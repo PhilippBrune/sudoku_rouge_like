@@ -35,6 +35,9 @@ This document reflects the current code-level implementation status after the la
 - Hidden dual-modifier boss definition and Chaos Monk secret unlock hooks
 - Ascension/prestige/seasonal seed service scaffolding
 - Full in-run UI flow controllers for event choice screen, curse panel, and heat-curve graph rendering
+- Modernized runtime-built main menu with onboarding/tutorial/meta/modes/options/conflict/confirm panels in Unity project tree
+- Game naming update to `Run of the Nine` in runtime menu title/credits copy
+- Class Garden progression system with level 1–40 XP curve, per-run XP formula, prestige gating/cap, and archive counters
 
 ## Partially Implemented (Needs UI / Scene Wiring)
 
@@ -63,6 +66,14 @@ This document reflects the current code-level implementation status after the la
 
 - Core systems are now substantially expanded and code-backed.
 - Project is in **advanced prototype / systems-complete, presentation-incomplete** stage.
+
+## Latest Integration Notes
+
+- The extended Class Garden progression prompt has been implemented in code and documented in [ClassProgressionSystem.md](ClassProgressionSystem.md).
+- Save sanitization includes clamping and validation for garden progression state, including class entries and prestige bounds.
+- Resume flow includes fallback restore from latest run backup when primary run save is invalid.
+- Branded naming is now `Run of the Nine` in menu-facing runtime text.
+- Japanese-garden themed bespoke art assets are still pending; current visuals are code-driven UI and default resources.
 
 ## Recommended Next Build Sequence
 

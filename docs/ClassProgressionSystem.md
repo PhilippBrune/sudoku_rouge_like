@@ -1,73 +1,104 @@
-# Class Progression System (Implemented)
+# Class Garden Progression System
 
-This document maps the implemented class unlock architecture to the design requirement.
+This document defines the integrated class-garden progression model used by **Run of the Nine**.
 
-## Core Philosophy
+## Goals
 
-- Start with one unlocked class only: `NumberFreak`
-- New classes unlock from milestone achievements
-- Unlock order follows skill/difficulty curve
-- Locked classes are shown in class select with requirement text and hidden passive (`???`)
+- Keep existing class unlock milestones intact.
+- Add long-term class growth with deterministic XP formulas.
+- Add prestige gating with clear requirements and a finite cap.
+- Persist archive history for progression UI and future achievements.
 
-## Unlock Roadmap
+## XP Curve
 
-1. **Number Freak**
-   - Default unlocked
+Level range and XP-to-next-level use a two-part curve:
 
-2. **Garden Monk**
-   - Clear a Tier 1/2 boss
-   - Reach run count 3 (non-tutorial)
+1. **Level 1-20 (linear):**
+   - `XP(level) = 120 + 20 * (level - 1)`
+2. **Level 21-40 (quadratic):**
+   - Let `d = level - 20`
+   - `XP(level) = 500 + 10 * d^2`
 
-3. **Shrine Archivist**
-   - Clear Tier 3+ boss
-   - Solve an 8x8 4★ board
+Hard caps:
+- Max level per prestige cycle: `40`
+- Max prestige tier: `9`
 
-4. **Koi Gambler**
-   - Win with less than 3 HP remaining
-   - OR complete Koi Path route
+## Per-Run XP Award Formula
 
-5. **Stone Gardener**
-   - Defeat Tier 4+ boss
-   - Reach Heat Score >= 5.0
+Run XP is awarded through:
 
-6. **Lantern Seer**
-   - Clear German Whispers boss
-   - Clear multi-stage boss
+`base + modifiers + outcome bonuses - mistake penalty`
 
-7. **Chaos Monk** (Secret)
-   - Unlock hidden dual-modifier boss pathway (via broad modifier mastery)
-   - Clear dual-modifier boss with exactly 1 HP remaining
+Concrete implementation inputs:
 
-## Skill Tier Metadata
+- Base: `60 + boardSize * 8 + stars * 30 + depthReached * 6`
+- Modifier bonus: `+15` (single) / `+35` (dual)
+- Victory bonus: `+40`
+- Boss clear bonus: `+55`
+- Perfect clear bonus: `+30`
+- Mistake penalty: `-5 * mistakesMade`
 
-- Tier 1: Number Freak (Low / Beginner)
-- Tier 2: Garden Monk (Low / Early)
-- Tier 3: Shrine Archivist (Medium / Intermediate)
-- Tier 4: Koi Gambler (Medium / Adaptive)
-- Tier 5: Stone Gardener (High / Advanced)
-- Tier 6: Lantern Seer (High / Expert)
-- Tier 7: Chaos Monk (High / Expert)
+Final XP is clamped to a minimum of `0`.
 
-## Main Class Select Logic
+## Level & Passive Cadence
 
-Implemented card behavior:
-- Unlocked: full data visible (stats + passive)
-- Locked: greyed card + unlock requirement + passive hidden as `???`
+- Each run contributes to global garden progression and per-class progression.
+- Level-up loop consumes `XP(level)` repeatedly until insufficient XP remains.
+- Every 5 levels grants one passive tier increment.
 
-## Technical Mapping
+## Prestige Rules
 
-- Unlock evaluator: `Assets/Scripts/Classes/ClassUnlockService.cs`
-- Class-select card model: `Assets/Scripts/Classes/ClassSelectService.cs`
-- Class metadata (tier/complexity/passive): `Assets/Scripts/Classes/ClassCatalog.cs`
-- Milestone payload in run result: `Assets/Scripts/Core/RuntimeModels.cs`
-- Profile progression persistence + unlock trigger on run record: `Assets/Scripts/Save/ProfileService.cs`
-- Run-side milestone hooks and lock enforcement: `Assets/Scripts/Run/RunDirector.cs`
+Prestige can trigger only when all are true:
 
-## Safeguards
+- Current level is `40`
+- Boss archive count meets tier gate:
+  - `ArchiveBossesDefeated >= (PrestigeTier + 1) * 3`
+- Current prestige tier is below cap (`9`)
 
-- `RunDirector.StartRun(...)` blocks advanced class starts unless unlocked in meta progression.
-- Tutorial runs are excluded from class progression unlock tracking.
-- Secret unlock integration:
-   - `MetaProgressionState.HiddenDualModifierBossUnlocked`
-   - `MetaProgressionState.ChaosMonkUnlocked`
-   - Run-result condition: dual-modifier clear with 1 HP left
+On prestige:
+
+- Prestige tier +1
+- Level reset to `1`
+- Current XP reset to `0`
+- Passive tier +1
+
+## Archive Tracking
+
+Persistent archive counters:
+
+- Total runs
+- Seeds bloomed (victories)
+- Bosses defeated
+- Perfect runs
+- Total XP earned
+
+Per-class archive entries store:
+
+- Class id
+- Level
+- Current XP
+- Prestige tier
+- Total XP earned
+
+## Data Model & Code Mapping
+
+- Save/runtime model additions:
+  - `MetaProgressionState.GardenProgression`
+  - `GardenClassProgressionState`
+  - `ClassGardenProgressEntry`
+- Run result class tagging:
+  - `RunResult.PlayedClassId`
+- Progression service:
+  - `Assets/Scripts/Meta/ClassGardenProgressionService.cs`
+- Run result production:
+  - `Assets/Scripts/Run/RunDirector.cs`
+- Profile update integration:
+  - `Assets/Scripts/Save/ProfileService.cs`
+- Save sanitization:
+  - `Assets/Scripts/Save/SaveFileService.cs`
+
+## Backward Compatibility
+
+- Existing saves are supported via null-safe initialization of `GardenProgression`.
+- New progression values are clamped/sanitized on load.
+- Existing unlock progression (`ClassUnlocks`) remains unchanged and continues to gate class availability.

@@ -1,6 +1,6 @@
-# Sudoku Roguelike — Unity Specification Pack
+# Run of the Nine — Unity Specification Pack
 
-This repository contains a complete design and implementation blueprint for a **Sudoku Roguelike** set in a pixel-art Japanese garden.
+This repository contains a complete design and implementation blueprint for **Run of the Nine**, a Sudoku roguelike set in a pixel-art Japanese garden.
 
 ## Included Documents
 
@@ -10,12 +10,16 @@ This repository contains a complete design and implementation blueprint for a **
 - [Design Bible (Chapters 1–17)](docs/DesignBible_Chapters_1-17.md)
 - [Tutorial Mode System](docs/TutorialModeSystem.md)
 - [Class Progression System](docs/ClassProgressionSystem.md)
+- [Items Collection System](docs/ItemsCollectionSystem.md)
 - [Core Systems Hardening](docs/CoreSystemsHardening.md)
 - [Implementation Audit (Previous Prompt)](docs/ImplementationAudit_PreviousPrompt.md)
 - [Implementation Progress (All Prompts)](docs/ImplementationProgress_AllPrompts.md)
 - [Unity Architecture Blueprint](docs/UnityArchitecture.md)
 - [Unity Install Guide (Windows)](docs/UnityInstall_Windows.md)
 - [Unity Prototype Setup](docs/UnityPrototypeSetup.md)
+- [Icon Prompt Pack](docs/run_of_the_nine_icon_prompts.md)
+- [UI Art Pipeline](docs/run_of_the_nine_ui_art_pipeline.md)
+- [Icon Creation Pipeline](docs/IconCreation_PixelGenerator.md)
 
 ## Project Goal
 
@@ -63,3 +67,38 @@ The repository now includes a Unity-ready gameplay systems scaffold under `Asset
 - Bootstrap MonoBehaviour for quick prototype startup
 
 See [Unity Prototype Setup](docs/UnityPrototypeSetup.md) to run the current prototype immediately.
+
+## Current Art Asset Status
+
+- Generated icon assets are included under `Assets/Resources/GeneratedIcons`.
+- Runtime UI icon loading now resolves through `Resources.Load("GeneratedIcons/<icon_name>")` from canonical `Assets` paths.
+- Prompt/pipeline references for future art upgrades are documented in:
+	- `docs/run_of_the_nine_icon_prompts.md`
+	- `docs/run_of_the_nine_ui_art_pipeline.md`
+
+## Script Tree Consolidation
+
+- **Source of truth:** `Assets/Scripts`
+- The former duplicate script tree has been retired from Unity import paths and moved to:
+	- `retired/nested-script-tree/Scripts`
+
+### Guardrails
+
+- CI checks that the nested tree stays retired:
+	- `.github/workflows/script-tree-guard.yml`
+- CI also blocks any newly committed `retired/**/*.cs` files.
+- A repo-managed pre-commit hook is provided:
+	- `.githooks/pre-commit`
+
+Enable the hook locally once per clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Manual check command:
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+./tools/check-script-tree-drift.ps1 -ExpectRetired
+```

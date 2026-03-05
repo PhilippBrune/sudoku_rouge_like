@@ -24,6 +24,11 @@ The runtime menu flow includes tutorial entry points:
 Tutorial setup supports:
 - Board size: 5x5..9x9
 - Stars: 1..5
+  - 1★ = 40% missing
+  - 2★ = 50% missing
+  - 3★ = 60% missing
+  - 4★ = 70% missing
+  - 5★ = 80% missing
 - Modifiers: 0..2 from boss modifier pool
 - Resource mode:
   - Free: infinite HP and infinite Pencil

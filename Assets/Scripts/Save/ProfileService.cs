@@ -12,6 +12,7 @@ namespace SudokuRoguelike.Save
         private readonly CompletionService _completionService = new();
         private readonly AscensionService _ascensionService = new();
         private readonly SteamAchievementService _achievementService = new();
+        private readonly ClassGardenProgressionService _gardenProgressionService = new();
 
         public MetaProgressionState Meta { get; } = new();
         public ProfileStats Stats { get; } = new();
@@ -71,6 +72,8 @@ namespace SudokuRoguelike.Save
             {
                 return newUnlocks;
             }
+
+            _gardenProgressionService.ApplyRun(Meta, result.PlayedClassId, result);
 
             _classUnlockService.UpdateProgressFromRunResult(Meta, result);
             var evaluated = _classUnlockService.EvaluateUnlocks(Meta);
@@ -194,6 +197,34 @@ namespace SudokuRoguelike.Save
             to.SpiritTrialsUnlocked = from.SpiritTrialsUnlocked;
             to.MaxStarCap = from.MaxStarCap;
             to.ClassUnlocks = from.ClassUnlocks ?? new ClassUnlockProgress();
+            to.GardenProgression ??= new GardenClassProgressionState();
+
+            if (from.GardenProgression != null)
+            {
+                to.GardenProgression.CurrentLevel = from.GardenProgression.CurrentLevel;
+                to.GardenProgression.CurrentXp = from.GardenProgression.CurrentXp;
+                to.GardenProgression.PrestigeTier = from.GardenProgression.PrestigeTier;
+                to.GardenProgression.PassiveTier = from.GardenProgression.PassiveTier;
+                to.GardenProgression.TotalXpEarned = from.GardenProgression.TotalXpEarned;
+                to.GardenProgression.ArchiveRunCount = from.GardenProgression.ArchiveRunCount;
+                to.GardenProgression.ArchiveSeedsBloomed = from.GardenProgression.ArchiveSeedsBloomed;
+                to.GardenProgression.ArchiveBossesDefeated = from.GardenProgression.ArchiveBossesDefeated;
+                to.GardenProgression.ArchivePerfectRuns = from.GardenProgression.ArchivePerfectRuns;
+
+                to.GardenProgression.ClassEntries.Clear();
+                for (var i = 0; i < from.GardenProgression.ClassEntries.Count; i++)
+                {
+                    var source = from.GardenProgression.ClassEntries[i];
+                    to.GardenProgression.ClassEntries.Add(new ClassGardenProgressEntry
+                    {
+                        ClassId = source.ClassId,
+                        Level = source.Level,
+                        CurrentXp = source.CurrentXp,
+                        PrestigeTier = source.PrestigeTier,
+                        TotalXpEarned = source.TotalXpEarned
+                    });
+                }
+            }
 
             to.UnlockedClasses.Clear();
             for (var i = 0; i < from.UnlockedClasses.Count; i++)

@@ -1,6 +1,10 @@
 using SudokuRoguelike.Core;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem.UI;
+#endif
 
 namespace SudokuRoguelike.UI
 {
@@ -23,21 +27,52 @@ namespace SudokuRoguelike.UI
         [ContextMenu("Build In-Run UI Blueprint")]
         public void BuildBlueprint()
         {
+            if (runMapController == null)
+            {
+                runMapController = GetComponentInChildren<RunMapController>(true);
+            }
+
             var canvas = EnsureCanvas();
+            EnsureEventSystem();
             var root = EnsureRect("InRunUI", canvas.transform as RectTransform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             EnsureOrGetImage(root.gameObject, new Color(0f, 0f, 0f, 0f));
 
             var flow = EnsureComponent<InRunUiFlowController>(root.gameObject);
+            var debug = EnsureComponent<PrototypeUiDebugHotkeys>(gameObject);
 
             var eventPanel = BuildEventPanel(root);
             var cursePanel = BuildCursePanel(root);
             var heatPanel = BuildHeatGraphPanel(root);
+            var debugPanel = BuildDebugPanel(root);
 
             flow.Configure(
                 runMapController,
                 eventPanel.GetComponent<EventChoiceScreenController>(),
                 cursePanel.GetComponent<CursePanelController>(),
                 heatPanel.GetComponent<HeatCurveGraphController>());
+
+            debug.Configure(flow, runMapController);
+            WireDebugButtons(debugPanel, debug);
+
+            if (runMapController == null)
+            {
+                Debug.LogWarning("InRunUiBlueprintBuilder: RunMapController was not found. Assign it on the builder or place one as a child.");
+            }
+        }
+
+        private static void EnsureEventSystem()
+        {
+            if (Object.FindFirstObjectByType<EventSystem>() != null)
+            {
+                return;
+            }
+
+            var eventSystemGo = new GameObject("EventSystem", typeof(EventSystem));
+#if ENABLE_INPUT_SYSTEM
+            eventSystemGo.AddComponent<InputSystemUIInputModule>();
+#else
+            eventSystemGo.AddComponent<StandaloneInputModule>();
+#endif
         }
 
         private GameObject BuildEventPanel(RectTransform root)
@@ -116,6 +151,69 @@ namespace SudokuRoguelike.UI
             return panel;
         }
 
+        private GameObject BuildDebugPanel(RectTransform root)
+        {
+            var panel = EnsureRect("DebugControlsPanel", root, new Vector2(0.32f, 0.58f), new Vector2(0.98f, 0.74f), Vector2.zero, Vector2.zero).gameObject;
+            EnsureOrGetImage(panel, panelColor);
+
+            var title = BuildText("DebugTitle", panel.transform as RectTransform, "Debug Controls", bodyFontSize, TextAnchor.UpperLeft);
+            SetRect(title.rectTransform, new Vector2(0.02f, 0.66f), new Vector2(0.28f, 0.96f), Vector2.zero, Vector2.zero);
+
+            var hint = BuildText("HotkeyHint", panel.transform as RectTransform, "Hotkeys: E Open | C Close | H Refresh | N or → Next Node", smallFontSize, TextAnchor.UpperLeft);
+            SetRect(hint.rectTransform, new Vector2(0.02f, 0.08f), new Vector2(0.28f, 0.62f), Vector2.zero, Vector2.zero);
+
+            var openEvent = BuildButton("BtnOpenEvent", panel.transform as RectTransform, "Open Event", smallFontSize);
+            SetRect(openEvent.GetComponent<RectTransform>(), new Vector2(0.30f, 0.18f), new Vector2(0.46f, 0.82f), Vector2.zero, Vector2.zero);
+
+            var closeEvent = BuildButton("BtnCloseEvent", panel.transform as RectTransform, "Close Event", smallFontSize);
+            SetRect(closeEvent.GetComponent<RectTransform>(), new Vector2(0.48f, 0.18f), new Vector2(0.64f, 0.82f), Vector2.zero, Vector2.zero);
+
+            var refresh = BuildButton("BtnRefresh", panel.transform as RectTransform, "Refresh UI", smallFontSize);
+            SetRect(refresh.GetComponent<RectTransform>(), new Vector2(0.66f, 0.18f), new Vector2(0.82f, 0.82f), Vector2.zero, Vector2.zero);
+
+            var nextNode = BuildButton("BtnNextNode", panel.transform as RectTransform, "Next Node", smallFontSize);
+            SetRect(nextNode.GetComponent<RectTransform>(), new Vector2(0.84f, 0.18f), new Vector2(0.98f, 0.82f), Vector2.zero, Vector2.zero);
+
+            return panel;
+        }
+
+        private static void WireDebugButtons(GameObject debugPanel, PrototypeUiDebugHotkeys debug)
+        {
+            if (debugPanel == null || debug == null)
+            {
+                return;
+            }
+
+            var open = debugPanel.transform.Find("BtnOpenEvent")?.GetComponent<Button>();
+            var close = debugPanel.transform.Find("BtnCloseEvent")?.GetComponent<Button>();
+            var refresh = debugPanel.transform.Find("BtnRefresh")?.GetComponent<Button>();
+            var next = debugPanel.transform.Find("BtnNextNode")?.GetComponent<Button>();
+
+            if (open != null)
+            {
+                open.onClick.RemoveAllListeners();
+                open.onClick.AddListener(debug.OpenEventPanel);
+            }
+
+            if (close != null)
+            {
+                close.onClick.RemoveAllListeners();
+                close.onClick.AddListener(debug.CloseEventPanel);
+            }
+
+            if (refresh != null)
+            {
+                refresh.onClick.RemoveAllListeners();
+                refresh.onClick.AddListener(debug.RefreshPanels);
+            }
+
+            if (next != null)
+            {
+                next.onClick.RemoveAllListeners();
+                next.onClick.AddListener(debug.AdvanceNodeSafe);
+            }
+        }
+
         private Canvas EnsureCanvas()
         {
             var existing = GetComponentInParent<Canvas>();
@@ -179,7 +277,7 @@ namespace SudokuRoguelike.UI
             var rect = EnsureRect(name, parent, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
             var text = EnsureComponent<Text>(rect.gameObject);
             text.text = value;
-            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            text.font = GetBuiltInFont();
             text.fontSize = size;
             text.alignment = anchor;
             text.color = textColor;
@@ -206,12 +304,23 @@ namespace SudokuRoguelike.UI
             var labelRect = EnsureRect("Label", rect, Vector2.zero, Vector2.one, new Vector2(10f, 8f), new Vector2(-10f, -8f));
             var text = EnsureComponent<Text>(labelRect.gameObject);
             text.text = label;
-            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            text.font = GetBuiltInFont();
             text.fontSize = size;
             text.alignment = TextAnchor.MiddleLeft;
             text.color = textColor;
 
             return button;
+        }
+
+        private static Font GetBuiltInFont()
+        {
+            var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            if (font != null)
+            {
+                return font;
+            }
+
+            return Resources.GetBuiltinResource<Font>("Arial.ttf");
         }
 
         private Image BuildImageTemplate(string name, RectTransform parent, Color color, Vector2 size)

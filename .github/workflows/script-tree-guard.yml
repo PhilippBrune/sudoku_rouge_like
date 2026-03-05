@@ -1,0 +1,48 @@
+name: Script Tree Guard
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check-script-tree:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate Nested Project Script Root
+        shell: pwsh
+        run: |
+          Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+          ./tools/check-script-tree-drift.ps1 -ExpectNestedRoot
+
+      - name: Block C# Sources Under retired/
+        shell: pwsh
+        run: |
+          Set-StrictMode -Version Latest
+          $ErrorActionPreference = 'Stop'
+
+          $eventName = "${{ github.event_name }}"
+          $headSha = "${{ github.sha }}"
+          if ($eventName -eq 'pull_request') {
+            $baseSha = "${{ github.event.pull_request.base.sha }}"
+          } else {
+            $baseSha = "${{ github.event.before }}"
+            if ([string]::IsNullOrWhiteSpace($baseSha) -or $baseSha -eq '0000000000000000000000000000000000000000') {
+              $baseSha = (git rev-list --max-parents=0 HEAD | Select-Object -First 1)
+            }
+          }
+
+          $changed = git diff --name-only $baseSha $headSha
+          $blocked = @($changed | Where-Object { $_ -match '^retired/.*\.cs$' })
+
+          if ($blocked.Count -gt 0) {
+            Write-Host 'Blocked files:'
+            $blocked | ForEach-Object { Write-Host " - $_" }
+            throw 'C# files are not allowed under retired/. Move archival code out of source form (for example: patch/zipped artifact) before committing.'
+          }
+
+          Write-Host 'No C# files added or modified under retired/ in this change set.'

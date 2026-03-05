@@ -143,6 +143,7 @@ namespace SudokuRoguelike.Core
     [Serializable]
     public sealed class RunResult
     {
+        public ClassId PlayedClassId = ClassId.NumberFreak;
         public GameMode Mode;
         public bool Victory;
         public int GardenDepthReached;
@@ -259,8 +260,62 @@ namespace SudokuRoguelike.Core
         public bool ChaosMonkUnlocked;
         public bool SeasonalChallengeUnlocked;
         public ClassUnlockProgress ClassUnlocks = new();
+        public GardenClassProgressionState GardenProgression = new();
+        public ItemCodexState ItemCodex = new();
         public readonly List<string> PurchasedPermanentUpgrades = new();
         public readonly List<string> UnlockedAchievements = new();
+    }
+
+    [Serializable]
+    public sealed class ItemCodexState
+    {
+        public int SaveDataVersion = 1;
+        public readonly List<ItemCodexEntry> Entries = new();
+    }
+
+    [Serializable]
+    public sealed class ItemCodexEntry
+    {
+        public string ItemID;
+        public string Name;
+        public string Type;
+        public string RarityTier;
+        public string UnlockCondition;
+        public string Description;
+        public string EffectFormula;
+        public string SynergyTags;
+        public bool Discovered;
+        public bool Mastered;
+        public int TimesPicked;
+        public int TimesWon;
+        public int TimesUsed;
+        public int BestRunDepth;
+        public string DiscoveredDate;
+    }
+
+    [Serializable]
+    public sealed class GardenClassProgressionState
+    {
+        public int CurrentLevel = 1;
+        public int CurrentXp;
+        public int PrestigeTier;
+        public int PassiveTier;
+        public int TotalXpEarned;
+        public int ArchiveRunCount;
+        public int ArchiveSeedsBloomed;
+        public int ArchiveBossesDefeated;
+        public int ArchivePerfectRuns;
+        public readonly List<ClassGardenProgressEntry> ClassEntries = new();
+    }
+
+    [Serializable]
+    public sealed class ClassGardenProgressEntry
+    {
+        public ClassId ClassId = ClassId.NumberFreak;
+        public int Level = 1;
+        public int CurrentXp;
+        public int PrestigeTier;
+        public int TotalXpEarned;
     }
 
     [Serializable]

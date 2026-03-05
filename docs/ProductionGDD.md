@@ -72,8 +72,8 @@ Use HeatScore for encounter pressure tracking, reward tuning, and progression sp
 S = 1 + (missing\_percentage \times 1.8)
 \]
 Examples:
-- 10% => 1.18
-- 50% => 1.90
+- 40% => 1.72
+- 80% => 2.44
 
 ### Constraint Load (C)
 - Tier 1: 1.15

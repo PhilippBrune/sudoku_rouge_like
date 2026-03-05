@@ -63,7 +63,7 @@ namespace SudokuRoguelike.Data
                 }
             }
 
-            return Mathf.Clamp01(star * 0.1f);
+            return StarDensityService.MissingPercentForStars(star);
         }
     }
 }

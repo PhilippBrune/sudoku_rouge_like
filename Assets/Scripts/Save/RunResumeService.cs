@@ -1,3 +1,4 @@
+using SudokuRoguelike.Core;
 using SudokuRoguelike.Run;
 
 namespace SudokuRoguelike.Save
@@ -6,7 +7,7 @@ namespace SudokuRoguelike.Save
     {
         public bool TryResumeFromSave(RunDirector runDirector, SaveFileEnvelope envelope)
         {
-            if (envelope?.ActiveRunState == null || envelope.ActivePuzzle == null)
+            if (envelope?.ActiveRunState == null)
             {
                 return false;
             }
@@ -51,6 +52,11 @@ namespace SudokuRoguelike.Save
             for (var i = 0; i < envelope.ActiveRunState.NodePath.Count; i++)
             {
                 runState.NodePath.Add(envelope.ActiveRunState.NodePath[i]);
+            }
+
+            if (envelope.ActivePuzzle == null)
+            {
+                return true;
             }
 
             return runDirector.TryRestorePuzzleSaveState(envelope.ActivePuzzle);

@@ -40,6 +40,8 @@ namespace SudokuRoguelike.Run
         public List<RunNode> CurrentRunGraph { get; private set; } = new();
         public List<ShopOffer> CurrentShopOffers { get; private set; } = new();
         public RunEvent CurrentEvent { get; private set; }
+        public TutorialSetupConfig ActiveTutorialSetup { get; private set; }
+        public TutorialSetupConfig LastCompletedTutorialSetup { get; private set; }
 
         public int ShopPurchasesThisRun { get; private set; }
         public int EmergencyHealsThisRun { get; private set; }
@@ -74,6 +76,9 @@ namespace SudokuRoguelike.Run
 
         public void StartRun(ClassId classId, GameMode mode = GameMode.GardenRun, int runNumber = 1, MetaProgressionState meta = null)
         {
+            ActiveTutorialSetup = null;
+            LastCompletedTutorialSetup = null;
+
             if (mode != GameMode.Tutorial)
             {
                 if (meta == null)
@@ -182,6 +187,7 @@ namespace SudokuRoguelike.Run
         {
             var mode = GameMode.Tutorial;
             StartRun(ClassId.NumberFreak, mode, runNumber: 1, meta: null);
+            ActiveTutorialSetup = CloneTutorialSetup(tutorialSetup);
 
             RunState.TutorialMode = true;
             RunState.DisableProgressionRewards = true;
@@ -226,7 +232,7 @@ namespace SudokuRoguelike.Run
             var difficulty = MapDifficulty(runNumber, depth);
             var boardSize = 4 + (int)difficulty;
             var stars = RollStarForRun(runNumber);
-            var missing = stars * 0.1f;
+            var missing = StarDensityService.MissingPercentForStars(stars);
             var node = FindNodeByDepth(depth);
             var riskPath = node != null && node.IsRiskPath;
             var nodeType = node?.Type ?? NodeType.Puzzle;
@@ -452,6 +458,11 @@ namespace SudokuRoguelike.Run
             {
                 RunState.CurrentGold = 0;
                 RunState.CurrentXP = 0;
+                if (CurrentLevelState.PuzzleComplete && ActiveTutorialSetup != null)
+                {
+                    LastCompletedTutorialSetup = CloneTutorialSetup(ActiveTutorialSetup);
+                }
+
                 RunState.Depth++;
                 return;
             }
@@ -511,14 +522,28 @@ namespace SudokuRoguelike.Run
                 return null;
             }
 
-            var nextIndex = Math.Min(RunState.CurrentNodeIndex + 1, CurrentRunGraph.Count - 1);
+            var currentIndex = Math.Clamp(RunState.CurrentNodeIndex, 0, CurrentRunGraph.Count - 1);
+            var currentDepth = CurrentRunGraph[currentIndex].Depth;
+            var nextIndex = -1;
 
-            if (chooseRiskPath)
+            for (var i = 0; i < CurrentRunGraph.Count; i++)
             {
-                while (nextIndex < CurrentRunGraph.Count - 1 && !CurrentRunGraph[nextIndex].IsRiskPath)
+                var candidate = CurrentRunGraph[i];
+                if (candidate.Depth <= currentDepth)
                 {
-                    nextIndex++;
+                    continue;
                 }
+
+                if (candidate.Type == NodeType.Boss || candidate.IsRiskPath == chooseRiskPath)
+                {
+                    nextIndex = i;
+                    break;
+                }
+            }
+
+            if (nextIndex < 0)
+            {
+                return null;
             }
 
             RunState.CurrentNodeIndex = nextIndex;
@@ -537,7 +562,15 @@ namespace SudokuRoguelike.Run
 
             RunState.RouteHistory.Add(route);
             MarkRouteCompleted(route);
-            _routeService.ApplyRouteProfile(route, CurrentLevelConfig, ref CurrentMistakePenalty, ref CurrentGoldMultiplier, ref CurrentBonusPencilReward, ref CurrentBonusXp);
+            var mistakePenalty = CurrentMistakePenalty;
+            var goldMultiplier = CurrentGoldMultiplier;
+            var bonusPencilReward = CurrentBonusPencilReward;
+            var bonusXp = CurrentBonusXp;
+            _routeService.ApplyRouteProfile(route, CurrentLevelConfig, ref mistakePenalty, ref goldMultiplier, ref bonusPencilReward, ref bonusXp);
+            CurrentMistakePenalty = mistakePenalty;
+            CurrentGoldMultiplier = goldMultiplier;
+            CurrentBonusPencilReward = bonusPencilReward;
+            CurrentBonusXp = bonusXp;
             UpdateCurrentHeatScore();
         }
 
@@ -568,6 +601,7 @@ namespace SudokuRoguelike.Run
 
             var result = new RunResult
             {
+                PlayedClassId = RunState.ClassId,
                 Mode = RunState.Mode,
                 Victory = victory,
                 GardenDepthReached = RunState.Depth,
@@ -823,7 +857,7 @@ namespace SudokuRoguelike.Run
                 BoardSize = size,
                 Difficulty = (DifficultyTier)save.Difficulty,
                 Stars = save.Stars,
-                MissingPercent = save.Stars * 0.1f,
+                MissingPercent = StarDensityService.MissingPercentForStars(save.Stars),
                 IsBoss = save.IsBoss
             };
 
@@ -912,6 +946,13 @@ namespace SudokuRoguelike.Run
             }
         }
 
+        public bool TryConsumeLastCompletedTutorialSetup(out TutorialSetupConfig setup)
+        {
+            setup = LastCompletedTutorialSetup;
+            LastCompletedTutorialSetup = null;
+            return setup != null;
+        }
+
         public List<BossModifierId> RollBossModifierChoices(int runNumber)
         {
             return _bossService.RollBossChoices(runNumber, CurrentLevelConfig.Stars);
@@ -937,6 +978,28 @@ namespace SudokuRoguelike.Run
 
             RunState.Inventory.RemoveAt(0);
             RunState.Inventory.Add(item);
+        }
+
+        private static TutorialSetupConfig CloneTutorialSetup(TutorialSetupConfig source)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+
+            var copy = new TutorialSetupConfig
+            {
+                BoardSize = source.BoardSize,
+                Stars = source.Stars,
+                ResourceMode = source.ResourceMode
+            };
+
+            for (var i = 0; i < source.SelectedModifiers.Count; i++)
+            {
+                copy.SelectedModifiers.Add(source.SelectedModifiers[i]);
+            }
+
+            return copy;
         }
 
         private void ApplyMistakePenalty()

@@ -1,4 +1,4 @@
-# Sudoku Roguelike — Full Game Design Specification
+# Run of the Nine — Full Game Design Specification
 
 ## 1) Vision
 
@@ -36,14 +36,14 @@ Run failure occurs when HP reaches 0.
 
 ## 3.2 Star Density (Missing Cells)
 
-- 1★: 10% missing
-- 2★: 20% missing
-- 3★: 30% missing
-- 4★: 40% missing
-- 5★: 50% missing
+- 1★: 40% missing
+- 2★: 50% missing
+- 3★: 60% missing
+- 4★: 70% missing
+- 5★: 80% missing
 
-Extensibility requirement:
-- Star scaling must be data-driven so 6★+ can be added without code changes.
+Current release requirement:
+- Star scaling uses only 1★..5★.
 
 ## 4) Controls Specification
 

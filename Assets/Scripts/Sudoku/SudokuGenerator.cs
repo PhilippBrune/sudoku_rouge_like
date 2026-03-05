@@ -8,8 +8,8 @@ namespace SudokuRoguelike.Sudoku
         public static SudokuBoard CreatePuzzle(int size, float missingPercent, int seed)
         {
             var random = new Random(seed);
-            var solution = GenerateSolvedLatinBoard(size, random);
             var regionMap = BuildRegionMap(size);
+            var solution = GenerateSolvedBoard(size, regionMap, random);
             var puzzle = (int[,])solution.Clone();
 
             var totalCells = size * size;
@@ -44,67 +44,103 @@ namespace SudokuRoguelike.Sudoku
             return new SudokuBoard(size, solution, puzzle, givenMask, regionMap);
         }
 
-        private static int[,] GenerateSolvedLatinBoard(int size, Random random)
+        private static int[,] GenerateSolvedBoard(int size, int[,] regionMap, Random random)
         {
             var board = new int[size, size];
+            var rowMask = new int[size];
+            var colMask = new int[size];
+            var regionCount = CountDistinctRegions(regionMap, size);
+            var regionMask = new int[Math.Max(regionCount, size)];
 
-            for (var row = 0; row < size; row++)
+            var solved = FillBoard(board, regionMap, size, rowMask, colMask, regionMask, random);
+            if (!solved)
             {
-                for (var col = 0; col < size; col++)
-                {
-                    board[row, col] = ((row + col) % size) + 1;
-                }
+                throw new InvalidOperationException($"Failed to generate solved board for size {size}.");
             }
 
-            var rowOrder = CreateIndexList(size);
-            var colOrder = CreateIndexList(size);
-            var symbolOrder = CreateIndexList(size);
+            return board;
+        }
 
-            Shuffle(rowOrder, random);
-            Shuffle(colOrder, random);
-            Shuffle(symbolOrder, random);
-
-            var remapped = new int[size, size];
-            for (var r = 0; r < size; r++)
+        private static bool FillBoard(int[,] board, int[,] regionMap, int size, int[] rowMask, int[] colMask, int[] regionMask, Random random)
+        {
+            if (!FindNextCell(board, regionMap, size, rowMask, colMask, regionMask, out var row, out var col, out var candidates))
             {
-                for (var c = 0; c < size; c++)
-                {
-                    var original = board[rowOrder[r], colOrder[c]];
-                    remapped[r, c] = symbolOrder[original - 1] + 1;
-                }
+                return true;
             }
 
-            return remapped;
+            Shuffle(candidates, random);
+            var region = regionMap[row, col];
+
+            for (var i = 0; i < candidates.Count; i++)
+            {
+                var value = candidates[i];
+                var bit = 1 << value;
+
+                board[row, col] = value;
+                rowMask[row] |= bit;
+                colMask[col] |= bit;
+                regionMask[region] |= bit;
+
+                if (FillBoard(board, regionMap, size, rowMask, colMask, regionMask, random))
+                {
+                    return true;
+                }
+
+                board[row, col] = 0;
+                rowMask[row] &= ~bit;
+                colMask[col] &= ~bit;
+                regionMask[region] &= ~bit;
+            }
+
+            return false;
         }
 
         private static int[,] BuildRegionMap(int size)
         {
             var regionMap = new int[size, size];
-            var boxRoot = (int)Math.Sqrt(size);
 
+            if (size == 6)
+            {
+                FillRectangularRegions(regionMap, size, 2, 3);
+                return regionMap;
+            }
+
+            if (size == 8)
+            {
+                // 8x8 uses 2x4 regions.
+                FillRectangularRegions(regionMap, size, 2, 4);
+                return regionMap;
+            }
+
+            var boxRoot = (int)Math.Sqrt(size);
             if (boxRoot * boxRoot == size)
             {
-                for (var row = 0; row < size; row++)
-                {
-                    for (var col = 0; col < size; col++)
-                    {
-                        var region = (row / boxRoot) * boxRoot + (col / boxRoot);
-                        regionMap[row, col] = region;
-                    }
-                }
+                FillRectangularRegions(regionMap, size, boxRoot, boxRoot);
+                return regionMap;
             }
-            else
+
+            // 5x5/7x7 use deterministic irregular-style region partitioning.
+            for (var row = 0; row < size; row++)
             {
-                for (var row = 0; row < size; row++)
+                for (var col = 0; col < size; col++)
                 {
-                    for (var col = 0; col < size; col++)
-                    {
-                        regionMap[row, col] = (row + col) % size;
-                    }
+                    regionMap[row, col] = (row + col) % size;
                 }
             }
 
             return regionMap;
+        }
+
+        private static void FillRectangularRegions(int[,] regionMap, int size, int boxRows, int boxCols)
+        {
+            for (var row = 0; row < size; row++)
+            {
+                for (var col = 0; col < size; col++)
+                {
+                    var region = (row / boxRows) * (size / boxCols) + (col / boxCols);
+                    regionMap[row, col] = region;
+                }
+            }
         }
 
         private static List<int> CreateIndexList(int size)
@@ -125,6 +161,76 @@ namespace SudokuRoguelike.Sudoku
                 var j = random.Next(i + 1);
                 (list[i], list[j]) = (list[j], list[i]);
             }
+        }
+
+        private static bool FindNextCell(int[,] board, int[,] regionMap, int size, int[] rowMask, int[] colMask, int[] regionMask, out int bestRow, out int bestCol, out List<int> bestCandidates)
+        {
+            bestRow = -1;
+            bestCol = -1;
+            bestCandidates = null;
+
+            var bestCount = int.MaxValue;
+            for (var row = 0; row < size; row++)
+            {
+                for (var col = 0; col < size; col++)
+                {
+                    if (board[row, col] != 0)
+                    {
+                        continue;
+                    }
+
+                    var region = regionMap[row, col];
+                    var usedMask = rowMask[row] | colMask[col] | regionMask[region];
+                    var candidates = new List<int>(size);
+                    for (var value = 1; value <= size; value++)
+                    {
+                        var bit = 1 << value;
+                        if ((usedMask & bit) == 0)
+                        {
+                            candidates.Add(value);
+                        }
+                    }
+
+                    if (candidates.Count == 0)
+                    {
+                        bestRow = row;
+                        bestCol = col;
+                        bestCandidates = candidates;
+                        return true;
+                    }
+
+                    if (candidates.Count < bestCount)
+                    {
+                        bestCount = candidates.Count;
+                        bestRow = row;
+                        bestCol = col;
+                        bestCandidates = candidates;
+                        if (bestCount == 1)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return bestRow >= 0;
+        }
+
+        private static int CountDistinctRegions(int[,] regionMap, int size)
+        {
+            var max = 0;
+            for (var row = 0; row < size; row++)
+            {
+                for (var col = 0; col < size; col++)
+                {
+                    if (regionMap[row, col] > max)
+                    {
+                        max = regionMap[row, col];
+                    }
+                }
+            }
+
+            return max + 1;
         }
     }
 }

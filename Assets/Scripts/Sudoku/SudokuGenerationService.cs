@@ -15,7 +15,7 @@ namespace SudokuRoguelike.Sudoku
             var given = BuildGivenMask(request.BoardSize, true);
 
             var total = request.BoardSize * request.BoardSize;
-            var targetMissing = Math.Clamp((int)Math.Round(total * (request.Stars * 0.1f)), 1, total - request.BoardSize);
+            var targetMissing = Math.Clamp((int)Math.Round(total * StarDensityService.MissingPercentForStars(request.Stars)), 1, total - request.BoardSize);
             var order = BuildRemovalOrder(total, random);
 
             var removed = 0;

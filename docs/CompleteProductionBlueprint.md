@@ -1,13 +1,13 @@
 # GARDEN OF NUMBERS — Complete Production-Ready Game Design Blueprint
 
-Genre: Sudoku Roguelike  
+Genre: Run of the Nine (Sudoku Roguelike)  
 Platform: PC (Steam)  
 Target Audience: Mid-Core Puzzle Players  
 Identity: Spiritual Mastery Through Discipline
 
 ## 1) Core Vision
 
-Garden of Numbers is a deterministic Sudoku roguelike where players traverse branching gardens of escalating logical trials. Each run culminates in a multi-phase boss puzzle layered with advanced Sudoku modifiers.
+Run of the Nine is a deterministic Sudoku roguelike where players traverse branching gardens of escalating logical trials. Each run culminates in a multi-phase boss puzzle layered with advanced Sudoku modifiers.
 
 The game must:
 - Reward logical mastery, not guessing

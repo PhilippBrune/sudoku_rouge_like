@@ -25,7 +25,7 @@ namespace SudokuRoguelike.Run
                 BoardSize = 9,
                 Difficulty = DifficultyTier.Diff5,
                 Stars = stars,
-                MissingPercent = stars * 0.1f,
+                MissingPercent = StarDensityService.MissingPercentForStars(stars),
                 IsBoss = false
             };
         }

@@ -1,5 +1,7 @@
 using SudokuRoguelike.Core;
 using UnityEngine;
+using System;
+using System.IO;
 
 namespace SudokuRoguelike.Save
 {
@@ -28,12 +30,33 @@ namespace SudokuRoguelike.Save
             return local && cloud;
         }
 
+        public bool TryBuildRunConflictSummary(out string summary)
+        {
+            summary = string.Empty;
+
+            var hasLocal = _saveFile.TryLoadRun(out var localEnvelope);
+            var hasCloud = TryLoadCloudRun(out var cloudEnvelope, out var cloudTimestamp);
+            if (!hasLocal || !hasCloud)
+            {
+                return false;
+            }
+
+            var localTimestamp = 0L;
+            if (File.Exists(_saveFile.RunPath))
+            {
+                localTimestamp = new DateTimeOffset(File.GetLastWriteTimeUtc(_saveFile.RunPath)).ToUnixTimeSeconds();
+            }
+
+            summary = $"Local [{DescribeEnvelope(localEnvelope, localTimestamp)}] vs Cloud [{DescribeEnvelope(cloudEnvelope, cloudTimestamp)}].";
+            return true;
+        }
+
         public bool TryResolveRunConflict(SaveConflictDecision decision, out SaveFileEnvelope envelope)
         {
             envelope = null;
 
             var hasLocal = _saveFile.TryLoadRun(out var localEnvelope);
-            var hasCloud = TryLoadCloudRun(out var cloudEnvelope);
+            var hasCloud = TryLoadCloudRun(out var cloudEnvelope, out var _);
 
             if (!hasLocal && !hasCloud)
             {
@@ -80,10 +103,21 @@ namespace SudokuRoguelike.Save
             _cloud.SaveRun(json, timestamp);
         }
 
-        private bool TryLoadCloudRun(out SaveFileEnvelope envelope)
+        private static string DescribeEnvelope(SaveFileEnvelope envelope, long timestampUtc)
+        {
+            var mode = envelope?.ActiveRunState != null ? envelope.ActiveRunState.Mode.ToString() : "Unknown";
+            var boss = envelope?.ActivePuzzle != null && envelope.ActivePuzzle.IsBoss ? "Boss" : "Run";
+            var time = timestampUtc > 0
+                ? DateTimeOffset.FromUnixTimeSeconds(timestampUtc).UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss 'UTC'")
+                : "n/a";
+            return $"{boss}, mode={mode}, time={time}";
+        }
+
+        private bool TryLoadCloudRun(out SaveFileEnvelope envelope, out long timestampUtc)
         {
             envelope = null;
-            if (!_cloud.TryLoadRun(out var json, out var _))
+            timestampUtc = 0;
+            if (!_cloud.TryLoadRun(out var json, out timestampUtc))
             {
                 return false;
             }

@@ -94,7 +94,7 @@ namespace SudokuRoguelike.Tutorial
                 Difficulty = difficulty,
                 BoardSize = setup.BoardSize,
                 Stars = setup.Stars,
-                MissingPercent = setup.Stars * 0.1f,
+                MissingPercent = StarDensityService.MissingPercentForStars(setup.Stars),
                 IsBoss = setup.SelectedModifiers.Count > 0
             };
 

@@ -5,6 +5,8 @@ namespace SudokuRoguelike.Core
         public GameMode Mode = GameMode.GardenRun;
         public ClassId ClassId = ClassId.NumberFreak;
         public TutorialSetupConfig TutorialSetup;
+        public bool ResumeFromSave;
+        public bool StartFresh = true;
     }
 
     public static class LaunchRequestContext

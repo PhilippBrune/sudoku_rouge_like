@@ -458,9 +458,11 @@ namespace SudokuRoguelike.Run
             {
                 RunState.CurrentGold = 0;
                 RunState.CurrentXP = 0;
-                if (CurrentLevelState.PuzzleComplete && ActiveTutorialSetup != null)
+                if (CurrentLevelState.PuzzleComplete)
                 {
-                    LastCompletedTutorialSetup = CloneTutorialSetup(ActiveTutorialSetup);
+                    LastCompletedTutorialSetup = ActiveTutorialSetup != null
+                        ? CloneTutorialSetup(ActiveTutorialSetup)
+                        : BuildSetupFromCurrentLevel();
                 }
 
                 RunState.Depth++;
@@ -707,6 +709,391 @@ namespace SudokuRoguelike.Run
             }
 
             return false;
+        }
+
+        public bool TryPurchaseShopOfferReplacingSlot(string offerId, int replaceIndex)
+        {
+            for (var i = 0; i < CurrentShopOffers.Count; i++)
+            {
+                var offer = CurrentShopOffers[i];
+                if (offer.OfferId != offerId || RunState.CurrentGold < offer.Price)
+                {
+                    continue;
+                }
+
+                if (offer.IsRelic || offer.Item == null)
+                {
+                    return TryPurchaseShopOffer(offerId);
+                }
+
+                if (replaceIndex < 0 || replaceIndex >= RunState.Inventory.Count)
+                {
+                    return false;
+                }
+
+                RunState.CurrentGold -= offer.Price;
+                ShopPurchasesThisRun++;
+                RunState.Inventory[replaceIndex] = offer.Item;
+                CurrentShopOffers.RemoveAt(i);
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool TryUseInventoryItemAt(int inventoryIndex, int row, int col, out string message)
+        {
+            message = string.Empty;
+
+            if (RunState == null || CurrentBoard == null)
+            {
+                message = "No active puzzle.";
+                return false;
+            }
+
+            if (inventoryIndex < 0 || inventoryIndex >= RunState.Inventory.Count)
+            {
+                message = "Invalid inventory slot.";
+                return false;
+            }
+
+            var item = RunState.Inventory[inventoryIndex];
+            if (item == null)
+            {
+                message = "Item slot is empty.";
+                return false;
+            }
+
+            var used = false;
+            switch (item.Type)
+            {
+                case ItemType.Solver:
+                    used = _itemService.TryUseSolver(CurrentBoard, item.Rarity, row, col);
+                    message = used ? "Solver used." : "Solver requires an empty selected cell.";
+                    break;
+                case ItemType.Finder:
+                {
+                    var matches = _itemService.UseFinder(CurrentBoard, item.Rarity, row, col);
+                    used = matches.Count > 0;
+                    message = used ? $"Finder added {matches.Count} matching pencil hint(s)." : "Finder needs a selected filled value.";
+                    break;
+                }
+                case ItemType.InkWell:
+                {
+                    var restore = item.Rarity switch
+                    {
+                        ItemRarity.Normal => 3,
+                        ItemRarity.Rare => 5,
+                        _ => 7
+                    };
+                    RunState.CurrentPencil = Math.Min(RunState.MaxPencil, RunState.CurrentPencil + restore);
+                    used = true;
+                    message = $"+{restore} Pencil.";
+                    break;
+                }
+                case ItemType.MeditationStone:
+                {
+                    var heal = item.Rarity switch
+                    {
+                        ItemRarity.Normal => 1,
+                        ItemRarity.Rare => 2,
+                        _ => 3
+                    };
+                    RunState.CurrentHP = Math.Min(RunState.MaxHP, RunState.CurrentHP + heal);
+                    used = true;
+                    message = $"+{heal} HP.";
+                    break;
+                }
+                case ItemType.WindChime:
+                {
+                    var cleared = ClearPencilsInRowAndColumn(row, col);
+                    used = cleared > 0;
+                    message = used ? $"Wind Chime cleared {cleared} pencil marks." : "No pencil marks to clear in this row/column.";
+                    break;
+                }
+                case ItemType.PatternScroll:
+                {
+                    var added = AddLegalPencilsToCell(row, col);
+                    used = added > 0;
+                    message = used ? $"Pattern Scroll added {added} candidate marks." : "Select an empty non-given cell for Pattern Scroll.";
+                    break;
+                }
+                case ItemType.KoiReflection:
+                {
+                    var heal = item.Rarity switch
+                    {
+                        ItemRarity.Normal => 1,
+                        ItemRarity.Rare => 2,
+                        _ => 3
+                    };
+                    var pencil = item.Rarity switch
+                    {
+                        ItemRarity.Normal => 2,
+                        ItemRarity.Rare => 4,
+                        _ => 6
+                    };
+                    RunState.CurrentHP = Math.Min(RunState.MaxHP, RunState.CurrentHP + heal);
+                    RunState.CurrentPencil = Math.Min(RunState.MaxPencil, RunState.CurrentPencil + pencil);
+                    used = true;
+                    message = $"Koi Reflection restored {heal} HP and {pencil} Pencil.";
+                    break;
+                }
+                case ItemType.LanternOfClarity:
+                {
+                    used = RevealSingleCell(row, col, item.Rarity, out var solvedRow, out var solvedCol);
+                    message = used
+                        ? $"Lantern revealed cell ({solvedRow + 1},{solvedCol + 1})."
+                        : "No empty cell available for Lantern of Clarity.";
+                    break;
+                }
+                case ItemType.TeaOfFocus:
+                {
+                    CurrentLevelState.TeaOfFocusActive = true;
+                    CurrentLevelState.TeaOfFocusRemainingPlacements = item.Rarity switch
+                    {
+                        ItemRarity.Normal => 1,
+                        ItemRarity.Rare => 2,
+                        _ => 3
+                    };
+                    used = true;
+                    message = $"Tea of Focus active for {CurrentLevelState.TeaOfFocusRemainingPlacements} placement(s).";
+                    break;
+                }
+                case ItemType.CherryBlossomPact:
+                {
+                    var boost = item.Rarity switch
+                    {
+                        ItemRarity.Normal => 1,
+                        ItemRarity.Rare => 2,
+                        _ => 3
+                    };
+                    RunState.MaxPencil += boost;
+                    RunState.CurrentPencil = Math.Min(RunState.MaxPencil, RunState.CurrentPencil + (boost * 2));
+                    used = true;
+                    message = $"Cherry Blossom Pact: Max Pencil +{boost}.";
+                    break;
+                }
+                case ItemType.FortuneEnvelope:
+                {
+                    var gold = item.Rarity switch
+                    {
+                        ItemRarity.Normal => 8,
+                        ItemRarity.Rare => 14,
+                        _ => 20
+                    };
+                    RunState.CurrentGold += gold;
+                    used = true;
+                    message = $"Fortune Envelope granted {gold} gold.";
+                    break;
+                }
+                case ItemType.StoneShift:
+                {
+                    if (CurrentBoard.IsGiven(row, col))
+                    {
+                        used = false;
+                        message = "Stone Shift cannot clear a given cell.";
+                        break;
+                    }
+
+                    if (CurrentBoard.IsEmpty(row, col))
+                    {
+                        used = false;
+                        message = "Stone Shift needs a filled non-given cell.";
+                        break;
+                    }
+
+                    CurrentBoard.ClearCell(row, col);
+                    used = true;
+                    message = "Stone Shift cleared the selected cell.";
+                    break;
+                }
+                case ItemType.HarmonyCharm:
+                {
+                    var shield = item.Rarity switch
+                    {
+                        ItemRarity.Normal => 1,
+                        ItemRarity.Rare => 2,
+                        _ => 3
+                    };
+                    RunState.MistakeShieldCharges += shield;
+                    used = true;
+                    message = $"Harmony Charm granted {shield} shield charge(s).";
+                    break;
+                }
+                case ItemType.CompassOfOrder:
+                {
+                    used = AddSingleCorrectCandidate(row, col);
+                    message = used ? "Compass of Order marked a reliable candidate." : "Compass needs an empty non-given cell.";
+                    break;
+                }
+                default:
+                    message = "Item has no mapped effect.";
+                    break;
+            }
+
+            if (!used)
+            {
+                return false;
+            }
+
+            item.Charges = Math.Max(0, item.Charges - 1);
+            if (item.Charges <= 0)
+            {
+                RunState.Inventory.RemoveAt(inventoryIndex);
+            }
+
+            UpdateCurrentHeatScore();
+            return true;
+        }
+
+        private int ClearPencilsInRowAndColumn(int row, int col)
+        {
+            if (CurrentBoard == null)
+            {
+                return 0;
+            }
+
+            var cleared = 0;
+            for (var c = 0; c < CurrentBoard.Size; c++)
+            {
+                cleared += ClearPencilAt(row, c);
+            }
+
+            for (var r = 0; r < CurrentBoard.Size; r++)
+            {
+                if (r == row)
+                {
+                    continue;
+                }
+
+                cleared += ClearPencilAt(r, col);
+            }
+
+            return cleared;
+        }
+
+        private int ClearPencilAt(int row, int col)
+        {
+            if (CurrentBoard == null || CurrentBoard.IsGiven(row, col) || !CurrentBoard.IsEmpty(row, col))
+            {
+                return 0;
+            }
+
+            var set = CurrentBoard.GetPencilSet(row, col);
+            var count = set.Count;
+            set.Clear();
+            return count;
+        }
+
+        private int AddLegalPencilsToCell(int row, int col)
+        {
+            if (CurrentBoard == null || CurrentBoard.IsGiven(row, col) || !CurrentBoard.IsEmpty(row, col))
+            {
+                return 0;
+            }
+
+            var set = CurrentBoard.GetPencilSet(row, col);
+            var before = set.Count;
+            for (var value = 1; value <= CurrentBoard.Size; value++)
+            {
+                if (IsLegalAt(row, col, value))
+                {
+                    set.Add(value);
+                }
+            }
+
+            return set.Count - before;
+        }
+
+        private bool AddSingleCorrectCandidate(int row, int col)
+        {
+            if (CurrentBoard == null || CurrentBoard.IsGiven(row, col) || !CurrentBoard.IsEmpty(row, col))
+            {
+                return false;
+            }
+
+            var solutionValue = CurrentBoard.Solution[row, col];
+            if (solutionValue <= 0)
+            {
+                return false;
+            }
+
+            CurrentBoard.GetPencilSet(row, col).Add(solutionValue);
+            return true;
+        }
+
+        private bool RevealSingleCell(int row, int col, ItemRarity rarity, out int solvedRow, out int solvedCol)
+        {
+            solvedRow = -1;
+            solvedCol = -1;
+            if (CurrentBoard == null)
+            {
+                return false;
+            }
+
+            if (CurrentBoard.IsEmpty(row, col) && !CurrentBoard.IsGiven(row, col))
+            {
+                CurrentBoard.SetCell(row, col, CurrentBoard.Solution[row, col]);
+                solvedRow = row;
+                solvedCol = col;
+                return true;
+            }
+
+            var preferBottom = rarity == ItemRarity.Epic;
+            for (var r = 0; r < CurrentBoard.Size; r++)
+            {
+                var rr = preferBottom ? (CurrentBoard.Size - 1 - r) : r;
+                for (var c = 0; c < CurrentBoard.Size; c++)
+                {
+                    if (!CurrentBoard.IsEmpty(rr, c) || CurrentBoard.IsGiven(rr, c))
+                    {
+                        continue;
+                    }
+
+                    CurrentBoard.SetCell(rr, c, CurrentBoard.Solution[rr, c]);
+                    solvedRow = rr;
+                    solvedCol = c;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool IsLegalAt(int row, int col, int value)
+        {
+            if (CurrentBoard == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < CurrentBoard.Size; i++)
+            {
+                if (CurrentBoard.GetCell(row, i) == value || CurrentBoard.GetCell(i, col) == value)
+                {
+                    return false;
+                }
+            }
+
+            var regionMap = CurrentBoard.RegionMap;
+            if (regionMap == null)
+            {
+                return true;
+            }
+
+            var regionId = regionMap[row, col];
+            for (var r = 0; r < CurrentBoard.Size; r++)
+            {
+                for (var c = 0; c < CurrentBoard.Size; c++)
+                {
+                    if ((r != row || c != col) && regionMap[r, c] == regionId && CurrentBoard.GetCell(r, c) == value)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
         }
 
         public bool TryBuyEmergencyHeal()
@@ -1000,6 +1387,28 @@ namespace SudokuRoguelike.Run
             }
 
             return copy;
+        }
+
+        private TutorialSetupConfig BuildSetupFromCurrentLevel()
+        {
+            if (CurrentLevelConfig == null)
+            {
+                return null;
+            }
+
+            var setup = new TutorialSetupConfig
+            {
+                BoardSize = CurrentLevelConfig.BoardSize,
+                Stars = CurrentLevelConfig.Stars,
+                ResourceMode = RunState != null ? RunState.TutorialResourceMode : TutorialResourceMode.Simulation
+            };
+
+            for (var i = 0; i < CurrentLevelConfig.ActiveModifiers.Count; i++)
+            {
+                setup.SelectedModifiers.Add(CurrentLevelConfig.ActiveModifiers[i]);
+            }
+
+            return setup;
         }
 
         private void ApplyMistakePenalty()

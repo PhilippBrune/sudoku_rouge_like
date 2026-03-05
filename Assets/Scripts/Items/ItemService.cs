@@ -89,8 +89,8 @@ namespace SudokuRoguelike.Items
             var needed = rarity switch
             {
                 ItemRarity.Normal => 1,
-                ItemRarity.Rare => 3,
-                ItemRarity.Epic => 2,
+                ItemRarity.Rare => 2,
+                ItemRarity.Epic => 3,
                 _ => 1
             };
 
@@ -104,11 +104,22 @@ namespace SudokuRoguelike.Items
             {
                 for (var c = 0; c < board.Size; c++)
                 {
-                    if ((r == row && c == col) || board.GetCell(r, c) != target)
+                    if (r == row && c == col)
                     {
                         continue;
                     }
 
+                    if (!board.IsEmpty(r, c) || board.IsGiven(r, c))
+                    {
+                        continue;
+                    }
+
+                    if (board.Solution[r, c] != target)
+                    {
+                        continue;
+                    }
+
+                    board.GetPencilSet(r, c).Add(target);
                     matches.Add((r, c));
                     if (matches.Count >= needed)
                     {

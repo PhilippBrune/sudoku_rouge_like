@@ -2,6 +2,8 @@ using SudokuRoguelike.Core;
 using SudokuRoguelike.Save;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
@@ -14,18 +16,26 @@ namespace SudokuRoguelike.UI
         [SerializeField] private InRunUiFlowController inRunUiFlow;
         [SerializeField] private RunMapController runMapController;
         [SerializeField] private ClassId fallbackClass = ClassId.NumberFreak;
+        [SerializeField] private string mainMenuSceneName = "MainMenu";
+        [SerializeField] private Text pathPreviewText;
 
         private readonly ProfileService _profile = new();
 
         private void Start()
         {
             EnsureEventSystem();
+            RefreshPathPreview();
         }
 
-        public void Configure(InRunUiFlowController flowController, RunMapController mapController)
+        public void Configure(InRunUiFlowController flowController, RunMapController mapController, Text previewText = null)
         {
             inRunUiFlow = flowController;
             runMapController = mapController;
+            if (previewText != null)
+            {
+                pathPreviewText = previewText;
+            }
+            RefreshPathPreview();
         }
 
         private void Update()
@@ -37,8 +47,10 @@ namespace SudokuRoguelike.UI
 
             if (WasOpenEventPressed()) OpenEventPanel();
             if (WasCloseEventPressed()) CloseEventPanel();
-            if (WasRefreshPressed()) RefreshPanels();
             if (WasNextNodePressed()) AdvanceNodeSafe();
+            if (WasPathAPressed()) ChoosePathCalm();
+            if (WasPathBPressed()) ChoosePathRisky();
+            if (WasQuitAndSavePressed()) QuitAndSave();
         }
 
         private static bool WasOpenEventPressed()
@@ -59,15 +71,6 @@ namespace SudokuRoguelike.UI
 #endif
         }
 
-        private static bool WasRefreshPressed()
-        {
-#if ENABLE_INPUT_SYSTEM
-            return Keyboard.current != null && Keyboard.current.hKey.wasPressedThisFrame;
-#else
-            return Input.GetKeyDown(KeyCode.H);
-#endif
-        }
-
         private static bool WasNextNodePressed()
         {
 #if ENABLE_INPUT_SYSTEM
@@ -82,10 +85,39 @@ namespace SudokuRoguelike.UI
 #endif
         }
 
+    private static bool WasPathAPressed()
+    {
+#if ENABLE_INPUT_SYSTEM
+        return Keyboard.current != null && Keyboard.current.aKey.wasPressedThisFrame;
+#else
+        return Input.GetKeyDown(KeyCode.A);
+#endif
+    }
+
+    private static bool WasPathBPressed()
+    {
+#if ENABLE_INPUT_SYSTEM
+        return Keyboard.current != null && Keyboard.current.bKey.wasPressedThisFrame;
+#else
+        return Input.GetKeyDown(KeyCode.B);
+#endif
+    }
+
+    private static bool WasQuitAndSavePressed()
+    {
+#if ENABLE_INPUT_SYSTEM
+        return Keyboard.current != null && Keyboard.current.qKey.wasPressedThisFrame;
+#else
+        return Input.GetKeyDown(KeyCode.Q);
+#endif
+    }
+
         public void OpenEventPanel()
         {
+            EnsureBindings();
             if (inRunUiFlow == null)
             {
+                Debug.LogWarning("Debug UI: InRunUiFlowController reference is missing.");
                 return;
             }
 
@@ -95,8 +127,10 @@ namespace SudokuRoguelike.UI
 
         public void CloseEventPanel()
         {
+            EnsureBindings();
             if (inRunUiFlow == null)
             {
+                Debug.LogWarning("Debug UI: InRunUiFlowController reference is missing.");
                 return;
             }
 
@@ -104,19 +138,24 @@ namespace SudokuRoguelike.UI
             Debug.Log("Debug UI: Event panel closed and panels refreshed.");
         }
 
-        public void RefreshPanels()
+        public void ChoosePathCalm()
         {
-            if (inRunUiFlow == null)
-            {
-                return;
-            }
+            AdvancePath(risk: false);
+        }
 
-            inRunUiFlow.RefreshRuntimePanels();
-            Debug.Log("Debug UI: Heat/Curse panels refreshed.");
+        public void ChoosePathRisky()
+        {
+            AdvancePath(risk: true);
         }
 
         public void AdvanceNodeSafe()
         {
+            ChoosePathCalm();
+        }
+
+        private void AdvancePath(bool risk)
+        {
+            EnsureBindings();
             if (inRunUiFlow == null)
             {
                 Debug.LogWarning("Debug UI: InRunUiFlowController reference is missing.");
@@ -135,15 +174,52 @@ namespace SudokuRoguelike.UI
                 Debug.Log("Debug UI: RunMapController auto-initialized for prototype debug flow.");
             }
 
-            var node = runMapController.SelectPath(risk: false);
-            if (node != null)
+            if (runMapController.TryAdvancePathAndStartNextPuzzle(risk, out var node, out var level, out var failureReason))
             {
                 inRunUiFlow.OnNodeEntered(node.Type);
-                Debug.Log($"Debug UI: Advanced to node {node.Type} at depth {node.Depth}.");
+                RefreshPathPreview();
+                Debug.Log($"Garden path chosen: {(risk ? "Risk" : "Calm")} -> {node.Type} (Depth {node.Depth}) {level.BoardSize}x{level.BoardSize}, {level.Stars}★");
                 return;
             }
 
-            Debug.LogWarning("Debug UI: No next node available. Ensure RunMapController is initialized and graph exists.");
+            if (!string.IsNullOrWhiteSpace(failureReason))
+            {
+                if (pathPreviewText != null)
+                {
+                    pathPreviewText.text = $"{pathPreviewText.text}\n\nBlocked: {failureReason}";
+                }
+                Debug.LogWarning($"Garden path blocked: {failureReason}");
+            }
+            else
+            {
+                Debug.LogWarning("Debug UI: No next node available. Ensure RunMapController is initialized and graph exists.");
+            }
+        }
+
+        public void QuitAndSave()
+        {
+            EnsureBindings();
+            var run = runMapController?.Run;
+            if (run != null)
+            {
+                run.OnQuitRequested();
+            }
+
+            if (!string.IsNullOrWhiteSpace(mainMenuSceneName) && Application.CanStreamedLevelBeLoaded(mainMenuSceneName))
+            {
+                Time.timeScale = 1f;
+                SceneManager.LoadScene(mainMenuSceneName);
+                return;
+            }
+
+            if (SceneManager.sceneCountInBuildSettings > 0)
+            {
+                Time.timeScale = 1f;
+                SceneManager.LoadScene(0);
+                return;
+            }
+
+            Debug.LogWarning("Debug UI: Quit & Save could not load menu scene. Add MainMenu to build settings or set mainMenuSceneName.");
         }
 
         private static void EnsureEventSystem()
@@ -160,6 +236,99 @@ namespace SudokuRoguelike.UI
             eventSystemGo.AddComponent<StandaloneInputModule>();
 #endif
             Debug.Log("Debug UI: EventSystem was missing and has been auto-created.");
+        }
+
+        private void EnsureBindings()
+        {
+            if (inRunUiFlow == null)
+            {
+                inRunUiFlow = FindFirstObjectByType<InRunUiFlowController>();
+            }
+
+            if (runMapController == null)
+            {
+                runMapController = FindFirstObjectByType<RunMapController>();
+            }
+
+            if (inRunUiFlow != null && runMapController != null)
+            {
+                inRunUiFlow.BindRunMap(runMapController);
+            }
+
+            if (pathPreviewText == null)
+            {
+                pathPreviewText = FindByName<Text>("PathPreviewText");
+            }
+        }
+
+        private void RefreshPathPreview()
+        {
+            EnsureBindings();
+
+            if (pathPreviewText == null || runMapController == null)
+            {
+                return;
+            }
+
+            var calm = runMapController.BuildPathChoicePreview(risk: false);
+            var risk = runMapController.BuildPathChoicePreview(risk: true);
+
+            pathPreviewText.text =
+                $"Path A: {FormatPreview(calm)}\n" +
+                $"Path B: {FormatPreview(risk)}\n" +
+                BuildLockLine(calm, risk) + "\n" +
+                "Progress requires solving the current Sudoku.";
+        }
+
+        private static string BuildLockLine(RunMapController.PathChoicePreview calm, RunMapController.PathChoicePreview risk)
+        {
+            var lockValue = calm?.LockedPath ?? risk?.LockedPath;
+            if (!lockValue.HasValue)
+            {
+                return "Path lock: not chosen yet.";
+            }
+
+            return lockValue.Value ? "Path lock: B (Risk)" : "Path lock: A (Calm)";
+        }
+
+        private static string FormatPreview(RunMapController.PathChoicePreview preview)
+        {
+            if (preview == null || !preview.Available)
+            {
+                return "Not available";
+            }
+
+            var bossTag = preview.IsBoss ? " [Boss]" : string.Empty;
+            return $"D{preview.Depth} {preview.NodeType}{bossTag} | {preview.BoardSize}x{preview.BoardSize} | {preview.Stars}★";
+        }
+
+        private static T FindByName<T>(string name) where T : Component
+        {
+            var all = Resources.FindObjectsOfTypeAll<T>();
+            for (var i = 0; i < all.Length; i++)
+            {
+                var candidate = all[i];
+                if (candidate == null)
+                {
+                    continue;
+                }
+
+                var go = candidate.gameObject;
+                if (go == null || go.name != name)
+                {
+                    continue;
+                }
+
+                var scene = go.scene;
+                if (!scene.IsValid() || !scene.isLoaded)
+                {
+                    continue;
+                }
+
+                return candidate;
+            }
+
+            return null;
         }
     }
 }

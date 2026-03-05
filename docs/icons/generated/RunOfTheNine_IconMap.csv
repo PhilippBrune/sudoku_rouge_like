@@ -1,0 +1,76 @@
+index,label,category,file
+0,Tea Cup,items,icon_tea_cup.png
+1,Moss Stone,items,icon_moss_stone.png
+2,Bamboo Scroll,items,icon_bamboo_scroll.png
+3,Rice Bowl,items,icon_rice_bowl.png
+4,Pebble,items,icon_pebble.png
+5,Jade Amulet,items,icon_jade_amulet.png
+6,Wind Bell,items,icon_wind_bell.png
+7,Garden Lantern,items,icon_garden_lantern.png
+8,Water Basin,items,icon_water_basin.png
+9,Golden Koi,items,icon_golden_koi.png
+10,Sacred Bell,items,icon_sacred_bell.png
+11,Temple Seal,items,icon_temple_seal.png
+12,Sun Medallion,items,icon_sun_medallion.png
+13,Enlightenment Tree,legendary,icon_enlightenment_tree.png
+14,Spirit Dragon Coin,legendary,icon_spirit_dragon_coin.png
+15,Infinite Lotus,legendary,icon_infinite_lotus.png
+16,Broken Mask,cursed,icon_broken_mask.png
+17,Withered Flower,cursed,icon_withered_flower.png
+18,Blood Ink Brush,cursed,icon_blood_ink_brush.png
+19,Fog Stone,cursed,icon_fog_stone.png
+20,Coin Sakura,class,icon_coin_sakura.png
+21,Moss Tree,class,icon_moss_tree.png
+22,Flowing Wind,class,icon_flowing_wind.png
+23,Geometric Seal,class,icon_geometric_seal.png
+24,Fractured Lantern,class,icon_fractured_lantern.png
+25,Elite Mask,node,icon_elite_mask.png
+26,Market Stall,node,icon_market_stall.png
+27,Campfire Stones,node,icon_campfire_stones.png
+28,Relic Pedestal,node,icon_relic_pedestal.png
+29,Triple Chest,node,icon_triple_chest.png
+30,Stone Altar,node,icon_stone_altar.png
+31,Moss Trap,node,icon_moss_trap.png
+32,Engraved Stone,node,icon_engraved_stone.png
+33,Demon Mask,boss,icon_demon_mask.png
+34,Sakura Coin,ui,icon_sakura_coin.png
+35,Petal Orb,ui,icon_petal_orb.png
+36,Flame Stone,ui,icon_flame_stone.png
+37,Cracked Tile,ui,icon_cracked_tile.png
+38,Flow Ribbon,ui,icon_flow_ribbon.png
+39,Golden Bloom,ui,icon_golden_bloom.png
+40,Torii Lock,ui,icon_torii_lock.png
+41,Scroll Stamp,ui,icon_scroll_stamp.png
+42,Ink Save,ui,icon_ink_save.png
+43,Stone Gear,ui,icon_stone_gear.png
+44,Language Scroll,ui,icon_language_scroll.png
+45,Temple Bell,ui,icon_temple_bell.png
+46,Framed Garden,ui,icon_framed_garden.png
+47,Fog Cloud,modifier,icon_fog_cloud.png
+48,Arrow Sum,modifier,icon_arrow_sum.png
+49,Green Whisper,modifier,icon_green_whisper.png
+50,Orange Whisper,modifier,icon_orange_whisper.png
+51,Parity Line,modifier,icon_parity_line.png
+52,Renban Chain,modifier,icon_renban_chain.png
+53,Killer Cage,modifier,icon_killer_cage.png
+54,White Dot,modifier,icon_white_dot.png
+55,Black Dot,modifier,icon_black_dot.png
+56,Segmented Blue Line,modifier,icon_segmented_blue_line.png
+57,RGB Circle,modifier,icon_rgb_circle.png
+58,Spin Coin,economy,icon_spin_coin.png
+59,Empty Slot,economy,icon_empty_slot.png
+60,Iron Latch,economy,icon_iron_latch.png
+61,Swap Arrows,economy,icon_swap_arrows.png
+62,Golden Bonsai,economy,icon_golden_bonsai.png
+63,Melting Relic,economy,icon_melting_relic.png
+64,Shattered Mask,economy,icon_shattered_mask.png
+65,Bud,meta,icon_bud.png
+66,Full Sakura,meta,icon_full_sakura.png
+67,Golden Sakura,meta,icon_golden_sakura.png
+68,Halo Bloom,meta,icon_halo_bloom.png
+69,Stacked Flame,meta,icon_stacked_flame.png
+70,Infinity Stone,meta,icon_infinity_stone.png
+71,Petal Hourglass,meta,icon_petal_hourglass.png
+72,Scroll Graph,meta,icon_scroll_graph.png
+73,Corrupted Path,meta,icon_corrupted_path.png
+74,Dual Mask,meta,icon_dual_mask.png

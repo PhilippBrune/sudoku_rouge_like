@@ -24,6 +24,7 @@ namespace SudokuRoguelike.Bootstrap
         private void Start()
         {
             _autoSave = new RunAutoSaveCoordinator(_saveFileService, _profileService);
+            var runtimeSeed = BuildRuntimeSeed(seed);
 
             if (_saveFileService.TryLoadProfile(out var profileEnvelope))
             {
@@ -32,7 +33,26 @@ namespace SudokuRoguelike.Bootstrap
 
             if (LaunchRequestContext.TryConsume(out var launchRequest))
             {
-                _run = new RunDirector(seed);
+                if (launchRequest.ResumeFromSave)
+                {
+                    if (_saveFileService.TryLoadRun(out var resumeEnvelope))
+                    {
+                        _profileService.ApplyEnvelope(resumeEnvelope);
+                        _run = new RunDirector(runtimeSeed);
+                        if (_resumeService.TryResumeFromSave(_run, resumeEnvelope))
+                        {
+                            _autoSave.Bind(_run);
+                            BindRuntimeControllers();
+                            Debug.Log($"Run resumed from explicit resume request. HP={_run.RunState.CurrentHP}, Pencil={_run.RunState.CurrentPencil}");
+                            return;
+                        }
+                    }
+
+                    Debug.LogWarning("Resume was requested but no valid run save was available.");
+                    return;
+                }
+
+                _run = new RunDirector(runtimeSeed);
                 _autoSave.Bind(_run);
 
                 if (launchRequest.Mode == GameMode.Tutorial)
@@ -80,11 +100,11 @@ namespace SudokuRoguelike.Bootstrap
                 return;
             }
 
-            if (resumeRunIfAvailable && _saveFileService.TryLoadRun(out var runEnvelope))
+            if (resumeRunIfAvailable && _saveFileService.TryLoadRun(out var autoResumeEnvelope))
             {
-                _profileService.ApplyEnvelope(runEnvelope);
-                _run = new RunDirector(seed);
-                if (_resumeService.TryResumeFromSave(_run, runEnvelope))
+                _profileService.ApplyEnvelope(autoResumeEnvelope);
+                _run = new RunDirector(runtimeSeed);
+                if (_resumeService.TryResumeFromSave(_run, autoResumeEnvelope))
                 {
                     _autoSave.Bind(_run);
                     BindRuntimeControllers();
@@ -93,7 +113,7 @@ namespace SudokuRoguelike.Bootstrap
                 }
             }
 
-            _run = new RunDirector(seed);
+            _run = new RunDirector(runtimeSeed);
             try
             {
                 _run.StartRun(startingClass, runNumber: runNumber, meta: _profileService.Meta);
@@ -111,6 +131,15 @@ namespace SudokuRoguelike.Bootstrap
 
             Debug.Log($"Run started with {_run.RunState.ClassId}. HP={_run.RunState.CurrentHP}, Pencil={_run.RunState.CurrentPencil}");
             Debug.Log($"Level size={levelConfig.BoardSize}, stars={levelConfig.Stars}, missing={levelConfig.MissingPercent:P0}");
+        }
+
+        private static int BuildRuntimeSeed(int baseSeed)
+        {
+            unchecked
+            {
+                var ticks = (int)System.DateTime.UtcNow.Ticks;
+                return ticks ^ baseSeed ^ UnityEngine.Random.Range(int.MinValue, int.MaxValue);
+            }
         }
 
         public void DebugCompleteLevel()
@@ -145,6 +174,10 @@ namespace SudokuRoguelike.Bootstrap
             {
                 return;
             }
+
+            // Guarantee runtime UI exists even if scene/prefab changes were not saved.
+            var inRunBuilder = FindFirstObjectByType<InRunUiBlueprintBuilder>();
+            inRunBuilder?.BuildBlueprint();
 
             var runMapController = FindFirstObjectByType<RunMapController>();
             runMapController?.BindRun(_run);

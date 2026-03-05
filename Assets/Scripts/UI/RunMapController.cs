@@ -18,6 +18,7 @@ namespace SudokuRoguelike.UI
         private RunDirector _run;
         private RunDirector _autoSaveBoundRun;
         private bool? _lockedRiskPath;
+        private bool _rewardsGrantedForCurrentPuzzle;
         private readonly Dictionary<int, LevelConfig> _fixedNodeConfigs = new();
 
         public void Initialize(ClassId classId, MetaProgressionState meta)
@@ -27,6 +28,7 @@ namespace SudokuRoguelike.UI
             var levelConfig = _run.BuildLevelConfig(runNumber: 1, depth: 1);
             _run.StartLevel(levelConfig);
             _lockedRiskPath = null;
+            _rewardsGrantedForCurrentPuzzle = false;
             PrepareFixedNodeConfigs();
             BindAutoSave();
         }
@@ -48,6 +50,7 @@ namespace SudokuRoguelike.UI
 
             BindAutoSave();
             _lockedRiskPath = null;
+            _rewardsGrantedForCurrentPuzzle = _run.CurrentLevelState != null && _run.CurrentLevelState.PuzzleComplete;
             PrepareFixedNodeConfigs();
             return true;
         }
@@ -60,8 +63,43 @@ namespace SudokuRoguelike.UI
             }
 
             _run = run;
+            _rewardsGrantedForCurrentPuzzle = _run.CurrentLevelState != null && _run.CurrentLevelState.PuzzleComplete;
             PrepareFixedNodeConfigs();
             BindAutoSave();
+        }
+
+        public bool TryClaimCurrentPuzzleRewards(out int goldEarned, out List<ItemRollSlot> slots, out string failureReason)
+        {
+            goldEarned = 0;
+            slots = new List<ItemRollSlot>();
+            failureReason = string.Empty;
+
+            if (_run == null || _run.RunState == null || _run.CurrentLevelState == null)
+            {
+                failureReason = "No active puzzle state.";
+                return false;
+            }
+
+            if (!_run.CurrentLevelState.PuzzleComplete)
+            {
+                failureReason = "Puzzle is not complete yet.";
+                return false;
+            }
+
+            if (_rewardsGrantedForCurrentPuzzle)
+            {
+                failureReason = "Rewards already granted for this puzzle.";
+                return false;
+            }
+
+            var beforeGold = _run.RunState.CurrentGold;
+            _run.CompleteLevelAndGrantRewards();
+            var afterGold = _run.RunState.CurrentGold;
+            goldEarned = Mathf.Max(0, afterGold - beforeGold);
+
+            slots = _run.BuildItemRollPhase() ?? new List<ItemRollSlot>();
+            _rewardsGrantedForCurrentPuzzle = true;
+            return true;
         }
 
         public List<RunNode> GetVisibleNodes()
@@ -110,9 +148,10 @@ namespace SudokuRoguelike.UI
                 return false;
             }
 
-            if (!isFirstPathChoice)
+            if (!isFirstPathChoice && !_rewardsGrantedForCurrentPuzzle)
             {
                 _run.CompleteLevelAndGrantRewards();
+                _rewardsGrantedForCurrentPuzzle = true;
             }
 
             if (_lockedRiskPath.HasValue)
@@ -131,6 +170,12 @@ namespace SudokuRoguelike.UI
                 return false;
             }
 
+            if (!RequiresPuzzleNode(node.Type))
+            {
+                nextLevel = null;
+                return true;
+            }
+
             nextLevel = GetFixedLevelConfig(node);
             if (nextLevel == null)
             {
@@ -139,7 +184,13 @@ namespace SudokuRoguelike.UI
             }
 
             _run.StartLevel(nextLevel);
+            _rewardsGrantedForCurrentPuzzle = false;
             return true;
+        }
+
+        private static bool RequiresPuzzleNode(NodeType type)
+        {
+            return type == NodeType.Puzzle || type == NodeType.ElitePuzzle || type == NodeType.Boss;
         }
 
         public PathChoicePreview BuildPathChoicePreview(bool risk)

@@ -14,10 +14,10 @@ namespace SudokuRoguelike.UI
         [SerializeField] private RunMapController runMapController;
 
         [Header("Palette")]
-        [SerializeField] private Color panelColor = new(0.08f, 0.10f, 0.13f, 0.88f);
-        [SerializeField] private Color accentColor = new(0.30f, 0.60f, 0.55f, 1f);
-        [SerializeField] private Color textColor = new(0.92f, 0.93f, 0.90f, 1f);
-        [SerializeField] private Color buttonColor = new(0.20f, 0.26f, 0.31f, 1f);
+        [SerializeField] private Color panelColor = new(0.10f, 0.15f, 0.12f, 0.90f);
+        [SerializeField] private Color accentColor = new(0.56f, 0.72f, 0.42f, 1f);
+        [SerializeField] private Color textColor = new(0.92f, 0.96f, 0.89f, 1f);
+        [SerializeField] private Color buttonColor = new(0.18f, 0.27f, 0.20f, 1f);
 
         [Header("Typography")]
         [SerializeField] private int titleFontSize = 24;
@@ -32,6 +32,11 @@ namespace SudokuRoguelike.UI
                 runMapController = GetComponentInChildren<RunMapController>(true);
             }
 
+            if (runMapController == null)
+            {
+                runMapController = FindFirstObjectByType<RunMapController>();
+            }
+
             var canvas = EnsureCanvas();
             EnsureEventSystem();
             var root = EnsureRect("InRunUI", canvas.transform as RectTransform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
@@ -39,11 +44,19 @@ namespace SudokuRoguelike.UI
 
             var flow = EnsureComponent<InRunUiFlowController>(root.gameObject);
             var debug = EnsureComponent<PrototypeUiDebugHotkeys>(gameObject);
+            var tutorialBanner = EnsureComponent<TutorialRunBannerController>(root.gameObject);
+            var boardPreview = EnsureComponent<SudokuBoardPreviewController>(root.gameObject);
+            var runScreen = EnsureComponent<PrototypeRunScreenController>(root.gameObject);
 
             var eventPanel = BuildEventPanel(root);
             var cursePanel = BuildCursePanel(root);
             var heatPanel = BuildHeatGraphPanel(root);
             var debugPanel = BuildDebugPanel(root);
+            var sudokuPanel = BuildSudokuBoardPanel(root, out var boardText, out var boardStatusText);
+            var pathOverviewPanel = BuildPathOverviewPanel(root, out var pathOverviewText, out var laneAText, out var laneBText, out var laneAPathRoot, out var laneBPathRoot, out var chooseAButton, out var chooseBButton, out var saveQuitPathButton);
+            var sudokuGameplayPanel = BuildSudokuGameplayPanel(root, out var sudokuGridRoot, out var numpadRoot, out var saveQuitSudokuButton, out var solveSudokuButton, out var sudokuGameplayStatusText, out var hpText, out var pencilText);
+            var gameOverPanel = BuildGameOverPanel(root, out var gameOverSummaryText, out var gameOverDetailsText, out var gameOverBackButton);
+            var tutorialLabel = BuildTutorialBanner(root);
 
             flow.Configure(
                 runMapController,
@@ -51,8 +64,43 @@ namespace SudokuRoguelike.UI
                 cursePanel.GetComponent<CursePanelController>(),
                 heatPanel.GetComponent<HeatCurveGraphController>());
 
-            debug.Configure(flow, runMapController);
+            var pathPreviewText = debugPanel.transform.Find("PathPreviewText")?.GetComponent<Text>();
+            debug.Configure(flow, runMapController, pathPreviewText);
             WireDebugButtons(debugPanel, debug);
+            tutorialBanner.Configure(runMapController, tutorialLabel);
+            boardPreview.Configure(runMapController, boardText, boardStatusText);
+            runScreen.Configure(
+                runMapController,
+                pathOverviewPanel,
+                sudokuGameplayPanel,
+                pathOverviewText,
+                laneAText,
+                laneBText,
+                laneAPathRoot,
+                laneBPathRoot,
+                chooseAButton,
+                chooseBButton,
+                saveQuitPathButton,
+                saveQuitSudokuButton,
+                sudokuGridRoot,
+                numpadRoot,
+                solveSudokuButton,
+                sudokuGameplayStatusText,
+                hpText,
+                pencilText,
+                gameOverPanel,
+                gameOverSummaryText,
+                gameOverDetailsText,
+                gameOverBackButton);
+
+            // Keep legacy prototype helper panels out of the main redesign flow.
+            eventPanel.SetActive(false);
+            cursePanel.SetActive(false);
+            heatPanel.SetActive(false);
+            debugPanel.SetActive(false);
+            sudokuPanel.SetActive(false);
+            gameOverPanel.SetActive(false);
+            tutorialLabel.gameObject.SetActive(false);
 
             if (runMapController == null)
             {
@@ -156,25 +204,200 @@ namespace SudokuRoguelike.UI
             var panel = EnsureRect("DebugControlsPanel", root, new Vector2(0.32f, 0.58f), new Vector2(0.98f, 0.74f), Vector2.zero, Vector2.zero).gameObject;
             EnsureOrGetImage(panel, panelColor);
 
-            var title = BuildText("DebugTitle", panel.transform as RectTransform, "Debug Controls", bodyFontSize, TextAnchor.UpperLeft);
-            SetRect(title.rectTransform, new Vector2(0.02f, 0.66f), new Vector2(0.28f, 0.96f), Vector2.zero, Vector2.zero);
+            var title = BuildText("DebugTitle", panel.transform as RectTransform, "Garden Paths", bodyFontSize, TextAnchor.UpperLeft);
+            SetRect(title.rectTransform, new Vector2(0.02f, 0.66f), new Vector2(0.20f, 0.96f), Vector2.zero, Vector2.zero);
 
-            var hint = BuildText("HotkeyHint", panel.transform as RectTransform, "Hotkeys: E Open | C Close | H Refresh | N or → Next Node", smallFontSize, TextAnchor.UpperLeft);
-            SetRect(hint.rectTransform, new Vector2(0.02f, 0.08f), new Vector2(0.28f, 0.62f), Vector2.zero, Vector2.zero);
+            var hint = BuildText("PathPreviewText", panel.transform as RectTransform, "Path A/B previews appear here.", smallFontSize, TextAnchor.UpperLeft);
+            SetRect(hint.rectTransform, new Vector2(0.22f, 0.10f), new Vector2(0.64f, 0.92f), Vector2.zero, Vector2.zero);
 
-            var openEvent = BuildButton("BtnOpenEvent", panel.transform as RectTransform, "Open Event", smallFontSize);
-            SetRect(openEvent.GetComponent<RectTransform>(), new Vector2(0.30f, 0.18f), new Vector2(0.46f, 0.82f), Vector2.zero, Vector2.zero);
+            var calmPath = BuildButton("BtnPathA", panel.transform as RectTransform, "Path A (A)", smallFontSize);
+            SetRect(calmPath.GetComponent<RectTransform>(), new Vector2(0.66f, 0.52f), new Vector2(0.79f, 0.88f), Vector2.zero, Vector2.zero);
 
-            var closeEvent = BuildButton("BtnCloseEvent", panel.transform as RectTransform, "Close Event", smallFontSize);
-            SetRect(closeEvent.GetComponent<RectTransform>(), new Vector2(0.48f, 0.18f), new Vector2(0.64f, 0.82f), Vector2.zero, Vector2.zero);
+            var riskyPath = BuildButton("BtnPathB", panel.transform as RectTransform, "Path B (B)", smallFontSize);
+            SetRect(riskyPath.GetComponent<RectTransform>(), new Vector2(0.80f, 0.52f), new Vector2(0.93f, 0.88f), Vector2.zero, Vector2.zero);
 
-            var refresh = BuildButton("BtnRefresh", panel.transform as RectTransform, "Refresh UI", smallFontSize);
-            SetRect(refresh.GetComponent<RectTransform>(), new Vector2(0.66f, 0.18f), new Vector2(0.82f, 0.82f), Vector2.zero, Vector2.zero);
-
-            var nextNode = BuildButton("BtnNextNode", panel.transform as RectTransform, "Next Node", smallFontSize);
-            SetRect(nextNode.GetComponent<RectTransform>(), new Vector2(0.84f, 0.18f), new Vector2(0.98f, 0.82f), Vector2.zero, Vector2.zero);
+            var quitAndSave = BuildButton("BtnQuitSave", panel.transform as RectTransform, "Save & Quit (Q)", smallFontSize);
+            SetRect(quitAndSave.GetComponent<RectTransform>(), new Vector2(0.66f, 0.10f), new Vector2(0.93f, 0.46f), Vector2.zero, Vector2.zero);
 
             return panel;
+        }
+
+        private GameObject BuildSudokuBoardPanel(RectTransform root, out Text boardText, out Text statusText)
+        {
+            var panel = EnsureRect("SudokuBoardPanel", root, new Vector2(0.02f, 0.10f), new Vector2(0.30f, 0.56f), Vector2.zero, Vector2.zero).gameObject;
+            EnsureOrGetImage(panel, panelColor);
+
+            var title = BuildText("SudokuBoardTitle", panel.transform as RectTransform, "Sudoku Board", bodyFontSize, TextAnchor.UpperCenter);
+            SetRect(title.rectTransform, new Vector2(0.04f, 0.88f), new Vector2(0.96f, 0.98f), Vector2.zero, Vector2.zero);
+
+            boardText = BuildText("SudokuBoardText", panel.transform as RectTransform, "", smallFontSize, TextAnchor.UpperLeft);
+            SetRect(boardText.rectTransform, new Vector2(0.08f, 0.22f), new Vector2(0.92f, 0.86f), Vector2.zero, Vector2.zero);
+
+            statusText = BuildText("SudokuBoardStatus", panel.transform as RectTransform, "", smallFontSize, TextAnchor.UpperLeft);
+            SetRect(statusText.rectTransform, new Vector2(0.08f, 0.05f), new Vector2(0.92f, 0.20f), Vector2.zero, Vector2.zero);
+
+            return panel;
+        }
+
+        private GameObject BuildPathOverviewPanel(
+            RectTransform root,
+            out Text overviewText,
+            out Text laneAText,
+            out Text laneBText,
+            out RectTransform laneAPathRoot,
+            out RectTransform laneBPathRoot,
+            out Button chooseA,
+            out Button chooseB,
+            out Button saveQuit)
+        {
+            var panel = EnsureRect("PathOverviewPanel", root, new Vector2(0.03f, 0.03f), new Vector2(0.97f, 0.97f), Vector2.zero, Vector2.zero).gameObject;
+            EnsureOrGetImage(panel, new Color(panelColor.r, panelColor.g, panelColor.b, 0.97f));
+
+            var title = BuildText("PathOverviewTitle", panel.transform as RectTransform, "Garden Path Overview", 34, TextAnchor.UpperCenter);
+            SetRect(title.rectTransform, new Vector2(0.02f, 0.92f), new Vector2(0.98f, 0.99f), Vector2.zero, Vector2.zero);
+
+            overviewText = BuildText("PathOverviewText", panel.transform as RectTransform, "", 20, TextAnchor.UpperCenter);
+            SetRect(overviewText.rectTransform, new Vector2(0.06f, 0.82f), new Vector2(0.94f, 0.91f), Vector2.zero, Vector2.zero);
+
+            laneAText = BuildText("PathLaneAText", panel.transform as RectTransform, "", 18, TextAnchor.UpperLeft);
+            SetRect(laneAText.rectTransform, new Vector2(0.08f, 0.72f), new Vector2(0.45f, 0.80f), Vector2.zero, Vector2.zero);
+
+            laneBText = BuildText("PathLaneBText", panel.transform as RectTransform, "", 18, TextAnchor.UpperLeft);
+            SetRect(laneBText.rectTransform, new Vector2(0.55f, 0.72f), new Vector2(0.92f, 0.80f), Vector2.zero, Vector2.zero);
+
+            laneAPathRoot = BuildPathLaneScroll(
+                "LaneAPathScroll",
+                panel.transform as RectTransform,
+                new Vector2(0.08f, 0.24f),
+                new Vector2(0.45f, 0.70f),
+                "LaneAPathRoot");
+
+            laneBPathRoot = BuildPathLaneScroll(
+                "LaneBPathScroll",
+                panel.transform as RectTransform,
+                new Vector2(0.55f, 0.24f),
+                new Vector2(0.92f, 0.70f),
+                "LaneBPathRoot");
+
+            chooseA = null;
+            chooseB = null;
+
+            saveQuit = BuildButton("BtnPathOverviewSaveQuit", panel.transform as RectTransform, "Save & Quit (Q)", 20);
+            SetRect(saveQuit.GetComponent<RectTransform>(), new Vector2(0.72f, 0.10f), new Vector2(0.92f, 0.18f), Vector2.zero, Vector2.zero);
+
+            return panel;
+        }
+
+        private RectTransform BuildPathLaneScroll(string name, RectTransform parent, Vector2 anchorMin, Vector2 anchorMax, string contentName)
+        {
+            var scrollRoot = EnsureRect(name, parent, anchorMin, anchorMax, Vector2.zero, Vector2.zero);
+            EnsureOrGetImage(scrollRoot.gameObject, new Color(0f, 0f, 0f, 0.12f));
+
+            var viewport = EnsureRect("Viewport", scrollRoot, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            var viewportImage = EnsureOrGetImage(viewport.gameObject, new Color(1f, 1f, 1f, 0.02f));
+            var mask = EnsureComponent<Mask>(viewport.gameObject);
+            mask.showMaskGraphic = false;
+            viewportImage.raycastTarget = true;
+
+            var content = EnsureRect(contentName, viewport, new Vector2(0f, 0f), new Vector2(1f, 1f), new Vector2(8f, 8f), new Vector2(-8f, -8f));
+            content.pivot = new Vector2(0.5f, 0.5f);
+
+            var layout = EnsureComponent<VerticalLayoutGroup>(content.gameObject);
+            layout.childAlignment = TextAnchor.UpperCenter;
+            layout.childControlHeight = true;
+            layout.childControlWidth = false;
+            layout.childForceExpandHeight = false;
+            layout.childForceExpandWidth = false;
+            layout.spacing = 8f;
+            layout.padding = new RectOffset(0, 0, 0, 0);
+
+            var fitter = EnsureComponent<ContentSizeFitter>(content.gameObject);
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+            var scroll = EnsureComponent<ScrollRect>(scrollRoot.gameObject);
+            scroll.viewport = viewport;
+            scroll.content = content;
+            scroll.horizontal = false;
+            scroll.vertical = true;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+            scroll.scrollSensitivity = 22f;
+
+            return content;
+        }
+
+        private GameObject BuildSudokuGameplayPanel(
+            RectTransform root,
+            out RectTransform gridRoot,
+            out RectTransform numpadRoot,
+            out Button saveQuit,
+            out Button solveButton,
+            out Text statusText,
+            out Text hpText,
+            out Text pencilText)
+        {
+            var panel = EnsureRect("SudokuGameplayPanel", root, new Vector2(0.03f, 0.03f), new Vector2(0.97f, 0.97f), Vector2.zero, Vector2.zero).gameObject;
+            EnsureOrGetImage(panel, new Color(panelColor.r, panelColor.g, panelColor.b, 0.97f));
+
+            var title = BuildText("SudokuGameplayTitle", panel.transform as RectTransform, "Sudoku Puzzle", 34, TextAnchor.UpperCenter);
+            SetRect(title.rectTransform, new Vector2(0.02f, 0.92f), new Vector2(0.98f, 0.99f), Vector2.zero, Vector2.zero);
+
+            var levelInfo = BuildText("SudokuGameplayLevelInfo", panel.transform as RectTransform, "Level: -  Depth: -", 18, TextAnchor.MiddleCenter);
+            SetRect(levelInfo.rectTransform, new Vector2(0.30f, 0.87f), new Vector2(0.70f, 0.92f), Vector2.zero, Vector2.zero);
+
+            statusText = BuildText("SudokuGameplayStatus", panel.transform as RectTransform, "Select a path and start solving.", 19, TextAnchor.MiddleLeft);
+            SetRect(statusText.rectTransform, new Vector2(0.30f, 0.79f), new Vector2(0.72f, 0.86f), Vector2.zero, Vector2.zero);
+
+            hpText = BuildText("SudokuGameplayHp", panel.transform as RectTransform, "HP: -", 18, TextAnchor.MiddleLeft);
+            SetRect(hpText.rectTransform, new Vector2(0.03f, 0.83f), new Vector2(0.26f, 0.89f), Vector2.zero, Vector2.zero);
+
+            pencilText = BuildText("SudokuGameplayPencil", panel.transform as RectTransform, "Pencil: -", 18, TextAnchor.MiddleLeft);
+            SetRect(pencilText.rectTransform, new Vector2(0.03f, 0.76f), new Vector2(0.26f, 0.82f), Vector2.zero, Vector2.zero);
+
+            saveQuit = BuildButton("BtnSudokuSaveQuit", panel.transform as RectTransform, "Save & Quit (Q)", 18);
+            SetRect(saveQuit.GetComponent<RectTransform>(), new Vector2(0.80f, 0.84f), new Vector2(0.94f, 0.91f), Vector2.zero, Vector2.zero);
+
+            solveButton = BuildButton("BtnSudokuSolve", panel.transform as RectTransform, "Solve", 18);
+            SetRect(solveButton.GetComponent<RectTransform>(), new Vector2(0.73f, 0.84f), new Vector2(0.79f, 0.91f), Vector2.zero, Vector2.zero);
+
+            gridRoot = EnsureRect("SudokuGameplayGridRoot", panel.transform as RectTransform, new Vector2(0.22f, 0.16f), new Vector2(0.70f, 0.80f), Vector2.zero, Vector2.zero);
+            EnsureOrGetImage(gridRoot.gameObject, new Color(0f, 0f, 0f, 0.20f));
+
+            numpadRoot = EnsureRect("SudokuGameplayNumpadRoot", panel.transform as RectTransform, new Vector2(0.74f, 0.28f), new Vector2(0.93f, 0.72f), Vector2.zero, Vector2.zero);
+            EnsureOrGetImage(numpadRoot.gameObject, new Color(0f, 0f, 0f, 0.20f));
+
+            var hint = BuildText("SudokuGameplayHint", panel.transform as RectTransform, "Use numpad buttons or keyboard 1-9.\nSingle click: select cell\nDouble click filled cell: highlight same numbers", 15, TextAnchor.UpperLeft);
+            SetRect(hint.rectTransform, new Vector2(0.74f, 0.72f), new Vector2(0.94f, 0.82f), Vector2.zero, Vector2.zero);
+
+            return panel;
+        }
+
+        private GameObject BuildGameOverPanel(RectTransform root, out Text summaryText, out Text detailsText, out Button backButton)
+        {
+            var panel = EnsureRect("GameOverPanel", root, new Vector2(0.22f, 0.20f), new Vector2(0.78f, 0.80f), Vector2.zero, Vector2.zero).gameObject;
+            EnsureOrGetImage(panel, new Color(0.14f, 0.07f, 0.07f, 0.96f));
+
+            var title = BuildText("GameOverTitle", panel.transform as RectTransform, "Game Over", 38, TextAnchor.UpperCenter);
+            SetRect(title.rectTransform, new Vector2(0.06f, 0.82f), new Vector2(0.94f, 0.95f), Vector2.zero, Vector2.zero);
+
+            summaryText = BuildText("GameOverSummary", panel.transform as RectTransform, string.Empty, 18, TextAnchor.UpperLeft);
+            SetRect(summaryText.rectTransform, new Vector2(0.08f, 0.58f), new Vector2(0.92f, 0.80f), Vector2.zero, Vector2.zero);
+
+            detailsText = BuildText("GameOverDetails", panel.transform as RectTransform, string.Empty, 17, TextAnchor.UpperLeft);
+            SetRect(detailsText.rectTransform, new Vector2(0.08f, 0.24f), new Vector2(0.92f, 0.56f), Vector2.zero, Vector2.zero);
+
+            backButton = BuildButton("BtnGameOverBack", panel.transform as RectTransform, "Back to Menu", 19);
+            SetRect(backButton.GetComponent<RectTransform>(), new Vector2(0.36f, 0.08f), new Vector2(0.64f, 0.18f), Vector2.zero, Vector2.zero);
+
+            return panel;
+        }
+
+        private Text BuildTutorialBanner(RectTransform root)
+        {
+            var label = BuildText("TutorialBanner", root, "TUTORIAL MODE\nNo Progression Rewards", bodyFontSize, TextAnchor.UpperRight);
+            SetRect(label.rectTransform, new Vector2(0.66f, 0.92f), new Vector2(0.98f, 0.995f), Vector2.zero, Vector2.zero);
+            label.color = accentColor;
+            return label;
         }
 
         private static void WireDebugButtons(GameObject debugPanel, PrototypeUiDebugHotkeys debug)
@@ -184,33 +407,26 @@ namespace SudokuRoguelike.UI
                 return;
             }
 
-            var open = debugPanel.transform.Find("BtnOpenEvent")?.GetComponent<Button>();
-            var close = debugPanel.transform.Find("BtnCloseEvent")?.GetComponent<Button>();
-            var refresh = debugPanel.transform.Find("BtnRefresh")?.GetComponent<Button>();
-            var next = debugPanel.transform.Find("BtnNextNode")?.GetComponent<Button>();
+            var calmPath = debugPanel.transform.Find("BtnPathA")?.GetComponent<Button>();
+            var riskyPath = debugPanel.transform.Find("BtnPathB")?.GetComponent<Button>();
+            var quit = debugPanel.transform.Find("BtnQuitSave")?.GetComponent<Button>();
 
-            if (open != null)
+            if (calmPath != null)
             {
-                open.onClick.RemoveAllListeners();
-                open.onClick.AddListener(debug.OpenEventPanel);
+                calmPath.onClick.RemoveAllListeners();
+                calmPath.onClick.AddListener(debug.ChoosePathCalm);
             }
 
-            if (close != null)
+            if (riskyPath != null)
             {
-                close.onClick.RemoveAllListeners();
-                close.onClick.AddListener(debug.CloseEventPanel);
+                riskyPath.onClick.RemoveAllListeners();
+                riskyPath.onClick.AddListener(debug.ChoosePathRisky);
             }
 
-            if (refresh != null)
+            if (quit != null)
             {
-                refresh.onClick.RemoveAllListeners();
-                refresh.onClick.AddListener(debug.RefreshPanels);
-            }
-
-            if (next != null)
-            {
-                next.onClick.RemoveAllListeners();
-                next.onClick.AddListener(debug.AdvanceNodeSafe);
+                quit.onClick.RemoveAllListeners();
+                quit.onClick.AddListener(debug.QuitAndSave);
             }
         }
 

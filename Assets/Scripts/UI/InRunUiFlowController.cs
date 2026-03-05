@@ -12,14 +12,7 @@ namespace SudokuRoguelike.UI
 
         private void Awake()
         {
-            if (runMapController == null)
-            {
-                return;
-            }
-
-            eventChoiceScreen?.Bind(runMapController);
-            cursePanel?.Bind(runMapController);
-            heatCurveGraph?.Bind(runMapController);
+            BindPanelsToRunMap();
         }
 
         public void Configure(RunMapController runMap, EventChoiceScreenController eventController, CursePanelController curseController, HeatCurveGraphController heatController)
@@ -29,16 +22,18 @@ namespace SudokuRoguelike.UI
             cursePanel = curseController;
             heatCurveGraph = heatController;
 
-            if (runMapController != null)
-            {
-                eventChoiceScreen?.Bind(runMapController);
-                cursePanel?.Bind(runMapController);
-                heatCurveGraph?.Bind(runMapController);
-            }
+            BindPanelsToRunMap();
+        }
+
+        public void BindRunMap(RunMapController runMap)
+        {
+            runMapController = runMap;
+            BindPanelsToRunMap();
         }
 
         public void OnNodeEntered(NodeType nodeType)
         {
+            EnsureRunMap();
             if (nodeType == NodeType.Event)
             {
                 eventChoiceScreen?.OpenEvent();
@@ -50,6 +45,7 @@ namespace SudokuRoguelike.UI
 
         public void OnEventClosed()
         {
+            EnsureRunMap();
             eventChoiceScreen?.CloseEvent();
             cursePanel?.RefreshPanel();
             heatCurveGraph?.RenderCurrentRunCurve();
@@ -57,8 +53,32 @@ namespace SudokuRoguelike.UI
 
         public void RefreshRuntimePanels()
         {
+            EnsureRunMap();
             cursePanel?.RefreshPanel();
             heatCurveGraph?.RenderCurrentRunCurve();
+        }
+
+        private void EnsureRunMap()
+        {
+            if (runMapController != null)
+            {
+                return;
+            }
+
+            runMapController = FindFirstObjectByType<RunMapController>();
+            BindPanelsToRunMap();
+        }
+
+        private void BindPanelsToRunMap()
+        {
+            if (runMapController == null)
+            {
+                return;
+            }
+
+            eventChoiceScreen?.Bind(runMapController);
+            cursePanel?.Bind(runMapController);
+            heatCurveGraph?.Bind(runMapController);
         }
     }
 }

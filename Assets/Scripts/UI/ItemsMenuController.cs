@@ -301,9 +301,19 @@ namespace SudokuRoguelike.UI
 
                 if (iconSlotLabels != null && i < iconSlotLabels.Length && iconSlotLabels[i] != null)
                 {
-                    iconSlotLabels[i].text = item.Discovered ? item.Name : "???";
+                    iconSlotLabels[i].text = item.Discovered ? BuildShortLabel(item.Name) : "???";
                 }
             }
+        }
+
+        private static string BuildShortLabel(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            return value.Length <= 14 ? value : value.Substring(0, 13) + "…";
         }
 
         private string BuildGridText(List<ItemCodexEntry> filtered)

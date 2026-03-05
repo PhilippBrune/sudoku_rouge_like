@@ -16,26 +16,53 @@ namespace SudokuRoguelike.Run
         public List<RunNode> BuildRunGraph(int runNumber, int minNodes = 8, int maxNodes = 12)
         {
             var riskScore = Math.Clamp(runNumber / 2, 0, 4);
-            var totalNodes = Math.Clamp(minNodes + riskScore, minNodes, maxNodes);
-            var graph = new List<RunNode>(totalNodes);
+            var calmMin = 4;
+            var calmMax = 8;
+            var calmRollFloor = Math.Clamp(calmMin + (riskScore / 2), calmMin, calmMax);
+            var calmBranchLength = _random.Next(calmRollFloor, calmMax + 1);
 
-            graph.Add(new RunNode { Depth = 1, Layer = 1, Type = NodeType.Start, IsRevealed = true, IsRiskPath = false });
+            // Higher intended high-difficulty pressure shortens the risk route.
+            var targetRiskHighDifficultyNodes = Math.Clamp(1 + runNumber / 2, 1, 4);
+            var riskLengthPenalty = Math.Clamp(1 + (targetRiskHighDifficultyNodes / 2), 1, 3);
+            var riskBranchLength = Math.Clamp(calmBranchLength - riskLengthPenalty, calmMin - 2, calmMax - 1);
+            var longestBranch = Math.Max(calmBranchLength, riskBranchLength);
 
-            for (var depth = 2; depth <= totalNodes - 2; depth++)
+            var graph = new List<RunNode>(1 + calmBranchLength + riskBranchLength + 3);
+            graph.Add(new RunNode { Depth = 1, Layer = 0, Type = NodeType.Start, IsRevealed = true, IsRiskPath = false });
+
+            for (var step = 1; step <= longestBranch; step++)
             {
-                var type = RollNodeTypeByDepth(depth, totalNodes);
-                graph.Add(new RunNode
+                var depth = step + 1;
+
+                if (step <= calmBranchLength)
                 {
-                    Depth = depth,
-                    Layer = depth,
-                    Type = type,
-                    IsRiskPath = _random.NextDouble() < 0.45,
-                    IsRevealed = depth <= 3
-                });
+                    graph.Add(new RunNode
+                    {
+                        Depth = depth,
+                        Layer = 0,
+                        Type = RollNodeTypeByProgress(step, calmBranchLength, false),
+                        IsRiskPath = false,
+                        IsRevealed = depth <= 3
+                    });
+                }
+
+                if (step <= riskBranchLength)
+                {
+                    graph.Add(new RunNode
+                    {
+                        Depth = depth,
+                        Layer = 1,
+                        Type = RollNodeTypeByProgress(step, riskBranchLength, true, targetRiskHighDifficultyNodes),
+                        IsRiskPath = true,
+                        IsRevealed = depth <= 3
+                    });
+                }
             }
 
-            graph.Add(new RunNode { Depth = totalNodes - 1, Layer = totalNodes - 1, Type = NodeType.PreBoss, IsRevealed = true, IsRiskPath = true });
-            graph.Add(new RunNode { Depth = totalNodes, Layer = totalNodes, Type = NodeType.Boss, IsRevealed = true, IsRiskPath = true });
+            var preBossDepth = longestBranch + 2;
+            graph.Add(new RunNode { Depth = preBossDepth, Layer = 0, Type = NodeType.PreBoss, IsRevealed = true, IsRiskPath = false });
+            graph.Add(new RunNode { Depth = preBossDepth, Layer = 1, Type = NodeType.PreBoss, IsRevealed = true, IsRiskPath = true });
+            graph.Add(new RunNode { Depth = preBossDepth + 1, Layer = 2, Type = NodeType.Boss, IsRevealed = true, IsRiskPath = true });
 
             EnforceEconomyFloor(graph);
             return graph;
@@ -50,19 +77,42 @@ namespace SudokuRoguelike.Run
             }
         }
 
-        private NodeType RollNodeTypeByDepth(int depth, int totalNodes)
+        private NodeType RollNodeTypeByProgress(int step, int branchLength, bool riskPath, int riskHighDifficultyPressure = 0)
         {
-            if (depth <= 2)
+            if (step <= 1)
             {
-                return WeightedRoll((NodeType.Puzzle, 55), (NodeType.Shop, 20), (NodeType.Rest, 15), (NodeType.Relic, 5), (NodeType.Event, 5));
+                return NodeType.Puzzle;
             }
 
-            if (depth <= totalNodes / 2)
+            var progress = branchLength <= 0 ? 1f : (float)step / branchLength;
+
+            if (progress <= 0.30f)
             {
-                return WeightedRoll((NodeType.Puzzle, 45), (NodeType.ElitePuzzle, 10), (NodeType.Shop, 15), (NodeType.Rest, 10), (NodeType.Relic, 10), (NodeType.Event, 10));
+                return WeightedRoll((NodeType.Puzzle, 64), (NodeType.Shop, 8), (NodeType.Rest, 20), (NodeType.Relic, 4), (NodeType.Event, 4));
             }
 
-            return WeightedRoll((NodeType.Puzzle, 40), (NodeType.ElitePuzzle, 20), (NodeType.Shop, 12), (NodeType.Rest, 8), (NodeType.Relic, 10), (NodeType.Event, 10));
+            if (progress <= 0.70f)
+            {
+                return riskPath
+                    ? WeightedRoll(
+                        (NodeType.Puzzle, Math.Max(18, 38 - (riskHighDifficultyPressure * 4))),
+                        (NodeType.ElitePuzzle, 21 + (riskHighDifficultyPressure * 4)),
+                        (NodeType.Shop, 6),
+                        (NodeType.Rest, 14),
+                        (NodeType.Relic, 7),
+                        (NodeType.Event, 14))
+                    : WeightedRoll((NodeType.Puzzle, 52), (NodeType.ElitePuzzle, 8), (NodeType.Shop, 8), (NodeType.Rest, 18), (NodeType.Relic, 8), (NodeType.Event, 6));
+            }
+
+            return riskPath
+                ? WeightedRoll(
+                    (NodeType.Puzzle, Math.Max(12, 32 - (riskHighDifficultyPressure * 4))),
+                    (NodeType.ElitePuzzle, 30 + (riskHighDifficultyPressure * 4)),
+                    (NodeType.Shop, 5),
+                    (NodeType.Rest, 12),
+                    (NodeType.Relic, 7),
+                    (NodeType.Event, 14))
+                : WeightedRoll((NodeType.Puzzle, 46), (NodeType.ElitePuzzle, 12), (NodeType.Shop, 6), (NodeType.Rest, 16), (NodeType.Relic, 10), (NodeType.Event, 10));
         }
 
         private NodeType WeightedRoll(params (NodeType Type, int Weight)[] entries)
@@ -89,20 +139,47 @@ namespace SudokuRoguelike.Run
 
         private static void EnforceEconomyFloor(List<RunNode> graph)
         {
-            var sinceEconomy = 0;
+            var calmSinceEconomy = 0;
+            var riskSinceEconomy = 0;
+
             for (var i = 0; i < graph.Count; i++)
             {
-                if (graph[i].Type == NodeType.Shop || graph[i].Type == NodeType.Rest)
+                if (graph[i].Type == NodeType.Start || graph[i].Type == NodeType.Boss)
                 {
-                    sinceEconomy = 0;
                     continue;
                 }
 
-                sinceEconomy++;
-                if (sinceEconomy >= 3 && graph[i].Type == NodeType.Puzzle)
+                if (graph[i].Type == NodeType.Shop || graph[i].Type == NodeType.Rest)
                 {
-                    graph[i].Type = NodeType.Shop;
-                    sinceEconomy = 0;
+                    if (graph[i].IsRiskPath)
+                    {
+                        riskSinceEconomy = 0;
+                    }
+                    else
+                    {
+                        calmSinceEconomy = 0;
+                    }
+
+                    continue;
+                }
+
+                if (graph[i].IsRiskPath)
+                {
+                    riskSinceEconomy++;
+                    if (riskSinceEconomy >= 5 && graph[i].Type == NodeType.Puzzle)
+                    {
+                        graph[i].Type = NodeType.Rest;
+                        riskSinceEconomy = 0;
+                    }
+                }
+                else
+                {
+                    calmSinceEconomy++;
+                    if (calmSinceEconomy >= 5 && graph[i].Type == NodeType.Puzzle)
+                    {
+                        graph[i].Type = NodeType.Rest;
+                        calmSinceEconomy = 0;
+                    }
                 }
             }
         }

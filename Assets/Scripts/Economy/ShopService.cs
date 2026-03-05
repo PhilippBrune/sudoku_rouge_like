@@ -16,25 +16,30 @@ namespace SudokuRoguelike.Economy
         public List<ShopOffer> BuildOffers(int runDepth, int purchaseCount)
         {
             var offers = new List<ShopOffer>();
-            var offerCount = runDepth >= 6 ? 4 : 3;
+            const int offerCount = 3;
 
             for (var i = 0; i < offerCount; i++)
             {
-                var isRelic = runDepth >= 4 && _random.NextDouble() < 0.35;
-                var basePrice = isRelic ? 80 : 35;
+                var rarity = RollItemRarity(runDepth);
+                var basePrice = rarity switch
+                {
+                    ItemRarity.Epic => 72,
+                    ItemRarity.Rare => 52,
+                    _ => 34
+                };
                 var price = PriceCurve(basePrice, purchaseCount + i);
-                var relicId = isRelic ? BuildRelicId(runDepth, i) : null;
+                var itemType = RollShopItemType();
 
                 offers.Add(new ShopOffer
                 {
                     OfferId = Guid.NewGuid().ToString("N"),
-                    IsRelic = isRelic,
-                    RelicId = relicId,
-                    Item = isRelic ? null : new ItemInstance
+                    IsRelic = false,
+                    RelicId = null,
+                    Item = new ItemInstance
                     {
                         Id = Guid.NewGuid().ToString("N"),
-                        Type = _random.NextDouble() < 0.5 ? ItemType.InkWell : ItemType.MeditationStone,
-                        Rarity = runDepth >= 7 && _random.NextDouble() < 0.3 ? ItemRarity.Rare : ItemRarity.Normal,
+                        Type = itemType,
+                        Rarity = rarity,
                         Charges = 1
                     },
                     Price = price
@@ -42,6 +47,33 @@ namespace SudokuRoguelike.Economy
             }
 
             return offers;
+        }
+
+        private ItemType RollShopItemType()
+        {
+            var roll = _random.Next(3);
+            return roll switch
+            {
+                0 => ItemType.InkWell,
+                1 => ItemType.MeditationStone,
+                _ => ItemType.WindChime
+            };
+        }
+
+        private ItemRarity RollItemRarity(int runDepth)
+        {
+            var roll = _random.NextDouble();
+            if (runDepth >= 8 && roll < 0.15)
+            {
+                return ItemRarity.Epic;
+            }
+
+            if (roll < 0.42)
+            {
+                return ItemRarity.Rare;
+            }
+
+            return ItemRarity.Normal;
         }
 
         private string BuildRelicId(int runDepth, int slot)

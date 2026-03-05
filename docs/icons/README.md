@@ -1,3 +1,16 @@
+## Generated Icon Bundle
+
+- Source: `Assets/Resources/GeneratedIcons`
+- Rebuilt from project icon generation pipeline and aligned with:
+	- `docs/run_of_the_nine_icon_prompts.md`
+	- `docs/run_of_the_nine_ui_art_pipeline.md`
+- Export location in docs: `docs/icons/generated`
+
+Included outputs:
+
+- `RunOfTheNine_IconAtlas_2048.png`
+- `RunOfTheNine_IconMap.csv`
+- All `icon_*.png` sprites used by runtime UI (`Resources.Load("GeneratedIcons/<icon>")`)
 # Kyoto Garden UI/Icon Assets
 
 Generated on: 2026-03-05

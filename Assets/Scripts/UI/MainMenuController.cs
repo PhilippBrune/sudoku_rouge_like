@@ -6,6 +6,7 @@ using SudokuRoguelike.Run;
 using SudokuRoguelike.Save;
 using SudokuRoguelike.Tutorial;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -36,6 +37,7 @@ namespace SudokuRoguelike.UI
         [SerializeField] private Slider masterVolumeSlider;
         [SerializeField] private Slider musicVolumeSlider;
         [SerializeField] private Slider sfxVolumeSlider;
+        [SerializeField] private Dropdown musicStyleDropdown;
         [SerializeField] private Dropdown languageDropdown;
         [SerializeField] private Dropdown resolutionDropdown;
         [SerializeField] private Toggle highContrastToggle;
@@ -49,6 +51,7 @@ namespace SudokuRoguelike.UI
         [SerializeField] private ClassId selectedClass = ClassId.NumberFreak;
 
         private const string OnboardingSeenKey = "sr_onboarding_seen";
+        private const string ReturnTutorialProgressPrefKey = "sr_return_to_tutorial_progress";
         private int _onboardingIndex;
         private SaveFileEnvelope _pendingConflictEnvelope;
 
@@ -104,6 +107,8 @@ namespace SudokuRoguelike.UI
                 }
             }
 
+            ResolveOptionalWidgets();
+
             if (PlayerPrefs.GetInt(OnboardingSeenKey, 0) == 0)
             {
                 OpenOnboarding();
@@ -114,6 +119,65 @@ namespace SudokuRoguelike.UI
             SetStatus("Ready.");
             SyncOptionsWidgetsFromProfile();
             ApplyLanguageToVisibleUi(optionsController != null ? optionsController.Options.Language : LanguageOption.English);
+
+            if (PlayerPrefs.GetInt(ReturnTutorialProgressPrefKey, 0) == 1)
+            {
+                PlayerPrefs.SetInt(ReturnTutorialProgressPrefKey, 0);
+                PlayerPrefs.Save();
+                OpenTutorialProgress();
+                SetStatus("Tutorial complete. Progress updated.");
+            }
+        }
+
+        private void ResolveOptionalWidgets()
+        {
+            if (musicStyleDropdown == null)
+            {
+                musicStyleDropdown = FindDropdownByName("MusicStyleDropdown");
+            }
+
+            if (languageDropdown == null)
+            {
+                languageDropdown = FindDropdownByName("LanguageDropdown");
+            }
+
+            if (resolutionDropdown == null)
+            {
+                resolutionDropdown = FindDropdownByName("ResolutionDropdown");
+            }
+        }
+
+        private static Dropdown FindDropdownByName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return null;
+            }
+
+            var all = Resources.FindObjectsOfTypeAll<Dropdown>();
+            for (var i = 0; i < all.Length; i++)
+            {
+                var candidate = all[i];
+                if (candidate == null || candidate.gameObject == null)
+                {
+                    continue;
+                }
+
+                if (candidate.gameObject.name != name)
+                {
+                    continue;
+                }
+
+                var scene = candidate.gameObject.scene;
+                if (!scene.IsValid() || !scene.isLoaded)
+                {
+                    continue;
+                }
+
+                return candidate;
+            }
+
+            return null;
         }
 
         public void StartGame()
@@ -150,7 +214,9 @@ namespace SudokuRoguelike.UI
             LaunchRequestContext.Request(new LaunchRequest
             {
                 Mode = GameMode.Tutorial,
-                TutorialSetup = setup
+                TutorialSetup = setup,
+                StartFresh = true,
+                ResumeFromSave = false
             });
             LoadGameplayScene();
         }
@@ -194,7 +260,9 @@ namespace SudokuRoguelike.UI
             LaunchRequestContext.Request(new LaunchRequest
             {
                 Mode = mode,
-                ClassId = selectedClass
+                ClassId = selectedClass,
+                StartFresh = true,
+                ResumeFromSave = false
             });
             LoadGameplayScene();
         }
@@ -283,6 +351,13 @@ namespace SudokuRoguelike.UI
 
             if (hasSave)
             {
+                LaunchRequestContext.Request(new LaunchRequest
+                {
+                    Mode = GameMode.GardenRun,
+                    ClassId = envelope.ActiveRunState != null ? envelope.ActiveRunState.ClassId : selectedClass,
+                    StartFresh = false,
+                    ResumeFromSave = true
+                });
                 SetStatus(envelope != null && envelope.ActivePuzzle != null && envelope.ActivePuzzle.IsBoss
                     ? "Resuming mid-boss encounter..."
                     : "Resuming mid-run...");
@@ -318,12 +393,22 @@ namespace SudokuRoguelike.UI
 
         public void BackToMainMenu()
         {
+            if (IsDropdownInteractionActive())
+            {
+                return;
+            }
+
             ShowMainMenu();
             SetStatus("Ready.");
         }
 
         public void BackToOptions()
         {
+            if (IsDropdownInteractionActive())
+            {
+                return;
+            }
+
             ShowOptions();
             SetStatus("Options.");
         }
@@ -349,6 +434,12 @@ namespace SudokuRoguelike.UI
         {
             optionsController?.SetSfxVolume(value);
             SetStatus($"SFX Volume: {Mathf.RoundToInt(value * 100f)}%");
+        }
+
+        public void OnMenuMusicStyleChanged(int index)
+        {
+            optionsController?.SetMenuMusicStyle(index);
+            SetStatus(index == 0 ? "Menu music: 8-bit chill" : "Menu music: 16-bit chill");
         }
 
         public void OnLanguageChanged(int index)
@@ -572,6 +663,7 @@ namespace SudokuRoguelike.UI
             onboardingBodyText = onboardText;
             musicVolumeSlider = musicSlider;
             sfxVolumeSlider = sfxSlider;
+            musicStyleDropdown = null;
             languageDropdown = language;
             resolutionDropdown = resolution;
             highContrastToggle = highContrast;
@@ -660,6 +752,8 @@ namespace SudokuRoguelike.UI
 
         private void ShowOptions()
         {
+            ResolveOptionalWidgets();
+
             SetPanelState(mainMenuPanel, false);
             SetPanelState(classSelectPanel, false);
             SetPanelState(optionsPanel, true);
@@ -677,6 +771,13 @@ namespace SudokuRoguelike.UI
             if (optionsController != null && masterVolumeSlider != null)
             {
                 masterVolumeSlider.SetValueWithoutNotify(optionsController.Options.Audio.MasterVolume);
+            }
+
+            if (musicStyleDropdown != null)
+            {
+                musicStyleDropdown.onValueChanged.RemoveListener(OnMenuMusicStyleChanged);
+                musicStyleDropdown.onValueChanged.AddListener(OnMenuMusicStyleChanged);
+                musicStyleDropdown.SetValueWithoutNotify(Mathf.Clamp(optionsController != null ? optionsController.Options.Audio.MenuMusicStyleIndex : 0, 0, 1));
             }
         }
 
@@ -1134,6 +1235,7 @@ namespace SudokuRoguelike.UI
             if (masterVolumeSlider != null) masterVolumeSlider.SetValueWithoutNotify(optionsController.Options.Audio.MasterVolume);
             if (musicVolumeSlider != null) musicVolumeSlider.SetValueWithoutNotify(optionsController.Options.Audio.MusicVolume);
             if (sfxVolumeSlider != null) sfxVolumeSlider.SetValueWithoutNotify(optionsController.Options.Audio.SfxVolume);
+            if (musicStyleDropdown != null) musicStyleDropdown.SetValueWithoutNotify(Mathf.Clamp(optionsController.Options.Audio.MenuMusicStyleIndex, 0, 1));
             if (languageDropdown != null) languageDropdown.SetValueWithoutNotify(optionsController.Options.Language == LanguageOption.German ? 1 : 0);
             if (highContrastToggle != null) highContrastToggle.SetIsOnWithoutNotify(optionsController.Options.Accessibility.HighContrastMode);
             if (highlightErrorsToggle != null) highlightErrorsToggle.SetIsOnWithoutNotify(optionsController.Options.Gameplay.HighlightConflicts);
@@ -1250,6 +1352,114 @@ namespace SudokuRoguelike.UI
             {
                 panel.SetActive(visible);
             }
+        }
+
+        private static bool IsDropdownInteractionActive()
+        {
+            if (DropdownAutoSizeController.HasRecentGlobalInteraction)
+            {
+                return true;
+            }
+
+            var eventSystem = EventSystem.current;
+            if (eventSystem == null)
+            {
+                return false;
+            }
+
+            if (BelongsToDropdown(eventSystem.currentSelectedGameObject))
+            {
+                return true;
+            }
+
+            var selected = eventSystem.currentSelectedGameObject;
+            if (selected != null)
+            {
+                var selectedName = selected.name ?? string.Empty;
+                if (selectedName.Contains("Dropdown List", StringComparison.OrdinalIgnoreCase) ||
+                    selectedName.Contains("Blocker", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            var dropdownList = FindSceneObject("Dropdown List");
+            if (dropdownList != null && dropdownList.gameObject.activeInHierarchy)
+            {
+                return true;
+            }
+
+            if (HasActiveSceneObjectNamePart("Dropdown List"))
+            {
+                return true;
+            }
+
+            var blocker = FindSceneObject("Blocker");
+            if (blocker != null && blocker.gameObject.activeInHierarchy)
+            {
+                return true;
+            }
+
+            if (HasActiveSceneObjectNamePart("Blocker"))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool BelongsToDropdown(GameObject target)
+        {
+            if (target == null)
+            {
+                return false;
+            }
+
+            if (target.GetComponentInParent<Dropdown>() != null)
+            {
+                return true;
+            }
+
+            var name = target.name ?? string.Empty;
+            if (name == "Dropdown List" || name == "Blocker" ||
+                name.Contains("Dropdown List", StringComparison.OrdinalIgnoreCase) ||
+                name.Contains("Blocker", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool HasActiveSceneObjectNamePart(string namePart)
+        {
+            if (string.IsNullOrWhiteSpace(namePart))
+            {
+                return false;
+            }
+
+            var all = Resources.FindObjectsOfTypeAll<Transform>();
+            for (var i = 0; i < all.Length; i++)
+            {
+                var candidate = all[i];
+                if (candidate == null || candidate.gameObject == null)
+                {
+                    continue;
+                }
+
+                var scene = candidate.gameObject.scene;
+                if (!scene.IsValid() || !scene.isLoaded || !candidate.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+
+                if (candidate.name != null && candidate.name.Contains(namePart, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void SetStatus(string message)

@@ -112,6 +112,34 @@ namespace SudokuRoguelike.Sudoku
                 return regionMap;
             }
 
+            if (size == 5)
+            {
+                FillTemplateRegions(regionMap, new[,]
+                {
+                    { 0, 0, 1, 1, 1 },
+                    { 0, 0, 2, 1, 1 },
+                    { 0, 2, 2, 2, 3 },
+                    { 4, 4, 2, 3, 3 },
+                    { 4, 4, 4, 3, 3 }
+                });
+                return regionMap;
+            }
+
+            if (size == 7)
+            {
+                FillTemplateRegions(regionMap, new[,]
+                {
+                    { 0, 0, 1, 1, 1, 2, 2 },
+                    { 0, 0, 1, 1, 2, 2, 2 },
+                    { 0, 0, 1, 1, 3, 2, 2 },
+                    { 0, 4, 3, 3, 3, 6, 6 },
+                    { 4, 4, 3, 3, 3, 5, 6 },
+                    { 4, 4, 5, 5, 5, 6, 6 },
+                    { 4, 4, 5, 5, 5, 6, 6 }
+                });
+                return regionMap;
+            }
+
             var boxRoot = (int)Math.Sqrt(size);
             if (boxRoot * boxRoot == size)
             {
@@ -119,7 +147,6 @@ namespace SudokuRoguelike.Sudoku
                 return regionMap;
             }
 
-            // 5x5/7x7 use deterministic irregular-style region partitioning.
             for (var row = 0; row < size; row++)
             {
                 for (var col = 0; col < size; col++)
@@ -139,6 +166,18 @@ namespace SudokuRoguelike.Sudoku
                 {
                     var region = (row / boxRows) * (size / boxCols) + (col / boxCols);
                     regionMap[row, col] = region;
+                }
+            }
+        }
+
+        private static void FillTemplateRegions(int[,] regionMap, int[,] template)
+        {
+            var size = regionMap.GetLength(0);
+            for (var row = 0; row < size; row++)
+            {
+                for (var col = 0; col < size; col++)
+                {
+                    regionMap[row, col] = template[row, col];
                 }
             }
         }

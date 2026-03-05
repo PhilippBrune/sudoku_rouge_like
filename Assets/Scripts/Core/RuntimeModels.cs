@@ -364,6 +364,7 @@ namespace SudokuRoguelike.Core
         public float UiVolume = 1f;
         public bool MuteAll;
         public string OutputDeviceName;
+        public int MenuMusicStyleIndex;
     }
 
     [Serializable]

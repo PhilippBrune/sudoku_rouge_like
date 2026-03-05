@@ -3,6 +3,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using System;
 using System.Reflection;
+using System.IO;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem.UI;
 #endif
@@ -36,6 +37,11 @@ namespace SudokuRoguelike.UI
         [ContextMenu("Build Minimal Main Menu")]
         public void Build()
         {
+            if (Application.isPlaying && _builtAtRuntime)
+            {
+                return;
+            }
+
             if (mainMenuController == null)
             {
                 mainMenuController = GetComponent<MainMenuController>();
@@ -57,7 +63,16 @@ namespace SudokuRoguelike.UI
             EnsureMainCamera();
             var canvas = EnsureCanvas();
             var root = EnsureRect("MainMenuRoot", canvas.transform as RectTransform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
-            EnsureOrGetImage(root.gameObject, backgroundColor);
+            var rootImage = EnsureOrGetImage(root.gameObject, backgroundColor);
+            rootImage.sprite = null;
+            rootImage.type = Image.Type.Simple;
+            rootImage.preserveAspect = false;
+            var pngApplied = false;
+
+            var menuMusic = EnsureComponent<MenuMusicController>(root.gameObject);
+            var audioSource = EnsureComponent<AudioSource>(root.gameObject);
+            audioSource.playOnAwake = false;
+            audioSource.loop = true;
 
             var atmosphere = EnsureComponent<MainMenuAtmosphereController>(root.gameObject);
             var atmosphereFar = EnsureRect("AtmosphereFar", root, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
@@ -66,13 +81,28 @@ namespace SudokuRoguelike.UI
             EnsureOrGetImage(atmosphereFar.gameObject, new Color(0.06f, 0.12f, 0.16f, 0.60f));
             EnsureOrGetImage(atmosphereMid.gameObject, new Color(0.12f, 0.20f, 0.26f, 0.24f));
             EnsureOrGetImage(atmosphereNear.gameObject, new Color(0.96f, 0.78f, 0.20f, 0.05f));
+            if (pngApplied)
+            {
+                var far = atmosphereFar.GetComponent<Image>();
+                var mid = atmosphereMid.GetComponent<Image>();
+                var near = atmosphereNear.GetComponent<Image>();
+                if (far != null) far.color = new Color(0f, 0f, 0f, 0f);
+                if (mid != null) mid.color = new Color(0f, 0f, 0f, 0f);
+                if (near != null) near.color = new Color(0f, 0f, 0f, 0f);
+            }
 
             var petalRoot = EnsureRect("PetalLayer", root, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             var mistRoot = EnsureRect("MistLayer", root, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             atmosphere.Configure(atmosphereFar, atmosphereMid, atmosphereNear, petalRoot, mistRoot);
+            if (pngApplied)
+            {
+                petalRoot.gameObject.SetActive(false);
+                mistRoot.gameObject.SetActive(false);
+            }
 
             var card = EnsureRect("MenuCard", root, new Vector2(0.33f, 0.08f), new Vector2(0.67f, 0.90f), Vector2.zero, Vector2.zero);
             EnsureOrGetImage(card.gameObject, panelColor);
+            TryApplyMainMenuCardSlice(card);
 
             var title = BuildText("Title", card, "Run of the Nine", 56, TextAnchor.UpperCenter);
             SetRect(title.rectTransform, new Vector2(0.02f, 0.86f), new Vector2(0.98f, 0.98f), Vector2.zero, Vector2.zero);
@@ -89,6 +119,16 @@ namespace SudokuRoguelike.UI
             var btnOptions = BuildMenuButton(card, "BtnOptions", "Options", new Vector2(0.08f, 0.22f), new Vector2(0.92f, 0.285f), mainMenuController.OpenOptions);
             var btnCredits = BuildMenuButton(card, "BtnCredits", "Credits", new Vector2(0.08f, 0.145f), new Vector2(0.92f, 0.21f), mainMenuController.OpenCredits);
             var btnQuit = BuildMenuButton(card, "BtnQuit", "Quit", new Vector2(0.08f, 0.07f), new Vector2(0.92f, 0.135f), mainMenuController.ExitGame);
+
+            TryApplyMainMenuButtonSlice(btnStart, new Vector2(0.08f, 0.67f), new Vector2(0.92f, 0.735f));
+            TryApplyMainMenuButtonSlice(btnResume, new Vector2(0.08f, 0.595f), new Vector2(0.92f, 0.66f));
+            TryApplyMainMenuButtonSlice(btnTutorial, new Vector2(0.08f, 0.52f), new Vector2(0.92f, 0.585f));
+            TryApplyMainMenuButtonSlice(btnMeta, new Vector2(0.08f, 0.445f), new Vector2(0.92f, 0.51f));
+            TryApplyMainMenuButtonSlice(btnModes, new Vector2(0.08f, 0.37f), new Vector2(0.92f, 0.435f));
+            TryApplyMainMenuButtonSlice(btnItems, new Vector2(0.08f, 0.295f), new Vector2(0.92f, 0.36f));
+            TryApplyMainMenuButtonSlice(btnOptions, new Vector2(0.08f, 0.22f), new Vector2(0.92f, 0.285f));
+            TryApplyMainMenuButtonSlice(btnCredits, new Vector2(0.08f, 0.145f), new Vector2(0.92f, 0.21f));
+            TryApplyMainMenuButtonSlice(btnQuit, new Vector2(0.08f, 0.07f), new Vector2(0.92f, 0.135f));
 
             ApplyMenuButtonIcon(btnStart, "GeneratedIcons/icon_bud");
             ApplyMenuButtonIcon(btnResume, "GeneratedIcons/icon_scroll_graph");
@@ -174,6 +214,11 @@ namespace SudokuRoguelike.UI
                 debugToggle);
 
             Debug.Log("MainMenuBlueprintBuilder: Minimal Main Menu built.");
+
+            if (Application.isPlaying)
+            {
+                _builtAtRuntime = true;
+            }
         }
 
         private GameObject BuildClassSelectPanel(RectTransform root, MainMenuController controller, out Text selectedClassText)
@@ -281,6 +326,16 @@ namespace SudokuRoguelike.UI
             sfxSlider.SetValueWithoutNotify(optionsController.Options.Audio.SfxVolume);
             sfxSlider.onValueChanged.RemoveAllListeners();
             sfxSlider.onValueChanged.AddListener(controller.OnSfxVolumeChanged);
+
+            var musicStyleLabel = BuildText("MusicStyleLabel", panel.transform as RectTransform, "Menu Music Style", 18, TextAnchor.MiddleLeft);
+            SetRect(musicStyleLabel.rectTransform, new Vector2(0.10f, 0.43f), new Vector2(0.44f, 0.48f), Vector2.zero, Vector2.zero);
+            var musicStyle = BuildDropdown("MusicStyleDropdown", panel.transform as RectTransform);
+            SetRect(musicStyle.GetComponent<RectTransform>(), new Vector2(0.44f, 0.43f), new Vector2(0.90f, 0.48f), Vector2.zero, Vector2.zero);
+            musicStyle.ClearOptions();
+            musicStyle.AddOptions(new System.Collections.Generic.List<string> { "8-bit Chill", "16-bit Chill" });
+            musicStyle.SetValueWithoutNotify(Mathf.Clamp(optionsController.Options.Audio.MenuMusicStyleIndex, 0, 1));
+            musicStyle.onValueChanged.RemoveAllListeners();
+            musicStyle.onValueChanged.AddListener(controller.OnMenuMusicStyleChanged);
 
             var displayTitle = BuildText("DisplaySectionTitle", panel.transform as RectTransform, "Display", 20, TextAnchor.MiddleLeft);
             SetRect(displayTitle.rectTransform, new Vector2(0.10f, 0.41f), new Vector2(0.90f, 0.47f), Vector2.zero, Vector2.zero);
@@ -822,30 +877,70 @@ namespace SudokuRoguelike.UI
             reset.onClick.RemoveAllListeners();
             reset.onClick.AddListener(itemsController.ResetFiltersAndSort);
 
-            var iconStrip = EnsureRect("ItemsIconStrip", panel.transform as RectTransform, new Vector2(0.52f, 0.66f), new Vector2(0.94f, 0.74f), Vector2.zero, Vector2.zero);
+            var iconStrip = EnsureRect("ItemsIconStrip", panel.transform as RectTransform, new Vector2(0.52f, 0.62f), new Vector2(0.94f, 0.74f), Vector2.zero, Vector2.zero);
+            EnsureOrGetImage(iconStrip.gameObject, new Color(0f, 0f, 0f, 0.14f));
             var iconLayout = EnsureComponent<GridLayoutGroup>(iconStrip.gameObject);
             iconLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             iconLayout.constraintCount = 5;
-            iconLayout.cellSize = new Vector2(58f, 58f);
+            iconLayout.cellSize = new Vector2(74f, 86f);
             iconLayout.spacing = new Vector2(8f, 0f);
             iconLayout.childAlignment = TextAnchor.MiddleCenter;
+            iconLayout.padding = new RectOffset(6, 6, 6, 6);
 
             var iconSlots = new Image[5];
             var iconLabels = new Text[5];
             for (var i = 0; i < iconSlots.Length; i++)
             {
                 var slot = EnsureRect($"IconSlot_{i}", iconStrip, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
-                slot.sizeDelta = new Vector2(58f, 58f);
-                var slotImage = EnsureOrGetImage(slot.gameObject, new Color(0f, 0f, 0f, 0.22f));
+                slot.sizeDelta = new Vector2(74f, 86f);
+
+                var slotBg = EnsureOrGetImage(slot.gameObject, new Color(0f, 0f, 0f, 0.22f));
+                slotBg.type = Image.Type.Sliced;
+
+                var iconRect = EnsureRect("IconImage", slot, new Vector2(0.10f, 0.38f), new Vector2(0.90f, 0.95f), Vector2.zero, Vector2.zero);
+                var slotImage = EnsureOrGetImage(iconRect.gameObject, new Color(0f, 0f, 0f, 0.30f));
                 iconSlots[i] = slotImage;
 
-                var label = BuildText("Label", slot, "", 11, TextAnchor.LowerCenter);
-                SetRect(label.rectTransform, new Vector2(0f, 0f), new Vector2(1f, 0.24f), Vector2.zero, Vector2.zero);
+                var label = BuildText("Label", slot, "", 10, TextAnchor.MiddleCenter);
+                SetRect(label.rectTransform, new Vector2(0.04f, 0.03f), new Vector2(0.96f, 0.34f), Vector2.zero, Vector2.zero);
+                label.horizontalOverflow = HorizontalWrapMode.Wrap;
+                label.verticalOverflow = VerticalWrapMode.Truncate;
                 iconLabels[i] = label;
             }
 
-            var grid = BuildText("ItemsGridText", panel.transform as RectTransform, "", 15, TextAnchor.UpperLeft);
-            SetRect(grid.rectTransform, new Vector2(0.06f, 0.22f), new Vector2(0.48f, 0.68f), Vector2.zero, Vector2.zero);
+            var legacyGrid = panel.transform.Find("ItemsGridText");
+            if (legacyGrid != null)
+            {
+                DestroyImmediate(legacyGrid.gameObject);
+            }
+
+            var itemsListScroll = EnsureRect("ItemsListScroll", panel.transform as RectTransform, new Vector2(0.06f, 0.22f), new Vector2(0.48f, 0.68f), Vector2.zero, Vector2.zero);
+            EnsureOrGetImage(itemsListScroll.gameObject, new Color(0f, 0f, 0f, 0.12f));
+
+            var itemsListViewport = EnsureRect("Viewport", itemsListScroll, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            var itemsListViewportImage = EnsureOrGetImage(itemsListViewport.gameObject, new Color(1f, 1f, 1f, 0.02f));
+            var itemsListMask = EnsureComponent<Mask>(itemsListViewport.gameObject);
+            itemsListMask.showMaskGraphic = false;
+            itemsListViewportImage.raycastTarget = true;
+
+            var itemsListContent = EnsureRect("Content", itemsListViewport, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(10f, -10f), new Vector2(-10f, -10f));
+            itemsListContent.pivot = new Vector2(0.5f, 1f);
+            var listFitter = EnsureComponent<ContentSizeFitter>(itemsListContent.gameObject);
+            listFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            listFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+            var itemsListScrollRect = EnsureComponent<ScrollRect>(itemsListScroll.gameObject);
+            itemsListScrollRect.viewport = itemsListViewport;
+            itemsListScrollRect.content = itemsListContent;
+            itemsListScrollRect.horizontal = false;
+            itemsListScrollRect.vertical = true;
+            itemsListScrollRect.movementType = ScrollRect.MovementType.Clamped;
+            itemsListScrollRect.scrollSensitivity = 24f;
+
+            var grid = BuildText("ItemsGridText", itemsListContent, "", 15, TextAnchor.UpperLeft);
+            SetRect(grid.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero);
+            grid.horizontalOverflow = HorizontalWrapMode.Wrap;
+            grid.verticalOverflow = VerticalWrapMode.Overflow;
 
             var details = BuildText("ItemsDetailText", panel.transform as RectTransform, "", 15, TextAnchor.UpperLeft);
             SetRect(details.rectTransform, new Vector2(0.52f, 0.32f), new Vector2(0.94f, 0.64f), Vector2.zero, Vector2.zero);
@@ -885,6 +980,96 @@ namespace SudokuRoguelike.UI
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(action);
             return button;
+        }
+
+        private void TryApplyMainMenuButtonSlice(Button button, Vector2 cardAnchorMin, Vector2 cardAnchorMax)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            var source = TryLoadBackgroundTextureFromResources(
+                "GeneratedIcons/main_menue",
+                "main_menue",
+                "GeneratedIcons/main_menu",
+                "main_menu");
+            if (source == null)
+            {
+                return;
+            }
+
+            // Menu card in builder occupies 0.33..0.67 x and 0.08..0.90 y of the screen.
+            const float cardXMin = 0.33f;
+            const float cardXMax = 0.67f;
+            const float cardYMin = 0.08f;
+            const float cardYMax = 0.90f;
+
+            var absXMin = Mathf.Lerp(cardXMin, cardXMax, cardAnchorMin.x);
+            var absXMax = Mathf.Lerp(cardXMin, cardXMax, cardAnchorMax.x);
+            var absYMin = Mathf.Lerp(cardYMin, cardYMax, cardAnchorMin.y);
+            var absYMax = Mathf.Lerp(cardYMin, cardYMax, cardAnchorMax.y);
+
+            var pxMin = Mathf.Clamp(Mathf.RoundToInt(absXMin * source.width), 0, source.width - 1);
+            var pxMax = Mathf.Clamp(Mathf.RoundToInt(absXMax * source.width), pxMin + 1, source.width);
+            var pyMin = Mathf.Clamp(Mathf.RoundToInt(absYMin * source.height), 0, source.height - 1);
+            var pyMax = Mathf.Clamp(Mathf.RoundToInt(absYMax * source.height), pyMin + 1, source.height);
+
+            var rect = new Rect(pxMin, pyMin, pxMax - pxMin, pyMax - pyMin);
+            var sprite = Sprite.Create(source, rect, new Vector2(0.5f, 0.5f), 100f);
+
+            var image = button.GetComponent<Image>();
+            if (image == null)
+            {
+                return;
+            }
+
+            image.sprite = sprite;
+            image.type = Image.Type.Simple;
+            image.preserveAspect = false;
+            image.color = Color.white;
+        }
+
+        private void TryApplyMainMenuCardSlice(RectTransform card)
+        {
+            if (card == null)
+            {
+                return;
+            }
+
+            var image = card.GetComponent<Image>();
+            if (image == null)
+            {
+                return;
+            }
+
+            var source = TryLoadBackgroundTextureFromResources(
+                "GeneratedIcons/main_menue",
+                "main_menue",
+                "GeneratedIcons/main_menu",
+                "main_menu");
+            if (source == null)
+            {
+                return;
+            }
+
+            // Mirror the exact card viewport from the full menu art.
+            var xMin = Mathf.Min(card.anchorMin.x, card.anchorMax.x);
+            var xMax = Mathf.Max(card.anchorMin.x, card.anchorMax.x);
+            var yMin = Mathf.Min(card.anchorMin.y, card.anchorMax.y);
+            var yMax = Mathf.Max(card.anchorMin.y, card.anchorMax.y);
+
+            var pxMin = Mathf.Clamp(Mathf.RoundToInt(xMin * source.width), 0, source.width - 1);
+            var pxMax = Mathf.Clamp(Mathf.RoundToInt(xMax * source.width), pxMin + 1, source.width);
+            var pyMin = Mathf.Clamp(Mathf.RoundToInt(yMin * source.height), 0, source.height - 1);
+            var pyMax = Mathf.Clamp(Mathf.RoundToInt(yMax * source.height), pyMin + 1, source.height);
+
+            var rect = new Rect(pxMin, pyMin, pxMax - pxMin, pyMax - pyMin);
+            var sprite = Sprite.Create(source, rect, new Vector2(0.5f, 0.5f), 100f);
+            image.sprite = sprite;
+            image.type = Image.Type.Simple;
+            image.preserveAspect = false;
+            image.color = Color.white;
         }
 
         private void ApplyMenuButtonIcon(Button button, string resourcePath)
@@ -1157,7 +1342,131 @@ namespace SudokuRoguelike.UI
             dropdown.targetGraphic = EnsureOrGetImage(rect.gameObject, buttonColor);
             dropdown.captionText.raycastTarget = false;
 
+            EnsureComponent<DropdownAutoSizeController>(rect.gameObject);
+
             return dropdown;
+        }
+
+        private static bool TryApplyMainMenuPngBackground(RectTransform root)
+        {
+            if (root == null)
+            {
+                return false;
+            }
+
+            var image = root.GetComponent<Image>();
+            if (image == null)
+            {
+                return false;
+            }
+
+            // Prefer a Resources-based sprite so the same asset is used in editor and builds.
+            var resourceSprite = TryLoadBackgroundSpriteFromResources(
+                "GeneratedIcons/main_menue",
+                "main_menue",
+                "GeneratedIcons/main_menu",
+                "main_menu");
+            if (resourceSprite != null)
+            {
+                image.sprite = resourceSprite;
+                image.type = Image.Type.Simple;
+                image.preserveAspect = false;
+                image.color = Color.white;
+                return true;
+            }
+
+            var projectRoot = Directory.GetParent(Application.dataPath)?.FullName;
+            if (string.IsNullOrWhiteSpace(projectRoot))
+            {
+                projectRoot = Directory.GetCurrentDirectory();
+            }
+
+            var docsPath = Path.Combine(projectRoot, "docs", "main_menue.png");
+            if (!File.Exists(docsPath))
+            {
+                return false;
+            }
+
+            var bytes = File.ReadAllBytes(docsPath);
+            if (bytes == null || bytes.Length == 0)
+            {
+                return false;
+            }
+
+            var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            if (!tex.LoadImage(bytes, markNonReadable: false))
+            {
+                return false;
+            }
+
+            var sprite = Sprite.Create(tex, new Rect(0f, 0f, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100f);
+            image.sprite = sprite;
+            image.type = Image.Type.Simple;
+            image.preserveAspect = false;
+            image.color = Color.white;
+            return true;
+        }
+
+        private static Sprite TryLoadBackgroundSpriteFromResources(params string[] resourcePaths)
+        {
+            if (resourcePaths == null || resourcePaths.Length == 0)
+            {
+                return null;
+            }
+
+            for (var i = 0; i < resourcePaths.Length; i++)
+            {
+                var path = resourcePaths[i];
+                if (string.IsNullOrWhiteSpace(path))
+                {
+                    continue;
+                }
+
+                var sprite = Resources.Load<Sprite>(path);
+                if (sprite != null)
+                {
+                    return sprite;
+                }
+
+                var tex = Resources.Load<Texture2D>(path);
+                if (tex != null)
+                {
+                    return Sprite.Create(tex, new Rect(0f, 0f, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100f);
+                }
+            }
+
+            return null;
+        }
+
+        private static Texture2D TryLoadBackgroundTextureFromResources(params string[] resourcePaths)
+        {
+            if (resourcePaths == null || resourcePaths.Length == 0)
+            {
+                return null;
+            }
+
+            for (var i = 0; i < resourcePaths.Length; i++)
+            {
+                var path = resourcePaths[i];
+                if (string.IsNullOrWhiteSpace(path))
+                {
+                    continue;
+                }
+
+                var tex = Resources.Load<Texture2D>(path);
+                if (tex != null)
+                {
+                    return tex;
+                }
+
+                var sprite = Resources.Load<Sprite>(path);
+                if (sprite != null && sprite.texture != null)
+                {
+                    return sprite.texture;
+                }
+            }
+
+            return null;
         }
 
         private static void AttachDropdownItemCompat(GameObject itemGo, RectTransform itemRect, Text itemLabel, Image itemBackground, Toggle itemToggle)

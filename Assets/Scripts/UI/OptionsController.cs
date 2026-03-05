@@ -45,6 +45,12 @@ namespace SudokuRoguelike.UI
             Persist();
         }
 
+        public void SetMenuMusicStyle(int styleIndex)
+        {
+            Options.Audio.MenuMusicStyleIndex = Mathf.Clamp(styleIndex, 0, 1);
+            Persist();
+        }
+
         public void SetResolution(int width, int height, bool fullscreen)
         {
             Screen.SetResolution(width, height, fullscreen);

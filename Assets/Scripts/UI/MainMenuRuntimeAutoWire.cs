@@ -71,7 +71,6 @@ namespace SudokuRoguelike.UI
             WireDropdown("MusicStyleDropdown", mainMenuController.OnMenuMusicStyleChanged, required: false);
             WireDropdown("LanguageDropdown", mainMenuController.OnLanguageChanged, required: false);
             WireDropdown("ResolutionDropdown", mainMenuController.OnResolutionChanged, required: false);
-            WireToggle("HighContrastToggle", mainMenuController.OnHighContrastChanged, required: false);
             WireToggle("HighlightErrorsToggle", mainMenuController.OnHighlightErrorsChanged, required: false);
             WireToggle("DebugEnableAllToggle", mainMenuController.OnDebugEnableAllChanged, required: false);
 

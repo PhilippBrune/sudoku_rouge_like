@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using SudokuRoguelike.Core;
@@ -90,6 +91,8 @@ namespace SudokuRoguelike.UI
         private bool _hasLaneAEnd;
         private bool _hasLaneBEnd;
         private int _lastPuzzleItemSignature = int.MinValue;
+        private readonly List<(int Row, int Col)> _finderHighlightCells = new();
+        private float _finderHighlightUntil;
 
         private const string ReturnTutorialProgressPrefKey = "sr_return_to_tutorial_progress";
 
@@ -98,6 +101,7 @@ namespace SudokuRoguelike.UI
         private static readonly Color RowColHighlight = new(0.18f, 0.34f, 0.56f, 1f);
         private static readonly Color SelectedColor = new(0.73f, 0.49f, 0.18f, 1f);
         private static readonly Color MatchValueColor = new(0.36f, 0.24f, 0.58f, 1f);
+        private static readonly Color FinderHintColor = new(0.22f, 0.45f, 0.30f, 1f);
 
         public void Configure(
             RunMapController runMap,
@@ -556,6 +560,8 @@ namespace SudokuRoguelike.UI
                 return;
             }
 
+            _runAudio?.PlayPathAdvance();
+
             _selectedRow = -1;
             _selectedCol = -1;
             _highlightValue = 0;
@@ -818,6 +824,19 @@ namespace SudokuRoguelike.UI
                 hash = hash * 31 + (lockValue.HasValue ? (lockValue.Value ? 1 : 2) : 0);
                 hash = hash * 31 + BuildPreviewSignature(previewA);
                 hash = hash * 31 + BuildPreviewSignature(previewB);
+
+                var state = run?.RunState;
+                if (state != null)
+                {
+                    hash = hash * 31 + state.Inventory.Count;
+                    hash = hash * 31 + state.CurrentGold;
+                    for (var i = 0; i < state.Inventory.Count; i++)
+                    {
+                        var item = state.Inventory[i];
+                        hash = hash * 31 + (item?.Id?.GetHashCode() ?? 0);
+                        hash = hash * 31 + (item?.Charges ?? 0);
+                    }
+                }
 
                 var graph = run?.CurrentRunGraph;
                 if (graph != null)
@@ -1711,6 +1730,11 @@ namespace SudokuRoguelike.UI
                     color = MatchValueColor;
                 }
 
+                if (Time.unscaledTime <= _finderHighlightUntil && ContainsFinderHighlight(cell.Row, cell.Col))
+                {
+                    color = FinderHintColor;
+                }
+
                 cell.Image.color = color;
                 UpdateCellBorders(board, cell);
             }
@@ -2036,14 +2060,7 @@ namespace SudokuRoguelike.UI
             _shopOffers.AddRange(run.BuildShopOffers());
             _pendingShopOfferId = string.Empty;
             _awaitingShopReplacement = false;
-
-            if (_shopSummaryText != null)
-            {
-                _shopSummaryText.text =
-                    "Shop Node\n" +
-                    $"Gold: {run.RunState.CurrentGold}\n" +
-                    "Choose one offer or skip.";
-            }
+            RefreshShopSummaryText();
 
             if (_shopHoverText != null)
             {
@@ -2132,7 +2149,8 @@ namespace SudokuRoguelike.UI
                 var child = _shopPanel.transform.GetChild(i);
                 if (child.name.StartsWith("ShopChoice_", StringComparison.Ordinal) ||
                     child.name.StartsWith("ShopReplace_", StringComparison.Ordinal) ||
-                    child.name == "ShopSkip")
+                    child.name == "ShopSkip" ||
+                    child.name == "ShopReroll")
                 {
                     Destroy(child.gameObject);
                 }
@@ -2240,6 +2258,15 @@ namespace SudokuRoguelike.UI
             {
                 skipLabel.text = "Take Nothing";
             }
+
+            var reroll = BuildPanelButton(_shopPanel.transform, "ShopReroll", new Vector2(0.08f, 0.24f), new Vector2(0.22f, 0.12f), new Color(0.24f, 0.22f, 0.31f, 0.95f));
+            reroll.onClick.AddListener(TryRerollShopOffers);
+            var rerollLabel = reroll.GetComponentInChildren<Text>();
+            if (rerollLabel != null)
+            {
+                rerollLabel.fontSize = 11;
+                rerollLabel.text = BuildShopRerollLabel();
+            }
         }
 
         private void TryBuyShopOffer(int offerIndex)
@@ -2273,6 +2300,7 @@ namespace SudokuRoguelike.UI
             }
 
             SetStatus($"Purchased {DescribeItemShort(offer.Item)}.");
+            _runAudio?.PlayShopPurchase();
             CloseShopPanel(true);
         }
 
@@ -2291,7 +2319,58 @@ namespace SudokuRoguelike.UI
             }
 
             SetStatus("Purchased by replacing an inventory slot.");
+            _runAudio?.PlayShopPurchase();
             CloseShopPanel(true);
+        }
+
+        private void TryRerollShopOffers()
+        {
+            var run = runMapController?.Run;
+            if (run == null)
+            {
+                return;
+            }
+
+            if (!run.TryRerollShopOffers(out var spentGold, out var usedToken))
+            {
+                SetStatus("Cannot reroll shop offers.");
+                return;
+            }
+
+            _shopOffers.Clear();
+            _shopOffers.AddRange(run.CurrentShopOffers);
+            _runAudio?.PlayShopReroll();
+            SetStatus(usedToken ? "Shop rerolled using a reroll token." : $"Shop rerolled for {spentGold}g.");
+            RefreshShopSummaryText();
+            RebuildShopButtons();
+            RefreshHud();
+        }
+
+        private void RefreshShopSummaryText()
+        {
+            var state = runMapController?.Run?.RunState;
+            if (_shopSummaryText == null || state == null)
+            {
+                return;
+            }
+
+            _shopSummaryText.text =
+                "Shop Node\n" +
+                $"Gold: {state.CurrentGold}  |  Reroll Tokens: {state.RerollTokens}\n" +
+                $"{BuildShopRerollLabel()}  |  Choose one offer or skip.";
+        }
+
+        private string BuildShopRerollLabel()
+        {
+            var run = runMapController?.Run;
+            if (run == null)
+            {
+                return "Reroll";
+            }
+
+            return run.HasShopRerollTokenAvailable()
+                ? "Reroll (1 token)"
+                : $"Reroll ({run.GetShopRerollGoldCostPreview()}g)";
         }
 
         private void CloseShopPanel(bool purchased)
@@ -2313,6 +2392,7 @@ namespace SudokuRoguelike.UI
             {
                 _pathOverlayMessage = "Shop skipped.";
                 SetStatus("Skipped shop.");
+                _runAudio?.PlayPathAdvance();
             }
 
             RefreshPathOverview();
@@ -2837,9 +2917,15 @@ namespace SudokuRoguelike.UI
                 var trigger = button.AddComponent<EventTrigger>();
                 trigger.triggers = new List<EventTrigger.Entry>();
 
+                var startScale = Vector3.one * 0.78f;
+                var hoverScale = Vector3.one * 1.06f;
+                button.transform.localScale = startScale;
+                StartCoroutine(AnimateRewardSlotScale(button.transform as RectTransform, 0.06f * i, startScale, Vector3.one));
+
                 var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
                 enter.callback.AddListener(_ =>
                 {
+                    button.transform.localScale = hoverScale;
                     if (_rewardHoverText != null)
                     {
                         _rewardHoverText.text = DescribeRollSlot(slot);
@@ -2850,6 +2936,7 @@ namespace SudokuRoguelike.UI
                 var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
                 exit.callback.AddListener(_ =>
                 {
+                    button.transform.localScale = Vector3.one;
                     if (_rewardHoverText != null)
                     {
                         _rewardHoverText.text = "Hover a reward to inspect details.";
@@ -2878,6 +2965,8 @@ namespace SudokuRoguelike.UI
             _awaitingRewardChoice = false;
             HideRewardPanel();
             SetStatus("Reward claimed. Choose next path tile.");
+            _runAudio?.PlayRewardClaim();
+            _lastLaneRenderSignature = int.MinValue;
             RefreshPathOverview();
         }
 
@@ -3165,18 +3254,93 @@ namespace SudokuRoguelike.UI
                 }
             }
 
+            var usedType = run.RunState != null && index >= 0 && index < run.RunState.Inventory.Count && run.RunState.Inventory[index] != null
+                ? run.RunState.Inventory[index].Type
+                : ItemType.Solver;
+
             if (!run.TryUseInventoryItemAt(index, _selectedRow, _selectedCol, out var message))
             {
                 SetStatus(string.IsNullOrWhiteSpace(message) ? "Item usage failed." : message);
                 return;
             }
 
+            if (usedType == ItemType.Finder)
+            {
+                CaptureFinderHighlights(run);
+            }
+
             SetStatus(message);
+            _runAudio?.PlayItemUse();
             RenderBoard(board);
             RefreshHud();
             RefreshSolveButtonState();
             _lastPuzzleItemSignature = int.MinValue;
             RebuildPuzzleItemBar();
+        }
+
+        private IEnumerator AnimateRewardSlotScale(RectTransform rect, float delay, Vector3 from, Vector3 to)
+        {
+            if (rect == null)
+            {
+                yield break;
+            }
+
+            if (delay > 0f)
+            {
+                yield return new WaitForSecondsRealtime(delay);
+            }
+
+            const float duration = 0.16f;
+            var elapsed = 0f;
+            while (elapsed < duration)
+            {
+                if (rect == null)
+                {
+                    yield break;
+                }
+
+                elapsed += Time.unscaledDeltaTime;
+                var t = Mathf.Clamp01(elapsed / duration);
+                rect.localScale = Vector3.LerpUnclamped(from, to, 1f - Mathf.Pow(1f - t, 3f));
+                yield return null;
+            }
+
+            if (rect != null)
+            {
+                rect.localScale = to;
+            }
+        }
+
+        private void CaptureFinderHighlights(RunDirector run)
+        {
+            _finderHighlightCells.Clear();
+            if (run?.LastFinderHints == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < run.LastFinderHints.Count; i++)
+            {
+                _finderHighlightCells.Add(run.LastFinderHints[i]);
+            }
+
+            if (_finderHighlightCells.Count > 0)
+            {
+                _finderHighlightUntil = Time.unscaledTime + 2.2f;
+            }
+        }
+
+        private bool ContainsFinderHighlight(int row, int col)
+        {
+            for (var i = 0; i < _finderHighlightCells.Count; i++)
+            {
+                if (_finderHighlightCells[i].Row == row && _finderHighlightCells[i].Col == col)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static string ItemTypeToIconName(ItemType type)

@@ -51,9 +51,9 @@ namespace SudokuRoguelike.UI
             Persist();
         }
 
-        public void SetResolution(int width, int height, bool fullscreen)
+        public void SetResolution(int width, int height, bool fullscreen, FullScreenMode mode)
         {
-            Screen.SetResolution(width, height, fullscreen);
+            Screen.SetResolution(width, height, mode);
             Options.Graphics.Width = width;
             Options.Graphics.Height = height;
             Options.Graphics.Fullscreen = fullscreen;
@@ -63,12 +63,6 @@ namespace SudokuRoguelike.UI
         public bool RequiresRestartForResolutionModeSwitch(bool exclusiveFullscreen)
         {
             return requireRestartForExclusiveFullscreen && exclusiveFullscreen;
-        }
-
-        public void SetHighContrast(bool enabled)
-        {
-            Options.Accessibility.HighContrastMode = enabled;
-            Persist();
         }
 
         public void SetHighlightConflicts(bool enabled)

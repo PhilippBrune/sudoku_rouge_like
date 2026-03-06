@@ -40,7 +40,6 @@ namespace SudokuRoguelike.UI
         [SerializeField] private Dropdown musicStyleDropdown;
         [SerializeField] private Dropdown languageDropdown;
         [SerializeField] private Dropdown resolutionDropdown;
-        [SerializeField] private Toggle highContrastToggle;
         [SerializeField] private Toggle highlightErrorsToggle;
         [SerializeField] private Toggle debugEnableAllToggle;
         [SerializeField] private OptionsController optionsController;
@@ -59,6 +58,7 @@ namespace SudokuRoguelike.UI
         private readonly SaveFileService _save = new();
         private readonly ProfileService _profile = new();
         private readonly SudokuRoguelike.Meta.ClassGardenProgressionService _classProgression = new();
+        private readonly ClassUnlockService _classUnlockService = new();
         private readonly ICloudSaveProvider _cloud = new LocalCloudSaveProvider();
         private SaveConflictService _conflicts;
         private static bool _debugEnableAllFeatures;
@@ -269,14 +269,15 @@ namespace SudokuRoguelike.UI
 
         public void SetSelectedClass(ClassId classId)
         {
+            selectedClass = classId;
+            RefreshClassSelectUi();
+
             if (!IsClassUnlockedOrDebug(classId))
             {
-                SetStatus($"{classId} is locked.");
+                SetStatus($"{classId} is locked. See unlock requirements.");
                 return;
             }
 
-            selectedClass = classId;
-            RefreshClassSelectUi();
             SetStatus($"Selected class: {selectedClass}");
         }
 
@@ -289,6 +290,11 @@ namespace SudokuRoguelike.UI
 
         public void ConfirmClassAndStart()
         {
+            if (!IsClassUnlockedOrDebug(selectedClass))
+            {
+                SetStatus($"{selectedClass} is locked. Choose an unlocked class.");
+                return;
+            }
             StartMode(GameMode.GardenRun);
         }
 
@@ -468,6 +474,7 @@ namespace SudokuRoguelike.UI
                 var width = 1920;
                 var height = 1080;
                 var fullscreen = true;
+                var mode = FullScreenMode.ExclusiveFullScreen;
 
                 switch (index)
                 {
@@ -475,25 +482,29 @@ namespace SudokuRoguelike.UI
                         width = 1280;
                         height = 720;
                         fullscreen = false;
+                        mode = FullScreenMode.Windowed;
                         break;
                     case 1:
                         width = 1600;
                         height = 900;
                         fullscreen = false;
+                        mode = FullScreenMode.Windowed;
                         break;
                     case 2:
                         width = 1920;
                         height = 1080;
                         fullscreen = true;
+                        mode = FullScreenMode.ExclusiveFullScreen;
                         break;
                     case 3:
                         width = 2560;
                         height = 1440;
                         fullscreen = true;
+                        mode = FullScreenMode.ExclusiveFullScreen;
                         break;
                 }
 
-                optionsController?.SetResolution(width, height, fullscreen);
+                optionsController?.SetResolution(width, height, fullscreen, mode);
                 if (optionsController != null && optionsController.RequiresRestartForResolutionModeSwitch(fullscreen))
                 {
                     SetStatus("Resolution applied. Restart recommended for fullscreen mode switch.");
@@ -509,12 +520,6 @@ namespace SudokuRoguelike.UI
                 ShowOptions();
                 SetStatus("Resolution change failed. Options kept open.");
             }
-        }
-
-        public void OnHighContrastChanged(bool enabled)
-        {
-            optionsController?.SetHighContrast(enabled);
-            SetStatus(enabled ? "High contrast enabled." : "High contrast disabled.");
         }
 
         public void OnHighlightErrorsChanged(bool enabled)
@@ -635,7 +640,6 @@ namespace SudokuRoguelike.UI
             Slider sfxSlider = null,
             Dropdown language = null,
             Dropdown resolution = null,
-            Toggle highContrast = null,
             Toggle highlightErrors = null,
             Toggle debugEnableAll = null)
         {
@@ -666,7 +670,6 @@ namespace SudokuRoguelike.UI
             musicStyleDropdown = null;
             languageDropdown = language;
             resolutionDropdown = resolution;
-            highContrastToggle = highContrast;
             highlightErrorsToggle = highlightErrors;
             debugEnableAllToggle = debugEnableAll;
 
@@ -990,22 +993,25 @@ namespace SudokuRoguelike.UI
                 var meta = ClassCatalog.GetMeta(selectedClass);
                 var entry = GetClassProgressEntry(selectedClass);
                 var xpToNext = _classProgression.XpToNextLevel(Mathf.Max(1, entry.Level));
-                var unlocked = IsClassUnlockedOrDebug(selectedClass) ? "Unlocked" : "Locked";
+                var isUnlocked = IsClassUnlockedOrDebug(selectedClass);
+                var unlocked = isUnlocked ? "Unlocked" : "Locked";
+                var unlockHint = isUnlocked ? string.Empty : _classUnlockService.GetUnlockRequirementText(selectedClass);
 
                 classSelectClassText.text =
                     $"Selected Class: {selectedClass} ({unlocked})\n" +
                     $"HP {snapshot.HP} | Pencil {snapshot.Pencil} | Slots {snapshot.ItemSlots} | Rerolls {snapshot.RerollTokens}\n" +
                     $"Tier {meta.Tier} | Complexity {meta.Complexity} | Skill {meta.SkillBand}\n" +
                     $"Level {entry.Level} | XP {entry.CurrentXp}/{xpToNext} | Prestige {entry.PrestigeTier}\n" +
-                    $"Passive: {meta.PassiveDescription}";
+                    $"Passive: {meta.PassiveDescription}" +
+                    (string.IsNullOrWhiteSpace(unlockHint) ? string.Empty : $"\nUnlock: {unlockHint}");
             }
 
-            SetClassButtonInteractable("BtnStartClassNumberFreak", IsClassUnlockedOrDebug(ClassId.NumberFreak));
-            SetClassButtonInteractable("BtnStartClassGardenMonk", IsClassUnlockedOrDebug(ClassId.GardenMonk));
-            SetClassButtonInteractable("BtnStartClassShrineArchivist", IsClassUnlockedOrDebug(ClassId.ShrineArchivist));
-            SetClassButtonInteractable("BtnStartClassKoiGambler", IsClassUnlockedOrDebug(ClassId.KoiGambler));
-            SetClassButtonInteractable("BtnStartClassStoneGardener", IsClassUnlockedOrDebug(ClassId.StoneGardener));
-            SetClassButtonInteractable("BtnStartClassLanternSeer", IsClassUnlockedOrDebug(ClassId.LanternSeer));
+            SetClassButtonInteractable("BtnStartClassNumberFreak", true);
+            SetClassButtonInteractable("BtnStartClassGardenMonk", true);
+            SetClassButtonInteractable("BtnStartClassShrineArchivist", true);
+            SetClassButtonInteractable("BtnStartClassKoiGambler", true);
+            SetClassButtonInteractable("BtnStartClassStoneGardener", true);
+            SetClassButtonInteractable("BtnStartClassLanternSeer", true);
         }
 
         private void ApplyDebugUnlocks()
@@ -1237,8 +1243,19 @@ namespace SudokuRoguelike.UI
             if (sfxVolumeSlider != null) sfxVolumeSlider.SetValueWithoutNotify(optionsController.Options.Audio.SfxVolume);
             if (musicStyleDropdown != null) musicStyleDropdown.SetValueWithoutNotify(Mathf.Clamp(optionsController.Options.Audio.MenuMusicStyleIndex, 0, 1));
             if (languageDropdown != null) languageDropdown.SetValueWithoutNotify(optionsController.Options.Language == LanguageOption.German ? 1 : 0);
-            if (highContrastToggle != null) highContrastToggle.SetIsOnWithoutNotify(optionsController.Options.Accessibility.HighContrastMode);
             if (highlightErrorsToggle != null) highlightErrorsToggle.SetIsOnWithoutNotify(optionsController.Options.Gameplay.HighlightConflicts);
+            if (resolutionDropdown != null) resolutionDropdown.SetValueWithoutNotify(ResolveResolutionDropdownIndex(optionsController.Options));
+        }
+
+        private static int ResolveResolutionDropdownIndex(OptionsState options)
+        {
+            var w = options.Graphics.Width;
+            var h = options.Graphics.Height;
+            var fs = options.Graphics.Fullscreen;
+            if (w == 1280 && h == 720 && !fs) return 0;
+            if (w == 1600 && h == 900 && !fs) return 1;
+            if (w == 2560 && h == 1440 && fs) return 3;
+            return 2; // 1920x1080 default
         }
 
         private void ApplyLanguageToVisibleUi(LanguageOption language)

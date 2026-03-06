@@ -1,0 +1,49 @@
+# Unity generated folders
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+UserSettings/
+MemoryCaptures/
+Recordings/
+
+# Unity / IDE generated files
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Unity crash reports
+sysinfo.txt
+
+# VS and Rider
+.vs/
+.idea/
+*.DotSettings.user
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Nested legacy Unity project cache folders (inside archived tree)
+Assets/Scripts/My project/
+Assets/Scripts/My project/[Ll]ibrary/
+Assets/Scripts/My project/[Tt]emp/
+Assets/Scripts/My project/[Oo]bj/
+Assets/Scripts/My project/[Ll]ogs/
+Assets/Scripts/My project/UserSettings/
+
+# Local git hooks helper
+.githooks/*.local

@@ -64,10 +64,9 @@ namespace SudokuRoguelike.UI
             var canvas = EnsureCanvas();
             var root = EnsureRect("MainMenuRoot", canvas.transform as RectTransform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             var rootImage = EnsureOrGetImage(root.gameObject, backgroundColor);
-            rootImage.sprite = null;
             rootImage.type = Image.Type.Simple;
             rootImage.preserveAspect = false;
-            var pngApplied = false;
+            var pngApplied = TryApplyFullBackgroundSprite(rootImage);
 
             var menuMusic = EnsureComponent<MenuMusicController>(root.gameObject);
             var audioSource = EnsureComponent<AudioSource>(root.gameObject);
@@ -209,7 +208,6 @@ namespace SudokuRoguelike.UI
                 optionsPanel.transform.Find("SfxVolumeSlider")?.GetComponent<Slider>(),
                 optionsPanel.transform.Find("LanguageDropdown")?.GetComponent<Dropdown>(),
                 optionsPanel.transform.Find("ResolutionDropdown")?.GetComponent<Dropdown>(),
-                optionsPanel.transform.Find("HighContrastToggle")?.GetComponent<Toggle>(),
                 optionsPanel.transform.Find("HighlightErrorsToggle")?.GetComponent<Toggle>(),
                 debugToggle);
 
@@ -363,14 +361,8 @@ namespace SudokuRoguelike.UI
             var accessibilityTitle = BuildText("AccessibilitySectionTitle", panel.transform as RectTransform, "Accessibility", 20, TextAnchor.MiddleLeft);
             SetRect(accessibilityTitle.rectTransform, new Vector2(0.10f, 0.22f), new Vector2(0.90f, 0.28f), Vector2.zero, Vector2.zero);
 
-            var highContrast = BuildToggle("HighContrastToggle", panel.transform as RectTransform, "High Contrast");
-            SetRect(highContrast.GetComponent<RectTransform>(), new Vector2(0.10f, 0.16f), new Vector2(0.90f, 0.21f), Vector2.zero, Vector2.zero);
-            highContrast.SetIsOnWithoutNotify(optionsController.Options.Accessibility.HighContrastMode);
-            highContrast.onValueChanged.RemoveAllListeners();
-            highContrast.onValueChanged.AddListener(controller.OnHighContrastChanged);
-
             var highlightErrors = BuildToggle("HighlightErrorsToggle", panel.transform as RectTransform, "Highlight Errors");
-            SetRect(highlightErrors.GetComponent<RectTransform>(), new Vector2(0.10f, 0.10f), new Vector2(0.90f, 0.15f), Vector2.zero, Vector2.zero);
+            SetRect(highlightErrors.GetComponent<RectTransform>(), new Vector2(0.10f, 0.15f), new Vector2(0.90f, 0.20f), Vector2.zero, Vector2.zero);
             highlightErrors.SetIsOnWithoutNotify(optionsController.Options.Gameplay.HighlightConflicts);
             highlightErrors.onValueChanged.RemoveAllListeners();
             highlightErrors.onValueChanged.AddListener(controller.OnHighlightErrorsChanged);
@@ -928,6 +920,13 @@ namespace SudokuRoguelike.UI
             var listFitter = EnsureComponent<ContentSizeFitter>(itemsListContent.gameObject);
             listFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             listFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            var listLayout = EnsureComponent<VerticalLayoutGroup>(itemsListContent.gameObject);
+            listLayout.childForceExpandWidth = true;
+            listLayout.childForceExpandHeight = false;
+            listLayout.childControlWidth = true;
+            listLayout.childControlHeight = false;
+            listLayout.spacing = 6f;
+            listLayout.padding = new RectOffset(0, 0, 0, 0);
 
             var itemsListScrollRect = EnsureComponent<ScrollRect>(itemsListScroll.gameObject);
             itemsListScrollRect.viewport = itemsListViewport;
@@ -941,6 +940,7 @@ namespace SudokuRoguelike.UI
             SetRect(grid.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero);
             grid.horizontalOverflow = HorizontalWrapMode.Wrap;
             grid.verticalOverflow = VerticalWrapMode.Overflow;
+            grid.gameObject.SetActive(false);
 
             var details = BuildText("ItemsDetailText", panel.transform as RectTransform, "", 15, TextAnchor.UpperLeft);
             SetRect(details.rectTransform, new Vector2(0.52f, 0.32f), new Vector2(0.94f, 0.64f), Vector2.zero, Vector2.zero);
@@ -968,7 +968,7 @@ namespace SudokuRoguelike.UI
             back.onClick.RemoveAllListeners();
             back.onClick.AddListener(controller.BackToMainMenu);
 
-            itemsController.Configure(controller, completion, grid, details, tooltip, filter, iconSlots, iconLabels);
+            itemsController.Configure(controller, completion, grid, details, tooltip, filter, iconSlots, iconLabels, itemsListContent, itemsListScrollRect);
             panel.SetActive(false);
             return panel;
         }
@@ -980,6 +980,33 @@ namespace SudokuRoguelike.UI
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(action);
             return button;
+        }
+
+        private bool TryApplyFullBackgroundSprite(Image rootImage)
+        {
+            if (rootImage == null)
+            {
+                return false;
+            }
+
+            var source = TryLoadBackgroundTextureFromResources(
+                "GeneratedIcons/main_menue",
+                "main_menue",
+                "GeneratedIcons/main_menu",
+                "main_menu");
+            if (source == null)
+            {
+                Debug.LogWarning("MainMenuBlueprintBuilder: main_menue.png not found in Resources. Menu art not applied.");
+                rootImage.sprite = null;
+                return false;
+            }
+
+            var sprite = Sprite.Create(source, new Rect(0, 0, source.width, source.height), new Vector2(0.5f, 0.5f), 100f);
+            rootImage.sprite = sprite;
+            rootImage.type = Image.Type.Simple;
+            rootImage.preserveAspect = false;
+            rootImage.color = Color.white;
+            return true;
         }
 
         private void TryApplyMainMenuButtonSlice(Button button, Vector2 cardAnchorMin, Vector2 cardAnchorMax)

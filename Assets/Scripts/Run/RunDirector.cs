@@ -30,6 +30,8 @@ namespace SudokuRoguelike.Run
         private readonly EndlessZenService _endlessZenService = new();
         private readonly SpiritTrialsService _spiritTrialsService = new();
         private readonly RunFeelService _feelService = new();
+        private readonly Dictionary<int, List<BossModifierId>> _bossModifiersByDepth = new();
+        private readonly List<(int Row, int Col)> _lastFinderHints = new();
 
         public RunState RunState { get; private set; }
         public LevelConfig CurrentLevelConfig { get; private set; }
@@ -53,6 +55,7 @@ namespace SudokuRoguelike.Run
         public int CurrentBonusPencilReward { get; private set; }
         public int CurrentBonusXp { get; private set; }
         public int RunNumber { get; private set; } = 1;
+        public IReadOnlyList<(int Row, int Col)> LastFinderHints => _lastFinderHints;
 
         public bool MilestoneClearedBoss { get; private set; }
         public BossModifierTier MilestoneClearedBossTier { get; private set; } = BossModifierTier.Tier1;
@@ -78,6 +81,7 @@ namespace SudokuRoguelike.Run
         {
             ActiveTutorialSetup = null;
             LastCompletedTutorialSetup = null;
+            _bossModifiersByDepth.Clear();
 
             if (mode != GameMode.Tutorial)
             {
@@ -258,9 +262,33 @@ namespace SudokuRoguelike.Run
                 config.MissingPercent = Math.Clamp(config.MissingPercent + 0.05f, 0.05f, 0.80f);
             }
 
+            if (nodeType == NodeType.Boss)
+            {
+                config.IsBoss = true;
+                config.Stars = Math.Max(config.Stars, 4);
+                config.BoardSize = Math.Max(config.BoardSize, 8);
+
+                if (!_bossModifiersByDepth.TryGetValue(depth, out var rolled))
+                {
+                    rolled = _bossService.RollBossChoices(RunNumber, config.Stars);
+                    _bossModifiersByDepth[depth] = rolled;
+                }
+
+                for (var i = 0; i < rolled.Count && i < 2; i++)
+                {
+                    if (!config.ActiveModifiers.Contains(rolled[i]))
+                    {
+                        config.ActiveModifiers.Add(rolled[i]);
+                    }
+                }
+            }
+
             if (RunState.CorruptedGardenPath)
             {
-                config.ActiveModifiers.Add(BossModifierId.ParityLines);
+                if (!config.ActiveModifiers.Contains(BossModifierId.ParityLines))
+                {
+                    config.ActiveModifiers.Add(BossModifierId.ParityLines);
+                }
             }
 
             var expectedHeat = Math.Max(1f, RunState.CurrentHeatScore <= 0f ? 1f : RunState.CurrentHeatScore);
@@ -664,6 +692,53 @@ namespace SudokuRoguelike.Run
             return CurrentShopOffers;
         }
 
+        public bool HasShopRerollTokenAvailable()
+        {
+            return RunState != null && RunState.RerollTokens > 0;
+        }
+
+        public int GetShopRerollGoldCostPreview()
+        {
+            if (RunState == null)
+            {
+                return 0;
+            }
+
+            return FormulaService.RerollCost(RunState.RerollsThisRun);
+        }
+
+        public bool TryRerollShopOffers(out int spentGold, out bool usedToken)
+        {
+            spentGold = 0;
+            usedToken = false;
+
+            if (RunState == null || CurrentShopOffers == null || CurrentShopOffers.Count == 0)
+            {
+                return false;
+            }
+
+            if (RunState.RerollTokens > 0)
+            {
+                RunState.RerollTokens--;
+                usedToken = true;
+            }
+            else
+            {
+                spentGold = FormulaService.RerollCost(RunState.RerollsThisRun);
+                if (RunState.CurrentGold < spentGold)
+                {
+                    return false;
+                }
+
+                RunState.CurrentGold -= spentGold;
+                RunState.RerollsThisRun++;
+            }
+
+            // Include reroll count in the shop generation input so rerolled sets diverge.
+            CurrentShopOffers = _shopService.BuildOffers(RunState.Depth, ShopPurchasesThisRun + RunState.RerollsThisRun);
+            return true;
+        }
+
         public bool TryPurchaseShopOffer(string offerId)
         {
             for (var i = 0; i < CurrentShopOffers.Count; i++)
@@ -744,6 +819,7 @@ namespace SudokuRoguelike.Run
         public bool TryUseInventoryItemAt(int inventoryIndex, int row, int col, out string message)
         {
             message = string.Empty;
+            _lastFinderHints.Clear();
 
             if (RunState == null || CurrentBoard == null)
             {
@@ -775,6 +851,11 @@ namespace SudokuRoguelike.Run
                 {
                     var matches = _itemService.UseFinder(CurrentBoard, item.Rarity, row, col);
                     used = matches.Count > 0;
+                    if (used)
+                    {
+                        _lastFinderHints.AddRange(matches);
+                    }
+
                     message = used ? $"Finder added {matches.Count} matching pencil hint(s)." : "Finder needs a selected filled value.";
                     break;
                 }

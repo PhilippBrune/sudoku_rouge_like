@@ -25,6 +25,11 @@ namespace SudokuRoguelike.UI
         private AudioClip _restLoop;
         private AudioClip _wrongSfx;
         private AudioClip _solvedSfx;
+        private AudioClip _shopPurchaseSfx;
+        private AudioClip _shopRerollSfx;
+        private AudioClip _itemUseSfx;
+        private AudioClip _rewardClaimSfx;
+        private AudioClip _pathAdvanceSfx;
 
         private Context _context = Context.Path;
 
@@ -62,6 +67,11 @@ namespace SudokuRoguelike.UI
             _restLoop = BuildRestLoop();
             _wrongSfx = BuildWrongSfx();
             _solvedSfx = BuildSolvedSfx();
+            _shopPurchaseSfx = BuildShopPurchaseSfx();
+            _shopRerollSfx = BuildShopRerollSfx();
+            _itemUseSfx = BuildItemUseSfx();
+            _rewardClaimSfx = BuildRewardClaimSfx();
+            _pathAdvanceSfx = BuildPathAdvanceSfx();
         }
 
         private void Start()
@@ -69,11 +79,17 @@ namespace SudokuRoguelike.UI
             SetContext(Context.Path);
         }
 
+        private float _nextProfileRefresh;
+
         private void Update()
         {
-            if (_save.TryLoadProfile(out var envelope))
+            if (Time.unscaledTime >= _nextProfileRefresh)
             {
-                _profile.ApplyEnvelope(envelope);
+                _nextProfileRefresh = Time.unscaledTime + 1f;
+                if (_save.TryLoadProfile(out var envelope))
+                {
+                    _profile.ApplyEnvelope(envelope);
+                }
             }
 
             var muted = _profile.Options.Audio.MuteAll;
@@ -135,6 +151,46 @@ namespace SudokuRoguelike.UI
             if (_solvedSfx != null)
             {
                 _sfxSource.PlayOneShot(_solvedSfx, 1f);
+            }
+        }
+
+        public void PlayShopPurchase()
+        {
+            if (_shopPurchaseSfx != null)
+            {
+                _sfxSource.PlayOneShot(_shopPurchaseSfx, 1f);
+            }
+        }
+
+        public void PlayShopReroll()
+        {
+            if (_shopRerollSfx != null)
+            {
+                _sfxSource.PlayOneShot(_shopRerollSfx, 1f);
+            }
+        }
+
+        public void PlayItemUse()
+        {
+            if (_itemUseSfx != null)
+            {
+                _sfxSource.PlayOneShot(_itemUseSfx, 1f);
+            }
+        }
+
+        public void PlayRewardClaim()
+        {
+            if (_rewardClaimSfx != null)
+            {
+                _sfxSource.PlayOneShot(_rewardClaimSfx, 1f);
+            }
+        }
+
+        public void PlayPathAdvance()
+        {
+            if (_pathAdvanceSfx != null)
+            {
+                _sfxSource.PlayOneShot(_pathAdvanceSfx, 1f);
             }
         }
 
@@ -269,6 +325,115 @@ namespace SudokuRoguelike.UI
             }
 
             var clip = AudioClip.Create("PuzzleSolvedSfx", sampleCount, 1, sampleRate, false);
+            clip.SetData(data, 0);
+            return clip;
+        }
+
+        private static AudioClip BuildShopPurchaseSfx()
+        {
+            const int sampleRate = 22050;
+            const float seconds = 0.25f;
+            var sampleCount = Mathf.RoundToInt(sampleRate * seconds);
+            var data = new float[sampleCount];
+
+            for (var i = 0; i < sampleCount; i++)
+            {
+                var t = i / (float)sampleRate;
+                var env = Mathf.Exp(-t * 7.5f);
+                var pingA = Mathf.Sin(2f * Mathf.PI * 660f * t) * 0.22f;
+                var pingB = Mathf.Sin(2f * Mathf.PI * 990f * t) * 0.16f;
+                data[i] = Mathf.Clamp((pingA + pingB) * env, -0.8f, 0.8f);
+            }
+
+            var clip = AudioClip.Create("ShopPurchaseSfx", sampleCount, 1, sampleRate, false);
+            clip.SetData(data, 0);
+            return clip;
+        }
+
+        private static AudioClip BuildShopRerollSfx()
+        {
+            const int sampleRate = 22050;
+            const float seconds = 0.30f;
+            var sampleCount = Mathf.RoundToInt(sampleRate * seconds);
+            var data = new float[sampleCount];
+
+            for (var i = 0; i < sampleCount; i++)
+            {
+                var t = i / (float)sampleRate;
+                var env = Mathf.Exp(-t * 6f);
+                var sweepFreq = Mathf.Lerp(340f, 860f, Mathf.Clamp01(t / seconds));
+                var sweep = Mathf.Sin(2f * Mathf.PI * sweepFreq * t) * 0.24f;
+                data[i] = Mathf.Clamp(sweep * env, -0.8f, 0.8f);
+            }
+
+            var clip = AudioClip.Create("ShopRerollSfx", sampleCount, 1, sampleRate, false);
+            clip.SetData(data, 0);
+            return clip;
+        }
+
+        private static AudioClip BuildItemUseSfx()
+        {
+            const int sampleRate = 22050;
+            const float seconds = 0.22f;
+            var sampleCount = Mathf.RoundToInt(sampleRate * seconds);
+            var data = new float[sampleCount];
+
+            for (var i = 0; i < sampleCount; i++)
+            {
+                var t = i / (float)sampleRate;
+                var env = Mathf.Exp(-t * 9f);
+                var tone = Mathf.Sin(2f * Mathf.PI * 520f * t) * 0.24f;
+                data[i] = Mathf.Clamp(tone * env, -0.8f, 0.8f);
+            }
+
+            var clip = AudioClip.Create("ItemUseSfx", sampleCount, 1, sampleRate, false);
+            clip.SetData(data, 0);
+            return clip;
+        }
+
+        private static AudioClip BuildRewardClaimSfx()
+        {
+            const int sampleRate = 22050;
+            const float seconds = 0.32f;
+            var sampleCount = Mathf.RoundToInt(sampleRate * seconds);
+            var data = new float[sampleCount];
+            var notes = new[] { 523.25f, 659.25f, 783.99f };
+
+            for (var i = 0; i < sampleCount; i++)
+            {
+                var t = i / (float)sampleRate;
+                var env = Mathf.Exp(-t * 4.4f);
+                var signal = 0f;
+                for (var n = 0; n < notes.Length; n++)
+                {
+                    signal += Mathf.Sin(2f * Mathf.PI * notes[n] * t) * (0.16f - (n * 0.025f));
+                }
+
+                data[i] = Mathf.Clamp(signal * env, -0.8f, 0.8f);
+            }
+
+            var clip = AudioClip.Create("RewardClaimSfx", sampleCount, 1, sampleRate, false);
+            clip.SetData(data, 0);
+            return clip;
+        }
+
+        private static AudioClip BuildPathAdvanceSfx()
+        {
+            const int sampleRate = 22050;
+            const float seconds = 0.20f;
+            var sampleCount = Mathf.RoundToInt(sampleRate * seconds);
+            var data = new float[sampleCount];
+
+            for (var i = 0; i < sampleCount; i++)
+            {
+                var t = i / (float)sampleRate;
+                var env = Mathf.Exp(-t * 10f);
+                var pop = Mathf.Sin(2f * Mathf.PI * 420f * t) * 0.20f;
+                var click = Mathf.Sign(Mathf.Sin(2f * Mathf.PI * 48f * t)) * 0.06f;
+                data[i] = Mathf.Clamp((pop + click) * env, -0.8f, 0.8f);
+            }
+
+            var clip = AudioClip.Create("PathAdvanceSfx", sampleCount, 1, sampleRate, false);
             clip.SetData(data, 0);
             return clip;
         }

@@ -17,6 +17,8 @@ namespace SudokuRoguelike.UI
         [SerializeField] private Text filterText;
         [SerializeField] private Image[] iconSlots;
         [SerializeField] private Text[] iconSlotLabels;
+        [SerializeField] private RectTransform listContentRoot;
+        [SerializeField] private ScrollRect listScrollRect;
 
         private readonly SaveFileService _save = new();
         private readonly ProfileService _profile = new();
@@ -27,7 +29,7 @@ namespace SudokuRoguelike.UI
         private readonly Dictionary<string, Sprite> _spriteCache = new();
         private Sprite _fallbackSprite;
 
-        public void Configure(MainMenuController controller, Text completion, Text grid, Text detail, Text tooltip, Text filter, Image[] icons = null, Text[] iconLabels = null)
+        public void Configure(MainMenuController controller, Text completion, Text grid, Text detail, Text tooltip, Text filter, Image[] icons = null, Text[] iconLabels = null, RectTransform listContent = null, ScrollRect listScroll = null)
         {
             mainMenuController = controller;
             completionText = completion;
@@ -43,6 +45,16 @@ namespace SudokuRoguelike.UI
             if (iconLabels != null)
             {
                 iconSlotLabels = iconLabels;
+            }
+
+            if (listContent != null)
+            {
+                listContentRoot = listContent;
+            }
+
+            if (listScroll != null)
+            {
+                listScrollRect = listScroll;
             }
 
             RefreshView();
@@ -91,13 +103,16 @@ namespace SudokuRoguelike.UI
 
             if (gridText != null)
             {
-                gridText.text = BuildGridText(filtered);
+                // Keep the legacy text field as a lightweight fallback when no interactive list root exists.
+                gridText.text = listContentRoot == null ? BuildGridText(filtered) : string.Empty;
             }
 
             if (detailText != null)
             {
                 detailText.text = BuildDetailText(filtered);
             }
+
+            RebuildInteractiveList(filtered);
 
             RefreshIconGrid(filtered);
 
@@ -264,6 +279,68 @@ namespace SudokuRoguelike.UI
             if (string.Equals(rarity, "Rare", StringComparison.OrdinalIgnoreCase)) return 3;
             if (string.Equals(rarity, "Common", StringComparison.OrdinalIgnoreCase)) return 2;
             return 1;
+        }
+
+        private void RebuildInteractiveList(List<ItemCodexEntry> filtered)
+        {
+            if (listContentRoot == null)
+            {
+                return;
+            }
+
+            for (var i = listContentRoot.childCount - 1; i >= 0; i--)
+            {
+                var child = listContentRoot.GetChild(i);
+                if (child != null && child.name.StartsWith("ItemRow_", StringComparison.Ordinal))
+                {
+                    Destroy(child.gameObject);
+                }
+            }
+
+            for (var i = 0; i < filtered.Count; i++)
+            {
+                var entry = filtered[i];
+                var row = new GameObject($"ItemRow_{i}", typeof(RectTransform), typeof(Image), typeof(Button));
+                row.transform.SetParent(listContentRoot, false);
+
+                var image = row.GetComponent<Image>();
+                var selected = i == _selectedIndex;
+                image.color = selected ? new Color(0.27f, 0.36f, 0.43f, 0.94f) : new Color(0.12f, 0.14f, 0.18f, 0.85f);
+
+                var rect = row.GetComponent<RectTransform>();
+                rect.anchorMin = new Vector2(0f, 1f);
+                rect.anchorMax = new Vector2(1f, 1f);
+                rect.pivot = new Vector2(0.5f, 1f);
+                rect.sizeDelta = new Vector2(0f, 42f);
+
+                var button = row.GetComponent<Button>();
+                var captured = i;
+                button.onClick.AddListener(() =>
+                {
+                    _selectedIndex = captured;
+                    RefreshView();
+                });
+
+                var label = new GameObject("Label", typeof(RectTransform), typeof(Text)).GetComponent<Text>();
+                label.transform.SetParent(row.transform, false);
+                label.rectTransform.anchorMin = new Vector2(0.03f, 0.08f);
+                label.rectTransform.anchorMax = new Vector2(0.97f, 0.92f);
+                label.rectTransform.offsetMin = Vector2.zero;
+                label.rectTransform.offsetMax = Vector2.zero;
+                label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+                label.fontSize = 13;
+                label.alignment = TextAnchor.MiddleLeft;
+                label.color = Color.white;
+
+                var state = entry.Mastered ? "[M]" : entry.Discovered ? "[D]" : "[?]";
+                var name = entry.Discovered ? entry.Name : "???";
+                label.text = $"{state} {name}   [{entry.RarityTier}]";
+            }
+
+            if (listScrollRect != null)
+            {
+                listScrollRect.verticalNormalizedPosition = Mathf.Clamp01(listScrollRect.verticalNormalizedPosition);
+            }
         }
 
         private void RefreshIconGrid(List<ItemCodexEntry> filtered)

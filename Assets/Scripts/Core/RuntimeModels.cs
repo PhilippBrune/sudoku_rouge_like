@@ -54,6 +54,10 @@ namespace SudokuRoguelike.Core
         public int MutationNodesRemaining;
         public AdaptationMutationType ActiveMutation = AdaptationMutationType.None;
         public bool RiskyRebuildUsed;
+        public int PreBossPuzzlesCompleted;
+
+        public BossModifierId? ChosenBossModifier;
+        public readonly HashSet<BossModifierId> SeenBossModifiers = new();
 
         public readonly List<CurseType> ActiveCurses = new();
         public readonly List<float> HeatHistory = new();
@@ -73,6 +77,7 @@ namespace SudokuRoguelike.Core
         public StressVariant StressVariant;
         public float ExpectedHeat;
         public float VarianceBand;
+        public int RegionVariant;
         public readonly List<BossModifierId> ActiveModifiers = new();
     }
 
@@ -219,8 +224,10 @@ namespace SudokuRoguelike.Core
     {
         public int BoardSize = 5;
         public int Stars = 1;
+        public int RegionVariant;
         public List<BossModifierId> SelectedModifiers = new();
         public TutorialResourceMode ResourceMode = TutorialResourceMode.Simulation;
+        public ClassId SimulationClassId = ClassId.NumberFreak;
     }
 
     [Serializable]

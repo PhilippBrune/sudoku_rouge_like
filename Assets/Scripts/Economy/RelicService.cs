@@ -19,23 +19,38 @@ namespace SudokuRoguelike.Economy
 
         public void ApplyRunRelicEffects(RunState runState)
         {
-            for (var i = 0; i < runState.RelicIds.Count; i++)
+            if (runState.RelicIds.Count == 0) return;
+            ApplySingleRelicEffect(runState, runState.RelicIds[runState.RelicIds.Count - 1]);
+        }
+
+        public void ApplySingleRelicEffect(RunState runState, string relic)
+        {
+            if (relic.Contains("hp"))
             {
-                var relic = runState.RelicIds[i];
-                if (relic.Contains("hp"))
-                {
-                    runState.MaxHP += 1;
-                    runState.CurrentHP += 1;
-                }
-                else if (relic.Contains("gold"))
-                {
-                    runState.CurrentGold += 5;
-                }
-                else if (relic.Contains("pencil"))
-                {
-                    runState.CurrentPencil += 2;
-                    runState.MaxPencil += 2;
-                }
+                runState.MaxHP += 1;
+                runState.CurrentHP += 1;
+            }
+            else if (relic.Contains("gold"))
+            {
+                runState.CurrentGold += 5;
+            }
+            else if (relic.Contains("pencil"))
+            {
+                runState.CurrentPencil += 2;
+                runState.MaxPencil += 2;
+            }
+            else if (relic.Contains("sur"))
+            {
+                runState.MistakeShieldCharges += 1;
+            }
+            else if (relic.Contains("util"))
+            {
+                runState.MaxHP += 1;
+                runState.CurrentGold += 3;
+            }
+            else if (relic.Contains("chaos"))
+            {
+                runState.CurrentGold += 8;
             }
         }
 

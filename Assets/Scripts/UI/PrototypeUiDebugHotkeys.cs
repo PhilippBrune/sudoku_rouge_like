@@ -51,6 +51,7 @@ namespace SudokuRoguelike.UI
             if (WasPathAPressed()) ChoosePathCalm();
             if (WasPathBPressed()) ChoosePathRisky();
             if (WasQuitAndSavePressed()) QuitAndSave();
+            if (WasAutoSolvePressed()) DebugAutoSolve();
         }
 
         private static bool WasOpenEventPressed()
@@ -79,27 +80,27 @@ namespace SudokuRoguelike.UI
                 return false;
             }
 
-            return Keyboard.current.nKey.wasPressedThisFrame || Keyboard.current.rightArrowKey.wasPressedThisFrame;
+            return Keyboard.current.nKey.wasPressedThisFrame;
 #else
-            return Input.GetKeyDown(KeyCode.N) || Input.GetKeyDown(KeyCode.RightArrow);
+            return Input.GetKeyDown(KeyCode.N);
 #endif
         }
 
     private static bool WasPathAPressed()
     {
 #if ENABLE_INPUT_SYSTEM
-        return Keyboard.current != null && Keyboard.current.aKey.wasPressedThisFrame;
+        return Keyboard.current != null && Keyboard.current.f1Key.wasPressedThisFrame;
 #else
-        return Input.GetKeyDown(KeyCode.A);
+        return Input.GetKeyDown(KeyCode.F1);
 #endif
     }
 
     private static bool WasPathBPressed()
     {
 #if ENABLE_INPUT_SYSTEM
-        return Keyboard.current != null && Keyboard.current.bKey.wasPressedThisFrame;
+        return Keyboard.current != null && Keyboard.current.f2Key.wasPressedThisFrame;
 #else
-        return Input.GetKeyDown(KeyCode.B);
+        return Input.GetKeyDown(KeyCode.F2);
 #endif
     }
 
@@ -111,6 +112,15 @@ namespace SudokuRoguelike.UI
         return Input.GetKeyDown(KeyCode.Q);
 #endif
     }
+
+        private static bool WasAutoSolvePressed()
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Keyboard.current != null && Keyboard.current.pKey.wasPressedThisFrame;
+#else
+            return Input.GetKeyDown(KeyCode.P);
+#endif
+        }
 
         public void OpenEventPanel()
         {
@@ -220,6 +230,31 @@ namespace SudokuRoguelike.UI
             }
 
             Debug.LogWarning("Debug UI: Quit & Save could not load menu scene. Add MainMenu to build settings or set mainMenuSceneName.");
+        }
+
+        private void DebugAutoSolve()
+        {
+            EnsureBindings();
+            var board = runMapController?.Run?.CurrentBoard;
+            if (board == null)
+            {
+                Debug.LogWarning("Debug UI: No active puzzle to auto-solve.");
+                return;
+            }
+
+            var size = board.Size;
+            for (var r = 0; r < size; r++)
+            {
+                for (var c = 0; c < size; c++)
+                {
+                    if (!board.IsGiven(r, c) && board.IsEmpty(r, c))
+                    {
+                        runMapController.Run.PlaceNumber(r, c, board.Solution[r, c]);
+                    }
+                }
+            }
+
+            Debug.Log("Debug UI: Auto-solved current puzzle.");
         }
 
         private static void EnsureEventSystem()

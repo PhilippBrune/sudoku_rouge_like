@@ -38,6 +38,8 @@ namespace SudokuRoguelike.Run
         public LevelState CurrentLevelState { get; private set; }
         public SudokuBoard CurrentBoard { get; private set; }
         public PuzzleAnalysis CurrentPuzzleAnalysis { get; private set; }
+        public ModifierOverlayData CurrentOverlayData { get; private set; }
+        public SudokuConstraintEngine CurrentConstraintEngine { get; private set; }
         public RunFeelState FeelState => _feelService.State;
         public List<RunNode> CurrentRunGraph { get; private set; } = new();
         public List<ShopOffer> CurrentShopOffers { get; private set; } = new();
@@ -157,6 +159,22 @@ namespace SudokuRoguelike.Run
             RefreshRunBuildIdentity();
         }
 
+        public void AdvanceToNextGarden()
+        {
+            RunNumber++;
+            RunState.Depth++;
+            RunState.CurrentNodeIndex = 0;
+            RunState.PreBossPuzzlesCompleted = 0;
+            CurrentRunGraph = _runGraphService.BuildRunGraph(RunNumber);
+            RunState.NodePath.Clear();
+            for (var i = 0; i < CurrentRunGraph.Count; i++)
+            {
+                RunState.NodePath.Add(CurrentRunGraph[i]);
+            }
+
+            RefreshRunBuildIdentity();
+        }
+
         public void StartLevel(LevelConfig config)
         {
             CurrentLevelConfig = config;
@@ -169,18 +187,33 @@ namespace SudokuRoguelike.Run
                 TargetTier = ResolveTargetDifficultyTier(config),
                 AllowBruteForceOnly = config.IsBoss && config.ActiveModifiers.Count >= 2,
                 Seed = _random.Next(),
+                RegionVariant = config.RegionVariant,
                 ActiveModifiers = new List<BossModifierId>(config.ActiveModifiers)
             });
 
             if (!generation.Success || generation.Board == null)
             {
-                CurrentBoard = SudokuGenerator.CreatePuzzle(config.BoardSize, config.MissingPercent, _random.Next());
+                CurrentBoard = SudokuGenerator.CreatePuzzle(config.BoardSize, config.MissingPercent, _random.Next(), config.RegionVariant);
                 CurrentPuzzleAnalysis = SudokuLogicalAnalyzer.Analyze(CurrentBoard, config.ActiveModifiers, allowBruteForce: false);
             }
             else
             {
                 CurrentBoard = generation.Board;
                 CurrentPuzzleAnalysis = generation.Analysis;
+            }
+
+            if (config.ActiveModifiers.Count > 0)
+            {
+                CurrentOverlayData = ModifierGeometryGenerator.Generate(
+                    CurrentBoard, config.ActiveModifiers, _random.Next());
+                var rules = ModifierFactory.BuildRules(config.ActiveModifiers, CurrentOverlayData);
+                CurrentConstraintEngine = new SudokuConstraintEngine();
+                CurrentConstraintEngine.SetRulesDeterministic(rules);
+            }
+            else
+            {
+                CurrentOverlayData = null;
+                CurrentConstraintEngine = null;
             }
 
             UpdateCurrentHeatScore();
@@ -206,6 +239,14 @@ namespace SudokuRoguelike.Run
                 RunState.MaxPencil = int.MaxValue;
                 RunState.CurrentPencil = int.MaxValue;
             }
+            else if (tutorialSetup.ResourceMode == TutorialResourceMode.ClassBased)
+            {
+                var snap = Classes.ClassCatalog.Build(tutorialSetup.SimulationClassId);
+                RunState.MaxHP = snap.HP;
+                RunState.CurrentHP = snap.HP;
+                RunState.MaxPencil = snap.Pencil;
+                RunState.CurrentPencil = snap.Pencil;
+            }
             else
             {
                 RunState.MaxHP = 10;
@@ -224,7 +265,7 @@ namespace SudokuRoguelike.Run
             {
                 if (RunState.Mode == GameMode.EndlessZen)
                 {
-                    return _endlessZenService.BuildLevel(depth);
+                    return _endlessZenService.BuildLevel(depth, RunState.Seed);
                 }
 
                 if (RunState.Mode == GameMode.SpiritTrials)
@@ -252,7 +293,8 @@ namespace SudokuRoguelike.Run
                 Stars = stars,
                 BoardSize = boardSize,
                 MissingPercent = missing,
-                IsBoss = false
+                IsBoss = false,
+                RegionVariant = _random.Next(3)
             };
 
             if (nodeType == NodeType.ElitePuzzle)
@@ -274,11 +316,21 @@ namespace SudokuRoguelike.Run
                     _bossModifiersByDepth[depth] = rolled;
                 }
 
-                for (var i = 0; i < rolled.Count && i < 2; i++)
+                if (RunState.ChosenBossModifier.HasValue)
                 {
-                    if (!config.ActiveModifiers.Contains(rolled[i]))
+                    if (!config.ActiveModifiers.Contains(RunState.ChosenBossModifier.Value))
                     {
-                        config.ActiveModifiers.Add(rolled[i]);
+                        config.ActiveModifiers.Add(RunState.ChosenBossModifier.Value);
+                    }
+                }
+                else
+                {
+                    for (var i = 0; i < rolled.Count && i < 2; i++)
+                    {
+                        if (!config.ActiveModifiers.Contains(rolled[i]))
+                        {
+                            config.ActiveModifiers.Add(rolled[i]);
+                        }
                     }
                 }
             }
@@ -335,9 +387,16 @@ namespace SudokuRoguelike.Run
 
                 UpdateCurrentHeatScore();
 
+                if (CurrentOverlayData != null && CurrentOverlayData.FogCells.Count > 0)
+                {
+                    ModifierGeometryGenerator.RevealAdjacentFog(
+                        CurrentOverlayData, row, col, CurrentBoard.Size);
+                }
+
                 if (CurrentBoard.IsComplete())
                 {
                     CurrentLevelState.PuzzleComplete = true;
+                    CurrentOverlayData?.FogCells.Clear();
                 }
 
                 return true;
@@ -472,6 +531,18 @@ namespace SudokuRoguelike.Run
             }
         }
 
+        public void PickRolledSlotReplacingIndex(List<ItemRollSlot> slots, int slotIndex, int replaceIndex)
+        {
+            if (slotIndex < 0 || slotIndex >= slots.Count) return;
+            var slot = slots[slotIndex];
+            if (slot.IsNothing || slot.RolledItem == null) return;
+            if (replaceIndex >= 0 && replaceIndex < RunState.Inventory.Count)
+            {
+                RunState.Inventory[replaceIndex] = slot.RolledItem;
+            }
+            slot.IsLocked = true;
+        }
+
         public void CompleteLevelAndGrantRewards()
         {
             MarkSolvedBoard(CurrentLevelConfig.BoardSize, CurrentLevelConfig.Stars);
@@ -493,6 +564,26 @@ namespace SudokuRoguelike.Run
                         : BuildSetupFromCurrentLevel();
                 }
 
+                RunState.Depth++;
+                return;
+            }
+
+            if (RunState.Mode == GameMode.EndlessZen)
+            {
+                var zenGold = (int)Math.Round(5 * RunState.GlobalGoldMultiplier);
+                RunState.CurrentGold += Math.Max(0, zenGold);
+                RunState.CurrentXP += FormulaService.CalculateXp(CurrentLevelConfig.Difficulty, CurrentLevelConfig.Stars);
+                RunState.CurrentPencil += 1;
+                RunState.Depth++;
+                UpdateCurrentHeatScore();
+                RunState.HeatHistory.Add(RunState.CurrentHeatScore);
+                return;
+            }
+
+            if (RunState.Mode == GameMode.SpiritTrials)
+            {
+                RunState.CurrentXP += FormulaService.CalculateXp(CurrentLevelConfig.Difficulty, CurrentLevelConfig.Stars);
+                RunState.CurrentPencil += 1;
                 RunState.Depth++;
                 return;
             }
@@ -1424,6 +1515,19 @@ namespace SudokuRoguelike.Run
         public List<BossModifierId> RollBossModifierChoices(int runNumber)
         {
             return _bossService.RollBossChoices(runNumber, CurrentLevelConfig.Stars);
+        }
+
+        public List<BossModifierId> GetBossChoicesForDepth(int depth)
+        {
+            if (_bossModifiersByDepth.TryGetValue(depth, out var choices))
+            {
+                return choices;
+            }
+
+            var stars = CurrentLevelConfig?.Stars ?? 3;
+            var rolled = _bossService.RollBossChoices(RunNumber, stars);
+            _bossModifiersByDepth[depth] = rolled;
+            return rolled;
         }
 
         public List<BossPhase> BuildFinalBoss()

@@ -95,7 +95,8 @@ namespace SudokuRoguelike.Tutorial
                 BoardSize = setup.BoardSize,
                 Stars = setup.Stars,
                 MissingPercent = StarDensityService.MissingPercentForStars(setup.Stars),
-                IsBoss = setup.SelectedModifiers.Count > 0
+                IsBoss = setup.SelectedModifiers.Count > 0,
+                RegionVariant = setup.RegionVariant
             };
 
             for (var i = 0; i < setup.SelectedModifiers.Count; i++)

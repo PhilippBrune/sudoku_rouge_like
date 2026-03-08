@@ -66,7 +66,8 @@ namespace SudokuRoguelike.UI
             var rootImage = EnsureOrGetImage(root.gameObject, backgroundColor);
             rootImage.type = Image.Type.Simple;
             rootImage.preserveAspect = false;
-            var pngApplied = TryApplyFullBackgroundSprite(rootImage);
+            rootImage.sprite = null;
+            var pngApplied = false;
 
             var menuMusic = EnsureComponent<MenuMusicController>(root.gameObject);
             var audioSource = EnsureComponent<AudioSource>(root.gameObject);
@@ -100,34 +101,28 @@ namespace SudokuRoguelike.UI
             }
 
             var card = EnsureRect("MenuCard", root, new Vector2(0.33f, 0.08f), new Vector2(0.67f, 0.90f), Vector2.zero, Vector2.zero);
-            EnsureOrGetImage(card.gameObject, panelColor);
-            TryApplyMainMenuCardSlice(card);
+            var cardImage = EnsureOrGetImage(card.gameObject, panelColor);
+            pngApplied = TryApplyFullBackgroundSprite(cardImage);
 
-            var title = BuildText("Title", card, "Run of the Nine", 56, TextAnchor.UpperCenter);
-            SetRect(title.rectTransform, new Vector2(0.02f, 0.86f), new Vector2(0.98f, 0.98f), Vector2.zero, Vector2.zero);
+            var btnStart = BuildMenuButton(card, "BtnStart", "Start Game", new Vector2(0.08f, 0.686f), new Vector2(0.92f, 0.726f), mainMenuController.StartGame);
+            var btnResume = BuildMenuButton(card, "BtnResume", "Resume Game", new Vector2(0.08f, 0.634f), new Vector2(0.92f, 0.674f), mainMenuController.ResumeGame);
+            var btnTutorial = BuildMenuButton(card, "BtnTutorial", "Tutorial", new Vector2(0.08f, 0.579f), new Vector2(0.92f, 0.619f), mainMenuController.OpenTutorial);
+            var btnMeta = BuildMenuButton(card, "BtnMeta", "Meta Progression", new Vector2(0.08f, 0.527f), new Vector2(0.92f, 0.567f), mainMenuController.OpenMetaProgression);
+            var btnModes = BuildMenuButton(card, "BtnModes", "Game Modes", new Vector2(0.08f, 0.478f), new Vector2(0.92f, 0.518f), mainMenuController.OpenGameModes);
+            var btnItems = BuildMenuButton(card, "BtnItems", "Items", new Vector2(0.08f, 0.428f), new Vector2(0.92f, 0.468f), mainMenuController.OpenItems);
+            var btnOptions = BuildMenuButton(card, "BtnOptions", "Options", new Vector2(0.08f, 0.379f), new Vector2(0.92f, 0.419f), mainMenuController.OpenOptions);
+            var btnCredits = BuildMenuButton(card, "BtnCredits", "Credits", new Vector2(0.08f, 0.329f), new Vector2(0.92f, 0.369f), mainMenuController.OpenCredits);
+            var btnQuit = BuildMenuButton(card, "BtnQuit", "Quit", new Vector2(0.08f, 0.280f), new Vector2(0.92f, 0.320f), mainMenuController.ExitGame);
 
-            var subtitle = BuildText("Subtitle", card, "Sudoku Roguelike", 18, TextAnchor.MiddleCenter);
-            SetRect(subtitle.rectTransform, new Vector2(0.08f, 0.80f), new Vector2(0.92f, 0.86f), Vector2.zero, Vector2.zero);
-
-            var btnStart = BuildMenuButton(card, "BtnStart", "Start Game", new Vector2(0.08f, 0.67f), new Vector2(0.92f, 0.735f), mainMenuController.StartGame);
-            var btnResume = BuildMenuButton(card, "BtnResume", "Resume Game", new Vector2(0.08f, 0.595f), new Vector2(0.92f, 0.66f), mainMenuController.ResumeGame);
-            var btnTutorial = BuildMenuButton(card, "BtnTutorial", "Tutorial", new Vector2(0.08f, 0.52f), new Vector2(0.92f, 0.585f), mainMenuController.OpenTutorial);
-            var btnMeta = BuildMenuButton(card, "BtnMeta", "Meta Progression", new Vector2(0.08f, 0.445f), new Vector2(0.92f, 0.51f), mainMenuController.OpenMetaProgression);
-            var btnModes = BuildMenuButton(card, "BtnModes", "Game Modes", new Vector2(0.08f, 0.37f), new Vector2(0.92f, 0.435f), mainMenuController.OpenGameModes);
-            var btnItems = BuildMenuButton(card, "BtnItems", "Items", new Vector2(0.08f, 0.295f), new Vector2(0.92f, 0.36f), mainMenuController.OpenItems);
-            var btnOptions = BuildMenuButton(card, "BtnOptions", "Options", new Vector2(0.08f, 0.22f), new Vector2(0.92f, 0.285f), mainMenuController.OpenOptions);
-            var btnCredits = BuildMenuButton(card, "BtnCredits", "Credits", new Vector2(0.08f, 0.145f), new Vector2(0.92f, 0.21f), mainMenuController.OpenCredits);
-            var btnQuit = BuildMenuButton(card, "BtnQuit", "Quit", new Vector2(0.08f, 0.07f), new Vector2(0.92f, 0.135f), mainMenuController.ExitGame);
-
-            TryApplyMainMenuButtonSlice(btnStart, new Vector2(0.08f, 0.67f), new Vector2(0.92f, 0.735f));
-            TryApplyMainMenuButtonSlice(btnResume, new Vector2(0.08f, 0.595f), new Vector2(0.92f, 0.66f));
-            TryApplyMainMenuButtonSlice(btnTutorial, new Vector2(0.08f, 0.52f), new Vector2(0.92f, 0.585f));
-            TryApplyMainMenuButtonSlice(btnMeta, new Vector2(0.08f, 0.445f), new Vector2(0.92f, 0.51f));
-            TryApplyMainMenuButtonSlice(btnModes, new Vector2(0.08f, 0.37f), new Vector2(0.92f, 0.435f));
-            TryApplyMainMenuButtonSlice(btnItems, new Vector2(0.08f, 0.295f), new Vector2(0.92f, 0.36f));
-            TryApplyMainMenuButtonSlice(btnOptions, new Vector2(0.08f, 0.22f), new Vector2(0.92f, 0.285f));
-            TryApplyMainMenuButtonSlice(btnCredits, new Vector2(0.08f, 0.145f), new Vector2(0.92f, 0.21f));
-            TryApplyMainMenuButtonSlice(btnQuit, new Vector2(0.08f, 0.07f), new Vector2(0.92f, 0.135f));
+            TryApplyMainMenuButtonSlice(btnStart, new Vector2(0.08f, 0.686f), new Vector2(0.92f, 0.726f));
+            TryApplyMainMenuButtonSlice(btnResume, new Vector2(0.08f, 0.634f), new Vector2(0.92f, 0.674f));
+            TryApplyMainMenuButtonSlice(btnTutorial, new Vector2(0.08f, 0.579f), new Vector2(0.92f, 0.619f));
+            TryApplyMainMenuButtonSlice(btnMeta, new Vector2(0.08f, 0.527f), new Vector2(0.92f, 0.567f));
+            TryApplyMainMenuButtonSlice(btnModes, new Vector2(0.08f, 0.478f), new Vector2(0.92f, 0.518f));
+            TryApplyMainMenuButtonSlice(btnItems, new Vector2(0.08f, 0.428f), new Vector2(0.92f, 0.468f));
+            TryApplyMainMenuButtonSlice(btnOptions, new Vector2(0.08f, 0.379f), new Vector2(0.92f, 0.419f));
+            TryApplyMainMenuButtonSlice(btnCredits, new Vector2(0.08f, 0.329f), new Vector2(0.92f, 0.369f));
+            TryApplyMainMenuButtonSlice(btnQuit, new Vector2(0.08f, 0.280f), new Vector2(0.92f, 0.320f));
 
             ApplyMenuButtonIcon(btnStart, "GeneratedIcons/icon_bud");
             ApplyMenuButtonIcon(btnResume, "GeneratedIcons/icon_scroll_graph");
@@ -227,8 +222,12 @@ namespace SudokuRoguelike.UI
             var title = BuildText("ClassSelectTitle", panel.transform as RectTransform, "Select Class", 30, TextAnchor.UpperCenter);
             SetRect(title.rectTransform, new Vector2(0.08f, 0.88f), new Vector2(0.92f, 0.97f), Vector2.zero, Vector2.zero);
 
-            selectedClassText = BuildText("ClassSelectCurrentText", panel.transform as RectTransform, "Selected Class: NumberFreak", 18, TextAnchor.MiddleCenter);
-            SetRect(selectedClassText.rectTransform, new Vector2(0.10f, 0.78f), new Vector2(0.90f, 0.85f), Vector2.zero, Vector2.zero);
+            selectedClassText = BuildText("ClassSelectCurrentText", panel.transform as RectTransform, "Selected Class: NumberFreak", 13, TextAnchor.UpperLeft);
+            SetRect(selectedClassText.rectTransform, new Vector2(0.04f, 0.20f), new Vector2(0.48f, 0.42f), Vector2.zero, Vector2.zero);
+
+            var unlockTableText = BuildText("ClassUnlockTableText", panel.transform as RectTransform, "", 11, TextAnchor.UpperLeft);
+            SetRect(unlockTableText.rectTransform, new Vector2(0.52f, 0.20f), new Vector2(0.96f, 0.42f), Vector2.zero, Vector2.zero);
+            controller.SetClassUnlockTableText(unlockTableText);
 
             var btnNF = BuildButton("BtnStartClassNumberFreak", panel.transform as RectTransform, "Number Freak", 16);
             SetRect(btnNF.GetComponent<RectTransform>(), new Vector2(0.10f, 0.66f), new Vector2(0.46f, 0.74f), Vector2.zero, Vector2.zero);
@@ -336,12 +335,12 @@ namespace SudokuRoguelike.UI
             musicStyle.onValueChanged.AddListener(controller.OnMenuMusicStyleChanged);
 
             var displayTitle = BuildText("DisplaySectionTitle", panel.transform as RectTransform, "Display", 20, TextAnchor.MiddleLeft);
-            SetRect(displayTitle.rectTransform, new Vector2(0.10f, 0.41f), new Vector2(0.90f, 0.47f), Vector2.zero, Vector2.zero);
+            SetRect(displayTitle.rectTransform, new Vector2(0.10f, 0.36f), new Vector2(0.90f, 0.42f), Vector2.zero, Vector2.zero);
 
             var languageLabel = BuildText("LanguageLabel", panel.transform as RectTransform, "Language", 18, TextAnchor.MiddleLeft);
-            SetRect(languageLabel.rectTransform, new Vector2(0.10f, 0.35f), new Vector2(0.44f, 0.40f), Vector2.zero, Vector2.zero);
+            SetRect(languageLabel.rectTransform, new Vector2(0.10f, 0.30f), new Vector2(0.44f, 0.35f), Vector2.zero, Vector2.zero);
             var language = BuildDropdown("LanguageDropdown", panel.transform as RectTransform);
-            SetRect(language.GetComponent<RectTransform>(), new Vector2(0.44f, 0.35f), new Vector2(0.90f, 0.40f), Vector2.zero, Vector2.zero);
+            SetRect(language.GetComponent<RectTransform>(), new Vector2(0.44f, 0.30f), new Vector2(0.90f, 0.35f), Vector2.zero, Vector2.zero);
             language.ClearOptions();
             language.AddOptions(new System.Collections.Generic.List<string> { "English", "German" });
             language.SetValueWithoutNotify(optionsController.Options.Language == SudokuRoguelike.Core.LanguageOption.German ? 1 : 0);
@@ -349,9 +348,9 @@ namespace SudokuRoguelike.UI
             language.onValueChanged.AddListener(controller.OnLanguageChanged);
 
             var resolutionLabel = BuildText("ResolutionLabel", panel.transform as RectTransform, "Resolution", 18, TextAnchor.MiddleLeft);
-            SetRect(resolutionLabel.rectTransform, new Vector2(0.10f, 0.29f), new Vector2(0.44f, 0.34f), Vector2.zero, Vector2.zero);
+            SetRect(resolutionLabel.rectTransform, new Vector2(0.10f, 0.24f), new Vector2(0.44f, 0.29f), Vector2.zero, Vector2.zero);
             var resolution = BuildDropdown("ResolutionDropdown", panel.transform as RectTransform);
-            SetRect(resolution.GetComponent<RectTransform>(), new Vector2(0.44f, 0.29f), new Vector2(0.90f, 0.34f), Vector2.zero, Vector2.zero);
+            SetRect(resolution.GetComponent<RectTransform>(), new Vector2(0.44f, 0.24f), new Vector2(0.90f, 0.29f), Vector2.zero, Vector2.zero);
             resolution.ClearOptions();
             resolution.AddOptions(new System.Collections.Generic.List<string> { "1280x720 Windowed", "1600x900 Windowed", "1920x1080 Fullscreen", "2560x1440 Fullscreen" });
             resolution.SetValueWithoutNotify(2);
@@ -359,10 +358,10 @@ namespace SudokuRoguelike.UI
             resolution.onValueChanged.AddListener(controller.OnResolutionChanged);
 
             var accessibilityTitle = BuildText("AccessibilitySectionTitle", panel.transform as RectTransform, "Accessibility", 20, TextAnchor.MiddleLeft);
-            SetRect(accessibilityTitle.rectTransform, new Vector2(0.10f, 0.22f), new Vector2(0.90f, 0.28f), Vector2.zero, Vector2.zero);
+            SetRect(accessibilityTitle.rectTransform, new Vector2(0.10f, 0.17f), new Vector2(0.90f, 0.23f), Vector2.zero, Vector2.zero);
 
             var highlightErrors = BuildToggle("HighlightErrorsToggle", panel.transform as RectTransform, "Highlight Errors");
-            SetRect(highlightErrors.GetComponent<RectTransform>(), new Vector2(0.10f, 0.15f), new Vector2(0.90f, 0.20f), Vector2.zero, Vector2.zero);
+            SetRect(highlightErrors.GetComponent<RectTransform>(), new Vector2(0.10f, 0.11f), new Vector2(0.90f, 0.16f), Vector2.zero, Vector2.zero);
             highlightErrors.SetIsOnWithoutNotify(optionsController.Options.Gameplay.HighlightConflicts);
             highlightErrors.onValueChanged.RemoveAllListeners();
             highlightErrors.onValueChanged.AddListener(controller.OnHighlightErrorsChanged);
@@ -546,10 +545,15 @@ namespace SudokuRoguelike.UI
             var resourceDropdown = BuildDropdown("ResourceModeDropdown", panel.transform as RectTransform);
             SetRect(resourceDropdown.GetComponent<RectTransform>(), new Vector2(0.34f, 0.66f), new Vector2(0.88f, 0.71f), Vector2.zero, Vector2.zero);
 
-            var modifiersTitle = BuildText("ModifiersTitle", panel.transform as RectTransform, "Boss Mechanics (0-2)", 18, TextAnchor.MiddleLeft);
-            SetRect(modifiersTitle.rectTransform, new Vector2(0.08f, 0.58f), new Vector2(0.92f, 0.64f), Vector2.zero, Vector2.zero);
+            var regionLabel = BuildText("RegionLayoutLabel", panel.transform as RectTransform, "Region Layout", 18, TextAnchor.MiddleLeft);
+            SetRect(regionLabel.rectTransform, new Vector2(0.08f, 0.59f), new Vector2(0.32f, 0.64f), Vector2.zero, Vector2.zero);
+            var regionDropdown = BuildDropdown("RegionLayoutDropdown", panel.transform as RectTransform);
+            SetRect(regionDropdown.GetComponent<RectTransform>(), new Vector2(0.34f, 0.59f), new Vector2(0.88f, 0.64f), Vector2.zero, Vector2.zero);
 
-            var modRoot = EnsureRect("ModifierToggles", panel.transform as RectTransform, new Vector2(0.08f, 0.26f), new Vector2(0.92f, 0.58f), Vector2.zero, Vector2.zero);
+            var modifiersTitle = BuildText("ModifiersTitle", panel.transform as RectTransform, "Boss Mechanics (0-2)", 18, TextAnchor.MiddleLeft);
+            SetRect(modifiersTitle.rectTransform, new Vector2(0.08f, 0.51f), new Vector2(0.92f, 0.57f), Vector2.zero, Vector2.zero);
+
+            var modRoot = EnsureRect("ModifierToggles", panel.transform as RectTransform, new Vector2(0.08f, 0.23f), new Vector2(0.92f, 0.51f), Vector2.zero, Vector2.zero);
             var modLayout = EnsureComponent<GridLayoutGroup>(modRoot.gameObject);
             modLayout.cellSize = new Vector2(260f, 32f);
             modLayout.spacing = new Vector2(8f, 8f);
@@ -586,7 +590,7 @@ namespace SudokuRoguelike.UI
             progressButton.onClick.AddListener(controller.OpenTutorialProgress);
 
             var backButton = BuildButton("BtnTutorialBack", panel.transform as RectTransform, "Back", 18);
-            SetRect(backButton.GetComponent<RectTransform>(), new Vector2(0.90f, 0.90f), new Vector2(0.98f, 0.97f), Vector2.zero, Vector2.zero);
+            SetRect(backButton.GetComponent<RectTransform>(), new Vector2(0.93f, 0.05f), new Vector2(0.99f, 0.14f), Vector2.zero, Vector2.zero);
             backButton.onClick.RemoveAllListeners();
             backButton.onClick.AddListener(controller.BackToMainMenu);
 
@@ -595,6 +599,7 @@ namespace SudokuRoguelike.UI
                 boardDropdown,
                 starsDropdown,
                 resourceDropdown,
+                regionDropdown,
                 validation,
                 completionHint,
                 modifierDescription,
@@ -650,6 +655,7 @@ namespace SudokuRoguelike.UI
 
             tutorialController.Configure(
                 controller,
+                null,
                 null,
                 null,
                 null,
@@ -869,7 +875,7 @@ namespace SudokuRoguelike.UI
             reset.onClick.RemoveAllListeners();
             reset.onClick.AddListener(itemsController.ResetFiltersAndSort);
 
-            var iconStrip = EnsureRect("ItemsIconStrip", panel.transform as RectTransform, new Vector2(0.52f, 0.62f), new Vector2(0.94f, 0.74f), Vector2.zero, Vector2.zero);
+            var iconStrip = EnsureRect("ItemsIconStrip", panel.transform as RectTransform, new Vector2(0.52f, 0.22f), new Vector2(0.94f, 0.34f), Vector2.zero, Vector2.zero);
             EnsureOrGetImage(iconStrip.gameObject, new Color(0f, 0f, 0f, 0.14f));
             var iconLayout = EnsureComponent<GridLayoutGroup>(iconStrip.gameObject);
             iconLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
@@ -943,10 +949,10 @@ namespace SudokuRoguelike.UI
             grid.gameObject.SetActive(false);
 
             var details = BuildText("ItemsDetailText", panel.transform as RectTransform, "", 15, TextAnchor.UpperLeft);
-            SetRect(details.rectTransform, new Vector2(0.52f, 0.32f), new Vector2(0.94f, 0.64f), Vector2.zero, Vector2.zero);
+            SetRect(details.rectTransform, new Vector2(0.52f, 0.36f), new Vector2(0.94f, 0.68f), Vector2.zero, Vector2.zero);
 
             var tooltip = BuildText("ItemsTooltipText", panel.transform as RectTransform, "", 14, TextAnchor.UpperLeft);
-            SetRect(tooltip.rectTransform, new Vector2(0.52f, 0.14f), new Vector2(0.94f, 0.28f), Vector2.zero, Vector2.zero);
+            SetRect(tooltip.rectTransform, new Vector2(0.52f, 0.10f), new Vector2(0.94f, 0.22f), Vector2.zero, Vector2.zero);
 
             var prev = BuildButton("BtnItemsPrev", panel.transform as RectTransform, "Prev", 15);
             SetRect(prev.GetComponent<RectTransform>(), new Vector2(0.06f, 0.10f), new Vector2(0.16f, 0.16f), Vector2.zero, Vector2.zero);
@@ -994,9 +1000,15 @@ namespace SudokuRoguelike.UI
                 "main_menue",
                 "GeneratedIcons/main_menu",
                 "main_menu");
+
             if (source == null)
             {
-                Debug.LogWarning("MainMenuBlueprintBuilder: main_menue.png not found in Resources. Menu art not applied.");
+                source = TryLoadBackgroundTextureFromDocs("main_menue.png", "main_menu.png");
+            }
+
+            if (source == null)
+            {
+                Debug.LogWarning("MainMenuBlueprintBuilder: main_menue.png not found in Resources or docs/. Menu art not applied.");
                 rootImage.sprite = null;
                 return false;
             }
@@ -1007,6 +1019,43 @@ namespace SudokuRoguelike.UI
             rootImage.preserveAspect = false;
             rootImage.color = Color.white;
             return true;
+        }
+
+        private static Texture2D TryLoadBackgroundTextureFromDocs(params string[] fileNames)
+        {
+            var projectRoot = Directory.GetParent(Application.dataPath)?.FullName;
+            if (string.IsNullOrWhiteSpace(projectRoot))
+            {
+                projectRoot = Directory.GetCurrentDirectory();
+            }
+
+            var searchDirs = new[] { "docs", Path.Combine("docs", "icons") };
+
+            for (var d = 0; d < searchDirs.Length; d++)
+            {
+                for (var f = 0; f < fileNames.Length; f++)
+                {
+                    var path = Path.Combine(projectRoot, searchDirs[d], fileNames[f]);
+                    if (!File.Exists(path))
+                    {
+                        continue;
+                    }
+
+                    var bytes = File.ReadAllBytes(path);
+                    if (bytes == null || bytes.Length == 0)
+                    {
+                        continue;
+                    }
+
+                    var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                    if (tex.LoadImage(bytes, markNonReadable: false))
+                    {
+                        return tex;
+                    }
+                }
+            }
+
+            return null;
         }
 
         private void TryApplyMainMenuButtonSlice(Button button, Vector2 cardAnchorMin, Vector2 cardAnchorMax)
@@ -1026,21 +1075,11 @@ namespace SudokuRoguelike.UI
                 return;
             }
 
-            // Menu card in builder occupies 0.33..0.67 x and 0.08..0.90 y of the screen.
-            const float cardXMin = 0.33f;
-            const float cardXMax = 0.67f;
-            const float cardYMin = 0.08f;
-            const float cardYMax = 0.90f;
-
-            var absXMin = Mathf.Lerp(cardXMin, cardXMax, cardAnchorMin.x);
-            var absXMax = Mathf.Lerp(cardXMin, cardXMax, cardAnchorMax.x);
-            var absYMin = Mathf.Lerp(cardYMin, cardYMax, cardAnchorMin.y);
-            var absYMax = Mathf.Lerp(cardYMin, cardYMax, cardAnchorMax.y);
-
-            var pxMin = Mathf.Clamp(Mathf.RoundToInt(absXMin * source.width), 0, source.width - 1);
-            var pxMax = Mathf.Clamp(Mathf.RoundToInt(absXMax * source.width), pxMin + 1, source.width);
-            var pyMin = Mathf.Clamp(Mathf.RoundToInt(absYMin * source.height), 0, source.height - 1);
-            var pyMax = Mathf.Clamp(Mathf.RoundToInt(absYMax * source.height), pyMin + 1, source.height);
+            // Image is now directly on the card, so button anchors map directly to image UV.
+            var pxMin = Mathf.Clamp(Mathf.RoundToInt(cardAnchorMin.x * source.width), 0, source.width - 1);
+            var pxMax = Mathf.Clamp(Mathf.RoundToInt(cardAnchorMax.x * source.width), pxMin + 1, source.width);
+            var pyMin = Mathf.Clamp(Mathf.RoundToInt(cardAnchorMin.y * source.height), 0, source.height - 1);
+            var pyMax = Mathf.Clamp(Mathf.RoundToInt(cardAnchorMax.y * source.height), pyMin + 1, source.height);
 
             var rect = new Rect(pxMin, pyMin, pxMax - pxMin, pyMax - pyMin);
             var sprite = Sprite.Create(source, rect, new Vector2(0.5f, 0.5f), 100f);
@@ -1122,6 +1161,7 @@ namespace SudokuRoguelike.UI
             if (label != null)
             {
                 SetRect(label, new Vector2(0.16f, 0f), new Vector2(0.98f, 1f), Vector2.zero, Vector2.zero);
+                label.SetAsLastSibling();
             }
         }
 
@@ -1294,6 +1334,12 @@ namespace SudokuRoguelike.UI
             text.alignment = TextAnchor.MiddleCenter;
             text.color = textColor;
 
+            var shadow = EnsureComponent<Shadow>(labelRect.gameObject);
+            shadow.effectColor = new Color(0f, 0f, 0f, 0.65f);
+            shadow.effectDistance = new Vector2(1f, -1f);
+
+            labelRect.SetAsLastSibling();
+
             return button;
         }
 
@@ -1365,7 +1411,7 @@ namespace SudokuRoguelike.UI
             dropdown.captionText = label;
             dropdown.template = template;
             dropdown.itemText = itemLabel;
-            dropdown.itemImage = itemBackground;
+            dropdown.itemImage = null;
             dropdown.targetGraphic = EnsureOrGetImage(rect.gameObject, buttonColor);
             dropdown.captionText.raycastTarget = false;
 

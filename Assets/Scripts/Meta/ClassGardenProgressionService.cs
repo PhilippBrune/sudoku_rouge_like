@@ -36,15 +36,7 @@ namespace SudokuRoguelike.Meta
             var state = meta.GardenProgression ??= new GardenClassProgressionState();
             var entry = GetOrCreateClassEntry(state, playedClass);
 
-            var runXp = CalculateRunXp(
-                boardSize: result.SolvedEightByEightFourStar ? 8 : 6,
-                stars: result.ClearedBossTier >= BossModifierTier.Tier4 ? 5 : 3,
-                depthReached: result.GardenDepthReached,
-                victory: result.Victory,
-                clearedBoss: result.ClearedBoss,
-                perfectClear: result.PerfectClear,
-                mistakesMade: result.MistakesMade,
-                activeModifierCount: result.ClearedMultiStageBoss ? 2 : 1);
+            var runXp = result.XpEarned;
 
             state.ArchiveRunCount++;
             if (result.Victory)
@@ -131,7 +123,7 @@ namespace SudokuRoguelike.Meta
                 }
             }
 
-            var created = new ClassGardenProgressEntry { ClassId = classId };
+            var created = new ClassGardenProgressEntry { ClassId = classId, Level = 1 };
             state.ClassEntries.Add(created);
             return created;
         }

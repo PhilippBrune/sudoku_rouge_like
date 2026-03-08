@@ -65,6 +65,7 @@ namespace SudokuRoguelike.Run
             graph.Add(new RunNode { Depth = preBossDepth + 1, Layer = 2, Type = NodeType.Boss, IsRevealed = true, IsRiskPath = true });
 
             EnforceEconomyFloor(graph);
+            PreventAdjacentEconomyNodes(graph);
             return graph;
         }
 
@@ -88,7 +89,7 @@ namespace SudokuRoguelike.Run
 
             if (progress <= 0.30f)
             {
-                return WeightedRoll((NodeType.Puzzle, 64), (NodeType.Shop, 8), (NodeType.Rest, 20), (NodeType.Relic, 4), (NodeType.Event, 4));
+                return WeightedRoll((NodeType.Puzzle, 68), (NodeType.Shop, 8), (NodeType.Rest, 16), (NodeType.Relic, 8));
             }
 
             if (progress <= 0.70f)
@@ -97,22 +98,20 @@ namespace SudokuRoguelike.Run
                     ? WeightedRoll(
                         (NodeType.Puzzle, Math.Max(18, 38 - (riskHighDifficultyPressure * 4))),
                         (NodeType.ElitePuzzle, 21 + (riskHighDifficultyPressure * 4)),
-                        (NodeType.Shop, 6),
-                        (NodeType.Rest, 14),
-                        (NodeType.Relic, 7),
-                        (NodeType.Event, 14))
-                    : WeightedRoll((NodeType.Puzzle, 52), (NodeType.ElitePuzzle, 8), (NodeType.Shop, 8), (NodeType.Rest, 18), (NodeType.Relic, 8), (NodeType.Event, 6));
+                        (NodeType.Shop, 8),
+                        (NodeType.Rest, 18),
+                        (NodeType.Relic, 15))
+                    : WeightedRoll((NodeType.Puzzle, 54), (NodeType.ElitePuzzle, 10), (NodeType.Shop, 10), (NodeType.Rest, 16), (NodeType.Relic, 10));
             }
 
             return riskPath
                 ? WeightedRoll(
                     (NodeType.Puzzle, Math.Max(12, 32 - (riskHighDifficultyPressure * 4))),
                     (NodeType.ElitePuzzle, 30 + (riskHighDifficultyPressure * 4)),
-                    (NodeType.Shop, 5),
-                    (NodeType.Rest, 12),
-                    (NodeType.Relic, 7),
-                    (NodeType.Event, 14))
-                : WeightedRoll((NodeType.Puzzle, 46), (NodeType.ElitePuzzle, 12), (NodeType.Shop, 6), (NodeType.Rest, 16), (NodeType.Relic, 10), (NodeType.Event, 10));
+                    (NodeType.Shop, 6),
+                    (NodeType.Rest, 14),
+                    (NodeType.Relic, 18))
+                : WeightedRoll((NodeType.Puzzle, 48), (NodeType.ElitePuzzle, 14), (NodeType.Shop, 8), (NodeType.Rest, 16), (NodeType.Relic, 14));
         }
 
         private NodeType WeightedRoll(params (NodeType Type, int Weight)[] entries)
@@ -183,5 +182,33 @@ namespace SudokuRoguelike.Run
                 }
             }
         }
+        private static void PreventAdjacentEconomyNodes(List<RunNode> graph)
+        {
+            for (var lane = 0; lane <= 1; lane++)
+            {
+                var isRisk = lane == 1;
+                RunNode prev = null;
+                for (var i = 0; i < graph.Count; i++)
+                {
+                    var node = graph[i];
+                    if (node.IsRiskPath != isRisk)
+                        continue;
+                    if (node.Type == NodeType.Start || node.Type == NodeType.Boss || node.Type == NodeType.PreBoss)
+                    {
+                        prev = node;
+                        continue;
+                    }
+
+                    if (prev != null && IsEconomyNode(prev.Type) && IsEconomyNode(node.Type))
+                    {
+                        node.Type = NodeType.Puzzle;
+                    }
+
+                    prev = node;
+                }
+            }
+        }
+
+        private static bool IsEconomyNode(NodeType type) => type == NodeType.Shop || type == NodeType.Rest;
     }
 }

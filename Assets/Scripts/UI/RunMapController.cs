@@ -25,11 +25,12 @@ namespace SudokuRoguelike.UI
         {
             _run = new RunDirector(seed);
             _run.StartRun(classId, GameMode.GardenRun, runNumber: 1, meta: meta);
-            var levelConfig = _run.BuildLevelConfig(runNumber: 1, depth: 1);
-            _run.StartLevel(levelConfig);
             _lockedRiskPath = null;
             _rewardsGrantedForCurrentPuzzle = false;
             PrepareFixedNodeConfigs();
+            var firstNode = _run.CurrentRunGraph != null && _run.CurrentRunGraph.Count > 0 ? _run.CurrentRunGraph[0] : null;
+            var levelConfig = firstNode != null ? GetFixedLevelConfig(firstNode) : _run.BuildLevelConfig(runNumber: 1, depth: 1);
+            _run.StartLevel(levelConfig);
             BindAutoSave();
         }
 
@@ -190,7 +191,7 @@ namespace SudokuRoguelike.UI
 
         private static bool RequiresPuzzleNode(NodeType type)
         {
-            return type == NodeType.Puzzle || type == NodeType.ElitePuzzle || type == NodeType.Boss;
+            return type == NodeType.Puzzle || type == NodeType.ElitePuzzle || type == NodeType.PreBoss || type == NodeType.Boss;
         }
 
         public PathChoicePreview BuildPathChoicePreview(bool risk)
@@ -309,6 +310,16 @@ namespace SudokuRoguelike.UI
             return _run.BuildRunResult(victory, bossPhaseReached, secondsPlayed);
         }
 
+        public void AdvanceToNextGarden()
+        {
+            if (_run == null) return;
+            _run.AdvanceToNextGarden();
+            _lockedRiskPath = null;
+            _rewardsGrantedForCurrentPuzzle = false;
+            _fixedNodeConfigs.Clear();
+            PrepareFixedNodeConfigs();
+        }
+
         public RunDirector Run => _run;
 
         public sealed class PathChoicePreview
@@ -366,7 +377,7 @@ namespace SudokuRoguelike.UI
             for (var i = 0; i < _run.CurrentRunGraph.Count; i++)
             {
                 var node = _run.CurrentRunGraph[i];
-                if (node == null || node.Depth <= 1)
+                if (node == null)
                 {
                     continue;
                 }
@@ -390,7 +401,7 @@ namespace SudokuRoguelike.UI
             }
         }
 
-        private LevelConfig GetFixedLevelConfig(RunNode node)
+        public LevelConfig GetFixedLevelConfig(RunNode node)
         {
             if (_run == null || node == null || _run.CurrentRunGraph == null)
             {
@@ -421,6 +432,13 @@ namespace SudokuRoguelike.UI
                     config.Stars = Mathf.Max(config.Stars, 4);
                     config.BoardSize = Mathf.Max(config.BoardSize, 8);
                 }
+                else if (node.IsRiskPath)
+                {
+                    config.Difficulty = (DifficultyTier)Mathf.Clamp((int)config.Difficulty + 1, (int)DifficultyTier.Diff1, (int)DifficultyTier.Diff5);
+                    config.Stars = Mathf.Clamp(config.Stars + 1, 1, 5);
+                    config.BoardSize = Mathf.Clamp(config.BoardSize + 1, 4, 9);
+                    config.MissingPercent = Mathf.Clamp(config.MissingPercent + 0.06f, 0.08f, 0.85f);
+                }
 
                 _fixedNodeConfigs[index] = CloneConfig(config);
             }
@@ -444,7 +462,8 @@ namespace SudokuRoguelike.UI
                 IsBoss = src.IsBoss,
                 StressVariant = src.StressVariant,
                 ExpectedHeat = src.ExpectedHeat,
-                VarianceBand = src.VarianceBand
+                VarianceBand = src.VarianceBand,
+                RegionVariant = src.RegionVariant
             };
 
             for (var i = 0; i < src.ActiveModifiers.Count; i++)

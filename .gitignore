@@ -1,4 +1,6 @@
+# ============================================================
 # Unity generated folders
+# ============================================================
 [Ll]ibrary/
 [Tt]emp/
 [Oo]bj/
@@ -13,6 +15,7 @@ Recordings/
 *.csproj
 *.unityproj
 *.sln
+*.slnx
 *.suo
 *.tmp
 *.user
@@ -37,7 +40,45 @@ sysinfo.txt
 .DS_Store
 Thumbs.db
 
-# Nested legacy Unity project cache folders (inside archived tree)
+# ============================================================
+# Python / AI tooling (local only — not part of the game)
+# ============================================================
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.env.*
+
+# Local tooling directories
+ai/
+foocus_api/
+tools/
+requirements/
+retired/
+_empty/
+
+# One-off utility scripts and scan output
+_scan_*.py
+_scan_result*.txt
+agent.ps1
+
+# ============================================================
+# IDE / Editor settings
+# ============================================================
+.vscode/
+
+# ============================================================
+# Claude Code session data (personal, not part of project)
+# ============================================================
+.claude/
+
+# ============================================================
+# Nested legacy Unity project cache folders
+# ============================================================
 Assets/Scripts/My project/
 Assets/Scripts/My project_clean/
 Assets/Scripts/My project/[Ll]ibrary/
@@ -46,5 +87,7 @@ Assets/Scripts/My project/[Oo]bj/
 Assets/Scripts/My project/[Ll]ogs/
 Assets/Scripts/My project/UserSettings/
 
-# Local git hooks helper
+# ============================================================
+# Local git hooks helpers
+# ============================================================
 .githooks/*.local

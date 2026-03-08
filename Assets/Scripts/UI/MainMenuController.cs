@@ -34,6 +34,7 @@ namespace SudokuRoguelike.UI
         [SerializeField] private Text onboardingBodyText;
         [SerializeField] private Text statusText;
         [SerializeField] private Text classSelectClassText;
+        private Text _classUnlockTableText;
         [SerializeField] private Slider masterVolumeSlider;
         [SerializeField] private Slider musicVolumeSlider;
         [SerializeField] private Slider sfxVolumeSlider;
@@ -124,8 +125,8 @@ namespace SudokuRoguelike.UI
             {
                 PlayerPrefs.SetInt(ReturnTutorialProgressPrefKey, 0);
                 PlayerPrefs.Save();
-                OpenTutorialProgress();
-                SetStatus("Tutorial complete. Progress updated.");
+                OpenTutorial();
+                SetStatus("Tutorial complete. Returned to setup.");
             }
         }
 
@@ -265,6 +266,11 @@ namespace SudokuRoguelike.UI
                 ResumeFromSave = false
             });
             LoadGameplayScene();
+        }
+
+        public void SetClassUnlockTableText(Text text)
+        {
+            _classUnlockTableText = text;
         }
 
         public void SetSelectedClass(ClassId classId)
@@ -1003,7 +1009,7 @@ namespace SudokuRoguelike.UI
                     $"Tier {meta.Tier} | Complexity {meta.Complexity} | Skill {meta.SkillBand}\n" +
                     $"Level {entry.Level} | XP {entry.CurrentXp}/{xpToNext} | Prestige {entry.PrestigeTier}\n" +
                     $"Passive: {meta.PassiveDescription}" +
-                    (string.IsNullOrWhiteSpace(unlockHint) ? string.Empty : $"\nUnlock: {unlockHint}");
+                    (string.IsNullOrWhiteSpace(unlockHint) ? string.Empty : $"\n<color=#FF4444>Unlock: {unlockHint}</color>");
             }
 
             SetClassButtonInteractable("BtnStartClassNumberFreak", true);
@@ -1012,6 +1018,27 @@ namespace SudokuRoguelike.UI
             SetClassButtonInteractable("BtnStartClassKoiGambler", true);
             SetClassButtonInteractable("BtnStartClassStoneGardener", true);
             SetClassButtonInteractable("BtnStartClassLanternSeer", true);
+
+            HighlightClassButton("BtnStartClassNumberFreak", selectedClass == ClassId.NumberFreak);
+            HighlightClassButton("BtnStartClassGardenMonk", selectedClass == ClassId.GardenMonk);
+            HighlightClassButton("BtnStartClassShrineArchivist", selectedClass == ClassId.ShrineArchivist);
+            HighlightClassButton("BtnStartClassKoiGambler", selectedClass == ClassId.KoiGambler);
+            HighlightClassButton("BtnStartClassStoneGardener", selectedClass == ClassId.StoneGardener);
+            HighlightClassButton("BtnStartClassLanternSeer", selectedClass == ClassId.LanternSeer);
+
+            if (_classUnlockTableText != null)
+            {
+                _classUnlockTableText.text =
+                    "Level Rewards:\n" +
+                    "Lv 3  — +1 Pencil\n" +
+                    "Lv 5  — Passive Tier Up\n" +
+                    "Lv 7  — +2 Max HP\n" +
+                    "Lv 10 — +2 Pencil, +2 HP\n" +
+                    "Lv 15 — +1 Reroll Token\n" +
+                    "Lv 20 — +1 Item Slot\n" +
+                    "Lv 30 — Rare Solver Item\n" +
+                    "Lv 40 — Prestige Available";
+            }
         }
 
         private void ApplyDebugUnlocks()
@@ -1169,6 +1196,24 @@ namespace SudokuRoguelike.UI
             if (button != null)
             {
                 button.interactable = interactable;
+            }
+        }
+
+        private static readonly Color ClassButtonDefault = new(0.25f, 0.25f, 0.25f, 1f);
+        private static readonly Color ClassButtonSelected = new(0.56f, 0.72f, 0.42f, 1f);
+
+        private static void HighlightClassButton(string buttonName, bool selected)
+        {
+            var buttonTransform = FindSceneObject(buttonName);
+            if (buttonTransform == null)
+            {
+                return;
+            }
+
+            var image = buttonTransform.GetComponent<Image>();
+            if (image != null)
+            {
+                image.color = selected ? ClassButtonSelected : ClassButtonDefault;
             }
         }
 

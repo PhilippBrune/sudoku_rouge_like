@@ -67,7 +67,7 @@ namespace SudokuRoguelike.UI
         private static AudioClip BuildGardenClip(string clipName, bool is8Bit)
         {
             const int sampleRate = 22050;
-            const float seconds = 112f;
+            const float seconds = 114f;
             var sampleCount = Mathf.RoundToInt(sampleRate * seconds);
             var data = new float[sampleCount];
 
@@ -79,7 +79,7 @@ namespace SudokuRoguelike.UI
                 var t = i / (float)sampleRate;
                 var step = (int)(t * 1.6f) % notes.Length;
                 var bassStep = (int)(t * 0.8f) % bass.Length;
-                var env = 0.5f + (0.5f * Mathf.Sin(t * Mathf.PI * 0.5f));
+                var env = 0.5f + (0.5f * Mathf.Sin(2f * Mathf.PI * t / seconds));
 
                 var lead = is8Bit
                     ? Square(notes[step], t, 0.35f)
@@ -103,7 +103,7 @@ namespace SudokuRoguelike.UI
             }
 
             // Blend loop seam to avoid clicks and make loop transitions smoother.
-            var seamSamples = Mathf.Min(sampleCount / 8, Mathf.RoundToInt(sampleRate * 0.35f));
+            var seamSamples = Mathf.Min(sampleCount / 4, Mathf.RoundToInt(sampleRate * 4f));
             for (var i = 0; i < seamSamples; i++)
             {
                 var t = i / (float)Mathf.Max(1, seamSamples - 1);

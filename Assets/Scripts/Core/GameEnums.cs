@@ -144,7 +144,8 @@ namespace SudokuRoguelike.Core
     public enum TutorialResourceMode
     {
         Free,
-        Simulation
+        Simulation,
+        ClassBased
     }
 
     public enum MenuScreen

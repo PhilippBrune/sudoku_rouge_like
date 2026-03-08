@@ -32,6 +32,7 @@ namespace SudokuRoguelike.Core
         public PuzzleDifficultyTier TargetTier;
         public bool AllowBruteForceOnly;
         public int Seed;
+        public int RegionVariant;
         public List<BossModifierId> ActiveModifiers = new();
     }
 

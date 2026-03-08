@@ -9,8 +9,8 @@ namespace SudokuRoguelike.Sudoku
         public static PuzzleGenerationResult Generate(PuzzleGenerationRequest request)
         {
             var random = new Random(request.Seed);
-            var solved = BuildSolvedBoard(request.BoardSize, random);
-            var regionMap = BuildRegionMap(request.BoardSize);
+            var solved = BuildSolvedBoard(request.BoardSize, request.RegionVariant, random);
+            var regionMap = BuildRegionMap(request.BoardSize, request.RegionVariant);
             var puzzle = (int[,])solved.Clone();
             var given = BuildGivenMask(request.BoardSize, true);
 
@@ -69,16 +69,15 @@ namespace SudokuRoguelike.Sudoku
             };
         }
 
-        private static int[,] BuildSolvedBoard(int size, Random random)
+        private static int[,] BuildSolvedBoard(int size, int regionVariant, Random random)
         {
-            var solved = SudokuGenerator.CreatePuzzle(size, 0f, random.Next());
+            var solved = SudokuGenerator.CreatePuzzle(size, 0f, random.Next(), regionVariant);
             return solved.Solution;
         }
 
-        private static int[,] BuildRegionMap(int size)
+        private static int[,] BuildRegionMap(int size, int regionVariant)
         {
-            var template = SudokuGenerator.CreatePuzzle(size, 0f, 777 + size);
-            return template.RegionMap;
+            return SudokuGenerator.BuildRegionMap(size, regionVariant);
         }
 
         private static bool[,] BuildGivenMask(int size, bool value)

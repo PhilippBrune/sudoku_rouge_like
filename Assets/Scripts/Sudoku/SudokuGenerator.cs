@@ -5,10 +5,10 @@ namespace SudokuRoguelike.Sudoku
 {
     public static class SudokuGenerator
     {
-        public static SudokuBoard CreatePuzzle(int size, float missingPercent, int seed)
+        public static SudokuBoard CreatePuzzle(int size, float missingPercent, int seed, int regionVariant = 0)
         {
             var random = new Random(seed);
-            var regionMap = BuildRegionMap(size);
+            var regionMap = BuildRegionMap(size, regionVariant);
             var solution = GenerateSolvedBoard(size, regionMap, random);
             var puzzle = (int[,])solution.Clone();
 
@@ -95,56 +95,51 @@ namespace SudokuRoguelike.Sudoku
             return false;
         }
 
-        private static int[,] BuildRegionMap(int size)
+        internal static int[,] BuildRegionMap(int size, int variant = 0)
         {
             var regionMap = new int[size, size];
 
             if (size == 6)
             {
-                FillRectangularRegions(regionMap, size, 2, 3);
+                if (variant == 2)
+                    FillTemplateRegions(regionMap, Get6x6Template());
+                else if (variant % 2 == 0)
+                    FillRectangularRegions(regionMap, size, 2, 3);
+                else
+                    FillRectangularRegions(regionMap, size, 3, 2);
                 return regionMap;
             }
 
             if (size == 8)
             {
-                // 8x8 uses 2x4 regions.
-                FillRectangularRegions(regionMap, size, 2, 4);
+                if (variant == 2)
+                    FillTemplateRegions(regionMap, Get8x8Template());
+                else if (variant % 2 == 0)
+                    FillRectangularRegions(regionMap, size, 2, 4);
+                else
+                    FillRectangularRegions(regionMap, size, 4, 2);
                 return regionMap;
             }
 
             if (size == 5)
             {
-                FillTemplateRegions(regionMap, new[,]
-                {
-                    { 0, 0, 1, 1, 1 },
-                    { 0, 0, 2, 1, 1 },
-                    { 0, 2, 2, 2, 3 },
-                    { 4, 4, 2, 3, 3 },
-                    { 4, 4, 4, 3, 3 }
-                });
+                FillTemplateRegions(regionMap, Get5x5Template(variant));
                 return regionMap;
             }
 
             if (size == 7)
             {
-                // Each of the 7 regions has exactly 7 cells (49 total).
-                FillTemplateRegions(regionMap, new[,]
-                {
-                    { 0, 0, 1, 1, 1, 2, 2 },
-                    { 0, 0, 0, 1, 2, 2, 2 },
-                    { 3, 3, 0, 4, 4, 2, 5 },
-                    { 3, 3, 4, 4, 4, 5, 5 },
-                    { 3, 3, 6, 6, 4, 5, 5 },
-                    { 6, 6, 6, 6, 4, 5, 1 },
-                    { 3, 0, 6, 1, 1, 2, 5 }
-                });
+                FillTemplateRegions(regionMap, Get7x7Template(variant));
                 return regionMap;
             }
 
             var boxRoot = (int)Math.Sqrt(size);
             if (boxRoot * boxRoot == size)
             {
-                FillRectangularRegions(regionMap, size, boxRoot, boxRoot);
+                if (size == 9 && variant == 2)
+                    FillTemplateRegions(regionMap, Get9x9Template());
+                else
+                    FillRectangularRegions(regionMap, size, boxRoot, boxRoot);
                 return regionMap;
             }
 
@@ -157,6 +152,104 @@ namespace SudokuRoguelike.Sudoku
             }
 
             return regionMap;
+        }
+
+        private static int[,] Get5x5Template(int variant)
+        {
+            if (variant % 2 == 0)
+            {
+                return new[,]
+                {
+                    { 0, 0, 1, 1, 1 },
+                    { 0, 0, 2, 1, 1 },
+                    { 0, 2, 2, 2, 3 },
+                    { 4, 4, 2, 3, 3 },
+                    { 4, 4, 4, 3, 3 }
+                };
+            }
+
+            return new[,]
+            {
+                { 0, 0, 0, 1, 1 },
+                { 2, 2, 0, 0, 1 },
+                { 2, 3, 3, 1, 1 },
+                { 2, 3, 4, 4, 4 },
+                { 2, 3, 3, 4, 4 }
+            };
+        }
+
+        private static int[,] Get7x7Template(int variant)
+        {
+            if (variant % 2 == 0)
+            {
+                // Horizontal wave bands — 7 regions, 7 cells each, all contiguous.
+                return new[,]
+                {
+                    { 0, 0, 0, 0, 1, 1, 1 },
+                    { 2, 2, 0, 0, 0, 1, 1 },
+                    { 2, 2, 2, 3, 3, 1, 1 },
+                    { 4, 2, 2, 3, 3, 3, 5 },
+                    { 4, 4, 6, 6, 3, 3, 5 },
+                    { 4, 4, 6, 6, 6, 5, 5 },
+                    { 4, 4, 6, 6, 5, 5, 5 }
+                };
+            }
+
+            // Vertical wave bands (90° rotation of template 0).
+            return new[,]
+            {
+                { 4, 4, 4, 4, 2, 2, 0 },
+                { 4, 4, 4, 2, 2, 2, 0 },
+                { 6, 6, 6, 2, 2, 0, 0 },
+                { 6, 6, 6, 3, 3, 0, 0 },
+                { 5, 6, 3, 3, 3, 0, 1 },
+                { 5, 5, 3, 3, 1, 1, 1 },
+                { 5, 5, 5, 5, 1, 1, 1 }
+            };
+        }
+
+        private static int[,] Get6x6Template()
+        {
+            return new[,]
+            {
+                { 0, 2, 2, 2, 1, 1 },
+                { 0, 2, 2, 3, 1, 1 },
+                { 0, 2, 3, 3, 3, 1 },
+                { 0, 0, 0, 3, 3, 1 },
+                { 4, 4, 4, 4, 5, 5 },
+                { 4, 4, 5, 5, 5, 5 }
+            };
+        }
+
+        private static int[,] Get8x8Template()
+        {
+            return new[,]
+            {
+                { 0, 0, 0, 0, 2, 2, 2, 2 },
+                { 0, 0, 1, 1, 3, 3, 2, 2 },
+                { 0, 1, 1, 1, 3, 3, 3, 2 },
+                { 0, 1, 1, 1, 3, 3, 3, 2 },
+                { 4, 5, 5, 5, 7, 7, 7, 6 },
+                { 4, 5, 5, 5, 7, 7, 7, 6 },
+                { 4, 5, 5, 4, 6, 7, 7, 6 },
+                { 4, 4, 4, 4, 6, 6, 6, 6 }
+            };
+        }
+
+        private static int[,] Get9x9Template()
+        {
+            return new[,]
+            {
+                { 0, 0, 0, 0, 1, 1, 1, 1, 1 },
+                { 0, 0, 0, 2, 2, 2, 2, 1, 1 },
+                { 0, 0, 2, 2, 2, 2, 2, 3, 1 },
+                { 4, 4, 4, 5, 5, 3, 3, 3, 1 },
+                { 4, 4, 5, 5, 5, 5, 3, 3, 3 },
+                { 4, 4, 5, 5, 5, 6, 6, 3, 3 },
+                { 4, 4, 6, 6, 6, 6, 6, 7, 7 },
+                { 8, 8, 6, 6, 8, 8, 7, 7, 7 },
+                { 8, 8, 8, 8, 8, 7, 7, 7, 7 }
+            };
         }
 
         private static void FillRectangularRegions(int[,] regionMap, int size, int boxRows, int boxCols)

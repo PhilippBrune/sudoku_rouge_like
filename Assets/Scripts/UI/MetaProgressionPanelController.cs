@@ -63,11 +63,12 @@ namespace SudokuRoguelike.UI
             if (classProgressText != null)
             {
                 var cards = _classSelect.BuildCards(_profile.Meta);
+                var selectedId = mainMenuController != null ? mainMenuController.SelectedClass : ClassId.NumberFreak;
                 var builder = new StringBuilder();
                 for (var i = 0; i < cards.Count; i++)
                 {
                     var card = cards[i];
-                    if (!card.IsUnlocked)
+                    if (card.ClassId != selectedId)
                     {
                         continue;
                     }
@@ -75,11 +76,12 @@ namespace SudokuRoguelike.UI
                     builder.AppendLine(card.Name);
                     builder.AppendLine($"  HP {card.HP} | Pencil {card.Pencil} | Slots {card.ItemSlots}");
                     builder.AppendLine($"  Passive: {card.PassiveDisplay}");
+                    break;
                 }
 
                 classProgressText.text = builder.Length > 0
                     ? builder.ToString().TrimEnd()
-                    : "No classes unlocked yet.";
+                    : "No class selected.";
             }
 
             for (var i = 0; i < ClassButtons.Length; i++)

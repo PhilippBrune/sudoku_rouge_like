@@ -1,21 +1,26 @@
 ﻿# Main Menu Items Collection System
 
-This document defines the persistent **Items Discovery Archive** for **Run of the Nine**.
+This document outlines the persistent **Items Discovery Archive** for the **Run of the Nine** game.
 
-## Purpose
+## 1) Purpose
 
-The **Items** menu serves as a catalogue, not an inventory, showing discovered items such as:
-- Relics
+The **Items** menu serves as a reference for the player's progression, tracking:
+- Collected relics
 - Consumables
 - Cursed items
 - Legendary items
 - Boss-exclusive rewards
 
-The purpose of this system is to provide feedback on meta progression, tracking completion, and facilitating strategy planning, long-term engagement, and achievement support.
+Its primary goals include:
+- Feedback on meta progression
+- Tracking game completion
+- Strategy planning
+- Lifelong engagement
+- Achievement support
 
-## Main Menu Structure
+## 2) Main Menu Structure 
 
-The main menu includes:
+The main menu contains:
 - Start Game
 - Tutorial
 - Resume Game
@@ -26,22 +31,16 @@ The main menu includes:
 - Graphics Settings
 - End Game
 
-## Items Menu Core Layout
+## 3) Items Menu Core Layout
 
-The top section of the Items menu displays:
-- A count of discovered items (`discovered / total`)
-- The active filter label
+The layout of the Items menu consists of:
+- A top section displaying the completion count (`discovered / total`) and active filter label
+- A middle section displaying a grid/list of entries
+- A bottom/right detail panel for selected item details and help tooltip
 
-The middle section displays:
-- A grid/list display of items
+## 4) Filter Tabs
 
-The bottom/right details panel shows:
-- Detailed information about the selected item
-- A help tooltip for the roll system
-
-## Filter Tabs
-
-The following filter tabs are implemented:
+Several tabs have been implemented for filtering:
 - All
 - Relics
 - Consumables
@@ -50,16 +49,16 @@ The following filter tabs are implemented:
 - Boss Rewards
 - Class-Specific
 
-## Display States
+## 5) Display States
 
-Each item supports three states:
-- **Undiscovered**: The item is hidden with a silhouette behavior and an unlock hint is visible.
-- **Discovered**: The full name/details of the item are visible.
-- **Mastered**: For completion-based items, an optional elevated state for completion styling is supported.
+Each item has three states:
+- **Undiscovered**: hidden name `???`, silhouette behavior, unlock hint visible
+- **Discovered**: full name/details visible
+- **Mastered**: for completion styling
 
-## Detail Panel Fields
+## 6) Detail Panel Fields
 
-The selected item displays the following fields:
+For each selected item, the following fields are displayed:
 - Name
 - Type
 - Rarity
@@ -71,9 +70,9 @@ The selected item displays the following fields:
 - Wins With Item
 - Best Run Depth
 
-## Persistent Data Model
+## 7) Persistent Data Model
 
-Items are serialized in save via `MetaProgressionState.ItemCodex`, including:
+Serialized in save via `MetaProgressionState.ItemCodex`:
 - `ItemID`
 - `Name`
 - `Type`
@@ -90,17 +89,17 @@ Items are serialized in save via `MetaProgressionState.ItemCodex`, including:
 - `BestRunDepth`
 - `DiscoveredDate`
 
-Plus codex versioning:
+Additionally, a versioning system for the codex:
 - `ItemCodexState.SaveDataVersion`
 
-## Item Roll System Visibility
+## 8) Item Roll System Visibility
 
-The items menu includes help text for:
+Help text is provided for:
 - Slot roll scaling by difficulty
 - Nothing-slot mechanic
 - Replacement/reroll constraints
 
-## Rarity Framework
+## 9) Rarity Framework
 
 The current codex supports rarity labels for:
 - Common
@@ -109,9 +108,9 @@ The current codex supports rarity labels for:
 - Legendary
 - Cursed-style entries via type/category
 
-Future visual coding can map these labels to themed frames/glows.
+Visual coding can map these labels to themed frames/glows.
 
-## Completion Milestones
+## 10) Completion Milestones
 
 Planned incentives include:
 - 25% cosmetic decoration
@@ -119,7 +118,7 @@ Planned incentives include:
 - 75% unique lantern
 - 100% secret class or legendary relic
 
-## UX Requirements
+## 11) UX Requirements
 
 The current implementation supports:
 - Mouse clicks for filters and navigation
@@ -131,28 +130,28 @@ Roadmap includes:
 - Smooth tab transitions
 - New-item indicator
 
-## Game System Integration
+## 12) Game System Integration
 
-Codex data is persistent and designed to sync with:
+The codex data is persistent and is designed to sync with:
 - Run economy loop
 - Class progression
 - Relic/cursed systems
 - Achievement scaffolding
 
-## Visual Direction
+## 13) Visual Direction
 
 The target style remains:
 - Serene Japanese garden mood
 - Soft natural tones
 - Wooden/parchment inspired paneling (theme layer)
 
-## Strategic Unlock Rule
+## 14) Strategic Unlock Rule
 
-Adopted design includes:
+The adopted design:
 - Unlock on discovery
 - Mastered on win/use criteria
 
-## Future Compatibility
+## 15) Future Compatibility
 
 The data model supports:
 - Seasonal/event items
@@ -160,9 +159,9 @@ The data model supports:
 - Balance patch evolution
 - DLC-compatible extension via save data versioning
 
-## Intended Outcome
+## 16) Intended Outcome
 
-The Items codex should:
+The Items codex aims to:
 - Encourage experimentation
 - Reduce RNG frustration through visibility
 - Support build theorycrafting

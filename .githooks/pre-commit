@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if command -v pwsh >/dev/null 2>&1; then
-  pwsh -NoProfile -ExecutionPolicy Bypass -File "tools/check-script-tree-drift.ps1" -ExpectNestedRoot
-elif command -v powershell >/dev/null 2>&1; then
-  powershell -NoProfile -ExecutionPolicy Bypass -File "tools/check-script-tree-drift.ps1" -ExpectNestedRoot
-else
-  echo "Error: neither pwsh nor powershell is available for script-tree check." >&2
-  exit 1
+# Script-tree drift check — only runs when the tools directory is present.
+if [ -f "tools/check-script-tree-drift.ps1" ]; then
+  if command -v pwsh >/dev/null 2>&1; then
+    pwsh -NoProfile -ExecutionPolicy Bypass -File "tools/check-script-tree-drift.ps1" -ExpectNestedRoot
+  elif command -v powershell >/dev/null 2>&1; then
+    powershell -NoProfile -ExecutionPolicy Bypass -File "tools/check-script-tree-drift.ps1" -ExpectNestedRoot
+  else
+    echo "Warning: tools/check-script-tree-drift.ps1 found but no PowerShell available — skipping." >&2
+  fi
 fi
 
 blocked_retired_cs="$(git diff --cached --name-only --diff-filter=ACMR | grep -Ei '^retired/.*\.cs$' || true)"

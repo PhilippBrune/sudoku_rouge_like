@@ -18,6 +18,30 @@ namespace SudokuRoguelike.Run
             return "C";
         }
 
+        public int ComputeScore(int basePoints, float speedMultiplier, float constraintBonus, int mistakePenalty)
+        {
+            return Math.Max(0, (int)Math.Round(basePoints * speedMultiplier * constraintBonus) - mistakePenalty);
+        }
+
+        public float SpeedMultiplier(int solveTimeSeconds)
+        {
+            if (solveTimeSeconds <= 180) return 2.0f;
+            if (solveTimeSeconds <= 300) return 1.5f;
+            if (solveTimeSeconds <= 480) return 1.2f;
+            if (solveTimeSeconds <= 600) return 1.0f;
+            return 0.8f;
+        }
+
+        public float ConstraintBonus(int activeModifierCount)
+        {
+            return 1f + (activeModifierCount * 0.15f);
+        }
+
+        public int MistakePenalty(int mistakes)
+        {
+            return mistakes * 50;
+        }
+
         public LevelConfig BuildDailyTrialLevel(int seed)
         {
             var random = new Random(seed);

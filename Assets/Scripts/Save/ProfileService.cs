@@ -88,6 +88,11 @@ namespace SudokuRoguelike.Save
                 Stats.BossClears++;
             }
 
+            if (!Meta.EndlessZenUnlocked && Stats.TotalRuns >= 10)
+            {
+                Meta.EndlessZenUnlocked = true;
+            }
+
             var oldAverage = Stats.AverageMistakes;
             Stats.AverageMistakes = ((oldAverage * (Stats.TotalRuns - 1)) + result.MistakesMade) / Stats.TotalRuns;
 

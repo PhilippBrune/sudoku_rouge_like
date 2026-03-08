@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using SudokuRoguelike.Classes;
 using SudokuRoguelike.Core;
 using SudokuRoguelike.Save;
 using SudokuRoguelike.Tutorial;
@@ -18,6 +19,7 @@ namespace SudokuRoguelike.UI
         [SerializeField] private Dropdown boardSizeDropdown;
         [SerializeField] private Dropdown starDropdown;
         [SerializeField] private Dropdown resourceModeDropdown;
+        [SerializeField] private Dropdown regionLayoutDropdown;
         [SerializeField] private Text validationText;
         [SerializeField] private Text completionHintText;
         [SerializeField] private Text modifierDescriptionText;
@@ -41,6 +43,7 @@ namespace SudokuRoguelike.UI
 
         private readonly SaveFileService _save = new();
         private readonly ProfileService _profile = new();
+        private readonly List<ClassId> _classDropdownIds = new();
 
         private TutorialSetupConfig _currentSetup = new();
 
@@ -67,6 +70,7 @@ namespace SudokuRoguelike.UI
             Dropdown boardDropdown,
             Dropdown starsDropdown,
             Dropdown resourceDropdown,
+            Dropdown regionDropdown,
             Text validation,
             Text completionHint,
             Text modifierDescription,
@@ -88,6 +92,7 @@ namespace SudokuRoguelike.UI
             if (boardDropdown != null) boardSizeDropdown = boardDropdown;
             if (starsDropdown != null) starDropdown = starsDropdown;
             if (resourceDropdown != null) resourceModeDropdown = resourceDropdown;
+            if (regionDropdown != null) regionLayoutDropdown = regionDropdown;
             if (validation != null) validationText = validation;
             if (completionHint != null) completionHintText = completionHint;
             if (modifierDescription != null) modifierDescriptionText = modifierDescription;
@@ -233,12 +238,29 @@ namespace SudokuRoguelike.UI
             if (resourceModeDropdown != null)
             {
                 resourceModeDropdown.ClearOptions();
-                resourceModeDropdown.AddOptions(new List<string>
+                var resourceOptions = new List<string> { "Free Mode (∞ HP / ∞ Pencil)" };
+                _classDropdownIds.Clear();
+                foreach (ClassId cid in Enum.GetValues(typeof(ClassId)))
                 {
-                    "Free Mode (∞ HP / ∞ Pencil)",
-                    "Simulation Mode (10 HP / 10 Pencil / no Gold)"
-                });
+                    var snap = ClassCatalog.Build(cid);
+                    var label = System.Text.RegularExpressions.Regex.Replace(cid.ToString(), "(?<!^)([A-Z])", " $1");
+                    resourceOptions.Add($"{label} ({snap.HP} HP / {snap.Pencil} Pencil)");
+                    _classDropdownIds.Add(cid);
+                }
+                resourceModeDropdown.AddOptions(resourceOptions);
                 resourceModeDropdown.value = 1;
+            }
+
+            if (regionLayoutDropdown != null)
+            {
+                regionLayoutDropdown.ClearOptions();
+                regionLayoutDropdown.AddOptions(new List<string>
+                {
+                    "Standard",
+                    "Rectangular Alt",
+                    "Irregular (Jigsaw)"
+                });
+                regionLayoutDropdown.value = 0;
             }
         }
 
@@ -260,6 +282,12 @@ namespace SudokuRoguelike.UI
             {
                 resourceModeDropdown.onValueChanged.RemoveAllListeners();
                 resourceModeDropdown.onValueChanged.AddListener(_ => RefreshSetupView());
+            }
+
+            if (regionLayoutDropdown != null)
+            {
+                regionLayoutDropdown.onValueChanged.RemoveAllListeners();
+                regionLayoutDropdown.onValueChanged.AddListener(_ => RefreshSetupView());
             }
 
             WireToggle(fogOfWarToggle);
@@ -335,9 +363,22 @@ namespace SudokuRoguelike.UI
 
             _currentSetup.BoardSize = sizes[Mathf.Clamp(boardSizeDropdown != null ? boardSizeDropdown.value : 0, 0, sizes.Count - 1)];
             _currentSetup.Stars = stars[Mathf.Clamp(starDropdown != null ? starDropdown.value : 0, 0, stars.Count - 1)];
-            _currentSetup.ResourceMode = resourceModeDropdown != null && resourceModeDropdown.value == 0
-                ? TutorialResourceMode.Free
-                : TutorialResourceMode.Simulation;
+            if (resourceModeDropdown != null && resourceModeDropdown.value == 0)
+            {
+                _currentSetup.ResourceMode = TutorialResourceMode.Free;
+            }
+            else
+            {
+                _currentSetup.ResourceMode = TutorialResourceMode.ClassBased;
+                var idx = (resourceModeDropdown != null ? resourceModeDropdown.value : 1) - 1;
+                _currentSetup.SimulationClassId = idx >= 0 && idx < _classDropdownIds.Count
+                    ? _classDropdownIds[idx]
+                    : ClassId.NumberFreak;
+            }
+
+            _currentSetup.RegionVariant = regionLayoutDropdown != null
+                ? Mathf.Clamp(regionLayoutDropdown.value, 0, 2)
+                : 0;
 
             _currentSetup.SelectedModifiers.Clear();
             TryAddModifier(fogOfWarToggle, BossModifierId.FogOfWar);

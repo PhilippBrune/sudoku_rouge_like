@@ -83,7 +83,6 @@ namespace SudokuRoguelike.Core
         public bool AllModifiersCleared;
         public bool AllClassesLevelThirty;
         public bool AllRelicsUnlocked;
-        public bool MultiStageBossHighHeatClear;
     }
 
     [Serializable]

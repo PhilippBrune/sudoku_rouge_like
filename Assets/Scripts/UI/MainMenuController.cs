@@ -49,16 +49,20 @@ namespace SudokuRoguelike.UI
         [SerializeField] private GameModesPanelController gameModesController;
         [SerializeField] private ItemsMenuController itemsMenuController;
         [SerializeField] private ClassId selectedClass = ClassId.NumberFreak;
+        private bool _allowIrregularPuzzles = true;
 
         private const string OnboardingSeenKey = "sr_onboarding_seen";
         private const string ReturnTutorialProgressPrefKey = "sr_return_to_tutorial_progress";
         private int _onboardingIndex;
         private SaveFileEnvelope _pendingConflictEnvelope;
 
+        private GameObject _controlsPanel;
+        private readonly InputRemapService _inputRemap = new();
+
         private readonly MenuFlowService _menu = new();
         private readonly SaveFileService _save = new();
         private readonly ProfileService _profile = new();
-        private readonly SudokuRoguelike.Meta.ClassGardenProgressionService _classProgression = new();
+        // ClassGardenProgressionService methods are now static — no instance needed
         private readonly ClassUnlockService _classUnlockService = new();
         private readonly ICloudSaveProvider _cloud = new LocalCloudSaveProvider();
         private SaveConflictService _conflicts;
@@ -263,7 +267,8 @@ namespace SudokuRoguelike.UI
                 Mode = mode,
                 ClassId = selectedClass,
                 StartFresh = true,
-                ResumeFromSave = false
+                ResumeFromSave = false,
+                AllowIrregularPuzzles = _allowIrregularPuzzles
             });
             LoadGameplayScene();
         }
@@ -312,6 +317,18 @@ namespace SudokuRoguelike.UI
         public void SetStatusExternal(string message)
         {
             SetStatus(message);
+        }
+
+        public void SetupResumeButton(Button resumeBtn)
+        {
+            if (resumeBtn == null) return;
+            var hasRun = _save.TryLoadRun(out var envelope) && envelope?.ActiveRunState != null;
+            resumeBtn.interactable = hasRun;
+            var colors = resumeBtn.colors;
+            colors.disabledColor = new Color(0.40f, 0.40f, 0.40f, 0.45f);
+            resumeBtn.colors = colors;
+            var label = resumeBtn.GetComponentInChildren<Text>();
+            if (label != null) label.color = hasRun ? new Color(0.96f, 0.93f, 0.82f, 1f) : new Color(0.50f, 0.50f, 0.50f, 0.60f);
         }
 
         public void ResumeGame()
@@ -534,6 +551,43 @@ namespace SudokuRoguelike.UI
             SetStatus(enabled ? "Error highlighting enabled." : "Error highlighting disabled.");
         }
 
+        // ── Accessibility callbacks ──────────────────────────────────────
+
+        public void OnColorblindModeChanged(bool enabled)
+        {
+            optionsController?.SetColorblindMode(enabled);
+            SetStatus(enabled ? "Colorblind mode enabled." : "Colorblind mode disabled.");
+        }
+
+        public void OnHighContrastModeChanged(bool enabled)
+        {
+            optionsController?.SetHighContrastMode(enabled);
+            SetStatus(enabled ? "High contrast mode enabled." : "High contrast mode disabled.");
+        }
+
+        public void OnReduceMotionChanged(bool enabled)
+        {
+            optionsController?.SetReduceMotion(enabled);
+            SetStatus(enabled ? "Reduce motion enabled." : "Reduce motion disabled.");
+        }
+
+        public void OnAltSymbolsChanged(bool enabled)
+        {
+            optionsController?.SetAlternativeConstraintSymbols(enabled);
+            SetStatus(enabled ? "Alternative symbols enabled." : "Alternative symbols disabled.");
+        }
+
+        public void OnFontScaleChanged(float value)
+        {
+            optionsController?.SetFontScale(value);
+            SetStatus($"Font scale: {value:F1}x");
+        }
+
+        public void OnUiVolumeChanged(float value)
+        {
+            optionsController?.SetUiVolume(value);
+        }
+
         public void OnDebugEnableAllChanged(bool enabled)
         {
             _debugEnableAllFeatures = enabled;
@@ -569,6 +623,167 @@ namespace SudokuRoguelike.UI
         {
             ShowDeleteSaveConfirm();
             SetStatus("Delete run/profile save? This cannot be undone.");
+        }
+
+        public void OpenControlsPanel()
+        {
+            if (_controlsPanel != null) Destroy(_controlsPanel);
+
+            var canvas = FindFirstObjectByType<Canvas>();
+            if (canvas == null) return;
+
+            _controlsPanel = new GameObject("ControlsPanel", typeof(RectTransform), typeof(Image));
+            _controlsPanel.transform.SetParent(canvas.transform, false);
+            var rect = _controlsPanel.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.15f, 0.08f);
+            rect.anchorMax = new Vector2(0.85f, 0.92f);
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+            var bg = _controlsPanel.GetComponent<Image>();
+            bg.color = new Color(0.06f, 0.08f, 0.10f, 0.97f);
+
+            var title = new GameObject("Title", typeof(RectTransform), typeof(Text)).GetComponent<Text>();
+            title.transform.SetParent(rect, false);
+            title.rectTransform.anchorMin = new Vector2(0.05f, 0.92f);
+            title.rectTransform.anchorMax = new Vector2(0.95f, 0.99f);
+            title.rectTransform.offsetMin = Vector2.zero;
+            title.rectTransform.offsetMax = Vector2.zero;
+            title.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            title.fontSize = 22;
+            title.alignment = TextAnchor.MiddleCenter;
+            title.color = new Color(0.95f, 0.90f, 0.62f, 1f);
+            title.text = "Keyboard Controls";
+
+            // Build rows for each category / action
+            var yPos = 0.88f;
+            var categories = InputRemapService.Categories;
+            foreach (var cat in categories)
+            {
+                // Category header
+                var catLabel = new GameObject($"Cat_{cat}", typeof(RectTransform), typeof(Text)).GetComponent<Text>();
+                catLabel.transform.SetParent(rect, false);
+                catLabel.rectTransform.anchorMin = new Vector2(0.05f, yPos - 0.03f);
+                catLabel.rectTransform.anchorMax = new Vector2(0.95f, yPos);
+                catLabel.rectTransform.offsetMin = Vector2.zero;
+                catLabel.rectTransform.offsetMax = Vector2.zero;
+                catLabel.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                catLabel.fontSize = 14;
+                catLabel.alignment = TextAnchor.MiddleLeft;
+                catLabel.color = new Color(0.80f, 0.75f, 0.55f, 1f);
+                catLabel.text = cat;
+                catLabel.fontStyle = FontStyle.Bold;
+                yPos -= 0.035f;
+
+                var actions = InputRemapService.GetActionsInCategory(cat);
+                foreach (var action in actions)
+                {
+                    if (yPos < 0.08f) break;
+
+                    // Action label
+                    var actionLabel = new GameObject($"Act_{action}", typeof(RectTransform), typeof(Text)).GetComponent<Text>();
+                    actionLabel.transform.SetParent(rect, false);
+                    actionLabel.rectTransform.anchorMin = new Vector2(0.08f, yPos - 0.025f);
+                    actionLabel.rectTransform.anchorMax = new Vector2(0.45f, yPos);
+                    actionLabel.rectTransform.offsetMin = Vector2.zero;
+                    actionLabel.rectTransform.offsetMax = Vector2.zero;
+                    actionLabel.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                    actionLabel.fontSize = 12;
+                    actionLabel.alignment = TextAnchor.MiddleLeft;
+                    actionLabel.color = Color.white;
+                    actionLabel.text = FormatActionName(action);
+
+                    // Current binding display
+                    var bindingLabel = new GameObject($"Bind_{action}", typeof(RectTransform), typeof(Text)).GetComponent<Text>();
+                    bindingLabel.transform.SetParent(rect, false);
+                    bindingLabel.rectTransform.anchorMin = new Vector2(0.48f, yPos - 0.025f);
+                    bindingLabel.rectTransform.anchorMax = new Vector2(0.70f, yPos);
+                    bindingLabel.rectTransform.offsetMin = Vector2.zero;
+                    bindingLabel.rectTransform.offsetMax = Vector2.zero;
+                    bindingLabel.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                    bindingLabel.fontSize = 12;
+                    bindingLabel.alignment = TextAnchor.MiddleCenter;
+                    bindingLabel.color = new Color(0.70f, 0.85f, 0.70f, 1f);
+                    bindingLabel.text = $"[ {_inputRemap.GetDisplayName(action)} ]";
+
+                    yPos -= 0.028f;
+                }
+                yPos -= 0.01f;
+            }
+
+            // Reset All button
+            var resetGo = new GameObject("ResetAllBtn", typeof(RectTransform), typeof(Image), typeof(Button));
+            resetGo.transform.SetParent(rect, false);
+            var resetRect = resetGo.GetComponent<RectTransform>();
+            resetRect.anchorMin = new Vector2(0.10f, 0.02f);
+            resetRect.anchorMax = new Vector2(0.40f, 0.06f);
+            resetRect.offsetMin = Vector2.zero;
+            resetRect.offsetMax = Vector2.zero;
+            resetGo.GetComponent<Image>().color = new Color(0.35f, 0.20f, 0.15f, 1f);
+            var resetBtn = resetGo.GetComponent<Button>();
+            resetBtn.onClick.AddListener(() =>
+            {
+                _inputRemap.ResetAllBindings();
+                OpenControlsPanel(); // Rebuild to refresh display
+            });
+            var resetLbl = new GameObject("Label", typeof(RectTransform), typeof(Text)).GetComponent<Text>();
+            resetLbl.transform.SetParent(resetRect, false);
+            resetLbl.rectTransform.anchorMin = Vector2.zero;
+            resetLbl.rectTransform.anchorMax = Vector2.one;
+            resetLbl.rectTransform.offsetMin = Vector2.zero;
+            resetLbl.rectTransform.offsetMax = Vector2.zero;
+            resetLbl.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            resetLbl.fontSize = 13;
+            resetLbl.alignment = TextAnchor.MiddleCenter;
+            resetLbl.color = Color.white;
+            resetLbl.text = "Reset All to Defaults";
+
+            // Back button
+            var backGo = new GameObject("BackBtn", typeof(RectTransform), typeof(Image), typeof(Button));
+            backGo.transform.SetParent(rect, false);
+            var backRect = backGo.GetComponent<RectTransform>();
+            backRect.anchorMin = new Vector2(0.70f, 0.02f);
+            backRect.anchorMax = new Vector2(0.90f, 0.06f);
+            backRect.offsetMin = Vector2.zero;
+            backRect.offsetMax = Vector2.zero;
+            backGo.GetComponent<Image>().color = new Color(0.20f, 0.28f, 0.32f, 1f);
+            var backBtn = backGo.GetComponent<Button>();
+            backBtn.onClick.AddListener(CloseControlsPanel);
+            var backLbl = new GameObject("Label", typeof(RectTransform), typeof(Text)).GetComponent<Text>();
+            backLbl.transform.SetParent(backRect, false);
+            backLbl.rectTransform.anchorMin = Vector2.zero;
+            backLbl.rectTransform.anchorMax = Vector2.one;
+            backLbl.rectTransform.offsetMin = Vector2.zero;
+            backLbl.rectTransform.offsetMax = Vector2.zero;
+            backLbl.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            backLbl.fontSize = 14;
+            backLbl.alignment = TextAnchor.MiddleCenter;
+            backLbl.color = Color.white;
+            backLbl.text = "Back";
+
+            SetStatus("View and customize keyboard controls.");
+        }
+
+        public void CloseControlsPanel()
+        {
+            if (_controlsPanel != null)
+            {
+                Destroy(_controlsPanel);
+                _controlsPanel = null;
+            }
+        }
+
+        private static string FormatActionName(InputRemapService.InputAction action)
+        {
+            var name = action.ToString();
+            // Insert spaces before capital letters
+            var result = new System.Text.StringBuilder();
+            for (var i = 0; i < name.Length; i++)
+            {
+                if (i > 0 && char.IsUpper(name[i]) && !char.IsUpper(name[i - 1]))
+                    result.Append(' ');
+                result.Append(name[i]);
+            }
+            return result.ToString();
         }
 
         public void ConfirmDeleteSave()
@@ -726,6 +941,7 @@ namespace SudokuRoguelike.UI
 
         private void ShowMainMenu()
         {
+            CloseControlsPanel();
             SetPanelState(mainMenuPanel, true);
             SetPanelState(classSelectPanel, false);
             SetPanelState(optionsPanel, false);
@@ -788,6 +1004,8 @@ namespace SudokuRoguelike.UI
                 musicStyleDropdown.onValueChanged.AddListener(OnMenuMusicStyleChanged);
                 musicStyleDropdown.SetValueWithoutNotify(Mathf.Clamp(optionsController != null ? optionsController.Options.Audio.MenuMusicStyleIndex : 0, 0, 1));
             }
+
+            SyncAccessibilityWidgets();
         }
 
         private void ShowCredits()
@@ -895,6 +1113,11 @@ namespace SudokuRoguelike.UI
 
         public ClassId SelectedClass => selectedClass;
 
+        public void SetAllowIrregularPuzzles(bool allow)
+        {
+            _allowIrregularPuzzles = allow;
+        }
+
         private void OpenSaveConflictPanel()
         {
             SetPanelState(mainMenuPanel, false);
@@ -998,16 +1221,33 @@ namespace SudokuRoguelike.UI
                 var snapshot = ClassCatalog.Build(selectedClass);
                 var meta = ClassCatalog.GetMeta(selectedClass);
                 var entry = GetClassProgressEntry(selectedClass);
-                var xpToNext = _classProgression.XpToNextLevel(Mathf.Max(1, entry.Level));
+                var totalXp = entry.TotalXp;
+                var (classLevel, progressXp, xpToNext) = SudokuRoguelike.Meta.ClassGardenProgressionService.DeriveLevel(totalXp);
                 var isUnlocked = IsClassUnlockedOrDebug(selectedClass);
                 var unlocked = isUnlocked ? "Unlocked" : "Locked";
                 var unlockHint = isUnlocked ? string.Empty : _classUnlockService.GetUnlockRequirementText(selectedClass);
 
+                var bonuses = SudokuRoguelike.Meta.ClassGardenProgressionService.GetStatBonuses(selectedClass, classLevel);
+                var nextUnlock = SudokuRoguelike.Meta.ClassGardenProgressionService.GetNextUnlock(selectedClass, classLevel);
+                var hpTotal     = snapshot.HP      + bonuses.HpBonus;
+                var pencilTotal = snapshot.Pencil  + bonuses.PencilBonus;
+                var slotsTotal  = snapshot.ItemSlots + bonuses.SlotBonus;
+                var rerollTotal = snapshot.RerollTokens + bonuses.RerollBonus;
+
+                var hpStr     = bonuses.HpBonus     > 0 ? $"HP {hpTotal} (+{bonuses.HpBonus})"         : $"HP {hpTotal}";
+                var pencilStr = bonuses.PencilBonus > 0 ? $"Pencil {pencilTotal} (+{bonuses.PencilBonus})" : $"Pencil {pencilTotal}";
+                var slotsStr  = bonuses.SlotBonus   > 0 ? $"Slots {slotsTotal} (+{bonuses.SlotBonus})"  : $"Slots {slotsTotal}";
+                var rerollStr = bonuses.RerollBonus > 0 ? $"Rerolls {rerollTotal} (+{bonuses.RerollBonus})" : $"Rerolls {rerollTotal}";
+                var xpDisplay = xpToNext > 0 ? $"{progressXp}/{xpToNext}" : "MAX";
+
+                UnityEngine.Debug.Log($"[XP] RefreshClassSelectUi — {selectedClass} Lv{classLevel} XP:{xpDisplay}");
+
                 classSelectClassText.text =
                     $"Selected Class: {selectedClass} ({unlocked})\n" +
-                    $"HP {snapshot.HP} | Pencil {snapshot.Pencil} | Slots {snapshot.ItemSlots} | Rerolls {snapshot.RerollTokens}\n" +
+                    $"{hpStr} | {pencilStr} | {slotsStr} | {rerollStr}\n" +
                     $"Tier {meta.Tier} | Complexity {meta.Complexity} | Skill {meta.SkillBand}\n" +
-                    $"Level {entry.Level} | XP {entry.CurrentXp}/{xpToNext} | Prestige {entry.PrestigeTier}\n" +
+                    $"Level {classLevel} | XP {xpDisplay} | Prestige {entry.PrestigeTier}\n" +
+                    $"Next: {nextUnlock}\n" +
                     $"Passive: {meta.PassiveDescription}" +
                     (string.IsNullOrWhiteSpace(unlockHint) ? string.Empty : $"\n<color=#FF4444>Unlock: {unlockHint}</color>");
             }
@@ -1018,6 +1258,8 @@ namespace SudokuRoguelike.UI
             SetClassButtonInteractable("BtnStartClassKoiGambler", true);
             SetClassButtonInteractable("BtnStartClassStoneGardener", true);
             SetClassButtonInteractable("BtnStartClassLanternSeer", true);
+            SetClassButtonInteractable("BtnStartClassReedDuelist", true);
+            SetClassButtonInteractable("BtnStartClassQuietCartographer", true);
 
             HighlightClassButton("BtnStartClassNumberFreak", selectedClass == ClassId.NumberFreak);
             HighlightClassButton("BtnStartClassGardenMonk", selectedClass == ClassId.GardenMonk);
@@ -1025,19 +1267,16 @@ namespace SudokuRoguelike.UI
             HighlightClassButton("BtnStartClassKoiGambler", selectedClass == ClassId.KoiGambler);
             HighlightClassButton("BtnStartClassStoneGardener", selectedClass == ClassId.StoneGardener);
             HighlightClassButton("BtnStartClassLanternSeer", selectedClass == ClassId.LanternSeer);
+            HighlightClassButton("BtnStartClassReedDuelist", selectedClass == ClassId.ReedDuelist);
+            HighlightClassButton("BtnStartClassQuietCartographer", selectedClass == ClassId.QuietCartographer);
 
             if (_classUnlockTableText != null)
             {
-                _classUnlockTableText.text =
-                    "Level Rewards:\n" +
-                    "Lv 3  — +1 Pencil\n" +
-                    "Lv 5  — Passive Tier Up\n" +
-                    "Lv 7  — +2 Max HP\n" +
-                    "Lv 10 — +2 Pencil, +2 HP\n" +
-                    "Lv 15 — +1 Reroll Token\n" +
-                    "Lv 20 — +1 Item Slot\n" +
-                    "Lv 30 — Rare Solver Item\n" +
-                    "Lv 40 — Prestige Available";
+                var allUnlocks = SudokuRoguelike.Meta.ClassGardenProgressionService.GetUnlocksInRange(selectedClass, 0, 40);
+                var sb = new System.Text.StringBuilder("Level Rewards:\n");
+                for (var ui = 0; ui < allUnlocks.Count; ui++)
+                    sb.AppendLine(allUnlocks[ui]);
+                _classUnlockTableText.text = sb.ToString().TrimEnd();
             }
         }
 
@@ -1054,7 +1293,6 @@ namespace SudokuRoguelike.UI
             _profile.Meta.EndlessZenUnlocked = true;
             _profile.Meta.SpiritTrialsUnlocked = true;
             _profile.Meta.HiddenDualModifierBossUnlocked = true;
-            _profile.Meta.ChaosMonkUnlocked = true;
 
             EnsureDefaultItemCodexEntries(_profile.Meta.ItemCodex.Entries);
             var discoveredOn = DateTime.UtcNow.ToString("yyyy-MM-dd");
@@ -1081,20 +1319,15 @@ namespace SudokuRoguelike.UI
         {
             var progression = _profile.Meta.GardenProgression;
             if (progression == null)
-            {
-                return new ClassGardenProgressEntry { ClassId = classId, Level = 1, CurrentXp = 0, PrestigeTier = 0 };
-            }
+                return new ClassGardenProgressEntry { ClassId = classId };
 
             for (var i = 0; i < progression.ClassEntries.Count; i++)
             {
-                var entry = progression.ClassEntries[i];
-                if (entry.ClassId == classId)
-                {
-                    return entry;
-                }
+                if (progression.ClassEntries[i].ClassId == classId)
+                    return progression.ClassEntries[i];
             }
 
-            return new ClassGardenProgressEntry { ClassId = classId, Level = 1, CurrentXp = 0, PrestigeTier = 0 };
+            return new ClassGardenProgressEntry { ClassId = classId };
         }
 
         private static void EnsureDefaultItemCodexEntries(List<ItemCodexEntry> entries)
@@ -1129,7 +1362,7 @@ namespace SudokuRoguelike.UI
                 RarityTier = "Epic",
                 UnlockCondition = "Accept a trap event.",
                 Description = "Power for clarity at a price.",
-                EffectFormula = "+Gold, +Heat",
+                EffectFormula = "+Gold, +Risk",
                 SynergyTags = "Curse"
             });
             AddCodexEntryIfMissing(entries, new ItemCodexEntry
@@ -1138,7 +1371,7 @@ namespace SudokuRoguelike.UI
                 Name = "Lantern of Nine",
                 Type = "Relic",
                 RarityTier = "Legendary",
-                UnlockCondition = "Defeat a Boss with Heat 5+.",
+                UnlockCondition = "Defeat a Boss with max difficulty.",
                 Description = "A sacred relic of the garden.",
                 EffectFormula = "+2 reroll tokens, +10% XP",
                 SynergyTags = "Class:LanternSeer"
@@ -1292,6 +1525,31 @@ namespace SudokuRoguelike.UI
             if (resolutionDropdown != null) resolutionDropdown.SetValueWithoutNotify(ResolveResolutionDropdownIndex(optionsController.Options));
         }
 
+        private void SyncAccessibilityWidgets()
+        {
+            if (optionsController == null || optionsPanel == null) return;
+            var a = optionsController.Options.Accessibility;
+            var panelTr = optionsPanel.transform;
+
+            var cb = panelTr.Find("ColorblindToggle")?.GetComponent<Toggle>();
+            if (cb != null) cb.SetIsOnWithoutNotify(a.ColorblindMode);
+
+            var hc = panelTr.Find("HighContrastToggle")?.GetComponent<Toggle>();
+            if (hc != null) hc.SetIsOnWithoutNotify(a.HighContrastMode);
+
+            var rm = panelTr.Find("ReduceMotionToggle")?.GetComponent<Toggle>();
+            if (rm != null) rm.SetIsOnWithoutNotify(a.ReduceMotion);
+
+            var alt = panelTr.Find("AltSymbolsToggle")?.GetComponent<Toggle>();
+            if (alt != null) alt.SetIsOnWithoutNotify(a.AlternativeConstraintSymbols);
+
+            var fs = panelTr.Find("FontScaleSlider")?.GetComponent<Slider>();
+            if (fs != null) fs.SetValueWithoutNotify(a.FontScale);
+
+            var uiVol = panelTr.Find("UiVolumeSlider")?.GetComponent<Slider>();
+            if (uiVol != null) uiVol.SetValueWithoutNotify(optionsController.Options.Audio.UiVolume);
+        }
+
         private static int ResolveResolutionDropdownIndex(OptionsState options)
         {
             var w = options.Graphics.Width;
@@ -1317,11 +1575,13 @@ namespace SudokuRoguelike.UI
             SetTextByName("LanguageLabel", german ? "Sprache" : "Language");
             SetTextByName("ResolutionLabel", german ? "Auflösung" : "Resolution");
             SetTextByName("AccessibilitySectionTitle", german ? "Barrierefreiheit" : "Accessibility");
+            SetTextByName("UiVolumeLabel", german ? "UI-Lautstärke" : "UI Volume");
+            SetTextByName("FontScaleLabel", german ? "Schriftgröße" : "Font Scale");
             SetTextByName("TutorialTitle", german ? "Tutorial-Setup" : "Tutorial Setup");
             SetTextByName("BoardSizeLabel", german ? "Spielfeldgröße" : "Board Size");
             SetTextByName("StarsLabel", german ? "Sterne" : "Star Difficulty");
             SetTextByName("ResourceModeLabel", german ? "Ressourcenmodus" : "Resource Mode");
-            SetTextByName("ModifiersTitle", german ? "Boss-Mechaniken (0-2)" : "Boss Mechanics (0-2)");
+            SetTextByName("ModifiersTitle", german ? "Sudoku-Modi" : "Sudoku Modes");
 
             SetButtonLabel("BtnStart", german ? "Spiel starten" : "Start Game");
             SetButtonLabel("BtnResume", german ? "Fortsetzen" : "Resume Game");

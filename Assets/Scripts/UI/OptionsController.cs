@@ -71,6 +71,66 @@ namespace SudokuRoguelike.UI
             Persist();
         }
 
+        // ── Accessibility settings ───────────────────────────────────────
+
+        public void SetColorblindMode(bool enabled)
+        {
+            Options.Accessibility.ColorblindMode = enabled;
+            Persist();
+        }
+
+        public void SetHighContrastMode(bool enabled)
+        {
+            Options.Accessibility.HighContrastMode = enabled;
+            Persist();
+        }
+
+        public void SetReduceMotion(bool enabled)
+        {
+            Options.Accessibility.ReduceMotion = enabled;
+            Persist();
+        }
+
+        public void SetAlternativeConstraintSymbols(bool enabled)
+        {
+            Options.Accessibility.AlternativeConstraintSymbols = enabled;
+            Persist();
+        }
+
+        public void SetFontScale(float value)
+        {
+            Options.Accessibility.FontScale = Mathf.Clamp(value, 0.8f, 1.5f);
+            Persist();
+        }
+
+        // ── Audio settings ───────────────────────────────────────────────
+
+        public void SetUiVolume(float value)
+        {
+            Options.Audio.UiVolume = Mathf.Clamp01(value);
+            Persist();
+        }
+
+        public void SetMuteAll(bool muted)
+        {
+            Options.Audio.MuteAll = muted;
+            Persist();
+        }
+
+        // ── Graphics settings ────────────────────────────────────────────
+
+        public void SetScreenShake(bool enabled)
+        {
+            Options.Graphics.ScreenShake = enabled;
+            Persist();
+        }
+
+        public void SetParticleIntensity(float value)
+        {
+            Options.Graphics.ParticleIntensity = Mathf.Clamp01(value);
+            Persist();
+        }
+
         private void Persist()
         {
             var envelope = new SaveFileEnvelope

@@ -51,7 +51,6 @@ namespace SudokuRoguelike.UI
 
             var eventPanel = BuildEventPanel(root);
             var cursePanel = BuildCursePanel(root);
-            var heatPanel = BuildHeatGraphPanel(root);
             var debugPanel = BuildDebugPanel(root);
             var sudokuPanel = BuildSudokuBoardPanel(root, out var boardText, out var boardStatusText);
             var pathOverviewPanel = BuildPathOverviewPanel(root, out var pathOverviewText, out var laneAText, out var laneBText, out var laneAPathRoot, out var laneBPathRoot, out var chooseAButton, out var chooseBButton, out var saveQuitPathButton);
@@ -63,8 +62,7 @@ namespace SudokuRoguelike.UI
             flow.Configure(
                 runMapController,
                 eventPanel.GetComponent<EventChoiceScreenController>(),
-                cursePanel.GetComponent<CursePanelController>(),
-                heatPanel.GetComponent<HeatCurveGraphController>());
+                cursePanel.GetComponent<CursePanelController>());
 
             var pathPreviewText = debugPanel.transform.Find("PathPreviewText")?.GetComponent<Text>();
             debug.Configure(flow, runMapController, pathPreviewText);
@@ -100,7 +98,6 @@ namespace SudokuRoguelike.UI
             // Keep legacy prototype helper panels out of the main redesign flow.
             eventPanel.SetActive(false);
             cursePanel.SetActive(false);
-            heatPanel.SetActive(false);
             debugPanel.SetActive(false);
             sudokuPanel.SetActive(false);
             gameOverPanel.SetActive(false);
@@ -177,30 +174,7 @@ namespace SudokuRoguelike.UI
             var list = BuildText("CurseListText", panel.transform as RectTransform, "No active curses.", smallFontSize, TextAnchor.UpperLeft);
             SetRect(list.rectTransform, new Vector2(0.06f, 0.22f), new Vector2(0.94f, 0.78f), Vector2.zero, Vector2.zero);
 
-            var tension = BuildText("TensionText", panel.transform as RectTransform, "Heat pressure: 1.00", smallFontSize, TextAnchor.LowerLeft);
-            SetRect(tension.rectTransform, new Vector2(0.06f, 0.05f), new Vector2(0.94f, 0.20f), Vector2.zero, Vector2.zero);
-
-            controller.Configure(title, list, tension);
-            return panel;
-        }
-
-        private GameObject BuildHeatGraphPanel(RectTransform root)
-        {
-            var panel = EnsureRect("HeatGraphPanel", root, new Vector2(0.32f, 0.76f), new Vector2(0.98f, 0.96f), Vector2.zero, Vector2.zero).gameObject;
-            EnsureOrGetImage(panel, panelColor);
-            var controller = EnsureComponent<HeatCurveGraphController>(panel);
-
-            var label = BuildText("YAxisLabel", panel.transform as RectTransform, "Heat 1.0 - 1.0", smallFontSize, TextAnchor.UpperLeft);
-            SetRect(label.rectTransform, new Vector2(0.03f, 0.72f), new Vector2(0.30f, 0.95f), Vector2.zero, Vector2.zero);
-
-            var graphRoot = EnsureRect("GraphRoot", panel.transform as RectTransform, new Vector2(0.05f, 0.14f), new Vector2(0.97f, 0.68f), Vector2.zero, Vector2.zero);
-            EnsureOrGetImage(graphRoot.gameObject, new Color(0f, 0f, 0f, 0.15f));
-
-            var pointTemplate = BuildImageTemplate("PointTemplate", panel.transform as RectTransform, accentColor, new Vector2(10f, 10f));
-            var segmentTemplate = BuildImageTemplate("SegmentTemplate", panel.transform as RectTransform, new Color(accentColor.r, accentColor.g, accentColor.b, 0.75f), new Vector2(32f, 3f));
-
-            controller.Configure(graphRoot, pointTemplate, segmentTemplate, label);
-
+            controller.Configure(title, list);
             return panel;
         }
 
@@ -359,10 +333,48 @@ namespace SudokuRoguelike.UI
             SetRect(statusText.rectTransform, new Vector2(0.28f, 0.79f), new Vector2(0.72f, 0.83f), Vector2.zero, Vector2.zero);
 
             hpText = BuildText("SudokuGameplayHp", panel.transform as RectTransform, "HP: -", 18, TextAnchor.MiddleLeft);
-            SetRect(hpText.rectTransform, new Vector2(0.03f, 0.83f), new Vector2(0.26f, 0.89f), Vector2.zero, Vector2.zero);
+            SetRect(hpText.rectTransform, new Vector2(0.03f, 0.83f), new Vector2(0.13f, 0.89f), Vector2.zero, Vector2.zero);
+
+            var hpBarBgRect = EnsureRect("HpBarBg", panel.transform as RectTransform, new Vector2(0.14f, 0.847f), new Vector2(0.26f, 0.878f), Vector2.zero, Vector2.zero);
+            var hpBarBgImg = EnsureOrGetImage(hpBarBgRect.gameObject, new Color(0.08f, 0.06f, 0.06f, 0.85f));
+            hpBarBgImg.raycastTarget = false;
+            var hpBarFillGo = new GameObject("HpBarFill", typeof(RectTransform), typeof(Image));
+            hpBarFillGo.transform.SetParent(hpBarBgRect, false);
+            var hpBarFillRect = hpBarFillGo.GetComponent<RectTransform>();
+            hpBarFillRect.anchorMin = Vector2.zero;
+            hpBarFillRect.anchorMax = Vector2.one;
+            hpBarFillRect.offsetMin = Vector2.zero;
+            hpBarFillRect.offsetMax = Vector2.zero;
+            var hpBarFillImg = hpBarFillGo.GetComponent<Image>();
+            hpBarFillImg.sprite = BuildWhiteSprite();
+            hpBarFillImg.color = new Color(0.75f, 0.22f, 0.22f, 0.90f);
+            hpBarFillImg.type = Image.Type.Filled;
+            hpBarFillImg.fillMethod = Image.FillMethod.Horizontal;
+            hpBarFillImg.fillOrigin = 0;
+            hpBarFillImg.fillAmount = 1f;
+            hpBarFillImg.raycastTarget = false;
 
             pencilText = BuildText("SudokuGameplayPencil", panel.transform as RectTransform, "Pencil: -", 18, TextAnchor.MiddleLeft);
-            SetRect(pencilText.rectTransform, new Vector2(0.03f, 0.76f), new Vector2(0.26f, 0.82f), Vector2.zero, Vector2.zero);
+            SetRect(pencilText.rectTransform, new Vector2(0.03f, 0.76f), new Vector2(0.13f, 0.82f), Vector2.zero, Vector2.zero);
+
+            var pencilBarBgRect = EnsureRect("PencilBarBg", panel.transform as RectTransform, new Vector2(0.14f, 0.777f), new Vector2(0.26f, 0.808f), Vector2.zero, Vector2.zero);
+            var pencilBarBgImg = EnsureOrGetImage(pencilBarBgRect.gameObject, new Color(0.06f, 0.06f, 0.08f, 0.85f));
+            pencilBarBgImg.raycastTarget = false;
+            var pencilBarFillGo = new GameObject("PencilBarFill", typeof(RectTransform), typeof(Image));
+            pencilBarFillGo.transform.SetParent(pencilBarBgRect, false);
+            var pencilBarFillRect = pencilBarFillGo.GetComponent<RectTransform>();
+            pencilBarFillRect.anchorMin = Vector2.zero;
+            pencilBarFillRect.anchorMax = Vector2.one;
+            pencilBarFillRect.offsetMin = Vector2.zero;
+            pencilBarFillRect.offsetMax = Vector2.zero;
+            var pencilBarFillImg = pencilBarFillGo.GetComponent<Image>();
+            pencilBarFillImg.sprite = BuildWhiteSprite();
+            pencilBarFillImg.color = new Color(0.22f, 0.55f, 0.80f, 0.90f);
+            pencilBarFillImg.type = Image.Type.Filled;
+            pencilBarFillImg.fillMethod = Image.FillMethod.Horizontal;
+            pencilBarFillImg.fillOrigin = 0;
+            pencilBarFillImg.fillAmount = 1f;
+            pencilBarFillImg.raycastTarget = false;
 
             saveQuit = BuildButton("BtnSudokuSaveQuit", panel.transform as RectTransform, "Save & Quit (Q)", 18);
             SetRect(saveQuit.GetComponent<RectTransform>(), new Vector2(0.80f, 0.84f), new Vector2(0.94f, 0.91f), Vector2.zero, Vector2.zero);
@@ -381,6 +393,12 @@ namespace SudokuRoguelike.UI
 
             var hint = BuildText("SudokuGameplayHint", panel.transform as RectTransform, "Use numpad buttons or keyboard 1-9.\nSingle click: select cell\nDouble click filled cell: highlight same numbers", 15, TextAnchor.UpperLeft);
             SetRect(hint.rectTransform, new Vector2(0.74f, 0.72f), new Vector2(0.94f, 0.82f), Vector2.zero, Vector2.zero);
+
+            // Boss modifier description — placed directly under the numpad (below the Mode button)
+            var bossDesc = BuildText("SudokuGameplayBossDesc", panel.transform as RectTransform, string.Empty, 12, TextAnchor.UpperLeft);
+            SetRect(bossDesc.rectTransform, new Vector2(0.74f, 0.08f), new Vector2(0.97f, 0.27f), Vector2.zero, Vector2.zero);
+            bossDesc.color = new Color(1f, 0.65f, 0.30f, 1f);
+            bossDesc.gameObject.SetActive(false);
 
             return panel;
         }
@@ -663,6 +681,18 @@ namespace SudokuRoguelike.UI
             }
 
             return Resources.GetBuiltinResource<Font>("Arial.ttf");
+        }
+
+        private static Sprite BuildWhiteSprite()
+        {
+            var tex = new Texture2D(4, 4, TextureFormat.RGBA32, false);
+            tex.filterMode = FilterMode.Bilinear;
+            var white = Color.white;
+            for (var py = 0; py < 4; py++)
+                for (var px = 0; px < 4; px++)
+                    tex.SetPixel(px, py, white);
+            tex.Apply();
+            return Sprite.Create(tex, new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f));
         }
 
         private Image BuildImageTemplate(string name, RectTransform parent, Color color, Vector2 size)

@@ -35,6 +35,12 @@ namespace SudokuRoguelike.UI
         [SerializeField] private Toggle killerCagesToggle;
         [SerializeField] private Toggle differenceKropkiToggle;
         [SerializeField] private Toggle ratioKropkiToggle;
+        [SerializeField] private Toggle palindromeToggle;
+        [SerializeField] private Toggle thermoToggle;
+        [SerializeField] private Toggle betweenLinesToggle;
+        [SerializeField] private Toggle evenOddToggle;
+        [SerializeField] private Toggle nonconsecutiveToggle;
+        [SerializeField] private Toggle antiknightToggle;
 
         [Header("Progress Widgets")]
         [SerializeField] private Text boardProgressText;
@@ -84,6 +90,12 @@ namespace SudokuRoguelike.UI
             Toggle killer,
             Toggle difference,
             Toggle ratio,
+            Toggle palindrome,
+            Toggle thermo,
+            Toggle betweenLines,
+            Toggle evenOdd,
+            Toggle nonconsecutive,
+            Toggle antiknight,
             Text boardProgress,
             Text modifierProgress,
             Text completionPercent)
@@ -107,6 +119,12 @@ namespace SudokuRoguelike.UI
             if (killer != null) killerCagesToggle = killer;
             if (difference != null) differenceKropkiToggle = difference;
             if (ratio != null) ratioKropkiToggle = ratio;
+            if (palindrome != null) palindromeToggle = palindrome;
+            if (thermo != null) thermoToggle = thermo;
+            if (betweenLines != null) betweenLinesToggle = betweenLines;
+            if (evenOdd != null) evenOddToggle = evenOdd;
+            if (nonconsecutive != null) nonconsecutiveToggle = nonconsecutive;
+            if (antiknight != null) antiknightToggle = antiknight;
 
             if (boardProgress != null) boardProgressText = boardProgress;
             if (modifierProgress != null) modifierProgressText = modifierProgress;
@@ -299,6 +317,12 @@ namespace SudokuRoguelike.UI
             WireToggle(killerCagesToggle);
             WireToggle(differenceKropkiToggle);
             WireToggle(ratioKropkiToggle);
+            WireToggle(palindromeToggle);
+            WireToggle(thermoToggle);
+            WireToggle(betweenLinesToggle);
+            WireToggle(evenOddToggle);
+            WireToggle(nonconsecutiveToggle);
+            WireToggle(antiknightToggle);
 
             if (startButton != null)
             {
@@ -324,21 +348,7 @@ namespace SudokuRoguelike.UI
 
         private void EnforceModifierCountLimit(Toggle changedToggle)
         {
-            var activeCount = CountActiveModifiers();
-            if (activeCount <= 2)
-            {
-                return;
-            }
-
-            if (changedToggle != null)
-            {
-                changedToggle.SetIsOnWithoutNotify(false);
-            }
-
-            if (validationText != null)
-            {
-                validationText.text = "Select up to 2 modifiers.";
-            }
+            // No limit — all modifiers are allowed in tutorial mode.
         }
 
         private int CountActiveModifiers()
@@ -353,6 +363,12 @@ namespace SudokuRoguelike.UI
             if (killerCagesToggle != null && killerCagesToggle.isOn) count++;
             if (differenceKropkiToggle != null && differenceKropkiToggle.isOn) count++;
             if (ratioKropkiToggle != null && ratioKropkiToggle.isOn) count++;
+            if (palindromeToggle != null && palindromeToggle.isOn) count++;
+            if (thermoToggle != null && thermoToggle.isOn) count++;
+            if (betweenLinesToggle != null && betweenLinesToggle.isOn) count++;
+            if (evenOddToggle != null && evenOddToggle.isOn) count++;
+            if (nonconsecutiveToggle != null && nonconsecutiveToggle.isOn) count++;
+            if (antiknightToggle != null && antiknightToggle.isOn) count++;
             return count;
         }
 
@@ -376,9 +392,10 @@ namespace SudokuRoguelike.UI
                     : ClassId.NumberFreak;
             }
 
-            _currentSetup.RegionVariant = regionLayoutDropdown != null
-                ? Mathf.Clamp(regionLayoutDropdown.value, 0, 2)
-                : 0;
+            // Dropdown: 0=Standard, 1=Rectangular Alt, 2=Irregular (Jigsaw)
+            // Jigsaw uses variant 3 in SudokuGenerator; map index 2 → 3.
+            var regionDropdownVal = regionLayoutDropdown != null ? regionLayoutDropdown.value : 0;
+            _currentSetup.RegionVariant = regionDropdownVal == 2 ? 3 : regionDropdownVal;
 
             _currentSetup.SelectedModifiers.Clear();
             TryAddModifier(fogOfWarToggle, BossModifierId.FogOfWar);
@@ -390,6 +407,12 @@ namespace SudokuRoguelike.UI
             TryAddModifier(killerCagesToggle, BossModifierId.KillerCages);
             TryAddModifier(differenceKropkiToggle, BossModifierId.DifferenceKropki);
             TryAddModifier(ratioKropkiToggle, BossModifierId.RatioKropki);
+            TryAddModifier(palindromeToggle, BossModifierId.Palindrome);
+            TryAddModifier(thermoToggle, BossModifierId.Thermo);
+            TryAddModifier(betweenLinesToggle, BossModifierId.BetweenLines);
+            TryAddModifier(evenOddToggle, BossModifierId.EvenOdd);
+            TryAddModifier(nonconsecutiveToggle, BossModifierId.Nonconsecutive);
+            TryAddModifier(antiknightToggle, BossModifierId.Antiknight);
         }
 
         private void TryAddModifier(Toggle toggle, BossModifierId modifier)
@@ -481,7 +504,9 @@ namespace SudokuRoguelike.UI
             {
                 BoardSize = source.BoardSize,
                 Stars = source.Stars,
-                ResourceMode = source.ResourceMode
+                RegionVariant = source.RegionVariant,
+                ResourceMode = source.ResourceMode,
+                SimulationClassId = source.SimulationClassId
             };
 
             for (var i = 0; i < source.SelectedModifiers.Count; i++)

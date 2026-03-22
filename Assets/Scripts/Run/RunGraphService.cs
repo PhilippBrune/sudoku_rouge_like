@@ -13,72 +13,177 @@ namespace SudokuRoguelike.Run
             _random = new Random(seed);
         }
 
-        public List<RunNode> BuildRunGraph(int runNumber, int minNodes = 8, int maxNodes = 12)
+        /// <summary>Builds the path graph for a single floor.</summary>
+        public List<RunNode> BuildFloorGraph(int floorIndex, int seed)
         {
-            var riskScore = Math.Clamp(runNumber / 2, 0, 4);
-            var calmMin = 4;
-            var calmMax = 8;
-            var calmRollFloor = Math.Clamp(calmMin + (riskScore / 2), calmMin, calmMax);
-            var calmBranchLength = _random.Next(calmRollFloor, calmMax + 1);
+            var floorRng = new Random(seed + floorIndex * 7919);
+            GetFloorLengths(floorIndex, floorRng, out var calmLength, out var riskLength);
 
-            // Higher intended high-difficulty pressure shortens the risk route.
-            var targetRiskHighDifficultyNodes = Math.Clamp(1 + runNumber / 2, 1, 4);
-            var riskLengthPenalty = Math.Clamp(1 + (targetRiskHighDifficultyNodes / 2), 1, 3);
-            var riskBranchLength = Math.Clamp(calmBranchLength - riskLengthPenalty, calmMin - 2, calmMax - 1);
-            var longestBranch = Math.Max(calmBranchLength, riskBranchLength);
+            var longestBranch = Math.Max(calmLength, riskLength);
+            var graph = new List<RunNode>(2 + calmLength + riskLength + 3);
 
-            var graph = new List<RunNode>(1 + calmBranchLength + riskBranchLength + 3);
+            // Shared Start Tile
             graph.Add(new RunNode { Depth = 1, Layer = 0, Type = NodeType.Start, IsRevealed = true, IsRiskPath = false });
 
             for (var step = 1; step <= longestBranch; step++)
             {
                 var depth = step + 1;
 
-                if (step <= calmBranchLength)
+                if (step <= calmLength)
                 {
+                    var type = step == calmLength
+                        ? NodeType.PreBoss
+                        : RollNodeTypeByProgress(step, calmLength, false, floorRng);
                     graph.Add(new RunNode
                     {
                         Depth = depth,
                         Layer = 0,
-                        Type = RollNodeTypeByProgress(step, calmBranchLength, false),
+                        Type = type,
                         IsRiskPath = false,
-                        IsRevealed = depth <= 3
+                        IsRevealed = true
                     });
                 }
 
-                if (step <= riskBranchLength)
+                if (step <= riskLength)
                 {
+                    var type = step == riskLength
+                        ? NodeType.PreBoss
+                        : RollNodeTypeByProgress(step, riskLength, true, floorRng, 1 + floorIndex / 2);
                     graph.Add(new RunNode
                     {
                         Depth = depth,
                         Layer = 1,
-                        Type = RollNodeTypeByProgress(step, riskBranchLength, true, targetRiskHighDifficultyNodes),
+                        Type = type,
                         IsRiskPath = true,
-                        IsRevealed = depth <= 3
+                        IsRevealed = true
                     });
                 }
             }
 
-            var preBossDepth = longestBranch + 2;
-            graph.Add(new RunNode { Depth = preBossDepth, Layer = 0, Type = NodeType.PreBoss, IsRevealed = true, IsRiskPath = false });
-            graph.Add(new RunNode { Depth = preBossDepth, Layer = 1, Type = NodeType.PreBoss, IsRevealed = true, IsRiskPath = true });
-            graph.Add(new RunNode { Depth = preBossDepth + 1, Layer = 2, Type = NodeType.Boss, IsRevealed = true, IsRiskPath = true });
+            // Shared Boss Gate
+            var bossDepth = longestBranch + 2;
+            graph.Add(new RunNode { Depth = bossDepth, Layer = 2, Type = NodeType.Boss, IsRevealed = true, IsRiskPath = false });
 
             EnforceEconomyFloor(graph);
             PreventAdjacentEconomyNodes(graph);
+            InsertCrossLinks(graph, calmLength, riskLength);
+            AssignCanvasPositions(graph, calmLength, riskLength, floorIndex, seed);
             return graph;
+        }
+
+        /// <summary>Legacy overload — builds graph using old runNumber-based logic.</summary>
+        public List<RunNode> BuildRunGraph(int runNumber, int minNodes = 8, int maxNodes = 12)
+        {
+            return BuildFloorGraph(0, _random.Next());
+        }
+
+        private static void GetFloorLengths(int floorIndex, Random rng, out int calmLength, out int riskLength)
+        {
+            int calmMin, calmMax, riskSub;
+            switch (floorIndex)
+            {
+                case 0: calmMin = 5; calmMax = 8; riskSub = 1; break;
+                case 1: calmMin = 6; calmMax = 9; riskSub = 2; break;
+                case 2: calmMin = 7; calmMax = 10; riskSub = 2; break;
+                case 3: calmMin = 8; calmMax = 11; riskSub = 3; break;
+                default: calmMin = 9; calmMax = 12; riskSub = 3; break;
+            }
+
+            calmLength = rng.Next(calmMin, calmMax + 1);
+
+            var riskMin = Math.Max(3, calmLength - riskSub);
+            var riskMax = Math.Max(riskMin, calmLength - Math.Max(1, riskSub - 1));
+            riskLength = rng.Next(riskMin, riskMax + 1);
         }
 
         public void RevealNextTwoLayers(List<RunNode> graph, int currentDepth)
         {
             for (var i = 0; i < graph.Count; i++)
             {
-                var delta = graph[i].Depth - currentDepth;
-                graph[i].IsRevealed = delta <= 2;
+                graph[i].IsRevealed = true; // All tiles visible per spec
             }
         }
 
-        private NodeType RollNodeTypeByProgress(int step, int branchLength, bool riskPath, int riskHighDifficultyPressure = 0)
+        /// <summary>
+        /// Assigns normalised [0,1] canvas positions to every node.
+        /// Layout is LEFT-TO-RIGHT: X progresses from start (left) to boss (right).
+        /// Calm route occupies the upper lane (low Y), Risk route the lower lane (high Y).
+        /// Start and Boss sit at the vertical centre.
+        /// </summary>
+        private static void AssignCanvasPositions(List<RunNode> graph, int calmLength, int riskLength,
+            int floorIndex, int seed)
+        {
+            var longestBranch = Math.Max(calmLength, riskLength);
+            var totalSlots = longestBranch + 2; // +1 for start, +1 for boss
+            var slotWidth = 1f / totalSlots;
+
+            float laneOffset, jitterMax;
+            if (floorIndex <= 1) { laneOffset = 0.18f; jitterMax = 0.04f; }
+            else if (floorIndex == 2) { laneOffset = 0.22f; jitterMax = 0.05f; }
+            else { laneOffset = 0.26f; jitterMax = 0.06f; }
+
+            var calmNodes = new List<RunNode>();
+            var riskNodes = new List<RunNode>();
+
+            for (var i = 0; i < graph.Count; i++)
+            {
+                var node = graph[i];
+                if (node.Type == NodeType.Start)
+                {
+                    node.CanvasX = slotWidth * 0.5f;      // left edge
+                    node.CanvasY = 0.5f;                   // vertical centre
+                }
+                else if (node.Type == NodeType.Boss)
+                {
+                    node.CanvasX = 1f - slotWidth * 0.5f;  // right edge
+                    node.CanvasY = 0.5f;                    // vertical centre
+                }
+                else if (!node.IsRiskPath)
+                {
+                    calmNodes.Add(node);
+                }
+                else
+                {
+                    riskNodes.Add(node);
+                }
+            }
+
+            // Distribute calm nodes (upper lane) evenly across horizontal slots
+            for (var ci = 0; ci < calmNodes.Count; ci++)
+            {
+                var slot = ci + 1;
+                var x = slotWidth * (slot + 0.5f);
+                var jRng = new Random(seed + floorIndex * 100 + ci);
+                var jitter = (float)(jRng.NextDouble() * 2 - 1) * jitterMax;
+                calmNodes[ci].CanvasX = x;
+                calmNodes[ci].CanvasY = 0.5f - laneOffset + jitter;  // upper half
+            }
+
+            // Distribute risk nodes (lower lane) proportionally spanning the same horizontal range
+            for (var ri = 0; ri < riskNodes.Count; ri++)
+            {
+                float x;
+                if (riskNodes.Count == 1)
+                {
+                    x = slotWidth * 1.5f;
+                }
+                else
+                {
+                    var fraction = (float)ri / (riskNodes.Count - 1);
+                    var startX = slotWidth * 1.5f;
+                    var endX = slotWidth * (calmLength + 0.5f);
+                    x = startX + fraction * (endX - startX);
+                }
+
+                var jRng = new Random(seed + floorIndex * 100 + 50 + ri);
+                var jitter = (float)(jRng.NextDouble() * 2 - 1) * jitterMax;
+                riskNodes[ri].CanvasX = x;
+                riskNodes[ri].CanvasY = 0.5f + laneOffset + jitter;  // lower half
+            }
+        }
+
+        private static NodeType RollNodeTypeByProgress(int step, int branchLength, bool riskPath,
+            Random rng, int riskHighDifficultyPressure = 0)
         {
             if (step <= 1)
             {
@@ -89,32 +194,32 @@ namespace SudokuRoguelike.Run
 
             if (progress <= 0.30f)
             {
-                return WeightedRoll((NodeType.Puzzle, 68), (NodeType.Shop, 8), (NodeType.Rest, 16), (NodeType.Relic, 8));
+                return WeightedRoll(rng, (NodeType.Puzzle, 68), (NodeType.Shop, 8), (NodeType.Rest, 16), (NodeType.Relic, 8));
             }
 
             if (progress <= 0.70f)
             {
                 return riskPath
-                    ? WeightedRoll(
+                    ? WeightedRoll(rng,
                         (NodeType.Puzzle, Math.Max(18, 38 - (riskHighDifficultyPressure * 4))),
                         (NodeType.ElitePuzzle, 21 + (riskHighDifficultyPressure * 4)),
                         (NodeType.Shop, 8),
                         (NodeType.Rest, 18),
                         (NodeType.Relic, 15))
-                    : WeightedRoll((NodeType.Puzzle, 54), (NodeType.ElitePuzzle, 10), (NodeType.Shop, 10), (NodeType.Rest, 16), (NodeType.Relic, 10));
+                    : WeightedRoll(rng, (NodeType.Puzzle, 54), (NodeType.ElitePuzzle, 10), (NodeType.Shop, 10), (NodeType.Rest, 16), (NodeType.Relic, 10));
             }
 
             return riskPath
-                ? WeightedRoll(
+                ? WeightedRoll(rng,
                     (NodeType.Puzzle, Math.Max(12, 32 - (riskHighDifficultyPressure * 4))),
                     (NodeType.ElitePuzzle, 30 + (riskHighDifficultyPressure * 4)),
                     (NodeType.Shop, 6),
                     (NodeType.Rest, 14),
                     (NodeType.Relic, 18))
-                : WeightedRoll((NodeType.Puzzle, 48), (NodeType.ElitePuzzle, 14), (NodeType.Shop, 8), (NodeType.Rest, 16), (NodeType.Relic, 14));
+                : WeightedRoll(rng, (NodeType.Puzzle, 48), (NodeType.ElitePuzzle, 14), (NodeType.Shop, 8), (NodeType.Rest, 16), (NodeType.Relic, 14));
         }
 
-        private NodeType WeightedRoll(params (NodeType Type, int Weight)[] entries)
+        private static NodeType WeightedRoll(Random rng, params (NodeType Type, int Weight)[] entries)
         {
             var total = 0;
             for (var i = 0; i < entries.Length; i++)
@@ -122,7 +227,7 @@ namespace SudokuRoguelike.Run
                 total += entries[i].Weight;
             }
 
-            var roll = _random.Next(total);
+            var roll = rng.Next(total);
             var cursor = 0;
             for (var i = 0; i < entries.Length; i++)
             {
@@ -182,6 +287,7 @@ namespace SudokuRoguelike.Run
                 }
             }
         }
+
         private static void PreventAdjacentEconomyNodes(List<RunNode> graph)
         {
             for (var lane = 0; lane <= 1; lane++)
@@ -210,5 +316,36 @@ namespace SudokuRoguelike.Run
         }
 
         private static bool IsEconomyNode(NodeType type) => type == NodeType.Shop || type == NodeType.Rest;
+
+        private static void InsertCrossLinks(List<RunNode> graph, int calmBranchLength, int riskBranchLength)
+        {
+            var shortestBranch = Math.Min(calmBranchLength, riskBranchLength);
+            if (shortestBranch < 3)
+            {
+                return;
+            }
+
+            var crossLinkStep = Math.Clamp(shortestBranch / 2, 2, shortestBranch - 1);
+            var crossLinkDepth = crossLinkStep + 1;
+
+            for (var i = 0; i < graph.Count; i++)
+            {
+                var node = graph[i];
+                if (node.Depth == crossLinkDepth && node.Layer <= 1 &&
+                    node.Type != NodeType.Start && node.Type != NodeType.Boss && node.Type != NodeType.PreBoss)
+                {
+                    // Mark as cross-link but keep original tile type (puzzle, shop, rest, etc.)
+                    node.IsCrossLink = true;
+                    node.IsRevealed = true;
+                }
+            }
+        }
+
+        /// <summary>Returns the floor-scaled boss modifier options and required choices.</summary>
+        public static void GetBossModifierCounts(int floorIndex, out int optionsShown, out int playerChooses)
+        {
+            optionsShown = Math.Clamp(floorIndex + 2, 2, 6);
+            playerChooses = Math.Clamp(floorIndex + 1, 1, 5);
+        }
     }
 }

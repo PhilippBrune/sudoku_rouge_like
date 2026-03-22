@@ -41,6 +41,24 @@ namespace SudokuRoguelike.Sudoku
                     case BossModifierId.FogOfWar:
                         rules.Add(new FogOfWarRule(overlay));
                         break;
+                    case BossModifierId.Palindrome:
+                        rules.Add(new PalindromeRule(overlay.Lines));
+                        break;
+                    case BossModifierId.Thermo:
+                        rules.Add(new ThermoRule(overlay.Lines));
+                        break;
+                    case BossModifierId.BetweenLines:
+                        rules.Add(new BetweenLinesRule(overlay.Lines));
+                        break;
+                    case BossModifierId.EvenOdd:
+                        rules.Add(new EvenOddRule(overlay.CellMarkers));
+                        break;
+                    case BossModifierId.Nonconsecutive:
+                        rules.Add(new NonconsecutiveRule());
+                        break;
+                    case BossModifierId.Antiknight:
+                        rules.Add(new AntiknightRule());
+                        break;
                 }
             }
 

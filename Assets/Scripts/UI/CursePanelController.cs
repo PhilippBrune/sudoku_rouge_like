@@ -9,7 +9,6 @@ namespace SudokuRoguelike.UI
     {
         [SerializeField] private Text titleText;
         [SerializeField] private Text curseListText;
-        [SerializeField] private Text tensionText;
 
         private RunMapController _runMap;
 
@@ -18,11 +17,10 @@ namespace SudokuRoguelike.UI
             _runMap = runMap;
         }
 
-        public void Configure(Text title, Text list, Text tension)
+        public void Configure(Text title, Text list)
         {
             titleText = title;
             curseListText = list;
-            tensionText = tension;
         }
 
         public void RefreshPanel()
@@ -61,11 +59,6 @@ namespace SudokuRoguelike.UI
                 }
             }
 
-            if (tensionText != null)
-            {
-                var heat = _runMap.Run?.RunState?.CurrentHeatScore ?? 1f;
-                tensionText.text = $"Heat pressure: {heat:0.00}";
-            }
         }
 
         private static string CurseDescription(CurseType curse)

@@ -26,7 +26,6 @@ namespace SudokuRoguelike.Meta
 
             meta.PrestigeCount++;
             meta.AscensionLevel = 0;
-            meta.GardenEssence = 0;
             meta.MaxStarCap = 5;
             meta.PurchasedPermanentUpgrades.Clear();
             return true;

@@ -18,24 +18,16 @@ namespace SudokuRoguelike.Run
             var roll = random.NextDouble();
 
             if (roll < 0.33)
-            {
                 return BuildSacrificeEvent();
-            }
-
             if (roll < 0.66 + rareBonus)
-            {
                 return BuildRiskAmplificationEvent();
-            }
-
             return BuildResourceTradeEvent();
         }
 
         public bool ResolveChoice(RunState runState, RunEvent runEvent, string optionId)
         {
             if (runState == null || runEvent == null || string.IsNullOrWhiteSpace(optionId))
-            {
                 return false;
-            }
 
             if (runEvent.Category == EventCategory.Sacrifice)
             {
@@ -47,13 +39,14 @@ namespace SudokuRoguelike.Run
 
                 if (optionId == "sacrifice_relic")
                 {
-                    if (runState.RelicIds.Count == 0)
-                    {
+                    // Trade current relic for +1 max HP permanently (spec: trade events)
+                    if (!runState.HasRelic)
                         return false;
-                    }
 
-                    runState.RelicIds.RemoveAt(runState.RelicIds.Count - 1);
-                    runState.RelicIds.Add("relic_legend_silent_grid");
+                    runState.HasRelic = false;
+                    runState.HeldRelic = null;
+                    runState.MaxHP += 1;
+                    runState.CurrentHP += 1;
                     return true;
                 }
             }
@@ -77,23 +70,27 @@ namespace SudokuRoguelike.Run
                 if (optionId == "gold_for_combo")
                 {
                     if (runState.CurrentGold < 35)
-                    {
                         return false;
-                    }
 
+                    // Trade gold for Monk Charm relic (single slot)
                     runState.CurrentGold -= 35;
-                    runState.RelicIds.Add("relic_combo_t2_monk_charm");
+                    runState.HasRelic = true;
+                    runState.HeldRelic = new RelicInstance
+                    {
+                        Id = RelicId.MonkCharm,
+                        Tier = RelicTier.Tier2,
+                        UsesRemaining = -1
+                    };
                     return true;
                 }
 
                 if (optionId == "relic_for_hp")
                 {
-                    if (runState.RelicIds.Count == 0)
-                    {
+                    if (!runState.HasRelic)
                         return false;
-                    }
 
-                    runState.RelicIds.RemoveAt(runState.RelicIds.Count - 1);
+                    runState.HasRelic = false;
+                    runState.HeldRelic = null;
                     runState.MaxHP += 1;
                     runState.CurrentHP += 1;
                     return true;
@@ -112,7 +109,7 @@ namespace SudokuRoguelike.Run
                 Prompt = "An ancient statue demands focus."
             };
             runEvent.Options.Add(new RunEventOption { OptionId = "sacrifice_hp", Label = "Lose 2 HP", Tradeoff = "Remove one active modifier." });
-            runEvent.Options.Add(new RunEventOption { OptionId = "sacrifice_relic", Label = "Lose random relic", Tradeoff = "Gain a rare relic." });
+            runEvent.Options.Add(new RunEventOption { OptionId = "sacrifice_relic", Label = "Trade current relic", Tradeoff = "Gain +1 max HP permanently." });
             return runEvent;
         }
 
@@ -137,8 +134,8 @@ namespace SudokuRoguelike.Run
                 Category = EventCategory.ResourceTrade,
                 Prompt = "A wandering monk offers an exchange."
             };
-            runEvent.Options.Add(new RunEventOption { OptionId = "gold_for_combo", Label = "Lose gold", Tradeoff = "Gain combo relic." });
-            runEvent.Options.Add(new RunEventOption { OptionId = "relic_for_hp", Label = "Lose relic", Tradeoff = "Gain +1 max HP permanently." });
+            runEvent.Options.Add(new RunEventOption { OptionId = "gold_for_combo", Label = "Pay 35 gold", Tradeoff = "Gain Monk Charm relic." });
+            runEvent.Options.Add(new RunEventOption { OptionId = "relic_for_hp", Label = "Trade current relic", Tradeoff = "Gain +1 max HP permanently." });
             return runEvent;
         }
     }

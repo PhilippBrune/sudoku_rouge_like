@@ -1,3 +1,4 @@
+using System.Collections;
 using SudokuRoguelike.Save;
 using UnityEngine;
 
@@ -19,10 +20,20 @@ namespace SudokuRoguelike.UI
 
         private AudioSource _musicSource;
         private AudioSource _sfxSource;
+        private AudioSource _uiSource;
+        private AudioSource _bossSource;
 
         private AudioClip _puzzleLoop;
         private AudioClip _shopLoop;
         private AudioClip _restLoop;
+
+        // Floor-based music
+        private readonly AudioClip[] _floorLoops = new AudioClip[5];
+        private readonly AudioClip[] _bossLayers = new AudioClip[5];
+        private int _currentFloorIndex = -1;
+        private bool _bossLayerActive;
+        private bool _isDucking;
+        private Coroutine _crossfadeCoroutine;
         private AudioClip _wrongSfx;
         private AudioClip _solvedSfx;
         private AudioClip _shopPurchaseSfx;
@@ -36,6 +47,31 @@ namespace SudokuRoguelike.UI
         private AudioClip _restHealSfx;
         private AudioClip _gameOverSfx;
         private AudioClip _relicPickupSfx;
+
+        // New SFX from AudioVisualDirection spec
+        private AudioClip _combo5Sfx;
+        private AudioClip _combo10Sfx;
+        private AudioClip _comboBreakSfx;
+        private AudioClip _hpLossSfx;
+        private AudioClip _hpCriticalSfx;
+        private AudioClip _pencilDepletedSfx;
+        private AudioClip _goldGainSfx;
+        private AudioClip _fogRevealSfx;
+        private AudioClip _modifierActivateSfx;
+        private AudioClip _bossGateOpenSfx;
+        private AudioClip _floorTransitionSfx;
+        private AudioClip _levelUpSfx;
+        private AudioClip _achievementSfx;
+        private AudioClip _xpBarFillSfx;
+        private AudioClip _victorySfx;
+
+        // UI SFX
+        private AudioClip _buttonHoverSfx;
+        private AudioClip _buttonClickSfx;
+        private AudioClip _menuOpenSfx;
+        private AudioClip _menuCloseSfx;
+        private AudioClip _itemRewardSfx;
+        private AudioClip _relicRevealSfx;
 
         private Context _context = Context.Path;
 
@@ -53,6 +89,20 @@ namespace SudokuRoguelike.UI
             _sfxSource.playOnAwake = false;
             _sfxSource.spatialBlend = 0f;
 
+            var uiGo = new GameObject("RunUiSource", typeof(AudioSource));
+            uiGo.transform.SetParent(transform, false);
+            _uiSource = uiGo.GetComponent<AudioSource>();
+            _uiSource.loop = false;
+            _uiSource.playOnAwake = false;
+            _uiSource.spatialBlend = 0f;
+
+            var bossGo = new GameObject("RunBossSource", typeof(AudioSource));
+            bossGo.transform.SetParent(transform, false);
+            _bossSource = bossGo.GetComponent<AudioSource>();
+            _bossSource.loop = true;
+            _bossSource.playOnAwake = false;
+            _bossSource.spatialBlend = 0f;
+
             // Ensure a listener exists so runtime-generated clips are audible in minimal prototype scenes.
             if (FindFirstObjectByType<AudioListener>() == null)
             {
@@ -68,22 +118,57 @@ namespace SudokuRoguelike.UI
                 _profile.ApplyEnvelope(envelope);
             }
 
-            _puzzleLoop = BuildPuzzleLoop();
-            _shopLoop = BuildShopLoop();
-            _restLoop = BuildRestLoop();
-            _wrongSfx = BuildWrongSfx();
-            _solvedSfx = BuildSolvedSfx();
-            _shopPurchaseSfx = BuildShopPurchaseSfx();
-            _shopRerollSfx = BuildShopRerollSfx();
-            _itemUseSfx = BuildItemUseSfx();
-            _rewardClaimSfx = BuildRewardClaimSfx();
-            _pathAdvanceSfx = BuildPathAdvanceSfx();
-            _correctPlaceSfx = BuildCorrectPlaceSfx();
-            _cellSelectSfx = BuildCellSelectSfx();
-            _pencilToggleSfx = BuildPencilToggleSfx();
-            _restHealSfx = BuildRestHealSfx();
-            _gameOverSfx = BuildGameOverSfx();
-            _relicPickupSfx = BuildRelicPickupSfx();
+            // Context loops — delegate to ProceduralSfxLibrary
+            _puzzleLoop = ProceduralSfxLibrary.BuildPuzzleLoop();
+            _shopLoop = ProceduralSfxLibrary.BuildShopLoop();
+            _restLoop = ProceduralSfxLibrary.BuildRestLoop();
+
+            // Floor-based music loops + boss layers
+            for (var f = 0; f < 5; f++)
+            {
+                _floorLoops[f] = FloorMusicGenerator.BuildFloorLoop(f);
+                _bossLayers[f] = FloorMusicGenerator.BuildBossLayer(f);
+            }
+
+            // Existing gameplay SFX
+            _wrongSfx = ProceduralSfxLibrary.BuildWrongPlaceSfx();
+            _solvedSfx = ProceduralSfxLibrary.BuildLevelCompleteSfx();
+            _shopPurchaseSfx = ProceduralSfxLibrary.BuildShopPurchaseSfx();
+            _shopRerollSfx = ProceduralSfxLibrary.BuildShopRerollSfx();
+            _itemUseSfx = ProceduralSfxLibrary.BuildItemUseSfx();
+            _rewardClaimSfx = ProceduralSfxLibrary.BuildRewardClaimSfx();
+            _pathAdvanceSfx = ProceduralSfxLibrary.BuildPathAdvanceSfx();
+            _correctPlaceSfx = ProceduralSfxLibrary.BuildCorrectPlaceSfx();
+            _cellSelectSfx = ProceduralSfxLibrary.BuildCellSelectSfx();
+            _pencilToggleSfx = ProceduralSfxLibrary.BuildPencilToggleSfx();
+            _restHealSfx = ProceduralSfxLibrary.BuildRestHealSfx();
+            _gameOverSfx = ProceduralSfxLibrary.BuildGameOverStingerSfx();
+            _relicPickupSfx = ProceduralSfxLibrary.BuildRelicPickupSfx();
+
+            // New gameplay SFX
+            _combo5Sfx = ProceduralSfxLibrary.BuildCombo5Sfx();
+            _combo10Sfx = ProceduralSfxLibrary.BuildCombo10Sfx();
+            _comboBreakSfx = ProceduralSfxLibrary.BuildComboBreakSfx();
+            _hpLossSfx = ProceduralSfxLibrary.BuildHpLossSfx();
+            _hpCriticalSfx = ProceduralSfxLibrary.BuildHpCriticalSfx();
+            _pencilDepletedSfx = ProceduralSfxLibrary.BuildPencilDepletedSfx();
+            _goldGainSfx = ProceduralSfxLibrary.BuildGoldGainSfx();
+            _fogRevealSfx = ProceduralSfxLibrary.BuildFogRevealSfx();
+            _modifierActivateSfx = ProceduralSfxLibrary.BuildModifierActivateSfx();
+            _bossGateOpenSfx = ProceduralSfxLibrary.BuildBossGateOpenSfx();
+            _floorTransitionSfx = ProceduralSfxLibrary.BuildFloorTransitionSfx();
+            _levelUpSfx = ProceduralSfxLibrary.BuildLevelUpSfx();
+            _achievementSfx = ProceduralSfxLibrary.BuildAchievementSfx();
+            _xpBarFillSfx = ProceduralSfxLibrary.BuildXpBarFillSfx();
+            _victorySfx = ProceduralSfxLibrary.BuildVictoryStingerSfx();
+
+            // UI SFX
+            _buttonHoverSfx = ProceduralSfxLibrary.BuildButtonHoverSfx();
+            _buttonClickSfx = ProceduralSfxLibrary.BuildButtonClickSfx();
+            _menuOpenSfx = ProceduralSfxLibrary.BuildMenuOpenSfx();
+            _menuCloseSfx = ProceduralSfxLibrary.BuildMenuCloseSfx();
+            _itemRewardSfx = ProceduralSfxLibrary.BuildItemRewardSfx();
+            _relicRevealSfx = ProceduralSfxLibrary.BuildRelicRevealSfx();
         }
 
         private void Start()
@@ -106,18 +191,19 @@ namespace SudokuRoguelike.UI
 
             var muted = _profile.Options.Audio.MuteAll;
             var baseVolume = Mathf.Clamp01(_profile.Options.Audio.MasterVolume);
+            var musicVol = baseVolume * Mathf.Clamp01(_profile.Options.Audio.MusicVolume) * 0.75f;
+            var duckMul = _isDucking ? 0.8f : 1f;
             _musicSource.mute = muted;
             _sfxSource.mute = muted;
-            _musicSource.volume = baseVolume * Mathf.Clamp01(_profile.Options.Audio.MusicVolume) * 0.75f;
+            _uiSource.mute = muted;
+            _bossSource.mute = muted;
+            _musicSource.volume = musicVol * duckMul;
             _sfxSource.volume = baseVolume * Mathf.Clamp01(_profile.Options.Audio.SfxVolume) * 0.55f;
+            _uiSource.volume = baseVolume * Mathf.Clamp01(_profile.Options.Audio.UiVolume) * 0.65f;
+            _bossSource.volume = _bossLayerActive ? musicVol * 0.6f * duckMul : 0f;
 
             if (_context == Context.Puzzle && !_musicSource.mute)
             {
-                if (_musicSource.clip != _puzzleLoop)
-                {
-                    _musicSource.clip = _puzzleLoop;
-                }
-
                 if (_musicSource.clip != null && !_musicSource.isPlaying)
                 {
                     _musicSource.Play();
@@ -133,6 +219,13 @@ namespace SudokuRoguelike.UI
             }
 
             _context = context;
+
+            // Stop boss layer when leaving puzzle context
+            if (context != Context.Puzzle && _bossLayerActive)
+            {
+                StopBossLayer();
+            }
+
             _musicSource.clip = context switch
             {
                 Context.Puzzle => _puzzleLoop,
@@ -150,479 +243,145 @@ namespace SudokuRoguelike.UI
             _musicSource.Play();
         }
 
-        public void PlayWrongPlacement()
+        // ── Existing gameplay SFX playback ───────────────────────────────
+
+        public void PlayWrongPlacement() => PlaySfx(_wrongSfx, 1f);
+        public void PlayPuzzleSolved() => PlaySfx(_solvedSfx, 1f);
+        public void PlayShopPurchase() => PlaySfx(_shopPurchaseSfx, 1f);
+        public void PlayShopReroll() => PlaySfx(_shopRerollSfx, 1f);
+        public void PlayItemUse() => PlaySfx(_itemUseSfx, 1f);
+        public void PlayRewardClaim() => PlaySfx(_rewardClaimSfx, 1f);
+        public void PlayPathAdvance() => PlaySfx(_pathAdvanceSfx, 1f);
+        public void PlayCorrectPlacement() => PlaySfx(_correctPlaceSfx, 0.7f);
+        public void PlayCellSelect() => PlaySfx(_cellSelectSfx, 0.5f);
+        public void PlayPencilToggle() => PlaySfx(_pencilToggleSfx, 0.6f);
+        public void PlayRestHeal() => PlaySfx(_restHealSfx, 1f);
+        public void PlayGameOver() => PlaySfx(_gameOverSfx, 1f);
+        public void PlayRelicPickup() => PlaySfx(_relicPickupSfx, 1f);
+
+        // ── New gameplay SFX ─────────────────────────────────────────────
+
+        public void PlayComboMilestone(int combo)
         {
-            if (_wrongSfx != null)
+            if (combo >= 10) PlaySfx(_combo10Sfx, 0.8f);
+            else if (combo >= 5) PlaySfx(_combo5Sfx, 0.8f);
+        }
+
+        public void PlayComboBreak() => PlaySfx(_comboBreakSfx, 0.6f);
+        public void PlayHpLoss() => PlaySfx(_hpLossSfx, 1f);
+        public void PlayHpCritical() => PlaySfx(_hpCriticalSfx, 0.8f);
+        public void PlayPencilDepleted() => PlaySfx(_pencilDepletedSfx, 0.5f);
+        public void PlayGoldGain() => PlaySfx(_goldGainSfx, 0.6f);
+        public void PlayFogReveal() => PlaySfx(_fogRevealSfx, 0.7f);
+        public void PlayModifierActivate() => PlaySfx(_modifierActivateSfx, 0.8f);
+        public void PlayBossGateOpen() => PlaySfx(_bossGateOpenSfx, 1f);
+        public void PlayFloorTransition() => PlaySfx(_floorTransitionSfx, 1f);
+        public void PlayLevelUp() => PlaySfx(_levelUpSfx, 1f);
+        public void PlayAchievement() => PlaySfx(_achievementSfx, 0.9f);
+        public void PlayXpBarFill() => PlaySfx(_xpBarFillSfx, 0.7f);
+        public void PlayVictory() => PlaySfx(_victorySfx, 1f);
+
+        // ── UI SFX (routed through UiVolume channel) ─────────────────────
+
+        public void PlayButtonHover() => PlayUi(_buttonHoverSfx, 0.4f);
+        public void PlayButtonClick() => PlayUi(_buttonClickSfx, 0.6f);
+        public void PlayMenuOpen() => PlayUi(_menuOpenSfx, 0.5f);
+        public void PlayMenuClose() => PlayUi(_menuCloseSfx, 0.5f);
+        public void PlayItemReward() => PlayUi(_itemRewardSfx, 0.7f);
+        public void PlayRelicReveal() => PlayUi(_relicRevealSfx, 0.8f);
+
+        // ── Floor Music ─────────────────────────────────────────────────
+
+        /// <summary>
+        /// Switch to floor-specific music with crossfade (800ms out, 200ms silence, 800ms in).
+        /// </summary>
+        public void SetFloorIndex(int floorIndex)
+        {
+            floorIndex = Mathf.Clamp(floorIndex, 0, 4);
+            if (floorIndex == _currentFloorIndex) return;
+            _currentFloorIndex = floorIndex;
+
+            // Use the floor loop as the puzzle loop for this floor
+            _puzzleLoop = _floorLoops[floorIndex];
+
+            if (_context == Context.Puzzle)
             {
-                _sfxSource.PlayOneShot(_wrongSfx, 1f);
+                if (_crossfadeCoroutine != null) StopCoroutine(_crossfadeCoroutine);
+                _crossfadeCoroutine = StartCoroutine(CrossfadeToClip(_floorLoops[floorIndex]));
             }
         }
 
-        public void PlayPuzzleSolved()
+        /// <summary>
+        /// Start additive boss tension layer on top of current floor music.
+        /// </summary>
+        public void StartBossLayer()
         {
-            if (_solvedSfx != null)
-            {
-                _sfxSource.PlayOneShot(_solvedSfx, 1f);
-            }
+            if (_bossLayerActive) return;
+            _bossLayerActive = true;
+            var idx = Mathf.Clamp(_currentFloorIndex, 0, 4);
+            _bossSource.clip = _bossLayers[idx];
+            _bossSource.Play();
         }
 
-        public void PlayShopPurchase()
+        /// <summary>
+        /// Stop the boss tension layer.
+        /// </summary>
+        public void StopBossLayer()
         {
-            if (_shopPurchaseSfx != null)
-            {
-                _sfxSource.PlayOneShot(_shopPurchaseSfx, 1f);
-            }
+            _bossLayerActive = false;
+            _bossSource.Stop();
         }
 
-        public void PlayShopReroll()
+        /// <summary>
+        /// Duck music volume 20% during XP bar animation.
+        /// </summary>
+        public void SetMusicDucking(bool ducking)
         {
-            if (_shopRerollSfx != null)
-            {
-                _sfxSource.PlayOneShot(_shopRerollSfx, 1f);
-            }
+            _isDucking = ducking;
         }
 
-        public void PlayItemUse()
+        private IEnumerator CrossfadeToClip(AudioClip newClip)
         {
-            if (_itemUseSfx != null)
+            // Fade out (800ms)
+            var startVol = _musicSource.volume;
+            var elapsed = 0f;
+            while (elapsed < 0.8f)
             {
-                _sfxSource.PlayOneShot(_itemUseSfx, 1f);
+                elapsed += Time.unscaledDeltaTime;
+                _musicSource.volume = Mathf.Lerp(startVol, 0f, elapsed / 0.8f);
+                yield return null;
             }
-        }
+            _musicSource.Stop();
 
-        public void PlayRewardClaim()
-        {
-            if (_rewardClaimSfx != null)
+            // Silence (200ms)
+            yield return new WaitForSecondsRealtime(0.2f);
+
+            // Fade in (800ms)
+            _musicSource.clip = newClip;
+            if (newClip != null)
             {
-                _sfxSource.PlayOneShot(_rewardClaimSfx, 1f);
-            }
-        }
-
-        public void PlayPathAdvance()
-        {
-            if (_pathAdvanceSfx != null)
-            {
-                _sfxSource.PlayOneShot(_pathAdvanceSfx, 1f);
-            }
-        }
-
-        public void PlayCorrectPlacement()
-        {
-            if (_correctPlaceSfx != null)
-            {
-                _sfxSource.PlayOneShot(_correctPlaceSfx, 0.7f);
-            }
-        }
-
-        public void PlayCellSelect()
-        {
-            if (_cellSelectSfx != null)
-            {
-                _sfxSource.PlayOneShot(_cellSelectSfx, 0.5f);
-            }
-        }
-
-        public void PlayPencilToggle()
-        {
-            if (_pencilToggleSfx != null)
-            {
-                _sfxSource.PlayOneShot(_pencilToggleSfx, 0.6f);
-            }
-        }
-
-        public void PlayRestHeal()
-        {
-            if (_restHealSfx != null)
-            {
-                _sfxSource.PlayOneShot(_restHealSfx, 1f);
-            }
-        }
-
-        public void PlayGameOver()
-        {
-            if (_gameOverSfx != null)
-            {
-                _sfxSource.PlayOneShot(_gameOverSfx, 1f);
-            }
-        }
-
-        public void PlayRelicPickup()
-        {
-            if (_relicPickupSfx != null)
-            {
-                _sfxSource.PlayOneShot(_relicPickupSfx, 1f);
-            }
-        }
-
-        private static AudioClip BuildPuzzleLoop()
-        {
-            const int sampleRate = 22050;
-            // 10x longer loop for puzzle solving sessions.
-            const float seconds = 280f;
-            var sampleCount = Mathf.RoundToInt(sampleRate * seconds);
-            var data = new float[sampleCount];
-
-            var notes = new[] { 220f, 246.94f, 261.63f, 293.66f, 329.63f, 349.23f, 329.63f, 293.66f, 261.63f, 246.94f };
-            for (var i = 0; i < sampleCount; i++)
-            {
-                var t = i / (float)sampleRate;
-                var step = (int)(t * 1.8f) % notes.Length;
-                var pulse = 0.55f + 0.45f * Mathf.Sin(t * 0.35f * Mathf.PI);
-                var lead = Mathf.Sin(2f * Mathf.PI * notes[step] * t) * 0.21f;
-                var harmony = Mathf.Sin(2f * Mathf.PI * (notes[(step + 3) % notes.Length] * 0.5f) * t) * 0.14f;
-                var bell = Mathf.Sin(2f * Mathf.PI * notes[(step + 5) % notes.Length] * t) * 0.06f;
-                data[i] = Mathf.Clamp((lead + harmony + bell) * pulse, -0.65f, 0.65f);
-            }
-
-            var clip = AudioClip.Create("RunPuzzleLoop", sampleCount, 1, sampleRate, false);
-            clip.SetData(data, 0);
-            return clip;
-        }
-
-        private static AudioClip BuildShopLoop()
-        {
-            const int sampleRate = 22050;
-            const float seconds = 20f;
-            var sampleCount = Mathf.RoundToInt(sampleRate * seconds);
-            var data = new float[sampleCount];
-            var notes = new[] { 392f, 440f, 523.25f, 659.25f };
-
-            for (var i = 0; i < sampleCount; i++)
-            {
-                var t = i / (float)sampleRate;
-                var slot = Mathf.FloorToInt(t * 1.2f) % notes.Length;
-                var local = t % 0.83f;
-                var decay = Mathf.Exp(-local * 6f);
-                var pluck = Mathf.Sin(2f * Mathf.PI * notes[slot] * t) * decay * 0.25f;
-                var low = Mathf.Sin(2f * Mathf.PI * 98f * t) * 0.07f;
-                data[i] = Mathf.Clamp(pluck + low, -0.55f, 0.55f);
-            }
-
-            var clip = AudioClip.Create("RunShopLoop", sampleCount, 1, sampleRate, false);
-            clip.SetData(data, 0);
-            return clip;
-        }
-
-        private static AudioClip BuildRestLoop()
-        {
-            const int sampleRate = 22050;
-            const float seconds = 22f;
-            var sampleCount = Mathf.RoundToInt(sampleRate * seconds);
-            var data = new float[sampleCount];
-
-            for (var i = 0; i < sampleCount; i++)
-            {
-                var t = i / (float)sampleRate;
-                var wind = Mathf.Sin(2f * Mathf.PI * 55f * t) * 0.08f + Mathf.Sin(2f * Mathf.PI * 110f * t) * 0.03f;
-
-                var chirpA = Chirp(t, 1.4f, 1320f, 1560f, 0.11f);
-                var chirpB = Chirp(t + 0.23f, 1.9f, 990f, 1260f, 0.09f);
-                var chirpC = Chirp(t + 0.57f, 2.7f, 1180f, 1420f, 0.07f);
-
-                data[i] = Mathf.Clamp(wind + chirpA + chirpB + chirpC, -0.50f, 0.50f);
-            }
-
-            var clip = AudioClip.Create("RunRestLoop", sampleCount, 1, sampleRate, false);
-            clip.SetData(data, 0);
-            return clip;
-        }
-
-        private static float Chirp(float t, float rate, float f0, float f1, float amp)
-        {
-            var phase = t * rate;
-            var frac = phase - Mathf.Floor(phase);
-            if (frac > 0.18f)
-            {
-                return 0f;
-            }
-
-            var k = frac / 0.18f;
-            var freq = Mathf.Lerp(f0, f1, k);
-            var env = Mathf.Sin(k * Mathf.PI);
-            return Mathf.Sin(2f * Mathf.PI * freq * t) * env * amp;
-        }
-
-        private static AudioClip BuildWrongSfx()
-        {
-            const int sampleRate = 22050;
-            const float seconds = 0.18f;
-            var sampleCount = Mathf.RoundToInt(sampleRate * seconds);
-            var data = new float[sampleCount];
-
-            for (var i = 0; i < sampleCount; i++)
-            {
-                var t = i / (float)sampleRate;
-                var env = Mathf.Exp(-t * 12f);
-                var buzz = Mathf.Sign(Mathf.Sin(2f * Mathf.PI * 170f * t)) * 0.22f;
-                var drop = Mathf.Sin(2f * Mathf.PI * Mathf.Lerp(280f, 130f, t / seconds) * t) * 0.20f;
-                data[i] = Mathf.Clamp((buzz + drop) * env, -0.8f, 0.8f);
-            }
-
-            var clip = AudioClip.Create("WrongPlacementSfx", sampleCount, 1, sampleRate, false);
-            clip.SetData(data, 0);
-            return clip;
-        }
-
-        private static AudioClip BuildSolvedSfx()
-        {
-            const int sampleRate = 22050;
-            const float seconds = 0.85f;
-            var sampleCount = Mathf.RoundToInt(sampleRate * seconds);
-            var data = new float[sampleCount];
-            var tones = new[] { 523.25f, 659.25f, 783.99f };
-
-            for (var i = 0; i < sampleCount; i++)
-            {
-                var t = i / (float)sampleRate;
-                var env = Mathf.Exp(-t * 2.2f);
-                var signal = 0f;
-                for (var n = 0; n < tones.Length; n++)
+                _musicSource.Play();
+                elapsed = 0f;
+                while (elapsed < 0.8f)
                 {
-                    signal += Mathf.Sin(2f * Mathf.PI * tones[n] * t) * (0.19f - (n * 0.03f));
+                    elapsed += Time.unscaledDeltaTime;
+                    // Volume will be reset by Update, but we nudge it for smoothness
+                    yield return null;
                 }
-
-                data[i] = Mathf.Clamp(signal * env, -0.8f, 0.8f);
             }
-
-            var clip = AudioClip.Create("PuzzleSolvedSfx", sampleCount, 1, sampleRate, false);
-            clip.SetData(data, 0);
-            return clip;
+            _crossfadeCoroutine = null;
         }
 
-        private static AudioClip BuildShopPurchaseSfx()
+        // ── Helpers ──────────────────────────────────────────────────────
+
+        private void PlaySfx(AudioClip clip, float volume)
         {
-            const int sampleRate = 22050;
-            const float seconds = 0.25f;
-            var sampleCount = Mathf.RoundToInt(sampleRate * seconds);
-            var data = new float[sampleCount];
-
-            for (var i = 0; i < sampleCount; i++)
-            {
-                var t = i / (float)sampleRate;
-                var env = Mathf.Exp(-t * 7.5f);
-                var pingA = Mathf.Sin(2f * Mathf.PI * 660f * t) * 0.22f;
-                var pingB = Mathf.Sin(2f * Mathf.PI * 990f * t) * 0.16f;
-                data[i] = Mathf.Clamp((pingA + pingB) * env, -0.8f, 0.8f);
-            }
-
-            var clip = AudioClip.Create("ShopPurchaseSfx", sampleCount, 1, sampleRate, false);
-            clip.SetData(data, 0);
-            return clip;
+            if (clip != null) _sfxSource.PlayOneShot(clip, volume);
         }
 
-        private static AudioClip BuildShopRerollSfx()
+        private void PlayUi(AudioClip clip, float volume)
         {
-            const int sampleRate = 22050;
-            const float seconds = 0.30f;
-            var sampleCount = Mathf.RoundToInt(sampleRate * seconds);
-            var data = new float[sampleCount];
-
-            for (var i = 0; i < sampleCount; i++)
-            {
-                var t = i / (float)sampleRate;
-                var env = Mathf.Exp(-t * 6f);
-                var sweepFreq = Mathf.Lerp(340f, 860f, Mathf.Clamp01(t / seconds));
-                var sweep = Mathf.Sin(2f * Mathf.PI * sweepFreq * t) * 0.24f;
-                data[i] = Mathf.Clamp(sweep * env, -0.8f, 0.8f);
-            }
-
-            var clip = AudioClip.Create("ShopRerollSfx", sampleCount, 1, sampleRate, false);
-            clip.SetData(data, 0);
-            return clip;
-        }
-
-        private static AudioClip BuildItemUseSfx()
-        {
-            const int sampleRate = 22050;
-            const float seconds = 0.22f;
-            var sampleCount = Mathf.RoundToInt(sampleRate * seconds);
-            var data = new float[sampleCount];
-
-            for (var i = 0; i < sampleCount; i++)
-            {
-                var t = i / (float)sampleRate;
-                var env = Mathf.Exp(-t * 9f);
-                var tone = Mathf.Sin(2f * Mathf.PI * 520f * t) * 0.24f;
-                data[i] = Mathf.Clamp(tone * env, -0.8f, 0.8f);
-            }
-
-            var clip = AudioClip.Create("ItemUseSfx", sampleCount, 1, sampleRate, false);
-            clip.SetData(data, 0);
-            return clip;
-        }
-
-        private static AudioClip BuildRewardClaimSfx()
-        {
-            const int sampleRate = 22050;
-            const float seconds = 0.32f;
-            var sampleCount = Mathf.RoundToInt(sampleRate * seconds);
-            var data = new float[sampleCount];
-            var notes = new[] { 523.25f, 659.25f, 783.99f };
-
-            for (var i = 0; i < sampleCount; i++)
-            {
-                var t = i / (float)sampleRate;
-                var env = Mathf.Exp(-t * 4.4f);
-                var signal = 0f;
-                for (var n = 0; n < notes.Length; n++)
-                {
-                    signal += Mathf.Sin(2f * Mathf.PI * notes[n] * t) * (0.16f - (n * 0.025f));
-                }
-
-                data[i] = Mathf.Clamp(signal * env, -0.8f, 0.8f);
-            }
-
-            var clip = AudioClip.Create("RewardClaimSfx", sampleCount, 1, sampleRate, false);
-            clip.SetData(data, 0);
-            return clip;
-        }
-
-        private static AudioClip BuildPathAdvanceSfx()
-        {
-            const int sampleRate = 22050;
-            const float seconds = 0.20f;
-            var sampleCount = Mathf.RoundToInt(sampleRate * seconds);
-            var data = new float[sampleCount];
-
-            for (var i = 0; i < sampleCount; i++)
-            {
-                var t = i / (float)sampleRate;
-                var env = Mathf.Exp(-t * 10f);
-                var pop = Mathf.Sin(2f * Mathf.PI * 420f * t) * 0.20f;
-                var click = Mathf.Sign(Mathf.Sin(2f * Mathf.PI * 48f * t)) * 0.06f;
-                data[i] = Mathf.Clamp((pop + click) * env, -0.8f, 0.8f);
-            }
-
-            var clip = AudioClip.Create("PathAdvanceSfx", sampleCount, 1, sampleRate, false);
-            clip.SetData(data, 0);
-            return clip;
-        }
-
-        private static AudioClip BuildCorrectPlaceSfx()
-        {
-            const int sampleRate = 22050;
-            const float seconds = 0.15f;
-            var sampleCount = Mathf.RoundToInt(sampleRate * seconds);
-            var data = new float[sampleCount];
-
-            for (var i = 0; i < sampleCount; i++)
-            {
-                var t = i / (float)sampleRate;
-                var env = Mathf.Exp(-t * 14f);
-                var tone = Mathf.Sin(2f * Mathf.PI * 880f * t) * 0.18f;
-                var harmonic = Mathf.Sin(2f * Mathf.PI * 1320f * t) * 0.08f;
-                data[i] = Mathf.Clamp((tone + harmonic) * env, -0.8f, 0.8f);
-            }
-
-            var clip = AudioClip.Create("CorrectPlaceSfx", sampleCount, 1, sampleRate, false);
-            clip.SetData(data, 0);
-            return clip;
-        }
-
-        private static AudioClip BuildCellSelectSfx()
-        {
-            const int sampleRate = 22050;
-            const float seconds = 0.06f;
-            var sampleCount = Mathf.RoundToInt(sampleRate * seconds);
-            var data = new float[sampleCount];
-
-            for (var i = 0; i < sampleCount; i++)
-            {
-                var t = i / (float)sampleRate;
-                var env = Mathf.Exp(-t * 30f);
-                data[i] = Mathf.Clamp(Mathf.Sin(2f * Mathf.PI * 600f * t) * 0.10f * env, -0.8f, 0.8f);
-            }
-
-            var clip = AudioClip.Create("CellSelectSfx", sampleCount, 1, sampleRate, false);
-            clip.SetData(data, 0);
-            return clip;
-        }
-
-        private static AudioClip BuildPencilToggleSfx()
-        {
-            const int sampleRate = 22050;
-            const float seconds = 0.10f;
-            var sampleCount = Mathf.RoundToInt(sampleRate * seconds);
-            var data = new float[sampleCount];
-
-            for (var i = 0; i < sampleCount; i++)
-            {
-                var t = i / (float)sampleRate;
-                var env = Mathf.Exp(-t * 20f);
-                var click = Mathf.Sign(Mathf.Sin(2f * Mathf.PI * 90f * t)) * 0.08f;
-                var tone = Mathf.Sin(2f * Mathf.PI * 520f * t) * 0.12f;
-                data[i] = Mathf.Clamp((click + tone) * env, -0.8f, 0.8f);
-            }
-
-            var clip = AudioClip.Create("PencilToggleSfx", sampleCount, 1, sampleRate, false);
-            clip.SetData(data, 0);
-            return clip;
-        }
-
-        private static AudioClip BuildRestHealSfx()
-        {
-            const int sampleRate = 22050;
-            const float seconds = 0.50f;
-            var sampleCount = Mathf.RoundToInt(sampleRate * seconds);
-            var data = new float[sampleCount];
-
-            for (var i = 0; i < sampleCount; i++)
-            {
-                var t = i / (float)sampleRate;
-                var env = Mathf.Exp(-t * 4f);
-                var sweep = 330f + 220f * t;
-                var tone = Mathf.Sin(2f * Mathf.PI * sweep * t) * 0.15f;
-                var shimmer = Mathf.Sin(2f * Mathf.PI * 1760f * t) * 0.04f * Mathf.Exp(-t * 8f);
-                data[i] = Mathf.Clamp((tone + shimmer) * env, -0.8f, 0.8f);
-            }
-
-            var clip = AudioClip.Create("RestHealSfx", sampleCount, 1, sampleRate, false);
-            clip.SetData(data, 0);
-            return clip;
-        }
-
-        private static AudioClip BuildGameOverSfx()
-        {
-            const int sampleRate = 22050;
-            const float seconds = 0.80f;
-            var sampleCount = Mathf.RoundToInt(sampleRate * seconds);
-            var data = new float[sampleCount];
-
-            for (var i = 0; i < sampleCount; i++)
-            {
-                var t = i / (float)sampleRate;
-                var env = Mathf.Exp(-t * 2.5f);
-                var descend = 440f - 300f * t;
-                var tone = Mathf.Sin(2f * Mathf.PI * descend * t) * 0.20f;
-                var rumble = Mathf.Sin(2f * Mathf.PI * 55f * t) * 0.10f;
-                data[i] = Mathf.Clamp((tone + rumble) * env, -0.8f, 0.8f);
-            }
-
-            var clip = AudioClip.Create("GameOverSfx", sampleCount, 1, sampleRate, false);
-            clip.SetData(data, 0);
-            return clip;
-        }
-
-        private static AudioClip BuildRelicPickupSfx()
-        {
-            const int sampleRate = 22050;
-            const float seconds = 0.35f;
-            var sampleCount = Mathf.RoundToInt(sampleRate * seconds);
-            var data = new float[sampleCount];
-
-            for (var i = 0; i < sampleCount; i++)
-            {
-                var t = i / (float)sampleRate;
-                var env = Mathf.Exp(-t * 6f);
-                var chime = Mathf.Sin(2f * Mathf.PI * 1047f * t) * 0.14f;
-                var harmonic = Mathf.Sin(2f * Mathf.PI * 1568f * t) * 0.07f;
-                var sparkle = Mathf.Sin(2f * Mathf.PI * 2093f * t) * 0.04f * Mathf.Exp(-t * 12f);
-                data[i] = Mathf.Clamp((chime + harmonic + sparkle) * env, -0.8f, 0.8f);
-            }
-
-            var clip = AudioClip.Create("RelicPickupSfx", sampleCount, 1, sampleRate, false);
-            clip.SetData(data, 0);
-            return clip;
+            if (clip != null) _uiSource.PlayOneShot(clip, volume);
         }
     }
 }

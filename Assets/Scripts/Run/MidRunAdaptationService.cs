@@ -1,5 +1,6 @@
 using System;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Economy;
 
 namespace SudokuRoguelike.Run
 {
@@ -7,17 +8,27 @@ namespace SudokuRoguelike.Run
     {
         public bool TryTransformRelics(RunState runState, Random random)
         {
-            if (runState == null || runState.RelicIds.Count < 2)
+            if (runState == null || !runState.HasRelic)
             {
                 return false;
             }
 
-            runState.RelicIds.RemoveAt(runState.RelicIds.Count - 1);
-            runState.RelicIds.RemoveAt(runState.RelicIds.Count - 1);
+            // Transmutation: upgrade current relic to a higher-tier variant
+            var currentTier = RelicService.GetTier(runState.HeldRelic.Id);
+            if (currentTier >= RelicTier.Tier4)
+            {
+                return false; // already high tier, no upgrade
+            }
 
-            var cursed = random.NextDouble() < 0.2;
-            var generated = cursed ? "relic_cursed_t4_transmuted" : "relic_utility_t4_transmuted";
-            runState.RelicIds.Add(generated);
+            // Replace with TransmutedSigil (Tier 4) as the transmutation result
+            runState.HeldRelic = new RelicInstance
+            {
+                Id = RelicId.TransmutedSigil,
+                Tier = RelicTier.Tier4,
+                UsesRemaining = -1
+            };
+            runState.MaxHP += 1;
+            runState.CurrentHP += 1;
             return true;
         }
 
@@ -54,9 +65,14 @@ namespace SudokuRoguelike.Run
                 return false;
             }
 
-            runState.RelicIds.Clear();
-            runState.RelicIds.Add("relic_legend_shifting_garden");
-            runState.RelicIds.Add("relic_legend_golden_root");
+            // Risky rebuild: grant Shifting Garden relic but drop HP to 1
+            runState.HasRelic = true;
+            runState.HeldRelic = new RelicInstance
+            {
+                Id = RelicId.ShiftingGarden,
+                Tier = RelicTier.Legendary,
+                UsesRemaining = -1
+            };
             runState.CurrentHP = 1;
             runState.RiskyRebuildUsed = true;
             return true;

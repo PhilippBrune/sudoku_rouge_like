@@ -6,7 +6,9 @@ namespace SudokuRoguelike.Core
     {
         public static float MissingPercentForStars(int stars)
         {
-            var clamped = Math.Clamp(stars, 1, 5);
+            // 7★ = 100% missing (0 givens, tutorial only)
+            if (stars >= 7) return 1.0f;
+            var clamped = Math.Clamp(stars, 1, 6);
             return Math.Clamp((clamped + 3) * 0.1f, 0.01f, 0.95f);
         }
 

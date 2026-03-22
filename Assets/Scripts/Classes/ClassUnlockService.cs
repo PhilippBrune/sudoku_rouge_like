@@ -3,31 +3,50 @@ using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.Classes
 {
+    /// <summary>
+    /// Evaluates class unlock conditions based on the ClassXpProgressionSystem spec.
+    /// All conditions are tracked cumulatively across all classes and runs.
+    /// </summary>
     public sealed class ClassUnlockService
     {
         public IReadOnlyList<ClassId> EvaluateUnlocks(MetaProgressionState meta)
         {
             var newlyUnlocked = new List<ClassId>();
-            var progress = meta.ClassUnlocks;
+            var p = meta.ClassUnlocks;
 
+            // 2. Garden Monk — defeat 2 bosses (cumulative)
             UnlockIfEligible(meta, ClassId.GardenMonk,
-                progress.ClearedTier1Or2Boss && progress.NonTutorialRunCount >= 3,
+                p.CumulativeBossDefeats >= 2,
                 newlyUnlocked);
 
+            // 3. Shrine Archivist — use 15 items (cumulative)
             UnlockIfEligible(meta, ClassId.ShrineArchivist,
-                progress.ClearedTier3Boss && progress.SolvedEightByEightFourStar,
+                p.CumulativeItemsUsed >= 15,
                 newlyUnlocked);
 
+            // 4. Koi Gambler — collect 10 relics (cumulative)
             UnlockIfEligible(meta, ClassId.KoiGambler,
-                progress.WonWithUnderThreeHp || progress.CompletedKoiPath,
+                p.CumulativeRelicsCollected >= 10,
                 newlyUnlocked);
 
+            // 5. Stone Gardener — defeat 10 bosses (cumulative)
             UnlockIfEligible(meta, ClassId.StoneGardener,
-                progress.ClearedTier4Boss && progress.ReachedHeatFive,
+                p.CumulativeBossDefeats >= 10,
                 newlyUnlocked);
 
+            // 6. Lantern Seer — collect 50,000 gold (cumulative)
             UnlockIfEligible(meta, ClassId.LanternSeer,
-                progress.ClearedGermanWhispersBoss && progress.ClearedMultiStageBoss,
+                p.CumulativeGoldCollected >= 50000,
+                newlyUnlocked);
+
+            // 7. Reed Duelist — find every unique item at least once (evaluate codex)
+            UnlockIfEligible(meta, ClassId.ReedDuelist,
+                p.AllUniqueItemsFound || EvaluateItemCodexComplete(meta),
+                newlyUnlocked);
+
+            // 8. Quiet Cartographer — clear an entire stage with zero pencil use and zero HP lost
+            UnlockIfEligible(meta, ClassId.QuietCartographer,
+                p.ClearedStageZeroPencilZeroHpLost,
                 newlyUnlocked);
 
             return newlyUnlocked;
@@ -36,60 +55,22 @@ namespace SudokuRoguelike.Classes
         public void UpdateProgressFromRunResult(MetaProgressionState meta, RunResult result)
         {
             if (result.TutorialMode || result.Mode == GameMode.Tutorial)
-            {
                 return;
-            }
 
-            var progress = meta.ClassUnlocks;
-            progress.NonTutorialRunCount++;
+            var p = meta.ClassUnlocks;
 
             if (result.ClearedBoss)
-            {
-                if (result.ClearedBossTier <= BossModifierTier.Tier2)
-                {
-                    progress.ClearedTier1Or2Boss = true;
-                }
+                p.CumulativeBossDefeats++;
 
-                if (result.ClearedBossTier >= BossModifierTier.Tier3)
-                {
-                    progress.ClearedTier3Boss = true;
-                }
+            p.CumulativeGoldCollected += result.GoldEarned;
+            p.CumulativeItemsUsed += result.ItemsUsedThisRun;
+            p.CumulativeRelicsCollected += result.RelicsCollectedThisRun;
 
-                if (result.ClearedBossTier >= BossModifierTier.Tier4)
-                {
-                    progress.ClearedTier4Boss = true;
-                }
-            }
+            if (result.FoundAllUniqueItems)
+                p.AllUniqueItemsFound = true;
 
-            if (result.SolvedEightByEightFourStar)
-            {
-                progress.SolvedEightByEightFourStar = true;
-            }
-
-            if (result.CompletedKoiPathRoute)
-            {
-                progress.CompletedKoiPath = true;
-            }
-
-            if (result.WonWithUnderThreeHp)
-            {
-                progress.WonWithUnderThreeHp = true;
-            }
-
-            if (result.PeakHeatScore >= 5f)
-            {
-                progress.ReachedHeatFive = true;
-            }
-
-            if (result.ClearedGermanWhispersBoss)
-            {
-                progress.ClearedGermanWhispersBoss = true;
-            }
-
-            if (result.ClearedMultiStageBoss)
-            {
-                progress.ClearedMultiStageBoss = true;
-            }
+            if (result.ClearedStageNoPencilNoHpLoss)
+                p.ClearedStageZeroPencilZeroHpLost = true;
         }
 
         public string GetUnlockRequirementText(ClassId classId)
@@ -97,22 +78,36 @@ namespace SudokuRoguelike.Classes
             return classId switch
             {
                 ClassId.NumberFreak => "Default unlocked",
-                ClassId.GardenMonk => "Clear Tier 1/2 boss and reach Run 3",
-                ClassId.ShrineArchivist => "Clear Tier 3 boss and solve one 8x8 4★",
-                ClassId.KoiGambler => "Win with <3 HP remaining or complete Koi Path route",
-                ClassId.StoneGardener => "Defeat Tier 4 boss and reach Heat Score 5.0",
-                ClassId.LanternSeer => "Clear German Whispers boss and beat multi-stage boss",
-                ClassId.ZenMaster => "Locked preview class",
+                ClassId.GardenMonk => "Defeat 2 bosses (cumulative)",
+                ClassId.ShrineArchivist => "Use 15 items (cumulative)",
+                ClassId.KoiGambler => "Collect 10 relics (cumulative)",
+                ClassId.StoneGardener => "Defeat 10 bosses (cumulative)",
+                ClassId.LanternSeer => "Collect 50,000 gold (cumulative)",
+                ClassId.ReedDuelist => "Find every unique item at least once",
+                ClassId.QuietCartographer => "Clear a stage with 0 pencil use and 0 HP lost",
                 _ => "Unknown unlock requirement"
             };
         }
 
-        private static void UnlockIfEligible(MetaProgressionState meta, ClassId classId, bool condition, List<ClassId> newlyUnlocked)
+        private static bool EvaluateItemCodexComplete(MetaProgressionState meta)
+        {
+            if (meta.ItemCodex?.Entries == null || meta.ItemCodex.Entries.Count == 0)
+                return false;
+
+            for (var i = 0; i < meta.ItemCodex.Entries.Count; i++)
+            {
+                // Only check item entries (not relics) for Reed Duelist
+                if (meta.ItemCodex.Entries[i].Type == "Relic") continue;
+                if (!meta.ItemCodex.Entries[i].Discovered) return false;
+            }
+            return true;
+        }
+
+        private static void UnlockIfEligible(MetaProgressionState meta, ClassId classId,
+            bool condition, List<ClassId> newlyUnlocked)
         {
             if (!condition || meta.UnlockedClasses.Contains(classId))
-            {
                 return;
-            }
 
             meta.UnlockedClasses.Add(classId);
             newlyUnlocked.Add(classId);

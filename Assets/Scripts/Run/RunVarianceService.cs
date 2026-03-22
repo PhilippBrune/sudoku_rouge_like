@@ -5,9 +5,8 @@ namespace SudokuRoguelike.Run
 {
     public sealed class RunVarianceService
     {
-        public void ApplyVariance(LevelConfig config, float expectedHeat, bool isRiskPath, Random random, bool allowSpike)
+        public void ApplyVariance(LevelConfig config, bool isRiskPath, Random random, bool allowSpike)
         {
-            config.ExpectedHeat = expectedHeat;
             config.VarianceBand = isRiskPath ? 0.15f : 0.05f;
 
             var delta = ((float)random.NextDouble() * 2f - 1f) * config.VarianceBand;

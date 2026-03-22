@@ -3,7 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Data;
 using SudokuRoguelike.Economy;
+using SudokuRoguelike.Meta;
 using SudokuRoguelike.Run;
 using SudokuRoguelike.Save;
 using SudokuRoguelike.Sudoku;
@@ -53,6 +55,7 @@ namespace SudokuRoguelike.UI
         private int _boardSize;
         private int _selectedRow = -1;
         private int _selectedCol = -1;
+        private readonly HashSet<long> _multiSelectedCells = new();
         private int _highlightValue;
         private int _lastClickRow = -1;
         private int _lastClickCol = -1;
@@ -72,9 +75,8 @@ namespace SudokuRoguelike.UI
         private RunAudioController _runAudio;
         private string _hoverInfo = string.Empty;
         private RectTransform _inventoryBadgeRoot;
-        private Image _classToken;
-        private Vector2 _classTokenTarget;
-        private bool _hasClassTokenTarget;
+        // Old _classToken/_classTokenTarget removed — replaced by PlayerIconController
+        // _hasClassTokenTarget removed — replaced by PlayerIconController
         private GameObject _rewardPanel;
         private Text _rewardSummaryText;
         private Text _rewardHoverText;
@@ -90,23 +92,32 @@ namespace SudokuRoguelike.UI
         private Text _puzzleItemHoverText;
         private Text _levelInfoText;
         private Text _modifiersLabel;
+        private Image _hpBarFill;
+        private Image _pencilBarFill;
         private RectTransform _pathOverlayRoot;
-        private Vector2 _laneAEndPanelLocal;
-        private Vector2 _laneBEndPanelLocal;
-        private bool _hasLaneAEnd;
-        private bool _hasLaneBEnd;
+        // Old lane-end/cross-link tracking fields removed — replaced by canvas coordinate system
         private int _lastPuzzleItemSignature = int.MinValue;
         private readonly List<(int Row, int Col)> _finderHighlightCells = new();
         private float _finderHighlightUntil;
         private GameObject _bossGateChoicePanel;
         private bool _awaitingBossGateChoice;
+        private bool _awaitingRelicChoice;
+        private GameObject _relicChoicePanel;
+        private RelicInstance _offeredRelic;
         private bool _awaitingRewardReplacement;
         private int _pendingRewardSlotIndex;
         private RectTransform _gridOverlayRoot;
         private RectTransform _gridNumberRoot;
         private readonly List<GameObject> _overlayObjects = new();
+        private readonly Dictionary<BossModifierId, List<GameObject>> _overlayGroups = new();
+        private BossModifierId _currentOverlayModifier;
         private bool _overlaysBuilt;
         private readonly HashSet<long> _cageBorderEdges = new();
+        private Sprite _circleSprite;
+        private Text _bossModifierDescText;
+        private GameObject _legendPanel;
+        private bool _legendExpanded;
+        private Coroutine _isolateCoroutine;
 
         private const string ReturnTutorialProgressPrefKey = "sr_return_to_tutorial_progress";
 
@@ -119,14 +130,38 @@ namespace SudokuRoguelike.UI
         private static readonly Color ConflictColor = new(0.72f, 0.18f, 0.18f, 1f);
         private static readonly Color FogColor = new(0.06f, 0.06f, 0.08f, 1f);
         private static readonly Color GermanWhispersLineColor = new(0.20f, 0.72f, 0.30f, 0.55f);
-        private static readonly Color DutchWhispersLineColor = new(0.90f, 0.55f, 0.15f, 0.55f);
-        private static readonly Color ParityLineColor = new(0.30f, 0.40f, 0.85f, 0.55f);
+        private static readonly Color DutchWhispersLineColor = new(0.10f, 0.95f, 0.78f, 0.75f); // bright teal
+        private static readonly Color ParityLineColor = new(0.10f, 0.88f, 0.80f, 0.70f);
         private static readonly Color RenbanLineColor = new(0.80f, 0.35f, 0.65f, 0.55f);
+        private static readonly Color PalindromeLineColor = new(0.60f, 0.60f, 0.60f, 0.65f); // gray
+        private static readonly Color ThermoLineColor = new(0.85f, 0.45f, 0.10f, 0.70f);    // warm orange
+        private static readonly Color BetweenLinesColor = new(0.90f, 0.90f, 0.90f, 0.60f); // near-white
+        private static readonly Color EvenMarkerColor = new(0.35f, 0.65f, 0.90f, 0.55f);   // light blue square
+        private static readonly Color OddMarkerColor = new(0.90f, 0.55f, 0.20f, 0.55f);    // warm orange circle
         private static readonly Color KillerCageBorder = new(0.85f, 0.15f, 0.12f, 0.90f);
         private static readonly Color WhiteDotColor = new(0.95f, 0.95f, 0.95f, 0.85f);
         private static readonly Color BlackDotColor = new(0.10f, 0.10f, 0.10f, 0.90f);
-        private static readonly Color ArrowCircleColor = new(0.70f, 0.70f, 0.70f, 0.55f);
+        private static readonly Color ArrowCircleColor = new(0.75f, 0.75f, 0.75f, 0.90f);
+        private static readonly Color ArrowCircleInnerColor = new(0f, 0f, 0f, 0f); // transparent → true hollow outline
         private static readonly Color ArrowPathColor = new(0.55f, 0.55f, 0.55f, 0.45f);
+        private static readonly Color KnightMoveHighlight = new(0.32f, 0.22f, 0.48f, 0.55f);
+
+        private static readonly (int Dr, int Dc)[] KnightOffsets =
+        {
+            (-2, -1), (-2, 1), (-1, -2), (-1, 2),
+            (1, -2),  (1, 2),  (2, -1),  (2, 1)
+        };
+
+        private AccessibilityService _accessibility;
+
+        // High contrast overrides
+        private static readonly Color HcBackground = new(1f, 1f, 1f, 1f);
+        private static readonly Color HcBorder = new(0f, 0f, 0f, 1f);
+        private static readonly Color HcSelected = new(1f, 1f, 0f, 1f);
+        private static readonly Color HcError = new(1f, 0f, 0f, 1f);
+        private static readonly Color HcFog = new(0f, 0f, 0f, 1f);
+        private static readonly Color HcPanelBg = new(0.02f, 0.02f, 0.04f, 0.95f);
+        private static readonly Color HcPanelText = new(1f, 1f, 1f, 1f);
 
         private bool _highlightConflicts = true;
 
@@ -201,6 +236,7 @@ namespace SudokuRoguelike.UI
         private void Awake()
         {
             WireButtons();
+            _accessibility = new AccessibilityService();
             _runAudio = GetComponent<RunAudioController>();
             if (_runAudio == null)
             {
@@ -242,7 +278,7 @@ namespace SudokuRoguelike.UI
 
             if (pathOverviewPanel != null && pathOverviewPanel.activeSelf)
             {
-                UpdateClassTokenPosition();
+                _playerIcon.Update();
             }
 
             if (!_buttonIconsApplied)
@@ -325,8 +361,42 @@ namespace SudokuRoguelike.UI
             }
         }
 
+        private static bool WasEscapePressed()
+        {
+#if ENABLE_INPUT_SYSTEM
+            return UnityEngine.InputSystem.Keyboard.current != null &&
+                   UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame;
+#else
+            return Input.GetKeyDown(KeyCode.Escape);
+#endif
+        }
+
         private void HandleKeyboardInput()
         {
+            // Escape closes the top-most active panel
+            if (WasEscapePressed())
+            {
+                if (_inGameOptionsPanel != null && _inGameOptionsPanel.activeSelf)
+                {
+                    _inGameOptionsPanel.SetActive(false);
+                    return;
+                }
+                if (_shopPanel != null && _shopPanel.activeSelf)
+                {
+                    _shopPanel.SetActive(false);
+                    ShowPathOverview();
+                    return;
+                }
+                if (_rewardPanel != null && _rewardPanel.activeSelf)
+                {
+                    // Don't allow closing reward panel (must choose)
+                }
+                if (_bossGateChoicePanel != null && _bossGateChoicePanel.activeSelf)
+                {
+                    // Don't allow closing boss gate (must choose)
+                }
+            }
+
             var boardSize = runMapController?.Run?.CurrentBoard?.Size ?? 9;
 
             var moveRow = 0;
@@ -367,6 +437,68 @@ namespace SudokuRoguelike.UI
             {
                 TogglePencilMode();
             }
+
+            // Multi-select shortcuts
+            HandleMultiSelectShortcuts();
+        }
+
+        private void HandleMultiSelectShortcuts()
+        {
+            var board = runMapController?.Run?.CurrentBoard;
+            if (board == null) return;
+
+            var ctrlHeld = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+            var shiftHeld = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+
+            if (!ctrlHeld) return;
+
+            if (shiftHeld && Input.GetKeyDown(KeyCode.A))
+            {
+                // CTRL+SHIFT+A: deselect all
+                _multiSelectedCells.Clear();
+                _selectedRow = -1;
+                _selectedCol = -1;
+                RenderBoard(board);
+            }
+            else if (Input.GetKeyDown(KeyCode.A))
+            {
+                // CTRL+A: select all empty cells
+                _multiSelectedCells.Clear();
+                for (var r = 0; r < board.Size; r++)
+                {
+                    for (var c = 0; c < board.Size; c++)
+                    {
+                        if (board.IsEmpty(r, c) && !board.IsGiven(r, c))
+                            _multiSelectedCells.Add((long)r * 1000 + c);
+                    }
+                }
+                RenderBoard(board);
+            }
+            else if (Input.GetKeyDown(KeyCode.I))
+            {
+                // CTRL+I: invert selection
+                var newSelection = new HashSet<long>();
+                for (var r = 0; r < board.Size; r++)
+                {
+                    for (var c = 0; c < board.Size; c++)
+                    {
+                        if (board.IsGiven(r, c)) continue;
+                        var key = (long)r * 1000 + c;
+                        if (!_multiSelectedCells.Contains(key))
+                            newSelection.Add(key);
+                    }
+                }
+                _multiSelectedCells.Clear();
+                foreach (var k in newSelection)
+                    _multiSelectedCells.Add(k);
+                RenderBoard(board);
+            }
+        }
+
+        /// <summary>Check if a cell is in the multi-selection set.</summary>
+        private bool IsCellMultiSelected(int row, int col)
+        {
+            return _multiSelectedCells.Contains((long)row * 1000 + col);
         }
 
         private void MoveSelection(int deltaRow, int deltaCol)
@@ -656,6 +788,12 @@ namespace SudokuRoguelike.UI
                 return;
             }
 
+            if (_awaitingRelicChoice)
+            {
+                SetStatus("Choose a relic first.");
+                return;
+            }
+
             if (runMapController == null)
             {
                 runMapController = FindFirstObjectByType<RunMapController>();
@@ -716,6 +854,9 @@ namespace SudokuRoguelike.UI
                 return;
             }
 
+            // Cross-link tiles now function as their underlying type (puzzle, shop, etc.)
+            // with the additional ability to switch lanes after completion.
+
             _pathOverlayMessage = string.Empty;
 
             if (level == null)
@@ -732,70 +873,60 @@ namespace SudokuRoguelike.UI
             RefreshPathOverview();
         }
 
+        private readonly PlayerIconController _playerIcon = new();
+
         private void RefreshPathOverview()
         {
-            if (runMapController == null)
-            {
-                return;
-            }
-
-            PrepareLaneRootForFreePlacement(laneAPathRoot);
-            PrepareLaneRootForFreePlacement(laneBPathRoot);
-
-            EnsureClassToken();
+            if (runMapController == null) return;
 
             var run = runMapController.Run;
             if (run == null || run.CurrentRunGraph == null || run.CurrentRunGraph.Count == 0)
             {
-                if (pathOverviewText != null)
-                {
-                    pathOverviewText.text = "No active run graph.";
-                }
-
+                if (pathOverviewText != null) pathOverviewText.text = "No active run graph.";
                 return;
             }
 
+            var runState = run.RunState;
+            var floor = runState.CurrentFloor;
+            var theme = Data.FloorThemeData.Get(floor);
+
+            // Apply floor theme background
+            if (pathOverviewPanel != null)
+            {
+                var bgImage = pathOverviewPanel.GetComponent<Image>();
+                if (bgImage != null) bgImage.color = theme.BgColor;
+            }
+
+            // Meta HUD
             if (pathOverviewText != null)
             {
-                var runState = run.RunState;
-                var gardenName = GetGardenName(runState.Depth);
                 var classPassive = Classes.ClassCatalog.GetMeta(runState.ClassId).PassiveDescription;
                 var overview =
-                    $"{gardenName}\n" +
+                    $"{theme.Name} ({theme.JapaneseName})    Garden {floor + 1} / {runState.TotalFloors}\n" +
                     $"HP: {runState.CurrentHP}/{runState.MaxHP}    Gold: {runState.CurrentGold}    Pencil: {runState.CurrentPencil}/{runState.MaxPencil}\n" +
-                    $"Items: {runState.Inventory.Count}    Relics: {runState.RelicIds.Count}\n" +
-                    $"Passive: {classPassive}";
-
-                if (runState.RelicIds.Count > 0)
-                {
-                    overview += "\nRelics:";
-                    for (var r = 0; r < runState.RelicIds.Count; r++)
-                    {
-                        overview += $"\n  - {DescribeRelic(runState.RelicIds[r])}";
-                    }
-                }
+                    $"Items: {runState.Inventory.Count}    Relic: {(runState.HasRelic ? Economy.RelicService.GetName(runState.HeldRelic.Id) : "None")}    Passive: {classPassive}";
 
                 if (!string.IsNullOrWhiteSpace(_pathOverlayMessage))
-                {
-                    overview += "\n\n" + _pathOverlayMessage;
-                }
-
+                    overview += "\n" + _pathOverlayMessage;
                 if (!string.IsNullOrWhiteSpace(_hoverInfo))
-                {
-                    overview += "\n\n" + _hoverInfo;
-                }
+                    overview += "\n" + _hoverInfo;
 
                 pathOverviewText.text = overview;
             }
 
-            if (laneAText != null)
-            {
-                laneAText.text = "Calm Route";
-            }
+            if (laneAText != null) laneAText.text = "Calm Route";
+            if (laneBText != null) laneBText.text = "Risk Route";
 
-            if (laneBText != null)
+            // Hide per-lane backgrounds — we now render everything on the overlay root
+            if (laneAPathRoot != null)
             {
-                laneBText.text = "Risk Route";
+                var img = laneAPathRoot.GetComponent<Image>();
+                if (img != null) img.color = new Color(0f, 0f, 0f, 0f);
+            }
+            if (laneBPathRoot != null)
+            {
+                var img = laneBPathRoot.GetComponent<Image>();
+                if (img != null) img.color = new Color(0f, 0f, 0f, 0f);
             }
 
             var previewA = runMapController.BuildPathChoicePreview(false);
@@ -806,32 +937,367 @@ namespace SudokuRoguelike.UI
             if (nextSignature != _lastLaneRenderSignature)
             {
                 _lastLaneRenderSignature = nextSignature;
-                RebuildLaneNodeButtons(false, laneAPathRoot, previewA.Available && (!lockValue.HasValue || lockValue.Value == false));
-                RebuildLaneNodeButtons(true, laneBPathRoot, previewB.Available && (!lockValue.HasValue || lockValue.Value == true));
+                RebuildGardenCanvas(lockValue, theme);
                 RebuildInventoryBadges();
             }
+        }
 
-            RebuildSharedBossGate();
+        private void RebuildGardenCanvas(bool? lockValue, Data.FloorTheme theme)
+        {
+            EnsurePathOverlayRoot();
+            if (_pathOverlayRoot == null) return;
 
-            if (laneAPathRoot != null)
+            // Clear previous renders from lane roots and overlay
+            ClearChildren(laneAPathRoot);
+            ClearChildren(laneBPathRoot);
+            for (var i = _pathOverlayRoot.childCount - 1; i >= 0; i--)
+                Destroy(_pathOverlayRoot.GetChild(i).gameObject);
+
+            var run = runMapController?.Run;
+            var graph = run?.CurrentRunGraph;
+            if (graph == null || graph.Count == 0) return;
+
+            var canvasRect = _pathOverlayRoot;
+            var canvasW = Mathf.Max(400f, canvasRect.rect.width);
+            var canvasH = Mathf.Max(300f, canvasRect.rect.height);
+
+            // Build adjacency: connect sequential same-lane nodes + start→first of each lane + last→boss
+            var calmNodes = new List<RunNode>();
+            var riskNodes = new List<RunNode>();
+            RunNode startNode = null;
+            RunNode bossNode = null;
+
+            for (var i = 0; i < graph.Count; i++)
             {
-                var image = laneAPathRoot.GetComponent<Image>();
-                if (image != null)
+                var node = graph[i];
+                if (node.Type == NodeType.Start) startNode = node;
+                else if (node.Type == NodeType.Boss) bossNode = node;
+                else if (!node.IsRiskPath) calmNodes.Add(node);
+                else riskNodes.Add(node);
+            }
+
+            // Sort by depth
+            calmNodes.Sort((a, b) => a.Depth.CompareTo(b.Depth));
+            riskNodes.Sort((a, b) => a.Depth.CompareTo(b.Depth));
+
+            // Draw edges first (behind tiles)
+            var edgeColor = theme.PathColor;
+            if (startNode != null)
+            {
+                if (calmNodes.Count > 0) DrawCanvasEdge(canvasRect, canvasW, canvasH, startNode, calmNodes[0], edgeColor);
+                if (riskNodes.Count > 0) DrawCanvasEdge(canvasRect, canvasW, canvasH, startNode, riskNodes[0], edgeColor);
+            }
+
+            for (var i = 1; i < calmNodes.Count; i++)
+                DrawCanvasEdge(canvasRect, canvasW, canvasH, calmNodes[i - 1], calmNodes[i], edgeColor);
+            for (var i = 1; i < riskNodes.Count; i++)
+                DrawCanvasEdge(canvasRect, canvasW, canvasH, riskNodes[i - 1], riskNodes[i], edgeColor);
+
+            if (bossNode != null)
+            {
+                if (calmNodes.Count > 0) DrawCanvasEdge(canvasRect, canvasW, canvasH, calmNodes[calmNodes.Count - 1], bossNode, edgeColor);
+                if (riskNodes.Count > 0) DrawCanvasEdge(canvasRect, canvasW, canvasH, riskNodes[riskNodes.Count - 1], bossNode, edgeColor);
+            }
+
+            // Draw cross-edge bezier
+            RunNode crossCalm = null, crossRisk = null;
+            for (var i = 0; i < graph.Count; i++)
+            {
+                if (graph[i].IsCrossLink)
                 {
-                    var dim = lockValue.HasValue && lockValue.Value;
-                    image.color = dim ? new Color(0f, 0f, 0f, 0.30f) : new Color(0f, 0f, 0f, 0.12f);
+                    if (!graph[i].IsRiskPath) crossCalm = graph[i];
+                    else crossRisk = graph[i];
                 }
             }
 
-            if (laneBPathRoot != null)
+            if (crossCalm != null && crossRisk != null)
             {
-                var image = laneBPathRoot.GetComponent<Image>();
-                if (image != null)
+                DrawCrossEdgeBezier(canvasRect, canvasW, canvasH, crossCalm, crossRisk);
+            }
+
+            // Draw all node tiles
+            var currentNodeIndex = run.RunState.CurrentNodeIndex;
+            for (var i = 0; i < graph.Count; i++)
+            {
+                var node = graph[i];
+                var pos = CanvasToPixel(node.CanvasX, node.CanvasY, canvasW, canvasH);
+                var isCurrentNode = i == currentNodeIndex;
+                var nodeButton = CreateGardenNodeTile(_pathOverlayRoot, node, pos, lockValue, theme, isCurrentNode);
+                nodeButton.onClick.RemoveAllListeners();
+
+                if (node.Type == NodeType.Boss)
                 {
-                    var dim = lockValue.HasValue && !lockValue.Value;
-                    image.color = dim ? new Color(0f, 0f, 0f, 0.30f) : new Color(0f, 0f, 0f, 0.12f);
+                    nodeButton.onClick.AddListener(() => ShowBossGateChoice());
+                    nodeButton.interactable = IsNextChoiceNode(node, false) || IsNextChoiceNode(node, true);
+                }
+                else if (node.Type != NodeType.Start)
+                {
+                    var risk = node.IsRiskPath;
+                    nodeButton.onClick.AddListener(() => ChoosePath(risk));
+                    nodeButton.interactable = IsNextChoiceNode(node, risk);
+                }
+                else
+                {
+                    nodeButton.interactable = false;
+                }
+
+                // Track player icon position
+                if (isCurrentNode)
+                {
+                    _playerIcon.EnsureCreated(canvasRect);
+                    _playerIcon.SetPosition(new Vector2(node.CanvasX, node.CanvasY), canvasRect);
+                    _playerIcon.BringToFront();
                 }
             }
+        }
+
+        private static Vector2 CanvasToPixel(float cx, float cy, float w, float h)
+        {
+            // Left-to-right layout: X maps directly, Y inverted (canvas 0=top, RectTransform 0=bottom)
+            return new Vector2(cx * w, (1f - cy) * h);
+        }
+
+        private void DrawCanvasEdge(RectTransform parent, float w, float h, RunNode a, RunNode b, Color color)
+        {
+            var pa = CanvasToPixel(a.CanvasX, a.CanvasY, w, h);
+            var pb = CanvasToPixel(b.CanvasX, b.CanvasY, w, h);
+
+            var lineGo = new GameObject("Edge", typeof(RectTransform), typeof(Image));
+            lineGo.transform.SetParent(parent, false);
+            lineGo.transform.SetAsFirstSibling();
+            var img = lineGo.GetComponent<Image>();
+            img.color = color;
+            img.raycastTarget = false;
+            var rect = lineGo.GetComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.zero;
+
+            var delta = pb - pa;
+            var dist = delta.magnitude;
+            if (dist < 1f) return;
+            rect.sizeDelta = new Vector2(dist, 3f);
+            rect.anchoredPosition = pa + delta * 0.5f;
+            rect.localEulerAngles = new Vector3(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
+        }
+
+        private void DrawCrossEdgeBezier(RectTransform parent, float w, float h, RunNode a, RunNode b)
+        {
+            var pa = CanvasToPixel(a.CanvasX, a.CanvasY, w, h);
+            var pb = CanvasToPixel(b.CanvasX, b.CanvasY, w, h);
+            var centerX = w * 0.5f;
+
+            // Control points offset toward center
+            var cpA = new Vector2(Mathf.Lerp(pa.x, centerX, 0.5f), Mathf.Lerp(pa.y, pb.y, 0.33f));
+            var cpB = new Vector2(Mathf.Lerp(pb.x, centerX, 0.5f), Mathf.Lerp(pa.y, pb.y, 0.67f));
+
+            var crossColor = new Color(0.85f, 0.72f, 0.18f, 0.70f);
+            const int segments = 12;
+            var prev = pa;
+            for (var s = 1; s <= segments; s++)
+            {
+                var t = (float)s / segments;
+                var pt = CubicBezier(pa, cpA, cpB, pb, t);
+                var segGo = new GameObject("BezierSeg", typeof(RectTransform), typeof(Image));
+                segGo.transform.SetParent(parent, false);
+                segGo.transform.SetAsFirstSibling();
+                var img = segGo.GetComponent<Image>();
+                img.color = crossColor;
+                img.raycastTarget = false;
+                var rect = segGo.GetComponent<RectTransform>();
+                rect.anchorMin = Vector2.zero;
+                rect.anchorMax = Vector2.zero;
+                var d = pt - prev;
+                var segLen = d.magnitude;
+                if (segLen < 0.5f) { prev = pt; continue; }
+                rect.sizeDelta = new Vector2(segLen, 3f);
+                rect.anchoredPosition = prev + d * 0.5f;
+                rect.localEulerAngles = new Vector3(0f, 0f, Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg);
+                prev = pt;
+            }
+        }
+
+        private static Vector2 CubicBezier(Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3, float t)
+        {
+            var u = 1f - t;
+            return u * u * u * p0 + 3f * u * u * t * p1 + 3f * u * t * t * p2 + t * t * t * p3;
+        }
+
+        private Button CreateGardenNodeTile(RectTransform parent, RunNode node, Vector2 pos,
+            bool? lockValue, Data.FloorTheme theme, bool isCurrent)
+        {
+            var go = new GameObject($"Tile_{node.Type}_{node.Depth}", typeof(RectTransform), typeof(Image), typeof(Button));
+            go.transform.SetParent(parent, false);
+            var goRect = go.GetComponent<RectTransform>();
+            goRect.anchorMin = Vector2.zero;
+            goRect.anchorMax = Vector2.zero;
+            goRect.pivot = new Vector2(0.5f, 0.5f);
+            goRect.sizeDelta = node.Type == NodeType.Boss ? new Vector2(120f, 60f) : new Vector2(72f, 72f);
+            goRect.anchoredPosition = pos;
+
+            var currentNodeIdx = runMapController?.Run?.RunState?.CurrentNodeIndex ?? 0;
+            var nodeIdx = -1;
+            var graph = runMapController?.Run?.CurrentRunGraph;
+            if (graph != null)
+            {
+                for (var i = 0; i < graph.Count; i++)
+                    if (ReferenceEquals(graph[i], node)) { nodeIdx = i; break; }
+            }
+
+            // Determine tile visual state
+            Color nodeColor;
+            var isVisited = nodeIdx >= 0 && nodeIdx < currentNodeIdx;
+            var isUnreachable = false;
+
+            // Unreachable: on the opposite locked lane and not a boss/start/crosslink
+            if (lockValue.HasValue && node.Type != NodeType.Boss && node.Type != NodeType.Start
+                && !node.IsCrossLink)
+            {
+                isUnreachable = node.IsRiskPath != lockValue.Value;
+            }
+
+            if (node.Type == NodeType.Boss)
+                nodeColor = theme.BossGateColor;
+            else if (node.Type == NodeType.Start)
+                nodeColor = theme.TileColor;
+            else if (isVisited)
+                nodeColor = new Color(theme.TileColor.r, theme.TileColor.g, theme.TileColor.b, 0.40f);
+            else if (isUnreachable)
+                nodeColor = new Color(0.25f, 0.25f, 0.25f, 0.35f);
+            else if (node.IsCrossLink)
+                nodeColor = new Color(0.65f, 0.42f, 0.08f, 1f);
+            else if (isCurrent)
+                nodeColor = new Color(theme.AccentColor.r, theme.AccentColor.g, theme.AccentColor.b, 1f);
+            else
+                nodeColor = theme.TileColor;
+
+            var image = go.GetComponent<Image>();
+            image.color = nodeColor;
+
+            var button = go.GetComponent<Button>();
+            var colors = button.colors;
+            colors.colorMultiplier = 1.25f;
+            colors.fadeDuration = 0.07f;
+            button.colors = colors;
+
+            // Node type label
+            var labelGo = new GameObject("TypeLabel", typeof(RectTransform));
+            labelGo.transform.SetParent(go.transform, false);
+            var labelRect = labelGo.GetComponent<RectTransform>();
+            labelRect.anchorMin = new Vector2(0f, 0.30f);
+            labelRect.anchorMax = new Vector2(1f, 0.70f);
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+            var labelText = labelGo.AddComponent<Text>();
+            labelText.text = GetTileLabel(node.Type);
+            labelText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+            labelText.fontSize = node.Type == NodeType.Boss ? 14 : 11;
+            labelText.alignment = TextAnchor.MiddleCenter;
+            labelText.color = new Color(0.95f, 0.95f, 0.90f, isVisited ? 0.50f : 0.95f);
+            labelText.raycastTarget = false;
+
+            // Size and star labels for puzzle nodes
+            var showLabels = node.Type == NodeType.Puzzle || node.Type == NodeType.ElitePuzzle
+                || node.Type == NodeType.Boss || node.Type == NodeType.PreBoss;
+            if (showLabels)
+            {
+                runMapController.TryGetFixedLevelForNode(node, out var config);
+                var boardSize = config != null ? config.BoardSize : Mathf.Clamp(4 + node.Depth / 3, 4, 9);
+                var starCount = config != null ? config.Stars : Mathf.Clamp(1 + node.Depth / 4, 1, 5);
+
+                var sizeGo = new GameObject("SzLbl", typeof(RectTransform));
+                sizeGo.transform.SetParent(go.transform, false);
+                var sizeRect = sizeGo.GetComponent<RectTransform>();
+                sizeRect.anchorMin = new Vector2(0f, 0.72f);
+                sizeRect.anchorMax = new Vector2(0.50f, 1f);
+                sizeRect.offsetMin = new Vector2(3f, 0f);
+                sizeRect.offsetMax = new Vector2(0f, -2f);
+                var sizeText = sizeGo.AddComponent<Text>();
+                sizeText.text = $"{boardSize}x{boardSize}";
+                sizeText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+                sizeText.fontSize = 9;
+                sizeText.alignment = TextAnchor.UpperLeft;
+                sizeText.color = new Color(0.95f, 0.95f, 0.85f, 0.85f);
+                sizeText.raycastTarget = false;
+
+                var starGo = new GameObject("StarLbl", typeof(RectTransform));
+                starGo.transform.SetParent(go.transform, false);
+                var starRect = starGo.GetComponent<RectTransform>();
+                starRect.anchorMin = new Vector2(0.50f, 0f);
+                starRect.anchorMax = new Vector2(1f, 0.30f);
+                starRect.offsetMin = new Vector2(0f, 2f);
+                starRect.offsetMax = new Vector2(-3f, 0f);
+                var starText = starGo.AddComponent<Text>();
+                starText.text = new string('\u2605', starCount);
+                starText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+                starText.fontSize = 9;
+                starText.alignment = TextAnchor.LowerRight;
+                starText.color = new Color(0.98f, 0.83f, 0.26f, 0.85f);
+                starText.raycastTarget = false;
+            }
+
+            // Visited checkmark
+            if (isVisited)
+            {
+                var checkGo = new GameObject("Check", typeof(RectTransform));
+                checkGo.transform.SetParent(go.transform, false);
+                var checkRect = checkGo.GetComponent<RectTransform>();
+                checkRect.anchorMin = new Vector2(0.7f, 0.7f);
+                checkRect.anchorMax = new Vector2(1f, 1f);
+                checkRect.offsetMin = Vector2.zero;
+                checkRect.offsetMax = Vector2.zero;
+                var checkText = checkGo.AddComponent<Text>();
+                checkText.text = "\u2713";
+                checkText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+                checkText.fontSize = 16;
+                checkText.alignment = TextAnchor.MiddleCenter;
+                checkText.color = new Color(0.40f, 0.80f, 0.42f, 0.70f);
+                checkText.raycastTarget = false;
+            }
+
+            // Cross-link badge: small ⇄ indicator in top-left corner
+            if (node.IsCrossLink)
+            {
+                var crossGo = new GameObject("CrossBadge", typeof(RectTransform));
+                crossGo.transform.SetParent(go.transform, false);
+                var crossRect = crossGo.GetComponent<RectTransform>();
+                crossRect.anchorMin = new Vector2(0f, 0.75f);
+                crossRect.anchorMax = new Vector2(0.30f, 1f);
+                crossRect.offsetMin = Vector2.zero;
+                crossRect.offsetMax = Vector2.zero;
+                var crossText = crossGo.AddComponent<Text>();
+                crossText.text = "\u21c4";
+                crossText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+                crossText.fontSize = 12;
+                crossText.alignment = TextAnchor.MiddleCenter;
+                crossText.color = new Color(1f, 0.92f, 0.60f, 0.90f);
+                crossText.raycastTarget = false;
+            }
+
+            return button;
+        }
+
+        private static string GetTileLabel(NodeType type)
+        {
+            return type switch
+            {
+                NodeType.Start => "Start",
+                NodeType.Puzzle => "Puzzle",
+                NodeType.ElitePuzzle => "Elite",
+                NodeType.Shop => "Shop",
+                NodeType.Rest => "Rest",
+                NodeType.Relic => "Relic",
+                NodeType.Event => "Event",
+                NodeType.PreBoss => "Elite",
+                NodeType.Boss => "Boss Gate",
+                _ => "?"
+            };
+        }
+
+        private static void ClearChildren(RectTransform root)
+        {
+            if (root == null) return;
+            for (var i = root.childCount - 1; i >= 0; i--)
+                Destroy(root.GetChild(i).gameObject);
         }
 
         private static void PrepareLaneRootForFreePlacement(RectTransform root)
@@ -893,53 +1359,7 @@ namespace SudokuRoguelike.UI
             _pathOverlayRoot.SetAsLastSibling();
         }
 
-        private void RebuildSharedBossGate()
-        {
-            EnsurePathOverlayRoot();
-            if (_pathOverlayRoot == null)
-            {
-                return;
-            }
-
-            for (var i = _pathOverlayRoot.childCount - 1; i >= 0; i--)
-            {
-                Destroy(_pathOverlayRoot.GetChild(i).gameObject);
-            }
-
-            var run = runMapController?.Run;
-            var graph = run?.CurrentRunGraph;
-            if (graph == null)
-            {
-                return;
-            }
-
-            RunNode boss = null;
-            for (var i = 0; i < graph.Count; i++)
-            {
-                if (graph[i] != null && graph[i].Type == NodeType.Boss)
-                {
-                    boss = graph[i];
-                    break;
-                }
-            }
-
-            if (boss == null || (!_hasLaneAEnd && !_hasLaneBEnd))
-            {
-                return;
-            }
-
-            var width = Mathf.Max(320f, _pathOverlayRoot.rect.width);
-            var height = Mathf.Max(220f, _pathOverlayRoot.rect.height);
-            var bossPos = new Vector2(width * 0.5f, Mathf.Clamp(height * 0.14f, 56f, height - 42f));
-
-            if (_hasLaneAEnd) CreatePathConnectionLine(_pathOverlayRoot, _laneAEndPanelLocal, bossPos);
-            if (_hasLaneBEnd) CreatePathConnectionLine(_pathOverlayRoot, _laneBEndPanelLocal, bossPos);
-
-            var bossButton = CreatePathNodeButton(_pathOverlayRoot, boss, risk: false, bossPos);
-            bossButton.onClick.RemoveAllListeners();
-            bossButton.onClick.AddListener(() => ShowBossGateChoice());
-            bossButton.interactable = IsNextChoiceNode(boss, false) || IsNextChoiceNode(boss, true);
-        }
+        // RebuildSharedBossGate removed — replaced by RebuildGardenCanvas
 
         private int BuildLaneRenderSignature(RunMapController.PathChoicePreview previewA, RunMapController.PathChoicePreview previewB, bool? lockValue)
         {
@@ -998,339 +1418,10 @@ namespace SudokuRoguelike.UI
             }
         }
 
-        private void RebuildLaneNodeButtons(bool risk, RectTransform root, bool laneIsAvailable)
-        {
-            if (root == null || runMapController?.Run?.CurrentRunGraph == null)
-            {
-                return;
-            }
-
-            for (var i = root.childCount - 1; i >= 0; i--)
-            {
-                Destroy(root.GetChild(i).gameObject);
-            }
-
-            var layout = root.GetComponent<VerticalLayoutGroup>();
-            if (layout != null)
-            {
-                layout.enabled = false;
-            }
-
-            var fitter = root.GetComponent<ContentSizeFitter>();
-            if (fitter != null)
-            {
-                fitter.enabled = false;
-            }
-
-            var graph = runMapController.Run.CurrentRunGraph;
-            var laneNodes = new List<RunNode>();
-            for (var i = 0; i < graph.Count; i++)
-            {
-                var node = graph[i];
-                if (node == null || node.Depth <= 1)
-                {
-                    continue;
-                }
-
-                if (node.Type == NodeType.Boss)
-                {
-                    continue;
-                }
-
-                if (node.IsRiskPath != risk)
-                {
-                    continue;
-                }
-
-                laneNodes.Add(node);
-            }
-
-            // Fallback so path lanes are never empty if risk markers are missing/misaligned.
-            if (laneNodes.Count == 0)
-            {
-                for (var i = 0; i < graph.Count; i++)
-                {
-                    var node = graph[i];
-                    if (node != null && node.Depth > 1)
-                    {
-                        laneNodes.Add(node);
-                    }
-                }
-            }
-
-            var desiredPositions = new List<Vector2>(laneNodes.Count);
-            for (var i = 0; i < laneNodes.Count; i++)
-            {
-                desiredPositions.Add(ComputeLaneNodePosition(root, i, laneNodes.Count, laneNodes[i], risk));
-            }
-
-            ResolveLaneOverlaps(desiredPositions, root);
-
-            var previousNodePos = Vector2.zero;
-            var hasPrevious = false;
-            var laneEnd = new Vector2(Mathf.Max(24f, root.rect.width * 0.5f), Mathf.Max(24f, root.rect.height * 0.5f));
-            var hasLaneEnd = false;
-            for (var i = 0; i < laneNodes.Count; i++)
-            {
-                var node = laneNodes[i];
-                var pos = desiredPositions[i];
-                var button = CreatePathNodeButton(root, node, risk, pos);
-                button.interactable = laneIsAvailable && IsNextChoiceNode(node, risk);
-                TrySetClassTokenTargetForNode(node, risk, pos);
-
-                if (hasPrevious)
-                {
-                    CreatePathConnectionLine(root, previousNodePos, pos);
-                }
-
-                hasPrevious = true;
-                previousNodePos = pos;
-                laneEnd = pos;
-                hasLaneEnd = true;
-            }
-
-            CaptureLaneEndForSharedBoss(risk, root, laneEnd, hasLaneEnd);
-        }
-
-        private static void ResolveLaneOverlaps(List<Vector2> positions, RectTransform root)
-        {
-            if (positions == null || positions.Count <= 1 || root == null)
-            {
-                return;
-            }
-
-            var width = Mathf.Max(180f, root.rect.width);
-            var height = Mathf.Max(140f, root.rect.height);
-            const float minDist = 112f;
-
-            for (var pass = 0; pass < 16; pass++)
-            {
-                for (var i = 0; i < positions.Count; i++)
-                {
-                    for (var j = i + 1; j < positions.Count; j++)
-                    {
-                        var delta = positions[j] - positions[i];
-                        var dist = Mathf.Max(0.001f, delta.magnitude);
-                        if (dist >= minDist)
-                        {
-                            continue;
-                        }
-
-                        var push = (minDist - dist) * 0.5f;
-                        var dir = delta / dist;
-                        positions[i] -= dir * push;
-                        positions[j] += dir * push;
-                    }
-
-                    var p = positions[i];
-                    p.x = Mathf.Clamp(p.x, 40f, width - 40f);
-                    p.y = Mathf.Clamp(p.y, 44f, height - 44f);
-                    positions[i] = p;
-                }
-            }
-        }
-
-        private void CaptureLaneEndForSharedBoss(bool risk, RectTransform laneRoot, Vector2 laneLocalPoint, bool hasPoint)
-        {
-            if (!hasPoint || laneRoot == null || pathOverviewPanel == null)
-            {
-                if (risk)
-                {
-                    _hasLaneBEnd = false;
-                }
-                else
-                {
-                    _hasLaneAEnd = false;
-                }
-
-                return;
-            }
-
-            var panelRect = pathOverviewPanel.GetComponent<RectTransform>();
-            if (panelRect == null)
-            {
-                return;
-            }
-
-            Canvas.ForceUpdateCanvases();
-
-            var world = laneRoot.TransformPoint(laneLocalPoint);
-            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(panelRect, RectTransformUtility.WorldToScreenPoint(null, world), null, out var panelPos))
-            {
-                return;
-            }
-
-            panelPos.x += panelRect.rect.width * 0.5f;
-            panelPos.y += panelRect.rect.height * 0.5f;
-
-            if (risk)
-            {
-                _laneBEndPanelLocal = panelPos;
-                _hasLaneBEnd = true;
-            }
-            else
-            {
-                _laneAEndPanelLocal = panelPos;
-                _hasLaneAEnd = true;
-            }
-        }
-
-        private static Vector2 ComputeLaneNodePosition(RectTransform root, int index, int count, RunNode node, bool risk)
-        {
-            var width = Mathf.Max(320f, root.rect.width);
-            var height = Mathf.Max(220f, root.rect.height);
-
-            if (count <= 1)
-                return new Vector2(width * 0.5f, height * 0.5f);
-
-            // Snake layout: arrange nodes in a zigzag grid.
-            // Determine how many columns fit (3 columns for a clear snake).
-            const int cols = 3;
-            var rows = Mathf.CeilToInt((float)count / cols);
-
-            var row = index / cols;
-            var colInRow = index % cols;
-
-            // Alternate row direction for snake pattern.
-            // Left lane (risk=false): even rows go left→right, odd rows right→left — starts top-left.
-            // Right lane (risk=true): mirrored — even rows go right→left, odd rows left→right — starts top-right.
-            bool reverseRow;
-            if (risk)
-                reverseRow = row % 2 == 0; // even rows right→left for risk
-            else
-                reverseRow = row % 2 == 1; // odd rows right→left for safe
-
-            if (reverseRow)
-                colInRow = cols - 1 - colInRow;
-
-            var margin = 52f;
-            var usableW = width - margin * 2f;
-            var usableH = height - margin * 2f;
-
-            var cellW = cols > 1 ? usableW / (cols - 1) : 0f;
-            var cellH = rows > 1 ? usableH / (rows - 1) : 0f;
-
-            var x = margin + colInRow * cellW;
-            var y = height - margin - row * cellH; // top to bottom
-
-            return new Vector2(Mathf.Clamp(x, 46f, width - 46f), Mathf.Clamp(y, 46f, height - 46f));
-        }
-
-        private static void CreatePathConnectionLine(RectTransform parent, Vector2 a, Vector2 b)
-        {
-            var lineGo = new GameObject("PathLine", typeof(RectTransform), typeof(Image));
-            lineGo.transform.SetParent(parent, false);
-            lineGo.transform.SetAsFirstSibling();
-
-            var image = lineGo.GetComponent<Image>();
-            image.color = new Color(0.95f, 0.51f, 0.17f, 0.85f);
-            image.raycastTarget = false;
-
-            var rect = lineGo.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0f, 0f);
-            rect.anchorMax = new Vector2(0f, 0f);
-
-            var delta = b - a;
-            var dist = delta.magnitude;
-            if (dist < 0.001f)
-            {
-                return;
-            }
-
-            var dir = delta / dist;
-            var halfTile = 39f;
-            var start = a + (dir * halfTile);
-            var end = b - (dir * halfTile);
-            var edgeDelta = end - start;
-
-            rect.sizeDelta = new Vector2(Mathf.Max(2f, edgeDelta.magnitude), 4f);
-            rect.anchoredPosition = start + (edgeDelta * 0.5f);
-            rect.localEulerAngles = new Vector3(0f, 0f, Mathf.Atan2(edgeDelta.y, edgeDelta.x) * Mathf.Rad2Deg);
-        }
-
-        private static bool IsPuzzleNodeType(NodeType type)
-        {
-            return type == NodeType.Puzzle || type == NodeType.ElitePuzzle || type == NodeType.Boss;
-        }
-
-        private Button CreatePathNodeButton(RectTransform parent, RunNode node, bool risk, Vector2 anchoredPosition)
-        {
-            var go = new GameObject($"PathNode_{(risk ? "B" : "A")}_{node.Depth}", typeof(RectTransform), typeof(Image), typeof(Button));
-            go.transform.SetParent(parent, false);
-            var goRect = go.GetComponent<RectTransform>();
-            goRect.anchorMin = new Vector2(0f, 0f);
-            goRect.anchorMax = new Vector2(0f, 0f);
-            goRect.pivot = new Vector2(0.5f, 0.5f);
-            goRect.sizeDelta = node.Type == NodeType.Boss ? new Vector2(156f, 78f) : new Vector2(78f, 78f);
-            goRect.anchoredPosition = anchoredPosition;
-
-            var image = go.GetComponent<Image>();
-            image.color = node.Type == NodeType.Boss ? new Color(0.38f, 0.16f, 0.10f, 1f) : new Color(0.19f, 0.28f, 0.20f, 1f);
-
-            var button = go.GetComponent<Button>();
-            var colors = button.colors;
-            colors.colorMultiplier = 1.35f;
-            colors.fadeDuration = 0.07f;
-            colors.highlightedColor = new Color(0.30f, 0.43f, 0.30f, 1f);
-            colors.pressedColor = new Color(0.15f, 0.22f, 0.16f, 1f);
-            button.colors = colors;
-            button.onClick.AddListener(() => ChoosePath(risk));
-
-            // Add pixel-art icon for node type (added first so labels render on top)
-            var iconSprite = PathNodeIconFactory.GetIcon(node.Type.ToString());
-            if (iconSprite != null)
-            {
-                var iconGo = new GameObject("NodeIcon", typeof(RectTransform), typeof(Image));
-                iconGo.transform.SetParent(go.transform, false);
-                var iconRect = iconGo.GetComponent<RectTransform>();
-                iconRect.anchorMin = new Vector2(0.10f, 0.10f);
-                iconRect.anchorMax = new Vector2(0.90f, 0.90f);
-                iconRect.offsetMin = Vector2.zero;
-                iconRect.offsetMax = Vector2.zero;
-                var iconImg = iconGo.GetComponent<Image>();
-                iconImg.sprite = iconSprite;
-                iconImg.preserveAspect = true;
-                iconImg.raycastTarget = false;
-            }
-
-            // Size label (top-left corner) — shown on all node types
-            runMapController.TryGetFixedLevelForNode(node, out var config);
-            var boardSize = config != null ? config.BoardSize : Mathf.Clamp(4 + node.Depth / 3, 4, 9);
-            var starCount = config != null ? config.Stars : Mathf.Clamp(1 + node.Depth / 4, 1, 5);
-
-            var sizeGo = new GameObject("SizeLabel", typeof(RectTransform), typeof(Text));
-            sizeGo.transform.SetParent(go.transform, false);
-            var sizeRect = sizeGo.GetComponent<RectTransform>();
-            sizeRect.anchorMin = new Vector2(0f, 0.72f);
-            sizeRect.anchorMax = new Vector2(0.50f, 1f);
-            sizeRect.offsetMin = new Vector2(3f, 0f);
-            sizeRect.offsetMax = new Vector2(0f, -2f);
-            var sizeText = sizeGo.GetComponent<Text>();
-            sizeText.text = $"{boardSize}x{boardSize}";
-            sizeText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
-            sizeText.fontSize = 10;
-            sizeText.alignment = TextAnchor.UpperLeft;
-            sizeText.color = new Color(0.95f, 0.95f, 0.85f, 0.90f);
-            sizeText.raycastTarget = false;
-
-            // Difficulty label (bottom-right corner) — shown on all node types
-            var diffGo = new GameObject("DiffLabel", typeof(RectTransform), typeof(Text));
-            diffGo.transform.SetParent(go.transform, false);
-            var diffRect = diffGo.GetComponent<RectTransform>();
-            diffRect.anchorMin = new Vector2(0.50f, 0f);
-            diffRect.anchorMax = new Vector2(1f, 0.30f);
-            diffRect.offsetMin = new Vector2(0f, 2f);
-            diffRect.offsetMax = new Vector2(-3f, 0f);
-            var diffText = diffGo.GetComponent<Text>();
-            diffText.text = new string('\u2605', starCount);
-            diffText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
-            diffText.fontSize = 10;
-            diffText.alignment = TextAnchor.LowerRight;
-            diffText.color = new Color(0.98f, 0.83f, 0.26f, 0.90f);
-            diffText.raycastTarget = false;
-
-            return button;
-        }
+        // Old lane-based methods removed: RebuildLaneNodeButtons, ResolveLaneOverlaps,
+        // CaptureLaneEndForSharedBoss, StoreCrossLinkPosition, CreateCrossLinkConnectorLine,
+        // ComputeLaneNodePosition, CreatePathConnectionLine, IsPuzzleNodeType, CreatePathNodeButton
+        // All replaced by RebuildGardenCanvas with pre-computed canvas positions.
 
         private bool IsNextChoiceNode(RunNode node, bool risk)
         {
@@ -1397,6 +1488,9 @@ namespace SudokuRoguelike.UI
                 BuildModifierOverlays();
                 _overlaysBuilt = true;
             }
+
+            // Boss modifier description — refresh every time the board is built/refreshed
+            RefreshBossModifierDescription();
 
             if ((_selectedRow < 0 || _selectedCol < 0) && TryFindFirstEditableCell(board, out var row, out var col))
             {
@@ -1513,7 +1607,8 @@ namespace SudokuRoguelike.UI
                     textRect.offsetMax = Vector2.zero;
                     var text = textGo.GetComponent<Text>();
                     text.font = builtinFont;
-                    text.fontSize = size <= 6 ? 30 : size <= 8 ? 24 : 20;
+                    var baseFontSize = size <= 6 ? 30 : size <= 8 ? 24 : 20;
+                    text.fontSize = _accessibility?.ScaleFont(baseFontSize) ?? baseFontSize;
                     text.alignment = TextAnchor.MiddleCenter;
                     text.color = new Color(0.93f, 0.96f, 0.90f, 1f);
                     text.raycastTarget = false;
@@ -1527,7 +1622,8 @@ namespace SudokuRoguelike.UI
                     pencilRect.offsetMax = Vector2.zero;
                     var pencilText = pencilGo.GetComponent<Text>();
                     pencilText.font = builtinFont;
-                    pencilText.fontSize = size <= 6 ? 16 : 14;
+                    var basePencilSize = size <= 6 ? 16 : 14;
+                    pencilText.fontSize = _accessibility?.ScaleFont(basePencilSize) ?? basePencilSize;
                     pencilText.alignment = TextAnchor.UpperLeft;
                     pencilText.color = new Color(0.84f, 0.86f, 0.82f, 0.95f);
                     pencilText.supportRichText = true;
@@ -1644,7 +1740,7 @@ namespace SudokuRoguelike.UI
             var text = textGo.GetComponent<Text>();
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
             text.alignment = TextAnchor.MiddleCenter;
-            text.fontSize = 13;
+            text.fontSize = _accessibility?.ScaleFont(13) ?? 13;
             text.color = new Color(0.92f, 0.95f, 0.90f, 1f);
             text.text = "Mode: SOLVE";
         }
@@ -1698,7 +1794,7 @@ namespace SudokuRoguelike.UI
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
             text.text = value.ToString();
             text.alignment = TextAnchor.MiddleCenter;
-            text.fontSize = 24;
+            text.fontSize = _accessibility?.ScaleFont(24) ?? 24;
             text.color = new Color(0.93f, 0.96f, 0.90f, 1f);
 
             return button;
@@ -1728,9 +1824,25 @@ namespace SudokuRoguelike.UI
 
         private void OnCellClicked(int row, int col)
         {
-            var board = runMapController?.Run?.CurrentBoard;
+            var run = runMapController?.Run;
+            var board = run?.CurrentBoard;
             if (board == null)
             {
+                return;
+            }
+
+            // SilkFan phase 2: complete the swap on second cell click
+            if (run.IsSilkFanPending)
+            {
+                if (run.TryCompleteSilkFanSwap(row, col, out var swapMsg))
+                {
+                    _runAudio?.PlayItemUse();
+                    RenderBoard(board);
+                    RefreshHud();
+                    _lastPuzzleItemSignature = int.MinValue;
+                    RebuildPuzzleItemBar();
+                }
+                SetStatus(swapMsg);
                 return;
             }
 
@@ -1767,6 +1879,13 @@ namespace SudokuRoguelike.UI
                 return;
             }
 
+            // Cancel any pending SilkFan swap when entering a number
+            if (run.IsSilkFanPending)
+            {
+                run.CancelSilkFan();
+                SetStatus("Silk Fan cancelled.");
+            }
+
             if (_selectedRow < 0 || _selectedCol < 0)
             {
                 if (TryFindFirstEditableCell(board, out var autoRow, out var autoCol))
@@ -1791,11 +1910,7 @@ namespace SudokuRoguelike.UI
             }
 
             var fogOverlay = run.CurrentOverlayData;
-            if (fogOverlay != null && fogOverlay.IsFogged(_selectedRow, _selectedCol))
-            {
-                SetStatus("This cell is hidden by fog.");
-                return;
-            }
+            var isFoggedCell = fogOverlay != null && fogOverlay.IsFogged(_selectedRow, _selectedCol);
 
             if (value < 1 || value > board.Size)
             {
@@ -1834,14 +1949,24 @@ namespace SudokuRoguelike.UI
             }
 
             var ok = run.PlaceNumber(_selectedRow, _selectedCol, value);
-            SetStatus(ok ? $"Placed {value}." : $"{value} is incorrect. HP now {run.RunState.CurrentHP}.");
-            if (!ok)
+            if (isFoggedCell)
             {
-                _runAudio?.PlayWrongPlacement();
+                SetStatus($"Placed {value} in fog \u2014 will validate on reveal.");
+                _runAudio?.PlayCorrectPlacement();
             }
             else
             {
-                _runAudio?.PlayCorrectPlacement();
+                SetStatus(ok ? $"Placed {value}." : $"{value} is incorrect. HP now {run.RunState.CurrentHP}.");
+                if (!ok)
+                {
+                    _runAudio?.PlayWrongPlacement();
+                    TriggerScreenShake(AnimationHelper.ShakeWrongPx, AnimationHelper.ShakeWrongDuration);
+                    if (run.RunState.CurrentHP <= 2)
+                    {
+                        _runAudio?.PlayHpCritical();
+                    }
+                }
+                else _runAudio?.PlayCorrectPlacement();
             }
             RefreshHud();
             RenderBoard(board);
@@ -1878,6 +2003,9 @@ namespace SudokuRoguelike.UI
             levelState.Mistakes++;
             state.CurrentHP = Math.Max(0, state.CurrentHP - 1);
             SetStatus($"Sudoku has errors. HP now {state.CurrentHP}.");
+            _runAudio?.PlayWrongPlacement();
+            TriggerScreenShake(AnimationHelper.ShakeWrongPx, AnimationHelper.ShakeWrongDuration);
+            if (state.CurrentHP <= 2) _runAudio?.PlayHpCritical();
             RefreshHud();
             CheckForGameOver();
         }
@@ -1953,6 +2081,10 @@ namespace SudokuRoguelike.UI
                 {
                     color = RowColHighlight;
                 }
+                else if (IsAntiknightActive() && IsKnightMoveFrom(_selectedRow, _selectedCol, cell.Row, cell.Col))
+                {
+                    color = KnightMoveHighlight;
+                }
 
                 if (_highlightValue > 0 && value == _highlightValue)
                 {
@@ -1968,8 +2100,40 @@ namespace SudokuRoguelike.UI
                 if (overlay != null && overlay.IsFogged(cell.Row, cell.Col))
                 {
                     color = FogColor;
-                    cell.Label.text = string.Empty;
+                    // Keep placed numbers visible in fog; only hide empty cells
+                    if (value == 0)
+                    {
+                        cell.Label.text = string.Empty;
+                    }
                     if (cell.PencilLabel != null) cell.PencilLabel.text = string.Empty;
+                }
+
+                // High contrast overrides
+                if (_accessibility != null && _accessibility.IsHighContrast)
+                {
+                    if (color == ConflictColor)
+                        color = HcError;
+                    else if (color == SelectedColor || (_selectedRow == cell.Row && _selectedCol == cell.Col))
+                        color = HcSelected;
+                    else if (color == FogColor)
+                        color = HcFog;
+                    else
+                        color = HcBackground;
+
+                    cell.Label.color = new Color(0.05f, 0.05f, 0.05f, 1f);
+                }
+
+                // Fog: add "?" text for accessibility
+                if (overlay != null && overlay.IsFogged(cell.Row, cell.Col) && value == 0)
+                {
+                    var fogLabel = _accessibility?.GetFogCellLabel();
+                    if (fogLabel != null)
+                    {
+                        cell.Label.text = fogLabel;
+                        cell.Label.color = _accessibility.IsHighContrast
+                            ? Color.white
+                            : new Color(0.5f, 0.5f, 0.6f, 0.5f);
+                    }
                 }
 
                 cell.Image.color = color;
@@ -2060,6 +2224,9 @@ namespace SudokuRoguelike.UI
                 LineType.DutchWhispers => DutchWhispersLineColor,
                 LineType.Parity => ParityLineColor,
                 LineType.Renban => RenbanLineColor,
+                LineType.Palindrome => PalindromeLineColor,
+                LineType.Thermo => ThermoLineColor,
+                LineType.BetweenLines => BetweenLinesColor,
                 _ => GermanWhispersLineColor
             };
         }
@@ -2169,6 +2336,26 @@ namespace SudokuRoguelike.UI
                 }
             }
 
+            return false;
+        }
+
+        private bool IsAntiknightActive()
+        {
+            var mods = runMapController?.Run?.CurrentLevelConfig?.ActiveModifiers;
+            if (mods == null) return false;
+            for (var i = 0; i < mods.Count; i++)
+                if (mods[i] == BossModifierId.Antiknight) return true;
+            return false;
+        }
+
+        private static bool IsKnightMoveFrom(int fromRow, int fromCol, int toRow, int toCol)
+        {
+            if (fromRow < 0 || fromCol < 0) return false;
+            for (var i = 0; i < KnightOffsets.Length; i++)
+            {
+                if (fromRow + KnightOffsets[i].Dr == toRow && fromCol + KnightOffsets[i].Dc == toCol)
+                    return true;
+            }
             return false;
         }
 
@@ -2339,6 +2526,43 @@ namespace SudokuRoguelike.UI
                 profile.ApplyEnvelope(envelope);
             }
             profile.RecordRunAndGetNewUnlocks(result);
+
+            // Sync item discoveries from this run's inventory into the ItemCodex
+            var inventory = runMapController?.Run?.RunState?.Inventory;
+            if (inventory != null && profile.Meta?.ItemCodex != null)
+            {
+                var today = System.DateTime.UtcNow.ToString("yyyy-MM-dd");
+                for (var inv = 0; inv < inventory.Count; inv++)
+                {
+                    var itemId = inventory[inv].Id;
+                    if (string.IsNullOrWhiteSpace(itemId)) continue;
+
+                    ItemCodexEntry codexEntry = null;
+                    for (var ci = 0; ci < profile.Meta.ItemCodex.Entries.Count; ci++)
+                    {
+                        if (profile.Meta.ItemCodex.Entries[ci].ItemID == itemId)
+                        {
+                            codexEntry = profile.Meta.ItemCodex.Entries[ci];
+                            break;
+                        }
+                    }
+
+                    if (codexEntry == null) continue;
+
+                    if (!codexEntry.Discovered)
+                    {
+                        codexEntry.Discovered = true;
+                        codexEntry.DiscoveredDate = today;
+                        UnityEngine.Debug.Log($"[ItemCodex] Discovered: {itemId} ({codexEntry.Name})");
+                    }
+
+                    codexEntry.TimesPicked++;
+                    if (result.Victory) codexEntry.TimesWon++;
+                    if (result.GardenDepthReached > codexEntry.BestRunDepth)
+                        codexEntry.BestRunDepth = result.GardenDepthReached;
+                }
+            }
+
             var updated = new SaveFileEnvelope
             {
                 PlayerProfile = new ProfileSaveData { Options = profile.Options },
@@ -2461,6 +2685,17 @@ namespace SudokuRoguelike.UI
             _shopHoverText.alignment = TextAnchor.UpperLeft;
             _shopHoverText.color = new Color(0.95f, 0.93f, 0.85f, 1f);
 
+            // High contrast overrides
+            if (_accessibility is { IsHighContrast: true })
+            {
+                image.color = HcPanelBg;
+                title.color = HcPanelText;
+                title.fontStyle = FontStyle.Bold;
+                _shopSummaryText.color = HcPanelText;
+                _shopSummaryText.fontStyle = FontStyle.Bold;
+                _shopHoverText.color = HcPanelText;
+            }
+
             _shopPanel.SetActive(false);
         }
 
@@ -2498,7 +2733,7 @@ namespace SudokuRoguelike.UI
 
                 for (var i = 0; i < inventory.Count; i++)
                 {
-                    var replaceButton = BuildPanelButton(_shopPanel.transform, $"ShopReplace_{i}", new Vector2(0.08f + ((i % 3) * 0.29f), 0.48f - ((i / 3) * 0.18f)), new Vector2(0.34f, 0.14f), new Color(0.28f, 0.22f, 0.18f, 0.95f), anchorBased: true);
+                    var replaceButton = BuildPanelButton(_shopPanel.transform, $"ShopReplace_{i}", new Vector2(0.05f + ((i % 3) * 0.32f), 0.48f - ((i / 3) * 0.18f)), new Vector2(0.26f, 0.14f), new Color(0.28f, 0.22f, 0.18f, 0.95f), anchorBased: true);
                     var idx = i;
                     replaceButton.onClick.AddListener(() => PurchaseOfferReplacing(idx));
 
@@ -2780,15 +3015,188 @@ namespace SudokuRoguelike.UI
                 return;
             }
 
-            var relicId = $"relic_node_{state.Depth}_{DateTime.UtcNow:HHmmss}";
-            state.RelicIds.Add(relicId);
-            state.MaxPencil = Mathf.Min(99, state.MaxPencil + 1);
-            state.CurrentPencil = Mathf.Min(state.MaxPencil, state.CurrentPencil + 1);
-
-            _runAudio?.PlayRelicPickup();
-            _pathOverlayMessage = $"Relic Node\nEffect: +1 Max Pencil.";
-            SetStatus("Relic acquired.");
+            // Roll relic via RunDirector (single relic slot)
+            var run = runMapController?.Run;
+            if (run != null)
+            {
+                var node = run.GetCurrentNode();
+                var isRisk = node != null && node.IsRiskPath;
+                var (offered, needsChoice) = run.RollRelicNodeReward(isRisk);
+                if (!needsChoice)
+                {
+                    _runAudio?.PlayRelicPickup();
+                    _pathOverlayMessage = $"Relic: {Economy.RelicService.GetName(offered.Id)}\n{Economy.RelicService.GetDescription(offered.Id)}";
+                    SetStatus("Relic acquired.");
+                }
+                else
+                {
+                    _offeredRelic = offered;
+                    _awaitingRelicChoice = true;
+                    BuildRelicChoicePanel(state, offered);
+                    SetStatus("Choose which relic to keep.");
+                }
+            }
         }
+
+        private void BuildRelicChoicePanel(RunState state, RelicInstance offered)
+        {
+            if (_relicChoicePanel != null)
+                Destroy(_relicChoicePanel);
+
+            var canvas = FindFirstObjectByType<Canvas>();
+            if (canvas == null) return;
+
+            _relicChoicePanel = new GameObject("RelicChoicePanel", typeof(RectTransform), typeof(Image));
+            _relicChoicePanel.transform.SetParent(canvas.transform, false);
+            var panelRect = _relicChoicePanel.GetComponent<RectTransform>();
+            panelRect.anchorMin = new Vector2(0.15f, 0.20f);
+            panelRect.anchorMax = new Vector2(0.85f, 0.80f);
+            panelRect.offsetMin = Vector2.zero;
+            panelRect.offsetMax = Vector2.zero;
+            var panelImg = _relicChoicePanel.GetComponent<Image>();
+            panelImg.color = new Color(0.10f, 0.08f, 0.06f, 0.96f);
+
+            // Title
+            var titleGo = new GameObject("Title", typeof(RectTransform), typeof(Text));
+            titleGo.transform.SetParent(panelRect, false);
+            var titleRect = titleGo.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0.05f, 0.85f);
+            titleRect.anchorMax = new Vector2(0.95f, 0.97f);
+            titleRect.offsetMin = Vector2.zero;
+            titleRect.offsetMax = Vector2.zero;
+            var titleText = titleGo.GetComponent<Text>();
+            titleText.text = "Relic Found — Choose One to Keep";
+            titleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            titleText.fontSize = 18;
+            titleText.alignment = TextAnchor.MiddleCenter;
+            titleText.color = new Color(0.90f, 0.80f, 0.55f, 1f);
+
+            // Current relic card (left)
+            var current = state.HeldRelic;
+            BuildRelicCard(panelRect, "CurrentRelic",
+                new Vector2(0.04f, 0.18f), new Vector2(0.48f, 0.82f),
+                "CURRENT",
+                Economy.RelicService.GetName(current.Id),
+                $"Tier {(int)current.Tier + 1}\n{Economy.RelicService.GetDescription(current.Id)}",
+                new Color(0.22f, 0.30f, 0.22f, 1f),
+                () => ConfirmRelicChoice(current));
+
+            // Offered relic card (right)
+            BuildRelicCard(panelRect, "OfferedRelic",
+                new Vector2(0.52f, 0.18f), new Vector2(0.96f, 0.82f),
+                "NEW",
+                Economy.RelicService.GetName(offered.Id),
+                $"Tier {(int)offered.Tier + 1}\n{Economy.RelicService.GetDescription(offered.Id)}",
+                new Color(0.30f, 0.22f, 0.15f, 1f),
+                () => ConfirmRelicChoice(offered));
+
+            // Hint text
+            var hintGo = new GameObject("Hint", typeof(RectTransform), typeof(Text));
+            hintGo.transform.SetParent(panelRect, false);
+            var hintRect = hintGo.GetComponent<RectTransform>();
+            hintRect.anchorMin = new Vector2(0.10f, 0.03f);
+            hintRect.anchorMax = new Vector2(0.90f, 0.15f);
+            hintRect.offsetMin = Vector2.zero;
+            hintRect.offsetMax = Vector2.zero;
+            var hintText = hintGo.GetComponent<Text>();
+            hintText.text = "Click a relic to keep it. The other will be discarded.";
+            hintText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            hintText.fontSize = 13;
+            hintText.alignment = TextAnchor.MiddleCenter;
+            hintText.color = new Color(0.70f, 0.70f, 0.70f, 1f);
+        }
+
+        private void BuildRelicCard(RectTransform parent, string name,
+            Vector2 anchorMin, Vector2 anchorMax,
+            string badge, string relicName, string description,
+            Color bgColor, UnityEngine.Events.UnityAction onClick)
+        {
+            var cardGo = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
+            cardGo.transform.SetParent(parent, false);
+            var cardRect = cardGo.GetComponent<RectTransform>();
+            cardRect.anchorMin = anchorMin;
+            cardRect.anchorMax = anchorMax;
+            cardRect.offsetMin = Vector2.zero;
+            cardRect.offsetMax = Vector2.zero;
+            var cardImg = cardGo.GetComponent<Image>();
+            cardImg.color = bgColor;
+
+            // Badge (CURRENT / NEW)
+            var badgeGo = new GameObject("Badge", typeof(RectTransform), typeof(Text));
+            badgeGo.transform.SetParent(cardRect, false);
+            var badgeRect = badgeGo.GetComponent<RectTransform>();
+            badgeRect.anchorMin = new Vector2(0.05f, 0.85f);
+            badgeRect.anchorMax = new Vector2(0.95f, 0.98f);
+            badgeRect.offsetMin = Vector2.zero;
+            badgeRect.offsetMax = Vector2.zero;
+            var badgeText = badgeGo.GetComponent<Text>();
+            badgeText.text = badge;
+            badgeText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            badgeText.fontSize = 11;
+            badgeText.alignment = TextAnchor.MiddleCenter;
+            badgeText.color = new Color(0.65f, 0.65f, 0.55f, 1f);
+            badgeText.fontStyle = FontStyle.Bold;
+
+            // Relic name
+            var nameGo = new GameObject("Name", typeof(RectTransform), typeof(Text));
+            nameGo.transform.SetParent(cardRect, false);
+            var nameRect = nameGo.GetComponent<RectTransform>();
+            nameRect.anchorMin = new Vector2(0.05f, 0.60f);
+            nameRect.anchorMax = new Vector2(0.95f, 0.85f);
+            nameRect.offsetMin = Vector2.zero;
+            nameRect.offsetMax = Vector2.zero;
+            var nameText = nameGo.GetComponent<Text>();
+            nameText.text = relicName;
+            nameText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            nameText.fontSize = 16;
+            nameText.alignment = TextAnchor.MiddleCenter;
+            nameText.color = new Color(0.95f, 0.88f, 0.65f, 1f);
+
+            // Description
+            var descGo = new GameObject("Desc", typeof(RectTransform), typeof(Text));
+            descGo.transform.SetParent(cardRect, false);
+            var descRect = descGo.GetComponent<RectTransform>();
+            descRect.anchorMin = new Vector2(0.05f, 0.05f);
+            descRect.anchorMax = new Vector2(0.95f, 0.58f);
+            descRect.offsetMin = Vector2.zero;
+            descRect.offsetMax = Vector2.zero;
+            var descText = descGo.GetComponent<Text>();
+            descText.text = description;
+            descText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            descText.fontSize = 12;
+            descText.alignment = TextAnchor.UpperCenter;
+            descText.color = Color.white;
+            descText.verticalOverflow = VerticalWrapMode.Overflow;
+
+            var btn = cardGo.GetComponent<Button>();
+            btn.onClick.AddListener(onClick);
+        }
+
+        private void ConfirmRelicChoice(RelicInstance chosen)
+        {
+            _awaitingRelicChoice = false;
+
+            var run = runMapController?.Run;
+            if (run != null)
+            {
+                run.AcceptRelicChoice(chosen);
+                _runAudio?.PlayRelicPickup();
+                _pathOverlayMessage = $"Kept relic: {Economy.RelicService.GetName(chosen.Id)}\n{Economy.RelicService.GetDescription(chosen.Id)}";
+                SetStatus("Relic chosen.");
+            }
+
+            if (_relicChoicePanel != null)
+            {
+                Destroy(_relicChoicePanel);
+                _relicChoicePanel = null;
+            }
+
+            _offeredRelic = null;
+        }
+
+        private readonly List<BossModifierId> _bossGateSelected = new();
+        private List<BossModifierId> _bossGateOptions;
+        private int _bossGateRequiredChoices;
 
         private void ShowBossGateChoice()
         {
@@ -2798,33 +3206,33 @@ namespace SudokuRoguelike.UI
             if (run == null) return;
 
             var state = run.RunState;
-            var bossDepth = 0;
-            var graph = run.CurrentRunGraph;
-            if (graph != null)
-            {
-                for (var i = 0; i < graph.Count; i++)
-                {
-                    if (graph[i] != null && graph[i].Type == NodeType.Boss)
-                    {
-                        bossDepth = graph[i].Depth;
-                        break;
-                    }
-                }
-            }
+            var floor = state.CurrentFloor;
 
-            var choices = run.GetBossChoicesForDepth(bossDepth);
-            if (choices == null || choices.Count < 2)
+            RunGraphService.GetBossModifierCounts(floor, out var optionsShown, out var playerChooses);
+
+            // Roll fresh options excluding any already chosen this run
+            var bossService = run.BossServiceInstance;
+            _bossGateOptions = bossService != null
+                ? bossService.RollBossOptions(optionsShown, state.ChosenBossModifiers)
+                : new List<BossModifierId>();
+
+            if (_bossGateOptions.Count == 0)
             {
                 ChoosePath(false);
                 return;
             }
 
+            _bossGateRequiredChoices = Mathf.Min(playerChooses, _bossGateOptions.Count);
+            _bossGateSelected.Clear();
             _awaitingBossGateChoice = true;
 
+            BuildBossGatePanel(state);
+        }
+
+        private void BuildBossGatePanel(RunState state)
+        {
             if (_bossGateChoicePanel != null)
-            {
                 Destroy(_bossGateChoicePanel);
-            }
 
             var canvas = FindFirstObjectByType<Canvas>();
             if (canvas == null) return;
@@ -2832,74 +3240,147 @@ namespace SudokuRoguelike.UI
             _bossGateChoicePanel = new GameObject("BossGateChoicePanel", typeof(RectTransform), typeof(Image));
             _bossGateChoicePanel.transform.SetParent(canvas.transform, false);
             var panelRect = _bossGateChoicePanel.GetComponent<RectTransform>();
-            panelRect.anchorMin = new Vector2(0.25f, 0.25f);
-            panelRect.anchorMax = new Vector2(0.75f, 0.75f);
+            panelRect.anchorMin = new Vector2(0.15f, 0.10f);
+            panelRect.anchorMax = new Vector2(0.85f, 0.90f);
             panelRect.offsetMin = Vector2.zero;
             panelRect.offsetMax = Vector2.zero;
             var panelImg = _bossGateChoicePanel.GetComponent<Image>();
-            panelImg.color = new Color(0.10f, 0.08f, 0.06f, 0.96f);
+            var hc = _accessibility is { IsHighContrast: true };
+            panelImg.color = hc ? HcPanelBg : new Color(0.10f, 0.08f, 0.06f, 0.96f);
 
+            var floor = state.CurrentFloor;
+            var theme = Data.FloorThemeData.Get(floor);
+
+            // Title
             var titleGo = new GameObject("Title", typeof(RectTransform), typeof(Text));
             titleGo.transform.SetParent(panelRect, false);
             var titleRect = titleGo.GetComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0.05f, 0.80f);
-            titleRect.anchorMax = new Vector2(0.95f, 0.95f);
+            titleRect.anchorMin = new Vector2(0.05f, 0.88f);
+            titleRect.anchorMax = new Vector2(0.95f, 0.98f);
             titleRect.offsetMin = Vector2.zero;
             titleRect.offsetMax = Vector2.zero;
             var titleText = titleGo.GetComponent<Text>();
-            titleText.text = "Boss Gate — Choose a Modifier";
+            titleText.text = $"Boss Gate — {theme.Name}\nChoose {_bossGateRequiredChoices} Modifier(s)   [{_bossGateSelected.Count}/{_bossGateRequiredChoices} selected]";
             titleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            titleText.fontSize = 22;
+            titleText.fontSize = 18;
             titleText.alignment = TextAnchor.MiddleCenter;
-            titleText.color = new Color(0.90f, 0.80f, 0.55f, 1f);
+            titleText.color = hc ? HcPanelText : new Color(0.90f, 0.80f, 0.55f, 1f);
+            if (hc) titleText.fontStyle = FontStyle.Bold;
 
-            for (var i = 0; i < 2 && i < choices.Count; i++)
+            // Option cards
+            var count = _bossGateOptions.Count;
+            var columns = Mathf.Min(count, 3);
+            var rows = Mathf.CeilToInt((float)count / columns);
+
+            for (var i = 0; i < count; i++)
             {
-                var modifier = choices[i];
+                var modifier = _bossGateOptions[i];
                 var seen = state.SeenBossModifiers.Contains(modifier);
-                var label = seen ? modifier.ToString() : "???";
-                var yMin = i == 0 ? 0.42f : 0.10f;
-                var yMax = i == 0 ? 0.72f : 0.40f;
+                var modName = seen ? FormatModifierName(modifier) : "???";
+                var modDesc = seen ? GetBossModifierDescription(modifier) : "Unknown modifier";
+                var isSelected = _bossGateSelected.Contains(modifier);
+
+                var col = i % columns;
+                var row = i / columns;
+                var xMin = 0.03f + col * (0.94f / columns);
+                var xMax = xMin + (0.94f / columns) - 0.02f;
+                var yMax = 0.85f - row * (0.72f / rows);
+                var yMin = yMax - (0.72f / rows) + 0.02f;
 
                 var btnGo = new GameObject($"BossChoice_{i}", typeof(RectTransform), typeof(Image), typeof(Button));
                 btnGo.transform.SetParent(panelRect, false);
                 var btnRect = btnGo.GetComponent<RectTransform>();
-                btnRect.anchorMin = new Vector2(0.10f, yMin);
-                btnRect.anchorMax = new Vector2(0.90f, yMax);
+                btnRect.anchorMin = new Vector2(xMin, yMin);
+                btnRect.anchorMax = new Vector2(xMax, yMax);
                 btnRect.offsetMin = Vector2.zero;
                 btnRect.offsetMax = Vector2.zero;
                 var btnImg = btnGo.GetComponent<Image>();
-                btnImg.color = new Color(0.25f, 0.18f, 0.12f, 1f);
+                btnImg.color = isSelected
+                    ? new Color(0.40f, 0.55f, 0.25f, 1f)
+                    : new Color(0.25f, 0.18f, 0.12f, 1f);
 
                 var lblGo = new GameObject("Label", typeof(RectTransform), typeof(Text));
                 lblGo.transform.SetParent(btnRect, false);
                 var lblRect = lblGo.GetComponent<RectTransform>();
                 lblRect.anchorMin = Vector2.zero;
                 lblRect.anchorMax = Vector2.one;
-                lblRect.offsetMin = Vector2.zero;
-                lblRect.offsetMax = Vector2.zero;
+                lblRect.offsetMin = new Vector2(4f, 4f);
+                lblRect.offsetMax = new Vector2(-4f, -4f);
                 var lblText = lblGo.GetComponent<Text>();
-                lblText.text = label;
+                lblText.text = isSelected ? $"\u2713 {modName}\n{modDesc}" : $"{modName}\n{modDesc}";
                 lblText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-                lblText.fontSize = 18;
+                lblText.fontSize = 12;
                 lblText.alignment = TextAnchor.MiddleCenter;
                 lblText.color = Color.white;
+                lblText.verticalOverflow = VerticalWrapMode.Overflow;
 
                 var captured = modifier;
                 var btn = btnGo.GetComponent<Button>();
-                btn.onClick.AddListener(() => HandleBossGateSelection(captured));
+                btn.onClick.AddListener(() => ToggleBossGateModifier(captured, state));
             }
+
+            // Confirm button (only active when enough selected)
+            var confirmGo = new GameObject("ConfirmBtn", typeof(RectTransform), typeof(Image), typeof(Button));
+            confirmGo.transform.SetParent(panelRect, false);
+            var confirmRect = confirmGo.GetComponent<RectTransform>();
+            confirmRect.anchorMin = new Vector2(0.30f, 0.02f);
+            confirmRect.anchorMax = new Vector2(0.70f, 0.10f);
+            confirmRect.offsetMin = Vector2.zero;
+            confirmRect.offsetMax = Vector2.zero;
+            var confirmImg = confirmGo.GetComponent<Image>();
+            var canConfirm = _bossGateSelected.Count >= _bossGateRequiredChoices;
+            confirmImg.color = canConfirm ? new Color(0.45f, 0.65f, 0.25f, 1f) : new Color(0.30f, 0.30f, 0.30f, 0.60f);
+
+            var confirmLblGo = new GameObject("ConfirmLbl", typeof(RectTransform), typeof(Text));
+            confirmLblGo.transform.SetParent(confirmRect, false);
+            var confirmLblRect = confirmLblGo.GetComponent<RectTransform>();
+            confirmLblRect.anchorMin = Vector2.zero;
+            confirmLblRect.anchorMax = Vector2.one;
+            confirmLblRect.offsetMin = Vector2.zero;
+            confirmLblRect.offsetMax = Vector2.zero;
+            var confirmLblText = confirmLblGo.GetComponent<Text>();
+            confirmLblText.text = canConfirm ? "Confirm Selection" : $"Select {_bossGateRequiredChoices - _bossGateSelected.Count} more";
+            confirmLblText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            confirmLblText.fontSize = 16;
+            confirmLblText.alignment = TextAnchor.MiddleCenter;
+            confirmLblText.color = Color.white;
+
+            var confirmBtn = confirmGo.GetComponent<Button>();
+            confirmBtn.interactable = canConfirm;
+            confirmBtn.onClick.AddListener(() => ConfirmBossGateSelection(state));
         }
 
-        private void HandleBossGateSelection(BossModifierId chosen)
+        private void ToggleBossGateModifier(BossModifierId modifier, RunState state)
+        {
+            if (_bossGateSelected.Contains(modifier))
+            {
+                _bossGateSelected.Remove(modifier);
+            }
+            else if (_bossGateSelected.Count < _bossGateRequiredChoices)
+            {
+                _bossGateSelected.Add(modifier);
+            }
+
+            // Rebuild panel to reflect selection state
+            BuildBossGatePanel(state);
+        }
+
+        private void ConfirmBossGateSelection(RunState state)
         {
             _awaitingBossGateChoice = false;
 
-            var state = runMapController?.Run?.RunState;
             if (state != null)
             {
-                state.ChosenBossModifier = chosen;
-                state.SeenBossModifiers.Add(chosen);
+                // Apply all selected modifiers
+                for (var i = 0; i < _bossGateSelected.Count; i++)
+                {
+                    state.ChosenBossModifiers.Add(_bossGateSelected[i]);
+                    state.SeenBossModifiers.Add(_bossGateSelected[i]);
+                }
+
+                // Keep legacy single-modifier field for backwards compat
+                if (_bossGateSelected.Count > 0)
+                    state.ChosenBossModifier = _bossGateSelected[0];
             }
 
             if (_bossGateChoicePanel != null)
@@ -2911,22 +3392,40 @@ namespace SudokuRoguelike.UI
             ChoosePath(false);
         }
 
+        private bool HandleBossVictoryOrAdvance()
+        {
+            var run = runMapController?.Run;
+            if (run == null) return false;
+
+            var state = run.RunState;
+            var isLastFloor = state.CurrentFloor >= state.TotalFloors - 1;
+
+            if (isLastFloor)
+            {
+                // Final boss defeated — trigger victory
+                ShowGameOver(run);
+                return true;
+            }
+
+            // Advance to next floor
+            runMapController.AdvanceToNextGarden();
+            var theme = Data.FloorThemeData.Get(state.CurrentFloor);
+            SetStatus($"Garden Cleared! Entering {theme.Name}...");
+            _lastLaneRenderSignature = int.MinValue;
+            ShowPathOverview();
+            RefreshPathOverview();
+            return true;
+        }
+
         private static string FormatOffer(ShopOffer offer)
         {
-            if (offer == null)
-            {
-                return "Unknown offer";
-            }
+            if (offer == null) return "Unknown offer";
+
+            if (offer.IsRelic && offer.RelicOffer != null)
+                return $"{Economy.RelicService.GetName(offer.RelicOffer.Id)} - {offer.Price}g";
 
             if (offer.Item != null)
-            {
-                return $"{offer.Item.Type} ({offer.Item.Rarity}) - {offer.Price}g";
-            }
-
-            if (!string.IsNullOrWhiteSpace(offer.RelicId))
-            {
-                return $"{offer.RelicId} - {offer.Price}g";
-            }
+                return $"{Items.ItemService.GetItemName(offer.Item.Type)} ({offer.Item.Rarity}) - {offer.Price}g";
 
             return $"Offer - {offer.Price}g";
         }
@@ -2973,12 +3472,13 @@ namespace SudokuRoguelike.UI
                     GetItemSprite(item));
             }
 
-            for (var i = 0; i < state.RelicIds.Count; i++)
+            if (state.HasRelic && state.HeldRelic != null)
             {
-                var relicId = state.RelicIds[i];
+                var relicName = Economy.RelicService.GetName(state.HeldRelic.Id);
+                var relicDesc = Economy.RelicService.GetDescription(state.HeldRelic.Id);
                 CreateHoverBadge(
-                    $"Relic {ShortRelicName(relicId)}",
-                    DescribeRelic(relicId),
+                    relicName,
+                    relicDesc,
                     slot++,
                     new Color(0.30f, 0.24f, 0.15f, 0.92f),
                     Resources.Load<Sprite>("GeneratedIcons/icon_relic_pedestal") ?? GetFallbackSprite());
@@ -3056,17 +3556,6 @@ namespace SudokuRoguelike.UI
             trigger.triggers.Add(exit);
         }
 
-        private static string GetGardenName(int depth)
-        {
-            return depth switch
-            {
-                <= 3 => "Outer Gate",
-                <= 6 => "Bamboo Shade",
-                <= 9 => "Stone Court",
-                _ => "Temple Ascent"
-            };
-        }
-
         private static string DescribeItem(ItemInstance item)
         {
             if (item == null)
@@ -3074,145 +3563,16 @@ namespace SudokuRoguelike.UI
                 return "Unknown item";
             }
 
-            var effect = item.Type switch
-            {
-                ItemType.Solver => "Fill the selected empty cell with the correct value.",
-                ItemType.Finder => "Adds pencil hints to empty cells that match the selected value.",
-                ItemType.InkWell => "Restore pencil marks resource.",
-                ItemType.MeditationStone => "Recover HP.",
-                ItemType.WindChime => "Clean candidate marks from the selected row and column.",
-                ItemType.PatternScroll => "Write legal candidate marks into the selected empty cell.",
-                ItemType.KoiReflection => "Recover both HP and pencil resources.",
-                ItemType.LanternOfClarity => "Reveal one correct value in an empty cell.",
-                ItemType.TeaOfFocus => "Negate mistake damage for upcoming placements.",
-                ItemType.CherryBlossomPact => "Increase max pencil and refill it immediately.",
-                ItemType.FortuneEnvelope => "Gain bonus gold instantly.",
-                ItemType.StoneShift => "Clear the selected non-given cell.",
-                ItemType.HarmonyCharm => "Gain mistake shield charges.",
-                ItemType.CompassOfOrder => "Reveal one clear candidate in the selected cell.",
-                _ => "Use the item for a tactical boost."
-            };
-
-            return $"{item.Type} ({item.Rarity})\nCharges: {item.Charges}\n{effect}";
+            var name = Items.ItemService.GetItemName(item.Type);
+            var effect = Items.ItemService.GetItemDescription(item.Type, item.Rarity);
+            var charges = item.IsInfinite ? "Infinite" : item.Charges.ToString();
+            return $"{name} ({item.Rarity})\nCharges: {charges}\n{effect}";
         }
 
-        private static string DescribeRelic(string relicId)
-        {
-            if (string.IsNullOrWhiteSpace(relicId))
-            {
-                return "Unknown relic";
-            }
+        // DescribeRelic and ShortRelicName archived — use RelicService.GetName/GetDescription directly
 
-            // Legendary relics.
-            if (relicId == "relic_legend_shifting_garden") return "Shifting Garden: Corrupts garden path, mutating route pressure.";
-            if (relicId == "relic_legend_silent_grid") return "Silent Grid: +2 Mistake Shield charges.";
-            if (relicId == "relic_legend_golden_root") return "Golden Root: Enables gold interest carry between stages.";
-
-            // Named relics.
-            if (relicId == "relic_combo_t2_monk_charm") return "Monk Charm: Passive combo synergy relic.";
-            if (relicId == "relic_cursed_t4_transmuted") return "Transmuted Burden: Cursed relic. +8 Gold on acquire.";
-            if (relicId == "relic_utility_t4_transmuted") return "Transmuted Sigil: +1 Max HP, +3 Gold.";
-
-            // Dynamic relics by category.
-            if (relicId.Contains("sur") || relicId.Contains("hp")) return $"{ShortRelicName(relicId)}: +1 Max HP, +1 Current HP.";
-            if (relicId.Contains("eco") || relicId.Contains("gold")) return $"{ShortRelicName(relicId)}: +5 Gold on acquire.";
-            if (relicId.Contains("util")) return $"{ShortRelicName(relicId)}: +1 Max HP, +3 Gold.";
-            if (relicId.Contains("pencil")) return $"{ShortRelicName(relicId)}: +2 Max Pencil, +2 Current Pencil.";
-            if (relicId.Contains("chaos") || relicId.Contains("cursed")) return $"{ShortRelicName(relicId)}: +8 Gold on acquire.";
-            if (relicId.Contains("mod")) return $"{ShortRelicName(relicId)}: Synergy relic. Reduces boss modifier difficulty.";
-            if (relicId.Contains("combo")) return $"{ShortRelicName(relicId)}: Synergy relic. Stacks gold multiplier.";
-
-            return $"{relicId}: Passive relic effect active.";
-        }
-
-        private static string ShortRelicName(string relicId)
-        {
-            if (string.IsNullOrWhiteSpace(relicId))
-            {
-                return "Relic";
-            }
-
-            return relicId.Length <= 10 ? relicId : relicId.Substring(0, 10);
-        }
-
-        private void EnsureClassToken()
-        {
-            if (_classToken != null || pathOverviewPanel == null)
-            {
-                return;
-            }
-
-            var panelRect = pathOverviewPanel.GetComponent<RectTransform>();
-            if (panelRect == null)
-            {
-                return;
-            }
-
-            var go = new GameObject("ClassToken", typeof(RectTransform), typeof(Image));
-            go.transform.SetParent(panelRect, false);
-            var rect = go.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0f, 0f);
-            rect.anchorMax = new Vector2(0f, 0f);
-            rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.sizeDelta = new Vector2(18f, 18f);
-
-            _classToken = go.GetComponent<Image>();
-            _classToken.color = new Color(0.95f, 0.26f, 0.20f, 0.95f);
-            _classToken.raycastTarget = false;
-        }
-
-        private void TrySetClassTokenTargetForNode(RunNode node, bool risk, Vector2 localPos)
-        {
-            if (_classToken == null || runMapController?.Run?.CurrentRunGraph == null || node == null)
-            {
-                return;
-            }
-
-            var graph = runMapController.Run.CurrentRunGraph;
-            var currentIndex = Mathf.Clamp(runMapController.Run.RunState.CurrentNodeIndex, 0, graph.Count - 1);
-            var currentNode = graph[currentIndex];
-            if (currentNode == null || currentNode.Depth != node.Depth)
-            {
-                return;
-            }
-
-            if (currentNode.Type != NodeType.Boss && currentNode.IsRiskPath != risk)
-            {
-                return;
-            }
-
-            var laneRoot = risk ? laneBPathRoot : laneAPathRoot;
-            if (laneRoot == null)
-            {
-                return;
-            }
-
-            var world = laneRoot.TransformPoint(localPos);
-            var panelRect = pathOverviewPanel.GetComponent<RectTransform>();
-            if (panelRect == null)
-            {
-                return;
-            }
-
-            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(panelRect, RectTransformUtility.WorldToScreenPoint(null, world), null, out var panelPos))
-            {
-                return;
-            }
-
-            _classTokenTarget = panelPos;
-            _hasClassTokenTarget = true;
-        }
-
-        private void UpdateClassTokenPosition()
-        {
-            if (_classToken == null || !_hasClassTokenTarget)
-            {
-                return;
-            }
-
-            var rect = _classToken.rectTransform;
-            rect.anchoredPosition = Vector2.Lerp(rect.anchoredPosition, _classTokenTarget, 0.25f);
-        }
+        // EnsureClassToken, TrySetClassTokenTargetForNode, UpdateClassTokenPosition removed
+        // Player position is now managed by PlayerIconController
 
         private void ShowRewardScreen()
         {
@@ -3247,9 +3607,26 @@ namespace SudokuRoguelike.UI
             _awaitingRewardChoice = true;
             _pendingRewardSlots.AddRange(slots);
 
+            var runRef = runMapController?.Run;
+            var cfg = runRef?.CurrentLevelConfig;
+            var lvlState = runRef?.CurrentLevelState;
+            var xpBreak = XpService.CalculateTile(
+                cfg?.BoardSize ?? 9,
+                cfg?.Stars ?? 1,
+                cfg?.ActiveModifiers?.Count ?? 0,
+                cfg?.IsBoss ?? false,
+                (lvlState?.Mistakes ?? 0) == 0);
+
             var summary = new StringBuilder();
-            summary.AppendLine("Puzzle cleared");
+            summary.AppendLine("Puzzle Complete!");
             summary.AppendLine($"Gold gained: +{goldEarned}");
+            summary.AppendLine(string.Empty);
+            summary.AppendLine($"XP Gained:    +{xpBreak.TotalXp}");
+            if (xpBreak.IsBoss)
+                summary.AppendLine("  Boss ×2");
+            if (xpBreak.PerfectBonus > 0)
+                summary.AppendLine($"  Perfect Solve:   +{xpBreak.PerfectBonus}");
+            summary.AppendLine(string.Empty);
             summary.AppendLine($"Item slots rolled: {_pendingRewardSlots.Count}");
             summary.AppendLine("Choose one slot reward.");
             if (_rewardSummaryText != null)
@@ -3329,6 +3706,17 @@ namespace SudokuRoguelike.UI
             _rewardHoverText.alignment = TextAnchor.UpperLeft;
             _rewardHoverText.color = new Color(0.95f, 0.93f, 0.85f, 1f);
             _rewardHoverText.text = "Hover a reward to inspect details.";
+
+            // High contrast overrides
+            if (_accessibility is { IsHighContrast: true })
+            {
+                image.color = HcPanelBg;
+                title.color = HcPanelText;
+                title.fontStyle = FontStyle.Bold;
+                _rewardSummaryText.color = HcPanelText;
+                _rewardSummaryText.fontStyle = FontStyle.Bold;
+                _rewardHoverText.color = HcPanelText;
+            }
 
             _rewardPanel.SetActive(false);
         }
@@ -3561,13 +3949,7 @@ namespace SudokuRoguelike.UI
                 var currentNode = GetCurrentNode();
                 if (currentNode != null && currentNode.Type == NodeType.Boss)
                 {
-                    runMapController.AdvanceToNextGarden();
-                    var gardenName = GetGardenName(runMapController.Run.RunState.Depth);
-                    SetStatus($"Boss defeated! Entering {gardenName}...");
-                    _lastLaneRenderSignature = int.MinValue;
-                    ShowPathOverview();
-                    RefreshPathOverview();
-                    return;
+                    if (HandleBossVictoryOrAdvance()) return;
                 }
 
                 SetStatus("Reward skipped. Choose next path tile.");
@@ -3634,16 +4016,11 @@ namespace SudokuRoguelike.UI
             HideRewardPanel();
             _runAudio?.PlayRewardClaim();
 
-            // After boss: advance to next garden instead of ending the run.
+            // After boss: advance to next garden or trigger victory.
             var currentNode = GetCurrentNode();
             if (currentNode != null && currentNode.Type == NodeType.Boss)
             {
-                runMapController.AdvanceToNextGarden();
-                var gardenName = GetGardenName(run.RunState.Depth);
-                SetStatus($"Boss defeated! Entering {gardenName}...");
-                _lastLaneRenderSignature = int.MinValue;
-                RefreshPathOverview();
-                return;
+                if (HandleBossVictoryOrAdvance()) return;
             }
 
             SetStatus("Reward claimed. Choose next path tile.");
@@ -3667,12 +4044,7 @@ namespace SudokuRoguelike.UI
             var currentNode = GetCurrentNode();
             if (currentNode != null && currentNode.Type == NodeType.Boss)
             {
-                runMapController.AdvanceToNextGarden();
-                var gardenName = GetGardenName(run.RunState.Depth);
-                SetStatus($"Boss defeated! Entering {gardenName}...");
-                _lastLaneRenderSignature = int.MinValue;
-                RefreshPathOverview();
-                return;
+                if (HandleBossVictoryOrAdvance()) return;
             }
 
             SetStatus("Reward claimed. Choose next path tile.");
@@ -3697,30 +4069,14 @@ namespace SudokuRoguelike.UI
 
             if (slot.IsNothing)
             {
-                return $"Gold +{slot.NothingGoldBonus}\nReceive bonus gold instead of an item.";
+                return "Nothing\nSkip this reward. No gold, no item.";
             }
 
             if (slot.RolledItem != null)
             {
-                var effect = slot.RolledItem.Type switch
-                {
-                    ItemType.Solver => "Fill the selected empty cell with the correct value.",
-                    ItemType.Finder => "Adds pencil hints to empty cells that match the selected value.",
-                    ItemType.InkWell => "Restore pencil marks resource.",
-                    ItemType.MeditationStone => "Recover HP.",
-                    ItemType.WindChime => "Clean candidate marks from the selected row and column.",
-                    ItemType.PatternScroll => "Write legal candidate marks into the selected empty cell.",
-                    ItemType.KoiReflection => "Recover both HP and pencil resources.",
-                    ItemType.LanternOfClarity => "Reveal one correct value in an empty cell.",
-                    ItemType.TeaOfFocus => "Negate mistake damage for upcoming placements.",
-                    ItemType.CherryBlossomPact => "Increase max pencil and refill it immediately.",
-                    ItemType.FortuneEnvelope => "Gain bonus gold instantly.",
-                    ItemType.StoneShift => "Clear the selected non-given cell.",
-                    ItemType.HarmonyCharm => "Gain mistake shield charges.",
-                    ItemType.CompassOfOrder => "Reveal one clear candidate in the selected cell.",
-                    _ => "Use the item for a tactical boost."
-                };
-                return $"{slot.RolledItem.Type} ({slot.RolledItem.Rarity})\n{effect}";
+                var itemName = Items.ItemService.GetItemName(slot.RolledItem.Type);
+                var effect = Items.ItemService.GetItemDescription(slot.RolledItem.Type, slot.RolledItem.Rarity);
+                return $"{itemName} ({slot.RolledItem.Rarity})\n{effect}";
             }
 
             return "Locked";
@@ -3735,7 +4091,7 @@ namespace SudokuRoguelike.UI
 
             if (slot.IsNothing)
             {
-                return $"Gold +{slot.NothingGoldBonus}";
+                return "Nothing";
             }
 
             if (slot.RolledItem != null)
@@ -3759,25 +4115,22 @@ namespace SudokuRoguelike.UI
         private static string DescribeShopOffer(ShopOffer offer)
         {
             if (offer == null)
-            {
                 return "Unknown offer";
-            }
 
-            if (offer.IsRelic)
+            if (offer.IsRelic && offer.RelicOffer != null)
             {
-                return $"Relic {offer.RelicId}\nPrice: {offer.Price}g";
+                var name = Economy.RelicService.GetName(offer.RelicOffer.Id);
+                var desc = Economy.RelicService.GetDescription(offer.RelicOffer.Id);
+                return $"{name} ({offer.RelicOffer.Tier})\n{desc}\nPrice: {offer.Price}g";
             }
 
             var item = offer.Item;
             if (item == null)
-            {
                 return $"Offer price: {offer.Price}g";
-            }
 
-            return
-                $"{item.Type} ({item.Rarity})\n" +
-                $"Charges: {item.Charges}\n" +
-                $"Price: {offer.Price}g";
+            var itemName = Items.ItemService.GetItemName(item.Type);
+            var effect = Items.ItemService.GetItemDescription(item.Type, item.Rarity);
+            return $"{itemName} ({item.Rarity})\n{effect}\nPrice: {offer.Price}g";
         }
 
         private Button BuildPanelButton(Transform parent, string name, Vector2 anchorMin, Vector2 size, Color color, bool anchorBased = false)
@@ -3999,12 +4352,25 @@ namespace SudokuRoguelike.UI
                 }
             }
 
+            // Cancel pending SilkFan if using a different item
+            if (run.IsSilkFanPending)
+            {
+                run.CancelSilkFan();
+                SetStatus("Silk Fan cancelled.");
+            }
+
             var usedType = run.RunState != null && index >= 0 && index < run.RunState.Inventory.Count && run.RunState.Inventory[index] != null
                 ? run.RunState.Inventory[index].Type
                 : ItemType.Solver;
 
             if (!run.TryUseInventoryItemAt(index, _selectedRow, _selectedCol, out var message))
             {
+                // SilkFan phase 1: pending state was set even though used=false
+                if (run.IsSilkFanPending)
+                {
+                    SetStatus(message);
+                    return;
+                }
                 SetStatus(string.IsNullOrWhiteSpace(message) ? "Item usage failed." : message);
                 return;
             }
@@ -4030,12 +4396,19 @@ namespace SudokuRoguelike.UI
                 yield break;
             }
 
+            // Reduce Motion: skip animation entirely
+            if (_accessibility != null && _accessibility.IsReduceMotion)
+            {
+                rect.localScale = to;
+                yield break;
+            }
+
             if (delay > 0f)
             {
                 yield return new WaitForSecondsRealtime(delay);
             }
 
-            const float duration = 0.16f;
+            var duration = AnimationHelper.RewardSlotDuration;
             var elapsed = 0f;
             while (elapsed < duration)
             {
@@ -4046,7 +4419,7 @@ namespace SudokuRoguelike.UI
 
                 elapsed += Time.unscaledDeltaTime;
                 var t = Mathf.Clamp01(elapsed / duration);
-                rect.localScale = Vector3.LerpUnclamped(from, to, 1f - Mathf.Pow(1f - t, 3f));
+                rect.localScale = Vector3.LerpUnclamped(from, to, AnimationHelper.Ease(t, AnimationHelper.EaseType.EaseOut));
                 yield return null;
             }
 
@@ -4100,12 +4473,16 @@ namespace SudokuRoguelike.UI
                 ItemType.PatternScroll => "icon_language_scroll",
                 ItemType.KoiReflection => "icon_golden_koi",
                 ItemType.LanternOfClarity => "icon_garden_lantern",
-                ItemType.TeaOfFocus => "icon_tea_cup",
-                ItemType.CherryBlossomPact => "icon_golden_bloom",
-                ItemType.FortuneEnvelope => "icon_sakura_coin",
-                ItemType.StoneShift => "icon_stone_gear",
-                ItemType.HarmonyCharm => "icon_jade_amulet",
-                ItemType.CompassOfOrder => "icon_temple_seal",
+                ItemType.GardenRake => "icon_pebble",
+                ItemType.OfferingBowl => "icon_rice_bowl",
+                ItemType.PruningShears => "icon_pebble",
+                ItemType.ZenSandSifter => "icon_pebble",
+                ItemType.GinkgoLeaf => "icon_golden_bloom",
+                ItemType.RicePaperUmbrella => "icon_pebble",
+                ItemType.TempleIncense => "icon_sacred_bell",
+                ItemType.KoiDragonScale => "icon_golden_koi",
+                ItemType.GoldenKintsugiJar => "icon_broken_mask",
+                ItemType.SilkFan => "icon_pebble",
                 _ => "icon_pebble"
             };
         }
@@ -4177,6 +4554,14 @@ namespace SudokuRoguelike.UI
             }
         }
 
+        private void TriggerScreenShake(float px, float ms)
+        {
+            if (_accessibility != null && (!_accessibility.ScreenShakeEnabled || _accessibility.IsReduceMotion))
+                return;
+            var target = sudokuPanel != null ? sudokuPanel.transform : transform;
+            StartCoroutine(AnimationHelper.ScreenShake(target, px, ms));
+        }
+
         private void SquarePathActionButtons()
         {
             SetSquareButton(saveQuitPathButton);
@@ -4224,6 +4609,58 @@ namespace SudokuRoguelike.UI
                 pencilText.text = $"Pencil: {state.CurrentPencil}/{state.MaxPencil}";
             }
 
+            if (_hpBarFill == null || _pencilBarFill == null)
+            {
+                var panelRect = sudokuPanel != null ? sudokuPanel.GetComponent<RectTransform>() : null;
+                if (panelRect != null)
+                {
+                    var hpBg = panelRect.Find("HpBarBg");
+                    if (hpBg != null) _hpBarFill = hpBg.Find("HpBarFill")?.GetComponent<Image>();
+                    var pencilBg = panelRect.Find("PencilBarBg");
+                    if (pencilBg != null) _pencilBarFill = pencilBg.Find("PencilBarFill")?.GetComponent<Image>();
+                }
+            }
+
+            if (_hpBarFill != null)
+            {
+                EnsureBarFillSprite(_hpBarFill);
+                _hpBarFill.fillAmount = state.MaxHP > 0 ? Mathf.Clamp01(state.CurrentHP / (float)state.MaxHP) : 0f;
+
+                // Colorblind: numeric HP overlay on bar
+                if (_accessibility != null && _accessibility.IsColorblind)
+                {
+                    var hpOverlay = _hpBarFill.transform.Find("HpNumericOverlay");
+                    if (hpOverlay == null)
+                    {
+                        var ovGo = new GameObject("HpNumericOverlay", typeof(RectTransform), typeof(Text));
+                        ovGo.transform.SetParent(_hpBarFill.transform, false);
+                        var ovRect = ovGo.GetComponent<RectTransform>();
+                        ovRect.anchorMin = Vector2.zero;
+                        ovRect.anchorMax = Vector2.one;
+                        ovRect.offsetMin = Vector2.zero;
+                        ovRect.offsetMax = Vector2.zero;
+                        hpOverlay = ovGo.transform;
+                    }
+                    var ovTxt = hpOverlay.GetComponent<Text>();
+                    if (ovTxt != null)
+                    {
+                        ovTxt.text = $"{state.CurrentHP}/{state.MaxHP}";
+                        ovTxt.fontSize = _accessibility.ScaleFont(12);
+                        ovTxt.alignment = TextAnchor.MiddleCenter;
+                        ovTxt.color = Color.white;
+                        ovTxt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                        ovTxt.fontStyle = FontStyle.Bold;
+                        ovTxt.raycastTarget = false;
+                    }
+                }
+            }
+
+            if (_pencilBarFill != null)
+            {
+                EnsureBarFillSprite(_pencilBarFill);
+                _pencilBarFill.fillAmount = state.MaxPencil > 0 ? Mathf.Clamp01(state.CurrentPencil / (float)state.MaxPencil) : 0f;
+            }
+
             if (_levelInfoText == null)
             {
                 var panelRect = sudokuPanel != null ? sudokuPanel.GetComponent<RectTransform>() : null;
@@ -4235,7 +4672,7 @@ namespace SudokuRoguelike.UI
             if (_levelInfoText != null)
             {
                 var isTutorial = runMapController?.Run?.RunState != null && runMapController.Run.RunState.TutorialMode;
-                _levelInfoText.text = isTutorial ? string.Empty : $"Level: {state.Level}  Depth: {state.Depth}";
+                _levelInfoText.text = isTutorial ? string.Empty : $"Depth: {state.Depth}  Floor: {state.CurrentFloor + 1}";
             }
 
             if (_modifiersLabel == null)
@@ -4328,11 +4765,72 @@ namespace SudokuRoguelike.UI
 
             if (gameOverDetailsText != null)
             {
-                gameOverDetailsText.text =
-                    $"Class: {run.RunState.ClassId}\n" +
-                    $"Depth reached: {run.RunState.Depth}\n" +
-                    $"HP: {run.RunState.CurrentHP}/{run.RunState.MaxHP}\n" +
-                    $"Pencil: {run.RunState.CurrentPencil}/{run.RunState.MaxPencil}";
+                var goDetails = new StringBuilder();
+                goDetails.AppendLine($"Class: {run.RunState.ClassId}");
+                goDetails.AppendLine($"Depth reached: {run.RunState.Depth}");
+                goDetails.AppendLine($"HP: {run.RunState.CurrentHP}/{run.RunState.MaxHP}");
+                goDetails.AppendLine($"Pencil: {run.RunState.CurrentPencil}/{run.RunState.MaxPencil}");
+                goDetails.AppendLine(string.Empty);
+
+                // XP breakdown (new formula)
+                var cfg = run.CurrentLevelConfig;
+                var lvlState = run.CurrentLevelState;
+                if (cfg != null)
+                {
+                    var xpBreak = XpService.CalculateTile(
+                        cfg.BoardSize, cfg.Stars, cfg.ActiveModifiers?.Count ?? 0,
+                        cfg.IsBoss, (lvlState?.Mistakes ?? 0) == 0);
+                    goDetails.AppendLine("— XP Breakdown —");
+                    goDetails.AppendLine($"Base: {xpBreak.BaseXp} × {xpBreak.StarMult:F1} = {xpBreak.TileXp}");
+                    if (xpBreak.IsBoss) goDetails.AppendLine($"Boss ×1.5");
+                    if (xpBreak.ModifierBonus > 0) goDetails.AppendLine($"Modifier Bonus: +{xpBreak.ModifierBonus}");
+                    if (xpBreak.PerfectBonus > 0) goDetails.AppendLine($"Perfect Bonus: +{xpBreak.PerfectBonus}");
+                    goDetails.AppendLine($"Total XP: +{xpBreak.TotalXp}");
+                    goDetails.AppendLine(string.Empty);
+                }
+                else
+                {
+                    goDetails.AppendLine($"XP Gained: +{result.XpEarned}");
+                    goDetails.AppendLine(string.Empty);
+                }
+
+                // Class-level progress after XP was applied
+                var gSave = new SaveFileService();
+                var gProfile = new ProfileService();
+                if (gSave.TryLoadProfile(out var gEnv))
+                {
+                    gProfile.ApplyEnvelope(gEnv);
+                    var prog   = gProfile.Meta.GardenProgression;
+
+                    // Per-class level
+                    ClassGardenProgressEntry classEntry = null;
+                    if (prog != null)
+                    {
+                        for (var ci = 0; ci < prog.ClassEntries.Count; ci++)
+                        {
+                            if (prog.ClassEntries[ci].ClassId == run.RunState.ClassId)
+                            {
+                                classEntry = prog.ClassEntries[ci];
+                                break;
+                            }
+                        }
+                    }
+
+                    if (classEntry != null)
+                    {
+                        var (classLevel, classProgressXp, classXpToNext) = XpService.DeriveLevel(classEntry.TotalXp);
+                        var pctClass = classXpToNext > 0 ? Mathf.Clamp01((float)classProgressXp / classXpToNext) : 1f;
+                        goDetails.AppendLine($"Class Level {classLevel}  ({Mathf.RoundToInt(pctClass * 100f)}%)");
+                        goDetails.AppendLine($"XP {classProgressXp}/{classXpToNext}");
+                        var nextUnlock = ClassGardenProgressionService.GetNextUnlock(run.RunState.ClassId, classLevel);
+                        if (nextUnlock != "Max Level")
+                            goDetails.AppendLine($"Next: {nextUnlock}");
+                        else
+                            goDetails.AppendLine("Class Max Level");
+                    }
+                }
+
+                gameOverDetailsText.text = goDetails.ToString().TrimEnd();
             }
 
             SetStatus("Game Over");
@@ -4361,16 +4859,20 @@ namespace SudokuRoguelike.UI
             var totalW = (cellW * size) + (spaceX * (size - 1));
             var totalH = (cellH * size) + (spaceY * (size - 1));
 
-            // Lines (whispers, parity, renban)
+            // Refresh accessibility state for this render pass
+            _accessibility?.Refresh();
+
+            // Lines (whispers, parity, renban, palindrome, thermo, between lines)
             for (var li = 0; li < overlay.Lines.Count; li++)
             {
                 var line = overlay.Lines[li];
                 var lineColor = GetLineColor(line.Type);
+                var dashPattern = _accessibility?.GetLineDashPattern(line.Type);
                 for (var ci = 0; ci < line.Cells.Count - 1; ci++)
                 {
                     var a = line.Cells[ci];
                     var b = line.Cells[ci + 1];
-                    DrawLineBetweenCells(a, b, lineColor, 4f, cellW, cellH, spaceX, spaceY, totalW, totalH);
+                    DrawLineBetweenCells(a, b, lineColor, 4f, cellW, cellH, spaceX, spaceY, totalW, totalH, dashPattern);
                 }
 
                 for (var ci = 0; ci < line.Cells.Count; ci++)
@@ -4378,19 +4880,56 @@ namespace SudokuRoguelike.UI
                     var c = line.Cells[ci];
                     DrawCellDot(c, lineColor, 8f, cellW, cellH, spaceX, spaceY, totalW, totalH);
                 }
+
+                // Thermo: large bulb circle at start cell
+                if (line.Type == LineType.Thermo && line.Cells.Count > 0)
+                {
+                    DrawCellDot(line.Cells[0], lineColor, 18f, cellW, cellH, spaceX, spaceY, totalW, totalH);
+                    var thermoLabel = _accessibility?.GetThermoBulbLabel();
+                    if (thermoLabel != null)
+                        DrawOverlayLabel(line.Cells[0], thermoLabel, 14, cellW, cellH, spaceX, spaceY, totalW, totalH);
+                }
+
+                // Between Lines: hollow circles at both endpoints
+                if (line.Type == LineType.BetweenLines && line.Cells.Count >= 2)
+                {
+                    DrawCellDot(line.Cells[0], lineColor, 14f, cellW, cellH, spaceX, spaceY, totalW, totalH);
+                    DrawCellDot(line.Cells[0], new Color(0f, 0f, 0f, 0f), 9f, cellW, cellH, spaceX, spaceY, totalW, totalH);
+                    DrawCellDot(line.Cells[line.Cells.Count - 1], lineColor, 14f, cellW, cellH, spaceX, spaceY, totalW, totalH);
+                    DrawCellDot(line.Cells[line.Cells.Count - 1], new Color(0f, 0f, 0f, 0f), 9f, cellW, cellH, spaceX, spaceY, totalW, totalH);
+                    var betweenLabel = _accessibility?.GetBetweenEndpointLabel();
+                    if (betweenLabel != null)
+                    {
+                        DrawOverlayLabel(line.Cells[0], betweenLabel, 12, cellW, cellH, spaceX, spaceY, totalW, totalH);
+                        DrawOverlayLabel(line.Cells[line.Cells.Count - 1], betweenLabel, 12, cellW, cellH, spaceX, spaceY, totalW, totalH);
+                    }
+                }
             }
 
-            // Kropki dots
+            // Kropki dots — white = hollow white circle, black = filled black circle
             for (var di = 0; di < overlay.Dots.Count; di++)
             {
                 var dot = overlay.Dots[di];
-                var dotColor = dot.Type == DotType.White ? WhiteDotColor : BlackDotColor;
-                var mid = new CellCoord(0, 0);
                 var mr = (dot.CellA.Row + dot.CellB.Row) / 2f;
                 var mc = (dot.CellA.Col + dot.CellB.Col) / 2f;
                 var posX = mc * (cellW + spaceX) + cellW * 0.5f - totalW * 0.5f;
                 var posY = -(mr * (cellH + spaceY) + cellH * 0.5f - totalH * 0.5f);
-                DrawOverlayCircle(posX, posY, 10f, dotColor);
+                if (dot.Type == DotType.White)
+                {
+                    // Hollow white circle: outer white ring + transparent inner
+                    DrawOverlayCircle(posX, posY, 10f, WhiteDotColor);
+                    DrawOverlayCircle(posX, posY,  6f, new Color(0f, 0f, 0f, 0f)); // punch out centre
+                }
+                else
+                {
+                    // Filled black circle
+                    DrawOverlayCircle(posX, posY, 10f, BlackDotColor);
+                }
+
+                // Accessibility: add text label on dot
+                var dotLabel = _accessibility?.GetDotLabel(dot.Type);
+                if (dotLabel != null)
+                    DrawOverlayTextAt(posX, posY, dotLabel, 11, Color.white);
             }
 
             // Killer cages — record cage edges and draw sum text
@@ -4413,32 +4952,38 @@ namespace SudokuRoguelike.UI
                         topLeft = cc;
                 }
 
-                var sumIdx = topLeft.Row * size + topLeft.Col;
-                if (sumIdx >= 0 && sumIdx < _cells.Count)
-                {
-                    // Parent to the number root so the sum renders above overlay lines
-                    Transform sumParent = (_gridNumberRoot != null && sumIdx < _gridNumberRoot.childCount)
-                        ? _gridNumberRoot.GetChild(sumIdx)
-                        : _cells[sumIdx].Root;
-                    var sumGo = new GameObject("CageSum", typeof(RectTransform), typeof(Image), typeof(Text));
-                    sumGo.transform.SetParent(sumParent, false);
-                    var sumRect = sumGo.GetComponent<RectTransform>();
-                    sumRect.anchorMin = new Vector2(0f, 0.68f);
-                    sumRect.anchorMax = new Vector2(0.48f, 1f);
-                    sumRect.offsetMin = Vector2.zero;
-                    sumRect.offsetMax = Vector2.zero;
-                    var sumBg = sumGo.GetComponent<Image>();
-                    sumBg.color = new Color(0f, 0f, 0f, 0.55f);
-                    sumBg.raycastTarget = false;
-                    var sumText = sumGo.GetComponent<Text>();
-                    sumText.text = cage.Sum.ToString();
-                    sumText.fontSize = 11;
-                    sumText.alignment = TextAnchor.MiddleCenter;
-                    sumText.color = new Color(0.90f, 0.15f, 0.12f, 1f);
-                    sumText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-                    sumText.raycastTarget = false;
-                    _overlayObjects.Add(sumGo);
-                }
+                // Place cage sum: background Image parent + Text child (avoids multiple Graphic on same object)
+                var tlX = topLeft.Col * (cellW + spaceX) - totalW * 0.5f;
+                var tlY = totalH * 0.5f - topLeft.Row * (cellH + spaceY);
+
+                var sumBgGo = new GameObject("CageSumBg", typeof(RectTransform), typeof(Image));
+                sumBgGo.transform.SetParent(_gridOverlayRoot, false);
+                var sumBgRect = sumBgGo.GetComponent<RectTransform>();
+                sumBgRect.anchorMin = new Vector2(0.5f, 0.5f);
+                sumBgRect.anchorMax = new Vector2(0.5f, 0.5f);
+                sumBgRect.pivot = new Vector2(0f, 1f);
+                sumBgRect.anchoredPosition = new Vector2(tlX, tlY);
+                sumBgRect.sizeDelta = new Vector2(cellW * 0.46f, cellH * 0.30f);
+                var sumBgImg = sumBgGo.GetComponent<Image>();
+                sumBgImg.color = new Color(0f, 0f, 0f, 0.65f);
+                sumBgImg.raycastTarget = false;
+
+                var sumTextGo = new GameObject("CageSumText", typeof(RectTransform), typeof(Text));
+                sumTextGo.transform.SetParent(sumBgGo.transform, false);
+                var sumTextRect = sumTextGo.GetComponent<RectTransform>();
+                sumTextRect.anchorMin = Vector2.zero;
+                sumTextRect.anchorMax = Vector2.one;
+                sumTextRect.offsetMin = Vector2.zero;
+                sumTextRect.offsetMax = Vector2.zero;
+                var sumText = sumTextGo.GetComponent<Text>();
+                sumText.text = cage.Sum.ToString();
+                sumText.fontSize = _accessibility?.ScaleFont(11) ?? 11;
+                sumText.alignment = TextAnchor.MiddleCenter;
+                sumText.color = new Color(0.90f, 0.15f, 0.12f, 1f);
+                sumText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                sumText.raycastTarget = false;
+
+                _overlayObjects.Add(sumBgGo);
             }
 
             // Red board border strips when Killer Cage is active
@@ -4460,7 +5005,13 @@ namespace SudokuRoguelike.UI
             for (var ai = 0; ai < overlay.Arrows.Count; ai++)
             {
                 var arrow = overlay.Arrows[ai];
+                // Hollow circle: outer ring + inner cutout
                 DrawCellDot(arrow.Circle, ArrowCircleColor, 18f, cellW, cellH, spaceX, spaceY, totalW, totalH);
+                DrawCellDot(arrow.Circle, ArrowCircleInnerColor, 11f, cellW, cellH, spaceX, spaceY, totalW, totalH);
+
+                var arrowLabel = _accessibility?.GetArrowCircleLabel();
+                if (arrowLabel != null)
+                    DrawOverlayLabel(arrow.Circle, arrowLabel, 12, cellW, cellH, spaceX, spaceY, totalW, totalH);
 
                 if (arrow.Path.Count > 0)
                     DrawLineBetweenCells(arrow.Circle, arrow.Path[0], ArrowPathColor, 3f, cellW, cellH, spaceX, spaceY, totalW, totalH);
@@ -4473,6 +5024,135 @@ namespace SudokuRoguelike.UI
                     var last = arrow.Path[arrow.Path.Count - 1];
                     DrawCellDot(last, ArrowPathColor, 6f, cellW, cellH, spaceX, spaceY, totalW, totalH);
                 }
+            }
+
+            // Even/Odd cell markers — square for even, circle for odd
+            for (var mi = 0; mi < overlay.CellMarkers.Count; mi++)
+            {
+                var marker = overlay.CellMarkers[mi];
+                var posX = marker.Cell.Col * (cellW + spaceX) + cellW * 0.5f - totalW * 0.5f;
+                var posY = -(marker.Cell.Row * (cellH + spaceY) + cellH * 0.5f - totalH * 0.5f);
+                if (marker.Type == MarkerType.Even)
+                {
+                    // Blue square
+                    var sq = new GameObject("EvenMarker", typeof(RectTransform), typeof(UnityEngine.UI.Image));
+                    sq.transform.SetParent(_gridOverlayRoot, false);
+                    var sqRect = sq.GetComponent<RectTransform>();
+                    sqRect.anchorMin = new Vector2(0.5f, 0.5f);
+                    sqRect.anchorMax = new Vector2(0.5f, 0.5f);
+                    sqRect.pivot = new Vector2(0.5f, 0.5f);
+                    sqRect.anchoredPosition = new Vector2(posX, posY);
+                    sqRect.sizeDelta = new Vector2(cellW * 0.70f, cellH * 0.70f);
+                    var sqImg = sq.GetComponent<UnityEngine.UI.Image>();
+                    sqImg.color = EvenMarkerColor;
+                    sqImg.raycastTarget = false;
+                    _overlayObjects.Add(sq);
+                }
+                else
+                {
+                    // Orange circle
+                    DrawOverlayCircle(posX, posY, cellW * 0.35f, OddMarkerColor);
+                }
+
+                // Accessibility: add E/O text label on marker
+                var markerLabel = _accessibility?.GetMarkerLabel(marker.Type);
+                if (markerLabel != null)
+                    DrawOverlayTextAt(posX, posY, markerLabel, 14, Color.white);
+            }
+
+            // Build modifier legend panel for multi-modifier readability
+            var modifiers = run?.CurrentLevelConfig?.ActiveModifiers;
+            if (modifiers != null && modifiers.Count > 0)
+            {
+                BuildModifierLegend(modifiers);
+            }
+        }
+
+        private void RefreshBossModifierDescription()
+        {
+            if (_bossModifierDescText == null && sudokuPanel != null)
+            {
+                _bossModifierDescText = sudokuPanel.transform.Find("SudokuGameplayBossDesc")?.GetComponent<Text>();
+            }
+
+            if (_bossModifierDescText == null) return;
+
+            var run = runMapController?.Run;
+            var modifiers = run?.CurrentLevelConfig?.ActiveModifiers;
+            if (modifiers != null && modifiers.Count > 0)
+            {
+                var descSb = new System.Text.StringBuilder();
+                for (var mi = 0; mi < modifiers.Count; mi++)
+                {
+                    if (mi > 0) descSb.AppendLine();
+                    descSb.Append(GetBossModifierDescription(modifiers[mi]));
+                }
+                _bossModifierDescText.text = descSb.ToString();
+                _bossModifierDescText.gameObject.SetActive(true);
+            }
+            else
+            {
+                _bossModifierDescText.text = string.Empty;
+                _bossModifierDescText.gameObject.SetActive(false);
+            }
+        }
+
+        private static string FormatModifierName(BossModifierId modifier) => modifier switch
+        {
+            BossModifierId.FogOfWar          => "Fog of War",
+            BossModifierId.ArrowSums         => "Arrow Sums",
+            BossModifierId.GermanWhispers    => "German Whispers",
+            BossModifierId.DutchWhispers     => "Dutch Whispers",
+            BossModifierId.ParityLines       => "Parity Lines",
+            BossModifierId.RenbanLines       => "Renban Lines",
+            BossModifierId.KillerCages       => "Killer Cages",
+            BossModifierId.DifferenceKropki  => "Difference Kropki",
+            BossModifierId.RatioKropki       => "Ratio Kropki",
+            BossModifierId.Palindrome        => "Palindrome",
+            BossModifierId.Thermo            => "Thermo",
+            BossModifierId.BetweenLines      => "Between Lines",
+            BossModifierId.EvenOdd           => "Even/Odd",
+            BossModifierId.Nonconsecutive    => "Nonconsecutive",
+            BossModifierId.Antiknight        => "Antiknight",
+            _                                => modifier.ToString()
+        };
+
+        private static string GetBossModifierDescription(BossModifierId modifier)
+        {
+            switch (modifier)
+            {
+                case BossModifierId.FogOfWar:
+                    return "Fog of War: Correct placements reveal hidden cells.\nExample: placing 5 in a fogged cell clears nearby fog.";
+                case BossModifierId.ArrowSums:
+                    return "Arrow Sums (grey arrow): Digits along the arrow sum to the circled digit.\nExample: circle=6, path=[2,4] \u2192 2+4=6 \u2713";
+                case BossModifierId.GermanWhispers:
+                    return "German Whispers (green line): Neighbours differ by \u22655.\nExample: 1-7-2-8-3 \u2713  |  1-5-2 \u2717 (5-2=3 < 5)";
+                case BossModifierId.DutchWhispers:
+                    return "Dutch Whispers (teal line): Neighbours differ by \u22654.\nExample: 1-6-2-7-3 \u2713  |  1-4-1 \u2717 (4-1=3 < 4)";
+                case BossModifierId.ParityLines:
+                    return "Parity Lines (teal line): Adjacent cells alternate odd/even.\nExample: 1-4-3-8-5 \u2713  |  2-4-6 \u2717 (even-even)";
+                case BossModifierId.RenbanLines:
+                    return "Renban (pink/purple line): Line digits form a consecutive set (any order).\nExample: 3-5-4 \u2713  |  1-3-5 \u2717 (gap)";
+                case BossModifierId.KillerCages:
+                    return "Killer Cages (dashed border): Cage digits sum to label; no repeats.\nExample: cage=7, cells=[3,4] \u2713  |  [4,4] \u2717 (repeat)";
+                case BossModifierId.DifferenceKropki:
+                    return "White Dots (white circle): Adjacent cells differ by exactly 1.\nExample: 4\u25e65 \u2713  |  4\u25e66 \u2717";
+                case BossModifierId.RatioKropki:
+                    return "Black Dots (black circle): One adjacent cell is double the other.\nExample: 3\u25cf6 \u2713  |  3\u25cf5 \u2717";
+                case BossModifierId.Palindrome:
+                    return "Palindrome (grey line): Digits read the same forward and backward.\nExample: 3-7-5-7-3 \u2713  |  3-7-5-8-3 \u2717";
+                case BossModifierId.Thermo:
+                    return "Thermo (orange bulb\u2192tip): Digits strictly increase from bulb to tip.\nExample: bulb=2, path=[4,7] \u2713  |  bulb=2, path=[5,3] \u2717";
+                case BossModifierId.BetweenLines:
+                    return "Between Lines (white circles at ends): All path digits must lie strictly between the endpoint values.\nExample: ends=2&8, path=[5,4] \u2713  |  path=[1,5] \u2717";
+                case BossModifierId.EvenOdd:
+                    return "Even/Odd (blue square=even, orange circle=odd): Marked cells must have the correct parity.\nExample: square cell must be 2,4,6,8; circle cell must be 1,3,5,7,9.";
+                case BossModifierId.Nonconsecutive:
+                    return "Nonconsecutive (global): No two orthogonally adjacent cells may contain consecutive digits.\nExample: 3 adjacent to 4 is \u2717; 3 adjacent to 5 \u2713";
+                case BossModifierId.Antiknight:
+                    return "Antiknight (global): No two cells a chess knight\u2019s move apart may share a digit.\nExample: if 5 is at r1c1, r2c3 and r3c2 cannot be 5.";
+                default:
+                    return modifier.ToString();
             }
         }
 
@@ -4514,32 +5194,301 @@ namespace SudokuRoguelike.UI
                 if (_overlayObjects[i] != null) Destroy(_overlayObjects[i]);
             }
             _overlayObjects.Clear();
+            _overlayGroups.Clear();
+            if (_legendPanel != null)
+            {
+                Destroy(_legendPanel);
+                _legendPanel = null;
+            }
+            _legendExpanded = false;
+            if (_isolateCoroutine != null)
+            {
+                StopCoroutine(_isolateCoroutine);
+                _isolateCoroutine = null;
+            }
+        }
+
+        /// <summary>Register an overlay GameObject under a modifier ID for tap-to-isolate grouping.</summary>
+        private void RegisterOverlayForModifier(BossModifierId modId, GameObject go)
+        {
+            if (!_overlayGroups.TryGetValue(modId, out var list))
+            {
+                list = new List<GameObject>();
+                _overlayGroups[modId] = list;
+            }
+            list.Add(go);
+        }
+
+        /// <summary>Build collapsible modifier legend panel when 2+ modifiers are active.</summary>
+        private void BuildModifierLegend(List<BossModifierId> activeModifiers)
+        {
+            if (activeModifiers == null || activeModifiers.Count < 1) return;
+            if (_gridOverlayRoot == null) return;
+
+            _legendPanel = new GameObject("ModifierLegend", typeof(RectTransform), typeof(CanvasGroup));
+            _legendPanel.transform.SetParent(_gridOverlayRoot.parent, false);
+            var panelRect = _legendPanel.GetComponent<RectTransform>();
+            panelRect.anchorMin = new Vector2(1f, 1f);
+            panelRect.anchorMax = new Vector2(1f, 1f);
+            panelRect.pivot = new Vector2(1f, 1f);
+            panelRect.anchoredPosition = new Vector2(-5f, -5f);
+            panelRect.sizeDelta = new Vector2(130f, 26f + activeModifiers.Count * 28f);
+
+            var panelBg = _legendPanel.AddComponent<Image>();
+            panelBg.color = new Color(0.05f, 0.05f, 0.08f, 0.85f);
+            panelBg.raycastTarget = true;
+
+            // Title
+            var titleGo = new GameObject("LegendTitle", typeof(RectTransform), typeof(Text));
+            titleGo.transform.SetParent(_legendPanel.transform, false);
+            var titleRect = titleGo.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0f, 1f);
+            titleRect.anchorMax = new Vector2(1f, 1f);
+            titleRect.pivot = new Vector2(0.5f, 1f);
+            titleRect.anchoredPosition = Vector2.zero;
+            titleRect.sizeDelta = new Vector2(0f, 22f);
+            var titleText = titleGo.GetComponent<Text>();
+            titleText.text = "Modifiers";
+            titleText.fontSize = 11;
+            titleText.alignment = TextAnchor.MiddleCenter;
+            titleText.color = Color.white;
+            titleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            titleText.raycastTarget = false;
+
+            // Entries
+            for (var i = 0; i < activeModifiers.Count; i++)
+            {
+                var modId = activeModifiers[i];
+                var yOffset = -(24f + i * 28f);
+
+                // Colour swatch
+                var swatchGo = new GameObject("Swatch", typeof(RectTransform), typeof(Image));
+                swatchGo.transform.SetParent(_legendPanel.transform, false);
+                var swatchRect = swatchGo.GetComponent<RectTransform>();
+                swatchRect.anchorMin = new Vector2(0f, 1f);
+                swatchRect.anchorMax = new Vector2(0f, 1f);
+                swatchRect.pivot = new Vector2(0f, 1f);
+                swatchRect.anchoredPosition = new Vector2(6f, yOffset);
+                swatchRect.sizeDelta = new Vector2(16f, 16f);
+                var swatchImg = swatchGo.GetComponent<Image>();
+                swatchImg.color = GetModifierSwatchColor(modId);
+                swatchImg.raycastTarget = false;
+
+                // Label
+                var labelGo = new GameObject("Label", typeof(RectTransform), typeof(Text));
+                labelGo.transform.SetParent(_legendPanel.transform, false);
+                var labelRect = labelGo.GetComponent<RectTransform>();
+                labelRect.anchorMin = new Vector2(0f, 1f);
+                labelRect.anchorMax = new Vector2(1f, 1f);
+                labelRect.pivot = new Vector2(0f, 1f);
+                labelRect.anchoredPosition = new Vector2(26f, yOffset);
+                labelRect.sizeDelta = new Vector2(-32f, 20f);
+                var labelText = labelGo.GetComponent<Text>();
+                labelText.text = modId.ToString();
+                labelText.fontSize = 10;
+                labelText.alignment = TextAnchor.MiddleLeft;
+                labelText.color = Color.white;
+                labelText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                labelText.raycastTarget = false;
+
+                // Tap-to-isolate button
+                var btnGo = new GameObject("IsolateBtn", typeof(RectTransform), typeof(Image), typeof(Button));
+                btnGo.transform.SetParent(_legendPanel.transform, false);
+                var btnRect = btnGo.GetComponent<RectTransform>();
+                btnRect.anchorMin = new Vector2(0f, 1f);
+                btnRect.anchorMax = new Vector2(1f, 1f);
+                btnRect.pivot = new Vector2(0f, 1f);
+                btnRect.anchoredPosition = new Vector2(0f, yOffset);
+                btnRect.sizeDelta = new Vector2(0f, 24f);
+                var btnImg = btnGo.GetComponent<Image>();
+                btnImg.color = new Color(0f, 0f, 0f, 0f);
+                var btn = btnGo.GetComponent<Button>();
+                var capturedMod = modId;
+                btn.onClick.AddListener(() => OnLegendEntryTapped(capturedMod));
+            }
+
+            // Start collapsed if only 1 modifier
+            if (activeModifiers.Count < 2)
+            {
+                _legendPanel.SetActive(false);
+                _legendExpanded = false;
+            }
+            else
+            {
+                _legendExpanded = true;
+            }
+        }
+
+        private void OnLegendEntryTapped(BossModifierId selectedMod)
+        {
+            if (_isolateCoroutine != null)
+            {
+                StopCoroutine(_isolateCoroutine);
+                RestoreAllOverlayOpacity();
+            }
+            _isolateCoroutine = StartCoroutine(IsolateModifierCoroutine(selectedMod));
+        }
+
+        private System.Collections.IEnumerator IsolateModifierCoroutine(BossModifierId selectedMod)
+        {
+            // Dim all non-selected modifier groups to 15% opacity
+            foreach (var kvp in _overlayGroups)
+            {
+                var alpha = kvp.Key == selectedMod ? 1f : 0.15f;
+                for (var i = 0; i < kvp.Value.Count; i++)
+                {
+                    var go = kvp.Value[i];
+                    if (go == null) continue;
+                    var cg = go.GetComponent<CanvasGroup>();
+                    if (cg == null) cg = go.AddComponent<CanvasGroup>();
+                    cg.alpha = alpha;
+                }
+            }
+
+            yield return new WaitForSeconds(3f);
+
+            RestoreAllOverlayOpacity();
+            _isolateCoroutine = null;
+        }
+
+        private void RestoreAllOverlayOpacity()
+        {
+            foreach (var kvp in _overlayGroups)
+            {
+                for (var i = 0; i < kvp.Value.Count; i++)
+                {
+                    var go = kvp.Value[i];
+                    if (go == null) continue;
+                    var cg = go.GetComponent<CanvasGroup>();
+                    if (cg != null) cg.alpha = 1f;
+                }
+            }
+        }
+
+        private static Color GetModifierSwatchColor(BossModifierId modId)
+        {
+            return modId switch
+            {
+                BossModifierId.GermanWhispers => new Color(0.20f, 0.72f, 0.30f, 1f),
+                BossModifierId.DutchWhispers => new Color(0.10f, 0.95f, 0.78f, 1f),
+                BossModifierId.ParityLines => new Color(0.30f, 0.40f, 0.85f, 1f),
+                BossModifierId.RenbanLines => new Color(0.80f, 0.35f, 0.65f, 1f),
+                BossModifierId.Palindrome => new Color(0.60f, 0.60f, 0.60f, 1f),
+                BossModifierId.Thermo => new Color(0.75f, 0.45f, 0.15f, 1f),
+                BossModifierId.BetweenLines => new Color(0.90f, 0.90f, 0.90f, 1f),
+                BossModifierId.DifferenceKropki => new Color(1f, 1f, 1f, 1f),
+                BossModifierId.RatioKropki => new Color(0.15f, 0.15f, 0.15f, 1f),
+                BossModifierId.KillerCages => new Color(0.85f, 0.15f, 0.12f, 1f),
+                BossModifierId.ArrowSums => new Color(0.55f, 0.55f, 0.55f, 1f),
+                BossModifierId.EvenOdd => new Color(0.35f, 0.65f, 0.90f, 1f),
+                BossModifierId.Nonconsecutive => Color.white,
+                BossModifierId.Antiknight => Color.white,
+                BossModifierId.FogOfWar => new Color(0.40f, 0.40f, 0.50f, 1f),
+                _ => Color.white
+            };
         }
 
         private void DrawLineBetweenCells(CellCoord a, CellCoord b, Color color, float width,
-            float cellW, float cellH, float spX, float spY, float totalW, float totalH)
+            float cellW, float cellH, float spX, float spY, float totalW, float totalH,
+            LineDashPattern pattern = null)
         {
             var ax = a.Col * (cellW + spX) + cellW * 0.5f - totalW * 0.5f;
             var ay = -(a.Row * (cellH + spY) + cellH * 0.5f - totalH * 0.5f);
             var bx = b.Col * (cellW + spX) + cellW * 0.5f - totalW * 0.5f;
             var by = -(b.Row * (cellH + spY) + cellH * 0.5f - totalH * 0.5f);
 
-            var go = new GameObject("OverlayLine", typeof(RectTransform), typeof(Image));
-            go.transform.SetParent(_gridOverlayRoot, false);
-            var rect = go.GetComponent<RectTransform>();
-
             var dx = bx - ax;
             var dy = by - ay;
             var len = Mathf.Sqrt(dx * dx + dy * dy);
             var angle = Mathf.Atan2(dy, dx) * Mathf.Rad2Deg;
 
+            var lineWidth = width * (_accessibility?.GetLineWidthMultiplier() ?? 1f);
+            if (pattern != null && pattern.Style != LineDashStyle.Solid && pattern.Style != LineDashStyle.SolidThick)
+                lineWidth = pattern.Width * (_accessibility?.GetLineWidthMultiplier() ?? 1f);
+            if (pattern != null && pattern.Style == LineDashStyle.SolidThick)
+                lineWidth = pattern.Width * (_accessibility?.GetLineWidthMultiplier() ?? 1f);
+
+            var overlayAlpha = _accessibility?.GetOverlayAlpha(color.a) ?? color.a;
+            var drawColor = new Color(color.r, color.g, color.b, overlayAlpha);
+
+            // Dashed / dotted / dash-dot patterns: draw multiple segments
+            if (pattern != null && pattern.SegmentLength > 0f &&
+                (pattern.Style == LineDashStyle.Dashed || pattern.Style == LineDashStyle.Dotted || pattern.Style == LineDashStyle.DashDot))
+            {
+                var segLen = pattern.SegmentLength;
+                var gapLen = pattern.GapLength;
+                var pos = 0f;
+                var isDash = true;
+                while (pos < len)
+                {
+                    var currentLen = isDash ? segLen : (pattern.Style == LineDashStyle.DashDot && !isDash ? 3f : gapLen);
+                    if (isDash)
+                    {
+                        var end = Mathf.Min(pos + currentLen, len);
+                        var segStart = pos / len;
+                        var segEnd = end / len;
+                        var sx = ax + dx * segStart;
+                        var sy = ay + dy * segStart;
+                        DrawSegment(sx, sy, end - pos, lineWidth, angle, drawColor);
+                    }
+                    pos += currentLen;
+                    isDash = !isDash;
+                }
+                return;
+            }
+
+            // Double line pattern: two parallel lines offset by width
+            if (pattern != null && pattern.Style == LineDashStyle.DoubleLine)
+            {
+                var perpX = -dy / len * lineWidth * 0.8f;
+                var perpY = dx / len * lineWidth * 0.8f;
+                DrawSegment(ax + perpX, ay + perpY, len, lineWidth * 0.6f, angle, drawColor);
+                DrawSegment(ax - perpX, ay - perpY, len, lineWidth * 0.6f, angle, drawColor);
+                return;
+            }
+
+            // Wavy pattern: sine wave offset segments
+            if (pattern != null && pattern.Style == LineDashStyle.Wavy)
+            {
+                const int segments = 10;
+                var segLen = len / segments;
+                for (var si = 0; si < segments; si++)
+                {
+                    var t0 = si / (float)segments;
+                    var t1 = (si + 1f) / segments;
+                    var waveAmp = lineWidth * 1.5f;
+                    var perpX = -dy / len;
+                    var perpY = dx / len;
+                    var off0 = Mathf.Sin(t0 * Mathf.PI * 3f) * waveAmp;
+                    var off1 = Mathf.Sin(t1 * Mathf.PI * 3f) * waveAmp;
+                    var sx = ax + dx * t0 + perpX * off0;
+                    var sy = ay + dy * t0 + perpY * off0;
+                    var ex = ax + dx * t1 + perpX * off1;
+                    var ey = ay + dy * t1 + perpY * off1;
+                    var sdx = ex - sx;
+                    var sdy = ey - sy;
+                    var sLen = Mathf.Sqrt(sdx * sdx + sdy * sdy);
+                    var sAngle = Mathf.Atan2(sdy, sdx) * Mathf.Rad2Deg;
+                    DrawSegment(sx, sy, sLen, lineWidth * 0.7f, sAngle, drawColor);
+                }
+                return;
+            }
+
+            // Default: solid line
+            DrawSegment(ax, ay, len, lineWidth, angle, drawColor);
+        }
+
+        private void DrawSegment(float x, float y, float length, float width, float angle, Color color)
+        {
+            var go = new GameObject("OverlaySeg", typeof(RectTransform), typeof(Image));
+            go.transform.SetParent(_gridOverlayRoot, false);
+            var rect = go.GetComponent<RectTransform>();
             rect.anchorMin = new Vector2(0.5f, 0.5f);
             rect.anchorMax = new Vector2(0.5f, 0.5f);
             rect.pivot = new Vector2(0f, 0.5f);
-            rect.anchoredPosition = new Vector2(ax, ay);
-            rect.sizeDelta = new Vector2(len, width);
+            rect.anchoredPosition = new Vector2(x, y);
+            rect.sizeDelta = new Vector2(length, width);
             rect.localRotation = Quaternion.Euler(0f, 0f, angle);
-
             var img = go.GetComponent<Image>();
             img.color = color;
             img.raycastTarget = false;
@@ -4554,8 +5503,78 @@ namespace SudokuRoguelike.UI
             DrawOverlayCircle(posX, posY, radius, color);
         }
 
+        private void DrawOverlayLabel(CellCoord c, string label, int fontSize,
+            float cellW, float cellH, float spX, float spY, float totalW, float totalH)
+        {
+            var posX = c.Col * (cellW + spX) + cellW * 0.5f - totalW * 0.5f;
+            var posY = -(c.Row * (cellH + spY) + cellH * 0.5f - totalH * 0.5f);
+            DrawOverlayTextAt(posX, posY, label, fontSize, Color.white);
+        }
+
+        private void DrawOverlayTextAt(float x, float y, string label, int fontSize, Color color)
+        {
+            var scaledSize = _accessibility?.ScaleFont(fontSize) ?? fontSize;
+            var go = new GameObject("OverlayLabel", typeof(RectTransform), typeof(Text));
+            go.transform.SetParent(_gridOverlayRoot, false);
+            var rect = go.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(x, y);
+            rect.sizeDelta = new Vector2(24f, 20f);
+            var txt = go.GetComponent<Text>();
+            txt.text = label;
+            txt.fontSize = scaledSize;
+            txt.alignment = TextAnchor.MiddleCenter;
+            txt.color = color;
+            txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            txt.fontStyle = FontStyle.Bold;
+            txt.raycastTarget = false;
+            _overlayObjects.Add(go);
+        }
+
+        private static void EnsureBarFillSprite(Image fill)
+        {
+            if (fill.sprite != null) return;
+            var tex = new Texture2D(4, 4, TextureFormat.RGBA32, false);
+            var white = Color.white;
+            for (var py = 0; py < 4; py++)
+                for (var px = 0; px < 4; px++)
+                    tex.SetPixel(px, py, white);
+            tex.Apply();
+            fill.sprite = Sprite.Create(tex, new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f));
+            fill.type = Image.Type.Filled;
+            fill.fillMethod = Image.FillMethod.Horizontal;
+            fill.fillOrigin = 0;
+        }
+
+        private static Sprite BuildCircleSprite()
+        {
+            const int size = 64;
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            tex.filterMode = FilterMode.Bilinear;
+            var center = size * 0.5f - 0.5f;
+            var r = center;
+            for (var py = 0; py < size; py++)
+            {
+                for (var px = 0; px < size; px++)
+                {
+                    var dx = px - center;
+                    var dy = py - center;
+                    var dist = UnityEngine.Mathf.Sqrt(dx * dx + dy * dy);
+                    var alpha = UnityEngine.Mathf.Clamp01((r - dist) + 0.5f);
+                    tex.SetPixel(px, py, new Color(1f, 1f, 1f, alpha));
+                }
+            }
+            tex.Apply();
+            return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
+        }
+
         private void DrawOverlayCircle(float x, float y, float radius, Color color)
         {
+            if (_circleSprite == null)
+                _circleSprite = BuildCircleSprite();
+
             var go = new GameObject("OverlayDot", typeof(RectTransform), typeof(Image));
             go.transform.SetParent(_gridOverlayRoot, false);
             var rect = go.GetComponent<RectTransform>();
@@ -4566,6 +5585,7 @@ namespace SudokuRoguelike.UI
             rect.sizeDelta = new Vector2(radius * 2f, radius * 2f);
 
             var img = go.GetComponent<Image>();
+            img.sprite = _circleSprite;
             img.color = color;
             img.raycastTarget = false;
             _overlayObjects.Add(go);

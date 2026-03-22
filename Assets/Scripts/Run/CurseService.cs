@@ -15,12 +15,6 @@ namespace SudokuRoguelike.Run
             return runState.ActiveCurses.Count;
         }
 
-        public float GetCurseHeatMultiplier(RunState runState)
-        {
-            var weight = GetCurseWeight(runState);
-            return 1f + (weight * 0.07f);
-        }
-
         public float GetRareEventBonusChance(RunState runState)
         {
             return Math.Clamp(GetCurseWeight(runState) * 0.01f, 0f, 0.10f);

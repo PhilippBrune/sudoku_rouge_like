@@ -13,7 +13,11 @@ namespace SudokuRoguelike.Sudoku
             var puzzle = (int[,])solution.Clone();
 
             var totalCells = size * size;
-            var removeCount = Math.Clamp((int)Math.Round(totalCells * missingPercent), 1, totalCells - size);
+            var removeCount = Math.Clamp((int)Math.Round(totalCells * missingPercent), 1, totalCells - 1);
+            var startDigitsTarget = totalCells - removeCount;
+            UnityEngine.Debug.Log(
+                $"[SudokuGenerator] BoardSize:{size} Missing:{missingPercent * 100f:F0}% " +
+                $"StartDigitsTarget:{startDigitsTarget} RemoveCount:{removeCount} TotalCells:{totalCells}");
             var allIndices = new List<int>(totalCells);
 
             for (var i = 0; i < totalCells; i++)
@@ -40,6 +44,12 @@ namespace SudokuRoguelike.Sudoku
                 puzzle[row, col] = 0;
                 givenMask[row, col] = false;
             }
+
+            var actualGiven = 0;
+            for (var r = 0; r < size; r++)
+                for (var c = 0; c < size; c++)
+                    if (puzzle[r, c] != 0) actualGiven++;
+            UnityEngine.Debug.Log($"[SudokuGenerator] ActualStartDigits:{actualGiven} (target:{startDigitsTarget})");
 
             return new SudokuBoard(size, solution, puzzle, givenMask, regionMap);
         }
@@ -103,6 +113,8 @@ namespace SudokuRoguelike.Sudoku
             {
                 if (variant == 2)
                     FillTemplateRegions(regionMap, Get6x6Template());
+                else if (variant == 3)
+                    FillTemplateRegions(regionMap, Get6x6TemplateB());
                 else if (variant % 2 == 0)
                     FillRectangularRegions(regionMap, size, 2, 3);
                 else
@@ -114,6 +126,8 @@ namespace SudokuRoguelike.Sudoku
             {
                 if (variant == 2)
                     FillTemplateRegions(regionMap, Get8x8Template());
+                else if (variant == 3)
+                    FillTemplateRegions(regionMap, Get8x8TemplateB());
                 else if (variant % 2 == 0)
                     FillRectangularRegions(regionMap, size, 2, 4);
                 else
@@ -138,6 +152,8 @@ namespace SudokuRoguelike.Sudoku
             {
                 if (size == 9 && variant == 2)
                     FillTemplateRegions(regionMap, Get9x9Template());
+                else if (size == 9 && variant == 3)
+                    FillTemplateRegions(regionMap, Get9x9TemplateB());
                 else
                     FillRectangularRegions(regionMap, size, boxRoot, boxRoot);
                 return regionMap;
@@ -249,6 +265,53 @@ namespace SudokuRoguelike.Sudoku
                 { 4, 4, 6, 6, 6, 6, 6, 7, 7 },
                 { 8, 8, 6, 6, 8, 8, 7, 7, 7 },
                 { 8, 8, 8, 8, 8, 7, 7, 7, 7 }
+            };
+        }
+
+        private static int[,] Get6x6TemplateB()
+        {
+            // Mirror of Get6x6Template — 6 regions of 6 cells each, all contiguous
+            return new[,]
+            {
+                { 0, 0, 2, 2, 2, 1 },
+                { 0, 0, 3, 2, 2, 1 },
+                { 0, 3, 3, 3, 2, 1 },
+                { 0, 3, 3, 1, 1, 1 },
+                { 5, 5, 4, 4, 4, 4 },
+                { 5, 5, 5, 5, 4, 4 }
+            };
+        }
+
+        private static int[,] Get8x8TemplateB()
+        {
+            // Staircase jigsaw — 8 regions of 8 cells each, all contiguous
+            return new[,]
+            {
+                { 0, 0, 0, 0, 1, 1, 1, 1 },
+                { 0, 0, 0, 2, 2, 2, 2, 1 },
+                { 0, 3, 3, 3, 2, 2, 2, 1 },
+                { 4, 4, 3, 3, 3, 2, 1, 1 },
+                { 4, 4, 4, 3, 3, 5, 5, 5 },
+                { 4, 4, 4, 6, 6, 6, 6, 5 },
+                { 7, 7, 7, 7, 6, 6, 6, 5 },
+                { 7, 7, 7, 7, 6, 5, 5, 5 }
+            };
+        }
+
+        private static int[,] Get9x9TemplateB()
+        {
+            // Mirror of Get9x9Template — 9 regions of 9 cells each, all contiguous
+            return new[,]
+            {
+                { 1, 1, 1, 1, 1, 0, 0, 0, 0 },
+                { 1, 1, 2, 2, 2, 2, 0, 0, 0 },
+                { 1, 3, 2, 2, 2, 2, 2, 0, 0 },
+                { 1, 3, 3, 3, 5, 5, 4, 4, 4 },
+                { 3, 3, 3, 5, 5, 5, 5, 4, 4 },
+                { 3, 3, 6, 6, 5, 5, 5, 4, 4 },
+                { 7, 7, 6, 6, 6, 6, 6, 4, 4 },
+                { 7, 7, 7, 8, 8, 6, 6, 8, 8 },
+                { 7, 7, 7, 7, 8, 8, 8, 8, 8 }
             };
         }
 
@@ -364,6 +427,141 @@ namespace SudokuRoguelike.Sudoku
             }
 
             return max + 1;
+        }
+
+        // ── Post-Removal Uniqueness Checker ──
+
+        /// <summary>
+        /// Creates a puzzle and verifies it has a unique solution given base Sudoku rules
+        /// plus any active constraint rules. If not unique, regenerates with a shifted seed.
+        /// Used for Spirit Trials (always) and optionally for Garden Run boss puzzles.
+        /// </summary>
+        public static SudokuBoard CreatePuzzleWithUniquenessCheck(int size, float missingPercent, int seed,
+            int regionVariant = 0, SudokuConstraintEngine constraintEngine = null, int maxAttempts = 5)
+        {
+            for (var attempt = 0; attempt < maxAttempts; attempt++)
+            {
+                var board = CreatePuzzle(size, missingPercent, seed + attempt, regionVariant);
+                if (constraintEngine == null || HasUniqueSolution(board, constraintEngine))
+                    return board;
+
+                UnityEngine.Debug.Log($"[SudokuGenerator] Uniqueness check failed (attempt {attempt + 1}), retrying with shifted seed");
+            }
+
+            // Fallback: return last attempt even if not unique
+            UnityEngine.Debug.LogWarning($"[SudokuGenerator] Could not find unique-solution puzzle after {maxAttempts} attempts");
+            return CreatePuzzle(size, missingPercent, seed + maxAttempts, regionVariant);
+        }
+
+        /// <summary>
+        /// Checks if the puzzle has exactly one solution by running a backtracking solver.
+        /// Returns true if unique, false if >1 solutions found.
+        /// </summary>
+        public static bool HasUniqueSolution(SudokuBoard board, SudokuConstraintEngine engine)
+        {
+            var size = board.Size;
+            var grid = new int[size, size];
+            for (var r = 0; r < size; r++)
+                for (var c = 0; c < size; c++)
+                    grid[r, c] = board.GetCell(r, c);
+
+            var solutionCount = 0;
+            CountSolutions(grid, board, engine, size, ref solutionCount, 2);
+            return solutionCount == 1;
+        }
+
+        private static bool CountSolutions(int[,] grid, SudokuBoard board, SudokuConstraintEngine engine,
+            int size, ref int count, int maxCount)
+        {
+            // Find next empty cell
+            var bestRow = -1;
+            var bestCol = -1;
+            var minCandidates = size + 1;
+
+            for (var r = 0; r < size; r++)
+            {
+                for (var c = 0; c < size; c++)
+                {
+                    if (grid[r, c] != 0) continue;
+                    var candidates = CountCandidates(grid, board, engine, size, r, c);
+                    if (candidates < minCandidates)
+                    {
+                        minCandidates = candidates;
+                        bestRow = r;
+                        bestCol = c;
+                    }
+                }
+            }
+
+            // All cells filled — found a solution
+            if (bestRow == -1)
+            {
+                count++;
+                return count >= maxCount;
+            }
+
+            // No candidates — dead end
+            if (minCandidates == 0) return false;
+
+            // Try each value
+            for (var v = 1; v <= size; v++)
+            {
+                if (!IsValidPlacement(grid, board, engine, size, bestRow, bestCol, v))
+                    continue;
+
+                grid[bestRow, bestCol] = v;
+                if (CountSolutions(grid, board, engine, size, ref count, maxCount))
+                {
+                    grid[bestRow, bestCol] = 0;
+                    return true;
+                }
+                grid[bestRow, bestCol] = 0;
+            }
+
+            return false;
+        }
+
+        private static int CountCandidates(int[,] grid, SudokuBoard board, SudokuConstraintEngine engine,
+            int size, int row, int col)
+        {
+            var count = 0;
+            for (var v = 1; v <= size; v++)
+            {
+                if (IsValidPlacement(grid, board, engine, size, row, col, v))
+                    count++;
+            }
+            return count;
+        }
+
+        private static bool IsValidPlacement(int[,] grid, SudokuBoard board, SudokuConstraintEngine engine,
+            int size, int row, int col, int value)
+        {
+            // Row check
+            for (var c = 0; c < size; c++)
+                if (grid[row, c] == value) return false;
+
+            // Column check
+            for (var r = 0; r < size; r++)
+                if (grid[r, col] == value) return false;
+
+            // Region check
+            var regionId = board.RegionMap[row, col];
+            for (var r = 0; r < size; r++)
+                for (var c = 0; c < size; c++)
+                    if (board.RegionMap[r, c] == regionId && grid[r, c] == value) return false;
+
+            // Constraint engine rules (modifiers)
+            if (engine != null)
+            {
+                // Temporarily place the value to check constraints
+                var prevVal = grid[row, col];
+                grid[row, col] = value;
+                var valid = engine.ValidateAll(board, row, col, value);
+                grid[row, col] = prevVal;
+                if (!valid) return false;
+            }
+
+            return true;
         }
     }
 }

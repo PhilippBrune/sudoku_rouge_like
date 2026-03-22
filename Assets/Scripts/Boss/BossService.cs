@@ -12,11 +12,17 @@ namespace SudokuRoguelike.Boss
         {
             [BossModifierId.ParityLines] = (BossModifierTier.Tier1, 0.15f),
             [BossModifierId.DifferenceKropki] = (BossModifierTier.Tier1, 0.20f),
+            [BossModifierId.Nonconsecutive] = (BossModifierTier.Tier1, 0.25f),
             [BossModifierId.DutchWhispers] = (BossModifierTier.Tier2, 0.30f),
             [BossModifierId.RenbanLines] = (BossModifierTier.Tier2, 0.35f),
             [BossModifierId.RatioKropki] = (BossModifierTier.Tier2, 0.40f),
+            [BossModifierId.Palindrome] = (BossModifierTier.Tier2, 0.30f),
+            [BossModifierId.Antiknight] = (BossModifierTier.Tier2, 0.35f),
             [BossModifierId.KillerCages] = (BossModifierTier.Tier3, 0.50f),
             [BossModifierId.ArrowSums] = (BossModifierTier.Tier3, 0.55f),
+            [BossModifierId.Thermo] = (BossModifierTier.Tier3, 0.45f),
+            [BossModifierId.BetweenLines] = (BossModifierTier.Tier3, 0.45f),
+            [BossModifierId.EvenOdd] = (BossModifierTier.Tier2, 0.25f),
             [BossModifierId.FogOfWar] = (BossModifierTier.Tier4, 0.60f),
             [BossModifierId.GermanWhispers] = (BossModifierTier.Tier5, 0.75f)
         };
@@ -33,16 +39,38 @@ namespace SudokuRoguelike.Boss
 
         public List<BossModifierId> RollBossChoices(int runNumber, int stars)
         {
-            var pool = BuildModifierPool(runNumber, stars);
-            var choiceA = pool[_random.Next(pool.Count)];
-            var choiceB = pool[_random.Next(pool.Count)];
+            return RollBossOptions(2, null);
+        }
 
-            while (choiceB == choiceA)
+        /// <summary>Rolls N unique modifier options, excluding any already used this run.</summary>
+        public List<BossModifierId> RollBossOptions(int count, List<BossModifierId> excludeUsed)
+        {
+            var pool = BuildModifierPool(0, 0);
+            if (excludeUsed != null)
             {
-                choiceB = pool[_random.Next(pool.Count)];
+                for (var i = pool.Count - 1; i >= 0; i--)
+                {
+                    for (var j = 0; j < excludeUsed.Count; j++)
+                    {
+                        if (pool[i] == excludeUsed[j])
+                        {
+                            pool.RemoveAt(i);
+                            break;
+                        }
+                    }
+                }
             }
 
-            return new List<BossModifierId> { choiceA, choiceB };
+            var result = new List<BossModifierId>();
+            var safeCount = Math.Min(count, pool.Count);
+            for (var picked = 0; picked < safeCount; picked++)
+            {
+                var idx = _random.Next(pool.Count);
+                result.Add(pool[idx]);
+                pool.RemoveAt(idx);
+            }
+
+            return result;
         }
 
         public List<BossPhase> BuildFinalThreePhaseBoss()
@@ -116,32 +144,10 @@ namespace SudokuRoguelike.Boss
 
         private static List<BossModifierId> BuildModifierPool(int runNumber, int stars)
         {
-            var maxTier = runNumber switch
-            {
-                <= 2 => BossModifierTier.Tier1,
-                <= 4 => BossModifierTier.Tier2,
-                <= 6 => BossModifierTier.Tier3,
-                <= 8 => BossModifierTier.Tier4,
-                _ => BossModifierTier.Tier5
-            };
-
-            if (runNumber >= 9)
-            {
-                maxTier = BossModifierTier.Tier5;
-            }
-
             var pool = new List<BossModifierId>();
             foreach (var pair in ModifierData)
             {
-                if (pair.Value.Tier <= maxTier)
-                {
-                    if (pair.Key == BossModifierId.GermanWhispers && stars < 5 && runNumber < 10)
-                    {
-                        continue;
-                    }
-
-                    pool.Add(pair.Key);
-                }
+                pool.Add(pair.Key);
             }
 
             return pool;

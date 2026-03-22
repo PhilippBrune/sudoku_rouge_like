@@ -8,19 +8,17 @@ namespace SudokuRoguelike.UI
         [SerializeField] private RunMapController runMapController;
         [SerializeField] private EventChoiceScreenController eventChoiceScreen;
         [SerializeField] private CursePanelController cursePanel;
-        [SerializeField] private HeatCurveGraphController heatCurveGraph;
 
         private void Awake()
         {
             BindPanelsToRunMap();
         }
 
-        public void Configure(RunMapController runMap, EventChoiceScreenController eventController, CursePanelController curseController, HeatCurveGraphController heatController)
+        public void Configure(RunMapController runMap, EventChoiceScreenController eventController, CursePanelController curseController)
         {
             runMapController = runMap;
             eventChoiceScreen = eventController;
             cursePanel = curseController;
-            heatCurveGraph = heatController;
 
             BindPanelsToRunMap();
         }
@@ -40,7 +38,6 @@ namespace SudokuRoguelike.UI
             }
 
             cursePanel?.RefreshPanel();
-            heatCurveGraph?.RenderCurrentRunCurve();
         }
 
         public void OnEventClosed()
@@ -48,14 +45,12 @@ namespace SudokuRoguelike.UI
             EnsureRunMap();
             eventChoiceScreen?.CloseEvent();
             cursePanel?.RefreshPanel();
-            heatCurveGraph?.RenderCurrentRunCurve();
         }
 
         public void RefreshRuntimePanels()
         {
             EnsureRunMap();
             cursePanel?.RefreshPanel();
-            heatCurveGraph?.RenderCurrentRunCurve();
         }
 
         private void EnsureRunMap()
@@ -78,7 +73,6 @@ namespace SudokuRoguelike.UI
 
             eventChoiceScreen?.Bind(runMapController);
             cursePanel?.Bind(runMapController);
-            heatCurveGraph?.Bind(runMapController);
         }
     }
 }

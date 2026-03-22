@@ -21,6 +21,9 @@ namespace SudokuRoguelike.Save
 
         private void Save(RunDirector runDirector, RunSaveTrigger trigger)
         {
+            // Sync runtime HashSet to serializable List before saving
+            runDirector.RunState?.SyncSeenModifiersToList();
+
             var envelope = new SaveFileEnvelope
             {
                 PlayerProfile = new ProfileSaveData { Options = _profileService.Options },

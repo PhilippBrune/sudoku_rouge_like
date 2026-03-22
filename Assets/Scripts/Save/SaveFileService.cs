@@ -226,15 +226,10 @@ namespace SudokuRoguelike.Save
 
             options.Accessibility.FontScale = Mathf.Clamp(options.Accessibility.FontScale, 0.75f, 2f);
 
-            envelope.MetaProgress.GardenEssence = Math.Max(0, envelope.MetaProgress.GardenEssence);
             envelope.MetaProgress.MaxStarCap = Mathf.Clamp(envelope.MetaProgress.MaxStarCap, 1, 10);
             envelope.MetaProgress.AscensionLevel = Math.Max(0, envelope.MetaProgress.AscensionLevel);
             envelope.MetaProgress.PrestigeCount = Math.Max(0, envelope.MetaProgress.PrestigeCount);
             envelope.MetaProgress.GardenProgression ??= new GardenClassProgressionState();
-            envelope.MetaProgress.GardenProgression.CurrentLevel = Mathf.Clamp(envelope.MetaProgress.GardenProgression.CurrentLevel, 1, 40);
-            envelope.MetaProgress.GardenProgression.CurrentXp = Math.Max(0, envelope.MetaProgress.GardenProgression.CurrentXp);
-            envelope.MetaProgress.GardenProgression.PrestigeTier = Mathf.Clamp(envelope.MetaProgress.GardenProgression.PrestigeTier, 0, 9);
-            envelope.MetaProgress.GardenProgression.PassiveTier = Math.Max(0, envelope.MetaProgress.GardenProgression.PassiveTier);
             envelope.MetaProgress.GardenProgression.TotalXpEarned = Math.Max(0, envelope.MetaProgress.GardenProgression.TotalXpEarned);
             envelope.MetaProgress.GardenProgression.ArchiveRunCount = Math.Max(0, envelope.MetaProgress.GardenProgression.ArchiveRunCount);
             envelope.MetaProgress.GardenProgression.ArchiveSeedsBloomed = Math.Max(0, envelope.MetaProgress.GardenProgression.ArchiveSeedsBloomed);
@@ -244,10 +239,8 @@ namespace SudokuRoguelike.Save
             for (var i = 0; i < envelope.MetaProgress.GardenProgression.ClassEntries.Count; i++)
             {
                 var entry = envelope.MetaProgress.GardenProgression.ClassEntries[i];
-                entry.Level = Mathf.Clamp(entry.Level, 1, 40);
-                entry.CurrentXp = Math.Max(0, entry.CurrentXp);
+                entry.TotalXp = Math.Max(0, entry.TotalXp);
                 entry.PrestigeTier = Mathf.Clamp(entry.PrestigeTier, 0, 9);
-                entry.TotalXpEarned = Math.Max(0, entry.TotalXpEarned);
             }
 
             if (envelope.MetaProgress.UnlockedClasses.Count == 0)
@@ -277,17 +270,9 @@ namespace SudokuRoguelike.Save
             run.MaxPencil = Mathf.Clamp(run.MaxPencil, 1, 99);
             run.CurrentPencil = Mathf.Clamp(run.CurrentPencil, 0, run.MaxPencil);
             run.CurrentGold = Math.Max(0, run.CurrentGold);
-            run.Level = Math.Max(1, run.Level);
             run.CurrentXP = Math.Max(0, run.CurrentXP);
             run.RerollTokens = Math.Max(0, run.RerollTokens);
             run.ItemSlots = Mathf.Clamp(run.ItemSlots, 1, 10);
-
-            run.CurrentHeatScore = Mathf.Clamp(run.CurrentHeatScore, 0f, 999f);
-            run.PeakHeatScore = Mathf.Clamp(run.PeakHeatScore, 0f, 999f);
-            if (run.PeakHeatScore < run.CurrentHeatScore)
-            {
-                run.PeakHeatScore = run.CurrentHeatScore;
-            }
 
             run.GlobalGoldMultiplier = Mathf.Clamp(run.GlobalGoldMultiplier, 0.1f, 10f);
             run.MistakeShieldCharges = Math.Max(0, run.MistakeShieldCharges);
@@ -338,7 +323,7 @@ namespace SudokuRoguelike.Save
             puzzle.PeakCombo = Math.Max(puzzle.ComboStreak, puzzle.PeakCombo);
             puzzle.Mistakes = Math.Max(0, puzzle.Mistakes);
             puzzle.CorrectPlacements = Mathf.Clamp(puzzle.CorrectPlacements, 0, expected);
-            puzzle.Stars = Mathf.Clamp(puzzle.Stars, 1, 5);
+            puzzle.Stars = Mathf.Clamp(puzzle.Stars, 1, 6);
             puzzle.Difficulty = Mathf.Clamp(puzzle.Difficulty, (int)DifficultyTier.Diff1, (int)DifficultyTier.Diff5);
 
             return true;

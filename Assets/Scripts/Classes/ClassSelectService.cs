@@ -33,7 +33,8 @@ namespace SudokuRoguelike.Classes
                 ClassId.KoiGambler,
                 ClassId.StoneGardener,
                 ClassId.LanternSeer,
-                ClassId.ZenMaster
+                ClassId.ReedDuelist,
+                ClassId.QuietCartographer
             };
 
             var cards = new List<ClassSelectCard>(order.Length);

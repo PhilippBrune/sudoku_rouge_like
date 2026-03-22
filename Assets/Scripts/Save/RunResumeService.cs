@@ -25,24 +25,20 @@ namespace SudokuRoguelike.Save
             runState.MaxPencil = envelope.ActiveRunState.MaxPencil;
             runState.CurrentGold = envelope.ActiveRunState.CurrentGold;
             runState.CurrentXP = envelope.ActiveRunState.CurrentXP;
-            runState.Level = envelope.ActiveRunState.Level;
             runState.CurrentNodeIndex = envelope.ActiveRunState.CurrentNodeIndex;
             runState.RerollTokens = envelope.ActiveRunState.RerollTokens;
             runState.ItemSlots = envelope.ActiveRunState.ItemSlots;
             runState.PencilPurchasesThisRun = envelope.ActiveRunState.PencilPurchasesThisRun;
             runState.RerollsThisRun = envelope.ActiveRunState.RerollsThisRun;
-            runState.CurrentHeatScore = envelope.ActiveRunState.CurrentHeatScore;
-            runState.PeakHeatScore = envelope.ActiveRunState.PeakHeatScore;
 
             for (var i = 0; i < envelope.ActiveRunState.Inventory.Count; i++)
             {
                 runState.Inventory.Add(envelope.ActiveRunState.Inventory[i]);
             }
 
-            for (var i = 0; i < envelope.ActiveRunState.RelicIds.Count; i++)
-            {
-                runState.RelicIds.Add(envelope.ActiveRunState.RelicIds[i]);
-            }
+            // Restore single relic slot
+            runState.HasRelic = envelope.ActiveRunState.HasRelic;
+            runState.HeldRelic = envelope.ActiveRunState.HeldRelic;
 
             for (var i = 0; i < envelope.ActiveRunState.RouteHistory.Count; i++)
             {
@@ -53,6 +49,28 @@ namespace SudokuRoguelike.Save
             {
                 runState.NodePath.Add(envelope.ActiveRunState.NodePath[i]);
             }
+
+            // Restore boss modifier selection
+            runState.HasChosenBossModifier = envelope.ActiveRunState.HasChosenBossModifier;
+            runState.ChosenBossModifierId = envelope.ActiveRunState.ChosenBossModifierId;
+
+            // Restore seen modifiers from serialized list → runtime HashSet
+            for (var i = 0; i < envelope.ActiveRunState.SeenBossModifierList.Count; i++)
+                runState.SeenBossModifiers.Add(envelope.ActiveRunState.SeenBossModifierList[i]);
+
+            runState.AllowIrregularPuzzles = envelope.ActiveRunState.AllowIrregularPuzzles;
+
+            // Restore floor progression
+            runState.CurrentFloor = envelope.ActiveRunState.CurrentFloor;
+            runState.TotalFloors = envelope.ActiveRunState.TotalFloors;
+
+            // Restore multi-modifier boss selections
+            for (var i = 0; i < envelope.ActiveRunState.ChosenBossModifiers.Count; i++)
+                runState.ChosenBossModifiers.Add(envelope.ActiveRunState.ChosenBossModifiers[i]);
+
+            // Rebuild graph for restored floor (StartRun always builds floor 0)
+            if (runState.CurrentFloor > 0)
+                runDirector.RebuildCurrentFloorGraph();
 
             if (envelope.ActivePuzzle == null)
             {

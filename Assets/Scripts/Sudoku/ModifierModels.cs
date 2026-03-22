@@ -16,9 +16,18 @@ namespace SudokuRoguelike.Sudoku
         }
     }
 
-    public enum LineType { GermanWhispers, DutchWhispers, Parity, Renban }
+    public enum LineType { GermanWhispers, DutchWhispers, Parity, Renban, Palindrome, Thermo, BetweenLines }
 
     public enum DotType { White, Black }
+
+    public enum MarkerType { Even, Odd }
+
+    [Serializable]
+    public sealed class CellMarker
+    {
+        public CellCoord Cell;
+        public MarkerType Type;
+    }
 
     [Serializable]
     public sealed class ModifierLine
@@ -56,6 +65,7 @@ namespace SudokuRoguelike.Sudoku
         public readonly List<ArrowConstraint> Arrows = new();
         public readonly List<KillerCage> Cages = new();
         public readonly List<KropkiDot> Dots = new();
+        public readonly List<CellMarker> CellMarkers = new();
         public readonly HashSet<long> FogCells = new();
 
         public static long PackCoord(int row, int col) => ((long)row << 16) | (long)(col & 0xFFFF);

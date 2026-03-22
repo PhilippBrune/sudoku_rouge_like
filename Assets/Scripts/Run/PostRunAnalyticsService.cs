@@ -12,11 +12,6 @@ namespace SudokuRoguelike.Run
                 return analytics;
             }
 
-            for (var i = 0; i < runState.HeatHistory.Count; i++)
-            {
-                analytics.HeatCurve.Add(runState.HeatHistory[i]);
-            }
-
             analytics.TotalMistakes = runResult.MistakesMade;
             analytics.MistakesPerPuzzle.Add(runResult.MistakesMade);
             analytics.HighestSinglePuzzleMistakes = runResult.MistakesMade;

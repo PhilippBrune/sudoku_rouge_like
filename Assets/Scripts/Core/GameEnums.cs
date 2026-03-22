@@ -13,6 +13,7 @@ namespace SudokuRoguelike.Core
 
     public enum ItemType
     {
+        // Tiered items (Normal / Rare / Epic variants)
         Solver,
         Finder,
         InkWell,
@@ -21,12 +22,18 @@ namespace SudokuRoguelike.Core
         PatternScroll,
         KoiReflection,
         LanternOfClarity,
-        TeaOfFocus,
-        CherryBlossomPact,
-        FortuneEnvelope,
-        StoneShift,
-        HarmonyCharm,
-        CompassOfOrder
+
+        // Unique items (fixed rarity)
+        GardenRake,        // Normal — highlights cells with only 2 candidates in row/col
+        OfferingBowl,      // Normal — spend 5 HP to reveal correct number for one cell
+        PruningShears,     // Normal — removes 1 impossible candidate from a 3x3 box
+        ZenSandSifter,     // Normal — highlights Hidden Pairs in current row
+        GinkgoLeaf,        // Rare  — highlights all instances of a chosen number until placed
+        RicePaperUmbrella, // Rare  — protects HP from next 2 mistakes
+        TempleIncense,     // Rare  — correct cells for a number pulse for 5 moves
+        KoiDragonScale,    // Epic  — instantly completes the most-filled line or box
+        GoldenKintsugiJar, // Epic  — highlights all current mistakes in red (no HP penalty)
+        SilkFan            // Epic  — swap positions of two placed numbers
     }
 
     public enum ItemRarity
@@ -39,13 +46,13 @@ namespace SudokuRoguelike.Core
     public enum ClassId
     {
         NumberFreak,
-        ZenMaster,
         GardenMonk,
         ShrineArchivist,
         KoiGambler,
-        LanternSeer,
         StoneGardener,
-        ChaosMonk
+        LanternSeer,
+        ReedDuelist,
+        QuietCartographer
     }
 
     public enum RouteType
@@ -67,7 +74,8 @@ namespace SudokuRoguelike.Core
         Relic,
         Event,
         PreBoss,
-        Boss
+        Boss,
+        CrossLink
     }
 
     public enum GameMode
@@ -84,18 +92,43 @@ namespace SudokuRoguelike.Core
         EconomyMerchantMonk,
         ModifierRuleBender,
         SurvivalEnduringSage,
-        ComboFlowMaster,
-        ChaosMonk
+        ComboFlowMaster
     }
 
-    public enum RelicCategory
+    public enum RelicId
     {
-        Economy,
-        Survival,
-        Modifier,
-        Combo,
-        Chaos,
-        Utility
+        // Tier 1 — Minor Passives
+        SmoothPebble,       // +5 Pencil at start of each puzzle
+        CrackedTeacup,      // First wrong placement each puzzle costs 0 HP
+        WoodenComb,          // Nothing-slot gold bonus doubled
+        MossToken,           // Shop reroll costs reduced by 25%
+
+        // Tier 2 — Noticeable Effects
+        KoiReflectionRelic,  // +1 combo grace
+        MonkCharm,           // Every 5 correct placements in a row grants +2 Gold
+        CopperTortoise,      // +5 Gold bonus on no-mistake puzzle completion
+        JadeHairpin,         // Reveal all candidates in one row (1 use/puzzle)
+        StoneSundial,        // +1 reward slot on puzzle completion
+
+        // Tier 3 — Build-Enabling
+        SakuraSeal,          // Perfect puzzle → next puzzle starts with +3 HP
+        CrimsonFan,          // Boss modifier intensity reduced one step
+        WisteriaBranch,      // +2 HP at start of each floor
+        PaperCrane,          // Skip one puzzle tile (2 uses/run)
+        PorcelainMask,       // Elite tiles drop items one rarity tier higher
+
+        // Tier 4 — Run-Defining
+        TransmutedSigil,     // +1 Max HP, +3 Gold per puzzle completed
+        PhoenixFeather,      // Prevent death once: full HP+Pencil restore (1 use/run)
+        SpiritLantern,       // All shop items cost 20% less gold
+        MoonstoneCompass,    // Relic nodes offer one tier higher
+
+        // Legendary — Exceptional Named Relics
+        GoldenRoot,          // Gold carries 50% interest between stages
+        SilentGrid,          // +2 mistake shield charges per puzzle
+        ShiftingGarden,      // Extra branching tile per floor
+        EternalLotus,        // Items never consumed — infinite uses
+        DragonsEye           // Reveal full solution for 3 seconds (1 use/floor)
     }
 
     public enum RelicTier
@@ -198,7 +231,13 @@ namespace SudokuRoguelike.Core
         RenbanLines,
         KillerCages,
         DifferenceKropki,
-        RatioKropki
+        RatioKropki,
+        Palindrome,
+        Thermo,
+        BetweenLines,
+        EvenOdd,
+        Nonconsecutive,
+        Antiknight
     }
 
     public enum BossModifierTier
@@ -208,6 +247,15 @@ namespace SudokuRoguelike.Core
         Tier3,
         Tier4,
         Tier5
+    }
+
+    /// <summary>Controls how many modifier elements (lines, dots, cages, arrows) appear in a puzzle.</summary>
+    public enum BossModifierIntensity
+    {
+        Low,      // ~50% of normal element count
+        Medium,   // 100% (default)
+        High,     // ~150%
+        VeryHigh  // ~200%
     }
 
     public enum SudokuTechnique
@@ -259,10 +307,26 @@ namespace SudokuRoguelike.Core
     {
         BaseSudoku = 0,
         Region = 1,
-        Line = 2,
-        Dot = 3,
-        Arithmetic = 4,
-        FogPostProcess = 5
+        GlobalNegative = 2,
+        Line = 3,
+        Dot = 4,
+        Arithmetic = 5,
+        CellLevel = 6,
+        FogPostProcess = 7
+    }
+
+    public enum SpiritTrialsTier
+    {
+        Apprentice,
+        Adept,
+        Master,
+        Grandmaster
+    }
+
+    public enum SpiritTrialsItemMode
+    {
+        Random,
+        SolverStart
     }
 
     public enum AchievementTier

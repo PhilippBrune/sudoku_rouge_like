@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Items;
 
 namespace SudokuRoguelike.Economy
 {
@@ -13,115 +14,94 @@ namespace SudokuRoguelike.Economy
             _random = new Random(seed);
         }
 
-        public List<ShopOffer> BuildOffers(int runDepth, int purchaseCount)
+        /// <summary>Build shop offers for the current floor. Items only — relics are NOT sold in shops.</summary>
+        public List<ShopOffer> BuildOffers(int floorIndex, int classLevel, float priceMultiplier)
         {
             var offers = new List<ShopOffer>();
-            const int offerCount = 3;
 
-            for (var i = 0; i < offerCount; i++)
+            // Floor-based shop inventory size: F1-2=2, F3-4=3, F5=4
+            var slotCount = GetShopSlotCount(floorIndex);
+
+            for (var i = 0; i < slotCount; i++)
             {
-                var rarity = RollItemRarity(runDepth);
-                var basePrice = rarity switch
-                {
-                    ItemRarity.Epic => 72,
-                    ItemRarity.Rare => 52,
-                    _ => 34
-                };
-                var price = PriceCurve(basePrice, purchaseCount + i);
-                var itemType = RollShopItemType();
+                var rarity = RollShopItemRarity(floorIndex, classLevel);
+                var type = RollShopItemType(rarity, classLevel);
+                var basePrice = ItemService.GetBasePrice(rarity);
+                var scaledPrice = (int)Math.Round(basePrice * (1f + floorIndex * 0.5f) * priceMultiplier);
 
                 offers.Add(new ShopOffer
                 {
                     OfferId = Guid.NewGuid().ToString("N"),
                     IsRelic = false,
-                    RelicId = null,
                     Item = new ItemInstance
                     {
                         Id = Guid.NewGuid().ToString("N"),
-                        Type = itemType,
-                        Rarity = rarity,
+                        Type = type,
+                        Rarity = ItemService.IsTiered(type) ? rarity : ItemService.GetFixedRarity(type),
                         Charges = 1
                     },
-                    Price = price
+                    Price = scaledPrice
                 });
             }
 
             return offers;
         }
 
-        private ItemType RollShopItemType()
+        /// <summary>Shop inventory size scales with floor: F1-2=2, F3-4=3, F5=4.</summary>
+        public static int GetShopSlotCount(int floorIndex)
         {
-            var roll = _random.Next(3);
-            return roll switch
+            return floorIndex switch
             {
-                0 => ItemType.InkWell,
-                1 => ItemType.MeditationStone,
-                _ => ItemType.WindChime
+                <= 1 => 2,
+                <= 3 => 3,
+                _ => 4
             };
-        }
-
-        private ItemRarity RollItemRarity(int runDepth)
-        {
-            var roll = _random.NextDouble();
-            if (runDepth >= 8 && roll < 0.15)
-            {
-                return ItemRarity.Epic;
-            }
-
-            if (roll < 0.42)
-            {
-                return ItemRarity.Rare;
-            }
-
-            return ItemRarity.Normal;
-        }
-
-        private string BuildRelicId(int runDepth, int slot)
-        {
-            if (_random.NextDouble() < 0.045)
-            {
-                return RollLegendaryRelicId();
-            }
-
-            var category = RollCategoryTag();
-            var tierTag = runDepth >= 8 ? "t4" : runDepth >= 6 ? "t3" : runDepth >= 4 ? "t2" : "t1";
-            return $"relic_{category}_{tierTag}_{runDepth}_{slot}";
-        }
-
-        private string RollCategoryTag()
-        {
-            var roll = _random.Next(6);
-            return roll switch
-            {
-                0 => "eco",
-                1 => "sur",
-                2 => "mod",
-                3 => "combo",
-                4 => "chaos",
-                _ => "util"
-            };
-        }
-
-        private string RollLegendaryRelicId()
-        {
-            var roll = _random.Next(3);
-            return roll switch
-            {
-                0 => "relic_legend_shifting_garden",
-                1 => "relic_legend_silent_grid",
-                _ => "relic_legend_golden_root"
-            };
-        }
-
-        public int PriceCurve(int basePrice, int purchases)
-        {
-            var growth = 1f + 0.22f * MathF.Pow(Math.Max(0, purchases), 1.15f);
-            return Math.Max(basePrice, (int)MathF.Round(basePrice * growth));
         }
 
         public int EmergencyHealPrice(int healsPurchased)
         {
-            return PriceCurve(25, healsPurchased);
+            return (int)Math.Round(25 * (1f + healsPurchased * 0.5f));
+        }
+
+        private ItemRarity RollShopItemRarity(int floorIndex, int classLevel)
+        {
+            var roll = _random.NextDouble();
+
+            // Epic items only available at class Level 15+
+            if (classLevel >= 15)
+            {
+                var epicChance = 0.02 + (classLevel - 15) * 0.002;
+                if (floorIndex >= 3) epicChance += 0.03; // late floors boost
+                if (roll < epicChance) return ItemRarity.Epic;
+            }
+
+            var rareChance = 0.30 + floorIndex * 0.05;
+            return roll < rareChance ? ItemRarity.Rare : ItemRarity.Normal;
+        }
+
+        private ItemType RollShopItemType(ItemRarity rarity, int classLevel)
+        {
+            // Weighted pool: prefer resource items in shop
+            var resourceTypes = new[]
+            {
+                ItemType.InkWell, ItemType.MeditationStone, ItemType.WindChime,
+                ItemType.Solver, ItemType.Finder, ItemType.PatternScroll
+            };
+
+            // Chance for unique items based on rarity
+            if (rarity == ItemRarity.Epic && _random.NextDouble() < 0.40)
+            {
+                var epics = new[] { ItemType.KoiDragonScale, ItemType.GoldenKintsugiJar, ItemType.SilkFan };
+                return epics[_random.Next(epics.Length)];
+            }
+
+            if (rarity == ItemRarity.Rare && _random.NextDouble() < 0.30)
+            {
+                var rares = new[] { ItemType.GinkgoLeaf, ItemType.RicePaperUmbrella, ItemType.TempleIncense };
+                return rares[_random.Next(rares.Length)];
+            }
+
+            return resourceTypes[_random.Next(resourceTypes.Length)];
         }
     }
 }

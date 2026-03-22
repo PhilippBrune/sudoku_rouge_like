@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Economy;
+using SudokuRoguelike.Items;
 using SudokuRoguelike.Save;
 using UnityEngine;
 using UnityEngine.UI;
@@ -37,26 +39,10 @@ namespace SudokuRoguelike.UI
             detailText = detail;
             tooltipText = tooltip;
             filterText = filter;
-            if (icons != null)
-            {
-                iconSlots = icons;
-            }
-
-            if (iconLabels != null)
-            {
-                iconSlotLabels = iconLabels;
-            }
-
-            if (listContent != null)
-            {
-                listContentRoot = listContent;
-            }
-
-            if (listScroll != null)
-            {
-                listScrollRect = listScroll;
-            }
-
+            if (icons != null) iconSlots = icons;
+            if (iconLabels != null) iconSlotLabels = iconLabels;
+            if (listContent != null) listContentRoot = listContent;
+            if (listScroll != null) listScrollRect = listScroll;
             RefreshView();
         }
 
@@ -66,62 +52,41 @@ namespace SudokuRoguelike.UI
             EnsureSeedEntries();
             if (mainMenuController != null && mainMenuController.DebugEnableAllFeatures)
             {
-                EnsureDebugCatalogCoverage();
                 MarkAllEntriesDiscovered();
-                if (_filter == "Unseen")
-                {
-                    _filter = "All";
-                }
+                if (_filter == "Unseen") _filter = "All";
             }
 
             var filtered = BuildFiltered();
-
             if (_selectedIndex >= filtered.Count)
-            {
                 _selectedIndex = Mathf.Max(0, filtered.Count - 1);
-            }
 
             if (completionText != null)
             {
                 var discovered = 0;
                 var all = _profile.Meta.ItemCodex.Entries.Count;
                 for (var i = 0; i < all; i++)
-                {
-                    if (_profile.Meta.ItemCodex.Entries[i].Discovered)
-                    {
-                        discovered++;
-                    }
-                }
-
+                    if (_profile.Meta.ItemCodex.Entries[i].Discovered) discovered++;
                 completionText.text = $"Completion: {discovered} / {all}";
             }
 
             if (filterText != null)
-            {
                 filterText.text = $"Filter: {_filter} | Sort: {_sort}";
-            }
 
             if (gridText != null)
-            {
-                // Keep the legacy text field as a lightweight fallback when no interactive list root exists.
                 gridText.text = listContentRoot == null ? BuildGridText(filtered) : string.Empty;
-            }
 
             if (detailText != null)
-            {
                 detailText.text = BuildDetailText(filtered);
-            }
 
             RebuildInteractiveList(filtered);
-
             RefreshIconGrid(filtered);
 
             if (tooltipText != null)
             {
                 tooltipText.text =
-                    "Item Roll: 2-5 slots by difficulty.\n" +
-                    "Nothing-slot can grant gold.\n" +
-                    "Picked/Nothing slots cannot be rerolled.";
+                    "Item Roll: 2-5 slots by star difficulty.\n" +
+                    "Nothing-slot grants gold.\n" +
+                    "Single relic slot — choose wisely.";
             }
 
             Persist();
@@ -130,10 +95,7 @@ namespace SudokuRoguelike.UI
         public void FilterAll() => SetFilter("All");
         public void FilterRelics() => SetFilter("Relics");
         public void FilterConsumables() => SetFilter("Consumables");
-        public void FilterCursed() => SetFilter("Cursed");
         public void FilterLegendary() => SetFilter("Legendary");
-        public void FilterBossRewards() => SetFilter("Boss Rewards");
-        public void FilterClassSpecific() => SetFilter("Class-Specific");
         public void FilterUnseen() => SetFilter("Unseen");
 
         public void SortByRarity()
@@ -165,11 +127,7 @@ namespace SudokuRoguelike.UI
         public void SelectNext()
         {
             var filtered = BuildFiltered();
-            if (filtered.Count == 0)
-            {
-                return;
-            }
-
+            if (filtered.Count == 0) return;
             _selectedIndex = (_selectedIndex + 1) % filtered.Count;
             RefreshView();
         }
@@ -177,11 +135,7 @@ namespace SudokuRoguelike.UI
         public void SelectPrev()
         {
             var filtered = BuildFiltered();
-            if (filtered.Count == 0)
-            {
-                return;
-            }
-
+            if (filtered.Count == 0) return;
             _selectedIndex = (_selectedIndex - 1 + filtered.Count) % filtered.Count;
             RefreshView();
         }
@@ -199,7 +153,6 @@ namespace SudokuRoguelike.UI
                     break;
                 }
             }
-
             RefreshView();
         }
 
@@ -218,29 +171,18 @@ namespace SudokuRoguelike.UI
             {
                 var item = entries[i];
                 if (_filter == "All" || MatchesFilter(item, _filter))
-                {
                     output.Add(item);
-                }
             }
-
             ApplySort(output);
-
             return output;
         }
 
         private static bool MatchesFilter(ItemCodexEntry item, string filter)
         {
-            if (item == null)
-            {
-                return false;
-            }
-
+            if (item == null) return false;
             if (filter == "Relics") return string.Equals(item.Type, "Relic", StringComparison.OrdinalIgnoreCase);
-            if (filter == "Consumables") return string.Equals(item.Type, "Consumable", StringComparison.OrdinalIgnoreCase);
-            if (filter == "Cursed") return string.Equals(item.Type, "Cursed", StringComparison.OrdinalIgnoreCase);
+            if (filter == "Consumables") return string.Equals(item.Type, "Item", StringComparison.OrdinalIgnoreCase);
             if (filter == "Legendary") return string.Equals(item.RarityTier, "Legendary", StringComparison.OrdinalIgnoreCase);
-            if (filter == "Boss Rewards") return item.UnlockCondition.Contains("Boss", StringComparison.OrdinalIgnoreCase);
-            if (filter == "Class-Specific") return item.SynergyTags.Contains("Class", StringComparison.OrdinalIgnoreCase);
             if (filter == "Unseen") return !item.Discovered;
             return true;
         }
@@ -252,23 +194,17 @@ namespace SudokuRoguelike.UI
                 output.Sort((a, b) => b.TimesUsed.CompareTo(a.TimesUsed));
                 return;
             }
-
             if (_sort == "WinRate")
             {
                 output.Sort((a, b) => WinRate(b).CompareTo(WinRate(a)));
                 return;
             }
-
             output.Sort((a, b) => RarityScore(b.RarityTier).CompareTo(RarityScore(a.RarityTier)));
         }
 
         private static float WinRate(ItemCodexEntry item)
         {
-            if (item == null || item.TimesPicked <= 0)
-            {
-                return 0f;
-            }
-
+            if (item == null || item.TimesPicked <= 0) return 0f;
             return (float)item.TimesWon / item.TimesPicked;
         }
 
@@ -277,24 +213,19 @@ namespace SudokuRoguelike.UI
             if (string.Equals(rarity, "Legendary", StringComparison.OrdinalIgnoreCase)) return 5;
             if (string.Equals(rarity, "Epic", StringComparison.OrdinalIgnoreCase)) return 4;
             if (string.Equals(rarity, "Rare", StringComparison.OrdinalIgnoreCase)) return 3;
-            if (string.Equals(rarity, "Common", StringComparison.OrdinalIgnoreCase)) return 2;
+            if (string.Equals(rarity, "Normal", StringComparison.OrdinalIgnoreCase)) return 2;
             return 1;
         }
 
         private void RebuildInteractiveList(List<ItemCodexEntry> filtered)
         {
-            if (listContentRoot == null)
-            {
-                return;
-            }
+            if (listContentRoot == null) return;
 
             for (var i = listContentRoot.childCount - 1; i >= 0; i--)
             {
                 var child = listContentRoot.GetChild(i);
                 if (child != null && child.name.StartsWith("ItemRow_", StringComparison.Ordinal))
-                {
                     Destroy(child.gameObject);
-                }
             }
 
             for (var i = 0; i < filtered.Count; i++)
@@ -315,11 +246,7 @@ namespace SudokuRoguelike.UI
 
                 var button = row.GetComponent<Button>();
                 var captured = i;
-                button.onClick.AddListener(() =>
-                {
-                    _selectedIndex = captured;
-                    RefreshView();
-                });
+                button.onClick.AddListener(() => { _selectedIndex = captured; RefreshView(); });
 
                 var label = new GameObject("Label", typeof(RectTransform), typeof(Text)).GetComponent<Text>();
                 label.transform.SetParent(row.transform, false);
@@ -338,156 +265,169 @@ namespace SudokuRoguelike.UI
             }
 
             if (listScrollRect != null)
-            {
                 listScrollRect.verticalNormalizedPosition = Mathf.Clamp01(listScrollRect.verticalNormalizedPosition);
-            }
         }
 
         private void RefreshIconGrid(List<ItemCodexEntry> filtered)
         {
-            if (iconSlots == null || iconSlots.Length == 0)
-            {
-                return;
-            }
+            if (iconSlots == null || iconSlots.Length == 0) return;
 
             for (var i = 0; i < iconSlots.Length; i++)
             {
-                var image = iconSlots[i];
-                if (image == null)
-                {
-                    continue;
-                }
+                var img = iconSlots[i];
+                if (img == null) continue;
 
                 if (i >= filtered.Count)
                 {
-                    image.enabled = false;
+                    img.enabled = false;
                     if (iconSlotLabels != null && i < iconSlotLabels.Length && iconSlotLabels[i] != null)
-                    {
                         iconSlotLabels[i].text = string.Empty;
-                    }
-
                     continue;
                 }
 
                 var item = filtered[i];
-                image.enabled = true;
-                image.color = item.Discovered ? Color.white : new Color(0.2f, 0.2f, 0.2f, 1f);
-                image.sprite = ResolveItemSprite(item);
-                image.type = Image.Type.Sliced;
-                image.preserveAspect = true;
+                img.enabled = true;
+                img.color = item.Discovered ? Color.white : new Color(0.2f, 0.2f, 0.2f, 1f);
+                img.sprite = ResolveItemSprite(item);
+                img.type = Image.Type.Sliced;
+                img.preserveAspect = true;
 
                 if (iconSlotLabels != null && i < iconSlotLabels.Length && iconSlotLabels[i] != null)
-                {
                     iconSlotLabels[i].text = item.Discovered ? BuildShortLabel(item.Name) : "???";
-                }
             }
         }
 
         private static string BuildShortLabel(string value)
         {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                return string.Empty;
-            }
-
-            return value.Length <= 14 ? value : value.Substring(0, 13) + "…";
+            if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+            return value.Length <= 14 ? value : value.Substring(0, 13) + "...";
         }
 
         private string BuildGridText(List<ItemCodexEntry> filtered)
         {
-            if (filtered.Count == 0)
-            {
-                return "No items match this filter.";
-            }
-
+            if (filtered.Count == 0) return "No items match this filter.";
             var rows = new System.Text.StringBuilder();
             for (var i = 0; i < filtered.Count; i++)
             {
                 var item = filtered[i];
                 var selected = i == _selectedIndex ? "> " : "  ";
-                var state = item.Mastered ? "🌸" : item.Discovered ? "🌿" : "🔒";
+                var state = item.Mastered ? "*" : item.Discovered ? "+" : "?";
                 var name = item.Discovered ? item.Name : "???";
-                rows.AppendLine($"{selected}{state} {name} [{item.RarityTier}]");
+                rows.AppendLine($"{selected}[{state}] {name} [{item.RarityTier}]");
             }
-
             return rows.ToString().TrimEnd();
         }
 
         private string BuildDetailText(List<ItemCodexEntry> filtered)
         {
-            if (filtered.Count == 0)
-            {
-                return "Select an item to view details.";
-            }
-
+            if (filtered.Count == 0) return "Select an item to view details.";
             var item = filtered[Mathf.Clamp(_selectedIndex, 0, filtered.Count - 1)];
             if (!item.Discovered)
             {
-                return
-                    "Name: ???\n" +
-                    "Type: ???\n" +
-                    "Rarity: ???\n" +
-                    $"Unlock hint: {item.UnlockCondition}";
+                return "Name: ???\nType: ???\nRarity: ???\n" +
+                       $"Unlock hint: {item.UnlockCondition}";
             }
-
-            return
-                $"Name: {item.Name}\n" +
-                $"Type: {item.Type}\n" +
-                $"Rarity: {item.RarityTier}\n" +
-                $"Description: {item.Description}\n" +
-                $"Effect: {item.EffectFormula}\n" +
-                $"Synergy: {item.SynergyTags}\n" +
-                $"Discovered: {item.DiscoveredDate}\n" +
-                $"Times used: {item.TimesUsed}\n" +
-                $"Wins with item: {item.TimesWon}\n" +
-                $"Best depth: {item.BestRunDepth}";
+            return $"Name: {item.Name}\n" +
+                   $"Type: {item.Type}\n" +
+                   $"Rarity: {item.RarityTier}\n" +
+                   $"Description: {item.Description}\n" +
+                   $"Effect: {item.EffectFormula}\n" +
+                   $"Synergy: {item.SynergyTags}\n" +
+                   $"Discovered: {item.DiscoveredDate}\n" +
+                   $"Times used: {item.TimesUsed}\n" +
+                   $"Wins with item: {item.TimesWon}\n" +
+                   $"Best depth: {item.BestRunDepth}";
         }
 
         private void EnsureProfileLoaded()
         {
             if (_save.TryLoadProfile(out var envelope))
-            {
                 _profile.ApplyEnvelope(envelope);
-            }
         }
 
         private void EnsureSeedEntries()
         {
             var codex = _profile.Meta.ItemCodex;
-            if (codex.Entries.Count > 0)
-            {
-                return;
-            }
+            if (codex.Entries.Count > 0) return;
 
-            codex.Entries.Add(new ItemCodexEntry { ItemID = "relic_koi", Name = "Koi Reflection", Type = "Relic", RarityTier = "Rare", UnlockCondition = "Complete a Garden run.", Description = "Adds calm combo stability.", EffectFormula = "+1 combo grace", SynergyTags = "Class:GardenMonk", Discovered = false });
-            codex.Entries.Add(new ItemCodexEntry { ItemID = "consumable_tea", Name = "Tea of Focus", Type = "Consumable", RarityTier = "Common", UnlockCondition = "Use 3 consumables.", Description = "Boosts accuracy for one puzzle.", EffectFormula = "-1 mistake penalty for 5 moves", SynergyTags = "Utility", Discovered = false });
-            codex.Entries.Add(new ItemCodexEntry { ItemID = "curse_blind", Name = "Shrouded Lens", Type = "Cursed", RarityTier = "Epic", UnlockCondition = "Accept a trap event.", Description = "Power for clarity at a price.", EffectFormula = "+Gold, +Heat", SynergyTags = "Curse", Discovered = false });
-            codex.Entries.Add(new ItemCodexEntry { ItemID = "legendary_lantern", Name = "Lantern of Nine", Type = "Relic", RarityTier = "Legendary", UnlockCondition = "Defeat a Boss with Heat 5+.", Description = "A sacred relic of the garden.", EffectFormula = "+2 reroll tokens, +10% XP", SynergyTags = "Class:LanternSeer", Discovered = false });
-            codex.Entries.Add(new ItemCodexEntry { ItemID = "boss_reward_root", Name = "Ember Root", Type = "Boss Reward", RarityTier = "Epic", UnlockCondition = "Clear first Boss.", Description = "Reward from the guardian.", EffectFormula = "+1 passive tier", SynergyTags = "Boss", Discovered = false });
+            // ── Tiered consumable items (8 items × 3 rarities = shown as single entries) ──
+            SeedItem(codex, "item_solver", "Solver", "Item", "Normal", "Available from start.",
+                "Fill correct cells.", "Tiered: N=1, R=1+1, E=1+2", "Tempo");
+            SeedItem(codex, "item_finder", "Finder", "Item", "Normal", "Available from start.",
+                "Highlight matching cells.", "Tiered: N=1, R=3, E=2", "Information");
+            SeedItem(codex, "item_inkwell", "Ink Well", "Item", "Normal", "Available from start.",
+                "Restores Pencil charges.", "Tiered: N=+3, R=+6, E=+10", "Recovery");
+            SeedItem(codex, "item_meditation_stone", "Meditation Stone", "Item", "Normal", "Available from start.",
+                "Restores HP.", "Tiered: N=+1, R=+2, E=+3", "Recovery");
+            SeedItem(codex, "item_wind_chime", "Wind Chime", "Item", "Normal", "Available from start.",
+                "Undo last mistake.", "Tiered: undo + HP + reveal", "Recovery");
+            SeedItem(codex, "item_pattern_scroll", "Pattern Scroll", "Item", "Normal", "Available from start.",
+                "Highlights constraint conflicts.", "Tiered: 1/2/all zones", "Information");
+            SeedItem(codex, "item_koi_reflection", "Koi Reflection", "Item", "Normal", "Available from start.",
+                "Reveals candidates without Pencil cost.", "Tiered: 1/2/3 cells", "Information");
+            SeedItem(codex, "item_lantern_of_clarity", "Lantern of Clarity", "Item", "Normal", "Available from start.",
+                "Disables Fog of War.", "Tiered: 3/6/10 moves", "Constraint-control");
+
+            // ── Unique items (10) ──
+            SeedItem(codex, "item_garden_rake", "Garden Rake", "Item", "Normal", "Available from start.",
+                "Highlights cells with 2 candidates in row/col.", "2-candidate highlight", "Information");
+            SeedItem(codex, "item_offering_bowl", "Offering Bowl", "Item", "Normal", "Complete 3 puzzles.",
+                "Spend 5 HP to reveal correct cell.", "5 HP cost, 1 cell", "Risk-conversion");
+            SeedItem(codex, "item_pruning_shears", "Pruning Shears", "Item", "Normal", "Available from start.",
+                "Removes 1 impossible candidate from box.", "1 candidate removed", "Information");
+            SeedItem(codex, "item_zen_sand_sifter", "Zen Sand Sifter", "Item", "Normal", "Complete 5 puzzles.",
+                "Highlights Hidden Pairs in row.", "Hidden pair highlight", "Information");
+            SeedItem(codex, "item_ginkgo_leaf", "Ginkgo Leaf", "Item", "Rare", "Find 5 unique items.",
+                "Highlights all instances of a number.", "Number tracking", "Information");
+            SeedItem(codex, "item_rice_paper_umbrella", "Rice Paper Umbrella", "Item", "Rare", "Survive with 1 HP.",
+                "Protects from next 2 mistakes.", "2 mistake shield", "Recovery");
+            SeedItem(codex, "item_temple_incense", "Temple Incense", "Item", "Rare", "Complete a boss.",
+                "Correct cells pulse for 5 moves.", "5-move pulse", "Information");
+            SeedItem(codex, "item_koi_dragon_scale", "Koi Dragon Scale", "Item", "Epic", "Class Level 15+.",
+                "Completes most-filled line or box.", "Auto-complete line", "Tempo");
+            SeedItem(codex, "item_golden_kintsugi_jar", "Golden Kintsugi Jar", "Item", "Epic", "Class Level 15+.",
+                "Highlights all mistakes (no HP cost).", "Mistake reveal", "Information");
+            SeedItem(codex, "item_silk_fan", "Silk Fan", "Item", "Epic", "Class Level 15+.",
+                "Swap two placed numbers.", "Number swap", "Tempo");
+
+            // ── Relics (23) ──
+            foreach (RelicId id in Enum.GetValues(typeof(RelicId)))
+            {
+                var tier = RelicService.GetTier(id);
+                var name = RelicService.GetName(id);
+                var desc = RelicService.GetDescription(id);
+                var rarityLabel = tier == RelicTier.Legendary ? "Legendary" : tier.ToString();
+                var synergy = ClassifyRelicSynergy(id);
+                SeedItem(codex, $"relic_{id}", name, "Relic", rarityLabel,
+                    $"Discover via relic nodes, elites, or shops.",
+                    desc, desc, synergy);
+            }
         }
 
-        private void EnsureDebugCatalogCoverage()
+        private static string ClassifyRelicSynergy(RelicId id)
         {
-            var codex = _profile.Meta.ItemCodex;
-            AddEntryIfMissing(codex.Entries, "relic_legend_shifting_garden", "Shifting Garden", "Relic", "Legendary", "Debug unlock", "Garden mutates route pressure.", "Path variance +", "Boss");
-            AddEntryIfMissing(codex.Entries, "relic_legend_silent_grid", "Silent Grid", "Relic", "Legendary", "Debug unlock", "Protective rhythm on mistakes.", "Mistake shield +", "Class:LanternSeer");
-            AddEntryIfMissing(codex.Entries, "relic_legend_golden_root", "Golden Root", "Relic", "Legendary", "Debug unlock", "Carries value through the run.", "Gold carryover", "Boss");
-            AddEntryIfMissing(codex.Entries, "relic_combo_t2_monk_charm", "Monk Charm", "Relic", "Rare", "Debug unlock", "Rewards clean placement streaks.", "Combo gain +", "Class:GardenMonk");
-            AddEntryIfMissing(codex.Entries, "relic_cursed_t4_transmuted", "Transmuted Burden", "Cursed", "Epic", "Debug unlock", "Strong upside with pressure.", "Heat + reward +", "Curse");
-            AddEntryIfMissing(codex.Entries, "relic_utility_t4_transmuted", "Transmuted Sigil", "Relic", "Epic", "Debug unlock", "Utility relic from adaptation.", "Adaptive utility", "Utility");
+            return id switch
+            {
+                RelicId.SmoothPebble or RelicId.CrackedTeacup or RelicId.WisteriaBranch or
+                RelicId.PhoenixFeather or RelicId.SilentGrid or RelicId.SakuraSeal
+                    => "Recovery",
+                RelicId.WoodenComb or RelicId.CopperTortoise or RelicId.GoldenRoot or
+                RelicId.SpiritLantern or RelicId.MossToken
+                    => "Risk-conversion",
+                RelicId.CrimsonFan or RelicId.PorcelainMask or RelicId.MoonstoneCompass or
+                RelicId.ShiftingGarden
+                    => "Constraint-control",
+                RelicId.MonkCharm or RelicId.KoiReflectionRelic or RelicId.StoneSundial or
+                RelicId.EternalLotus or RelicId.DragonsEye or RelicId.JadeHairpin
+                    => "Tempo",
+                _ => "Information"
+            };
         }
 
-        private static void AddEntryIfMissing(List<ItemCodexEntry> entries, string id, string name, string type, string rarity, string unlockCondition, string description, string effect, string tags)
+        private static void SeedItem(ItemCodexState codex, string id, string name, string type, string rarity,
+            string unlockCondition, string description, string effect, string synergy)
         {
-            for (var i = 0; i < entries.Count; i++)
-            {
-                if (string.Equals(entries[i].ItemID, id, StringComparison.OrdinalIgnoreCase))
-                {
-                    return;
-                }
-            }
-
-            entries.Add(new ItemCodexEntry
+            codex.Entries.Add(new ItemCodexEntry
             {
                 ItemID = id,
                 Name = name,
@@ -496,7 +436,7 @@ namespace SudokuRoguelike.UI
                 UnlockCondition = unlockCondition,
                 Description = description,
                 EffectFormula = effect,
-                SynergyTags = tags,
+                SynergyTags = synergy,
                 Discovered = false,
                 Mastered = false
             });
@@ -511,9 +451,7 @@ namespace SudokuRoguelike.UI
                 codex.Entries[i].Discovered = true;
                 codex.Entries[i].Mastered = true;
                 if (string.IsNullOrWhiteSpace(codex.Entries[i].DiscoveredDate))
-                {
                     codex.Entries[i].DiscoveredDate = date;
-                }
             }
         }
 
@@ -528,28 +466,17 @@ namespace SudokuRoguelike.UI
                 Mastery = _profile.Mastery,
                 Completion = _profile.Completion
             };
-
             _save.SaveProfile(envelope);
         }
 
         private Sprite ResolveItemSprite(ItemCodexEntry item)
         {
             var iconName = ItemIdToIconName(item);
-            if (_spriteCache.TryGetValue(iconName, out var cached))
-            {
-                return cached;
-            }
+            if (_spriteCache.TryGetValue(iconName, out var cached)) return cached;
 
             var loaded = Resources.Load<Sprite>("GeneratedIcons/" + iconName);
-            if (loaded == null)
-            {
-                loaded = Resources.Load<Sprite>("GeneratedIcons/icon_pebble");
-            }
-
-            if (loaded == null)
-            {
-                loaded = GetFallbackSprite();
-            }
+            if (loaded == null) loaded = Resources.Load<Sprite>("GeneratedIcons/icon_pebble");
+            if (loaded == null) loaded = GetFallbackSprite();
 
             _spriteCache[iconName] = loaded;
             return loaded;
@@ -557,41 +484,53 @@ namespace SudokuRoguelike.UI
 
         private static string ItemIdToIconName(ItemCodexEntry item)
         {
-            if (item == null || string.IsNullOrWhiteSpace(item.ItemID))
+            if (item == null || string.IsNullOrWhiteSpace(item.ItemID)) return "icon_pebble";
+
+            // Relic icons
+            if (item.ItemID.StartsWith("relic_", StringComparison.Ordinal))
             {
-                return "icon_pebble";
+                if (item.ItemID.Contains("GoldenRoot")) return "icon_golden_bloom";
+                if (item.ItemID.Contains("SilentGrid")) return "icon_fog_stone";
+                if (item.ItemID.Contains("ShiftingGarden")) return "icon_enlightenment_tree";
+                if (item.ItemID.Contains("EternalLotus")) return "icon_infinite_lotus";
+                if (item.ItemID.Contains("DragonsEye")) return "icon_golden_koi";
+                if (item.ItemID.Contains("PhoenixFeather")) return "icon_golden_bloom";
+                return "icon_jade_amulet";
             }
 
-            if (item.ItemID.Contains("lantern", StringComparison.OrdinalIgnoreCase)) return "icon_garden_lantern";
-            if (item.ItemID.Contains("tea", StringComparison.OrdinalIgnoreCase)) return "icon_tea_cup";
-            if (item.ItemID.Contains("koi", StringComparison.OrdinalIgnoreCase)) return "icon_golden_koi";
-            if (item.ItemID.Contains("blind", StringComparison.OrdinalIgnoreCase)) return "icon_fog_stone";
-            if (item.ItemID.Contains("root", StringComparison.OrdinalIgnoreCase)) return "icon_moss_stone";
+            // Item icons
+            if (item.ItemID.Contains("solver")) return "icon_item_solver";
+            if (item.ItemID.Contains("finder")) return "icon_item_finder";
+            if (item.ItemID.Contains("inkwell")) return "icon_item_ink_well";
+            if (item.ItemID.Contains("meditation")) return "icon_item_meditation_stone";
+            if (item.ItemID.Contains("wind_chime")) return "icon_item_wind_chime";
+            if (item.ItemID.Contains("pattern")) return "icon_item_pattern_scroll";
+            if (item.ItemID.Contains("koi_reflection")) return "icon_item_koi_reflection";
+            if (item.ItemID.Contains("lantern")) return "icon_item_lantern_of_clarity";
+            if (item.ItemID.Contains("garden_rake")) return "icon_pebble";
+            if (item.ItemID.Contains("offering")) return "icon_rice_bowl";
+            if (item.ItemID.Contains("pruning")) return "icon_pebble";
+            if (item.ItemID.Contains("zen_sand")) return "icon_pebble";
+            if (item.ItemID.Contains("ginkgo")) return "icon_golden_bloom";
+            if (item.ItemID.Contains("umbrella")) return "icon_pebble";
+            if (item.ItemID.Contains("incense")) return "icon_sacred_bell";
+            if (item.ItemID.Contains("dragon_scale")) return "icon_golden_koi";
+            if (item.ItemID.Contains("kintsugi")) return "icon_broken_mask";
+            if (item.ItemID.Contains("silk_fan")) return "icon_pebble";
 
-            if (string.Equals(item.Type, "Cursed", StringComparison.OrdinalIgnoreCase)) return "icon_broken_mask";
-            if (string.Equals(item.RarityTier, "Legendary", StringComparison.OrdinalIgnoreCase)) return "icon_sacred_bell";
-            if (string.Equals(item.Type, "Consumable", StringComparison.OrdinalIgnoreCase)) return "icon_rice_bowl";
-            return "icon_jade_amulet";
+            return "icon_pebble";
         }
 
         private Sprite GetFallbackSprite()
         {
-            if (_fallbackSprite != null)
-            {
-                return _fallbackSprite;
-            }
+            if (_fallbackSprite != null) return _fallbackSprite;
 
             var tex = new Texture2D(32, 32, TextureFormat.RGBA32, false);
             var dark = new Color(0.12f, 0.17f, 0.22f, 1f);
             var light = new Color(0.32f, 0.45f, 0.58f, 1f);
             for (var y = 0; y < 32; y++)
-            {
                 for (var x = 0; x < 32; x++)
-                {
-                    var border = x < 2 || y < 2 || x > 29 || y > 29;
-                    tex.SetPixel(x, y, border ? light : dark);
-                }
-            }
+                    tex.SetPixel(x, y, (x < 2 || y < 2 || x > 29 || y > 29) ? light : dark);
 
             tex.Apply();
             _fallbackSprite = Sprite.Create(tex, new Rect(0, 0, 32, 32), new Vector2(0.5f, 0.5f), 32f);

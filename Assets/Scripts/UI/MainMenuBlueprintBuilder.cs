@@ -266,13 +266,19 @@ namespace SudokuRoguelike.UI
             ApplyMenuButtonIcon(btnSG, "GeneratedIcons/icon_moss_stone");
             ApplyMenuButtonIcon(btnLS, "GeneratedIcons/icon_garden_lantern");
 
+            var irregularToggle = BuildToggle("TglAllowIrregular", panel.transform as RectTransform, "Allow Irregular Puzzles");
+            SetRect(irregularToggle.GetComponent<RectTransform>(), new Vector2(0.04f, 0.05f), new Vector2(0.50f, 0.14f), Vector2.zero, Vector2.zero);
+            irregularToggle.isOn = true;
+            irregularToggle.onValueChanged.RemoveAllListeners();
+            irregularToggle.onValueChanged.AddListener(controller.SetAllowIrregularPuzzles);
+
             var continueButton = BuildButton("BtnClassSelectContinue", panel.transform as RectTransform, "Continue", 20);
             SetRect(continueButton.GetComponent<RectTransform>(), new Vector2(0.56f, 0.08f), new Vector2(0.90f, 0.18f), Vector2.zero, Vector2.zero);
             continueButton.onClick.RemoveAllListeners();
             continueButton.onClick.AddListener(controller.ConfirmClassAndStart);
 
             var backButton = BuildButton("BtnClassSelectBack", panel.transform as RectTransform, "Back", 18);
-            SetRect(backButton.GetComponent<RectTransform>(), new Vector2(0.10f, 0.08f), new Vector2(0.34f, 0.18f), Vector2.zero, Vector2.zero);
+            SetRect(backButton.GetComponent<RectTransform>(), new Vector2(0.10f, 0.20f), new Vector2(0.34f, 0.28f), Vector2.zero, Vector2.zero);
             backButton.onClick.RemoveAllListeners();
             backButton.onClick.AddListener(controller.BackFromClassSelect);
 
@@ -357,22 +363,77 @@ namespace SudokuRoguelike.UI
             resolution.onValueChanged.RemoveAllListeners();
             resolution.onValueChanged.AddListener(controller.OnResolutionChanged);
 
+            // ── Accessibility Section ─────────────────────────────────────
             var accessibilityTitle = BuildText("AccessibilitySectionTitle", panel.transform as RectTransform, "Accessibility", 20, TextAnchor.MiddleLeft);
             SetRect(accessibilityTitle.rectTransform, new Vector2(0.10f, 0.17f), new Vector2(0.90f, 0.23f), Vector2.zero, Vector2.zero);
 
+            // ── Audio: UI Volume slider ──────────────────────────────────
+            var uiVolLabel = BuildText("UiVolumeLabel", panel.transform as RectTransform, "UI Volume", 18, TextAnchor.MiddleLeft);
+            SetRect(uiVolLabel.rectTransform, new Vector2(0.52f, 0.43f), new Vector2(0.90f, 0.48f), Vector2.zero, Vector2.zero);
+            var uiVolSlider = BuildSlider("UiVolumeSlider", panel.transform as RectTransform);
+            SetRect(uiVolSlider.GetComponent<RectTransform>(), new Vector2(0.52f, 0.38f), new Vector2(0.90f, 0.43f), Vector2.zero, Vector2.zero);
+            uiVolSlider.minValue = 0f;
+            uiVolSlider.maxValue = 1f;
+            uiVolSlider.SetValueWithoutNotify(optionsController.Options.Audio.UiVolume);
+            uiVolSlider.onValueChanged.RemoveAllListeners();
+            uiVolSlider.onValueChanged.AddListener(controller.OnUiVolumeChanged);
+
+            // Row 1: Highlight Errors + Colorblind
             var highlightErrors = BuildToggle("HighlightErrorsToggle", panel.transform as RectTransform, "Highlight Errors");
-            SetRect(highlightErrors.GetComponent<RectTransform>(), new Vector2(0.10f, 0.11f), new Vector2(0.90f, 0.16f), Vector2.zero, Vector2.zero);
+            SetRect(highlightErrors.GetComponent<RectTransform>(), new Vector2(0.10f, 0.125f), new Vector2(0.48f, 0.165f), Vector2.zero, Vector2.zero);
             highlightErrors.SetIsOnWithoutNotify(optionsController.Options.Gameplay.HighlightConflicts);
             highlightErrors.onValueChanged.RemoveAllListeners();
             highlightErrors.onValueChanged.AddListener(controller.OnHighlightErrorsChanged);
 
+            var colorblindToggle = BuildToggle("ColorblindToggle", panel.transform as RectTransform, "Colorblind Mode");
+            SetRect(colorblindToggle.GetComponent<RectTransform>(), new Vector2(0.52f, 0.125f), new Vector2(0.90f, 0.165f), Vector2.zero, Vector2.zero);
+            colorblindToggle.SetIsOnWithoutNotify(optionsController.Options.Accessibility.ColorblindMode);
+            colorblindToggle.onValueChanged.RemoveAllListeners();
+            colorblindToggle.onValueChanged.AddListener(controller.OnColorblindModeChanged);
+
+            // Row 2: High Contrast + Reduce Motion
+            var highContrastToggle = BuildToggle("HighContrastToggle", panel.transform as RectTransform, "High Contrast");
+            SetRect(highContrastToggle.GetComponent<RectTransform>(), new Vector2(0.10f, 0.085f), new Vector2(0.48f, 0.125f), Vector2.zero, Vector2.zero);
+            highContrastToggle.SetIsOnWithoutNotify(optionsController.Options.Accessibility.HighContrastMode);
+            highContrastToggle.onValueChanged.RemoveAllListeners();
+            highContrastToggle.onValueChanged.AddListener(controller.OnHighContrastModeChanged);
+
+            var reduceMotionToggle = BuildToggle("ReduceMotionToggle", panel.transform as RectTransform, "Reduce Motion");
+            SetRect(reduceMotionToggle.GetComponent<RectTransform>(), new Vector2(0.52f, 0.085f), new Vector2(0.90f, 0.125f), Vector2.zero, Vector2.zero);
+            reduceMotionToggle.SetIsOnWithoutNotify(optionsController.Options.Accessibility.ReduceMotion);
+            reduceMotionToggle.onValueChanged.RemoveAllListeners();
+            reduceMotionToggle.onValueChanged.AddListener(controller.OnReduceMotionChanged);
+
+            // Row 3: Alt Symbols + Font Scale slider
+            var altSymbolsToggle = BuildToggle("AltSymbolsToggle", panel.transform as RectTransform, "Alt Constraint Symbols");
+            SetRect(altSymbolsToggle.GetComponent<RectTransform>(), new Vector2(0.10f, 0.045f), new Vector2(0.48f, 0.085f), Vector2.zero, Vector2.zero);
+            altSymbolsToggle.SetIsOnWithoutNotify(optionsController.Options.Accessibility.AlternativeConstraintSymbols);
+            altSymbolsToggle.onValueChanged.RemoveAllListeners();
+            altSymbolsToggle.onValueChanged.AddListener(controller.OnAltSymbolsChanged);
+
+            var fontScaleLabel = BuildText("FontScaleLabel", panel.transform as RectTransform, "Font Scale", 14, TextAnchor.MiddleLeft);
+            SetRect(fontScaleLabel.rectTransform, new Vector2(0.52f, 0.055f), new Vector2(0.66f, 0.085f), Vector2.zero, Vector2.zero);
+            var fontScaleSlider = BuildSlider("FontScaleSlider", panel.transform as RectTransform);
+            SetRect(fontScaleSlider.GetComponent<RectTransform>(), new Vector2(0.66f, 0.055f), new Vector2(0.90f, 0.085f), Vector2.zero, Vector2.zero);
+            fontScaleSlider.minValue = 0.8f;
+            fontScaleSlider.maxValue = 1.5f;
+            fontScaleSlider.SetValueWithoutNotify(optionsController.Options.Accessibility.FontScale);
+            fontScaleSlider.onValueChanged.RemoveAllListeners();
+            fontScaleSlider.onValueChanged.AddListener(controller.OnFontScaleChanged);
+
+            // ── Bottom buttons ───────────────────────────────────────────
             var deleteSave = BuildButton("BtnDeleteSave", panel.transform as RectTransform, "Delete Save", 16);
-            SetRect(deleteSave.GetComponent<RectTransform>(), new Vector2(0.10f, 0.03f), new Vector2(0.36f, 0.09f), Vector2.zero, Vector2.zero);
+            SetRect(deleteSave.GetComponent<RectTransform>(), new Vector2(0.10f, 0.005f), new Vector2(0.30f, 0.04f), Vector2.zero, Vector2.zero);
             deleteSave.onClick.RemoveAllListeners();
             deleteSave.onClick.AddListener(controller.OpenDeleteSaveConfirmation);
 
+            var controlsButton = BuildButton("BtnControls", panel.transform as RectTransform, "Controls", 16);
+            SetRect(controlsButton.GetComponent<RectTransform>(), new Vector2(0.32f, 0.005f), new Vector2(0.52f, 0.04f), Vector2.zero, Vector2.zero);
+            controlsButton.onClick.RemoveAllListeners();
+            controlsButton.onClick.AddListener(controller.OpenControlsPanel);
+
             var backButton = BuildButton("BtnOptionsBack", panel.transform as RectTransform, "Back", 20);
-            SetRect(backButton.GetComponent<RectTransform>(), new Vector2(0.74f, 0.03f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
+            SetRect(backButton.GetComponent<RectTransform>(), new Vector2(0.74f, 0.005f), new Vector2(0.90f, 0.04f), Vector2.zero, Vector2.zero);
             backButton.onClick.RemoveAllListeners();
             backButton.onClick.AddListener(controller.BackToMainMenu);
 
@@ -526,71 +587,140 @@ namespace SudokuRoguelike.UI
         {
             var panel = EnsureRect("TutorialSetupPanel", root, new Vector2(0.22f, 0.10f), new Vector2(0.78f, 0.90f), Vector2.zero, Vector2.zero).gameObject;
             EnsureOrGetImage(panel, panelColor);
+            var panelR = panel.transform as RectTransform;
 
-            var title = BuildText("TutorialTitle", panel.transform as RectTransform, "Tutorial Setup", 30, TextAnchor.UpperCenter);
-            SetRect(title.rectTransform, new Vector2(0.08f, 0.90f), new Vector2(0.92f, 0.98f), Vector2.zero, Vector2.zero);
+            // ── Title ──────────────────────────────────────────────────────────
+            var title = BuildText("TutorialTitle", panelR, "Tutorial Setup", 28, TextAnchor.UpperCenter);
+            SetRect(title.rectTransform, new Vector2(0.04f, 0.91f), new Vector2(0.96f, 0.98f), Vector2.zero, Vector2.zero);
 
-            var boardLabel = BuildText("BoardSizeLabel", panel.transform as RectTransform, "Board Size", 18, TextAnchor.MiddleLeft);
-            SetRect(boardLabel.rectTransform, new Vector2(0.08f, 0.82f), new Vector2(0.32f, 0.87f), Vector2.zero, Vector2.zero);
-            var boardDropdown = BuildDropdown("BoardSizeDropdown", panel.transform as RectTransform);
-            SetRect(boardDropdown.GetComponent<RectTransform>(), new Vector2(0.34f, 0.82f), new Vector2(0.88f, 0.87f), Vector2.zero, Vector2.zero);
+            // ── Four dropdowns ─────────────────────────────────────────────────
+            var boardLabel = BuildText("BoardSizeLabel", panelR, "Board Size", 15, TextAnchor.MiddleLeft);
+            SetRect(boardLabel.rectTransform, new Vector2(0.04f, 0.85f), new Vector2(0.28f, 0.90f), Vector2.zero, Vector2.zero);
+            var boardDropdown = BuildDropdown("BoardSizeDropdown", panelR);
+            SetRect(boardDropdown.GetComponent<RectTransform>(), new Vector2(0.30f, 0.85f), new Vector2(0.96f, 0.90f), Vector2.zero, Vector2.zero);
 
-            var starsLabel = BuildText("StarsLabel", panel.transform as RectTransform, "Star Difficulty", 18, TextAnchor.MiddleLeft);
-            SetRect(starsLabel.rectTransform, new Vector2(0.08f, 0.74f), new Vector2(0.32f, 0.79f), Vector2.zero, Vector2.zero);
-            var starsDropdown = BuildDropdown("StarsDropdown", panel.transform as RectTransform);
-            SetRect(starsDropdown.GetComponent<RectTransform>(), new Vector2(0.34f, 0.74f), new Vector2(0.88f, 0.79f), Vector2.zero, Vector2.zero);
+            var starsLabel = BuildText("StarsLabel", panelR, "Difficulty", 15, TextAnchor.MiddleLeft);
+            SetRect(starsLabel.rectTransform, new Vector2(0.04f, 0.79f), new Vector2(0.28f, 0.84f), Vector2.zero, Vector2.zero);
+            var starsDropdown = BuildDropdown("StarsDropdown", panelR);
+            SetRect(starsDropdown.GetComponent<RectTransform>(), new Vector2(0.30f, 0.79f), new Vector2(0.96f, 0.84f), Vector2.zero, Vector2.zero);
 
-            var resourceLabel = BuildText("ResourceModeLabel", panel.transform as RectTransform, "Resource Mode", 18, TextAnchor.MiddleLeft);
-            SetRect(resourceLabel.rectTransform, new Vector2(0.08f, 0.66f), new Vector2(0.32f, 0.71f), Vector2.zero, Vector2.zero);
-            var resourceDropdown = BuildDropdown("ResourceModeDropdown", panel.transform as RectTransform);
-            SetRect(resourceDropdown.GetComponent<RectTransform>(), new Vector2(0.34f, 0.66f), new Vector2(0.88f, 0.71f), Vector2.zero, Vector2.zero);
+            var regionLabel = BuildText("RegionLayoutLabel", panelR, "Region Layout", 15, TextAnchor.MiddleLeft);
+            SetRect(regionLabel.rectTransform, new Vector2(0.04f, 0.73f), new Vector2(0.28f, 0.78f), Vector2.zero, Vector2.zero);
+            var regionDropdown = BuildDropdown("RegionLayoutDropdown", panelR);
+            SetRect(regionDropdown.GetComponent<RectTransform>(), new Vector2(0.30f, 0.73f), new Vector2(0.96f, 0.78f), Vector2.zero, Vector2.zero);
 
-            var regionLabel = BuildText("RegionLayoutLabel", panel.transform as RectTransform, "Region Layout", 18, TextAnchor.MiddleLeft);
-            SetRect(regionLabel.rectTransform, new Vector2(0.08f, 0.59f), new Vector2(0.32f, 0.64f), Vector2.zero, Vector2.zero);
-            var regionDropdown = BuildDropdown("RegionLayoutDropdown", panel.transform as RectTransform);
-            SetRect(regionDropdown.GetComponent<RectTransform>(), new Vector2(0.34f, 0.59f), new Vector2(0.88f, 0.64f), Vector2.zero, Vector2.zero);
+            var resourceLabel = BuildText("ResourceModeLabel", panelR, "Mode", 15, TextAnchor.MiddleLeft);
+            SetRect(resourceLabel.rectTransform, new Vector2(0.04f, 0.67f), new Vector2(0.28f, 0.72f), Vector2.zero, Vector2.zero);
+            var resourceDropdown = BuildDropdown("ResourceModeDropdown", panelR);
+            SetRect(resourceDropdown.GetComponent<RectTransform>(), new Vector2(0.30f, 0.67f), new Vector2(0.96f, 0.72f), Vector2.zero, Vector2.zero);
 
-            var modifiersTitle = BuildText("ModifiersTitle", panel.transform as RectTransform, "Boss Mechanics (0-2)", 18, TextAnchor.MiddleLeft);
-            SetRect(modifiersTitle.rectTransform, new Vector2(0.08f, 0.51f), new Vector2(0.92f, 0.57f), Vector2.zero, Vector2.zero);
+            // ── Boss Mode label ────────────────────────────────────────────────
+            var modifiersTitle = BuildText("ModifiersTitle", panelR, "Boss Mode", 15, TextAnchor.MiddleLeft);
+            modifiersTitle.fontStyle = FontStyle.Bold;
+            modifiersTitle.color = accentColor;
+            SetRect(modifiersTitle.rectTransform, new Vector2(0.04f, 0.62f), new Vector2(0.96f, 0.66f), Vector2.zero, Vector2.zero);
 
-            var modRoot = EnsureRect("ModifierToggles", panel.transform as RectTransform, new Vector2(0.08f, 0.23f), new Vector2(0.92f, 0.51f), Vector2.zero, Vector2.zero);
-            var modLayout = EnsureComponent<GridLayoutGroup>(modRoot.gameObject);
-            modLayout.cellSize = new Vector2(260f, 32f);
-            modLayout.spacing = new Vector2(8f, 8f);
-            modLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            modLayout.constraintCount = 2;
+            // ── Modifier columns (6 categories) ───────────────────────────────
+            // 6 equal columns from x=0.02 to x=0.98
+            float colW = (0.96f - 0.02f) / 6f;
 
-            var fog = BuildToggle("TglModifierFog", modRoot, "Fog of War");
-            var arrow = BuildToggle("TglModifierArrow", modRoot, "Arrow Sums");
-            var german = BuildToggle("TglModifierGerman", modRoot, "German Whispers");
-            var dutch = BuildToggle("TglModifierDutch", modRoot, "Dutch Whispers");
-            var parity = BuildToggle("TglModifierParity", modRoot, "Parity Lines");
-            var renban = BuildToggle("TglModifierRenban", modRoot, "Renban Lines");
-            var killer = BuildToggle("TglModifierKiller", modRoot, "Killer Cages");
-            var difference = BuildToggle("TglModifierDifference", modRoot, "Difference Kropki");
-            var ratio = BuildToggle("TglModifierRatio", modRoot, "Ratio Kropki");
+            RectTransform MakeCol(string goName, int colIdx)
+            {
+                var xMin = 0.02f + colIdx * colW;
+                var xMax = xMin + colW - 0.005f;
+                var col = EnsureRect(goName, panelR, new Vector2(xMin, 0.27f), new Vector2(xMax, 0.61f), Vector2.zero, Vector2.zero);
+                var vl = EnsureComponent<VerticalLayoutGroup>(col.gameObject);
+                vl.childAlignment = TextAnchor.UpperCenter;
+                vl.spacing = 2f;
+                vl.childControlWidth = true;
+                vl.childControlHeight = false;
+                vl.childForceExpandWidth = true;
+                vl.childForceExpandHeight = false;
+                vl.padding = new RectOffset(1, 1, 1, 1);
+                return col;
+            }
 
-            var validation = BuildText("TutorialValidationText", panel.transform as RectTransform, "Ready.", 16, TextAnchor.MiddleLeft);
-            SetRect(validation.rectTransform, new Vector2(0.08f, 0.20f), new Vector2(0.92f, 0.25f), Vector2.zero, Vector2.zero);
+            void AddColHeader(RectTransform col, string goName, string label)
+            {
+                var h = EnsureRect(goName, col, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+                var hText = EnsureComponent<Text>(h.gameObject);
+                hText.text = label;
+                hText.font = GetBuiltInFont();
+                hText.fontSize = 10;
+                hText.alignment = TextAnchor.MiddleCenter;
+                hText.color = accentColor;
+                hText.fontStyle = FontStyle.Bold;
+                EnsureComponent<LayoutElement>(h.gameObject).preferredHeight = 16f;
+            }
 
-            var completionHint = BuildText("TutorialCompletionHint", panel.transform as RectTransform, "Current configuration: ✖ Not completed", 16, TextAnchor.MiddleLeft);
-            SetRect(completionHint.rectTransform, new Vector2(0.08f, 0.15f), new Vector2(0.92f, 0.20f), Vector2.zero, Vector2.zero);
+            Toggle AddColToggle(RectTransform col, string goName, string label)
+            {
+                var t = BuildToggle(goName, col, label);
+                EnsureComponent<LayoutElement>(t.gameObject).preferredHeight = 20f;
+                return t;
+            }
 
-            var modifierDescription = BuildText("ModifierDescriptionText", panel.transform as RectTransform, "Select a modifier to see its rule.", 15, TextAnchor.UpperLeft);
-            SetRect(modifierDescription.rectTransform, new Vector2(0.08f, 0.05f), new Vector2(0.62f, 0.14f), Vector2.zero, Vector2.zero);
+            // Col 0 — Global / Negative
+            var c0 = MakeCol("ModColGlobal", 0);
+            AddColHeader(c0, "ColHdrGlobal", "Global/Neg");
+            var nonconsecutive = AddColToggle(c0, "TglModifierNoncons",    "Nonconsec.");
+            var antiknight     = AddColToggle(c0, "TglModifierAntiknight", "Antiknight");
 
-            var startButton = BuildButton("BtnTutorialStart", panel.transform as RectTransform, "Start Puzzle", 18);
-            SetRect(startButton.GetComponent<RectTransform>(), new Vector2(0.64f, 0.05f), new Vector2(0.82f, 0.14f), Vector2.zero, Vector2.zero);
+            // Col 1 — Line Constraints
+            var c1 = MakeCol("ModColLine", 1);
+            AddColHeader(c1, "ColHdrLine", "Line");
+            var german       = AddColToggle(c1, "TglModifierGerman",    "German");
+            var dutch        = AddColToggle(c1, "TglModifierDutch",     "Dutch");
+            var parity       = AddColToggle(c1, "TglModifierParity",    "Parity");
+            var renban       = AddColToggle(c1, "TglModifierRenban",    "Renban");
+            var palindrome   = AddColToggle(c1, "TglModifierPalindrome","Palindrome");
+            var betweenLines = AddColToggle(c1, "TglModifierBetween",   "Between");
+
+            // Col 2 — Thermo Variants
+            var c2 = MakeCol("ModColThermo", 2);
+            AddColHeader(c2, "ColHdrThermo", "Thermo");
+            var thermo = AddColToggle(c2, "TglModifierThermo", "Thermo");
+
+            // Col 3 — Arrow Variants
+            var c3 = MakeCol("ModColArrow", 3);
+            AddColHeader(c3, "ColHdrArrow", "Arrow");
+            var arrow = AddColToggle(c3, "TglModifierArrow", "Arrow Sums");
+
+            // Col 4 — Arithmetic
+            var c4 = MakeCol("ModColArith", 4);
+            AddColHeader(c4, "ColHdrArith", "Arithmetic");
+            var killer     = AddColToggle(c4, "TglModifierKiller",     "Killer");
+            var difference = AddColToggle(c4, "TglModifierDifference", "Diff Kropki");
+            var ratio      = AddColToggle(c4, "TglModifierRatio",      "Ratio Kropki");
+
+            // Col 5 — Cell-Level / Fog
+            var c5 = MakeCol("ModColCell", 5);
+            AddColHeader(c5, "ColHdrCell", "Cell / Fog");
+            var evenOdd = AddColToggle(c5, "TglModifierEvenOdd", "Even/Odd");
+            var fog     = AddColToggle(c5, "TglModifierFog",     "Fog of War");
+
+            // ── Bottom controls ────────────────────────────────────────────────
+            var validation = BuildText("TutorialValidationText", panelR, "Ready.", 14, TextAnchor.MiddleLeft);
+            SetRect(validation.rectTransform, new Vector2(0.04f, 0.22f), new Vector2(0.96f, 0.26f), Vector2.zero, Vector2.zero);
+
+            var completionHint = BuildText("TutorialCompletionHint", panelR, "Current configuration: ✖ Not completed", 14, TextAnchor.MiddleLeft);
+            SetRect(completionHint.rectTransform, new Vector2(0.04f, 0.17f), new Vector2(0.96f, 0.22f), Vector2.zero, Vector2.zero);
+
+            var modifierDescription = BuildText("ModifierDescriptionText", panelR, "Select a modifier to see its rule.", 12, TextAnchor.UpperLeft);
+            SetRect(modifierDescription.rectTransform, new Vector2(0.04f, 0.09f), new Vector2(0.60f, 0.16f), Vector2.zero, Vector2.zero);
+
+            var startButton = BuildButton("BtnTutorialStart", panelR, "Start Puzzle", 15);
+            SetRect(startButton.GetComponent<RectTransform>(), new Vector2(0.62f, 0.09f), new Vector2(0.80f, 0.16f), Vector2.zero, Vector2.zero);
             startButton.onClick.RemoveAllListeners();
             startButton.onClick.AddListener(tutorialController.StartTutorialFromSetup);
 
-            var progressButton = BuildButton("BtnTutorialProgress", panel.transform as RectTransform, "Progress", 18);
-            SetRect(progressButton.GetComponent<RectTransform>(), new Vector2(0.83f, 0.05f), new Vector2(0.92f, 0.14f), Vector2.zero, Vector2.zero);
+            var progressButton = BuildButton("BtnTutorialProgress", panelR, "Progress", 15);
+            SetRect(progressButton.GetComponent<RectTransform>(), new Vector2(0.81f, 0.09f), new Vector2(0.96f, 0.16f), Vector2.zero, Vector2.zero);
             progressButton.onClick.RemoveAllListeners();
             progressButton.onClick.AddListener(controller.OpenTutorialProgress);
 
-            var backButton = BuildButton("BtnTutorialBack", panel.transform as RectTransform, "Back", 18);
-            SetRect(backButton.GetComponent<RectTransform>(), new Vector2(0.93f, 0.05f), new Vector2(0.99f, 0.14f), Vector2.zero, Vector2.zero);
+            var backButton = BuildButton("BtnTutorialBack", panelR, "Back", 15);
+            SetRect(backButton.GetComponent<RectTransform>(), new Vector2(0.62f, 0.02f), new Vector2(0.96f, 0.08f), Vector2.zero, Vector2.zero);
             backButton.onClick.RemoveAllListeners();
             backButton.onClick.AddListener(controller.BackToMainMenu);
 
@@ -604,18 +734,10 @@ namespace SudokuRoguelike.UI
                 completionHint,
                 modifierDescription,
                 startButton,
-                fog,
-                arrow,
-                german,
-                dutch,
-                parity,
-                renban,
-                killer,
-                difference,
-                ratio,
-                null,
-                null,
-                null);
+                fog, arrow, german, dutch, parity, renban, killer,
+                difference, ratio, palindrome, thermo, betweenLines,
+                evenOdd, nonconsecutive, antiknight,
+                null, null, null);
 
             panel.SetActive(false);
             return panel;
@@ -672,6 +794,12 @@ namespace SudokuRoguelike.UI
                 null,
                 null,
                 null,
+                null, // palindrome
+                null, // thermo
+                null, // betweenLines
+                null, // evenOdd
+                null, // nonconsecutive
+                null, // antiknight
                 boardProgress,
                 modifierProgress,
                 completionPercent);
@@ -830,25 +958,10 @@ namespace SudokuRoguelike.UI
             consumables.onClick.RemoveAllListeners();
             consumables.onClick.AddListener(itemsController.FilterConsumables);
 
-            var cursed = BuildButton("BtnItemsCursed", panel.transform as RectTransform, "Cursed", 14);
-            SetRect(cursed.GetComponent<RectTransform>(), new Vector2(0.43f, 0.76f), new Vector2(0.53f, 0.82f), Vector2.zero, Vector2.zero);
-            cursed.onClick.RemoveAllListeners();
-            cursed.onClick.AddListener(itemsController.FilterCursed);
-
             var legendary = BuildButton("BtnItemsLegendary", panel.transform as RectTransform, "Legendary", 14);
-            SetRect(legendary.GetComponent<RectTransform>(), new Vector2(0.54f, 0.76f), new Vector2(0.66f, 0.82f), Vector2.zero, Vector2.zero);
+            SetRect(legendary.GetComponent<RectTransform>(), new Vector2(0.43f, 0.76f), new Vector2(0.56f, 0.82f), Vector2.zero, Vector2.zero);
             legendary.onClick.RemoveAllListeners();
             legendary.onClick.AddListener(itemsController.FilterLegendary);
-
-            var boss = BuildButton("BtnItemsBoss", panel.transform as RectTransform, "Boss Rewards", 14);
-            SetRect(boss.GetComponent<RectTransform>(), new Vector2(0.67f, 0.76f), new Vector2(0.82f, 0.82f), Vector2.zero, Vector2.zero);
-            boss.onClick.RemoveAllListeners();
-            boss.onClick.AddListener(itemsController.FilterBossRewards);
-
-            var classSpecific = BuildButton("BtnItemsClass", panel.transform as RectTransform, "Class-Specific", 14);
-            SetRect(classSpecific.GetComponent<RectTransform>(), new Vector2(0.83f, 0.76f), new Vector2(0.94f, 0.82f), Vector2.zero, Vector2.zero);
-            classSpecific.onClick.RemoveAllListeners();
-            classSpecific.onClick.AddListener(itemsController.FilterClassSpecific);
 
             var unseen = BuildButton("BtnItemsUnseen", panel.transform as RectTransform, "Unseen", 14);
             SetRect(unseen.GetComponent<RectTransform>(), new Vector2(0.06f, 0.69f), new Vector2(0.16f, 0.75f), Vector2.zero, Vector2.zero);
@@ -985,6 +1098,19 @@ namespace SudokuRoguelike.UI
             SetRect(button.GetComponent<RectTransform>(), anchorMin, anchorMax, Vector2.zero, Vector2.zero);
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(action);
+
+            // Main menu buttons are transparent; only the text, icon, and accent outline are visible.
+            var img = button.GetComponent<Image>();
+            if (img != null) img.color = new Color(0f, 0f, 0f, 0f);
+
+            var colors = button.colors;
+            colors.normalColor    = new Color(1f, 1f, 1f, 0f);
+            colors.highlightedColor = new Color(1f, 1f, 1f, 0.08f);
+            colors.pressedColor   = new Color(0f, 0f, 0f, 0.12f);
+            colors.selectedColor  = colors.highlightedColor;
+            colors.colorMultiplier = 1f;
+            button.colors = colors;
+
             return button;
         }
 

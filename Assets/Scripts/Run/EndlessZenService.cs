@@ -6,6 +6,7 @@ namespace SudokuRoguelike.Run
 {
     public sealed class EndlessZenService
     {
+        // All 14 modifiers (all except German Whispers, which requires ≥7×7 and has narrow valid set)
         private static readonly BossModifierId[] ModifierPool =
         {
             BossModifierId.ParityLines,
@@ -15,19 +16,19 @@ namespace SudokuRoguelike.Run
             BossModifierId.RatioKropki,
             BossModifierId.KillerCages,
             BossModifierId.ArrowSums,
-            BossModifierId.FogOfWar
+            BossModifierId.FogOfWar,
+            BossModifierId.Palindrome,
+            BossModifierId.Thermo,
+            BossModifierId.BetweenLines,
+            BossModifierId.EvenOdd,
+            BossModifierId.Nonconsecutive,
+            BossModifierId.Antiknight
         };
-
-        public float ComputeEndlessHeat(int depth)
-        {
-            return 1.2f + (0.18f * depth) + (0.02f * MathF.Pow(depth, 1.3f));
-        }
 
         public int ModifierCap(int depth)
         {
-            if (depth < 10) return 1;
-            if (depth < 20) return 2;
-            return 3;
+            // Depth <10: 1 modifier, Depth >=10: 2 modifiers (no cap)
+            return depth < 10 ? 1 : 2;
         }
 
         public LevelConfig BuildLevel(int depth, int seed = 0)

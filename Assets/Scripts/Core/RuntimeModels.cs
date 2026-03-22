@@ -10,6 +10,15 @@ namespace SudokuRoguelike.Core
         public ItemType Type;
         public ItemRarity Rarity;
         public int Charges = 1;
+        public bool IsInfinite; // set by Eternal Lotus relic
+    }
+
+    [Serializable]
+    public sealed class RelicInstance
+    {
+        public RelicId Id;
+        public RelicTier Tier;
+        public int UsesRemaining = -1; // -1 = passive (unlimited); >0 = active uses left
     }
 
     [Serializable]
@@ -18,6 +27,8 @@ namespace SudokuRoguelike.Core
         public int Seed;
         public int Depth;
         public int CurrentNodeIndex;
+        public int CurrentFloor;
+        public int TotalFloors = 5;
         public ClassId ClassId;
         public GameMode Mode = GameMode.GardenRun;
         public bool TutorialMode;
@@ -30,21 +41,37 @@ namespace SudokuRoguelike.Core
         public int MaxPencil;
         public int CurrentGold;
 
-        public int Level = 1;
-        public int CurrentXP;
+        public int CurrentXP;   // accumulated run XP total (committed to class progression at run end)
         public int RerollTokens;
         public int ItemSlots;
 
         public int PencilPurchasesThisRun;
         public int RerollsThisRun;
+        public int ItemsUsedCount;
+        public int PencilUsedCount;
+        public bool LostHpThisRun;
 
         public readonly List<ItemInstance> Inventory = new();
-        public readonly List<string> RelicIds = new();
+
+        // Single relic slot — player holds one relic at a time
+        public bool HasRelic;
+        public RelicInstance HeldRelic;
+
+        // Active relic state tracked per-puzzle
+        public bool CrackedTeacupUsedThisPuzzle;   // first mistake free
+        public int PaperCraneUsesRemaining = 2;     // skip puzzle (2/run)
+        public bool PhoenixFeatherUsed;              // death prevention (1/run)
+        public bool DragonsEyeUsedThisFloor;         // reveal solution (1/floor)
+        public int MonkCharmStreakCount;              // consecutive correct placements
+        public int StoneSundialBonusSlots;            // +1 reward slot
+        public bool SakuraSealPerfectLastPuzzle;      // track for next puzzle HP bonus
+        public int UmbrellaShieldCharges;             // Rice Paper Umbrella remaining
+        public int SilkFanPendingIndex = -1;             // inventory index while awaiting second cell
+        public int SilkFanFirstRow = -1;
+        public int SilkFanFirstCol = -1;
         public readonly List<RouteType> RouteHistory = new();
         public readonly List<RunNode> NodePath = new();
 
-        public float CurrentHeatScore = 1f;
-        public float PeakHeatScore = 1f;
         public RunArchetype CurrentArchetype = RunArchetype.Undefined;
         public float GlobalGoldMultiplier = 1f;
         public int MistakeShieldCharges;
@@ -56,11 +83,41 @@ namespace SudokuRoguelike.Core
         public bool RiskyRebuildUsed;
         public int PreBossPuzzlesCompleted;
 
-        public BossModifierId? ChosenBossModifier;
-        public readonly HashSet<BossModifierId> SeenBossModifiers = new();
+        // Serialization-friendly boss modifier fields (JsonUtility does not support nullable/HashSet)
+        public bool HasChosenBossModifier;
+        public BossModifierId ChosenBossModifierId;
+        public List<BossModifierId> SeenBossModifierList = new();
+
+        [System.NonSerialized]
+        public HashSet<BossModifierId> SeenBossModifiers = new();
+
+        public BossModifierId? ChosenBossModifier
+        {
+            get => HasChosenBossModifier ? ChosenBossModifierId : (BossModifierId?)null;
+            set
+            {
+                HasChosenBossModifier = value.HasValue;
+                if (value.HasValue) ChosenBossModifierId = value.Value;
+            }
+        }
+
+        public void SyncSeenModifiersToList()
+        {
+            SeenBossModifierList.Clear();
+            foreach (var m in SeenBossModifiers) SeenBossModifierList.Add(m);
+        }
+
+        public void SyncSeenModifiersFromList()
+        {
+            SeenBossModifiers.Clear();
+            for (var i = 0; i < SeenBossModifierList.Count; i++) SeenBossModifiers.Add(SeenBossModifierList[i]);
+        }
+
+        public bool AllowIrregularPuzzles = true;
+
+        public readonly List<BossModifierId> ChosenBossModifiers = new();
 
         public readonly List<CurseType> ActiveCurses = new();
-        public readonly List<float> HeatHistory = new();
         public readonly List<string> RunNotes = new();
 
         public bool IsDead => CurrentHP <= 0;
@@ -75,9 +132,9 @@ namespace SudokuRoguelike.Core
         public float MissingPercent;
         public bool IsBoss;
         public StressVariant StressVariant;
-        public float ExpectedHeat;
         public float VarianceBand;
         public int RegionVariant;
+        public BossModifierIntensity ModifierIntensity = BossModifierIntensity.Medium;
         public readonly List<BossModifierId> ActiveModifiers = new();
     }
 
@@ -90,9 +147,6 @@ namespace SudokuRoguelike.Core
         public bool TeaOfFocusActive;
         public int TeaOfFocusRemainingPlacements;
         public readonly List<MoveRecord> Moves = new();
-
-        public float StartHeatScore = 1f;
-        public float CurrentHeatScore = 1f;
     }
 
     [Serializable]
@@ -111,7 +165,6 @@ namespace SudokuRoguelike.Core
         public bool IsNothing;
         public bool IsLocked;
         public ItemInstance RolledItem;
-        public int NothingGoldBonus;
     }
 
     [Serializable]
@@ -119,8 +172,8 @@ namespace SudokuRoguelike.Core
     {
         public string OfferId;
         public bool IsRelic;
-        public string RelicId;
-        public ItemInstance Item;
+        public RelicInstance RelicOffer;  // set when IsRelic=true
+        public ItemInstance Item;         // set when IsRelic=false
         public int Price;
     }
 
@@ -132,6 +185,9 @@ namespace SudokuRoguelike.Core
         public NodeType Type;
         public bool IsRiskPath;
         public bool IsRevealed;
+        public bool IsCrossLink;
+        public float CanvasX;
+        public float CanvasY;
     }
 
     [Serializable]
@@ -152,11 +208,8 @@ namespace SudokuRoguelike.Core
         public GameMode Mode;
         public bool Victory;
         public int GardenDepthReached;
-        public float FinalHeatScore;
-        public float PeakHeatScore;
         public int GoldEarned;
         public int XpEarned;
-        public int EssenceEarned;
         public int BossPhaseReached;
         public int MistakesMade;
         public int SecondsPlayed;
@@ -174,12 +227,33 @@ namespace SudokuRoguelike.Core
         public int PeakCombo;
         public RunArchetype FinalArchetype;
         public PostRunAnalytics Analytics;
+
+        // New fields for class unlock tracking
+        public int ItemsUsedThisRun;
+        public int RelicsCollectedThisRun;
+        public bool FoundAllUniqueItems;
+        public bool ClearedStageNoPencilNoHpLoss;
+
+        // Achievement-relevant fields
+        public int HighestBoardSize;
+        public int HighestStarCleared;
+        public int RiskRoutesChosen;
+        public int SimultaneousModifiersOnBoss;
+        public bool UsedAnyItem;
+        public bool SwappedRelic;
+        public bool BoughtFromShop;
+        public bool AcquiredEpicItem;
+        public bool AcquiredRelic;
+        public bool FlawlessFloor;
+        public int SpiritTrialScore;
+
+        // Per-tile XP breakdown for end-of-run display
+        public readonly List<Economy.TileXpEntry> TileXpEntries = new();
     }
 
     [Serializable]
     public sealed class PostRunAnalytics
     {
-        public readonly List<float> HeatCurve = new();
         public readonly List<int> MistakesPerPuzzle = new();
         public int TotalMistakes;
         public int HighestSinglePuzzleMistakes;
@@ -214,9 +288,41 @@ namespace SudokuRoguelike.Core
         public int BossClears;
         public float AverageMistakes;
         public int FastestSeconds;
-        public float HighestHeatScore;
         public int HighestEndlessDepth;
         public int TotalAchievementsUnlocked;
+
+        // Completion tracking
+        public int SizeStarCombosCleared;
+        public readonly HashSet<string> ClearedSizeStarKeys = new();
+
+        // Achievement tracking
+        public int HighestGoldInSingleRun;
+        public int RiskRoutesChosenInBestRun;
+        public int HighestCombo;
+        public int HighestFloorReached;
+        public int ModifiersEncountered;
+        public bool CompletedFullRun;
+        public bool UsedItem;
+        public bool AcquiredRelic;
+        public bool BoughtFromShop;
+        public bool SwappedRelic;
+        public bool CompletedTutorialPuzzle;
+        public bool CompletedNoItemRun;
+        public bool CompletedFlawlessFloor;
+        public bool AcquiredEpicItem;
+        public int HighestSpiritTrialScore;
+
+        // Spirit Trials per-tier personal bests
+        public readonly SpiritTrialsPersonalBest[] SpiritTrialsBests = new SpiritTrialsPersonalBest[4];
+    }
+
+    [Serializable]
+    public sealed class SpiritTrialsPersonalBest
+    {
+        public int BestScore;
+        public int BestTimeSeconds;
+        public int BestNoMistakeTimeSeconds;
+        public int TotalSessionsPlayed;
     }
 
     [Serializable]
@@ -255,16 +361,14 @@ namespace SudokuRoguelike.Core
     [Serializable]
     public sealed class MetaProgressionState
     {
-        public int GardenEssence;
         public readonly List<ClassId> UnlockedClasses = new();
-        public readonly List<string> UnlockedRelics = new();
+        public readonly List<RelicId> DiscoveredRelics = new();
         public bool EndlessZenUnlocked;
         public bool SpiritTrialsUnlocked;
         public int MaxStarCap = 5;
         public int AscensionLevel;
         public int PrestigeCount;
         public bool HiddenDualModifierBossUnlocked;
-        public bool ChaosMonkUnlocked;
         public bool SeasonalChallengeUnlocked;
         public ClassUnlockProgress ClassUnlocks = new();
         public GardenClassProgressionState GardenProgression = new();
@@ -303,10 +407,6 @@ namespace SudokuRoguelike.Core
     [Serializable]
     public sealed class GardenClassProgressionState
     {
-        public int CurrentLevel = 1;
-        public int CurrentXp;
-        public int PrestigeTier;
-        public int PassiveTier;
         public int TotalXpEarned;
         public int ArchiveRunCount;
         public int ArchiveSeedsBloomed;
@@ -319,25 +419,19 @@ namespace SudokuRoguelike.Core
     public sealed class ClassGardenProgressEntry
     {
         public ClassId ClassId = ClassId.NumberFreak;
-        public int Level = 1;
-        public int CurrentXp;
-        public int PrestigeTier;
-        public int TotalXpEarned;
+        public int TotalXp;       // single persistent value; level derived at runtime
+        public int PrestigeTier;  // 0-9
     }
 
     [Serializable]
     public sealed class ClassUnlockProgress
     {
-        public int NonTutorialRunCount;
-        public bool ClearedTier1Or2Boss;
-        public bool ClearedTier3Boss;
-        public bool SolvedEightByEightFourStar;
-        public bool CompletedKoiPath;
-        public bool WonWithUnderThreeHp;
-        public bool ClearedTier4Boss;
-        public bool ReachedHeatFive;
-        public bool ClearedGermanWhispersBoss;
-        public bool ClearedMultiStageBoss;
+        public int CumulativeBossDefeats;
+        public int CumulativeItemsUsed;
+        public int CumulativeRelicsCollected;
+        public int CumulativeGoldCollected;
+        public bool AllUniqueItemsFound;
+        public bool ClearedStageZeroPencilZeroHpLost;
     }
 
     [Serializable]
@@ -348,7 +442,6 @@ namespace SudokuRoguelike.Core
         public bool AutoPencilCleanup;
         public bool HighlightConflicts = true;
         public bool ShowCandidateCount = true;
-        public bool ShowHeatIndicator;
         public bool CursorSnapOnSelection;
     }
 

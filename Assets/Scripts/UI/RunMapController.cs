@@ -171,6 +171,12 @@ namespace SudokuRoguelike.UI
                 return false;
             }
 
+            if (node.IsCrossLink)
+            {
+                // Release the lane lock so the player can switch to either lane on the next choice.
+                _lockedRiskPath = null;
+            }
+
             if (!RequiresPuzzleNode(node.Type))
             {
                 nextLevel = null;
@@ -279,22 +285,6 @@ namespace SudokuRoguelike.UI
             for (var i = 0; i < _run.RunState.ActiveCurses.Count; i++)
             {
                 output.Add(_run.RunState.ActiveCurses[i]);
-            }
-
-            return output;
-        }
-
-        public List<float> GetHeatCurve()
-        {
-            var output = new List<float>();
-            if (_run?.RunState == null)
-            {
-                return output;
-            }
-
-            for (var i = 0; i < _run.RunState.HeatHistory.Count; i++)
-            {
-                output.Add(_run.RunState.HeatHistory[i]);
             }
 
             return output;
@@ -443,7 +433,30 @@ namespace SudokuRoguelike.UI
                 _fixedNodeConfigs[index] = CloneConfig(config);
             }
 
-            return CloneConfig(config);
+            var result = CloneConfig(config);
+
+            // Apply the player's chosen boss modifiers at call time (set after the gate panel,
+            // which is after the config was first cached).
+            if (node.Type == NodeType.Boss && _run.RunState != null)
+            {
+                // Multi-modifier selection (new floor system)
+                for (var mi = 0; mi < _run.RunState.ChosenBossModifiers.Count; mi++)
+                {
+                    var mod = _run.RunState.ChosenBossModifiers[mi];
+                    if (!result.ActiveModifiers.Contains(mod))
+                        result.ActiveModifiers.Add(mod);
+                }
+
+                // Legacy single modifier fallback
+                if (_run.RunState.ChosenBossModifier.HasValue)
+                {
+                    var chosen = _run.RunState.ChosenBossModifier.Value;
+                    if (!result.ActiveModifiers.Contains(chosen))
+                        result.ActiveModifiers.Add(chosen);
+                }
+            }
+
+            return result;
         }
 
         private static LevelConfig CloneConfig(LevelConfig src)
@@ -461,7 +474,6 @@ namespace SudokuRoguelike.UI
                 MissingPercent = src.MissingPercent,
                 IsBoss = src.IsBoss,
                 StressVariant = src.StressVariant,
-                ExpectedHeat = src.ExpectedHeat,
                 VarianceBand = src.VarianceBand,
                 RegionVariant = src.RegionVariant
             };

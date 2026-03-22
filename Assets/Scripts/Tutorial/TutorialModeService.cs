@@ -22,7 +22,7 @@ namespace SudokuRoguelike.Tutorial
 
         public static IReadOnlyList<int> GetBoardSizes() => new[] { 5, 6, 7, 8, 9 };
 
-        public static IReadOnlyList<int> GetStars() => new[] { 1, 2, 3, 4, 5 };
+        public static IReadOnlyList<int> GetStars() => new[] { 1, 2, 3, 4, 5, 6, 7 };
 
         public static bool IsModifierAvailable(BossModifierId modifier, int boardSize)
         {
@@ -48,13 +48,9 @@ namespace SudokuRoguelike.Tutorial
 
             if (!GetStars().Contains(setup.Stars))
             {
-                return new TutorialSetupValidation { IsValid = false, Message = "Stars must be between 1 and 5." };
+                return new TutorialSetupValidation { IsValid = false, Message = "Stars must be between 1 and 7." };
             }
 
-            if (setup.SelectedModifiers.Count > 2)
-            {
-                return new TutorialSetupValidation { IsValid = false, Message = "Select up to 2 modifiers." };
-            }
 
             for (var i = 0; i < setup.SelectedModifiers.Count; i++)
             {
@@ -125,6 +121,12 @@ namespace SudokuRoguelike.Tutorial
                 BossModifierId.KillerCages => "Digits in each cage must sum to the displayed value without repeats.",
                 BossModifierId.DifferenceKropki => "White dots connect consecutive digits.",
                 BossModifierId.RatioKropki => "Black dots connect digits where one is double the other.",
+                BossModifierId.Palindrome => "Gray lines: digits read the same forward and backward.",
+                BossModifierId.Thermo => "Orange-bulb lines: digits strictly increase from bulb to tip.",
+                BossModifierId.BetweenLines => "White endpoint circles: all path digits must be strictly between the two endpoint values.",
+                BossModifierId.EvenOdd => "Square markers = even digit; circle markers = odd digit.",
+                BossModifierId.Nonconsecutive => "No two orthogonally adjacent cells may contain consecutive digits.",
+                BossModifierId.Antiknight => "No two cells a chess knight's move apart may share a digit.",
                 _ => "No modifier selected."
             };
         }

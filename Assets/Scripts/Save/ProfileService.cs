@@ -42,25 +42,14 @@ namespace SudokuRoguelike.Save
             }
         }
 
-        public void AddEssence(int value)
+        public bool TryDiscoverRelic(RelicId relicId)
         {
-            if (value <= 0)
-            {
-                return;
-            }
-
-            Meta.GardenEssence += value;
-        }
-
-        public bool TryUnlockRelic(string relicId, int cost)
-        {
-            if (Meta.UnlockedRelics.Contains(relicId) || Meta.GardenEssence < cost)
+            if (Meta.DiscoveredRelics.Contains(relicId))
             {
                 return false;
             }
 
-            Meta.GardenEssence -= cost;
-            Meta.UnlockedRelics.Add(relicId);
+            Meta.DiscoveredRelics.Add(relicId);
             return true;
         }
 
@@ -101,15 +90,38 @@ namespace SudokuRoguelike.Save
                 Stats.FastestSeconds = result.SecondsPlayed;
             }
 
-            if (result.PeakHeatScore > Stats.HighestHeatScore)
-            {
-                Stats.HighestHeatScore = result.PeakHeatScore;
-            }
-
             if (result.GardenDepthReached > Stats.HighestEndlessDepth)
             {
                 Stats.HighestEndlessDepth = result.GardenDepthReached;
             }
+
+            if (result.GoldEarned > Stats.HighestGoldInSingleRun)
+                Stats.HighestGoldInSingleRun = result.GoldEarned;
+
+            if (result.PeakCombo > Stats.HighestCombo)
+                Stats.HighestCombo = result.PeakCombo;
+
+            if (result.GardenDepthReached > Stats.HighestFloorReached)
+                Stats.HighestFloorReached = result.GardenDepthReached;
+
+            if (result.RiskRoutesChosen > Stats.RiskRoutesChosenInBestRun)
+                Stats.RiskRoutesChosenInBestRun = result.RiskRoutesChosen;
+
+            if (result.UsedAnyItem) Stats.UsedItem = true;
+            if (result.AcquiredRelic) Stats.AcquiredRelic = true;
+            if (result.BoughtFromShop) Stats.BoughtFromShop = true;
+            if (result.SwappedRelic) Stats.SwappedRelic = true;
+            if (result.AcquiredEpicItem) Stats.AcquiredEpicItem = true;
+            if (result.FlawlessFloor) Stats.CompletedFlawlessFloor = true;
+            if (result.Victory && result.Mode == GameMode.GardenRun) Stats.CompletedFullRun = true;
+            if (result.Mode == GameMode.Tutorial) Stats.CompletedTutorialPuzzle = true;
+            if (result.Victory && !result.UsedAnyItem && result.Mode == GameMode.GardenRun)
+                Stats.CompletedNoItemRun = true;
+            if (result.SpiritTrialScore > Stats.HighestSpiritTrialScore)
+                Stats.HighestSpiritTrialScore = result.SpiritTrialScore;
+
+            // Track size×star combos for completion
+            RecordSizeStarCombo(result);
 
             if (result.ClearedBoss)
             {
@@ -127,12 +139,6 @@ namespace SudokuRoguelike.Save
                 Meta.HiddenDualModifierBossUnlocked = true;
             }
 
-            if (Meta.HiddenDualModifierBossUnlocked && result.ClearedMultiStageBoss && result.WonWithOneHp)
-            {
-                Meta.ChaosMonkUnlocked = true;
-                UnlockClass(ClassId.ChaosMonk);
-            }
-
             if (result.SolvedEightByEightFourStar)
             {
                 _masteryService.RecordNineByNineFiveStarClear(Mastery);
@@ -144,7 +150,7 @@ namespace SudokuRoguelike.Save
             }
 
             _completionService.Recalculate(Completion, Meta, Mastery, Stats);
-            _achievementService.EvaluateUnlocks(result, Meta);
+            _achievementService.EvaluateUnlocks(result, Meta, Stats, Mastery);
             Stats.TotalAchievementsUnlocked = Meta.UnlockedAchievements.Count;
 
             return newUnlocks;
@@ -190,6 +196,18 @@ namespace SudokuRoguelike.Save
             }
         }
 
+        private void RecordSizeStarCombo(RunResult result)
+        {
+            if (result.TileXpEntries == null) return;
+            for (var i = 0; i < result.TileXpEntries.Count; i++)
+            {
+                var entry = result.TileXpEntries[i];
+                var key = $"{entry.BoardSize}x{entry.Stars}";
+                if (Stats.ClearedSizeStarKeys.Add(key))
+                    Stats.SizeStarCombosCleared++;
+            }
+        }
+
         private static void CopyMeta(MetaProgressionState from, MetaProgressionState to)
         {
             if (from == null || to == null)
@@ -197,7 +215,6 @@ namespace SudokuRoguelike.Save
                 return;
             }
 
-            to.GardenEssence = from.GardenEssence;
             to.EndlessZenUnlocked = from.EndlessZenUnlocked;
             to.SpiritTrialsUnlocked = from.SpiritTrialsUnlocked;
             to.MaxStarCap = from.MaxStarCap;
@@ -206,10 +223,6 @@ namespace SudokuRoguelike.Save
 
             if (from.GardenProgression != null)
             {
-                to.GardenProgression.CurrentLevel = from.GardenProgression.CurrentLevel;
-                to.GardenProgression.CurrentXp = from.GardenProgression.CurrentXp;
-                to.GardenProgression.PrestigeTier = from.GardenProgression.PrestigeTier;
-                to.GardenProgression.PassiveTier = from.GardenProgression.PassiveTier;
                 to.GardenProgression.TotalXpEarned = from.GardenProgression.TotalXpEarned;
                 to.GardenProgression.ArchiveRunCount = from.GardenProgression.ArchiveRunCount;
                 to.GardenProgression.ArchiveSeedsBloomed = from.GardenProgression.ArchiveSeedsBloomed;
@@ -223,10 +236,8 @@ namespace SudokuRoguelike.Save
                     to.GardenProgression.ClassEntries.Add(new ClassGardenProgressEntry
                     {
                         ClassId = source.ClassId,
-                        Level = source.Level,
-                        CurrentXp = source.CurrentXp,
-                        PrestigeTier = source.PrestigeTier,
-                        TotalXpEarned = source.TotalXpEarned
+                        TotalXp = source.TotalXp,
+                        PrestigeTier = source.PrestigeTier
                     });
                 }
             }
@@ -237,10 +248,10 @@ namespace SudokuRoguelike.Save
                 to.UnlockedClasses.Add(from.UnlockedClasses[i]);
             }
 
-            to.UnlockedRelics.Clear();
-            for (var i = 0; i < from.UnlockedRelics.Count; i++)
+            to.DiscoveredRelics.Clear();
+            for (var i = 0; i < from.DiscoveredRelics.Count; i++)
             {
-                to.UnlockedRelics.Add(from.UnlockedRelics[i]);
+                to.DiscoveredRelics.Add(from.DiscoveredRelics[i]);
             }
 
             to.PurchasedPermanentUpgrades.Clear();
@@ -281,9 +292,28 @@ namespace SudokuRoguelike.Save
             to.BossClears = from.BossClears;
             to.AverageMistakes = from.AverageMistakes;
             to.FastestSeconds = from.FastestSeconds;
-            to.HighestHeatScore = from.HighestHeatScore;
             to.HighestEndlessDepth = from.HighestEndlessDepth;
             to.TotalAchievementsUnlocked = from.TotalAchievementsUnlocked;
+            to.SizeStarCombosCleared = from.SizeStarCombosCleared;
+            to.HighestGoldInSingleRun = from.HighestGoldInSingleRun;
+            to.RiskRoutesChosenInBestRun = from.RiskRoutesChosenInBestRun;
+            to.HighestCombo = from.HighestCombo;
+            to.HighestFloorReached = from.HighestFloorReached;
+            to.ModifiersEncountered = from.ModifiersEncountered;
+            to.CompletedFullRun = from.CompletedFullRun;
+            to.UsedItem = from.UsedItem;
+            to.AcquiredRelic = from.AcquiredRelic;
+            to.BoughtFromShop = from.BoughtFromShop;
+            to.SwappedRelic = from.SwappedRelic;
+            to.CompletedTutorialPuzzle = from.CompletedTutorialPuzzle;
+            to.CompletedNoItemRun = from.CompletedNoItemRun;
+            to.CompletedFlawlessFloor = from.CompletedFlawlessFloor;
+            to.AcquiredEpicItem = from.AcquiredEpicItem;
+            to.HighestSpiritTrialScore = from.HighestSpiritTrialScore;
+
+            to.ClearedSizeStarKeys.Clear();
+            foreach (var key in from.ClearedSizeStarKeys)
+                to.ClearedSizeStarKeys.Add(key);
         }
 
         private static void CopyTutorial(TutorialProgressState from, TutorialProgressState to)
@@ -342,7 +372,6 @@ namespace SudokuRoguelike.Save
             to.AllModifiersCleared = from.AllModifiersCleared;
             to.AllClassesLevelThirty = from.AllClassesLevelThirty;
             to.AllRelicsUnlocked = from.AllRelicsUnlocked;
-            to.MultiStageBossHighHeatClear = from.MultiStageBossHighHeatClear;
         }
     }
 }

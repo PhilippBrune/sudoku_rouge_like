@@ -5,6 +5,7 @@ using SudokuRoguelike.Classes;
 using SudokuRoguelike.Core;
 using SudokuRoguelike.Economy;
 using SudokuRoguelike.Items;
+using SudokuRoguelike.Meta;
 using SudokuRoguelike.Route;
 using SudokuRoguelike.Sudoku;
 using SudokuRoguelike.Tutorial;
@@ -20,7 +21,6 @@ namespace SudokuRoguelike.Run
         private readonly RunGraphService _runGraphService;
         private readonly ShopService _shopService;
         private readonly RelicService _relicService;
-        private readonly RelicSynergyService _relicSynergyService = new();
         private readonly RunArchetypeService _archetypeService = new();
         private readonly CurseService _curseService = new();
         private readonly RunEventService _eventService;
@@ -32,6 +32,7 @@ namespace SudokuRoguelike.Run
         private readonly RunFeelService _feelService = new();
         private readonly Dictionary<int, List<BossModifierId>> _bossModifiersByDepth = new();
         private readonly List<(int Row, int Col)> _lastFinderHints = new();
+        private readonly List<TileXpEntry> _tileXpLog = new();
 
         public RunState RunState { get; private set; }
         public LevelConfig CurrentLevelConfig { get; private set; }
@@ -41,6 +42,7 @@ namespace SudokuRoguelike.Run
         public ModifierOverlayData CurrentOverlayData { get; private set; }
         public SudokuConstraintEngine CurrentConstraintEngine { get; private set; }
         public RunFeelState FeelState => _feelService.State;
+        public BossService BossServiceInstance => _bossService;
         public List<RunNode> CurrentRunGraph { get; private set; } = new();
         public List<ShopOffer> CurrentShopOffers { get; private set; } = new();
         public RunEvent CurrentEvent { get; private set; }
@@ -75,7 +77,7 @@ namespace SudokuRoguelike.Run
             _bossService = new BossService(seed + 37);
             _runGraphService = new RunGraphService(seed + 47);
             _shopService = new ShopService(seed + 59);
-            _relicService = new RelicService();
+            _relicService = new RelicService(seed + 67);
             _eventService = new RunEventService(_curseService);
         }
 
@@ -122,7 +124,6 @@ namespace SudokuRoguelike.Run
                 CurrentGold = 0,
                 ItemSlots = snapshot.ItemSlots,
                 RerollTokens = snapshot.RerollTokens,
-                Level = 1,
                 CurrentXP = 0
             };
 
@@ -133,12 +134,10 @@ namespace SudokuRoguelike.Run
                 RunState.RerollTokens = 0;
             }
 
-            RunState.CurrentHeatScore = 1f;
-            RunState.PeakHeatScore = 1f;
-            RunState.HeatHistory.Clear();
-            RunState.HeatHistory.Add(1f);
             RunState.CurrentNodeIndex = 0;
-            CurrentRunGraph = _runGraphService.BuildRunGraph(RunNumber);
+            RunState.CurrentFloor = 0;
+            _tileXpLog.Clear();
+            CurrentRunGraph = _runGraphService.BuildFloorGraph(0, RunState.Seed);
             RunState.NodePath.Clear();
             for (var i = 0; i < CurrentRunGraph.Count; i++)
             {
@@ -162,10 +161,13 @@ namespace SudokuRoguelike.Run
         public void AdvanceToNextGarden()
         {
             RunNumber++;
+            RunState.CurrentFloor++;
             RunState.Depth++;
             RunState.CurrentNodeIndex = 0;
             RunState.PreBossPuzzlesCompleted = 0;
-            CurrentRunGraph = _runGraphService.BuildRunGraph(RunNumber);
+            RunState.ChosenBossModifier = null;
+            RunState.ChosenBossModifiers.Clear();
+            CurrentRunGraph = _runGraphService.BuildFloorGraph(RunState.CurrentFloor, RunState.Seed);
             RunState.NodePath.Clear();
             for (var i = 0; i < CurrentRunGraph.Count; i++)
             {
@@ -173,6 +175,14 @@ namespace SudokuRoguelike.Run
             }
 
             RefreshRunBuildIdentity();
+        }
+
+        public void RebuildCurrentFloorGraph()
+        {
+            CurrentRunGraph = _runGraphService.BuildFloorGraph(RunState.CurrentFloor, RunState.Seed);
+            RunState.NodePath.Clear();
+            for (var i = 0; i < CurrentRunGraph.Count; i++)
+                RunState.NodePath.Add(CurrentRunGraph[i]);
         }
 
         public void StartLevel(LevelConfig config)
@@ -204,11 +214,57 @@ namespace SudokuRoguelike.Run
 
             if (config.ActiveModifiers.Count > 0)
             {
-                CurrentOverlayData = ModifierGeometryGenerator.Generate(
-                    CurrentBoard, config.ActiveModifiers, _random.Next());
+                // Try overlay generation with the current board; if the geometry doesn't fit
+                // (e.g. no valid thermo paths, no ratio pairs), regenerate the entire puzzle.
+                var overlayValid = false;
+                for (var boardRetry = 0; boardRetry < 5 && !overlayValid; boardRetry++)
+                {
+                    if (boardRetry > 0)
+                    {
+                        // Regenerate puzzle with a new seed to get a different solution
+                        var regen = SudokuGenerationService.Generate(new PuzzleGenerationRequest
+                        {
+                            BoardSize = config.BoardSize,
+                            Stars = config.Stars,
+                            TargetTier = ResolveTargetDifficultyTier(config),
+                            AllowBruteForceOnly = config.IsBoss && config.ActiveModifiers.Count >= 2,
+                            Seed = _random.Next(),
+                            RegionVariant = config.RegionVariant,
+                            ActiveModifiers = new List<BossModifierId>(config.ActiveModifiers)
+                        });
+
+                        if (regen.Success && regen.Board != null)
+                        {
+                            CurrentBoard = regen.Board;
+                            CurrentPuzzleAnalysis = regen.Analysis;
+                        }
+                        else
+                        {
+                            CurrentBoard = SudokuGenerator.CreatePuzzle(config.BoardSize, config.MissingPercent, _random.Next(), config.RegionVariant);
+                            CurrentPuzzleAnalysis = SudokuLogicalAnalyzer.Analyze(CurrentBoard, config.ActiveModifiers, allowBruteForce: false);
+                        }
+                    }
+
+                    CurrentOverlayData = ModifierGeometryGenerator.Generate(
+                        CurrentBoard, config.ActiveModifiers, _random.Next(), config.ModifierIntensity);
+
+                    // Retry overlay seeds on the same board a few times
+                    for (var seedRetry = 0; seedRetry < 12 && !HasAllModifiersPresent(config.ActiveModifiers, CurrentOverlayData); seedRetry++)
+                    {
+                        CurrentOverlayData = ModifierGeometryGenerator.Generate(
+                            CurrentBoard, config.ActiveModifiers, _random.Next(), config.ModifierIntensity);
+                    }
+
+                    overlayValid = HasAllModifiersPresent(config.ActiveModifiers, CurrentOverlayData);
+                }
+
                 var rules = ModifierFactory.BuildRules(config.ActiveModifiers, CurrentOverlayData);
                 CurrentConstraintEngine = new SudokuConstraintEngine();
                 CurrentConstraintEngine.SetRulesDeterministic(rules);
+
+                // Cells that are part of modifier overlays (lines, dots, cages, arrows, markers)
+                // must never be given at puzzle start — the player must solve them.
+                ClearOverlayCellsFromGivenMask(CurrentBoard, CurrentOverlayData);
             }
             else
             {
@@ -216,8 +272,6 @@ namespace SudokuRoguelike.Run
                 CurrentConstraintEngine = null;
             }
 
-            UpdateCurrentHeatScore();
-            CurrentLevelState.StartHeatScore = CurrentLevelState.CurrentHeatScore;
         }
 
         public void StartTutorialRun(TutorialSetupConfig tutorialSetup)
@@ -287,6 +341,7 @@ namespace SudokuRoguelike.Run
                 _runGraphService.RevealNextTwoLayers(CurrentRunGraph, depth);
             }
 
+            var allowIrregular = RunState == null || RunState.AllowIrregularPuzzles;
             var config = new LevelConfig
             {
                 Difficulty = difficulty,
@@ -294,7 +349,7 @@ namespace SudokuRoguelike.Run
                 BoardSize = boardSize,
                 MissingPercent = missing,
                 IsBoss = false,
-                RegionVariant = _random.Next(3)
+                RegionVariant = allowIrregular ? _random.Next(4) : _random.Next(2)
             };
 
             if (nodeType == NodeType.ElitePuzzle)
@@ -310,29 +365,19 @@ namespace SudokuRoguelike.Run
                 config.Stars = Math.Max(config.Stars, 4);
                 config.BoardSize = Math.Max(config.BoardSize, 8);
 
-                if (!_bossModifiersByDepth.TryGetValue(depth, out var rolled))
+                // Intensity scales with floor: floor 0-1=Low, 2=Medium, 3=High, 4=VeryHigh
+                var floor = RunState?.CurrentFloor ?? 0;
+                config.ModifierIntensity = floor switch
                 {
-                    rolled = _bossService.RollBossChoices(RunNumber, config.Stars);
-                    _bossModifiersByDepth[depth] = rolled;
-                }
+                    <= 1 => BossModifierIntensity.Low,
+                    2    => BossModifierIntensity.Medium,
+                    3    => BossModifierIntensity.High,
+                    _    => BossModifierIntensity.VeryHigh
+                };
 
-                if (RunState.ChosenBossModifier.HasValue)
-                {
-                    if (!config.ActiveModifiers.Contains(RunState.ChosenBossModifier.Value))
-                    {
-                        config.ActiveModifiers.Add(RunState.ChosenBossModifier.Value);
-                    }
-                }
-                else
-                {
-                    for (var i = 0; i < rolled.Count && i < 2; i++)
-                    {
-                        if (!config.ActiveModifiers.Contains(rolled[i]))
-                        {
-                            config.ActiveModifiers.Add(rolled[i]);
-                        }
-                    }
-                }
+                // Modifiers are applied by RunMapController.GetFixedLevelConfig from
+                // ChosenBossModifiers after the player confirms at the boss gate panel.
+                // Do NOT add modifiers here — they would be cached before the player chooses.
             }
 
             if (RunState.CorruptedGardenPath)
@@ -343,9 +388,8 @@ namespace SudokuRoguelike.Run
                 }
             }
 
-            var expectedHeat = Math.Max(1f, RunState.CurrentHeatScore <= 0f ? 1f : RunState.CurrentHeatScore);
             var allowSpike = nodeType == NodeType.ElitePuzzle;
-            _varianceService.ApplyVariance(config, expectedHeat, riskPath, _random, allowSpike);
+            _varianceService.ApplyVariance(config, riskPath, _random, allowSpike);
 
             if (_random.NextDouble() < 0.1)
             {
@@ -359,6 +403,21 @@ namespace SudokuRoguelike.Run
         {
             if (CurrentBoard == null || RunState == null || CurrentLevelState == null)
             {
+                return false;
+            }
+
+            // Fogged cells: place without validation; wrong placements are penalised when fog is revealed.
+            if (CurrentOverlayData != null && CurrentOverlayData.IsFogged(row, col))
+            {
+                CurrentBoard.SetCell(row, col, value);
+                CurrentLevelState.Moves.Add(new MoveRecord
+                {
+                    Row = row,
+                    Col = col,
+                    Value = value,
+                    WasCorrect = false,
+                    WasPencil = false
+                });
                 return false;
             }
 
@@ -385,12 +444,41 @@ namespace SudokuRoguelike.Run
                     RunState.CurrentGold += comboGold;
                 }
 
-                UpdateCurrentHeatScore();
-
                 if (CurrentOverlayData != null && CurrentOverlayData.FogCells.Count > 0)
                 {
+                    // Capture which neighbours are currently fogged before the reveal.
+                    var boardSize = CurrentBoard.Size;
+                    var dr = new[] { 0, -1, 1, 0, 0 };
+                    var dc = new[] { 0, 0, 0, -1, 1 };
+                    var wasFogged = new System.Collections.Generic.List<(int r, int c)>();
+                    for (var d = 0; d < 5; d++)
+                    {
+                        var rr = row + dr[d];
+                        var cc = col + dc[d];
+                        if (rr >= 0 && rr < boardSize && cc >= 0 && cc < boardSize
+                            && CurrentOverlayData.IsFogged(rr, cc))
+                        {
+                            wasFogged.Add((rr, cc));
+                        }
+                    }
+
                     ModifierGeometryGenerator.RevealAdjacentFog(
-                        CurrentOverlayData, row, col, CurrentBoard.Size);
+                        CurrentOverlayData, row, col, boardSize);
+
+                    // Penalise any wrong values that were placed in now-revealed fog cells.
+                    for (var fi = 0; fi < wasFogged.Count; fi++)
+                    {
+                        var (fr, fc) = wasFogged[fi];
+                        if (!CurrentOverlayData.IsFogged(fr, fc)
+                            && !CurrentBoard.IsEmpty(fr, fc)
+                            && !CurrentBoard.IsGiven(fr, fc)
+                            && CurrentBoard.GetCell(fr, fc) != CurrentBoard.Solution[fr, fc])
+                        {
+                            CurrentLevelState.Mistakes++;
+                            ApplyMistakePenalty();
+                            _feelService.OnMistake(RunState.CurrentHP);
+                        }
+                    }
                 }
 
                 if (CurrentBoard.IsComplete())
@@ -405,7 +493,6 @@ namespace SudokuRoguelike.Run
             CurrentLevelState.Mistakes++;
             ApplyMistakePenalty();
             _feelService.OnMistake(RunState.CurrentHP);
-            UpdateCurrentHeatScore();
             return false;
         }
 
@@ -448,7 +535,6 @@ namespace SudokuRoguelike.Run
                 RunState.CurrentPencil = Math.Max(0, RunState.CurrentPencil - pencilCost);
             }
 
-            UpdateCurrentHeatScore();
             return true;
         }
 
@@ -474,7 +560,6 @@ namespace SudokuRoguelike.Run
             RunState.CurrentGold -= cost;
             RunState.CurrentPencil += 5;
             RunState.PencilPurchasesThisRun++;
-            UpdateCurrentHeatScore();
             return true;
         }
 
@@ -485,7 +570,15 @@ namespace SudokuRoguelike.Run
                 return new List<ItemRollSlot>();
             }
 
-            return _itemService.RollSlots(CurrentLevelConfig.Difficulty, CurrentLevelConfig.Stars);
+            var bonusSlots = RelicService.GetBonusRewardSlots(RunState);
+            return _itemService.RollSlots(CurrentLevelConfig.Stars, GetClassLevel(), bonusSlots);
+        }
+
+        private int GetClassLevel()
+        {
+            // Level derived from TotalXp at runtime — during run, we don't have meta state,
+            // so we use a conservative default of 1. The shop/item service can accept any level.
+            return 1;
         }
 
         public bool TryRerollItemSlots(List<ItemRollSlot> slots)
@@ -503,7 +596,7 @@ namespace SudokuRoguelike.Run
 
             RunState.CurrentGold -= cost;
             RunState.RerollsThisRun++;
-            _itemService.RerollEligibleSlots(slots, CurrentLevelConfig.Difficulty, CurrentLevelConfig.Stars);
+            _itemService.RerollEligibleSlots(slots, CurrentLevelConfig.Stars, GetClassLevel());
             return true;
         }
 
@@ -515,7 +608,7 @@ namespace SudokuRoguelike.Run
                 {
                     if (slots[i].IsNothing)
                     {
-                        RunState.CurrentGold += Math.Max(0, slots[i].NothingGoldBonus);
+                        // Nothing slot grants no gold — pure sacrifice mechanic
                     }
                     else if (slots[i].RolledItem != null)
                     {
@@ -572,47 +665,45 @@ namespace SudokuRoguelike.Run
             {
                 var zenGold = (int)Math.Round(5 * RunState.GlobalGoldMultiplier);
                 RunState.CurrentGold += Math.Max(0, zenGold);
-                RunState.CurrentXP += FormulaService.CalculateXp(CurrentLevelConfig.Difficulty, CurrentLevelConfig.Stars);
+                var zenTile = XpService.CalculateTile(CurrentLevelConfig.BoardSize, CurrentLevelConfig.Stars, 0, false, (CurrentLevelState?.Mistakes ?? 0) == 0);
+                RunState.CurrentXP += zenTile.TotalXp;
+                _tileXpLog.Add(zenTile);
                 RunState.CurrentPencil += 1;
                 RunState.Depth++;
-                UpdateCurrentHeatScore();
-                RunState.HeatHistory.Add(RunState.CurrentHeatScore);
                 return;
             }
 
             if (RunState.Mode == GameMode.SpiritTrials)
             {
-                RunState.CurrentXP += FormulaService.CalculateXp(CurrentLevelConfig.Difficulty, CurrentLevelConfig.Stars);
+                var spiritTile = XpService.CalculateTile(CurrentLevelConfig.BoardSize, CurrentLevelConfig.Stars, 0, false, (CurrentLevelState?.Mistakes ?? 0) == 0);
+                RunState.CurrentXP += spiritTile.TotalXp;
+                _tileXpLog.Add(spiritTile);
                 RunState.CurrentPencil += 1;
                 RunState.Depth++;
                 return;
             }
 
-            var gold = FormulaService.CalculateGold(CurrentLevelConfig.Difficulty, CurrentLevelConfig.Stars);
-            var xp = FormulaService.CalculateXp(CurrentLevelConfig.Difficulty, CurrentLevelConfig.Stars);
+            var perfectSolve = (CurrentLevelState?.Mistakes ?? 0) == 0;
+            var tileXp = XpService.CalculateTile(
+                CurrentLevelConfig.BoardSize,
+                CurrentLevelConfig.Stars,
+                CurrentLevelConfig.ActiveModifiers.Count,
+                CurrentLevelConfig.IsBoss,
+                perfectSolve);
+            _tileXpLog.Add(tileXp);
 
+            var gold = FormulaService.CalculateGold(CurrentLevelConfig.Difficulty, CurrentLevelConfig.Stars);
             var modifierBonus = CurrentLevelConfig.ActiveModifiers.Count >= 2 ? 1.15f : CurrentLevelConfig.ActiveModifiers.Count == 1 ? 1.05f : 1f;
             gold = (int)Math.Round(gold * CurrentGoldMultiplier * RunState.GlobalGoldMultiplier * modifierBonus);
-            xp += CurrentBonusXp;
-            if (clearMind)
-            {
-                xp = (int)Math.Round(xp * 1.10f);
-            }
-
-            if (RunState.CarryGoldInterest)
-            {
-                var interest = (int)Math.Round(RunState.CurrentGold * 0.05f);
-                RunState.CurrentGold += Math.Max(0, interest);
-            }
 
             RunState.CurrentGold += Math.Max(0, gold);
-            RunState.CurrentXP += Math.Max(0, xp);
+            RunState.CurrentXP += tileXp.TotalXp;
             RunState.CurrentPencil += Math.Max(0, 2 + CurrentBonusPencilReward);
-            RunState.Depth++;
-            UpdateCurrentHeatScore();
-            RunState.HeatHistory.Add(RunState.CurrentHeatScore);
 
-            ProcessLevelUps();
+            // Apply relic puzzle-complete effects
+            RelicService.ApplyPuzzleComplete(RunState, perfectSolve);
+
+            RunState.Depth++;
         }
 
         public RouteChoice RollRouteChoice()
@@ -692,28 +783,6 @@ namespace SudokuRoguelike.Run
             CurrentGoldMultiplier = goldMultiplier;
             CurrentBonusPencilReward = bonusPencilReward;
             CurrentBonusXp = bonusXp;
-            UpdateCurrentHeatScore();
-        }
-
-        public bool CanAcceptNextLevelHeat(LevelConfig nextLevel)
-        {
-            var hpRatio = RunState.MaxHP <= 0 ? 1f : (float)RunState.CurrentHP / RunState.MaxHP;
-            var startPencil = Math.Max(1, RunState.MaxPencil);
-            var pencilRatio = (float)Math.Max(0, RunState.CurrentPencil) / startPencil;
-            var modifierTier = ResolveConstraintTier(nextLevel.ActiveModifiers);
-            var interference = ResolveInterferenceFlags(nextLevel.ActiveModifiers);
-
-            var nextHeat = HeatScoreService.ComputeHeatScore(
-                nextLevel.BoardSize,
-                nextLevel.MissingPercent,
-                modifierTier,
-                interference.HasArithmetic,
-                interference.HasFog,
-                interference.HasDual,
-                hpRatio,
-                pencilRatio);
-
-            return HeatScoreService.IsValidHeatStep(RunState.CurrentHeatScore, nextHeat, nextLevel.IsBoss);
         }
 
         public RunResult BuildRunResult(bool victory, int bossPhaseReached, int secondsPlayed)
@@ -726,11 +795,8 @@ namespace SudokuRoguelike.Run
                 Mode = RunState.Mode,
                 Victory = victory,
                 GardenDepthReached = RunState.Depth,
-                FinalHeatScore = RunState.CurrentHeatScore,
-                PeakHeatScore = RunState.PeakHeatScore,
                 GoldEarned = RunState.TutorialMode ? 0 : RunState.CurrentGold,
                 XpEarned = RunState.TutorialMode ? 0 : RunState.CurrentXP,
-                EssenceEarned = RunState.TutorialMode ? 0 : Math.Max(0, (victory ? 20 : 5) + (RunState.Depth / 2)),
                 BossPhaseReached = bossPhaseReached,
                 MistakesMade = CurrentLevelState?.Mistakes ?? 0,
                 SecondsPlayed = Math.Max(1, secondsPlayed),
@@ -745,8 +811,19 @@ namespace SudokuRoguelike.Run
                 ClearedMultiStageBoss = MilestoneClearedMultiStageBoss,
                 PerfectClear = FeelState.ClearMindAwarded,
                 PeakCombo = FeelState.PeakCorrectStreak,
-                FinalArchetype = RunState.CurrentArchetype
+                FinalArchetype = RunState.CurrentArchetype,
+                ItemsUsedThisRun = RunState.ItemsUsedCount,
+                RelicsCollectedThisRun = RunState.HasRelic ? 1 : 0,
+                ClearedStageNoPencilNoHpLoss = victory && RunState.PencilUsedCount == 0 && (CurrentLevelState?.Mistakes ?? 0) == 0,
+                HighestBoardSize = CurrentLevelConfig?.BoardSize ?? 0,
+                HighestStarCleared = CurrentLevelConfig?.Stars ?? 0,
+                SimultaneousModifiersOnBoss = CurrentLevelConfig?.ActiveModifiers?.Count ?? 0,
+                UsedAnyItem = RunState.ItemsUsedCount > 0,
+                FlawlessFloor = victory && (CurrentLevelState?.Mistakes ?? 0) == 0
             };
+
+            for (var ti = 0; ti < _tileXpLog.Count; ti++)
+                result.TileXpEntries.Add(_tileXpLog[ti]);
 
             result.Analytics = _analyticsService.Build(RunState, result, CurrentLevelConfig, CurrentLevelState);
             return result;
@@ -779,7 +856,8 @@ namespace SudokuRoguelike.Run
 
         public List<ShopOffer> BuildShopOffers()
         {
-            CurrentShopOffers = _shopService.BuildOffers(RunState.Depth, ShopPurchasesThisRun);
+            var priceMult = RelicService.GetShopPriceMultiplier(RunState);
+            CurrentShopOffers = _shopService.BuildOffers(RunState.CurrentFloor, GetClassLevel(), priceMult);
             return CurrentShopOffers;
         }
 
@@ -826,7 +904,8 @@ namespace SudokuRoguelike.Run
             }
 
             // Include reroll count in the shop generation input so rerolled sets diverge.
-            CurrentShopOffers = _shopService.BuildOffers(RunState.Depth, ShopPurchasesThisRun + RunState.RerollsThisRun);
+            var priceMult = RelicService.GetShopPriceMultiplier(RunState);
+            CurrentShopOffers = _shopService.BuildOffers(RunState.CurrentFloor, GetClassLevel(), priceMult);
             return true;
         }
 
@@ -843,27 +922,11 @@ namespace SudokuRoguelike.Run
                 RunState.CurrentGold -= offer.Price;
                 ShopPurchasesThisRun++;
 
-                if (offer.IsRelic)
+                if (offer.IsRelic && offer.RelicOffer != null)
                 {
-                    if (!string.IsNullOrWhiteSpace(offer.RelicId))
-                    {
-                        RunState.RelicIds.Add(offer.RelicId);
-                        _relicService.ApplyRunRelicEffects(RunState);
-                        if (offer.RelicId.Contains("shifting_garden", StringComparison.OrdinalIgnoreCase))
-                        {
-                            RunState.CorruptedGardenPath = true;
-                        }
-                        else if (offer.RelicId.Contains("silent_grid", StringComparison.OrdinalIgnoreCase))
-                        {
-                            RunState.MistakeShieldCharges += 2;
-                        }
-                        else if (offer.RelicId.Contains("golden_root", StringComparison.OrdinalIgnoreCase))
-                        {
-                            RunState.CarryGoldInterest = true;
-                        }
-
-                        RefreshRunBuildIdentity();
-                    }
+                    // Single relic slot: if player already has one, caller should show choice UI first
+                    _relicService.AcceptRelic(RunState, offer.RelicOffer);
+                    RefreshRunBuildIdentity();
                 }
                 else if (offer.Item != null)
                 {
@@ -887,12 +950,12 @@ namespace SudokuRoguelike.Run
                     continue;
                 }
 
-                if (offer.IsRelic || offer.Item == null)
+                if (offer.IsRelic)
                 {
                     return TryPurchaseShopOffer(offerId);
                 }
 
-                if (replaceIndex < 0 || replaceIndex >= RunState.Inventory.Count)
+                if (offer.Item == null || replaceIndex < 0 || replaceIndex >= RunState.Inventory.Count)
                 {
                     return false;
                 }
@@ -935,29 +998,21 @@ namespace SudokuRoguelike.Run
             switch (item.Type)
             {
                 case ItemType.Solver:
-                    used = _itemService.TryUseSolver(CurrentBoard, item.Rarity, row, col);
+                    used = ItemService.TryUseSolver(CurrentBoard, item.Rarity, row, col);
                     message = used ? "Solver used." : "Solver requires an empty selected cell.";
+                    if (used) MarkSolverItemUsed();
                     break;
                 case ItemType.Finder:
                 {
-                    var matches = _itemService.UseFinder(CurrentBoard, item.Rarity, row, col);
+                    var matches = ItemService.UseFinder(CurrentBoard, item.Rarity, row, col);
                     used = matches.Count > 0;
-                    if (used)
-                    {
-                        _lastFinderHints.AddRange(matches);
-                    }
-
-                    message = used ? $"Finder added {matches.Count} matching pencil hint(s)." : "Finder needs a selected filled value.";
+                    if (used) _lastFinderHints.AddRange(matches);
+                    message = used ? $"Finder highlighted {matches.Count} matching cell(s)." : "Finder needs a selected filled value.";
                     break;
                 }
                 case ItemType.InkWell:
                 {
-                    var restore = item.Rarity switch
-                    {
-                        ItemRarity.Normal => 3,
-                        ItemRarity.Rare => 5,
-                        _ => 7
-                    };
+                    var restore = ItemService.GetInkWellAmount(item.Rarity);
                     RunState.CurrentPencil = Math.Min(RunState.MaxPencil, RunState.CurrentPencil + restore);
                     used = true;
                     message = $"+{restore} Pencil.";
@@ -965,12 +1020,7 @@ namespace SudokuRoguelike.Run
                 }
                 case ItemType.MeditationStone:
                 {
-                    var heal = item.Rarity switch
-                    {
-                        ItemRarity.Normal => 1,
-                        ItemRarity.Rare => 2,
-                        _ => 3
-                    };
+                    var heal = ItemService.GetMeditationStoneAmount(item.Rarity);
                     RunState.CurrentHP = Math.Min(RunState.MaxHP, RunState.CurrentHP + heal);
                     used = true;
                     message = $"+{heal} HP.";
@@ -978,124 +1028,130 @@ namespace SudokuRoguelike.Run
                 }
                 case ItemType.WindChime:
                 {
-                    var cleared = ClearPencilsInRowAndColumn(row, col);
-                    used = cleared > 0;
-                    message = used ? $"Wind Chime cleared {cleared} pencil marks." : "No pencil marks to clear in this row/column.";
+                    // Undo last wrong input (within 3 moves)
+                    var undone = TryUndoLastMistake();
+                    if (undone)
+                    {
+                        if (item.Rarity >= ItemRarity.Rare)
+                            RunState.CurrentHP = Math.Min(RunState.MaxHP, RunState.CurrentHP + 1);
+                        if (item.Rarity >= ItemRarity.Epic)
+                            RevealSingleCell(row, col, item.Rarity, out _, out _);
+                    }
+                    used = undone;
+                    message = used ? "Wind Chime undid the last mistake." : "No recent mistake to undo.";
                     break;
                 }
                 case ItemType.PatternScroll:
                 {
-                    var added = AddLegalPencilsToCell(row, col);
+                    var zones = ItemService.GetPatternScrollZones(item.Rarity);
+                    var added = zones == -1 ? HighlightFullConflictWeb() : HighlightConflictZones(row, col, zones);
                     used = added > 0;
-                    message = used ? $"Pattern Scroll added {added} candidate marks." : "Select an empty non-given cell for Pattern Scroll.";
+                    message = used ? $"Pattern Scroll highlighted {added} conflict(s)." : "No conflicts found.";
                     break;
                 }
                 case ItemType.KoiReflection:
                 {
-                    var heal = item.Rarity switch
-                    {
-                        ItemRarity.Normal => 1,
-                        ItemRarity.Rare => 2,
-                        _ => 3
-                    };
-                    var pencil = item.Rarity switch
-                    {
-                        ItemRarity.Normal => 2,
-                        ItemRarity.Rare => 4,
-                        _ => 6
-                    };
-                    RunState.CurrentHP = Math.Min(RunState.MaxHP, RunState.CurrentHP + heal);
-                    RunState.CurrentPencil = Math.Min(RunState.MaxPencil, RunState.CurrentPencil + pencil);
-                    used = true;
-                    message = $"Koi Reflection restored {heal} HP and {pencil} Pencil.";
+                    var cells = ItemService.GetKoiReflectionCells(item.Rarity);
+                    var revealed = RevealCandidatesForCells(row, col, cells);
+                    used = revealed > 0;
+                    message = used ? $"Koi Reflection revealed candidates for {revealed} cell(s)." : "No eligible cells.";
                     break;
                 }
                 case ItemType.LanternOfClarity:
                 {
-                    used = RevealSingleCell(row, col, item.Rarity, out var solvedRow, out var solvedCol);
-                    message = used
-                        ? $"Lantern revealed cell ({solvedRow + 1},{solvedCol + 1})."
-                        : "No empty cell available for Lantern of Clarity.";
-                    break;
-                }
-                case ItemType.TeaOfFocus:
-                {
-                    CurrentLevelState.TeaOfFocusActive = true;
-                    CurrentLevelState.TeaOfFocusRemainingPlacements = item.Rarity switch
-                    {
-                        ItemRarity.Normal => 1,
-                        ItemRarity.Rare => 2,
-                        _ => 3
-                    };
+                    var moves = ItemService.GetLanternOfClarityMoves(item.Rarity);
+                    CurrentLevelState.TeaOfFocusActive = true; // reuse fog-disable state
+                    CurrentLevelState.TeaOfFocusRemainingPlacements = moves;
                     used = true;
-                    message = $"Tea of Focus active for {CurrentLevelState.TeaOfFocusRemainingPlacements} placement(s).";
+                    message = $"Fog disabled for {moves} moves.";
                     break;
                 }
-                case ItemType.CherryBlossomPact:
+                case ItemType.GardenRake:
                 {
-                    var boost = item.Rarity switch
-                    {
-                        ItemRarity.Normal => 1,
-                        ItemRarity.Rare => 2,
-                        _ => 3
-                    };
-                    RunState.MaxPencil += boost;
-                    RunState.CurrentPencil = Math.Min(RunState.MaxPencil, RunState.CurrentPencil + (boost * 2));
-                    used = true;
-                    message = $"Cherry Blossom Pact: Max Pencil +{boost}.";
+                    var highlighted = HighlightTwoCandidateCells(row, col);
+                    used = highlighted > 0;
+                    message = used ? $"Garden Rake highlighted {highlighted} cell(s) with 2 candidates." : "No 2-candidate cells in this row/column.";
                     break;
                 }
-                case ItemType.FortuneEnvelope:
+                case ItemType.OfferingBowl:
                 {
-                    var gold = item.Rarity switch
-                    {
-                        ItemRarity.Normal => 8,
-                        ItemRarity.Rare => 14,
-                        _ => 20
-                    };
-                    RunState.CurrentGold += gold;
-                    used = true;
-                    message = $"Fortune Envelope granted {gold} gold.";
-                    break;
-                }
-                case ItemType.StoneShift:
-                {
-                    if (CurrentBoard.IsGiven(row, col))
+                    if (RunState.CurrentHP < 5)
                     {
                         used = false;
-                        message = "Stone Shift cannot clear a given cell.";
-                        break;
+                        message = "Need at least 5 HP to use Offering Bowl.";
                     }
-
-                    if (CurrentBoard.IsEmpty(row, col))
+                    else
+                    {
+                        RunState.CurrentHP -= 5;
+                        used = RevealSingleCell(row, col, ItemRarity.Normal, out var solvedRow, out var solvedCol);
+                        message = used ? $"Offering Bowl revealed cell ({solvedRow + 1},{solvedCol + 1})." : "No empty cell to reveal.";
+                    }
+                    break;
+                }
+                case ItemType.PruningShears:
+                {
+                    used = RemoveImpossibleCandidate(row, col);
+                    message = used ? "Pruning Shears removed an impossible candidate." : "No removable candidates in this box.";
+                    break;
+                }
+                case ItemType.ZenSandSifter:
+                {
+                    var pairs = HighlightHiddenPairsInRow(row);
+                    used = pairs > 0;
+                    message = used ? $"Zen Sand Sifter found {pairs} hidden pair(s)." : "No hidden pairs in this row.";
+                    break;
+                }
+                case ItemType.GinkgoLeaf:
+                {
+                    // Highlights all instances of a chosen number — tracked visually by UI
+                    used = CurrentBoard.GetCell(row, col) > 0;
+                    message = used ? "Ginkgo Leaf active — all instances highlighted." : "Select a filled cell to track.";
+                    break;
+                }
+                case ItemType.RicePaperUmbrella:
+                {
+                    RunState.UmbrellaShieldCharges += 2;
+                    used = true;
+                    message = "Rice Paper Umbrella: next 2 mistakes cost 0 HP.";
+                    break;
+                }
+                case ItemType.TempleIncense:
+                {
+                    // Correct cells for the selected number pulse — tracked by UI
+                    used = CurrentBoard.GetCell(row, col) > 0;
+                    message = used ? "Temple Incense active — correct cells pulsing." : "Select a filled cell.";
+                    break;
+                }
+                case ItemType.KoiDragonScale:
+                {
+                    var filled = CompletesMostFilledLineOrBox();
+                    used = filled > 0;
+                    message = used ? $"Koi Dragon Scale completed {filled} cell(s)!" : "No eligible line or box to complete.";
+                    break;
+                }
+                case ItemType.GoldenKintsugiJar:
+                {
+                    var mistakes = HighlightAllCurrentMistakes();
+                    used = true;
+                    message = mistakes > 0 ? $"Golden Kintsugi Jar found {mistakes} mistake(s)." : "No mistakes on the board.";
+                    break;
+                }
+                case ItemType.SilkFan:
+                {
+                    // Phase 1: player clicked SilkFan — record first cell
+                    if (CurrentBoard.IsGiven(row, col) || CurrentBoard.GetCell(row, col) == 0)
                     {
                         used = false;
-                        message = "Stone Shift needs a filled non-given cell.";
-                        break;
+                        message = "Select a filled (non-given) cell first.";
                     }
-
-                    CurrentBoard.ClearCell(row, col);
-                    used = true;
-                    message = "Stone Shift cleared the selected cell.";
-                    break;
-                }
-                case ItemType.HarmonyCharm:
-                {
-                    var shield = item.Rarity switch
+                    else
                     {
-                        ItemRarity.Normal => 1,
-                        ItemRarity.Rare => 2,
-                        _ => 3
-                    };
-                    RunState.MistakeShieldCharges += shield;
-                    used = true;
-                    message = $"Harmony Charm granted {shield} shield charge(s).";
-                    break;
-                }
-                case ItemType.CompassOfOrder:
-                {
-                    used = AddSingleCorrectCandidate(row, col);
-                    message = used ? "Compass of Order marked a reliable candidate." : "Compass needs an empty non-given cell.";
+                        RunState.SilkFanPendingIndex = inventoryIndex;
+                        RunState.SilkFanFirstRow = row;
+                        RunState.SilkFanFirstCol = col;
+                        used = false; // don't consume yet — consumed on phase 2
+                        message = "Silk Fan: now select the second cell to swap with.";
+                    }
                     break;
                 }
                 default:
@@ -1108,13 +1164,83 @@ namespace SudokuRoguelike.Run
                 return false;
             }
 
-            item.Charges = Math.Max(0, item.Charges - 1);
-            if (item.Charges <= 0)
+            RunState.ItemsUsedCount++;
+
+            // Eternal Lotus relic: items have infinite uses
+            if (!item.IsInfinite && !RelicService.HasInfiniteItems(RunState))
             {
-                RunState.Inventory.RemoveAt(inventoryIndex);
+                item.Charges = Math.Max(0, item.Charges - 1);
+                if (item.Charges <= 0)
+                {
+                    RunState.Inventory.RemoveAt(inventoryIndex);
+                }
             }
 
-            UpdateCurrentHeatScore();
+            return true;
+        }
+
+        public bool IsSilkFanPending => RunState != null && RunState.SilkFanPendingIndex >= 0;
+
+        public void CancelSilkFan()
+        {
+            if (RunState == null) return;
+            RunState.SilkFanPendingIndex = -1;
+            RunState.SilkFanFirstRow = -1;
+            RunState.SilkFanFirstCol = -1;
+        }
+
+        public bool TryCompleteSilkFanSwap(int secondRow, int secondCol, out string message)
+        {
+            message = string.Empty;
+            if (RunState == null || CurrentBoard == null || RunState.SilkFanPendingIndex < 0)
+            {
+                message = "No Silk Fan swap pending.";
+                return false;
+            }
+
+            var firstRow = RunState.SilkFanFirstRow;
+            var firstCol = RunState.SilkFanFirstCol;
+            var itemIndex = RunState.SilkFanPendingIndex;
+
+            // Reset pending state regardless of outcome
+            RunState.SilkFanPendingIndex = -1;
+            RunState.SilkFanFirstRow = -1;
+            RunState.SilkFanFirstCol = -1;
+
+            if (firstRow == secondRow && firstCol == secondCol)
+            {
+                message = "Silk Fan cancelled — same cell.";
+                return false;
+            }
+
+            if (CurrentBoard.IsGiven(secondRow, secondCol) || CurrentBoard.GetCell(secondRow, secondCol) == 0)
+            {
+                message = "Second cell must be filled and non-given.";
+                return false;
+            }
+
+            // Perform the swap
+            var valA = CurrentBoard.GetCell(firstRow, firstCol);
+            var valB = CurrentBoard.GetCell(secondRow, secondCol);
+            CurrentBoard.SetCell(firstRow, firstCol, valB);
+            CurrentBoard.SetCell(secondRow, secondCol, valA);
+
+            // Consume the item
+            RunState.ItemsUsedCount++;
+            if (itemIndex >= 0 && itemIndex < RunState.Inventory.Count)
+            {
+                var item = RunState.Inventory[itemIndex];
+                if (item != null && !item.IsInfinite && !RelicService.HasInfiniteItems(RunState))
+                {
+                    item.Charges = Math.Max(0, item.Charges - 1);
+                    if (item.Charges <= 0)
+                    {
+                        RunState.Inventory.RemoveAt(itemIndex);
+                    }
+                }
+            }
+
+            message = $"Silk Fan swapped ({firstRow + 1},{firstCol + 1}) and ({secondRow + 1},{secondCol + 1}).";
             return true;
         }
 
@@ -1192,6 +1318,225 @@ namespace SudokuRoguelike.Run
 
             CurrentBoard.GetPencilSet(row, col).Add(solutionValue);
             return true;
+        }
+
+        private bool TryUndoLastMistake()
+        {
+            if (CurrentLevelState == null || CurrentLevelState.Moves.Count == 0)
+                return false;
+
+            // Look back up to 3 moves for the most recent wrong placement
+            var limit = Math.Min(3, CurrentLevelState.Moves.Count);
+            for (var i = CurrentLevelState.Moves.Count - 1; i >= CurrentLevelState.Moves.Count - limit; i--)
+            {
+                var move = CurrentLevelState.Moves[i];
+                if (!move.WasCorrect && !move.WasPencil)
+                {
+                    CurrentBoard.ClearCell(move.Row, move.Col);
+                    CurrentLevelState.Moves.RemoveAt(i);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private int HighlightConflictZones(int row, int col, int zoneCount)
+        {
+            // Highlights conflicts in row/col/box — returns count of conflicts found
+            if (CurrentBoard == null) return 0;
+            var conflicts = 0;
+            // Check row
+            for (var c = 0; c < CurrentBoard.Size && conflicts < zoneCount; c++)
+            {
+                if (c == col) continue;
+                var val = CurrentBoard.GetCell(row, c);
+                if (val > 0 && val != CurrentBoard.Solution[row, c]) conflicts++;
+            }
+            // Check column
+            for (var r = 0; r < CurrentBoard.Size && conflicts < zoneCount; r++)
+            {
+                if (r == row) continue;
+                var val = CurrentBoard.GetCell(r, col);
+                if (val > 0 && val != CurrentBoard.Solution[r, col]) conflicts++;
+            }
+            return conflicts;
+        }
+
+        private int HighlightFullConflictWeb()
+        {
+            if (CurrentBoard == null) return 0;
+            var conflicts = 0;
+            for (var r = 0; r < CurrentBoard.Size; r++)
+                for (var c = 0; c < CurrentBoard.Size; c++)
+                {
+                    var val = CurrentBoard.GetCell(r, c);
+                    if (val > 0 && val != CurrentBoard.Solution[r, c]) conflicts++;
+                }
+            return conflicts;
+        }
+
+        private int RevealCandidatesForCells(int row, int col, int count)
+        {
+            if (CurrentBoard == null) return 0;
+            var revealed = 0;
+
+            // Start from selected cell, then scan nearby
+            for (var r = 0; r < CurrentBoard.Size && revealed < count; r++)
+            {
+                for (var c = 0; c < CurrentBoard.Size && revealed < count; c++)
+                {
+                    if (!CurrentBoard.IsEmpty(r, c) || CurrentBoard.IsGiven(r, c)) continue;
+                    var added = AddLegalPencilsToCell(r, c);
+                    if (added > 0) revealed++;
+                }
+            }
+            return revealed;
+        }
+
+        private int HighlightTwoCandidateCells(int row, int col)
+        {
+            if (CurrentBoard == null) return 0;
+            var count = 0;
+            // Check cells in same row and column
+            for (var c = 0; c < CurrentBoard.Size; c++)
+            {
+                if (CurrentBoard.IsEmpty(row, c) && !CurrentBoard.IsGiven(row, c))
+                {
+                    var candidates = CountCandidates(row, c);
+                    if (candidates == 2) count++;
+                }
+            }
+            for (var r = 0; r < CurrentBoard.Size; r++)
+            {
+                if (r == row) continue;
+                if (CurrentBoard.IsEmpty(r, col) && !CurrentBoard.IsGiven(r, col))
+                {
+                    var candidates = CountCandidates(r, col);
+                    if (candidates == 2) count++;
+                }
+            }
+            return count;
+        }
+
+        private int CountCandidates(int row, int col)
+        {
+            var count = 0;
+            for (var v = 1; v <= CurrentBoard.Size; v++)
+                if (IsLegalAt(row, v == col ? row : row, v)) count++;
+            // Simple implementation: count legal values
+            count = 0;
+            for (var v = 1; v <= CurrentBoard.Size; v++)
+                if (IsLegalAt(row, col, v)) count++;
+            return count;
+        }
+
+        private bool RemoveImpossibleCandidate(int row, int col)
+        {
+            if (CurrentBoard == null) return false;
+            // Find the 3x3 box containing this cell and remove one wrong candidate
+            var regionMap = CurrentBoard.RegionMap;
+            if (regionMap == null) return false;
+
+            var regionId = regionMap[row, col];
+            for (var r = 0; r < CurrentBoard.Size; r++)
+            {
+                for (var c = 0; c < CurrentBoard.Size; c++)
+                {
+                    if (regionMap[r, c] != regionId) continue;
+                    if (!CurrentBoard.IsEmpty(r, c)) continue;
+                    var pencils = CurrentBoard.GetPencilSet(r, c);
+                    foreach (var val in pencils)
+                    {
+                        if (val != CurrentBoard.Solution[r, c])
+                        {
+                            pencils.Remove(val);
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        private int HighlightHiddenPairsInRow(int row)
+        {
+            if (CurrentBoard == null) return 0;
+            // Simplified: count cells in this row that have exactly 2 candidates
+            var pairs = 0;
+            for (var c = 0; c < CurrentBoard.Size; c++)
+            {
+                if (CurrentBoard.IsEmpty(row, c) && !CurrentBoard.IsGiven(row, c))
+                {
+                    var count = 0;
+                    for (var v = 1; v <= CurrentBoard.Size; v++)
+                        if (IsLegalAt(row, c, v)) count++;
+                    if (count == 2) pairs++;
+                }
+            }
+            return pairs / 2; // pairs, not cells
+        }
+
+        private int CompletesMostFilledLineOrBox()
+        {
+            if (CurrentBoard == null) return 0;
+            var bestEmpty = int.MaxValue;
+            var bestType = -1; // 0=row, 1=col, 2=region
+            var bestIndex = -1;
+
+            // Find the row/col/region with fewest empty cells (but at least 1)
+            for (var i = 0; i < CurrentBoard.Size; i++)
+            {
+                var rowEmpty = 0;
+                var colEmpty = 0;
+                for (var j = 0; j < CurrentBoard.Size; j++)
+                {
+                    if (CurrentBoard.IsEmpty(i, j)) rowEmpty++;
+                    if (CurrentBoard.IsEmpty(j, i)) colEmpty++;
+                }
+                if (rowEmpty > 0 && rowEmpty < bestEmpty) { bestEmpty = rowEmpty; bestType = 0; bestIndex = i; }
+                if (colEmpty > 0 && colEmpty < bestEmpty) { bestEmpty = colEmpty; bestType = 1; bestIndex = i; }
+            }
+
+            if (bestIndex < 0 || bestEmpty == 0) return 0;
+
+            var filled = 0;
+            if (bestType == 0) // row
+            {
+                for (var c = 0; c < CurrentBoard.Size; c++)
+                {
+                    if (CurrentBoard.IsEmpty(bestIndex, c))
+                    {
+                        CurrentBoard.SetCell(bestIndex, c, CurrentBoard.Solution[bestIndex, c]);
+                        filled++;
+                    }
+                }
+            }
+            else // col
+            {
+                for (var r = 0; r < CurrentBoard.Size; r++)
+                {
+                    if (CurrentBoard.IsEmpty(r, bestIndex))
+                    {
+                        CurrentBoard.SetCell(r, bestIndex, CurrentBoard.Solution[r, bestIndex]);
+                        filled++;
+                    }
+                }
+            }
+            return filled;
+        }
+
+        private int HighlightAllCurrentMistakes()
+        {
+            if (CurrentBoard == null) return 0;
+            var mistakes = 0;
+            for (var r = 0; r < CurrentBoard.Size; r++)
+                for (var c = 0; c < CurrentBoard.Size; c++)
+                {
+                    var val = CurrentBoard.GetCell(r, c);
+                    if (val > 0 && !CurrentBoard.IsGiven(r, c) && val != CurrentBoard.Solution[r, c])
+                        mistakes++;
+                }
+            return mistakes;
         }
 
         private bool RevealSingleCell(int row, int col, ItemRarity rarity, out int solvedRow, out int solvedCol)
@@ -1304,15 +1649,27 @@ namespace SudokuRoguelike.Run
             var changed = _adaptationService.TryTransformRelics(RunState, _random);
             if (changed)
             {
-                if (RunState.RelicIds[RunState.RelicIds.Count - 1].Contains("cursed", StringComparison.OrdinalIgnoreCase))
-                {
-                    _curseService.ApplyCurse(RunState, CurseType.CursedRelicBacklash);
-                }
-
                 RefreshRunBuildIdentity();
             }
 
             return changed;
+        }
+
+        /// <summary>Roll and offer a relic at a relic node. Returns the offered relic and whether a choice is needed.</summary>
+        public (RelicInstance Offered, bool NeedsChoice) RollRelicNodeReward(bool isRiskRoute)
+        {
+            var tierBonus = RelicService.GetRelicNodeTierBonus(RunState);
+            var effectiveFloor = RunState.CurrentFloor + 1 + tierBonus;
+            var offered = _relicService.RollRelic(effectiveFloor, isRiskRoute);
+            var needsChoice = _relicService.OfferRelic(RunState, offered);
+            return (offered, needsChoice);
+        }
+
+        /// <summary>Player chose which relic to keep after a relic node choice.</summary>
+        public void AcceptRelicChoice(RelicInstance chosen)
+        {
+            _relicService.AcceptRelic(RunState, chosen);
+            RefreshRunBuildIdentity();
         }
 
         public void ApplyTemporaryMutation(AdaptationMutationType mutation, int nodes = 3)
@@ -1466,7 +1823,6 @@ namespace SudokuRoguelike.Run
             FeelState.CurrentCorrectStreak = save.ComboStreak;
             FeelState.PeakCorrectStreak = save.PeakCombo;
             FeelState.CurrentMusicLayer = save.MusicLayer;
-            UpdateCurrentHeatScore();
             return true;
         }
 
@@ -1604,6 +1960,12 @@ namespace SudokuRoguelike.Run
                 return;
             }
 
+            // Relic mistake absorption (Cracked Teacup, Rice Paper Umbrella)
+            if (RelicService.TryAbsorbMistake(RunState))
+            {
+                return;
+            }
+
             var hpCost = CurrentMistakePenalty;
             if (RunState.TutorialMode && RunState.TutorialResourceMode == TutorialResourceMode.Free)
             {
@@ -1638,6 +2000,14 @@ namespace SudokuRoguelike.Run
             if (hpCost > 0)
             {
                 _feelService.OnHpLoss();
+                RunState.LostHpThisRun = true;
+                RelicService.OnWrongPlacement(RunState);
+            }
+
+            // Phoenix Feather: prevent death
+            if (RunState.CurrentHP <= 0 && RelicService.TryPreventDeath(RunState))
+            {
+                // Death prevented — HP/Pencil fully restored
             }
 
             if (RunState.CurrentHP > 0 && RunState.CurrentHP < 3)
@@ -1662,61 +2032,9 @@ namespace SudokuRoguelike.Run
             {
                 RunState.CurrentHP = Math.Min(RunState.MaxHP, RunState.CurrentHP + 1);
             }
-        }
 
-        private void ProcessLevelUps()
-        {
-            if (RunState.TutorialMode || RunState.DisableProgressionRewards)
-            {
-                return;
-            }
-
-            while (RunState.Level < 30)
-            {
-                var needed = FormulaService.XpToNextLevel(RunState.Level);
-                if (RunState.CurrentXP < needed)
-                {
-                    break;
-                }
-
-                RunState.CurrentXP -= needed;
-                RunState.Level++;
-                ApplyLevelReward(RunState.Level);
-            }
-        }
-
-        private void ApplyLevelReward(int level)
-        {
-            switch (level)
-            {
-                case 3:
-                    RunState.CurrentPencil += 1;
-                    break;
-                case 7:
-                    RunState.MaxHP += 2;
-                    RunState.CurrentHP += 2;
-                    break;
-                case 10:
-                    RunState.CurrentPencil += 2;
-                    RunState.MaxHP += 2;
-                    RunState.CurrentHP += 2;
-                    break;
-                case 15:
-                    RunState.RerollTokens += 1;
-                    break;
-                case 20:
-                    RunState.ItemSlots += 1;
-                    break;
-                case 30:
-                    AddItemToInventory(new ItemInstance
-                    {
-                        Id = Guid.NewGuid().ToString("N"),
-                        Type = ItemType.Solver,
-                        Rarity = ItemRarity.Rare,
-                        Charges = 1
-                    });
-                    break;
-            }
+            // Monk Charm relic: streak gold bonus
+            RelicService.OnCorrectPlacement(RunState);
         }
 
         private static DifficultyTier MapDifficulty(int runNumber, int depth)
@@ -1772,41 +2090,6 @@ namespace SudokuRoguelike.Run
             };
         }
 
-        private void UpdateCurrentHeatScore()
-        {
-            if (RunState == null || CurrentLevelConfig == null)
-            {
-                return;
-            }
-
-            var hpRatio = RunState.MaxHP <= 0 ? 1f : (float)RunState.CurrentHP / RunState.MaxHP;
-            var startPencil = Math.Max(1, RunState.MaxPencil);
-            var pencilRatio = (float)Math.Max(0, RunState.CurrentPencil) / startPencil;
-
-            var modifierTier = ResolveConstraintTier(CurrentLevelConfig.ActiveModifiers);
-            var flags = ResolveInterferenceFlags(CurrentLevelConfig.ActiveModifiers);
-
-            var heat = HeatScoreService.ComputeHeatScore(
-                CurrentLevelConfig.BoardSize,
-                CurrentLevelConfig.MissingPercent,
-                modifierTier,
-                flags.HasArithmetic,
-                flags.HasFog,
-                flags.HasDual,
-                hpRatio,
-                pencilRatio);
-
-            heat *= _curseService.GetCurseHeatMultiplier(RunState);
-
-            RunState.CurrentHeatScore = heat;
-            RunState.PeakHeatScore = Math.Max(RunState.PeakHeatScore, heat);
-
-            if (CurrentLevelState != null)
-            {
-                CurrentLevelState.CurrentHeatScore = heat;
-            }
-        }
-
         private RunNode FindNodeByDepth(int depth)
         {
             if (CurrentRunGraph == null)
@@ -1832,11 +2115,7 @@ namespace SudokuRoguelike.Run
                 return;
             }
 
-            var synergy = _relicSynergyService.Build(RunState.RelicIds);
-            RunState.GlobalGoldMultiplier = synergy.GoldMultiplier;
-            RunState.CarryGoldInterest = RunState.CarryGoldInterest || synergy.CarryGoldInterest;
-            RunState.MistakeShieldCharges = Math.Max(RunState.MistakeShieldCharges, synergy.MistakeShieldCharges);
-            RunState.ComboMistakeProtectionCharges = Math.Max(RunState.ComboMistakeProtectionCharges, synergy.ComboMistakeProtectionCharges);
+            // Single relic slot — no synergy stacking needed
             RunState.CurrentArchetype = _archetypeService.Evaluate(RunState);
         }
 
@@ -1866,6 +2145,99 @@ namespace SudokuRoguelike.Run
             }
 
             return tier;
+        }
+
+        private static bool HasAllModifiersPresent(List<BossModifierId> modifiers, ModifierOverlayData overlay)
+        {
+            if (overlay == null) return false;
+            for (var i = 0; i < modifiers.Count; i++)
+            {
+                switch (modifiers[i])
+                {
+                    case BossModifierId.GermanWhispers:
+                    case BossModifierId.DutchWhispers:
+                    case BossModifierId.ParityLines:
+                    case BossModifierId.RenbanLines:
+                    case BossModifierId.Palindrome:
+                    case BossModifierId.Thermo:
+                    case BossModifierId.BetweenLines:
+                        if (overlay.Lines.Count == 0) return false;
+                        break;
+                    case BossModifierId.DifferenceKropki:
+                    case BossModifierId.RatioKropki:
+                        if (overlay.Dots.Count == 0) return false;
+                        break;
+                    case BossModifierId.KillerCages:
+                        if (overlay.Cages.Count == 0) return false;
+                        break;
+                    case BossModifierId.ArrowSums:
+                        if (overlay.Arrows.Count == 0) return false;
+                        break;
+                    case BossModifierId.FogOfWar:
+                        if (overlay.FogCells.Count == 0) return false;
+                        break;
+                    case BossModifierId.EvenOdd:
+                        if (overlay.CellMarkers.Count == 0) return false;
+                        break;
+                }
+            }
+            return true;
+        }
+
+        private static void ClearOverlayCellsFromGivenMask(SudokuBoard board, ModifierOverlayData overlay)
+        {
+            if (board == null || overlay == null) return;
+
+            for (var li = 0; li < overlay.Lines.Count; li++)
+            {
+                var line = overlay.Lines[li];
+                for (var ci = 0; ci < line.Cells.Count; ci++)
+                {
+                    var cell = line.Cells[ci];
+                    board.GivenMask[cell.Row, cell.Col] = false;
+                    board.Cells[cell.Row, cell.Col] = 0;
+                }
+            }
+
+            for (var di = 0; di < overlay.Dots.Count; di++)
+            {
+                var dot = overlay.Dots[di];
+                board.GivenMask[dot.CellA.Row, dot.CellA.Col] = false;
+                board.Cells[dot.CellA.Row, dot.CellA.Col] = 0;
+                board.GivenMask[dot.CellB.Row, dot.CellB.Col] = false;
+                board.Cells[dot.CellB.Row, dot.CellB.Col] = 0;
+            }
+
+            for (var ki = 0; ki < overlay.Cages.Count; ki++)
+            {
+                var cage = overlay.Cages[ki];
+                for (var ci = 0; ci < cage.Cells.Count; ci++)
+                {
+                    var cell = cage.Cells[ci];
+                    board.GivenMask[cell.Row, cell.Col] = false;
+                    board.Cells[cell.Row, cell.Col] = 0;
+                }
+            }
+
+            for (var ai = 0; ai < overlay.Arrows.Count; ai++)
+            {
+                var arrow = overlay.Arrows[ai];
+                board.GivenMask[arrow.Circle.Row, arrow.Circle.Col] = false;
+                board.Cells[arrow.Circle.Row, arrow.Circle.Col] = 0;
+                for (var pi = 0; pi < arrow.Path.Count; pi++)
+                {
+                    var cell = arrow.Path[pi];
+                    board.GivenMask[cell.Row, cell.Col] = false;
+                    board.Cells[cell.Row, cell.Col] = 0;
+                }
+            }
+
+            for (var mi = 0; mi < overlay.CellMarkers.Count; mi++)
+            {
+                var marker = overlay.CellMarkers[mi];
+                board.GivenMask[marker.Cell.Row, marker.Cell.Col] = false;
+                board.Cells[marker.Cell.Row, marker.Cell.Col] = 0;
+            }
         }
 
         private static (bool HasArithmetic, bool HasFog, bool HasDual) ResolveInterferenceFlags(List<BossModifierId> modifiers)

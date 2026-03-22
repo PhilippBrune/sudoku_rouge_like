@@ -1,6 +1,7 @@
 using System.Text;
 using SudokuRoguelike.Classes;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Meta;
 using SudokuRoguelike.Save;
 using UnityEngine;
 using UnityEngine.UI;
@@ -24,7 +25,9 @@ namespace SudokuRoguelike.UI
             (ClassId.ShrineArchivist, "BtnClassShrineArchivist"),
             (ClassId.KoiGambler, "BtnClassKoiGambler"),
             (ClassId.StoneGardener, "BtnClassStoneGardener"),
-            (ClassId.LanternSeer, "BtnClassLanternSeer")
+            (ClassId.LanternSeer, "BtnClassLanternSeer"),
+            (ClassId.ReedDuelist, "BtnClassReedDuelist"),
+            (ClassId.QuietCartographer, "BtnClassQuietCartographer")
         };
 
         private void Awake()
@@ -54,7 +57,6 @@ namespace SudokuRoguelike.UI
             if (metaSummaryText != null)
             {
                 metaSummaryText.text =
-                    $"Essence: {_profile.Meta.GardenEssence}\n" +
                     $"Runs: {_profile.Stats.TotalRuns}\n" +
                     $"Boss Clears: {_profile.Stats.BossClears}\n" +
                     $"Achievements: {_profile.Stats.TotalAchievementsUnlocked}";
@@ -76,6 +78,27 @@ namespace SudokuRoguelike.UI
                     builder.AppendLine(card.Name);
                     builder.AppendLine($"  HP {card.HP} | Pencil {card.Pencil} | Slots {card.ItemSlots}");
                     builder.AppendLine($"  Passive: {card.PassiveDisplay}");
+
+                    var progression = _profile.Meta.GardenProgression;
+                    ClassGardenProgressEntry classEntry = null;
+                    for (var j = 0; j < progression.ClassEntries.Count; j++)
+                    {
+                        if (progression.ClassEntries[j].ClassId == selectedId)
+                        {
+                            classEntry = progression.ClassEntries[j];
+                            break;
+                        }
+                    }
+
+                    var totalXp = classEntry?.TotalXp ?? 0;
+                    var prestige = classEntry?.PrestigeTier ?? 0;
+                    var (lvl, progressXp, xpToNext) = ClassGardenProgressionService.DeriveLevel(totalXp);
+                    var xpDisplay = xpToNext > 0 ? $"{progressXp}/{xpToNext}" : "MAX";
+                    builder.AppendLine($"  Level {lvl} | XP: {xpDisplay}");
+                    if (prestige > 0)
+                        builder.AppendLine($"  Prestige: {prestige}");
+                    builder.AppendLine($"  Next: {ClassGardenProgressionService.GetNextUnlock(selectedId, lvl)}");
+
                     break;
                 }
 
@@ -105,6 +128,8 @@ namespace SudokuRoguelike.UI
         public void SelectClassKoiGambler() => TrySelectClass(ClassId.KoiGambler);
         public void SelectClassStoneGardener() => TrySelectClass(ClassId.StoneGardener);
         public void SelectClassLanternSeer() => TrySelectClass(ClassId.LanternSeer);
+        public void SelectClassReedDuelist() => TrySelectClass(ClassId.ReedDuelist);
+        public void SelectClassQuietCartographer() => TrySelectClass(ClassId.QuietCartographer);
 
         public void UnlockDemoContent()
         {
@@ -113,6 +138,8 @@ namespace SudokuRoguelike.UI
             UnlockClass(ClassId.KoiGambler);
             UnlockClass(ClassId.StoneGardener);
             UnlockClass(ClassId.LanternSeer);
+            UnlockClass(ClassId.ReedDuelist);
+            UnlockClass(ClassId.QuietCartographer);
 
             _profile.Meta.EndlessZenUnlocked = true;
             _profile.Meta.SpiritTrialsUnlocked = true;

@@ -93,6 +93,7 @@ namespace SudokuRoguelike.Bootstrap
                     _run.StartRun(ClassId.NumberFreak, launchRequest.Mode, runNumber: runNumber, meta: _profileService.Meta);
                     Debug.LogWarning($"Launch request class {launchRequest.ClassId} was unavailable. Fallback to Number Freak.");
                 }
+                _run.RunState.AllowIrregularPuzzles = launchRequest.AllowIrregularPuzzles;
                 var requestedLevel = _run.BuildLevelConfig(runNumber, depth: 1);
                 _run.StartLevel(requestedLevel);
                 BindRuntimeControllers();
@@ -165,7 +166,7 @@ namespace SudokuRoguelike.Bootstrap
                 Debug.Log($"Tutorial completion saved: {TutorialModeService.BuildCompletionKey(completedSetup)}");
             }
 
-            Debug.Log($"Rewards applied. Gold={_run.RunState.CurrentGold}, XP={_run.RunState.CurrentXP}, Level={_run.RunState.Level}");
+            Debug.Log($"Rewards applied. Gold={_run.RunState.CurrentGold}, XP={_run.RunState.CurrentXP}");
         }
 
         private void BindRuntimeControllers()

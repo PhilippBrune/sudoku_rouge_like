@@ -7,6 +7,7 @@ namespace SudokuRoguelike.Core
         public TutorialSetupConfig TutorialSetup;
         public bool ResumeFromSave;
         public bool StartFresh = true;
+        public bool AllowIrregularPuzzles = true;
     }
 
     public static class LaunchRequestContext

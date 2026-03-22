@@ -1,8 +1,8 @@
+using SudokuRoguelike.Bootstrap;
 using SudokuRoguelike.Core;
 using SudokuRoguelike.Save;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -16,7 +16,6 @@ namespace SudokuRoguelike.UI
         [SerializeField] private InRunUiFlowController inRunUiFlow;
         [SerializeField] private RunMapController runMapController;
         [SerializeField] private ClassId fallbackClass = ClassId.NumberFreak;
-        [SerializeField] private string mainMenuSceneName = "MainMenu";
         [SerializeField] private Text pathPreviewText;
 
         private readonly ProfileService _profile = new();
@@ -215,21 +214,16 @@ namespace SudokuRoguelike.UI
                 run.OnQuitRequested();
             }
 
-            if (!string.IsNullOrWhiteSpace(mainMenuSceneName) && Application.CanStreamedLevelBeLoaded(mainMenuSceneName))
+            Time.timeScale = 1f;
+            var bootstrap = FindFirstObjectByType<GameBootstrap>();
+            if (bootstrap != null)
             {
-                Time.timeScale = 1f;
-                SceneManager.LoadScene(mainMenuSceneName);
-                return;
+                bootstrap.ReturnToMenu();
             }
-
-            if (SceneManager.sceneCountInBuildSettings > 0)
+            else
             {
-                Time.timeScale = 1f;
-                SceneManager.LoadScene(0);
-                return;
+                Debug.LogWarning("Debug UI: GameBootstrap not found — cannot return to menu.");
             }
-
-            Debug.LogWarning("Debug UI: Quit & Save could not load menu scene. Add MainMenu to build settings or set mainMenuSceneName.");
         }
 
         private void DebugAutoSolve()

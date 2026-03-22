@@ -1,6 +1,8 @@
 {
     "name": "GameTests.EditMode",
-    "references": [],
+    "references": [
+        "Game"
+    ],
     "includePlatforms": ["Editor"],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

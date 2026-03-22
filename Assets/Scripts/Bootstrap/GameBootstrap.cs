@@ -7,6 +7,11 @@ using UnityEngine;
 
 namespace SudokuRoguelike.Bootstrap
 {
+    /// <summary>
+    /// Single entry point for the entire game. The app has one scene ("Game").
+    /// GameBootstrap starts in menu mode and transitions between menu, gameplay,
+    /// and end screen by showing/hiding panel groups via ScreenManager.
+    /// </summary>
     public sealed class GameBootstrap : MonoBehaviour
     {
         [SerializeField] private int seed = 12345;
@@ -20,128 +25,145 @@ namespace SudokuRoguelike.Bootstrap
 
         private RunAutoSaveCoordinator _autoSave;
         private RunDirector _run;
+        private ScreenManager _screenManager;
+
+        public RunDirector Run => _run;
+        public ProfileService Profile => _profileService;
+        public SaveFileService SaveFile => _saveFileService;
 
         private void Start()
         {
             _autoSave = new RunAutoSaveCoordinator(_saveFileService, _profileService);
-            var runtimeSeed = BuildRuntimeSeed(seed);
+            _screenManager = FindFirstObjectByType<ScreenManager>();
 
+            // Load persistent profile
             if (_saveFileService.TryLoadProfile(out var profileEnvelope))
             {
                 _profileService.ApplyEnvelope(profileEnvelope);
             }
 
-            if (LaunchRequestContext.TryConsume(out var launchRequest))
-            {
-                if (launchRequest.ResumeFromSave)
-                {
-                    if (_saveFileService.TryLoadRun(out var resumeEnvelope))
-                    {
-                        _profileService.ApplyEnvelope(resumeEnvelope);
-                        _run = new RunDirector(runtimeSeed);
-                        if (_resumeService.TryResumeFromSave(_run, resumeEnvelope))
-                        {
-                            _autoSave.Bind(_run);
-                            BindRuntimeControllers();
-                            Debug.Log($"Run resumed from explicit resume request. HP={_run.RunState.CurrentHP}, Pencil={_run.RunState.CurrentPencil}");
-                            return;
-                        }
-                    }
+            // Start in menu mode
+            _screenManager?.ShowMenu();
+        }
 
-                    Debug.LogWarning("Resume was requested but no valid run save was available.");
-                    return;
-                }
+        // ── Launch methods (called by menu controllers instead of LaunchRequestContext) ──
 
-                _run = new RunDirector(runtimeSeed);
-                _autoSave.Bind(_run);
-
-                if (launchRequest.Mode == GameMode.Tutorial)
-                {
-                    var setup = launchRequest.TutorialSetup ?? new TutorialSetupConfig
-                    {
-                        BoardSize = 5,
-                        Stars = 1,
-                        ResourceMode = TutorialResourceMode.Simulation
-                    };
-
-                    var validation = TutorialModeService.ValidateSetup(setup);
-                    if (!validation.IsValid)
-                    {
-                        Debug.LogWarning($"Tutorial setup invalid from launch request: {validation.Message}. Falling back to 5x5 1★ Simulation.");
-                        setup = new TutorialSetupConfig
-                        {
-                            BoardSize = 5,
-                            Stars = 1,
-                            ResourceMode = TutorialResourceMode.Simulation
-                        };
-                    }
-
-                    _run.StartTutorialRun(setup);
-                    BindRuntimeControllers();
-
-                    Debug.Log("Tutorial run started from Main Menu.");
-                    Debug.Log($"Tutorial state: HP={_run.RunState.CurrentHP}, Pencil={_run.RunState.CurrentPencil}");
-                    return;
-                }
-
-                try
-                {
-                    _run.StartRun(launchRequest.ClassId, launchRequest.Mode, runNumber: runNumber, meta: _profileService.Meta);
-                }
-                catch
-                {
-                    _run.StartRun(ClassId.NumberFreak, launchRequest.Mode, runNumber: runNumber, meta: _profileService.Meta);
-                    Debug.LogWarning($"Launch request class {launchRequest.ClassId} was unavailable. Fallback to Number Freak.");
-                }
-                _run.RunState.AllowIrregularPuzzles = launchRequest.AllowIrregularPuzzles;
-                var requestedLevel = _run.BuildLevelConfig(runNumber, depth: 1);
-                _run.StartLevel(requestedLevel);
-                BindRuntimeControllers();
-                Debug.Log($"Run started from launch request. Mode={launchRequest.Mode}, Class={launchRequest.ClassId}");
-                return;
-            }
-
-            if (resumeRunIfAvailable && _saveFileService.TryLoadRun(out var autoResumeEnvelope))
-            {
-                _profileService.ApplyEnvelope(autoResumeEnvelope);
-                _run = new RunDirector(runtimeSeed);
-                if (_resumeService.TryResumeFromSave(_run, autoResumeEnvelope))
-                {
-                    _autoSave.Bind(_run);
-                    BindRuntimeControllers();
-                    Debug.Log($"Run resumed for {_run.RunState.ClassId}. HP={_run.RunState.CurrentHP}, Pencil={_run.RunState.CurrentPencil}");
-                    return;
-                }
-            }
-
+        /// <summary>
+        /// Start a new Garden Run, Spirit Trials, or Endless Zen run.
+        /// Called by MainMenuController when the player confirms class selection.
+        /// </summary>
+        public void LaunchRun(LaunchRequest request)
+        {
+            var runtimeSeed = BuildRuntimeSeed(seed);
             _run = new RunDirector(runtimeSeed);
+            _autoSave.Bind(_run);
+
             try
             {
-                _run.StartRun(startingClass, runNumber: runNumber, meta: _profileService.Meta);
+                _run.StartRun(request.ClassId, request.Mode, runNumber: runNumber, meta: _profileService.Meta);
             }
             catch
             {
-                _run.StartRun(ClassId.NumberFreak, runNumber: runNumber, meta: _profileService.Meta);
-                Debug.LogWarning($"Starting class {startingClass} unavailable. Fallback to Number Freak.");
+                _run.StartRun(ClassId.NumberFreak, request.Mode, runNumber: runNumber, meta: _profileService.Meta);
+                Debug.LogWarning($"Class {request.ClassId} unavailable. Fallback to Number Freak.");
             }
-            _autoSave.Bind(_run);
 
+            _run.RunState.AllowIrregularPuzzles = request.AllowIrregularPuzzles;
             var levelConfig = _run.BuildLevelConfig(runNumber, depth: 1);
             _run.StartLevel(levelConfig);
+
             BindRuntimeControllers();
+            _screenManager?.ShowGame();
 
-            Debug.Log($"Run started with {_run.RunState.ClassId}. HP={_run.RunState.CurrentHP}, Pencil={_run.RunState.CurrentPencil}");
-            Debug.Log($"Level size={levelConfig.BoardSize}, stars={levelConfig.Stars}, missing={levelConfig.MissingPercent:P0}");
+            Debug.Log($"Run started. Mode={request.Mode}, Class={request.ClassId}");
         }
 
-        private static int BuildRuntimeSeed(int baseSeed)
+        /// <summary>
+        /// Start a tutorial run.
+        /// Called by MainMenuController / TutorialMenuController.
+        /// </summary>
+        public void LaunchTutorial(TutorialSetupConfig setup)
         {
-            unchecked
+            var validation = TutorialModeService.ValidateSetup(setup);
+            if (!validation.IsValid)
             {
-                var ticks = (int)System.DateTime.UtcNow.Ticks;
-                return ticks ^ baseSeed ^ UnityEngine.Random.Range(int.MinValue, int.MaxValue);
+                Debug.LogWarning($"Tutorial setup invalid: {validation.Message}. Falling back to 5x5 1★.");
+                setup = new TutorialSetupConfig
+                {
+                    BoardSize = 5,
+                    Stars = 1,
+                    ResourceMode = TutorialResourceMode.Simulation
+                };
             }
+
+            var runtimeSeed = BuildRuntimeSeed(seed);
+            _run = new RunDirector(runtimeSeed);
+            _autoSave.Bind(_run);
+            _run.StartTutorialRun(setup);
+
+            BindRuntimeControllers();
+            _screenManager?.ShowGame();
+
+            Debug.Log($"Tutorial started. Size={setup.BoardSize}, Stars={setup.Stars}");
         }
+
+        /// <summary>
+        /// Resume an in-progress run from save file.
+        /// Called by MainMenuController when Resume Game is pressed.
+        /// </summary>
+        public bool LaunchResume()
+        {
+            if (!_saveFileService.TryLoadRun(out var resumeEnvelope))
+            {
+                Debug.LogWarning("Resume requested but no valid run save found.");
+                return false;
+            }
+
+            _profileService.ApplyEnvelope(resumeEnvelope);
+            var runtimeSeed = BuildRuntimeSeed(seed);
+            _run = new RunDirector(runtimeSeed);
+
+            if (!_resumeService.TryResumeFromSave(_run, resumeEnvelope))
+            {
+                Debug.LogWarning("Resume failed — save data could not be restored.");
+                return false;
+            }
+
+            _autoSave.Bind(_run);
+            BindRuntimeControllers();
+            _screenManager?.ShowGame();
+
+            Debug.Log($"Run resumed. Class={_run.RunState.ClassId}, HP={_run.RunState.CurrentHP}");
+            return true;
+        }
+
+        /// <summary>
+        /// Return to main menu after a run ends (victory, defeat, or quit).
+        /// Handles post-run profile updates before showing menu.
+        /// </summary>
+        public void ReturnToMenu()
+        {
+            _run = null;
+            _screenManager?.ShowMenu();
+        }
+
+        /// <summary>
+        /// Show end screen (victory or defeat) after a run completes.
+        /// </summary>
+        public void ShowEndScreen()
+        {
+            _screenManager?.ShowEndScreen();
+        }
+
+        /// <summary>
+        /// Check whether a valid run save exists for the Resume button.
+        /// </summary>
+        public bool HasResumableRun()
+        {
+            return _saveFileService.TryLoadRun(out _);
+        }
+
+        // ── Debug helpers ───────────────────────────────────────────────────
 
         public void DebugCompleteLevel()
         {
@@ -169,14 +191,12 @@ namespace SudokuRoguelike.Bootstrap
             Debug.Log($"Rewards applied. Gold={_run.RunState.CurrentGold}, XP={_run.RunState.CurrentXP}");
         }
 
+        // ── Internal wiring ─────────────────────────────────────────────────
+
         private void BindRuntimeControllers()
         {
-            if (_run == null)
-            {
-                return;
-            }
+            if (_run == null) return;
 
-            // Guarantee runtime UI exists even if scene/prefab changes were not saved.
             var inRunBuilder = FindFirstObjectByType<InRunUiBlueprintBuilder>();
             inRunBuilder?.BuildBlueprint();
 
@@ -191,6 +211,15 @@ namespace SudokuRoguelike.Bootstrap
 
             var shopController = FindFirstObjectByType<ShopController>();
             shopController?.Bind(_run);
+        }
+
+        private static int BuildRuntimeSeed(int baseSeed)
+        {
+            unchecked
+            {
+                var ticks = (int)System.DateTime.UtcNow.Ticks;
+                return ticks ^ baseSeed ^ UnityEngine.Random.Range(int.MinValue, int.MaxValue);
+            }
         }
     }
 }

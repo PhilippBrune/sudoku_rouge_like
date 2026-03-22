@@ -140,15 +140,16 @@ namespace SudokuRoguelike.Run
                 }
             }
 
-            return new LevelConfig
+            var level = new LevelConfig
             {
                 BoardSize = 9,
                 Difficulty = DifficultyTier.Diff5,
                 Stars = config.Stars,
                 MissingPercent = StarDensityService.MissingPercentForStars(config.Stars),
-                IsBoss = false,
-                ActiveModifiers = modifiers
+                IsBoss = false
             };
+            level.ActiveModifiers.AddRange(modifiers);
+            return level;
         }
 
         // ── Personal Best Tracking ──

@@ -12,7 +12,7 @@ using SudokuRoguelike.Sudoku;
 using SudokuRoguelike.Tutorial;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.SceneManagement;
+using SudokuRoguelike.Bootstrap;
 using UnityEngine.UI;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -2375,17 +2375,11 @@ namespace SudokuRoguelike.UI
                 PlayerPrefs.Save();
             }
 
-            if (!string.IsNullOrWhiteSpace(mainMenuSceneName) && Application.CanStreamedLevelBeLoaded(mainMenuSceneName))
+            Time.timeScale = 1f;
+            var bootstrap = FindFirstObjectByType<GameBootstrap>();
+            if (bootstrap != null)
             {
-                Time.timeScale = 1f;
-                SceneManager.LoadScene(mainMenuSceneName);
-                return;
-            }
-
-            if (SceneManager.sceneCountInBuildSettings > 0)
-            {
-                Time.timeScale = 1f;
-                SceneManager.LoadScene(0);
+                bootstrap.ReturnToMenu();
             }
         }
 
@@ -4419,7 +4413,7 @@ namespace SudokuRoguelike.UI
 
                 elapsed += Time.unscaledDeltaTime;
                 var t = Mathf.Clamp01(elapsed / duration);
-                rect.localScale = Vector3.LerpUnclamped(from, to, AnimationHelper.Ease(t, AnimationHelper.EaseType.EaseOut));
+                rect.localScale = Vector3.LerpUnclamped(from, to, AnimationHelper.Ease(t, EaseType.EaseOut));
                 yield return null;
             }
 

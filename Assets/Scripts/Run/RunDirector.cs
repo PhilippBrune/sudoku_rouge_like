@@ -324,7 +324,7 @@ namespace SudokuRoguelike.Run
 
                 if (RunState.Mode == GameMode.SpiritTrials)
                 {
-                    return _spiritTrialsService.BuildDailyTrialLevel(RunState.Seed + depth);
+                    return _spiritTrialsService.BuildTrialLevel(SpiritTrialsTier.Apprentice, RunState.Seed + depth);
                 }
             }
 

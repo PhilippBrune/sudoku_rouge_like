@@ -1,11 +1,14 @@
 # Unity Implementation Specification
 
-**Version:** 1.0 | **Date:** 2026-03-22 | **Status:** new
+**Version:** 1.3 | **Date:** 2026-03-22 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.3 | 2026-03-22 | implemented | All architecture verified implemented: single-scene, ScreenManager, GameBootstrap entry point, panel groups |
+| 1.2 | 2026-03-22 | review | Single-scene architecture: replaced two-scene setup with ScreenManager panel groups, eliminated LaunchRequestContext static shuttle, GameBootstrap is now single entry point with direct launch methods |
+| 1.1 | 2026-03-22 | review | Resolved OPEN-A (package cleanup), OPEN-B (dead code removal), OPEN-C (PlayMode tests added) |
 | 1.0 | 2026-03-22 | new | Initial specification derived from all 14 requirement documents |
 
 ---
@@ -65,14 +68,23 @@ This document defines how Run of the Nine shall be implemented in Unity. It cons
 
 ## 2) Scene Structure
 
-The game uses exactly **two scenes**:
+The game uses a **single scene** ("Game"). All UI is procedurally built in C# — no scene-specific prefabs or assets require separate scenes. Screen transitions are handled by `ScreenManager`, which shows/hides three top-level panel groups (Menu, Game, EndScreen).
 
-### Scene: MainMenu
+### Scene: Game
+
+#### Always-Active Components
+
+| Component | Type | Role |
+|-----------|------|------|
+| GameBootstrap | MonoBehaviour | Single entry point — loads profile on `Start()`, shows menu, provides `LaunchRun()` / `LaunchTutorial()` / `LaunchResume()` / `ReturnToMenu()` / `ShowEndScreen()` methods |
+| ScreenManager | MonoBehaviour | Manages three panel groups (`menuGroup`, `gameGroup`, `endScreenGroup`), fires `ScreenChanged` event |
+
+#### Menu Panel Group (active when `AppScreen.Menu`)
 
 | Component | Type | Role |
 |-----------|------|------|
 | MainMenuBlueprintBuilder | MonoBehaviour | Procedurally builds entire menu UI hierarchy via `[ContextMenu("Build")]` |
-| MainMenuController | MonoBehaviour | Wires button callbacks, panel transitions, data binding |
+| MainMenuController | MonoBehaviour | Wires button callbacks, panel transitions, data binding; calls `GameBootstrap.LaunchRun()` / `LaunchTutorial()` / `LaunchResume()` directly |
 | MainMenuRuntimeAutoWire | MonoBehaviour | Auto-wires references at runtime if builder hasn't run |
 | MainMenuAtmosphereController | MonoBehaviour | Background ambience, particles, music for menu |
 | MenuMusicController | MonoBehaviour | Menu music playback and crossfade |
@@ -94,13 +106,10 @@ The game uses exactly **two scenes**:
 | Options | Options button | Audio (4 channels), Graphics (resolution, fullscreen, particle intensity), Accessibility, Input Remapping |
 | Credits | Credits button | Scrolling credit text |
 
-**Scene transition:** `MainMenu` → `Prototype` via `SceneManager.LoadScene("Prototype")` triggered by `GameBootstrap` through `LaunchRequestContext`.
-
-### Scene: Prototype
+#### Game Panel Group (active when `AppScreen.Game`)
 
 | Component | Type | Role |
 |-----------|------|------|
-| GameBootstrap | MonoBehaviour | Entry point — reads `LaunchRequestContext`, initialises `RunDirector`, binds UI controllers |
 | InRunUiBlueprintBuilder | MonoBehaviour | Procedurally builds the in-run UI hierarchy via `[ContextMenu("Build")]` |
 | PrototypeRunScreenController | MonoBehaviour | Main in-run UI controller (~4700 lines) — board rendering, input handling, overlays, HUD updates |
 | PrototypeInputController | MonoBehaviour | Input routing (keyboard, mouse, controller) to game actions |
@@ -110,10 +119,27 @@ The game uses exactly **two scenes**:
 | RunAudioController | MonoBehaviour | In-run music layers, SFX playback |
 | AmbientParticleController | MonoBehaviour | Floor-themed particle systems |
 | ShopController | MonoBehaviour | Shop UI panel and purchase flow |
-| EndScreenPresenter | MonoBehaviour | End-of-run screen (victory/defeat), XP breakdown, stats |
 | PauseRunController | MonoBehaviour | Pause menu overlay with Save & Quit |
 | KeyboardNavigationController | MonoBehaviour | Focus management for keyboard/controller navigation |
 | TutorialRunBannerController | MonoBehaviour | Persistent "TUTORIAL MODE" banner during tutorial runs |
+
+#### EndScreen Panel Group (active when `AppScreen.EndScreen`)
+
+| Component | Type | Role |
+|-----------|------|------|
+| EndScreenPresenter | MonoBehaviour | End-of-run screen (victory/defeat), XP breakdown, stats |
+
+### Screen Transitions
+
+All transitions use `ScreenManager.Show(AppScreen)` — no `SceneManager.LoadScene()` calls exist in the codebase.
+
+| Trigger | Method | Transition |
+|---------|--------|------------|
+| Player confirms class selection | `GameBootstrap.LaunchRun(request)` | Menu → Game |
+| Player starts tutorial | `GameBootstrap.LaunchTutorial(setup)` | Menu → Game |
+| Player presses Resume Game | `GameBootstrap.LaunchResume()` | Menu → Game |
+| Run ends (victory/defeat) | `GameBootstrap.ShowEndScreen()` | Game → EndScreen |
+| Player exits end screen or quits run | `GameBootstrap.ReturnToMenu()` | Game/EndScreen → Menu |
 
 ---
 
@@ -151,26 +177,41 @@ The game uses exactly **two scenes**:
 5. **No singletons except GameBootstrap** — services are passed by reference, not accessed statically
 6. **No prefabs for game UI** — all UI is built procedurally in C# via Blueprint Builders
 
-### Initialisation Flow
+### Initialisation Flow (Single-Scene)
 
 ```
-MainMenu Scene
-  └→ Player selects mode → writes LaunchRequestContext
-     └→ SceneManager.LoadScene("Prototype")
-
-Prototype Scene
+Game Scene
   └→ GameBootstrap.Start()
+     ├→ Create RunAutoSaveCoordinator
+     ├→ Find ScreenManager
      ├→ Load ProfileService (profile_save.json)
-     ├→ Read LaunchRequestContext.TryConsume()
-     │   ├→ Resume → RunResumeService.TryResumeFromSave()
-     │   ├→ Tutorial → RunDirector.StartTutorialRun(setup)
-     │   ├→ SpiritTrials → RunDirector.StartRun(classId, SpiritTrials)
-     │   ├→ EndlessZen → RunDirector.StartRun(classId, EndlessZen)
-     │   └→ GardenRun → RunDirector.StartRun(classId, GardenRun)
-     ├→ RunDirector constructor creates all 41 services
-     ├→ BindRuntimeControllers() → wires RunDirector to MonoBehaviours
-     └→ First level begins or map is shown
+     └→ ScreenManager.ShowMenu()  ← app starts in menu mode
+
+Menu → Run Launch (called directly by MainMenuController)
+  ├→ GameBootstrap.LaunchRun(request)
+  │   ├→ new RunDirector(seed) → creates all 41 services
+  │   ├→ RunDirector.StartRun(classId, mode)
+  │   ├→ RunDirector.BuildLevelConfig() + StartLevel()
+  │   ├→ BindRuntimeControllers() → wires RunDirector to MonoBehaviours
+  │   └→ ScreenManager.ShowGame()
+  ├→ GameBootstrap.LaunchTutorial(setup)
+  │   ├→ TutorialModeService.ValidateSetup() → fallback if invalid
+  │   ├→ new RunDirector(seed) → StartTutorialRun(setup)
+  │   ├→ BindRuntimeControllers()
+  │   └→ ScreenManager.ShowGame()
+  └→ GameBootstrap.LaunchResume()
+      ├→ SaveFileService.TryLoadRun() → RunResumeService.TryResumeFromSave()
+      ├→ BindRuntimeControllers()
+      └→ ScreenManager.ShowGame()
+
+Run → End Screen
+  └→ GameBootstrap.ShowEndScreen() → ScreenManager.ShowEndScreen()
+
+Any Screen → Menu
+  └→ GameBootstrap.ReturnToMenu() → nulls RunDirector, ScreenManager.ShowMenu()
 ```
+
+No `LaunchRequestContext` static shuttle is used — menu controllers hold a `[SerializeField]` reference to `GameBootstrap` and call its launch methods directly.
 
 ---
 
@@ -870,31 +911,42 @@ All accessibility settings are fields on `AccessibilitySettings` (serialized in 
 
 ## 16) Testing
 
+### Assembly Definitions
+
+| Assembly | File | References | Scope |
+|----------|------|------------|-------|
+| Game | `Assets/Scripts/Game.asmdef` | Unity.InputSystem | All game code |
+| Game.Editor | `Assets/Scripts/Editor/Game.Editor.asmdef` | Game | Editor-only tools |
+| GameTests.EditMode | `Assets/Scripts/Tests/EditMode/GameTests.EditMode.asmdef` | Game | Editor unit tests |
+| GameTests.PlayMode | `Assets/Scripts/Tests/PlayMode/GameTests.PlayMode.asmdef` | Game, UnityEngine.TestRunner, UnityEditor.TestRunner | Integration tests |
+
 ### Test Structure
 
 ```
 Assets/Scripts/Tests/
 ├── EditMode/
-│   ├── GameTests.EditMode.asmdef
-│   ├── SudokuGeneratorTests.cs
-│   ├── XpServiceTests.cs
-│   ├── ConstraintRuleTests.cs
-│   ├── FormulaServiceTests.cs
-│   └── SaveMigrationTests.cs
-└── PlayMode/ (future)
-    └── IntegrationTests.cs
+│   └── GameTests.EditMode.asmdef
+└── PlayMode/
+    ├── GameTests.PlayMode.asmdef
+    ├── TestDriver.cs                  — Base class with setup/teardown, helper assertions
+    ├── ScenarioRunner.cs              — E2E step sequencer with timeout
+    ├── RunFlowIntegrationTests.cs     — Run lifecycle, class stats, all game modes
+    ├── SaveLoadIntegrationTests.cs    — Save round-trip, validation clamps, backup rotation
+    └── EconomyIntegrationTests.cs     — XP curve, gold formula, star density
 ```
 
 ### Test Categories
 
 | Category | Focus | Framework |
 |----------|-------|-----------|
-| Sudoku generation | Board validity, region maps, cell removal | NUnit (EditMode) |
+| Run flow | Run start, level config, board generation, class variations | NUnit (PlayMode) |
+| Game modes | Garden Run, Tutorial, Endless Zen, Spirit Trials mode specifics | NUnit (PlayMode) |
+| Save/Load | Envelope round-trip, RunState serialization, atomic writes, backup rotation | NUnit (PlayMode) |
+| XP calculations | Curve totals (16,860), level derivation, star/boss/mod multipliers | NUnit (PlayMode) |
+| Gold economy | Base gold by board size, pencil buy escalation, reroll escalation | NUnit (PlayMode) |
+| Star density | Formula correctness for all 7 star levels | NUnit (PlayMode) |
+| Sudoku generation | All board sizes, all region variants, determinism | NUnit (PlayMode) |
 | Constraint rules | All 15 modifier rules validate correctly | NUnit (EditMode) |
-| XP calculations | Formula correctness, level derivation, curve totals | NUnit (EditMode) |
-| Gold economy | Reward formulas, cost escalation, shop pricing | NUnit (EditMode) |
-| Save/Load | Envelope serialization, migration, validation clamps | NUnit (EditMode) |
-| Item/Relic rolling | Probability distribution, tier weights, gating | NUnit (EditMode) |
 | Uniqueness checker | `CreatePuzzleWithUniquenessCheck` produces unique solutions | NUnit (EditMode) |
 
 ### Critical Invariants to Test
@@ -931,20 +983,18 @@ Assets/Scripts/Tests/
 ```
 Assets/
 ├── Scenes/
-│   ├── MainMenu.unity
-│   └── Prototype.unity
+│   └── Game.unity
 ├── Scripts/
 │   ├── Bootstrap/          GameBootstrap.cs
 │   ├── Boss/               BossService.cs
 │   ├── Classes/            ClassCatalog, ClassSelectService, ClassUnlockService
 │   ├── Core/               GameEnums, RuntimeModels, HardeningModels,
-│   │                       LaunchRequestContext, StarDensityService,
+│   │                       LaunchRequest, StarDensityService,
 │   │                       AccessibilityService, InputRemapService
 │   ├── Data/               DefinitionAssets, FloorThemeData
 │   ├── Economy/            XpService, FormulaService, RelicService,
-│   │                       ShopService, (stubs: HeatScoreService,
-│   │                       RelicCatalogService, RelicSynergyService)
-│   ├── Editor/             PixelIconSetGenerator
+│   │                       ShopService
+│   ├── Editor/             PixelIconSetGenerator, Game.Editor.asmdef
 │   ├── Items/              ItemService
 │   ├── Meta/               ClassGardenProgressionService, AscensionService,
 │   │                       CompletionService, MasteryService,
@@ -971,9 +1021,11 @@ Assets/
 │   ├── Tutorial/           TutorialModeService, TutorialProgressService
 │   ├── UI/                 (38 controllers — see Section 2)
 │   ├── Tests/
-│   │   └── EditMode/       GameTests.EditMode.asmdef, test files
-│   ├── Generated/          (3 stub files — empty namespaces, to be removed)
-│   └── Archive/            (6 pre-rewrite backups — to be removed)
+│   │   ├── EditMode/       GameTests.EditMode.asmdef
+│   │   └── PlayMode/       GameTests.PlayMode.asmdef, TestDriver,
+│   │                       ScenarioRunner, RunFlowIntegrationTests,
+│   │                       SaveLoadIntegrationTests, EconomyIntegrationTests
+│   └── Game.asmdef         Root assembly definition
 ├── Resources/
 │   ├── Icons/              16×16 pixel art icons
 │   ├── GeneratedIcons/     Procedurally generated icons
@@ -981,17 +1033,6 @@ Assets/
 └── Packages/
     └── manifest.json       Package dependencies
 ```
-
-### Files to Remove (Cleanup)
-
-| File/Folder | Reason |
-|-------------|--------|
-| `Scripts/Generated/*.cs` (3 files) | Broken AI-generated stubs, empty namespaces |
-| `Scripts/Archive/*.cs` (6 files) | Pre-rewrite backups, superseded by current code |
-| `Scripts/Economy/HeatScoreService.cs` | Heat system removed, empty stub |
-| `Scripts/Economy/HeatCurveGraphController.cs` | Heat system removed, empty stub |
-| `Scripts/Economy/RelicCatalogService.cs` | Replaced by `RelicService` |
-| `Scripts/Economy/RelicSynergyService.cs` | Multi-relic stacking removed |
 
 ---
 
@@ -1032,19 +1073,16 @@ Assets/
 
 ---
 
-## 20) Open Issues
+## 20) Resolved Issues
 
-### OPEN-A — Package Cleanup
-**Status:** Planned
-**Description:** Remove unused Unity packages (ads, purchasing, AI navigation, multiplayer, XR, timeline) from `Packages/manifest.json` to reduce build size and compilation time.
-**Blocker for:** Clean build pipeline.
+### OPEN-A — Package Cleanup (Resolved)
+Removed 6 unused packages from `Packages/manifest.json`: `com.unity.ads`, `com.unity.purchasing`, `com.unity.ai.navigation`, `com.unity.multiplayer.center`, `com.unity.timeline`, `com.unity.xr.legacyinputhelpers`. Also removed 18 unused Unity modules (3D physics, terrain, cloth, vehicles, VR, XR, etc.).
 
-### OPEN-B — Dead Code Removal
-**Status:** Planned
-**Description:** Remove stub files (Generated/, Archive/, HeatScoreService, RelicCatalogService, RelicSynergyService) that are empty or superseded.
-**Blocker for:** Code clarity, new developer onboarding.
+### OPEN-B — Dead Code Removal (Resolved)
+Deleted 7 stub/dead files: `Generated/` folder (3 files), `HeatScoreService.cs`, `HeatCurveGraphController.cs`, `RelicCatalogService.cs`, `RelicSynergyService.cs` — all empty namespaces or deprecated stubs.
 
-### OPEN-C — PlayMode Tests
-**Status:** Planned
-**Description:** Add PlayMode integration tests for full run flow (start → puzzle → reward → map → boss → end), save/load round-trip, and scene transitions.
-**Blocker for:** Regression safety for refactoring.
+### OPEN-C — PlayMode Tests (Resolved)
+Added assembly definitions (`Game.asmdef`, `Game.Editor.asmdef`) and 3 integration test files:
+- `RunFlowIntegrationTests.cs` — 11 tests covering run lifecycle, all 8 classes, all 4 game modes, board generation, determinism
+- `SaveLoadIntegrationTests.cs` — 5 tests covering profile round-trip, RunState serialization, validation clamps, atomic writes, backup rotation
+- `EconomyIntegrationTests.cs` — 8 tests covering XP curve (16,860 total), star/boss/mod multipliers, gold formulas, pencil/reroll escalation, star density formula

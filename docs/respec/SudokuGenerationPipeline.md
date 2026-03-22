@@ -1,11 +1,12 @@
 # Sudoku Generation Pipeline
 
-**Version:** 1.1 | **Date:** 2026-03-22 | **Status:** under review
+**Version:** 1.2 | **Date:** 2026-03-22 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.2 | 2026-03-22 | implemented | OPEN-A (uniqueness checker) and OPEN-B (irregular templates) both verified present in SudokuGenerator |
 | 1.1 | 2026-03-22 | under review | Integrated OPEN-A (uniqueness checker) and OPEN-B (irregular template expansion) as requirements |
 | 1.0 | 2026-03-21 | implemented | Initial specification |
 

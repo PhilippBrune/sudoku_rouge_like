@@ -7,7 +7,7 @@ using SudokuRoguelike.Save;
 using SudokuRoguelike.Tutorial;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.SceneManagement;
+using SudokuRoguelike.Bootstrap;
 using UnityEngine.UI;
 
 namespace SudokuRoguelike.UI
@@ -16,7 +16,7 @@ namespace SudokuRoguelike.UI
     {
         [SerializeField] private RunMapController runMapController;
         [SerializeField] private SaveConflictDecision defaultConflictDecision = SaveConflictDecision.KeepLocal;
-        [SerializeField] private string gameplaySceneName = "Prototype";
+        [SerializeField] private GameBootstrap gameBootstrap;
         [SerializeField] private bool logOnlyForOptionsAndCredits = true;
         [SerializeField] private GameObject mainMenuPanel;
         [SerializeField] private GameObject optionsPanel;
@@ -212,18 +212,12 @@ namespace SudokuRoguelike.UI
 
         public void StartTutorialGame(TutorialSetupConfig setup)
         {
-            Debug.Log($"MainMenuController: StartTutorialGame pressed. Target scene='{gameplaySceneName}'");
+            Debug.Log("MainMenuController: StartTutorialGame pressed.");
             SetStatus("Loading tutorial...");
             _menu.OnTutorial();
             _menu.ConfirmTutorialSetup(setup);
-            LaunchRequestContext.Request(new LaunchRequest
-            {
-                Mode = GameMode.Tutorial,
-                TutorialSetup = setup,
-                StartFresh = true,
-                ResumeFromSave = false
-            });
-            LoadGameplayScene();
+            var bootstrap = gameBootstrap != null ? gameBootstrap : FindFirstObjectByType<GameBootstrap>();
+            bootstrap.LaunchTutorial(setup);
         }
 
         public void OpenTutorialProgress()
@@ -259,10 +253,11 @@ namespace SudokuRoguelike.UI
 
         public void StartMode(GameMode mode)
         {
-            Debug.Log($"MainMenuController: StartMode pressed. Mode={mode}, Class={selectedClass}, scene='{gameplaySceneName}'");
+            Debug.Log($"MainMenuController: StartMode pressed. Mode={mode}, Class={selectedClass}");
             SetStatus($"Loading {mode}...");
             _menu.SetMode(mode);
-            LaunchRequestContext.Request(new LaunchRequest
+            var bootstrap = gameBootstrap != null ? gameBootstrap : FindFirstObjectByType<GameBootstrap>();
+            bootstrap.LaunchRun(new LaunchRequest
             {
                 Mode = mode,
                 ClassId = selectedClass,
@@ -270,7 +265,6 @@ namespace SudokuRoguelike.UI
                 ResumeFromSave = false,
                 AllowIrregularPuzzles = _allowIrregularPuzzles
             });
-            LoadGameplayScene();
         }
 
         public void SetClassUnlockTableText(Text text)
@@ -380,17 +374,11 @@ namespace SudokuRoguelike.UI
 
             if (hasSave)
             {
-                LaunchRequestContext.Request(new LaunchRequest
-                {
-                    Mode = GameMode.GardenRun,
-                    ClassId = envelope.ActiveRunState != null ? envelope.ActiveRunState.ClassId : selectedClass,
-                    StartFresh = false,
-                    ResumeFromSave = true
-                });
                 SetStatus(envelope != null && envelope.ActivePuzzle != null && envelope.ActivePuzzle.IsBoss
                     ? "Resuming mid-boss encounter..."
                     : "Resuming mid-run...");
-                LoadGameplayScene();
+                var bootstrap = gameBootstrap != null ? gameBootstrap : FindFirstObjectByType<GameBootstrap>();
+                bootstrap.LaunchResume();
             }
             else
             {
@@ -913,31 +901,8 @@ namespace SudokuRoguelike.UI
 #endif
         }
 
-        private void LoadGameplayScene()
-        {
-            if (string.IsNullOrWhiteSpace(gameplaySceneName))
-            {
-                Debug.LogError("MainMenuController: Gameplay scene name is empty.");
-                return;
-            }
-
-            if (!Application.CanStreamedLevelBeLoaded(gameplaySceneName))
-            {
-                Debug.LogWarning($"MainMenuController: Scene '{gameplaySceneName}' is not loadable by name. Checking fallback index 1.");
-                var sceneCount = SceneManager.sceneCountInBuildSettings;
-                if (sceneCount > 1)
-                {
-                    Debug.Log("MainMenuController: Loading fallback scene at build index 1.");
-                    SceneManager.LoadScene(1);
-                    return;
-                }
-
-                Debug.LogError("MainMenuController: No fallback gameplay scene found. Add MainMenu + Prototype to Build Profiles scene list.");
-                return;
-            }
-
-            SceneManager.LoadScene(gameplaySceneName);
-        }
+        // LoadGameplayScene removed — single-scene architecture.
+        // GameBootstrap.LaunchRun / LaunchTutorial / LaunchResume handle transitions via ScreenManager.
 
         private void ShowMainMenu()
         {
@@ -1506,7 +1471,8 @@ namespace SudokuRoguelike.UI
 
             var isBoss = _pendingConflictEnvelope.ActivePuzzle != null && _pendingConflictEnvelope.ActivePuzzle.IsBoss;
             SetStatus(isBoss ? "Resuming mid-boss encounter..." : "Resuming mid-run...");
-            LoadGameplayScene();
+            var bootstrap = gameBootstrap != null ? gameBootstrap : FindFirstObjectByType<GameBootstrap>();
+            bootstrap.LaunchResume();
         }
 
         private void SyncOptionsWidgetsFromProfile()

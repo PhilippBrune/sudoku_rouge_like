@@ -1,11 +1,12 @@
 # Accessibility Specification
 
-**Version:** 1.0 | **Date:** 2026-03-21 | **Status:** review
+**Version:** 1.1 | **Date:** 2026-03-22 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.1 | 2026-03-22 | implemented | All features implemented: AccessibilityService, colorblind line patterns, high contrast, font scaling, reduce motion, alt constraint symbols, keyboard navigation, input remapping |
 | 1.0 | 2026-03-21 | review | Initial specification |
 
 ---

@@ -33,6 +33,12 @@ namespace SudokuRoguelike.Economy
             [5] = 1.9f
         };
 
+        public static int BaseGoldForBoardSize(int boardSize)
+        {
+            var tier = (DifficultyTier)Math.Clamp(boardSize - 4, 1, 5);
+            return BaseDifficultyGold.TryGetValue(tier, out var g) ? g : 20;
+        }
+
         public static int CalculateGold(DifficultyTier difficulty, int stars)
         {
             var baseGold = BaseDifficultyGold[difficulty];

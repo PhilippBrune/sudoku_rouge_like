@@ -144,7 +144,7 @@ public class RunFlowIntegrationTests : TestDriver
             BoardSize = 9,
             Stars = 3,
             ResourceMode = TutorialResourceMode.Simulation,
-            SelectedClassId = ClassId.NumberFreak,
+            SimulationClassId = ClassId.NumberFreak,
             RegionVariant = 0,
         };
         run.StartTutorialRun(setup);
@@ -163,7 +163,7 @@ public class RunFlowIntegrationTests : TestDriver
             BoardSize = 9,
             Stars = 7,
             ResourceMode = TutorialResourceMode.Simulation,
-            SelectedClassId = ClassId.NumberFreak,
+            SimulationClassId = ClassId.NumberFreak,
             RegionVariant = 0,
         };
         run.StartTutorialRun(setup);
@@ -264,7 +264,7 @@ public class RunFlowIntegrationTests : TestDriver
         {
             Assert.AreEqual(board1.Solution[r, c], board2.Solution[r, c],
                 $"Solution at ({r},{c}) should be deterministic");
-            Assert.AreEqual(board1.Puzzle[r, c], board2.Puzzle[r, c],
+            Assert.AreEqual(board1.Cells[r, c], board2.Cells[r, c],
                 $"Puzzle at ({r},{c}) should be deterministic");
         }
 

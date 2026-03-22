@@ -43,7 +43,6 @@ public class SaveLoadIntegrationTests : TestDriver
         var envelope = new SaveFileEnvelope
         {
             SaveVersion = "1.0.0",
-            TimestampUtc = System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
         };
 
         // Write
@@ -55,7 +54,6 @@ public class SaveLoadIntegrationTests : TestDriver
         var loaded = JsonUtility.FromJson<SaveFileEnvelope>(loadedJson);
 
         Assert.AreEqual("1.0.0", loaded.SaveVersion);
-        Assert.AreEqual(envelope.TimestampUtc, loaded.TimestampUtc);
 
         yield return null;
     }

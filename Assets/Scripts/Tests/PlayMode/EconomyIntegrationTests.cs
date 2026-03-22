@@ -17,7 +17,7 @@ public class EconomyIntegrationTests : TestDriver
         int totalXp = 0;
         for (int level = 1; level <= 40; level++)
         {
-            totalXp += XpService.XpRequiredForLevel(level);
+            totalXp += XpService.XpToNextLevel(level);
         }
 
         Assert.AreEqual(16860, totalXp, "Total XP to level 40 should be 16,860");
@@ -53,7 +53,7 @@ public class EconomyIntegrationTests : TestDriver
 
         foreach (var (size, baseXp) in expected)
         {
-            var entry = XpService.CalculateTile(size, stars: 1, modCount: 0, isBoss: false, perfect: false);
+            var entry = XpService.CalculateTile(size, stars: 1, activeModCount: 0, isBoss: false, perfectSolve: false);
             Assert.AreEqual(baseXp, entry.BaseXp,
                 $"Board size {size} base XP should be {baseXp}");
         }
@@ -80,8 +80,8 @@ public class EconomyIntegrationTests : TestDriver
     [UnityTest]
     public IEnumerator XpPerTile_BossMultiplier_Adds50Percent()
     {
-        var normal = XpService.CalculateTile(9, 1, 0, isBoss: false, perfect: false);
-        var boss = XpService.CalculateTile(9, 1, 0, isBoss: true, perfect: false);
+        var normal = XpService.CalculateTile(9, 1, 0, isBoss: false, perfectSolve: false);
+        var boss = XpService.CalculateTile(9, 1, 0, isBoss: true, perfectSolve: false);
 
         Assert.AreEqual((int)(normal.TotalXp * 1.5f), boss.TotalXp,
             "Boss should multiply by ×1.5");
@@ -92,8 +92,8 @@ public class EconomyIntegrationTests : TestDriver
     [UnityTest]
     public IEnumerator XpPerTile_PerfectBonus_Adds25Flat()
     {
-        var normal = XpService.CalculateTile(9, 1, 0, false, perfect: false);
-        var perfect = XpService.CalculateTile(9, 1, 0, false, perfect: true);
+        var normal = XpService.CalculateTile(9, 1, 0, false, perfectSolve: false);
+        var perfect = XpService.CalculateTile(9, 1, 0, false, perfectSolve: true);
 
         Assert.AreEqual(normal.TotalXp + 25, perfect.TotalXp,
             "Perfect bonus should add +25 flat");

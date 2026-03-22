@@ -4,6 +4,7 @@ using SudokuRoguelike.Save;
 using SudokuRoguelike.Tutorial;
 using SudokuRoguelike.UI;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace SudokuRoguelike.Bootstrap
 {
@@ -11,6 +12,8 @@ namespace SudokuRoguelike.Bootstrap
     /// Single entry point for the entire game. The app has one scene ("Game").
     /// GameBootstrap starts in menu mode and transitions between menu, gameplay,
     /// and end screen by showing/hiding panel groups via ScreenManager.
+    /// Creates Camera, EventSystem, ScreenManager, and menu components at runtime
+    /// if they are not already present in the scene.
     /// </summary>
     public sealed class GameBootstrap : MonoBehaviour
     {
@@ -33,6 +36,8 @@ namespace SudokuRoguelike.Bootstrap
 
         private void Start()
         {
+            EnsureSceneInfrastructure();
+
             _autoSave = new RunAutoSaveCoordinator(_saveFileService, _profileService);
             _screenManager = FindFirstObjectByType<ScreenManager>();
 
@@ -44,6 +49,63 @@ namespace SudokuRoguelike.Bootstrap
 
             // Start in menu mode
             _screenManager?.ShowMenu();
+        }
+
+        /// <summary>
+        /// Creates all required scene infrastructure that the single-scene architecture needs.
+        /// Safe to call multiple times — skips anything that already exists.
+        /// </summary>
+        private void EnsureSceneInfrastructure()
+        {
+            // 1. Camera (required for rendering)
+            if (FindFirstObjectByType<Camera>() == null)
+            {
+                var camGo = new GameObject("Main Camera");
+                camGo.tag = "MainCamera";
+                var cam = camGo.AddComponent<Camera>();
+                cam.clearFlags = CameraClearFlags.SolidColor;
+                cam.backgroundColor = new Color(0.02f, 0.03f, 0.05f, 1f);
+                cam.orthographic = true;
+                cam.orthographicSize = 5f;
+                cam.nearClipPlane = 0.3f;
+                cam.farClipPlane = 1000f;
+                camGo.AddComponent<AudioListener>();
+                Debug.Log("GameBootstrap: Created Main Camera.");
+            }
+
+            // 2. EventSystem (required for UI interaction)
+            if (FindFirstObjectByType<EventSystem>() == null)
+            {
+                var esGo = new GameObject("EventSystem");
+                esGo.AddComponent<EventSystem>();
+                esGo.AddComponent<StandaloneInputModule>();
+                Debug.Log("GameBootstrap: Created EventSystem.");
+            }
+
+            // 3. ScreenManager (required for panel group transitions)
+            if (FindFirstObjectByType<ScreenManager>() == null)
+            {
+                var smGo = new GameObject("ScreenManager");
+                smGo.AddComponent<ScreenManager>();
+                Debug.Log("GameBootstrap: Created ScreenManager.");
+            }
+
+            // 4. Menu components (MainMenuController, MainMenuBlueprintBuilder, etc.)
+            if (FindFirstObjectByType<MainMenuController>() == null)
+            {
+                var menuGo = new GameObject("MenuSetup");
+                var controller = menuGo.AddComponent<MainMenuController>();
+                var builder = menuGo.AddComponent<MainMenuBlueprintBuilder>();
+                menuGo.AddComponent<OptionsController>();
+                menuGo.AddComponent<TutorialMenuController>();
+                menuGo.AddComponent<MetaProgressionPanelController>();
+                menuGo.AddComponent<GameModesPanelController>();
+                menuGo.AddComponent<ItemsMenuController>();
+                var autoWire = menuGo.AddComponent<MainMenuRuntimeAutoWire>();
+                autoWire.Configure(controller);
+                // builder auto-discovers MainMenuController via GetComponent in its Start()
+                Debug.Log("GameBootstrap: Created MenuSetup with all menu components.");
+            }
         }
 
         // ── Launch methods (called by menu controllers instead of LaunchRequestContext) ──

@@ -44,7 +44,6 @@ namespace SudokuRoguelike.UI
         [SerializeField] private Text gameOverSummaryText;
         [SerializeField] private Text gameOverDetailsText;
         [SerializeField] private Button gameOverBackToMenuButton;
-        [SerializeField] private string mainMenuSceneName = "MainMenu";
 
         private Button _optionsSudokuButton;
         private GameObject _inGameOptionsPanel;

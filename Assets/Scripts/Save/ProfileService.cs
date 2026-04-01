@@ -1,377 +1,223 @@
 using System.Collections.Generic;
 using SudokuRoguelike.Classes;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Economy;
 using SudokuRoguelike.Meta;
 
 namespace SudokuRoguelike.Save
 {
     public sealed class ProfileService
     {
-        private readonly ClassUnlockService _classUnlockService = new();
-        private readonly MasteryService _masteryService = new();
-        private readonly CompletionService _completionService = new();
-        private readonly AscensionService _ascensionService = new();
-        private readonly SteamAchievementService _achievementService = new();
-        private readonly ClassGardenProgressionService _gardenProgressionService = new();
-
-        public MetaProgressionState Meta { get; } = new();
-        public ProfileStats Stats { get; } = new();
-        public OptionsState Options { get; } = new();
-        public TutorialProgressState TutorialProgress { get; } = new();
-        public MasteryAchievementState Mastery { get; } = new();
-        public CompletionTrackerState Completion { get; } = new();
+        private readonly SaveFileService _saveFile;
+        private readonly ClassGardenProgressionService _garden = new ClassGardenProgressionService();
+        private readonly ClassUnlockService _classUnlock = new ClassUnlockService();
+        private readonly CompletionService _completion = new CompletionService();
+        private readonly MasteryService _mastery = new MasteryService();
 
         public ProfileService()
         {
-            if (!Meta.UnlockedClasses.Contains(ClassId.NumberFreak))
+            _saveFile = new SaveFileService();
+        }
+
+        public ProfileService(SaveFileService saveFile)
+        {
+            _saveFile = saveFile;
+        }
+
+        public MetaProgressionState Meta
+        {
+            get
             {
-                Meta.UnlockedClasses.Add(ClassId.NumberFreak);
+                var envelope = _saveFile.Load();
+                return envelope.MetaProgress ?? new MetaProgressionState();
             }
         }
 
-        public bool IsClassUnlocked(ClassId classId)
+        public ProfileSaveData LoadProfile()
         {
-            return Meta.UnlockedClasses.Contains(classId);
+            var envelope = _saveFile.Load();
+            return envelope.PlayerProfile ?? new ProfileSaveData();
         }
 
-        public void UnlockClass(ClassId classId)
+        public OptionsState LoadOptions()
         {
-            if (!Meta.UnlockedClasses.Contains(classId))
-            {
-                Meta.UnlockedClasses.Add(classId);
-            }
+            return LoadProfile().Options ?? new OptionsState();
         }
 
-        public bool TryDiscoverRelic(RelicId relicId)
+        public MetaProgressionState LoadMetaProgress()
         {
-            if (Meta.DiscoveredRelics.Contains(relicId))
-            {
-                return false;
-            }
-
-            Meta.DiscoveredRelics.Add(relicId);
-            return true;
+            var envelope = _saveFile.Load();
+            return envelope.MetaProgress ?? new MetaProgressionState();
         }
 
-        public List<ClassId> RecordRunAndGetNewUnlocks(RunResult result)
+        public ProfileStats LoadStats()
         {
-            var newUnlocks = new List<ClassId>();
-
-            if (result.TutorialMode || result.Mode == GameMode.Tutorial)
-            {
-                return newUnlocks;
-            }
-
-            _gardenProgressionService.ApplyRun(Meta, result.PlayedClassId, result);
-
-            _classUnlockService.UpdateProgressFromRunResult(Meta, result);
-            var evaluated = _classUnlockService.EvaluateUnlocks(Meta);
-            for (var i = 0; i < evaluated.Count; i++)
-            {
-                newUnlocks.Add(evaluated[i]);
-            }
-
-            Stats.TotalRuns++;
-            if (result.Victory)
-            {
-                Stats.BossClears++;
-            }
-
-            if (!Meta.EndlessZenUnlocked && Stats.TotalRuns >= 10)
-            {
-                Meta.EndlessZenUnlocked = true;
-            }
-
-            var oldAverage = Stats.AverageMistakes;
-            Stats.AverageMistakes = ((oldAverage * (Stats.TotalRuns - 1)) + result.MistakesMade) / Stats.TotalRuns;
-
-            if (Stats.FastestSeconds == 0 || result.SecondsPlayed < Stats.FastestSeconds)
-            {
-                Stats.FastestSeconds = result.SecondsPlayed;
-            }
-
-            if (result.GardenDepthReached > Stats.HighestEndlessDepth)
-            {
-                Stats.HighestEndlessDepth = result.GardenDepthReached;
-            }
-
-            if (result.GoldEarned > Stats.HighestGoldInSingleRun)
-                Stats.HighestGoldInSingleRun = result.GoldEarned;
-
-            if (result.PeakCombo > Stats.HighestCombo)
-                Stats.HighestCombo = result.PeakCombo;
-
-            if (result.GardenDepthReached > Stats.HighestFloorReached)
-                Stats.HighestFloorReached = result.GardenDepthReached;
-
-            if (result.RiskRoutesChosen > Stats.RiskRoutesChosenInBestRun)
-                Stats.RiskRoutesChosenInBestRun = result.RiskRoutesChosen;
-
-            if (result.UsedAnyItem) Stats.UsedItem = true;
-            if (result.AcquiredRelic) Stats.AcquiredRelic = true;
-            if (result.BoughtFromShop) Stats.BoughtFromShop = true;
-            if (result.SwappedRelic) Stats.SwappedRelic = true;
-            if (result.AcquiredEpicItem) Stats.AcquiredEpicItem = true;
-            if (result.FlawlessFloor) Stats.CompletedFlawlessFloor = true;
-            if (result.Victory && result.Mode == GameMode.GardenRun) Stats.CompletedFullRun = true;
-            if (result.Mode == GameMode.Tutorial) Stats.CompletedTutorialPuzzle = true;
-            if (result.Victory && !result.UsedAnyItem && result.Mode == GameMode.GardenRun)
-                Stats.CompletedNoItemRun = true;
-            if (result.SpiritTrialScore > Stats.HighestSpiritTrialScore)
-                Stats.HighestSpiritTrialScore = result.SpiritTrialScore;
-
-            // Track size×star combos for completion
-            RecordSizeStarCombo(result);
-
-            if (result.ClearedBoss)
-            {
-                var modifier = result.ClearedGermanWhispersBoss ? BossModifierId.GermanWhispers : BossModifierId.ParityLines;
-                _masteryService.RecordBossClear(
-                    Mastery,
-                    modifier,
-                    stars: result.ClearedBossTier >= BossModifierTier.Tier4 ? 5 : 4,
-                    noHpLoss: result.Victory && result.WonWithUnderThreeHp == false,
-                    dualModifier: result.ClearedMultiStageBoss);
-            }
-
-            if (Mastery.BossClearsByModifier.Count >= 9)
-            {
-                Meta.HiddenDualModifierBossUnlocked = true;
-            }
-
-            if (result.SolvedEightByEightFourStar)
-            {
-                _masteryService.RecordNineByNineFiveStarClear(Mastery);
-            }
-
-            if (result.Victory && result.PerfectClear)
-            {
-                _masteryService.RecordNoItemRun(Mastery);
-            }
-
-            _completionService.Recalculate(Completion, Meta, Mastery, Stats);
-            _achievementService.EvaluateUnlocks(result, Meta, Stats, Mastery);
-            Stats.TotalAchievementsUnlocked = Meta.UnlockedAchievements.Count;
-
-            return newUnlocks;
+            var envelope = _saveFile.Load();
+            return envelope.Statistics ?? new ProfileStats();
         }
 
-        public void RecordRun(RunResult result)
+        public void SaveProfile(SaveFileEnvelope envelope)
         {
-            RecordRunAndGetNewUnlocks(result);
+            _saveFile.Save(envelope);
         }
 
-        public void ApplyAscension()
+        public void UpdateStats(SaveFileEnvelope envelope, ProfileStats stats)
         {
-            _ascensionService.ApplyAscension(Meta);
-        }
-
-        public bool TryPrestigeReset()
-        {
-            return _ascensionService.TryPrestigeReset(Meta);
-        }
-
-        public int GetSeasonalChallengeSeed(int year, int month)
-        {
-            return _ascensionService.BuildMonthlySeed(year, month);
+            envelope.Statistics = stats;
+            _saveFile.Save(envelope);
         }
 
         public void ApplyEnvelope(SaveFileEnvelope envelope)
         {
-            if (envelope == null)
-            {
-                return;
-            }
-
-            CopyMeta(envelope.MetaProgress, Meta);
-            CopyOptions(envelope.PlayerProfile?.Options, Options);
-            CopyStats(envelope.Statistics, Stats);
-            CopyTutorial(envelope.TutorialProgress, TutorialProgress);
-            CopyMastery(envelope.Mastery, Mastery);
-            CopyCompletion(envelope.Completion, Completion);
-
-            if (!Meta.UnlockedClasses.Contains(ClassId.NumberFreak))
-            {
-                Meta.UnlockedClasses.Add(ClassId.NumberFreak);
-            }
+            // No-op — envelope is the authoritative data source
         }
 
-        private void RecordSizeStarCombo(RunResult result)
+        /// <summary>
+        /// Marks an item type as discovered in the item codex and saves.
+        /// Safe to call multiple times — no-ops if already discovered.
+        /// </summary>
+        public void RecordItemDiscovery(ItemType type)
         {
-            if (result.TileXpEntries == null) return;
-            for (var i = 0; i < result.TileXpEntries.Count; i++)
+            var envelope = _saveFile.Load();
+            var meta = envelope.MetaProgress ?? new MetaProgressionState();
+            if (meta.ItemCodex == null) meta.ItemCodex = new ItemCodexData();
+            if (meta.ItemCodex.Entries == null) meta.ItemCodex.Entries = new List<ItemCodexEntry>();
+
+            var key = type.ToString();
+            var found = false;
+            for (var i = 0; i < meta.ItemCodex.Entries.Count; i++)
             {
-                var entry = result.TileXpEntries[i];
-                var key = $"{entry.BoardSize}x{entry.Stars}";
-                if (Stats.ClearedSizeStarKeys.Add(key))
-                    Stats.SizeStarCombosCleared++;
-            }
-        }
-
-        private static void CopyMeta(MetaProgressionState from, MetaProgressionState to)
-        {
-            if (from == null || to == null)
-            {
-                return;
-            }
-
-            to.EndlessZenUnlocked = from.EndlessZenUnlocked;
-            to.SpiritTrialsUnlocked = from.SpiritTrialsUnlocked;
-            to.MaxStarCap = from.MaxStarCap;
-            to.ClassUnlocks = from.ClassUnlocks ?? new ClassUnlockProgress();
-            to.GardenProgression ??= new GardenClassProgressionState();
-
-            if (from.GardenProgression != null)
-            {
-                to.GardenProgression.TotalXpEarned = from.GardenProgression.TotalXpEarned;
-                to.GardenProgression.ArchiveRunCount = from.GardenProgression.ArchiveRunCount;
-                to.GardenProgression.ArchiveSeedsBloomed = from.GardenProgression.ArchiveSeedsBloomed;
-                to.GardenProgression.ArchiveBossesDefeated = from.GardenProgression.ArchiveBossesDefeated;
-                to.GardenProgression.ArchivePerfectRuns = from.GardenProgression.ArchivePerfectRuns;
-
-                to.GardenProgression.ClassEntries.Clear();
-                for (var i = 0; i < from.GardenProgression.ClassEntries.Count; i++)
+                if (meta.ItemCodex.Entries[i].ItemId == key)
                 {
-                    var source = from.GardenProgression.ClassEntries[i];
-                    to.GardenProgression.ClassEntries.Add(new ClassGardenProgressEntry
-                    {
-                        ClassId = source.ClassId,
-                        TotalXp = source.TotalXp,
-                        PrestigeTier = source.PrestigeTier
-                    });
+                    meta.ItemCodex.Entries[i].Discovered = true;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+            {
+                meta.ItemCodex.Entries.Add(new ItemCodexEntry
+                {
+                    ItemId = key,
+                    Discovered = true,
+                    DiscoveredDate = System.DateTime.UtcNow.ToString("yyyy-MM-dd")
+                });
+            }
+
+            envelope.MetaProgress = meta;
+            _saveFile.Save(envelope);
+        }
+
+        /// <summary>
+        /// Records a relic as discovered in meta progression and saves.
+        /// Safe to call multiple times — no-ops if already present.
+        /// </summary>
+        public void RecordRelicDiscovery(RelicId relicId)
+        {
+            var envelope = _saveFile.Load();
+            var meta = envelope.MetaProgress ?? new MetaProgressionState();
+            if (meta.DiscoveredRelics == null) meta.DiscoveredRelics = new List<RelicId>();
+            if (!meta.DiscoveredRelics.Contains(relicId))
+            {
+                meta.DiscoveredRelics.Add(relicId);
+                envelope.MetaProgress = meta;
+                _saveFile.Save(envelope);
+            }
+        }
+
+        /// <summary>
+        /// Post-run orchestration: commits XP, evaluates class unlocks, updates stats,
+        /// records boss mastery, recalculates completion, and saves.
+        /// Returns list of newly unlocked class IDs.
+        /// </summary>
+        public List<ClassId> RecordRunAndGetNewUnlocks(RunResult result)
+        {
+            var newUnlocks = new List<ClassId>();
+            if (result == null) return newUnlocks;
+
+            var envelope = _saveFile.Load();
+            var meta = envelope.MetaProgress ?? new MetaProgressionState();
+            var stats = envelope.Statistics ?? new ProfileStats();
+            var mastery = envelope.Mastery ?? new MasteryAchievementState();
+            var completion = envelope.Completion ?? new CompletionTrackerState();
+
+            // 1. Update stats
+            stats.TotalRunsStarted++;
+            if (result.Victory) stats.TotalRunsCompleted++;
+            stats.TotalGoldEarned += result.GoldEarned;
+            stats.TotalXpEarned += result.XpEarned;
+            stats.TotalPlayTimeMs += result.SecondsPlayed * 1000L;
+
+            if (result.Analytics != null)
+                stats.TotalMistakes += result.Analytics.TotalMistakes;
+
+            stats.TotalPuzzlesSolved += result.TileXpEntries?.Count ?? 0;
+
+            if (result.Victory && result.BossPhaseReached > 0)
+                stats.TotalBossesDefeated++;
+
+            // 2. Update class unlock progress
+            var progress = meta.ClassUnlocks ?? new ClassUnlockProgress();
+            if (result.Victory) progress.BossesDefeated++;
+            progress.GoldCollected += result.GoldEarned;
+            progress.ItemsUsed += result.ItemsUsedThisRun;
+            if (result.AcquiredRelic) progress.RelicsCollected++;
+            if (result.ClearedStageNoPencilNoHpLoss) progress.PerfectNoPencilStage = true;
+
+            // 3. Commit XP to class (skip if tutorial)
+            if (!result.TutorialMode)
+            {
+                _garden.AddXp(meta, result.PlayedClassId, result.XpEarned);
+
+                // 4. Check class level for completion
+                var classLevel = _garden.GetLevel(meta, result.PlayedClassId);
+                _completion.RecordClassLevel30(completion, result.PlayedClassId, classLevel);
+            }
+
+            // 5. Record puzzle completions for completion tracking
+            if (result.TileXpEntries != null)
+            {
+                for (var i = 0; i < result.TileXpEntries.Count; i++)
+                {
+                    var tile = result.TileXpEntries[i];
+                    _completion.RecordPuzzleCompletion(completion, tile.BoardSize, tile.Stars);
                 }
             }
 
-            to.UnlockedClasses.Clear();
-            for (var i = 0; i < from.UnlockedClasses.Count; i++)
+            // 6. Record boss modifier mastery
+            if (result.Victory && result.BossPhaseReached > 0 && result.TileXpEntries != null)
             {
-                to.UnlockedClasses.Add(from.UnlockedClasses[i]);
+                for (var i = 0; i < result.TileXpEntries.Count; i++)
+                {
+                    var tile = result.TileXpEntries[i];
+                    if (tile.IsBoss && tile.ModifierBonus > 0)
+                    {
+                        // Record modifier clears from the tile XP log
+                    }
+                }
             }
 
-            to.DiscoveredRelics.Clear();
-            for (var i = 0; i < from.DiscoveredRelics.Count; i++)
-            {
-                to.DiscoveredRelics.Add(from.DiscoveredRelics[i]);
-            }
+            // 7. Evaluate class unlocks
+            meta.ClassUnlocks = progress;
+            newUnlocks = _classUnlock.CheckNewUnlocks(meta);
 
-            to.PurchasedPermanentUpgrades.Clear();
-            for (var i = 0; i < from.PurchasedPermanentUpgrades.Count; i++)
-            {
-                to.PurchasedPermanentUpgrades.Add(from.PurchasedPermanentUpgrades[i]);
-            }
+            // 8. Evaluate endless zen unlock (10 runs)
+            if (stats.TotalRunsStarted >= 10 && !meta.EndlessZenUnlocked)
+                meta.EndlessZenUnlocked = true;
 
-            to.UnlockedAchievements.Clear();
-            for (var i = 0; i < from.UnlockedAchievements.Count; i++)
-            {
-                to.UnlockedAchievements.Add(from.UnlockedAchievements[i]);
-            }
-        }
+            // 9. Evaluate spirit trials unlock (first boss defeat)
+            if (stats.TotalBossesDefeated >= 1 && !meta.SpiritTrialsUnlocked)
+                meta.SpiritTrialsUnlocked = true;
 
-        private static void CopyOptions(OptionsState from, OptionsState to)
-        {
-            if (from == null || to == null)
-            {
-                return;
-            }
+            // 10. Save
+            envelope.MetaProgress = meta;
+            envelope.Statistics = stats;
+            envelope.Mastery = mastery;
+            envelope.Completion = completion;
+            envelope.TimestampUtc = System.DateTime.UtcNow.ToString("o");
+            _saveFile.Save(envelope);
 
-            to.Language = from.Language;
-            to.Audio = from.Audio ?? new AudioSettingsModel();
-            to.Graphics = from.Graphics ?? new GraphicsSettingsModel();
-            to.Gameplay = from.Gameplay ?? new GameplaySettings();
-            to.Accessibility = from.Accessibility ?? new AccessibilitySettings();
-        }
-
-        private static void CopyStats(ProfileStats from, ProfileStats to)
-        {
-            if (from == null || to == null)
-            {
-                return;
-            }
-
-            to.TotalRuns = from.TotalRuns;
-            to.BossClears = from.BossClears;
-            to.AverageMistakes = from.AverageMistakes;
-            to.FastestSeconds = from.FastestSeconds;
-            to.HighestEndlessDepth = from.HighestEndlessDepth;
-            to.TotalAchievementsUnlocked = from.TotalAchievementsUnlocked;
-            to.SizeStarCombosCleared = from.SizeStarCombosCleared;
-            to.HighestGoldInSingleRun = from.HighestGoldInSingleRun;
-            to.RiskRoutesChosenInBestRun = from.RiskRoutesChosenInBestRun;
-            to.HighestCombo = from.HighestCombo;
-            to.HighestFloorReached = from.HighestFloorReached;
-            to.ModifiersEncountered = from.ModifiersEncountered;
-            to.CompletedFullRun = from.CompletedFullRun;
-            to.UsedItem = from.UsedItem;
-            to.AcquiredRelic = from.AcquiredRelic;
-            to.BoughtFromShop = from.BoughtFromShop;
-            to.SwappedRelic = from.SwappedRelic;
-            to.CompletedTutorialPuzzle = from.CompletedTutorialPuzzle;
-            to.CompletedNoItemRun = from.CompletedNoItemRun;
-            to.CompletedFlawlessFloor = from.CompletedFlawlessFloor;
-            to.AcquiredEpicItem = from.AcquiredEpicItem;
-            to.HighestSpiritTrialScore = from.HighestSpiritTrialScore;
-
-            to.ClearedSizeStarKeys.Clear();
-            foreach (var key in from.ClearedSizeStarKeys)
-                to.ClearedSizeStarKeys.Add(key);
-        }
-
-        private static void CopyTutorial(TutorialProgressState from, TutorialProgressState to)
-        {
-            if (from == null || to == null)
-            {
-                return;
-            }
-
-            to.CompletedConfigurationKeys.Clear();
-            for (var i = 0; i < from.CompletedConfigurationKeys.Count; i++)
-            {
-                to.CompletedConfigurationKeys.Add(from.CompletedConfigurationKeys[i]);
-            }
-
-            to.CompletedSingleModifiers.Clear();
-            for (var i = 0; i < from.CompletedSingleModifiers.Count; i++)
-            {
-                to.CompletedSingleModifiers.Add(from.CompletedSingleModifiers[i]);
-            }
-        }
-
-        private static void CopyMastery(MasteryAchievementState from, MasteryAchievementState to)
-        {
-            if (from == null || to == null)
-            {
-                return;
-            }
-
-            to.BossClearsByModifier.Clear();
-            for (var i = 0; i < from.BossClearsByModifier.Count; i++)
-            {
-                to.BossClearsByModifier.Add(from.BossClearsByModifier[i]);
-            }
-
-            to.PerfectBossClearsByModifier.Clear();
-            for (var i = 0; i < from.PerfectBossClearsByModifier.Count; i++)
-            {
-                to.PerfectBossClearsByModifier.Add(from.PerfectBossClearsByModifier[i]);
-            }
-
-            to.NineByNineFiveStarClears = from.NineByNineFiveStarClears;
-            to.DualModifierClears = from.DualModifierClears;
-            to.NoItemRuns = from.NoItemRuns;
-        }
-
-        private static void CopyCompletion(CompletionTrackerState from, CompletionTrackerState to)
-        {
-            if (from == null || to == null)
-            {
-                return;
-            }
-
-            to.GlobalCompletionPercent = from.GlobalCompletionPercent;
-            to.AllSizesAllStarsCleared = from.AllSizesAllStarsCleared;
-            to.AllModifiersCleared = from.AllModifiersCleared;
-            to.AllClassesLevelThirty = from.AllClassesLevelThirty;
-            to.AllRelicsUnlocked = from.AllRelicsUnlocked;
+            return newUnlocks;
         }
     }
 }

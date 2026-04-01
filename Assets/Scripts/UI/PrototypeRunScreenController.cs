@@ -2,5095 +2,2419 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using SudokuRoguelike.Boss;
 using SudokuRoguelike.Core;
 using SudokuRoguelike.Data;
 using SudokuRoguelike.Economy;
-using SudokuRoguelike.Meta;
+using SudokuRoguelike.Items;
 using SudokuRoguelike.Run;
 using SudokuRoguelike.Save;
 using SudokuRoguelike.Sudoku;
-using SudokuRoguelike.Tutorial;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using SudokuRoguelike.Bootstrap;
 using UnityEngine.UI;
-#if ENABLE_INPUT_SYSTEM
-using UnityEngine.InputSystem;
-#endif
 
 namespace SudokuRoguelike.UI
 {
+    /// <summary>
+    /// In-run screen controller: path overview, sudoku gameplay, rewards, shop, game over.
+    /// Procedurally builds all UI. Drives RunMapController / RunDirector.
+    /// </summary>
     public sealed class PrototypeRunScreenController : MonoBehaviour
     {
-        [SerializeField] private RunMapController runMapController;
-        [SerializeField] private GameObject pathOverviewPanel;
-        [SerializeField] private GameObject sudokuPanel;
-        [SerializeField] private Text pathOverviewText;
-        [SerializeField] private Text laneAText;
-        [SerializeField] private Text laneBText;
-        [SerializeField] private RectTransform laneAPathRoot;
-        [SerializeField] private RectTransform laneBPathRoot;
-        [SerializeField] private Button choosePathAButton;
-        [SerializeField] private Button choosePathBButton;
-        [SerializeField] private Button saveQuitPathButton;
-        [SerializeField] private Button saveQuitSudokuButton;
-        [SerializeField] private RectTransform sudokuGridRoot;
-        [SerializeField] private RectTransform numpadRoot;
-        [SerializeField] private Button solveSudokuButton;
-        [SerializeField] private Text sudokuStatusText;
-        [SerializeField] private Text hpText;
-        [SerializeField] private Text pencilText;
-        [SerializeField] private GameObject gameOverPanel;
-        [SerializeField] private Text gameOverSummaryText;
-        [SerializeField] private Text gameOverDetailsText;
-        [SerializeField] private Button gameOverBackToMenuButton;
+        // ── Injected via Configure() ──
+        private RunMapController _map;
+        private GameObject _pathPanel;
+        private GameObject _sudokuPanel;
+        private GameObject _gameOverPanel;
+        private Text _overviewText;
+        private Text _statusText;
+        private Text _hpText;
+        private Text _pencilText;
+        private Text _gameOverSummary;
+        private Text _gameOverDetails;
+        private Button _gameOverBackBtn;
+        private RectTransform _gridRoot;
+        private RectTransform _numpadRoot;
 
-        private Button _optionsSudokuButton;
-        private GameObject _inGameOptionsPanel;
-
-        private readonly List<CellView> _cells = new();
-        private readonly List<Button> _numpadButtons = new();
-
+        // ── Runtime state ──
+        private List<CellView> _cells;
+        private List<Button> _numpadButtons;
         private int _boardSize;
-        private int _selectedRow = -1;
-        private int _selectedCol = -1;
-        private readonly HashSet<long> _multiSelectedCells = new();
+        private int _selectedRow;
+        private int _selectedCol;
         private int _highlightValue;
-        private int _lastClickRow = -1;
-        private int _lastClickCol = -1;
-        private float _lastClickTime;
         private bool _completionHandled;
-        private float _nextPathRefreshTime;
-        private bool _buttonIconsApplied;
-        private bool _fallbackRunInitAttempted;
-        private bool _tutorialSudokuShown;
-        private int _lastLaneRenderSignature = int.MinValue;
         private bool _gameOverShown;
-        private bool _tutorialCompletionProcessed;
-        private string _pathOverlayMessage = string.Empty;
-        private bool _resumeScreenApplied;
         private bool _pencilMode;
         private Button _pencilModeButton;
-        private RunAudioController _runAudio;
-        private string _hoverInfo = string.Empty;
-        private RectTransform _inventoryBadgeRoot;
-        // Old _classToken/_classTokenTarget removed — replaced by PlayerIconController
-        // _hasClassTokenTarget removed — replaced by PlayerIconController
-        private GameObject _rewardPanel;
-        private Text _rewardSummaryText;
-        private Text _rewardHoverText;
-        private readonly List<ItemRollSlot> _pendingRewardSlots = new();
-        private bool _awaitingRewardChoice;
-        private GameObject _shopPanel;
-        private Text _shopSummaryText;
-        private Text _shopHoverText;
-        private readonly List<ShopOffer> _shopOffers = new();
-        private string _pendingShopOfferId = string.Empty;
-        private bool _awaitingShopReplacement;
-        private RectTransform _puzzleItemBarRoot;
-        private Text _puzzleItemHoverText;
-        private Text _levelInfoText;
-        private Text _modifiersLabel;
-        private Image _hpBarFill;
-        private Image _pencilBarFill;
-        private RectTransform _pathOverlayRoot;
-        // Old lane-end/cross-link tracking fields removed — replaced by canvas coordinate system
-        private int _lastPuzzleItemSignature = int.MinValue;
-        private readonly List<(int Row, int Col)> _finderHighlightCells = new();
-        private float _finderHighlightUntil;
-        private GameObject _bossGateChoicePanel;
-        private bool _awaitingBossGateChoice;
-        private bool _awaitingRelicChoice;
-        private GameObject _relicChoicePanel;
-        private RelicInstance _offeredRelic;
-        private bool _awaitingRewardReplacement;
-        private int _pendingRewardSlotIndex;
+        private bool _resumeApplied;
+        private bool _tutorialShown;
+
+        // ── Overlay ──
         private RectTransform _gridOverlayRoot;
         private RectTransform _gridNumberRoot;
-        private readonly List<GameObject> _overlayObjects = new();
-        private readonly Dictionary<BossModifierId, List<GameObject>> _overlayGroups = new();
-        private BossModifierId _currentOverlayModifier;
+        private List<GameObject> _overlayObjects;
         private bool _overlaysBuilt;
-        private readonly HashSet<long> _cageBorderEdges = new();
+        private HashSet<long> _cageBorderEdges;
         private Sprite _circleSprite;
-        private Text _bossModifierDescText;
-        private GameObject _legendPanel;
-        private bool _legendExpanded;
-        private Coroutine _isolateCoroutine;
+        private Sprite _ringSprite;
 
-        private const string ReturnTutorialProgressPrefKey = "sr_return_to_tutorial_progress";
+        // ── Reward / Shop ──
+        private GameObject _rewardPanel;
+        private Text _rewardSummary;
+        private bool _awaitingReward;
+        private List<ItemInstance> _rewardSlots;
+        private GameObject _shopPanel;
+        private Text _shopSummary;
+        private List<ShopOffer> _shopOffers;
 
-        private static readonly Color EmptyColor = new(0.12f, 0.18f, 0.14f, 1f);
-        private static readonly Color GivenColor = new(0.20f, 0.29f, 0.20f, 1f);
-        private static readonly Color RowColHighlight = new(0.18f, 0.34f, 0.56f, 1f);
-        private static readonly Color SelectedColor = new(0.73f, 0.49f, 0.18f, 1f);
-        private static readonly Color MatchValueColor = new(0.36f, 0.24f, 0.58f, 1f);
-        private static readonly Color FinderHintColor = new(0.22f, 0.45f, 0.30f, 1f);
-        private static readonly Color ConflictColor = new(0.72f, 0.18f, 0.18f, 1f);
-        private static readonly Color FogColor = new(0.06f, 0.06f, 0.08f, 1f);
-        private static readonly Color GermanWhispersLineColor = new(0.20f, 0.72f, 0.30f, 0.55f);
-        private static readonly Color DutchWhispersLineColor = new(0.10f, 0.95f, 0.78f, 0.75f); // bright teal
-        private static readonly Color ParityLineColor = new(0.10f, 0.88f, 0.80f, 0.70f);
-        private static readonly Color RenbanLineColor = new(0.80f, 0.35f, 0.65f, 0.55f);
-        private static readonly Color PalindromeLineColor = new(0.60f, 0.60f, 0.60f, 0.65f); // gray
-        private static readonly Color ThermoLineColor = new(0.85f, 0.45f, 0.10f, 0.70f);    // warm orange
-        private static readonly Color BetweenLinesColor = new(0.90f, 0.90f, 0.90f, 0.60f); // near-white
-        private static readonly Color EvenMarkerColor = new(0.35f, 0.65f, 0.90f, 0.55f);   // light blue square
-        private static readonly Color OddMarkerColor = new(0.90f, 0.55f, 0.20f, 0.55f);    // warm orange circle
-        private static readonly Color KillerCageBorder = new(0.85f, 0.15f, 0.12f, 0.90f);
-        private static readonly Color WhiteDotColor = new(0.95f, 0.95f, 0.95f, 0.85f);
-        private static readonly Color BlackDotColor = new(0.10f, 0.10f, 0.10f, 0.90f);
-        private static readonly Color ArrowCircleColor = new(0.75f, 0.75f, 0.75f, 0.90f);
-        private static readonly Color ArrowCircleInnerColor = new(0f, 0f, 0f, 0f); // transparent → true hollow outline
-        private static readonly Color ArrowPathColor = new(0.55f, 0.55f, 0.55f, 0.45f);
-        private static readonly Color KnightMoveHighlight = new(0.32f, 0.22f, 0.48f, 0.55f);
+        // ── Boss gate ──
+        private GameObject _bossGatePanel;
+        private bool _awaitingBossGate;
+        private List<BossModifierId> _bossGateOptions;
+        private List<BossModifierId> _selectedBossMods;
+        private int _bossPicksRequired;
+        private Text _bossGateTitle;
 
-        private static readonly (int Dr, int Dc)[] KnightOffsets =
+        // ── Path overlay ──
+        private RectTransform _pathOverlayRoot;
+        private string _pathMessage;
+
+        // ── Options panel ──
+        private GameObject _inGameOptionsPanel;
+        private int _bossNodeIndex = -1;
+
+        // ── Audio ──
+        private RunAudioController _audio;
+
+        // ── Accessibility ──
+        private AccessibilityService _accessibility = new AccessibilityService();
+
+        // ── HUD bars ──
+        private Image _hpBarFill;
+        private Image _pencilBarFill;
+
+        // ── Floor modifier display ──
+        private GameObject _floorModBanner;
+        private Text _floorModText;
+        private GameObject _modifierInfoBox;
+        private Text _modifierInfoText;
+
+        // ── Shop selection ──
+        private int _selectedShopOffer = -1;
+
+        // ── Bag-full swap panel ──
+        private GameObject _bagSwapPanel;
+        private ItemInstance _pendingSwapItem;    // item waiting to be placed
+        private System.Action<int> _onSwapSlotChosen; // callback(slotIndex) → do the replace
+        private System.Action _onSwapAborted;
+
+        // ── Bag panel ──
+        private GameObject _bagPanel;
+        private List<Button> _bagItemButtons;
+        private Button _bagRelicButton;
+        private HashSet<(int row, int col)> _bagHighlightCells;
+        private float _bagHighlightEndTime;
+        private int _selectedBagSlot = -1;
+        private int _umbrellaCharges;
+        private int _fogDisabledMovesRemaining;
+        private bool _swapMode;
+        private int _swapRow1 = -1, _swapCol1 = -1;
+        private int _lastMistakeRow = -1, _lastMistakeCol = -1;
+
+        // ── Colors ──
+        private static readonly Color BgColor = new Color(0.07f, 0.11f, 0.14f);
+        private static readonly Color PanelBg = new Color(0.08f, 0.12f, 0.16f, 0.94f);
+        private static readonly Color BtnColor = new Color(0.15f, 0.22f, 0.29f, 0.94f);
+        private static readonly Color AccentGold = new Color(0.98f, 0.83f, 0.26f);
+        private static readonly Color TextColor = new Color(0.96f, 0.93f, 0.82f);
+        private static readonly Color HpRed = new Color(0.75f, 0.22f, 0.22f);
+        private static readonly Color PencilBlue = new Color(0.22f, 0.55f, 0.75f);
+        private static readonly Color EmptyCellColor = new Color(0.12f, 0.18f, 0.14f, 1f);
+        private static readonly Color GivenCellColor = new Color(0.20f, 0.29f, 0.20f, 1f);
+        private static readonly Color SelectedColor = new Color(0.73f, 0.49f, 0.18f, 1f);
+        private static readonly Color RowColHL = new Color(0.18f, 0.34f, 0.56f, 1f);
+        private static readonly Color MatchColor = new Color(0.36f, 0.24f, 0.58f, 1f);
+        private static readonly Color ConflictColor = new Color(0.72f, 0.18f, 0.18f, 1f);
+        private static readonly Color FogColor = new Color(0.06f, 0.06f, 0.08f, 1f);
+        private static readonly Color AntiknightForbidColor = new Color(0.55f, 0.20f, 0.60f, 0.55f);
+        private static readonly Color BagHighlightColor = new Color(0.30f, 0.65f, 0.85f, 0.55f);
+        private static readonly Color RegionBorder = new Color(1f, 0.78f, 0.24f, 0.72f);
+        private static readonly Color KillerBorder = new Color(0.85f, 0.15f, 0.12f, 0.90f);
+
+        private static Font _font;
+        private static Font GetFont()
         {
-            (-2, -1), (-2, 1), (-1, -2), (-1, 2),
-            (1, -2),  (1, 2),  (2, -1),  (2, 1)
-        };
-
-        private AccessibilityService _accessibility;
-
-        // High contrast overrides
-        private static readonly Color HcBackground = new(1f, 1f, 1f, 1f);
-        private static readonly Color HcBorder = new(0f, 0f, 0f, 1f);
-        private static readonly Color HcSelected = new(1f, 1f, 0f, 1f);
-        private static readonly Color HcError = new(1f, 0f, 0f, 1f);
-        private static readonly Color HcFog = new(0f, 0f, 0f, 1f);
-        private static readonly Color HcPanelBg = new(0.02f, 0.02f, 0.04f, 0.95f);
-        private static readonly Color HcPanelText = new(1f, 1f, 1f, 1f);
-
-        private bool _highlightConflicts = true;
-
-        public void SetHighlightConflictsLive(bool enabled)
-        {
-            _highlightConflicts = enabled;
-            var board = runMapController?.Run?.CurrentBoard;
-            if (board != null)
-            {
-                RenderBoard(board);
-            }
+            if (_font == null)
+                _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf")
+                     ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+            return _font;
         }
 
-        public void Configure(
-            RunMapController runMap,
-            GameObject pathPanel,
-            GameObject sudokuGamePanel,
-            Text overviewText,
-            Text laneA,
-            Text laneB,
-            RectTransform laneARoot,
-            RectTransform laneBRoot,
-            Button chooseA,
-            Button chooseB,
-            Button saveQuitPath,
-            Button saveQuitSudoku,
-            Button optionsSudoku,
-            GameObject inGameOptions,
-            RectTransform gridRoot,
-            RectTransform numpad,
-            Button solveButton,
-            Text statusText,
-            Text hp,
-            Text pencil,
-            GameObject gameOver,
-            Text gameOverSummary,
-            Text gameOverDetails,
-            Button gameOverBack)
-        {
-            runMapController = runMap;
-            pathOverviewPanel = pathPanel;
-            sudokuPanel = sudokuGamePanel;
-            pathOverviewText = overviewText;
-            laneAText = laneA;
-            laneBText = laneB;
-            laneAPathRoot = laneARoot;
-            laneBPathRoot = laneBRoot;
-            choosePathAButton = chooseA;
-            choosePathBButton = chooseB;
-            saveQuitPathButton = saveQuitPath;
-            saveQuitSudokuButton = saveQuitSudoku;
-            _optionsSudokuButton = optionsSudoku;
-            _inGameOptionsPanel = inGameOptions;
-            sudokuGridRoot = gridRoot;
-            numpadRoot = numpad;
-            solveSudokuButton = solveButton;
-            sudokuStatusText = statusText;
-            hpText = hp;
-            pencilText = pencil;
-            gameOverPanel = gameOver;
-            gameOverSummaryText = gameOverSummary;
-            gameOverDetailsText = gameOverDetails;
-            gameOverBackToMenuButton = gameOverBack;
-
-            WireButtons();
-            BuildNumpad();
-            SquarePathActionButtons();
-            ShowPathOverview();
-            RefreshPathOverview();
-        }
+        // ────────────────────── Lifecycle ──────────────────────
 
         private void Awake()
         {
-            WireButtons();
-            _accessibility = new AccessibilityService();
-            _runAudio = GetComponent<RunAudioController>();
-            if (_runAudio == null)
+            _cells = new List<CellView>();
+            _numpadButtons = new List<Button>();
+            _overlayObjects = new List<GameObject>();
+            _cageBorderEdges = new HashSet<long>();
+            _rewardSlots = new List<ItemInstance>();
+            _shopOffers = new List<ShopOffer>();
+            _bossGateOptions = new List<BossModifierId>();
+            _selectedBossMods = new List<BossModifierId>();
+            _bagItemButtons = new List<Button>();
+            _bagHighlightCells = new HashSet<(int, int)>();
+            _selectedRow = -1;
+            _selectedCol = -1;
+            _pathMessage = string.Empty;
+        }
+
+        public void Configure(RunMapController map,
+            GameObject pathPanel, GameObject sudokuPanel, GameObject gameOverPanel,
+            Text overviewText, Text statusText, Text hpText, Text pencilText,
+            Text goSummary, Text goDetails, Button goBack,
+            RectTransform gridRoot, RectTransform numpadRoot)
+        {
+            _map = map;
+            _pathPanel = pathPanel;
+            _sudokuPanel = sudokuPanel;
+            _gameOverPanel = gameOverPanel;
+            _overviewText = overviewText;
+            _statusText = statusText;
+            _hpText = hpText;
+            _pencilText = pencilText;
+            _gameOverSummary = goSummary;
+            _gameOverDetails = goDetails;
+            _gameOverBackBtn = goBack;
+            _gridRoot = gridRoot;
+            _numpadRoot = numpadRoot;
+
+            if (_gameOverBackBtn != null)
             {
-                _runAudio = gameObject.AddComponent<RunAudioController>();
+                _gameOverBackBtn.onClick.RemoveAllListeners();
+                _gameOverBackBtn.onClick.AddListener(SaveAndQuit);
             }
 
+            BuildNumpad();
+            ShowPath();
+        }
+
+        public void NotifyRunStarted()
+        {
+            _audio = FindFirstObjectByType<RunAudioController>();
+            _resumeApplied = false;
+            _tutorialShown = false;
+            _completionHandled = false;
+            _gameOverShown = false;
+            RefreshAccessibility();
+            WireInGameButtons();
+            ShowPath();
+        }
+
+        public void NotifyAccessibilityChanged()
+        {
+            RefreshAccessibility();
+            // Refresh board overlays if a puzzle is active
+            if (_map?.Run?.CurrentBoard != null && _cells != null && _cells.Count > 0)
+            {
+                _overlaysBuilt = false; // force overlay rebuild with new accessibility settings
+                RebuildBoard();
+            }
+            // Refresh particle controller
+            FindFirstObjectByType<AmbientParticleController>()?.RefreshSettings();
+        }
+
+        private void RefreshAccessibility()
+        {
             var save = new SaveFileService();
-            var profile = new ProfileService();
-            if (save.TryLoadProfile(out var envelope))
+            var opts = save.HasSaveFile() ? save.Load().PlayerProfile?.Options : null;
+            _accessibility.Refresh(
+                opts?.Accessibility ?? new AccessibilitySettings(),
+                opts?.Graphics ?? new GraphicsSettingsModel());
+        }
+
+        private void WireInGameButtons()
+        {
+            if (_sudokuPanel == null) return;
+            var pr = _sudokuPanel.GetComponent<RectTransform>();
+            if (pr == null) return;
+
+            // Wire Save & Quit button (label becomes "Quit" in tutorial — no save occurs)
+            var sqBtn = pr.Find("BtnSudokuSaveQuit")?.GetComponent<Button>();
+            if (sqBtn != null)
             {
-                profile.ApplyEnvelope(envelope);
+                sqBtn.onClick.RemoveAllListeners();
+                sqBtn.onClick.AddListener(SaveAndQuit);
+                if (_map?.Run?.State != null && _map.Run.State.TutorialMode)
+                {
+                    var sqLabel = sqBtn.GetComponentInChildren<Text>();
+                    if (sqLabel != null) sqLabel.text = "Quit (Q)";
+                }
             }
 
-            _highlightConflicts = profile.Options.Gameplay.HighlightConflicts;
+            // Wire Options button
+            var optBtn = pr.Find("BtnSudokuOptions")?.GetComponent<Button>();
+            if (optBtn != null)
+            {
+                optBtn.onClick.RemoveAllListeners();
+                optBtn.onClick.AddListener(ToggleOptionsPanel);
+            }
+
+            // Find in-game options panel (sibling of sudokuPanel under same parent)
+            if (_inGameOptionsPanel == null && _sudokuPanel.transform.parent != null)
+            {
+                var parent = _sudokuPanel.transform.parent;
+                var candidate = parent.Find("InGameOptionsPanel")?.gameObject
+                    ?? parent.Find("InRunUI/InGameOptionsPanel")?.gameObject;
+                if (candidate == null)
+                    for (var i = 0; i < parent.childCount; i++)
+                        if (parent.GetChild(i).name.Contains("Options") && parent.GetChild(i).name.Contains("Panel"))
+                        { candidate = parent.GetChild(i).gameObject; break; }
+                _inGameOptionsPanel = candidate;
+            }
+        }
+
+        private void ToggleOptionsPanel()
+        {
+            if (_inGameOptionsPanel != null)
+                _inGameOptionsPanel.SetActive(!_inGameOptionsPanel.activeSelf);
+        }
+
+        public void SetInGameOptionsPanel(GameObject panel)
+        {
+            _inGameOptionsPanel = panel;
+        }
+
+        public void SaveAndQuitPublic() => SaveAndQuit();
+
+        public void SetHighlightConflictsLive(bool enabled)
+        {
+            // Refresh board visuals when highlight-conflicts setting changes mid-game
+            if (_map?.Run?.CurrentBoard != null && _cells != null && _cells.Count > 0)
+                RebuildBoard();
         }
 
         private void Update()
         {
-            if (runMapController == null)
-            {
-                runMapController = FindFirstObjectByType<RunMapController>();
-                if (runMapController == null)
-                {
-                    return;
-                }
-            }
-
-            if (runMapController.Run == null && !_fallbackRunInitAttempted)
-            {
-                _fallbackRunInitAttempted = true;
-                runMapController.Initialize(ClassId.NumberFreak, new MetaProgressionState());
-            }
-
-            if (pathOverviewPanel != null && pathOverviewPanel.activeSelf && Time.unscaledTime >= _nextPathRefreshTime)
-            {
-                _nextPathRefreshTime = Time.unscaledTime + 0.50f;
-                RefreshPathOverview();
-            }
-
-            if (pathOverviewPanel != null && pathOverviewPanel.activeSelf)
-            {
-                _playerIcon.Update();
-            }
-
-            if (!_buttonIconsApplied)
-            {
-                TryApplyButtonIcons();
-            }
-
-            if (!_tutorialSudokuShown && runMapController?.Run?.RunState != null && runMapController.Run.RunState.TutorialMode)
-            {
-                _tutorialSudokuShown = true;
-                ShowSudoku();
-                BuildOrRefreshSudokuBoard();
-                SetStatus("Tutorial puzzle started.");
-            }
-
-            if (sudokuPanel != null && sudokuPanel.activeSelf)
-            {
-                _runAudio?.SetContext(RunAudioController.Context.Puzzle);
-            }
-
-            if (!_resumeScreenApplied)
-            {
-                ApplyResumeScreenState();
-            }
-
-            if (sudokuPanel != null && sudokuPanel.activeSelf)
-            {
-                HandleKeyboardInput();
-                HandleCompletionState();
-                RefreshHud();
-                RefreshSolveButtonState();
-                CheckForGameOver();
-            }
-        }
-
-        private void WireButtons()
-        {
-            if (choosePathAButton != null)
-            {
-                choosePathAButton.gameObject.SetActive(false);
-            }
-
-            if (choosePathBButton != null)
-            {
-                choosePathBButton.gameObject.SetActive(false);
-            }
-
-            if (saveQuitPathButton != null)
-            {
-                saveQuitPathButton.onClick.RemoveAllListeners();
-                saveQuitPathButton.onClick.AddListener(SaveAndQuit);
-            }
-
-            if (saveQuitSudokuButton != null)
-            {
-                saveQuitSudokuButton.onClick.RemoveAllListeners();
-                saveQuitSudokuButton.onClick.AddListener(SaveAndQuit);
-            }
-
-            if (_optionsSudokuButton != null)
-            {
-                _optionsSudokuButton.onClick.RemoveAllListeners();
-                _optionsSudokuButton.onClick.AddListener(() =>
-                {
-                    if (_inGameOptionsPanel != null) _inGameOptionsPanel.SetActive(true);
-                });
-            }
-
-            if (solveSudokuButton != null)
-            {
-                solveSudokuButton.onClick.RemoveAllListeners();
-                solveSudokuButton.onClick.AddListener(EvaluateCurrentSudoku);
-                solveSudokuButton.gameObject.SetActive(false);
-            }
-
-            if (gameOverBackToMenuButton != null)
-            {
-                gameOverBackToMenuButton.onClick.RemoveAllListeners();
-                gameOverBackToMenuButton.onClick.AddListener(SaveAndQuit);
-            }
-        }
-
-        private static bool WasEscapePressed()
-        {
-#if ENABLE_INPUT_SYSTEM
-            return UnityEngine.InputSystem.Keyboard.current != null &&
-                   UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame;
-#else
-            return Input.GetKeyDown(KeyCode.Escape);
-#endif
-        }
-
-        private void HandleKeyboardInput()
-        {
-            // Escape closes the top-most active panel
-            if (WasEscapePressed())
-            {
-                if (_inGameOptionsPanel != null && _inGameOptionsPanel.activeSelf)
-                {
-                    _inGameOptionsPanel.SetActive(false);
-                    return;
-                }
-                if (_shopPanel != null && _shopPanel.activeSelf)
-                {
-                    _shopPanel.SetActive(false);
-                    ShowPathOverview();
-                    return;
-                }
-                if (_rewardPanel != null && _rewardPanel.activeSelf)
-                {
-                    // Don't allow closing reward panel (must choose)
-                }
-                if (_bossGateChoicePanel != null && _bossGateChoicePanel.activeSelf)
-                {
-                    // Don't allow closing boss gate (must choose)
-                }
-            }
-
-            var boardSize = runMapController?.Run?.CurrentBoard?.Size ?? 9;
-
-            var moveRow = 0;
-            var moveCol = 0;
-            if (WasMoveUpPressed()) moveRow -= 1;
-            if (WasMoveDownPressed()) moveRow += 1;
-            if (WasMoveLeftPressed()) moveCol -= 1;
-            if (WasMoveRightPressed()) moveCol += 1;
-            if (moveRow != 0 || moveCol != 0)
-            {
-                MoveSelection(moveRow, moveCol);
-            }
-
-            for (var i = 1; i <= 9; i++)
-            {
-                if (i > boardSize)
-                {
-                    continue;
-                }
-
-                if (WasDigitPressed(i))
-                {
-                    EnterNumber(i);
-                }
-            }
-
-            if (WasClearPressed())
-            {
-                ClearSelectedCell();
-            }
-
-            if (WasSaveQuitPressed())
-            {
-                SaveAndQuit();
-            }
-
-            if (WasTogglePencilModePressed())
-            {
-                TogglePencilMode();
-            }
-
-            // Multi-select shortcuts
-            HandleMultiSelectShortcuts();
-        }
-
-        private void HandleMultiSelectShortcuts()
-        {
-            var board = runMapController?.Run?.CurrentBoard;
-            if (board == null) return;
-
-            var ctrlHeld = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
-            var shiftHeld = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
-
-            if (!ctrlHeld) return;
-
-            if (shiftHeld && Input.GetKeyDown(KeyCode.A))
-            {
-                // CTRL+SHIFT+A: deselect all
-                _multiSelectedCells.Clear();
-                _selectedRow = -1;
-                _selectedCol = -1;
-                RenderBoard(board);
-            }
-            else if (Input.GetKeyDown(KeyCode.A))
-            {
-                // CTRL+A: select all empty cells
-                _multiSelectedCells.Clear();
-                for (var r = 0; r < board.Size; r++)
-                {
-                    for (var c = 0; c < board.Size; c++)
-                    {
-                        if (board.IsEmpty(r, c) && !board.IsGiven(r, c))
-                            _multiSelectedCells.Add((long)r * 1000 + c);
-                    }
-                }
-                RenderBoard(board);
-            }
-            else if (Input.GetKeyDown(KeyCode.I))
-            {
-                // CTRL+I: invert selection
-                var newSelection = new HashSet<long>();
-                for (var r = 0; r < board.Size; r++)
-                {
-                    for (var c = 0; c < board.Size; c++)
-                    {
-                        if (board.IsGiven(r, c)) continue;
-                        var key = (long)r * 1000 + c;
-                        if (!_multiSelectedCells.Contains(key))
-                            newSelection.Add(key);
-                    }
-                }
-                _multiSelectedCells.Clear();
-                foreach (var k in newSelection)
-                    _multiSelectedCells.Add(k);
-                RenderBoard(board);
-            }
-        }
-
-        /// <summary>Check if a cell is in the multi-selection set.</summary>
-        private bool IsCellMultiSelected(int row, int col)
-        {
-            return _multiSelectedCells.Contains((long)row * 1000 + col);
-        }
-
-        private void MoveSelection(int deltaRow, int deltaCol)
-        {
-            var board = runMapController?.Run?.CurrentBoard;
-            if (board == null)
-            {
-                return;
-            }
-
-            if (_selectedRow < 0 || _selectedCol < 0)
-            {
-                if (TryFindFirstEditableCell(board, out var startRow, out var startCol))
-                {
-                    _selectedRow = startRow;
-                    _selectedCol = startCol;
-                    RenderBoard(board);
-                }
-
-                return;
-            }
-
-            _selectedRow = Mathf.Clamp(_selectedRow + deltaRow, 0, board.Size - 1);
-            _selectedCol = Mathf.Clamp(_selectedCol + deltaCol, 0, board.Size - 1);
-            RenderBoard(board);
-        }
-
-        private static bool WasDigitPressed(int value)
-        {
-            if (value < 1 || value > 9)
-            {
-                return false;
-            }
-
-#if ENABLE_INPUT_SYSTEM
-            if (Keyboard.current == null)
-            {
-                return false;
-            }
-
-            return value switch
-            {
-                1 => Keyboard.current.digit1Key.wasPressedThisFrame || Keyboard.current.numpad1Key.wasPressedThisFrame,
-                2 => Keyboard.current.digit2Key.wasPressedThisFrame || Keyboard.current.numpad2Key.wasPressedThisFrame,
-                3 => Keyboard.current.digit3Key.wasPressedThisFrame || Keyboard.current.numpad3Key.wasPressedThisFrame,
-                4 => Keyboard.current.digit4Key.wasPressedThisFrame || Keyboard.current.numpad4Key.wasPressedThisFrame,
-                5 => Keyboard.current.digit5Key.wasPressedThisFrame || Keyboard.current.numpad5Key.wasPressedThisFrame,
-                6 => Keyboard.current.digit6Key.wasPressedThisFrame || Keyboard.current.numpad6Key.wasPressedThisFrame,
-                7 => Keyboard.current.digit7Key.wasPressedThisFrame || Keyboard.current.numpad7Key.wasPressedThisFrame,
-                8 => Keyboard.current.digit8Key.wasPressedThisFrame || Keyboard.current.numpad8Key.wasPressedThisFrame,
-                9 => Keyboard.current.digit9Key.wasPressedThisFrame || Keyboard.current.numpad9Key.wasPressedThisFrame,
-                _ => false
-            };
-#else
-            return Input.GetKeyDown(KeyCode.Alpha0 + value) || Input.GetKeyDown(KeyCode.Keypad0 + value);
-#endif
-        }
-
-        private static bool WasSaveQuitPressed()
-        {
-#if ENABLE_INPUT_SYSTEM
-            return Keyboard.current != null && Keyboard.current.qKey.wasPressedThisFrame;
-#else
-            return Input.GetKeyDown(KeyCode.Q);
-#endif
-        }
-
-    private static bool WasMoveUpPressed()
-    {
-#if ENABLE_INPUT_SYSTEM
-        return Keyboard.current != null && (Keyboard.current.upArrowKey.wasPressedThisFrame || Keyboard.current.wKey.wasPressedThisFrame);
-#else
-        return Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W);
-#endif
-    }
-
-    private static bool WasMoveDownPressed()
-    {
-#if ENABLE_INPUT_SYSTEM
-        return Keyboard.current != null && (Keyboard.current.downArrowKey.wasPressedThisFrame || Keyboard.current.sKey.wasPressedThisFrame);
-#else
-        return Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S);
-#endif
-    }
-
-    private static bool WasMoveLeftPressed()
-    {
-#if ENABLE_INPUT_SYSTEM
-        return Keyboard.current != null && (Keyboard.current.leftArrowKey.wasPressedThisFrame || Keyboard.current.aKey.wasPressedThisFrame);
-#else
-        return Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A);
-#endif
-    }
-
-    private static bool WasMoveRightPressed()
-    {
-#if ENABLE_INPUT_SYSTEM
-        return Keyboard.current != null && (Keyboard.current.rightArrowKey.wasPressedThisFrame || Keyboard.current.dKey.wasPressedThisFrame);
-#else
-        return Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D);
-#endif
-    }
-
-    private static bool WasTogglePencilModePressed()
-    {
-#if ENABLE_INPUT_SYSTEM
-        if (Keyboard.current == null)
-        {
-        return false;
-        }
-
-        return Keyboard.current.leftCtrlKey.wasPressedThisFrame || Keyboard.current.rightCtrlKey.wasPressedThisFrame;
-#else
-        return Input.GetKeyDown(KeyCode.LeftControl) || Input.GetKeyDown(KeyCode.RightControl);
-#endif
-    }
-
-        private static bool WasClearPressed()
-        {
-    #if ENABLE_INPUT_SYSTEM
-            if (Keyboard.current == null)
-            {
-            return false;
-            }
-
-            return Keyboard.current.backspaceKey.wasPressedThisFrame ||
-               Keyboard.current.deleteKey.wasPressedThisFrame ||
-               Keyboard.current.numpad0Key.wasPressedThisFrame;
-    #else
-            return Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Delete) || Input.GetKeyDown(KeyCode.Keypad0);
-    #endif
-        }
-
-        private void HandleCompletionState()
-        {
-            var levelState = runMapController?.Run?.CurrentLevelState;
-            if (levelState == null)
-            {
-                return;
-            }
-
-            if (!levelState.PuzzleComplete)
-            {
-                _completionHandled = false;
-                return;
-            }
-
-            if (_completionHandled)
-            {
-                return;
-            }
-
-            _completionHandled = true;
-            if (runMapController?.Run?.RunState != null && runMapController.Run.RunState.TutorialMode)
-            {
-                SetStatus("Tutorial Sudoku solved.");
-                TryCompleteTutorialAndReturn();
-                return;
-            }
-
-            // PreBoss requires 2 puzzles solved sequentially.
-            var runState = runMapController?.Run?.RunState;
-            var currentNode = GetCurrentNode();
-            if (currentNode != null && currentNode.Type == NodeType.PreBoss && runState != null && runState.PreBossPuzzlesCompleted < 1)
-            {
-                runState.PreBossPuzzlesCompleted++;
-                SetStatus($"Pre-Boss puzzle {runState.PreBossPuzzlesCompleted}/2 complete. Starting next puzzle...");
-                StartNextPreBossPuzzle();
-                return;
-            }
-
-            if (currentNode != null && currentNode.Type == NodeType.PreBoss && runState != null)
-            {
-                runState.PreBossPuzzlesCompleted = 0;
-            }
-
-            ShowRewardScreen();
-        }
-
-        private RunNode GetCurrentNode()
-        {
-            var run = runMapController?.Run;
-            if (run?.CurrentRunGraph == null || run.RunState == null) return null;
-            var idx = run.RunState.CurrentNodeIndex;
-            if (idx < 0 || idx >= run.CurrentRunGraph.Count) return null;
-            return run.CurrentRunGraph[idx];
-        }
-
-        private void StartNextPreBossPuzzle()
-        {
-            var run = runMapController?.Run;
+            if (_map == null) return;
+            var run = _map.Run;
             if (run == null) return;
 
-            // Build a new level config for the second pre-boss puzzle (slightly harder).
-            var node = GetCurrentNode();
-            if (node == null) return;
+            if (!_resumeApplied) { ApplyResumeState(); return; }
 
-            var config = runMapController.GetFixedLevelConfig(node);
-            if (config == null) return;
+            if (!_tutorialShown && run.State != null && run.State.TutorialMode)
+            {
+                _tutorialShown = true;
+                ShowSudoku();
+                RebuildBoard();
+            }
 
-            config.Difficulty = (DifficultyTier)Mathf.Min((int)config.Difficulty + 1, (int)DifficultyTier.Diff5);
-            config.Stars = Mathf.Min(5, config.Stars + 1);
-
-            run.StartLevel(config);
-            _completionHandled = false;
-            _selectedRow = -1;
-            _selectedCol = -1;
-            _highlightValue = 0;
-            BuildOrRefreshSudokuBoard();
-            RefreshHud();
+            if (_sudokuPanel != null && _sudokuPanel.activeSelf)
+            {
+                HandleKeyboard();
+                HandleCompletion();
+                RefreshHud();
+                CheckGameOver();
+            }
         }
 
-        private void ShowPathOverview()
+        // ────────────────────── Screen transitions ──────────────────────
+
+        private void ShowPath()
         {
-            if (runMapController?.Run?.RunState != null && runMapController.Run.RunState.TutorialMode)
-            {
-                ShowSudoku();
-                return;
-            }
-
-            if (pathOverviewPanel != null)
-            {
-                pathOverviewPanel.SetActive(true);
-            }
-
-            if (sudokuPanel != null)
-            {
-                sudokuPanel.SetActive(false);
-            }
-
-            if (_rewardPanel != null && !_awaitingRewardChoice)
-            {
-                _rewardPanel.SetActive(false);
-            }
-
-            UpdateQuitButtonLabels();
-
-            _runAudio?.SetContext(RunAudioController.Context.Path);
+            var run = _map?.Run;
+            if (run?.State != null && run.State.TutorialMode) { ShowSudoku(); return; }
+            SetActive(_pathPanel, true);
+            SetActive(_sudokuPanel, false);
+            SetActive(_gameOverPanel, false);
+            HidePanel(_rewardPanel);
+            HidePanel(_shopPanel);
+            _audio?.SetContext(RunAudioController.Context.Path);
+            RefreshPathOverview();
         }
 
         private void ShowSudoku()
         {
-            if (pathOverviewPanel != null)
-            {
-                pathOverviewPanel.SetActive(false);
-            }
-
-            if (sudokuPanel != null)
-            {
-                sudokuPanel.SetActive(true);
-            }
-
-            if (gameOverPanel != null)
-            {
-                gameOverPanel.SetActive(false);
-            }
-
-            HideRewardPanel();
-
-            if (_shopPanel != null)
-            {
-                _shopPanel.SetActive(false);
-            }
-
-            UpdateQuitButtonLabels();
-
-            _runAudio?.SetContext(RunAudioController.Context.Puzzle);
+            SetActive(_pathPanel, false);
+            SetActive(_sudokuPanel, true);
+            SetActive(_gameOverPanel, false);
+            HidePanel(_rewardPanel);
+            HidePanel(_shopPanel);
+            var floor = _map?.Run?.State?.CurrentFloor ?? 0;
+            _audio?.SetFloorIndex(floor);
+            _audio?.SetContext(RunAudioController.Context.Puzzle);
         }
 
-        private void ChoosePath(bool risk)
+        private static void SetActive(GameObject go, bool active)
         {
-            if (_shopPanel != null && _shopPanel.activeSelf)
-            {
-                SetStatus("Resolve shop choice first.");
-                return;
-            }
-
-            if (_awaitingRewardChoice)
-            {
-                SetStatus("Choose a reward first.");
-                return;
-            }
-
-            if (_awaitingBossGateChoice)
-            {
-                SetStatus("Choose a boss modifier first.");
-                return;
-            }
-
-            if (_awaitingRelicChoice)
-            {
-                SetStatus("Choose a relic first.");
-                return;
-            }
-
-            if (runMapController == null)
-            {
-                runMapController = FindFirstObjectByType<RunMapController>();
-            }
-
-            if (runMapController == null)
-            {
-                SetStatus("RunMapController missing.");
-                return;
-            }
-
-            if (!runMapController.TryAdvancePathAndStartNextPuzzle(risk, out var node, out var level, out var failureReason))
-            {
-                SetStatus(string.IsNullOrWhiteSpace(failureReason) ? "Path is unavailable." : failureReason);
-                RefreshPathOverview();
-                return;
-            }
-
-            _runAudio?.PlayPathAdvance();
-
-            _selectedRow = -1;
-            _selectedCol = -1;
-            _highlightValue = 0;
-            _completionHandled = false;
-            _gameOverShown = false;
-
-            if (node.Type == NodeType.Shop)
-            {
-                HandleShopNode();
-                _runAudio?.SetContext(RunAudioController.Context.Shop);
-                ShowPathOverview();
-                RefreshPathOverview();
-                return;
-            }
-
-            if (node.Type == NodeType.Rest)
-            {
-                HandleRestNode();
-                _runAudio?.SetContext(RunAudioController.Context.Rest);
-                ShowPathOverview();
-                RefreshPathOverview();
-                return;
-            }
-
-            if (node.Type == NodeType.Event)
-            {
-                HandleEventNode();
-                ShowPathOverview();
-                RefreshPathOverview();
-                return;
-            }
-
-            if (node.Type == NodeType.Relic)
-            {
-                HandleRelicNode();
-                ShowPathOverview();
-                RefreshPathOverview();
-                return;
-            }
-
-            // Cross-link tiles now function as their underlying type (puzzle, shop, etc.)
-            // with the additional ability to switch lanes after completion.
-
-            _pathOverlayMessage = string.Empty;
-
-            if (level == null)
-            {
-                SetStatus("Node has no puzzle level configured.");
-                ShowPathOverview();
-                RefreshPathOverview();
-                return;
-            }
-
-            SetStatus($"Route selected: {node.Type}, {level.BoardSize}x{level.BoardSize}, {level.Stars}★");
-            ShowSudoku();
-            BuildOrRefreshSudokuBoard();
-            RefreshPathOverview();
+            if (go != null) go.SetActive(active);
         }
 
-        private readonly PlayerIconController _playerIcon = new();
+        private static void HidePanel(GameObject panel)
+        {
+            if (panel != null) panel.SetActive(false);
+        }
+
+        // ────────────────────── Path overview ──────────────────────
 
         private void RefreshPathOverview()
         {
-            if (runMapController == null) return;
+            var run = _map?.Run;
+            if (run?.State == null || run.CurrentFloorGraph == null) return;
 
-            var run = runMapController.Run;
-            if (run == null || run.CurrentRunGraph == null || run.CurrentRunGraph.Count == 0)
+            var s = run.State;
+            var floorName = FloorThemeData.GetFloorName(s.CurrentFloor);
+            var floorTint = FloorThemeData.GetFloorTint(s.CurrentFloor);
+
+            if (_overviewText != null)
             {
-                if (pathOverviewText != null) pathOverviewText.text = "No active run graph.";
-                return;
+                var sb = new StringBuilder();
+                sb.AppendLine($"{floorName} - Garden {s.CurrentFloor + 1}/{s.TotalFloors}");
+                sb.AppendLine($"HP: {s.CurrentHP}/{s.MaxHP}  Gold: {s.CurrentGold}  Pencil: {s.CurrentPencil}/{s.MaxPencil}");
+                if (s.HasRelic)
+                    sb.AppendLine($"Relic: {s.HeldRelic.Id}");
+                if (!string.IsNullOrEmpty(_pathMessage))
+                    sb.AppendLine(_pathMessage);
+                _overviewText.text = sb.ToString().TrimEnd();
             }
 
-            var runState = run.RunState;
-            var floor = runState.CurrentFloor;
-            var theme = Data.FloorThemeData.Get(floor);
-
-            // Apply floor theme background
-            if (pathOverviewPanel != null)
-            {
-                var bgImage = pathOverviewPanel.GetComponent<Image>();
-                if (bgImage != null) bgImage.color = theme.BgColor;
-            }
-
-            // Meta HUD
-            if (pathOverviewText != null)
-            {
-                var classPassive = Classes.ClassCatalog.GetMeta(runState.ClassId).PassiveDescription;
-                var overview =
-                    $"{theme.Name} ({theme.JapaneseName})    Garden {floor + 1} / {runState.TotalFloors}\n" +
-                    $"HP: {runState.CurrentHP}/{runState.MaxHP}    Gold: {runState.CurrentGold}    Pencil: {runState.CurrentPencil}/{runState.MaxPencil}\n" +
-                    $"Items: {runState.Inventory.Count}    Relic: {(runState.HasRelic ? Economy.RelicService.GetName(runState.HeldRelic.Id) : "None")}    Passive: {classPassive}";
-
-                if (!string.IsNullOrWhiteSpace(_pathOverlayMessage))
-                    overview += "\n" + _pathOverlayMessage;
-                if (!string.IsNullOrWhiteSpace(_hoverInfo))
-                    overview += "\n" + _hoverInfo;
-
-                pathOverviewText.text = overview;
-            }
-
-            if (laneAText != null) laneAText.text = "Calm Route";
-            if (laneBText != null) laneBText.text = "Risk Route";
-
-            // Hide per-lane backgrounds — we now render everything on the overlay root
-            if (laneAPathRoot != null)
-            {
-                var img = laneAPathRoot.GetComponent<Image>();
-                if (img != null) img.color = new Color(0f, 0f, 0f, 0f);
-            }
-            if (laneBPathRoot != null)
-            {
-                var img = laneBPathRoot.GetComponent<Image>();
-                if (img != null) img.color = new Color(0f, 0f, 0f, 0f);
-            }
-
-            var previewA = runMapController.BuildPathChoicePreview(false);
-            var previewB = runMapController.BuildPathChoicePreview(true);
-            var lockValue = previewA.LockedPath ?? previewB.LockedPath;
-
-            var nextSignature = BuildLaneRenderSignature(previewA, previewB, lockValue);
-            if (nextSignature != _lastLaneRenderSignature)
-            {
-                _lastLaneRenderSignature = nextSignature;
-                RebuildGardenCanvas(lockValue, theme);
-                RebuildInventoryBadges();
-            }
+            RebuildPathCanvas(run, floorTint);
         }
 
-        private void RebuildGardenCanvas(bool? lockValue, Data.FloorTheme theme)
+        private void RebuildPathCanvas(RunDirector run, Color floorTint)
         {
             EnsurePathOverlayRoot();
             if (_pathOverlayRoot == null) return;
+            ClearChildren(_pathOverlayRoot);
 
-            // Clear previous renders from lane roots and overlay
-            ClearChildren(laneAPathRoot);
-            ClearChildren(laneBPathRoot);
-            for (var i = _pathOverlayRoot.childCount - 1; i >= 0; i--)
-                Destroy(_pathOverlayRoot.GetChild(i).gameObject);
-
-            var run = runMapController?.Run;
-            var graph = run?.CurrentRunGraph;
+            var graph = run.CurrentFloorGraph;
             if (graph == null || graph.Count == 0) return;
 
-            var canvasRect = _pathOverlayRoot;
-            var canvasW = Mathf.Max(400f, canvasRect.rect.width);
-            var canvasH = Mathf.Max(300f, canvasRect.rect.height);
+            var w = Mathf.Max(400f, _pathOverlayRoot.rect.width);
+            var h = Mathf.Max(300f, _pathOverlayRoot.rect.height);
+            var reachable = run.GetReachableNodes();
 
-            // Build adjacency: connect sequential same-lane nodes + start→first of each lane + last→boss
-            var calmNodes = new List<RunNode>();
-            var riskNodes = new List<RunNode>();
-            RunNode startNode = null;
-            RunNode bossNode = null;
+            // Separate route nodes — Start and Boss sit outside the lane boxes
+            var calmLane = new List<RunNode>();
+            var riskLane = new List<RunNode>();
+            for (var i = 0; i < graph.Count; i++)
+            {
+                var n = graph[i];
+                if (n.Type == NodeType.Start || n.Type == NodeType.Boss) continue;
+                if (n.Route == RouteType.CalmRoute) calmLane.Add(n);
+                else riskLane.Add(n);
+            }
 
+            // Per-route lane background boxes (drawn first = behind everything)
+            var calmBg      = new Color(floorTint.r * 0.22f, floorTint.g * 0.26f, floorTint.b * 0.32f, 0.88f);
+            var calmOutline = new Color(floorTint.r * 0.60f, floorTint.g * 0.78f, floorTint.b * 0.92f, 0.75f);
+            var riskBg      = new Color(floorTint.r * 0.26f + 0.12f, floorTint.g * 0.16f, floorTint.b * 0.12f, 0.88f);
+            var riskOutline = new Color(0.88f, 0.40f, 0.18f, 0.75f);
+
+            if (calmLane.Count > 0)
+                DrawRouteLane(_pathOverlayRoot, calmLane, w, h, calmBg, calmOutline, "CalmLane", "Calm Path");
+            if (riskLane.Count > 0)
+                DrawRouteLane(_pathOverlayRoot, riskLane, w, h, riskBg, riskOutline, "RiskLane", "Risk Path");
+
+            var pathColor    = new Color(floorTint.r * 0.75f, floorTint.g * 0.75f, floorTint.b * 0.75f, 0.70f);
+            var accentColor  = AccentGold;
+            var bossGateColor = new Color(0.7f, 0.2f, 0.2f, 1f);
+
+            // Draw edges
             for (var i = 0; i < graph.Count; i++)
             {
                 var node = graph[i];
-                if (node.Type == NodeType.Start) startNode = node;
-                else if (node.Type == NodeType.Boss) bossNode = node;
-                else if (!node.IsRiskPath) calmNodes.Add(node);
-                else riskNodes.Add(node);
-            }
-
-            // Sort by depth
-            calmNodes.Sort((a, b) => a.Depth.CompareTo(b.Depth));
-            riskNodes.Sort((a, b) => a.Depth.CompareTo(b.Depth));
-
-            // Draw edges first (behind tiles)
-            var edgeColor = theme.PathColor;
-            if (startNode != null)
-            {
-                if (calmNodes.Count > 0) DrawCanvasEdge(canvasRect, canvasW, canvasH, startNode, calmNodes[0], edgeColor);
-                if (riskNodes.Count > 0) DrawCanvasEdge(canvasRect, canvasW, canvasH, startNode, riskNodes[0], edgeColor);
-            }
-
-            for (var i = 1; i < calmNodes.Count; i++)
-                DrawCanvasEdge(canvasRect, canvasW, canvasH, calmNodes[i - 1], calmNodes[i], edgeColor);
-            for (var i = 1; i < riskNodes.Count; i++)
-                DrawCanvasEdge(canvasRect, canvasW, canvasH, riskNodes[i - 1], riskNodes[i], edgeColor);
-
-            if (bossNode != null)
-            {
-                if (calmNodes.Count > 0) DrawCanvasEdge(canvasRect, canvasW, canvasH, calmNodes[calmNodes.Count - 1], bossNode, edgeColor);
-                if (riskNodes.Count > 0) DrawCanvasEdge(canvasRect, canvasW, canvasH, riskNodes[riskNodes.Count - 1], bossNode, edgeColor);
-            }
-
-            // Draw cross-edge bezier
-            RunNode crossCalm = null, crossRisk = null;
-            for (var i = 0; i < graph.Count; i++)
-            {
-                if (graph[i].IsCrossLink)
+                for (var n = 0; n < node.NextNodes.Count; n++)
                 {
-                    if (!graph[i].IsRiskPath) crossCalm = graph[i];
-                    else crossRisk = graph[i];
+                    var next = node.NextNodes[n];
+                    if (next >= 0 && next < graph.Count)
+                        DrawEdge(_pathOverlayRoot, w, h, graph[i], graph[next], pathColor);
                 }
             }
 
-            if (crossCalm != null && crossRisk != null)
-            {
-                DrawCrossEdgeBezier(canvasRect, canvasW, canvasH, crossCalm, crossRisk);
-            }
-
-            // Draw all node tiles
-            var currentNodeIndex = run.RunState.CurrentNodeIndex;
+            // Draw nodes
             for (var i = 0; i < graph.Count; i++)
             {
                 var node = graph[i];
-                var pos = CanvasToPixel(node.CanvasX, node.CanvasY, canvasW, canvasH);
-                var isCurrentNode = i == currentNodeIndex;
-                var nodeButton = CreateGardenNodeTile(_pathOverlayRoot, node, pos, lockValue, theme, isCurrentNode);
-                nodeButton.onClick.RemoveAllListeners();
+                var pos = new Vector2(node.CanvasX * w, (1f - node.CanvasY) * h);
+                var isCurrent = i == run.State.CurrentNodeIndex;
+                var canReach = reachable != null && reachable.Contains(i);
 
-                if (node.Type == NodeType.Boss)
-                {
-                    nodeButton.onClick.AddListener(() => ShowBossGateChoice());
-                    nodeButton.interactable = IsNextChoiceNode(node, false) || IsNextChoiceNode(node, true);
-                }
-                else if (node.Type != NodeType.Start)
-                {
-                    var risk = node.IsRiskPath;
-                    nodeButton.onClick.AddListener(() => ChoosePath(risk));
-                    nodeButton.interactable = IsNextChoiceNode(node, risk);
-                }
-                else
-                {
-                    nodeButton.interactable = false;
-                }
+                var color = node.Visited ? new Color(floorTint.r, floorTint.g, floorTint.b, 0.4f)
+                    : isCurrent ? accentColor
+                    : node.Type == NodeType.Boss ? bossGateColor
+                    : floorTint;
 
-                // Track player icon position
-                if (isCurrentNode)
-                {
-                    _playerIcon.EnsureCreated(canvasRect);
-                    _playerIcon.SetPosition(new Vector2(node.CanvasX, node.CanvasY), canvasRect);
-                    _playerIcon.BringToFront();
-                }
+                var nodeConfig = IsPuzzleNodeType(node.Type) ? _map.GetFixedLevelConfig(node) : null;
+                var btn = CreateNodeButton(_pathOverlayRoot, node, pos, color, nodeConfig);
+                btn.interactable = canReach && !node.Visited;
+                var idx = i;
+                btn.onClick.AddListener(() => OnNodeClicked(idx));
             }
         }
 
-        private static Vector2 CanvasToPixel(float cx, float cy, float w, float h)
+        private void DrawRouteLane(RectTransform parent, List<RunNode> laneNodes, float w, float h,
+            Color boxColor, Color outlineColor, string goName, string label)
         {
-            // Left-to-right layout: X maps directly, Y inverted (canvas 0=top, RectTransform 0=bottom)
-            return new Vector2(cx * w, (1f - cy) * h);
-        }
+            const float padPx = 40f;
 
-        private void DrawCanvasEdge(RectTransform parent, float w, float h, RunNode a, RunNode b, Color color)
-        {
-            var pa = CanvasToPixel(a.CanvasX, a.CanvasY, w, h);
-            var pb = CanvasToPixel(b.CanvasX, b.CanvasY, w, h);
-
-            var lineGo = new GameObject("Edge", typeof(RectTransform), typeof(Image));
-            lineGo.transform.SetParent(parent, false);
-            lineGo.transform.SetAsFirstSibling();
-            var img = lineGo.GetComponent<Image>();
-            img.color = color;
-            img.raycastTarget = false;
-            var rect = lineGo.GetComponent<RectTransform>();
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.zero;
-
-            var delta = pb - pa;
-            var dist = delta.magnitude;
-            if (dist < 1f) return;
-            rect.sizeDelta = new Vector2(dist, 3f);
-            rect.anchoredPosition = pa + delta * 0.5f;
-            rect.localEulerAngles = new Vector3(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
-        }
-
-        private void DrawCrossEdgeBezier(RectTransform parent, float w, float h, RunNode a, RunNode b)
-        {
-            var pa = CanvasToPixel(a.CanvasX, a.CanvasY, w, h);
-            var pb = CanvasToPixel(b.CanvasX, b.CanvasY, w, h);
-            var centerX = w * 0.5f;
-
-            // Control points offset toward center
-            var cpA = new Vector2(Mathf.Lerp(pa.x, centerX, 0.5f), Mathf.Lerp(pa.y, pb.y, 0.33f));
-            var cpB = new Vector2(Mathf.Lerp(pb.x, centerX, 0.5f), Mathf.Lerp(pa.y, pb.y, 0.67f));
-
-            var crossColor = new Color(0.85f, 0.72f, 0.18f, 0.70f);
-            const int segments = 12;
-            var prev = pa;
-            for (var s = 1; s <= segments; s++)
+            var minPx = float.MaxValue; var maxPx = float.MinValue;
+            var minPy = float.MaxValue; var maxPy = float.MinValue;
+            for (var i = 0; i < laneNodes.Count; i++)
             {
-                var t = (float)s / segments;
-                var pt = CubicBezier(pa, cpA, cpB, pb, t);
-                var segGo = new GameObject("BezierSeg", typeof(RectTransform), typeof(Image));
-                segGo.transform.SetParent(parent, false);
-                segGo.transform.SetAsFirstSibling();
-                var img = segGo.GetComponent<Image>();
-                img.color = crossColor;
-                img.raycastTarget = false;
-                var rect = segGo.GetComponent<RectTransform>();
-                rect.anchorMin = Vector2.zero;
-                rect.anchorMax = Vector2.zero;
-                var d = pt - prev;
-                var segLen = d.magnitude;
-                if (segLen < 0.5f) { prev = pt; continue; }
-                rect.sizeDelta = new Vector2(segLen, 3f);
-                rect.anchoredPosition = prev + d * 0.5f;
-                rect.localEulerAngles = new Vector3(0f, 0f, Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg);
-                prev = pt;
+                var px = laneNodes[i].CanvasX * w;
+                var py = (1f - laneNodes[i].CanvasY) * h;
+                if (px < minPx) minPx = px;
+                if (px > maxPx) maxPx = px;
+                if (py < minPy) minPy = py;
+                if (py > maxPy) maxPy = py;
             }
-        }
 
-        private static Vector2 CubicBezier(Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3, float t)
-        {
-            var u = 1f - t;
-            return u * u * u * p0 + 3f * u * u * t * p1 + 3f * u * t * t * p2 + t * t * t * p3;
-        }
+            var boxW    = (maxPx - minPx) + padPx * 2f;
+            var boxH    = (maxPy - minPy) + padPx * 2f;
+            var centerX = (minPx + maxPx) * 0.5f;
+            var centerY = (minPy + maxPy) * 0.5f;
 
-        private Button CreateGardenNodeTile(RectTransform parent, RunNode node, Vector2 pos,
-            bool? lockValue, Data.FloorTheme theme, bool isCurrent)
-        {
-            var go = new GameObject($"Tile_{node.Type}_{node.Depth}", typeof(RectTransform), typeof(Image), typeof(Button));
+            var go = new GameObject(goName, typeof(RectTransform), typeof(Image));
             go.transform.SetParent(parent, false);
-            var goRect = go.GetComponent<RectTransform>();
-            goRect.anchorMin = Vector2.zero;
-            goRect.anchorMax = Vector2.zero;
-            goRect.pivot = new Vector2(0.5f, 0.5f);
-            goRect.sizeDelta = node.Type == NodeType.Boss ? new Vector2(120f, 60f) : new Vector2(72f, 72f);
-            goRect.anchoredPosition = pos;
+            go.transform.SetAsFirstSibling();
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.zero;
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = new Vector2(centerX, centerY);
+            rt.sizeDelta = new Vector2(boxW, boxH);
 
-            var currentNodeIdx = runMapController?.Run?.RunState?.CurrentNodeIndex ?? 0;
-            var nodeIdx = -1;
-            var graph = runMapController?.Run?.CurrentRunGraph;
-            if (graph != null)
-            {
-                for (var i = 0; i < graph.Count; i++)
-                    if (ReferenceEquals(graph[i], node)) { nodeIdx = i; break; }
-            }
+            var img = go.GetComponent<Image>();
+            img.color = boxColor;
+            img.raycastTarget = false;
 
-            // Determine tile visual state
-            Color nodeColor;
-            var isVisited = nodeIdx >= 0 && nodeIdx < currentNodeIdx;
-            var isUnreachable = false;
+            var ol = go.AddComponent<Outline>();
+            ol.effectColor = outlineColor;
+            ol.effectDistance = new Vector2(2f, -2f);
 
-            // Unreachable: on the opposite locked lane and not a boss/start/crosslink
-            if (lockValue.HasValue && node.Type != NodeType.Boss && node.Type != NodeType.Start
-                && !node.IsCrossLink)
-            {
-                isUnreachable = node.IsRiskPath != lockValue.Value;
-            }
-
-            if (node.Type == NodeType.Boss)
-                nodeColor = theme.BossGateColor;
-            else if (node.Type == NodeType.Start)
-                nodeColor = theme.TileColor;
-            else if (isVisited)
-                nodeColor = new Color(theme.TileColor.r, theme.TileColor.g, theme.TileColor.b, 0.40f);
-            else if (isUnreachable)
-                nodeColor = new Color(0.25f, 0.25f, 0.25f, 0.35f);
-            else if (node.IsCrossLink)
-                nodeColor = new Color(0.65f, 0.42f, 0.08f, 1f);
-            else if (isCurrent)
-                nodeColor = new Color(theme.AccentColor.r, theme.AccentColor.g, theme.AccentColor.b, 1f);
-            else
-                nodeColor = theme.TileColor;
-
-            var image = go.GetComponent<Image>();
-            image.color = nodeColor;
-
-            var button = go.GetComponent<Button>();
-            var colors = button.colors;
-            colors.colorMultiplier = 1.25f;
-            colors.fadeDuration = 0.07f;
-            button.colors = colors;
-
-            // Node type label
-            var labelGo = new GameObject("TypeLabel", typeof(RectTransform));
-            labelGo.transform.SetParent(go.transform, false);
-            var labelRect = labelGo.GetComponent<RectTransform>();
-            labelRect.anchorMin = new Vector2(0f, 0.30f);
-            labelRect.anchorMax = new Vector2(1f, 0.70f);
-            labelRect.offsetMin = Vector2.zero;
-            labelRect.offsetMax = Vector2.zero;
-            var labelText = labelGo.AddComponent<Text>();
-            labelText.text = GetTileLabel(node.Type);
-            labelText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
-            labelText.fontSize = node.Type == NodeType.Boss ? 14 : 11;
-            labelText.alignment = TextAnchor.MiddleCenter;
-            labelText.color = new Color(0.95f, 0.95f, 0.90f, isVisited ? 0.50f : 0.95f);
-            labelText.raycastTarget = false;
-
-            // Size and star labels for puzzle nodes
-            var showLabels = node.Type == NodeType.Puzzle || node.Type == NodeType.ElitePuzzle
-                || node.Type == NodeType.Boss || node.Type == NodeType.PreBoss;
-            if (showLabels)
-            {
-                runMapController.TryGetFixedLevelForNode(node, out var config);
-                var boardSize = config != null ? config.BoardSize : Mathf.Clamp(4 + node.Depth / 3, 4, 9);
-                var starCount = config != null ? config.Stars : Mathf.Clamp(1 + node.Depth / 4, 1, 5);
-
-                var sizeGo = new GameObject("SzLbl", typeof(RectTransform));
-                sizeGo.transform.SetParent(go.transform, false);
-                var sizeRect = sizeGo.GetComponent<RectTransform>();
-                sizeRect.anchorMin = new Vector2(0f, 0.72f);
-                sizeRect.anchorMax = new Vector2(0.50f, 1f);
-                sizeRect.offsetMin = new Vector2(3f, 0f);
-                sizeRect.offsetMax = new Vector2(0f, -2f);
-                var sizeText = sizeGo.AddComponent<Text>();
-                sizeText.text = $"{boardSize}x{boardSize}";
-                sizeText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
-                sizeText.fontSize = 9;
-                sizeText.alignment = TextAnchor.UpperLeft;
-                sizeText.color = new Color(0.95f, 0.95f, 0.85f, 0.85f);
-                sizeText.raycastTarget = false;
-
-                var starGo = new GameObject("StarLbl", typeof(RectTransform));
-                starGo.transform.SetParent(go.transform, false);
-                var starRect = starGo.GetComponent<RectTransform>();
-                starRect.anchorMin = new Vector2(0.50f, 0f);
-                starRect.anchorMax = new Vector2(1f, 0.30f);
-                starRect.offsetMin = new Vector2(0f, 2f);
-                starRect.offsetMax = new Vector2(-3f, 0f);
-                var starText = starGo.AddComponent<Text>();
-                starText.text = new string('\u2605', starCount);
-                starText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
-                starText.fontSize = 9;
-                starText.alignment = TextAnchor.LowerRight;
-                starText.color = new Color(0.98f, 0.83f, 0.26f, 0.85f);
-                starText.raycastTarget = false;
-            }
-
-            // Visited checkmark
-            if (isVisited)
-            {
-                var checkGo = new GameObject("Check", typeof(RectTransform));
-                checkGo.transform.SetParent(go.transform, false);
-                var checkRect = checkGo.GetComponent<RectTransform>();
-                checkRect.anchorMin = new Vector2(0.7f, 0.7f);
-                checkRect.anchorMax = new Vector2(1f, 1f);
-                checkRect.offsetMin = Vector2.zero;
-                checkRect.offsetMax = Vector2.zero;
-                var checkText = checkGo.AddComponent<Text>();
-                checkText.text = "\u2713";
-                checkText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
-                checkText.fontSize = 16;
-                checkText.alignment = TextAnchor.MiddleCenter;
-                checkText.color = new Color(0.40f, 0.80f, 0.42f, 0.70f);
-                checkText.raycastTarget = false;
-            }
-
-            // Cross-link badge: small ⇄ indicator in top-left corner
-            if (node.IsCrossLink)
-            {
-                var crossGo = new GameObject("CrossBadge", typeof(RectTransform));
-                crossGo.transform.SetParent(go.transform, false);
-                var crossRect = crossGo.GetComponent<RectTransform>();
-                crossRect.anchorMin = new Vector2(0f, 0.75f);
-                crossRect.anchorMax = new Vector2(0.30f, 1f);
-                crossRect.offsetMin = Vector2.zero;
-                crossRect.offsetMax = Vector2.zero;
-                var crossText = crossGo.AddComponent<Text>();
-                crossText.text = "\u21c4";
-                crossText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
-                crossText.fontSize = 12;
-                crossText.alignment = TextAnchor.MiddleCenter;
-                crossText.color = new Color(1f, 0.92f, 0.60f, 0.90f);
-                crossText.raycastTarget = false;
-            }
-
-            return button;
+            // Lane label in top-left corner of the box
+            var lbl = CreateText(go.transform, "LaneLabel", label, 10,
+                TextAnchor.UpperLeft, new Color(outlineColor.r, outlineColor.g, outlineColor.b, 0.85f));
+            lbl.rectTransform.anchorMin = new Vector2(0f, 0.80f);
+            lbl.rectTransform.anchorMax = new Vector2(1f, 1f);
+            lbl.rectTransform.offsetMin = new Vector2(6f, 0f);
+            lbl.rectTransform.offsetMax = Vector2.zero;
+            lbl.raycastTarget = false;
         }
 
-        private static string GetTileLabel(NodeType type)
+        private void OnNodeClicked(int nodeIndex)
         {
-            return type switch
-            {
-                NodeType.Start => "Start",
-                NodeType.Puzzle => "Puzzle",
-                NodeType.ElitePuzzle => "Elite",
-                NodeType.Shop => "Shop",
-                NodeType.Rest => "Rest",
-                NodeType.Relic => "Relic",
-                NodeType.Event => "Event",
-                NodeType.PreBoss => "Elite",
-                NodeType.Boss => "Boss Gate",
-                _ => "?"
-            };
-        }
+            if (_awaitingReward || _awaitingBossGate) return;
+            var run = _map?.Run;
+            if (run == null) return;
 
-        private static void ClearChildren(RectTransform root)
-        {
-            if (root == null) return;
-            for (var i = root.childCount - 1; i >= 0; i--)
-                Destroy(root.GetChild(i).gameObject);
-        }
+            var graph = run.CurrentFloorGraph;
+            if (graph == null || nodeIndex < 0 || nodeIndex >= graph.Count) return;
+            var node = graph[nodeIndex];
 
-        private static void PrepareLaneRootForFreePlacement(RectTransform root)
-        {
-            if (root == null)
+            // Boss gate requires modifier choice first (only if modifiers not yet chosen)
+            if (node.Type == NodeType.Boss && (run.State.ChosenBossModifiers == null || run.State.ChosenBossModifiers.Count == 0))
             {
+                _bossNodeIndex = nodeIndex;
+                ShowBossGateChoice();
                 return;
             }
 
-            root.anchorMin = new Vector2(0f, 0f);
-            root.anchorMax = new Vector2(1f, 1f);
-            root.pivot = new Vector2(0.5f, 0.5f);
-            root.offsetMin = new Vector2(8f, 8f);
-            root.offsetMax = new Vector2(-8f, -8f);
-
-            var layout = root.GetComponent<VerticalLayoutGroup>();
-            if (layout != null)
+            if (!_map.TryAdvanceToNodeAndStartPuzzle(nodeIndex, out var arrivedNode, out var level))
             {
-                layout.enabled = false;
+                SetStatus("Cannot move there.");
+                return;
             }
 
-            var fitter = root.GetComponent<ContentSizeFitter>();
-            if (fitter != null)
-            {
-                fitter.enabled = false;
-            }
+            _pathMessage = string.Empty;
+            _completionHandled = false;
+            _gameOverShown = false;
+            _overlaysBuilt = false;
+            _selectedRow = -1;
+            _selectedCol = -1;
+            _highlightValue = 0;
+            _selectedBagSlot = -1;
 
-            var viewport = root.parent as RectTransform;
-            if (viewport != null)
-            {
-                var mask = viewport.GetComponent<Mask>();
-                if (mask != null)
-                {
-                    mask.showMaskGraphic = false;
-                }
-            }
+            if (arrivedNode.Type == NodeType.Shop) { HandleShop(); return; }
+            if (arrivedNode.Type == NodeType.Rest) { HandleRest(); ShowPath(); return; }
+            if (arrivedNode.Type == NodeType.Event) { HandleEvent(); return; }
+            if (arrivedNode.Type == NodeType.Relic) { HandleRelic(); ShowPath(); return; }
+
+            if (level == null) { ShowPath(); return; }
+
+            SetStatus($"{arrivedNode.Type} - {level.BoardSize}x{level.BoardSize} {level.Stars}*");
+            ShowSudoku();
+            RebuildBoard();
         }
 
         private void EnsurePathOverlayRoot()
         {
-            if (_pathOverlayRoot != null || pathOverviewPanel == null)
-            {
-                return;
-            }
-
-            var panelRect = pathOverviewPanel.GetComponent<RectTransform>();
-            if (panelRect == null)
-            {
-                return;
-            }
-
-            var overlayGo = new GameObject("PathOverlay", typeof(RectTransform));
-            overlayGo.transform.SetParent(panelRect, false);
-            _pathOverlayRoot = overlayGo.GetComponent<RectTransform>();
+            if (_pathOverlayRoot != null || _pathPanel == null) return;
+            var go = new GameObject("PathOverlay", typeof(RectTransform));
+            go.transform.SetParent(_pathPanel.GetComponent<RectTransform>(), false);
+            _pathOverlayRoot = go.GetComponent<RectTransform>();
             _pathOverlayRoot.anchorMin = Vector2.zero;
             _pathOverlayRoot.anchorMax = Vector2.one;
             _pathOverlayRoot.offsetMin = Vector2.zero;
             _pathOverlayRoot.offsetMax = Vector2.zero;
-            _pathOverlayRoot.SetAsLastSibling();
         }
 
-        // RebuildSharedBossGate removed — replaced by RebuildGardenCanvas
-
-        private int BuildLaneRenderSignature(RunMapController.PathChoicePreview previewA, RunMapController.PathChoicePreview previewB, bool? lockValue)
+        private void DrawEdge(RectTransform parent, float w, float h, RunNode a, RunNode b, Color color)
         {
-            unchecked
-            {
-                var hash = 17;
-                var run = runMapController?.Run;
-                hash = hash * 31 + (run?.RunState?.CurrentNodeIndex ?? -1);
-                hash = hash * 31 + (lockValue.HasValue ? (lockValue.Value ? 1 : 2) : 0);
-                hash = hash * 31 + BuildPreviewSignature(previewA);
-                hash = hash * 31 + BuildPreviewSignature(previewB);
+            var pa = new Vector2(a.CanvasX * w, (1f - a.CanvasY) * h);
+            var pb = new Vector2(b.CanvasX * w, (1f - b.CanvasY) * h);
+            var d = pb - pa;
+            var dist = d.magnitude;
+            if (dist < 1f) return;
 
-                var state = run?.RunState;
-                if (state != null)
-                {
-                    hash = hash * 31 + state.Inventory.Count;
-                    hash = hash * 31 + state.CurrentGold;
-                    for (var i = 0; i < state.Inventory.Count; i++)
-                    {
-                        var item = state.Inventory[i];
-                        hash = hash * 31 + (item?.Id?.GetHashCode() ?? 0);
-                        hash = hash * 31 + (item?.Charges ?? 0);
-                    }
-                }
-
-                var graph = run?.CurrentRunGraph;
-                if (graph != null)
-                {
-                    hash = hash * 31 + graph.Count;
-                    for (var i = 0; i < graph.Count; i++)
-                    {
-                        var node = graph[i];
-                        hash = hash * 31 + node.Depth;
-                        hash = hash * 31 + (int)node.Type;
-                        hash = hash * 31 + (node.IsRiskPath ? 1 : 0);
-                        hash = hash * 31 + (node.IsRevealed ? 1 : 0);
-                    }
-                }
-
-                return hash;
-            }
+            var go = new GameObject("Edge", typeof(RectTransform), typeof(Image));
+            go.transform.SetParent(parent, false);
+            go.transform.SetAsFirstSibling();
+            var img = go.GetComponent<Image>();
+            img.color = color;
+            img.raycastTarget = false;
+            var r = go.GetComponent<RectTransform>();
+            r.anchorMin = Vector2.zero;
+            r.anchorMax = Vector2.zero;
+            r.sizeDelta = new Vector2(dist, 3f);
+            r.anchoredPosition = pa + d * 0.5f;
+            r.localEulerAngles = new Vector3(0, 0, Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg);
         }
 
-        private static int BuildPreviewSignature(RunMapController.PathChoicePreview preview)
+        private static bool IsPuzzleNodeType(NodeType t) =>
+            t == NodeType.Puzzle || t == NodeType.ElitePuzzle || t == NodeType.PreBoss || t == NodeType.Boss;
+
+        private Button CreateNodeButton(RectTransform parent, RunNode node, Vector2 pos, Color color, LevelConfig config = null)
         {
-            unchecked
+            var isBoss = node.Type == NodeType.Boss;
+            var size = isBoss ? new Vector2(120, 60) : new Vector2(72, 72);
+            var go = new GameObject($"Node_{node.Type}_{node.Index}", typeof(RectTransform), typeof(Image), typeof(Button));
+            go.transform.SetParent(parent, false);
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.zero;
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta = size;
+            rt.anchoredPosition = pos;
+            go.GetComponent<Image>().color = color;
+
+            // Try to load icon
+            var iconName = GetNodeIconName(node.Type);
+            var sprite = string.IsNullOrEmpty(iconName) ? null : Resources.Load<Sprite>("GeneratedIcons/icon_" + iconName);
+            if (sprite != null)
             {
-                var hash = 13;
-                hash = hash * 31 + (preview.Available ? 1 : 0);
-                hash = hash * 31 + (preview.RiskPath ? 1 : 0);
-                hash = hash * 31 + preview.Depth;
-                hash = hash * 31 + preview.BoardSize;
-                hash = hash * 31 + preview.Stars;
-                hash = hash * 31 + (int)preview.NodeType;
-                return hash;
-            }
-        }
+                // Icon left-center, label right
+                var iconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+                iconGo.transform.SetParent(go.transform, false);
+                var iconRt = iconGo.GetComponent<RectTransform>();
+                iconRt.anchorMin = new Vector2(0.04f, 0.15f);
+                iconRt.anchorMax = new Vector2(0.42f, 0.85f);
+                iconRt.offsetMin = Vector2.zero;
+                iconRt.offsetMax = Vector2.zero;
+                var img = iconGo.GetComponent<Image>();
+                img.sprite = sprite;
+                img.preserveAspect = true;
+                img.raycastTarget = false;
 
-        // Old lane-based methods removed: RebuildLaneNodeButtons, ResolveLaneOverlaps,
-        // CaptureLaneEndForSharedBoss, StoreCrossLinkPosition, CreateCrossLinkConnectorLine,
-        // ComputeLaneNodePosition, CreatePathConnectionLine, IsPuzzleNodeType, CreatePathNodeButton
-        // All replaced by RebuildGardenCanvas with pre-computed canvas positions.
-
-        private bool IsNextChoiceNode(RunNode node, bool risk)
-        {
-            var preview = runMapController.BuildPathChoicePreview(risk);
-            return preview.Available && preview.Depth == node.Depth && preview.NodeType == node.Type;
-        }
-
-        private void TryApplyButtonIcons()
-        {
-            var quit = Resources.Load<Sprite>("GeneratedIcons/icon_ink_save");
-
-            if (quit == null)
-            {
-                return;
-            }
-
-            ApplyButtonIcon(saveQuitPathButton, quit);
-            ApplyButtonIcon(saveQuitSudokuButton, quit);
-            _buttonIconsApplied = true;
-        }
-
-        private static void ApplyButtonIcon(Button button, Sprite sprite)
-        {
-            if (button == null || sprite == null)
-            {
-                return;
-            }
-
-            var image = button.GetComponent<Image>();
-            if (image == null)
-            {
-                return;
-            }
-
-            image.sprite = sprite;
-            image.type = Image.Type.Simple;
-            image.preserveAspect = false;
-        }
-
-        private void BuildOrRefreshSudokuBoard()
-        {
-            var board = runMapController?.Run?.CurrentBoard;
-            if (board == null || sudokuGridRoot == null)
-            {
-                return;
-            }
-
-            if (_boardSize != board.Size || _cells.Count == 0)
-            {
-                BuildBoardGrid(board.Size);
-                _overlaysBuilt = false;
-
-                // Sync overlay and number root sizes with the resized grid
-                if (_gridOverlayRoot != null)
-                {
-                    _gridOverlayRoot.anchoredPosition = sudokuGridRoot.anchoredPosition;
-                    _gridOverlayRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, sudokuGridRoot.rect.width);
-                    _gridOverlayRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, sudokuGridRoot.rect.height);
-                }
-            }
-
-            if (!_overlaysBuilt)
-            {
-                BuildModifierOverlays();
-                _overlaysBuilt = true;
-            }
-
-            // Boss modifier description — refresh every time the board is built/refreshed
-            RefreshBossModifierDescription();
-
-            if ((_selectedRow < 0 || _selectedCol < 0) && TryFindFirstEditableCell(board, out var row, out var col))
-            {
-                _selectedRow = row;
-                _selectedCol = col;
-            }
-
-            UpdateNumpadAvailability(board.Size);
-            RenderBoard(board);
-            RebuildPuzzleItemBar();
-        }
-
-        private void BuildBoardGrid(int size)
-        {
-            _boardSize = size;
-            _cells.Clear();
-
-            for (var i = sudokuGridRoot.childCount - 1; i >= 0; i--)
-            {
-                Destroy(sudokuGridRoot.GetChild(i).gameObject);
-            }
-
-            var grid = sudokuGridRoot.GetComponent<GridLayoutGroup>();
-            if (grid == null)
-            {
-                grid = sudokuGridRoot.gameObject.AddComponent<GridLayoutGroup>();
-            }
-
-            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            grid.constraintCount = size;
-            grid.spacing = new Vector2(2f, 2f);
-            grid.cellSize = size <= 6 ? new Vector2(96f, 96f) : size <= 8 ? new Vector2(74f, 74f) : new Vector2(62f, 62f);
-            grid.childAlignment = TextAnchor.MiddleCenter;
-
-            var totalW = (grid.cellSize.x * size) + (grid.spacing.x * (size - 1));
-            var totalH = (grid.cellSize.y * size) + (grid.spacing.y * (size - 1));
-            sudokuGridRoot.anchorMin = new Vector2(0.5f, 0.42f);
-            sudokuGridRoot.anchorMax = new Vector2(0.5f, 0.42f);
-            sudokuGridRoot.pivot = new Vector2(0.5f, 0.5f);
-            sudokuGridRoot.anchoredPosition = Vector2.zero;
-            sudokuGridRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, totalW);
-            sudokuGridRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, totalH);
-
-            // Ensure the number-text layer exists and is placed just after the grid root (overlay
-            // will be inserted between them when EnsureGridOverlayRoot is called later, giving
-            // the correct order: Grid → Overlay → Numbers).
-            if (_gridNumberRoot == null)
-            {
-                var numGo = new GameObject("GridNumbers", typeof(RectTransform));
-                numGo.transform.SetParent(sudokuGridRoot.parent, false);
-                _gridNumberRoot = numGo.GetComponent<RectTransform>();
-                var leNum = numGo.AddComponent<UnityEngine.UI.LayoutElement>();
-                leNum.ignoreLayout = true;
-                var cgNum = numGo.AddComponent<CanvasGroup>();
-                cgNum.blocksRaycasts = false;
-                cgNum.interactable = false;
-                _gridNumberRoot.SetSiblingIndex(sudokuGridRoot.GetSiblingIndex() + 1);
+                var lbl = CreateText(go.transform, "Label", GetNodeLabelShort(node),
+                    isBoss ? 11 : 10, TextAnchor.MiddleCenter, TextColor);
+                lbl.rectTransform.anchorMin = new Vector2(0.40f, 0f);
+                lbl.rectTransform.anchorMax = new Vector2(0.98f, 1f);
+                lbl.rectTransform.offsetMin = Vector2.zero;
+                lbl.rectTransform.offsetMax = Vector2.zero;
+                lbl.verticalOverflow = VerticalWrapMode.Overflow;
             }
             else
             {
-                for (var i = _gridNumberRoot.childCount - 1; i >= 0; i--)
-                    Destroy(_gridNumberRoot.GetChild(i).gameObject);
+                var lbl = CreateText(go.transform, "Label", GetNodeLabelShort(node),
+                    isBoss ? 13 : 11, TextAnchor.MiddleCenter, TextColor);
+                StretchFill(lbl.rectTransform);
             }
 
-            // Keep number root size/position in sync with grid root
-            _gridNumberRoot.anchorMin = sudokuGridRoot.anchorMin;
-            _gridNumberRoot.anchorMax = sudokuGridRoot.anchorMax;
-            _gridNumberRoot.pivot = sudokuGridRoot.pivot;
-            _gridNumberRoot.anchoredPosition = sudokuGridRoot.anchoredPosition;
-            _gridNumberRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, totalW);
-            _gridNumberRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, totalH);
+            // Puzzle-type nodes: top-left size, bottom-right stars
+            if (config != null && IsPuzzleNodeType(node.Type))
+            {
+                var sizeLabel = CreateText(go.transform, "SizeLabel",
+                    $"{config.BoardSize}×{config.BoardSize}", 9, TextAnchor.UpperLeft,
+                    new Color(TextColor.r, TextColor.g, TextColor.b, 0.85f));
+                sizeLabel.rectTransform.anchorMin = new Vector2(0f, 0.72f);
+                sizeLabel.rectTransform.anchorMax = new Vector2(0.55f, 1f);
+                sizeLabel.rectTransform.offsetMin = new Vector2(3f, 0f);
+                sizeLabel.rectTransform.offsetMax = new Vector2(0f, -2f);
+                sizeLabel.raycastTarget = false;
 
-            // Set up the same GridLayoutGroup on the number root so children line up with grid cells
-            var numGrid = _gridNumberRoot.GetComponent<GridLayoutGroup>() ?? _gridNumberRoot.gameObject.AddComponent<GridLayoutGroup>();
-            numGrid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            numGrid.constraintCount = size;
-            numGrid.spacing = grid.spacing;
-            numGrid.cellSize = grid.cellSize;
-            numGrid.childAlignment = TextAnchor.MiddleCenter;
+                var stars = Mathf.Clamp(config.Stars, 1, 6);
+                var starStr = new string('★', stars);
+                var starLabel = CreateText(go.transform, "StarLabel",
+                    starStr, 9, TextAnchor.LowerRight, AccentGold);
+                starLabel.rectTransform.anchorMin = new Vector2(0.45f, 0f);
+                starLabel.rectTransform.anchorMax = new Vector2(1f, 0.28f);
+                starLabel.rectTransform.offsetMin = new Vector2(0f, 2f);
+                starLabel.rectTransform.offsetMax = new Vector2(-3f, 0f);
+                starLabel.raycastTarget = false;
+            }
 
-            var builtinFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+            return go.GetComponent<Button>();
+        }
+
+        private static string GetNodeIconName(NodeType t) => t switch
+        {
+            NodeType.Puzzle      => "bud",
+            NodeType.ElitePuzzle => "elite_mask",
+            NodeType.PreBoss     => "elite_mask",
+            NodeType.Boss        => "demon_mask",
+            NodeType.Shop        => "market_stall",
+            NodeType.Rest        => "campfire_stones",
+            NodeType.Relic       => "relic_pedestal",
+            NodeType.Event       => "stone_altar",
+            _                    => ""
+        };
+
+        private static string GetNodeLabelShort(RunNode node)
+        {
+            return node.Type switch
+            {
+                NodeType.Start       => "Start",
+                NodeType.Puzzle      => "Puzzle",
+                NodeType.ElitePuzzle => "Elite",
+                NodeType.Shop        => "Shop",
+                NodeType.Rest        => "Rest",
+                NodeType.Relic       => "Relic",
+                NodeType.Event       => "Event",
+                NodeType.PreBoss     => "Pre-Boss",
+                NodeType.Boss        => "Boss\nGate",
+                _                    => "?"
+            };
+        }
+
+        private static string GetNodeLabel(NodeType t) => t switch
+        {
+            NodeType.Start => "Start", NodeType.Puzzle => "Puzzle", NodeType.ElitePuzzle => "Elite",
+            NodeType.Shop => "Shop", NodeType.Rest => "Rest", NodeType.Relic => "Relic",
+            NodeType.Event => "Event", NodeType.PreBoss => "Elite", NodeType.Boss => "Boss Gate",
+            _ => "?"
+        };
+
+        // ────────────────────── Board building ──────────────────────
+
+        private void RebuildBoard()
+        {
+            var run = _map?.Run;
+            var board = run?.CurrentBoard;
+            if (board == null || _gridRoot == null) return;
+
+            if (_boardSize != board.Size || _cells.Count == 0)
+            {
+                BuildGrid(board.Size);
+                _overlaysBuilt = false;
+            }
+
+            if (!_overlaysBuilt) { BuildOverlays(); _overlaysBuilt = true; }
+
+            if (_selectedRow < 0 && TryFindEditable(board, out var r, out var c))
+            {
+                _selectedRow = r;
+                _selectedCol = c;
+            }
+
+            // Update level/depth info label
+            if (_sudokuPanel != null)
+            {
+                var infoText = _sudokuPanel.GetComponent<RectTransform>()?.Find("SudokuGameplayLevelInfo")?.GetComponent<Text>();
+                if (infoText != null && run?.State != null)
+                {
+                    var cfg = run.CurrentLevelConfig;
+                    var stars = cfg != null ? new string('★', cfg.Stars) : "";
+                    infoText.text = $"Floor {run.State.CurrentFloor + 1}  Depth {run.State.Depth}  {board.Size}×{board.Size}  {stars}";
+                }
+            }
+
+            UpdateNumpad(board.Size, board);
+            RenderBoard(board);
+        }
+
+        private void BuildGrid(int size)
+        {
+            _boardSize = size;
+            _cells.Clear();
+            ClearChildren(_gridRoot);
+
+            var grid = _gridRoot.GetComponent<GridLayoutGroup>() ?? _gridRoot.gameObject.AddComponent<GridLayoutGroup>();
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = size;
+            grid.spacing = new Vector2(2, 2);
+            grid.cellSize = size <= 6 ? new Vector2(96, 96) : size <= 8 ? new Vector2(74, 74) : new Vector2(62, 62);
+            grid.childAlignment = TextAnchor.MiddleCenter;
+
+            var totalW = grid.cellSize.x * size + grid.spacing.x * (size - 1);
+            var totalH = grid.cellSize.y * size + grid.spacing.y * (size - 1);
+            _gridRoot.anchorMin = new Vector2(0.5f, 0.42f);
+            _gridRoot.anchorMax = new Vector2(0.5f, 0.42f);
+            _gridRoot.pivot = new Vector2(0.5f, 0.5f);
+            _gridRoot.anchoredPosition = Vector2.zero;
+            _gridRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, totalW);
+            _gridRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, totalH);
+
+            EnsureNumberRoot(size, grid);
+            EnsureOverlayRoot();
 
             for (var row = 0; row < size; row++)
+            for (var col = 0; col < size; col++)
             {
-                for (var col = 0; col < size; col++)
-                {
-                    // Background cell in sudokuGridRoot — image + button + borders only
-                    var cellGo = new GameObject($"Cell_{row}_{col}", typeof(RectTransform), typeof(Image), typeof(Button));
-                    cellGo.transform.SetParent(sudokuGridRoot, false);
+                // Background cell
+                var cellGo = new GameObject($"C_{row}_{col}", typeof(RectTransform), typeof(Image), typeof(Button));
+                cellGo.transform.SetParent(_gridRoot, false);
+                var img = cellGo.GetComponent<Image>();
+                img.color = EmptyCellColor;
+                var cr = row; var cc = col;
+                cellGo.GetComponent<Button>().onClick.AddListener(() => OnCellClicked(cr, cc));
 
-                    var image = cellGo.GetComponent<Image>();
-                    image.color = EmptyColor;
+                var bt = CreateBorder(cellGo.transform, "BT", new Vector2(0,1), new Vector2(1,1), new Vector2(0,-3), Vector2.zero);
+                var bb = CreateBorder(cellGo.transform, "BB", Vector2.zero, new Vector2(1,0), Vector2.zero, new Vector2(0,3));
+                var bl = CreateBorder(cellGo.transform, "BL", Vector2.zero, new Vector2(0,1), Vector2.zero, new Vector2(3,0));
+                var br = CreateBorder(cellGo.transform, "BR", new Vector2(1,0), Vector2.one, new Vector2(-3,0), Vector2.zero);
 
-                    var button = cellGo.GetComponent<Button>();
-                    var capturedRow = row;
-                    var capturedCol = col;
-                    button.onClick.AddListener(() => OnCellClicked(capturedRow, capturedCol));
+                // Number cell
+                var numGo = new GameObject($"N_{row}_{col}", typeof(RectTransform));
+                numGo.transform.SetParent(_gridNumberRoot, false);
+                var fs = size <= 6 ? 30 : size <= 8 ? 24 : 20;
+                var valText = CreateText(numGo.transform, "Val", "", fs, TextAnchor.MiddleCenter, Color.white);
+                StretchFill(valText.rectTransform);
+                valText.raycastTarget = false;
+                var pencilFs = size <= 6 ? 16 : 14;
+                var pencilText = CreateText(numGo.transform, "Pencil", "", pencilFs, TextAnchor.UpperLeft, new Color(0.84f, 0.86f, 0.82f, 0.95f));
+                pencilText.rectTransform.anchorMin = new Vector2(0.08f, 0.08f);
+                pencilText.rectTransform.anchorMax = new Vector2(0.92f, 0.92f);
+                pencilText.rectTransform.offsetMin = Vector2.zero;
+                pencilText.rectTransform.offsetMax = Vector2.zero;
+                pencilText.supportRichText = true;
+                pencilText.raycastTarget = false;
 
-                    var borderTop = CreateCellBorder(cellGo.transform, "BorderTop", new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -3f), new Vector2(0f, 0f));
-                    var borderBottom = CreateCellBorder(cellGo.transform, "BorderBottom", new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0f, 0f), new Vector2(0f, 3f));
-                    var borderLeft = CreateCellBorder(cellGo.transform, "BorderLeft", new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0f, 0f), new Vector2(3f, 0f));
-                    var borderRight = CreateCellBorder(cellGo.transform, "BorderRight", new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(-3f, 0f), new Vector2(0f, 0f));
-
-                    // Text cell in _gridNumberRoot — value and pencil text only (no image blocker)
-                    var numCellGo = new GameObject($"NumCell_{row}_{col}", typeof(RectTransform));
-                    numCellGo.transform.SetParent(_gridNumberRoot, false);
-
-                    var textGo = new GameObject("Value", typeof(RectTransform), typeof(Text));
-                    textGo.transform.SetParent(numCellGo.transform, false);
-                    var textRect = textGo.GetComponent<RectTransform>();
-                    textRect.anchorMin = Vector2.zero;
-                    textRect.anchorMax = Vector2.one;
-                    textRect.offsetMin = Vector2.zero;
-                    textRect.offsetMax = Vector2.zero;
-                    var text = textGo.GetComponent<Text>();
-                    text.font = builtinFont;
-                    var baseFontSize = size <= 6 ? 30 : size <= 8 ? 24 : 20;
-                    text.fontSize = _accessibility?.ScaleFont(baseFontSize) ?? baseFontSize;
-                    text.alignment = TextAnchor.MiddleCenter;
-                    text.color = new Color(0.93f, 0.96f, 0.90f, 1f);
-                    text.raycastTarget = false;
-
-                    var pencilGo = new GameObject("Pencil", typeof(RectTransform), typeof(Text));
-                    pencilGo.transform.SetParent(numCellGo.transform, false);
-                    var pencilRect = pencilGo.GetComponent<RectTransform>();
-                    pencilRect.anchorMin = new Vector2(0.08f, 0.08f);
-                    pencilRect.anchorMax = new Vector2(0.92f, 0.92f);
-                    pencilRect.offsetMin = Vector2.zero;
-                    pencilRect.offsetMax = Vector2.zero;
-                    var pencilText = pencilGo.GetComponent<Text>();
-                    pencilText.font = builtinFont;
-                    var basePencilSize = size <= 6 ? 16 : 14;
-                    pencilText.fontSize = _accessibility?.ScaleFont(basePencilSize) ?? basePencilSize;
-                    pencilText.alignment = TextAnchor.UpperLeft;
-                    pencilText.color = new Color(0.84f, 0.86f, 0.82f, 0.95f);
-                    pencilText.supportRichText = true;
-                    pencilText.raycastTarget = false;
-
-                    _cells.Add(new CellView
-                    {
-                        Row = row,
-                        Col = col,
-                        Root = cellGo.GetComponent<RectTransform>(),
-                        Image = image,
-                        Label = text,
-                        PencilLabel = pencilText,
-                        BorderTop = borderTop,
-                        BorderBottom = borderBottom,
-                        BorderLeft = borderLeft,
-                        BorderRight = borderRight,
-                        Button = button
-                    });
-                }
+                _cells.Add(new CellView { Row = row, Col = col, Image = img, Label = valText,
+                    PencilLabel = pencilText, BorderTop = bt, BorderBottom = bb, BorderLeft = bl, BorderRight = br });
             }
         }
 
-        private static Image CreateCellBorder(Transform parent, string name, Vector2 anchorMin, Vector2 anchorMax, Vector2 offsetMin, Vector2 offsetMax)
+        private static Image CreateBorder(Transform parent, string name, Vector2 amin, Vector2 amax, Vector2 omin, Vector2 omax)
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(Image));
             go.transform.SetParent(parent, false);
-            var rect = go.GetComponent<RectTransform>();
-            rect.anchorMin = anchorMin;
-            rect.anchorMax = anchorMax;
-            rect.offsetMin = offsetMin;
-            rect.offsetMax = offsetMax;
-
-            var image = go.GetComponent<Image>();
-            image.color = new Color(0.98f, 0.76f, 0.26f, 0.0f);
-            image.raycastTarget = false;
-            return image;
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = amin; rt.anchorMax = amax; rt.offsetMin = omin; rt.offsetMax = omax;
+            var img = go.GetComponent<Image>();
+            img.color = new Color(1, 0.78f, 0.26f, 0);
+            img.raycastTarget = false;
+            return img;
         }
 
-        private void BuildNumpad()
+        private void EnsureNumberRoot(int size, GridLayoutGroup srcGrid)
         {
-            if (numpadRoot == null)
+            if (_gridNumberRoot == null)
             {
-                return;
+                var go = new GameObject("GridNumbers", typeof(RectTransform));
+                go.transform.SetParent(_gridRoot.parent, false);
+                _gridNumberRoot = go.GetComponent<RectTransform>();
+                go.AddComponent<LayoutElement>().ignoreLayout = true;
+                var cg = go.AddComponent<CanvasGroup>();
+                cg.blocksRaycasts = false;
+                cg.interactable = false;
             }
+            else ClearChildren(_gridNumberRoot);
 
-            _numpadButtons.Clear();
-            for (var i = numpadRoot.childCount - 1; i >= 0; i--)
-            {
-                Destroy(numpadRoot.GetChild(i).gameObject);
-            }
-
-            var grid = numpadRoot.GetComponent<GridLayoutGroup>();
-            if (grid == null)
-            {
-                grid = numpadRoot.gameObject.AddComponent<GridLayoutGroup>();
-            }
-
-            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            grid.constraintCount = 3;
-            grid.cellSize = new Vector2(90f, 56f);
-            grid.spacing = new Vector2(8f, 8f);
-            grid.childAlignment = TextAnchor.MiddleCenter;
-
-            for (var value = 1; value <= 9; value++)
-            {
-                var btn = CreateNumpadButton(value);
-                _numpadButtons.Add(btn);
-            }
-
-            EnsurePencilToggleButton();
+            CopyRectTransform(_gridRoot, _gridNumberRoot);
+            var ng = _gridNumberRoot.GetComponent<GridLayoutGroup>() ?? _gridNumberRoot.gameObject.AddComponent<GridLayoutGroup>();
+            ng.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            ng.constraintCount = size;
+            ng.spacing = srcGrid.spacing;
+            ng.cellSize = srcGrid.cellSize;
+            ng.childAlignment = TextAnchor.MiddleCenter;
+            _gridNumberRoot.SetSiblingIndex(_gridRoot.GetSiblingIndex() + 1);
         }
 
-        private void EnsurePencilToggleButton()
+        private void EnsureOverlayRoot()
         {
-            if (numpadRoot == null)
+            if (_gridOverlayRoot != null) return;
+            var go = new GameObject("GridOverlay", typeof(RectTransform));
+            go.transform.SetParent(_gridRoot.parent, false);
+            _gridOverlayRoot = go.GetComponent<RectTransform>();
+            CopyRectTransform(_gridRoot, _gridOverlayRoot);
+            go.AddComponent<LayoutElement>().ignoreLayout = true;
+            var cg = go.AddComponent<CanvasGroup>();
+            cg.blocksRaycasts = false;
+            cg.interactable = false;
+            _gridOverlayRoot.SetSiblingIndex(_gridRoot.GetSiblingIndex() + 1);
+            if (_gridNumberRoot != null)
+                _gridNumberRoot.SetSiblingIndex(_gridOverlayRoot.GetSiblingIndex() + 1);
+        }
+
+        private static void CopyRectTransform(RectTransform src, RectTransform dst)
+        {
+            dst.anchorMin = src.anchorMin;
+            dst.anchorMax = src.anchorMax;
+            dst.pivot = src.pivot;
+            dst.anchoredPosition = src.anchoredPosition;
+            dst.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, src.rect.width);
+            dst.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, src.rect.height);
+        }
+
+        // ────────────────────── Board rendering ──────────────────────
+
+        private void RenderBoard(SudokuBoard board)
+        {
+            var overlay = _map?.Run?.CurrentOverlay;
+            var hasAntiknight = HasActiveModifier(BossModifierId.Antiknight);
+
+            for (var i = 0; i < _cells.Count; i++)
             {
+                var cell = _cells[i];
+                var val = board.Cells[cell.Row, cell.Col];
+                var given = board.GivenMask[cell.Row, cell.Col];
+
+                cell.Label.text = val == 0 ? "" : val.ToString();
+                cell.Label.color = given ? new Color(0.04f, 0.04f, 0.04f) : Color.white;
+                cell.PencilLabel.text = val == 0 ? BuildPencilText(board, cell.Row, cell.Col) : "";
+
+                var c = ComputeCellColor(board, cell.Row, cell.Col, given);
+                if (_selectedRow == cell.Row && _selectedCol == cell.Col)
+                    c = SelectedColor;
+                else if (_selectedRow == cell.Row || _selectedCol == cell.Col)
+                    c = RowColHL;
+                if (_highlightValue > 0 && val == _highlightValue)
+                    c = MatchColor;
+
+                // Anti-Knight: highlight cells that are a knight's move from the selected cell
+                // and already contain the highlighted value (forbidden by rule)
+                if (hasAntiknight && _selectedRow >= 0 && _highlightValue > 0)
+                {
+                    if (IsAntiknightForbiddenCell(board, cell.Row, cell.Col))
+                        c = Color.Lerp(c, AntiknightForbidColor, 0.70f);
+                }
+
+                // Bag item highlights (Finder, Pattern Scroll, etc.)
+                if (_bagHighlightCells != null && _bagHighlightCells.Contains((cell.Row, cell.Col)))
+                    c = Color.Lerp(c, BagHighlightColor, 0.65f);
+
+                // Fog (bypassed while LanternOfClarity is active)
+                if (_fogDisabledMovesRemaining <= 0 && overlay != null && IsFogged(overlay, cell.Row, cell.Col))
+                {
+                    c = FogColor;
+                    if (val == 0) cell.Label.text = "";
+                    cell.PencilLabel.text = "";
+                }
+
+                // Conflicts
+                if (!given && HasConflict(board, cell.Row, cell.Col))
+                    c = ConflictColor;
+
+                cell.Image.color = c;
+                UpdateBorders(board, cell);
+            }
+        }
+
+        private bool HasActiveModifier(BossModifierId mod)
+        {
+            var cfg = _map?.Run?.CurrentLevelConfig;
+            return cfg != null && cfg.ActiveModifiers.Contains(mod);
+        }
+
+        private static readonly (int dr, int dc)[] KnightMoves =
+        {
+            (-2, -1), (-2, 1), (-1, -2), (-1, 2),
+            (1, -2), (1, 2), (2, -1), (2, 1)
+        };
+
+        // Returns true if this cell is a knight's move from the selected cell and the selected
+        // cell has a non-zero value, making this cell forbidden for that value.
+        private bool IsAntiknightForbiddenCell(SudokuBoard board, int r, int c)
+        {
+            if (_selectedRow < 0 || _selectedCol < 0) return false;
+            // Check if (r,c) is a knight's move from selected cell
+            var dr = r - _selectedRow;
+            var dc = c - _selectedCol;
+            var isKnightMove = false;
+            for (var k = 0; k < KnightMoves.Length; k++)
+                if (KnightMoves[k].dr == dr && KnightMoves[k].dc == dc) { isKnightMove = true; break; }
+            if (!isKnightMove) return false;
+
+            // Highlight if this cell has the same value as highlighted value OR
+            // if the selected cell is empty and the highlighted value is > 0,
+            // show all knight-move cells as forbidden destinations
+            var selectedVal = board.Cells[_selectedRow, _selectedCol];
+            if (_highlightValue > 0)
+            {
+                // Show forbidden cells: knight-move cells that contain the highlighted value
+                return board.Cells[r, c] == _highlightValue;
+            }
+            // If nothing is highlighted but selected cell has a value, show forbidden cells for that value
+            if (selectedVal > 0)
+                return board.Cells[r, c] == selectedVal;
+            return false;
+        }
+
+        private static Color ComputeCellColor(SudokuBoard board, int r, int c, bool given)
+        {
+            if (board.RegionMap != null)
+            {
+                var alt = (board.RegionMap[r, c] & 1) == 0;
+                return given
+                    ? (alt ? new Color(0.25f, 0.36f, 0.25f) : new Color(0.19f, 0.30f, 0.20f))
+                    : (alt ? new Color(0.15f, 0.22f, 0.16f) : new Color(0.11f, 0.17f, 0.12f));
+            }
+            return given ? GivenCellColor : EmptyCellColor;
+        }
+
+        private void UpdateBorders(SudokuBoard board, CellView cell)
+        {
+            var map = board.RegionMap;
+            if (map == null) return;
+            var r = cell.Row; var c = cell.Col; var sz = board.Size;
+            var region = map[r, c];
+            var clear = new Color(RegionBorder.r, RegionBorder.g, RegionBorder.b, 0);
+
+            cell.BorderTop.color = (r == 0 || map[r - 1, c] != region) ? RegionBorder : clear;
+            cell.BorderBottom.color = (r == sz - 1 || map[r + 1, c] != region) ? RegionBorder : clear;
+            cell.BorderLeft.color = (c == 0 || map[r, c - 1] != region) ? RegionBorder : clear;
+            cell.BorderRight.color = (c == sz - 1 || map[r, c + 1] != region) ? RegionBorder : clear;
+
+            // Killer cage borders override region borders
+            if (_cageBorderEdges.Count > 0)
+            {
+                if (IsCageEdge(r, c, sz, 0)) cell.BorderTop.color = KillerBorder;
+                if (IsCageEdge(r, c, sz, 1)) cell.BorderBottom.color = KillerBorder;
+                if (IsCageEdge(r, c, sz, 2)) cell.BorderLeft.color = KillerBorder;
+                if (IsCageEdge(r, c, sz, 3)) cell.BorderRight.color = KillerBorder;
+            }
+        }
+
+        private static string BuildPencilText(SudokuBoard board, int r, int c)
+        {
+            var marks = board.GetPencilMarks(r, c);
+            if (marks == null || marks.Count == 0) return "";
+            var sb = new StringBuilder();
+            for (var v = 1; v <= board.Size; v++)
+                if (marks.Contains(v)) sb.Append(v).Append(' ');
+            return sb.ToString().TrimEnd();
+        }
+
+        private static bool HasConflict(SudokuBoard board, int r, int c)
+        {
+            var val = board.Cells[r, c];
+            if (val == 0) return false;
+            var sz = board.Size;
+            for (var i = 0; i < sz; i++)
+            {
+                if (i != c && board.Cells[r, i] == val) return true;
+                if (i != r && board.Cells[i, c] == val) return true;
+            }
+            if (board.RegionMap != null)
+            {
+                var reg = board.RegionMap[r, c];
+                for (var rr = 0; rr < sz; rr++)
+                for (var cc = 0; cc < sz; cc++)
+                    if ((rr != r || cc != c) && board.RegionMap[rr, cc] == reg && board.Cells[rr, cc] == val)
+                        return true;
+            }
+            return false;
+        }
+
+        private static bool IsFogged(ModifierOverlayData overlay, int r, int c)
+        {
+            if (overlay?.FogCells == null) return false;
+            for (var i = 0; i < overlay.FogCells.Count; i++)
+                if (overlay.FogCells[i].Row == r && overlay.FogCells[i].Col == c) return true;
+            return false;
+        }
+
+        // ────────────────────── Input ──────────────────────
+
+        private void HandleKeyboard()
+        {
+            if (Input.GetKeyDown(KeyCode.Escape)) return;
+            var sz = _map?.Run?.CurrentBoard?.Size ?? 9;
+            if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W)) MoveSelection(-1, 0);
+            if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S)) MoveSelection(1, 0);
+            if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A)) MoveSelection(0, -1);
+            if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D)) MoveSelection(0, 1);
+
+            for (var v = 1; v <= Mathf.Min(sz, 9); v++)
+                if (Input.GetKeyDown(KeyCode.Alpha0 + v) || Input.GetKeyDown(KeyCode.Keypad0 + v))
+                    EnterNumber(v);
+
+            if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Delete))
+                ClearCell();
+
+            if (Input.GetKeyDown(KeyCode.LeftControl) || Input.GetKeyDown(KeyCode.RightControl))
+                TogglePencilMode();
+
+            if (Input.GetKeyDown(KeyCode.Q))
+                SaveAndQuit();
+        }
+
+        private void MoveSelection(int dr, int dc)
+        {
+            var board = _map?.Run?.CurrentBoard;
+            if (board == null) return;
+            if (_selectedRow < 0)
+            {
+                if (TryFindEditable(board, out var r, out var c)) { _selectedRow = r; _selectedCol = c; }
+                RenderBoard(board);
+                return;
+            }
+            _selectedRow = Mathf.Clamp(_selectedRow + dr, 0, board.Size - 1);
+            _selectedCol = Mathf.Clamp(_selectedCol + dc, 0, board.Size - 1);
+            RenderBoard(board);
+        }
+
+        private void OnCellClicked(int r, int c)
+        {
+            var board = _map?.Run?.CurrentBoard;
+            if (board == null) return;
+
+            if (_swapMode)
+            {
+                HandleSwapClick(r, c);
+                return;
+            }
+            var val = board.Cells[r, c];
+            // Single click on a filled cell sets/clears highlight; clicking same value again clears it
+            if (val > 0)
+                _highlightValue = _highlightValue == val ? 0 : val;
+            else
+                _highlightValue = 0;
+            _selectedRow = r;
+            _selectedCol = c;
+            RenderBoard(board);
+
+            // Anti-Knight: after selecting an empty cell, clear highlight so forbidden cells
+            // show for the selected cell's neighbor values
+            if (val == 0 && HasActiveModifier(BossModifierId.Antiknight))
+                _highlightValue = 0;
+        }
+
+        private void EnterNumber(int value)
+        {
+            var run = _map?.Run;
+            var board = run?.CurrentBoard;
+            if (run == null || board == null) return;
+            if (_selectedRow < 0 || _selectedCol < 0)
+            {
+                if (!TryFindEditable(board, out _selectedRow, out _selectedCol)) return;
+            }
+            if (board.GivenMask[_selectedRow, _selectedCol]) { SetStatus("Given cell."); return; }
+            if (value < 1 || value > board.Size) return;
+
+            if (_pencilMode)
+            {
+                if (board.Cells[_selectedRow, _selectedCol] != 0) { SetStatus("Clear cell first."); return; }
+                if (!run.TryAddPencilMark(_selectedRow, _selectedCol, value))
+                    SetStatus("No pencil charges.");
+                else
+                    SetStatus($"Pencil: {value}");
+                RenderBoard(board);
                 return;
             }
 
-            if (_pencilModeButton != null)
+            var result = run.PlaceNumber(_selectedRow, _selectedCol, value);
+            if (result == PlaceResult.Correct)
             {
-                return;
+                _audio?.PlayCorrectPlacement();
+                SetStatus($"Placed {value}.");
+                if (_fogDisabledMovesRemaining > 0) _fogDisabledMovesRemaining--;
             }
+            else if (result == PlaceResult.IsGiven)
+                SetStatus("Given cell.");
+            else
+            {
+                _lastMistakeRow = _selectedRow;
+                _lastMistakeCol = _selectedCol;
+                if (_umbrellaCharges > 0)
+                {
+                    _umbrellaCharges--;
+                    SetStatus($"Umbrella blocked the penalty! ({_umbrellaCharges} left)");
+                    RefreshBag();
+                }
+                else
+                {
+                    _audio?.PlayWrongPlacement();
+                    _audio?.PlayHpLoss();
+                    run.ApplyMistakePenalty();
+                    SetStatus($"{value} conflicts! HP: {run.State.CurrentHP}");
+                    if (!_accessibility.IsReduceMotion)
+                        StartCoroutine(AnimationHelper.ScreenShake(
+                            _sudokuPanel != null ? _sudokuPanel.transform : transform,
+                            AnimationHelper.ShakeWrongPx, AnimationHelper.ShakeWrongDuration));
+                }
+            }
+            UpdateNumpad(board.Size, board);
+            RenderBoard(board);
+            CheckGameOver();
+        }
 
-            // Place Mode button inside the numpad box, below the 7-8-9 row.
-            var btnGo = new GameObject("BtnPencilMode", typeof(RectTransform), typeof(Image), typeof(Button));
-            btnGo.transform.SetParent(numpadRoot, false);
-
-            var le = btnGo.AddComponent<UnityEngine.UI.LayoutElement>();
-            le.ignoreLayout = true;
-
-            var rect = btnGo.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.10f, 0.04f);
-            rect.anchorMax = new Vector2(0.90f, 0.14f);
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-
-            var image = btnGo.GetComponent<Image>();
-            image.color = new Color(0.20f, 0.26f, 0.31f, 0.95f);
-
-            var button = btnGo.GetComponent<Button>();
-            button.onClick.AddListener(TogglePencilMode);
-            _pencilModeButton = button;
-
-            var textGo = new GameObject("Label", typeof(RectTransform), typeof(Text));
-            textGo.transform.SetParent(btnGo.transform, false);
-            var textRect = textGo.GetComponent<RectTransform>();
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.offsetMin = Vector2.zero;
-            textRect.offsetMax = Vector2.zero;
-
-            var text = textGo.GetComponent<Text>();
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
-            text.alignment = TextAnchor.MiddleCenter;
-            text.fontSize = _accessibility?.ScaleFont(13) ?? 13;
-            text.color = new Color(0.92f, 0.95f, 0.90f, 1f);
-            text.text = "Mode: SOLVE";
+        private void ClearCell()
+        {
+            var board = _map?.Run?.CurrentBoard;
+            if (board == null || _selectedRow < 0) return;
+            if (board.GivenMask[_selectedRow, _selectedCol]) return;
+            board.PlaceValue(_selectedRow, _selectedCol, 0);
+            _highlightValue = 0;
+            RenderBoard(board);
         }
 
         private void TogglePencilMode()
         {
             _pencilMode = !_pencilMode;
-            _runAudio?.PlayPencilToggle();
             if (_pencilModeButton != null)
             {
-                var label = _pencilModeButton.GetComponentInChildren<Text>();
-                if (label != null)
-                {
-                    label.text = _pencilMode ? "Mode: PENCIL" : "Mode: SOLVE";
-                }
-
-                var image = _pencilModeButton.GetComponent<Image>();
-                if (image != null)
-                {
-                    image.color = _pencilMode ? new Color(0.31f, 0.43f, 0.28f, 0.98f) : new Color(0.20f, 0.26f, 0.31f, 0.95f);
-                }
+                var lbl = _pencilModeButton.GetComponentInChildren<Text>();
+                if (lbl != null) lbl.text = _pencilMode ? "Mode: PENCIL" : "Mode: SOLVE";
+                var img = _pencilModeButton.GetComponent<Image>();
+                if (img != null)
+                    img.color = _pencilMode ? new Color(0.31f, 0.43f, 0.28f) : BtnColor;
             }
         }
 
-        private Button CreateNumpadButton(int value)
+        // ────────────────────── Numpad ──────────────────────
+
+        private void BuildNumpad()
         {
-            var btnGo = new GameObject($"Num_{value}", typeof(RectTransform), typeof(Image), typeof(Button));
-            btnGo.transform.SetParent(numpadRoot, false);
+            if (_numpadRoot == null) return;
+            _numpadButtons.Clear();
+            ClearChildren(_numpadRoot);
 
-            var image = btnGo.GetComponent<Image>();
-            image.color = new Color(0.19f, 0.30f, 0.20f, 1f);
+            var grid = _numpadRoot.GetComponent<GridLayoutGroup>() ?? _numpadRoot.gameObject.AddComponent<GridLayoutGroup>();
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = 3;
+            grid.cellSize = new Vector2(90, 56);
+            grid.spacing = new Vector2(8, 8);
+            grid.childAlignment = TextAnchor.MiddleCenter;
 
-            var button = btnGo.GetComponent<Button>();
-            var colors = button.colors;
-            colors.colorMultiplier = 1.30f;
-            colors.fadeDuration = 0.07f;
-            colors.highlightedColor = new Color(0.27f, 0.40f, 0.28f, 1f);
-            colors.pressedColor = new Color(0.13f, 0.21f, 0.14f, 1f);
-            button.colors = colors;
-            button.onClick.AddListener(() => EnterNumber(value));
+            for (var v = 1; v <= 9; v++)
+            {
+                var go = new GameObject($"Num_{v}", typeof(RectTransform), typeof(Image), typeof(Button));
+                go.transform.SetParent(_numpadRoot, false);
+                go.GetComponent<Image>().color = new Color(0.19f, 0.30f, 0.20f);
+                var val = v;
+                go.GetComponent<Button>().onClick.AddListener(() => EnterNumber(val));
+                var t = CreateText(go.transform, "L", v.ToString(), 24, TextAnchor.MiddleCenter, TextColor);
+                StretchFill(t.rectTransform);
+                _numpadButtons.Add(go.GetComponent<Button>());
+            }
 
-            var textGo = new GameObject("Label", typeof(RectTransform), typeof(Text));
-            textGo.transform.SetParent(btnGo.transform, false);
-            var rect = textGo.GetComponent<RectTransform>();
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-
-            var text = textGo.GetComponent<Text>();
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
-            text.text = value.ToString();
-            text.alignment = TextAnchor.MiddleCenter;
-            text.fontSize = _accessibility?.ScaleFont(24) ?? 24;
-            text.color = new Color(0.93f, 0.96f, 0.90f, 1f);
-
-            return button;
+            // Pencil mode button
+            var pmGo = new GameObject("PencilBtn", typeof(RectTransform), typeof(Image), typeof(Button));
+            pmGo.transform.SetParent(_numpadRoot, false);
+            pmGo.AddComponent<LayoutElement>().ignoreLayout = true;
+            var pmRect = pmGo.GetComponent<RectTransform>();
+            pmRect.anchorMin = new Vector2(0.1f, 0.04f);
+            pmRect.anchorMax = new Vector2(0.9f, 0.14f);
+            pmRect.offsetMin = Vector2.zero;
+            pmRect.offsetMax = Vector2.zero;
+            pmGo.GetComponent<Image>().color = BtnColor;
+            _pencilModeButton = pmGo.GetComponent<Button>();
+            _pencilModeButton.onClick.AddListener(TogglePencilMode);
+            var pmLbl = CreateText(pmGo.transform, "L", "Mode: SOLVE", 13, TextAnchor.MiddleCenter, TextColor);
+            StretchFill(pmLbl.rectTransform);
         }
 
-        private void UpdateNumpadAvailability(int boardSize)
+        private void UpdateNumpad(int boardSize, SudokuBoard board = null)
         {
-            for (var i = 0; i < _numpadButtons.Count; i++)
-            {
-                var value = i + 1;
-                var button = _numpadButtons[i];
-                if (button == null)
+            // Count how many of each digit are placed on the board
+            var counts = new int[boardSize + 1];
+            if (board != null)
+                for (var r = 0; r < boardSize; r++)
+                for (var c = 0; c < boardSize; c++)
                 {
-                    continue;
+                    var v = board.Cells[r, c];
+                    if (v >= 1 && v <= boardSize) counts[v]++;
                 }
-
-                var enabled = value <= boardSize;
-                button.interactable = enabled;
-
-                var image = button.GetComponent<Image>();
-                if (image != null)
-                {
-                    image.color = enabled ? new Color(0.19f, 0.30f, 0.20f, 1f) : new Color(0.13f, 0.13f, 0.13f, 0.8f);
-                }
-            }
-        }
-
-        private void OnCellClicked(int row, int col)
-        {
-            var run = runMapController?.Run;
-            var board = run?.CurrentBoard;
-            if (board == null)
-            {
-                return;
-            }
-
-            // SilkFan phase 2: complete the swap on second cell click
-            if (run.IsSilkFanPending)
-            {
-                if (run.TryCompleteSilkFanSwap(row, col, out var swapMsg))
-                {
-                    _runAudio?.PlayItemUse();
-                    RenderBoard(board);
-                    RefreshHud();
-                    _lastPuzzleItemSignature = int.MinValue;
-                    RebuildPuzzleItemBar();
-                }
-                SetStatus(swapMsg);
-                return;
-            }
-
-            var now = Time.unscaledTime;
-            var value = board.GetCell(row, col);
-            var isDoubleClick = _lastClickRow == row && _lastClickCol == col && now - _lastClickTime <= 0.28f;
-
-            _selectedRow = row;
-            _selectedCol = col;
-            _runAudio?.PlayCellSelect();
-
-            if (isDoubleClick && value > 0)
-            {
-                _highlightValue = value;
-            }
-            else if (_highlightValue > 0 && _highlightValue == value)
-            {
-                _highlightValue = 0;
-            }
-
-            _lastClickRow = row;
-            _lastClickCol = col;
-            _lastClickTime = now;
-
-            RenderBoard(board);
-        }
-
-        private void EnterNumber(int value)
-        {
-            var run = runMapController?.Run;
-            var board = run?.CurrentBoard;
-            if (run == null || board == null)
-            {
-                return;
-            }
-
-            // Cancel any pending SilkFan swap when entering a number
-            if (run.IsSilkFanPending)
-            {
-                run.CancelSilkFan();
-                SetStatus("Silk Fan cancelled.");
-            }
-
-            if (_selectedRow < 0 || _selectedCol < 0)
-            {
-                if (TryFindFirstEditableCell(board, out var autoRow, out var autoCol))
-                {
-                    _selectedRow = autoRow;
-                    _selectedCol = autoCol;
-                }
-
-                if (_selectedRow < 0 || _selectedCol < 0)
-                {
-                    SetStatus("No editable cell available.");
-                    return;
-                }
-
-                SetStatus("Select a cell first.");
-            }
-
-            if (board.IsGiven(_selectedRow, _selectedCol))
-            {
-                SetStatus("Given cells cannot be changed.");
-                return;
-            }
-
-            var fogOverlay = run.CurrentOverlayData;
-            var isFoggedCell = fogOverlay != null && fogOverlay.IsFogged(_selectedRow, _selectedCol);
-
-            if (value < 1 || value > board.Size)
-            {
-                SetStatus($"Value must be between 1 and {board.Size}.");
-                return;
-            }
-
-            if (_pencilMode)
-            {
-                if (!board.IsEmpty(_selectedRow, _selectedCol))
-                {
-                    SetStatus("Clear the cell before adding pencil marks.");
-                    return;
-                }
-
-                var pencil = board.GetPencilSet(_selectedRow, _selectedCol);
-                if (pencil.Contains(value))
-                {
-                    pencil.Remove(value);
-                    SetStatus($"Pencil: removed {value}.");
-                }
-                else
-                {
-                    if (!run.TryAddPencilMark(_selectedRow, _selectedCol, value))
-                    {
-                        SetStatus("No pencil charges left.");
-                        return;
-                    }
-
-                    SetStatus($"Pencil: added {value}.");
-                }
-
-                RefreshHud();
-                RenderBoard(board);
-                return;
-            }
-
-            var ok = run.PlaceNumber(_selectedRow, _selectedCol, value);
-            if (isFoggedCell)
-            {
-                SetStatus($"Placed {value} in fog \u2014 will validate on reveal.");
-                _runAudio?.PlayCorrectPlacement();
-            }
-            else
-            {
-                SetStatus(ok ? $"Placed {value}." : $"{value} is incorrect. HP now {run.RunState.CurrentHP}.");
-                if (!ok)
-                {
-                    _runAudio?.PlayWrongPlacement();
-                    TriggerScreenShake(AnimationHelper.ShakeWrongPx, AnimationHelper.ShakeWrongDuration);
-                    if (run.RunState.CurrentHP <= 2)
-                    {
-                        _runAudio?.PlayHpCritical();
-                    }
-                }
-                else _runAudio?.PlayCorrectPlacement();
-            }
-            RefreshHud();
-            RenderBoard(board);
-            RefreshSolveButtonState();
-            CheckForGameOver();
-        }
-
-        private void EvaluateCurrentSudoku()
-        {
-            var run = runMapController?.Run;
-            var board = run?.CurrentBoard;
-            var state = run?.RunState;
-            var levelState = run?.CurrentLevelState;
-            if (run == null || board == null || state == null || levelState == null)
-            {
-                return;
-            }
-
-            if (!board.IsComplete())
-            {
-                SetStatus("Fill all cells before pressing Solve.");
-                return;
-            }
-
-            if (IsBoardSolved(board))
-            {
-                levelState.PuzzleComplete = true;
-                SetStatus("Sudoku solved. Choose next path tile.");
-                _runAudio?.PlayPuzzleSolved();
-                HandleCompletionState();
-                return;
-            }
-
-            levelState.Mistakes++;
-            state.CurrentHP = Math.Max(0, state.CurrentHP - 1);
-            SetStatus($"Sudoku has errors. HP now {state.CurrentHP}.");
-            _runAudio?.PlayWrongPlacement();
-            TriggerScreenShake(AnimationHelper.ShakeWrongPx, AnimationHelper.ShakeWrongDuration);
-            if (state.CurrentHP <= 2) _runAudio?.PlayHpCritical();
-            RefreshHud();
-            CheckForGameOver();
-        }
-
-        private static bool IsBoardSolved(SudokuBoard board)
-        {
-            for (var row = 0; row < board.Size; row++)
-            {
-                for (var col = 0; col < board.Size; col++)
-                {
-                    if (board.GetCell(row, col) != board.Solution[row, col])
-                    {
-                        return false;
-                    }
-                }
-            }
-
-            return true;
-        }
-
-        private static bool TryFindFirstEditableCell(SudokuBoard board, out int row, out int col)
-        {
-            row = -1;
-            col = -1;
-            if (board == null)
-            {
-                return false;
-            }
-
-            for (var r = 0; r < board.Size; r++)
-            {
-                for (var c = 0; c < board.Size; c++)
-                {
-                    if (!board.IsGiven(r, c))
-                    {
-                        row = r;
-                        col = c;
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        private void RenderBoard(SudokuBoard board)
-        {
-            for (var i = 0; i < _cells.Count; i++)
-            {
-                var cell = _cells[i];
-                var value = board.GetCell(cell.Row, cell.Col);
-                var given = board.IsGiven(cell.Row, cell.Col);
-
-                cell.Label.text = value == 0 ? string.Empty : value.ToString();
-                cell.Label.color = given ? new Color(0.04f, 0.04f, 0.04f, 1f) : new Color(0.98f, 0.98f, 0.98f, 1f);
-                if (cell.PencilLabel != null)
-                {
-                    cell.PencilLabel.text = value == 0 ? BuildPencilMarkup(board, cell.Row, cell.Col) : string.Empty;
-                }
-
-                var color = ComputeBaseCellColor(board, cell.Row, cell.Col, given);
-
-                if (_highlightConflicts && !given && HasConflict(board, cell.Row, cell.Col))
-                {
-                    color = ConflictColor;
-                }
-
-                if (_selectedRow == cell.Row && _selectedCol == cell.Col)
-                {
-                    color = SelectedColor;
-                }
-                else if (_selectedRow == cell.Row || _selectedCol == cell.Col)
-                {
-                    color = RowColHighlight;
-                }
-                else if (IsAntiknightActive() && IsKnightMoveFrom(_selectedRow, _selectedCol, cell.Row, cell.Col))
-                {
-                    color = KnightMoveHighlight;
-                }
-
-                if (_highlightValue > 0 && value == _highlightValue)
-                {
-                    color = MatchValueColor;
-                }
-
-                if (Time.unscaledTime <= _finderHighlightUntil && ContainsFinderHighlight(cell.Row, cell.Col))
-                {
-                    color = FinderHintColor;
-                }
-
-                var overlay = runMapController?.Run?.CurrentOverlayData;
-                if (overlay != null && overlay.IsFogged(cell.Row, cell.Col))
-                {
-                    color = FogColor;
-                    // Keep placed numbers visible in fog; only hide empty cells
-                    if (value == 0)
-                    {
-                        cell.Label.text = string.Empty;
-                    }
-                    if (cell.PencilLabel != null) cell.PencilLabel.text = string.Empty;
-                }
-
-                // High contrast overrides
-                if (_accessibility != null && _accessibility.IsHighContrast)
-                {
-                    if (color == ConflictColor)
-                        color = HcError;
-                    else if (color == SelectedColor || (_selectedRow == cell.Row && _selectedCol == cell.Col))
-                        color = HcSelected;
-                    else if (color == FogColor)
-                        color = HcFog;
-                    else
-                        color = HcBackground;
-
-                    cell.Label.color = new Color(0.05f, 0.05f, 0.05f, 1f);
-                }
-
-                // Fog: add "?" text for accessibility
-                if (overlay != null && overlay.IsFogged(cell.Row, cell.Col) && value == 0)
-                {
-                    var fogLabel = _accessibility?.GetFogCellLabel();
-                    if (fogLabel != null)
-                    {
-                        cell.Label.text = fogLabel;
-                        cell.Label.color = _accessibility.IsHighContrast
-                            ? Color.white
-                            : new Color(0.5f, 0.5f, 0.6f, 0.5f);
-                    }
-                }
-
-                cell.Image.color = color;
-                UpdateCellBorders(board, cell);
-            }
-
-            UpdateNumpadSolvedState(board);
-        }
-
-        private void UpdateCellBorders(SudokuBoard board, CellView cell)
-        {
-            var map = board.RegionMap;
-            if (map == null)
-            {
-                return;
-            }
-
-            var row = cell.Row;
-            var col = cell.Col;
-            var region = map[row, col];
-            var size = board.Size;
-            var borderColor = new Color(1f, 0.78f, 0.24f, 0.72f);
-
-            var top = row == 0 || map[row - 1, col] != region;
-            var bottom = row == size - 1 || map[row + 1, col] != region;
-            var left = col == 0 || map[row, col - 1] != region;
-            var right = col == size - 1 || map[row, col + 1] != region;
-
-            if (cell.BorderTop != null) cell.BorderTop.color = top ? borderColor : new Color(borderColor.r, borderColor.g, borderColor.b, 0f);
-            if (cell.BorderBottom != null) cell.BorderBottom.color = bottom ? borderColor : new Color(borderColor.r, borderColor.g, borderColor.b, 0f);
-            if (cell.BorderLeft != null) cell.BorderLeft.color = left ? borderColor : new Color(borderColor.r, borderColor.g, borderColor.b, 0f);
-            if (cell.BorderRight != null) cell.BorderRight.color = right ? borderColor : new Color(borderColor.r, borderColor.g, borderColor.b, 0f);
-
-            // Apply killer cage border color on top of region borders
-            if (_cageBorderEdges.Count > 0)
-            {
-                if (cell.BorderTop != null && IsCageBorderEdge(row, col, size, 0)) cell.BorderTop.color = KillerCageBorder;
-                if (cell.BorderBottom != null && IsCageBorderEdge(row, col, size, 1)) cell.BorderBottom.color = KillerCageBorder;
-                if (cell.BorderLeft != null && IsCageBorderEdge(row, col, size, 2)) cell.BorderLeft.color = KillerCageBorder;
-                if (cell.BorderRight != null && IsCageBorderEdge(row, col, size, 3)) cell.BorderRight.color = KillerCageBorder;
-            }
-        }
-
-        private string BuildPencilMarkup(SudokuBoard board, int row, int col)
-        {
-            var set = board.GetPencilSet(row, col);
-            if (set == null || set.Count == 0)
-            {
-                return string.Empty;
-            }
-
-            var sb = new StringBuilder();
-            for (var value = 1; value <= board.Size; value++)
-            {
-                if (!set.Contains(value))
-                {
-                    continue;
-                }
-
-                var valid = IsPencilMarkValid(board, row, col, value);
-                if (!valid)
-                {
-                    sb.Append("<color=#FF6A6A>");
-                }
-
-                sb.Append(value);
-                sb.Append(' ');
-
-                if (!valid)
-                {
-                    sb.Append("</color>");
-                }
-            }
-
-            return sb.ToString().TrimEnd();
-        }
-
-        private static bool IsPencilMarkValid(SudokuBoard board, int row, int col, int value)
-        {
-            return SudokuValidator.IsMoveValid(board, row, col, value);
-        }
-
-        private static Color GetLineColor(LineType type)
-        {
-            return type switch
-            {
-                LineType.GermanWhispers => GermanWhispersLineColor,
-                LineType.DutchWhispers => DutchWhispersLineColor,
-                LineType.Parity => ParityLineColor,
-                LineType.Renban => RenbanLineColor,
-                LineType.Palindrome => PalindromeLineColor,
-                LineType.Thermo => ThermoLineColor,
-                LineType.BetweenLines => BetweenLinesColor,
-                _ => GermanWhispersLineColor
-            };
-        }
-
-        private void UpdateNumpadSolvedState(SudokuBoard board)
-        {
-            if (board == null)
-            {
-                return;
-            }
-
-            var size = board.Size;
-            var counts = new int[size + 1];
-            for (var row = 0; row < size; row++)
-            {
-                for (var col = 0; col < size; col++)
-                {
-                    var value = board.GetCell(row, col);
-                    if (value >= 1 && value <= size)
-                    {
-                        counts[value]++;
-                    }
-                }
-            }
 
             for (var i = 0; i < _numpadButtons.Count; i++)
             {
-                var value = i + 1;
-                if (value > size)
-                {
-                    continue;
-                }
-
                 var btn = _numpadButtons[i];
-                if (btn == null)
-                {
-                    continue;
-                }
-
-                var solved = counts[value] >= size;
-                btn.interactable = !solved;
-                var image = btn.GetComponent<Image>();
-                if (image != null)
-                {
-                    image.color = solved ? new Color(0.28f, 0.28f, 0.28f, 0.85f) : new Color(0.19f, 0.30f, 0.20f, 1f);
-                }
+                if (btn == null) continue;
+                var digit = i + 1;
+                var inRange = digit <= boardSize;
+                var completed = inRange && board != null && counts[digit] >= boardSize;
+                btn.interactable = inRange && !completed;
+                var img = btn.GetComponent<Image>();
+                if (img != null)
+                    img.color = !inRange ? new Color(0.13f, 0.13f, 0.13f, 0.8f)
+                        : completed  ? new Color(0.10f, 0.10f, 0.10f, 0.5f)
+                        : new Color(0.19f, 0.30f, 0.20f);
             }
         }
 
-        private static Color ComputeBaseCellColor(SudokuBoard board, int row, int col, bool given)
+        // ────────────────────── HUD ──────────────────────
+
+        private void RefreshHud()
         {
-            var regionMap = board.RegionMap;
-            if (regionMap != null)
-            {
-                var regionId = regionMap[row, col];
-                var alternate = (regionId & 1) == 0;
-                if (given)
-                {
-                    return alternate ? new Color(0.25f, 0.36f, 0.25f, 1f) : new Color(0.19f, 0.30f, 0.20f, 1f);
-                }
+            var s = _map?.Run?.State;
+            if (s == null) return;
+            if (_hpText != null) _hpText.text = $"HP: {s.CurrentHP}/{s.MaxHP}";
+            if (_pencilText != null) _pencilText.text = $"Pencil: {s.CurrentPencil}/{s.MaxPencil}";
 
-                return alternate ? new Color(0.15f, 0.22f, 0.16f, 1f) : new Color(0.11f, 0.17f, 0.12f, 1f);
+            if (_hpBarFill == null && _sudokuPanel != null)
+            {
+                var pr = _sudokuPanel.GetComponent<RectTransform>();
+                var hpBg = pr?.Find("HpBarBg");
+                if (hpBg != null) _hpBarFill = hpBg.Find("HpBarFill")?.GetComponent<Image>();
+                var pBg = pr?.Find("PencilBarBg");
+                if (pBg != null) _pencilBarFill = pBg.Find("PencilBarFill")?.GetComponent<Image>();
             }
 
-            return given ? GivenColor : EmptyColor;
-        }
-
-        private static bool HasConflict(SudokuBoard board, int row, int col)
-        {
-            var value = board.GetCell(row, col);
-            if (value == 0)
+            if (_hpBarFill != null)
             {
-                return false;
+                EnsureBarSprite(_hpBarFill);
+                _hpBarFill.fillAmount = s.MaxHP > 0 ? Mathf.Clamp01(s.CurrentHP / (float)s.MaxHP) : 0;
+            }
+            if (_pencilBarFill != null)
+            {
+                EnsureBarSprite(_pencilBarFill);
+                _pencilBarFill.fillAmount = s.MaxPencil > 0 ? Mathf.Clamp01(s.CurrentPencil / (float)s.MaxPencil) : 0;
             }
 
-            var size = board.Size;
-
-            for (var c = 0; c < size; c++)
+            EnsureFloorModBanner();
+            EnsureModifierInfoBox();
+            EnsureBagPanel();
+            RefreshBag();
+            if (_bagHighlightEndTime > 0f && Time.time > _bagHighlightEndTime)
             {
-                if (c != col && board.GetCell(row, c) == value)
-                {
-                    return true;
-                }
-            }
-
-            for (var r = 0; r < size; r++)
-            {
-                if (r != row && board.GetCell(r, col) == value)
-                {
-                    return true;
-                }
-            }
-
-            var regionMap = board.RegionMap;
-            if (regionMap != null)
-            {
-                var region = regionMap[row, col];
-                for (var r = 0; r < size; r++)
-                {
-                    for (var c = 0; c < size; c++)
-                    {
-                        if ((r != row || c != col) && regionMap[r, c] == region && board.GetCell(r, c) == value)
-                        {
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        private bool IsAntiknightActive()
-        {
-            var mods = runMapController?.Run?.CurrentLevelConfig?.ActiveModifiers;
-            if (mods == null) return false;
-            for (var i = 0; i < mods.Count; i++)
-                if (mods[i] == BossModifierId.Antiknight) return true;
-            return false;
-        }
-
-        private static bool IsKnightMoveFrom(int fromRow, int fromCol, int toRow, int toCol)
-        {
-            if (fromRow < 0 || fromCol < 0) return false;
-            for (var i = 0; i < KnightOffsets.Length; i++)
-            {
-                if (fromRow + KnightOffsets[i].Dr == toRow && fromCol + KnightOffsets[i].Dc == toCol)
-                    return true;
-            }
-            return false;
-        }
-
-        private void SaveAndQuit()
-        {
-            var tutorialMode = runMapController?.Run?.RunState?.TutorialMode == true;
-            if (!tutorialMode)
-            {
-                Debug.Log("PrototypeRunScreenController: Save & Quit triggered.");
-                runMapController?.Run?.OnQuitRequested();
-                Debug.Log("PrototypeRunScreenController: Auto-save requested via RunDirector.OnQuitRequested().");
-            }
-            else
-            {
-                Debug.Log("PrototypeRunScreenController: Tutorial quit triggered (no save).");
-                PlayerPrefs.SetInt(ReturnTutorialProgressPrefKey, 1);
-                PlayerPrefs.Save();
-            }
-
-            Time.timeScale = 1f;
-            var bootstrap = FindFirstObjectByType<GameBootstrap>();
-            if (bootstrap != null)
-            {
-                bootstrap.ReturnToMenu();
+                _bagHighlightCells.Clear();
+                _bagHighlightEndTime = 0f;
+                var brd = _map?.Run?.CurrentBoard;
+                if (brd != null) RenderBoard(brd);
             }
         }
 
-        private void ApplyResumeScreenState()
+        private static void EnsureBarSprite(Image fill)
         {
-            var run = runMapController?.Run;
-            if (run?.RunState == null)
+            if (fill.sprite != null) return;
+            var tex = new Texture2D(4, 4, TextureFormat.RGBA32, false);
+            for (var y = 0; y < 4; y++) for (var x = 0; x < 4; x++) tex.SetPixel(x, y, Color.white);
+            tex.Apply();
+            fill.sprite = Sprite.Create(tex, new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f));
+            fill.type = Image.Type.Filled;
+            fill.fillMethod = Image.FillMethod.Horizontal;
+        }
+
+        // ────────────────────── Floor modifier display ──────────────────────
+
+        private void EnsureFloorModBanner()
+        {
+            var run = _map?.Run;
+            if (run?.State == null) return;
+            var mods = run.State.ActiveFloorModifiers;
+
+            if (mods == null || mods.Count == 0)
             {
+                if (_floorModBanner != null) _floorModBanner.SetActive(false);
                 return;
             }
 
-            _resumeScreenApplied = true;
-
-            if (run.RunState.TutorialMode)
+            if (_floorModBanner == null && _sudokuPanel != null)
             {
-                ShowSudoku();
-                BuildOrRefreshSudokuBoard();
-                return;
+                _floorModBanner = new GameObject("FloorModBanner", typeof(RectTransform), typeof(Image));
+                _floorModBanner.transform.SetParent(_sudokuPanel.transform, false);
+                var rt = _floorModBanner.GetComponent<RectTransform>();
+                // Positioned below level info (0.87-0.92) and above status text (0.79-0.83)
+                rt.anchorMin = new Vector2(0.27f, 0.835f);
+                rt.anchorMax = new Vector2(0.73f, 0.865f);
+                rt.offsetMin = Vector2.zero;
+                rt.offsetMax = Vector2.zero;
+                _floorModBanner.GetComponent<Image>().color = new Color(0.15f, 0.10f, 0.25f, 0.85f);
+
+                _floorModText = CreateText(_floorModBanner.transform, "FloorModText", "",
+                    12, TextAnchor.MiddleCenter, AccentGold);
+                _floorModText.rectTransform.anchorMin = Vector2.zero;
+                _floorModText.rectTransform.anchorMax = Vector2.one;
+                _floorModText.rectTransform.offsetMin = new Vector2(4, 0);
+                _floorModText.rectTransform.offsetMax = new Vector2(-4, 0);
             }
 
-            if (run.RunState.CurrentNodeIndex <= 0)
-            {
-                ShowPathOverview();
-                RefreshPathOverview();
-                return;
-            }
+            if (_floorModBanner != null) _floorModBanner.SetActive(true);
 
-            if (run.CurrentBoard != null && run.CurrentLevelState != null && !run.CurrentLevelState.PuzzleComplete)
+            if (_floorModText != null)
             {
-                ShowSudoku();
-                BuildOrRefreshSudokuBoard();
-                return;
+                var sb = new StringBuilder("Floor Modifiers: ");
+                for (var i = 0; i < mods.Count; i++)
+                {
+                    if (i > 0) sb.Append(" | ");
+                    sb.Append(FormatModName(mods[i]));
+                }
+                _floorModText.text = sb.ToString();
             }
-
-            ShowPathOverview();
-            RefreshPathOverview();
         }
 
-        private void TryCompleteTutorialAndReturn()
+        private void EnsureModifierInfoBox()
         {
-            if (_tutorialCompletionProcessed)
+            var run = _map?.Run;
+            if (run?.State == null || run.CurrentLevelConfig == null) return;
+            var activeMods = run.CurrentLevelConfig.ActiveModifiers;
+
+            if (activeMods == null || activeMods.Count == 0)
             {
+                if (_modifierInfoBox != null) _modifierInfoBox.SetActive(false);
                 return;
             }
 
-            _tutorialCompletionProcessed = true;
-
-            var run = runMapController?.Run;
-            if (run == null)
+            if (_modifierInfoBox == null && _sudokuPanel != null)
             {
+                _modifierInfoBox = new GameObject("ModInfoBox", typeof(RectTransform), typeof(Image));
+                _modifierInfoBox.transform.SetParent(_sudokuPanel.transform, false);
+                var rt = _modifierInfoBox.GetComponent<RectTransform>();
+                rt.anchorMin = new Vector2(0.74f, 0.08f);
+                rt.anchorMax = new Vector2(0.97f, 0.27f);
+                rt.offsetMin = Vector2.zero;
+                rt.offsetMax = Vector2.zero;
+                _modifierInfoBox.GetComponent<Image>().color = new Color(0.10f, 0.14f, 0.18f, 0.90f);
+
+                _modifierInfoText = CreateText(_modifierInfoBox.transform, "ModInfoText", "",
+                    10, TextAnchor.UpperLeft, TextColor);
+                _modifierInfoText.rectTransform.anchorMin = Vector2.zero;
+                _modifierInfoText.rectTransform.anchorMax = Vector2.one;
+                _modifierInfoText.rectTransform.offsetMin = new Vector2(4, 4);
+                _modifierInfoText.rectTransform.offsetMax = new Vector2(-4, -4);
+            }
+
+            if (_modifierInfoBox != null) _modifierInfoBox.SetActive(true);
+
+            if (_modifierInfoText != null)
+            {
+                var sb = new StringBuilder();
+                for (var i = 0; i < activeMods.Count; i++)
+                {
+                    if (i > 0) sb.Append('\n');
+                    sb.Append(FormatModName(activeMods[i]));
+                    sb.Append(": ");
+                    sb.Append(GetModDesc(activeMods[i]));
+                }
+                _modifierInfoText.text = sb.ToString();
+            }
+        }
+
+        // ────────────────────── Completion / Game Over ──────────────────────
+
+        private void HandleCompletion()
+        {
+            var run = _map?.Run;
+            if (run == null || !run.IsLevelComplete) { _completionHandled = false; return; }
+            if (_completionHandled) return;
+            _completionHandled = true;
+
+            if (run.State.TutorialMode)
+            {
+                run.CompleteLevelAndGrantRewards();
+                SetStatus("Tutorial solved!");
                 SaveAndQuit();
                 return;
             }
 
-            run.CompleteLevelAndGrantRewards();
+            ShowRewardScreen();
+        }
 
-            if (run.TryConsumeLastCompletedTutorialSetup(out var completedSetup))
+        private void CheckGameOver()
+        {
+            if (_gameOverShown) return;
+            var run = _map?.Run;
+            if (run == null || !run.IsPlayerDead) return;
+            _gameOverShown = true;
+            ShowGameOver(run, false);
+        }
+
+        private void ShowGameOver(RunDirector run, bool victory)
+        {
+            SetActive(_sudokuPanel, false);
+            SetActive(_pathPanel, false);
+            SetActive(_gameOverPanel, true);
+
+            // Dynamic title
+            if (_gameOverSummary != null)
             {
-                PersistTutorialCompletion(completedSetup);
+                _gameOverSummary.text = victory ? "Victory!" : "Defeat";
+                _gameOverSummary.color = victory
+                    ? new Color(0.85f, 0.75f, 0.20f, 1f)   // gold for victory
+                    : new Color(0.90f, 0.30f, 0.20f, 1f);  // red for defeat
             }
-            else if (run.ActiveTutorialSetup != null)
+
+            // Snapshot XP before persisting so we can show level-up
+            var classId = run.State.ClassId;
+            var snapshotSave = new SaveFileService();
+            var preXp = snapshotSave.HasSaveFile()
+                ? GetClassTotalXpFromSave(snapshotSave.Load(), classId) : 0;
+            var preLevel = XpTable.DeriveLevel(preXp);
+
+            var result = _map.BuildRunResult(victory, 0, 0);
+            PersistResult(result);
+
+            // Load updated XP after persist; fallback to in-memory calculation
+            var postSave = new SaveFileService();
+            var postXp = postSave.HasSaveFile()
+                ? GetClassTotalXpFromSave(postSave.Load(), classId) : preXp + (result?.XpEarned ?? 0);
+            var postLevel = XpTable.DeriveLevel(postXp);
+            var postXpInto = postXp - XpTable.CumulativeXpForLevel(postLevel);
+            var postXpToNext = postLevel < 40 ? XpTable.XpToNextLevel(postLevel) : 0;
+
+            if (_gameOverDetails != null)
             {
-                PersistTutorialCompletion(run.ActiveTutorialSetup);
-            }
-            else
-            {
-                var fallback = BuildSolvedTutorialSetupFromRun(run);
-                if (fallback != null)
+                var sb = new StringBuilder();
+
+                // Run summary
+                sb.AppendLine($"Class: {classId}   Floor: {run.State.Depth}");
+                sb.AppendLine($"HP: {run.State.CurrentHP}/{run.State.MaxHP}   Gold: {run.State.CurrentGold}");
+
+                // XP earned this run
+                var xpEarned = result?.XpEarned ?? 0;
+                sb.AppendLine($"XP Earned This Run: +{xpEarned}");
+                sb.AppendLine();
+
+                // Level-up notification
+                if (preLevel != postLevel)
+                    sb.AppendLine($"  Level Up!  {preLevel}  →  {postLevel}");
+
+                // XP progress bar toward next level
+                if (postLevel < 40)
                 {
-                    PersistTutorialCompletion(fallback);
-                }
-            }
-
-            PlayerPrefs.SetInt(ReturnTutorialProgressPrefKey, 1);
-            PlayerPrefs.Save();
-            SaveAndQuit();
-        }
-
-        private void UpdateQuitButtonLabels()
-        {
-            var tutorialMode = runMapController?.Run?.RunState?.TutorialMode == true;
-            var label = tutorialMode ? "Quit (No Save)" : "Save & Quit (Q)";
-            SetButtonLabel(saveQuitPathButton, label);
-            SetButtonLabel(saveQuitSudokuButton, label);
-        }
-
-        private static void SetButtonLabel(Button button, string text)
-        {
-            if (button == null)
-            {
-                return;
-            }
-
-            var label = button.GetComponentInChildren<Text>();
-            if (label != null)
-            {
-                label.text = text;
-            }
-        }
-
-        private void PersistTutorialCompletion(TutorialSetupConfig completedSetup)
-        {
-            if (completedSetup == null)
-            {
-                return;
-            }
-
-            var save = new SaveFileService();
-            var profile = new ProfileService();
-            if (save.TryLoadProfile(out var envelope))
-            {
-                profile.ApplyEnvelope(envelope);
-            }
-
-            var tutorialProgress = new TutorialProgressService(profile.TutorialProgress);
-            tutorialProgress.MarkCompleted(completedSetup);
-
-            var updated = new SaveFileEnvelope
-            {
-                PlayerProfile = new ProfileSaveData { Options = profile.Options },
-                MetaProgress = profile.Meta,
-                TutorialProgress = profile.TutorialProgress,
-                Statistics = profile.Stats,
-                Mastery = profile.Mastery,
-                Completion = profile.Completion
-            };
-
-            save.SaveProfile(updated);
-        }
-
-        private void PersistRunResult(RunResult result)
-        {
-            if (result == null || result.TutorialMode) return;
-            var save = new SaveFileService();
-            var profile = new ProfileService();
-            if (save.TryLoadProfile(out var envelope))
-            {
-                profile.ApplyEnvelope(envelope);
-            }
-            profile.RecordRunAndGetNewUnlocks(result);
-
-            // Sync item discoveries from this run's inventory into the ItemCodex
-            var inventory = runMapController?.Run?.RunState?.Inventory;
-            if (inventory != null && profile.Meta?.ItemCodex != null)
-            {
-                var today = System.DateTime.UtcNow.ToString("yyyy-MM-dd");
-                for (var inv = 0; inv < inventory.Count; inv++)
-                {
-                    var itemId = inventory[inv].Id;
-                    if (string.IsNullOrWhiteSpace(itemId)) continue;
-
-                    ItemCodexEntry codexEntry = null;
-                    for (var ci = 0; ci < profile.Meta.ItemCodex.Entries.Count; ci++)
-                    {
-                        if (profile.Meta.ItemCodex.Entries[ci].ItemID == itemId)
-                        {
-                            codexEntry = profile.Meta.ItemCodex.Entries[ci];
-                            break;
-                        }
-                    }
-
-                    if (codexEntry == null) continue;
-
-                    if (!codexEntry.Discovered)
-                    {
-                        codexEntry.Discovered = true;
-                        codexEntry.DiscoveredDate = today;
-                        UnityEngine.Debug.Log($"[ItemCodex] Discovered: {itemId} ({codexEntry.Name})");
-                    }
-
-                    codexEntry.TimesPicked++;
-                    if (result.Victory) codexEntry.TimesWon++;
-                    if (result.GardenDepthReached > codexEntry.BestRunDepth)
-                        codexEntry.BestRunDepth = result.GardenDepthReached;
-                }
-            }
-
-            var updated = new SaveFileEnvelope
-            {
-                PlayerProfile = new ProfileSaveData { Options = profile.Options },
-                MetaProgress = profile.Meta,
-                TutorialProgress = profile.TutorialProgress,
-                Statistics = profile.Stats,
-                Mastery = profile.Mastery,
-                Completion = profile.Completion
-            };
-            save.SaveProfile(updated);
-        }
-
-        private static TutorialSetupConfig BuildSolvedTutorialSetupFromRun(RunDirector run)
-        {
-            if (run?.CurrentLevelConfig == null || run.RunState == null)
-            {
-                return null;
-            }
-
-            var setup = new TutorialSetupConfig
-            {
-                BoardSize = run.CurrentLevelConfig.BoardSize,
-                Stars = run.CurrentLevelConfig.Stars,
-                ResourceMode = run.RunState.TutorialResourceMode
-            };
-
-            var modifiers = run.CurrentLevelConfig.ActiveModifiers;
-            for (var i = 0; i < modifiers.Count; i++)
-            {
-                setup.SelectedModifiers.Add(modifiers[i]);
-            }
-
-            return setup;
-        }
-
-        private void HandleShopNode()
-        {
-            var run = runMapController?.Run;
-            if (run?.RunState == null)
-            {
-                return;
-            }
-
-            BuildShopPanel();
-            _shopOffers.Clear();
-            _shopOffers.AddRange(run.BuildShopOffers());
-            _pendingShopOfferId = string.Empty;
-            _awaitingShopReplacement = false;
-            RefreshShopSummaryText();
-
-            if (_shopHoverText != null)
-            {
-                _shopHoverText.text = "Hover an offer to inspect details.";
-            }
-
-            RebuildShopButtons();
-            if (_shopPanel != null)
-            {
-                _shopPanel.SetActive(true);
-            }
-
-            SetStatus("Shop opened.");
-        }
-
-        private void BuildShopPanel()
-        {
-            if (_shopPanel != null || pathOverviewPanel == null)
-            {
-                return;
-            }
-
-            var panelRect = pathOverviewPanel.GetComponent<RectTransform>();
-            if (panelRect == null)
-            {
-                return;
-            }
-
-            _shopPanel = new GameObject("ShopPanel", typeof(RectTransform), typeof(Image));
-            _shopPanel.transform.SetParent(panelRect, false);
-            var rect = _shopPanel.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.18f, 0.16f);
-            rect.anchorMax = new Vector2(0.82f, 0.82f);
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-
-            var image = _shopPanel.GetComponent<Image>();
-            image.color = new Color(0.08f, 0.10f, 0.12f, 0.96f);
-
-            var title = new GameObject("ShopTitle", typeof(RectTransform), typeof(Text)).GetComponent<Text>();
-            title.transform.SetParent(_shopPanel.transform, false);
-            title.rectTransform.anchorMin = new Vector2(0.06f, 0.88f);
-            title.rectTransform.anchorMax = new Vector2(0.94f, 0.98f);
-            title.rectTransform.offsetMin = Vector2.zero;
-            title.rectTransform.offsetMax = Vector2.zero;
-            title.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
-            title.fontSize = 22;
-            title.alignment = TextAnchor.MiddleCenter;
-            title.color = new Color(0.95f, 0.90f, 0.62f, 1f);
-            title.text = "Garden Shop";
-
-            _shopSummaryText = new GameObject("ShopSummary", typeof(RectTransform), typeof(Text)).GetComponent<Text>();
-            _shopSummaryText.transform.SetParent(_shopPanel.transform, false);
-            _shopSummaryText.rectTransform.anchorMin = new Vector2(0.06f, 0.69f);
-            _shopSummaryText.rectTransform.anchorMax = new Vector2(0.94f, 0.86f);
-            _shopSummaryText.rectTransform.offsetMin = Vector2.zero;
-            _shopSummaryText.rectTransform.offsetMax = Vector2.zero;
-            _shopSummaryText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
-            _shopSummaryText.fontSize = 14;
-            _shopSummaryText.alignment = TextAnchor.UpperLeft;
-            _shopSummaryText.color = new Color(0.92f, 0.95f, 0.96f, 1f);
-
-            _shopHoverText = new GameObject("ShopHover", typeof(RectTransform), typeof(Text)).GetComponent<Text>();
-            _shopHoverText.transform.SetParent(_shopPanel.transform, false);
-            _shopHoverText.rectTransform.anchorMin = new Vector2(0.06f, 0.08f);
-            _shopHoverText.rectTransform.anchorMax = new Vector2(0.94f, 0.22f);
-            _shopHoverText.rectTransform.offsetMin = Vector2.zero;
-            _shopHoverText.rectTransform.offsetMax = Vector2.zero;
-            _shopHoverText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
-            _shopHoverText.fontSize = 13;
-            _shopHoverText.alignment = TextAnchor.UpperLeft;
-            _shopHoverText.color = new Color(0.95f, 0.93f, 0.85f, 1f);
-
-            // High contrast overrides
-            if (_accessibility is { IsHighContrast: true })
-            {
-                image.color = HcPanelBg;
-                title.color = HcPanelText;
-                title.fontStyle = FontStyle.Bold;
-                _shopSummaryText.color = HcPanelText;
-                _shopSummaryText.fontStyle = FontStyle.Bold;
-                _shopHoverText.color = HcPanelText;
-            }
-
-            _shopPanel.SetActive(false);
-        }
-
-        private void RebuildShopButtons()
-        {
-            if (_shopPanel == null)
-            {
-                return;
-            }
-
-            for (var i = _shopPanel.transform.childCount - 1; i >= 0; i--)
-            {
-                var child = _shopPanel.transform.GetChild(i);
-                if (child.name.StartsWith("ShopChoice_", StringComparison.Ordinal) ||
-                    child.name.StartsWith("ShopReplace_", StringComparison.Ordinal) ||
-                    child.name == "ShopSkip" ||
-                    child.name == "ShopReroll")
-                {
-                    Destroy(child.gameObject);
-                }
-            }
-
-            if (_awaitingShopReplacement)
-            {
-                var inventory = runMapController?.Run?.RunState?.Inventory;
-                if (inventory == null)
-                {
-                    return;
-                }
-
-                if (_shopSummaryText != null)
-                {
-                    _shopSummaryText.text = "Inventory is full. Choose a slot to replace, or cancel.";
-                }
-
-                for (var i = 0; i < inventory.Count; i++)
-                {
-                    var replaceButton = BuildPanelButton(_shopPanel.transform, $"ShopReplace_{i}", new Vector2(0.05f + ((i % 3) * 0.32f), 0.48f - ((i / 3) * 0.18f)), new Vector2(0.26f, 0.14f), new Color(0.28f, 0.22f, 0.18f, 0.95f), anchorBased: true);
-                    var idx = i;
-                    replaceButton.onClick.AddListener(() => PurchaseOfferReplacing(idx));
-
-                    var label = replaceButton.GetComponentInChildren<Text>();
-                    if (label != null)
-                    {
-                        label.alignment = TextAnchor.MiddleCenter;
-                        label.fontSize = 13;
-                        label.text = $"Replace {DescribeItemShort(inventory[i])}";
-                    }
-                }
-
-                var cancel = BuildPanelButton(_shopPanel.transform, "ShopSkip", new Vector2(0.33f, 0.24f), new Vector2(0.34f, 0.12f), new Color(0.25f, 0.26f, 0.28f, 0.95f), anchorBased: true);
-                cancel.onClick.AddListener(() =>
-                {
-                    _awaitingShopReplacement = false;
-                    _pendingShopOfferId = string.Empty;
-                    RebuildShopButtons();
-                });
-
-                var cancelLabel = cancel.GetComponentInChildren<Text>();
-                if (cancelLabel != null)
-                {
-                    cancelLabel.text = "Cancel";
-                }
-
-                return;
-            }
-
-            var cardCount = Mathf.Min(3, _shopOffers.Count);
-            for (var i = 0; i < cardCount; i++)
-            {
-                var offer = _shopOffers[i];
-                var btn = BuildPanelButton(_shopPanel.transform, $"ShopChoice_{i}", new Vector2(0.08f + (i * 0.29f), 0.38f), new Vector2(0.26f, 0.30f), new Color(0.17f, 0.26f, 0.32f, 0.95f), anchorBased: true);
-                var idx = i;
-                btn.onClick.AddListener(() => TryBuyShopOffer(idx));
-
-                var icon = new GameObject("Icon", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
-                icon.transform.SetParent(btn.transform, false);
-                icon.rectTransform.anchorMin = new Vector2(0.06f, 0.40f);
-                icon.rectTransform.anchorMax = new Vector2(0.38f, 0.92f);
-                icon.rectTransform.offsetMin = Vector2.zero;
-                icon.rectTransform.offsetMax = Vector2.zero;
-                icon.sprite = GetItemSprite(offer.Item);
-                icon.preserveAspect = true;
-                icon.color = Color.white;
-
-                var label = btn.GetComponentInChildren<Text>();
-                if (label != null)
-                {
-                    label.rectTransform.anchorMin = new Vector2(0.40f, 0.08f);
-                    label.rectTransform.anchorMax = new Vector2(0.96f, 0.94f);
-                    label.rectTransform.offsetMin = new Vector2(2f, 2f);
-                    label.rectTransform.offsetMax = new Vector2(-2f, -2f);
-                    label.alignment = TextAnchor.UpperLeft;
-                    label.fontSize = 12;
-                    label.text = $"{DescribeItemShort(offer.Item)}\n{offer.Price}g";
-                }
-
-                var trigger = btn.gameObject.AddComponent<EventTrigger>();
-                trigger.triggers = new List<EventTrigger.Entry>();
-
-                var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-                enter.callback.AddListener(_ =>
-                {
-                    if (_shopHoverText != null)
-                    {
-                        _shopHoverText.text = DescribeShopOffer(offer);
-                    }
-                });
-                trigger.triggers.Add(enter);
-
-                var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
-                exit.callback.AddListener(_ =>
-                {
-                    if (_shopHoverText != null)
-                    {
-                        _shopHoverText.text = "Hover an offer to inspect details.";
-                    }
-                });
-                trigger.triggers.Add(exit);
-            }
-
-            var skip = BuildPanelButton(_shopPanel.transform, "ShopSkip", new Vector2(0.33f, 0.24f), new Vector2(0.34f, 0.12f), new Color(0.25f, 0.26f, 0.28f, 0.95f), anchorBased: true);
-            skip.onClick.AddListener(() => CloseShopPanel(false));
-            var skipLabel = skip.GetComponentInChildren<Text>();
-            if (skipLabel != null)
-            {
-                skipLabel.text = "Take Nothing";
-            }
-
-            var reroll = BuildPanelButton(_shopPanel.transform, "ShopReroll", new Vector2(0.08f, 0.24f), new Vector2(0.22f, 0.12f), new Color(0.24f, 0.22f, 0.31f, 0.95f), anchorBased: true);
-            reroll.onClick.AddListener(TryRerollShopOffers);
-            var rerollLabel = reroll.GetComponentInChildren<Text>();
-            if (rerollLabel != null)
-            {
-                rerollLabel.fontSize = 11;
-                rerollLabel.text = BuildShopRerollLabel();
-            }
-        }
-
-        private void TryBuyShopOffer(int offerIndex)
-        {
-            var run = runMapController?.Run;
-            var state = run?.RunState;
-            if (run == null || state == null || offerIndex < 0 || offerIndex >= _shopOffers.Count)
-            {
-                return;
-            }
-
-            var offer = _shopOffers[offerIndex];
-            if (offer == null)
-            {
-                return;
-            }
-
-            if (!offer.IsRelic && offer.Item != null && state.Inventory.Count >= state.ItemSlots)
-            {
-                _awaitingShopReplacement = true;
-                _pendingShopOfferId = offer.OfferId;
-                RebuildShopButtons();
-                return;
-            }
-
-            var purchased = run.TryPurchaseShopOffer(offer.OfferId);
-            if (!purchased)
-            {
-                SetStatus("Cannot buy offer.");
-                return;
-            }
-
-            SetStatus($"Purchased {DescribeItemShort(offer.Item)}.");
-            _runAudio?.PlayShopPurchase();
-            CloseShopPanel(true);
-        }
-
-        private void PurchaseOfferReplacing(int replaceIndex)
-        {
-            var run = runMapController?.Run;
-            if (run == null || string.IsNullOrWhiteSpace(_pendingShopOfferId))
-            {
-                return;
-            }
-
-            if (!run.TryPurchaseShopOfferReplacingSlot(_pendingShopOfferId, replaceIndex))
-            {
-                SetStatus("Replacement purchase failed.");
-                return;
-            }
-
-            SetStatus("Purchased by replacing an inventory slot.");
-            _runAudio?.PlayShopPurchase();
-            CloseShopPanel(true);
-        }
-
-        private void TryRerollShopOffers()
-        {
-            var run = runMapController?.Run;
-            if (run == null)
-            {
-                return;
-            }
-
-            if (!run.TryRerollShopOffers(out var spentGold, out var usedToken))
-            {
-                SetStatus("Cannot reroll shop offers.");
-                return;
-            }
-
-            _shopOffers.Clear();
-            _shopOffers.AddRange(run.CurrentShopOffers);
-            _runAudio?.PlayShopReroll();
-            SetStatus(usedToken ? "Shop rerolled using a reroll token." : $"Shop rerolled for {spentGold}g.");
-            RefreshShopSummaryText();
-            RebuildShopButtons();
-            RefreshHud();
-        }
-
-        private void RefreshShopSummaryText()
-        {
-            var state = runMapController?.Run?.RunState;
-            if (_shopSummaryText == null || state == null)
-            {
-                return;
-            }
-
-            _shopSummaryText.text =
-                "Shop Node\n" +
-                $"Gold: {state.CurrentGold}  |  Reroll Tokens: {state.RerollTokens}\n" +
-                $"{BuildShopRerollLabel()}  |  Choose one offer or skip.";
-        }
-
-        private string BuildShopRerollLabel()
-        {
-            var run = runMapController?.Run;
-            if (run == null)
-            {
-                return "Reroll";
-            }
-
-            return run.HasShopRerollTokenAvailable()
-                ? "Reroll (1 token)"
-                : $"Reroll ({run.GetShopRerollGoldCostPreview()}g)";
-        }
-
-        private void CloseShopPanel(bool purchased)
-        {
-            _awaitingShopReplacement = false;
-            _pendingShopOfferId = string.Empty;
-            _shopOffers.Clear();
-
-            if (_shopPanel != null)
-            {
-                _shopPanel.SetActive(false);
-            }
-
-            if (purchased)
-            {
-                _pathOverlayMessage = "Shop purchase complete.";
-            }
-            else
-            {
-                _pathOverlayMessage = "Shop skipped.";
-                SetStatus("Skipped shop.");
-                _runAudio?.PlayPathAdvance();
-            }
-
-            RefreshPathOverview();
-        }
-
-        private void HandleRestNode()
-        {
-            var state = runMapController?.Run?.RunState;
-            if (state == null)
-            {
-                return;
-            }
-
-            var healAmount = Mathf.Max(1, Mathf.CeilToInt(state.MaxHP * 0.10f));
-            var before = state.CurrentHP;
-            state.CurrentHP = Mathf.Min(state.MaxHP, state.CurrentHP + healAmount);
-            var recovered = Mathf.Max(0, state.CurrentHP - before);
-
-            _runAudio?.PlayRestHeal();
-            _pathOverlayMessage = $"Rest Node\nRecovered {recovered} HP ({before} -> {state.CurrentHP}).";
-            SetStatus("Rested and recovered HP.");
-        }
-
-        private void HandleEventNode()
-        {
-            var run = runMapController?.Run;
-            if (run == null)
-            {
-                return;
-            }
-
-            var runEvent = runMapController.OpenEventNode();
-            if (runEvent == null || runEvent.Options.Count == 0)
-            {
-                _pathOverlayMessage = "Event Node\nNo scripted event found. (Design docs define richer event logic.)";
-                SetStatus("Event node has no active scripted payload yet.");
-                return;
-            }
-
-            var option = runEvent.Options[0];
-            var resolved = runMapController.ChooseEventOption(option.OptionId);
-            _pathOverlayMessage =
-                $"Event Node\n{runEvent.Prompt}\n" +
-                $"Chosen: {option.Label} ({option.Tradeoff})\n" +
-                (resolved ? "Outcome applied." : "Outcome failed requirements.");
-            SetStatus(resolved ? "Event resolved." : "Event option failed.");
-        }
-
-        private void HandleRelicNode()
-        {
-            var state = runMapController?.Run?.RunState;
-            if (state == null)
-            {
-                return;
-            }
-
-            // Roll relic via RunDirector (single relic slot)
-            var run = runMapController?.Run;
-            if (run != null)
-            {
-                var node = run.GetCurrentNode();
-                var isRisk = node != null && node.IsRiskPath;
-                var (offered, needsChoice) = run.RollRelicNodeReward(isRisk);
-                if (!needsChoice)
-                {
-                    _runAudio?.PlayRelicPickup();
-                    _pathOverlayMessage = $"Relic: {Economy.RelicService.GetName(offered.Id)}\n{Economy.RelicService.GetDescription(offered.Id)}";
-                    SetStatus("Relic acquired.");
+                    var barLen = 16;
+                    var filled = postXpToNext > 0
+                        ? Math.Min(barLen, (int)(postXpInto * barLen / (float)postXpToNext))
+                        : 0;
+                    var bar = new string('=', filled) + new string('-', barLen - filled);
+                    sb.AppendLine($"{classId}  Lv {postLevel}");
+                    sb.AppendLine($"[{bar}]  {postXpInto} / {postXpToNext} XP");
+                    sb.AppendLine($"(to Level {postLevel + 1})");
                 }
                 else
                 {
-                    _offeredRelic = offered;
-                    _awaitingRelicChoice = true;
-                    BuildRelicChoicePanel(state, offered);
-                    SetStatus("Choose which relic to keep.");
+                    sb.AppendLine($"{classId}  Level MAX  (Lv 40)");
                 }
+
+                _gameOverDetails.text = sb.ToString().TrimEnd();
             }
         }
 
-        private void BuildRelicChoicePanel(RunState state, RelicInstance offered)
+        private static int GetClassTotalXpFromSave(SaveFileEnvelope envelope, ClassId classId)
         {
-            if (_relicChoicePanel != null)
-                Destroy(_relicChoicePanel);
-
-            var canvas = FindFirstObjectByType<Canvas>();
-            if (canvas == null) return;
-
-            _relicChoicePanel = new GameObject("RelicChoicePanel", typeof(RectTransform), typeof(Image));
-            _relicChoicePanel.transform.SetParent(canvas.transform, false);
-            var panelRect = _relicChoicePanel.GetComponent<RectTransform>();
-            panelRect.anchorMin = new Vector2(0.15f, 0.20f);
-            panelRect.anchorMax = new Vector2(0.85f, 0.80f);
-            panelRect.offsetMin = Vector2.zero;
-            panelRect.offsetMax = Vector2.zero;
-            var panelImg = _relicChoicePanel.GetComponent<Image>();
-            panelImg.color = new Color(0.10f, 0.08f, 0.06f, 0.96f);
-
-            // Title
-            var titleGo = new GameObject("Title", typeof(RectTransform), typeof(Text));
-            titleGo.transform.SetParent(panelRect, false);
-            var titleRect = titleGo.GetComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0.05f, 0.85f);
-            titleRect.anchorMax = new Vector2(0.95f, 0.97f);
-            titleRect.offsetMin = Vector2.zero;
-            titleRect.offsetMax = Vector2.zero;
-            var titleText = titleGo.GetComponent<Text>();
-            titleText.text = "Relic Found — Choose One to Keep";
-            titleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            titleText.fontSize = 18;
-            titleText.alignment = TextAnchor.MiddleCenter;
-            titleText.color = new Color(0.90f, 0.80f, 0.55f, 1f);
-
-            // Current relic card (left)
-            var current = state.HeldRelic;
-            BuildRelicCard(panelRect, "CurrentRelic",
-                new Vector2(0.04f, 0.18f), new Vector2(0.48f, 0.82f),
-                "CURRENT",
-                Economy.RelicService.GetName(current.Id),
-                $"Tier {(int)current.Tier + 1}\n{Economy.RelicService.GetDescription(current.Id)}",
-                new Color(0.22f, 0.30f, 0.22f, 1f),
-                () => ConfirmRelicChoice(current));
-
-            // Offered relic card (right)
-            BuildRelicCard(panelRect, "OfferedRelic",
-                new Vector2(0.52f, 0.18f), new Vector2(0.96f, 0.82f),
-                "NEW",
-                Economy.RelicService.GetName(offered.Id),
-                $"Tier {(int)offered.Tier + 1}\n{Economy.RelicService.GetDescription(offered.Id)}",
-                new Color(0.30f, 0.22f, 0.15f, 1f),
-                () => ConfirmRelicChoice(offered));
-
-            // Hint text
-            var hintGo = new GameObject("Hint", typeof(RectTransform), typeof(Text));
-            hintGo.transform.SetParent(panelRect, false);
-            var hintRect = hintGo.GetComponent<RectTransform>();
-            hintRect.anchorMin = new Vector2(0.10f, 0.03f);
-            hintRect.anchorMax = new Vector2(0.90f, 0.15f);
-            hintRect.offsetMin = Vector2.zero;
-            hintRect.offsetMax = Vector2.zero;
-            var hintText = hintGo.GetComponent<Text>();
-            hintText.text = "Click a relic to keep it. The other will be discarded.";
-            hintText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            hintText.fontSize = 13;
-            hintText.alignment = TextAnchor.MiddleCenter;
-            hintText.color = new Color(0.70f, 0.70f, 0.70f, 1f);
+            var entries = envelope?.MetaProgress?.GardenProgression?.ClassEntries;
+            if (entries == null) return 0;
+            for (var i = 0; i < entries.Count; i++)
+                if (entries[i].ClassId == classId) return entries[i].TotalXp;
+            return 0;
         }
 
-        private void BuildRelicCard(RectTransform parent, string name,
-            Vector2 anchorMin, Vector2 anchorMax,
-            string badge, string relicName, string description,
-            Color bgColor, UnityEngine.Events.UnityAction onClick)
+        private void PersistResult(RunResult result)
         {
-            var cardGo = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
-            cardGo.transform.SetParent(parent, false);
-            var cardRect = cardGo.GetComponent<RectTransform>();
-            cardRect.anchorMin = anchorMin;
-            cardRect.anchorMax = anchorMax;
-            cardRect.offsetMin = Vector2.zero;
-            cardRect.offsetMax = Vector2.zero;
-            var cardImg = cardGo.GetComponent<Image>();
-            cardImg.color = bgColor;
+            if (result == null || result.TutorialMode) return;
 
-            // Badge (CURRENT / NEW)
-            var badgeGo = new GameObject("Badge", typeof(RectTransform), typeof(Text));
-            badgeGo.transform.SetParent(cardRect, false);
-            var badgeRect = badgeGo.GetComponent<RectTransform>();
-            badgeRect.anchorMin = new Vector2(0.05f, 0.85f);
-            badgeRect.anchorMax = new Vector2(0.95f, 0.98f);
-            badgeRect.offsetMin = Vector2.zero;
-            badgeRect.offsetMax = Vector2.zero;
-            var badgeText = badgeGo.GetComponent<Text>();
-            badgeText.text = badge;
-            badgeText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            badgeText.fontSize = 11;
-            badgeText.alignment = TextAnchor.MiddleCenter;
-            badgeText.color = new Color(0.65f, 0.65f, 0.55f, 1f);
-            badgeText.fontStyle = FontStyle.Bold;
-
-            // Relic name
-            var nameGo = new GameObject("Name", typeof(RectTransform), typeof(Text));
-            nameGo.transform.SetParent(cardRect, false);
-            var nameRect = nameGo.GetComponent<RectTransform>();
-            nameRect.anchorMin = new Vector2(0.05f, 0.60f);
-            nameRect.anchorMax = new Vector2(0.95f, 0.85f);
-            nameRect.offsetMin = Vector2.zero;
-            nameRect.offsetMax = Vector2.zero;
-            var nameText = nameGo.GetComponent<Text>();
-            nameText.text = relicName;
-            nameText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            nameText.fontSize = 16;
-            nameText.alignment = TextAnchor.MiddleCenter;
-            nameText.color = new Color(0.95f, 0.88f, 0.65f, 1f);
-
-            // Description
-            var descGo = new GameObject("Desc", typeof(RectTransform), typeof(Text));
-            descGo.transform.SetParent(cardRect, false);
-            var descRect = descGo.GetComponent<RectTransform>();
-            descRect.anchorMin = new Vector2(0.05f, 0.05f);
-            descRect.anchorMax = new Vector2(0.95f, 0.58f);
-            descRect.offsetMin = Vector2.zero;
-            descRect.offsetMax = Vector2.zero;
-            var descText = descGo.GetComponent<Text>();
-            descText.text = description;
-            descText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            descText.fontSize = 12;
-            descText.alignment = TextAnchor.UpperCenter;
-            descText.color = Color.white;
-            descText.verticalOverflow = VerticalWrapMode.Overflow;
-
-            var btn = cardGo.GetComponent<Button>();
-            btn.onClick.AddListener(onClick);
-        }
-
-        private void ConfirmRelicChoice(RelicInstance chosen)
-        {
-            _awaitingRelicChoice = false;
-
-            var run = runMapController?.Run;
+            // Populate item/relic counts from the run state
+            var run = _map?.Run;
             if (run != null)
             {
-                run.AcceptRelicChoice(chosen);
-                _runAudio?.PlayRelicPickup();
-                _pathOverlayMessage = $"Kept relic: {Economy.RelicService.GetName(chosen.Id)}\n{Economy.RelicService.GetDescription(chosen.Id)}";
-                SetStatus("Relic chosen.");
+                // Use analytics total (accumulated across all puzzles in the run)
+                result.ItemsUsedThisRun = run.GetAnalytics()?.TotalItemsUsed
+                    ?? run.CurrentLevelState?.ItemsUsedThisLevel ?? 0;
+                result.AcquiredRelic = run.State.HasRelic;
             }
 
-            if (_relicChoicePanel != null)
+            // ProfileService handles XP commit, class unlock evaluation, stats, and saving
+            var profile = new ProfileService(new SaveFileService());
+            profile.RecordRunAndGetNewUnlocks(result);
+
+            // Clear active run state
+            var save = new SaveFileService();
+            if (save.HasSaveFile())
             {
-                Destroy(_relicChoicePanel);
-                _relicChoicePanel = null;
-            }
-
-            _offeredRelic = null;
-        }
-
-        private readonly List<BossModifierId> _bossGateSelected = new();
-        private List<BossModifierId> _bossGateOptions;
-        private int _bossGateRequiredChoices;
-
-        private void ShowBossGateChoice()
-        {
-            if (_awaitingBossGateChoice) return;
-
-            var run = runMapController?.Run;
-            if (run == null) return;
-
-            var state = run.RunState;
-            var floor = state.CurrentFloor;
-
-            RunGraphService.GetBossModifierCounts(floor, out var optionsShown, out var playerChooses);
-
-            // Roll fresh options excluding any already chosen this run
-            var bossService = run.BossServiceInstance;
-            _bossGateOptions = bossService != null
-                ? bossService.RollBossOptions(optionsShown, state.ChosenBossModifiers)
-                : new List<BossModifierId>();
-
-            if (_bossGateOptions.Count == 0)
-            {
-                ChoosePath(false);
-                return;
-            }
-
-            _bossGateRequiredChoices = Mathf.Min(playerChooses, _bossGateOptions.Count);
-            _bossGateSelected.Clear();
-            _awaitingBossGateChoice = true;
-
-            BuildBossGatePanel(state);
-        }
-
-        private void BuildBossGatePanel(RunState state)
-        {
-            if (_bossGateChoicePanel != null)
-                Destroy(_bossGateChoicePanel);
-
-            var canvas = FindFirstObjectByType<Canvas>();
-            if (canvas == null) return;
-
-            _bossGateChoicePanel = new GameObject("BossGateChoicePanel", typeof(RectTransform), typeof(Image));
-            _bossGateChoicePanel.transform.SetParent(canvas.transform, false);
-            var panelRect = _bossGateChoicePanel.GetComponent<RectTransform>();
-            panelRect.anchorMin = new Vector2(0.15f, 0.10f);
-            panelRect.anchorMax = new Vector2(0.85f, 0.90f);
-            panelRect.offsetMin = Vector2.zero;
-            panelRect.offsetMax = Vector2.zero;
-            var panelImg = _bossGateChoicePanel.GetComponent<Image>();
-            var hc = _accessibility is { IsHighContrast: true };
-            panelImg.color = hc ? HcPanelBg : new Color(0.10f, 0.08f, 0.06f, 0.96f);
-
-            var floor = state.CurrentFloor;
-            var theme = Data.FloorThemeData.Get(floor);
-
-            // Title
-            var titleGo = new GameObject("Title", typeof(RectTransform), typeof(Text));
-            titleGo.transform.SetParent(panelRect, false);
-            var titleRect = titleGo.GetComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0.05f, 0.88f);
-            titleRect.anchorMax = new Vector2(0.95f, 0.98f);
-            titleRect.offsetMin = Vector2.zero;
-            titleRect.offsetMax = Vector2.zero;
-            var titleText = titleGo.GetComponent<Text>();
-            titleText.text = $"Boss Gate — {theme.Name}\nChoose {_bossGateRequiredChoices} Modifier(s)   [{_bossGateSelected.Count}/{_bossGateRequiredChoices} selected]";
-            titleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            titleText.fontSize = 18;
-            titleText.alignment = TextAnchor.MiddleCenter;
-            titleText.color = hc ? HcPanelText : new Color(0.90f, 0.80f, 0.55f, 1f);
-            if (hc) titleText.fontStyle = FontStyle.Bold;
-
-            // Option cards
-            var count = _bossGateOptions.Count;
-            var columns = Mathf.Min(count, 3);
-            var rows = Mathf.CeilToInt((float)count / columns);
-
-            for (var i = 0; i < count; i++)
-            {
-                var modifier = _bossGateOptions[i];
-                var seen = state.SeenBossModifiers.Contains(modifier);
-                var modName = seen ? FormatModifierName(modifier) : "???";
-                var modDesc = seen ? GetBossModifierDescription(modifier) : "Unknown modifier";
-                var isSelected = _bossGateSelected.Contains(modifier);
-
-                var col = i % columns;
-                var row = i / columns;
-                var xMin = 0.03f + col * (0.94f / columns);
-                var xMax = xMin + (0.94f / columns) - 0.02f;
-                var yMax = 0.85f - row * (0.72f / rows);
-                var yMin = yMax - (0.72f / rows) + 0.02f;
-
-                var btnGo = new GameObject($"BossChoice_{i}", typeof(RectTransform), typeof(Image), typeof(Button));
-                btnGo.transform.SetParent(panelRect, false);
-                var btnRect = btnGo.GetComponent<RectTransform>();
-                btnRect.anchorMin = new Vector2(xMin, yMin);
-                btnRect.anchorMax = new Vector2(xMax, yMax);
-                btnRect.offsetMin = Vector2.zero;
-                btnRect.offsetMax = Vector2.zero;
-                var btnImg = btnGo.GetComponent<Image>();
-                btnImg.color = isSelected
-                    ? new Color(0.40f, 0.55f, 0.25f, 1f)
-                    : new Color(0.25f, 0.18f, 0.12f, 1f);
-
-                var lblGo = new GameObject("Label", typeof(RectTransform), typeof(Text));
-                lblGo.transform.SetParent(btnRect, false);
-                var lblRect = lblGo.GetComponent<RectTransform>();
-                lblRect.anchorMin = Vector2.zero;
-                lblRect.anchorMax = Vector2.one;
-                lblRect.offsetMin = new Vector2(4f, 4f);
-                lblRect.offsetMax = new Vector2(-4f, -4f);
-                var lblText = lblGo.GetComponent<Text>();
-                lblText.text = isSelected ? $"\u2713 {modName}\n{modDesc}" : $"{modName}\n{modDesc}";
-                lblText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-                lblText.fontSize = 12;
-                lblText.alignment = TextAnchor.MiddleCenter;
-                lblText.color = Color.white;
-                lblText.verticalOverflow = VerticalWrapMode.Overflow;
-
-                var captured = modifier;
-                var btn = btnGo.GetComponent<Button>();
-                btn.onClick.AddListener(() => ToggleBossGateModifier(captured, state));
-            }
-
-            // Confirm button (only active when enough selected)
-            var confirmGo = new GameObject("ConfirmBtn", typeof(RectTransform), typeof(Image), typeof(Button));
-            confirmGo.transform.SetParent(panelRect, false);
-            var confirmRect = confirmGo.GetComponent<RectTransform>();
-            confirmRect.anchorMin = new Vector2(0.30f, 0.02f);
-            confirmRect.anchorMax = new Vector2(0.70f, 0.10f);
-            confirmRect.offsetMin = Vector2.zero;
-            confirmRect.offsetMax = Vector2.zero;
-            var confirmImg = confirmGo.GetComponent<Image>();
-            var canConfirm = _bossGateSelected.Count >= _bossGateRequiredChoices;
-            confirmImg.color = canConfirm ? new Color(0.45f, 0.65f, 0.25f, 1f) : new Color(0.30f, 0.30f, 0.30f, 0.60f);
-
-            var confirmLblGo = new GameObject("ConfirmLbl", typeof(RectTransform), typeof(Text));
-            confirmLblGo.transform.SetParent(confirmRect, false);
-            var confirmLblRect = confirmLblGo.GetComponent<RectTransform>();
-            confirmLblRect.anchorMin = Vector2.zero;
-            confirmLblRect.anchorMax = Vector2.one;
-            confirmLblRect.offsetMin = Vector2.zero;
-            confirmLblRect.offsetMax = Vector2.zero;
-            var confirmLblText = confirmLblGo.GetComponent<Text>();
-            confirmLblText.text = canConfirm ? "Confirm Selection" : $"Select {_bossGateRequiredChoices - _bossGateSelected.Count} more";
-            confirmLblText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            confirmLblText.fontSize = 16;
-            confirmLblText.alignment = TextAnchor.MiddleCenter;
-            confirmLblText.color = Color.white;
-
-            var confirmBtn = confirmGo.GetComponent<Button>();
-            confirmBtn.interactable = canConfirm;
-            confirmBtn.onClick.AddListener(() => ConfirmBossGateSelection(state));
-        }
-
-        private void ToggleBossGateModifier(BossModifierId modifier, RunState state)
-        {
-            if (_bossGateSelected.Contains(modifier))
-            {
-                _bossGateSelected.Remove(modifier);
-            }
-            else if (_bossGateSelected.Count < _bossGateRequiredChoices)
-            {
-                _bossGateSelected.Add(modifier);
-            }
-
-            // Rebuild panel to reflect selection state
-            BuildBossGatePanel(state);
-        }
-
-        private void ConfirmBossGateSelection(RunState state)
-        {
-            _awaitingBossGateChoice = false;
-
-            if (state != null)
-            {
-                // Apply all selected modifiers
-                for (var i = 0; i < _bossGateSelected.Count; i++)
-                {
-                    state.ChosenBossModifiers.Add(_bossGateSelected[i]);
-                    state.SeenBossModifiers.Add(_bossGateSelected[i]);
-                }
-
-                // Keep legacy single-modifier field for backwards compat
-                if (_bossGateSelected.Count > 0)
-                    state.ChosenBossModifier = _bossGateSelected[0];
-            }
-
-            if (_bossGateChoicePanel != null)
-            {
-                Destroy(_bossGateChoicePanel);
-                _bossGateChoicePanel = null;
-            }
-
-            ChoosePath(false);
-        }
-
-        private bool HandleBossVictoryOrAdvance()
-        {
-            var run = runMapController?.Run;
-            if (run == null) return false;
-
-            var state = run.RunState;
-            var isLastFloor = state.CurrentFloor >= state.TotalFloors - 1;
-
-            if (isLastFloor)
-            {
-                // Final boss defeated — trigger victory
-                ShowGameOver(run);
-                return true;
-            }
-
-            // Advance to next floor
-            runMapController.AdvanceToNextGarden();
-            var theme = Data.FloorThemeData.Get(state.CurrentFloor);
-            SetStatus($"Garden Cleared! Entering {theme.Name}...");
-            _lastLaneRenderSignature = int.MinValue;
-            ShowPathOverview();
-            RefreshPathOverview();
-            return true;
-        }
-
-        private static string FormatOffer(ShopOffer offer)
-        {
-            if (offer == null) return "Unknown offer";
-
-            if (offer.IsRelic && offer.RelicOffer != null)
-                return $"{Economy.RelicService.GetName(offer.RelicOffer.Id)} - {offer.Price}g";
-
-            if (offer.Item != null)
-                return $"{Items.ItemService.GetItemName(offer.Item.Type)} ({offer.Item.Rarity}) - {offer.Price}g";
-
-            return $"Offer - {offer.Price}g";
-        }
-
-        private void RebuildInventoryBadges()
-        {
-            var state = runMapController?.Run?.RunState;
-            if (state == null || pathOverviewPanel == null)
-            {
-                return;
-            }
-
-            var panelRect = pathOverviewPanel.GetComponent<RectTransform>();
-            if (panelRect == null)
-            {
-                return;
-            }
-
-            if (_inventoryBadgeRoot == null)
-            {
-                var rootGo = new GameObject("InventoryBadgeRoot", typeof(RectTransform));
-                rootGo.transform.SetParent(panelRect, false);
-                _inventoryBadgeRoot = rootGo.GetComponent<RectTransform>();
-                _inventoryBadgeRoot.anchorMin = new Vector2(0.02f, 0.82f);
-                _inventoryBadgeRoot.anchorMax = new Vector2(0.98f, 0.91f);
-                _inventoryBadgeRoot.offsetMin = Vector2.zero;
-                _inventoryBadgeRoot.offsetMax = Vector2.zero;
-            }
-
-            for (var i = _inventoryBadgeRoot.childCount - 1; i >= 0; i--)
-            {
-                Destroy(_inventoryBadgeRoot.GetChild(i).gameObject);
-            }
-
-            var slot = 0;
-            for (var i = 0; i < state.Inventory.Count; i++)
-            {
-                var item = state.Inventory[i];
-                CreateHoverBadge(
-                    DescribeItemShort(item),
-                    DescribeItem(item),
-                    slot++,
-                    new Color(0.19f, 0.35f, 0.24f, 0.92f),
-                    GetItemSprite(item));
-            }
-
-            if (state.HasRelic && state.HeldRelic != null)
-            {
-                var relicName = Economy.RelicService.GetName(state.HeldRelic.Id);
-                var relicDesc = Economy.RelicService.GetDescription(state.HeldRelic.Id);
-                CreateHoverBadge(
-                    relicName,
-                    relicDesc,
-                    slot++,
-                    new Color(0.30f, 0.24f, 0.15f, 0.92f),
-                    Resources.Load<Sprite>("GeneratedIcons/icon_relic_pedestal") ?? GetFallbackSprite());
+                var envelope = save.Load();
+                envelope.ActiveRunState = null;
+                envelope.ActivePuzzle = null;
+                save.Save(envelope);
             }
         }
 
-        private void CreateHoverBadge(string label, string description, int slot, Color color, Sprite icon)
-        {
-            if (_inventoryBadgeRoot == null)
-            {
-                return;
-            }
-
-            var go = new GameObject($"Badge_{slot}", typeof(RectTransform), typeof(Image), typeof(Button), typeof(EventTrigger));
-            go.transform.SetParent(_inventoryBadgeRoot, false);
-            var rect = go.GetComponent<RectTransform>();
-
-            var w = 108f;
-            var h = 24f;
-            var cols = 8;
-            var row = slot / cols;
-            var col = slot % cols;
-            rect.anchorMin = new Vector2(0f, 1f);
-            rect.anchorMax = new Vector2(0f, 1f);
-            rect.pivot = new Vector2(0f, 1f);
-            rect.sizeDelta = new Vector2(w, h);
-            rect.anchoredPosition = new Vector2(col * (w + 6f), -row * (h + 4f));
-
-            var image = go.GetComponent<Image>();
-            image.color = color;
-
-            var iconImage = new GameObject("Icon", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
-            iconImage.transform.SetParent(go.transform, false);
-            iconImage.rectTransform.anchorMin = new Vector2(0.02f, 0.12f);
-            iconImage.rectTransform.anchorMax = new Vector2(0.24f, 0.88f);
-            iconImage.rectTransform.offsetMin = Vector2.zero;
-            iconImage.rectTransform.offsetMax = Vector2.zero;
-            iconImage.sprite = icon ?? GetFallbackSprite();
-            iconImage.preserveAspect = true;
-            iconImage.color = Color.white;
-            iconImage.raycastTarget = false;
-
-            var textGo = new GameObject("Label", typeof(RectTransform), typeof(Text));
-            textGo.transform.SetParent(go.transform, false);
-            var textRect = textGo.GetComponent<RectTransform>();
-            textRect.anchorMin = new Vector2(0.26f, 0f);
-            textRect.anchorMax = Vector2.one;
-            textRect.offsetMin = new Vector2(2f, 1f);
-            textRect.offsetMax = new Vector2(-4f, -1f);
-
-            var text = textGo.GetComponent<Text>();
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
-            text.fontSize = 12;
-            text.alignment = TextAnchor.MiddleLeft;
-            text.color = new Color(0.95f, 0.96f, 0.92f, 1f);
-            text.text = label;
-
-            var trigger = go.GetComponent<EventTrigger>();
-            trigger.triggers = new List<EventTrigger.Entry>();
-
-            var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-            enter.callback.AddListener(_ =>
-            {
-                _hoverInfo = description;
-                RefreshPathOverview();
-            });
-            trigger.triggers.Add(enter);
-
-            var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
-            exit.callback.AddListener(_ =>
-            {
-                _hoverInfo = string.Empty;
-                RefreshPathOverview();
-            });
-            trigger.triggers.Add(exit);
-        }
-
-        private static string DescribeItem(ItemInstance item)
-        {
-            if (item == null)
-            {
-                return "Unknown item";
-            }
-
-            var name = Items.ItemService.GetItemName(item.Type);
-            var effect = Items.ItemService.GetItemDescription(item.Type, item.Rarity);
-            var charges = item.IsInfinite ? "Infinite" : item.Charges.ToString();
-            return $"{name} ({item.Rarity})\nCharges: {charges}\n{effect}";
-        }
-
-        // DescribeRelic and ShortRelicName archived — use RelicService.GetName/GetDescription directly
-
-        // EnsureClassToken, TrySetClassTokenTargetForNode, UpdateClassTokenPosition removed
-        // Player position is now managed by PlayerIconController
+        // ────────────────────── Rewards ──────────────────────
 
         private void ShowRewardScreen()
         {
-            if (runMapController == null)
-            {
-                return;
-            }
-
-            var currentMode = runMapController.Run?.RunState?.Mode ?? GameMode.GardenRun;
-            if (currentMode == GameMode.EndlessZen || currentMode == GameMode.SpiritTrials)
-            {
-                ShowPathOverview();
-                _awaitingRewardChoice = false;
-                SetStatus("Puzzle cleared. Continue to next level.");
-                RefreshPathOverview();
-                return;
-            }
-
-            ShowPathOverview();
+            ShowPath();
             BuildRewardPanel();
-            _pendingRewardSlots.Clear();
 
-            if (!runMapController.TryClaimCurrentPuzzleRewards(out var goldEarned, out var slots, out var reason))
+            if (!_map.TryClaimCurrentPuzzleRewards(out var gold, out var slots))
             {
-                _awaitingRewardChoice = false;
-                SetStatus(string.IsNullOrWhiteSpace(reason) ? "Rewards unavailable." : reason);
-                HideRewardPanel();
-                RefreshPathOverview();
+                _awaitingReward = false;
+                SetStatus("No rewards.");
+                HidePanel(_rewardPanel);
                 return;
             }
 
-            _awaitingRewardChoice = true;
-            _pendingRewardSlots.AddRange(slots);
+            _awaitingReward = true;
+            _rewardSlots.Clear();
+            _rewardSlots.AddRange(slots);
 
-            var runRef = runMapController?.Run;
-            var cfg = runRef?.CurrentLevelConfig;
-            var lvlState = runRef?.CurrentLevelState;
-            var xpBreak = XpService.CalculateTile(
-                cfg?.BoardSize ?? 9,
-                cfg?.Stars ?? 1,
-                cfg?.ActiveModifiers?.Count ?? 0,
-                cfg?.IsBoss ?? false,
-                (lvlState?.Mistakes ?? 0) == 0);
-
-            var summary = new StringBuilder();
-            summary.AppendLine("Puzzle Complete!");
-            summary.AppendLine($"Gold gained: +{goldEarned}");
-            summary.AppendLine(string.Empty);
-            summary.AppendLine($"XP Gained:    +{xpBreak.TotalXp}");
-            if (xpBreak.IsBoss)
-                summary.AppendLine("  Boss ×2");
-            if (xpBreak.PerfectBonus > 0)
-                summary.AppendLine($"  Perfect Solve:   +{xpBreak.PerfectBonus}");
-            summary.AppendLine(string.Empty);
-            summary.AppendLine($"Item slots rolled: {_pendingRewardSlots.Count}");
-            summary.AppendLine("Choose one slot reward.");
-            if (_rewardSummaryText != null)
-            {
-                _rewardSummaryText.text = summary.ToString().TrimEnd();
-            }
-
-            if (_pendingRewardSlots.Count == 0)
-            {
-                _awaitingRewardChoice = false;
-                HideRewardPanel();
-                SetStatus("Rewards granted. Choose next path tile.");
-                RefreshPathOverview();
-                return;
-            }
+            if (_rewardSummary != null)
+                _rewardSummary.text = $"Puzzle complete! Gold +{gold}\nChoose a reward ({slots.Count} slots).";
 
             RebuildRewardButtons();
-            SetStatus("Choose your reward.");
-            RefreshPathOverview();
+            if (_rewardPanel != null) _rewardPanel.SetActive(true);
         }
 
         private void BuildRewardPanel()
         {
-            if (_rewardPanel != null || pathOverviewPanel == null)
-            {
-                return;
-            }
-
-            var panelRect = pathOverviewPanel.GetComponent<RectTransform>();
-            if (panelRect == null)
-            {
-                return;
-            }
-
-            _rewardPanel = new GameObject("RewardPanel", typeof(RectTransform), typeof(Image));
-            _rewardPanel.transform.SetParent(panelRect, false);
-            var rect = _rewardPanel.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.24f, 0.22f);
-            rect.anchorMax = new Vector2(0.76f, 0.72f);
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-
-            var image = _rewardPanel.GetComponent<Image>();
-            image.color = new Color(0.06f, 0.10f, 0.08f, 0.96f);
-
-            var title = new GameObject("RewardTitle", typeof(RectTransform), typeof(Text)).GetComponent<Text>();
-            title.transform.SetParent(_rewardPanel.transform, false);
-            title.rectTransform.anchorMin = new Vector2(0.06f, 0.82f);
-            title.rectTransform.anchorMax = new Vector2(0.94f, 0.96f);
-            title.rectTransform.offsetMin = Vector2.zero;
-            title.rectTransform.offsetMax = Vector2.zero;
-            title.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
-            title.fontSize = 22;
-            title.alignment = TextAnchor.MiddleCenter;
-            title.color = new Color(0.96f, 0.88f, 0.56f, 1f);
-            title.text = "Reward";
-
-            _rewardSummaryText = new GameObject("RewardSummary", typeof(RectTransform), typeof(Text)).GetComponent<Text>();
-            _rewardSummaryText.transform.SetParent(_rewardPanel.transform, false);
-            _rewardSummaryText.rectTransform.anchorMin = new Vector2(0.08f, 0.56f);
-            _rewardSummaryText.rectTransform.anchorMax = new Vector2(0.92f, 0.80f);
-            _rewardSummaryText.rectTransform.offsetMin = Vector2.zero;
-            _rewardSummaryText.rectTransform.offsetMax = Vector2.zero;
-            _rewardSummaryText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
-            _rewardSummaryText.fontSize = 14;
-            _rewardSummaryText.alignment = TextAnchor.UpperLeft;
-            _rewardSummaryText.color = new Color(0.94f, 0.95f, 0.92f, 1f);
-
-            _rewardHoverText = new GameObject("RewardHover", typeof(RectTransform), typeof(Text)).GetComponent<Text>();
-            _rewardHoverText.transform.SetParent(_rewardPanel.transform, false);
-            _rewardHoverText.rectTransform.anchorMin = new Vector2(0.08f, 0.08f);
-            _rewardHoverText.rectTransform.anchorMax = new Vector2(0.92f, 0.18f);
-            _rewardHoverText.rectTransform.offsetMin = Vector2.zero;
-            _rewardHoverText.rectTransform.offsetMax = Vector2.zero;
-            _rewardHoverText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
-            _rewardHoverText.fontSize = 13;
-            _rewardHoverText.alignment = TextAnchor.UpperLeft;
-            _rewardHoverText.color = new Color(0.95f, 0.93f, 0.85f, 1f);
-            _rewardHoverText.text = "Hover a reward to inspect details.";
-
-            // High contrast overrides
-            if (_accessibility is { IsHighContrast: true })
-            {
-                image.color = HcPanelBg;
-                title.color = HcPanelText;
-                title.fontStyle = FontStyle.Bold;
-                _rewardSummaryText.color = HcPanelText;
-                _rewardSummaryText.fontStyle = FontStyle.Bold;
-                _rewardHoverText.color = HcPanelText;
-            }
-
+            if (_rewardPanel != null || _pathPanel == null) return;
+            _rewardPanel = CreateOverlayPanel(_pathPanel.transform, "RewardPanel", "Reward");
+            _rewardSummary = _rewardPanel.transform.Find("Summary")?.GetComponent<Text>();
             _rewardPanel.SetActive(false);
         }
 
         private void RebuildRewardButtons()
         {
-            if (_rewardPanel == null)
+            if (_rewardPanel == null) return;
+            ClearNamedChildren(_rewardPanel.transform, "Slot_");
+
+            var cols = Mathf.Clamp(_rewardSlots.Count, 1, 3);
+            for (var i = 0; i < _rewardSlots.Count; i++)
             {
-                return;
-            }
+                var item = _rewardSlots[i];
+                var col = i % cols;
+                var row = i / cols;
+                var xMin = 0.08f + col * 0.29f;
+                var yMax = 0.50f - row * 0.18f;
 
-            for (var i = _rewardPanel.transform.childCount - 1; i >= 0; i--)
-            {
-                var child = _rewardPanel.transform.GetChild(i);
-                if (child.name.StartsWith("RewardChoice_", StringComparison.Ordinal))
-                {
-                    Destroy(child.gameObject);
-                }
-            }
-
-            if (_awaitingRewardReplacement)
-            {
-                var inventory = runMapController?.Run?.RunState?.Inventory;
-                if (inventory == null) return;
-
-                if (_rewardSummaryText != null)
-                {
-                    _rewardSummaryText.text = "Inventory is full. Choose an item to replace, or cancel.";
-                }
-
-                var cols = Mathf.Clamp(inventory.Count, 1, 3);
-                for (var i = 0; i < inventory.Count; i++)
-                {
-                    var col = i % cols;
-                    var row = i / cols;
-                    var xMin = 0.08f + (col * 0.29f);
-                    var yMax = 0.50f - (row * 0.18f);
-
-                    var btnGo = new GameObject($"RewardChoice_{i}", typeof(RectTransform), typeof(Image), typeof(Button));
-                    btnGo.transform.SetParent(_rewardPanel.transform, false);
-                    var rect = btnGo.GetComponent<RectTransform>();
-                    rect.anchorMin = new Vector2(xMin, yMax - 0.14f);
-                    rect.anchorMax = new Vector2(xMin + 0.26f, yMax);
-                    rect.offsetMin = Vector2.zero;
-                    rect.offsetMax = Vector2.zero;
-                    btnGo.GetComponent<Image>().color = new Color(0.28f, 0.22f, 0.18f, 0.95f);
-
-                    var idx = i;
-                    btnGo.GetComponent<Button>().onClick.AddListener(() => ClaimRewardReplacing(idx));
-
-                    var lbl = new GameObject("Label", typeof(RectTransform), typeof(Text)).GetComponent<Text>();
-                    lbl.transform.SetParent(btnGo.transform, false);
-                    lbl.rectTransform.anchorMin = Vector2.zero;
-                    lbl.rectTransform.anchorMax = Vector2.one;
-                    lbl.rectTransform.offsetMin = Vector2.zero;
-                    lbl.rectTransform.offsetMax = Vector2.zero;
-                    lbl.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-                    lbl.fontSize = 12;
-                    lbl.alignment = TextAnchor.MiddleCenter;
-                    lbl.color = Color.white;
-                    lbl.text = $"Replace {DescribeItemShort(inventory[i])}";
-                }
-
-                var cancelGo = new GameObject("RewardChoice_cancel", typeof(RectTransform), typeof(Image), typeof(Button));
-                cancelGo.transform.SetParent(_rewardPanel.transform, false);
-                var cancelRect = cancelGo.GetComponent<RectTransform>();
-                cancelRect.anchorMin = new Vector2(0.33f, 0.08f);
-                cancelRect.anchorMax = new Vector2(0.67f, 0.20f);
-                cancelRect.offsetMin = Vector2.zero;
-                cancelRect.offsetMax = Vector2.zero;
-                cancelGo.GetComponent<Image>().color = new Color(0.25f, 0.26f, 0.28f, 0.95f);
-                cancelGo.GetComponent<Button>().onClick.AddListener(() =>
-                {
-                    _awaitingRewardReplacement = false;
-                    RebuildRewardButtons();
-                });
-                var cancelLbl = new GameObject("Label", typeof(RectTransform), typeof(Text)).GetComponent<Text>();
-                cancelLbl.transform.SetParent(cancelGo.transform, false);
-                cancelLbl.rectTransform.anchorMin = Vector2.zero;
-                cancelLbl.rectTransform.anchorMax = Vector2.one;
-                cancelLbl.rectTransform.offsetMin = Vector2.zero;
-                cancelLbl.rectTransform.offsetMax = Vector2.zero;
-                cancelLbl.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-                cancelLbl.fontSize = 13;
-                cancelLbl.alignment = TextAnchor.MiddleCenter;
-                cancelLbl.color = Color.white;
-                cancelLbl.text = "Cancel";
-
-                _rewardPanel.SetActive(true);
-                return;
-            }
-
-            var columns = Mathf.Clamp(_pendingRewardSlots.Count, 1, 3);
-            var rows = Mathf.CeilToInt(_pendingRewardSlots.Count / (float)columns);
-            var spacingX = 0.03f;
-            var spacingY = 0.04f;
-            var availableWidth = 0.84f;
-            var availableHeight = 0.28f;
-            var cellWidth = (availableWidth - ((columns - 1) * spacingX)) / columns;
-            var cellHeight = (availableHeight - ((Mathf.Max(1, rows) - 1) * spacingY)) / Mathf.Max(1, rows);
-
-            for (var i = 0; i < _pendingRewardSlots.Count; i++)
-            {
-                var slot = _pendingRewardSlots[i];
-                var button = new GameObject($"RewardChoice_{i}", typeof(RectTransform), typeof(Image), typeof(Button));
-                button.transform.SetParent(_rewardPanel.transform, false);
-
-                var rect = button.GetComponent<RectTransform>();
-                var col = i % columns;
-                var row = i / columns;
-                var xMin = 0.08f + (col * (cellWidth + spacingX));
-                var yMax = 0.50f - (row * (cellHeight + spacingY));
-                var yMin = yMax - cellHeight;
-
-                rect.anchorMin = new Vector2(xMin, yMin);
-                rect.anchorMax = new Vector2(xMin + cellWidth, yMax);
-                rect.offsetMin = Vector2.zero;
-                rect.offsetMax = Vector2.zero;
-
-                var image = button.GetComponent<Image>();
-                image.color = new Color(0.18f, 0.29f, 0.22f, 0.95f);
-
-                var btn = button.GetComponent<Button>();
-                var index = i;
-                btn.onClick.AddListener(() => ClaimReward(index));
-
-                var icon = new GameObject("Icon", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
-                icon.transform.SetParent(button.transform, false);
-                icon.rectTransform.anchorMin = new Vector2(0.06f, 0.18f);
-                icon.rectTransform.anchorMax = new Vector2(0.34f, 0.88f);
-                icon.rectTransform.offsetMin = Vector2.zero;
-                icon.rectTransform.offsetMax = Vector2.zero;
-                icon.sprite = GetRewardSlotSprite(slot);
-                icon.preserveAspect = true;
-                icon.color = Color.white;
-
-                var label = new GameObject("Label", typeof(RectTransform), typeof(Text)).GetComponent<Text>();
-                label.transform.SetParent(button.transform, false);
-                label.rectTransform.anchorMin = new Vector2(0.36f, 0.10f);
-                label.rectTransform.anchorMax = new Vector2(0.96f, 0.92f);
-                label.rectTransform.offsetMin = new Vector2(2f, 2f);
-                label.rectTransform.offsetMax = new Vector2(-2f, -2f);
-                label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
-                label.fontSize = 12;
-                label.alignment = TextAnchor.MiddleLeft;
-                label.color = Color.white;
-                label.text = DescribeRollSlotShort(slot);
-
-                var trigger = button.AddComponent<EventTrigger>();
-                trigger.triggers = new List<EventTrigger.Entry>();
-
-                var startScale = Vector3.one * 0.78f;
-                var hoverScale = Vector3.one * 1.06f;
-                button.transform.localScale = startScale;
-                StartCoroutine(AnimateRewardSlotScale(button.transform as RectTransform, 0.06f * i, startScale, Vector3.one));
-
-                var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-                enter.callback.AddListener(_ =>
-                {
-                    button.transform.localScale = hoverScale;
-                    if (_rewardHoverText != null)
-                    {
-                        _rewardHoverText.text = DescribeRollSlot(slot);
-                    }
-                });
-                trigger.triggers.Add(enter);
-
-                var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
-                exit.callback.AddListener(_ =>
-                {
-                    button.transform.localScale = Vector3.one;
-                    if (_rewardHoverText != null)
-                    {
-                        _rewardHoverText.text = "Hover a reward to inspect details.";
-                    }
-                });
-                trigger.triggers.Add(exit);
-            }
-
-            var run = runMapController?.Run;
-            if (run != null && !run.RunState.TutorialMode)
-            {
-                var rerollCost = FormulaService.RerollCost(run.RunState.RerollsThisRun);
-                var canAfford = run.RunState.CurrentGold >= rerollCost;
-
-                var rerollGo = new GameObject("RewardChoice_reroll", typeof(RectTransform), typeof(Image), typeof(Button));
-                rerollGo.transform.SetParent(_rewardPanel.transform, false);
-                var rerollRect = rerollGo.GetComponent<RectTransform>();
-                rerollRect.anchorMin = new Vector2(0.08f, 0.08f);
-                rerollRect.anchorMax = new Vector2(0.42f, 0.18f);
-                rerollRect.offsetMin = Vector2.zero;
-                rerollRect.offsetMax = Vector2.zero;
-                rerollGo.GetComponent<Image>().color = canAfford
-                    ? new Color(0.22f, 0.36f, 0.28f, 0.95f)
-                    : new Color(0.30f, 0.22f, 0.22f, 0.60f);
-
-                var rerollBtn = rerollGo.GetComponent<Button>();
-                rerollBtn.interactable = canAfford;
-                rerollBtn.onClick.AddListener(RerollRewards);
-
-                var rerollLbl = new GameObject("Label", typeof(RectTransform), typeof(Text)).GetComponent<Text>();
-                rerollLbl.transform.SetParent(rerollGo.transform, false);
-                rerollLbl.rectTransform.anchorMin = Vector2.zero;
-                rerollLbl.rectTransform.anchorMax = Vector2.one;
-                rerollLbl.rectTransform.offsetMin = Vector2.zero;
-                rerollLbl.rectTransform.offsetMax = Vector2.zero;
-                rerollLbl.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-                rerollLbl.fontSize = 14;
-                rerollLbl.alignment = TextAnchor.MiddleCenter;
-                rerollLbl.color = Color.white;
-                rerollLbl.text = $"Reroll ({rerollCost}g)";
+                var itemLabel = item != null
+                    ? $"{ItemService.GetItemName(item.Type)}\n{item.Rarity}\n{ItemService.GetItemDescription(item.Type, item.Rarity)}"
+                    : "Nothing";
+                var btn = CreatePanelButton(_rewardPanel.transform, $"Slot_{i}",
+                    new Vector2(xMin, yMax - 0.14f), new Vector2(xMin + 0.26f, yMax),
+                    itemLabel);
+                if (item != null)
+                    SetButtonIcon(btn, ItemService.GetIconName(item.Type));
+                var idx = i;
+                btn.onClick.AddListener(() => ClaimReward(idx));
             }
 
             // Skip button
-            var skipGo = new GameObject("RewardChoice_skip", typeof(RectTransform), typeof(Image), typeof(Button));
-            skipGo.transform.SetParent(_rewardPanel.transform, false);
-            var skipRect = skipGo.GetComponent<RectTransform>();
-            skipRect.anchorMin = new Vector2(0.58f, 0.08f);
-            skipRect.anchorMax = new Vector2(0.92f, 0.18f);
-            skipRect.offsetMin = Vector2.zero;
-            skipRect.offsetMax = Vector2.zero;
-            skipGo.GetComponent<Image>().color = new Color(0.25f, 0.26f, 0.28f, 0.95f);
-            skipGo.GetComponent<Button>().onClick.AddListener(() =>
+            var skip = CreatePanelButton(_rewardPanel.transform, "Slot_skip",
+                new Vector2(0.35f, 0.08f), new Vector2(0.65f, 0.18f), "Skip");
+            skip.onClick.AddListener(() =>
             {
-                _pendingRewardSlots.Clear();
-                _awaitingRewardChoice = false;
-                _awaitingRewardReplacement = false;
-                HideRewardPanel();
-
-                var currentNode = GetCurrentNode();
-                if (currentNode != null && currentNode.Type == NodeType.Boss)
-                {
-                    if (HandleBossVictoryOrAdvance()) return;
-                }
-
-                SetStatus("Reward skipped. Choose next path tile.");
-                _lastLaneRenderSignature = int.MinValue;
-                ShowPathOverview();
-                RefreshPathOverview();
+                _awaitingReward = false;
+                HidePanel(_rewardPanel);
+                HandlePostReward();
             });
-            var skipLbl = new GameObject("Label", typeof(RectTransform), typeof(Text)).GetComponent<Text>();
-            skipLbl.transform.SetParent(skipGo.transform, false);
-            skipLbl.rectTransform.anchorMin = Vector2.zero;
-            skipLbl.rectTransform.anchorMax = Vector2.one;
-            skipLbl.rectTransform.offsetMin = Vector2.zero;
-            skipLbl.rectTransform.offsetMax = Vector2.zero;
-            skipLbl.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            skipLbl.fontSize = 14;
-            skipLbl.alignment = TextAnchor.MiddleCenter;
-            skipLbl.color = Color.white;
-            skipLbl.text = "Skip";
-
-            _rewardPanel.SetActive(true);
         }
 
-        private void RerollRewards()
+        private void ClaimReward(int index)
         {
-            var run = runMapController?.Run;
+            var run = _map?.Run;
             if (run == null) return;
 
-            if (!run.TryRerollItemSlots(_pendingRewardSlots))
+            if (index >= 0 && index < _rewardSlots.Count && _rewardSlots[index] != null)
             {
-                SetStatus("Not enough gold to reroll.");
-                return;
-            }
+                var claimed = _rewardSlots[index];
 
-            _runAudio?.PlayShopPurchase();
-            RebuildRewardButtons();
-            RefreshPathOverview();
-        }
-
-        private void ClaimReward(int slotIndex)
-        {
-            var run = runMapController?.Run;
-            if (run == null)
-            {
-                return;
-            }
-
-            if (_pendingRewardSlots.Count > 0 && slotIndex >= 0 && slotIndex < _pendingRewardSlots.Count)
-            {
-                var slot = _pendingRewardSlots[slotIndex];
-                var state = run.RunState;
-                if (!slot.IsNothing && slot.RolledItem != null && state.Inventory.Count >= state.ItemSlots)
+                if (run.IsBagFull())
                 {
-                    _awaitingRewardReplacement = true;
-                    _pendingRewardSlotIndex = slotIndex;
-                    RebuildRewardButtons();
-                    return;
-                }
-
-                run.PickRolledSlot(_pendingRewardSlots, slotIndex);
-            }
-
-            _pendingRewardSlots.Clear();
-            _awaitingRewardChoice = false;
-            HideRewardPanel();
-            _runAudio?.PlayRewardClaim();
-
-            // After boss: advance to next garden or trigger victory.
-            var currentNode = GetCurrentNode();
-            if (currentNode != null && currentNode.Type == NodeType.Boss)
-            {
-                if (HandleBossVictoryOrAdvance()) return;
-            }
-
-            SetStatus("Reward claimed. Choose next path tile.");
-            _lastLaneRenderSignature = int.MinValue;
-            RefreshPathOverview();
-        }
-
-        private void ClaimRewardReplacing(int replaceIndex)
-        {
-            var run = runMapController?.Run;
-            if (run == null) return;
-
-            run.PickRolledSlotReplacingIndex(_pendingRewardSlots, _pendingRewardSlotIndex, replaceIndex);
-
-            _awaitingRewardReplacement = false;
-            _pendingRewardSlots.Clear();
-            _awaitingRewardChoice = false;
-            HideRewardPanel();
-            _runAudio?.PlayRewardClaim();
-
-            var currentNode = GetCurrentNode();
-            if (currentNode != null && currentNode.Type == NodeType.Boss)
-            {
-                if (HandleBossVictoryOrAdvance()) return;
-            }
-
-            SetStatus("Reward claimed. Choose next path tile.");
-            _lastLaneRenderSignature = int.MinValue;
-            RefreshPathOverview();
-        }
-
-        private void HideRewardPanel()
-        {
-            if (_rewardPanel != null)
-            {
-                _rewardPanel.SetActive(false);
-            }
-        }
-
-        private static string DescribeRollSlot(ItemRollSlot slot)
-        {
-            if (slot == null)
-            {
-                return "Unknown";
-            }
-
-            if (slot.IsNothing)
-            {
-                return "Nothing\nSkip this reward. No gold, no item.";
-            }
-
-            if (slot.RolledItem != null)
-            {
-                var itemName = Items.ItemService.GetItemName(slot.RolledItem.Type);
-                var effect = Items.ItemService.GetItemDescription(slot.RolledItem.Type, slot.RolledItem.Rarity);
-                return $"{itemName} ({slot.RolledItem.Rarity})\n{effect}";
-            }
-
-            return "Locked";
-        }
-
-        private static string DescribeRollSlotShort(ItemRollSlot slot)
-        {
-            if (slot == null)
-            {
-                return "Unknown";
-            }
-
-            if (slot.IsNothing)
-            {
-                return "Nothing";
-            }
-
-            if (slot.RolledItem != null)
-            {
-                return $"{slot.RolledItem.Type}\n{slot.RolledItem.Rarity}";
-            }
-
-            return "Locked";
-        }
-
-        private static string DescribeItemShort(ItemInstance item)
-        {
-            if (item == null)
-            {
-                return "Unknown";
-            }
-
-            return $"{item.Type} ({item.Rarity})";
-        }
-
-        private static string DescribeShopOffer(ShopOffer offer)
-        {
-            if (offer == null)
-                return "Unknown offer";
-
-            if (offer.IsRelic && offer.RelicOffer != null)
-            {
-                var name = Economy.RelicService.GetName(offer.RelicOffer.Id);
-                var desc = Economy.RelicService.GetDescription(offer.RelicOffer.Id);
-                return $"{name} ({offer.RelicOffer.Tier})\n{desc}\nPrice: {offer.Price}g";
-            }
-
-            var item = offer.Item;
-            if (item == null)
-                return $"Offer price: {offer.Price}g";
-
-            var itemName = Items.ItemService.GetItemName(item.Type);
-            var effect = Items.ItemService.GetItemDescription(item.Type, item.Rarity);
-            return $"{itemName} ({item.Rarity})\n{effect}\nPrice: {offer.Price}g";
-        }
-
-        private Button BuildPanelButton(Transform parent, string name, Vector2 anchorMin, Vector2 size, Color color, bool anchorBased = false)
-        {
-            var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
-            go.transform.SetParent(parent, false);
-
-            var rect = go.GetComponent<RectTransform>();
-            if (anchorBased)
-            {
-                rect.anchorMin = anchorMin;
-                rect.anchorMax = new Vector2(anchorMin.x + size.x, anchorMin.y + size.y);
-                rect.offsetMin = Vector2.zero;
-                rect.offsetMax = Vector2.zero;
-            }
-            else
-            {
-                rect.anchorMin = anchorMin;
-                rect.anchorMax = anchorMin;
-                rect.pivot = new Vector2(0f, 1f);
-                rect.sizeDelta = size;
-                rect.anchoredPosition = Vector2.zero;
-            }
-
-            var image = go.GetComponent<Image>();
-            image.color = color;
-
-            var button = go.GetComponent<Button>();
-            var colors = button.colors;
-            colors.colorMultiplier = 1.2f;
-            colors.fadeDuration = 0.06f;
-            button.colors = colors;
-
-            var label = new GameObject("Label", typeof(RectTransform), typeof(Text)).GetComponent<Text>();
-            label.transform.SetParent(go.transform, false);
-            label.rectTransform.anchorMin = Vector2.zero;
-            label.rectTransform.anchorMax = Vector2.one;
-            label.rectTransform.offsetMin = new Vector2(6f, 4f);
-            label.rectTransform.offsetMax = new Vector2(-6f, -4f);
-            label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
-            label.fontSize = 12;
-            label.alignment = TextAnchor.MiddleCenter;
-            label.color = new Color(0.95f, 0.95f, 0.92f, 1f);
-            label.text = name;
-
-            return button;
-        }
-
-        private void EnsurePuzzleItemBar()
-        {
-            if (_puzzleItemBarRoot != null || sudokuPanel == null)
-            {
-                return;
-            }
-
-            var panelRect = sudokuPanel.GetComponent<RectTransform>();
-            if (panelRect == null)
-            {
-                return;
-            }
-
-            var root = new GameObject("PuzzleItemBar", typeof(RectTransform));
-            root.transform.SetParent(panelRect, false);
-            _puzzleItemBarRoot = root.GetComponent<RectTransform>();
-            _puzzleItemBarRoot.anchorMin = new Vector2(0.03f, 0.14f);
-            _puzzleItemBarRoot.anchorMax = new Vector2(0.20f, 0.46f);
-            _puzzleItemBarRoot.offsetMin = Vector2.zero;
-            _puzzleItemBarRoot.offsetMax = Vector2.zero;
-
-            var hoverText = new GameObject("PuzzleItemHover", typeof(RectTransform), typeof(Text)).GetComponent<Text>();
-            hoverText.transform.SetParent(panelRect, false);
-            hoverText.rectTransform.anchorMin = new Vector2(0.03f, 0.03f);
-            hoverText.rectTransform.anchorMax = new Vector2(0.28f, 0.12f);
-            hoverText.rectTransform.offsetMin = Vector2.zero;
-            hoverText.rectTransform.offsetMax = Vector2.zero;
-            hoverText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
-            hoverText.fontSize = 12;
-            hoverText.alignment = TextAnchor.UpperLeft;
-            hoverText.color = new Color(0.90f, 0.92f, 0.85f, 1f);
-            hoverText.text = "Bag\nHover an item for details.";
-            _puzzleItemHoverText = hoverText;
-        }
-
-        private int BuildPuzzleItemSignature()
-        {
-            unchecked
-            {
-                var state = runMapController?.Run?.RunState;
-                if (state == null)
-                {
-                    return -1;
-                }
-
-                var hash = 29;
-                hash = hash * 31 + state.Inventory.Count;
-                hash = hash * 31 + state.ItemSlots;
-                for (var i = 0; i < state.Inventory.Count; i++)
-                {
-                    var item = state.Inventory[i];
-                    hash = hash * 31 + (item?.Id?.GetHashCode() ?? 0);
-                    hash = hash * 31 + (item?.Charges ?? 0);
-                    hash = hash * 31 + (int)(item?.Type ?? ItemType.Solver);
-                    hash = hash * 31 + (int)(item?.Rarity ?? ItemRarity.Normal);
-                }
-
-                return hash;
-            }
-        }
-
-        private void RebuildPuzzleItemBar()
-        {
-            if (sudokuPanel == null || !sudokuPanel.activeSelf)
-            {
-                return;
-            }
-
-            EnsurePuzzleItemBar();
-            var state = runMapController?.Run?.RunState;
-            if (_puzzleItemBarRoot == null || state == null)
-            {
-                return;
-            }
-
-            if (state.TutorialMode)
-            {
-                _puzzleItemBarRoot.gameObject.SetActive(false);
-                return;
-            }
-            _puzzleItemBarRoot.gameObject.SetActive(true);
-
-            var signature = BuildPuzzleItemSignature();
-            if (signature == _lastPuzzleItemSignature)
-            {
-                return;
-            }
-
-            _lastPuzzleItemSignature = signature;
-
-            for (var i = _puzzleItemBarRoot.childCount - 1; i >= 0; i--)
-            {
-                Destroy(_puzzleItemBarRoot.GetChild(i).gameObject);
-            }
-
-            for (var i = 0; i < state.Inventory.Count; i++)
-            {
-                var item = state.Inventory[i];
-                var btn = BuildPanelButton(_puzzleItemBarRoot, $"PuzzleItem_{i}", new Vector2(0f, 1f), new Vector2(150f, 44f), new Color(0.18f, 0.26f, 0.20f, 0.95f));
-                var btnRect = btn.GetComponent<RectTransform>();
-                if (btnRect != null)
-                {
-                    btnRect.anchoredPosition = new Vector2(0f, -i * 48f);
-                }
-
-                var idx = i;
-                btn.onClick.AddListener(() => TryUsePuzzleItem(idx));
-
-                var icon = new GameObject("Icon", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
-                icon.transform.SetParent(btn.transform, false);
-                icon.rectTransform.anchorMin = new Vector2(0.04f, 0.14f);
-                icon.rectTransform.anchorMax = new Vector2(0.30f, 0.86f);
-                icon.rectTransform.offsetMin = Vector2.zero;
-                icon.rectTransform.offsetMax = Vector2.zero;
-                icon.sprite = GetItemSprite(item);
-                icon.preserveAspect = true;
-                icon.color = Color.white;
-
-                var label = btn.GetComponentInChildren<Text>();
-                if (label != null)
-                {
-                    label.alignment = TextAnchor.MiddleLeft;
-                    label.fontSize = 11;
-                    label.text = $"{item.Type}\n{item.Rarity} x{item.Charges}";
-                    label.rectTransform.anchorMin = new Vector2(0.34f, 0.06f);
-                    label.rectTransform.anchorMax = new Vector2(0.98f, 0.94f);
-                    label.rectTransform.offsetMin = Vector2.zero;
-                    label.rectTransform.offsetMax = Vector2.zero;
-                }
-
-                var trigger = btn.gameObject.AddComponent<EventTrigger>();
-                trigger.triggers = new List<EventTrigger.Entry>();
-
-                var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-                enter.callback.AddListener(_ =>
-                {
-                    if (_puzzleItemHoverText != null)
-                    {
-                        _puzzleItemHoverText.text = DescribeItem(item);
-                    }
-                });
-                trigger.triggers.Add(enter);
-
-                var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
-                exit.callback.AddListener(_ =>
-                {
-                    if (_puzzleItemHoverText != null)
-                    {
-                        _puzzleItemHoverText.text = "Bag\nHover an item for details.";
-                    }
-                });
-                trigger.triggers.Add(exit);
-            }
-        }
-
-        private void TryUsePuzzleItem(int index)
-        {
-            var run = runMapController?.Run;
-            var board = run?.CurrentBoard;
-            if (run == null || board == null)
-            {
-                return;
-            }
-
-            if (_selectedRow < 0 || _selectedCol < 0)
-            {
-                if (!TryFindFirstEditableCell(board, out _selectedRow, out _selectedCol))
-                {
-                    SetStatus("Select a cell before using an item.");
-                    return;
-                }
-            }
-
-            // Cancel pending SilkFan if using a different item
-            if (run.IsSilkFanPending)
-            {
-                run.CancelSilkFan();
-                SetStatus("Silk Fan cancelled.");
-            }
-
-            var usedType = run.RunState != null && index >= 0 && index < run.RunState.Inventory.Count && run.RunState.Inventory[index] != null
-                ? run.RunState.Inventory[index].Type
-                : ItemType.Solver;
-
-            if (!run.TryUseInventoryItemAt(index, _selectedRow, _selectedCol, out var message))
-            {
-                // SilkFan phase 1: pending state was set even though used=false
-                if (run.IsSilkFanPending)
-                {
-                    SetStatus(message);
-                    return;
-                }
-                SetStatus(string.IsNullOrWhiteSpace(message) ? "Item usage failed." : message);
-                return;
-            }
-
-            if (usedType == ItemType.Finder)
-            {
-                CaptureFinderHighlights(run);
-            }
-
-            SetStatus(message);
-            _runAudio?.PlayItemUse();
-            RenderBoard(board);
-            RefreshHud();
-            RefreshSolveButtonState();
-            _lastPuzzleItemSignature = int.MinValue;
-            RebuildPuzzleItemBar();
-        }
-
-        private IEnumerator AnimateRewardSlotScale(RectTransform rect, float delay, Vector3 from, Vector3 to)
-        {
-            if (rect == null)
-            {
-                yield break;
-            }
-
-            // Reduce Motion: skip animation entirely
-            if (_accessibility != null && _accessibility.IsReduceMotion)
-            {
-                rect.localScale = to;
-                yield break;
-            }
-
-            if (delay > 0f)
-            {
-                yield return new WaitForSecondsRealtime(delay);
-            }
-
-            var duration = AnimationHelper.RewardSlotDuration;
-            var elapsed = 0f;
-            while (elapsed < duration)
-            {
-                if (rect == null)
-                {
-                    yield break;
-                }
-
-                elapsed += Time.unscaledDeltaTime;
-                var t = Mathf.Clamp01(elapsed / duration);
-                rect.localScale = Vector3.LerpUnclamped(from, to, AnimationHelper.Ease(t, EaseType.EaseOut));
-                yield return null;
-            }
-
-            if (rect != null)
-            {
-                rect.localScale = to;
-            }
-        }
-
-        private void CaptureFinderHighlights(RunDirector run)
-        {
-            _finderHighlightCells.Clear();
-            if (run?.LastFinderHints == null)
-            {
-                return;
-            }
-
-            for (var i = 0; i < run.LastFinderHints.Count; i++)
-            {
-                _finderHighlightCells.Add(run.LastFinderHints[i]);
-            }
-
-            if (_finderHighlightCells.Count > 0)
-            {
-                _finderHighlightUntil = Time.unscaledTime + 2.2f;
-            }
-        }
-
-        private bool ContainsFinderHighlight(int row, int col)
-        {
-            for (var i = 0; i < _finderHighlightCells.Count; i++)
-            {
-                if (_finderHighlightCells[i].Row == row && _finderHighlightCells[i].Col == col)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static string ItemTypeToIconName(ItemType type)
-        {
-            return type switch
-            {
-                ItemType.Solver => "icon_scroll_graph",
-                ItemType.Finder => "icon_compass_of_order",
-                ItemType.InkWell => "icon_ink_save",
-                ItemType.MeditationStone => "icon_stone_altar",
-                ItemType.WindChime => "icon_wind_bell",
-                ItemType.PatternScroll => "icon_language_scroll",
-                ItemType.KoiReflection => "icon_golden_koi",
-                ItemType.LanternOfClarity => "icon_garden_lantern",
-                ItemType.GardenRake => "icon_pebble",
-                ItemType.OfferingBowl => "icon_rice_bowl",
-                ItemType.PruningShears => "icon_pebble",
-                ItemType.ZenSandSifter => "icon_pebble",
-                ItemType.GinkgoLeaf => "icon_golden_bloom",
-                ItemType.RicePaperUmbrella => "icon_pebble",
-                ItemType.TempleIncense => "icon_sacred_bell",
-                ItemType.KoiDragonScale => "icon_golden_koi",
-                ItemType.GoldenKintsugiJar => "icon_broken_mask",
-                ItemType.SilkFan => "icon_pebble",
-                _ => "icon_pebble"
-            };
-        }
-
-        private static Sprite GetFallbackSprite()
-        {
-            return Resources.Load<Sprite>("GeneratedIcons/icon_pebble");
-        }
-
-        private static Sprite GetItemSprite(ItemInstance item)
-        {
-            if (item == null)
-            {
-                return GetFallbackSprite();
-            }
-
-            var iconPath = "GeneratedIcons/" + ItemTypeToIconName(item.Type);
-            var sprite = Resources.Load<Sprite>(iconPath);
-            return sprite ?? GetFallbackSprite();
-        }
-
-        private static Sprite GetRewardSlotSprite(ItemRollSlot slot)
-        {
-            if (slot == null)
-            {
-                return GetFallbackSprite();
-            }
-
-            if (slot.IsNothing)
-            {
-                return Resources.Load<Sprite>("GeneratedIcons/icon_coin_sakura") ?? GetFallbackSprite();
-            }
-
-            return GetItemSprite(slot.RolledItem);
-        }
-
-        private void ClearSelectedCell()
-        {
-            var board = runMapController?.Run?.CurrentBoard;
-            if (board == null)
-            {
-                return;
-            }
-
-            if (_selectedRow < 0 || _selectedCol < 0)
-            {
-                SetStatus("Select a cell first.");
-                return;
-            }
-
-            if (board.IsGiven(_selectedRow, _selectedCol))
-            {
-                SetStatus("Given cells cannot be cleared.");
-                return;
-            }
-
-            board.ClearCell(_selectedRow, _selectedCol);
-            _highlightValue = 0;
-            SetStatus("Cleared selected cell.");
-            RenderBoard(board);
-            RefreshSolveButtonState();
-        }
-
-        private void SetStatus(string message)
-        {
-            if (sudokuStatusText != null)
-            {
-                sudokuStatusText.text = message;
-            }
-        }
-
-        private void TriggerScreenShake(float px, float ms)
-        {
-            if (_accessibility != null && (!_accessibility.ScreenShakeEnabled || _accessibility.IsReduceMotion))
-                return;
-            var target = sudokuPanel != null ? sudokuPanel.transform : transform;
-            StartCoroutine(AnimationHelper.ScreenShake(target, px, ms));
-        }
-
-        private void SquarePathActionButtons()
-        {
-            SetSquareButton(saveQuitPathButton);
-        }
-
-        private static void SetSquareButton(Button button)
-        {
-            if (button == null)
-            {
-                return;
-            }
-
-            var rect = button.GetComponent<RectTransform>();
-            if (rect == null)
-            {
-                return;
-            }
-
-            var height = Mathf.Max(44f, rect.rect.height);
-            rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, height);
-
-            var colors = button.colors;
-            colors.colorMultiplier = 1.45f;
-            colors.fadeDuration = 0.07f;
-            button.colors = colors;
-        }
-
-        private void RefreshHud()
-        {
-            var state = runMapController?.Run?.RunState;
-            if (state == null)
-            {
-                return;
-            }
-
-            UpdateQuitButtonLabels();
-
-            if (hpText != null)
-            {
-                hpText.text = $"HP: {state.CurrentHP}/{state.MaxHP}";
-            }
-
-            if (pencilText != null)
-            {
-                pencilText.text = $"Pencil: {state.CurrentPencil}/{state.MaxPencil}";
-            }
-
-            if (_hpBarFill == null || _pencilBarFill == null)
-            {
-                var panelRect = sudokuPanel != null ? sudokuPanel.GetComponent<RectTransform>() : null;
-                if (panelRect != null)
-                {
-                    var hpBg = panelRect.Find("HpBarBg");
-                    if (hpBg != null) _hpBarFill = hpBg.Find("HpBarFill")?.GetComponent<Image>();
-                    var pencilBg = panelRect.Find("PencilBarBg");
-                    if (pencilBg != null) _pencilBarFill = pencilBg.Find("PencilBarFill")?.GetComponent<Image>();
-                }
-            }
-
-            if (_hpBarFill != null)
-            {
-                EnsureBarFillSprite(_hpBarFill);
-                _hpBarFill.fillAmount = state.MaxHP > 0 ? Mathf.Clamp01(state.CurrentHP / (float)state.MaxHP) : 0f;
-
-                // Colorblind: numeric HP overlay on bar
-                if (_accessibility != null && _accessibility.IsColorblind)
-                {
-                    var hpOverlay = _hpBarFill.transform.Find("HpNumericOverlay");
-                    if (hpOverlay == null)
-                    {
-                        var ovGo = new GameObject("HpNumericOverlay", typeof(RectTransform), typeof(Text));
-                        ovGo.transform.SetParent(_hpBarFill.transform, false);
-                        var ovRect = ovGo.GetComponent<RectTransform>();
-                        ovRect.anchorMin = Vector2.zero;
-                        ovRect.anchorMax = Vector2.one;
-                        ovRect.offsetMin = Vector2.zero;
-                        ovRect.offsetMax = Vector2.zero;
-                        hpOverlay = ovGo.transform;
-                    }
-                    var ovTxt = hpOverlay.GetComponent<Text>();
-                    if (ovTxt != null)
-                    {
-                        ovTxt.text = $"{state.CurrentHP}/{state.MaxHP}";
-                        ovTxt.fontSize = _accessibility.ScaleFont(12);
-                        ovTxt.alignment = TextAnchor.MiddleCenter;
-                        ovTxt.color = Color.white;
-                        ovTxt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-                        ovTxt.fontStyle = FontStyle.Bold;
-                        ovTxt.raycastTarget = false;
-                    }
-                }
-            }
-
-            if (_pencilBarFill != null)
-            {
-                EnsureBarFillSprite(_pencilBarFill);
-                _pencilBarFill.fillAmount = state.MaxPencil > 0 ? Mathf.Clamp01(state.CurrentPencil / (float)state.MaxPencil) : 0f;
-            }
-
-            if (_levelInfoText == null)
-            {
-                var panelRect = sudokuPanel != null ? sudokuPanel.GetComponent<RectTransform>() : null;
-                _levelInfoText = panelRect != null
-                    ? panelRect.Find("SudokuGameplayLevelInfo")?.GetComponent<Text>()
-                    : null;
-            }
-
-            if (_levelInfoText != null)
-            {
-                var isTutorial = runMapController?.Run?.RunState != null && runMapController.Run.RunState.TutorialMode;
-                _levelInfoText.text = isTutorial ? string.Empty : $"Depth: {state.Depth}  Floor: {state.CurrentFloor + 1}";
-            }
-
-            if (_modifiersLabel == null)
-            {
-                var panelRect2 = sudokuPanel != null ? sudokuPanel.GetComponent<RectTransform>() : null;
-                _modifiersLabel = panelRect2 != null
-                    ? panelRect2.Find("SudokuGameplayModifiers")?.GetComponent<Text>()
-                    : null;
-            }
-
-            if (_modifiersLabel != null)
-            {
-                var mods = runMapController?.Run?.CurrentLevelConfig?.ActiveModifiers;
-                if (mods != null && mods.Count > 0)
-                {
-                    var sb = new System.Text.StringBuilder();
-                    sb.Append("Modifiers: ");
-                    for (var m = 0; m < mods.Count; m++)
-                    {
-                        if (m > 0) sb.Append(", ");
-                        sb.Append(mods[m]);
-                    }
-                    _modifiersLabel.text = sb.ToString();
-                }
-                else
-                {
-                    _modifiersLabel.text = string.Empty;
-                }
-            }
-
-            RebuildPuzzleItemBar();
-        }
-
-        private void RefreshSolveButtonState()
-        {
-            if (solveSudokuButton == null)
-            {
-                return;
-            }
-
-            var board = runMapController?.Run?.CurrentBoard;
-            var levelState = runMapController?.Run?.CurrentLevelState;
-            var canEvaluate = board != null && board.IsComplete() && (levelState == null || !levelState.PuzzleComplete);
-            solveSudokuButton.interactable = canEvaluate;
-        }
-
-        private void CheckForGameOver()
-        {
-            if (_gameOverShown)
-            {
-                return;
-            }
-
-            var run = runMapController?.Run;
-            var state = run?.RunState;
-            if (state == null || state.CurrentHP > 0)
-            {
-                return;
-            }
-
-            _gameOverShown = true;
-            ShowGameOver(run);
-        }
-
-        private void ShowGameOver(RunDirector run)
-        {
-            _runAudio?.PlayGameOver();
-            if (sudokuPanel != null)
-            {
-                sudokuPanel.SetActive(false);
-            }
-
-            if (pathOverviewPanel != null)
-            {
-                pathOverviewPanel.SetActive(false);
-            }
-
-            if (gameOverPanel != null)
-            {
-                gameOverPanel.SetActive(true);
-            }
-
-            var result = run.BuildRunResult(victory: false, bossPhaseReached: 0, secondsPlayed: 0);
-            PersistRunResult(result);
-            var presenter = new EndScreenPresenter();
-            if (gameOverSummaryText != null)
-            {
-                gameOverSummaryText.text = presenter.BuildRunOverSummary(result);
-            }
-
-            if (gameOverDetailsText != null)
-            {
-                var goDetails = new StringBuilder();
-                goDetails.AppendLine($"Class: {run.RunState.ClassId}");
-                goDetails.AppendLine($"Depth reached: {run.RunState.Depth}");
-                goDetails.AppendLine($"HP: {run.RunState.CurrentHP}/{run.RunState.MaxHP}");
-                goDetails.AppendLine($"Pencil: {run.RunState.CurrentPencil}/{run.RunState.MaxPencil}");
-                goDetails.AppendLine(string.Empty);
-
-                // XP breakdown (new formula)
-                var cfg = run.CurrentLevelConfig;
-                var lvlState = run.CurrentLevelState;
-                if (cfg != null)
-                {
-                    var xpBreak = XpService.CalculateTile(
-                        cfg.BoardSize, cfg.Stars, cfg.ActiveModifiers?.Count ?? 0,
-                        cfg.IsBoss, (lvlState?.Mistakes ?? 0) == 0);
-                    goDetails.AppendLine("— XP Breakdown —");
-                    goDetails.AppendLine($"Base: {xpBreak.BaseXp} × {xpBreak.StarMult:F1} = {xpBreak.TileXp}");
-                    if (xpBreak.IsBoss) goDetails.AppendLine($"Boss ×1.5");
-                    if (xpBreak.ModifierBonus > 0) goDetails.AppendLine($"Modifier Bonus: +{xpBreak.ModifierBonus}");
-                    if (xpBreak.PerfectBonus > 0) goDetails.AppendLine($"Perfect Bonus: +{xpBreak.PerfectBonus}");
-                    goDetails.AppendLine($"Total XP: +{xpBreak.TotalXp}");
-                    goDetails.AppendLine(string.Empty);
-                }
-                else
-                {
-                    goDetails.AppendLine($"XP Gained: +{result.XpEarned}");
-                    goDetails.AppendLine(string.Empty);
-                }
-
-                // Class-level progress after XP was applied
-                var gSave = new SaveFileService();
-                var gProfile = new ProfileService();
-                if (gSave.TryLoadProfile(out var gEnv))
-                {
-                    gProfile.ApplyEnvelope(gEnv);
-                    var prog   = gProfile.Meta.GardenProgression;
-
-                    // Per-class level
-                    ClassGardenProgressEntry classEntry = null;
-                    if (prog != null)
-                    {
-                        for (var ci = 0; ci < prog.ClassEntries.Count; ci++)
+                    // Bag is full — show replacement panel before finishing the reward
+                    ShowBagSwapPanel(
+                        claimed,
+                        slotToReplace =>
                         {
-                            if (prog.ClassEntries[ci].ClassId == run.RunState.ClassId)
-                            {
-                                classEntry = prog.ClassEntries[ci];
-                                break;
-                            }
-                        }
-                    }
-
-                    if (classEntry != null)
-                    {
-                        var (classLevel, classProgressXp, classXpToNext) = XpService.DeriveLevel(classEntry.TotalXp);
-                        var pctClass = classXpToNext > 0 ? Mathf.Clamp01((float)classProgressXp / classXpToNext) : 1f;
-                        goDetails.AppendLine($"Class Level {classLevel}  ({Mathf.RoundToInt(pctClass * 100f)}%)");
-                        goDetails.AppendLine($"XP {classProgressXp}/{classXpToNext}");
-                        var nextUnlock = ClassGardenProgressionService.GetNextUnlock(run.RunState.ClassId, classLevel);
-                        if (nextUnlock != "Max Level")
-                            goDetails.AppendLine($"Next: {nextUnlock}");
-                        else
-                            goDetails.AppendLine("Class Max Level");
-                    }
+                            run.ReplaceItemInInventory(slotToReplace, claimed);
+                            new ProfileService(new SaveFileService()).RecordItemDiscovery(claimed.Type);
+                            _awaitingReward = false;
+                            _rewardSlots.Clear();
+                            HidePanel(_rewardPanel);
+                            HidePanel(_bagSwapPanel);
+                            HandlePostReward();
+                        },
+                        () =>
+                        {
+                            // Abort — skip this reward slot
+                            _awaitingReward = false;
+                            _rewardSlots.Clear();
+                            HidePanel(_rewardPanel);
+                            HidePanel(_bagSwapPanel);
+                            HandlePostReward();
+                        });
+                    return;
                 }
 
-                gameOverDetailsText.text = goDetails.ToString().TrimEnd();
+                run.PickRewardItem(index);
+                new ProfileService(new SaveFileService()).RecordItemDiscovery(claimed.Type);
             }
 
-            SetStatus("Game Over");
+            _awaitingReward = false;
+            _rewardSlots.Clear();
+            HidePanel(_rewardPanel);
+            HandlePostReward();
         }
 
-        private void BuildModifierOverlays()
+        private void HandlePostReward()
         {
-            ClearOverlayObjects();
-            var run = runMapController?.Run;
-            var overlay = run?.CurrentOverlayData;
+            var node = _map?.Run?.GetCurrentNode();
+            if (node != null && node.Type == NodeType.Boss)
+            {
+                var s = _map.Run.State;
+                if (s.CurrentFloor >= s.TotalFloors - 1)
+                {
+                    ShowGameOver(_map.Run, true);
+                    return;
+                }
+                _map.AdvanceToNextFloor();
+                SetStatus("Garden cleared! Next floor...");
+            }
+            ShowPath();
+        }
+
+        // ────────────────────── Bag-full swap panel ──────────────────────
+
+        private void ShowBagSwapPanel(ItemInstance newItem, System.Action<int> onReplace, System.Action onAbort)
+        {
+            _pendingSwapItem = newItem;
+            _onSwapSlotChosen = onReplace;
+            _onSwapAborted = onAbort;
+
+            // Lazily create the panel parented to path panel (or canvas root if needed)
+            var parent = _pathPanel?.transform ?? FindFirstObjectByType<Canvas>()?.transform;
+            if (parent == null) return;
+
+            if (_bagSwapPanel != null) Destroy(_bagSwapPanel);
+            _bagSwapPanel = new GameObject("BagSwapPanel", typeof(RectTransform), typeof(Image));
+            _bagSwapPanel.transform.SetParent(parent, false);
+            var rt = _bagSwapPanel.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.25f, 0.25f);
+            rt.anchorMax = new Vector2(0.75f, 0.75f);
+            rt.offsetMin = rt.offsetMax = Vector2.zero;
+            _bagSwapPanel.GetComponent<Image>().color = new Color(0.07f, 0.10f, 0.14f, 0.97f);
+
+            var outline = _bagSwapPanel.AddComponent<Outline>();
+            outline.effectColor = new Color(AccentGold.r, AccentGold.g, AccentGold.b, 0.6f);
+            outline.effectDistance = new Vector2(2f, -2f);
+
+            var title = CreateText(_bagSwapPanel.transform, "SwapTitle",
+                $"Bag Full — Choose a slot to replace with:\n{ItemService.GetItemName(newItem.Type)} ({newItem.Rarity})\n{ItemService.GetItemDescription(newItem.Type, newItem.Rarity)}",
+                13, TextAnchor.UpperCenter, AccentGold);
+            title.rectTransform.anchorMin = new Vector2(0.04f, 0.72f);
+            title.rectTransform.anchorMax = new Vector2(0.96f, 0.98f);
+            title.rectTransform.offsetMin = title.rectTransform.offsetMax = Vector2.zero;
+
+            var run = _map?.Run;
+            var heldItems = run?.State?.HeldItems;
+            var slotCount = run?.State?.ItemSlots ?? 0;
+
+            for (var i = 0; i < slotCount; i++)
+            {
+                var item = (heldItems != null && i < heldItems.Count) ? heldItems[i] : null;
+                var col = i % 3;
+                var row = i / 3;
+                var xMin = 0.05f + col * 0.32f;
+                var yMax = 0.68f - row * 0.25f;
+                var label = item != null
+                    ? $"{ItemService.GetItemName(item.Type)}\n{item.Rarity}"
+                    : "Empty";
+                var slotBtn = CreatePanelButton(_bagSwapPanel.transform, $"SwapSlot_{i}",
+                    new Vector2(xMin, yMax - 0.20f), new Vector2(xMin + 0.29f, yMax), label);
+                if (item != null)
+                    SetButtonIcon(slotBtn, ItemService.GetIconName(item.Type));
+                var capturedIdx = i;
+                slotBtn.onClick.AddListener(() => _onSwapSlotChosen?.Invoke(capturedIdx));
+            }
+
+            var abortBtn = CreatePanelButton(_bagSwapPanel.transform, "SwapAbort",
+                new Vector2(0.30f, 0.04f), new Vector2(0.70f, 0.14f), "Keep Bag (Abort)");
+            abortBtn.onClick.AddListener(() => _onSwapAborted?.Invoke());
+
+            _bagSwapPanel.SetActive(true);
+        }
+
+        // ────────────────────── Shop ──────────────────────
+
+        private void HandleShop()
+        {
+            var run = _map?.Run;
+            if (run == null) return;
+
+            BuildShopPanel();
+            _shopOffers.Clear();
+            _shopOffers.AddRange(run.BuildShopOffers());
+            RebuildShopButtons();
+            if (_shopPanel != null) _shopPanel.SetActive(true);
+        }
+
+        private void BuildShopPanel()
+        {
+            if (_shopPanel != null || _pathPanel == null) return;
+            _shopPanel = CreateOverlayPanel(_pathPanel.transform, "ShopPanel", "Shop");
+            _shopSummary = _shopPanel.transform.Find("Summary")?.GetComponent<Text>();
+            _shopPanel.SetActive(false);
+        }
+
+        private void RebuildShopButtons()
+        {
+            if (_shopPanel == null) return;
+            ClearNamedChildren(_shopPanel.transform, "Offer_");
+            _selectedShopOffer = -1;
+
+            var s = _map?.Run?.State;
+            if (_shopSummary != null && s != null)
+                _shopSummary.text = $"Gold: {s.CurrentGold}  |  Click an item to preview, then press Buy.";
+
+            for (var i = 0; i < Mathf.Min(3, _shopOffers.Count); i++)
+            {
+                var offer = _shopOffers[i];
+                var label = offer.Item != null
+                    ? $"{ItemService.GetItemName(offer.Item.Type)}\n{offer.Price}g"
+                    : $"Offer {offer.Price}g";
+                var btn = CreatePanelButton(_shopPanel.transform, $"Offer_{i}",
+                    new Vector2(0.08f + i * 0.29f, 0.40f), new Vector2(0.08f + i * 0.29f + 0.26f, 0.70f), label);
+                if (offer.Item != null)
+                    SetButtonIcon(btn, ItemService.GetIconName(offer.Item.Type));
+                var idx = i;
+                btn.onClick.AddListener(() => SelectShopOffer(idx));
+            }
+
+            // Buy button (disabled until an offer is selected)
+            var buyBtn = CreatePanelButton(_shopPanel.transform, "Offer_buy",
+                new Vector2(0.35f, 0.26f), new Vector2(0.65f, 0.36f), "Buy");
+            buyBtn.interactable = false;
+            buyBtn.gameObject.name = "ShopBuyBtn";
+            buyBtn.onClick.AddListener(TryBuySelectedOffer);
+
+            var skip = CreatePanelButton(_shopPanel.transform, "Offer_skip",
+                new Vector2(0.35f, 0.13f), new Vector2(0.65f, 0.23f), "Skip");
+            skip.onClick.AddListener(() =>
+            {
+                _shopOffers.Clear();
+                _selectedShopOffer = -1;
+                HidePanel(_shopPanel);
+                _pathMessage = "Shop skipped.";
+            });
+        }
+
+        private void SelectShopOffer(int idx)
+        {
+            _selectedShopOffer = idx;
+            var offer = (idx >= 0 && idx < _shopOffers.Count) ? _shopOffers[idx] : null;
+
+            // Update summary with item description
+            if (_shopSummary != null && offer != null)
+            {
+                var s = _map?.Run?.State;
+                var goldTxt = s != null ? $"Gold: {s.CurrentGold}  |  " : "";
+                var desc = offer.Item != null
+                    ? $"{goldTxt}{ItemService.GetItemName(offer.Item.Type)} ({offer.Item.Rarity}) — {offer.Price}g\n{ItemService.GetItemDescription(offer.Item.Type, offer.Item.Rarity)}"
+                    : $"{goldTxt}Offer — {offer.Price}g";
+                _shopSummary.text = desc;
+            }
+
+            // Highlight selected, un-highlight others; enable Buy button
+            for (var i = 0; i < Mathf.Min(3, _shopOffers.Count); i++)
+            {
+                var offerGo = _shopPanel?.transform.Find($"Offer_{i}");
+                if (offerGo == null) continue;
+                var btn = offerGo.GetComponent<Button>();
+                if (btn == null) continue;
+                var cols = btn.colors;
+                cols.normalColor = (i == idx) ? new Color(AccentGold.r, AccentGold.g, AccentGold.b, 0.45f) : BtnColor;
+                btn.colors = cols;
+            }
+
+            var buyGo = _shopPanel?.transform.Find("ShopBuyBtn");
+            if (buyGo != null)
+            {
+                var buyBtn = buyGo.GetComponent<Button>();
+                if (buyBtn != null) buyBtn.interactable = true;
+            }
+        }
+
+        private void TryBuySelectedOffer()
+        {
+            var run = _map?.Run;
+            if (run == null || _selectedShopOffer < 0 || _selectedShopOffer >= _shopOffers.Count) return;
+            var offer = _shopOffers[_selectedShopOffer];
+            if (offer == null || offer.Item == null) return;
+
+            // Gold check before proceeding
+            if (run.State.CurrentGold < offer.Price) { SetStatus("Not enough gold."); return; }
+
+            if (offer.Item != null && run.IsBagFull())
+            {
+                // Bag is full — show swap panel; deduct gold only after confirmed
+                ShowBagSwapPanel(
+                    offer.Item,
+                    slotToReplace =>
+                    {
+                        if (!run.TryPurchaseShopOffer(_selectedShopOffer))
+                        {
+                            SetStatus("Not enough gold.");
+                            HidePanel(_bagSwapPanel);
+                            return;
+                        }
+                        // AddItemToInventory inside TryPurchaseShopOffer silently fails (bag full),
+                        // so manually replace the chosen slot with the purchased item.
+                        run.ReplaceItemInInventory(slotToReplace, offer.Item);
+                        new ProfileService(new SaveFileService()).RecordItemDiscovery(offer.Item.Type);
+                        _shopOffers.Clear();
+                        _selectedShopOffer = -1;
+                        HidePanel(_shopPanel);
+                        HidePanel(_bagSwapPanel);
+                        _pathMessage = "Purchased!";
+                        RefreshPathOverview();
+                    },
+                    () => HidePanel(_bagSwapPanel));
+                return;
+            }
+
+            if (!run.TryPurchaseShopOffer(_selectedShopOffer)) { SetStatus("Not enough gold."); return; }
+            var purchasedItem = offer.Item;
+            _shopOffers.Clear();
+            _selectedShopOffer = -1;
+            HidePanel(_shopPanel);
+            _pathMessage = "Purchased!";
+            if (purchasedItem != null)
+                new ProfileService(new SaveFileService()).RecordItemDiscovery(purchasedItem.Type);
+            RefreshPathOverview();
+        }
+
+        // ────────────────────── Rest / Event / Relic nodes ──────────────────────
+
+        private void HandleRest()
+        {
+            var s = _map?.Run?.State;
+            if (s == null) return;
+            var heal = Mathf.Max(1, Mathf.CeilToInt(s.MaxHP * 0.10f));
+            var before = s.CurrentHP;
+            s.CurrentHP = Mathf.Min(s.MaxHP, s.CurrentHP + heal);
+            _pathMessage = $"Rested. HP {before} -> {s.CurrentHP}";
+        }
+
+        private void HandleEvent()
+        {
+            var evt = _map.OpenEventNode();
+            if (evt == null || evt.Options.Count == 0)
+            {
+                _pathMessage = "Event: nothing happened.";
+                return;
+            }
+            _map.ChooseEventOption(0);
+            _pathMessage = $"Event: {evt.Title}\nChose: {evt.Options[0].Label}";
+        }
+
+        private void HandleRelic()
+        {
+            var run = _map?.Run;
+            if (run == null) return;
+            var relic = run.RollRelicReward();
+            if (relic == null) return;
+            run.AcceptRelic(relic);
+            new ProfileService(new SaveFileService()).RecordRelicDiscovery(relic.Id);
+            _pathMessage = $"Relic: {relic.Id}";
+        }
+
+        // ────────────────────── Boss gate ──────────────────────
+
+        private void ShowBossGateChoice()
+        {
+            if (_awaitingBossGate) return;
+            var run = _map?.Run;
+            if (run == null) return;
+
+            _bossGateOptions.Clear();
+            _selectedBossMods.Clear();
+            var choices = run.RollBossModifierChoices();
+            if (choices != null) _bossGateOptions.AddRange(choices);
+            if (_bossGateOptions.Count == 0) return;
+
+            run.GetBossModifierCounts(out _, out _bossPicksRequired);
+            _awaitingBossGate = true;
+            BuildBossGatePanel();
+        }
+
+        private void BuildBossGatePanel()
+        {
+            if (_bossGatePanel != null) Destroy(_bossGatePanel);
+            var canvas = FindFirstObjectByType<Canvas>();
+            if (canvas == null) return;
+
+            _bossGatePanel = new GameObject("BossGatePanel", typeof(RectTransform), typeof(Image));
+            _bossGatePanel.transform.SetParent(canvas.transform, false);
+            var pr = _bossGatePanel.GetComponent<RectTransform>();
+            pr.anchorMin = new Vector2(0.15f, 0.10f);
+            pr.anchorMax = new Vector2(0.85f, 0.90f);
+            pr.offsetMin = Vector2.zero;
+            pr.offsetMax = Vector2.zero;
+            _bossGatePanel.GetComponent<Image>().color = PanelBg;
+
+            _bossGateTitle = CreateText(_bossGatePanel.transform, "Title",
+                $"Boss Gate — Pick {_bossPicksRequired} Modifiers (0/{_bossPicksRequired})",
+                18, TextAnchor.MiddleCenter, AccentGold);
+            _bossGateTitle.rectTransform.anchorMin = new Vector2(0.05f, 0.90f);
+            _bossGateTitle.rectTransform.anchorMax = new Vector2(0.95f, 0.98f);
+            _bossGateTitle.rectTransform.offsetMin = Vector2.zero;
+            _bossGateTitle.rectTransform.offsetMax = Vector2.zero;
+
+            var run2 = _map?.Run;
+            var seenMods = run2?.State?.SeenBossModifiers;
+            for (var i = 0; i < _bossGateOptions.Count; i++)
+            {
+                var mod = _bossGateOptions[i];
+                var seen = seenMods != null && seenMods.Contains(mod);
+                var col = i % 3; var row = i / 3;
+                var xMin = 0.05f + col * 0.31f;
+                var yMax = 0.85f - row * 0.25f;
+                var labelText = seen ? $"{FormatModName(mod)}\n{GetModDesc(mod)}" : "???";
+                var btn = CreatePanelButton(_bossGatePanel.transform, $"Mod_{i}",
+                    new Vector2(xMin, yMax - 0.22f), new Vector2(xMin + 0.28f, yMax),
+                    labelText);
+                SetButtonIcon(btn, seen ? BossService.GetIconName(mod) : null, !seen);
+                var captured = mod;
+                btn.onClick.AddListener(() => ToggleBossModSelection(captured, btn));
+            }
+
+            // Confirm button (disabled until enough picks)
+            var confirmBtn = CreatePanelButton(_bossGatePanel.transform, "ConfirmBoss",
+                new Vector2(0.35f, 0.02f), new Vector2(0.65f, 0.10f),
+                "Confirm");
+            confirmBtn.interactable = false;
+            confirmBtn.onClick.AddListener(ConfirmBossGateAll);
+            confirmBtn.gameObject.name = "ConfirmBossBtn";
+        }
+
+        private void ToggleBossModSelection(BossModifierId mod, Button btn)
+        {
+            if (_selectedBossMods.Contains(mod))
+            {
+                _selectedBossMods.Remove(mod);
+                var colors = btn.colors;
+                colors.normalColor = BtnColor;
+                btn.colors = colors;
+            }
+            else if (_selectedBossMods.Count < _bossPicksRequired)
+            {
+                _selectedBossMods.Add(mod);
+                var colors = btn.colors;
+                colors.normalColor = new Color(AccentGold.r, AccentGold.g, AccentGold.b, 0.5f);
+                btn.colors = colors;
+            }
+
+            // Update title
+            if (_bossGateTitle != null)
+                _bossGateTitle.text = $"Boss Gate — Pick {_bossPicksRequired} Modifiers ({_selectedBossMods.Count}/{_bossPicksRequired})";
+
+            // Enable/disable confirm
+            var confirmGo = _bossGatePanel?.transform.Find("ConfirmBossBtn");
+            if (confirmGo != null)
+            {
+                var confirmBtn = confirmGo.GetComponent<Button>();
+                if (confirmBtn != null)
+                    confirmBtn.interactable = _selectedBossMods.Count >= _bossPicksRequired;
+            }
+        }
+
+        private void ConfirmBossGateAll()
+        {
+            _awaitingBossGate = false;
+            var run = _map?.Run;
+            if (run != null) run.ChooseBossModifiers(new List<BossModifierId>(_selectedBossMods));
+            if (_bossGatePanel != null) { Destroy(_bossGatePanel); _bossGatePanel = null; }
+
+            // Directly advance to the boss node (skip boss gate check)
+            var idx = _bossNodeIndex;
+            _bossNodeIndex = -1;
+            if (idx < 0) return;
+
+            if (!_map.TryAdvanceToNodeAndStartPuzzle(idx, out _, out var level)) return;
+            _pathMessage = string.Empty;
+            _completionHandled = false;
+            _gameOverShown = false;
+            _overlaysBuilt = false;
+            _selectedRow = -1;
+            _selectedCol = -1;
+            _highlightValue = 0;
+            if (level == null) { ShowPath(); return; }
+            SetStatus($"Boss - {level.BoardSize}x{level.BoardSize} {level.Stars}*");
+            ShowSudoku();
+            RebuildBoard();
+        }
+
+        // ────────────────────── Modifier overlay rendering ──────────────────────
+
+        private void BuildOverlays()
+        {
+            ClearOverlays();
+            var overlay = _map?.Run?.CurrentOverlay;
             if (overlay == null || _cells.Count == 0) return;
+            EnsureOverlayRoot();
+            CopyRectTransform(_gridRoot, _gridOverlayRoot);
 
-            EnsureGridOverlayRoot();
-            // Sync overlay position/size with grid in case board size changed
-            _gridOverlayRoot.anchoredPosition = sudokuGridRoot.anchoredPosition;
-            _gridOverlayRoot.sizeDelta = sudokuGridRoot.sizeDelta;
-
-            var size = _boardSize;
-            var grid = sudokuGridRoot.GetComponent<GridLayoutGroup>();
+            var grid = _gridRoot.GetComponent<GridLayoutGroup>();
             if (grid == null) return;
+            var cW = grid.cellSize.x; var cH = grid.cellSize.y;
+            var sX = grid.spacing.x; var sY = grid.spacing.y;
+            var tW = cW * _boardSize + sX * (_boardSize - 1);
+            var tH = cH * _boardSize + sY * (_boardSize - 1);
 
-            var cellW = grid.cellSize.x;
-            var cellH = grid.cellSize.y;
-            var spaceX = grid.spacing.x;
-            var spaceY = grid.spacing.y;
-            var totalW = (cellW * size) + (spaceX * (size - 1));
-            var totalH = (cellH * size) + (spaceY * (size - 1));
-
-            // Refresh accessibility state for this render pass
-            _accessibility?.Refresh();
-
-            // Lines (whispers, parity, renban, palindrome, thermo, between lines)
+            // Lines — draw thin connecting spine first, then circles around each cell
+            var lineWidthMult = _accessibility.GetLineWidthMultiplier();
             for (var li = 0; li < overlay.Lines.Count; li++)
             {
                 var line = overlay.Lines[li];
-                var lineColor = GetLineColor(line.Type);
-                var dashPattern = _accessibility?.GetLineDashPattern(line.Type);
+                var color = GetLineColor(line.Type);
+                var spineAlpha = new Color(color.r, color.g, color.b,
+                    _accessibility.GetOverlayAlpha(color.a * 0.50f));
+                var spineW = 3f * lineWidthMult;
+
+                // Spine (thin line between cell-edge midpoints so numbers stay readable)
                 for (var ci = 0; ci < line.Cells.Count - 1; ci++)
-                {
-                    var a = line.Cells[ci];
-                    var b = line.Cells[ci + 1];
-                    DrawLineBetweenCells(a, b, lineColor, 4f, cellW, cellH, spaceX, spaceY, totalW, totalH, dashPattern);
-                }
+                    DrawOverlayLine(line.Cells[ci], line.Cells[ci + 1], spineAlpha, spineW, cW, cH, sX, sY, tW, tH);
 
+                // Circles per cell — hollow ring outline
+                var ringOuter = Mathf.Min(cW, cH) * 0.44f;
                 for (var ci = 0; ci < line.Cells.Count; ci++)
-                {
-                    var c = line.Cells[ci];
-                    DrawCellDot(c, lineColor, 8f, cellW, cellH, spaceX, spaceY, totalW, totalH);
-                }
+                    DrawRingDot(line.Cells[ci], color, ringOuter, cW, cH, sX, sY, tW, tH);
 
-                // Thermo: large bulb circle at start cell
+                // Thermo: filled bulb at start
                 if (line.Type == LineType.Thermo && line.Cells.Count > 0)
+                    DrawDot(line.Cells[0], color, ringOuter + 4f, cW, cH, sX, sY, tW, tH);
+
+                // SlowThermo: open (ring) bulb at start — distinguishes from strict thermo
+                if (line.Type == LineType.SlowThermo && line.Cells.Count > 0)
+                    DrawRingDot(line.Cells[0], color, ringOuter + 5f, cW, cH, sX, sY, tW, tH);
+
+                // BetweenLine: hollow dots at both ends (larger ring for emphasis)
+                if (line.Type == LineType.BetweenLine && line.Cells.Count >= 2)
                 {
-                    DrawCellDot(line.Cells[0], lineColor, 18f, cellW, cellH, spaceX, spaceY, totalW, totalH);
-                    var thermoLabel = _accessibility?.GetThermoBulbLabel();
-                    if (thermoLabel != null)
-                        DrawOverlayLabel(line.Cells[0], thermoLabel, 14, cellW, cellH, spaceX, spaceY, totalW, totalH);
+                    var last = line.Cells[line.Cells.Count - 1];
+                    DrawRingDot(line.Cells[0], color, ringOuter + 4f, cW, cH, sX, sY, tW, tH);
+                    DrawRingDot(last, color, ringOuter + 4f, cW, cH, sX, sY, tW, tH);
                 }
 
-                // Between Lines: hollow circles at both endpoints
-                if (line.Type == LineType.BetweenLines && line.Cells.Count >= 2)
+                // UniqueSetLine: small "U" ring at both endpoints
+                if (line.Type == LineType.UniqueSetLine && line.Cells.Count >= 2)
                 {
-                    DrawCellDot(line.Cells[0], lineColor, 14f, cellW, cellH, spaceX, spaceY, totalW, totalH);
-                    DrawCellDot(line.Cells[0], new Color(0f, 0f, 0f, 0f), 9f, cellW, cellH, spaceX, spaceY, totalW, totalH);
-                    DrawCellDot(line.Cells[line.Cells.Count - 1], lineColor, 14f, cellW, cellH, spaceX, spaceY, totalW, totalH);
-                    DrawCellDot(line.Cells[line.Cells.Count - 1], new Color(0f, 0f, 0f, 0f), 9f, cellW, cellH, spaceX, spaceY, totalW, totalH);
-                    var betweenLabel = _accessibility?.GetBetweenEndpointLabel();
-                    if (betweenLabel != null)
-                    {
-                        DrawOverlayLabel(line.Cells[0], betweenLabel, 12, cellW, cellH, spaceX, spaceY, totalW, totalH);
-                        DrawOverlayLabel(line.Cells[line.Cells.Count - 1], betweenLabel, 12, cellW, cellH, spaceX, spaceY, totalW, totalH);
-                    }
+                    DrawRingDot(line.Cells[0], color, ringOuter + 3f, cW, cH, sX, sY, tW, tH);
+                    DrawRingDot(line.Cells[line.Cells.Count - 1], color, ringOuter + 3f, cW, cH, sX, sY, tW, tH);
                 }
             }
 
-            // Kropki dots — white = hollow white circle, black = filled black circle
-            for (var di = 0; di < overlay.Dots.Count; di++)
+            // Kropki dots (white/black standard + sum-labelled dots)
+            for (var di = 0; di < overlay.KropkiDots.Count; di++)
             {
-                var dot = overlay.Dots[di];
+                var dot = overlay.KropkiDots[di];
                 var mr = (dot.CellA.Row + dot.CellB.Row) / 2f;
                 var mc = (dot.CellA.Col + dot.CellB.Col) / 2f;
-                var posX = mc * (cellW + spaceX) + cellW * 0.5f - totalW * 0.5f;
-                var posY = -(mr * (cellH + spaceY) + cellH * 0.5f - totalH * 0.5f);
-                if (dot.Type == DotType.White)
+                var px = mc * (cW + sX) + cW * 0.5f - tW * 0.5f;
+                var py = -(mr * (cH + sY) + cH * 0.5f - tH * 0.5f);
+                if (dot.SumValue > 0)
                 {
-                    // Hollow white circle: outer white ring + transparent inner
-                    DrawOverlayCircle(posX, posY, 10f, WhiteDotColor);
-                    DrawOverlayCircle(posX, posY,  6f, new Color(0f, 0f, 0f, 0f)); // punch out centre
+                    // Sum Kropki: grey circle with sum label
+                    DrawCircle(px, py, 12f, new Color(0.45f, 0.45f, 0.50f, 0.90f));
+                    DrawOverlayText(px, py, dot.SumValue.ToString(), 9, new Color(1f, 1f, 1f, 1f));
                 }
+                else if (dot.IsBlack)
+                    DrawCircle(px, py, 10f, new Color(0.1f, 0.1f, 0.1f, 0.9f));
                 else
-                {
-                    // Filled black circle
-                    DrawOverlayCircle(posX, posY, 10f, BlackDotColor);
-                }
-
-                // Accessibility: add text label on dot
-                var dotLabel = _accessibility?.GetDotLabel(dot.Type);
-                if (dotLabel != null)
-                    DrawOverlayTextAt(posX, posY, dotLabel, 11, Color.white);
+                    DrawRingAtPos(px, py, 10f, new Color(0.95f, 0.95f, 0.95f, 0.85f));
             }
 
-            // Killer cages — record cage edges and draw sum text
-            _cageBorderEdges.Clear();
-            for (var ci = 0; ci < overlay.Cages.Count; ci++)
+            // Pair constraints (Greater/Less Than and XV Pairs)
+            if (overlay.PairConstraints != null)
             {
-                var cage = overlay.Cages[ci];
-                for (var c = 0; c < cage.Cells.Count; c++)
+                for (var pi = 0; pi < overlay.PairConstraints.Count; pi++)
                 {
-                    var cell = cage.Cells[c];
-                    RecordCageEdges(cage, cell.Row, cell.Col, size);
+                    var pair = overlay.PairConstraints[pi];
+                    var mr = (pair.CellA.Row + pair.CellB.Row) / 2f;
+                    var mc = (pair.CellA.Col + pair.CellB.Col) / 2f;
+                    var px = mc * (cW + sX) + cW * 0.5f - tW * 0.5f;
+                    var py = -(mr * (cH + sY) + cH * 0.5f - tH * 0.5f);
+                    string label;
+                    Color labelColor;
+                    switch (pair.Type)
+                    {
+                        case PairConstraintType.GreaterThan:
+                            label = ">"; labelColor = new Color(0.95f, 0.70f, 0.20f, 0.90f); break;
+                        case PairConstraintType.LessThan:
+                            label = "<"; labelColor = new Color(0.95f, 0.70f, 0.20f, 0.90f); break;
+                        case PairConstraintType.SumX:
+                            label = "X"; labelColor = new Color(0.20f, 0.80f, 0.90f, 0.90f); break;
+                        case PairConstraintType.SumV:
+                            label = "V"; labelColor = new Color(0.20f, 0.80f, 0.90f, 0.90f); break;
+                        case PairConstraintType.SumK:
+                            label = pair.Value.ToString(); labelColor = new Color(0.20f, 0.80f, 0.90f, 0.90f); break;
+                        default:
+                            label = "?"; labelColor = Color.white; break;
+                    }
+                    DrawOverlayText(px, py, label, 11, labelColor);
                 }
+            }
 
-                // Sum label on first cell (top-left of cage)
-                var topLeft = cage.Cells[0];
+            // Killer cages
+            _cageBorderEdges.Clear();
+            for (var ci = 0; ci < overlay.KillerCages.Count; ci++)
+            {
+                var cage = overlay.KillerCages[ci];
+                for (var c = 0; c < cage.Cells.Count; c++)
+                    RecordCageEdges(cage, cage.Cells[c].Row, cage.Cells[c].Col);
+
+                var tl = cage.Cells[0];
                 for (var c = 1; c < cage.Cells.Count; c++)
                 {
                     var cc = cage.Cells[c];
-                    if (cc.Row < topLeft.Row || (cc.Row == topLeft.Row && cc.Col < topLeft.Col))
-                        topLeft = cc;
+                    if (cc.Row < tl.Row || (cc.Row == tl.Row && cc.Col < tl.Col)) tl = cc;
                 }
-
-                // Place cage sum: background Image parent + Text child (avoids multiple Graphic on same object)
-                var tlX = topLeft.Col * (cellW + spaceX) - totalW * 0.5f;
-                var tlY = totalH * 0.5f - topLeft.Row * (cellH + spaceY);
-
-                var sumBgGo = new GameObject("CageSumBg", typeof(RectTransform), typeof(Image));
-                sumBgGo.transform.SetParent(_gridOverlayRoot, false);
-                var sumBgRect = sumBgGo.GetComponent<RectTransform>();
-                sumBgRect.anchorMin = new Vector2(0.5f, 0.5f);
-                sumBgRect.anchorMax = new Vector2(0.5f, 0.5f);
-                sumBgRect.pivot = new Vector2(0f, 1f);
-                sumBgRect.anchoredPosition = new Vector2(tlX, tlY);
-                sumBgRect.sizeDelta = new Vector2(cellW * 0.46f, cellH * 0.30f);
-                var sumBgImg = sumBgGo.GetComponent<Image>();
-                sumBgImg.color = new Color(0f, 0f, 0f, 0.65f);
-                sumBgImg.raycastTarget = false;
-
-                var sumTextGo = new GameObject("CageSumText", typeof(RectTransform), typeof(Text));
-                sumTextGo.transform.SetParent(sumBgGo.transform, false);
-                var sumTextRect = sumTextGo.GetComponent<RectTransform>();
-                sumTextRect.anchorMin = Vector2.zero;
-                sumTextRect.anchorMax = Vector2.one;
-                sumTextRect.offsetMin = Vector2.zero;
-                sumTextRect.offsetMax = Vector2.zero;
-                var sumText = sumTextGo.GetComponent<Text>();
-                sumText.text = cage.Sum.ToString();
-                sumText.fontSize = _accessibility?.ScaleFont(11) ?? 11;
-                sumText.alignment = TextAnchor.MiddleCenter;
-                sumText.color = new Color(0.90f, 0.15f, 0.12f, 1f);
-                sumText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-                sumText.raycastTarget = false;
-
-                _overlayObjects.Add(sumBgGo);
-            }
-
-            // Red board border strips when Killer Cage is active
-            if (overlay.Cages.Count > 0)
-            {
-                const float bt = 4f; // border thickness
-                var redBorder = new Color(0.85f, 0.15f, 0.12f, 0.85f);
-                // Top
-                DrawBorderStrip("KCBorderTop",    _gridOverlayRoot, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, 0f), new Vector2(0f, bt), redBorder);
-                // Bottom
-                DrawBorderStrip("KCBorderBottom", _gridOverlayRoot, new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0f, -bt), new Vector2(0f, 0f), redBorder);
-                // Left
-                DrawBorderStrip("KCBorderLeft",   _gridOverlayRoot, new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(-bt, 0f), new Vector2(0f, 0f), redBorder);
-                // Right
-                DrawBorderStrip("KCBorderRight",  _gridOverlayRoot, new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(0f, 0f), new Vector2(bt, 0f), redBorder);
+                var tlX = tl.Col * (cW + sX) - tW * 0.5f;
+                var tlY = tH * 0.5f - tl.Row * (cH + sY);
+                DrawCageSum(tlX, tlY, cage.Sum, cW, cH);
             }
 
             // Arrows
             for (var ai = 0; ai < overlay.Arrows.Count; ai++)
             {
                 var arrow = overlay.Arrows[ai];
-                // Hollow circle: outer ring + inner cutout
-                DrawCellDot(arrow.Circle, ArrowCircleColor, 18f, cellW, cellH, spaceX, spaceY, totalW, totalH);
-                DrawCellDot(arrow.Circle, ArrowCircleInnerColor, 11f, cellW, cellH, spaceX, spaceY, totalW, totalH);
-
-                var arrowLabel = _accessibility?.GetArrowCircleLabel();
-                if (arrowLabel != null)
-                    DrawOverlayLabel(arrow.Circle, arrowLabel, 12, cellW, cellH, spaceX, spaceY, totalW, totalH);
-
-                if (arrow.Path.Count > 0)
-                    DrawLineBetweenCells(arrow.Circle, arrow.Path[0], ArrowPathColor, 3f, cellW, cellH, spaceX, spaceY, totalW, totalH);
-
-                for (var pi = 0; pi < arrow.Path.Count - 1; pi++)
-                    DrawLineBetweenCells(arrow.Path[pi], arrow.Path[pi + 1], ArrowPathColor, 3f, cellW, cellH, spaceX, spaceY, totalW, totalH);
-
-                if (arrow.Path.Count > 0)
-                {
-                    var last = arrow.Path[arrow.Path.Count - 1];
-                    DrawCellDot(last, ArrowPathColor, 6f, cellW, cellH, spaceX, spaceY, totalW, totalH);
-                }
+                var arrowColor = new Color(0.75f, 0.75f, 0.75f, 0.9f);
+                DrawRingDot(arrow.CircleCell, arrowColor, 18f, cW, cH, sX, sY, tW, tH);
+                var pathColor = new Color(0.55f, 0.55f, 0.55f, 0.45f);
+                if (arrow.ArrowCells.Count > 0)
+                    DrawOverlayLine(arrow.CircleCell, arrow.ArrowCells[0], pathColor, 3f, cW, cH, sX, sY, tW, tH);
+                for (var pi = 0; pi < arrow.ArrowCells.Count - 1; pi++)
+                    DrawOverlayLine(arrow.ArrowCells[pi], arrow.ArrowCells[pi + 1], pathColor, 3f, cW, cH, sX, sY, tW, tH);
             }
 
-            // Even/Odd cell markers — square for even, circle for odd
+            // Cell markers
             for (var mi = 0; mi < overlay.CellMarkers.Count; mi++)
             {
-                var marker = overlay.CellMarkers[mi];
-                var posX = marker.Cell.Col * (cellW + spaceX) + cellW * 0.5f - totalW * 0.5f;
-                var posY = -(marker.Cell.Row * (cellH + spaceY) + cellH * 0.5f - totalH * 0.5f);
-                if (marker.Type == MarkerType.Even)
+                var m = overlay.CellMarkers[mi];
+                var px = m.Cell.Col * (cW + sX) + cW * 0.5f - tW * 0.5f;
+                var py = -(m.Cell.Row * (cH + sY) + cH * 0.5f - tH * 0.5f);
+                if (m.Type == MarkerType.Even)
                 {
-                    // Blue square
-                    var sq = new GameObject("EvenMarker", typeof(RectTransform), typeof(UnityEngine.UI.Image));
+                    var sq = new GameObject("Even", typeof(RectTransform), typeof(Image));
                     sq.transform.SetParent(_gridOverlayRoot, false);
-                    var sqRect = sq.GetComponent<RectTransform>();
-                    sqRect.anchorMin = new Vector2(0.5f, 0.5f);
-                    sqRect.anchorMax = new Vector2(0.5f, 0.5f);
-                    sqRect.pivot = new Vector2(0.5f, 0.5f);
-                    sqRect.anchoredPosition = new Vector2(posX, posY);
-                    sqRect.sizeDelta = new Vector2(cellW * 0.70f, cellH * 0.70f);
-                    var sqImg = sq.GetComponent<UnityEngine.UI.Image>();
-                    sqImg.color = EvenMarkerColor;
-                    sqImg.raycastTarget = false;
+                    var sr = sq.GetComponent<RectTransform>();
+                    sr.anchorMin = sr.anchorMax = new Vector2(0.5f, 0.5f);
+                    sr.pivot = new Vector2(0.5f, 0.5f);
+                    sr.anchoredPosition = new Vector2(px, py);
+                    sr.sizeDelta = new Vector2(cW * 0.7f, cH * 0.7f);
+                    sq.GetComponent<Image>().color = new Color(0.35f, 0.65f, 0.9f, 0.55f);
+                    sq.GetComponent<Image>().raycastTarget = false;
                     _overlayObjects.Add(sq);
                 }
-                else
+                else if (m.Type == MarkerType.Odd)
+                    DrawCircle(px, py, cW * 0.35f, new Color(0.9f, 0.55f, 0.2f, 0.55f));
+                else if (m.Type == MarkerType.Prime)
                 {
-                    // Orange circle
-                    DrawOverlayCircle(posX, posY, cellW * 0.35f, OddMarkerColor);
+                    // Prime: gold pentagon-like ring + "P" label
+                    DrawCircle(px, py, cW * 0.36f, new Color(0.85f, 0.75f, 0.15f, 0.50f));
+                    DrawOverlayText(px, py, "P", 10, new Color(1f, 0.95f, 0.4f, 0.95f));
                 }
-
-                // Accessibility: add E/O text label on marker
-                var markerLabel = _accessibility?.GetMarkerLabel(marker.Type);
-                if (markerLabel != null)
-                    DrawOverlayTextAt(posX, posY, markerLabel, 14, Color.white);
-            }
-
-            // Build modifier legend panel for multi-modifier readability
-            var modifiers = run?.CurrentLevelConfig?.ActiveModifiers;
-            if (modifiers != null && modifiers.Count > 0)
-            {
-                BuildModifierLegend(modifiers);
+                else if (m.Type == MarkerType.Fortress)
+                {
+                    // Fortress: grey shaded cell background
+                    var sq = new GameObject("Fortress", typeof(RectTransform), typeof(Image));
+                    sq.transform.SetParent(_gridOverlayRoot, false);
+                    var sr = sq.GetComponent<RectTransform>();
+                    sr.anchorMin = sr.anchorMax = new Vector2(0.5f, 0.5f);
+                    sr.pivot = new Vector2(0.5f, 0.5f);
+                    sr.anchoredPosition = new Vector2(px, py);
+                    sr.sizeDelta = new Vector2(cW * 0.88f, cH * 0.88f);
+                    sq.GetComponent<Image>().color = new Color(0.45f, 0.45f, 0.50f, 0.45f);
+                    sq.GetComponent<Image>().raycastTarget = false;
+                    _overlayObjects.Add(sq);
+                }
             }
         }
 
-        private void RefreshBossModifierDescription()
+        private static Color GetLineColor(LineType t) => t switch
         {
-            if (_bossModifierDescText == null && sudokuPanel != null)
-            {
-                _bossModifierDescText = sudokuPanel.transform.Find("SudokuGameplayBossDesc")?.GetComponent<Text>();
-            }
+            LineType.GermanWhispers  => new Color(0.20f, 0.72f, 0.30f, 0.55f),
+            LineType.DutchWhispers   => new Color(0.10f, 0.95f, 0.78f, 0.75f),
+            LineType.ParityLine      => new Color(0.10f, 0.88f, 0.80f, 0.70f),
+            LineType.RenbanLine      => new Color(0.80f, 0.35f, 0.65f, 0.55f),
+            LineType.Palindrome      => new Color(0.60f, 0.60f, 0.60f, 0.65f),
+            LineType.Thermo          => new Color(0.85f, 0.45f, 0.10f, 0.70f),
+            LineType.BetweenLine     => new Color(0.90f, 0.90f, 0.90f, 0.60f),
+            LineType.ConsecutiveLine => new Color(0.95f, 0.65f, 0.15f, 0.70f),  // orange
+            LineType.SlowThermo      => new Color(0.70f, 0.30f, 0.80f, 0.70f),  // purple (open bulb variant)
+            LineType.UniqueSetLine   => new Color(0.20f, 0.70f, 0.95f, 0.65f),  // sky blue
+            _ => new Color(0.20f, 0.72f, 0.30f, 0.55f)
+        };
 
-            if (_bossModifierDescText == null) return;
+        private void DrawOverlayLine(CellCoord a, CellCoord b, Color color, float width,
+            float cW, float cH, float sX, float sY, float tW, float tH)
+        {
+            var ax = a.Col * (cW + sX) + cW * 0.5f - tW * 0.5f;
+            var ay = -(a.Row * (cH + sY) + cH * 0.5f - tH * 0.5f);
+            var bx = b.Col * (cW + sX) + cW * 0.5f - tW * 0.5f;
+            var by = -(b.Row * (cH + sY) + cH * 0.5f - tH * 0.5f);
+            var dx = bx - ax; var dy = by - ay;
+            var len = Mathf.Sqrt(dx * dx + dy * dy);
 
-            var run = runMapController?.Run;
-            var modifiers = run?.CurrentLevelConfig?.ActiveModifiers;
-            if (modifiers != null && modifiers.Count > 0)
-            {
-                var descSb = new System.Text.StringBuilder();
-                for (var mi = 0; mi < modifiers.Count; mi++)
-                {
-                    if (mi > 0) descSb.AppendLine();
-                    descSb.Append(GetBossModifierDescription(modifiers[mi]));
-                }
-                _bossModifierDescText.text = descSb.ToString();
-                _bossModifierDescText.gameObject.SetActive(true);
-            }
-            else
-            {
-                _bossModifierDescText.text = string.Empty;
-                _bossModifierDescText.gameObject.SetActive(false);
-            }
+            var go = new GameObject("Line", typeof(RectTransform), typeof(Image));
+            go.transform.SetParent(_gridOverlayRoot, false);
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0, 0.5f);
+            rt.anchoredPosition = new Vector2(ax, ay);
+            rt.sizeDelta = new Vector2(len, width);
+            rt.localRotation = Quaternion.Euler(0, 0, Mathf.Atan2(dy, dx) * Mathf.Rad2Deg);
+            go.GetComponent<Image>().color = color;
+            go.GetComponent<Image>().raycastTarget = false;
+            _overlayObjects.Add(go);
         }
 
-        private static string FormatModifierName(BossModifierId modifier) => modifier switch
+        private void DrawDot(CellCoord c, Color color, float radius,
+            float cW, float cH, float sX, float sY, float tW, float tH)
+        {
+            var px = c.Col * (cW + sX) + cW * 0.5f - tW * 0.5f;
+            var py = -(c.Row * (cH + sY) + cH * 0.5f - tH * 0.5f);
+            DrawCircle(px, py, radius, color);
+        }
+
+        private void DrawRingDot(CellCoord c, Color color, float radius,
+            float cW, float cH, float sX, float sY, float tW, float tH)
+        {
+            var px = c.Col * (cW + sX) + cW * 0.5f - tW * 0.5f;
+            var py = -(c.Row * (cH + sY) + cH * 0.5f - tH * 0.5f);
+            DrawRingAtPos(px, py, radius, color);
+        }
+
+        private void DrawOverlayText(float x, float y, string text, int fontSize, Color color)
+        {
+            var go = new GameObject("OvTxt", typeof(RectTransform), typeof(Text));
+            go.transform.SetParent(_gridOverlayRoot, false);
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = new Vector2(x, y);
+            rt.sizeDelta = new Vector2(26f, 18f);
+            var t = go.GetComponent<Text>();
+            t.text = text;
+            t.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            t.fontSize = fontSize;
+            t.fontStyle = FontStyle.Bold;
+            t.alignment = TextAnchor.MiddleCenter;
+            t.color = color;
+            t.raycastTarget = false;
+            _overlayObjects.Add(go);
+        }
+
+        private void DrawRingAtPos(float x, float y, float radius, Color color)
+        {
+            if (_ringSprite == null) _ringSprite = BuildRingSprite();
+            var go = new GameObject("Ring", typeof(RectTransform), typeof(Image));
+            go.transform.SetParent(_gridOverlayRoot, false);
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = new Vector2(x, y);
+            rt.sizeDelta = new Vector2(radius * 2, radius * 2);
+            var img = go.GetComponent<Image>();
+            img.sprite = _ringSprite;
+            img.color = color;
+            img.raycastTarget = false;
+            _overlayObjects.Add(go);
+        }
+
+        private void DrawCircle(float x, float y, float radius, Color color)
+        {
+            if (_circleSprite == null) _circleSprite = BuildCircleSprite();
+            var go = new GameObject("Dot", typeof(RectTransform), typeof(Image));
+            go.transform.SetParent(_gridOverlayRoot, false);
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = new Vector2(x, y);
+            rt.sizeDelta = new Vector2(radius * 2, radius * 2);
+            var img = go.GetComponent<Image>();
+            img.sprite = _circleSprite;
+            img.color = color;
+            img.raycastTarget = false;
+            _overlayObjects.Add(go);
+        }
+
+        private static Sprite BuildCircleSprite()
+        {
+            const int sz = 64;
+            var tex = new Texture2D(sz, sz, TextureFormat.RGBA32, false);
+            tex.filterMode = FilterMode.Bilinear;
+            var c = sz * 0.5f - 0.5f;
+            for (var py = 0; py < sz; py++)
+            for (var px = 0; px < sz; px++)
+            {
+                var d = Mathf.Sqrt((px - c) * (px - c) + (py - c) * (py - c));
+                tex.SetPixel(px, py, new Color(1, 1, 1, Mathf.Clamp01(c - d + 0.5f)));
+            }
+            tex.Apply();
+            return Sprite.Create(tex, new Rect(0, 0, sz, sz), new Vector2(0.5f, 0.5f));
+        }
+
+        // Ring sprite: white ring, transparent inside (inner radius = 82% of outer = thin ring)
+        private static Sprite BuildRingSprite()
+        {
+            const int sz = 64;
+            var tex = new Texture2D(sz, sz, TextureFormat.RGBA32, false);
+            tex.filterMode = FilterMode.Bilinear;
+            var c = sz * 0.5f - 0.5f;
+            var outerR = c;
+            var innerR = c * 0.82f;
+            for (var py = 0; py < sz; py++)
+            for (var px = 0; px < sz; px++)
+            {
+                var d = Mathf.Sqrt((px - c) * (px - c) + (py - c) * (py - c));
+                var a = Mathf.Clamp01(outerR - d + 0.5f) * Mathf.Clamp01(d - innerR + 0.5f);
+                tex.SetPixel(px, py, new Color(1, 1, 1, a));
+            }
+            tex.Apply();
+            return Sprite.Create(tex, new Rect(0, 0, sz, sz), new Vector2(0.5f, 0.5f));
+        }
+
+        private void DrawCageSum(float x, float y, int sum, float cW, float cH)
+        {
+            var bg = new GameObject("CageSumBg", typeof(RectTransform), typeof(Image));
+            bg.transform.SetParent(_gridOverlayRoot, false);
+            var bgRt = bg.GetComponent<RectTransform>();
+            bgRt.anchorMin = bgRt.anchorMax = new Vector2(0.5f, 0.5f);
+            bgRt.pivot = new Vector2(0, 1);
+            bgRt.anchoredPosition = new Vector2(x, y);
+            bgRt.sizeDelta = new Vector2(cW * 0.46f, cH * 0.30f);
+            bg.GetComponent<Image>().color = new Color(0, 0, 0, 0.65f);
+            bg.GetComponent<Image>().raycastTarget = false;
+
+            var txt = CreateText(bg.transform, "Sum", sum.ToString(), 11, TextAnchor.MiddleCenter, KillerBorder);
+            StretchFill(txt.rectTransform);
+            txt.raycastTarget = false;
+            _overlayObjects.Add(bg);
+        }
+
+        private void RecordCageEdges(KillerCage cage, int r, int c)
+        {
+            CheckCageEdge(cage, r, c, -1, 0, 0);
+            CheckCageEdge(cage, r, c, 1, 0, 1);
+            CheckCageEdge(cage, r, c, 0, -1, 2);
+            CheckCageEdge(cage, r, c, 0, 1, 3);
+        }
+
+        private void CheckCageEdge(KillerCage cage, int r, int c, int dr, int dc, int side)
+        {
+            var nr = r + dr; var nc = c + dc;
+            for (var i = 0; i < cage.Cells.Count; i++)
+                if (cage.Cells[i].Row == nr && cage.Cells[i].Col == nc) return;
+            _cageBorderEdges.Add((long)r * _boardSize * 4 + c * 4 + side);
+        }
+
+        private bool IsCageEdge(int r, int c, int sz, int side)
+            => _cageBorderEdges.Contains((long)r * sz * 4 + c * 4 + side);
+
+        private void ClearOverlays()
+        {
+            for (var i = _overlayObjects.Count - 1; i >= 0; i--)
+                if (_overlayObjects[i] != null) Destroy(_overlayObjects[i]);
+            _overlayObjects.Clear();
+        }
+
+        // ────────────────────── Modifier descriptions ──────────────────────
+
+        private static string FormatModName(BossModifierId m) => m switch
         {
             BossModifierId.FogOfWar          => "Fog of War",
             BossModifierId.ArrowSums         => "Arrow Sums",
@@ -5107,559 +2431,921 @@ namespace SudokuRoguelike.UI
             BossModifierId.EvenOdd           => "Even/Odd",
             BossModifierId.Nonconsecutive    => "Nonconsecutive",
             BossModifierId.Antiknight        => "Antiknight",
-            _                                => modifier.ToString()
+            // Extended pool
+            BossModifierId.Antiking          => "Anti-King",
+            BossModifierId.AntiBishop        => "Anti-Bishop",
+            BossModifierId.NonconsecDiagonal => "Nonconsec. Diagonal",
+            BossModifierId.DistanceGe2       => "Distance ≥ 2",
+            BossModifierId.EntropyGlobal     => "Entropy",
+            BossModifierId.ModularRegions    => "Modular Regions",
+            BossModifierId.ConsecutiveLine   => "Consecutive Line",
+            BossModifierId.SlowThermo        => "Slow Thermo",
+            BossModifierId.UniqueSetLine     => "Unique Set Line",
+            BossModifierId.FullKropki        => "Full Kropki",
+            BossModifierId.SumKropki         => "Sum Dot",
+            BossModifierId.GreaterLessThan   => "Greater/Less Than",
+            BossModifierId.XVPairs           => "XV Pairs",
+            BossModifierId.PrimeCells        => "Prime Cells",
+            BossModifierId.FortressCells     => "Fortress Cells",
+            _                                => m.ToString()
         };
 
-        private static string GetBossModifierDescription(BossModifierId modifier)
+        private static string GetModDesc(BossModifierId m) => m switch
         {
-            switch (modifier)
+            BossModifierId.FogOfWar          => "Correct placements reveal hidden cells.",
+            BossModifierId.ArrowSums         => "Arrow circles: digits on the arrow sum to the number in the circle.",
+            BossModifierId.GermanWhispers    => "Green line: neighbours on the line must differ by 5 or more.",
+            BossModifierId.DutchWhispers     => "Teal line: neighbours on the line must differ by 4 or more.",
+            BossModifierId.ParityLines       => "Cyan line: adjacent cells must strictly alternate between odd and even.",
+            BossModifierId.RenbanLines       => "Pink line: all digits on the line form a consecutive set (any order).",
+            BossModifierId.KillerCages       => "Dashed cage: digits sum to the cage label; no repeats inside the cage.",
+            BossModifierId.DifferenceKropki  => "White dot between cells: those two digits differ by exactly 1.",
+            BossModifierId.RatioKropki       => "Black dot between cells: one digit is exactly double the other.",
+            BossModifierId.Palindrome        => "Grey line: digits read the same from either end of the line.",
+            BossModifierId.Thermo            => "Orange line with bulb: digits must strictly increase from bulb to tip.",
+            BossModifierId.BetweenLines      => "White line: every digit on the line must fall strictly between the two endpoint values.",
+            BossModifierId.EvenOdd           => "Blue square = even digit. Orange circle = odd digit.",
+            BossModifierId.Nonconsecutive    => "Global: no two orthogonally adjacent cells may contain consecutive digits.",
+            BossModifierId.Antiknight        => "Global: no two cells a chess knight's move apart may share the same digit.",
+            // Extended pool
+            BossModifierId.Antiking          => "Global: no two cells a king's move apart (including diagonal) may share a digit.",
+            BossModifierId.AntiBishop        => "Global: no two cells on the same diagonal may share a digit.",
+            BossModifierId.NonconsecDiagonal => "Global: diagonally adjacent cells cannot be consecutive (e.g. 4 cannot touch 3 or 5 diagonally).",
+            BossModifierId.DistanceGe2       => "Global: equal digits must be at least 2 cells apart (no king-adjacent equal digits).",
+            BossModifierId.EntropyGlobal     => "Every 3 consecutive row/col cells must contain one low (1–3), one mid (4–6), and one high (7–9) digit.",
+            BossModifierId.ModularRegions    => "Every box region must contain at least one digit from {1–3}, {4–6}, and {7–9}.",
+            BossModifierId.ConsecutiveLine   => "Orange line: adjacent cells on the line must differ by exactly 1 (e.g. 3-4-5).",
+            BossModifierId.SlowThermo        => "Purple line with open bulb: digits must increase or stay equal from bulb to tip (e.g. 2-2-3-5).",
+            BossModifierId.UniqueSetLine     => "Sky-blue line: no digit may repeat anywhere on the line.",
+            BossModifierId.FullKropki        => "All diff-by-1 pairs show a white dot; all 1:2 ratio pairs show a black dot. No dot = neither.",
+            BossModifierId.SumKropki         => "Labelled dot between two cells: those cells must sum to that value.",
+            BossModifierId.GreaterLessThan   => "Orange chevrons (> / <) between cells indicate which digit must be larger.",
+            BossModifierId.XVPairs           => "X between two cells: they sum to 10. V between two cells: they sum to 5.",
+            BossModifierId.PrimeCells        => "Gold 'P' cells must contain a prime digit: 2, 3, 5, or 7.",
+            BossModifierId.FortressCells     => "Grey shaded cells must be strictly greater than every orthogonally adjacent unshaded cell.",
+            _                                => m.ToString()
+        };
+
+        // ────────────────────── Save / Resume ──────────────────────
+
+        private void SaveAndQuit()
+        {
+            Time.timeScale = 1f;
+            var bootstrap = FindFirstObjectByType<Bootstrap.GameBootstrap>();
+            if (bootstrap != null) bootstrap.ReturnToMenu();
+        }
+
+        private void ApplyResumeState()
+        {
+            var run = _map?.Run;
+            if (run?.State == null) return;
+            _resumeApplied = true;
+
+            if (run.State.TutorialMode) { ShowSudoku(); RebuildBoard(); return; }
+
+            // Resume: already-active puzzle → show board immediately
+            if (run.CurrentBoard != null && run.CurrentLevelState != null && !run.IsLevelComplete)
             {
-                case BossModifierId.FogOfWar:
-                    return "Fog of War: Correct placements reveal hidden cells.\nExample: placing 5 in a fogged cell clears nearby fog.";
-                case BossModifierId.ArrowSums:
-                    return "Arrow Sums (grey arrow): Digits along the arrow sum to the circled digit.\nExample: circle=6, path=[2,4] \u2192 2+4=6 \u2713";
-                case BossModifierId.GermanWhispers:
-                    return "German Whispers (green line): Neighbours differ by \u22655.\nExample: 1-7-2-8-3 \u2713  |  1-5-2 \u2717 (5-2=3 < 5)";
-                case BossModifierId.DutchWhispers:
-                    return "Dutch Whispers (teal line): Neighbours differ by \u22654.\nExample: 1-6-2-7-3 \u2713  |  1-4-1 \u2717 (4-1=3 < 4)";
-                case BossModifierId.ParityLines:
-                    return "Parity Lines (teal line): Adjacent cells alternate odd/even.\nExample: 1-4-3-8-5 \u2713  |  2-4-6 \u2717 (even-even)";
-                case BossModifierId.RenbanLines:
-                    return "Renban (pink/purple line): Line digits form a consecutive set (any order).\nExample: 3-5-4 \u2713  |  1-3-5 \u2717 (gap)";
-                case BossModifierId.KillerCages:
-                    return "Killer Cages (dashed border): Cage digits sum to label; no repeats.\nExample: cage=7, cells=[3,4] \u2713  |  [4,4] \u2717 (repeat)";
-                case BossModifierId.DifferenceKropki:
-                    return "White Dots (white circle): Adjacent cells differ by exactly 1.\nExample: 4\u25e65 \u2713  |  4\u25e66 \u2717";
-                case BossModifierId.RatioKropki:
-                    return "Black Dots (black circle): One adjacent cell is double the other.\nExample: 3\u25cf6 \u2713  |  3\u25cf5 \u2717";
-                case BossModifierId.Palindrome:
-                    return "Palindrome (grey line): Digits read the same forward and backward.\nExample: 3-7-5-7-3 \u2713  |  3-7-5-8-3 \u2717";
-                case BossModifierId.Thermo:
-                    return "Thermo (orange bulb\u2192tip): Digits strictly increase from bulb to tip.\nExample: bulb=2, path=[4,7] \u2713  |  bulb=2, path=[5,3] \u2717";
-                case BossModifierId.BetweenLines:
-                    return "Between Lines (white circles at ends): All path digits must lie strictly between the endpoint values.\nExample: ends=2&8, path=[5,4] \u2713  |  path=[1,5] \u2717";
-                case BossModifierId.EvenOdd:
-                    return "Even/Odd (blue square=even, orange circle=odd): Marked cells must have the correct parity.\nExample: square cell must be 2,4,6,8; circle cell must be 1,3,5,7,9.";
-                case BossModifierId.Nonconsecutive:
-                    return "Nonconsecutive (global): No two orthogonally adjacent cells may contain consecutive digits.\nExample: 3 adjacent to 4 is \u2717; 3 adjacent to 5 \u2713";
-                case BossModifierId.Antiknight:
-                    return "Antiknight (global): No two cells a chess knight\u2019s move apart may share a digit.\nExample: if 5 is at r1c1, r2c3 and r3c2 cannot be 5.";
-                default:
-                    return modifier.ToString();
+                ShowSudoku(); RebuildBoard(); return;
+            }
+
+            // Fresh run (no nodes visited yet): auto-start the first available puzzle
+            var nodePath = run.State.NodePath;
+            var freshRun = (nodePath == null || nodePath.Count == 0) && run.CurrentBoard == null;
+            if (freshRun)
+            {
+                var reachable = run.GetReachableNodes();
+                if (reachable != null && reachable.Count > 0)
+                {
+                    var firstIdx = reachable[0];
+                    if (_map.TryAdvanceToNodeAndStartPuzzle(firstIdx, out var arrivedNode, out var level))
+                    {
+                        _completionHandled = false;
+                        _overlaysBuilt = false;
+                        _selectedRow = -1;
+                        _selectedCol = -1;
+                        _highlightValue = 0;
+                        if (level != null && arrivedNode != null &&
+                            arrivedNode.Type != NodeType.Shop && arrivedNode.Type != NodeType.Rest &&
+                            arrivedNode.Type != NodeType.Event && arrivedNode.Type != NodeType.Relic)
+                        {
+                            ShowSudoku(); RebuildBoard(); return;
+                        }
+                    }
+                }
+            }
+
+            ShowPath();
+        }
+
+        // ────────────────────── UI Helpers ──────────────────────
+
+        private void SetStatus(string msg)
+        {
+            if (_statusText != null) _statusText.text = msg;
+        }
+
+        private static bool TryFindEditable(SudokuBoard board, out int r, out int c)
+        {
+            r = -1; c = -1;
+            if (board == null) return false;
+            for (var rr = 0; rr < board.Size; rr++)
+            for (var cc = 0; cc < board.Size; cc++)
+                if (!board.GivenMask[rr, cc]) { r = rr; c = cc; return true; }
+            return false;
+        }
+
+        private static void ClearChildren(RectTransform root)
+        {
+            if (root == null) return;
+            for (var i = root.childCount - 1; i >= 0; i--)
+                Destroy(root.GetChild(i).gameObject);
+        }
+
+        private static void ClearNamedChildren(Transform parent, string prefix)
+        {
+            for (var i = parent.childCount - 1; i >= 0; i--)
+            {
+                var child = parent.GetChild(i);
+                if (child.name.StartsWith(prefix, StringComparison.Ordinal))
+                    Destroy(child.gameObject);
             }
         }
 
-        private void EnsureGridOverlayRoot()
+        private static Text CreateText(Transform parent, string name, string content,
+            int fontSize, TextAnchor alignment, Color color)
         {
-            if (_gridOverlayRoot != null) return;
-            var go = new GameObject("GridOverlay", typeof(RectTransform));
-            go.transform.SetParent(sudokuGridRoot.parent, false);
-            _gridOverlayRoot = go.GetComponent<RectTransform>();
-            _gridOverlayRoot.anchorMin = sudokuGridRoot.anchorMin;
-            _gridOverlayRoot.anchorMax = sudokuGridRoot.anchorMax;
-            _gridOverlayRoot.pivot = sudokuGridRoot.pivot;
-            _gridOverlayRoot.anchoredPosition = sudokuGridRoot.anchoredPosition;
-            _gridOverlayRoot.sizeDelta = sudokuGridRoot.sizeDelta;
-
-            var le = go.AddComponent<UnityEngine.UI.LayoutElement>();
-            le.ignoreLayout = true;
-
-            var cg = go.AddComponent<CanvasGroup>();
-            cg.blocksRaycasts = false;
-            cg.interactable = false;
-
-            // Final sibling order: Grid (back) → Overlay (middle) → Numbers (front)
-            // Insert overlay right after grid; _gridNumberRoot (if present) shifts to after overlay.
-            var gridIndex = sudokuGridRoot.GetSiblingIndex();
-            _gridOverlayRoot.SetSiblingIndex(gridIndex + 1);
-
-            // Ensure number root is placed after overlay
-            if (_gridNumberRoot != null)
-            {
-                _gridNumberRoot.SetSiblingIndex(gridIndex + 2);
-            }
+            var go = new GameObject(name, typeof(RectTransform), typeof(Text));
+            go.transform.SetParent(parent, false);
+            var t = go.GetComponent<Text>();
+            t.font = GetFont();
+            t.text = content;
+            t.fontSize = fontSize;
+            t.alignment = alignment;
+            t.color = color;
+            return t;
         }
 
-        private void ClearOverlayObjects()
+        private static void StretchFill(RectTransform rt)
         {
-            for (var i = _overlayObjects.Count - 1; i >= 0; i--)
-            {
-                if (_overlayObjects[i] != null) Destroy(_overlayObjects[i]);
-            }
-            _overlayObjects.Clear();
-            _overlayGroups.Clear();
-            if (_legendPanel != null)
-            {
-                Destroy(_legendPanel);
-                _legendPanel = null;
-            }
-            _legendExpanded = false;
-            if (_isolateCoroutine != null)
-            {
-                StopCoroutine(_isolateCoroutine);
-                _isolateCoroutine = null;
-            }
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
         }
 
-        /// <summary>Register an overlay GameObject under a modifier ID for tap-to-isolate grouping.</summary>
-        private void RegisterOverlayForModifier(BossModifierId modId, GameObject go)
+        private GameObject CreateOverlayPanel(Transform parent, string name, string title)
         {
-            if (!_overlayGroups.TryGetValue(modId, out var list))
-            {
-                list = new List<GameObject>();
-                _overlayGroups[modId] = list;
-            }
-            list.Add(go);
+            var panel = new GameObject(name, typeof(RectTransform), typeof(Image));
+            panel.transform.SetParent(parent, false);
+            var pr = panel.GetComponent<RectTransform>();
+            pr.anchorMin = new Vector2(0.20f, 0.18f);
+            pr.anchorMax = new Vector2(0.80f, 0.78f);
+            pr.offsetMin = Vector2.zero;
+            pr.offsetMax = Vector2.zero;
+            panel.GetComponent<Image>().color = PanelBg;
+
+            var t = CreateText(panel.transform, "Title", title, 22, TextAnchor.MiddleCenter, AccentGold);
+            t.rectTransform.anchorMin = new Vector2(0.06f, 0.86f);
+            t.rectTransform.anchorMax = new Vector2(0.94f, 0.97f);
+            t.rectTransform.offsetMin = Vector2.zero;
+            t.rectTransform.offsetMax = Vector2.zero;
+
+            var summary = CreateText(panel.transform, "Summary", "", 14, TextAnchor.UpperLeft, TextColor);
+            summary.rectTransform.anchorMin = new Vector2(0.08f, 0.58f);
+            summary.rectTransform.anchorMax = new Vector2(0.92f, 0.84f);
+            summary.rectTransform.offsetMin = Vector2.zero;
+            summary.rectTransform.offsetMax = Vector2.zero;
+
+            return panel;
         }
 
-        /// <summary>Build collapsible modifier legend panel when 2+ modifiers are active.</summary>
-        private void BuildModifierLegend(List<BossModifierId> activeModifiers)
+        private Button CreatePanelButton(Transform parent, string name,
+            Vector2 anchorMin, Vector2 anchorMax, string label)
         {
-            if (activeModifiers == null || activeModifiers.Count < 1) return;
-            if (_gridOverlayRoot == null) return;
+            var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
+            go.transform.SetParent(parent, false);
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = anchorMin;
+            rt.anchorMax = anchorMax;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+            go.GetComponent<Image>().color = BtnColor;
 
-            _legendPanel = new GameObject("ModifierLegend", typeof(RectTransform), typeof(CanvasGroup));
-            _legendPanel.transform.SetParent(_gridOverlayRoot.parent, false);
-            var panelRect = _legendPanel.GetComponent<RectTransform>();
-            panelRect.anchorMin = new Vector2(1f, 1f);
-            panelRect.anchorMax = new Vector2(1f, 1f);
-            panelRect.pivot = new Vector2(1f, 1f);
-            panelRect.anchoredPosition = new Vector2(-5f, -5f);
-            panelRect.sizeDelta = new Vector2(130f, 26f + activeModifiers.Count * 28f);
+            var t = CreateText(go.transform, "Label", label, 12, TextAnchor.MiddleCenter, TextColor);
+            StretchFill(t.rectTransform);
+            t.verticalOverflow = VerticalWrapMode.Overflow;
 
-            var panelBg = _legendPanel.AddComponent<Image>();
-            panelBg.color = new Color(0.05f, 0.05f, 0.08f, 0.85f);
-            panelBg.raycastTarget = true;
+            return go.GetComponent<Button>();
+        }
 
-            // Title
-            var titleGo = new GameObject("LegendTitle", typeof(RectTransform), typeof(Text));
-            titleGo.transform.SetParent(_legendPanel.transform, false);
-            var titleRect = titleGo.GetComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0f, 1f);
-            titleRect.anchorMax = new Vector2(1f, 1f);
-            titleRect.pivot = new Vector2(0.5f, 1f);
-            titleRect.anchoredPosition = Vector2.zero;
-            titleRect.sizeDelta = new Vector2(0f, 22f);
-            var titleText = titleGo.GetComponent<Text>();
-            titleText.text = "Modifiers";
-            titleText.fontSize = 11;
-            titleText.alignment = TextAnchor.MiddleCenter;
-            titleText.color = Color.white;
-            titleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            titleText.raycastTarget = false;
+        // Icon top 62%, label bottom 34% — used for reward/shop/boss-gate panel buttons.
+        private static void SetButtonIcon(Button btn, string iconName, bool unknown = false)
+        {
+            var sprite = unknown ? null : (string.IsNullOrEmpty(iconName) ? null : Resources.Load<Sprite>("GeneratedIcons/icon_" + iconName));
 
-            // Entries
-            for (var i = 0; i < activeModifiers.Count; i++)
+            // Reposition label to bottom
+            var label = btn.transform.Find("Label")?.GetComponent<Text>();
+            if (label != null)
             {
-                var modId = activeModifiers[i];
-                var yOffset = -(24f + i * 28f);
-
-                // Colour swatch
-                var swatchGo = new GameObject("Swatch", typeof(RectTransform), typeof(Image));
-                swatchGo.transform.SetParent(_legendPanel.transform, false);
-                var swatchRect = swatchGo.GetComponent<RectTransform>();
-                swatchRect.anchorMin = new Vector2(0f, 1f);
-                swatchRect.anchorMax = new Vector2(0f, 1f);
-                swatchRect.pivot = new Vector2(0f, 1f);
-                swatchRect.anchoredPosition = new Vector2(6f, yOffset);
-                swatchRect.sizeDelta = new Vector2(16f, 16f);
-                var swatchImg = swatchGo.GetComponent<Image>();
-                swatchImg.color = GetModifierSwatchColor(modId);
-                swatchImg.raycastTarget = false;
-
-                // Label
-                var labelGo = new GameObject("Label", typeof(RectTransform), typeof(Text));
-                labelGo.transform.SetParent(_legendPanel.transform, false);
-                var labelRect = labelGo.GetComponent<RectTransform>();
-                labelRect.anchorMin = new Vector2(0f, 1f);
-                labelRect.anchorMax = new Vector2(1f, 1f);
-                labelRect.pivot = new Vector2(0f, 1f);
-                labelRect.anchoredPosition = new Vector2(26f, yOffset);
-                labelRect.sizeDelta = new Vector2(-32f, 20f);
-                var labelText = labelGo.GetComponent<Text>();
-                labelText.text = modId.ToString();
-                labelText.fontSize = 10;
-                labelText.alignment = TextAnchor.MiddleLeft;
-                labelText.color = Color.white;
-                labelText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-                labelText.raycastTarget = false;
-
-                // Tap-to-isolate button
-                var btnGo = new GameObject("IsolateBtn", typeof(RectTransform), typeof(Image), typeof(Button));
-                btnGo.transform.SetParent(_legendPanel.transform, false);
-                var btnRect = btnGo.GetComponent<RectTransform>();
-                btnRect.anchorMin = new Vector2(0f, 1f);
-                btnRect.anchorMax = new Vector2(1f, 1f);
-                btnRect.pivot = new Vector2(0f, 1f);
-                btnRect.anchoredPosition = new Vector2(0f, yOffset);
-                btnRect.sizeDelta = new Vector2(0f, 24f);
-                var btnImg = btnGo.GetComponent<Image>();
-                btnImg.color = new Color(0f, 0f, 0f, 0f);
-                var btn = btnGo.GetComponent<Button>();
-                var capturedMod = modId;
-                btn.onClick.AddListener(() => OnLegendEntryTapped(capturedMod));
+                label.rectTransform.anchorMin = new Vector2(0.02f, 0.02f);
+                label.rectTransform.anchorMax = new Vector2(0.98f, 0.36f);
+                label.rectTransform.offsetMin = Vector2.zero;
+                label.rectTransform.offsetMax = Vector2.zero;
+                label.fontSize = 10;
+                label.verticalOverflow = VerticalWrapMode.Overflow;
             }
 
-            // Start collapsed if only 1 modifier
-            if (activeModifiers.Count < 2)
+            if (sprite == null && !unknown) return;
+
+            // Icon fills top 60% of button
+            var iconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+            iconGo.transform.SetParent(btn.transform, false);
+            var iconRt = iconGo.GetComponent<RectTransform>();
+            iconRt.anchorMin = new Vector2(0.05f, 0.38f);
+            iconRt.anchorMax = new Vector2(0.95f, 0.97f);
+            iconRt.offsetMin = Vector2.zero;
+            iconRt.offsetMax = Vector2.zero;
+            var img = iconGo.GetComponent<Image>();
+            if (sprite != null)
             {
-                _legendPanel.SetActive(false);
-                _legendExpanded = false;
+                img.sprite = sprite;
+                img.preserveAspect = true;
             }
             else
             {
-                _legendExpanded = true;
+                // "???" placeholder
+                img.color = new Color(0.3f, 0.3f, 0.3f, 0.4f);
+                var qText = new GameObject("UnknownLabel", typeof(RectTransform), typeof(Text));
+                qText.transform.SetParent(iconGo.transform, false);
+                var qt = qText.GetComponent<Text>();
+                qt.text = "???";
+                qt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+                qt.fontSize = 22;
+                qt.alignment = TextAnchor.MiddleCenter;
+                qt.color = new Color(0.7f, 0.7f, 0.7f, 0.9f);
+                var qRt = qText.GetComponent<RectTransform>();
+                qRt.anchorMin = Vector2.zero;
+                qRt.anchorMax = Vector2.one;
+                qRt.offsetMin = Vector2.zero;
+                qRt.offsetMax = Vector2.zero;
             }
         }
 
-        private void OnLegendEntryTapped(BossModifierId selectedMod)
+        // ────────────────────── Bag panel ──────────────────────
+
+        private void EnsureBagPanel()
         {
-            if (_isolateCoroutine != null)
+            if (_bagPanel != null || _sudokuPanel == null) return;
+            var pr = _sudokuPanel.GetComponent<RectTransform>();
+            if (pr == null) return;
+
+            var bagGo = new GameObject("BagPanel", typeof(RectTransform), typeof(Image));
+            bagGo.transform.SetParent(pr, false);
+            var bagRt = bagGo.GetComponent<RectTransform>();
+            bagRt.anchorMin = new Vector2(0.01f, 0.03f);
+            bagRt.anchorMax = new Vector2(0.21f, 0.74f);
+            bagRt.offsetMin = Vector2.zero;
+            bagRt.offsetMax = Vector2.zero;
+            bagGo.GetComponent<Image>().color = new Color(0.06f, 0.10f, 0.12f, 0.70f);
+            _bagPanel = bagGo;
+
+            var title = CreateText(bagGo.transform, "BagTitle", "BAG", 13, TextAnchor.MiddleCenter, AccentGold);
+            title.rectTransform.anchorMin = new Vector2(0.02f, 0.93f);
+            title.rectTransform.anchorMax = new Vector2(0.98f, 1.00f);
+            title.rectTransform.offsetMin = Vector2.zero;
+            title.rectTransform.offsetMax = Vector2.zero;
+
+            // Three item slots
+            _bagItemButtons.Clear();
+            var slotYs = new[] { (0.68f, 0.90f), (0.45f, 0.67f), (0.22f, 0.44f) };
+            for (var i = 0; i < 3; i++)
             {
-                StopCoroutine(_isolateCoroutine);
-                RestoreAllOverlayOpacity();
-            }
-            _isolateCoroutine = StartCoroutine(IsolateModifierCoroutine(selectedMod));
-        }
-
-        private System.Collections.IEnumerator IsolateModifierCoroutine(BossModifierId selectedMod)
-        {
-            // Dim all non-selected modifier groups to 15% opacity
-            foreach (var kvp in _overlayGroups)
-            {
-                var alpha = kvp.Key == selectedMod ? 1f : 0.15f;
-                for (var i = 0; i < kvp.Value.Count; i++)
-                {
-                    var go = kvp.Value[i];
-                    if (go == null) continue;
-                    var cg = go.GetComponent<CanvasGroup>();
-                    if (cg == null) cg = go.AddComponent<CanvasGroup>();
-                    cg.alpha = alpha;
-                }
-            }
-
-            yield return new WaitForSeconds(3f);
-
-            RestoreAllOverlayOpacity();
-            _isolateCoroutine = null;
-        }
-
-        private void RestoreAllOverlayOpacity()
-        {
-            foreach (var kvp in _overlayGroups)
-            {
-                for (var i = 0; i < kvp.Value.Count; i++)
-                {
-                    var go = kvp.Value[i];
-                    if (go == null) continue;
-                    var cg = go.GetComponent<CanvasGroup>();
-                    if (cg != null) cg.alpha = 1f;
-                }
-            }
-        }
-
-        private static Color GetModifierSwatchColor(BossModifierId modId)
-        {
-            return modId switch
-            {
-                BossModifierId.GermanWhispers => new Color(0.20f, 0.72f, 0.30f, 1f),
-                BossModifierId.DutchWhispers => new Color(0.10f, 0.95f, 0.78f, 1f),
-                BossModifierId.ParityLines => new Color(0.30f, 0.40f, 0.85f, 1f),
-                BossModifierId.RenbanLines => new Color(0.80f, 0.35f, 0.65f, 1f),
-                BossModifierId.Palindrome => new Color(0.60f, 0.60f, 0.60f, 1f),
-                BossModifierId.Thermo => new Color(0.75f, 0.45f, 0.15f, 1f),
-                BossModifierId.BetweenLines => new Color(0.90f, 0.90f, 0.90f, 1f),
-                BossModifierId.DifferenceKropki => new Color(1f, 1f, 1f, 1f),
-                BossModifierId.RatioKropki => new Color(0.15f, 0.15f, 0.15f, 1f),
-                BossModifierId.KillerCages => new Color(0.85f, 0.15f, 0.12f, 1f),
-                BossModifierId.ArrowSums => new Color(0.55f, 0.55f, 0.55f, 1f),
-                BossModifierId.EvenOdd => new Color(0.35f, 0.65f, 0.90f, 1f),
-                BossModifierId.Nonconsecutive => Color.white,
-                BossModifierId.Antiknight => Color.white,
-                BossModifierId.FogOfWar => new Color(0.40f, 0.40f, 0.50f, 1f),
-                _ => Color.white
-            };
-        }
-
-        private void DrawLineBetweenCells(CellCoord a, CellCoord b, Color color, float width,
-            float cellW, float cellH, float spX, float spY, float totalW, float totalH,
-            LineDashPattern pattern = null)
-        {
-            var ax = a.Col * (cellW + spX) + cellW * 0.5f - totalW * 0.5f;
-            var ay = -(a.Row * (cellH + spY) + cellH * 0.5f - totalH * 0.5f);
-            var bx = b.Col * (cellW + spX) + cellW * 0.5f - totalW * 0.5f;
-            var by = -(b.Row * (cellH + spY) + cellH * 0.5f - totalH * 0.5f);
-
-            var dx = bx - ax;
-            var dy = by - ay;
-            var len = Mathf.Sqrt(dx * dx + dy * dy);
-            var angle = Mathf.Atan2(dy, dx) * Mathf.Rad2Deg;
-
-            var lineWidth = width * (_accessibility?.GetLineWidthMultiplier() ?? 1f);
-            if (pattern != null && pattern.Style != LineDashStyle.Solid && pattern.Style != LineDashStyle.SolidThick)
-                lineWidth = pattern.Width * (_accessibility?.GetLineWidthMultiplier() ?? 1f);
-            if (pattern != null && pattern.Style == LineDashStyle.SolidThick)
-                lineWidth = pattern.Width * (_accessibility?.GetLineWidthMultiplier() ?? 1f);
-
-            var overlayAlpha = _accessibility?.GetOverlayAlpha(color.a) ?? color.a;
-            var drawColor = new Color(color.r, color.g, color.b, overlayAlpha);
-
-            // Dashed / dotted / dash-dot patterns: draw multiple segments
-            if (pattern != null && pattern.SegmentLength > 0f &&
-                (pattern.Style == LineDashStyle.Dashed || pattern.Style == LineDashStyle.Dotted || pattern.Style == LineDashStyle.DashDot))
-            {
-                var segLen = pattern.SegmentLength;
-                var gapLen = pattern.GapLength;
-                var pos = 0f;
-                var isDash = true;
-                while (pos < len)
-                {
-                    var currentLen = isDash ? segLen : (pattern.Style == LineDashStyle.DashDot && !isDash ? 3f : gapLen);
-                    if (isDash)
-                    {
-                        var end = Mathf.Min(pos + currentLen, len);
-                        var segStart = pos / len;
-                        var segEnd = end / len;
-                        var sx = ax + dx * segStart;
-                        var sy = ay + dy * segStart;
-                        DrawSegment(sx, sy, end - pos, lineWidth, angle, drawColor);
-                    }
-                    pos += currentLen;
-                    isDash = !isDash;
-                }
-                return;
+                var (yMin, yMax) = slotYs[i];
+                var btn = CreateBagSlotButton(bagGo.transform, $"BagSlot_{i}",
+                    new Vector2(0.03f, yMin), new Vector2(0.97f, yMax));
+                _bagItemButtons.Add(btn);
+                var idx = i;
+                btn.onClick.AddListener(() => OnBagItemClicked(idx));
             }
 
-            // Double line pattern: two parallel lines offset by width
-            if (pattern != null && pattern.Style == LineDashStyle.DoubleLine)
-            {
-                var perpX = -dy / len * lineWidth * 0.8f;
-                var perpY = dx / len * lineWidth * 0.8f;
-                DrawSegment(ax + perpX, ay + perpY, len, lineWidth * 0.6f, angle, drawColor);
-                DrawSegment(ax - perpX, ay - perpY, len, lineWidth * 0.6f, angle, drawColor);
-                return;
-            }
+            // Thin divider between items and relic
+            var divGo = new GameObject("BagDivider", typeof(RectTransform), typeof(Image));
+            divGo.transform.SetParent(bagGo.transform, false);
+            var divRt = divGo.GetComponent<RectTransform>();
+            divRt.anchorMin = new Vector2(0.05f, 0.19f);
+            divRt.anchorMax = new Vector2(0.95f, 0.21f);
+            divRt.offsetMin = Vector2.zero;
+            divRt.offsetMax = Vector2.zero;
+            divGo.GetComponent<Image>().color = new Color(AccentGold.r, AccentGold.g, AccentGold.b, 0.35f);
 
-            // Wavy pattern: sine wave offset segments
-            if (pattern != null && pattern.Style == LineDashStyle.Wavy)
-            {
-                const int segments = 10;
-                var segLen = len / segments;
-                for (var si = 0; si < segments; si++)
-                {
-                    var t0 = si / (float)segments;
-                    var t1 = (si + 1f) / segments;
-                    var waveAmp = lineWidth * 1.5f;
-                    var perpX = -dy / len;
-                    var perpY = dx / len;
-                    var off0 = Mathf.Sin(t0 * Mathf.PI * 3f) * waveAmp;
-                    var off1 = Mathf.Sin(t1 * Mathf.PI * 3f) * waveAmp;
-                    var sx = ax + dx * t0 + perpX * off0;
-                    var sy = ay + dy * t0 + perpY * off0;
-                    var ex = ax + dx * t1 + perpX * off1;
-                    var ey = ay + dy * t1 + perpY * off1;
-                    var sdx = ex - sx;
-                    var sdy = ey - sy;
-                    var sLen = Mathf.Sqrt(sdx * sdx + sdy * sdy);
-                    var sAngle = Mathf.Atan2(sdy, sdx) * Mathf.Rad2Deg;
-                    DrawSegment(sx, sy, sLen, lineWidth * 0.7f, sAngle, drawColor);
-                }
-                return;
-            }
-
-            // Default: solid line
-            DrawSegment(ax, ay, len, lineWidth, angle, drawColor);
+            // Relic slot
+            _bagRelicButton = CreateBagSlotButton(bagGo.transform, "BagRelic",
+                new Vector2(0.03f, 0.01f), new Vector2(0.97f, 0.17f));
+            _bagRelicButton.onClick.RemoveAllListeners();
+            _bagRelicButton.onClick.AddListener(OnBagRelicClicked);
         }
 
-        private void DrawSegment(float x, float y, float length, float width, float angle, Color color)
+        private Button CreateBagSlotButton(Transform parent, string name, Vector2 ancMin, Vector2 ancMax)
         {
-            var go = new GameObject("OverlaySeg", typeof(RectTransform), typeof(Image));
-            go.transform.SetParent(_gridOverlayRoot, false);
-            var rect = go.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.5f, 0.5f);
-            rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.pivot = new Vector2(0f, 0.5f);
-            rect.anchoredPosition = new Vector2(x, y);
-            rect.sizeDelta = new Vector2(length, width);
-            rect.localRotation = Quaternion.Euler(0f, 0f, angle);
-            var img = go.GetComponent<Image>();
-            img.color = color;
-            img.raycastTarget = false;
-            _overlayObjects.Add(go);
-        }
-
-        private void DrawCellDot(CellCoord c, Color color, float radius,
-            float cellW, float cellH, float spX, float spY, float totalW, float totalH)
-        {
-            var posX = c.Col * (cellW + spX) + cellW * 0.5f - totalW * 0.5f;
-            var posY = -(c.Row * (cellH + spY) + cellH * 0.5f - totalH * 0.5f);
-            DrawOverlayCircle(posX, posY, radius, color);
-        }
-
-        private void DrawOverlayLabel(CellCoord c, string label, int fontSize,
-            float cellW, float cellH, float spX, float spY, float totalW, float totalH)
-        {
-            var posX = c.Col * (cellW + spX) + cellW * 0.5f - totalW * 0.5f;
-            var posY = -(c.Row * (cellH + spY) + cellH * 0.5f - totalH * 0.5f);
-            DrawOverlayTextAt(posX, posY, label, fontSize, Color.white);
-        }
-
-        private void DrawOverlayTextAt(float x, float y, string label, int fontSize, Color color)
-        {
-            var scaledSize = _accessibility?.ScaleFont(fontSize) ?? fontSize;
-            var go = new GameObject("OverlayLabel", typeof(RectTransform), typeof(Text));
-            go.transform.SetParent(_gridOverlayRoot, false);
-            var rect = go.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.5f, 0.5f);
-            rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = new Vector2(x, y);
-            rect.sizeDelta = new Vector2(24f, 20f);
-            var txt = go.GetComponent<Text>();
-            txt.text = label;
-            txt.fontSize = scaledSize;
-            txt.alignment = TextAnchor.MiddleCenter;
-            txt.color = color;
-            txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            txt.fontStyle = FontStyle.Bold;
-            txt.raycastTarget = false;
-            _overlayObjects.Add(go);
-        }
-
-        private static void EnsureBarFillSprite(Image fill)
-        {
-            if (fill.sprite != null) return;
-            var tex = new Texture2D(4, 4, TextureFormat.RGBA32, false);
-            var white = Color.white;
-            for (var py = 0; py < 4; py++)
-                for (var px = 0; px < 4; px++)
-                    tex.SetPixel(px, py, white);
-            tex.Apply();
-            fill.sprite = Sprite.Create(tex, new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f));
-            fill.type = Image.Type.Filled;
-            fill.fillMethod = Image.FillMethod.Horizontal;
-            fill.fillOrigin = 0;
-        }
-
-        private static Sprite BuildCircleSprite()
-        {
-            const int size = 64;
-            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-            tex.filterMode = FilterMode.Bilinear;
-            var center = size * 0.5f - 0.5f;
-            var r = center;
-            for (var py = 0; py < size; py++)
-            {
-                for (var px = 0; px < size; px++)
-                {
-                    var dx = px - center;
-                    var dy = py - center;
-                    var dist = UnityEngine.Mathf.Sqrt(dx * dx + dy * dy);
-                    var alpha = UnityEngine.Mathf.Clamp01((r - dist) + 0.5f);
-                    tex.SetPixel(px, py, new Color(1f, 1f, 1f, alpha));
-                }
-            }
-            tex.Apply();
-            return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
-        }
-
-        private void DrawOverlayCircle(float x, float y, float radius, Color color)
-        {
-            if (_circleSprite == null)
-                _circleSprite = BuildCircleSprite();
-
-            var go = new GameObject("OverlayDot", typeof(RectTransform), typeof(Image));
-            go.transform.SetParent(_gridOverlayRoot, false);
-            var rect = go.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.5f, 0.5f);
-            rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = new Vector2(x, y);
-            rect.sizeDelta = new Vector2(radius * 2f, radius * 2f);
-
-            var img = go.GetComponent<Image>();
-            img.sprite = _circleSprite;
-            img.color = color;
-            img.raycastTarget = false;
-            _overlayObjects.Add(go);
-        }
-
-        private void DrawBorderStrip(string name, RectTransform parent, Vector2 anchorMin, Vector2 anchorMax, Vector2 offsetMin, Vector2 offsetMax, Color color)
-        {
-            var go = new GameObject(name, typeof(RectTransform), typeof(Image));
+            var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
             go.transform.SetParent(parent, false);
-            var rect = go.GetComponent<RectTransform>();
-            rect.anchorMin = anchorMin;
-            rect.anchorMax = anchorMax;
-            rect.offsetMin = offsetMin;
-            rect.offsetMax = offsetMax;
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = ancMin;
+            rt.anchorMax = ancMax;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+
             var img = go.GetComponent<Image>();
-            img.color = color;
-            img.raycastTarget = false;
-            _overlayObjects.Add(go);
+            img.color = new Color(0.10f, 0.16f, 0.20f, 0.80f);
+
+            var btn = go.GetComponent<Button>();
+            var cols = btn.colors;
+            cols.normalColor = new Color(0.10f, 0.16f, 0.20f, 0.80f);
+            cols.highlightedColor = new Color(0.17f, 0.26f, 0.33f, 0.90f);
+            cols.pressedColor = new Color(0.07f, 0.11f, 0.14f, 0.90f);
+            cols.disabledColor = new Color(0.06f, 0.09f, 0.11f, 0.45f);
+            btn.colors = cols;
+
+            // Icon (left ~30%)
+            var iconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+            iconGo.transform.SetParent(go.transform, false);
+            var iconRt = iconGo.GetComponent<RectTransform>();
+            iconRt.anchorMin = new Vector2(0.04f, 0.12f);
+            iconRt.anchorMax = new Vector2(0.36f, 0.88f);
+            iconRt.offsetMin = Vector2.zero;
+            iconRt.offsetMax = Vector2.zero;
+            iconGo.GetComponent<Image>().raycastTarget = false;
+
+            // Name text (right of icon)
+            var nameText = CreateText(go.transform, "NameText", "", 10, TextAnchor.MiddleLeft, TextColor);
+            nameText.rectTransform.anchorMin = new Vector2(0.38f, 0.04f);
+            nameText.rectTransform.anchorMax = new Vector2(0.98f, 0.96f);
+            nameText.rectTransform.offsetMin = new Vector2(2f, 1f);
+            nameText.rectTransform.offsetMax = new Vector2(-2f, -1f);
+            nameText.supportRichText = true;
+
+            return btn;
         }
 
-        private static void TintBorderIfCageEdge(Image border, KillerCage cage, int row, int col, int dr, int dc)
+        private void RefreshBag()
         {
-            var nr = row + dr;
-            var nc = col + dc;
-            var inCage = false;
-            for (var i = 0; i < cage.Cells.Count; i++)
+            if (_bagPanel == null) return;
+            var state = _map?.Run?.State;
+
+            for (var i = 0; i < _bagItemButtons.Count; i++)
             {
-                if (cage.Cells[i].Row == nr && cage.Cells[i].Col == nc)
+                var btn = _bagItemButtons[i];
+                if (btn == null) continue;
+                var iconImg = btn.transform.Find("Icon")?.GetComponent<Image>();
+                var nameText = btn.transform.Find("NameText")?.GetComponent<Text>();
+                var item = (state != null && i < state.HeldItems.Count) ? state.HeldItems[i] : null;
+
+                if (item != null)
                 {
-                    inCage = true;
-                    break;
+                    btn.interactable = true;
+                    if (iconImg != null)
+                    {
+                        var spr = Resources.Load<Sprite>("GeneratedIcons/icon_" + ItemService.GetIconName(item.Type));
+                        iconImg.sprite = spr;
+                        iconImg.color = spr != null ? Color.white : new Color(1f, 1f, 1f, 0.2f);
+                        iconImg.preserveAspect = true;
+                    }
+                    if (nameText != null)
+                    {
+                        var chargeTxt = item.Charges > 1 ? $" ×{item.Charges}" : "";
+                        nameText.text = $"{ItemService.GetItemName(item.Type)}{chargeTxt}\n<size=8>{item.Rarity}</size>";
+                        nameText.color = TextColor;
+                    }
+                }
+                else
+                {
+                    btn.interactable = false;
+                    if (iconImg != null) { iconImg.sprite = null; iconImg.color = new Color(1f, 1f, 1f, 0.08f); }
+                    if (nameText != null)
+                    {
+                        nameText.text = (state != null && i < state.ItemSlots) ? "Empty" : "—";
+                        nameText.color = new Color(0.45f, 0.45f, 0.45f, 0.55f);
+                    }
                 }
             }
 
-            if (!inCage)
-            {
-                border.color = KillerCageBorder;
-            }
-        }
+            // Umbrella visual: if charges active, tint slot 0 (or whichever item it came from) — just show status text
+            // (umbrella charges are tracked separately; visual is reflected in SetStatus calls)
 
-        private void RecordCageEdges(KillerCage cage, int row, int col, int boardSize)
-        {
-            // Check each of the four directions; if the neighbor is NOT in the cage, mark that edge
-            CheckAndRecordEdge(cage, row, col, -1, 0, boardSize); // top
-            CheckAndRecordEdge(cage, row, col, 1, 0, boardSize);  // bottom
-            CheckAndRecordEdge(cage, row, col, 0, -1, boardSize); // left
-            CheckAndRecordEdge(cage, row, col, 0, 1, boardSize);  // right
-        }
-
-        private void CheckAndRecordEdge(KillerCage cage, int row, int col, int dr, int dc, int boardSize)
-        {
-            var nr = row + dr;
-            var nc = col + dc;
-            var inCage = false;
-            for (var i = 0; i < cage.Cells.Count; i++)
+            if (_bagRelicButton != null)
             {
-                if (cage.Cells[i].Row == nr && cage.Cells[i].Col == nc)
+                var iconImg = _bagRelicButton.transform.Find("Icon")?.GetComponent<Image>();
+                var nameText = _bagRelicButton.transform.Find("NameText")?.GetComponent<Text>();
+                if (state != null && state.HasRelic)
                 {
-                    inCage = true;
-                    break;
+                    var relic = state.HeldRelic;
+                    _bagRelicButton.interactable = false; // passives not manually clickable; click shows description
+                    if (iconImg != null)
+                    {
+                        var spr = Resources.Load<Sprite>("GeneratedIcons/icon_" + RelicService.GetIconName(relic.Id));
+                        iconImg.sprite = spr;
+                        iconImg.color = spr != null ? Color.white : new Color(1f, 1f, 1f, 0.2f);
+                        iconImg.preserveAspect = true;
+                    }
+                    if (nameText != null)
+                    {
+                        var useTxt = relic.UsesRemaining < 0 ? "Passive"
+                            : relic.UsesRemaining == 0 ? "Spent" : $"×{relic.UsesRemaining}";
+                        nameText.text = $"{RelicService.GetRelicName(relic.Id)}\n<size=8>{useTxt}</size>";
+                        nameText.color = new Color(0.98f, 0.83f, 0.26f, 1f);
+                    }
+                    _bagRelicButton.interactable = true;
+                }
+                else
+                {
+                    _bagRelicButton.interactable = false;
+                    if (iconImg != null) { iconImg.sprite = null; iconImg.color = new Color(1f, 1f, 1f, 0.08f); }
+                    if (nameText != null) { nameText.text = "No Relic"; nameText.color = new Color(0.45f, 0.45f, 0.45f, 0.55f); }
                 }
             }
+        }
 
-            if (!inCage)
+        private void OnBagItemClicked(int idx)
+        {
+            var run = _map?.Run;
+            if (run == null || idx < 0 || idx >= run.State.HeldItems.Count) return;
+            var item = run.State.HeldItems[idx];
+            if (item == null) return;
+
+            if (_selectedBagSlot == idx)
             {
-                // Encode: row * boardSize * 4 + col * 4 + sideIndex (top=0, bottom=1, left=2, right=3)
-                var side = dr == -1 ? 0 : dr == 1 ? 1 : dc == -1 ? 2 : 3;
-                _cageBorderEdges.Add((long)row * boardSize * 4 + col * 4 + side);
+                // Second click on same slot → use the item
+                _selectedBagSlot = -1;
+                RefreshBagHighlights();
+                ApplyItemEffect(idx, item);
+            }
+            else
+            {
+                // First click → show description
+                _selectedBagSlot = idx;
+                RefreshBagHighlights();
+                var desc = ItemService.GetItemDescription(item.Type, item.Rarity);
+                SetStatus($"{ItemService.GetItemName(item.Type)}: {desc}  [click again to use]");
             }
         }
 
-        private bool IsCageBorderEdge(int row, int col, int boardSize, int side)
+        private void RefreshBagHighlights()
         {
-            return _cageBorderEdges.Contains((long)row * boardSize * 4 + col * 4 + side);
+            for (var i = 0; i < _bagItemButtons.Count; i++)
+            {
+                var btn = _bagItemButtons[i];
+                if (btn == null) continue;
+                var img = btn.GetComponent<Image>();
+                if (img == null) continue;
+                img.color = (i == _selectedBagSlot)
+                    ? new Color(AccentGold.r * 0.5f, AccentGold.g * 0.5f, 0.10f, 0.90f)
+                    : new Color(0.10f, 0.16f, 0.20f, 0.80f);
+            }
         }
+
+        private void OnBagRelicClicked()
+        {
+            var state = _map?.Run?.State;
+            if (state == null || !state.HasRelic) return;
+            var relic = state.HeldRelic;
+            SetStatus($"{RelicService.GetRelicName(relic.Id)}: {RelicService.GetRelicDescription(relic.Id)}");
+        }
+
+        private void ApplyItemEffect(int slotIndex, ItemInstance item)
+        {
+            var run = _map?.Run;
+            if (run == null) return;
+            var board = run.CurrentBoard;
+            var s = run.State;
+
+            switch (item.Type)
+            {
+                // ── Ink Well: restore pencil marks ──
+                case ItemType.InkWell:
+                {
+                    var amount = ItemService.GetInkWellAmount(item.Rarity);
+                    s.CurrentPencil = Math.Min(s.MaxPencil, s.CurrentPencil + amount);
+                    run.TryUseItem(slotIndex);
+                    SetStatus($"Ink Well: restored {amount} pencil marks.");
+                    break;
+                }
+
+                // ── Meditation Stone: restore HP ──
+                case ItemType.MeditationStone:
+                {
+                    var amount = ItemService.GetMeditationStoneAmount(item.Rarity);
+                    s.CurrentHP = Math.Min(s.MaxHP, s.CurrentHP + amount);
+                    run.TryUseItem(slotIndex);
+                    SetStatus($"Meditation Stone: restored {amount} HP.");
+                    break;
+                }
+
+                // ── Offering Bowl: sacrifice HP for gold ──
+                case ItemType.OfferingBowl:
+                {
+                    if (s.CurrentHP <= 1) { SetStatus("Not enough HP to sacrifice."); return; }
+                    s.CurrentHP -= 1;
+                    s.CurrentGold += 30;
+                    run.TryUseItem(slotIndex);
+                    SetStatus("Offering Bowl: -1 HP, +30 gold.");
+                    break;
+                }
+
+                // ── Solver: fill selected cell (+neighbours) ──
+                case ItemType.Solver:
+                {
+                    if (board == null || _selectedRow < 0) { SetStatus("Select a cell first."); return; }
+                    var neighbors = ItemService.GetSolverNeighborCount(item.Rarity);
+                    var filled = SolveCells(board, run, _selectedRow, _selectedCol, neighbors);
+                    run.TryUseItem(slotIndex);
+                    SetStatus($"Solver: filled {filled} cell(s).");
+                    RenderBoard(board);
+                    break;
+                }
+
+                // ── Finder: highlight cells matching selected digit in solution ──
+                case ItemType.Finder:
+                {
+                    if (board == null || _highlightValue <= 0) { SetStatus("Select a number first."); return; }
+                    var count = ItemService.GetFinderHighlightCount(item.Rarity);
+                    var found = 0;
+                    _bagHighlightCells.Clear();
+                    for (var r = 0; r < board.Size && found < count; r++)
+                    for (var c = 0; c < board.Size && found < count; c++)
+                    {
+                        if (board.GivenMask[r, c]) continue;
+                        if (board.Cells[r, c] == 0 && board.Solution[r, c] == _highlightValue)
+                        { _bagHighlightCells.Add((r, c)); found++; }
+                    }
+                    run.TryUseItem(slotIndex);
+                    _bagHighlightEndTime = Time.time + 4f;
+                    SetStatus($"Finder: highlighted {found} cell(s) for {_highlightValue}.");
+                    RenderBoard(board);
+                    break;
+                }
+
+                // ── Pattern Scroll: highlight conflict cells ──
+                case ItemType.PatternScroll:
+                {
+                    if (board == null) { SetStatus("No active board."); return; }
+                    _bagHighlightCells.Clear();
+                    var zones = ItemService.GetPatternScrollZones(item.Rarity); // -1 = all
+                    var zoneCount = 0;
+                    for (var r = 0; r < board.Size; r++)
+                    for (var c = 0; c < board.Size; c++)
+                    {
+                        if (board.Cells[r, c] == 0) continue;
+                        if (HasConflict(board, r, c))
+                        {
+                            if (zones < 0 || zoneCount < zones)
+                            { _bagHighlightCells.Add((r, c)); zoneCount++; }
+                        }
+                    }
+                    run.TryUseItem(slotIndex);
+                    _bagHighlightEndTime = Time.time + 5f;
+                    SetStatus($"Pattern Scroll: highlighted {zoneCount} conflict(s).");
+                    RenderBoard(board);
+                    break;
+                }
+
+                // ── Koi Reflection: reveal candidates for N cells ──
+                case ItemType.KoiReflection:
+                {
+                    if (board == null) { SetStatus("No active board."); return; }
+                    var count = ItemService.GetKoiReflectionCells(item.Rarity);
+                    var revealed = 0;
+                    for (var r = 0; r < board.Size && revealed < count; r++)
+                    for (var c = 0; c < board.Size && revealed < count; c++)
+                    {
+                        if (board.GivenMask[r, c] || board.Cells[r, c] != 0) continue;
+                        if (board.GetPencilMarks(r, c).Count > 0) continue;
+                        // Add all valid candidates
+                        var usedMask = 0;
+                        for (var rr = 0; rr < board.Size; rr++) if (board.Cells[rr, c] > 0) usedMask |= 1 << board.Cells[rr, c];
+                        for (var cc = 0; cc < board.Size; cc++) if (board.Cells[r, cc] > 0) usedMask |= 1 << board.Cells[r, cc];
+                        var reg = board.RegionMap[r, c];
+                        for (var rr = 0; rr < board.Size; rr++)
+                        for (var cc = 0; cc < board.Size; cc++)
+                            if (board.RegionMap[rr, cc] == reg && board.Cells[rr, cc] > 0) usedMask |= 1 << board.Cells[rr, cc];
+                        var added = false;
+                        for (var v = 1; v <= board.Size; v++)
+                            if ((usedMask & (1 << v)) == 0) { board.AddPencilMark(r, c, v); added = true; }
+                        if (added) revealed++;
+                    }
+                    run.TryUseItem(slotIndex);
+                    SetStatus($"Koi Reflection: revealed candidates for {revealed} cell(s).");
+                    RenderBoard(board);
+                    break;
+                }
+
+                // ── Lantern of Clarity: disable fog for N moves ──
+                case ItemType.LanternOfClarity:
+                {
+                    var moves = ItemService.GetLanternOfClarityMoves(item.Rarity);
+                    _fogDisabledMovesRemaining += moves;
+                    run.TryUseItem(slotIndex);
+                    SetStatus($"Lantern of Clarity: fog disabled for {_fogDisabledMovesRemaining} moves.");
+                    if (board != null) RenderBoard(board);
+                    break;
+                }
+
+                // ── Garden Rake: clear pencil marks in selected row + column ──
+                case ItemType.GardenRake:
+                {
+                    if (board == null || _selectedRow < 0) { SetStatus("Select a cell first."); return; }
+                    for (var i2 = 0; i2 < board.Size; i2++)
+                    {
+                        board.ClearPencilMarks(_selectedRow, i2);
+                        board.ClearPencilMarks(i2, _selectedCol);
+                    }
+                    run.TryUseItem(slotIndex);
+                    SetStatus($"Garden Rake: cleared row {_selectedRow + 1} and col {_selectedCol + 1}.");
+                    RenderBoard(board);
+                    break;
+                }
+
+                // ── Pruning Shears: remove one incorrect candidate from selected cell ──
+                case ItemType.PruningShears:
+                {
+                    if (board == null || _selectedRow < 0) { SetStatus("Select a cell first."); return; }
+                    if (board.Cells[_selectedRow, _selectedCol] != 0) { SetStatus("Cell is already filled."); return; }
+                    var marks = board.GetPencilMarks(_selectedRow, _selectedCol);
+                    var correct = board.Solution[_selectedRow, _selectedCol];
+                    var removed = false;
+                    foreach (var v in marks)
+                    {
+                        if (v != correct) { board.RemovePencilMark(_selectedRow, _selectedCol, v); removed = true; break; }
+                    }
+                    if (!removed) { SetStatus("No incorrect candidates to prune."); return; }
+                    run.TryUseItem(slotIndex);
+                    SetStatus("Pruning Shears: removed one incorrect candidate.");
+                    RenderBoard(board);
+                    break;
+                }
+
+                // ── Zen Sand Sifter: highlight cells with exactly two candidates ──
+                case ItemType.ZenSandSifter:
+                {
+                    if (board == null) { SetStatus("No active board."); return; }
+                    _bagHighlightCells.Clear();
+                    for (var r = 0; r < board.Size; r++)
+                    for (var c = 0; c < board.Size; c++)
+                    {
+                        if (board.GivenMask[r, c] || board.Cells[r, c] != 0) continue;
+                        var usedMask = 0;
+                        for (var rr = 0; rr < board.Size; rr++) if (board.Cells[rr, c] > 0) usedMask |= 1 << board.Cells[rr, c];
+                        for (var cc = 0; cc < board.Size; cc++) if (board.Cells[r, cc] > 0) usedMask |= 1 << board.Cells[r, cc];
+                        var reg = board.RegionMap[r, c];
+                        for (var rr = 0; rr < board.Size; rr++)
+                        for (var cc = 0; cc < board.Size; cc++)
+                            if (board.RegionMap[rr, cc] == reg && board.Cells[rr, cc] > 0) usedMask |= 1 << board.Cells[rr, cc];
+                        var cands = 0;
+                        for (var v = 1; v <= board.Size; v++) if ((usedMask & (1 << v)) == 0) cands++;
+                        if (cands == 2) _bagHighlightCells.Add((r, c));
+                    }
+                    run.TryUseItem(slotIndex);
+                    _bagHighlightEndTime = Time.time + 5f;
+                    SetStatus($"Zen Sand Sifter: {_bagHighlightCells.Count} cells with exactly 2 candidates.");
+                    RenderBoard(board);
+                    break;
+                }
+
+                // ── Ginkgo Leaf: undo last mistake placement ──
+                case ItemType.GinkgoLeaf:
+                {
+                    if (board == null || _lastMistakeRow < 0) { SetStatus("No mistake to undo."); return; }
+                    board.PlaceValue(_lastMistakeRow, _lastMistakeCol, 0);
+                    s.CurrentHP = Math.Min(s.MaxHP, s.CurrentHP + 1); // restore lost HP
+                    run.TryUseItem(slotIndex);
+                    SetStatus($"Ginkgo Leaf: mistake at ({_lastMistakeRow + 1},{_lastMistakeCol + 1}) undone, +1 HP.");
+                    _lastMistakeRow = -1;
+                    _lastMistakeCol = -1;
+                    RenderBoard(board);
+                    break;
+                }
+
+                // ── Rice Paper Umbrella: block next 2 mistake penalties ──
+                case ItemType.RicePaperUmbrella:
+                {
+                    _umbrellaCharges += 2;
+                    run.TryUseItem(slotIndex);
+                    SetStatus($"Rice Paper Umbrella: next {_umbrellaCharges} mistake(s) won't cost HP.");
+                    break;
+                }
+
+                // ── Temple Incense: fill a naked-single cell ──
+                case ItemType.TempleIncense:
+                {
+                    if (board == null) { SetStatus("No active board."); return; }
+                    var filled = false;
+                    for (var r = 0; r < board.Size && !filled; r++)
+                    for (var c = 0; c < board.Size && !filled; c++)
+                    {
+                        if (board.GivenMask[r, c] || board.Cells[r, c] != 0) continue;
+                        var usedMask = 0;
+                        for (var rr = 0; rr < board.Size; rr++) if (board.Cells[rr, c] > 0) usedMask |= 1 << board.Cells[rr, c];
+                        for (var cc = 0; cc < board.Size; cc++) if (board.Cells[r, cc] > 0) usedMask |= 1 << board.Cells[r, cc];
+                        var reg = board.RegionMap[r, c];
+                        for (var rr = 0; rr < board.Size; rr++)
+                        for (var cc = 0; cc < board.Size; cc++)
+                            if (board.RegionMap[rr, cc] == reg && board.Cells[rr, cc] > 0) usedMask |= 1 << board.Cells[rr, cc];
+                        var singles = new List<int>();
+                        for (var v = 1; v <= board.Size; v++) if ((usedMask & (1 << v)) == 0) singles.Add(v);
+                        if (singles.Count == 1)
+                        {
+                            run.PlaceNumber(r, c, singles[0]);
+                            filled = true;
+                            _selectedRow = r; _selectedCol = c;
+                        }
+                    }
+                    if (!filled) { SetStatus("No naked single found."); return; }
+                    run.TryUseItem(slotIndex);
+                    SetStatus("Temple Incense: filled a naked-single cell.");
+                    RenderBoard(board);
+                    break;
+                }
+
+                // ── Koi Dragon Scale: fill the most-complete unit ──
+                case ItemType.KoiDragonScale:
+                {
+                    if (board == null) { SetStatus("No active board."); return; }
+                    var count = FillMostCompleteUnit(board, run);
+                    if (count == 0) { SetStatus("No incomplete unit found."); return; }
+                    run.TryUseItem(slotIndex);
+                    SetStatus($"Koi Dragon Scale: filled {count} cell(s) in the most-complete unit.");
+                    RenderBoard(board);
+                    break;
+                }
+
+                // ── Golden Kintsugi Jar: highlight all mistakes ──
+                case ItemType.GoldenKintsugiJar:
+                {
+                    if (board == null) { SetStatus("No active board."); return; }
+                    _bagHighlightCells.Clear();
+                    for (var r = 0; r < board.Size; r++)
+                    for (var c = 0; c < board.Size; c++)
+                    {
+                        if (board.Cells[r, c] == 0 || board.GivenMask[r, c]) continue;
+                        if (board.Cells[r, c] != board.Solution[r, c])
+                            _bagHighlightCells.Add((r, c));
+                    }
+                    run.TryUseItem(slotIndex);
+                    _bagHighlightEndTime = Time.time + 6f;
+                    SetStatus($"Golden Kintsugi Jar: found {_bagHighlightCells.Count} mistake(s).");
+                    RenderBoard(board);
+                    break;
+                }
+
+                // ── Silk Fan: swap two non-given cells ──
+                case ItemType.SilkFan:
+                {
+                    if (board == null) { SetStatus("No active board."); return; }
+                    _swapMode = true;
+                    _swapRow1 = -1; _swapCol1 = -1;
+                    run.TryUseItem(slotIndex);
+                    SetStatus("Silk Fan: click first cell to swap...");
+                    break;
+                }
+
+                // ── Wind Chime: reroll item reward slots ──
+                case ItemType.WindChime:
+                {
+                    if (_awaitingReward)
+                    {
+                        var newSlots = run.BuildItemRewardSlots();
+                        if (newSlots != null)
+                        {
+                            _rewardSlots.Clear();
+                            _rewardSlots.AddRange(newSlots);
+                            RebuildRewardButtons();
+                        }
+                    }
+                    run.TryUseItem(slotIndex);
+                    SetStatus("Wind Chime: reward slots rerolled.");
+                    break;
+                }
+
+                default:
+                    SetStatus($"Used {ItemService.GetItemName(item.Type)}.");
+                    run.TryUseItem(slotIndex);
+                    break;
+            }
+
+            RefreshBag();
+        }
+
+        private int SolveCells(SudokuBoard board, RunDirector run, int row, int col, int neighborCount)
+        {
+            var filled = 0;
+            if (!board.GivenMask[row, col] && board.Cells[row, col] != board.Solution[row, col])
+            {
+                run.PlaceNumber(row, col, board.Solution[row, col]);
+                filled++;
+            }
+            if (neighborCount <= 0) return filled;
+            var dirs = new[] { (-1, 0), (1, 0), (0, -1), (0, 1) };
+            var added = 0;
+            foreach (var (dr, dc) in dirs)
+            {
+                var nr = row + dr; var nc = col + dc;
+                if (nr < 0 || nr >= board.Size || nc < 0 || nc >= board.Size) continue;
+                if (!board.GivenMask[nr, nc] && board.Cells[nr, nc] != board.Solution[nr, nc])
+                {
+                    run.PlaceNumber(nr, nc, board.Solution[nr, nc]);
+                    filled++;
+                    added++;
+                    if (added >= neighborCount) break;
+                }
+            }
+            return filled;
+        }
+
+        private static int FillMostCompleteUnit(SudokuBoard board, RunDirector run)
+        {
+            var best = -1;
+            var bestFilled = 0;
+            var bestType = 0; // 0=row, 1=col, 2=region
+
+            // Check rows
+            for (var r = 0; r < board.Size; r++)
+            {
+                var f = 0;
+                for (var c = 0; c < board.Size; c++) if (board.Cells[r, c] != 0) f++;
+                if (f > bestFilled && f < board.Size) { bestFilled = f; best = r; bestType = 0; }
+            }
+            // Check cols
+            for (var c = 0; c < board.Size; c++)
+            {
+                var f = 0;
+                for (var r = 0; r < board.Size; r++) if (board.Cells[r, c] != 0) f++;
+                if (f > bestFilled && f < board.Size) { bestFilled = f; best = c; bestType = 1; }
+            }
+            // Check regions
+            for (var reg = 0; reg < board.Size; reg++)
+            {
+                var f = 0;
+                for (var r = 0; r < board.Size; r++)
+                for (var c = 0; c < board.Size; c++)
+                    if (board.RegionMap[r, c] == reg && board.Cells[r, c] != 0) f++;
+                if (f > bestFilled && f < board.Size) { bestFilled = f; best = reg; bestType = 2; }
+            }
+
+            if (best < 0) return 0;
+            var count = 0;
+            if (bestType == 0)
+            {
+                for (var c = 0; c < board.Size; c++)
+                    if (!board.GivenMask[best, c] && board.Cells[best, c] != board.Solution[best, c])
+                    { run.PlaceNumber(best, c, board.Solution[best, c]); count++; }
+            }
+            else if (bestType == 1)
+            {
+                for (var r = 0; r < board.Size; r++)
+                    if (!board.GivenMask[r, best] && board.Cells[r, best] != board.Solution[r, best])
+                    { run.PlaceNumber(r, best, board.Solution[r, best]); count++; }
+            }
+            else
+            {
+                for (var r = 0; r < board.Size; r++)
+                for (var c = 0; c < board.Size; c++)
+                    if (board.RegionMap[r, c] == best && !board.GivenMask[r, c] && board.Cells[r, c] != board.Solution[r, c])
+                    { run.PlaceNumber(r, c, board.Solution[r, c]); count++; }
+            }
+            return count;
+        }
+
+        private void HandleSwapClick(int r, int c)
+        {
+            var board = _map?.Run?.CurrentBoard;
+            if (board == null) { _swapMode = false; return; }
+            if (board.GivenMask[r, c]) { SetStatus("Can't swap a given cell. Click another."); return; }
+
+            if (_swapRow1 < 0)
+            {
+                _swapRow1 = r; _swapCol1 = c;
+                SetStatus($"Silk Fan: first cell ({r + 1},{c + 1}) selected. Click second cell.");
+            }
+            else
+            {
+                if (r == _swapRow1 && c == _swapCol1) { SetStatus("Silk Fan: same cell. Pick a different one."); return; }
+                var val1 = board.Cells[_swapRow1, _swapCol1];
+                var val2 = board.Cells[r, c];
+                board.PlaceValue(_swapRow1, _swapCol1, val2);
+                board.PlaceValue(r, c, val1);
+                _swapMode = false;
+                _swapRow1 = -1; _swapCol1 = -1;
+                SetStatus($"Silk Fan: swapped cells.");
+                RenderBoard(board);
+            }
+        }
+
+        // ────────────────────── Inner types ──────────────────────
 
         private sealed class CellView
         {
             public int Row;
             public int Col;
-            public RectTransform Root;
             public Image Image;
             public Text Label;
             public Text PencilLabel;
@@ -5667,7 +3353,6 @@ namespace SudokuRoguelike.UI
             public Image BorderBottom;
             public Image BorderLeft;
             public Image BorderRight;
-            public Button Button;
         }
     }
 }

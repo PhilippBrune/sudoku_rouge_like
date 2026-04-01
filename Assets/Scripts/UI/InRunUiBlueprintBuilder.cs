@@ -1,4 +1,3 @@
-using SudokuRoguelike.Core;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -10,19 +9,28 @@ namespace SudokuRoguelike.UI
 {
     public sealed class InRunUiBlueprintBuilder : MonoBehaviour
     {
-        [Header("References")]
-        [SerializeField] private RunMapController runMapController;
+        private RunMapController runMapController;
 
-        [Header("Palette")]
-        [SerializeField] private Color panelColor = new(0.10f, 0.15f, 0.12f, 0.90f);
-        [SerializeField] private Color accentColor = new(0.56f, 0.72f, 0.42f, 1f);
-        [SerializeField] private Color textColor = new(0.92f, 0.96f, 0.89f, 1f);
-        [SerializeField] private Color buttonColor = new(0.18f, 0.27f, 0.20f, 1f);
+        private Color panelColor;
+        private Color accentColor;
+        private Color textColor;
+        private Color buttonColor;
 
-        [Header("Typography")]
-        [SerializeField] private int titleFontSize = 24;
-        [SerializeField] private int bodyFontSize = 18;
-        [SerializeField] private int smallFontSize = 15;
+        private int titleFontSize;
+        private int bodyFontSize;
+        private int smallFontSize;
+
+        private void Awake()
+        {
+            panelColor = new Color(0.10f, 0.15f, 0.12f, 0.90f);
+            accentColor = new Color(0.56f, 0.72f, 0.42f, 1f);
+            textColor = new Color(0.92f, 0.96f, 0.89f, 1f);
+            buttonColor = new Color(0.18f, 0.27f, 0.20f, 1f);
+
+            titleFontSize = 24;
+            bodyFontSize = 18;
+            smallFontSize = 15;
+        }
 
         [ContextMenu("Build In-Run UI Blueprint")]
         public void BuildBlueprint()
@@ -44,9 +52,6 @@ namespace SudokuRoguelike.UI
             EnsureOrGetImage(root.gameObject, new Color(0f, 0f, 0f, 0f));
 
             var flow = EnsureComponent<InRunUiFlowController>(root.gameObject);
-            var debug = EnsureComponent<PrototypeUiDebugHotkeys>(gameObject);
-            var tutorialBanner = EnsureComponent<TutorialRunBannerController>(root.gameObject);
-            var boardPreview = EnsureComponent<SudokuBoardPreviewController>(root.gameObject);
             var runScreen = EnsureComponent<PrototypeRunScreenController>(root.gameObject);
 
             var eventPanel = BuildEventPanel(root);
@@ -54,7 +59,7 @@ namespace SudokuRoguelike.UI
             var debugPanel = BuildDebugPanel(root);
             var sudokuPanel = BuildSudokuBoardPanel(root, out var boardText, out var boardStatusText);
             var pathOverviewPanel = BuildPathOverviewPanel(root, out var pathOverviewText, out var laneAText, out var laneBText, out var laneAPathRoot, out var laneBPathRoot, out var chooseAButton, out var chooseBButton, out var saveQuitPathButton);
-            var sudokuGameplayPanel = BuildSudokuGameplayPanel(root, out var sudokuGridRoot, out var numpadRoot, out var saveQuitSudokuButton, out var optionsSudokuButton, out var solveSudokuButton, out var sudokuGameplayStatusText, out var hpText, out var pencilText);
+            var sudokuGameplayPanel = BuildSudokuGameplayPanel(root, out var sudokuGridRoot, out var numpadRoot, out var saveQuitSudokuButton, out var optionsSudokuButton, out var sudokuGameplayStatusText, out var hpText, out var pencilText);
             var gameOverPanel = BuildGameOverPanel(root, out var gameOverSummaryText, out var gameOverDetailsText, out var gameOverBackButton);
             var inGameOptionsPanel = BuildInGameOptionsPanel(root);
             var tutorialLabel = BuildTutorialBanner(root);
@@ -63,37 +68,6 @@ namespace SudokuRoguelike.UI
                 runMapController,
                 eventPanel.GetComponent<EventChoiceScreenController>(),
                 cursePanel.GetComponent<CursePanelController>());
-
-            var pathPreviewText = debugPanel.transform.Find("PathPreviewText")?.GetComponent<Text>();
-            debug.Configure(flow, runMapController, pathPreviewText);
-            WireDebugButtons(debugPanel, debug);
-            tutorialBanner.Configure(runMapController, tutorialLabel);
-            boardPreview.Configure(runMapController, boardText, boardStatusText);
-            runScreen.Configure(
-                runMapController,
-                pathOverviewPanel,
-                sudokuGameplayPanel,
-                pathOverviewText,
-                laneAText,
-                laneBText,
-                laneAPathRoot,
-                laneBPathRoot,
-                chooseAButton,
-                chooseBButton,
-                saveQuitPathButton,
-                saveQuitSudokuButton,
-                optionsSudokuButton,
-                inGameOptionsPanel,
-                sudokuGridRoot,
-                numpadRoot,
-                solveSudokuButton,
-                sudokuGameplayStatusText,
-                hpText,
-                pencilText,
-                gameOverPanel,
-                gameOverSummaryText,
-                gameOverDetailsText,
-                gameOverBackButton);
 
             // Keep legacy prototype helper panels out of the main redesign flow.
             eventPanel.SetActive(false);
@@ -106,8 +80,16 @@ namespace SudokuRoguelike.UI
 
             if (runMapController == null)
             {
-                Debug.LogWarning("InRunUiBlueprintBuilder: RunMapController was not found. Assign it on the builder or place one as a child.");
+                runMapController = EnsureComponent<RunMapController>(root.gameObject);
             }
+
+            runScreen.Configure(
+                runMapController,
+                pathOverviewPanel, sudokuGameplayPanel, gameOverPanel,
+                pathOverviewText, sudokuGameplayStatusText, hpText, pencilText,
+                gameOverSummaryText, gameOverDetailsText, gameOverBackButton,
+                sudokuGridRoot, numpadRoot);
+            runScreen.SetInGameOptionsPanel(inGameOptionsPanel);
         }
 
         private static void EnsureEventSystem()
@@ -153,10 +135,7 @@ namespace SudokuRoguelike.UI
             closeButton.onClick.RemoveAllListeners();
             closeButton.onClick.AddListener(controller.CloseEvent);
 
-            var buttonTemplate = BuildButton("OptionButtonTemplate", panel.transform as RectTransform, "Option Label — Tradeoff", bodyFontSize);
-            SetRect(buttonTemplate.GetComponent<RectTransform>(), new Vector2(0.04f, 0.22f), new Vector2(0.96f, 0.30f), Vector2.zero, Vector2.zero);
-
-            controller.Configure(panel, title, result, optionsArea, buttonTemplate);
+            controller.Configure(panel, title, result, optionsArea);
 
             panel.SetActive(false);
             return panel;
@@ -191,12 +170,15 @@ namespace SudokuRoguelike.UI
 
             var calmPath = BuildButton("BtnPathA", panel.transform as RectTransform, "Path A (A)", smallFontSize);
             SetRect(calmPath.GetComponent<RectTransform>(), new Vector2(0.66f, 0.52f), new Vector2(0.79f, 0.88f), Vector2.zero, Vector2.zero);
+            ApplyButtonIcon(calmPath, "bud");
 
             var riskyPath = BuildButton("BtnPathB", panel.transform as RectTransform, "Path B (B)", smallFontSize);
             SetRect(riskyPath.GetComponent<RectTransform>(), new Vector2(0.80f, 0.52f), new Vector2(0.93f, 0.88f), Vector2.zero, Vector2.zero);
+            ApplyButtonIcon(riskyPath, "golden_koi");
 
             var quitAndSave = BuildButton("BtnQuitSave", panel.transform as RectTransform, "Save & Quit (Q)", smallFontSize);
             SetRect(quitAndSave.GetComponent<RectTransform>(), new Vector2(0.66f, 0.10f), new Vector2(0.93f, 0.46f), Vector2.zero, Vector2.zero);
+            ApplyButtonIcon(quitAndSave, "torii_lock");
 
             return panel;
         }
@@ -263,6 +245,7 @@ namespace SudokuRoguelike.UI
 
             saveQuit = BuildButton("BtnPathOverviewSaveQuit", panel.transform as RectTransform, "Save & Quit (Q)", 20);
             SetRect(saveQuit.GetComponent<RectTransform>(), new Vector2(0.72f, 0.10f), new Vector2(0.92f, 0.18f), Vector2.zero, Vector2.zero);
+            ApplyButtonIcon(saveQuit, "torii_lock");
 
             return panel;
         }
@@ -311,7 +294,6 @@ namespace SudokuRoguelike.UI
             out RectTransform numpadRoot,
             out Button saveQuit,
             out Button optionsButton,
-            out Button solveButton,
             out Text statusText,
             out Text hpText,
             out Text pencilText)
@@ -378,12 +360,11 @@ namespace SudokuRoguelike.UI
 
             saveQuit = BuildButton("BtnSudokuSaveQuit", panel.transform as RectTransform, "Save & Quit (Q)", 18);
             SetRect(saveQuit.GetComponent<RectTransform>(), new Vector2(0.80f, 0.84f), new Vector2(0.94f, 0.91f), Vector2.zero, Vector2.zero);
+            ApplyButtonIcon(saveQuit, "torii_lock");
 
             optionsButton = BuildButton("BtnSudokuOptions", panel.transform as RectTransform, "Options", 18);
             SetRect(optionsButton.GetComponent<RectTransform>(), new Vector2(0.80f, 0.92f), new Vector2(0.94f, 0.99f), Vector2.zero, Vector2.zero);
-
-            solveButton = BuildButton("BtnSudokuSolve", panel.transform as RectTransform, "Solve", 18);
-            SetRect(solveButton.GetComponent<RectTransform>(), new Vector2(0.73f, 0.84f), new Vector2(0.79f, 0.91f), Vector2.zero, Vector2.zero);
+            ApplyButtonIcon(optionsButton, "stone_gear");
 
             gridRoot = EnsureRect("SudokuGameplayGridRoot", panel.transform as RectTransform, new Vector2(0.22f, 0.16f), new Vector2(0.70f, 0.76f), Vector2.zero, Vector2.zero);
             EnsureOrGetImage(gridRoot.gameObject, new Color(0f, 0f, 0f, 0.20f));
@@ -391,11 +372,10 @@ namespace SudokuRoguelike.UI
             numpadRoot = EnsureRect("SudokuGameplayNumpadRoot", panel.transform as RectTransform, new Vector2(0.74f, 0.28f), new Vector2(0.93f, 0.72f), Vector2.zero, Vector2.zero);
             EnsureOrGetImage(numpadRoot.gameObject, new Color(0f, 0f, 0f, 0.20f));
 
-            var hint = BuildText("SudokuGameplayHint", panel.transform as RectTransform, "Use numpad buttons or keyboard 1-9.\nSingle click: select cell\nDouble click filled cell: highlight same numbers", 15, TextAnchor.UpperLeft);
+            var hint = BuildText("SudokuGameplayHint", panel.transform as RectTransform, "Use numpad buttons or keyboard 1-9.\nSingle click: select cell\nDouble click filled cell: highlight same numbers", 20, TextAnchor.UpperLeft);
             SetRect(hint.rectTransform, new Vector2(0.74f, 0.72f), new Vector2(0.94f, 0.82f), Vector2.zero, Vector2.zero);
 
-            // Boss modifier description — placed directly under the numpad (below the Mode button)
-            var bossDesc = BuildText("SudokuGameplayBossDesc", panel.transform as RectTransform, string.Empty, 12, TextAnchor.UpperLeft);
+            var bossDesc = BuildText("SudokuGameplayBossDesc", panel.transform as RectTransform, string.Empty, 20, TextAnchor.UpperLeft);
             SetRect(bossDesc.rectTransform, new Vector2(0.74f, 0.08f), new Vector2(0.97f, 0.27f), Vector2.zero, Vector2.zero);
             bossDesc.color = new Color(1f, 0.65f, 0.30f, 1f);
             bossDesc.gameObject.SetActive(false);
@@ -405,20 +385,25 @@ namespace SudokuRoguelike.UI
 
         private GameObject BuildGameOverPanel(RectTransform root, out Text summaryText, out Text detailsText, out Button backButton)
         {
-            var panel = EnsureRect("GameOverPanel", root, new Vector2(0.22f, 0.20f), new Vector2(0.78f, 0.80f), Vector2.zero, Vector2.zero).gameObject;
-            EnsureOrGetImage(panel, new Color(0.14f, 0.07f, 0.07f, 0.96f));
+            var panel = EnsureRect("GameOverPanel", root, new Vector2(0.20f, 0.18f), new Vector2(0.80f, 0.82f), Vector2.zero, Vector2.zero).gameObject;
+            EnsureOrGetImage(panel, new Color(0.10f, 0.06f, 0.06f, 0.97f));
+            var panelOutline = EnsureComponent<Outline>(panel);
+            panelOutline.effectColor = new Color(0.70f, 0.20f, 0.15f, 0.55f);
+            panelOutline.effectDistance = new Vector2(2f, -2f);
 
-            var title = BuildText("GameOverTitle", panel.transform as RectTransform, "Game Over", 38, TextAnchor.UpperCenter);
-            SetRect(title.rectTransform, new Vector2(0.06f, 0.82f), new Vector2(0.94f, 0.95f), Vector2.zero, Vector2.zero);
+            // Dynamic title — "Game Over" or "Victory!" set at runtime
+            summaryText = BuildText("GameOverTitle", panel.transform as RectTransform, "Game Over", 34, TextAnchor.UpperCenter);
+            summaryText.fontStyle = FontStyle.Bold;
+            SetRect(summaryText.rectTransform, new Vector2(0.06f, 0.84f), new Vector2(0.94f, 0.97f), Vector2.zero, Vector2.zero);
 
-            summaryText = BuildText("GameOverSummary", panel.transform as RectTransform, string.Empty, 18, TextAnchor.UpperLeft);
-            SetRect(summaryText.rectTransform, new Vector2(0.08f, 0.58f), new Vector2(0.92f, 0.80f), Vector2.zero, Vector2.zero);
+            // Details: runs, XP, level progress — larger area for readability
+            detailsText = BuildText("GameOverDetails", panel.transform as RectTransform, string.Empty, 14, TextAnchor.UpperLeft);
+            SetRect(detailsText.rectTransform, new Vector2(0.08f, 0.20f), new Vector2(0.92f, 0.82f), Vector2.zero, Vector2.zero);
+            detailsText.lineSpacing = 1.2f;
 
-            detailsText = BuildText("GameOverDetails", panel.transform as RectTransform, string.Empty, 17, TextAnchor.UpperLeft);
-            SetRect(detailsText.rectTransform, new Vector2(0.08f, 0.24f), new Vector2(0.92f, 0.56f), Vector2.zero, Vector2.zero);
-
-            backButton = BuildButton("BtnGameOverBack", panel.transform as RectTransform, "Back to Menu", 19);
-            SetRect(backButton.GetComponent<RectTransform>(), new Vector2(0.36f, 0.08f), new Vector2(0.64f, 0.18f), Vector2.zero, Vector2.zero);
+            backButton = BuildButton("BtnGameOverBack", panel.transform as RectTransform, "Back to Menu", 17);
+            SetRect(backButton.GetComponent<RectTransform>(), new Vector2(0.34f, 0.04f), new Vector2(0.66f, 0.16f), Vector2.zero, Vector2.zero);
+            ApplyButtonIcon(backButton, "torii_lock");
 
             return panel;
         }
@@ -439,7 +424,7 @@ namespace SudokuRoguelike.UI
             SetRect(masterSlider.GetComponent<RectTransform>(), new Vector2(0.10f, 0.70f), new Vector2(0.90f, 0.76f), Vector2.zero, Vector2.zero);
             masterSlider.minValue = 0f;
             masterSlider.maxValue = 1f;
-            masterSlider.SetValueWithoutNotify(optCtrl.Options.Audio.MasterVolume);
+            masterSlider.SetValueWithoutNotify(optCtrl.GetOptions().Audio.MasterVolume);
             masterSlider.onValueChanged.AddListener(v => optCtrl.SetMasterVolume(v));
 
             var musicLabel = BuildText("IGMusicLabel", panel.transform as RectTransform, "Music Volume", 18, TextAnchor.MiddleLeft);
@@ -448,7 +433,7 @@ namespace SudokuRoguelike.UI
             SetRect(musicSlider.GetComponent<RectTransform>(), new Vector2(0.10f, 0.56f), new Vector2(0.90f, 0.62f), Vector2.zero, Vector2.zero);
             musicSlider.minValue = 0f;
             musicSlider.maxValue = 1f;
-            musicSlider.SetValueWithoutNotify(optCtrl.Options.Audio.MusicVolume);
+            musicSlider.SetValueWithoutNotify(optCtrl.GetOptions().Audio.MusicVolume);
             musicSlider.onValueChanged.AddListener(v => optCtrl.SetMusicVolume(v));
 
             var sfxLabel = BuildText("IGSfxLabel", panel.transform as RectTransform, "SFX Volume", 18, TextAnchor.MiddleLeft);
@@ -457,17 +442,17 @@ namespace SudokuRoguelike.UI
             SetRect(sfxSlider.GetComponent<RectTransform>(), new Vector2(0.10f, 0.42f), new Vector2(0.90f, 0.48f), Vector2.zero, Vector2.zero);
             sfxSlider.minValue = 0f;
             sfxSlider.maxValue = 1f;
-            sfxSlider.SetValueWithoutNotify(optCtrl.Options.Audio.SfxVolume);
+            sfxSlider.SetValueWithoutNotify(optCtrl.GetOptions().Audio.SfxVolume);
             sfxSlider.onValueChanged.AddListener(v => optCtrl.SetSfxVolume(v));
 
             var highlightToggle = BuildToggle("IGHighlightToggle", panel.transform as RectTransform, "Highlight Errors");
             SetRect(highlightToggle.GetComponent<RectTransform>(), new Vector2(0.10f, 0.34f), new Vector2(0.90f, 0.41f), Vector2.zero, Vector2.zero);
-            highlightToggle.SetIsOnWithoutNotify(optCtrl.Options.Gameplay.HighlightConflicts);
+            highlightToggle.SetIsOnWithoutNotify(optCtrl.GetOptions().Gameplay.HighlightConflicts);
             highlightToggle.onValueChanged.AddListener(v =>
             {
                 optCtrl.SetHighlightConflicts(v);
-                var runScreen = root.GetComponent<PrototypeRunScreenController>();
-                if (runScreen != null) runScreen.SetHighlightConflictsLive(v);
+                var rs = root.GetComponent<PrototypeRunScreenController>();
+                if (rs != null) rs.SetHighlightConflictsLive(v);
             });
 
             var closeBtn = BuildButton("BtnInGameOptionsClose", panel.transform as RectTransform, "Close", 20);
@@ -483,36 +468,6 @@ namespace SudokuRoguelike.UI
             SetRect(label.rectTransform, new Vector2(0.66f, 0.92f), new Vector2(0.98f, 0.995f), Vector2.zero, Vector2.zero);
             label.color = accentColor;
             return label;
-        }
-
-        private static void WireDebugButtons(GameObject debugPanel, PrototypeUiDebugHotkeys debug)
-        {
-            if (debugPanel == null || debug == null)
-            {
-                return;
-            }
-
-            var calmPath = debugPanel.transform.Find("BtnPathA")?.GetComponent<Button>();
-            var riskyPath = debugPanel.transform.Find("BtnPathB")?.GetComponent<Button>();
-            var quit = debugPanel.transform.Find("BtnQuitSave")?.GetComponent<Button>();
-
-            if (calmPath != null)
-            {
-                calmPath.onClick.RemoveAllListeners();
-                calmPath.onClick.AddListener(debug.ChoosePathCalm);
-            }
-
-            if (riskyPath != null)
-            {
-                riskyPath.onClick.RemoveAllListeners();
-                riskyPath.onClick.AddListener(debug.ChoosePathRisky);
-            }
-
-            if (quit != null)
-            {
-                quit.onClick.RemoveAllListeners();
-                quit.onClick.AddListener(debug.QuitAndSave);
-            }
         }
 
         private static void EnsureMainCamera()
@@ -600,6 +555,34 @@ namespace SudokuRoguelike.UI
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
             text.verticalOverflow = VerticalWrapMode.Overflow;
             return text;
+        }
+
+        private static void ApplyButtonIcon(Button btn, string iconName)
+        {
+            var sprite = Resources.Load<Sprite>("GeneratedIcons/icon_" + iconName);
+            if (sprite == null) return;
+
+            // Find or destroy existing Icon child to avoid duplicates on rebuild
+            var existingIcon = btn.transform.Find("Icon");
+            if (existingIcon != null) DestroyImmediate(existingIcon.gameObject);
+
+            // Shift label text right to make room for a fixed-size icon
+            var label = btn.transform.Find("Label")?.GetComponent<RectTransform>();
+            if (label != null)
+                label.offsetMin = new Vector2(50f, label.offsetMin.y);
+
+            // Fixed 36×36 pixel icon anchored to the left edge
+            var iconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+            iconGo.transform.SetParent(btn.transform, false);
+            var ir = iconGo.GetComponent<RectTransform>();
+            ir.anchorMin = new Vector2(0f, 0.5f);
+            ir.anchorMax = new Vector2(0f, 0.5f);
+            ir.pivot = new Vector2(0f, 0.5f);
+            ir.anchoredPosition = new Vector2(6f, 0f);
+            ir.sizeDelta = new Vector2(36f, 36f);
+            var iconImg = iconGo.GetComponent<Image>();
+            iconImg.sprite = sprite;
+            iconImg.raycastTarget = false;
         }
 
         private Button BuildButton(string name, RectTransform parent, string label, int size)

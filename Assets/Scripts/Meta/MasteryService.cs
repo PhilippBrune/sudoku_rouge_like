@@ -1,69 +1,58 @@
-using System.Collections.Generic;
 using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.Meta
 {
     public sealed class MasteryService
     {
-        public void RecordBossClear(MasteryAchievementState mastery, BossModifierId modifier, int stars, bool noHpLoss, bool dualModifier)
+        public void RecordModifierClear(MasteryAchievementState state, BossModifierId modifier,
+            int stars, bool noHpLoss)
         {
-            if (!mastery.BossClearsByModifier.Contains(modifier))
-            {
-                mastery.BossClearsByModifier.Add(modifier);
-            }
+            if (state == null) return;
 
-            if (noHpLoss && !mastery.PerfectBossClearsByModifier.Contains(modifier))
-            {
-                mastery.PerfectBossClearsByModifier.Add(modifier);
-            }
-
-            if (dualModifier)
-            {
-                mastery.DualModifierClears++;
-            }
+            var record = FindOrCreateRecord(state, modifier);
+            record.ClearCount++;
+            if (stars >= 4) record.HighStarClears++;
+            if (noHpLoss) record.NoHpLossClears++;
         }
 
-        public void RecordNineByNineFiveStarClear(MasteryAchievementState mastery)
+        public int GetClearCount(MasteryAchievementState state, BossModifierId modifier)
         {
-            mastery.NineByNineFiveStarClears++;
+            var record = FindRecord(state, modifier);
+            return record?.ClearCount ?? 0;
         }
 
-        public void RecordNoItemRun(MasteryAchievementState mastery)
+        public bool IsMastered(MasteryAchievementState state, BossModifierId modifier)
         {
-            mastery.NoItemRuns++;
+            var record = FindRecord(state, modifier);
+            return record != null && record.ClearCount >= 10 && record.HighStarClears >= 3 && record.NoHpLossClears >= 1;
         }
 
-        public List<ModifierMasteryEntry> BuildModifierBadges(MasteryAchievementState mastery)
+        public void UnlockAchievement(MasteryAchievementState state, string achievementId)
         {
-            var output = new List<ModifierMasteryEntry>();
-            var all = (BossModifierId[])System.Enum.GetValues(typeof(BossModifierId));
+            if (state == null) return;
+            if (!state.UnlockedAchievements.Contains(achievementId))
+                state.UnlockedAchievements.Add(achievementId);
+        }
 
-            for (var i = 0; i < all.Length; i++)
+        private static MasteryRecord FindRecord(MasteryAchievementState state, BossModifierId modifier)
+        {
+            if (state?.Records == null) return null;
+            for (var i = 0; i < state.Records.Count; i++)
             {
-                var badge = ModifierBadgeTier.None;
-                if (mastery.BossClearsByModifier.Contains(all[i]))
-                {
-                    badge = ModifierBadgeTier.Bronze;
-                }
-
-                if (mastery.PerfectBossClearsByModifier.Contains(all[i]))
-                {
-                    badge = ModifierBadgeTier.Gold;
-                }
-
-                if (mastery.DualModifierClears > 0 && mastery.BossClearsByModifier.Contains(all[i]))
-                {
-                    badge = ModifierBadgeTier.Spirit;
-                }
-
-                output.Add(new ModifierMasteryEntry
-                {
-                    Modifier = all[i],
-                    BadgeTier = badge
-                });
+                if (state.Records[i].ModifierId == modifier)
+                    return state.Records[i];
             }
+            return null;
+        }
 
-            return output;
+        private static MasteryRecord FindOrCreateRecord(MasteryAchievementState state, BossModifierId modifier)
+        {
+            var record = FindRecord(state, modifier);
+            if (record != null) return record;
+
+            record = new MasteryRecord { ModifierId = modifier };
+            state.Records.Add(record);
+            return record;
         }
     }
 }

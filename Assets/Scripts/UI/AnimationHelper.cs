@@ -12,7 +12,6 @@ namespace SudokuRoguelike.UI
 
     public static class AnimationHelper
     {
-        // Standard durations in seconds (from AudioVisualDirection spec)
         public const float CellHighlightDuration = 0.1f;
         public const float NumberPlaceDuration = 0.15f;
         public const float WrongFlashDuration = 0.2f;
@@ -25,7 +24,6 @@ namespace SudokuRoguelike.UI
         public const float FloorTransitionSilence = 0.2f;
         public const float FloorTransitionFadeIn = 0.8f;
 
-        // Screen shake presets (pixels, duration)
         public const float ShakeWrongPx = 2f;
         public const float ShakeWrongDuration = 0.1f;
         public const float ShakeBossPx = 3f;

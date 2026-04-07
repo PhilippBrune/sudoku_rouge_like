@@ -3,65 +3,31 @@ using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.Classes
 {
-    public sealed class ClassSelectCard
-    {
-        public ClassId ClassId;
-        public string Name;
-        public int HP;
-        public int Pencil;
-        public int ItemSlots;
-        public bool IsUnlocked;
-        public bool IsGreyedOut;
-        public string UnlockRequirement;
-        public string PassiveDisplay;
-        public int Tier;
-        public ClassComplexity Complexity;
-        public PlayerSkillBand SkillBand;
-    }
-
     public sealed class ClassSelectService
     {
-        private readonly ClassUnlockService _unlockService = new();
-
-        public List<ClassSelectCard> BuildCards(MetaProgressionState meta)
+        public List<ClassId> GetSelectableClasses(MetaProgressionState meta)
         {
-            var order = new[]
-            {
-                ClassId.NumberFreak,
-                ClassId.GardenMonk,
-                ClassId.ShrineArchivist,
-                ClassId.KoiGambler,
-                ClassId.StoneGardener,
-                ClassId.LanternSeer,
-                ClassId.ReedDuelist,
-                ClassId.QuietCartographer
-            };
+            var result = new List<ClassId>();
+            if (meta?.UnlockedClasses == null) return result;
 
-            var cards = new List<ClassSelectCard>(order.Length);
-            for (var i = 0; i < order.Length; i++)
-            {
-                var snapshot = ClassCatalog.Build(order[i]);
-                var unlocked = meta.UnlockedClasses.Contains(order[i]);
-                var metaInfo = ClassCatalog.GetMeta(order[i]);
+            for (var i = 0; i < meta.UnlockedClasses.Count; i++)
+                result.Add(meta.UnlockedClasses[i]);
 
-                cards.Add(new ClassSelectCard
-                {
-                    ClassId = order[i],
-                    Name = order[i].ToString(),
-                    HP = snapshot.HP,
-                    Pencil = snapshot.Pencil,
-                    ItemSlots = snapshot.ItemSlots,
-                    IsUnlocked = unlocked,
-                    IsGreyedOut = !unlocked,
-                    UnlockRequirement = unlocked ? string.Empty : _unlockService.GetUnlockRequirementText(order[i]),
-                    PassiveDisplay = unlocked ? metaInfo.PassiveDescription : "???",
-                    Tier = metaInfo.Tier,
-                    Complexity = metaInfo.Complexity,
-                    SkillBand = metaInfo.SkillBand
-                });
+            return result;
+        }
+
+        public int GetClassLevel(ClassId classId, MetaProgressionState meta)
+        {
+            if (meta?.GardenProgression?.ClassEntries == null) return 1;
+
+            for (var i = 0; i < meta.GardenProgression.ClassEntries.Count; i++)
+            {
+                var entry = meta.GardenProgression.ClassEntries[i];
+                if (entry.ClassId == classId)
+                    return Economy.XpTable.DeriveLevel(entry.TotalXp);
             }
 
-            return cards;
+            return 1;
         }
     }
 }

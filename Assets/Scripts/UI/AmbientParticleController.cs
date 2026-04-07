@@ -1,36 +1,33 @@
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Save;
 using UnityEngine;
 
 namespace SudokuRoguelike.UI
 {
-    /// <summary>
-    /// Per-floor ambient particle effects using Unity's ParticleSystem.
-    /// Respects ParticleIntensity setting (scales count + opacity) and ReduceMotion (disables entirely).
-    /// Max 2 visual layers active simultaneously.
-    /// </summary>
     public sealed class AmbientParticleController : MonoBehaviour
     {
-        private readonly AccessibilityService _accessibility = new();
+        private AccessibilityService _accessibility;
+        private ProfileService _profile;
         private ParticleSystem _primarySystem;
         private ParticleSystem _secondarySystem;
         private int _currentFloor = -1;
 
         private void Awake()
         {
+            _accessibility = new AccessibilityService();
+            _profile = new ProfileService();
             _primarySystem = CreateParticleSystem("AmbientPrimary");
             _secondarySystem = CreateParticleSystem("AmbientSecondary");
         }
 
-        /// <summary>
-        /// Switch to the ambient particles for the given floor.
-        /// </summary>
         public void SetFloor(int floorIndex)
         {
             floorIndex = Mathf.Clamp(floorIndex, 0, 4);
             if (floorIndex == _currentFloor) return;
             _currentFloor = floorIndex;
 
-            _accessibility.Refresh();
+            var opts = _profile.LoadOptions();
+            _accessibility.Refresh(opts.Accessibility, opts.Graphics);
 
             if (_accessibility.IsReduceMotion || _accessibility.ParticleIntensity <= 0f)
             {
@@ -43,23 +40,23 @@ namespace SudokuRoguelike.UI
 
             switch (floorIndex)
             {
-                case 0: // Bamboo Courtyard — petals
+                case 0:
                     ConfigureSystem(_primarySystem, FloorParticlePreset.Petals, intensity);
                     _secondarySystem.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
                     break;
-                case 1: // Moss Garden — dust motes + rain dots
+                case 1:
                     ConfigureSystem(_primarySystem, FloorParticlePreset.DustMotes, intensity);
                     ConfigureSystem(_secondarySystem, FloorParticlePreset.RainDots, intensity * 0.5f);
                     break;
-                case 2: // Koi Terrace — water ripples
+                case 2:
                     ConfigureSystem(_primarySystem, FloorParticlePreset.WaterRipples, intensity);
                     _secondarySystem.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
                     break;
-                case 3: // Stone Lantern Walk — dust motes + lantern glow
+                case 3:
                     ConfigureSystem(_primarySystem, FloorParticlePreset.DustMotes, intensity);
                     ConfigureSystem(_secondarySystem, FloorParticlePreset.LanternGlow, intensity * 0.7f);
                     break;
-                case 4: // Shrine Summit — petals + light rays
+                case 4:
                     ConfigureSystem(_primarySystem, FloorParticlePreset.Petals, intensity);
                     ConfigureSystem(_secondarySystem, FloorParticlePreset.LightRays, intensity * 0.6f);
                     break;
@@ -173,17 +170,34 @@ namespace SudokuRoguelike.UI
             if (!ps.isPlaying) ps.Play();
         }
 
+        /// <summary>Re-reads accessibility settings and applies them immediately.</summary>
+        public void RefreshSettings()
+        {
+            var opts = _profile.LoadOptions();
+            _accessibility.Refresh(opts.Accessibility, opts.Graphics);
+
+            if (_accessibility.IsReduceMotion || _accessibility.ParticleIntensity <= 0f)
+            {
+                _primarySystem.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                _secondarySystem.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            }
+            else if (_currentFloor >= 0)
+            {
+                // Re-apply the current floor settings with updated intensity
+                var savedFloor = _currentFloor;
+                _currentFloor = -1;
+                SetFloor(savedFloor);
+            }
+        }
+
         private ParticleSystem CreateParticleSystem(string name)
         {
             var go = new GameObject(name, typeof(ParticleSystem));
             go.transform.SetParent(transform, false);
             var ps = go.GetComponent<ParticleSystem>();
             ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-
-            // Disable default emission until configured
             var emission = ps.emission;
             emission.enabled = false;
-
             return ps;
         }
 

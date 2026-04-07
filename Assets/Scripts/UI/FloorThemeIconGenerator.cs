@@ -2,7 +2,6 @@ using UnityEngine;
 
 namespace SudokuRoguelike.UI
 {
-    /// <summary>Generates simple procedural icons for each floor theme (64×64 pixel art).</summary>
     public static class FloorThemeIconGenerator
     {
         private static readonly Sprite[] Cache = new Sprite[5];
@@ -39,7 +38,6 @@ namespace SudokuRoguelike.UI
             return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
         }
 
-        // Floor 1: Cherry blossom — 5 petal flower
         private static void DrawSakuraBlossom(Texture2D tex, int size)
         {
             var pink = new Color(1f, 0.65f, 0.75f, 1f);
@@ -54,11 +52,9 @@ namespace SudokuRoguelike.UI
                 var py = cy + Mathf.Sin(angle) * 14f;
                 FillCircle(tex, size, (int)px, (int)py, 10, pink);
             }
-
             FillCircle(tex, size, size / 2, size / 2, 6, center);
         }
 
-        // Floor 2: Bamboo — 3 vertical green stalks
         private static void DrawBambooStalks(Texture2D tex, int size)
         {
             var green = new Color(0.30f, 0.65f, 0.25f, 1f);
@@ -68,11 +64,8 @@ namespace SudokuRoguelike.UI
             void DrawStalk(int x)
             {
                 for (var y = 8; y < 56; y++)
-                {
                     for (var dx = -2; dx <= 2; dx++)
                         SetPixelSafe(tex, size, x + dx, y, green);
-                }
-
                 for (var dy = 0; dy < 3; dy++)
                     for (var dx = -3; dx <= 3; dx++)
                         SetPixelSafe(tex, size, x + dx, 20 + dy, darkGreen);
@@ -85,7 +78,6 @@ namespace SudokuRoguelike.UI
             DrawStalk(32);
             DrawStalk(44);
 
-            // Simple leaves
             for (var i = 0; i < 6; i++)
                 for (var j = 0; j < 3; j++)
                     SetPixelSafe(tex, size, 46 + i, 48 + j, leaf);
@@ -94,7 +86,6 @@ namespace SudokuRoguelike.UI
                     SetPixelSafe(tex, size, 14 - i, 28 + j, leaf);
         }
 
-        // Floor 3: Zen garden — stacked stones
         private static void DrawZenStones(Texture2D tex, int size)
         {
             var stone1 = new Color(0.55f, 0.53f, 0.50f, 1f);
@@ -102,20 +93,15 @@ namespace SudokuRoguelike.UI
             var stone3 = new Color(0.48f, 0.46f, 0.42f, 1f);
             var sand = new Color(0.88f, 0.85f, 0.78f, 0.60f);
 
-            // Sand lines
             for (var y = 10; y < 18; y++)
                 for (var x = 5; x < 59; x++)
                     if (y % 3 == 0) SetPixelSafe(tex, size, x, y, sand);
 
-            // Bottom stone (largest)
             FillEllipse(tex, size, 32, 30, 16, 8, stone1);
-            // Middle stone
             FillEllipse(tex, size, 32, 40, 12, 7, stone2);
-            // Top stone (smallest)
             FillEllipse(tex, size, 32, 50, 8, 6, stone3);
         }
 
-        // Floor 4: Koi fish — orange oval + tail
         private static void DrawKoiFish(Texture2D tex, int size)
         {
             var water = new Color(0.15f, 0.45f, 0.60f, 0.40f);
@@ -123,14 +109,10 @@ namespace SudokuRoguelike.UI
             var white = new Color(1f, 1f, 1f, 0.90f);
             var eye = new Color(0.05f, 0.05f, 0.05f, 1f);
 
-            // Water bg
             FillCircle(tex, size, 32, 32, 28, water);
-
-            // Fish body
             FillEllipse(tex, size, 28, 32, 14, 7, orange);
-            // White belly
             FillEllipse(tex, size, 26, 34, 8, 3, white);
-            // Tail
+
             for (var i = 0; i < 8; i++)
             {
                 SetPixelSafe(tex, size, 42 + i, 30 + i / 2, orange);
@@ -138,60 +120,48 @@ namespace SudokuRoguelike.UI
                 SetPixelSafe(tex, size, 42 + i, 31 + i / 2, orange);
                 SetPixelSafe(tex, size, 42 + i, 33 - i / 2, orange);
             }
-
-            // Eye
             SetPixelSafe(tex, size, 18, 31, eye);
             SetPixelSafe(tex, size, 19, 31, eye);
         }
 
-        // Floor 5: Mountain temple torii gate
         private static void DrawTempleGate(Texture2D tex, int size)
         {
             var red = new Color(0.80f, 0.15f, 0.10f, 1f);
             var darkRed = new Color(0.55f, 0.10f, 0.08f, 1f);
             var lantern = new Color(1f, 0.80f, 0.20f, 0.85f);
 
-            // Two pillars
             for (var y = 10; y < 55; y++)
-            {
                 for (var dx = 0; dx < 5; dx++)
                 {
                     SetPixelSafe(tex, size, 18 + dx, y, red);
                     SetPixelSafe(tex, size, 41 + dx, y, red);
                 }
-            }
 
-            // Top beam (wide)
             for (var x = 12; x < 52; x++)
                 for (var dy = 0; dy < 5; dy++)
                     SetPixelSafe(tex, size, x, 52 + dy, darkRed);
 
-            // Second beam
             for (var x = 16; x < 48; x++)
                 for (var dy = 0; dy < 3; dy++)
                     SetPixelSafe(tex, size, x, 46 + dy, red);
 
-            // Lantern glow in center
             FillCircle(tex, size, 32, 38, 4, lantern);
         }
 
         private static void FillCircle(Texture2D tex, int size, int cx, int cy, int r, Color color)
         {
             for (var y = cy - r; y <= cy + r; y++)
-            {
                 for (var x = cx - r; x <= cx + r; x++)
                 {
                     var dist = Mathf.Sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy));
                     if (dist <= r + 0.5f)
                         SetPixelSafe(tex, size, x, y, color);
                 }
-            }
         }
 
         private static void FillEllipse(Texture2D tex, int size, int cx, int cy, int rx, int ry, Color color)
         {
             for (var y = cy - ry; y <= cy + ry; y++)
-            {
                 for (var x = cx - rx; x <= cx + rx; x++)
                 {
                     var dx = (float)(x - cx) / rx;
@@ -199,7 +169,6 @@ namespace SudokuRoguelike.UI
                     if (dx * dx + dy * dy <= 1f)
                         SetPixelSafe(tex, size, x, y, color);
                 }
-            }
         }
 
         private static void SetPixelSafe(Texture2D tex, int size, int x, int y, Color c)

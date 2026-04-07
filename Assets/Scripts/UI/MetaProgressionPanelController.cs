@@ -1,272 +1,90 @@
-using System.Text;
-using SudokuRoguelike.Classes;
-using SudokuRoguelike.Core;
-using SudokuRoguelike.Meta;
-using SudokuRoguelike.Save;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using SudokuRoguelike.Core;
+using SudokuRoguelike.Classes;
+using SudokuRoguelike.Economy;
 
 namespace SudokuRoguelike.UI
 {
     public sealed class MetaProgressionPanelController : MonoBehaviour
     {
-        [SerializeField] private MainMenuController mainMenuController;
-        [SerializeField] private Text metaSummaryText;
-        [SerializeField] private Text classProgressText;
-        [SerializeField] private Text selectedClassText;
+        private RectTransform _contentRoot;
+        private Text _summaryText;
 
-        private readonly SaveFileService _save = new();
-        private readonly ProfileService _profile = new();
-        private readonly ClassSelectService _classSelect = new();
-        private static readonly (ClassId ClassId, string ButtonName)[] ClassButtons =
-        {
-            (ClassId.NumberFreak, "BtnClassNumberFreak"),
-            (ClassId.GardenMonk, "BtnClassGardenMonk"),
-            (ClassId.ShrineArchivist, "BtnClassShrineArchivist"),
-            (ClassId.KoiGambler, "BtnClassKoiGambler"),
-            (ClassId.StoneGardener, "BtnClassStoneGardener"),
-            (ClassId.LanternSeer, "BtnClassLanternSeer"),
-            (ClassId.ReedDuelist, "BtnClassReedDuelist"),
-            (ClassId.QuietCartographer, "BtnClassQuietCartographer")
-        };
+        private static readonly Color UnlockedColor = new Color(0.92f, 0.96f, 0.89f, 1f);
+        private static readonly Color LockedColor = new Color(0.55f, 0.55f, 0.55f, 0.7f);
 
-        private void Awake()
+        public void Configure(RectTransform contentRoot, Text summaryText)
         {
-            if (_save.TryLoadProfile(out var envelope))
-            {
-                _profile.ApplyEnvelope(envelope);
-            }
+            _contentRoot = contentRoot;
+            _summaryText = summaryText;
         }
 
-        public void Configure(MainMenuController controller, Text summary, Text classProgress, Text selectedClass)
+        public void Refresh(MetaProgressionState meta)
         {
-            mainMenuController = controller;
-            metaSummaryText = summary;
-            classProgressText = classProgress;
-            selectedClassText = selectedClass;
-            RefreshView();
-        }
+            if (meta == null) meta = new MetaProgressionState();
 
-        public void RefreshView()
-        {
-            if (_save.TryLoadProfile(out var envelope))
+            if (_summaryText != null)
             {
-                _profile.ApplyEnvelope(envelope);
+                var totalClasses = meta.UnlockedClasses?.Count ?? 0;
+                var totalRelics = meta.DiscoveredRelics?.Count ?? 0;
+                _summaryText.text = $"Classes: {totalClasses}/8  |  Relics: {totalRelics}/23  |  Ascension: {meta.AscensionLevel}";
             }
 
-            if (metaSummaryText != null)
-            {
-                metaSummaryText.text =
-                    $"Runs: {_profile.Stats.TotalRuns}\n" +
-                    $"Boss Clears: {_profile.Stats.BossClears}\n" +
-                    $"Achievements: {_profile.Stats.TotalAchievementsUnlocked}";
-            }
+            if (_contentRoot == null) return;
 
-            if (classProgressText != null)
+            for (var i = _contentRoot.childCount - 1; i >= 0; i--)
+                Destroy(_contentRoot.GetChild(i).gameObject);
+
+            // Show ALL 8 classes, not just those with progress
+            var allClasses = (ClassId[])Enum.GetValues(typeof(ClassId));
+            for (var i = 0; i < allClasses.Length; i++)
             {
-                var cards = _classSelect.BuildCards(_profile.Meta);
-                var selectedId = mainMenuController != null ? mainMenuController.SelectedClass : ClassId.NumberFreak;
-                var builder = new StringBuilder();
-                for (var i = 0; i < cards.Count; i++)
+                var classId = allClasses[i];
+                var def = ClassCatalog.GetDefinition(classId);
+                var entry = FindEntry(meta, classId);
+                var isUnlocked = meta.UnlockedClasses != null && meta.UnlockedClasses.Contains(classId);
+
+                var go = new GameObject(classId.ToString());
+                go.transform.SetParent(_contentRoot, false);
+                var text = go.AddComponent<Text>();
+                text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                text.fontSize = 15;
+
+                if (entry != null)
                 {
-                    var card = cards[i];
-                    if (card.ClassId != selectedId)
-                    {
-                        continue;
-                    }
-
-                    builder.AppendLine(card.Name);
-                    builder.AppendLine($"  HP {card.HP} | Pencil {card.Pencil} | Slots {card.ItemSlots}");
-                    builder.AppendLine($"  Passive: {card.PassiveDisplay}");
-
-                    var progression = _profile.Meta.GardenProgression;
-                    ClassGardenProgressEntry classEntry = null;
-                    for (var j = 0; j < progression.ClassEntries.Count; j++)
-                    {
-                        if (progression.ClassEntries[j].ClassId == selectedId)
-                        {
-                            classEntry = progression.ClassEntries[j];
-                            break;
-                        }
-                    }
-
-                    var totalXp = classEntry?.TotalXp ?? 0;
-                    var prestige = classEntry?.PrestigeTier ?? 0;
-                    var (lvl, progressXp, xpToNext) = ClassGardenProgressionService.DeriveLevel(totalXp);
-                    var xpDisplay = xpToNext > 0 ? $"{progressXp}/{xpToNext}" : "MAX";
-                    builder.AppendLine($"  Level {lvl} | XP: {xpDisplay}");
-                    if (prestige > 0)
-                        builder.AppendLine($"  Prestige: {prestige}");
-                    builder.AppendLine($"  Next: {ClassGardenProgressionService.GetNextUnlock(selectedId, lvl)}");
-
-                    break;
+                    var level = XpTable.DeriveLevel(entry.TotalXp);
+                    text.color = UnlockedColor;
+                    text.text = $"{def.Name}  —  Level {level}  (Prestige {entry.PrestigeTier})  —  {entry.TotalXp} XP\n" +
+                        $"    HP: {def.BaseHP}  Pencil: {def.BasePencil}  Slots: {def.BaseItemSlots}  |  {def.PassiveDescription}";
                 }
-
-                classProgressText.text = builder.Length > 0
-                    ? builder.ToString().TrimEnd()
-                    : "No class selected.";
-            }
-
-            for (var i = 0; i < ClassButtons.Length; i++)
-            {
-                var row = ClassButtons[i];
-                var visible = _profile.IsClassUnlocked(row.ClassId) || (mainMenuController != null && mainMenuController.DebugEnableAllFeatures);
-                SetClassButtonVisible(row.ButtonName, visible);
-            }
-
-            RelayoutVisibleClassButtons();
-
-            if (selectedClassText != null && mainMenuController != null)
-            {
-                selectedClassText.text = $"Selected Class: {mainMenuController.SelectedClass}";
-            }
-        }
-
-        public void SelectClassNumberFreak() => TrySelectClass(ClassId.NumberFreak);
-        public void SelectClassGardenMonk() => TrySelectClass(ClassId.GardenMonk);
-        public void SelectClassShrineArchivist() => TrySelectClass(ClassId.ShrineArchivist);
-        public void SelectClassKoiGambler() => TrySelectClass(ClassId.KoiGambler);
-        public void SelectClassStoneGardener() => TrySelectClass(ClassId.StoneGardener);
-        public void SelectClassLanternSeer() => TrySelectClass(ClassId.LanternSeer);
-        public void SelectClassReedDuelist() => TrySelectClass(ClassId.ReedDuelist);
-        public void SelectClassQuietCartographer() => TrySelectClass(ClassId.QuietCartographer);
-
-        public void UnlockDemoContent()
-        {
-            UnlockClass(ClassId.GardenMonk);
-            UnlockClass(ClassId.ShrineArchivist);
-            UnlockClass(ClassId.KoiGambler);
-            UnlockClass(ClassId.StoneGardener);
-            UnlockClass(ClassId.LanternSeer);
-            UnlockClass(ClassId.ReedDuelist);
-            UnlockClass(ClassId.QuietCartographer);
-
-            _profile.Meta.EndlessZenUnlocked = true;
-            _profile.Meta.SpiritTrialsUnlocked = true;
-
-            SaveProfile();
-            RefreshView();
-        }
-
-        private void TrySelectClass(ClassId classId)
-        {
-            var debugAll = mainMenuController != null && mainMenuController.DebugEnableAllFeatures;
-            if (!_profile.IsClassUnlocked(classId) && !debugAll)
-            {
-                mainMenuController?.SetStatusExternal($"{classId} is still locked.");
-                return;
-            }
-
-            mainMenuController?.SetSelectedClass(classId);
-            RefreshView();
-        }
-
-        private void UnlockClass(ClassId classId)
-        {
-            if (!_profile.Meta.UnlockedClasses.Contains(classId))
-            {
-                _profile.Meta.UnlockedClasses.Add(classId);
-            }
-        }
-
-        private void SaveProfile()
-        {
-            var envelope = new SaveFileEnvelope
-            {
-                PlayerProfile = new ProfileSaveData { Options = _profile.Options },
-                MetaProgress = _profile.Meta,
-                TutorialProgress = _profile.TutorialProgress,
-                Statistics = _profile.Stats,
-                Mastery = _profile.Mastery,
-                Completion = _profile.Completion
-            };
-
-            _save.SaveProfile(envelope);
-        }
-
-        private void SetClassButtonVisible(string buttonName, bool visible)
-        {
-            var button = FindSceneObject(buttonName);
-            if (button == null)
-            {
-                return;
-            }
-
-            button.gameObject.SetActive(visible);
-        }
-
-        private void RelayoutVisibleClassButtons()
-        {
-            var visibleButtons = new System.Collections.Generic.List<RectTransform>();
-            for (var i = 0; i < ClassButtons.Length; i++)
-            {
-                var row = ClassButtons[i];
-                var isVisible = _profile.IsClassUnlocked(row.ClassId) || (mainMenuController != null && mainMenuController.DebugEnableAllFeatures);
-                if (!isVisible)
+                else if (isUnlocked)
                 {
-                    continue;
-                }
-
-                var button = FindSceneObject(row.ButtonName);
-                if (button == null)
-                {
-                    continue;
-                }
-
-                var rect = button as RectTransform;
-                if (rect != null)
-                {
-                    visibleButtons.Add(rect);
-                }
-            }
-
-            var top = 0.66f;
-            var rowHeight = 0.07f;
-            var rowGap = 0.01f;
-
-            for (var i = 0; i < visibleButtons.Count; i++)
-            {
-                var col = i % 2;
-                var row = i / 2;
-                var yMax = top - row * (rowHeight + rowGap);
-                var yMin = yMax - rowHeight;
-
-                if (col == 0)
-                {
-                    visibleButtons[i].anchorMin = new Vector2(0.50f, yMin);
-                    visibleButtons[i].anchorMax = new Vector2(0.70f, yMax);
+                    text.color = UnlockedColor;
+                    text.text = $"{def.Name}  —  Level 1  —  Not Started\n" +
+                        $"    HP: {def.BaseHP}  Pencil: {def.BasePencil}  Slots: {def.BaseItemSlots}  |  {def.PassiveDescription}";
                 }
                 else
                 {
-                    visibleButtons[i].anchorMin = new Vector2(0.72f, yMin);
-                    visibleButtons[i].anchorMax = new Vector2(0.92f, yMax);
+                    text.color = LockedColor;
+                    text.text = $"{def.Name}  —  Locked";
                 }
 
-                visibleButtons[i].offsetMin = Vector2.zero;
-                visibleButtons[i].offsetMax = Vector2.zero;
+                var layout = go.AddComponent<LayoutElement>();
+                layout.preferredHeight = entry != null || isUnlocked ? 40 : 24;
             }
         }
 
-        private static Transform FindSceneObject(string objectName)
+        private static ClassGardenProgressEntry FindEntry(MetaProgressionState meta, ClassId classId)
         {
-            var all = Resources.FindObjectsOfTypeAll<Transform>();
-            for (var i = 0; i < all.Length; i++)
+            if (meta?.GardenProgression?.ClassEntries == null) return null;
+            for (var i = 0; i < meta.GardenProgression.ClassEntries.Count; i++)
             {
-                var candidate = all[i];
-                if (candidate == null || candidate.name != objectName)
-                {
-                    continue;
-                }
-
-                var scene = candidate.gameObject.scene;
-                if (!scene.IsValid() || !scene.isLoaded)
-                {
-                    continue;
-                }
-
-                return candidate;
+                if (meta.GardenProgression.ClassEntries[i].ClassId == classId)
+                    return meta.GardenProgression.ClassEntries[i];
             }
-
             return null;
         }
     }

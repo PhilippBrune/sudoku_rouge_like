@@ -1,31 +1,34 @@
-using SudokuRoguelike.Run;
 using UnityEngine;
 
 namespace SudokuRoguelike.UI
 {
     public sealed class PauseRunController : MonoBehaviour
     {
-        private RunDirector _run;
+        private PauseMenuService _pauseService;
+        private System.Action _onQuitRequested;
 
-        public void Bind(RunDirector run)
+        public void Bind(PauseMenuService pauseService, System.Action onQuitRequested)
         {
-            _run = run;
+            _pauseService = pauseService;
+            _onQuitRequested = onQuitRequested;
         }
 
         public void Pause()
         {
-            _run?.OnPauseRequested();
+            _pauseService?.SetPaused(true);
             Time.timeScale = 0f;
         }
 
         public void Resume()
         {
+            _pauseService?.SetPaused(false);
             Time.timeScale = 1f;
         }
 
         public void QuitToMenu()
         {
-            _run?.OnQuitRequested();
+            Resume();
+            _onQuitRequested?.Invoke();
         }
     }
 }

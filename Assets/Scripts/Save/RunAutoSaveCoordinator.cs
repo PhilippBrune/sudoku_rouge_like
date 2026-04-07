@@ -5,38 +5,57 @@ namespace SudokuRoguelike.Save
 {
     public sealed class RunAutoSaveCoordinator
     {
-        private readonly SaveFileService _saveFileService;
-        private readonly ProfileService _profileService;
+        private readonly SaveFileService _saveFile;
+        private readonly ProfileService _profile;
+        private RunDirector _boundRun;
 
-        public RunAutoSaveCoordinator(SaveFileService saveFileService, ProfileService profileService)
+        public RunAutoSaveCoordinator(SaveFileService saveFile)
         {
-            _saveFileService = saveFileService;
-            _profileService = profileService;
+            _saveFile = saveFile;
         }
 
-        public void Bind(RunDirector runDirector)
+        public RunAutoSaveCoordinator(SaveFileService saveFile, ProfileService profile)
         {
-            runDirector.AutoSaveRequested += trigger => Save(runDirector, trigger);
+            _saveFile = saveFile;
+            _profile = profile;
         }
 
-        private void Save(RunDirector runDirector, RunSaveTrigger trigger)
+        public void Bind(RunDirector run)
         {
-            // Sync runtime HashSet to serializable List before saving
-            runDirector.RunState?.SyncSeenModifiersToList();
+            _boundRun = run;
+        }
 
-            var envelope = new SaveFileEnvelope
-            {
-                PlayerProfile = new ProfileSaveData { Options = _profileService.Options },
-                MetaProgress = _profileService.Meta,
-                ActiveRunState = runDirector.RunState,
-                ActivePuzzle = runDirector.ExportPuzzleSaveState(),
-                TutorialProgress = _profileService.TutorialProgress,
-                Statistics = _profileService.Stats,
-                Mastery = _profileService.Mastery,
-                Completion = _profileService.Completion
-            };
+        public void Save(RunState runState, PuzzleSaveState puzzleState)
+        {
+            // Tutorial runs are not persisted — no resume, no progression
+            if (runState == null || runState.TutorialMode) return;
 
-            _saveFileService.SaveRun(envelope);
+            runState.SyncSeenModifiersToList();
+
+            var envelope = _saveFile.Load();
+            envelope.ActiveRunState = runState;
+            envelope.ActivePuzzle = puzzleState;
+            _saveFile.Save(envelope);
+        }
+
+        public void SaveBound()
+        {
+            if (_boundRun == null) return;
+            var puzzle = _boundRun.ExportPuzzleSaveState();
+            Save(_boundRun.State, puzzle);
+        }
+
+        public void ClearActiveRun()
+        {
+            var envelope = _saveFile.Load();
+            envelope.ActiveRunState = null;
+            envelope.ActivePuzzle = null;
+            _saveFile.Save(envelope);
+        }
+
+        public void SaveOnTrigger(RunSaveTrigger trigger, RunState runState, PuzzleSaveState puzzleState)
+        {
+            Save(runState, puzzleState);
         }
     }
 }

@@ -1,39 +1,34 @@
 using System.Collections.Generic;
+using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.Sudoku
 {
-    public interface IConstraintRule
-    {
-        bool ValidateMove(SudokuBoard board, int row, int col, int value);
-    }
-
     public sealed class SudokuConstraintEngine
     {
-        private readonly List<IConstraintRule> _rules = new();
+        private readonly List<IOrderedConstraintRule> _rules = new List<IOrderedConstraintRule>();
 
-        public void SetRules(IEnumerable<IConstraintRule> rules)
+        public void RegisterRule(IOrderedConstraintRule rule)
         {
-            _rules.Clear();
-            _rules.AddRange(rules);
+            _rules.Add(rule);
+            _rules.Sort((a, b) => a.Category.CompareTo(b.Category));
         }
 
-        public void SetRulesDeterministic(IEnumerable<IOrderedConstraintRule> rules)
-        {
-            _rules.Clear();
-            _rules.AddRange(ConstraintRuleRegistry.BuildDeterministicOrdered(rules));
-        }
+        public void ClearRules() => _rules.Clear();
 
-        public bool ValidateAll(SudokuBoard board, int row, int col, int value)
+        public bool ValidateAll(SudokuBoard board, int row, int col, int value, ModifierOverlayData overlayData)
         {
-            foreach (var rule in _rules)
+            if (!SudokuValidator.IsMoveValid(board, row, col, value))
+                return false;
+
+            for (var i = 0; i < _rules.Count; i++)
             {
-                if (!rule.ValidateMove(board, row, col, value))
-                {
+                if (!_rules[i].IsValid(board, row, col, value, overlayData))
                     return false;
-                }
             }
 
             return true;
         }
+
+        public int RuleCount => _rules.Count;
     }
 }

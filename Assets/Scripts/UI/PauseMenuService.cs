@@ -1,29 +1,19 @@
 using SudokuRoguelike.Core;
-using SudokuRoguelike.Run;
 
 namespace SudokuRoguelike.UI
 {
     public sealed class PauseMenuService
     {
+        public bool IsPaused { get; private set; }
+
         public bool CanRestartLevel(RunState runState)
         {
             return runState != null && runState.TutorialMode;
         }
 
-        public bool TryRestartLevel(RunState runState)
+        public void SetPaused(bool paused)
         {
-            if (!CanRestartLevel(runState))
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        public void AbandonRun(MenuFlowService menu)
-        {
-            menu.Session.HasRunInProgress = false;
-            menu.QuitToMain();
+            IsPaused = paused;
         }
     }
 }

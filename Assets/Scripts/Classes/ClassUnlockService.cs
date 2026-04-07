@@ -3,114 +3,49 @@ using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.Classes
 {
-    /// <summary>
-    /// Evaluates class unlock conditions based on the ClassXpProgressionSystem spec.
-    /// All conditions are tracked cumulatively across all classes and runs.
-    /// </summary>
     public sealed class ClassUnlockService
     {
-        public IReadOnlyList<ClassId> EvaluateUnlocks(MetaProgressionState meta)
+        public List<ClassId> CheckNewUnlocks(MetaProgressionState meta)
         {
-            var newlyUnlocked = new List<ClassId>();
-            var p = meta.ClassUnlocks;
+            var unlocked = new List<ClassId>();
+            if (meta == null) return unlocked;
 
-            // 2. Garden Monk — defeat 2 bosses (cumulative)
-            UnlockIfEligible(meta, ClassId.GardenMonk,
-                p.CumulativeBossDefeats >= 2,
-                newlyUnlocked);
+            var progress = meta.ClassUnlocks ?? new ClassUnlockProgress();
 
-            // 3. Shrine Archivist — use 15 items (cumulative)
-            UnlockIfEligible(meta, ClassId.ShrineArchivist,
-                p.CumulativeItemsUsed >= 15,
-                newlyUnlocked);
+            // NumberFreak: always unlocked (starter)
+            TryUnlock(meta, ClassId.NumberFreak, true, unlocked);
 
-            // 4. Koi Gambler — collect 10 relics (cumulative)
-            UnlockIfEligible(meta, ClassId.KoiGambler,
-                p.CumulativeRelicsCollected >= 10,
-                newlyUnlocked);
+            // GardenMonk: defeat 2 bosses
+            TryUnlock(meta, ClassId.GardenMonk, progress.BossesDefeated >= 2, unlocked);
 
-            // 5. Stone Gardener — defeat 10 bosses (cumulative)
-            UnlockIfEligible(meta, ClassId.StoneGardener,
-                p.CumulativeBossDefeats >= 10,
-                newlyUnlocked);
+            // ShrineArchivist: use 15 items
+            TryUnlock(meta, ClassId.ShrineArchivist, progress.ItemsUsed >= 15, unlocked);
 
-            // 6. Lantern Seer — collect 50,000 gold (cumulative)
-            UnlockIfEligible(meta, ClassId.LanternSeer,
-                p.CumulativeGoldCollected >= 50000,
-                newlyUnlocked);
+            // KoiGambler: collect 10 relics
+            TryUnlock(meta, ClassId.KoiGambler, progress.RelicsCollected >= 10, unlocked);
 
-            // 7. Reed Duelist — find every unique item at least once (evaluate codex)
-            UnlockIfEligible(meta, ClassId.ReedDuelist,
-                p.AllUniqueItemsFound || EvaluateItemCodexComplete(meta),
-                newlyUnlocked);
+            // StoneGardener: defeat 10 bosses
+            TryUnlock(meta, ClassId.StoneGardener, progress.BossesDefeated >= 10, unlocked);
 
-            // 8. Quiet Cartographer — clear an entire stage with zero pencil use and zero HP lost
-            UnlockIfEligible(meta, ClassId.QuietCartographer,
-                p.ClearedStageZeroPencilZeroHpLost,
-                newlyUnlocked);
+            // LanternSeer: collect 50,000 gold total
+            TryUnlock(meta, ClassId.LanternSeer, progress.GoldCollected >= 50000, unlocked);
 
-            return newlyUnlocked;
+            // ReedDuelist: complete the item codex
+            TryUnlock(meta, ClassId.ReedDuelist, progress.ItemCodexComplete, unlocked);
+
+            // QuietCartographer: clear full stage with no pencil use and no HP loss
+            TryUnlock(meta, ClassId.QuietCartographer, progress.PerfectNoPencilStage, unlocked);
+
+            return unlocked;
         }
 
-        public void UpdateProgressFromRunResult(MetaProgressionState meta, RunResult result)
+        private static void TryUnlock(MetaProgressionState meta, ClassId id, bool condition, List<ClassId> newlyUnlocked)
         {
-            if (result.TutorialMode || result.Mode == GameMode.Tutorial)
-                return;
+            if (!condition) return;
+            if (meta.UnlockedClasses.Contains(id)) return;
 
-            var p = meta.ClassUnlocks;
-
-            if (result.ClearedBoss)
-                p.CumulativeBossDefeats++;
-
-            p.CumulativeGoldCollected += result.GoldEarned;
-            p.CumulativeItemsUsed += result.ItemsUsedThisRun;
-            p.CumulativeRelicsCollected += result.RelicsCollectedThisRun;
-
-            if (result.FoundAllUniqueItems)
-                p.AllUniqueItemsFound = true;
-
-            if (result.ClearedStageNoPencilNoHpLoss)
-                p.ClearedStageZeroPencilZeroHpLost = true;
-        }
-
-        public string GetUnlockRequirementText(ClassId classId)
-        {
-            return classId switch
-            {
-                ClassId.NumberFreak => "Default unlocked",
-                ClassId.GardenMonk => "Defeat 2 bosses (cumulative)",
-                ClassId.ShrineArchivist => "Use 15 items (cumulative)",
-                ClassId.KoiGambler => "Collect 10 relics (cumulative)",
-                ClassId.StoneGardener => "Defeat 10 bosses (cumulative)",
-                ClassId.LanternSeer => "Collect 50,000 gold (cumulative)",
-                ClassId.ReedDuelist => "Find every unique item at least once",
-                ClassId.QuietCartographer => "Clear a stage with 0 pencil use and 0 HP lost",
-                _ => "Unknown unlock requirement"
-            };
-        }
-
-        private static bool EvaluateItemCodexComplete(MetaProgressionState meta)
-        {
-            if (meta.ItemCodex?.Entries == null || meta.ItemCodex.Entries.Count == 0)
-                return false;
-
-            for (var i = 0; i < meta.ItemCodex.Entries.Count; i++)
-            {
-                // Only check item entries (not relics) for Reed Duelist
-                if (meta.ItemCodex.Entries[i].Type == "Relic") continue;
-                if (!meta.ItemCodex.Entries[i].Discovered) return false;
-            }
-            return true;
-        }
-
-        private static void UnlockIfEligible(MetaProgressionState meta, ClassId classId,
-            bool condition, List<ClassId> newlyUnlocked)
-        {
-            if (!condition || meta.UnlockedClasses.Contains(classId))
-                return;
-
-            meta.UnlockedClasses.Add(classId);
-            newlyUnlocked.Add(classId);
+            meta.UnlockedClasses.Add(id);
+            newlyUnlocked.Add(id);
         }
     }
 }

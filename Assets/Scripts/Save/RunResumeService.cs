@@ -5,79 +5,75 @@ namespace SudokuRoguelike.Save
 {
     public sealed class RunResumeService
     {
-        public bool TryResumeFromSave(RunDirector runDirector, SaveFileEnvelope envelope)
+        private readonly SaveFileService _saveFile;
+
+        public RunResumeService()
         {
-            if (envelope?.ActiveRunState == null)
+            _saveFile = new SaveFileService();
+        }
+
+        public RunResumeService(SaveFileService saveFile)
+        {
+            _saveFile = saveFile;
+        }
+
+        public bool HasActiveRun()
+        {
+            return _saveFile.HasActiveRun();
+        }
+
+        public bool TryResumeFromSave(out RunState runState, out PuzzleSaveState puzzleState)
+        {
+            runState = null;
+            puzzleState = null;
+
+            if (!_saveFile.HasSaveFile()) return false;
+
+            var envelope = _saveFile.Load();
+            if (envelope.ActiveRunState == null) return false;
+
+            runState = envelope.ActiveRunState;
+            puzzleState = envelope.ActivePuzzle;
+
+            RestoreTransientState(runState);
+            return true;
+        }
+
+        /// <summary>
+        /// Resume a run from a save envelope into an existing RunDirector.
+        /// Used by RunMapController.ResumeFromEnvelope().
+        /// </summary>
+        public bool TryResumeFromSave(RunDirector run, SaveFileEnvelope envelope)
+        {
+            if (run == null || envelope == null) return false;
+            if (envelope.ActiveRunState == null) return false;
+
+            var runState = envelope.ActiveRunState;
+            RestoreTransientState(runState);
+
+            // Initialize services via a throwaway StartRun, then replace state
+            var request = new LaunchRequest
             {
-                return false;
-            }
+                ClassId = runState.ClassId,
+                Mode = runState.Mode,
+                AllowIrregularPuzzles = runState.AllowIrregularPuzzles
+            };
+            run.StartRun(request, runState.Seed);
+            run.RestoreState(runState);
 
-            runDirector.StartRun(
-                envelope.ActiveRunState.ClassId,
-                envelope.ActiveRunState.Mode,
-                envelope.ActiveRunState.Depth,
-                meta: envelope.MetaProgress);
+            // Rebuild floor graph for current floor
+            run.RebuildFloorGraph();
 
-            var runState = runDirector.RunState;
-            runState.CurrentHP = envelope.ActiveRunState.CurrentHP;
-            runState.MaxHP = envelope.ActiveRunState.MaxHP;
-            runState.CurrentPencil = envelope.ActiveRunState.CurrentPencil;
-            runState.MaxPencil = envelope.ActiveRunState.MaxPencil;
-            runState.CurrentGold = envelope.ActiveRunState.CurrentGold;
-            runState.CurrentXP = envelope.ActiveRunState.CurrentXP;
-            runState.CurrentNodeIndex = envelope.ActiveRunState.CurrentNodeIndex;
-            runState.RerollTokens = envelope.ActiveRunState.RerollTokens;
-            runState.ItemSlots = envelope.ActiveRunState.ItemSlots;
-            runState.PencilPurchasesThisRun = envelope.ActiveRunState.PencilPurchasesThisRun;
-            runState.RerollsThisRun = envelope.ActiveRunState.RerollsThisRun;
+            // Restore puzzle if available
+            if (envelope.ActivePuzzle != null)
+                run.TryRestorePuzzleSaveState(envelope.ActivePuzzle);
 
-            for (var i = 0; i < envelope.ActiveRunState.Inventory.Count; i++)
-            {
-                runState.Inventory.Add(envelope.ActiveRunState.Inventory[i]);
-            }
+            return true;
+        }
 
-            // Restore single relic slot
-            runState.HasRelic = envelope.ActiveRunState.HasRelic;
-            runState.HeldRelic = envelope.ActiveRunState.HeldRelic;
-
-            for (var i = 0; i < envelope.ActiveRunState.RouteHistory.Count; i++)
-            {
-                runState.RouteHistory.Add(envelope.ActiveRunState.RouteHistory[i]);
-            }
-
-            for (var i = 0; i < envelope.ActiveRunState.NodePath.Count; i++)
-            {
-                runState.NodePath.Add(envelope.ActiveRunState.NodePath[i]);
-            }
-
-            // Restore boss modifier selection
-            runState.HasChosenBossModifier = envelope.ActiveRunState.HasChosenBossModifier;
-            runState.ChosenBossModifierId = envelope.ActiveRunState.ChosenBossModifierId;
-
-            // Restore seen modifiers from serialized list → runtime HashSet
-            for (var i = 0; i < envelope.ActiveRunState.SeenBossModifierList.Count; i++)
-                runState.SeenBossModifiers.Add(envelope.ActiveRunState.SeenBossModifierList[i]);
-
-            runState.AllowIrregularPuzzles = envelope.ActiveRunState.AllowIrregularPuzzles;
-
-            // Restore floor progression
-            runState.CurrentFloor = envelope.ActiveRunState.CurrentFloor;
-            runState.TotalFloors = envelope.ActiveRunState.TotalFloors;
-
-            // Restore multi-modifier boss selections
-            for (var i = 0; i < envelope.ActiveRunState.ChosenBossModifiers.Count; i++)
-                runState.ChosenBossModifiers.Add(envelope.ActiveRunState.ChosenBossModifiers[i]);
-
-            // Rebuild graph for restored floor (StartRun always builds floor 0)
-            if (runState.CurrentFloor > 0)
-                runDirector.RebuildCurrentFloorGraph();
-
-            if (envelope.ActivePuzzle == null)
-            {
-                return true;
-            }
-
-            return runDirector.TryRestorePuzzleSaveState(envelope.ActivePuzzle);
+        private static void RestoreTransientState(RunState runState)
+        {
+            runState.SyncSeenModifiersFromList();
         }
     }
 }

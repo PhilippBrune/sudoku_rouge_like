@@ -6,23 +6,8 @@ namespace SudokuRoguelike.UI
     public sealed class PrototypeInputController : MonoBehaviour
     {
         [SerializeField] private bool useRandomCellInput = true;
-        [SerializeField] private GameObject bootstrapObject;
 
         private RunDirector _run;
-
-        private void Awake()
-        {
-            if (bootstrapObject == null)
-            {
-                return;
-            }
-
-            var bootstrap = bootstrapObject.GetComponent<SudokuRoguelike.Bootstrap.GameBootstrap>();
-            if (bootstrap == null)
-            {
-                return;
-            }
-        }
 
         public void Bind(RunDirector run)
         {
@@ -31,18 +16,16 @@ namespace SudokuRoguelike.UI
 
         private void Update()
         {
-            if (_run == null || _run.CurrentBoard == null)
-            {
-                return;
-            }
+            if (_run == null || _run.CurrentBoard == null) return;
 
             if (Input.GetKeyDown(KeyCode.Space) && useRandomCellInput)
             {
-                var row = Random.Range(0, _run.CurrentBoard.Size);
-                var col = Random.Range(0, _run.CurrentBoard.Size);
-                var value = Random.Range(1, _run.CurrentBoard.Size + 1);
-                var ok = _run.PlaceNumber(row, col, value);
-                Debug.Log($"Input ({row},{col})={value}, correct={ok}, hp={_run.RunState.CurrentHP}");
+                var size = _run.CurrentBoard.Size;
+                var row = Random.Range(0, size);
+                var col = Random.Range(0, size);
+                var value = Random.Range(1, size + 1);
+                var result = _run.PlaceNumber(row, col, value);
+                Debug.Log($"[Input] ({row},{col})={value} → {result}, HP={_run.State.CurrentHP}");
             }
         }
     }

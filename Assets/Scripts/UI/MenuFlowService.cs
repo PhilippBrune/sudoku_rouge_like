@@ -1,104 +1,61 @@
-using System;
 using System.Collections.Generic;
 using SudokuRoguelike.Core;
+using UnityEngine;
 
 namespace SudokuRoguelike.UI
 {
     public sealed class MenuFlowService
     {
-        public SessionState Session { get; } = new();
+        private readonly Stack<MenuScreen> _history = new Stack<MenuScreen>();
+        private readonly Dictionary<MenuScreen, GameObject> _panels = new Dictionary<MenuScreen, GameObject>();
 
-        public IReadOnlyList<MenuScreen> MainMenuOrder => new[]
+        public MenuScreen CurrentScreen { get; private set; } = MenuScreen.MainMenu;
+
+        public void RegisterPanel(MenuScreen screen, GameObject panel)
         {
-            MenuScreen.Main,
-            MenuScreen.ModeSelect,
-            MenuScreen.TutorialSetup,
-            MenuScreen.MetaProgression,
-            MenuScreen.GameModes,
-            MenuScreen.Options,
-            MenuScreen.Credits
-        };
-
-        public bool IsResumeVisible() => Session.HasRunInProgress;
-
-        public void OnStartGame()
-        {
-            Session.CurrentScreen = MenuScreen.ModeSelect;
+            _panels[screen] = panel;
         }
 
-        public void OnResumeGame(bool saveValid)
+        public void Show(MenuScreen screen)
         {
-            if (!saveValid || !Session.HasRunInProgress)
+            if (CurrentScreen != screen)
+                _history.Push(CurrentScreen);
+
+            SetActive(CurrentScreen, false);
+            CurrentScreen = screen;
+            SetActive(CurrentScreen, true);
+        }
+
+        public void Back()
+        {
+            if (_history.Count == 0) return;
+
+            SetActive(CurrentScreen, false);
+            CurrentScreen = _history.Pop();
+            SetActive(CurrentScreen, true);
+        }
+
+        public void ShowMainMenu()
+        {
+            _history.Clear();
+            HideAll();
+            CurrentScreen = MenuScreen.MainMenu;
+            SetActive(MenuScreen.MainMenu, true);
+        }
+
+        private void SetActive(MenuScreen screen, bool active)
+        {
+            if (_panels.TryGetValue(screen, out var panel) && panel != null)
+                panel.SetActive(active);
+        }
+
+        private void HideAll()
+        {
+            foreach (var kvp in _panels)
             {
-                return;
+                if (kvp.Value != null)
+                    kvp.Value.SetActive(false);
             }
-
-            Session.CurrentScreen = MenuScreen.Pause;
-        }
-
-        public void SetMode(GameMode mode)
-        {
-            Session.SelectedMode = mode;
-            Session.TutorialMode = mode == GameMode.Tutorial;
-
-            if (mode == GameMode.Tutorial)
-            {
-                Session.CurrentScreen = MenuScreen.TutorialSetup;
-                return;
-            }
-
-            Session.CurrentScreen = MenuScreen.ClassSelect;
-        }
-
-        public void SetClassAndContinue(ClassId classId)
-        {
-            Session.CurrentScreen = MenuScreen.SeedSelect;
-        }
-
-        public void ConfirmSeed(int seed, bool tutorialMode)
-        {
-            Session.SelectedSeed = seed;
-            Session.TutorialMode = tutorialMode;
-            Session.HasRunInProgress = true;
-        }
-
-        public void OnTutorial()
-        {
-            Session.SelectedMode = GameMode.Tutorial;
-            Session.TutorialMode = true;
-            Session.CurrentScreen = MenuScreen.TutorialSetup;
-        }
-
-        public void OpenTutorialProgress()
-        {
-            Session.CurrentScreen = MenuScreen.TutorialProgress;
-        }
-
-        public void ConfirmTutorialSetup(TutorialSetupConfig setup)
-        {
-            Session.SelectedMode = GameMode.Tutorial;
-            Session.TutorialMode = true;
-            Session.TutorialSetup = setup;
-            Session.HasRunInProgress = true;
-        }
-
-        public void OpenMeta() => Session.CurrentScreen = MenuScreen.MetaProgression;
-
-        public void OpenModes() => Session.CurrentScreen = MenuScreen.GameModes;
-
-        public void OpenOptions() => Session.CurrentScreen = MenuScreen.Options;
-
-        public void OpenCredits() => Session.CurrentScreen = MenuScreen.Credits;
-
-        public void OpenPause() => Session.CurrentScreen = MenuScreen.Pause;
-
-        public void OpenEndRun() => Session.CurrentScreen = MenuScreen.EndRun;
-
-        public void OpenVictory() => Session.CurrentScreen = MenuScreen.Victory;
-
-        public void QuitToMain()
-        {
-            Session.CurrentScreen = MenuScreen.Main;
         }
     }
 }

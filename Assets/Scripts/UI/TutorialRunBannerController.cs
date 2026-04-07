@@ -6,29 +6,26 @@ namespace SudokuRoguelike.UI
 {
     public sealed class TutorialRunBannerController : MonoBehaviour
     {
-        [SerializeField] private RunMapController runMapController;
-        [SerializeField] private Text bannerText;
+        private RunMapController _runMapController;
+        private Text _bannerText;
 
         public void Configure(RunMapController runMap, Text text)
         {
-            runMapController = runMap;
-            bannerText = text;
+            _runMapController = runMap;
+            _bannerText = text;
             Refresh();
         }
 
         public void Refresh()
         {
-            if (bannerText == null)
-            {
-                return;
-            }
+            if (_bannerText == null) return;
 
-            var run = runMapController?.Run;
-            var isTutorial = run?.RunState != null && run.RunState.Mode == GameMode.Tutorial;
-            bannerText.gameObject.SetActive(isTutorial);
+            var run = _runMapController?.Run;
+            var isTutorial = run?.State != null && run.State.Mode == GameMode.Tutorial;
+            _bannerText.gameObject.SetActive(isTutorial);
             if (isTutorial)
             {
-                bannerText.text = "TUTORIAL MODE\nNo Progression Rewards";
+                _bannerText.text = "TUTORIAL MODE\nNo Progression Rewards";
             }
         }
 

@@ -1,158 +1,92 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
+using SudokuRoguelike.Classes;
 using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.Tutorial
 {
-    public sealed class TutorialSetupValidation
+    public sealed class TutorialModeService
     {
-        public bool IsValid;
-        public bool ShowDualModifierWarning;
-        public string Message;
-    }
-
-    public static class TutorialModeService
-    {
-        private static readonly HashSet<BossModifierId> ArithmeticModifiers = new()
+        /// <summary>
+        /// Returns missing percent range for a given star rating.
+        /// Min = stars% (e.g. 6★ = 90%), Max = next_star% - 1% (e.g. 6★ max = 99%).
+        /// 7★ is always 100% missing (empty grid).
+        /// </summary>
+        public static (float min, float max) GetMissingRange(int stars)
         {
-            BossModifierId.KillerCages,
-            BossModifierId.ArrowSums
-        };
-
-        public static IReadOnlyList<int> GetBoardSizes() => new[] { 5, 6, 7, 8, 9 };
-
-        public static IReadOnlyList<int> GetStars() => new[] { 1, 2, 3, 4, 5, 6, 7 };
-
-        public static bool IsModifierAvailable(BossModifierId modifier, int boardSize)
-        {
-            if (boardSize < 7 && (modifier == BossModifierId.GermanWhispers || modifier == BossModifierId.KillerCages))
-            {
-                return false;
-            }
-
-            return true;
+            if (stars >= 7) return (1.0f, 1.0f);
+            var min = StarDensityService.MissingPercentForStars(stars);
+            // Next star's value minus a small epsilon
+            var next = StarDensityService.MissingPercentForStars(stars + 1);
+            return (min, next - 0.01f);
         }
 
-        public static TutorialSetupValidation ValidateSetup(TutorialSetupConfig setup)
+        public LevelConfig BuildTutorialLevel(TutorialSetupConfig setup, int seed)
         {
-            if (setup == null)
+            var stars = Math.Clamp(setup.Stars, 1, 7);
+            var boardSize = Math.Clamp(setup.BoardSize, 5, 9);
+
+            float missingPercent;
+            if (stars >= 7)
             {
-                return new TutorialSetupValidation { IsValid = false, Message = "Tutorial setup is missing." };
+                missingPercent = 1.0f; // 100% — empty grid
             }
-
-            if (!GetBoardSizes().Contains(setup.BoardSize))
+            else
             {
-                return new TutorialSetupValidation { IsValid = false, Message = "Board size must be between 5x5 and 9x9." };
+                var (minP, maxP) = GetMissingRange(stars);
+                var rng = new Random(seed);
+                missingPercent = (float)(minP + rng.NextDouble() * (maxP - minP));
             }
-
-            if (!GetStars().Contains(setup.Stars))
-            {
-                return new TutorialSetupValidation { IsValid = false, Message = "Stars must be between 1 and 7." };
-            }
-
-
-            for (var i = 0; i < setup.SelectedModifiers.Count; i++)
-            {
-                if (!IsModifierAvailable(setup.SelectedModifiers[i], setup.BoardSize))
-                {
-                    return new TutorialSetupValidation
-                    {
-                        IsValid = false,
-                        Message = $"{setup.SelectedModifiers[i]} is disabled for boards smaller than 7x7."
-                    };
-                }
-            }
-
-            return new TutorialSetupValidation
-            {
-                IsValid = true,
-                ShowDualModifierWarning = setup.SelectedModifiers.Count == 2,
-                Message = setup.SelectedModifiers.Count == 2
-                    ? "Dual modifiers increase cognitive load significantly."
-                    : string.Empty
-            };
-        }
-
-        public static LevelConfig BuildLevelConfig(TutorialSetupConfig setup)
-        {
-            var difficulty = setup.BoardSize switch
-            {
-                5 => DifficultyTier.Diff1,
-                6 => DifficultyTier.Diff2,
-                7 => DifficultyTier.Diff3,
-                8 => DifficultyTier.Diff4,
-                _ => DifficultyTier.Diff5
-            };
 
             var config = new LevelConfig
             {
-                Difficulty = difficulty,
-                BoardSize = setup.BoardSize,
-                Stars = setup.Stars,
-                MissingPercent = StarDensityService.MissingPercentForStars(setup.Stars),
+                BoardSize = boardSize,
+                Stars = stars,
+                MissingPercent = missingPercent,
+                RegionVariant = setup.RegionVariant,
                 IsBoss = setup.SelectedModifiers.Count > 0,
-                RegionVariant = setup.RegionVariant
+                Seed = seed,
+                Difficulty = DifficultyTier.Diff1
             };
 
-            for (var i = 0; i < setup.SelectedModifiers.Count; i++)
-            {
-                config.ActiveModifiers.Add(setup.SelectedModifiers[i]);
-            }
+            config.ActiveModifiers.AddRange(setup.SelectedModifiers);
 
             return config;
         }
 
-        public static string GetTutorialSessionLabel()
+        public static RunState CreateTutorialRunState(TutorialSetupConfig setup, int seed)
         {
-            return "TUTORIAL MODE | No Progression Rewards";
-        }
+            var isFree = setup.ResourceMode == TutorialResourceMode.Free;
 
-        public static string GetModifierDescription(BossModifierId modifier)
-        {
-            return modifier switch
+            int hp, pencil, slots;
+            if (isFree)
             {
-                BossModifierId.FogOfWar => "Some cells are hidden; nearby correct placements reveal fog.",
-                BossModifierId.ArrowSums => "Digits along each arrow sum to the circled total.",
-                BossModifierId.GermanWhispers => "Adjacent digits on green lines must differ by at least 5.",
-                BossModifierId.DutchWhispers => "Adjacent digits on orange lines must differ by at least 4.",
-                BossModifierId.ParityLines => "Digits along red lines alternate odd/even parity.",
-                BossModifierId.RenbanLines => "Digits on pink lines form a consecutive set in any order.",
-                BossModifierId.KillerCages => "Digits in each cage must sum to the displayed value without repeats.",
-                BossModifierId.DifferenceKropki => "White dots connect consecutive digits.",
-                BossModifierId.RatioKropki => "Black dots connect digits where one is double the other.",
-                BossModifierId.Palindrome => "Gray lines: digits read the same forward and backward.",
-                BossModifierId.Thermo => "Orange-bulb lines: digits strictly increase from bulb to tip.",
-                BossModifierId.BetweenLines => "White endpoint circles: all path digits must be strictly between the two endpoint values.",
-                BossModifierId.EvenOdd => "Square markers = even digit; circle markers = odd digit.",
-                BossModifierId.Nonconsecutive => "No two orthogonally adjacent cells may contain consecutive digits.",
-                BossModifierId.Antiknight => "No two cells a chess knight's move apart may share a digit.",
-                _ => "No modifier selected."
-            };
-        }
-
-        public static bool UsesArithmetic(TutorialSetupConfig setup)
-        {
-            for (var i = 0; i < setup.SelectedModifiers.Count; i++)
+                hp = 999; pencil = 999; slots = 3;
+            }
+            else
             {
-                if (ArithmeticModifiers.Contains(setup.SelectedModifiers[i]))
-                {
-                    return true;
-                }
+                var def = ClassCatalog.GetDefinition(setup.SimulationClassId);
+                hp = def.BaseHP;
+                pencil = def.BasePencil;
+                slots = def.BaseItemSlots;
             }
 
-            return false;
-        }
-
-        public static string BuildCompletionKey(TutorialSetupConfig setup)
-        {
-            var sorted = setup.SelectedModifiers
-                .OrderBy(x => x.ToString())
-                .Select(x => x.ToString())
-                .ToArray();
-
-            var modifierPart = sorted.Length == 0 ? "None" : string.Join("+", sorted);
-            return $"{setup.BoardSize}|{setup.Stars}|{modifierPart}";
+            return new RunState
+            {
+                ClassId = setup.SimulationClassId,
+                Mode = GameMode.Tutorial,
+                Seed = seed,
+                RunNumber = 1,
+                CurrentHP = hp,
+                MaxHP = hp,
+                CurrentPencil = pencil,
+                MaxPencil = pencil,
+                CurrentGold = 0,
+                ItemSlots = slots,
+                TotalFloors = 1,
+                TutorialMode = true,
+                DisableProgressionRewards = true,
+                AllowIrregularPuzzles = setup.RegionVariant >= 2
+            };
         }
     }
 }

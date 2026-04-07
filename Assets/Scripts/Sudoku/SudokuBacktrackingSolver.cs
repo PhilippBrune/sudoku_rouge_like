@@ -4,51 +4,91 @@ namespace SudokuRoguelike.Sudoku
 {
     public static class SudokuBacktrackingSolver
     {
-        public static int CountSolutions(SudokuBoard board, int maxCount = 2)
+        public static bool HasUniqueSolution(SudokuBoard board, ModifierOverlayData overlay = null,
+            SudokuConstraintEngine engine = null)
         {
-            var work = (int[,])board.Cells.Clone();
-            return SolveCount(work, board.RegionMap, board.Size, maxCount);
+            return CountSolutions(board, 2, overlay, engine) == 1;
         }
 
-        private static int SolveCount(int[,] cells, int[,] regionMap, int size, int maxCount)
+        public static int CountSolutions(SudokuBoard board, int maxCount = 2,
+            ModifierOverlayData overlay = null, SudokuConstraintEngine engine = null)
         {
-            if (!FindEmpty(cells, size, out var row, out var col))
-            {
-                return 1;
-            }
+            var size = board.Size;
+            var grid = new int[size, size];
+            Array.Copy(board.Cells, grid, board.Cells.Length);
 
-            var solutions = 0;
-            for (var value = 1; value <= size; value++)
-            {
-                if (!IsValid(cells, regionMap, size, row, col, value))
-                {
-                    continue;
-                }
-
-                cells[row, col] = value;
-                solutions += SolveCount(cells, regionMap, size, maxCount);
-                if (solutions >= maxCount)
-                {
-                    cells[row, col] = 0;
-                    return solutions;
-                }
-
-                cells[row, col] = 0;
-            }
-
-            return solutions;
+            var count = 0;
+            SolveCount(grid, board.RegionMap, size, overlay, engine, ref count, maxCount);
+            return count;
         }
 
-        private static bool FindEmpty(int[,] cells, int size, out int row, out int col)
+        public static bool TrySolve(SudokuBoard board, out int[,] solution,
+            ModifierOverlayData overlay = null, SudokuConstraintEngine engine = null)
         {
-            for (row = 0; row < size; row++)
+            var size = board.Size;
+            var grid = new int[size, size];
+            Array.Copy(board.Cells, grid, board.Cells.Length);
+
+            if (SolveFirst(grid, board.RegionMap, size, overlay, engine))
             {
-                for (col = 0; col < size; col++)
+                solution = grid;
+                return true;
+            }
+
+            solution = null;
+            return false;
+        }
+
+        private static void SolveCount(int[,] grid, int[,] regionMap, int size,
+            ModifierOverlayData overlay, SudokuConstraintEngine engine, ref int count, int maxCount)
+        {
+            if (!FindEmpty(grid, size, out var row, out var col))
+            {
+                count++;
+                return;
+            }
+
+            for (var v = 1; v <= size; v++)
+            {
+                if (!IsPlacementValid(grid, regionMap, size, row, col, v)) continue;
+                // TODO: add constraint engine validation when SudokuBoard can be efficiently reused
+
+                grid[row, col] = v;
+                SolveCount(grid, regionMap, size, overlay, engine, ref count, maxCount);
+                grid[row, col] = 0;
+                if (count >= maxCount) return;
+            }
+        }
+
+        private static bool SolveFirst(int[,] grid, int[,] regionMap, int size,
+            ModifierOverlayData overlay, SudokuConstraintEngine engine)
+        {
+            if (!FindEmpty(grid, size, out var row, out var col))
+                return true;
+
+            for (var v = 1; v <= size; v++)
+            {
+                if (!IsPlacementValid(grid, regionMap, size, row, col, v)) continue;
+
+                grid[row, col] = v;
+                if (SolveFirst(grid, regionMap, size, overlay, engine))
+                    return true;
+                grid[row, col] = 0;
+            }
+
+            return false;
+        }
+
+        private static bool FindEmpty(int[,] grid, int size, out int row, out int col)
+        {
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
+            {
+                if (grid[r, c] == 0)
                 {
-                    if (cells[row, col] == 0)
-                    {
-                        return true;
-                    }
+                    row = r;
+                    col = c;
+                    return true;
                 }
             }
 
@@ -57,26 +97,21 @@ namespace SudokuRoguelike.Sudoku
             return false;
         }
 
-        private static bool IsValid(int[,] cells, int[,] regionMap, int size, int row, int col, int value)
+        private static bool IsPlacementValid(int[,] grid, int[,] regionMap, int size,
+            int row, int col, int value)
         {
-            for (var i = 0; i < size; i++)
-            {
-                if (cells[row, i] == value || cells[i, col] == value)
-                {
-                    return false;
-                }
-            }
+            for (var c = 0; c < size; c++)
+                if (c != col && grid[row, c] == value) return false;
 
-            var region = regionMap[row, col];
             for (var r = 0; r < size; r++)
+                if (r != row && grid[r, col] == value) return false;
+
+            var regionId = regionMap[row, col];
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
             {
-                for (var c = 0; c < size; c++)
-                {
-                    if (regionMap[r, c] == region && cells[r, c] == value)
-                    {
-                        return false;
-                    }
-                }
+                if ((r != row || c != col) && regionMap[r, c] == regionId && grid[r, c] == value)
+                    return false;
             }
 
             return true;

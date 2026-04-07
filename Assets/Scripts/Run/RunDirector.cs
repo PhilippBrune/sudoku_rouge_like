@@ -37,6 +37,7 @@ namespace SudokuRoguelike.Run
         public List<TileXpEntry> TileXpLog { get; private set; } = new List<TileXpEntry>();
         public List<ItemInstance> RolledItemSlots { get; private set; }
         public List<BossModifierId> BossModifierChoices { get; private set; }
+        public List<RelicInstance> RolledRelicChoices { get; private set; }
 
         // ── Init ──
 
@@ -117,6 +118,14 @@ namespace SudokuRoguelike.Run
             // Add floor modifiers to seen set for "???" reveal tracking
             for (var i = 0; i < State.ActiveFloorModifiers.Count; i++)
                 State.SeenBossModifiers.Add(State.ActiveFloorModifiers[i]);
+
+            // Roll positive floor effect (one per floor, starting from floor 0)
+            var floorRng = new Random(State.Seed + State.CurrentFloor * 6271);
+            var effects = (PositiveFloorEffect[])System.Enum.GetValues(typeof(PositiveFloorEffect));
+            // Skip None (index 0)
+            var picked = (PositiveFloorEffect)effects[1 + floorRng.Next(effects.Length - 1)];
+            State.HasPositiveFloorEffect = true;
+            State.ActivePositiveFloorEffect = picked;
         }
 
         // ── Level Generation ──
@@ -167,6 +176,31 @@ namespace SudokuRoguelike.Run
             return config;
         }
 
+        /// <summary>Build a Cursed version of a normal LevelConfig.
+        /// Stacks one extra floor modifier (randomly chosen from unseen pool) and applies +50% gold/XP.</summary>
+        public LevelConfig BuildCursedLevelConfig(int nodeIndex = 0)
+        {
+            var config = BuildLevelConfig(false, false, nodeIndex);
+            config.IsCursed = true;
+            config.CursedGoldMult = 1.5f;
+            config.CursedXpMult  = 1.5f;
+
+            // Add one extra random modifier beyond what the floor provides
+            var rng = new Random(State.Seed + nodeIndex * 3137 + State.Depth * 17);
+            var allIds = (BossModifierId[])System.Enum.GetValues(typeof(BossModifierId));
+            // Prefer active pool (0-14)
+            for (var attempts = 0; attempts < 20; attempts++)
+            {
+                var pick = (BossModifierId)allIds[rng.Next(15)];
+                if (!config.ActiveModifiers.Contains(pick))
+                {
+                    config.ActiveModifiers.Add(pick);
+                    break;
+                }
+            }
+            return config;
+        }
+
         public void StartLevel(LevelConfig config)
         {
             CurrentLevelConfig = config;
@@ -205,9 +239,13 @@ namespace SudokuRoguelike.Run
             if (isValid)
             {
                 CurrentLevelState.CorrectPlacements++;
+                State.ComboStreak++;
+                if (State.ComboStreak > State.PeakComboThisRun)
+                    State.PeakComboThisRun = State.ComboStreak;
                 return PlaceResult.Correct;
             }
 
+            State.ComboStreak = 0;
             CurrentLevelState.Mistakes++;
             CurrentLevelState.PerfectSoFar = false;
             return PlaceResult.Invalid;
@@ -247,12 +285,41 @@ namespace SudokuRoguelike.Run
             var level = CurrentLevelState;
 
             var goldBase = GoldTable.CalculatePuzzleGold(config.BoardSize, config.Stars);
+
+            // Apply cursed bonus
+            if (config.IsCursed)
+                goldBase = (int)(goldBase * config.CursedGoldMult);
+
+            // Apply positive floor effect
+            if (State.HasPositiveFloorEffect)
+            {
+                switch (State.ActivePositiveFloorEffect)
+                {
+                    case PositiveFloorEffect.Bounty:
+                        goldBase = (int)(goldBase * 1.4f);
+                        break;
+                    case PositiveFloorEffect.PencilRefill:
+                        State.CurrentPencil = Math.Min(State.MaxPencil, State.CurrentPencil + 2);
+                        break;
+                    case PositiveFloorEffect.HealingPath:
+                        if (level.Mistakes == 0)
+                            State.CurrentHP = Math.Min(State.MaxHP, State.CurrentHP + 1);
+                        break;
+                }
+            }
+
             State.CurrentGold += goldBase;
 
             var xpEntry = XpService.CalculateTile(
                 config.BoardSize, config.Stars,
                 config.ActiveModifiers.Count, config.IsBoss,
                 level.PerfectSoFar);
+
+            // Apply cursed XP bonus
+            if (config.IsCursed)
+                xpEntry.TotalXp = (int)(xpEntry.TotalXp * config.CursedXpMult);
+
+            if (level.PerfectSoFar) _analytics?.RecordPerfectPuzzle();
 
             TileXpLog.Add(xpEntry);
             _analytics?.RecordPuzzleSolved(level.Mistakes, goldBase);
@@ -266,6 +333,8 @@ namespace SudokuRoguelike.Run
         public List<ItemInstance> BuildItemRewardSlots()
         {
             var bonusSlots = RelicService.GetBonusRewardSlots(State);
+            if (State.HasPositiveFloorEffect && State.ActivePositiveFloorEffect == PositiveFloorEffect.LuckyItems)
+                bonusSlots++;
             var classLevel = GetCurrentClassLevel();
             RolledItemSlots = _itemService.RollSlots(CurrentLevelConfig.Stars, classLevel, bonusSlots);
             return RolledItemSlots;
@@ -415,10 +484,45 @@ namespace SudokuRoguelike.Run
             return _relicService.RollRelic(State.CurrentFloor, tierBonus);
         }
 
+        /// <summary>Roll 3 distinct relics for a choice panel. Caches result in RolledRelicChoices.</summary>
+        public List<RelicInstance> RollRelicChoices(int count = 3)
+        {
+            var tierBonus = RelicService.GetRelicNodeTierBonus(State);
+            RolledRelicChoices = _relicService.RollRelicChoices(State.CurrentFloor, count, tierBonus);
+            return RolledRelicChoices;
+        }
+
+        /// <summary>Accept the relic at the given choice index (from RolledRelicChoices).</summary>
+        public void AcceptRelicChoice(int index)
+        {
+            if (RolledRelicChoices == null || index < 0 || index >= RolledRelicChoices.Count) return;
+            AcceptRelic(RolledRelicChoices[index]);
+            RolledRelicChoices = null;
+        }
+
         public void AcceptRelic(RelicInstance relic)
         {
             State.HasRelic = true;
             State.HeldRelic = relic;
+        }
+
+        // ── Rest Node Options ──
+
+        public int GetRestHealAmount() => Math.Max(1, State.MaxHP / 3);
+
+        public void AcceptRestHeal()
+        {
+            State.CurrentHP = Math.Min(State.MaxHP, State.CurrentHP + GetRestHealAmount());
+        }
+
+        public void AcceptRestPencilBoost()
+        {
+            State.CurrentPencil = Math.Min(State.MaxPencil, State.CurrentPencil + 4);
+        }
+
+        public void AcceptRestRerollShop()
+        {
+            State.RerollTokens++;
         }
 
         // ── Navigation ──

@@ -8,174 +8,99 @@ namespace SudokuRoguelike.UI
 {
     public sealed class RunMapController : MonoBehaviour
     {
-        [SerializeField] private int seed = 9901;
-
-        private readonly SaveFileService _saveFile = new();
-        private readonly ProfileService _profile = new();
-        private readonly RunResumeService _resume = new();
+        private SaveFileService _saveFile;
+        private ProfileService _profile;
+        private RunResumeService _resume;
 
         private RunAutoSaveCoordinator _autoSave;
         private RunDirector _run;
         private RunDirector _autoSaveBoundRun;
-        private bool? _lockedRiskPath;
         private bool _rewardsGrantedForCurrentPuzzle;
-        private readonly Dictionary<int, LevelConfig> _fixedNodeConfigs = new();
+        private readonly Dictionary<int, LevelConfig> _fixedNodeConfigs = new Dictionary<int, LevelConfig>();
 
-        public void Initialize(ClassId classId, MetaProgressionState meta)
+        private void Awake()
         {
-            _run = new RunDirector(seed);
-            _run.StartRun(classId, GameMode.GardenRun, runNumber: 1, meta: meta);
-            _lockedRiskPath = null;
+            _saveFile = new SaveFileService();
+            _profile = new ProfileService();
+            _resume = new RunResumeService();
+        }
+
+        public void Initialize(LaunchRequest request, int seed)
+        {
+            _run = new RunDirector();
+            _run.StartRun(request, seed);
             _rewardsGrantedForCurrentPuzzle = false;
             PrepareFixedNodeConfigs();
-            var firstNode = _run.CurrentRunGraph != null && _run.CurrentRunGraph.Count > 0 ? _run.CurrentRunGraph[0] : null;
-            var levelConfig = firstNode != null ? GetFixedLevelConfig(firstNode) : _run.BuildLevelConfig(runNumber: 1, depth: 1);
-            _run.StartLevel(levelConfig);
+
+            var node = _run.GetCurrentNode();
+            var isBoss = node != null && node.Type == NodeType.Boss;
+            var isElite = node != null && node.Type == NodeType.ElitePuzzle;
+            var config = GetFixedLevelConfig(node) ?? _run.BuildLevelConfig(isBoss, isElite);
+            _run.StartLevel(config);
             BindAutoSave();
         }
 
         public bool ResumeFromEnvelope(SaveFileEnvelope envelope)
         {
-            if (envelope == null)
-            {
-                return false;
-            }
+            if (envelope == null) return false;
 
             _profile.ApplyEnvelope(envelope);
-            _run = new RunDirector(seed);
+            _run = new RunDirector();
             var resumed = _resume.TryResumeFromSave(_run, envelope);
-            if (!resumed)
-            {
-                return false;
-            }
+            if (!resumed) return false;
 
             BindAutoSave();
-            _lockedRiskPath = null;
-            _rewardsGrantedForCurrentPuzzle = _run.CurrentLevelState != null && _run.CurrentLevelState.PuzzleComplete;
+            _rewardsGrantedForCurrentPuzzle = _run.CurrentLevelState != null && _run.IsLevelComplete;
             PrepareFixedNodeConfigs();
             return true;
         }
 
         public void BindRun(RunDirector run)
         {
-            if (run == null)
-            {
-                return;
-            }
-
+            if (run == null) return;
             _run = run;
-            _rewardsGrantedForCurrentPuzzle = _run.CurrentLevelState != null && _run.CurrentLevelState.PuzzleComplete;
+            _rewardsGrantedForCurrentPuzzle = _run.CurrentLevelState != null && _run.IsLevelComplete;
             PrepareFixedNodeConfigs();
             BindAutoSave();
         }
 
-        public bool TryClaimCurrentPuzzleRewards(out int goldEarned, out List<ItemRollSlot> slots, out string failureReason)
+        public bool TryClaimCurrentPuzzleRewards(out int goldEarned, out List<ItemInstance> slots)
         {
             goldEarned = 0;
-            slots = new List<ItemRollSlot>();
-            failureReason = string.Empty;
+            slots = new List<ItemInstance>();
 
-            if (_run == null || _run.RunState == null || _run.CurrentLevelState == null)
-            {
-                failureReason = "No active puzzle state.";
+            if (_run == null || _run.State == null || _run.CurrentLevelState == null)
                 return false;
-            }
-
-            if (!_run.CurrentLevelState.PuzzleComplete)
-            {
-                failureReason = "Puzzle is not complete yet.";
+            if (!_run.IsLevelComplete)
                 return false;
-            }
-
             if (_rewardsGrantedForCurrentPuzzle)
-            {
-                failureReason = "Rewards already granted for this puzzle.";
                 return false;
-            }
 
-            var beforeGold = _run.RunState.CurrentGold;
+            var beforeGold = _run.State.CurrentGold;
             _run.CompleteLevelAndGrantRewards();
-            var afterGold = _run.RunState.CurrentGold;
-            goldEarned = Mathf.Max(0, afterGold - beforeGold);
+            goldEarned = Mathf.Max(0, _run.State.CurrentGold - beforeGold);
 
-            slots = _run.BuildItemRollPhase() ?? new List<ItemRollSlot>();
+            slots = _run.BuildItemRewardSlots() ?? new List<ItemInstance>();
             _rewardsGrantedForCurrentPuzzle = true;
             return true;
         }
 
-        public List<RunNode> GetVisibleNodes()
+        public List<RunNode> GetFloorGraph()
         {
-            var output = new List<RunNode>();
-            var graph = _run.CurrentRunGraph;
-            for (var i = 0; i < graph.Count; i++)
-            {
-                if (graph[i].IsRevealed)
-                {
-                    output.Add(graph[i]);
-                }
-            }
-
-            return output;
+            return _run?.CurrentFloorGraph ?? new List<RunNode>();
         }
 
-        public RunNode SelectPath(bool risk)
-        {
-            if (_run == null)
-            {
-                Debug.LogWarning("RunMapController.SelectPath called before run initialization.");
-                return null;
-            }
-
-            return _run.AdvanceToNextNode(risk);
-        }
-
-        public bool TryAdvancePathAndStartNextPuzzle(bool risk, out RunNode node, out LevelConfig nextLevel, out string failureReason)
+        public bool TryAdvanceToNodeAndStartPuzzle(int nodeIndex, out RunNode node, out LevelConfig nextLevel)
         {
             node = null;
             nextLevel = null;
-            failureReason = string.Empty;
 
-            if (_run == null || _run.RunState == null)
-            {
-                failureReason = "Run is not initialized.";
-                return false;
-            }
+            if (_run == null || _run.State == null) return false;
 
-            var isFirstPathChoice = _run.RunState.CurrentNodeIndex == 0 && !_lockedRiskPath.HasValue;
+            if (!_run.TryAdvanceToNode(nodeIndex)) return false;
 
-            if (!isFirstPathChoice && (_run.CurrentLevelState == null || !_run.CurrentLevelState.PuzzleComplete))
-            {
-                failureReason = "Complete the current Sudoku puzzle first.";
-                return false;
-            }
-
-            if (!isFirstPathChoice && !_rewardsGrantedForCurrentPuzzle)
-            {
-                _run.CompleteLevelAndGrantRewards();
-                _rewardsGrantedForCurrentPuzzle = true;
-            }
-
-            if (_lockedRiskPath.HasValue)
-            {
-                risk = _lockedRiskPath.Value;
-            }
-            else
-            {
-                _lockedRiskPath = risk;
-            }
-
-            node = _run.AdvanceToNextNode(risk);
-            if (node == null)
-            {
-                failureReason = "No next path node is available.";
-                return false;
-            }
-
-            if (node.IsCrossLink)
-            {
-                // Release the lane lock so the player can switch to either lane on the next choice.
-                _lockedRiskPath = null;
-            }
+            node = _run.GetCurrentNode();
+            if (node == null) return false;
 
             if (!RequiresPuzzleNode(node.Type))
             {
@@ -186,8 +111,9 @@ namespace SudokuRoguelike.UI
             nextLevel = GetFixedLevelConfig(node);
             if (nextLevel == null)
             {
-                failureReason = "Failed to resolve level configuration for selected path.";
-                return false;
+                var isBoss = node.Type == NodeType.Boss;
+                var isElite = node.Type == NodeType.ElitePuzzle;
+                nextLevel = _run.BuildLevelConfig(isBoss, isElite);
             }
 
             _run.StartLevel(nextLevel);
@@ -197,71 +123,8 @@ namespace SudokuRoguelike.UI
 
         private static bool RequiresPuzzleNode(NodeType type)
         {
-            return type == NodeType.Puzzle || type == NodeType.ElitePuzzle || type == NodeType.PreBoss || type == NodeType.Boss;
-        }
-
-        public PathChoicePreview BuildPathChoicePreview(bool risk)
-        {
-            if (_run == null || _run.RunState == null || _run.CurrentRunGraph == null || _run.CurrentRunGraph.Count == 0)
-            {
-                return PathChoicePreview.Unavailable(risk);
-            }
-
-            if (!TryGetNextChoiceIndex(risk, out var index))
-            {
-                return PathChoicePreview.Unavailable(risk);
-            }
-
-            var node = _run.CurrentRunGraph[index];
-            var previewConfig = GetFixedLevelConfig(node);
-            var isBoss = node.Type == NodeType.Boss;
-
-            return new PathChoicePreview
-            {
-                Available = true,
-                RiskPath = risk,
-                LockedPath = _lockedRiskPath,
-                NodeType = node.Type,
-                Depth = node.Depth,
-                BoardSize = previewConfig.BoardSize,
-                Stars = previewConfig.Stars,
-                IsBoss = isBoss
-            };
-        }
-
-        public bool TryGetFixedLevelForNode(RunNode node, out LevelConfig config)
-        {
-            config = GetFixedLevelConfig(node);
-            return config != null;
-        }
-
-        private bool TryGetNextChoiceIndex(bool risk, out int index)
-        {
-            index = -1;
-            if (_run == null || _run.RunState == null || _run.CurrentRunGraph == null || _run.CurrentRunGraph.Count == 0)
-            {
-                return false;
-            }
-
-            var currentIndex = Mathf.Clamp(_run.RunState.CurrentNodeIndex, 0, _run.CurrentRunGraph.Count - 1);
-            var currentDepth = _run.CurrentRunGraph[currentIndex].Depth;
-
-            for (var i = 0; i < _run.CurrentRunGraph.Count; i++)
-            {
-                var candidate = _run.CurrentRunGraph[i];
-                if (candidate.Depth <= currentDepth)
-                {
-                    continue;
-                }
-
-                if (candidate.Type == NodeType.Boss || candidate.IsRiskPath == risk)
-                {
-                    index = i;
-                    return true;
-                }
-            }
-
-            return false;
+            return type == NodeType.Puzzle || type == NodeType.ElitePuzzle
+                || type == NodeType.PreBoss || type == NodeType.Boss;
         }
 
         public RunEvent OpenEventNode()
@@ -269,42 +132,42 @@ namespace SudokuRoguelike.UI
             return _run?.BuildCurrentEvent();
         }
 
-        public bool ChooseEventOption(string optionId)
+        public void ChooseEventOption(int optionIndex)
         {
-            return _run != null && _run.ResolveCurrentEventChoice(optionId);
-        }
-
-        public List<CurseType> GetActiveCurses()
-        {
-            var output = new List<CurseType>();
-            if (_run?.RunState == null)
-            {
-                return output;
-            }
-
-            for (var i = 0; i < _run.RunState.ActiveCurses.Count; i++)
-            {
-                output.Add(_run.RunState.ActiveCurses[i]);
-            }
-
-            return output;
+            _run?.ResolveCurrentEventChoice(optionIndex);
         }
 
         public RunResult BuildRunResult(bool victory, int bossPhaseReached, int secondsPlayed)
         {
-            if (_run == null)
-            {
-                return null;
-            }
+            if (_run == null || _run.State == null) return null;
 
-            return _run.BuildRunResult(victory, bossPhaseReached, secondsPlayed);
+            var result = new RunResult
+            {
+                PlayedClassId = _run.State.ClassId,
+                Mode = _run.State.Mode,
+                Victory = victory,
+                GardenDepthReached = _run.State.Depth,
+                GoldEarned = _run.State.CurrentGold,
+                XpEarned = _run.GetTotalRunXp(),
+                BossPhaseReached = bossPhaseReached,
+                SecondsPlayed = secondsPlayed,
+                TutorialMode = _run.State.TutorialMode
+            };
+
+            for (var i = 0; i < _run.TileXpLog.Count; i++)
+                result.TileXpEntries.Add(_run.TileXpLog[i]);
+
+            var analytics = _run.GetAnalytics();
+            if (analytics != null)
+                result.Analytics = analytics.Build();
+
+            return result;
         }
 
-        public void AdvanceToNextGarden()
+        public void AdvanceToNextFloor()
         {
             if (_run == null) return;
-            _run.AdvanceToNextGarden();
-            _lockedRiskPath = null;
+            _run.AdvanceToNextFloor();
             _rewardsGrantedForCurrentPuzzle = false;
             _fixedNodeConfigs.Clear();
             PrepareFixedNodeConfigs();
@@ -312,46 +175,70 @@ namespace SudokuRoguelike.UI
 
         public RunDirector Run => _run;
 
-        public sealed class PathChoicePreview
+        /// <summary>Returns a short preview string for the boss node shown on the map,
+        /// e.g. "3 mods — High intensity — Floor modifier: GermanWhispers".</summary>
+        public string GetBossNodePreviewHint()
         {
-            public bool Available;
-            public bool RiskPath;
-            public bool? LockedPath;
-            public NodeType NodeType;
-            public int Depth;
-            public int BoardSize;
-            public int Stars;
-            public bool IsBoss;
-
-            public static PathChoicePreview Unavailable(bool risk)
+            if (_run?.State == null) return "";
+            var floor = _run.State.CurrentFloor;
+            var floorMods = _run.State.ActiveFloorModifiers;
+            var sb = new System.Text.StringBuilder();
+            sb.Append($"Floor {floor + 1} Boss");
+            if (floorMods != null && floorMods.Count > 0)
             {
-                return new PathChoicePreview
+                sb.Append(" | Floor mod");
+                if (floorMods.Count > 1) sb.Append('s');
+                sb.Append(": ");
+                for (var i = 0; i < floorMods.Count; i++)
                 {
-                    Available = false,
-                    RiskPath = risk,
-                    LockedPath = null,
-                    NodeType = NodeType.Start,
-                    Depth = 0,
-                    BoardSize = 0,
-                    Stars = 0,
-                    IsBoss = false
-                };
+                    if (i > 0) sb.Append(", ");
+                    sb.Append(FormatModName(floorMods[i]));
+                }
             }
+            var intensity = Economy.BossService.IntensityForRunNumber(_run.State.RunNumber);
+            sb.Append($" | Intensity: {intensity}");
+            return sb.ToString();
         }
+
+        /// <summary>Short label for the active positive floor effect shown on the path overview.</summary>
+        public string GetPositiveFloorEffectLabel()
+        {
+            if (_run?.State == null || !_run.State.HasPositiveFloorEffect) return "";
+            return _run.State.ActivePositiveFloorEffect switch
+            {
+                PositiveFloorEffect.Bounty       => "★ Bounty Floor (+40% gold)",
+                PositiveFloorEffect.LuckyItems   => "★ Lucky Items (+1 reward slot)",
+                PositiveFloorEffect.PencilRefill => "★ Pencil Refill (+2 per puzzle)",
+                PositiveFloorEffect.HealingPath  => "★ Healing Path (+1 HP if perfect)",
+                _ => ""
+            };
+        }
+
+        private static string FormatModName(BossModifierId m) => m switch
+        {
+            BossModifierId.GermanWhispers   => "G.Whispers",
+            BossModifierId.DutchWhispers    => "D.Whispers",
+            BossModifierId.ParityLines      => "Parity",
+            BossModifierId.RenbanLines      => "Renban",
+            BossModifierId.KillerCages      => "Killer",
+            BossModifierId.DifferenceKropki => "Diff Dot",
+            BossModifierId.RatioKropki      => "Ratio Dot",
+            BossModifierId.ArrowSums        => "Arrow",
+            BossModifierId.FogOfWar         => "Fog",
+            BossModifierId.Palindrome       => "Palindrome",
+            BossModifierId.Thermo           => "Thermo",
+            BossModifierId.BetweenLines     => "Between",
+            BossModifierId.EvenOdd          => "Even/Odd",
+            BossModifierId.Nonconsecutive   => "Noncons.",
+            BossModifierId.Antiknight       => "Anti-Knight",
+            _ => m.ToString()
+        };
 
         private void BindAutoSave()
         {
-            if (_run == null)
-            {
-                return;
-            }
-
-            if (_autoSaveBoundRun == _run)
-            {
-                return;
-            }
-
-            _autoSave ??= new RunAutoSaveCoordinator(_saveFile, _profile);
+            if (_run == null) return;
+            if (_autoSaveBoundRun == _run) return;
+            _autoSave = _autoSave ?? new RunAutoSaveCoordinator(_saveFile, _profile);
             _autoSave.Bind(_run);
             _autoSaveBoundRun = _run;
         }
@@ -359,27 +246,23 @@ namespace SudokuRoguelike.UI
         private void PrepareFixedNodeConfigs()
         {
             _fixedNodeConfigs.Clear();
-            if (_run == null || _run.CurrentRunGraph == null || _run.CurrentRunGraph.Count == 0)
-            {
-                return;
-            }
+            if (_run == null || _run.CurrentFloorGraph == null) return;
 
-            for (var i = 0; i < _run.CurrentRunGraph.Count; i++)
+            for (var i = 0; i < _run.CurrentFloorGraph.Count; i++)
             {
-                var node = _run.CurrentRunGraph[i];
-                if (node == null)
-                {
-                    continue;
-                }
+                var node = _run.CurrentFloorGraph[i];
+                if (node == null) continue;
 
-                var config = _run.BuildLevelConfig(runNumber: 1, depth: node.Depth);
-                if (node.Type == NodeType.Boss)
+                var isBoss = node.Type == NodeType.Boss;
+                var isElite = node.Type == NodeType.ElitePuzzle;
+                var config = _run.BuildLevelConfig(isBoss, isElite, i);
+
+                if (isBoss)
                 {
-                    config.IsBoss = true;
                     config.Stars = Mathf.Max(config.Stars, 4);
                     config.BoardSize = Mathf.Max(config.BoardSize, 8);
                 }
-                else if (node.IsRiskPath)
+                else if (node.Route == RouteType.RiskRoute)
                 {
                     config.Difficulty = (DifficultyTier)Mathf.Clamp((int)config.Difficulty + 1, (int)DifficultyTier.Diff1, (int)DifficultyTier.Diff5);
                     config.Stars = Mathf.Clamp(config.Stars + 1, 1, 5);
@@ -387,42 +270,39 @@ namespace SudokuRoguelike.UI
                     config.MissingPercent = Mathf.Clamp(config.MissingPercent + 0.06f, 0.08f, 0.85f);
                 }
 
-                _fixedNodeConfigs[i] = CloneConfig(config);
+                _fixedNodeConfigs[i] = config.Clone();
             }
         }
 
         public LevelConfig GetFixedLevelConfig(RunNode node)
         {
-            if (_run == null || node == null || _run.CurrentRunGraph == null)
-            {
+            if (_run == null || node == null || _run.CurrentFloorGraph == null)
                 return null;
-            }
 
             var index = -1;
-            for (var i = 0; i < _run.CurrentRunGraph.Count; i++)
+            for (var i = 0; i < _run.CurrentFloorGraph.Count; i++)
             {
-                if (ReferenceEquals(_run.CurrentRunGraph[i], node))
+                if (ReferenceEquals(_run.CurrentFloorGraph[i], node))
                 {
                     index = i;
                     break;
                 }
             }
 
-            if (index < 0)
-            {
-                return null;
-            }
+            if (index < 0) return null;
 
             if (!_fixedNodeConfigs.TryGetValue(index, out var config) || config == null)
             {
-                config = _run.BuildLevelConfig(runNumber: 1, depth: node.Depth);
-                if (node.Type == NodeType.Boss)
+                var isBoss = node.Type == NodeType.Boss;
+                var isElite = node.Type == NodeType.ElitePuzzle;
+                config = _run.BuildLevelConfig(isBoss, isElite, index);
+
+                if (isBoss)
                 {
-                    config.IsBoss = true;
                     config.Stars = Mathf.Max(config.Stars, 4);
                     config.BoardSize = Mathf.Max(config.BoardSize, 8);
                 }
-                else if (node.IsRiskPath)
+                else if (node.Route == RouteType.RiskRoute)
                 {
                     config.Difficulty = (DifficultyTier)Mathf.Clamp((int)config.Difficulty + 1, (int)DifficultyTier.Diff1, (int)DifficultyTier.Diff5);
                     config.Stars = Mathf.Clamp(config.Stars + 1, 1, 5);
@@ -430,60 +310,22 @@ namespace SudokuRoguelike.UI
                     config.MissingPercent = Mathf.Clamp(config.MissingPercent + 0.06f, 0.08f, 0.85f);
                 }
 
-                _fixedNodeConfigs[index] = CloneConfig(config);
+                _fixedNodeConfigs[index] = config.Clone();
             }
 
-            var result = CloneConfig(config);
+            var result = config.Clone();
 
-            // Apply the player's chosen boss modifiers at call time (set after the gate panel,
-            // which is after the config was first cached).
-            if (node.Type == NodeType.Boss && _run.RunState != null)
+            // Apply chosen boss modifiers (plural) at call time (after boss gate panel)
+            if (node.Type == NodeType.Boss && _run.State != null && _run.State.ChosenBossModifiers != null)
             {
-                // Multi-modifier selection (new floor system)
-                for (var mi = 0; mi < _run.RunState.ChosenBossModifiers.Count; mi++)
+                for (var i = 0; i < _run.State.ChosenBossModifiers.Count; i++)
                 {
-                    var mod = _run.RunState.ChosenBossModifiers[mi];
-                    if (!result.ActiveModifiers.Contains(mod))
-                        result.ActiveModifiers.Add(mod);
-                }
-
-                // Legacy single modifier fallback
-                if (_run.RunState.ChosenBossModifier.HasValue)
-                {
-                    var chosen = _run.RunState.ChosenBossModifier.Value;
-                    if (!result.ActiveModifiers.Contains(chosen))
-                        result.ActiveModifiers.Add(chosen);
+                    if (!result.ActiveModifiers.Contains(_run.State.ChosenBossModifiers[i]))
+                        result.ActiveModifiers.Add(_run.State.ChosenBossModifiers[i]);
                 }
             }
 
             return result;
-        }
-
-        private static LevelConfig CloneConfig(LevelConfig src)
-        {
-            if (src == null)
-            {
-                return null;
-            }
-
-            var copy = new LevelConfig
-            {
-                Difficulty = src.Difficulty,
-                Stars = src.Stars,
-                BoardSize = src.BoardSize,
-                MissingPercent = src.MissingPercent,
-                IsBoss = src.IsBoss,
-                StressVariant = src.StressVariant,
-                VarianceBand = src.VarianceBand,
-                RegionVariant = src.RegionVariant
-            };
-
-            for (var i = 0; i < src.ActiveModifiers.Count; i++)
-            {
-                copy.ActiveModifiers.Add(src.ActiveModifiers[i]);
-            }
-
-            return copy;
         }
     }
 }

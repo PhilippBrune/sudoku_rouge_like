@@ -8,44 +8,21 @@ namespace SudokuRoguelike.Sudoku
     {
         private static readonly (int Dr, int Dc)[] Dirs = { (-1, 0), (1, 0), (0, -1), (0, 1) };
 
-        /// <summary>Returns a multiplier (0.5 / 1.0 / 1.5 / 2.0) for the given intensity.</summary>
         private static float IntensityScale(BossModifierIntensity intensity) => intensity switch
         {
             BossModifierIntensity.Low      => 0.5f,
             BossModifierIntensity.High     => 1.5f,
             BossModifierIntensity.VeryHigh => 2.0f,
-            _                              => 1.0f   // Medium
+            _                              => 1.0f
         };
 
-        /// <summary>Scales a base count by intensity and clamps it to [min, max].</summary>
         private static int ScaledCount(int baseCount, float scale, int min, int max)
             => Math.Clamp((int)Math.Round(baseCount * scale), min, max);
 
-        /// <summary>
-        /// Tracks cells used by previous modifiers for spatial separation.
-        /// Line generators bias start positions away from these cells.
-        /// </summary>
         private static readonly HashSet<long> _usedCells = new();
 
         private static long CellKey(int r, int c) => (long)r * 1000 + c;
 
-        /// <summary>Pick a start cell biased away from already-used cells.</summary>
-        private static CellCoord PickBiasedStart(SudokuBoard board, Random rng)
-        {
-            var size = board.Size;
-            // Try up to 10 random cells, prefer ones not in _usedCells
-            CellCoord best = new CellCoord { Row = rng.Next(size), Col = rng.Next(size) };
-            for (var attempt = 0; attempt < 10; attempt++)
-            {
-                var r = rng.Next(size);
-                var c = rng.Next(size);
-                if (!_usedCells.Contains(CellKey(r, c)))
-                    return new CellCoord { Row = r, Col = c };
-            }
-            return best;
-        }
-
-        /// <summary>Mark cells as used for spatial separation tracking.</summary>
         private static void MarkCellsUsed(List<CellCoord> cells)
         {
             for (var i = 0; i < cells.Count; i++)
@@ -62,10 +39,9 @@ namespace SudokuRoguelike.Sudoku
 
             for (var i = 0; i < modifiers.Count; i++)
             {
-                // Snapshot counts before this modifier generates geometry
                 var linesBefore = overlay.Lines.Count;
-                var dotsBefore = overlay.Dots.Count;
-                var cagesBefore = overlay.Cages.Count;
+                var dotsBefore = overlay.KropkiDots.Count;
+                var cagesBefore = overlay.KillerCages.Count;
                 var arrowsBefore = overlay.Arrows.Count;
                 var markersBefore = overlay.CellMarkers.Count;
 
@@ -84,10 +60,10 @@ namespace SudokuRoguelike.Sudoku
                         GenerateRenbanLines(board, overlay, rng, scale);
                         break;
                     case BossModifierId.DifferenceKropki:
-                        GenerateKropkiDots(board, overlay, rng, DotType.White, scale);
+                        GenerateKropkiDots(board, overlay, rng, false, scale);
                         break;
                     case BossModifierId.RatioKropki:
-                        GenerateKropkiDots(board, overlay, rng, DotType.Black, scale);
+                        GenerateKropkiDots(board, overlay, rng, true, scale);
                         break;
                     case BossModifierId.KillerCages:
                         GenerateKillerCages(board, overlay, rng, scale);
@@ -111,21 +87,105 @@ namespace SudokuRoguelike.Sudoku
                         GenerateEvenOddMarkers(board, overlay, rng, scale);
                         break;
                     // Nonconsecutive and Antiknight are global — no geometry needed
+
+                    // Extended global negative constraints (IDs 15-20): no geometry
+                    case BossModifierId.Antiking:
+                    case BossModifierId.AntiBishop:
+                    case BossModifierId.NonconsecDiagonal:
+                    case BossModifierId.DistanceGe2:
+                    case BossModifierId.EntropyGlobal:
+                    case BossModifierId.ModularRegions:
+                        break; // global rules — no geometry needed
+
+                    case BossModifierId.ConsecutiveLine:
+                        GenerateConsecutiveLines(board, overlay, rng, scale);
+                        break;
+                    case BossModifierId.SlowThermo:
+                        GenerateSlowThermoLines(board, overlay, rng, scale);
+                        break;
+                    case BossModifierId.UniqueSetLine:
+                        GenerateUniqueSetLines(board, overlay, rng, scale);
+                        break;
+                    case BossModifierId.FullKropki:
+                        GenerateFullKropki(board, overlay);
+                        break;
+                    case BossModifierId.SumKropki:
+                        GenerateSumKropkiDots(board, overlay, rng, scale);
+                        break;
+                    case BossModifierId.GreaterLessThan:
+                        GenerateGreaterLessThanPairs(board, overlay, rng, scale);
+                        break;
+                    case BossModifierId.XVPairs:
+                        GenerateXVPairs(board, overlay, rng, scale);
+                        break;
+                    case BossModifierId.PrimeCells:
+                        GeneratePrimeCellMarkers(board, overlay, rng, scale);
+                        break;
+                    case BossModifierId.FortressCells:
+                        GenerateFortressCellMarkers(board, overlay, rng, scale);
+                        break;
                 }
 
-                // Mark cells used by this modifier for spatial separation
                 MarkOverlayCellsUsed(overlay, linesBefore, dotsBefore, cagesBefore, arrowsBefore, markersBefore);
             }
 
             return overlay;
         }
 
-        private static void GenerateWhisperLines(SudokuBoard board, ModifierOverlayData overlay,
-            Random rng, LineType type, int minDiff, float scale = 1f)
+        // ── Fog ──
+
+        private static void GenerateFog(SudokuBoard board, ModifierOverlayData overlay, Random rng)
         {
             var size = board.Size;
-            // On a board of size N, max possible difference is N-1.
-            // German Whispers (minDiff=5) needs size >= 6; Dutch (minDiff=4) needs size >= 5.
+
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
+            {
+                if (!board.GivenMask[r, c])
+                    overlay.FogCells.Add(new CellCoord(r, c));
+            }
+
+            var givenCells = new List<CellCoord>();
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
+            {
+                if (board.GivenMask[r, c])
+                    givenCells.Add(new CellCoord(r, c));
+            }
+
+            Shuffle(givenCells, rng);
+            var revealCount = Math.Max(1, givenCells.Count / 3);
+            for (var i = 0; i < revealCount; i++)
+                RevealAdjacentFog(overlay, givenCells[i].Row, givenCells[i].Col, size);
+        }
+
+        public static void RevealAdjacentFog(ModifierOverlayData overlay, int row, int col, int size)
+        {
+            RemoveFogCell(overlay, row, col);
+            if (row > 0) RemoveFogCell(overlay, row - 1, col);
+            if (row < size - 1) RemoveFogCell(overlay, row + 1, col);
+            if (col > 0) RemoveFogCell(overlay, row, col - 1);
+            if (col < size - 1) RemoveFogCell(overlay, row, col + 1);
+        }
+
+        private static void RemoveFogCell(ModifierOverlayData overlay, int row, int col)
+        {
+            for (var i = overlay.FogCells.Count - 1; i >= 0; i--)
+            {
+                if (overlay.FogCells[i].Row == row && overlay.FogCells[i].Col == col)
+                {
+                    overlay.FogCells.RemoveAt(i);
+                    return;
+                }
+            }
+        }
+
+        // ── Whisper Lines (German / Dutch) ──
+
+        private static void GenerateWhisperLines(SudokuBoard board, ModifierOverlayData overlay,
+            Random rng, LineType type, int minDiff, float scale)
+        {
+            var size = board.Size;
             if (size - 1 < minDiff) return;
             var baseTarget = size <= 6 ? 2 : size <= 8 ? 3 : 4;
             var target = ScaledCount(baseTarget, scale, 1, 8);
@@ -151,6 +211,8 @@ namespace SudokuRoguelike.Sudoku
             var startRow = rng.Next(size);
             var startCol = rng.Next(size);
             if (used[startRow, startCol]) return null;
+            // Prefer starting on a non-given cell so the line has visible constraint
+            if (board.GivenMask[startRow, startCol] && rng.NextDouble() < 0.8) return null;
 
             var line = new ModifierLine();
             line.Cells.Add(new CellCoord(startRow, startCol));
@@ -182,7 +244,9 @@ namespace SudokuRoguelike.Sudoku
             return line.Cells.Count >= 3 ? line : null;
         }
 
-        private static void GenerateParityLines(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale = 1f)
+        // ── Parity Lines ──
+
+        private static void GenerateParityLines(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale)
         {
             var size = board.Size;
             var baseTarget = size <= 6 ? 2 : size <= 8 ? 3 : 4;
@@ -202,14 +266,13 @@ namespace SudokuRoguelike.Sudoku
             }
         }
 
-        private static ModifierLine TryBuildParityLine(SudokuBoard board, Random rng,
-            bool[,] used, int size)
+        private static ModifierLine TryBuildParityLine(SudokuBoard board, Random rng, bool[,] used, int size)
         {
             var startRow = rng.Next(size);
             var startCol = rng.Next(size);
             if (used[startRow, startCol]) return null;
 
-            var line = new ModifierLine { Type = LineType.Parity };
+            var line = new ModifierLine { Type = LineType.ParityLine };
             line.Cells.Add(new CellCoord(startRow, startCol));
 
             var targetLen = rng.Next(3, 6);
@@ -239,7 +302,9 @@ namespace SudokuRoguelike.Sudoku
             return line.Cells.Count >= 3 ? line : null;
         }
 
-        private static void GenerateRenbanLines(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale = 1f)
+        // ── Renban Lines ──
+
+        private static void GenerateRenbanLines(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale)
         {
             var size = board.Size;
             var baseTarget = size <= 6 ? 2 : 3;
@@ -259,14 +324,13 @@ namespace SudokuRoguelike.Sudoku
             }
         }
 
-        private static ModifierLine TryBuildRenbanLine(SudokuBoard board, Random rng,
-            bool[,] used, int size)
+        private static ModifierLine TryBuildRenbanLine(SudokuBoard board, Random rng, bool[,] used, int size)
         {
             var startRow = rng.Next(size);
             var startCol = rng.Next(size);
             if (used[startRow, startCol]) return null;
 
-            var line = new ModifierLine { Type = LineType.Renban };
+            var line = new ModifierLine { Type = LineType.RenbanLine };
             line.Cells.Add(new CellCoord(startRow, startCol));
             var values = new List<int> { board.Solution[startRow, startCol] };
 
@@ -313,31 +377,230 @@ namespace SudokuRoguelike.Sudoku
             return line;
         }
 
+        // ── Palindrome Lines ──
+
+        private static void GeneratePalindromeLines(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale)
+        {
+            var size = board.Size;
+            var baseTarget = size <= 6 ? 2 : 3;
+            var target = ScaledCount(baseTarget, scale, 1, 6);
+            var used = new bool[size, size];
+            var count = 0;
+
+            for (var attempt = 0; attempt < target * 40 && count < target; attempt++)
+            {
+                var line = TryBuildPalindromeLine(board, rng, used, size);
+                if (line == null) continue;
+
+                overlay.Lines.Add(line);
+                for (var c = 0; c < line.Cells.Count; c++)
+                    used[line.Cells[c].Row, line.Cells[c].Col] = true;
+                count++;
+            }
+        }
+
+        private static ModifierLine TryBuildPalindromeLine(SudokuBoard board, Random rng, bool[,] used, int size)
+        {
+            var startRow = rng.Next(size);
+            var startCol = rng.Next(size);
+            if (used[startRow, startCol]) return null;
+
+            var cells = new List<CellCoord> { new CellCoord(startRow, startCol) };
+            var rawLen = rng.Next(3, 6);
+            var targetLen = rawLen % 2 == 0 ? rawLen + 1 : rawLen;
+
+            for (var step = 1; step < targetLen; step++)
+            {
+                var last = cells[cells.Count - 1];
+                var candidates = new List<CellCoord>();
+
+                for (var d = 0; d < Dirs.Length; d++)
+                {
+                    var nr = last.Row + Dirs[d].Dr;
+                    var nc = last.Col + Dirs[d].Dc;
+                    if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
+                    if (used[nr, nc]) continue;
+                    var alreadyIn = false;
+                    for (var ci = 0; ci < cells.Count; ci++)
+                        if (cells[ci].Row == nr && cells[ci].Col == nc) { alreadyIn = true; break; }
+                    if (!alreadyIn) candidates.Add(new CellCoord(nr, nc));
+                }
+
+                if (candidates.Count == 0) break;
+                cells.Add(candidates[rng.Next(candidates.Count)]);
+            }
+
+            if (cells.Count < 3) return null;
+
+            var n = cells.Count;
+            for (var j = 0; j < n / 2; j++)
+            {
+                var a = cells[j];
+                var b = cells[n - 1 - j];
+                if (board.Solution[a.Row, a.Col] != board.Solution[b.Row, b.Col]) return null;
+            }
+
+            var line = new ModifierLine { Type = LineType.Palindrome };
+            line.Cells.AddRange(cells);
+            return line;
+        }
+
+        // ── Thermo Lines ──
+
+        private static void GenerateThermoLines(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale)
+        {
+            var size = board.Size;
+            var baseTarget = size <= 6 ? 2 : 3;
+            var target = ScaledCount(baseTarget, scale, 1, 6);
+            var used = new bool[size, size];
+            var count = 0;
+
+            for (var attempt = 0; attempt < target * 30 && count < target; attempt++)
+            {
+                var line = TryBuildThermoLine(board, rng, used, size);
+                if (line == null) continue;
+
+                overlay.Lines.Add(line);
+                for (var c = 0; c < line.Cells.Count; c++)
+                    used[line.Cells[c].Row, line.Cells[c].Col] = true;
+                count++;
+            }
+        }
+
+        private static ModifierLine TryBuildThermoLine(SudokuBoard board, Random rng, bool[,] used, int size)
+        {
+            var startRow = rng.Next(size);
+            var startCol = rng.Next(size);
+            if (used[startRow, startCol]) return null;
+
+            var line = new ModifierLine { Type = LineType.Thermo };
+            line.Cells.Add(new CellCoord(startRow, startCol));
+
+            var targetLen = rng.Next(3, 6);
+
+            for (var step = 1; step < targetLen; step++)
+            {
+                var last = line.Cells[line.Cells.Count - 1];
+                var lastVal = board.Solution[last.Row, last.Col];
+                var candidates = new List<CellCoord>();
+
+                for (var d = 0; d < Dirs.Length; d++)
+                {
+                    var nr = last.Row + Dirs[d].Dr;
+                    var nc = last.Col + Dirs[d].Dc;
+                    if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
+                    if (used[nr, nc] || IsInLine(line, nr, nc)) continue;
+                    if (board.Solution[nr, nc] > lastVal)
+                        candidates.Add(new CellCoord(nr, nc));
+                }
+
+                if (candidates.Count == 0) break;
+                line.Cells.Add(candidates[rng.Next(candidates.Count)]);
+            }
+
+            return line.Cells.Count >= 3 ? line : null;
+        }
+
+        // ── Between Lines ──
+
+        private static void GenerateBetweenLines(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale)
+        {
+            var size = board.Size;
+            var baseTarget = size <= 6 ? 2 : 3;
+            var target = ScaledCount(baseTarget, scale, 1, 6);
+            var used = new bool[size, size];
+            var count = 0;
+
+            for (var attempt = 0; attempt < target * 30 && count < target; attempt++)
+            {
+                var line = TryBuildBetweenLine(board, rng, used, size);
+                if (line == null) continue;
+
+                overlay.Lines.Add(line);
+                for (var c = 0; c < line.Cells.Count; c++)
+                    used[line.Cells[c].Row, line.Cells[c].Col] = true;
+                count++;
+            }
+        }
+
+        private static ModifierLine TryBuildBetweenLine(SudokuBoard board, Random rng, bool[,] used, int size)
+        {
+            var startRow = rng.Next(size);
+            var startCol = rng.Next(size);
+            if (used[startRow, startCol]) return null;
+
+            var cells = new List<CellCoord> { new CellCoord(startRow, startCol) };
+            var targetLen = rng.Next(3, 5);
+
+            for (var step = 1; step < targetLen; step++)
+            {
+                var last = cells[cells.Count - 1];
+                var candidates = new List<CellCoord>();
+
+                for (var d = 0; d < Dirs.Length; d++)
+                {
+                    var nr = last.Row + Dirs[d].Dr;
+                    var nc = last.Col + Dirs[d].Dc;
+                    if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
+                    if (used[nr, nc]) continue;
+                    var alreadyIn = false;
+                    for (var ci = 0; ci < cells.Count; ci++)
+                        if (cells[ci].Row == nr && cells[ci].Col == nc) { alreadyIn = true; break; }
+                    if (!alreadyIn) candidates.Add(new CellCoord(nr, nc));
+                }
+
+                if (candidates.Count == 0) break;
+                cells.Add(candidates[rng.Next(candidates.Count)]);
+            }
+
+            if (cells.Count < 3) return null;
+
+            var endA = cells[0];
+            var endB = cells[cells.Count - 1];
+            var valA = board.Solution[endA.Row, endA.Col];
+            var valB = board.Solution[endB.Row, endB.Col];
+            if (valA == valB) return null;
+
+            var lo = Math.Min(valA, valB);
+            var hi = Math.Max(valA, valB);
+
+            for (var j = 1; j < cells.Count - 1; j++)
+            {
+                var v = board.Solution[cells[j].Row, cells[j].Col];
+                if (v <= lo || v >= hi) return null;
+            }
+
+            var line = new ModifierLine { Type = LineType.BetweenLine };
+            line.Cells.AddRange(cells);
+            return line;
+        }
+
+        // ── Kropki Dots ──
+
         private static void GenerateKropkiDots(SudokuBoard board, ModifierOverlayData overlay,
-            Random rng, DotType targetType, float scale = 1f)
+            Random rng, bool isBlack, float scale)
         {
             var size = board.Size;
             var pairs = new List<(CellCoord A, CellCoord B)>();
 
             for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
             {
-                for (var c = 0; c < size; c++)
+                var v = board.Solution[r, c];
+
+                if (c + 1 < size)
                 {
-                    var v = board.Solution[r, c];
+                    var v2 = board.Solution[r, c + 1];
+                    // At least one cell must be missing (non-given) so the constraint is meaningful
+                    if (MatchesDot(v, v2, isBlack) && !(board.GivenMask[r, c] && board.GivenMask[r, c + 1]))
+                        pairs.Add((new CellCoord(r, c), new CellCoord(r, c + 1)));
+                }
 
-                    if (c + 1 < size)
-                    {
-                        var v2 = board.Solution[r, c + 1];
-                        if (MatchesDot(v, v2, targetType))
-                            pairs.Add((new CellCoord(r, c), new CellCoord(r, c + 1)));
-                    }
-
-                    if (r + 1 < size)
-                    {
-                        var v2 = board.Solution[r + 1, c];
-                        if (MatchesDot(v, v2, targetType))
-                            pairs.Add((new CellCoord(r, c), new CellCoord(r + 1, c)));
-                    }
+                if (r + 1 < size)
+                {
+                    var v2 = board.Solution[r + 1, c];
+                    if (MatchesDot(v, v2, isBlack) && !(board.GivenMask[r, c] && board.GivenMask[r + 1, c]))
+                        pairs.Add((new CellCoord(r, c), new CellCoord(r + 1, c)));
                 }
             }
 
@@ -347,36 +610,38 @@ namespace SudokuRoguelike.Sudoku
 
             for (var i = 0; i < dotCount; i++)
             {
-                overlay.Dots.Add(new KropkiDot
+                overlay.KropkiDots.Add(new KropkiDot
                 {
                     CellA = pairs[i].A,
                     CellB = pairs[i].B,
-                    Type = targetType
+                    IsBlack = isBlack
                 });
             }
         }
 
-        private static bool MatchesDot(int v1, int v2, DotType type)
+        private static bool MatchesDot(int v1, int v2, bool isBlack)
         {
-            if (type == DotType.White) return Math.Abs(v1 - v2) == 1;
+            if (!isBlack) return Math.Abs(v1 - v2) == 1;
             var bigger = Math.Max(v1, v2);
             var smaller = Math.Min(v1, v2);
             return smaller > 0 && bigger == 2 * smaller;
         }
 
-        private static void GenerateKillerCages(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale = 1f)
+        // ── Killer Cages ──
+
+        private static void GenerateKillerCages(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale)
         {
             var size = board.Size;
             var baseTarget = size <= 6 ? 3 : size <= 8 ? 4 : 5;
             var target = ScaledCount(baseTarget, scale, 1, 10);
             var used = new bool[size, size];
 
-            for (var attempt = 0; attempt < target * 20 && overlay.Cages.Count < target; attempt++)
+            for (var attempt = 0; attempt < target * 20 && overlay.KillerCages.Count < target; attempt++)
             {
                 var cage = TryBuildCage(board, rng, used, size);
                 if (cage == null) continue;
 
-                overlay.Cages.Add(cage);
+                overlay.KillerCages.Add(cage);
                 for (var c = 0; c < cage.Cells.Count; c++)
                     used[cage.Cells[c].Row, cage.Cells[c].Col] = true;
             }
@@ -431,7 +696,9 @@ namespace SudokuRoguelike.Sudoku
             return cage;
         }
 
-        private static void GenerateArrows(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale = 1f)
+        // ── Arrow Sums ──
+
+        private static void GenerateArrows(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale)
         {
             var size = board.Size;
             var baseTarget = size <= 6 ? 2 : 3;
@@ -444,9 +711,9 @@ namespace SudokuRoguelike.Sudoku
                 if (arrow == null) continue;
 
                 overlay.Arrows.Add(arrow);
-                used[arrow.Circle.Row, arrow.Circle.Col] = true;
-                for (var c = 0; c < arrow.Path.Count; c++)
-                    used[arrow.Path[c].Row, arrow.Path[c].Col] = true;
+                used[arrow.CircleCell.Row, arrow.CircleCell.Col] = true;
+                for (var c = 0; c < arrow.ArrowCells.Count; c++)
+                    used[arrow.ArrowCells[c].Row, arrow.ArrowCells[c].Col] = true;
             }
         }
 
@@ -459,7 +726,7 @@ namespace SudokuRoguelike.Sudoku
             var circleVal = board.Solution[circleRow, circleCol];
             if (circleVal < 3) return null;
 
-            var arrow = new ArrowConstraint { Circle = new CellCoord(circleRow, circleCol) };
+            var arrow = new ArrowConstraint { CircleCell = new CellCoord(circleRow, circleCol) };
             var runningSum = 0;
 
             var pathLen = rng.Next(2, 4);
@@ -485,277 +752,20 @@ namespace SudokuRoguelike.Sudoku
 
                 if (candidates.Count == 0) break;
                 var pick = candidates[rng.Next(candidates.Count)];
-                arrow.Path.Add(pick);
+                arrow.ArrowCells.Add(pick);
                 runningSum += board.Solution[pick.Row, pick.Col];
                 lastRow = pick.Row;
                 lastCol = pick.Col;
             }
 
-            if (arrow.Path.Count < 2 || runningSum != circleVal) return null;
+            if (arrow.ArrowCells.Count < 2 || runningSum != circleVal) return null;
 
             return arrow;
         }
 
-        private static void GenerateFog(SudokuBoard board, ModifierOverlayData overlay, Random rng)
-        {
-            var size = board.Size;
+        // ── EvenOdd Markers ──
 
-            for (var r = 0; r < size; r++)
-            {
-                for (var c = 0; c < size; c++)
-                {
-                    if (!board.GivenMask[r, c])
-                        overlay.SetFog(r, c);
-                }
-            }
-
-            var givenCells = new List<CellCoord>();
-            for (var r = 0; r < size; r++)
-            {
-                for (var c = 0; c < size; c++)
-                {
-                    if (board.GivenMask[r, c])
-                        givenCells.Add(new CellCoord(r, c));
-                }
-            }
-
-            Shuffle(givenCells, rng);
-            var revealCount = Math.Max(1, givenCells.Count / 3);
-            for (var i = 0; i < revealCount; i++)
-                RevealAdjacentFog(overlay, givenCells[i].Row, givenCells[i].Col, size);
-        }
-
-        public static void RevealAdjacentFog(ModifierOverlayData overlay, int row, int col, int size)
-        {
-            overlay.ClearFog(row, col);
-            if (row > 0) overlay.ClearFog(row - 1, col);
-            if (row < size - 1) overlay.ClearFog(row + 1, col);
-            if (col > 0) overlay.ClearFog(row, col - 1);
-            if (col < size - 1) overlay.ClearFog(row, col + 1);
-        }
-
-        private static bool IsInLine(ModifierLine line, int row, int col)
-        {
-            for (var i = 0; i < line.Cells.Count; i++)
-            {
-                if (line.Cells[i].Row == row && line.Cells[i].Col == col) return true;
-            }
-            return false;
-        }
-
-        private static bool IsInCage(KillerCage cage, int row, int col)
-        {
-            for (var i = 0; i < cage.Cells.Count; i++)
-            {
-                if (cage.Cells[i].Row == row && cage.Cells[i].Col == col) return true;
-            }
-            return false;
-        }
-
-        private static bool IsOnArrowPath(ArrowConstraint arrow, int row, int col)
-        {
-            for (var i = 0; i < arrow.Path.Count; i++)
-            {
-                if (arrow.Path[i].Row == row && arrow.Path[i].Col == col) return true;
-            }
-            return false;
-        }
-
-        private static void GeneratePalindromeLines(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale = 1f)
-        {
-            var size = board.Size;
-            var baseTarget = size <= 6 ? 2 : 3;
-            var target = ScaledCount(baseTarget, scale, 1, 6);
-            var used = new bool[size, size];
-            var count = 0;
-
-            for (var attempt = 0; attempt < target * 40 && count < target; attempt++)
-            {
-                var line = TryBuildPalindromeLine(board, rng, used, size);
-                if (line == null) continue;
-
-                overlay.Lines.Add(line);
-                for (var c = 0; c < line.Cells.Count; c++)
-                    used[line.Cells[c].Row, line.Cells[c].Col] = true;
-                count++;
-            }
-        }
-
-        private static ModifierLine TryBuildPalindromeLine(SudokuBoard board, Random rng, bool[,] used, int size)
-        {
-            var startRow = rng.Next(size);
-            var startCol = rng.Next(size);
-            if (used[startRow, startCol]) return null;
-
-            var cells = new List<CellCoord> { new CellCoord(startRow, startCol) };
-            var rawLen = rng.Next(3, 6);
-            var targetLen = rawLen % 2 == 0 ? rawLen + 1 : rawLen; // prefer odd length
-
-            for (var step = 1; step < targetLen; step++)
-            {
-                var last = cells[cells.Count - 1];
-                var candidates = new List<CellCoord>();
-
-                for (var d = 0; d < Dirs.Length; d++)
-                {
-                    var nr = last.Row + Dirs[d].Dr;
-                    var nc = last.Col + Dirs[d].Dc;
-                    if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
-                    if (used[nr, nc]) continue;
-                    var alreadyIn = false;
-                    for (var ci = 0; ci < cells.Count; ci++)
-                        if (cells[ci].Row == nr && cells[ci].Col == nc) { alreadyIn = true; break; }
-                    if (!alreadyIn) candidates.Add(new CellCoord(nr, nc));
-                }
-
-                if (candidates.Count == 0) break;
-                cells.Add(candidates[rng.Next(candidates.Count)]);
-            }
-
-            if (cells.Count < 3) return null;
-
-            // Verify palindrome in solution
-            var n = cells.Count;
-            for (var j = 0; j < n / 2; j++)
-            {
-                var a = cells[j];
-                var b = cells[n - 1 - j];
-                if (board.Solution[a.Row, a.Col] != board.Solution[b.Row, b.Col]) return null;
-            }
-
-            var line = new ModifierLine { Type = LineType.Palindrome };
-            line.Cells.AddRange(cells);
-            return line;
-        }
-
-        private static void GenerateThermoLines(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale = 1f)
-        {
-            var size = board.Size;
-            var baseTarget = size <= 6 ? 2 : 3;
-            var target = ScaledCount(baseTarget, scale, 1, 6);
-            var used = new bool[size, size];
-            var count = 0;
-
-            for (var attempt = 0; attempt < target * 30 && count < target; attempt++)
-            {
-                var line = TryBuildThermoLine(board, rng, used, size);
-                if (line == null) continue;
-
-                overlay.Lines.Add(line);
-                for (var c = 0; c < line.Cells.Count; c++)
-                    used[line.Cells[c].Row, line.Cells[c].Col] = true;
-                count++;
-            }
-        }
-
-        private static ModifierLine TryBuildThermoLine(SudokuBoard board, Random rng, bool[,] used, int size)
-        {
-            var startRow = rng.Next(size);
-            var startCol = rng.Next(size);
-            if (used[startRow, startCol]) return null;
-
-            var line = new ModifierLine { Type = LineType.Thermo };
-            line.Cells.Add(new CellCoord(startRow, startCol));
-
-            var targetLen = rng.Next(3, 6);
-
-            for (var step = 1; step < targetLen; step++)
-            {
-                var last = line.Cells[line.Cells.Count - 1];
-                var lastVal = board.Solution[last.Row, last.Col];
-                var candidates = new List<CellCoord>();
-
-                for (var d = 0; d < Dirs.Length; d++)
-                {
-                    var nr = last.Row + Dirs[d].Dr;
-                    var nc = last.Col + Dirs[d].Dc;
-                    if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
-                    if (used[nr, nc] || IsInLine(line, nr, nc)) continue;
-                    if (board.Solution[nr, nc] > lastVal)
-                        candidates.Add(new CellCoord(nr, nc));
-                }
-
-                if (candidates.Count == 0) break;
-                line.Cells.Add(candidates[rng.Next(candidates.Count)]);
-            }
-
-            return line.Cells.Count >= 3 ? line : null;
-        }
-
-        private static void GenerateBetweenLines(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale = 1f)
-        {
-            var size = board.Size;
-            var baseTarget = size <= 6 ? 2 : 3;
-            var target = ScaledCount(baseTarget, scale, 1, 6);
-            var used = new bool[size, size];
-            var count = 0;
-
-            for (var attempt = 0; attempt < target * 30 && count < target; attempt++)
-            {
-                var line = TryBuildBetweenLine(board, rng, used, size);
-                if (line == null) continue;
-
-                overlay.Lines.Add(line);
-                for (var c = 0; c < line.Cells.Count; c++)
-                    used[line.Cells[c].Row, line.Cells[c].Col] = true;
-                count++;
-            }
-        }
-
-        private static ModifierLine TryBuildBetweenLine(SudokuBoard board, Random rng, bool[,] used, int size)
-        {
-            var startRow = rng.Next(size);
-            var startCol = rng.Next(size);
-            if (used[startRow, startCol]) return null;
-
-            var cells = new List<CellCoord> { new CellCoord(startRow, startCol) };
-            var targetLen = rng.Next(3, 5);
-
-            for (var step = 1; step < targetLen; step++)
-            {
-                var last = cells[cells.Count - 1];
-                var candidates = new List<CellCoord>();
-
-                for (var d = 0; d < Dirs.Length; d++)
-                {
-                    var nr = last.Row + Dirs[d].Dr;
-                    var nc = last.Col + Dirs[d].Dc;
-                    if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
-                    if (used[nr, nc]) continue;
-                    var alreadyIn = false;
-                    for (var ci = 0; ci < cells.Count; ci++)
-                        if (cells[ci].Row == nr && cells[ci].Col == nc) { alreadyIn = true; break; }
-                    if (!alreadyIn) candidates.Add(new CellCoord(nr, nc));
-                }
-
-                if (candidates.Count == 0) break;
-                cells.Add(candidates[rng.Next(candidates.Count)]);
-            }
-
-            if (cells.Count < 3) return null;
-
-            // Verify: all interior cells have values strictly between the two endpoints
-            var endA = cells[0];
-            var endB = cells[cells.Count - 1];
-            var valA = board.Solution[endA.Row, endA.Col];
-            var valB = board.Solution[endB.Row, endB.Col];
-            if (valA == valB) return null;
-
-            var lo = Math.Min(valA, valB);
-            var hi = Math.Max(valA, valB);
-
-            for (var j = 1; j < cells.Count - 1; j++)
-            {
-                var v = board.Solution[cells[j].Row, cells[j].Col];
-                if (v <= lo || v >= hi) return null;
-            }
-
-            var line = new ModifierLine { Type = LineType.BetweenLines };
-            line.Cells.AddRange(cells);
-            return line;
-        }
-
-        private static void GenerateEvenOddMarkers(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale = 1f)
+        private static void GenerateEvenOddMarkers(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale)
         {
             var size = board.Size;
             var baseCount = size <= 6 ? 6 : size <= 8 ? 8 : 12;
@@ -763,8 +773,8 @@ namespace SudokuRoguelike.Sudoku
 
             var allCells = new List<CellCoord>(size * size);
             for (var r = 0; r < size; r++)
-                for (var c = 0; c < size; c++)
-                    allCells.Add(new CellCoord(r, c));
+            for (var c = 0; c < size; c++)
+                allCells.Add(new CellCoord(r, c));
 
             Shuffle(allCells, rng);
 
@@ -780,6 +790,376 @@ namespace SudokuRoguelike.Sudoku
             }
         }
 
+        // ── Consecutive Lines ──
+
+        private static void GenerateConsecutiveLines(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale)
+        {
+            var size = board.Size;
+            var baseTarget = size <= 6 ? 2 : 3;
+            var target = ScaledCount(baseTarget, scale, 1, 6);
+            var used = new bool[size, size];
+            var count = 0;
+
+            for (var attempt = 0; attempt < target * 30 && count < target; attempt++)
+            {
+                var line = TryBuildConsecutiveLine(board, rng, used, size);
+                if (line == null) continue;
+                overlay.Lines.Add(line);
+                for (var c = 0; c < line.Cells.Count; c++)
+                    used[line.Cells[c].Row, line.Cells[c].Col] = true;
+                count++;
+            }
+        }
+
+        private static ModifierLine TryBuildConsecutiveLine(SudokuBoard board, Random rng, bool[,] used, int size)
+        {
+            var startRow = rng.Next(size);
+            var startCol = rng.Next(size);
+            if (used[startRow, startCol]) return null;
+
+            var line = new ModifierLine { Type = LineType.ConsecutiveLine };
+            line.Cells.Add(new CellCoord(startRow, startCol));
+            var targetLen = rng.Next(3, 6);
+
+            for (var step = 1; step < targetLen; step++)
+            {
+                var last = line.Cells[line.Cells.Count - 1];
+                var lastVal = board.Solution[last.Row, last.Col];
+                var candidates = new List<CellCoord>();
+
+                for (var d = 0; d < Dirs.Length; d++)
+                {
+                    var nr = last.Row + Dirs[d].Dr;
+                    var nc = last.Col + Dirs[d].Dc;
+                    if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
+                    if (used[nr, nc] || IsInLine(line, nr, nc)) continue;
+                    if (Math.Abs(board.Solution[nr, nc] - lastVal) == 1)
+                        candidates.Add(new CellCoord(nr, nc));
+                }
+
+                if (candidates.Count == 0) break;
+                line.Cells.Add(candidates[rng.Next(candidates.Count)]);
+            }
+
+            return line.Cells.Count >= 3 ? line : null;
+        }
+
+        // ── Slow Thermo Lines ──
+
+        private static void GenerateSlowThermoLines(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale)
+        {
+            var size = board.Size;
+            var baseTarget = size <= 6 ? 2 : 3;
+            var target = ScaledCount(baseTarget, scale, 1, 6);
+            var used = new bool[size, size];
+            var count = 0;
+
+            for (var attempt = 0; attempt < target * 30 && count < target; attempt++)
+            {
+                var line = TryBuildSlowThermoLine(board, rng, used, size);
+                if (line == null) continue;
+                overlay.Lines.Add(line);
+                for (var c = 0; c < line.Cells.Count; c++)
+                    used[line.Cells[c].Row, line.Cells[c].Col] = true;
+                count++;
+            }
+        }
+
+        private static ModifierLine TryBuildSlowThermoLine(SudokuBoard board, Random rng, bool[,] used, int size)
+        {
+            var startRow = rng.Next(size);
+            var startCol = rng.Next(size);
+            if (used[startRow, startCol]) return null;
+
+            var line = new ModifierLine { Type = LineType.SlowThermo };
+            line.Cells.Add(new CellCoord(startRow, startCol));
+            var targetLen = rng.Next(3, 6);
+
+            for (var step = 1; step < targetLen; step++)
+            {
+                var last = line.Cells[line.Cells.Count - 1];
+                var lastVal = board.Solution[last.Row, last.Col];
+                var candidates = new List<CellCoord>();
+
+                for (var d = 0; d < Dirs.Length; d++)
+                {
+                    var nr = last.Row + Dirs[d].Dr;
+                    var nc = last.Col + Dirs[d].Dc;
+                    if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
+                    if (used[nr, nc] || IsInLine(line, nr, nc)) continue;
+                    if (board.Solution[nr, nc] >= lastVal)
+                        candidates.Add(new CellCoord(nr, nc));
+                }
+
+                if (candidates.Count == 0) break;
+                line.Cells.Add(candidates[rng.Next(candidates.Count)]);
+            }
+
+            return line.Cells.Count >= 3 ? line : null;
+        }
+
+        // ── Unique Set Lines ──
+
+        private static void GenerateUniqueSetLines(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale)
+        {
+            var size = board.Size;
+            var baseTarget = size <= 6 ? 2 : 3;
+            var target = ScaledCount(baseTarget, scale, 1, 6);
+            var used = new bool[size, size];
+            var count = 0;
+
+            for (var attempt = 0; attempt < target * 30 && count < target; attempt++)
+            {
+                var line = TryBuildUniqueSetLine(board, rng, used, size);
+                if (line == null) continue;
+                overlay.Lines.Add(line);
+                for (var c = 0; c < line.Cells.Count; c++)
+                    used[line.Cells[c].Row, line.Cells[c].Col] = true;
+                count++;
+            }
+        }
+
+        private static ModifierLine TryBuildUniqueSetLine(SudokuBoard board, Random rng, bool[,] used, int size)
+        {
+            var startRow = rng.Next(size);
+            var startCol = rng.Next(size);
+            if (used[startRow, startCol]) return null;
+
+            var line = new ModifierLine { Type = LineType.UniqueSetLine };
+            line.Cells.Add(new CellCoord(startRow, startCol));
+            var seenVals = new System.Collections.Generic.HashSet<int> { board.Solution[startRow, startCol] };
+            var targetLen = rng.Next(3, 6);
+
+            for (var step = 1; step < targetLen; step++)
+            {
+                var last = line.Cells[line.Cells.Count - 1];
+                var candidates = new List<CellCoord>();
+
+                for (var d = 0; d < Dirs.Length; d++)
+                {
+                    var nr = last.Row + Dirs[d].Dr;
+                    var nc = last.Col + Dirs[d].Dc;
+                    if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
+                    if (used[nr, nc] || IsInLine(line, nr, nc)) continue;
+                    var v = board.Solution[nr, nc];
+                    if (!seenVals.Contains(v))
+                        candidates.Add(new CellCoord(nr, nc));
+                }
+
+                if (candidates.Count == 0) break;
+                var pick = candidates[rng.Next(candidates.Count)];
+                line.Cells.Add(pick);
+                seenVals.Add(board.Solution[pick.Row, pick.Col]);
+            }
+
+            return line.Cells.Count >= 3 ? line : null;
+        }
+
+        // ── Full Kropki ──
+
+        private static void GenerateFullKropki(SudokuBoard board, ModifierOverlayData overlay)
+        {
+            overlay.FullKropkiNegativeInference = true;
+            var size = board.Size;
+
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
+            {
+                var v = board.Solution[r, c];
+
+                if (c + 1 < size)
+                {
+                    var v2 = board.Solution[r, c + 1];
+                    if (Math.Abs(v - v2) == 1)
+                        overlay.KropkiDots.Add(new KropkiDot { CellA = new CellCoord(r, c), CellB = new CellCoord(r, c + 1), IsBlack = false });
+                    else if (Math.Max(v, v2) == 2 * Math.Min(v, v2))
+                        overlay.KropkiDots.Add(new KropkiDot { CellA = new CellCoord(r, c), CellB = new CellCoord(r, c + 1), IsBlack = true });
+                }
+
+                if (r + 1 < size)
+                {
+                    var v2 = board.Solution[r + 1, c];
+                    if (Math.Abs(v - v2) == 1)
+                        overlay.KropkiDots.Add(new KropkiDot { CellA = new CellCoord(r, c), CellB = new CellCoord(r + 1, c), IsBlack = false });
+                    else if (Math.Max(v, v2) == 2 * Math.Min(v, v2))
+                        overlay.KropkiDots.Add(new KropkiDot { CellA = new CellCoord(r, c), CellB = new CellCoord(r + 1, c), IsBlack = true });
+                }
+            }
+        }
+
+        // ── Sum Kropki ──
+
+        private static void GenerateSumKropkiDots(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale)
+        {
+            var size = board.Size;
+            var pairs = new List<(CellCoord A, CellCoord B, int Sum)>();
+
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
+            {
+                if (c + 1 < size && !(board.GivenMask[r, c] && board.GivenMask[r, c + 1]))
+                    pairs.Add((new CellCoord(r, c), new CellCoord(r, c + 1), board.Solution[r, c] + board.Solution[r, c + 1]));
+                if (r + 1 < size && !(board.GivenMask[r, c] && board.GivenMask[r + 1, c]))
+                    pairs.Add((new CellCoord(r, c), new CellCoord(r + 1, c), board.Solution[r, c] + board.Solution[r + 1, c]));
+            }
+
+            var baseCount = size <= 6 ? 5 : size <= 8 ? 8 : 10;
+            var dotCount = Math.Min(pairs.Count, ScaledCount(baseCount, scale, 2, pairs.Count));
+            Shuffle(pairs, rng);
+
+            for (var i = 0; i < dotCount; i++)
+            {
+                overlay.KropkiDots.Add(new KropkiDot
+                {
+                    CellA = pairs[i].A,
+                    CellB = pairs[i].B,
+                    IsBlack = false,
+                    SumValue = pairs[i].Sum
+                });
+            }
+        }
+
+        // ── Greater/Less Than Pairs ──
+
+        private static void GenerateGreaterLessThanPairs(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale)
+        {
+            var size = board.Size;
+            var allPairs = new List<(CellCoord A, CellCoord B)>();
+
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
+            {
+                if (c + 1 < size) allPairs.Add((new CellCoord(r, c), new CellCoord(r, c + 1)));
+                if (r + 1 < size) allPairs.Add((new CellCoord(r, c), new CellCoord(r + 1, c)));
+            }
+
+            var baseCount = size <= 6 ? 6 : size <= 8 ? 8 : 12;
+            var count = Math.Min(allPairs.Count, ScaledCount(baseCount, scale, 3, allPairs.Count));
+            Shuffle(allPairs, rng);
+
+            for (var i = 0; i < count; i++)
+            {
+                var (a, b) = allPairs[i];
+                var va = board.Solution[a.Row, a.Col];
+                var vb = board.Solution[b.Row, b.Col];
+                if (va == vb) continue;
+                overlay.PairConstraints.Add(new AdjacentPairConstraint
+                {
+                    CellA = a,
+                    CellB = b,
+                    Type = va > vb ? PairConstraintType.GreaterThan : PairConstraintType.LessThan
+                });
+            }
+        }
+
+        // ── XV Pairs ──
+
+        private static void GenerateXVPairs(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale)
+        {
+            var size = board.Size;
+            var xPairs = new List<(CellCoord A, CellCoord B)>();
+            var vPairs = new List<(CellCoord A, CellCoord B)>();
+
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
+            {
+                void CheckPair(int r2, int c2)
+                {
+                    if (r2 >= size || c2 >= size) return;
+                    var s = board.Solution[r, c] + board.Solution[r2, c2];
+                    if (s == 10) xPairs.Add((new CellCoord(r, c), new CellCoord(r2, c2)));
+                    else if (s == 5) vPairs.Add((new CellCoord(r, c), new CellCoord(r2, c2)));
+                }
+                CheckPair(r, c + 1);
+                CheckPair(r + 1, c);
+            }
+
+            var baseCount = size <= 6 ? 4 : 6;
+            Shuffle(xPairs, rng);
+            Shuffle(vPairs, rng);
+
+            var xCount = Math.Min(xPairs.Count, ScaledCount(baseCount / 2, scale, 1, xPairs.Count));
+            var vCount = Math.Min(vPairs.Count, ScaledCount(baseCount / 2, scale, 1, vPairs.Count));
+
+            for (var i = 0; i < xCount; i++)
+                overlay.PairConstraints.Add(new AdjacentPairConstraint { CellA = xPairs[i].A, CellB = xPairs[i].B, Type = PairConstraintType.SumX });
+            for (var i = 0; i < vCount; i++)
+                overlay.PairConstraints.Add(new AdjacentPairConstraint { CellA = vPairs[i].A, CellB = vPairs[i].B, Type = PairConstraintType.SumV });
+        }
+
+        // ── Prime Cell Markers ──
+
+        private static void GeneratePrimeCellMarkers(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale)
+        {
+            var size = board.Size;
+            var primeCells = new List<CellCoord>();
+
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
+            {
+                var v = board.Solution[r, c];
+                if (v == 2 || v == 3 || v == 5 || v == 7)
+                    primeCells.Add(new CellCoord(r, c));
+            }
+
+            var baseCount = size <= 6 ? 5 : size <= 8 ? 8 : 12;
+            var count = Math.Min(primeCells.Count, ScaledCount(baseCount, scale, 2, primeCells.Count));
+            Shuffle(primeCells, rng);
+
+            for (var i = 0; i < count; i++)
+                overlay.CellMarkers.Add(new CellMarker { Cell = primeCells[i], Type = MarkerType.Prime });
+        }
+
+        // ── Fortress Cell Markers ──
+
+        private static void GenerateFortressCellMarkers(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale)
+        {
+            var size = board.Size;
+            var fortCells = new List<CellCoord>();
+
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
+            {
+                var v = board.Solution[r, c];
+                var isFortress = true;
+                if (r > 0 && board.Solution[r - 1, c] >= v) isFortress = false;
+                if (r < size - 1 && board.Solution[r + 1, c] >= v) isFortress = false;
+                if (c > 0 && board.Solution[r, c - 1] >= v) isFortress = false;
+                if (c < size - 1 && board.Solution[r, c + 1] >= v) isFortress = false;
+                if (isFortress) fortCells.Add(new CellCoord(r, c));
+            }
+
+            var baseCount = size <= 6 ? 4 : size <= 8 ? 6 : 9;
+            var count = Math.Min(fortCells.Count, ScaledCount(baseCount, scale, 1, fortCells.Count));
+            Shuffle(fortCells, rng);
+
+            for (var i = 0; i < count; i++)
+                overlay.CellMarkers.Add(new CellMarker { Cell = fortCells[i], Type = MarkerType.Fortress });
+        }
+
+        // ── Helpers ──
+
+        private static bool IsInLine(ModifierLine line, int row, int col)
+        {
+            for (var i = 0; i < line.Cells.Count; i++)
+                if (line.Cells[i].Row == row && line.Cells[i].Col == col) return true;
+            return false;
+        }
+
+        private static bool IsInCage(KillerCage cage, int row, int col)
+        {
+            for (var i = 0; i < cage.Cells.Count; i++)
+                if (cage.Cells[i].Row == row && cage.Cells[i].Col == col) return true;
+            return false;
+        }
+
+        private static bool IsOnArrowPath(ArrowConstraint arrow, int row, int col)
+        {
+            for (var i = 0; i < arrow.ArrowCells.Count; i++)
+                if (arrow.ArrowCells[i].Row == row && arrow.ArrowCells[i].Col == col) return true;
+            return false;
+        }
+
         private static void Shuffle<T>(List<T> list, Random rng)
         {
             for (var i = list.Count - 1; i > 0; i--)
@@ -788,26 +1168,26 @@ namespace SudokuRoguelike.Sudoku
                 (list[i], list[j]) = (list[j], list[i]);
             }
         }
-        /// <summary>Mark all cells generated by a modifier since the snapshot for spatial separation.</summary>
+
         private static void MarkOverlayCellsUsed(ModifierOverlayData overlay,
             int linesBefore, int dotsBefore, int cagesBefore, int arrowsBefore, int markersBefore)
         {
             for (var i = linesBefore; i < overlay.Lines.Count; i++)
                 MarkCellsUsed(overlay.Lines[i].Cells);
 
-            for (var i = dotsBefore; i < overlay.Dots.Count; i++)
+            for (var i = dotsBefore; i < overlay.KropkiDots.Count; i++)
             {
-                _usedCells.Add(CellKey(overlay.Dots[i].CellA.Row, overlay.Dots[i].CellA.Col));
-                _usedCells.Add(CellKey(overlay.Dots[i].CellB.Row, overlay.Dots[i].CellB.Col));
+                _usedCells.Add(CellKey(overlay.KropkiDots[i].CellA.Row, overlay.KropkiDots[i].CellA.Col));
+                _usedCells.Add(CellKey(overlay.KropkiDots[i].CellB.Row, overlay.KropkiDots[i].CellB.Col));
             }
 
-            for (var i = cagesBefore; i < overlay.Cages.Count; i++)
-                MarkCellsUsed(overlay.Cages[i].Cells);
+            for (var i = cagesBefore; i < overlay.KillerCages.Count; i++)
+                MarkCellsUsed(overlay.KillerCages[i].Cells);
 
             for (var i = arrowsBefore; i < overlay.Arrows.Count; i++)
             {
-                _usedCells.Add(CellKey(overlay.Arrows[i].Circle.Row, overlay.Arrows[i].Circle.Col));
-                MarkCellsUsed(overlay.Arrows[i].Path);
+                _usedCells.Add(CellKey(overlay.Arrows[i].CircleCell.Row, overlay.Arrows[i].CircleCell.Col));
+                MarkCellsUsed(overlay.Arrows[i].ArrowCells);
             }
 
             for (var i = markersBefore; i < overlay.CellMarkers.Count; i++)

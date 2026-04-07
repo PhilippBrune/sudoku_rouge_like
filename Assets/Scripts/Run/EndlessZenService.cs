@@ -6,55 +6,72 @@ namespace SudokuRoguelike.Run
 {
     public sealed class EndlessZenService
     {
-        // All 14 modifiers (all except German Whispers, which requires ≥7×7 and has narrow valid set)
-        private static readonly BossModifierId[] ModifierPool =
-        {
-            BossModifierId.ParityLines,
-            BossModifierId.DifferenceKropki,
-            BossModifierId.DutchWhispers,
-            BossModifierId.RenbanLines,
-            BossModifierId.RatioKropki,
-            BossModifierId.KillerCages,
-            BossModifierId.ArrowSums,
-            BossModifierId.FogOfWar,
-            BossModifierId.Palindrome,
-            BossModifierId.Thermo,
-            BossModifierId.BetweenLines,
-            BossModifierId.EvenOdd,
-            BossModifierId.Nonconsecutive,
-            BossModifierId.Antiknight
-        };
+        private readonly Random _random;
 
-        public int ModifierCap(int depth)
+        public EndlessZenService(int seed)
         {
-            // Depth <10: 1 modifier, Depth >=10: 2 modifiers (no cap)
-            return depth < 10 ? 1 : 2;
+            _random = new Random(seed);
         }
 
-        public LevelConfig BuildLevel(int depth, int seed = 0)
+        public LevelConfig BuildNextLevel(int depth, int preferredSize = 0, int preferredStars = 0)
         {
+            // Depth-based star scaling: Clamp(1 + depth/4, 1, 5)
             var stars = Math.Clamp(1 + depth / 4, 1, 5);
+            if (preferredStars > 0) stars = Math.Clamp(preferredStars, 1, 6);
+
+            // Depth-based board size: starts at 5, grows every 3 depth
+            var size = Math.Clamp(5 + depth / 3, 5, 9);
+            if (preferredSize > 0) size = Math.Clamp(preferredSize, 5, 9);
+
+            // Modifier cap: 0 until depth 8, then 1 per 4 depth, max 3
+            var modCap = depth < 8 ? 0 : Math.Min((depth - 8) / 4 + 1, 3);
+
             var config = new LevelConfig
             {
-                BoardSize = 9,
-                Difficulty = DifficultyTier.Diff5,
+                BoardSize = size,
                 Stars = stars,
                 MissingPercent = StarDensityService.MissingPercentForStars(stars),
-                IsBoss = false
+                RegionVariant = _random.Next(4),
+                IsBoss = false,
+                Seed = _random.Next(),
+                Difficulty = DifficultyTier.Diff1
             };
 
-            var rng = new Random(seed + depth * 97);
-            var count = depth >= 10 ? 2 : 1;
-            var used = new HashSet<int>();
-            for (var i = 0; i < count && i < ModifierPool.Length; i++)
+            if (modCap > 0)
             {
-                int idx;
-                do { idx = rng.Next(ModifierPool.Length); } while (used.Contains(idx));
-                used.Add(idx);
-                config.ActiveModifiers.Add(ModifierPool[idx]);
+                var pool = new List<BossModifierId>();
+                foreach (BossModifierId mod in Enum.GetValues(typeof(BossModifierId)))
+                    pool.Add(mod);
+
+                for (var i = 0; i < modCap && pool.Count > 0; i++)
+                {
+                    var idx = _random.Next(pool.Count);
+                    config.ActiveModifiers.Add(pool[idx]);
+                    pool.RemoveAt(idx);
+                }
             }
 
             return config;
+        }
+
+        public static RunState CreateZenRunState(ClassId classId, int seed)
+        {
+            var stats = Classes.ClassCatalog.GetDefinition(classId);
+            return new RunState
+            {
+                ClassId = classId,
+                Mode = GameMode.EndlessZen,
+                Seed = seed,
+                RunNumber = 1,
+                CurrentHP = stats.BaseHP,
+                MaxHP = stats.BaseHP,
+                CurrentPencil = stats.BasePencil,
+                MaxPencil = stats.BasePencil,
+                CurrentGold = 0,
+                ItemSlots = stats.BaseItemSlots,
+                TotalFloors = 1,
+                DisableProgressionRewards = true
+            };
         }
     }
 }

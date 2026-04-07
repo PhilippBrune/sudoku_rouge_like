@@ -16,17 +16,17 @@ namespace SudokuRoguelike.UI
 
         public List<ShopOffer> OpenShop()
         {
-            return _run.BuildShopOffers();
+            return _run?.BuildShopOffers();
         }
 
-        public bool BuyOffer(string offerId)
+        public bool BuyOffer(int offerIndex)
         {
-            return _run.TryPurchaseShopOffer(offerId);
+            return _run != null && _run.TryPurchaseShopOffer(offerIndex);
         }
 
         public bool BuyEmergencyHeal()
         {
-            return _run.TryBuyEmergencyHeal();
+            return _run != null && _run.TryBuyEmergencyHeal();
         }
     }
 }

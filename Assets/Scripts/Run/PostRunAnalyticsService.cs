@@ -1,43 +1,124 @@
+using System.Collections.Generic;
 using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.Run
 {
     public sealed class PostRunAnalyticsService
     {
-        public PostRunAnalytics Build(RunState runState, RunResult runResult, LevelConfig lastLevel, LevelState lastLevelState)
+        public int TotalPuzzlesSolved;
+        public int TotalMistakes;
+        public int TotalGoldEarned;
+        public int TotalItemsUsed;
+        public int FloorsCleared;
+        public bool RunCompleted;
+        public int PerfectPuzzleCount;
+        public int CursedPuzzlesCompleted;
+        public List<TileXpEntry> TileXpLog = new List<TileXpEntry>();
+
+        public void RecordPuzzleSolved(int mistakes, int goldEarned)
         {
-            var analytics = new PostRunAnalytics();
-            if (runState == null || runResult == null)
+            TotalPuzzlesSolved++;
+            TotalMistakes += mistakes;
+            TotalGoldEarned += goldEarned;
+        }
+
+        public void RecordItemUsed()
+        {
+            TotalItemsUsed++;
+        }
+
+        public void RecordFloorCleared()
+        {
+            FloorsCleared++;
+        }
+
+        public void RecordRunComplete()
+        {
+            RunCompleted = true;
+        }
+
+        public void RecordPerfectPuzzle()
+        {
+            PerfectPuzzleCount++;
+        }
+
+        public void RecordCursedPuzzleCompleted()
+        {
+            CursedPuzzlesCompleted++;
+        }
+
+        public void RecordTileXp(TileXpEntry entry)
+        {
+            TileXpLog.Add(entry);
+        }
+
+        public int GetTotalXp()
+        {
+            var total = 0;
+            for (var i = 0; i < TileXpLog.Count; i++)
+                total += TileXpLog[i].TotalXp;
+            return total;
+        }
+
+        public PostRunAnalytics Build()
+        {
+            var result = new PostRunAnalytics
             {
-                return analytics;
+                TotalMistakes = TotalMistakes
+            };
+
+            var highestMistakes = 0;
+            var highestStars = 0;
+            for (var i = 0; i < TileXpLog.Count; i++)
+            {
+                if (TileXpLog[i].Stars > highestStars)
+                    highestStars = TileXpLog[i].Stars;
             }
 
-            analytics.TotalMistakes = runResult.MistakesMade;
-            analytics.MistakesPerPuzzle.Add(runResult.MistakesMade);
-            analytics.HighestSinglePuzzleMistakes = runResult.MistakesMade;
-            analytics.HardestPuzzleStars = lastLevel?.Stars ?? 1;
-            analytics.HardestPuzzleModifier = lastLevel != null && lastLevel.ActiveModifiers.Count > 0
-                ? lastLevel.ActiveModifiers[0]
-                : BossModifierId.ParityLines;
-            analytics.HardestPuzzleTier = analytics.HardestPuzzleStars >= 5 ? PuzzleDifficultyTier.Tier4 : analytics.HardestPuzzleStars >= 4 ? PuzzleDifficultyTier.Tier3 : analytics.HardestPuzzleStars >= 3 ? PuzzleDifficultyTier.Tier2 : PuzzleDifficultyTier.Tier1;
-            analytics.ModifierImpactRating = (lastLevel?.ActiveModifiers.Count ?? 0) * 0.35f;
-
-            if (runState.CurrentHP <= 2)
+            for (var i = 0; i < TileXpLog.Count; i++)
             {
-                analytics.ImprovementSuggestions.Add("Consider reducing early modifier stacking.");
+                var mistakes = i < TileXpLog.Count ? 0 : 0;
+                result.MistakesPerPuzzle.Add(mistakes);
             }
 
-            if (runResult.PeakCombo > 0 && runResult.MistakesMade > 2)
-            {
-                analytics.ImprovementSuggestions.Add("Combo build collapsed due to low HP reserve.");
-            }
+            result.HardestPuzzleStars = highestStars;
+            result.HighestSinglePuzzleMistakes = highestMistakes;
+            result.PerfectPuzzleCount = PerfectPuzzleCount;
+            result.CursedPuzzlesCompleted = CursedPuzzlesCompleted;
+            result.RunScore = CalculateRunScore(TileXpLog, PerfectPuzzleCount, CursedPuzzlesCompleted,
+                TotalMistakes, RunCompleted);
 
-            if (analytics.ImprovementSuggestions.Count == 0)
-            {
-                analytics.ImprovementSuggestions.Add("Route selection was stable; push one higher-risk branch next run.");
-            }
+            if (TotalMistakes > 5)
+                result.ImprovementSuggestions.Add("Try using pencil marks to reduce mistakes.");
+            if (TotalItemsUsed == 0)
+                result.ImprovementSuggestions.Add("Use items to gain an advantage in harder puzzles.");
 
-            return analytics;
+            return result;
+        }
+
+        /// <summary>Run score: base XP × completion bonus × perfect bonus × cursed bonus, minus mistake penalty.</summary>
+        public static int CalculateRunScore(List<TileXpEntry> tiles, int perfectPuzzles,
+            int cursedCompleted, int totalMistakes, bool victory)
+        {
+            var totalXp = 0;
+            for (var i = 0; i < tiles.Count; i++) totalXp += tiles[i].TotalXp;
+
+            var score = totalXp;
+
+            // Perfect puzzle bonus: +5% per perfect puzzle (additive)
+            score = (int)(score * (1f + perfectPuzzles * 0.05f));
+
+            // Cursed completion bonus: +10% per cursed puzzle accepted and cleared
+            score = (int)(score * (1f + cursedCompleted * 0.10f));
+
+            // Victory bonus: +25%
+            if (victory) score = (int)(score * 1.25f);
+
+            // Mistake penalty: -2% per mistake, floor at 50% of base
+            var misPenalty = System.Math.Min(0.50f, totalMistakes * 0.02f);
+            score = (int)(score * (1f - misPenalty));
+
+            return System.Math.Max(0, score);
         }
     }
 }

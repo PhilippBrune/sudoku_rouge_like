@@ -1,40 +1,41 @@
-using System;
 using SudokuRoguelike.Core;
+using UnityEngine;
 
 namespace SudokuRoguelike.Meta
 {
     public sealed class AscensionService
     {
-        public void ApplyAscension(MetaProgressionState meta)
+        public int GetAscensionLevel(MetaProgressionState meta)
         {
-            if (meta == null)
-            {
-                return;
-            }
+            return meta?.AscensionLevel ?? 0;
+        }
 
+        public bool TryAscend(MetaProgressionState meta)
+        {
+            if (meta == null) return false;
             meta.AscensionLevel++;
-            meta.MaxStarCap = Math.Min(7, meta.MaxStarCap + 1);
-            meta.SeasonalChallengeUnlocked = true;
+            meta.MaxStarCap = Mathf.Min(meta.MaxStarCap + 1, 7);
+            return true;
         }
 
         public bool TryPrestigeReset(MetaProgressionState meta)
         {
-            if (meta == null || meta.AscensionLevel <= 0)
-            {
-                return false;
-            }
+            if (meta == null || meta.AscensionLevel <= 0) return false;
 
             meta.PrestigeCount++;
             meta.AscensionLevel = 0;
             meta.MaxStarCap = 5;
-            meta.PurchasedPermanentUpgrades.Clear();
             return true;
         }
 
-        public int BuildMonthlySeed(int year, int month)
+        public float GetAscensionDifficultyMultiplier(int ascensionLevel)
         {
-            var clampedMonth = Math.Clamp(month, 1, 12);
-            return (year * 100) + clampedMonth;
+            return 1f + ascensionLevel * 0.1f;
+        }
+
+        public static int BuildMonthlySeed(int year, int month)
+        {
+            return year * 100 + month;
         }
     }
 }

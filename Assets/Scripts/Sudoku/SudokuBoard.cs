@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 namespace SudokuRoguelike.Sudoku
 {
-    [Serializable]
     public sealed class SudokuBoard
     {
         public int Size { get; }
@@ -11,68 +10,122 @@ namespace SudokuRoguelike.Sudoku
         public int[,] Cells { get; }
         public bool[,] GivenMask { get; }
         public int[,] RegionMap { get; }
+        public bool IsUniqueSolution { get; set; }
 
-        private readonly HashSet<int>[,] _pencil;
+        private readonly HashSet<int>[,] _pencilMarks;
 
-        public SudokuBoard(int size, int[,] solution, int[,] puzzle, bool[,] givenMask, int[,] regionMap)
+        public SudokuBoard(int size, int[,] solution, int[,] cells, int[,] regionMap)
         {
             Size = size;
             Solution = solution;
-            Cells = puzzle;
-            GivenMask = givenMask;
+            Cells = cells;
             RegionMap = regionMap;
-            _pencil = new HashSet<int>[size, size];
+            GivenMask = new bool[size, size];
+            _pencilMarks = new HashSet<int>[size, size];
 
-            for (var row = 0; row < size; row++)
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
             {
-                for (var col = 0; col < size; col++)
-                {
-                    _pencil[row, col] = new HashSet<int>();
-                }
+                GivenMask[r, c] = cells[r, c] != 0;
+                _pencilMarks[r, c] = new HashSet<int>();
             }
         }
 
         public bool IsGiven(int row, int col) => GivenMask[row, col];
 
-        public int GetCell(int row, int col) => Cells[row, col];
-
-        public bool IsEmpty(int row, int col) => Cells[row, col] == 0;
-
-        public void SetCell(int row, int col, int value)
+        // A cell is "correct" when it has a value that does not conflict with
+        // any other already-placed value in the same row, column, or region.
+        // The generated Solution is intentionally NOT consulted here — puzzles
+        // may have multiple valid completions and the player may find any of them.
+        public bool IsCorrectAt(int row, int col)
         {
-            Cells[row, col] = value;
-            _pencil[row, col].Clear();
-        }
-
-        public void ClearCell(int row, int col)
-        {
-            if (!GivenMask[row, col])
+            var v = Cells[row, col];
+            if (v == 0) return false;
+            for (var i = 0; i < Size; i++)
             {
-                Cells[row, col] = 0;
+                if (i != col && Cells[row, i] == v) return false;
+                if (i != row && Cells[i, col] == v) return false;
             }
-        }
-
-        public HashSet<int> GetPencilSet(int row, int col) => _pencil[row, col];
-
-        public bool IsComplete()
-        {
-            for (var row = 0; row < Size; row++)
+            var regionId = RegionMap[row, col];
+            for (var r = 0; r < Size; r++)
+            for (var c = 0; c < Size; c++)
             {
-                for (var col = 0; col < Size; col++)
-                {
-                    if (Cells[row, col] != Solution[row, col])
-                    {
-                        return false;
-                    }
-                }
+                if ((r != row || c != col) && RegionMap[r, c] == regionId && Cells[r, c] == v)
+                    return false;
             }
-
             return true;
         }
 
-        public bool IsCorrectAt(int row, int col)
+        // Puzzle is complete when every cell is filled and the board satisfies all
+        // standard Sudoku constraints (no duplicates in any row, column, or region).
+        // Any valid completion is accepted — not only the originally generated one.
+        public bool IsComplete()
         {
-            return Cells[row, col] != 0 && Cells[row, col] == Solution[row, col];
+            var size = Size;
+            // Build region count
+            var regionCount = 0;
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
+                if (RegionMap[r, c] >= regionCount) regionCount = RegionMap[r, c] + 1;
+
+            var rowSeen = new bool[size, size + 1];
+            var colSeen = new bool[size, size + 1];
+            var regSeen = new bool[regionCount, size + 1];
+
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
+            {
+                var v = Cells[r, c];
+                if (v == 0) return false;
+                var region = RegionMap[r, c];
+                if (rowSeen[r, v] || colSeen[c, v] || regSeen[region, v]) return false;
+                rowSeen[r, v] = true;
+                colSeen[c, v] = true;
+                regSeen[region, v] = true;
+            }
+            return true;
+        }
+
+        public int EmptyCellCount()
+        {
+            var count = 0;
+            for (var r = 0; r < Size; r++)
+            for (var c = 0; c < Size; c++)
+            {
+                if (Cells[r, c] == 0)
+                    count++;
+            }
+            return count;
+        }
+
+        public HashSet<int> GetPencilMarks(int row, int col) => _pencilMarks[row, col];
+
+        public void AddPencilMark(int row, int col, int value) => _pencilMarks[row, col].Add(value);
+
+        public void RemovePencilMark(int row, int col, int value) => _pencilMarks[row, col].Remove(value);
+
+        public void ClearPencilMarks(int row, int col) => _pencilMarks[row, col].Clear();
+
+        public void TogglePencilMark(int row, int col, int value)
+        {
+            if (!_pencilMarks[row, col].Add(value))
+                _pencilMarks[row, col].Remove(value);
+        }
+
+        public void PlaceValue(int row, int col, int value)
+        {
+            if (!GivenMask[row, col])
+            {
+                Cells[row, col] = value;
+                if (value != 0)
+                    _pencilMarks[row, col].Clear();
+            }
+        }
+
+        public void ClearValue(int row, int col)
+        {
+            if (!GivenMask[row, col])
+                Cells[row, col] = 0;
         }
     }
 }

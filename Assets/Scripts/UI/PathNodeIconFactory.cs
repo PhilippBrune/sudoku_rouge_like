@@ -3,25 +3,21 @@ using UnityEngine;
 
 namespace SudokuRoguelike.UI
 {
-    /// <summary>
-    /// Generates pixel-art icons for garden path node types at runtime.
-    /// Palette: calm greens, stone neutrals, lantern gold.
-    /// </summary>
     public static class PathNodeIconFactory
     {
-        private static readonly Dictionary<string, Sprite> Cache = new();
+        private static readonly Dictionary<string, Sprite> Cache = new Dictionary<string, Sprite>();
 
-        private static readonly Color Transparent = new(0, 0, 0, 0);
-        private static readonly Color StoneGray = new(0.55f, 0.53f, 0.48f, 1f);
-        private static readonly Color CalmGreen = new(0.30f, 0.52f, 0.32f, 1f);
-        private static readonly Color DarkGreen = new(0.18f, 0.34f, 0.20f, 1f);
-        private static readonly Color LanternGold = new(0.92f, 0.76f, 0.22f, 1f);
-        private static readonly Color WarmBrown = new(0.48f, 0.32f, 0.18f, 1f);
-        private static readonly Color DarkBrown = new(0.30f, 0.20f, 0.10f, 1f);
-        private static readonly Color BoneWhite = new(0.90f, 0.88f, 0.82f, 1f);
-        private static readonly Color DeepRed = new(0.72f, 0.14f, 0.10f, 1f);
-        private static readonly Color Black = new(0.08f, 0.06f, 0.06f, 1f);
-        private static readonly Color TorikRed = new(0.78f, 0.18f, 0.12f, 1f);
+        private static readonly Color Transparent = new Color(0, 0, 0, 0);
+        private static readonly Color StoneGray = new Color(0.55f, 0.53f, 0.48f, 1f);
+        private static readonly Color CalmGreen = new Color(0.30f, 0.52f, 0.32f, 1f);
+        private static readonly Color DarkGreen = new Color(0.18f, 0.34f, 0.20f, 1f);
+        private static readonly Color LanternGold = new Color(0.92f, 0.76f, 0.22f, 1f);
+        private static readonly Color WarmBrown = new Color(0.48f, 0.32f, 0.18f, 1f);
+        private static readonly Color DarkBrown = new Color(0.30f, 0.20f, 0.10f, 1f);
+        private static readonly Color BoneWhite = new Color(0.90f, 0.88f, 0.82f, 1f);
+        private static readonly Color DeepRed = new Color(0.72f, 0.14f, 0.10f, 1f);
+        private static readonly Color Black = new Color(0.08f, 0.06f, 0.06f, 1f);
+        private static readonly Color TorikRed = new Color(0.78f, 0.18f, 0.12f, 1f);
 
         public static Sprite GetIcon(string nodeType)
         {
@@ -49,153 +45,98 @@ namespace SudokuRoguelike.UI
             return sprite;
         }
 
-        // Jigsaw puzzle piece — 16x16 pixel art
         private static Texture2D DrawPuzzlePiece()
         {
             var t = new Texture2D(16, 16, TextureFormat.RGBA32, false);
             Clear(t, Transparent);
-
-            // Main body — a square with tabs
             FillRect(t, 4, 3, 12, 13, CalmGreen);
-            // Tab right
             FillRect(t, 12, 6, 15, 10, CalmGreen);
-            // Tab top
             FillRect(t, 6, 13, 10, 16, CalmGreen);
-            // Notch left
             FillRect(t, 4, 6, 6, 10, Transparent);
-            // Notch bottom
             FillRect(t, 6, 3, 10, 5, Transparent);
-
-            // Outline
             DrawOutline(t, DarkGreen);
-            // Inner detail
             SetPx(t, 8, 8, LanternGold);
             SetPx(t, 7, 9, LanternGold);
             SetPx(t, 9, 7, LanternGold);
-
             return t;
         }
 
-        // Japanese temple / torii gate — 16x16
         private static Texture2D DrawTemple()
         {
             var t = new Texture2D(16, 16, TextureFormat.RGBA32, false);
             Clear(t, Transparent);
-
-            // Pillars
             FillRect(t, 3, 1, 5, 12, TorikRed);
             FillRect(t, 11, 1, 13, 12, TorikRed);
-            // Top beam
             FillRect(t, 2, 12, 14, 14, TorikRed);
-            // Upper beam (curved effect)
             FillRect(t, 1, 14, 15, 16, TorikRed);
-            // Cross beam
             FillRect(t, 4, 9, 12, 10, TorikRed);
-            // Gold accents on top
             SetPx(t, 7, 15, LanternGold);
             SetPx(t, 8, 15, LanternGold);
-            // Base stones
             FillRect(t, 2, 0, 6, 1, StoneGray);
             FillRect(t, 10, 0, 14, 1, StoneGray);
-
             return t;
         }
 
-        // Garden bench — 16x16
         private static Texture2D DrawBench()
         {
             var t = new Texture2D(16, 16, TextureFormat.RGBA32, false);
             Clear(t, Transparent);
-
-            // Bench seat
             FillRect(t, 2, 7, 14, 9, WarmBrown);
-            // Legs
             FillRect(t, 3, 2, 5, 7, WarmBrown);
             FillRect(t, 11, 2, 13, 7, WarmBrown);
-            // Back rest
             FillRect(t, 2, 9, 14, 10, DarkBrown);
             FillRect(t, 3, 10, 4, 14, DarkBrown);
             FillRect(t, 12, 10, 13, 14, DarkBrown);
             FillRect(t, 4, 13, 12, 14, DarkBrown);
-            // Ground detail
             SetPx(t, 1, 1, CalmGreen);
             SetPx(t, 7, 1, CalmGreen);
             SetPx(t, 14, 1, CalmGreen);
-            // Gold accent on seat
             SetPx(t, 7, 8, LanternGold);
             SetPx(t, 8, 8, LanternGold);
-
             return t;
         }
 
-        // Walking stick / staff — 16x16
         private static Texture2D DrawWalkingStick()
         {
             var t = new Texture2D(16, 16, TextureFormat.RGBA32, false);
             Clear(t, Transparent);
-
-            // Main shaft (diagonal)
-            for (var i = 0; i < 14; i++)
-            {
-                var x = 6 + (i > 6 ? i - 6 : 0);
-                var y = i + 1;
-                if (x < 16 && y < 16)
-                {
-                    SetPx(t, Mathf.Clamp(7 + i / 4, 0, 15), y, WarmBrown);
-                    SetPx(t, Mathf.Clamp(8 + i / 4, 0, 15), y, WarmBrown);
-                }
-            }
-            // Straight vertical shaft
             FillRect(t, 7, 1, 9, 13, WarmBrown);
-            // Handle top (curved)
             FillRect(t, 6, 13, 10, 15, DarkBrown);
             FillRect(t, 5, 14, 7, 16, DarkBrown);
-            // Gold binding
             FillRect(t, 7, 11, 9, 12, LanternGold);
-            // Foot tip
             SetPx(t, 7, 0, StoneGray);
             SetPx(t, 8, 0, StoneGray);
-
             return t;
         }
 
-        // Elite/Pre-Boss: black skull on red ground — 16x16
         private static Texture2D DrawEliteBossSkull()
         {
             var t = new Texture2D(16, 16, TextureFormat.RGBA32, false);
             Clear(t, DeepRed);
-
             DrawSkull(t, Black, BoneWhite);
             return t;
         }
 
-        // Boss: red skull on black ground — 16x16
         private static Texture2D DrawBossSkull()
         {
             var t = new Texture2D(16, 16, TextureFormat.RGBA32, false);
             Clear(t, Black);
-
             DrawSkull(t, DeepRed, LanternGold);
             return t;
         }
 
         private static void DrawSkull(Texture2D t, Color skullColor, Color eyeColor)
         {
-            // Cranium
             FillRect(t, 4, 8, 12, 14, skullColor);
             FillRect(t, 5, 14, 11, 15, skullColor);
             FillRect(t, 3, 9, 5, 13, skullColor);
             FillRect(t, 11, 9, 13, 13, skullColor);
-            // Jaw
             FillRect(t, 5, 4, 11, 8, skullColor);
             FillRect(t, 6, 3, 10, 4, skullColor);
-            // Eyes
             FillRect(t, 5, 10, 7, 12, eyeColor);
             FillRect(t, 9, 10, 11, 12, eyeColor);
-            // Nose
             SetPx(t, 7, 9, eyeColor);
             SetPx(t, 8, 9, eyeColor);
-            // Teeth
             SetPx(t, 6, 5, eyeColor);
             SetPx(t, 8, 5, eyeColor);
             SetPx(t, 10, 5, eyeColor);

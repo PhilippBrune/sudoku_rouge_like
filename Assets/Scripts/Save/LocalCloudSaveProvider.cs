@@ -2,26 +2,13 @@ namespace SudokuRoguelike.Save
 {
     public sealed class LocalCloudSaveProvider : ICloudSaveProvider
     {
-        public bool TryLoadProfile(out string json, out long timestampUtc)
-        {
-            json = null;
-            timestampUtc = 0;
-            return false;
-        }
+        public bool IsAvailable => false;
 
-        public bool TryLoadRun(out string json, out long timestampUtc)
-        {
-            json = null;
-            timestampUtc = 0;
-            return false;
-        }
+        public string LoadCloudData() => null;
 
-        public void SaveProfile(string json, long timestampUtc)
+        public void SaveCloudData(string json)
         {
-        }
-
-        public void SaveRun(string json, long timestampUtc)
-        {
+            // No-op for local builds
         }
     }
 }

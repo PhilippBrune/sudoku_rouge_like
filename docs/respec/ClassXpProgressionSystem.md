@@ -6,6 +6,7 @@
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.1 | 2026-03-23 | implemented | Prestige boss-gate check added, ProfileService.RecordRunAndGetNewUnlocks orchestration implemented, class unlock thresholds corrected to match spec |
 | 1.0 | 2026-03-21 | implemented | Initial specification |
 
 ---

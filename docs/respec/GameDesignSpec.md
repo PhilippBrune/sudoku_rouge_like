@@ -1,11 +1,16 @@
 # Run of the Nine — Game Design Specification
 
-**Version:** 1.0 | **Date:** 2026-03-21 | **Status:** implemented
+**Version:** 1.5 | **Date:** 2026-04-07 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.5 | 2026-04-07 | implemented | Game loop improvements: (1) Combo counter HUD — live streak label in puzzle, resets on mistake. (2) Class passive label shown in puzzle HUD. (3) Rest node replaced with 3-way choice (Heal / +Pencil / +Reroll Token). (4) Relic node replaced with 3-of-3 relic choice panel. (5) Cursed node added (Accept/Decline risk/reward). (6) Positive floor effect per floor (Bounty/LuckyItems/PencilRefill/HealingPath). (7) Boss modifier preview hint on path map nodes. (8) End-of-run score breakdown (base XP × bonuses − mistake penalty). |
+| 1.4 | 2026-03-28 | implemented | Game flow: Start Game → Class Select → Garden Path (path overview shows before first puzzle). All submenus are full-screen opaque overlays. Locked classes display unlock conditions. 7-star requires ≥1 modifier. Hint/Undo features removed; Q = Save & Quit. |
+| 1.3 | 2026-03-24 | implemented | Localization system (EN/DE): LocalizationService with dictionary-based translation. Language selector rebuilds all menu UI. Class select info panel moved to dedicated dark box between button grid and bottom controls. Game launch fixed: GameBootstrap.BindRunToMap() wires RunDirector→RunMapController→first level start. |
+| 1.2 | 2026-03-24 | implemented | UI polish: Meta Progression panel shows all 8 classes with level/prestige/XP or "Locked" state. Class Select panel highlights selected class with gold outline and displays HP/Pencil/Slots/Passive attributes. Resume Game button disabled when no save exists. Main menu color scheme: cream buttons, dark text, gold accents. |
+| 1.1 | 2026-03-23 | implemented | Floor modifier system: floors 2–5 apply persistent modifiers to all puzzles (not just boss). Boss choice scaling unchanged (N from N+1). Implemented in RunDirector, BossService, and UI. |
 | 1.0 | 2026-03-21 | implemented | Initial specification |
 
 ---
@@ -26,15 +31,16 @@ A serene but tense Sudoku roguelike where each solved board is a deeper step int
 ## 2) Core Loop
 
 1. Start run with chosen class
-2. Enter garden floor (5 floors per run)
+2. Enter garden floor (5 floors per run) — a **positive floor effect** may apply to all puzzles this floor
 3. Choose Calm or Risk route through branching path
-4. Solve Sudoku puzzles under HP + Pencil constraints
-5. Gain Gold + XP on completion
-6. Item reward phase (pick one slot or Nothing)
-7. Optional reroll of eligible slots
-8. Reach boss gate → choose modifiers → solve boss puzzle
-9. Advance to next floor or complete run
-10. End-of-run screen: XP breakdown, level-up animation, class progression
+4. Encounter a node — may be: Puzzle, Rest (3-way choice), Relic (3-of-3 choice), Shop, Elite, or Cursed (Accept/Decline)
+5. Solve Sudoku puzzles under HP + Pencil constraints — **combo streak** tracked per correct tile
+6. Gain Gold + XP on completion (multiplied if Cursed was accepted or Bounty floor effect active)
+7. Item reward phase (pick one slot or Nothing; +1 slot if LuckyItems floor effect active)
+8. Optional reroll of eligible slots
+9. Reach boss gate → preview boss hint on map → choose modifiers → solve boss puzzle
+10. Advance to next floor or complete run
+11. End-of-run screen: XP breakdown, **run score breakdown**, level-up animation, class progression
 
 Run failure occurs when HP reaches 0. XP is still awarded at the game over screen.
 
@@ -228,6 +234,73 @@ See [ClassXpProgressionSystem](ClassXpProgressionSystem_implemented.md) for the 
 
 ---
 
+## 9b) In-Run Feedback Systems
+
+### Combo Counter
+- Correct tile placements increment `RunState.ComboStreak` by 1 each.
+- Any mistake resets `ComboStreak` to 0.
+- When `ComboStreak ≥ 2`, a **gold label** appears in the puzzle HUD showing `"Combo ×N!"`.
+- Peak combo across the run is stored in `RunState.PeakComboThisRun`.
+
+### Class Passive Label
+- A small label below the HUD shows the active class's passive ability description (from `ClassCatalog`).
+- Displayed at all times during puzzle solving — serves as a persistent reminder.
+
+### Rest Node — 3-Way Choice
+Rest tiles present the player with three options instead of automatically healing:
+
+| Option | Effect |
+|--------|--------|
+| **Heal** | Restore `+2 HP` (capped at max HP) |
+| **+Pencil** | Restore `+3 Pencil` |
+| **+Reroll Token** | Grant `+1 Reroll Token` for the next item reward screen |
+
+Only one option may be chosen. The panel dismisses after selection.
+
+### Boss Modifier Preview Hint
+- Boss Gate nodes on the path map display a tooltip/hint showing the floor's active modifiers and expected intensity level.
+- Format: `"Floor N Boss | Floor mods: <name>, <name> | Intensity: <level>"`.
+- Returned by `RunMapController.GetBossNodePreviewHint()`.
+- Intensity label: Low (runs 1–2), Medium (runs 3–5), High (runs 6–8), VeryHigh (runs 9+).
+
+---
+
+## 9c) Post-Run Score
+
+A **run score** is calculated at the end of every run (victory or defeat) and shown on the end screen.
+
+### Score Formula
+
+```
+BaseScore  = Total XP earned across all tiles
+PerfectBonus = +5% per puzzle completed without any mistakes
+CursedBonus  = +10% per Cursed puzzle accepted and completed
+VictoryBonus = +25% if the run was completed (Floor 5 boss defeated)
+MistakePenalty = −2% per mistake, capped at −50%
+
+FinalScore = BaseScore × (1 + PerfectBonus + CursedBonus + VictoryBonus + MistakePenalty)
+```
+
+### Breakdown Display
+
+The end screen shows an itemized breakdown:
+```
+Run Score Breakdown
+  Base (XP earned):    1 200
+  Perfect puzzles ×3:  +180   (15%)
+  Cursed accepted ×2:  +240   (20%)
+  Victory bonus:       +300   (25%)
+  Mistakes ×8:         −192   (−16%)
+  ──────────────────────────
+  Final Score:         1 728
+```
+
+- Tracked in `PostRunAnalyticsService`: `PerfectPuzzleCount`, `CursedPuzzlesCompleted`, `RunScore`.
+- Stored in `RunResult`: `PerfectPuzzleCount`, `CursedPuzzlesAccepted`, `RunScore`.
+- Score of 0 (e.g. immediate game over) suppresses the breakdown section.
+
+---
+
 ## 10) Run Structure — 5-Floor Garden
 
 See [PathSystem_GardenOverview](PathSystem_GardenOverview_implemented.md) for full path routing, floor themes, and layout algorithm.
@@ -238,7 +311,8 @@ See [PathSystem_GardenOverview](PathSystem_GardenOverview_implemented.md) for fu
 - Dual-path routing: Calm (longer, safer) and Risk (shorter, harder, better rewards)
 - One cross-edge per floor connecting Calm ↔ Risk
 - Node types: Puzzle, Elite, Shop, Relic, Event, Boss
-- Boss gate at end of each floor with modifier choice scaling (Floor N → pick N from N+1)
+- **Floor modifiers**: floors 2–5 apply persistent modifiers to **all** puzzles on that floor (not just boss). Count increases per floor (0 → 1 → 2 → 3 → 4). Rolled automatically on floor entry from full modifier pool.
+- Boss gate at end of each floor with modifier choice scaling (Floor N → pick N from N+1). Boss puzzles stack floor modifiers + boss-chosen modifiers.
 - Floor transition: Garden Cleared card → cutscene → fade-in
 
 ### Floor Themes
@@ -261,7 +335,17 @@ See [BossMechanicsSystem](BossMechanicsSystem.md) for the full 15-modifier pool,
 
 - 15 implemented modifiers: 7 line, 2 dot, 2 arithmetic, 1 cell-level, 2 global negative, 1 visibility
 - All 15 eligible at every floor (no tier gating). Board size restrictions apply.
-- Choice scaling: Floor N offers N+1 options, player picks N
+- **Floor modifiers** (persistent per floor, applied to all puzzles including boss):
+
+| Floor | Floor Modifiers | Boss Options Shown | Boss Player Picks |
+|:---:|:---:|:---:|:---:|
+| 1 | 0 | 3 | 2 |
+| 2 | 1 | 3 | 2 |
+| 3 | 2 | 4 | 3 |
+| 4 | 3 | 5 | 4 |
+| 5 | 4 | 6 | 5 |
+
+- Boss puzzles have **floor modifiers + boss-chosen modifiers** active simultaneously
 - Intensity scales with run number: Low (runs 1–2) → VeryHigh (runs 9+)
 - Modifier legend panel with tap-to-isolate for visual clarity
 - Puzzles are not required to be logically solvable — items and relics compensate
@@ -405,10 +489,30 @@ No open issues remaining.
 
 ---
 
+---
+
+---
+
 ## Requirements Traceability
 
 <!-- AUTO-GENERATED by SPICE pipeline. Do not edit manually. -->
 
-| REQ-ID | Title | Linked Systems |
-|--------|-------|----------------|
-| REQ-GENERAL-001 | Corridor |  |
+| REQ-ID | Title | Code File | Verified Classes | Status |
+|--------|-------|-----------|-----------------|--------|
+| REQ-GENERAL-013 | TITLE | `—` | — | ✗ missing |
+| REQ-GENERAL-014 | RunStartSequenceSystem | `Assets\Scripts\Run\RunDirector.cs` | RunDirector | ✓ verified |
+| REQ-GENERAL-015 | ClassSelectionScreen | `—` | — | ✗ missing |
+| REQ-GENERAL-016 | TITLE | `—` | — | ✗ missing |
+| REQ-GENERAL-017 | GameStateController | `Assets\Scripts\Run\RunDirector.cs` | RunDirector | ✓ verified |
+| REQ-GENERAL-018 | FloorSelectionScreen | `Assets\Scripts\UI\MainMenuController.cs` | — | ✓ verified |
+| REQ-GENERAL-019 | CoreLoopSudokuPuzzle | `Assets\Scripts\Run\RunDirector.cs` | — | ✓ verified |
+| REQ-GENERAL-020 | HpUnitsResource | `Assets\Scripts\Economy\RelicService.cs` | — | ✓ verified |
+| REQ-GENERAL-021 | PencilUnitsResource | `Assets\Scripts\Run\RunDirector.cs` | — | ✓ verified |
+| REQ-GENERAL-022 | GoldResource | `—` | — | ✗ missing |
+| REQ-GENERAL-023 | ItemAndRelicManagement | `Assets\Scripts\Run\RunDirector.cs` | — | ✓ verified |
+| REQ-GENERAL-024 | XpProgressionSystem | `Assets\Scripts\Economy\XpService.cs` | — | ✓ verified |
+| REQ-GENERAL-025 | PostLevelItemRollPhase | `Assets\Scripts\Run\RunDirector.cs` | — | ✓ verified |
+| REQ-GENERAL-026 | CoreLoopBosses | `Assets\Scripts\Run\SpiritTrialsService.cs` | — | ✓ verified |
+| REQ-GENERAL-027 | PathSystem | `Assets\Scripts\Run\RunDirector.cs` | RunDirector | ✓ verified |
+| REQ-GENERAL-028 | ClassXpProgressionSystem | `Assets\Scripts\UI\MainMenuController.cs` | — | ✓ verified |
+| REQ-GENERAL-029 | UiController | `Assets\Scripts\Run\RunDirector.cs` | RunDirector | ✓ verified |

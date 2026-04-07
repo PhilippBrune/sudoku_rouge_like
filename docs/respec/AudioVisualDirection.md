@@ -1,11 +1,13 @@
 # Audio & Visual Direction
 
-**Version:** 1.1 | **Date:** 2026-03-22 | **Status:** implemented
+**Version:** 1.4 | **Date:** 2026-03-24 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.4 | 2026-03-24 | implemented | Audio wiring completed: GameBootstrap creates MenuMusicController + RunAudioController. FloorMusicGenerator loop durations reduced from 120-300s to 30-48s for fast startup. Menu music plays on menu, stops on run launch. Color scheme: BtnColor cream (0.82,0.75,0.62), BtnTextColor dark (0.12,0.10,0.08), AccentColor gold (0.98,0.83,0.26). |
+| 1.2 | 2026-03-23 | implemented | Game over and victory one-shot stingers added to FloorMusicGenerator |
 | 1.1 | 2026-03-22 | implemented | All features implemented: ProceduralSfxLibrary (20+ SFX), FloorMusicGenerator (5 floor loops + boss layers + stingers), AmbientParticleController, AnimationHelper with timing constants, RunAudioController 4-channel audio with crossfade and ducking |
 | 1.0 | 2026-03-21 | review | Initial specification |
 

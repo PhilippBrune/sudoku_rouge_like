@@ -1,6 +1,5 @@
 using SudokuRoguelike.Bootstrap;
 using SudokuRoguelike.Core;
-using SudokuRoguelike.Save;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -13,351 +12,137 @@ namespace SudokuRoguelike.UI
 {
     public sealed class PrototypeUiDebugHotkeys : MonoBehaviour
     {
-        [SerializeField] private InRunUiFlowController inRunUiFlow;
-        [SerializeField] private RunMapController runMapController;
-        [SerializeField] private ClassId fallbackClass = ClassId.NumberFreak;
-        [SerializeField] private Text pathPreviewText;
+        private InRunUiFlowController _inRunUiFlow;
+        private RunMapController _runMapController;
+        private Text _debugText;
 
-        private readonly ProfileService _profile = new();
+        public void Configure(InRunUiFlowController flowController, RunMapController mapController, Text debugText = null)
+        {
+            _inRunUiFlow = flowController;
+            _runMapController = mapController;
+            _debugText = debugText;
+        }
 
         private void Start()
         {
             EnsureEventSystem();
-            RefreshPathPreview();
-        }
-
-        public void Configure(InRunUiFlowController flowController, RunMapController mapController, Text previewText = null)
-        {
-            inRunUiFlow = flowController;
-            runMapController = mapController;
-            if (previewText != null)
-            {
-                pathPreviewText = previewText;
-            }
-            RefreshPathPreview();
         }
 
         private void Update()
         {
-            if (inRunUiFlow == null)
+            EnsureBindings();
+            if (WasKeyPressed(KeyCode.E)) OpenEventPanel();
+            if (WasKeyPressed(KeyCode.C)) CloseEventPanel();
+            if (WasKeyPressed(KeyCode.N)) AdvanceToNextNode();
+            if (WasKeyPressed(KeyCode.Q)) QuitAndSave();
+            if (WasKeyPressed(KeyCode.P)) DebugAutoSolve();
+        }
+
+        private static bool WasKeyPressed(KeyCode key)
+        {
+#if ENABLE_INPUT_SYSTEM
+            var kb = Keyboard.current;
+            if (kb == null) return false;
+            switch (key)
             {
-                return;
+                case KeyCode.E: return kb.eKey.wasPressedThisFrame;
+                case KeyCode.C: return kb.cKey.wasPressedThisFrame;
+                case KeyCode.N: return kb.nKey.wasPressedThisFrame;
+                case KeyCode.Q: return kb.qKey.wasPressedThisFrame;
+                case KeyCode.P: return kb.pKey.wasPressedThisFrame;
+                default: return false;
             }
-
-            if (WasOpenEventPressed()) OpenEventPanel();
-            if (WasCloseEventPressed()) CloseEventPanel();
-            if (WasNextNodePressed()) AdvanceNodeSafe();
-            if (WasPathAPressed()) ChoosePathCalm();
-            if (WasPathBPressed()) ChoosePathRisky();
-            if (WasQuitAndSavePressed()) QuitAndSave();
-            if (WasAutoSolvePressed()) DebugAutoSolve();
-        }
-
-        private static bool WasOpenEventPressed()
-        {
-#if ENABLE_INPUT_SYSTEM
-            return Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame;
 #else
-            return Input.GetKeyDown(KeyCode.E);
+            return Input.GetKeyDown(key);
 #endif
         }
 
-        private static bool WasCloseEventPressed()
-        {
-#if ENABLE_INPUT_SYSTEM
-            return Keyboard.current != null && Keyboard.current.cKey.wasPressedThisFrame;
-#else
-            return Input.GetKeyDown(KeyCode.C);
-#endif
-        }
-
-        private static bool WasNextNodePressed()
-        {
-#if ENABLE_INPUT_SYSTEM
-            if (Keyboard.current == null)
-            {
-                return false;
-            }
-
-            return Keyboard.current.nKey.wasPressedThisFrame;
-#else
-            return Input.GetKeyDown(KeyCode.N);
-#endif
-        }
-
-    private static bool WasPathAPressed()
-    {
-#if ENABLE_INPUT_SYSTEM
-        return Keyboard.current != null && Keyboard.current.f1Key.wasPressedThisFrame;
-#else
-        return Input.GetKeyDown(KeyCode.F1);
-#endif
-    }
-
-    private static bool WasPathBPressed()
-    {
-#if ENABLE_INPUT_SYSTEM
-        return Keyboard.current != null && Keyboard.current.f2Key.wasPressedThisFrame;
-#else
-        return Input.GetKeyDown(KeyCode.F2);
-#endif
-    }
-
-    private static bool WasQuitAndSavePressed()
-    {
-#if ENABLE_INPUT_SYSTEM
-        return Keyboard.current != null && Keyboard.current.qKey.wasPressedThisFrame;
-#else
-        return Input.GetKeyDown(KeyCode.Q);
-#endif
-    }
-
-        private static bool WasAutoSolvePressed()
-        {
-#if ENABLE_INPUT_SYSTEM
-            return Keyboard.current != null && Keyboard.current.pKey.wasPressedThisFrame;
-#else
-            return Input.GetKeyDown(KeyCode.P);
-#endif
-        }
-
-        public void OpenEventPanel()
+        private void OpenEventPanel()
         {
             EnsureBindings();
-            if (inRunUiFlow == null)
-            {
-                Debug.LogWarning("Debug UI: InRunUiFlowController reference is missing.");
-                return;
-            }
-
-            inRunUiFlow.OnNodeEntered(NodeType.Event);
-            Debug.Log("Debug UI: Event panel opened.");
+            if (_inRunUiFlow == null) return;
+            _inRunUiFlow.OnNodeEntered(NodeType.Event);
+            Debug.Log("Debug: Event panel opened.");
         }
 
-        public void CloseEventPanel()
+        private void CloseEventPanel()
         {
             EnsureBindings();
-            if (inRunUiFlow == null)
-            {
-                Debug.LogWarning("Debug UI: InRunUiFlowController reference is missing.");
-                return;
-            }
-
-            inRunUiFlow.OnEventClosed();
-            Debug.Log("Debug UI: Event panel closed and panels refreshed.");
+            if (_inRunUiFlow == null) return;
+            _inRunUiFlow.OnEventClosed();
+            Debug.Log("Debug: Event panel closed.");
         }
 
-        public void ChoosePathCalm()
-        {
-            AdvancePath(risk: false);
-        }
-
-        public void ChoosePathRisky()
-        {
-            AdvancePath(risk: true);
-        }
-
-        public void AdvanceNodeSafe()
-        {
-            ChoosePathCalm();
-        }
-
-        private void AdvancePath(bool risk)
+        private void AdvanceToNextNode()
         {
             EnsureBindings();
-            if (inRunUiFlow == null)
+            if (_runMapController == null || _runMapController.Run == null) return;
+
+            var graph = _runMapController.GetFloorGraph();
+            var currentIndex = _runMapController.Run.State.CurrentNodeIndex;
+            var nextIndex = currentIndex + 1;
+
+            if (nextIndex >= graph.Count)
             {
-                Debug.LogWarning("Debug UI: InRunUiFlowController reference is missing.");
+                Debug.Log("Debug: No more nodes on this floor.");
                 return;
             }
 
-            if (runMapController == null)
+            if (_runMapController.TryAdvanceToNodeAndStartPuzzle(nextIndex, out var node, out var level))
             {
-                Debug.LogWarning("Debug UI: RunMapController reference is missing.");
-                return;
-            }
-
-            if (runMapController.Run == null)
-            {
-                runMapController.Initialize(fallbackClass, _profile.Meta);
-                Debug.Log("Debug UI: RunMapController auto-initialized for prototype debug flow.");
-            }
-
-            if (runMapController.TryAdvancePathAndStartNextPuzzle(risk, out var node, out var level, out var failureReason))
-            {
-                inRunUiFlow.OnNodeEntered(node.Type);
-                RefreshPathPreview();
-                Debug.Log($"Garden path chosen: {(risk ? "Risk" : "Calm")} -> {node.Type} (Depth {node.Depth}) {level.BoardSize}x{level.BoardSize}, {level.Stars}★");
-                return;
-            }
-
-            if (!string.IsNullOrWhiteSpace(failureReason))
-            {
-                if (pathPreviewText != null)
-                {
-                    pathPreviewText.text = $"{pathPreviewText.text}\n\nBlocked: {failureReason}";
-                }
-                Debug.LogWarning($"Garden path blocked: {failureReason}");
-            }
-            else
-            {
-                Debug.LogWarning("Debug UI: No next node available. Ensure RunMapController is initialized and graph exists.");
+                _inRunUiFlow?.OnNodeEntered(node.Type);
+                var info = level != null ? $"{level.BoardSize}x{level.BoardSize} {level.Stars}★" : node.Type.ToString();
+                Debug.Log($"Debug: Advanced to node {nextIndex} ({info})");
             }
         }
 
-        public void QuitAndSave()
+        private void QuitAndSave()
         {
-            EnsureBindings();
-            var run = runMapController?.Run;
-            if (run != null)
-            {
-                run.OnQuitRequested();
-            }
-
             Time.timeScale = 1f;
             var bootstrap = FindFirstObjectByType<GameBootstrap>();
             if (bootstrap != null)
-            {
                 bootstrap.ReturnToMenu();
-            }
             else
-            {
-                Debug.LogWarning("Debug UI: GameBootstrap not found — cannot return to menu.");
-            }
+                Debug.LogWarning("Debug: GameBootstrap not found.");
         }
 
         private void DebugAutoSolve()
         {
             EnsureBindings();
-            var board = runMapController?.Run?.CurrentBoard;
+            var board = _runMapController?.Run?.CurrentBoard;
             if (board == null)
             {
-                Debug.LogWarning("Debug UI: No active puzzle to auto-solve.");
+                Debug.LogWarning("Debug: No active puzzle to auto-solve.");
                 return;
             }
 
             var size = board.Size;
             for (var r = 0; r < size; r++)
-            {
                 for (var c = 0; c < size; c++)
-                {
-                    if (!board.IsGiven(r, c) && board.IsEmpty(r, c))
-                    {
-                        runMapController.Run.PlaceNumber(r, c, board.Solution[r, c]);
-                    }
-                }
-            }
+                    if (!board.IsGiven(r, c) && board.Cells[r, c] == 0)
+                        _runMapController.Run.PlaceNumber(r, c, board.Solution[r, c]);
 
-            Debug.Log("Debug UI: Auto-solved current puzzle.");
+            Debug.Log("Debug: Auto-solved current puzzle.");
         }
 
         private static void EnsureEventSystem()
         {
-            if (Object.FindFirstObjectByType<EventSystem>() != null)
-            {
-                return;
-            }
+            if (FindFirstObjectByType<EventSystem>() != null) return;
 
-            var eventSystemGo = new GameObject("EventSystem", typeof(EventSystem));
+            var go = new GameObject("EventSystem", typeof(EventSystem));
 #if ENABLE_INPUT_SYSTEM
-            eventSystemGo.AddComponent<InputSystemUIInputModule>();
+            go.AddComponent<InputSystemUIInputModule>();
 #else
-            eventSystemGo.AddComponent<StandaloneInputModule>();
+            go.AddComponent<StandaloneInputModule>();
 #endif
-            Debug.Log("Debug UI: EventSystem was missing and has been auto-created.");
         }
 
         private void EnsureBindings()
         {
-            if (inRunUiFlow == null)
-            {
-                inRunUiFlow = FindFirstObjectByType<InRunUiFlowController>();
-            }
-
-            if (runMapController == null)
-            {
-                runMapController = FindFirstObjectByType<RunMapController>();
-            }
-
-            if (inRunUiFlow != null && runMapController != null)
-            {
-                inRunUiFlow.BindRunMap(runMapController);
-            }
-
-            if (pathPreviewText == null)
-            {
-                pathPreviewText = FindByName<Text>("PathPreviewText");
-            }
-        }
-
-        private void RefreshPathPreview()
-        {
-            EnsureBindings();
-
-            if (pathPreviewText == null || runMapController == null)
-            {
-                return;
-            }
-
-            var calm = runMapController.BuildPathChoicePreview(risk: false);
-            var risk = runMapController.BuildPathChoicePreview(risk: true);
-
-            pathPreviewText.text =
-                $"Path A: {FormatPreview(calm)}\n" +
-                $"Path B: {FormatPreview(risk)}\n" +
-                BuildLockLine(calm, risk) + "\n" +
-                "Progress requires solving the current Sudoku.";
-        }
-
-        private static string BuildLockLine(RunMapController.PathChoicePreview calm, RunMapController.PathChoicePreview risk)
-        {
-            var lockValue = calm?.LockedPath ?? risk?.LockedPath;
-            if (!lockValue.HasValue)
-            {
-                return "Path lock: not chosen yet.";
-            }
-
-            return lockValue.Value ? "Path lock: B (Risk)" : "Path lock: A (Calm)";
-        }
-
-        private static string FormatPreview(RunMapController.PathChoicePreview preview)
-        {
-            if (preview == null || !preview.Available)
-            {
-                return "Not available";
-            }
-
-            var bossTag = preview.IsBoss ? " [Boss]" : string.Empty;
-            return $"D{preview.Depth} {preview.NodeType}{bossTag} | {preview.BoardSize}x{preview.BoardSize} | {preview.Stars}★";
-        }
-
-        private static T FindByName<T>(string name) where T : Component
-        {
-            var all = Resources.FindObjectsOfTypeAll<T>();
-            for (var i = 0; i < all.Length; i++)
-            {
-                var candidate = all[i];
-                if (candidate == null)
-                {
-                    continue;
-                }
-
-                var go = candidate.gameObject;
-                if (go == null || go.name != name)
-                {
-                    continue;
-                }
-
-                var scene = go.scene;
-                if (!scene.IsValid() || !scene.isLoaded)
-                {
-                    continue;
-                }
-
-                return candidate;
-            }
-
-            return null;
+            if (_inRunUiFlow == null)
+                _inRunUiFlow = FindFirstObjectByType<InRunUiFlowController>();
+            if (_runMapController == null)
+                _runMapController = FindFirstObjectByType<RunMapController>();
         }
     }
 }

@@ -1,24 +1,32 @@
 using SudokuRoguelike.Core;
-using SudokuRoguelike.Save;
 using UnityEngine;
 
 namespace SudokuRoguelike.UI
 {
     public sealed class PrototypeRunMapBootstrap : MonoBehaviour
     {
-        [SerializeField] private RunMapController runMapController;
-        [SerializeField] private ClassId classId = ClassId.NumberFreak;
+        private RunMapController _runMapController;
+        private ClassId _classId = ClassId.NumberFreak;
 
-        private readonly ProfileService _profile = new();
+        public void Configure(RunMapController runMap, ClassId classId = ClassId.NumberFreak)
+        {
+            _runMapController = runMap;
+            _classId = classId;
+        }
 
         private void Start()
         {
-            if (runMapController == null)
-            {
-                return;
-            }
+            if (_runMapController == null)
+                _runMapController = FindFirstObjectByType<RunMapController>();
+            if (_runMapController == null) return;
 
-            runMapController.Initialize(classId, _profile.Meta);
+            var request = new LaunchRequest
+            {
+                ClassId = _classId,
+                Mode = GameMode.GardenRun,
+                AllowIrregularPuzzles = true
+            };
+            _runMapController.Initialize(request, System.Environment.TickCount);
         }
     }
 }

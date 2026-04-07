@@ -1,11 +1,13 @@
 # Sudoku Generation Pipeline
 
-**Version:** 1.2 | **Date:** 2026-03-22 | **Status:** implemented
+**Version:** 1.4 | **Date:** 2026-03-28 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.4 | 2026-03-28 | implemented | Non-deterministic validation: placement is valid if it satisfies all constraints (no conflict in row/col/region/modifier), NOT compared against the single generated solution. PlaceResult.WrongButValid removed; only Correct/Invalid/IsGiven remain. SudokuBoard.IsComplete() and IsCorrectAt() use constraint satisfaction. Solution property retained for item effects only. |
+| 1.3 | 2026-03-23 | implemented | IsUniqueSolution property added to SudokuBoard |
 | 1.2 | 2026-03-22 | implemented | OPEN-A (uniqueness checker) and OPEN-B (irregular templates) both verified present in SudokuGenerator |
 | 1.1 | 2026-03-22 | under review | Integrated OPEN-A (uniqueness checker) and OPEN-B (irregular template expansion) as requirements |
 | 1.0 | 2026-03-21 | implemented | Initial specification |

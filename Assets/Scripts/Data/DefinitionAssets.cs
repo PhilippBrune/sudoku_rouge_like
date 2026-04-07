@@ -58,11 +58,8 @@ namespace SudokuRoguelike.Data
             foreach (var entry in Stars)
             {
                 if (entry.Star == star)
-                {
                     return entry.MissingPercent;
-                }
             }
-
             return StarDensityService.MissingPercentForStars(star);
         }
     }

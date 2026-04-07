@@ -1,11 +1,16 @@
 # Accessibility Specification
 
-**Version:** 1.1 | **Date:** 2026-03-22 | **Status:** implemented
+**Version:** 1.6 | **Date:** 2026-03-29 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.6 | 2026-03-29 | implemented | Accessibility toggles made functional: OptionsController.SetColorblindMode/SetHighContrast/SetReduceMotion/SetAltSymbols each call NotifyAccessibilityChanged() on PrototypeRunScreenController (via FindFirstObjectByType) after saving. NotifyAccessibilityChanged() reloads AccessibilityService from file, forces overlay rebuild (_overlaysBuilt=false + RebuildBoard), and calls AmbientParticleController.RefreshSettings(). High-contrast mode: line spine alpha multiplied by 1.4, line width multiplied by 1.5 (via GetOverlayAlpha/GetLineWidthMultiplier). Reduce-motion mode: screen shake (wrong answer) skipped, particles stopped/paused immediately on toggle. AmbientParticleController.RefreshSettings() added: re-reads settings and stops particles or re-applies current floor preset. |
+| 1.5 | 2026-03-28 | implemented | Toggle labels changed to dark text (BtnTextColor) to fix unreadable cream-on-cream contrast. Keybindings in Controls section updated: removed Hint (H) and Undo (U), added Q = Save & Quit. |
+| 1.4 | 2026-03-24 | implemented | Mute-when-unfocused toggle added (AudioSettingsModel.MuteWhenUnfocused). Keybindings displayed in Controls section (1-9, P, U, H, Esc). Application.runInBackground=true so audio continues in background by default. Language switching (EN/DE) with LocalizationService and full UI rebuild on change. |
+| 1.3 | 2026-03-24 | implemented | Options panel UI: language dropdown (EN/DE), fullscreen toggle, UI volume slider, controls placeholder (keybinding + controller coming soon). FontScale slider removed from panel. Accessibility toggles (Colorblind, High Contrast, Reduce Motion, Alt Symbols) wired to OptionsController and persisted. |
+| 1.2 | 2026-03-23 | implemented | Full rebuild verified: AccessibilityService, InputRemapService, KeyboardNavigationController, OptionsController all present. Screen reader and controller support are external platform dependencies (stubs in place) |
 | 1.1 | 2026-03-22 | implemented | All features implemented: AccessibilityService, colorblind line patterns, high contrast, font scaling, reduce motion, alt constraint symbols, keyboard navigation, input remapping |
 | 1.0 | 2026-03-21 | review | Initial specification |
 

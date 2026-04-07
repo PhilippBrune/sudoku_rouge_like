@@ -15,8 +15,8 @@ namespace SudokuRoguelike.UI
             Rest
         }
 
-        private readonly SaveFileService _save = new();
-        private readonly ProfileService _profile = new();
+        private SaveFileService _save;
+        private ProfileService _profile;
 
         private AudioSource _musicSource;
         private AudioSource _sfxSource;
@@ -27,7 +27,6 @@ namespace SudokuRoguelike.UI
         private AudioClip _shopLoop;
         private AudioClip _restLoop;
 
-        // Floor-based music
         private readonly AudioClip[] _floorLoops = new AudioClip[5];
         private readonly AudioClip[] _bossLayers = new AudioClip[5];
         private int _currentFloorIndex = -1;
@@ -48,7 +47,6 @@ namespace SudokuRoguelike.UI
         private AudioClip _gameOverSfx;
         private AudioClip _relicPickupSfx;
 
-        // New SFX from AudioVisualDirection spec
         private AudioClip _combo5Sfx;
         private AudioClip _combo10Sfx;
         private AudioClip _comboBreakSfx;
@@ -65,7 +63,6 @@ namespace SudokuRoguelike.UI
         private AudioClip _xpBarFillSfx;
         private AudioClip _victorySfx;
 
-        // UI SFX
         private AudioClip _buttonHoverSfx;
         private AudioClip _buttonClickSfx;
         private AudioClip _menuOpenSfx;
@@ -77,6 +74,9 @@ namespace SudokuRoguelike.UI
 
         private void Awake()
         {
+            _save = new SaveFileService();
+            _profile = new ProfileService();
+
             _musicSource = GetComponent<AudioSource>();
             _musicSource.loop = true;
             _musicSource.playOnAwake = false;
@@ -103,34 +103,26 @@ namespace SudokuRoguelike.UI
             _bossSource.playOnAwake = false;
             _bossSource.spatialBlend = 0f;
 
-            // Ensure a listener exists so runtime-generated clips are audible in minimal prototype scenes.
             if (FindFirstObjectByType<AudioListener>() == null)
             {
                 var mainCam = Camera.main;
                 if (mainCam != null)
-                {
                     mainCam.gameObject.AddComponent<AudioListener>();
-                }
             }
 
-            if (_save.TryLoadProfile(out var envelope))
-            {
-                _profile.ApplyEnvelope(envelope);
-            }
+            if (_save.HasSaveFile())
+                _profile.ApplyEnvelope(_save.Load());
 
-            // Context loops — delegate to ProceduralSfxLibrary
             _puzzleLoop = ProceduralSfxLibrary.BuildPuzzleLoop();
             _shopLoop = ProceduralSfxLibrary.BuildShopLoop();
             _restLoop = ProceduralSfxLibrary.BuildRestLoop();
 
-            // Floor-based music loops + boss layers
             for (var f = 0; f < 5; f++)
             {
                 _floorLoops[f] = FloorMusicGenerator.BuildFloorLoop(f);
                 _bossLayers[f] = FloorMusicGenerator.BuildBossLayer(f);
             }
 
-            // Existing gameplay SFX
             _wrongSfx = ProceduralSfxLibrary.BuildWrongPlaceSfx();
             _solvedSfx = ProceduralSfxLibrary.BuildLevelCompleteSfx();
             _shopPurchaseSfx = ProceduralSfxLibrary.BuildShopPurchaseSfx();
@@ -145,7 +137,6 @@ namespace SudokuRoguelike.UI
             _gameOverSfx = ProceduralSfxLibrary.BuildGameOverStingerSfx();
             _relicPickupSfx = ProceduralSfxLibrary.BuildRelicPickupSfx();
 
-            // New gameplay SFX
             _combo5Sfx = ProceduralSfxLibrary.BuildCombo5Sfx();
             _combo10Sfx = ProceduralSfxLibrary.BuildCombo10Sfx();
             _comboBreakSfx = ProceduralSfxLibrary.BuildComboBreakSfx();
@@ -162,7 +153,6 @@ namespace SudokuRoguelike.UI
             _xpBarFillSfx = ProceduralSfxLibrary.BuildXpBarFillSfx();
             _victorySfx = ProceduralSfxLibrary.BuildVictoryStingerSfx();
 
-            // UI SFX
             _buttonHoverSfx = ProceduralSfxLibrary.BuildButtonHoverSfx();
             _buttonClickSfx = ProceduralSfxLibrary.BuildButtonClickSfx();
             _menuOpenSfx = ProceduralSfxLibrary.BuildMenuOpenSfx();
@@ -183,48 +173,38 @@ namespace SudokuRoguelike.UI
             if (Time.unscaledTime >= _nextProfileRefresh)
             {
                 _nextProfileRefresh = Time.unscaledTime + 1f;
-                if (_save.TryLoadProfile(out var envelope))
-                {
-                    _profile.ApplyEnvelope(envelope);
-                }
+                if (_save.HasSaveFile())
+                    _profile.ApplyEnvelope(_save.Load());
             }
 
-            var muted = _profile.Options.Audio.MuteAll;
-            var baseVolume = Mathf.Clamp01(_profile.Options.Audio.MasterVolume);
-            var musicVol = baseVolume * Mathf.Clamp01(_profile.Options.Audio.MusicVolume) * 0.75f;
+            var opts = _profile.LoadOptions();
+            var muted = opts.Audio.MuteAll;
+            var baseVolume = Mathf.Clamp01(opts.Audio.MasterVolume);
+            var musicVol = baseVolume * Mathf.Clamp01(opts.Audio.MusicVolume) * 0.75f;
             var duckMul = _isDucking ? 0.8f : 1f;
             _musicSource.mute = muted;
             _sfxSource.mute = muted;
             _uiSource.mute = muted;
             _bossSource.mute = muted;
             _musicSource.volume = musicVol * duckMul;
-            _sfxSource.volume = baseVolume * Mathf.Clamp01(_profile.Options.Audio.SfxVolume) * 0.55f;
-            _uiSource.volume = baseVolume * Mathf.Clamp01(_profile.Options.Audio.UiVolume) * 0.65f;
+            _sfxSource.volume = baseVolume * Mathf.Clamp01(opts.Audio.SfxVolume) * 0.55f;
+            _uiSource.volume = baseVolume * Mathf.Clamp01(opts.Audio.UiVolume) * 0.65f;
             _bossSource.volume = _bossLayerActive ? musicVol * 0.6f * duckMul : 0f;
 
             if (_context == Context.Puzzle && !_musicSource.mute)
             {
                 if (_musicSource.clip != null && !_musicSource.isPlaying)
-                {
                     _musicSource.Play();
-                }
             }
         }
 
         public void SetContext(Context context)
         {
-            if (_context == context && _musicSource.isPlaying)
-            {
-                return;
-            }
-
+            if (_context == context && _musicSource.isPlaying) return;
             _context = context;
 
-            // Stop boss layer when leaving puzzle context
             if (context != Context.Puzzle && _bossLayerActive)
-            {
                 StopBossLayer();
-            }
 
             _musicSource.clip = context switch
             {
@@ -243,8 +223,6 @@ namespace SudokuRoguelike.UI
             _musicSource.Play();
         }
 
-        // ── Existing gameplay SFX playback ───────────────────────────────
-
         public void PlayWrongPlacement() => PlaySfx(_wrongSfx, 1f);
         public void PlayPuzzleSolved() => PlaySfx(_solvedSfx, 1f);
         public void PlayShopPurchase() => PlaySfx(_shopPurchaseSfx, 1f);
@@ -258,8 +236,6 @@ namespace SudokuRoguelike.UI
         public void PlayRestHeal() => PlaySfx(_restHealSfx, 1f);
         public void PlayGameOver() => PlaySfx(_gameOverSfx, 1f);
         public void PlayRelicPickup() => PlaySfx(_relicPickupSfx, 1f);
-
-        // ── New gameplay SFX ─────────────────────────────────────────────
 
         public void PlayComboMilestone(int combo)
         {
@@ -281,8 +257,6 @@ namespace SudokuRoguelike.UI
         public void PlayXpBarFill() => PlaySfx(_xpBarFillSfx, 0.7f);
         public void PlayVictory() => PlaySfx(_victorySfx, 1f);
 
-        // ── UI SFX (routed through UiVolume channel) ─────────────────────
-
         public void PlayButtonHover() => PlayUi(_buttonHoverSfx, 0.4f);
         public void PlayButtonClick() => PlayUi(_buttonClickSfx, 0.6f);
         public void PlayMenuOpen() => PlayUi(_menuOpenSfx, 0.5f);
@@ -290,18 +264,12 @@ namespace SudokuRoguelike.UI
         public void PlayItemReward() => PlayUi(_itemRewardSfx, 0.7f);
         public void PlayRelicReveal() => PlayUi(_relicRevealSfx, 0.8f);
 
-        // ── Floor Music ─────────────────────────────────────────────────
-
-        /// <summary>
-        /// Switch to floor-specific music with crossfade (800ms out, 200ms silence, 800ms in).
-        /// </summary>
         public void SetFloorIndex(int floorIndex)
         {
             floorIndex = Mathf.Clamp(floorIndex, 0, 4);
             if (floorIndex == _currentFloorIndex) return;
             _currentFloorIndex = floorIndex;
 
-            // Use the floor loop as the puzzle loop for this floor
             _puzzleLoop = _floorLoops[floorIndex];
 
             if (_context == Context.Puzzle)
@@ -311,9 +279,6 @@ namespace SudokuRoguelike.UI
             }
         }
 
-        /// <summary>
-        /// Start additive boss tension layer on top of current floor music.
-        /// </summary>
         public void StartBossLayer()
         {
             if (_bossLayerActive) return;
@@ -323,18 +288,12 @@ namespace SudokuRoguelike.UI
             _bossSource.Play();
         }
 
-        /// <summary>
-        /// Stop the boss tension layer.
-        /// </summary>
         public void StopBossLayer()
         {
             _bossLayerActive = false;
             _bossSource.Stop();
         }
 
-        /// <summary>
-        /// Duck music volume 20% during XP bar animation.
-        /// </summary>
         public void SetMusicDucking(bool ducking)
         {
             _isDucking = ducking;
@@ -342,7 +301,6 @@ namespace SudokuRoguelike.UI
 
         private IEnumerator CrossfadeToClip(AudioClip newClip)
         {
-            // Fade out (800ms)
             var startVol = _musicSource.volume;
             var elapsed = 0f;
             while (elapsed < 0.8f)
@@ -353,10 +311,8 @@ namespace SudokuRoguelike.UI
             }
             _musicSource.Stop();
 
-            // Silence (200ms)
             yield return new WaitForSecondsRealtime(0.2f);
 
-            // Fade in (800ms)
             _musicSource.clip = newClip;
             if (newClip != null)
             {
@@ -365,14 +321,11 @@ namespace SudokuRoguelike.UI
                 while (elapsed < 0.8f)
                 {
                     elapsed += Time.unscaledDeltaTime;
-                    // Volume will be reset by Update, but we nudge it for smoothness
                     yield return null;
                 }
             }
             _crossfadeCoroutine = null;
         }
-
-        // ── Helpers ──────────────────────────────────────────────────────
 
         private void PlaySfx(AudioClip clip, float volume)
         {

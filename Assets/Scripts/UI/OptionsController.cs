@@ -1,149 +1,145 @@
+using UnityEngine;
 using SudokuRoguelike.Core;
 using SudokuRoguelike.Save;
-using UnityEngine;
 
 namespace SudokuRoguelike.UI
 {
     public sealed class OptionsController : MonoBehaviour
     {
-        [SerializeField] private bool requireRestartForExclusiveFullscreen;
-
-        private readonly SaveFileService _save = new();
-        private readonly ProfileService _profile = new();
-
-        public OptionsState Options => _profile.Options;
+        private SaveFileService _saveFile;
+        private ProfileService _profile;
+        private OptionsState _options;
 
         private void Awake()
         {
-            if (_save.TryLoadProfile(out var envelope))
-            {
-                _profile.ApplyEnvelope(envelope);
-            }
+            _saveFile = new SaveFileService();
+            _profile = new ProfileService(_saveFile);
         }
 
-        public void SetLanguage(LanguageOption language)
+        public void LoadOptions()
         {
-            Options.Language = language;
-            Persist();
+            if (_saveFile == null) _saveFile = new SaveFileService();
+            if (_profile == null) _profile = new ProfileService(_saveFile);
+            _options = _profile.LoadOptions();
+        }
+
+        public OptionsState GetOptions()
+        {
+            if (_options == null) LoadOptions();
+            return _options;
         }
 
         public void SetMasterVolume(float value)
         {
-            Options.Audio.MasterVolume = Mathf.Clamp01(value);
-            Persist();
+            GetOptions().Audio.MasterVolume = value;
+            AudioListener.volume = value;
+            SaveOptions();
         }
 
         public void SetMusicVolume(float value)
         {
-            Options.Audio.MusicVolume = Mathf.Clamp01(value);
-            Persist();
+            GetOptions().Audio.MusicVolume = value;
+            SaveOptions();
         }
 
         public void SetSfxVolume(float value)
         {
-            Options.Audio.SfxVolume = Mathf.Clamp01(value);
-            Persist();
+            GetOptions().Audio.SfxVolume = value;
+            SaveOptions();
         }
-
-        public void SetMenuMusicStyle(int styleIndex)
-        {
-            Options.Audio.MenuMusicStyleIndex = Mathf.Clamp(styleIndex, 0, 1);
-            Persist();
-        }
-
-        public void SetResolution(int width, int height, bool fullscreen, FullScreenMode mode)
-        {
-            Screen.SetResolution(width, height, mode);
-            Options.Graphics.Width = width;
-            Options.Graphics.Height = height;
-            Options.Graphics.Fullscreen = fullscreen;
-            Persist();
-        }
-
-        public bool RequiresRestartForResolutionModeSwitch(bool exclusiveFullscreen)
-        {
-            return requireRestartForExclusiveFullscreen && exclusiveFullscreen;
-        }
-
-        public void SetHighlightConflicts(bool enabled)
-        {
-            Options.Gameplay.HighlightConflicts = enabled;
-            Persist();
-        }
-
-        // ── Accessibility settings ───────────────────────────────────────
-
-        public void SetColorblindMode(bool enabled)
-        {
-            Options.Accessibility.ColorblindMode = enabled;
-            Persist();
-        }
-
-        public void SetHighContrastMode(bool enabled)
-        {
-            Options.Accessibility.HighContrastMode = enabled;
-            Persist();
-        }
-
-        public void SetReduceMotion(bool enabled)
-        {
-            Options.Accessibility.ReduceMotion = enabled;
-            Persist();
-        }
-
-        public void SetAlternativeConstraintSymbols(bool enabled)
-        {
-            Options.Accessibility.AlternativeConstraintSymbols = enabled;
-            Persist();
-        }
-
-        public void SetFontScale(float value)
-        {
-            Options.Accessibility.FontScale = Mathf.Clamp(value, 0.8f, 1.5f);
-            Persist();
-        }
-
-        // ── Audio settings ───────────────────────────────────────────────
 
         public void SetUiVolume(float value)
         {
-            Options.Audio.UiVolume = Mathf.Clamp01(value);
-            Persist();
+            GetOptions().Audio.UiVolume = value;
+            SaveOptions();
         }
 
-        public void SetMuteAll(bool muted)
+        public void SetMusicStyleIndex(int index)
         {
-            Options.Audio.MuteAll = muted;
-            Persist();
+            GetOptions().Audio.MenuMusicStyleIndex = index;
+            SaveOptions();
         }
 
-        // ── Graphics settings ────────────────────────────────────────────
-
-        public void SetScreenShake(bool enabled)
+        public void SetMuteWhenUnfocused(bool on)
         {
-            Options.Graphics.ScreenShake = enabled;
-            Persist();
+            GetOptions().Audio.MuteWhenUnfocused = on;
+            SaveOptions();
         }
 
-        public void SetParticleIntensity(float value)
+        public void SetLanguage(LanguageOption lang)
         {
-            Options.Graphics.ParticleIntensity = Mathf.Clamp01(value);
-            Persist();
+            GetOptions().Language = lang;
+            LocalizationService.SetLanguage(lang);
+            SaveOptions();
         }
 
-        private void Persist()
+        public void SetColorblindMode(bool on)
         {
-            var envelope = new SaveFileEnvelope
-            {
-                PlayerProfile = new ProfileSaveData { Options = _profile.Options },
-                MetaProgress = _profile.Meta,
-                TutorialProgress = _profile.TutorialProgress,
-                Statistics = _profile.Stats,
-                Mastery = _profile.Mastery,
-                Completion = _profile.Completion
-            };
+            GetOptions().Accessibility.ColorblindMode = on;
+            SaveOptions();
+            NotifyAccessibilityChanged();
+        }
 
-            _save.SaveProfile(envelope);
+        public void SetHighContrast(bool on)
+        {
+            GetOptions().Accessibility.HighContrastMode = on;
+            SaveOptions();
+            NotifyAccessibilityChanged();
+        }
+
+        public void SetReduceMotion(bool on)
+        {
+            GetOptions().Accessibility.ReduceMotion = on;
+            SaveOptions();
+            NotifyAccessibilityChanged();
+        }
+
+        public void SetAltSymbols(bool on)
+        {
+            GetOptions().Accessibility.AlternativeConstraintSymbols = on;
+            SaveOptions();
+            NotifyAccessibilityChanged();
+        }
+
+        public void SetFontScale(float scale)
+        {
+            GetOptions().Accessibility.FontScale = scale;
+            SaveOptions();
+        }
+
+        public void SetHighlightConflicts(bool on)
+        {
+            GetOptions().Gameplay.HighlightConflicts = on;
+            SaveOptions();
+        }
+
+        public void SetFullscreen(bool on)
+        {
+            GetOptions().Graphics.Fullscreen = on;
+            Screen.fullScreen = on;
+            SaveOptions();
+        }
+
+        public void SetResolution(int width, int height)
+        {
+            var opt = GetOptions();
+            opt.Graphics.ResolutionWidth = width;
+            opt.Graphics.ResolutionHeight = height;
+            Screen.SetResolution(width, height, opt.Graphics.Fullscreen);
+            SaveOptions();
+        }
+
+        private void SaveOptions()
+        {
+            var envelope = _saveFile.Load();
+            envelope.PlayerProfile.Options = _options;
+            _saveFile.Save(envelope);
+        }
+
+        private void NotifyAccessibilityChanged()
+        {
+            var runScreen = FindFirstObjectByType<PrototypeRunScreenController>();
+            runScreen?.NotifyAccessibilityChanged();
         }
     }
 }

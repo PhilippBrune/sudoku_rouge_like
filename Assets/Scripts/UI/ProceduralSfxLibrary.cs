@@ -2,16 +2,9 @@ using UnityEngine;
 
 namespace SudokuRoguelike.UI
 {
-    /// <summary>
-    /// Static library of procedurally generated audio clips.
-    /// Extracted from RunAudioController + new SFX from AudioVisualDirection spec.
-    /// All clips: 22050 Hz, mono, normalized ~-6dB peak.
-    /// </summary>
     public static class ProceduralSfxLibrary
     {
         private const int SampleRate = 22050;
-
-        // ── Existing SFX (extracted from RunAudioController) ──────────────
 
         public static AudioClip BuildCellSelectSfx()
         {
@@ -122,8 +115,6 @@ namespace SudokuRoguelike.UI
             return MakeClip("sfx_modifier_activate", count, data);
         }
 
-        // ── Combo SFX ────────────────────────────────────────────────────
-
         public static AudioClip BuildCombo5Sfx()
         {
             const float seconds = 0.40f;
@@ -173,8 +164,6 @@ namespace SudokuRoguelike.UI
             return MakeClip("sfx_combo_break", count, data);
         }
 
-        // ── Resource SFX ─────────────────────────────────────────────────
-
         public static AudioClip BuildHpLossSfx()
         {
             const float seconds = 1.0f;
@@ -200,7 +189,6 @@ namespace SudokuRoguelike.UI
             for (var i = 0; i < count; i++)
             {
                 var t = i / (float)SampleRate;
-                // Two rapid strikes
                 var strike1 = t < 0.2f ? Mathf.Exp(-t * 10f) : 0f;
                 var strike2 = t >= 0.25f ? Mathf.Exp(-(t - 0.25f) * 10f) : 0f;
                 var env = strike1 + strike2;
@@ -241,8 +229,6 @@ namespace SudokuRoguelike.UI
             }
             return MakeClip("sfx_gold_gain", count, data);
         }
-
-        // ── UI SFX ───────────────────────────────────────────────────────
 
         public static AudioClip BuildButtonHoverSfx()
         {
@@ -486,8 +472,6 @@ namespace SudokuRoguelike.UI
             return MakeClip("sfx_reroll", count, data);
         }
 
-        // ── Stingers ─────────────────────────────────────────────────────
-
         public static AudioClip BuildVictoryStingerSfx()
         {
             const float seconds = 2.0f;
@@ -543,11 +527,9 @@ namespace SudokuRoguelike.UI
             return MakeClip("sfx_level_complete", count, data);
         }
 
-        // ── Existing loops (extracted from RunAudioController) ───────────
-
         public static AudioClip BuildPuzzleLoop()
         {
-            const float seconds = 280f;
+            const float seconds = 32f;
             var count = Mathf.RoundToInt(SampleRate * seconds);
             var data = new float[count];
             var notes = new[] { 220f, 246.94f, 261.63f, 293.66f, 329.63f, 349.23f, 329.63f, 293.66f, 261.63f, 246.94f };
@@ -562,6 +544,27 @@ namespace SudokuRoguelike.UI
                 data[i] = Mathf.Clamp((lead + harmony + bell) * pulse, -0.65f, 0.65f);
             }
             return MakeClip("RunPuzzleLoop", count, data);
+        }
+
+        public static AudioClip BuildMenuLoop()
+        {
+            const float seconds = 24f;
+            var count = Mathf.RoundToInt(SampleRate * seconds);
+            var data = new float[count];
+            // Pentatonic ambient — calm garden feel
+            var notes = new[] { 196f, 220f, 261.63f, 293.66f, 349.23f };
+            for (var i = 0; i < count; i++)
+            {
+                var t = i / (float)SampleRate;
+                var slot = (int)(t * 0.7f) % notes.Length;
+                var local = t % 1.43f;
+                var decay = Mathf.Exp(-local * 3f);
+                var tone = Mathf.Sin(2f * Mathf.PI * notes[slot] * t) * decay * 0.16f;
+                var pad = Mathf.Sin(2f * Mathf.PI * 98f * t) * 0.06f;
+                var shimmer = Mathf.Sin(2f * Mathf.PI * notes[(slot + 2) % notes.Length] * 2f * t) * 0.03f * decay;
+                data[i] = Mathf.Clamp(tone + pad + shimmer, -0.50f, 0.50f);
+            }
+            return MakeClip("MenuLoop", count, data);
         }
 
         public static AudioClip BuildShopLoop()
@@ -683,8 +686,6 @@ namespace SudokuRoguelike.UI
             }
             return MakeClip("sfx_relic_pickup", count, data);
         }
-
-        // ── Helpers ──────────────────────────────────────────────────────
 
         public static float Chirp(float t, float rate, float f0, float f1, float amp)
         {

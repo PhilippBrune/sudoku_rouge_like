@@ -7,13 +7,11 @@ namespace SudokuRoguelike.UI
 {
     public sealed class EventChoiceScreenController : MonoBehaviour
     {
-        [SerializeField] private GameObject panelRoot;
-        [SerializeField] private Text promptText;
-        [SerializeField] private Text resultText;
-        [SerializeField] private Transform optionsRoot;
-        [SerializeField] private Button optionButtonPrefab;
-
-        private readonly List<Button> _spawnedButtons = new();
+        private GameObject _panelRoot;
+        private Text _promptText;
+        private Text _resultText;
+        private Transform _optionsRoot;
+        private readonly List<GameObject> _spawnedButtons = new List<GameObject>();
         private RunMapController _runMap;
         private RunEvent _currentEvent;
 
@@ -22,110 +20,81 @@ namespace SudokuRoguelike.UI
             _runMap = runMap;
         }
 
-        public void Configure(GameObject panel, Text prompt, Text result, Transform optionsContainer, Button optionTemplate)
+        public void Configure(GameObject panel, Text prompt, Text result, Transform optionsContainer)
         {
-            panelRoot = panel;
-            promptText = prompt;
-            resultText = result;
-            optionsRoot = optionsContainer;
-            optionButtonPrefab = optionTemplate;
+            _panelRoot = panel;
+            _promptText = prompt;
+            _resultText = result;
+            _optionsRoot = optionsContainer;
         }
 
         public void OpenEvent()
         {
-            if (_runMap == null)
-            {
-                return;
-            }
+            if (_runMap == null) return;
 
             _currentEvent = _runMap.OpenEventNode();
-            if (_currentEvent == null)
-            {
-                return;
-            }
+            if (_currentEvent == null) return;
 
-            if (panelRoot != null)
-            {
-                panelRoot.SetActive(true);
-            }
-
-            if (promptText != null)
-            {
-                promptText.text = _currentEvent.Prompt;
-            }
-
-            if (resultText != null)
-            {
-                resultText.text = string.Empty;
-            }
+            if (_panelRoot != null) _panelRoot.SetActive(true);
+            if (_promptText != null) _promptText.text = $"{_currentEvent.Title}\n{_currentEvent.Description}";
+            if (_resultText != null) _resultText.text = string.Empty;
 
             BuildOptionButtons(_currentEvent.Options);
         }
 
         public void CloseEvent()
         {
-            if (panelRoot != null)
-            {
-                panelRoot.SetActive(false);
-            }
-
+            if (_panelRoot != null) _panelRoot.SetActive(false);
             ClearButtons();
             _currentEvent = null;
         }
 
-        private void BuildOptionButtons(List<RunEventOption> options)
+        private void BuildOptionButtons(List<EventOption> options)
         {
             ClearButtons();
-
-            if (options == null || optionButtonPrefab == null || optionsRoot == null)
-            {
-                return;
-            }
+            if (options == null || _optionsRoot == null) return;
 
             for (var i = 0; i < options.Count; i++)
             {
                 var option = options[i];
-                var button = Instantiate(optionButtonPrefab, optionsRoot);
-                var label = button.GetComponentInChildren<Text>();
-                if (label != null)
-                {
-                    label.text = $"{option.Label} — {option.Tradeoff}";
-                }
+                var go = new GameObject($"EventOption_{i}", typeof(RectTransform), typeof(Button), typeof(Image));
+                go.transform.SetParent(_optionsRoot, false);
 
-                var optionId = option.OptionId;
-                button.gameObject.SetActive(true);
-                button.onClick.AddListener(() => OnOptionClicked(optionId));
-                _spawnedButtons.Add(button);
+                var img = go.GetComponent<Image>();
+                img.color = new Color(0.15f, 0.22f, 0.29f, 0.9f);
+
+                var textGo = new GameObject("Label", typeof(RectTransform), typeof(Text));
+                textGo.transform.SetParent(go.transform, false);
+                var rt = textGo.GetComponent<RectTransform>();
+                rt.anchorMin = Vector2.zero;
+                rt.anchorMax = Vector2.one;
+                rt.offsetMin = new Vector2(8, 2);
+                rt.offsetMax = new Vector2(-8, -2);
+                var label = textGo.GetComponent<Text>();
+                label.text = $"{option.Label} — {option.EffectDescription}";
+                label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                label.fontSize = 14;
+                label.color = new Color(0.96f, 0.93f, 0.82f);
+                label.alignment = TextAnchor.MiddleLeft;
+
+                var optionIndex = i;
+                go.GetComponent<Button>().onClick.AddListener(() => OnOptionClicked(optionIndex));
+                _spawnedButtons.Add(go);
             }
         }
 
-        private void OnOptionClicked(string optionId)
+        private void OnOptionClicked(int optionIndex)
         {
-            if (_runMap == null)
-            {
-                return;
-            }
+            if (_runMap == null) return;
 
-            var success = _runMap.ChooseEventOption(optionId);
-            if (resultText != null)
-            {
-                resultText.text = success ? "Choice resolved." : "Choice failed (requirements not met).";
-            }
+            _runMap.ChooseEventOption(optionIndex);
+            if (_resultText != null)
+                _resultText.text = "Choice resolved.";
 
-            if (success)
-            {
-                SetButtonsInteractable(false);
-            }
-        }
-
-        private void SetButtonsInteractable(bool interactable)
-        {
             for (var i = 0; i < _spawnedButtons.Count; i++)
             {
-                if (_spawnedButtons[i] != null)
-                {
-                    _spawnedButtons[i].interactable = interactable;
-                }
+                var btn = _spawnedButtons[i]?.GetComponent<Button>();
+                if (btn != null) btn.interactable = false;
             }
         }
 
@@ -134,11 +103,8 @@ namespace SudokuRoguelike.UI
             for (var i = 0; i < _spawnedButtons.Count; i++)
             {
                 if (_spawnedButtons[i] != null)
-                {
-                    Destroy(_spawnedButtons[i].gameObject);
-                }
+                    Destroy(_spawnedButtons[i]);
             }
-
             _spawnedButtons.Clear();
         }
     }

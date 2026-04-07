@@ -100,6 +100,12 @@ namespace SudokuRoguelike.UI
         private GameObject _modifierInfoBox;
         private Text _modifierInfoText;
 
+        // ── Combo counter ──
+        private Text _comboText;
+
+        // ── Class passive label ──
+        private Text _passiveText;
+
         // ── Shop selection ──
         private int _selectedShopOffer = -1;
 
@@ -541,6 +547,7 @@ namespace SudokuRoguelike.UI
             if (arrivedNode.Type == NodeType.Rest) { HandleRest(); ShowPath(); return; }
             if (arrivedNode.Type == NodeType.Event) { HandleEvent(); return; }
             if (arrivedNode.Type == NodeType.Relic) { HandleRelic(); ShowPath(); return; }
+            if (arrivedNode.Type == NodeType.Cursed) { HandleCursedNode(arrivedNode); return; }
 
             if (level == null) { ShowPath(); return; }
 
@@ -669,6 +676,7 @@ namespace SudokuRoguelike.UI
             NodeType.Rest        => "campfire_stones",
             NodeType.Relic       => "relic_pedestal",
             NodeType.Event       => "stone_altar",
+            NodeType.Cursed      => "porcelain_mask",
             _                    => ""
         };
 
@@ -694,6 +702,7 @@ namespace SudokuRoguelike.UI
             NodeType.Start => "Start", NodeType.Puzzle => "Puzzle", NodeType.ElitePuzzle => "Elite",
             NodeType.Shop => "Shop", NodeType.Rest => "Rest", NodeType.Relic => "Relic",
             NodeType.Event => "Event", NodeType.PreBoss => "Elite", NodeType.Boss => "Boss Gate",
+            NodeType.Cursed => "Cursed",
             _ => "?"
         };
 
@@ -1277,6 +1286,8 @@ namespace SudokuRoguelike.UI
 
             EnsureFloorModBanner();
             EnsureModifierInfoBox();
+            EnsureComboCounter();
+            EnsurePassiveLabel();
             EnsureBagPanel();
             RefreshBag();
             if (_bagHighlightEndTime > 0f && Time.time > _bagHighlightEndTime)
@@ -1394,6 +1405,59 @@ namespace SudokuRoguelike.UI
             }
         }
 
+        private void EnsureComboCounter()
+        {
+            var run = _map?.Run;
+            if (run?.State == null || _sudokuPanel == null) return;
+
+            if (_comboText == null)
+            {
+                var go = new GameObject("ComboCounter", typeof(RectTransform));
+                go.transform.SetParent(_sudokuPanel.transform, false);
+                var rt = go.GetComponent<RectTransform>();
+                rt.anchorMin = new Vector2(0.74f, 0.28f);
+                rt.anchorMax = new Vector2(0.97f, 0.35f);
+                rt.offsetMin = Vector2.zero;
+                rt.offsetMax = Vector2.zero;
+                _comboText = CreateText(go.transform, "ComboText", "", 13, TextAnchor.MiddleCenter,
+                    new Color(0.98f, 0.83f, 0.26f, 1f));
+            }
+
+            var streak = run.State.ComboStreak;
+            if (streak >= 2)
+            {
+                _comboText.text = $"Combo ×{streak}!";
+                _comboText.gameObject.SetActive(true);
+            }
+            else
+            {
+                _comboText.gameObject.SetActive(false);
+            }
+        }
+
+        private void EnsurePassiveLabel()
+        {
+            var run = _map?.Run;
+            if (run?.State == null || _sudokuPanel == null) return;
+
+            if (_passiveText == null)
+            {
+                var go = new GameObject("PassiveLabel", typeof(RectTransform));
+                go.transform.SetParent(_sudokuPanel.transform, false);
+                var rt = go.GetComponent<RectTransform>();
+                rt.anchorMin = new Vector2(0.01f, 0.01f);
+                rt.anchorMax = new Vector2(0.46f, 0.06f);
+                rt.offsetMin = Vector2.zero;
+                rt.offsetMax = Vector2.zero;
+                _passiveText = CreateText(go.transform, "PassiveText", "", 9, TextAnchor.MiddleLeft,
+                    new Color(0.78f, 0.85f, 0.75f, 0.80f));
+                _passiveText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            }
+
+            var def = SudokuRoguelike.Classes.ClassCatalog.GetDefinition(run.State.ClassId);
+            _passiveText.text = def != null ? $"Passive: {def.PassiveDescription}" : "";
+        }
+
         // ────────────────────── Completion / Game Over ──────────────────────
 
         private void HandleCompletion()
@@ -1488,6 +1552,14 @@ namespace SudokuRoguelike.UI
                 else
                 {
                     sb.AppendLine($"{classId}  Level MAX  (Lv 40)");
+                }
+
+                // Run score
+                if (result != null && result.RunScore > 0)
+                {
+                    sb.AppendLine();
+                    var presenter = new EndScreenPresenter();
+                    sb.AppendLine(presenter.BuildRunScoreBreakdown(result));
                 }
 
                 _gameOverDetails.text = sb.ToString().TrimEnd();
@@ -1880,12 +1952,118 @@ namespace SudokuRoguelike.UI
 
         private void HandleRest()
         {
-            var s = _map?.Run?.State;
-            if (s == null) return;
-            var heal = Mathf.Max(1, Mathf.CeilToInt(s.MaxHP * 0.10f));
-            var before = s.CurrentHP;
-            s.CurrentHP = Mathf.Min(s.MaxHP, s.CurrentHP + heal);
-            _pathMessage = $"Rested. HP {before} -> {s.CurrentHP}";
+            var run = _map?.Run;
+            if (run?.State == null) return;
+            ShowRestChoicePanel(run);
+        }
+
+        private void ShowRestChoicePanel(RunDirector run)
+        {
+            if (_pathPanel == null) return;
+            var panel = new GameObject("RestChoicePanel", typeof(RectTransform));
+            panel.transform.SetParent(_pathPanel.transform, false);
+            var rt = panel.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.20f, 0.25f);
+            rt.anchorMax = new Vector2(0.80f, 0.75f);
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+            var bg = panel.AddComponent<Image>();
+            bg.color = new Color(0.08f, 0.12f, 0.10f, 0.95f);
+
+            CreateText(panel.transform, "Title", "Rest — Choose one:", 16, TextAnchor.UpperCenter,
+                new Color(0.98f, 0.83f, 0.26f, 1f)).rectTransform.SetRect(0.05f, 0.75f, 0.95f, 0.95f);
+
+            var healAmt = run.GetRestHealAmount();
+            var btnHeal = CreatePanelButton(panel.transform, "BtnHeal",
+                new Vector2(0.05f, 0.52f), new Vector2(0.95f, 0.70f),
+                $"Heal +{healAmt} HP");
+            btnHeal.onClick.AddListener(() =>
+            {
+                run.AcceptRestHeal();
+                _pathMessage = $"Rested. +{healAmt} HP";
+                Destroy(panel);
+            });
+
+            var btnPencil = CreatePanelButton(panel.transform, "BtnPencil",
+                new Vector2(0.05f, 0.30f), new Vector2(0.95f, 0.48f),
+                "+4 Pencil Marks");
+            btnPencil.onClick.AddListener(() =>
+            {
+                run.AcceptRestPencilBoost();
+                _pathMessage = "Rested. +4 Pencil";
+                Destroy(panel);
+            });
+
+            var btnReroll = CreatePanelButton(panel.transform, "BtnReroll",
+                new Vector2(0.05f, 0.08f), new Vector2(0.95f, 0.26f),
+                "+1 Shop Reroll Token");
+            btnReroll.onClick.AddListener(() =>
+            {
+                run.AcceptRestRerollShop();
+                _pathMessage = "Rested. +1 Reroll";
+                Destroy(panel);
+            });
+        }
+
+        private void HandleCursedNode(RunNode node)
+        {
+            var run = _map?.Run;
+            if (run == null) return;
+            ShowPath();
+
+            // Build a preview of what the cursed level would look like
+            var cursedConfig = run.BuildCursedLevelConfig(node.Index);
+            var extraMod = cursedConfig.ActiveModifiers.Count > 0
+                ? FormatModName(cursedConfig.ActiveModifiers[cursedConfig.ActiveModifiers.Count - 1])
+                : "?";
+
+            if (_pathPanel == null) return;
+            var panel = new GameObject("CursedChoicePanel", typeof(RectTransform));
+            panel.transform.SetParent(_pathPanel.transform, false);
+            var rt = panel.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.15f, 0.25f);
+            rt.anchorMax = new Vector2(0.85f, 0.75f);
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+            panel.AddComponent<Image>().color = new Color(0.18f, 0.06f, 0.06f, 0.96f);
+
+            CreateText(panel.transform, "Title", "Cursed Tile!", 18, TextAnchor.UpperCenter,
+                new Color(0.90f, 0.30f, 0.20f, 1f)).rectTransform.SetRect(0.05f, 0.80f, 0.95f, 0.97f);
+
+            CreateText(panel.transform, "Desc",
+                $"Extra modifier: {extraMod}\n+50% Gold & XP if you clear it.\nFail to complete? Normal penalties apply.",
+                12, TextAnchor.MiddleCenter, new Color(0.95f, 0.85f, 0.75f, 1f))
+                .rectTransform.SetRect(0.05f, 0.45f, 0.95f, 0.78f);
+
+            var btnAccept = CreatePanelButton(panel.transform, "BtnAccept",
+                new Vector2(0.05f, 0.20f), new Vector2(0.45f, 0.40f), "Accept Curse");
+            btnAccept.onClick.AddListener(() =>
+            {
+                run.StartLevel(cursedConfig);
+                _completionHandled = false;
+                _overlaysBuilt = false;
+                _selectedRow = -1; _selectedCol = -1; _highlightValue = 0;
+                SetStatus($"Cursed {cursedConfig.BoardSize}×{cursedConfig.BoardSize} {cursedConfig.Stars}★ +{extraMod}");
+                Destroy(panel);
+                ShowSudoku();
+                RebuildBoard();
+            });
+
+            var btnDecline = CreatePanelButton(panel.transform, "BtnDecline",
+                new Vector2(0.55f, 0.20f), new Vector2(0.95f, 0.40f), "Decline");
+            btnDecline.onClick.AddListener(() =>
+            {
+                // Fall back to a normal puzzle
+                var normalConfig = run.BuildLevelConfig(false, false, node.Index);
+                run.StartLevel(normalConfig);
+                _completionHandled = false;
+                _overlaysBuilt = false;
+                _selectedRow = -1; _selectedCol = -1; _highlightValue = 0;
+                SetStatus($"{normalConfig.BoardSize}×{normalConfig.BoardSize} {normalConfig.Stars}★");
+                Destroy(panel);
+                ShowSudoku();
+                RebuildBoard();
+            });
         }
 
         private void HandleEvent()
@@ -1904,11 +2082,58 @@ namespace SudokuRoguelike.UI
         {
             var run = _map?.Run;
             if (run == null) return;
-            var relic = run.RollRelicReward();
-            if (relic == null) return;
-            run.AcceptRelic(relic);
-            new ProfileService(new SaveFileService()).RecordRelicDiscovery(relic.Id);
-            _pathMessage = $"Relic: {relic.Id}";
+            var choices = run.RollRelicChoices(3);
+            if (choices == null || choices.Count == 0) return;
+            ShowRelicChoicePanel(run, choices);
+        }
+
+        private void ShowRelicChoicePanel(RunDirector run, List<RelicInstance> choices)
+        {
+            if (_pathPanel == null) return;
+            var panel = new GameObject("RelicChoicePanel", typeof(RectTransform));
+            panel.transform.SetParent(_pathPanel.transform, false);
+            var rt = panel.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.05f, 0.15f);
+            rt.anchorMax = new Vector2(0.95f, 0.85f);
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+            panel.AddComponent<Image>().color = new Color(0.08f, 0.12f, 0.10f, 0.95f);
+
+            CreateText(panel.transform, "Title", "Relic Node — Choose one:", 16, TextAnchor.UpperCenter,
+                new Color(0.98f, 0.83f, 0.26f, 1f)).rectTransform.SetRect(0.05f, 0.88f, 0.95f, 0.98f);
+
+            var colW = 1f / choices.Count;
+            for (var i = 0; i < choices.Count; i++)
+            {
+                var relic = choices[i];
+                var xMin = 0.04f + i * colW;
+                var xMax = xMin + colW - 0.04f;
+
+                var relicDesc = $"{RelicService.GetRelicName(relic.Id)}\n" +
+                                $"[{relic.Tier}]\n\n" +
+                                RelicService.GetRelicDescription(relic.Id);
+
+                var btn = CreatePanelButton(panel.transform, $"RelicBtn_{i}",
+                    new Vector2(xMin, 0.10f), new Vector2(xMax, 0.82f), relicDesc);
+                SetButtonIcon(btn, RelicService.GetIconName(relic.Id));
+                var idx = i;
+                btn.onClick.AddListener(() =>
+                {
+                    run.AcceptRelicChoice(idx);
+                    new ProfileService(new SaveFileService()).RecordRelicDiscovery(relic.Id);
+                    _pathMessage = $"Relic: {RelicService.GetRelicName(relic.Id)}";
+                    Destroy(panel);
+                });
+            }
+
+            // Skip / Leave button
+            var skip = CreatePanelButton(panel.transform, "BtnSkip",
+                new Vector2(0.35f, 0.01f), new Vector2(0.65f, 0.08f), "Leave");
+            skip.onClick.AddListener(() =>
+            {
+                _pathMessage = "Left the relic.";
+                Destroy(panel);
+            });
         }
 
         // ────────────────────── Boss gate ──────────────────────

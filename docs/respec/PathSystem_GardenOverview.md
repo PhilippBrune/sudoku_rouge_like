@@ -1,11 +1,15 @@
 # Path System & Garden Overview
 
-**Version:** 1.0 | **Date:** 2026-03-21 | **Status:** implemented
+**Version:** 1.4 | **Date:** 2026-04-07 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.4 | 2026-04-07 | implemented | Added Cursed node type (opt-in risk/reward encounter) and Positive Floor Effect system (one random floor-wide bonus per floor). Cursed nodes appear at low-medium weight on all routes. Player chooses Accept or Decline; Accept applies ×1.5 gold+XP multipliers and one extra random modifier. Four positive floor effects: Bounty (+40% gold), LuckyItems (+1 reward slot), PencilRefill (+2 pencil per puzzle), HealingPath (+1 HP per mistake-free puzzle). |
+| 1.3 | 2026-03-29 | implemented | Per-route lane boxes (Slay the Spire 2 style): single PathBg replaced with two separate lane background boxes — CalmLane (cool floor-tinted, blue-shifted) and RiskLane (warm, orange-shifted). Each box is sized to tightly fit its route's nodes with 40 px padding. Lane labels "Calm Path" / "Risk Path" shown in top-left corner of each box. Start and Boss nodes remain outside the lane boxes. `DrawRouteLane()` helper added to `PrototypeRunScreenController`. |
+| 1.2 | 2026-03-29 | implemented | Garden path visual rework: path nodes and edges are now drawn inside a floor-colored background box (PathBg). PathBg anchors 2–98% of the PathOverlay area; color = floorTint×0.28 at alpha 0.82 with a brighter floor-tinted Outline (effectColor = floorTint×0.85, alpha 0.70). Edge color brightened to floorTint×0.75. Fresh non-tutorial runs auto-start the first available puzzle node via ApplyResumeState (detects empty NodePath + no CurrentBoard, calls TryAdvanceToNodeAndStartPuzzle). |
+| 1.1 | 2026-03-23 | implemented | Floor modifier system: floors 2–5 apply persistent modifiers to all puzzles. Boss choice pool excludes active floor modifiers. Updated Boss Encounter section and added Floor Modifier Activation subsection. Implemented via RollFloorModifiers, BuildEligiblePool, multi-select boss gate UI. |
 | 1.0 | 2026-03-21 | implemented | Initial specification |
 
 ---
@@ -145,28 +149,77 @@ All tiles show:
 - Shows board size and star rating.
 - Completing the Boss Gate puzzle advances the player to the next floor (or ends the run on Floor 5).
 
+### Cursed
+- An opt-in risk/reward node. The player is presented with an **Accept / Decline** panel before the puzzle loads.
+- **Accept**: puzzle runs with `IsCursed = true` — applies **×1.5 gold multiplier** and **×1.5 XP multiplier**, and adds **one extra random modifier** (drawn from the 15-modifier pool, stacked on any existing floor modifiers).
+- **Decline**: a standard puzzle of the same board size/star rating starts with no extra modifiers or multipliers.
+- No board size or star rating is shown on the tile card before the choice is made (tile just shows the "Cursed" label and icon).
+- Accepted cursed puzzles are tracked for the run score breakdown (`CursedPuzzlesAccepted`).
+- **Roll weights** (in `RunGraphService`): early floors weight 2, mid floors 4–6, late floors 6–8, proportionally adjusted within the node-type pool.
+
+---
+
+## Positive Floor Effect
+
+Each floor rolls **one random positive effect** (or None) when the player enters it. The effect applies to **all puzzles on that floor** — normal, elite, and boss.
+
+| Effect | Description |
+|--------|-------------|
+| `None` | No bonus effect this floor |
+| `Bounty` | All completed puzzles grant **+40% gold** |
+| `LuckyItems` | All item reward screens get **+1 extra slot** |
+| `PencilRefill` | Each completed puzzle restores **+2 Pencil** |
+| `HealingPath` | Each mistake-free puzzle restores **+1 HP** |
+
+- Effect is rolled seeded from `RunState.Seed + floorIndex` for determinism.
+- Stored in `RunState.HasPositiveFloorEffect` + `ActivePositiveFloorEffect`.
+- Shown on the path screen as a banner (e.g. `"★ Bounty Floor (+40% gold)"`), returned by `RunMapController.GetPositiveFloorEffectLabel()`.
+- `None` has equal probability to each named effect (i.e. 20% each).
+
+---
+
+## Floor Modifier Activation
+
+Starting from Floor 2, modifiers are applied to **all puzzles** on the floor (normal, elite, and boss). These are rolled automatically when the player enters the floor and persist until the floor is cleared.
+
+| Floor | Floor Modifiers | Effect |
+|:---:|:---:|--------|
+| 1 | 0 | No floor modifiers — gentle introduction |
+| 2 | 1 | One modifier active on all puzzles |
+| 3 | 2 | Two modifiers on all puzzles |
+| 4 | 3 | Three modifiers on all puzzles |
+| 5 | 4 | Four modifiers on all puzzles |
+
+Formula: Floor N has **N−1** floor modifiers.
+
+- Rolled from the full pool of 15 with equal probability.
+- Board size restrictions apply (German Whispers and Killer Cages require ≥ 7×7).
+- Floor modifiers from previous floors do not exclude the current floor's pool.
+- Stored in `RunState.ActiveFloorModifiers`; persisted in save data.
+- A **floor modifier banner** is shown on floor entry listing the new modifiers.
+
 ---
 
 ## Boss Encounter: Modifier Choice
 
-When the player reaches the Boss Gate, a **modifier selection screen** appears before the puzzle loads.
+When the player reaches the Boss Gate, a **modifier selection screen** appears before the puzzle loads. Boss-chosen modifiers are **stacked on top of** the floor modifiers.
 
 ### Modifier Pool
 - **All 15 modifiers are eligible at every floor** — there is no floor-based restriction.
-- The random draw is uniform across the full pool, excluding modifiers already active from previous floors in the same run.
-- Only the option count and required choice count scale with floor (see table below).
+- The random draw is uniform across the full pool, **excluding modifiers already active as floor modifiers** (no duplicates within a floor).
+- Option count and required choice count scale with floor (see table below).
 
 ### Choice Scaling by Floor
 
-| Floor | Options Shown | Player Chooses | Active in Puzzle |
-|-------|:---:|:---:|:---:|
-| 1     | 2   | 1   | 1 modifier  |
-| 2     | 3   | 2   | 2 modifiers |
-| 3     | 4   | 3   | 3 modifiers |
-| 4     | 5   | 4   | 4 modifiers |
-| 5     | 6   | 5   | 5 modifiers |
+| Floor | Boss Options Shown | Player Picks | Floor Mods + Boss Mods = Total Active |
+|:---:|:---:|:---:|:---:|
+| 1 | 3 | 2 | 0 + 2 = **2** |
+| 2 | 3 | 2 | 1 + 2 = **3** |
+| 3 | 4 | 3 | 2 + 3 = **5** |
+| 4 | 5 | 4 | 3 + 4 = **7** |
+| 5 | 6 | 5 | 4 + 5 = **9** |
 
-All chosen modifiers are applied simultaneously to the boss puzzle.
+Boss choice formula: Floor N offers **N+1** options (min 3), player picks **N** (min 2). All floor modifiers + boss-chosen modifiers are applied simultaneously to the boss puzzle.
 
 ### Unknown Modifiers
 - If the player has **never encountered** a modifier in a previous run, its option card displays as **"???"** with the description hidden.
@@ -181,11 +234,11 @@ Each modifier option card shows:
 
 The player must confirm their selection before the boss puzzle loads. **Once confirmed, the selection is locked — there is no review step or take-back.**
 
-### Boss Modifier Description Box (In-Puzzle)
-- During a boss puzzle, a **description box** is shown directly **under the "Mode" button** on the numpad panel (anchored at `(0.74, 0.08)–(0.97, 0.27)`).
-- The box lists the name and short rule description for each active modifier.
-- **Visibility**: the box is hidden (`SetActive(false)`) when no modifiers are active (non-boss puzzles). It is shown (`SetActive(true)`) only when the current puzzle has one or more active modifiers.
-- **Update behaviour**: the description text refreshes on every call to `BuildOrRefreshSudokuBoard`, not just when overlays are first built. This ensures it updates correctly when a new boss puzzle loads with different modifiers.
+### Modifier Description Box (In-Puzzle)
+- A **description box** is shown directly **under the "Mode" button** on the numpad panel (anchored at `(0.74, 0.08)–(0.97, 0.27)`).
+- The box lists the name and short rule description for each active modifier (floor modifiers + boss modifiers if applicable).
+- **Visibility**: the box is hidden (`SetActive(false)`) when no modifiers are active (Floor 1 non-boss puzzles). It is shown (`SetActive(true)`) whenever the current puzzle has one or more active modifiers — including floor-modified puzzles on Floors 2–5.
+- **Update behaviour**: the description text refreshes on every call to `BuildOrRefreshSudokuBoard`, not just when overlays are first built. This ensures it updates correctly when a new puzzle loads with different modifiers.
 
 ### Boss Modifier Overlay Generation
 - Some modifiers (e.g. RatioKropki, Thermo, ArrowSums) require specific numeric relationships in the board solution. The overlay generator may fail to place geometry if the solution doesn't support the constraint.

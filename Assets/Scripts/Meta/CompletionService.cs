@@ -1,62 +1,52 @@
 using SudokuRoguelike.Core;
-using SudokuRoguelike.Economy;
+using UnityEngine;
 
 namespace SudokuRoguelike.Meta
 {
-    /// <summary>
-    /// Evaluates 4 global completion checks per MetaProgressionSystem spec.
-    /// Each check is worth 25% of global completion.
-    /// </summary>
     public sealed class CompletionService
     {
-        // 5 board sizes (5-9) × 6 star levels (1-6) = 30 combos
-        private const int TotalSizeStarCombos = 30;
-        private const int TotalModifiers = 15;
-        private const int TotalClasses = 8;
-        private const int RequiredClassLevel = 30;
-
-        public void Recalculate(CompletionTrackerState completion, MetaProgressionState meta,
-            MasteryAchievementState mastery, ProfileStats stats)
+        public void RecordPuzzleCompletion(CompletionTrackerState state, int boardSize, int stars)
         {
-            var checks = 4f;
-            var score = 0f;
-
-            // Check 1: All board sizes × all stars cleared (30 combos)
-            completion.AllSizesAllStarsCleared = stats.SizeStarCombosCleared >= TotalSizeStarCombos;
-
-            // Check 2: All 15 modifiers cleared at least once
-            completion.AllModifiersCleared = mastery.BossClearsByModifier.Count >= TotalModifiers;
-
-            // Check 3: All 8 classes at Level 30+
-            completion.AllClassesLevelThirty = CheckAllClassesAtLevel(meta, RequiredClassLevel);
-
-            // Check 4: All relics discovered
-            var totalRelics = System.Enum.GetValues(typeof(RelicId)).Length;
-            completion.AllRelicsUnlocked = meta.DiscoveredRelics.Count >= totalRelics;
-
-            if (completion.AllSizesAllStarsCleared) score += 1f;
-            if (completion.AllModifiersCleared) score += 1f;
-            if (completion.AllClassesLevelThirty) score += 1f;
-            if (completion.AllRelicsUnlocked) score += 1f;
-
-            completion.GlobalCompletionPercent = score / checks;
+            if (state == null) return;
+            var key = $"{boardSize}x{boardSize}_s{stars}";
+            if (!state.ClearedSizeStarCombos.Contains(key))
+                state.ClearedSizeStarCombos.Add(key);
         }
 
-        private static bool CheckAllClassesAtLevel(MetaProgressionState meta, int requiredLevel)
+        public void RecordModifierCleared(CompletionTrackerState state, BossModifierId modifier)
         {
-            if (meta.GardenProgression?.ClassEntries == null)
-                return false;
+            if (state == null) return;
+            if (!state.ClearedModifiers.Contains(modifier))
+                state.ClearedModifiers.Add(modifier);
+        }
 
-            var classesAtLevel = 0;
-            for (var i = 0; i < meta.GardenProgression.ClassEntries.Count; i++)
-            {
-                var entry = meta.GardenProgression.ClassEntries[i];
-                var (level, _, _) = XpService.DeriveLevel(entry.TotalXp);
-                if (level >= requiredLevel)
-                    classesAtLevel++;
-            }
+        public void RecordClassLevel30(CompletionTrackerState state, ClassId classId, int level)
+        {
+            if (state == null || level < 30) return;
+            if (!state.ClassesAtLevel30.Contains(classId))
+                state.ClassesAtLevel30.Add(classId);
+        }
 
-            return classesAtLevel >= TotalClasses;
+        public float GetCompletionPercent(CompletionTrackerState state)
+        {
+            if (state == null) return 0f;
+
+            // 4 categories, each worth 25%
+            const float categoryWeight = 0.25f;
+
+            // Category A: 30 size×star combos (5 sizes × 6 stars)
+            var comboPercent = Mathf.Clamp01(state.ClearedSizeStarCombos.Count / 30f);
+
+            // Category B: all 15 modifiers cleared
+            var modPercent = Mathf.Clamp01(state.ClearedModifiers.Count / 15f);
+
+            // Category C: all 8 classes at L30+
+            var classPercent = Mathf.Clamp01(state.ClassesAtLevel30.Count / 8f);
+
+            // Category D: all relics discovered
+            var relicPercent = state.AllRelicsDiscovered ? 1f : 0f;
+
+            return (comboPercent + modPercent + classPercent + relicPercent) * categoryWeight;
         }
     }
 }

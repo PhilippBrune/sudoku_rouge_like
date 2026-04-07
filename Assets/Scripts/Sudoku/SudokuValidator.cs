@@ -1,112 +1,55 @@
-using System.Collections.Generic;
-
 namespace SudokuRoguelike.Sudoku
 {
     public static class SudokuValidator
     {
-        public static bool IsMoveValid(SudokuBoard board, int row, int col, int value, SudokuConstraintEngine extraConstraints = null)
+        public static bool IsMoveValid(SudokuBoard board, int row, int col, int value)
         {
-            if (value < 1 || value > board.Size)
-            {
-                return false;
-            }
+            var size = board.Size;
 
-            if (board.IsGiven(row, col))
-            {
-                return false;
-            }
+            for (var c = 0; c < size; c++)
+                if (c != col && board.Cells[row, c] == value) return false;
 
-            if (!IsRowValid(board, row, col, value))
-            {
-                return false;
-            }
+            for (var r = 0; r < size; r++)
+                if (r != row && board.Cells[r, col] == value) return false;
 
-            if (!IsColumnValid(board, row, col, value))
-            {
-                return false;
-            }
-
-            if (!IsRegionValid(board, row, col, value))
-            {
-                return false;
-            }
-
-            return extraConstraints == null || extraConstraints.ValidateAll(board, row, col, value);
-        }
-
-        public static List<int> GetCandidates(SudokuBoard board, int row, int col, SudokuConstraintEngine extraConstraints = null)
-        {
-            var candidates = new List<int>();
-
-            if (board.GetCell(row, col) != 0)
-            {
-                return candidates;
-            }
-
-            for (var value = 1; value <= board.Size; value++)
-            {
-                if (IsMoveValid(board, row, col, value, extraConstraints))
-                {
-                    candidates.Add(value);
-                }
-            }
-
-            return candidates;
-        }
-
-        private static bool IsRowValid(SudokuBoard board, int row, int col, int value)
-        {
-            for (var currentCol = 0; currentCol < board.Size; currentCol++)
-            {
-                if (currentCol == col)
-                {
-                    continue;
-                }
-
-                if (board.GetCell(row, currentCol) == value)
-                {
+            var regionId = board.RegionMap[row, col];
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
+                if ((r != row || c != col) && board.RegionMap[r, c] == regionId && board.Cells[r, c] == value)
                     return false;
-                }
-            }
 
             return true;
         }
 
-        private static bool IsColumnValid(SudokuBoard board, int row, int col, int value)
+        public static bool IsValidBoard(SudokuBoard board)
         {
-            for (var currentRow = 0; currentRow < board.Size; currentRow++)
+            var size = board.Size;
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
             {
-                if (currentRow == row)
-                {
-                    continue;
-                }
+                var v = board.Solution[r, c];
+                if (v < 1 || v > size) return false;
+            }
 
-                if (board.GetCell(currentRow, col) == value)
+            for (var r = 0; r < size; r++)
+            {
+                var seen = new bool[size + 1];
+                for (var c = 0; c < size; c++)
                 {
-                    return false;
+                    var v = board.Solution[r, c];
+                    if (seen[v]) return false;
+                    seen[v] = true;
                 }
             }
 
-            return true;
-        }
-
-        private static bool IsRegionValid(SudokuBoard board, int row, int col, int value)
-        {
-            var targetRegion = board.RegionMap[row, col];
-
-            for (var currentRow = 0; currentRow < board.Size; currentRow++)
+            for (var c = 0; c < size; c++)
             {
-                for (var currentCol = 0; currentCol < board.Size; currentCol++)
+                var seen = new bool[size + 1];
+                for (var r = 0; r < size; r++)
                 {
-                    if (currentRow == row && currentCol == col)
-                    {
-                        continue;
-                    }
-
-                    if (board.RegionMap[currentRow, currentCol] == targetRegion && board.GetCell(currentRow, currentCol) == value)
-                    {
-                        return false;
-                    }
+                    var v = board.Solution[r, c];
+                    if (seen[v]) return false;
+                    seen[v] = true;
                 }
             }
 

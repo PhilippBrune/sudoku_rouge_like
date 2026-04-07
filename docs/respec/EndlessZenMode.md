@@ -6,6 +6,7 @@
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.1 | 2026-03-23 | implemented | Depth-based star and modifier formulas, class base HP instead of 999, HighestEndlessDepth tracking in ProfileStats, modifier pool from all 15 modifiers |
 | 1.0 | 2026-03-21 | implemented | Initial specification |
 
 ---

@@ -1,11 +1,21 @@
 # Unity Implementation Specification
 
-**Version:** 1.3 | **Date:** 2026-03-22 | **Status:** implemented
+**Version:** 2.3 | **Date:** 2026-03-29 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.3 | 2026-03-29 | implemented | Class select confirm button renamed "Start Run" (was "Continue") — always starts fresh run. Garden path redesigned: per-route lane boxes (CalmLane cool teal-tinted, RiskLane warm orange-red) replace single PathBg; each box sized tightly to its nodes with 40 px padding + "Calm Path"/"Risk Path" label. Item Codex population wired: ProfileService.RecordItemDiscovery + RecordRelicDiscovery called on reward claim, shop purchase, and relic tile pickup. |
+| 2.2 | 2026-03-29 | implemented | Class select layout reworked again: buttons 0.08 tall with 0.10 spacing (rows y=0.49–0.87), InfoBg y=0.19–0.48 with RectMask2D clipping (height 0.29, font 11, lineSpacing 1.1). Allow Irregular toggle exact match to class button dimensions (x=0.10–0.46, y=0.10–0.18, 0.08 tall). Game over panel redesigned: larger panel (y=0.18–0.82), summaryText (font 34 bold, dynamic color gold/red) replaces hardcoded title, detailsText covers y=0.20–0.82 with font 14 — shows XP earned, ASCII progress bar [===---] X/Y XP, level-up notification. Tutorial saves excluded: RunAutoSaveCoordinator.Save skips TutorialMode runs; SaveFileService.HasActiveRun excludes TutorialMode ActiveRunState — Resume Game stays greyed out after tutorial sessions. |
+| 2.1 | 2026-03-29 | implemented | Class select panel reworked: buttons shifted up (yMax=0.90-row×0.11), InfoBg moved to y=0.22–0.47 (no longer clips Confirm button), Allow Irregular toggle resized to match class button width (x=0.10–0.46) and defaults to false. Class info box now shows full 12-milestone unlock table (color-coded: gold=achieved, grey=future) and unlock condition progress (e.g. "Bosses defeated: 3/10"). Game over screen shows level-up notification and post-run XP progress (LvN X/Y XP). Tutorial Save&Quit button renamed "Quit" when in tutorial mode (no save occurs). Garden path wrapped in floor-colored background box (PathBg anchored 2–98%, dark floor tint + floor-tinted outline). Accessibility toggles now functional: OptionsController.SetColorblindMode/SetHighContrast/SetReduceMotion/SetAltSymbols call NotifyAccessibilityChanged on PrototypeRunScreenController, which refreshes AccessibilityService, rebuilds overlays, and notifies AmbientParticleController. Screen shake disabled when ReduceMotion is on. High-contrast increases overlay spine alpha×1.4 and line width×1.5. Fresh non-tutorial runs auto-start first available puzzle node (ApplyResumeState detects empty NodePath + no CurrentBoard, calls TryAdvanceToNodeAndStartPuzzle on first reachable node). Ring sprite inner radius 0.68→0.82 (thinner ring on line circles). |
+| 2.0 | 2026-03-29 | implemented | Bag panel added to in-run UI (bottom-left, x=0.01–0.21, y=0.03–0.74): shows held items (3 slots) + relic slot with icon + name. Click-to-use wired for all 18 item types. Relic slot click shows description in status bar. Umbrella charge tracking, fog-disable counter, swap mode (Silk Fan), and mistake-row tracking for Ginkgo Leaf all implemented in PrototypeRunScreenController. Class select info panel expanded: shows Level N, XP X/Y, "Next: unlock at Level N" line. Per-level unlock table added to ClassCatalog (all 8 classes, 12 milestones each L3–L40). Class unlock pipeline fixed: PersistResult now delegates to ProfileService.RecordRunAndGetNewUnlocks (XP commit + ClassUnlockService.CheckNewUnlocks + stats + save). |
+| 1.9 | 2026-03-28 | review | Tutorial modifier toggle panel made pool-driven: toggle count scales with the active modifier pool rather than being hardcoded to 15. Tutorial Mode table updated to reference extended library. TutorialSetup screen description updated. |
+| 1.8 | 2026-03-28 | implemented | German class names added to LocalizationService (all 8 classes). Class select buttons and info text use `T(def.Name)` for live localization. Status messages (no run, class locked) use `T()`. All dropdown templates sized via `FitDropdownToItems()` to show all options without scrolling. Tutorial panel resized (0.05–0.95) with Resource Mode section (Free toggle / Class-Based toggle + class dropdown). `TutorialMenuController.ConfigureResourceMode()` method wires the new UI. |
+| 1.7 | 2026-03-28 | implemented | Submenu panels: all panels are full-screen opaque overlays with inner card matching main menu dimensions (0.28–0.72, 0.08–0.92). Game flow Start→Class Select→Garden Path: BindRunToMap no longer calls StartLevel so path overview shows first. Toggle label text changed to dark (BtnTextColor) — was unreadable cream on cream. 7-star difficulty gates Start Puzzle unless ≥1 modifier enabled. Locked class buttons greyed, info box shows unlock condition. Hint/Undo removed; Q for Save & Quit. |
+| 1.6 | 2026-03-24 | implemented | Game launch fix: GameBootstrap.BindRunToMap() wires RunDirector to RunMapController and starts first level. LocalizationService (EN/DE) with ForceRebuild on language change. Application.runInBackground=true, MuteWhenUnfocused option with OnApplicationFocus handler. Keybindings display in Options panel. Class info panel repositioned with dark background between buttons and bottom controls. |
+| 1.5 | 2026-03-24 | implemented | Audio wiring: GameBootstrap creates MenuMusicController + RunAudioController in EnsureSceneInfrastructure; menu music plays/stops on screen transitions. FloorMusicGenerator loop durations reduced to 30-48s. Options panel: language dropdown, fullscreen toggle, UI volume slider, controls placeholder. Tutorial: 7-star option with % labels. Meta Progression: shows all 8 classes. Class Select: highlight + attribute display. Resume button gated by save existence. |
+| 1.4 | 2026-03-23 | implemented | Floor modifier system: updated BossService, RunDirector flow, RunMapController, PrototypeRunScreenController, and save/resume to reflect floor-wide modifiers on floors 2–5 |
 | 1.3 | 2026-03-22 | implemented | All architecture verified implemented: single-scene, ScreenManager, GameBootstrap entry point, panel groups |
 | 1.2 | 2026-03-22 | review | Single-scene architecture: replaced two-scene setup with ScreenManager panel groups, eliminated LaunchRequestContext static shuttle, GameBootstrap is now single entry point with direct launch methods |
 | 1.1 | 2026-03-22 | review | Resolved OPEN-A (package cleanup), OPEN-B (dead code removal), OPEN-C (PlayMode tests added) |
@@ -76,7 +86,7 @@ The game uses a **single scene** ("Game"). All UI is procedurally built in C# �
 
 | Component | Type | Role |
 |-----------|------|------|
-| GameBootstrap | MonoBehaviour | Single entry point — loads profile on `Start()`, shows menu, provides `LaunchRun()` / `LaunchTutorial()` / `LaunchResume()` / `ReturnToMenu()` / `ShowEndScreen()` methods |
+| GameBootstrap | MonoBehaviour | Single entry point — `EnsureSceneInfrastructure()` creates Camera, EventSystem, ScreenManager, blueprint builders, MenuMusicController, RunAudioController. `Start()` shows menu + plays menu music. `LaunchRun/Tutorial/Resume` stop menu music; `ReturnToMenu` restarts it. |
 | ScreenManager | MonoBehaviour | Manages three panel groups (`menuGroup`, `gameGroup`, `endScreenGroup`), fires `ScreenChanged` event |
 
 #### Menu Panel Group (active when `AppScreen.Menu`)
@@ -97,7 +107,7 @@ The game uses a **single scene** ("Game"). All UI is procedurally built in C# �
 |--------|-------------|---------|
 | MainMenu | App launch | Start Game, Resume Game, Tutorial, Game Modes, Items (Codex), Meta Progression, Options, Credits, Quit |
 | ClassSelect | Start Game button | 8 class cards (locked/unlocked), level display, XP text, passive description, irregular puzzles toggle |
-| TutorialSetup | Tutorial button | Board size dropdown, star slider, region dropdown, 15 modifier toggles, resource mode selector |
+| TutorialSetup | Tutorial button | Board size dropdown, star slider, region dropdown, modifier toggles (one per implemented modifier — currently 15, scales as extended library is integrated), resource mode selector |
 | TutorialProgress | Tab within Tutorial | 5×7 completion grid, modifier training list, aggregate % |
 | GameModes | Game Modes button | Spirit Trials (4 tiers) + Endless Zen (unlock gate) |
 | SpiritTrialsTierSelect | Spirit Trials | Tier buttons (Apprentice/Adept/Master/Grandmaster), item mode selector |
@@ -228,7 +238,7 @@ All services are plain C# classes instantiated by `RunDirector` (run-scoped) or 
 | `ShopService` | Economy | Shop inventory generation (3 items + optional relic), price scaling | [GoldEconomy](GoldEconomySystem.md) |
 | `XpService` | Economy | Per-tile XP calculation, XP curve, level derivation | [ClassXpProgression](ClassXpProgressionSystem.md) |
 | `FormulaService` | Economy | Gold reward formula, pencil buy cost, reroll cost | [GoldEconomy](GoldEconomySystem.md) |
-| `BossService` | Boss | Modifier pool rolling, choice generation, ModifierData catalog | [BossMechanics](BossMechanicsSystem.md) |
+| `BossService` | Boss | Floor modifier rolling (N−1 per floor), boss choice generation (pick N from N+1), ModifierData catalog | [BossMechanics](BossMechanicsSystem.md) |
 | `RouteService` | Route | Calm/Risk path generation, cross-link placement | [PathSystem](PathSystem_GardenOverview.md) |
 | `RunGraphService` | Run | 5-floor graph topology, node positioning, reachability | [PathSystem](PathSystem_GardenOverview.md) |
 | `RunArchetypeService` | Run | Run archetype scoring from relic/item/class usage | [GameDesignSpec](GameDesignSpec.md) |
@@ -552,7 +562,8 @@ After every run (win or lose), `ProfileService.PostRunUpdate()` executes 12 step
 | Board sizes | 5×5 through 9×9 (mixed per floor) |
 | Stars | 1–6★ (scaling with floor + class level) |
 | Region variants | 0–3 (unless irregular disabled → 0–1) |
-| Boss modifiers | 1 per boss (choice panel, scaling with floor) |
+| Floor modifiers | 0/1/2/3/4 per floor (floors 1–5), applied to all puzzles |
+| Boss modifiers | Pick 2/2/3/4/5 from 3/3/4/5/6 (floors 1–5), stacked on floor modifiers |
 | Items | Star-based reward slots after each puzzle |
 | Gold | Earned per puzzle, spent at shops |
 | XP | Earned per tile, committed at run end |
@@ -567,10 +578,17 @@ After every run (win or lose), `ProfileService.PostRunUpdate()` executes 12 step
 | Floors | 1 (single puzzle) |
 | Board sizes | 5×5 through 9×9 (player choice) |
 | Stars | 1–7★ (7★ requires modifier) |
-| Modifiers | Any of 15 (player toggle) |
+| Modifiers | Any modifier from the active implemented pool (player toggle). Currently 15; scales automatically as extended library modifiers are integrated. Board-size restrictions enforced per modifier. |
 | Items/Gold/XP/Relics | None |
 | Save/Resume | No |
 | Progression | Achievements only |
+
+**Tutorial modifier toggle panel design:**
+- The toggle list is **pool-driven** — `TutorialMenuController` queries the active modifier pool at build time and generates one toggle per entry.
+- Modifiers from the extended library are added to the panel as they become implemented; no manual UI count changes are required.
+- Each toggle shows the modifier name, its minimum board size, and a tooltip with the rule description.
+- If the player's selected board size is smaller than a modifier's minimum, that toggle is greyed out and auto-deselected.
+- Modifiers are grouped by category (Global/Negative, Line, Dot, Arithmetic, Cell-Level, Visibility) matching the category display in `BossMechanicsSystem.md`.
 
 ### Spirit Trials
 
@@ -726,7 +744,7 @@ Two methods available (player choice in Options):
 ### Music Playback Rules
 
 - Floor themes loop seamlessly (120–240s loops)
-- Boss modifier activation adds an intensity layer over the floor theme (additive, not replacement)
+- Modifier activation (floor or boss) adds an intensity layer over the floor theme (additive, not replacement)
 - Music ducks 20% during XP breakdown animation
 - Crossfade on floor transition: 800ms fade-out, 200ms silence, 800ms fade-in
 - Only one music track active at a time (plus optional boss layer)
@@ -1090,20 +1108,21 @@ Added assembly definitions (`Game.asmdef`, `Game.Editor.asmdef`) and 3 integrati
 
 ---
 
+---
+
+---
+
 ## Requirements Traceability
 
 <!-- AUTO-GENERATED by SPICE pipeline. Do not edit manually. -->
 
-| REQ-ID | Title | Linked Systems |
-|--------|-------|----------------|
-| REQ-GENERAL-002 | 1. "UnityVersionChecker | GameBootstrap" |
-| REQ-GENERAL-003 | 2. "RenderPipelineConfiguration | ProjectConfigurationService" |
-| REQ-GENERAL-004 | 3. "RequiredPackagesInstallationChecker | GameBootstrap" |
-| REQ-GENERAL-005 | 4. "MenuTransitionFlowValidator | ScreenManager" |
-| REQ-GENERAL-006 | 5. "MainMenuButtonPressedValidator | MainMenuController" |
-| REQ-GENERAL-007 | 6. "GameModeSelectionFlowControl | PrototypeRunScreenController" |
-| REQ-GENERAL-008 | 7. "ClassSelectButtonPressedValidator | ClassSelectController" |
-| REQ-GENERAL-009 | 8. "OptionsMenuConfigurationControl | OptionsMenuController" |
-| REQ-GENERAL-010 | 9. "KeyboardAndMouseInputMappingValidator | PrototypeInputController" |
-| REQ-GENERAL-011 | 10. "GameStatePersistenceChecker | SaveLoadService" |
-| REQ-GENERAL-012 | 11. "EndScreenFlowControl | EndScreenPresenter". |
+| REQ-ID | Title | Code File | Verified Classes | Status |
+|--------|-------|-----------|-----------------|--------|
+| REQ-GENERAL-030 | TITLE | `—` | — | ✗ missing |
+| REQ-GENERAL-031 | Unity Version & Render Pipeline Configuration | `Assets\Scripts\UI\MainMenuBlueprintBuilder.cs` | — | ✓ verified |
+| REQ-GENERAL-032 | Required Packages Configuration | `—` | — | ✗ missing |
+| REQ-GENERAL-033 | Package Not Used Configuration | `Assets\Scripts\Run\SpiritTrialsService.cs` | — | ✓ verified |
+| REQ-GENERAL-034 | Serialization Configuration | `Assets\Scripts\Bootstrap\GameBootstrap.cs` | — | ✓ verified |
+| REQ-GENERAL-035 | Single Scene Configuration | `Assets\Scripts\Bootstrap\GameBootstrap.cs` | — | ✓ verified |
+| REQ-GENERAL-036 | Screen Structure Definition | `Assets\Scripts\Bootstrap\GameBootstrap.cs` | — | ✓ verified |
+| REQ-GENERAL-037 | Screen Transitions Configuration | `Assets\Scripts\Bootstrap\GameBootstrap.cs` | — | ✓ verified |

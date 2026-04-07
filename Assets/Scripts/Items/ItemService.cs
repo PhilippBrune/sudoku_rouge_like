@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using SudokuRoguelike.Core;
-using SudokuRoguelike.Sudoku;
 
 namespace SudokuRoguelike.Items
 {
@@ -14,283 +13,182 @@ namespace SudokuRoguelike.Items
             _random = new Random(seed);
         }
 
-        // ── Slot count by star rating ──
+        // ── Slot Rolling ──
 
-        public static int GetSlotCount(int stars, int bonusSlots)
+        public static int GetSlotCount(int stars, int bonusSlots = 0)
         {
             var baseSlots = stars switch
             {
-                <= 1 => 2,
+                1 => 2,
                 2 => 3,
                 3 => 3,
                 4 => 4,
-                _ => 5,
+                _ => 5
             };
             return baseSlots + bonusSlots;
         }
 
-        // ── Nothing chance by star rating ──
-
-        private static double GetNothingChance(int stars)
+        public static float GetNothingChance(int stars)
         {
             return stars switch
             {
-                <= 1 => 0.25,
-                2 => 0.22,
-                3 => 0.18,
-                4 => 0.15,
-                _ => 0.12
+                1 => 0.25f,
+                2 => 0.22f,
+                3 => 0.18f,
+                4 => 0.15f,
+                _ => 0.12f
             };
         }
 
-        // ── Roll reward slots ──
-
-        public List<ItemRollSlot> RollSlots(int stars, int classLevel, int bonusSlots)
+        public List<ItemInstance> RollSlots(int stars, int classLevel, int bonusSlots = 0)
         {
-            var slotCount = GetSlotCount(stars, bonusSlots);
+            var count = GetSlotCount(stars, bonusSlots);
             var nothingChance = GetNothingChance(stars);
+            var slots = new List<ItemInstance>(count);
+            var hasReal = false;
 
-            var slots = new List<ItemRollSlot>(slotCount);
-            for (var i = 0; i < slotCount; i++)
+            for (var i = 0; i < count; i++)
             {
-                if (_random.NextDouble() < nothingChance)
+                if (_random.NextDouble() < nothingChance && (hasReal || i < count - 1))
                 {
-                    slots.Add(new ItemRollSlot
-                    {
-                        IsNothing = true,
-                        IsLocked = false
-                    });
+                    slots.Add(null);
+                    continue;
                 }
-                else
+
+                var rarity = RollItemRarity(stars, classLevel);
+                var type = RollItemType(rarity, classLevel);
+                var item = new ItemInstance
                 {
-                    slots.Add(RollItemSlot(stars, classLevel));
-                }
+                    Id = Guid.NewGuid().ToString("N"),
+                    Type = type,
+                    Rarity = IsTiered(type) ? rarity : GetFixedRarity(type),
+                    Charges = 1
+                };
+                slots.Add(item);
+                hasReal = true;
             }
 
-            // Guarantee at least 1 real item
-            var hasItem = false;
-            for (var i = 0; i < slots.Count; i++)
+            if (!hasReal && slots.Count > 0)
             {
-                if (!slots[i].IsNothing) { hasItem = true; break; }
-            }
-            if (!hasItem && slots.Count > 0)
-            {
-                slots[0] = RollItemSlot(stars, classLevel);
+                var rarity = RollItemRarity(stars, classLevel);
+                var type = RollItemType(rarity, classLevel);
+                slots[slots.Count - 1] = new ItemInstance
+                {
+                    Id = Guid.NewGuid().ToString("N"),
+                    Type = type,
+                    Rarity = IsTiered(type) ? rarity : GetFixedRarity(type),
+                    Charges = 1
+                };
             }
 
             return slots;
         }
 
-        /// <summary>Reroll eligible slots (not locked, not Nothing).</summary>
-        public void RerollEligibleSlots(List<ItemRollSlot> slots, int stars, int classLevel)
+        // ── Rarity & Type ──
+
+        private ItemRarity RollItemRarity(int stars, int classLevel)
         {
-            for (var i = 0; i < slots.Count; i++)
+            var roll = _random.NextDouble();
+
+            if (classLevel >= 15)
             {
-                if (slots[i].IsLocked || slots[i].IsNothing) continue;
-                slots[i] = RollItemSlot(stars, classLevel);
+                var epicChance = 0.02 + (classLevel - 15) * 0.002;
+                if (roll < epicChance) return ItemRarity.Epic;
             }
+
+            var rareChance = 0.15 + stars * 0.05;
+            return roll < rareChance ? ItemRarity.Rare : ItemRarity.Normal;
         }
 
-        // ── Item catalog: all items with their fixed rarity (for unique items) ──
-
-        private static readonly ItemType[] TieredItems =
+        private ItemType RollItemType(ItemRarity rarity, int classLevel)
         {
-            ItemType.Solver, ItemType.Finder, ItemType.InkWell, ItemType.MeditationStone,
-            ItemType.WindChime, ItemType.PatternScroll, ItemType.KoiReflection, ItemType.LanternOfClarity
-        };
+            if (rarity == ItemRarity.Epic && _random.NextDouble() < 0.40)
+            {
+                var epics = new[] { ItemType.KoiDragonScale, ItemType.GoldenKintsugiJar, ItemType.SilkFan };
+                return epics[_random.Next(epics.Length)];
+            }
 
-        private static readonly ItemType[] UniqueNormalItems =
-        {
-            ItemType.GardenRake, ItemType.OfferingBowl, ItemType.PruningShears, ItemType.ZenSandSifter
-        };
+            if (rarity == ItemRarity.Rare && _random.NextDouble() < 0.30)
+            {
+                var rares = new[] { ItemType.GinkgoLeaf, ItemType.RicePaperUmbrella, ItemType.TempleIncense };
+                return rares[_random.Next(rares.Length)];
+            }
 
-        private static readonly ItemType[] UniqueRareItems =
-        {
-            ItemType.GinkgoLeaf, ItemType.RicePaperUmbrella, ItemType.TempleIncense
-        };
+            var tiered = new[]
+            {
+                ItemType.Solver, ItemType.Finder, ItemType.InkWell, ItemType.MeditationStone,
+                ItemType.WindChime, ItemType.PatternScroll, ItemType.KoiReflection, ItemType.LanternOfClarity
+            };
+            return tiered[_random.Next(tiered.Length)];
+        }
 
-        private static readonly ItemType[] UniqueEpicItems =
-        {
-            ItemType.KoiDragonScale, ItemType.GoldenKintsugiJar, ItemType.SilkFan
-        };
+        // ── Item Classification ──
 
         public static bool IsTiered(ItemType type)
         {
-            return type <= ItemType.LanternOfClarity;
+            return type switch
+            {
+                ItemType.Solver or ItemType.Finder or ItemType.InkWell or ItemType.MeditationStone
+                    or ItemType.WindChime or ItemType.PatternScroll or ItemType.KoiReflection
+                    or ItemType.LanternOfClarity => true,
+                _ => false
+            };
         }
 
         public static ItemRarity GetFixedRarity(ItemType type)
         {
             return type switch
             {
-                ItemType.GardenRake or ItemType.OfferingBowl or ItemType.PruningShears or ItemType.ZenSandSifter
-                    => ItemRarity.Normal,
-                ItemType.GinkgoLeaf or ItemType.RicePaperUmbrella or ItemType.TempleIncense
-                    => ItemRarity.Rare,
-                ItemType.KoiDragonScale or ItemType.GoldenKintsugiJar or ItemType.SilkFan
-                    => ItemRarity.Epic,
-                _ => ItemRarity.Normal // tiered items get rarity from roll
+                ItemType.GardenRake or ItemType.OfferingBowl or ItemType.PruningShears
+                    or ItemType.ZenSandSifter => ItemRarity.Normal,
+                ItemType.GinkgoLeaf or ItemType.RicePaperUmbrella or ItemType.TempleIncense => ItemRarity.Rare,
+                ItemType.KoiDragonScale or ItemType.GoldenKintsugiJar or ItemType.SilkFan => ItemRarity.Epic,
+                _ => ItemRarity.Normal
             };
         }
 
-        // ── Roll a single item slot ──
+        // ── Item Effects (rarity-scaled) ──
 
-        private ItemRollSlot RollItemSlot(int stars, int classLevel)
-        {
-            var rarity = RollRarity(stars, classLevel);
-            var type = RollItemType(rarity, classLevel);
+        public static int GetSolverNeighborCount(ItemRarity rarity) =>
+            rarity == ItemRarity.Epic ? 2 : rarity == ItemRarity.Rare ? 1 : 0;
 
-            return new ItemRollSlot
-            {
-                IsNothing = false,
-                IsLocked = false,
-                RolledItem = new ItemInstance
-                {
-                    Id = Guid.NewGuid().ToString("N"),
-                    Type = type,
-                    Rarity = IsTiered(type) ? rarity : GetFixedRarity(type),
-                    Charges = 1
-                }
-            };
-        }
+        public static int GetFinderHighlightCount(ItemRarity rarity) =>
+            rarity == ItemRarity.Epic ? 2 : rarity == ItemRarity.Rare ? 3 : 1;
 
-        private ItemRarity RollRarity(int stars, int classLevel)
-        {
-            // Epic items only available at class Level 15+
-            if (classLevel >= 15)
-            {
-                // ~2% at L15, rising to ~7% at L40
-                var epicChance = 0.02 + (classLevel - 15) * 0.002;
-                if (_random.NextDouble() < epicChance)
-                    return ItemRarity.Epic;
-            }
+        public static int GetInkWellAmount(ItemRarity rarity) =>
+            rarity == ItemRarity.Epic ? 10 : rarity == ItemRarity.Rare ? 6 : 3;
 
-            var rareChance = 0.15 + Math.Max(0, stars - 2) * 0.05;
-            return _random.NextDouble() < rareChance ? ItemRarity.Rare : ItemRarity.Normal;
-        }
+        public static int GetMeditationStoneAmount(ItemRarity rarity) =>
+            rarity == ItemRarity.Epic ? 3 : rarity == ItemRarity.Rare ? 2 : 1;
 
-        private ItemType RollItemType(ItemRarity rarity, int classLevel)
-        {
-            // Epic rarity → chance for unique epic items
-            if (rarity == ItemRarity.Epic && _random.NextDouble() < 0.35)
-                return UniqueEpicItems[_random.Next(UniqueEpicItems.Length)];
+        public static int GetLanternOfClarityMoves(ItemRarity rarity) =>
+            rarity == ItemRarity.Epic ? 10 : rarity == ItemRarity.Rare ? 6 : 3;
 
-            // Rare rarity → chance for unique rare items
-            if (rarity == ItemRarity.Rare && _random.NextDouble() < 0.25)
-                return UniqueRareItems[_random.Next(UniqueRareItems.Length)];
+        public static int GetKoiReflectionCells(ItemRarity rarity) =>
+            rarity == ItemRarity.Epic ? 3 : rarity == ItemRarity.Rare ? 2 : 1;
 
-            // Normal rarity → chance for unique normal items
-            if (rarity == ItemRarity.Normal && _random.NextDouble() < 0.20)
-                return UniqueNormalItems[_random.Next(UniqueNormalItems.Length)];
+        public static int GetPatternScrollZones(ItemRarity rarity) =>
+            rarity == ItemRarity.Epic ? -1 : rarity == ItemRarity.Rare ? 2 : 1;
 
-            // Default: tiered items
-            return TieredItems[_random.Next(TieredItems.Length)];
-        }
+        // ── Pricing ──
 
-        // ── Item effect implementations ──
-
-        public static bool TryUseSolver(SudokuBoard board, ItemRarity rarity, int row, int col)
-        {
-            if (!board.IsEmpty(row, col)) return false;
-            board.SetCell(row, col, board.Solution[row, col]);
-
-            var neighborCount = rarity switch
-            {
-                ItemRarity.Normal => 0,
-                ItemRarity.Rare => 1,
-                ItemRarity.Epic => 2,
-                _ => 0
-            };
-            FillNeighbors(board, row, col, neighborCount);
-            return true;
-        }
-
-        public static List<(int Row, int Col)> UseFinder(SudokuBoard board, ItemRarity rarity, int row, int col)
-        {
-            var target = board.GetCell(row, col);
-            var needed = rarity switch
-            {
-                ItemRarity.Normal => 1,
-                ItemRarity.Rare => 3,
-                ItemRarity.Epic => 2, // Epic trades breadth for accuracy
-                _ => 1
-            };
-
-            var matches = new List<(int Row, int Col)>();
-            if (target == 0) return matches;
-
-            for (var r = 0; r < board.Size; r++)
-            {
-                for (var c = 0; c < board.Size; c++)
-                {
-                    if (r == row && c == col) continue;
-                    if (!board.IsEmpty(r, c) || board.IsGiven(r, c)) continue;
-                    if (board.Solution[r, c] != target) continue;
-
-                    board.GetPencilSet(r, c).Add(target);
-                    matches.Add((r, c));
-                    if (matches.Count >= needed) return matches;
-                }
-            }
-            return matches;
-        }
-
-        public static int GetInkWellAmount(ItemRarity rarity)
+        public static int GetBasePrice(ItemRarity rarity)
         {
             return rarity switch
             {
-                ItemRarity.Normal => 3,
-                ItemRarity.Rare => 6,
-                ItemRarity.Epic => 10,
-                _ => 3
+                ItemRarity.Normal => 15,
+                ItemRarity.Rare => 30,
+                ItemRarity.Epic => 60,
+                _ => 15
             };
         }
 
-        public static int GetMeditationStoneAmount(ItemRarity rarity)
+        public static int GetShopPrice(ItemRarity rarity, int floorIndex)
         {
-            return rarity switch
-            {
-                ItemRarity.Normal => 1,
-                ItemRarity.Rare => 2,
-                ItemRarity.Epic => 3,
-                _ => 1
-            };
+            return (int)Math.Round(GetBasePrice(rarity) * (1f + floorIndex * 0.5f));
         }
 
-        public static int GetLanternOfClarityMoves(ItemRarity rarity)
-        {
-            return rarity switch
-            {
-                ItemRarity.Normal => 3,
-                ItemRarity.Rare => 6,
-                ItemRarity.Epic => 10,
-                _ => 3
-            };
-        }
-
-        public static int GetKoiReflectionCells(ItemRarity rarity)
-        {
-            return rarity switch
-            {
-                ItemRarity.Normal => 1,
-                ItemRarity.Rare => 2,
-                ItemRarity.Epic => 3,
-                _ => 1
-            };
-        }
-
-        public static int GetPatternScrollZones(ItemRarity rarity)
-        {
-            return rarity switch
-            {
-                ItemRarity.Normal => 1,
-                ItemRarity.Rare => 2,
-                ItemRarity.Epic => -1, // -1 = full conflict web
-                _ => 1
-            };
-        }
-
-        // ── Item descriptions ──
+        // ── Name & Description ──
 
         public static string GetItemName(ItemType type)
         {
@@ -318,91 +216,56 @@ namespace SudokuRoguelike.Items
             };
         }
 
+        public static string GetIconName(ItemType type)
+        {
+            return type switch
+            {
+                ItemType.Solver            => "solver",
+                ItemType.Finder            => "finder",
+                ItemType.InkWell           => "ink_well",
+                ItemType.MeditationStone   => "meditation_stone",
+                ItemType.WindChime         => "wind_chime",
+                ItemType.PatternScroll     => "pattern_scroll",
+                ItemType.KoiReflection     => "koi_reflection",
+                ItemType.LanternOfClarity  => "lantern_of_clarity",
+                ItemType.GardenRake        => "garden_rake",
+                ItemType.OfferingBowl      => "offering_bowl",
+                ItemType.PruningShears     => "pruning_shears",
+                ItemType.ZenSandSifter     => "zen_sand_sifter",
+                ItemType.GinkgoLeaf        => "ginkgo_leaf",
+                ItemType.RicePaperUmbrella => "rice_paper_umbrella",
+                ItemType.TempleIncense     => "temple_incense",
+                ItemType.KoiDragonScale    => "koi_dragon_scale",
+                ItemType.GoldenKintsugiJar => "golden_kintsugi_jar",
+                ItemType.SilkFan           => "silk_fan",
+                _ => ""
+            };
+        }
+
         public static string GetItemDescription(ItemType type, ItemRarity rarity)
         {
             return type switch
             {
-                ItemType.Solver => rarity switch
-                {
-                    ItemRarity.Normal => "Fill 1 correct cell.",
-                    ItemRarity.Rare => "Fill 1 correct cell + 1 valid neighbor.",
-                    ItemRarity.Epic => "Fill 1 correct cell + 2 valid neighbors.",
-                    _ => "Fill a correct cell."
-                },
-                ItemType.Finder => rarity switch
-                {
-                    ItemRarity.Normal => "Highlight 1 matching cell.",
-                    ItemRarity.Rare => "Highlight 3 matching cells.",
-                    ItemRarity.Epic => "Highlight 2 matching cells (guaranteed accuracy).",
-                    _ => "Highlight matching cells."
-                },
-                ItemType.InkWell => $"+{GetInkWellAmount(rarity)} Pencil charges.",
-                ItemType.MeditationStone => $"+{GetMeditationStoneAmount(rarity)} HP.",
-                ItemType.WindChime => rarity switch
-                {
-                    ItemRarity.Normal => "Undo 1 wrong input.",
-                    ItemRarity.Rare => "Undo 1 wrong input + restore 1 HP.",
-                    ItemRarity.Epic => "Undo 1 wrong input + restore 1 HP + reveal 1 correct cell.",
-                    _ => "Undo a wrong input."
-                },
-                ItemType.PatternScroll => rarity switch
-                {
-                    ItemRarity.Normal => "Highlight conflicts in 1 zone.",
-                    ItemRarity.Rare => "Highlight conflicts in 2 zones.",
-                    ItemRarity.Epic => "Highlight full conflict web.",
-                    _ => "Highlight constraint conflicts."
-                },
-                ItemType.KoiReflection => $"Reveal candidates for {GetKoiReflectionCells(rarity)} cell(s) (no Pencil cost).",
-                ItemType.LanternOfClarity => $"Disable Fog of War for {GetLanternOfClarityMoves(rarity)} moves.",
-                ItemType.GardenRake => "Highlights cells with only 2 candidates in current row/column.",
-                ItemType.OfferingBowl => "Spend 5 HP to reveal the correct number for one cell.",
-                ItemType.PruningShears => "Removes 1 impossible candidate from a 3x3 box.",
-                ItemType.ZenSandSifter => "Highlights Hidden Pairs in the current row.",
-                ItemType.GinkgoLeaf => "Highlights all instances of a chosen number until placed.",
-                ItemType.RicePaperUmbrella => "Protects HP from the next 2 mistakes.",
-                ItemType.TempleIncense => "Correct cells for a specific number pulse for 5 moves.",
-                ItemType.KoiDragonScale => "Instantly completes the most-filled line or box.",
-                ItemType.GoldenKintsugiJar => "Highlights all current mistakes on the board in red.",
-                ItemType.SilkFan => "Swap the positions of two placed numbers.",
-                _ => "Unknown item."
+                ItemType.Solver => $"Fill a cell with its correct digit + {GetSolverNeighborCount(rarity)} neighbors.",
+                ItemType.Finder => $"Highlight {GetFinderHighlightCount(rarity)} cell(s) matching the selected digit.",
+                ItemType.InkWell => $"Restore {GetInkWellAmount(rarity)} pencil marks.",
+                ItemType.MeditationStone => $"Restore {GetMeditationStoneAmount(rarity)} HP.",
+                ItemType.WindChime => "Reroll item reward slots.",
+                ItemType.PatternScroll => GetPatternScrollZones(rarity) < 0 ? "Highlight all conflict zones." : $"Highlight {GetPatternScrollZones(rarity)} conflict zone(s).",
+                ItemType.KoiReflection => $"Reveal candidates for {GetKoiReflectionCells(rarity)} cell(s).",
+                ItemType.LanternOfClarity => $"Disable fog for {GetLanternOfClarityMoves(rarity)} moves.",
+                ItemType.GardenRake => "Clear all pencil marks in the selected row and column.",
+                ItemType.OfferingBowl => "Sacrifice 1 HP to gain 30 gold.",
+                ItemType.PruningShears => "Remove one incorrect candidate from a cell.",
+                ItemType.ZenSandSifter => "Highlight all cells with exactly two candidates.",
+                ItemType.GinkgoLeaf => "Undo the last mistake placement.",
+                ItemType.RicePaperUmbrella => "Block the next mistake penalty (2 charges).",
+                ItemType.TempleIncense => "Add the single correct candidate to an empty cell.",
+                ItemType.KoiDragonScale => "Complete the most-filled row, column, or box.",
+                ItemType.GoldenKintsugiJar => "Highlight all current mistakes on the board.",
+                ItemType.SilkFan => "Swap two non-given cells.",
+                _ => ""
             };
-        }
-
-        // ── Shop prices ──
-
-        public static int GetBasePrice(ItemRarity rarity)
-        {
-            return rarity switch
-            {
-                ItemRarity.Normal => 15,
-                ItemRarity.Rare => 30,
-                ItemRarity.Epic => 60,
-                _ => 15
-            };
-        }
-
-        public static int GetShopPrice(ItemRarity rarity, int floorIndex)
-        {
-            var basePrice = GetBasePrice(rarity);
-            return (int)Math.Round(basePrice * (1f + floorIndex * 0.5f));
-        }
-
-        // ── Private helpers ──
-
-        private static void FillNeighbors(SudokuBoard board, int row, int col, int count)
-        {
-            if (count <= 0) return;
-            var filled = 0;
-            for (var r = Math.Max(0, row - 1); r <= Math.Min(board.Size - 1, row + 1); r++)
-            {
-                for (var c = Math.Max(0, col - 1); c <= Math.Min(board.Size - 1, col + 1); c++)
-                {
-                    if ((r == row && c == col) || !board.IsEmpty(r, c)) continue;
-                    board.SetCell(r, c, board.Solution[r, c]);
-                    filled++;
-                    if (filled >= count) return;
-                }
-            }
         }
     }
 }

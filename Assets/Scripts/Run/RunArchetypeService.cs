@@ -1,71 +1,31 @@
 using SudokuRoguelike.Core;
-using SudokuRoguelike.Economy;
+using SudokuRoguelike.Classes;
 
 namespace SudokuRoguelike.Run
 {
-    public sealed class RunArchetypeService
+    public static class RunArchetypeService
     {
-        public RunArchetype Evaluate(RunState runState)
+        public static RunState CreateRunState(ClassId classId, int seed, bool allowIrregular = true)
         {
-            if (runState == null)
+            var def = ClassCatalog.GetDefinition(classId);
+
+            return new RunState
             {
-                return RunArchetype.Undefined;
-            }
-
-            var economy = runState.CurrentGold >= 120 ? 2 : runState.CurrentGold >= 60 ? 1 : 0;
-            var survival = runState.CurrentHP <= 3 ? 2 : runState.MistakeShieldCharges > 0 ? 1 : 0;
-            var modifier = 0;
-            var combo = 0;
-
-            // Single relic contributes to archetype classification
-            if (runState.HasRelic)
-            {
-                var tier = RelicService.GetTier(runState.HeldRelic.Id);
-                var tierWeight = tier >= RelicTier.Tier3 ? 2 : 1;
-
-                switch (runState.HeldRelic.Id)
-                {
-                    case RelicId.GoldenRoot:
-                    case RelicId.WoodenComb:
-                    case RelicId.CopperTortoise:
-                    case RelicId.SpiritLantern:
-                    case RelicId.MossToken:
-                        economy += tierWeight;
-                        break;
-
-                    case RelicId.CrackedTeacup:
-                    case RelicId.WisteriaBranch:
-                    case RelicId.PhoenixFeather:
-                    case RelicId.SilentGrid:
-                    case RelicId.SakuraSeal:
-                        survival += tierWeight;
-                        break;
-
-                    case RelicId.CrimsonFan:
-                    case RelicId.PorcelainMask:
-                    case RelicId.MoonstoneCompass:
-                    case RelicId.ShiftingGarden:
-                        modifier += tierWeight;
-                        break;
-
-                    case RelicId.MonkCharm:
-                    case RelicId.KoiReflectionRelic:
-                    case RelicId.StoneSundial:
-                    case RelicId.EternalLotus:
-                    case RelicId.DragonsEye:
-                        combo += tierWeight;
-                        break;
-                }
-            }
-
-            // Item usage patterns also contribute
-            if (runState.ItemsUsedCount >= 5) combo++;
-            if (runState.ItemsUsedCount >= 10) combo++;
-
-            if (economy >= survival && economy >= modifier && economy >= combo) return RunArchetype.EconomyMerchantMonk;
-            if (modifier >= survival && modifier >= combo) return RunArchetype.ModifierRuleBender;
-            if (survival >= combo) return RunArchetype.SurvivalEnduringSage;
-            return RunArchetype.ComboFlowMaster;
+                ClassId = classId,
+                Mode = GameMode.GardenRun,
+                Seed = seed,
+                RunNumber = 1,
+                Depth = 0,
+                CurrentFloor = 0,
+                TotalFloors = 5,
+                CurrentHP = def.BaseHP,
+                MaxHP = def.BaseHP,
+                CurrentPencil = def.BasePencil,
+                MaxPencil = def.BasePencil,
+                CurrentGold = 0,
+                ItemSlots = def.BaseItemSlots,
+                AllowIrregularPuzzles = allowIrregular
+            };
         }
     }
 }

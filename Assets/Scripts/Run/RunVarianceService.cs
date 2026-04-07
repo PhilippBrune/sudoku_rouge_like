@@ -5,18 +5,33 @@ namespace SudokuRoguelike.Run
 {
     public sealed class RunVarianceService
     {
-        public void ApplyVariance(LevelConfig config, bool isRiskPath, Random random, bool allowSpike)
+        private readonly Random _random;
+
+        public RunVarianceService(int seed)
         {
-            config.VarianceBand = isRiskPath ? 0.15f : 0.05f;
+            _random = new Random(seed);
+        }
 
-            var delta = ((float)random.NextDouble() * 2f - 1f) * config.VarianceBand;
-            config.MissingPercent = Math.Clamp(config.MissingPercent * (1f + delta), 0.05f, 0.80f);
-
-            if (allowSpike && random.NextDouble() < 0.02)
+        public void ApplyVariance(LevelConfig config, int depth, int floorIndex)
+        {
+            // Star variance: +/-1 occasionally
+            if (_random.NextDouble() < 0.20)
             {
-                config.Stars = Math.Min(5, config.Stars + 1);
-                config.Difficulty = (DifficultyTier)Math.Min((int)DifficultyTier.Diff5, (int)config.Difficulty + 1);
-                config.ActiveModifiers.Add(BossModifierId.ParityLines);
+                var delta = _random.NextDouble() < 0.5 ? -1 : 1;
+                config.Stars = Math.Clamp(config.Stars + delta, 1, 6);
+            }
+
+            // Size variance: +/-1 for non-boss
+            if (!config.IsBoss && _random.NextDouble() < 0.15)
+            {
+                var delta = _random.NextDouble() < 0.5 ? -1 : 1;
+                config.BoardSize = Math.Clamp(config.BoardSize + delta, 5, 9);
+            }
+
+            // Region variant refresh
+            if (_random.NextDouble() < 0.30)
+            {
+                config.RegionVariant = _random.Next(4);
             }
         }
     }

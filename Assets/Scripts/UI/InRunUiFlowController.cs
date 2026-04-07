@@ -5,27 +5,15 @@ namespace SudokuRoguelike.UI
 {
     public sealed class InRunUiFlowController : MonoBehaviour
     {
-        [SerializeField] private RunMapController runMapController;
-        [SerializeField] private EventChoiceScreenController eventChoiceScreen;
-        [SerializeField] private CursePanelController cursePanel;
-
-        private void Awake()
-        {
-            BindPanelsToRunMap();
-        }
+        private RunMapController _runMapController;
+        private EventChoiceScreenController _eventChoiceScreen;
+        private CursePanelController _cursePanel;
 
         public void Configure(RunMapController runMap, EventChoiceScreenController eventController, CursePanelController curseController)
         {
-            runMapController = runMap;
-            eventChoiceScreen = eventController;
-            cursePanel = curseController;
-
-            BindPanelsToRunMap();
-        }
-
-        public void BindRunMap(RunMapController runMap)
-        {
-            runMapController = runMap;
+            _runMapController = runMap;
+            _eventChoiceScreen = eventController;
+            _cursePanel = curseController;
             BindPanelsToRunMap();
         }
 
@@ -33,46 +21,35 @@ namespace SudokuRoguelike.UI
         {
             EnsureRunMap();
             if (nodeType == NodeType.Event)
-            {
-                eventChoiceScreen?.OpenEvent();
-            }
-
-            cursePanel?.RefreshPanel();
+                _eventChoiceScreen?.OpenEvent();
+            _cursePanel?.RefreshPanel();
         }
 
         public void OnEventClosed()
         {
             EnsureRunMap();
-            eventChoiceScreen?.CloseEvent();
-            cursePanel?.RefreshPanel();
+            _eventChoiceScreen?.CloseEvent();
+            _cursePanel?.RefreshPanel();
         }
 
         public void RefreshRuntimePanels()
         {
             EnsureRunMap();
-            cursePanel?.RefreshPanel();
+            _cursePanel?.RefreshPanel();
         }
 
         private void EnsureRunMap()
         {
-            if (runMapController != null)
-            {
-                return;
-            }
-
-            runMapController = FindFirstObjectByType<RunMapController>();
+            if (_runMapController != null) return;
+            _runMapController = FindFirstObjectByType<RunMapController>();
             BindPanelsToRunMap();
         }
 
         private void BindPanelsToRunMap()
         {
-            if (runMapController == null)
-            {
-                return;
-            }
-
-            eventChoiceScreen?.Bind(runMapController);
-            cursePanel?.Bind(runMapController);
+            if (_runMapController == null) return;
+            _eventChoiceScreen?.Bind(_runMapController);
+            _cursePanel?.Bind(_runMapController);
         }
     }
 }

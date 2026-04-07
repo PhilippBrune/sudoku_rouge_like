@@ -3,12 +3,6 @@ using UnityEngine.UI;
 
 namespace SudokuRoguelike.UI
 {
-    /// <summary>
-    /// Handles menu-level keyboard navigation that is not covered by the grid input
-    /// in PrototypeRunScreenController: Escape to go back/close panels, Tab/Shift+Tab
-    /// for UI button focus, Space/Enter to activate focused button, Space to skip
-    /// XP animation.
-    /// </summary>
     public sealed class KeyboardNavigationController : MonoBehaviour
     {
         private Selectable _currentFocus;
@@ -30,12 +24,9 @@ namespace SudokuRoguelike.UI
 #else
             if (!Input.GetKeyDown(KeyCode.Escape)) return;
 #endif
-            // Find the top-most active panel and try to close it
-            // Look for common panel close buttons
             var canvas = FindFirstObjectByType<Canvas>();
             if (canvas == null) return;
 
-            // Try to find and click a "back" or "close" button on any active panel
             if (TryClickButton(canvas, "BackButton")) return;
             if (TryClickButton(canvas, "CloseButton")) return;
             if (TryClickButton(canvas, "CancelButton")) return;
@@ -71,7 +62,6 @@ namespace SudokuRoguelike.UI
             var allSelectables = Selectable.allSelectablesArray;
             if (allSelectables.Length == 0) return;
 
-            // Find current index
             var currentIdx = -1;
             for (var i = 0; i < allSelectables.Length; i++)
             {
@@ -82,7 +72,6 @@ namespace SudokuRoguelike.UI
                 }
             }
 
-            // Move to next/previous
             var direction = shiftHeld ? -1 : 1;
             var startIdx = currentIdx < 0 ? 0 : currentIdx + direction;
             var count = allSelectables.Length;
@@ -118,13 +107,9 @@ namespace SudokuRoguelike.UI
             if (!activated) return;
 
             if (_currentFocus is Button btn && btn.interactable)
-            {
                 btn.onClick.Invoke();
-            }
             else if (_currentFocus is Toggle toggle && toggle.interactable)
-            {
                 toggle.isOn = !toggle.isOn;
-            }
         }
 
         private void SetFocus(Selectable selectable)
@@ -141,14 +126,13 @@ namespace SudokuRoguelike.UI
                 _focusIndicator = new GameObject("KeyboardFocusIndicator", typeof(RectTransform), typeof(Image));
                 _focusIndicator.transform.SetParent(FindFirstObjectByType<Canvas>()?.transform, false);
                 var img = _focusIndicator.GetComponent<Image>();
-                img.color = new Color(1f, 1f, 0f, 0.5f); // Yellow highlight
+                img.color = new Color(1f, 1f, 0f, 0.5f);
                 img.raycastTarget = false;
                 _focusRect = _focusIndicator.GetComponent<RectTransform>();
             }
 
             _focusIndicator.SetActive(true);
 
-            // Position the indicator around the focused element
             var targetRect = selectable.GetComponent<RectTransform>();
             if (targetRect == null)
             {
@@ -156,14 +140,11 @@ namespace SudokuRoguelike.UI
                 return;
             }
 
-            // Match the focused element's position and size with a small border
             _focusRect.SetParent(targetRect, false);
             _focusRect.anchorMin = Vector2.zero;
             _focusRect.anchorMax = Vector2.one;
             _focusRect.offsetMin = new Vector2(-2f, -2f);
             _focusRect.offsetMax = new Vector2(2f, 2f);
-
-            // Ensure indicator renders behind the content but visible
             _focusIndicator.transform.SetAsFirstSibling();
         }
 
@@ -177,9 +158,6 @@ namespace SudokuRoguelike.UI
 
     internal static class TransformExtensions
     {
-        /// <summary>
-        /// Recursively find a child by name.
-        /// </summary>
         public static Transform FindDeepChild(this Transform parent, string name)
         {
             for (var i = 0; i < parent.childCount; i++)

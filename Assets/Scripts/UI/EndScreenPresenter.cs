@@ -1,6 +1,5 @@
 using System.Text;
 using SudokuRoguelike.Core;
-using SudokuRoguelike.Economy;
 
 namespace SudokuRoguelike.UI
 {
@@ -16,7 +15,6 @@ namespace SudokuRoguelike.UI
             return $"Victory! Time {result.SecondsPlayed}s | Boss Phase {result.BossPhaseReached}";
         }
 
-        /// <summary>Builds a per-tile XP breakdown for the end-of-run screen.</summary>
         public string BuildXpBreakdown(RunResult result)
         {
             if (result.TileXpEntries == null || result.TileXpEntries.Count == 0)
@@ -49,6 +47,23 @@ namespace SudokuRoguelike.UI
             var mistakes = $"Mistakes: total {analytics.TotalMistakes}, peak puzzle {analytics.HighestSinglePuzzleMistakes}";
             var tip = analytics.ImprovementSuggestions.Count > 0 ? analytics.ImprovementSuggestions[0] : "No tip.";
             return $"{hardest} | {mistakes} | Tip: {tip}";
+        }
+
+        public string BuildRunScoreBreakdown(RunResult result)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("══ Run Score ══");
+            sb.AppendLine($"  Base XP total:         {result.XpEarned}");
+            if (result.PerfectPuzzleCount > 0)
+                sb.AppendLine($"  Perfect puzzles ×{result.PerfectPuzzleCount}:   +{result.PerfectPuzzleCount * 5}%");
+            if (result.CursedPuzzlesAccepted > 0)
+                sb.AppendLine($"  Cursed clears ×{result.CursedPuzzlesAccepted}:     +{result.CursedPuzzlesAccepted * 10}%");
+            if (result.Victory)
+                sb.AppendLine("  Victory bonus:         +25%");
+            if (result.MistakesMade > 0)
+                sb.AppendLine($"  Mistake penalty ×{result.MistakesMade}:   -{System.Math.Min(50, result.MistakesMade * 2)}%");
+            sb.Append($"  Final Score: {result.RunScore}");
+            return sb.ToString();
         }
     }
 }

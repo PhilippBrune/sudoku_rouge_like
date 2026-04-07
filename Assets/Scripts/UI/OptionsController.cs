@@ -138,7 +138,7 @@ namespace SudokuRoguelike.UI
 
         private void NotifyAccessibilityChanged()
         {
-            var runScreen = FindFirstObjectByType<PrototypeRunScreenController>();
+            var runScreen = FindFirstObjectByType<InRunController>();
             runScreen?.NotifyAccessibilityChanged();
         }
     }

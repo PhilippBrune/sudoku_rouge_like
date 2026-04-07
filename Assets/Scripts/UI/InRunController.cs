@@ -19,7 +19,7 @@ namespace SudokuRoguelike.UI
     /// In-run screen controller: path overview, sudoku gameplay, rewards, shop, game over.
     /// Procedurally builds all UI. Drives RunMapController / RunDirector.
     /// </summary>
-    public sealed class PrototypeRunScreenController : MonoBehaviour
+    public sealed class InRunController : MonoBehaviour
     {
         // ── Injected via Configure() ──
         private RunMapController _map;

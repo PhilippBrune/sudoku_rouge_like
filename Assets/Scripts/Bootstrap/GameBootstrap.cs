@@ -114,7 +114,7 @@ namespace SudokuRoguelike.Bootstrap
                 // and the player clicks a node to start the first puzzle.
                 map.BindRun(_run);
 
-                var runScreen = FindAnyObjectByType<PrototypeRunScreenController>();
+                var runScreen = FindAnyObjectByType<InRunController>();
                 runScreen?.NotifyRunStarted();
             }
             else
@@ -197,8 +197,10 @@ namespace SudokuRoguelike.Bootstrap
             if (gameBuilder == null)
                 gameBuilder = gameGroup.AddComponent<InRunUiBlueprintBuilder>();
             gameBuilder.BuildBlueprint();
-            if (gameGroup.GetComponent<PrototypeUiDebugHotkeys>() == null)
-                gameGroup.AddComponent<PrototypeUiDebugHotkeys>();
+#if UNITY_EDITOR
+            if (gameGroup.GetComponent<DebugHotkeys>() == null)
+                gameGroup.AddComponent<DebugHotkeys>();
+#endif
 
             // Menu music
             _menuMusic = menuGroup.GetComponent<MenuMusicController>();

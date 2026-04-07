@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using SudokuRoguelike.Bootstrap;
 using SudokuRoguelike.Core;
 using UnityEngine;
@@ -10,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 namespace SudokuRoguelike.UI
 {
-    public sealed class PrototypeUiDebugHotkeys : MonoBehaviour
+    public sealed class DebugHotkeys : MonoBehaviour
     {
         private InRunUiFlowController _inRunUiFlow;
         private RunMapController _runMapController;
@@ -146,3 +147,4 @@ namespace SudokuRoguelike.UI
         }
     }
 }
+#endif

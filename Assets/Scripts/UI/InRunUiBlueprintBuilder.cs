@@ -52,7 +52,7 @@ namespace SudokuRoguelike.UI
             EnsureOrGetImage(root.gameObject, new Color(0f, 0f, 0f, 0f));
 
             var flow = EnsureComponent<InRunUiFlowController>(root.gameObject);
-            var runScreen = EnsureComponent<PrototypeRunScreenController>(root.gameObject);
+            var runScreen = EnsureComponent<InRunController>(root.gameObject);
 
             var eventPanel = BuildEventPanel(root);
             var cursePanel = BuildCursePanel(root);
@@ -451,7 +451,7 @@ namespace SudokuRoguelike.UI
             highlightToggle.onValueChanged.AddListener(v =>
             {
                 optCtrl.SetHighlightConflicts(v);
-                var rs = root.GetComponent<PrototypeRunScreenController>();
+                var rs = root.GetComponent<InRunController>();
                 if (rs != null) rs.SetHighlightConflictsLive(v);
             });
 

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace SudokuRoguelike.UI
 {
-    public sealed class PrototypeInputController : MonoBehaviour
+    public sealed class InRunInputController : MonoBehaviour
     {
         [SerializeField] private bool useRandomCellInput = true;
 

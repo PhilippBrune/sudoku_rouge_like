@@ -192,8 +192,8 @@ See [ItemsAndRelicsSystem](ItemsAndRelicsSystem.md) for the full item table, rel
 
 ### Summary
 
-- **Items:** Single-use consumables in 3 rarities (Normal / Rare / Epic). 8 tiered item families + 10 unique items.
-- **Relics:** Passive permanent-for-run effects. Player holds one relic at a time. 20 relics across 5 tiers (Tier 1 → Legendary).
+- **Items:** Single-use consumables in 3 rarities (Normal / Rare / Epic). 8 tiered item families + 10 unique items. Sold in the Shop and awarded as puzzle rewards.
+- **Relics:** Passive permanent-for-run effects. Player holds one relic at a time. 23 relics across 5 tiers (Tier 1 → Legendary). Acquired from Relic tile nodes (3-of-3 choice), Elite rewards, and Run events — **not sold in the Shop**.
 - **Codex:** Unified item + relic discovery tracker. Discovery triggers on first acquisition.
 
 ---

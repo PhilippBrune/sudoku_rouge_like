@@ -1,11 +1,12 @@
 # Items & Relics System
 
-**Version:** 1.3 | **Date:** 2026-04-07 | **Status:** implemented
+**Version:** 1.4 | **Date:** 2026-04-07 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.4 | 2026-04-07 | implemented | Shop sells items only — no relic slot in shop. Relics are acquired exclusively from Relic tile nodes, Elite tile rewards, and Run events. Removed "shop purchases" from the Relic Acquisition list. |
 | 1.3 | 2026-04-07 | implemented | Relic node reward flow redesigned: instead of automatically granting a single relic, the node now presents a **3-of-3 choice panel** — three distinct relics are rolled and the player picks one (or leaves all). `RelicService.RollRelicChoices(floorIndex, count=3)` generates the pool with deduplication. A **"Leave"** button lets the player skip all choices. Discovery is recorded only for the chosen relic. |
 | 1.2 | 2026-03-29 | implemented | Item Codex population wired: `ProfileService.RecordItemDiscovery(ItemType)` and `RecordRelicDiscovery(RelicId)` added. Called from `ClaimReward()` (puzzle rewards), `TryBuyOffer()` (shop purchases), and `HandleRelic()` (relic tile nodes). Codex entries use `ItemType.ToString()` as key; relics use `MetaProgressionState.DiscoveredRelics` list. |
 | 1.1 | 2026-03-23 | implemented | Data models, RelicService, ItemService, ShopService verified implemented. Single relic slot, 23 relics, 18 items, tier weights, shop pricing all correct |
@@ -277,10 +278,11 @@ When multiple items or relics are active simultaneously, each uses a distinct vi
 ### Acquisition
 
 Relics are acquired through:
-- **Relic tile nodes** on the garden path — a single random relic is granted automatically
+- **Relic tile nodes** on the garden path — 3-of-3 choice panel (see Relic Node Reward Flow)
 - **Elite tile rewards** (chance to drop a relic)
-- **Shop purchases** (relic slots in shop inventory)
 - **Run events** (event choices may grant relics)
+
+Relics are **not available in the Shop**. The shop sells consumable items only.
 
 ### Single Relic Slot
 
@@ -290,11 +292,11 @@ The player can hold **one relic at a time**. When a new relic is offered while a
 
 | Tier | Power Level | Base Price | Acquisition |
 |------|-------------|:---:|-------------|
-| Tier 1 | Low — minor passive | 25g | Common relic nodes, early shops |
-| Tier 2 | Medium — noticeable effect | 45g | Mid-run relic nodes, elite rewards |
-| Tier 3 | High — build-enabling | 75g | Late-run relic nodes, difficult elites |
-| Tier 4 | Very high — run-defining | 120g | Special events, late floors |
-| Legendary | Exceptional — unique named relics | 200g | Very rare shop rolls at high difficulty |
+| Tier 1 | Low — minor passive | — | Common relic nodes, early floors |
+| Tier 2 | Medium — noticeable effect | — | Mid-run relic nodes, elite rewards |
+| Tier 3 | High — build-enabling | — | Late-run relic nodes, difficult elites |
+| Tier 4 | Very high — run-defining | — | Special events, late floors |
+| Legendary | Exceptional — unique named relics | — | Very rare elite rewards or high-floor events |
 
 Shop prices scale with floor: `RelicShopPrice = BasePrice × (1 + Floor_Index × 0.5)`
 

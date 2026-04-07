@@ -57,10 +57,10 @@ namespace SudokuRoguelike.UI
             var eventPanel = BuildEventPanel(root);
             var cursePanel = BuildCursePanel(root);
             var debugPanel = BuildDebugPanel(root);
-            var sudokuPanel = BuildSudokuBoardPanel(root, out var boardText, out var boardStatusText);
-            var pathOverviewPanel = BuildPathOverviewPanel(root, out var pathOverviewText, out var laneAText, out var laneBText, out var laneAPathRoot, out var laneBPathRoot, out var chooseAButton, out var chooseBButton, out var saveQuitPathButton);
-            var sudokuGameplayPanel = BuildSudokuGameplayPanel(root, out var sudokuGridRoot, out var numpadRoot, out var saveQuitSudokuButton, out var optionsSudokuButton, out var sudokuGameplayStatusText, out var hpText, out var pencilText);
-            var gameOverPanel = BuildGameOverPanel(root, out var gameOverSummaryText, out var gameOverDetailsText, out var gameOverBackButton);
+            var sudokuPanel = BuildSudokuBoardPanel(root);
+            BuildPathOverviewPanel(root);
+            BuildSudokuGameplayPanel(root);
+            BuildGameOverPanel(root);
             var inGameOptionsPanel = BuildInGameOptionsPanel(root);
             var tutorialLabel = BuildTutorialBanner(root);
 
@@ -74,22 +74,13 @@ namespace SudokuRoguelike.UI
             cursePanel.SetActive(false);
             debugPanel.SetActive(false);
             sudokuPanel.SetActive(false);
-            gameOverPanel.SetActive(false);
             inGameOptionsPanel.SetActive(false);
             tutorialLabel.gameObject.SetActive(false);
 
             if (runMapController == null)
-            {
                 runMapController = EnsureComponent<RunMapController>(root.gameObject);
-            }
 
-            runScreen.Configure(
-                runMapController,
-                pathOverviewPanel, sudokuGameplayPanel, gameOverPanel,
-                pathOverviewText, sudokuGameplayStatusText, hpText, pencilText,
-                gameOverSummaryText, gameOverDetailsText, gameOverBackButton,
-                sudokuGridRoot, numpadRoot);
-            runScreen.SetInGameOptionsPanel(inGameOptionsPanel);
+            runScreen.Configure(runMapController, root);
         }
 
         private static void EnsureEventSystem()
@@ -183,8 +174,9 @@ namespace SudokuRoguelike.UI
             return panel;
         }
 
-        private GameObject BuildSudokuBoardPanel(RectTransform root, out Text boardText, out Text statusText)
+        private GameObject BuildSudokuBoardPanel(RectTransform root)
         {
+            Text boardText, statusText;
             var panel = EnsureRect("SudokuBoardPanel", root, new Vector2(0.02f, 0.10f), new Vector2(0.30f, 0.56f), Vector2.zero, Vector2.zero).gameObject;
             EnsureOrGetImage(panel, panelColor);
 
@@ -200,17 +192,11 @@ namespace SudokuRoguelike.UI
             return panel;
         }
 
-        private GameObject BuildPathOverviewPanel(
-            RectTransform root,
-            out Text overviewText,
-            out Text laneAText,
-            out Text laneBText,
-            out RectTransform laneAPathRoot,
-            out RectTransform laneBPathRoot,
-            out Button chooseA,
-            out Button chooseB,
-            out Button saveQuit)
+        private void BuildPathOverviewPanel(RectTransform root)
         {
+            Text overviewText, laneAText, laneBText;
+            RectTransform laneAPathRoot, laneBPathRoot;
+            Button saveQuit;
             var panel = EnsureRect("PathOverviewPanel", root, new Vector2(0.03f, 0.03f), new Vector2(0.97f, 0.97f), Vector2.zero, Vector2.zero).gameObject;
             EnsureOrGetImage(panel, new Color(panelColor.r, panelColor.g, panelColor.b, 0.97f));
 
@@ -240,14 +226,9 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.92f, 0.70f),
                 "LaneBPathRoot");
 
-            chooseA = null;
-            chooseB = null;
-
             saveQuit = BuildButton("BtnPathOverviewSaveQuit", panel.transform as RectTransform, "Save & Quit (Q)", 20);
             SetRect(saveQuit.GetComponent<RectTransform>(), new Vector2(0.72f, 0.10f), new Vector2(0.92f, 0.18f), Vector2.zero, Vector2.zero);
             ApplyButtonIcon(saveQuit, "torii_lock");
-
-            return panel;
         }
 
         private RectTransform BuildPathLaneScroll(string name, RectTransform parent, Vector2 anchorMin, Vector2 anchorMax, string contentName)
@@ -288,16 +269,11 @@ namespace SudokuRoguelike.UI
             return content;
         }
 
-        private GameObject BuildSudokuGameplayPanel(
-            RectTransform root,
-            out RectTransform gridRoot,
-            out RectTransform numpadRoot,
-            out Button saveQuit,
-            out Button optionsButton,
-            out Text statusText,
-            out Text hpText,
-            out Text pencilText)
+        private void BuildSudokuGameplayPanel(RectTransform root)
         {
+            RectTransform gridRoot, numpadRoot;
+            Button saveQuit, optionsButton;
+            Text statusText, hpText, pencilText;
             var panel = EnsureRect("SudokuGameplayPanel", root, new Vector2(0.03f, 0.03f), new Vector2(0.97f, 0.97f), Vector2.zero, Vector2.zero).gameObject;
             EnsureOrGetImage(panel, new Color(panelColor.r, panelColor.g, panelColor.b, 0.97f));
 
@@ -379,12 +355,12 @@ namespace SudokuRoguelike.UI
             SetRect(bossDesc.rectTransform, new Vector2(0.74f, 0.08f), new Vector2(0.97f, 0.27f), Vector2.zero, Vector2.zero);
             bossDesc.color = new Color(1f, 0.65f, 0.30f, 1f);
             bossDesc.gameObject.SetActive(false);
-
-            return panel;
         }
 
-        private GameObject BuildGameOverPanel(RectTransform root, out Text summaryText, out Text detailsText, out Button backButton)
+        private void BuildGameOverPanel(RectTransform root)
         {
+            Text summaryText, detailsText;
+            Button backButton;
             var panel = EnsureRect("GameOverPanel", root, new Vector2(0.20f, 0.18f), new Vector2(0.80f, 0.82f), Vector2.zero, Vector2.zero).gameObject;
             EnsureOrGetImage(panel, new Color(0.10f, 0.06f, 0.06f, 0.97f));
             var panelOutline = EnsureComponent<Outline>(panel);
@@ -404,8 +380,6 @@ namespace SudokuRoguelike.UI
             backButton = BuildButton("BtnGameOverBack", panel.transform as RectTransform, "Back to Menu", 17);
             SetRect(backButton.GetComponent<RectTransform>(), new Vector2(0.34f, 0.04f), new Vector2(0.66f, 0.16f), Vector2.zero, Vector2.zero);
             ApplyButtonIcon(backButton, "torii_lock");
-
-            return panel;
         }
 
         private GameObject BuildInGameOptionsPanel(RectTransform root)

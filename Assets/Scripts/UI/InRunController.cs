@@ -76,18 +76,33 @@ namespace SudokuRoguelike.UI
             _bagHighlightCells = new HashSet<(int, int)>();
         }
 
-        public void Configure(RunMapController map,
-            GameObject pathPanel, GameObject sudokuPanel, GameObject gameOverPanel,
-            Text overviewText, Text statusText, Text hpText, Text pencilText,
-            Text goSummary, Text goDetails, Button goBack,
-            RectTransform gridRoot, RectTransform numpadRoot)
+        /// <summary>
+        /// Bootstraps the controller by discovering all named UI elements under <paramref name="uiRoot"/>.
+        /// Called by InRunUiBlueprintBuilder after the full hierarchy is built.
+        /// </summary>
+        public void Configure(RunMapController map, RectTransform uiRoot)
         {
-            _map           = map;
-            _pathPanel     = pathPanel;
-            _sudokuPanel   = sudokuPanel;
-            _gameOverPanel = gameOverPanel;
-            _overviewText  = overviewText;
-            _statusText    = statusText;
+            _map = map;
+
+            // ── Discover panels by name ──
+            _pathPanel     = uiRoot.Find("PathOverviewPanel")?.gameObject;
+            _sudokuPanel   = uiRoot.Find("SudokuGameplayPanel")?.gameObject;
+            _gameOverPanel = uiRoot.Find("GameOverPanel")?.gameObject;
+            _overviewText  = _pathPanel?.transform.Find("PathOverviewText")?.GetComponent<Text>();
+            _statusText    = _sudokuPanel?.transform.Find("SudokuGameplayStatus")?.GetComponent<Text>();
+            _inGameOptionsPanel = uiRoot.Find("InGameOptionsPanel")?.gameObject;
+
+            // ── Discover deeper refs for sub-controllers ──
+            var sudokuRt   = _sudokuPanel?.transform;
+            var hpText     = sudokuRt?.Find("SudokuGameplayHp")?.GetComponent<Text>();
+            var pencilText = sudokuRt?.Find("SudokuGameplayPencil")?.GetComponent<Text>();
+            var gridRoot   = sudokuRt?.Find("SudokuGameplayGridRoot") as RectTransform;
+            var numpadRoot = sudokuRt?.Find("SudokuGameplayNumpadRoot") as RectTransform;
+
+            var goRt      = _gameOverPanel?.transform;
+            var goSummary = goRt?.Find("GameOverTitle")?.GetComponent<Text>();
+            var goDetails = goRt?.Find("GameOverDetails")?.GetComponent<Text>();
+            var goBack    = goRt?.Find("BtnGameOverBack")?.GetComponent<Button>();
 
             // ── Instantiate sub-controllers ──
             _boardView     = gameObject.AddComponent<BoardViewController>();
@@ -100,13 +115,13 @@ namespace SudokuRoguelike.UI
 
             // ── Configure sub-controllers ──
             _boardView.Configure(map, gridRoot);
-            _hudView.Configure(map, sudokuPanel, hpText, pencilText);
+            _hudView.Configure(map, _sudokuPanel, hpText, pencilText);
             _numpadView.Configure(numpadRoot);
-            _rewardView.Configure(map, pathPanel);
-            _shopView.Configure(map, pathPanel,
+            _rewardView.Configure(map, _pathPanel);
+            _shopView.Configure(map, _pathPanel,
                 (item, onReplace, onAbort) => _rewardView.ShowBagSwapPanel(item, onReplace, onAbort));
             _bossGateView.Configure(map);
-            _endScreenView.Configure(map, gameOverPanel, goSummary, goDetails, goBack);
+            _endScreenView.Configure(map, _gameOverPanel, goSummary, goDetails, goBack);
 
             // ── Wire callbacks ──
             _boardView.OnCellClicked        = OnCellClicked;

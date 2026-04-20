@@ -9,6 +9,8 @@ namespace SudokuRoguelike.UI
         private EventChoiceScreenController _eventChoiceScreen;
         private CursePanelController _cursePanel;
 
+        public EventChoiceScreenController EventChoiceScreen => _eventChoiceScreen;
+
         public void Configure(RunMapController runMap, EventChoiceScreenController eventController, CursePanelController curseController)
         {
             _runMapController = runMap;

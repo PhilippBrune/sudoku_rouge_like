@@ -3,8 +3,8 @@ guid: 30174ece337a6f84898f818659e2d18f
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -5259667540370520026
-    second: icon_wind_chime_0
+      213: -4123224010657739439
+    second: icon_Wind_Chime_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -46,7 +46,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: icon_wind_chime_0
+      name: icon_Wind_Chime_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 0
-        width: 64
-        height: 64
+        y: 2
+        width: 192
+        height: 188
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 628009b2d38e107b0800000000000000
-      internalID: -5259667540370520026
+      spriteID: 15d426bab9d57c6c0800000000000000
+      internalID: -4123224010657739439
       vertices: []
       indices: 
       edges: []
@@ -125,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      icon_wind_chime_0: -5259667540370520026
+      icon_Wind_Chime_0: -4123224010657739439
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

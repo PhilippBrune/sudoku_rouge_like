@@ -86,7 +86,11 @@ namespace SudokuRoguelike.Sudoku
                         rules.Add(new UniqueSetLineRule());
                         break;
                     case BossModifierId.FullKropki:
+                        // Negative inference: undotted pairs cannot have diff=1 or ratio=2
                         rules.Add(new FullKropkiRule());
+                        // Positive constraints: dotted pairs MUST satisfy their marker
+                        rules.Add(new DifferenceKropkiRule());
+                        rules.Add(new RatioKropkiRule());
                         break;
                     case BossModifierId.SumKropki:
                         rules.Add(new SumKropkiRule());

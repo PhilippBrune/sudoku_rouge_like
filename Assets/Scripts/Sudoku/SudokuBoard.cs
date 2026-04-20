@@ -106,6 +106,8 @@ namespace SudokuRoguelike.Sudoku
 
         public void ClearPencilMarks(int row, int col) => _pencilMarks[row, col].Clear();
 
+        public bool HasAnyPencilMark(int row, int col) => _pencilMarks[row, col].Count > 0;
+
         public void TogglePencilMark(int row, int col, int value)
         {
             if (!_pencilMarks[row, col].Add(value))

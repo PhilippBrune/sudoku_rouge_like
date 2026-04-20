@@ -3,8 +3,8 @@ guid: a171419432d8db746b86fa5f9c0ecf88
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -8486223947641194370
-    second: icon_demon_mask_0
+      213: -1794883429809698081
+    second: icon_Demon_Mask_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -46,7 +46,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: icon_demon_mask_0
+      name: icon_Demon_Mask_0
       rect:
         serializedVersion: 2
-        x: 0
+        x: 15
         y: 0
-        width: 64
-        height: 64
+        width: 161
+        height: 192
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: e78fe641840ea3a80800000000000000
-      internalID: -8486223947641194370
+      spriteID: fda45f0c70b4717e0800000000000000
+      internalID: -1794883429809698081
       vertices: []
       indices: 
       edges: []
@@ -125,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      icon_demon_mask_0: -8486223947641194370
+      icon_Demon_Mask_0: -1794883429809698081
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

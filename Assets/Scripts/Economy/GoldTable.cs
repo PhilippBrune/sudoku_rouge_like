@@ -4,6 +4,7 @@ namespace SudokuRoguelike.Economy
 {
     public static class GoldTable
     {
+        // [REQ: ECON-REWARD-001] Base gold per board size used in puzzle completion formula
         public static int BaseGoldForBoardSize(int boardSize)
         {
             switch (boardSize)
@@ -17,11 +18,13 @@ namespace SudokuRoguelike.Economy
             }
         }
 
+        // [REQ: ECON-REWARD-001] Star multiplier: 1.0 + stars × 0.2
         public static float StarGoldMultiplier(int stars)
         {
             return 1.0f + stars * 0.2f;
         }
 
+        // [REQ: ECON-REWARD-001] Entry point: gold = BaseGold(size) × StarMult(stars)
         public static int CalculatePuzzleGold(int boardSize, int stars)
         {
             var baseGold = BaseGoldForBoardSize(boardSize);
@@ -38,11 +41,13 @@ namespace SudokuRoguelike.Economy
             return 20 + 20 * timesRerolledThisRun;
         }
 
+        // [REQ: SHOP-PRICE-001] [REQ: ECON-SHOP-002] Price = BasePrice × (1 + FloorIndex × 0.5)
         public static int ShopItemPrice(int basePrice, int floorIndex)
         {
             return Mathf.RoundToInt(basePrice * (1f + floorIndex * 0.5f));
         }
 
+        // [REQ: SHOP-PRICE-001] Base prices: Normal=15, Rare=30, Epic=60
         public static int BaseItemPrice(Core.ItemRarity rarity)
         {
             switch (rarity)

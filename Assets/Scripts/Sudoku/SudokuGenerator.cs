@@ -5,11 +5,13 @@ namespace SudokuRoguelike.Sudoku
 {
     public static class SudokuGenerator
     {
-        public static SudokuBoard CreatePuzzle(int size, float missingPercent, int seed, int regionVariant = 0)
+        public static SudokuBoard CreatePuzzle(int size, float missingPercent, int seed,
+            int regionVariant = 0, bool nonconsecutive = false, bool antiknight = false,
+            bool nonconsecDiagonal = false)
         {
             var random = new Random(seed);
             var regionMap = BuildRegionMap(size, regionVariant);
-            var solution = GenerateSolvedBoard(size, regionMap, random);
+            var solution = GenerateSolvedBoard(size, regionMap, random, nonconsecutive, antiknight, nonconsecDiagonal);
             var puzzle = (int[,])solution.Clone();
 
             var totalCells = size * size;
@@ -33,18 +35,13 @@ namespace SudokuRoguelike.Sudoku
         public static SudokuBoard CreatePuzzleWithUniquenessCheck(int size, float missingPercent, int seed,
             int regionVariant = 0, SudokuConstraintEngine constraintEngine = null, int maxAttempts = 5)
         {
-            for (var attempt = 0; attempt < maxAttempts; attempt++)
-            {
-                var board = CreatePuzzle(size, missingPercent, seed + attempt, regionVariant);
-                if (constraintEngine == null)
-                    return board;
-                // TODO: integrate uniqueness solver when SudokuBacktrackingSolver is built
-                return board;
-            }
-            return CreatePuzzle(size, missingPercent, seed + maxAttempts, regionVariant);
+            // Uniqueness solver not yet implemented; fall through to a single attempt.
+            // TODO: when SudokuBacktrackingSolver is ready, restore the multi-attempt loop.
+            return CreatePuzzle(size, missingPercent, seed, regionVariant);
         }
 
-        private static int[,] GenerateSolvedBoard(int size, int[,] regionMap, Random random)
+        private static int[,] GenerateSolvedBoard(int size, int[,] regionMap, Random random,
+            bool nonconsecutive = false, bool antiknight = false, bool nonconsecDiagonal = false)
         {
             var board = new int[size, size];
             var rowMask = new int[size];
@@ -52,14 +49,15 @@ namespace SudokuRoguelike.Sudoku
             var regionCount = CountDistinctRegions(regionMap, size);
             var regionMask = new int[Math.Max(regionCount, size)];
 
-            if (!FillBoard(board, regionMap, size, rowMask, colMask, regionMask, random))
+            if (!FillBoard(board, regionMap, size, rowMask, colMask, regionMask, random, nonconsecutive, antiknight, nonconsecDiagonal))
                 throw new InvalidOperationException($"Failed to generate solved board for size {size}.");
 
             return board;
         }
 
         private static bool FillBoard(int[,] board, int[,] regionMap, int size,
-            int[] rowMask, int[] colMask, int[] regionMask, Random random)
+            int[] rowMask, int[] colMask, int[] regionMask, Random random,
+            bool nonconsecutive = false, bool antiknight = false, bool nonconsecDiagonal = false)
         {
             if (!FindNextCell(board, regionMap, size, rowMask, colMask, regionMask,
                     out var row, out var col, out var candidates))
@@ -71,6 +69,12 @@ namespace SudokuRoguelike.Sudoku
             for (var i = 0; i < candidates.Count; i++)
             {
                 var value = candidates[i];
+
+                // Global negative pre-checks (applied before committing to avoid dead ends)
+                if (nonconsecutive && ViolatesNonconsecutive(board, row, col, value, size)) continue;
+                if (antiknight && ViolatesAntiknight(board, row, col, value, size)) continue;
+                if (nonconsecDiagonal && ViolatesNonconsecDiagonal(board, row, col, value, size)) continue;
+
                 var bit = 1 << value;
 
                 board[row, col] = value;
@@ -78,7 +82,7 @@ namespace SudokuRoguelike.Sudoku
                 colMask[col] |= bit;
                 regionMask[region] |= bit;
 
-                if (FillBoard(board, regionMap, size, rowMask, colMask, regionMask, random))
+                if (FillBoard(board, regionMap, size, rowMask, colMask, regionMask, random, nonconsecutive, antiknight, nonconsecDiagonal))
                     return true;
 
                 board[row, col] = 0;
@@ -87,6 +91,47 @@ namespace SudokuRoguelike.Sudoku
                 regionMask[region] &= ~bit;
             }
 
+            return false;
+        }
+
+        private static bool ViolatesNonconsecutive(int[,] board, int row, int col, int value, int size)
+        {
+            int[] dr = { -1, 1, 0, 0 };
+            int[] dc = { 0, 0, -1, 1 };
+            for (var d = 0; d < 4; d++)
+            {
+                var nr = row + dr[d]; var nc = col + dc[d];
+                if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
+                var v = board[nr, nc];
+                if (v != 0 && Math.Abs(value - v) == 1) return true;
+            }
+            return false;
+        }
+
+        private static bool ViolatesAntiknight(int[,] board, int row, int col, int value, int size)
+        {
+            int[] dr = { -2, -2, -1, -1, 1, 1, 2, 2 };
+            int[] dc = { -1, 1, -2, 2, -2, 2, -1, 1 };
+            for (var i = 0; i < 8; i++)
+            {
+                var nr = row + dr[i]; var nc = col + dc[i];
+                if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
+                if (board[nr, nc] == value) return true;
+            }
+            return false;
+        }
+
+        private static bool ViolatesNonconsecDiagonal(int[,] board, int row, int col, int value, int size)
+        {
+            int[] dr = { -1, -1, 1, 1 };
+            int[] dc = { -1, 1, -1, 1 };
+            for (var i = 0; i < 4; i++)
+            {
+                var nr = row + dr[i]; var nc = col + dc[i];
+                if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
+                var v = board[nr, nc];
+                if (v != 0 && Math.Abs(value - v) == 1) return true;
+            }
             return false;
         }
 

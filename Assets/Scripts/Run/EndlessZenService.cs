@@ -15,16 +15,15 @@ namespace SudokuRoguelike.Run
 
         public LevelConfig BuildNextLevel(int depth, int preferredSize = 0, int preferredStars = 0)
         {
-            // Depth-based star scaling: Clamp(1 + depth/4, 1, 5)
+            // [ZENMODE-SESSION-001] Board size always 9×9 per spec
+            const int size = 9;
+
+            // [ZENMODE-DEPTH-002] Depth-based star scaling: Clamp(1 + depth/4, 1, 5)
             var stars = Math.Clamp(1 + depth / 4, 1, 5);
-            if (preferredStars > 0) stars = Math.Clamp(preferredStars, 1, 6);
+            if (preferredStars > 0) stars = Math.Clamp(preferredStars, 1, 5);
 
-            // Depth-based board size: starts at 5, grows every 3 depth
-            var size = Math.Clamp(5 + depth / 3, 5, 9);
-            if (preferredSize > 0) size = Math.Clamp(preferredSize, 5, 9);
-
-            // Modifier cap: 0 until depth 8, then 1 per 4 depth, max 3
-            var modCap = depth < 8 ? 0 : Math.Min((depth - 8) / 4 + 1, 3);
+            // [ZENMODE-DEPTH-004] Modifier cap: depth<10→1, depth<20→2, depth≥20→3
+            var modCap = depth < 10 ? 1 : depth < 20 ? 2 : 3;
 
             var config = new LevelConfig
             {
@@ -34,7 +33,7 @@ namespace SudokuRoguelike.Run
                 RegionVariant = _random.Next(4),
                 IsBoss = false,
                 Seed = _random.Next(),
-                Difficulty = DifficultyTier.Diff1
+                Difficulty = DifficultyTier.Diff5   // [ZENMODE-SESSION-001] always Diff5
             };
 
             if (modCap > 0)

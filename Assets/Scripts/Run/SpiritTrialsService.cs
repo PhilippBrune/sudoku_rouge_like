@@ -15,20 +15,21 @@ namespace SudokuRoguelike.Run
 
         public LevelConfig BuildTrialLevel(SpiritTrialsTier tier)
         {
-            // All tiers use 9×9 board per spec
+            // [TRIAL-SESSION-001] All tiers use 9×9 board per spec
             const int size = 9;
             int stars, modCount;
 
+            // [TRIAL-TIER-001]
             switch (tier)
             {
                 case SpiritTrialsTier.Apprentice:
                     stars = 3; modCount = 0; break;
                 case SpiritTrialsTier.Adept:
-                    stars = 4; modCount = 1; break;
+                    stars = 3; modCount = 1; break;  // 3★, 1 modifier
                 case SpiritTrialsTier.Master:
-                    stars = 5; modCount = 2; break;
+                    stars = 4; modCount = 1; break;  // 4★, 1 modifier
                 default: // Grandmaster
-                    stars = 6; modCount = 3; break;
+                    stars = 5; modCount = 2; break;  // 5★, 2 modifiers
             }
 
             var config = new LevelConfig
@@ -62,17 +63,18 @@ namespace SudokuRoguelike.Run
 
         public static RunState CreateTrialRunState(SpiritTrialsTier tier, int seed)
         {
+            // [TRIAL-RES-001] HP and Pencil per tier
             int hp, pencil;
             switch (tier)
             {
                 case SpiritTrialsTier.Apprentice:
-                    hp = 5; pencil = 12; break;
+                    hp = 5; pencil = 15; break;
                 case SpiritTrialsTier.Adept:
-                    hp = 4; pencil = 10; break;
+                    hp = 4; pencil = 12; break;
                 case SpiritTrialsTier.Master:
-                    hp = 3; pencil = 8; break;
+                    hp = 3; pencil = 10; break;
                 default: // Grandmaster
-                    hp = 2; pencil = 5; break;
+                    hp = 2; pencil = 8; break;
             }
 
             return new RunState
@@ -92,35 +94,52 @@ namespace SudokuRoguelike.Run
         }
 
         /// <summary>
-        /// Calculate Spirit Trials score.
-        /// FinalScore = (BasePoints × SpeedMultiplier) + ConstraintBonus + PencilBonus - MistakePenalty
+        /// Calculate Spirit Trials score per spec [TRIAL-SCORE-005].
+        /// FinalScore = floor((BasePoints × SpeedMultiplier) + ConstraintBonus + PencilBonus − MistakePenalty)
         /// </summary>
+        /// <param name="cellsToFill">Cells the player had to fill (board cells − givens).</param>
+        /// <param name="pencilMarksUsed">Total pencil marks placed during the session.</param>
         public static int CalculateScore(SpiritTrialsTier tier, float secondsPlayed, int modCount,
-            int pencilRemaining, int mistakes)
+            int cellsToFill, int pencilMarksUsed, int mistakes)
         {
-            // Base points by tier
-            int basePoints;
-            switch (tier)
+            // [TRIAL-SCORE-001] BasePoints = CellsToFill × PointsPerCell
+            int pointsPerCell = tier switch
             {
-                case SpiritTrialsTier.Apprentice: basePoints = 1000; break;
-                case SpiritTrialsTier.Adept: basePoints = 2000; break;
-                case SpiritTrialsTier.Master: basePoints = 3500; break;
-                default: basePoints = 5000; break;
-            }
+                SpiritTrialsTier.Apprentice => 10,
+                SpiritTrialsTier.Adept      => 15,
+                SpiritTrialsTier.Master     => 20,
+                _                           => 30   // Grandmaster
+            };
+            var basePoints = cellsToFill * pointsPerCell;
 
-            // Speed multiplier: 2.0 at 60s, linearly decreasing to 0.5 at 600s
-            var speedMult = Math.Max(0.5f, 2.0f - (secondsPlayed - 60f) / 360f);
+            // [TRIAL-SCORE-002] SpeedMultiplier = max(0.5, 2.0 − ElapsedSeconds / ParTime)
+            float parTime = tier switch
+            {
+                SpiritTrialsTier.Apprentice => 300f,
+                SpiritTrialsTier.Adept      => 420f,
+                SpiritTrialsTier.Master     => 540f,
+                _                           => 720f  // Grandmaster
+            };
+            var speedMult = Math.Max(0.5f, 2.0f - secondsPlayed / parTime);
 
-            // Constraint bonus: +500 per active modifier
-            var constraintBonus = modCount * 500;
+            // [TRIAL-SCORE-003] ConstraintBonus
+            var constraintBonus = modCount switch { 1 => 100, 2 => 300, _ => 0 };
 
-            // Pencil bonus: +50 per pencil remaining
-            var pencilBonus = pencilRemaining * 50;
+            // [TRIAL-SCORE-004] Mistake penalty per tier
+            int penaltyPerMistake = tier switch
+            {
+                SpiritTrialsTier.Apprentice => 20,
+                SpiritTrialsTier.Adept      => 30,
+                SpiritTrialsTier.Master     => 50,
+                _                           => 75  // Grandmaster
+            };
+            var mistakePenalty = mistakes * penaltyPerMistake;
 
-            // Mistake penalty: -200 per mistake
-            var mistakePenalty = mistakes * 200;
+            // PencilBonus: max(0, (30 − pencilMarksUsed) × 5)
+            var pencilBonus = Math.Max(0, (30 - pencilMarksUsed) * 5);
 
-            return (int)(basePoints * speedMult) + constraintBonus + pencilBonus - mistakePenalty;
+            // [TRIAL-SCORE-005] Final = floor(base × speed) + constraint + pencil − mistakes
+            return Math.Max(0, (int)(basePoints * speedMult) + constraintBonus + pencilBonus - mistakePenalty);
         }
     }
 }

@@ -22,12 +22,16 @@ namespace SudokuRoguelike.UI
         private Text _shopSummary;
         private List<ShopOffer> _shopOffers;
         private int _selectedShopOffer = -1;
+        private Button _shopBuyButton;
 
         // Delegate to show bag-swap panel (supplied by InRunController)
         private Action<ItemInstance, Action<int>, Action> _showSwapPanel;
 
         public Action<string> OnStatusChanged;
         public Action OnShopClosed;
+
+        /// <summary>Non-null and active while the shop (or any sub-panel) is open; used by InRunController for overlay controller focus.</summary>
+        public GameObject ActivePanel { get; private set; }
 
         public void Configure(RunMapController map, GameObject pathPanel,
             Action<ItemInstance, Action<int>, Action> showSwapPanel)
@@ -47,13 +51,21 @@ namespace SudokuRoguelike.UI
             _shopOffers.Clear();
             _shopOffers.AddRange(run.BuildShopOffers());
             RebuildShopButtons();
-            if (_shopPanel != null) _shopPanel.SetActive(true);
+            if (_shopPanel != null)
+            {
+                _shopPanel.SetActive(true);
+                ActivePanel = _shopPanel;
+                InRunUiFactory.SelectFirstInteractable(_shopPanel);
+            }
         }
 
         private void BuildShopPanel()
         {
             if (_shopPanel != null || _pathPanel == null) return;
             _shopPanel = InRunUiFactory.CreateOverlayPanel(_pathPanel.transform, "ShopPanel", "Shop");
+            var shopBase = InRunUiFactory.PanelBg;
+            _shopPanel.GetComponent<Image>().color = new Color(shopBase.r, shopBase.g, shopBase.b, 0.40f);
+            InRunUiFactory.AddPanelBackground(_shopPanel.transform, "bg_shop");
             _shopSummary = _shopPanel.transform.Find("Summary")?.GetComponent<Text>();
             _shopPanel.SetActive(false);
         }
@@ -63,10 +75,11 @@ namespace SudokuRoguelike.UI
             if (_shopPanel == null) return;
             InRunUiFactory.ClearNamedChildren(_shopPanel.transform, "Offer_");
             _selectedShopOffer = -1;
+            _shopBuyButton = null;
 
             var s = _map?.Run?.State;
             if (_shopSummary != null && s != null)
-                _shopSummary.text = $"Gold: {s.CurrentGold}  |  Click an item to preview, then press Buy.";
+                _shopSummary.text = $"{ResourceHeader(s)}  |  Click an item to preview, then press Buy.";
 
             for (var i = 0; i < Mathf.Min(3, _shopOffers.Count); i++)
             {
@@ -88,9 +101,35 @@ namespace SudokuRoguelike.UI
             buyBtn.interactable = false;
             buyBtn.gameObject.name = "ShopBuyBtn";
             buyBtn.onClick.AddListener(TryBuySelectedOffer);
+            _shopBuyButton = buyBtn;
+
+            var run2      = _map?.Run;
+            var tokens    = run2?.State.RerollTokens ?? 0;
+            var rerollCost = run2 != null ? run2.GetShopRerollCost() : 15;
+            var rerollLabel = tokens > 0
+                ? $"Reroll ({tokens} token{(tokens != 1 ? "s" : "")})"
+                : $"Reroll ({rerollCost}g)";
+            var rerollBtn = InRunUiFactory.CreatePanelButton(_shopPanel.transform, "Offer_reroll",
+                new Vector2(0.05f, 0.13f), new Vector2(0.30f, 0.23f), rerollLabel);
+            rerollBtn.gameObject.name = "ShopRerollBtn";
+            // Teal tint signals "free reroll available"; default button color otherwise.
+            if (tokens > 0)
+            {
+                var img = rerollBtn.GetComponent<Image>();
+                if (img != null) img.color = new Color(0.15f, 0.55f, 0.40f, 0.95f);
+            }
+            rerollBtn.onClick.AddListener(() =>
+            {
+                var run = _map?.Run;
+                if (run == null) return;
+                if (!run.RerollShop()) { OnStatusChanged?.Invoke("Not enough gold."); return; }
+                _shopOffers.Clear();
+                _shopOffers.AddRange(run.CurrentShopOffers);
+                RebuildShopButtons();
+            });
 
             var skip = InRunUiFactory.CreatePanelButton(_shopPanel.transform, "Offer_skip",
-                new Vector2(0.35f, 0.13f), new Vector2(0.65f, 0.23f), "Skip");
+                new Vector2(0.70f, 0.13f), new Vector2(0.95f, 0.23f), "Skip");
             skip.onClick.AddListener(() =>
             {
                 _shopOffers.Clear();
@@ -109,32 +148,32 @@ namespace SudokuRoguelike.UI
             if (_shopSummary != null && offer != null)
             {
                 var s = _map?.Run?.State;
-                var goldTxt = s != null ? $"Gold: {s.CurrentGold}  |  " : "";
+                var header = s != null ? $"{ResourceHeader(s)}  |  " : "";
                 var desc = offer.Item != null
-                    ? $"{goldTxt}{ItemService.GetItemName(offer.Item.Type)} ({offer.Item.Rarity}) \u2014 {offer.Price}g\n{ItemService.GetItemDescription(offer.Item.Type, offer.Item.Rarity)}"
-                    : $"{goldTxt}Offer \u2014 {offer.Price}g";
+                    ? $"{header}{ItemService.GetItemName(offer.Item.Type)} ({offer.Item.Rarity}) \u2014 {offer.Price}g\n{ItemService.GetItemDescription(offer.Item.Type, offer.Item.Rarity)}"
+                    : $"{header}Offer \u2014 {offer.Price}g";
                 _shopSummary.text = desc;
             }
 
-            // Highlight selected, un-highlight others; enable Buy button
+            // Highlight selected, un-highlight others; enable Buy button.
+            // Set Image.color directly — btn.colors.normalColor is multiplied with the
+            // image's dark base color, making gold highlights nearly invisible.
             for (var i = 0; i < Mathf.Min(3, _shopOffers.Count); i++)
             {
                 var offerGo = _shopPanel?.transform.Find($"Offer_{i}");
                 if (offerGo == null) continue;
-                var btn = offerGo.GetComponent<Button>();
-                if (btn == null) continue;
-                var cols = btn.colors;
-                cols.normalColor = (i == idx) ? new Color(InRunUiFactory.AccentGold.r, InRunUiFactory.AccentGold.g, InRunUiFactory.AccentGold.b, 0.45f) : InRunUiFactory.BtnColor;
-                btn.colors = cols;
+                var img = offerGo.GetComponent<Image>();
+                if (img != null)
+                    img.color = (i == idx) ? GamePalette.AccentGold : InRunUiFactory.BtnColor;
             }
 
-            var buyGo = _shopPanel?.transform.Find("ShopBuyBtn");
-            if (buyGo != null)
-            {
-                var buyBtn = buyGo.GetComponent<Button>();
-                if (buyBtn != null) buyBtn.interactable = true;
-            }
+            if (_shopBuyButton != null)
+                _shopBuyButton.interactable = true;
         }
+
+        /// <summary>Builds the gold + token header shown in the shop summary line.</summary>
+        private static string ResourceHeader(RunState s) =>
+            $"Gold: {s.CurrentGold}  |  Tokens: {s.RerollTokens}";
 
         private void TryBuySelectedOffer()
         {
@@ -148,24 +187,27 @@ namespace SudokuRoguelike.UI
 
             if (offer.Item != null && run.IsBagFull())
             {
-                // Bag is full — show swap panel; deduct gold only after confirmed
+                // Bag is full — show swap panel; deduct gold only after confirmed.
+                // Capture the index as a local so later UI interactions cannot
+                // mutate _selectedShopOffer and cause the wrong offer to be purchased.
+                var selectedOfferIdx = _selectedShopOffer;
                 _showSwapPanel?.Invoke(
                     offer.Item,
                     slotToReplace =>
                     {
-                        if (!run.TryPurchaseShopOffer(_selectedShopOffer))
+                        if (!run.TryPurchaseShopOffer(selectedOfferIdx))
                         {
                             OnStatusChanged?.Invoke("Not enough gold.");
                             return;
                         }
                         run.ReplaceItemInInventory(slotToReplace, offer.Item);
-                        new ProfileService(new SaveFileService()).RecordItemDiscovery(offer.Item.Type);
+                        new ProfileService(new SaveFileService(SaveProfileService.ActiveSlot)).RecordItemDiscovery(offer.Item.Type);
                         _shopOffers.Clear();
                         _selectedShopOffer = -1;
                         InRunUiFactory.HidePanel(_shopPanel);
                         OnShopClosed?.Invoke();
                     },
-                    () => { /* abort — just hide swap panel, shop remains */ });
+                    () => { /* no-op — swap panel hiding is handled by ShowBagSwapPanel wrapper */ });
                 return;
             }
 
@@ -175,7 +217,7 @@ namespace SudokuRoguelike.UI
             _selectedShopOffer = -1;
             InRunUiFactory.HidePanel(_shopPanel);
             if (purchasedItem != null)
-                new ProfileService(new SaveFileService()).RecordItemDiscovery(purchasedItem.Type);
+                new ProfileService(new SaveFileService(SaveProfileService.ActiveSlot)).RecordItemDiscovery(purchasedItem.Type);
             OnShopClosed?.Invoke();
         }
     }

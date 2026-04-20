@@ -3,8 +3,8 @@ guid: be7fed1eacfbe2e408309540c17713fb
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 66323256304512887
-    second: icon_rice_paper_umbrella_0
+      213: 6446211871941247040
+    second: icon_Rice_Paper_Umbrella_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -46,7 +46,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: icon_rice_paper_umbrella_0
+      name: icon_Rice_Paper_Umbrella_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 0
-        width: 64
-        height: 64
+        y: 2
+        width: 192
+        height: 188
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 77fa06476a0abe000800000000000000
-      internalID: 66323256304512887
+      spriteID: 040c6f54b8b857950800000000000000
+      internalID: 6446211871941247040
       vertices: []
       indices: 
       edges: []
@@ -125,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      icon_rice_paper_umbrella_0: 66323256304512887
+      icon_Rice_Paper_Umbrella_0: 6446211871941247040
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

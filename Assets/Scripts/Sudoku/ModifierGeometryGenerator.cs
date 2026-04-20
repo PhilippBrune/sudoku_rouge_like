@@ -6,7 +6,7 @@ namespace SudokuRoguelike.Sudoku
 {
     public static class ModifierGeometryGenerator
     {
-        private static readonly (int Dr, int Dc)[] Dirs = { (-1, 0), (1, 0), (0, -1), (0, 1) };
+        private static readonly (int Dr, int Dc)[] Dirs = { (-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (1, 1), (-1, 1), (1, -1) };
 
         private static float IntensityScale(BossModifierIntensity intensity) => intensity switch
         {
@@ -17,17 +17,28 @@ namespace SudokuRoguelike.Sudoku
         };
 
         private static int ScaledCount(int baseCount, float scale, int min, int max)
-            => Math.Clamp((int)Math.Round(baseCount * scale), min, max);
+            => max < min ? max : Math.Clamp((int)Math.Round(baseCount * scale), min, max);
 
-        private static readonly HashSet<long> _usedCells = new();
+        // [ThreadStatic] ensures each thread (main thread and Task.Run background boss-bake)
+        // gets its own HashSet instance, eliminating concurrent-access corruption.
+        [System.ThreadStatic]
+        private static HashSet<long> _usedCells;
+        private static HashSet<long> UsedCells => _usedCells ??= new HashSet<long>();
 
         private static long CellKey(int r, int c) => (long)r * 1000 + c;
 
         private static void MarkCellsUsed(List<CellCoord> cells)
         {
             for (var i = 0; i < cells.Count; i++)
-                _usedCells.Add(CellKey(cells[i].Row, cells[i].Col));
+                UsedCells.Add(CellKey(cells[i].Row, cells[i].Col));
         }
+
+        /// <summary>
+        /// True when the cell is not claimed by another line in this modifier pass
+        /// AND not claimed by any previous modifier in this generation run.
+        /// </summary>
+        private static bool IsCellFree(int r, int c, bool[,] used)
+            => !used[r, c] && !UsedCells.Contains(CellKey(r, c));
 
         public static ModifierOverlayData Generate(SudokuBoard board, List<BossModifierId> modifiers, int seed,
             BossModifierIntensity intensity = BossModifierIntensity.Medium)
@@ -35,7 +46,7 @@ namespace SudokuRoguelike.Sudoku
             var overlay = new ModifierOverlayData();
             var rng = new Random(seed);
             var scale = IntensityScale(intensity);
-            _usedCells.Clear();
+            UsedCells.Clear();
 
             for (var i = 0; i < modifiers.Count; i++)
             {
@@ -138,25 +149,33 @@ namespace SudokuRoguelike.Sudoku
         {
             var size = board.Size;
 
-            for (var r = 0; r < size; r++)
-            for (var c = 0; c < size; c++)
-            {
-                if (!board.GivenMask[r, c])
-                    overlay.FogCells.Add(new CellCoord(r, c));
-            }
-
+            // Build fog as a HashSet during generation to allow O(1) removals.
+            var fogSet = new HashSet<(int, int)>();
             var givenCells = new List<CellCoord>();
             for (var r = 0; r < size; r++)
             for (var c = 0; c < size; c++)
             {
                 if (board.GivenMask[r, c])
                     givenCells.Add(new CellCoord(r, c));
+                else
+                    fogSet.Add((r, c));
             }
 
             Shuffle(givenCells, rng);
             var revealCount = Math.Max(1, givenCells.Count / 3);
             for (var i = 0; i < revealCount; i++)
-                RevealAdjacentFog(overlay, givenCells[i].Row, givenCells[i].Col, size);
+            {
+                var gr = givenCells[i].Row;
+                var gc = givenCells[i].Col;
+                fogSet.Remove((gr, gc));
+                if (gr > 0)        fogSet.Remove((gr - 1, gc));
+                if (gr < size - 1) fogSet.Remove((gr + 1, gc));
+                if (gc > 0)        fogSet.Remove((gr, gc - 1));
+                if (gc < size - 1) fogSet.Remove((gr, gc + 1));
+            }
+
+            foreach (var (r, c) in fogSet)
+                overlay.FogCells.Add(new CellCoord(r, c));
         }
 
         public static void RevealAdjacentFog(ModifierOverlayData overlay, int row, int col, int size)
@@ -210,14 +229,14 @@ namespace SudokuRoguelike.Sudoku
         {
             var startRow = rng.Next(size);
             var startCol = rng.Next(size);
-            if (used[startRow, startCol]) return null;
+            if (!IsCellFree(startRow, startCol, used)) return null;
             // Prefer starting on a non-given cell so the line has visible constraint
             if (board.GivenMask[startRow, startCol] && rng.NextDouble() < 0.8) return null;
 
             var line = new ModifierLine();
             line.Cells.Add(new CellCoord(startRow, startCol));
 
-            var targetLen = rng.Next(3, 6);
+            var targetLen = rng.Next(4, 7);
 
             for (var step = 1; step < targetLen; step++)
             {
@@ -229,7 +248,7 @@ namespace SudokuRoguelike.Sudoku
                     var nr = last.Row + Dirs[d].Dr;
                     var nc = last.Col + Dirs[d].Dc;
                     if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
-                    if (used[nr, nc] || IsInLine(line, nr, nc)) continue;
+                    if (!IsCellFree(nr, nc, used) || IsInLine(line, nr, nc)) continue;
 
                     var lastVal = board.Solution[last.Row, last.Col];
                     var nextVal = board.Solution[nr, nc];
@@ -241,10 +260,8 @@ namespace SudokuRoguelike.Sudoku
                 line.Cells.Add(candidates[rng.Next(candidates.Count)]);
             }
 
-            return line.Cells.Count >= 3 ? line : null;
+            return line.Cells.Count >= 4 ? line : null;
         }
-
-        // ── Parity Lines ──
 
         private static void GenerateParityLines(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale)
         {
@@ -270,12 +287,12 @@ namespace SudokuRoguelike.Sudoku
         {
             var startRow = rng.Next(size);
             var startCol = rng.Next(size);
-            if (used[startRow, startCol]) return null;
+            if (!IsCellFree(startRow, startCol, used)) return null;
 
             var line = new ModifierLine { Type = LineType.ParityLine };
             line.Cells.Add(new CellCoord(startRow, startCol));
 
-            var targetLen = rng.Next(3, 6);
+            var targetLen = rng.Next(4, 7);
 
             for (var step = 1; step < targetLen; step++)
             {
@@ -287,7 +304,7 @@ namespace SudokuRoguelike.Sudoku
                     var nr = last.Row + Dirs[d].Dr;
                     var nc = last.Col + Dirs[d].Dc;
                     if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
-                    if (used[nr, nc] || IsInLine(line, nr, nc)) continue;
+                    if (!IsCellFree(nr, nc, used) || IsInLine(line, nr, nc)) continue;
 
                     var lastVal = board.Solution[last.Row, last.Col];
                     var nextVal = board.Solution[nr, nc];
@@ -299,10 +316,8 @@ namespace SudokuRoguelike.Sudoku
                 line.Cells.Add(candidates[rng.Next(candidates.Count)]);
             }
 
-            return line.Cells.Count >= 3 ? line : null;
+            return line.Cells.Count >= 4 ? line : null;
         }
-
-        // ── Renban Lines ──
 
         private static void GenerateRenbanLines(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale)
         {
@@ -328,13 +343,13 @@ namespace SudokuRoguelike.Sudoku
         {
             var startRow = rng.Next(size);
             var startCol = rng.Next(size);
-            if (used[startRow, startCol]) return null;
+            if (!IsCellFree(startRow, startCol, used)) return null;
 
             var line = new ModifierLine { Type = LineType.RenbanLine };
             line.Cells.Add(new CellCoord(startRow, startCol));
             var values = new List<int> { board.Solution[startRow, startCol] };
 
-            var targetLen = rng.Next(3, 5);
+            var targetLen = rng.Next(4, 6);
 
             for (var step = 1; step < targetLen; step++)
             {
@@ -346,7 +361,7 @@ namespace SudokuRoguelike.Sudoku
                     var nr = last.Row + Dirs[d].Dr;
                     var nc = last.Col + Dirs[d].Dc;
                     if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
-                    if (used[nr, nc] || IsInLine(line, nr, nc)) continue;
+                    if (!IsCellFree(nr, nc, used) || IsInLine(line, nr, nc)) continue;
 
                     var nextVal = board.Solution[nr, nc];
                     if (values.Contains(nextVal)) continue;
@@ -369,7 +384,7 @@ namespace SudokuRoguelike.Sudoku
                 values.Add(pick.Val);
             }
 
-            if (line.Cells.Count < 3) return null;
+            if (line.Cells.Count < 4) return null;
 
             values.Sort();
             if (values[values.Count - 1] - values[0] != line.Cells.Count - 1) return null;
@@ -387,7 +402,7 @@ namespace SudokuRoguelike.Sudoku
             var used = new bool[size, size];
             var count = 0;
 
-            for (var attempt = 0; attempt < target * 40 && count < target; attempt++)
+            for (var attempt = 0; attempt < target * 20 && count < target; attempt++)
             {
                 var line = TryBuildPalindromeLine(board, rng, used, size);
                 if (line == null) continue;
@@ -403,10 +418,10 @@ namespace SudokuRoguelike.Sudoku
         {
             var startRow = rng.Next(size);
             var startCol = rng.Next(size);
-            if (used[startRow, startCol]) return null;
+            if (!IsCellFree(startRow, startCol, used)) return null;
 
             var cells = new List<CellCoord> { new CellCoord(startRow, startCol) };
-            var rawLen = rng.Next(3, 6);
+            var rawLen = rng.Next(4, 7);
             var targetLen = rawLen % 2 == 0 ? rawLen + 1 : rawLen;
 
             for (var step = 1; step < targetLen; step++)
@@ -419,7 +434,7 @@ namespace SudokuRoguelike.Sudoku
                     var nr = last.Row + Dirs[d].Dr;
                     var nc = last.Col + Dirs[d].Dc;
                     if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
-                    if (used[nr, nc]) continue;
+                    if (!IsCellFree(nr, nc, used)) continue;
                     var alreadyIn = false;
                     for (var ci = 0; ci < cells.Count; ci++)
                         if (cells[ci].Row == nr && cells[ci].Col == nc) { alreadyIn = true; break; }
@@ -430,7 +445,7 @@ namespace SudokuRoguelike.Sudoku
                 cells.Add(candidates[rng.Next(candidates.Count)]);
             }
 
-            if (cells.Count < 3) return null;
+            if (cells.Count < 4) return null;
 
             var n = cells.Count;
             for (var j = 0; j < n / 2; j++)
@@ -471,12 +486,12 @@ namespace SudokuRoguelike.Sudoku
         {
             var startRow = rng.Next(size);
             var startCol = rng.Next(size);
-            if (used[startRow, startCol]) return null;
+            if (!IsCellFree(startRow, startCol, used)) return null;
 
             var line = new ModifierLine { Type = LineType.Thermo };
             line.Cells.Add(new CellCoord(startRow, startCol));
 
-            var targetLen = rng.Next(3, 6);
+            var targetLen = rng.Next(4, 7);
 
             for (var step = 1; step < targetLen; step++)
             {
@@ -489,7 +504,7 @@ namespace SudokuRoguelike.Sudoku
                     var nr = last.Row + Dirs[d].Dr;
                     var nc = last.Col + Dirs[d].Dc;
                     if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
-                    if (used[nr, nc] || IsInLine(line, nr, nc)) continue;
+                    if (!IsCellFree(nr, nc, used) || IsInLine(line, nr, nc)) continue;
                     if (board.Solution[nr, nc] > lastVal)
                         candidates.Add(new CellCoord(nr, nc));
                 }
@@ -498,7 +513,7 @@ namespace SudokuRoguelike.Sudoku
                 line.Cells.Add(candidates[rng.Next(candidates.Count)]);
             }
 
-            return line.Cells.Count >= 3 ? line : null;
+            return line.Cells.Count >= 4 ? line : null;
         }
 
         // ── Between Lines ──
@@ -527,10 +542,10 @@ namespace SudokuRoguelike.Sudoku
         {
             var startRow = rng.Next(size);
             var startCol = rng.Next(size);
-            if (used[startRow, startCol]) return null;
+            if (!IsCellFree(startRow, startCol, used)) return null;
 
             var cells = new List<CellCoord> { new CellCoord(startRow, startCol) };
-            var targetLen = rng.Next(3, 5);
+            var targetLen = rng.Next(4, 6);
 
             for (var step = 1; step < targetLen; step++)
             {
@@ -542,7 +557,7 @@ namespace SudokuRoguelike.Sudoku
                     var nr = last.Row + Dirs[d].Dr;
                     var nc = last.Col + Dirs[d].Dc;
                     if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
-                    if (used[nr, nc]) continue;
+                    if (!IsCellFree(nr, nc, used)) continue;
                     var alreadyIn = false;
                     for (var ci = 0; ci < cells.Count; ci++)
                         if (cells[ci].Row == nr && cells[ci].Col == nc) { alreadyIn = true; break; }
@@ -591,15 +606,15 @@ namespace SudokuRoguelike.Sudoku
                 if (c + 1 < size)
                 {
                     var v2 = board.Solution[r, c + 1];
-                    // At least one cell must be missing (non-given) so the constraint is meaningful
-                    if (MatchesDot(v, v2, isBlack) && !(board.GivenMask[r, c] && board.GivenMask[r, c + 1]))
+                    // Neither cell may be pre-filled — Kropki dots must not connect to given cells
+                    if (MatchesDot(v, v2, isBlack) && !board.GivenMask[r, c] && !board.GivenMask[r, c + 1])
                         pairs.Add((new CellCoord(r, c), new CellCoord(r, c + 1)));
                 }
 
                 if (r + 1 < size)
                 {
                     var v2 = board.Solution[r + 1, c];
-                    if (MatchesDot(v, v2, isBlack) && !(board.GivenMask[r, c] && board.GivenMask[r + 1, c]))
+                    if (MatchesDot(v, v2, isBlack) && !board.GivenMask[r, c] && !board.GivenMask[r + 1, c])
                         pairs.Add((new CellCoord(r, c), new CellCoord(r + 1, c)));
                 }
             }
@@ -651,7 +666,7 @@ namespace SudokuRoguelike.Sudoku
         {
             var startRow = rng.Next(size);
             var startCol = rng.Next(size);
-            if (used[startRow, startCol]) return null;
+            if (!IsCellFree(startRow, startCol, used)) return null;
 
             var cage = new KillerCage();
             cage.Cells.Add(new CellCoord(startRow, startCol));
@@ -815,7 +830,7 @@ namespace SudokuRoguelike.Sudoku
         {
             var startRow = rng.Next(size);
             var startCol = rng.Next(size);
-            if (used[startRow, startCol]) return null;
+            if (!IsCellFree(startRow, startCol, used)) return null;
 
             var line = new ModifierLine { Type = LineType.ConsecutiveLine };
             line.Cells.Add(new CellCoord(startRow, startCol));
@@ -832,7 +847,7 @@ namespace SudokuRoguelike.Sudoku
                     var nr = last.Row + Dirs[d].Dr;
                     var nc = last.Col + Dirs[d].Dc;
                     if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
-                    if (used[nr, nc] || IsInLine(line, nr, nc)) continue;
+                    if (!IsCellFree(nr, nc, used) || IsInLine(line, nr, nc)) continue;
                     if (Math.Abs(board.Solution[nr, nc] - lastVal) == 1)
                         candidates.Add(new CellCoord(nr, nc));
                 }
@@ -841,7 +856,7 @@ namespace SudokuRoguelike.Sudoku
                 line.Cells.Add(candidates[rng.Next(candidates.Count)]);
             }
 
-            return line.Cells.Count >= 3 ? line : null;
+            return line.Cells.Count >= 4 ? line : null;
         }
 
         // ── Slow Thermo Lines ──
@@ -869,7 +884,7 @@ namespace SudokuRoguelike.Sudoku
         {
             var startRow = rng.Next(size);
             var startCol = rng.Next(size);
-            if (used[startRow, startCol]) return null;
+            if (!IsCellFree(startRow, startCol, used)) return null;
 
             var line = new ModifierLine { Type = LineType.SlowThermo };
             line.Cells.Add(new CellCoord(startRow, startCol));
@@ -886,7 +901,7 @@ namespace SudokuRoguelike.Sudoku
                     var nr = last.Row + Dirs[d].Dr;
                     var nc = last.Col + Dirs[d].Dc;
                     if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
-                    if (used[nr, nc] || IsInLine(line, nr, nc)) continue;
+                    if (!IsCellFree(nr, nc, used) || IsInLine(line, nr, nc)) continue;
                     if (board.Solution[nr, nc] >= lastVal)
                         candidates.Add(new CellCoord(nr, nc));
                 }
@@ -895,7 +910,7 @@ namespace SudokuRoguelike.Sudoku
                 line.Cells.Add(candidates[rng.Next(candidates.Count)]);
             }
 
-            return line.Cells.Count >= 3 ? line : null;
+            return line.Cells.Count >= 4 ? line : null;
         }
 
         // ── Unique Set Lines ──
@@ -923,12 +938,12 @@ namespace SudokuRoguelike.Sudoku
         {
             var startRow = rng.Next(size);
             var startCol = rng.Next(size);
-            if (used[startRow, startCol]) return null;
+            if (!IsCellFree(startRow, startCol, used)) return null;
 
             var line = new ModifierLine { Type = LineType.UniqueSetLine };
             line.Cells.Add(new CellCoord(startRow, startCol));
             var seenVals = new System.Collections.Generic.HashSet<int> { board.Solution[startRow, startCol] };
-            var targetLen = rng.Next(3, 6);
+            var targetLen = rng.Next(4, 6);
 
             for (var step = 1; step < targetLen; step++)
             {
@@ -940,7 +955,7 @@ namespace SudokuRoguelike.Sudoku
                     var nr = last.Row + Dirs[d].Dr;
                     var nc = last.Col + Dirs[d].Dc;
                     if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
-                    if (used[nr, nc] || IsInLine(line, nr, nc)) continue;
+                    if (!IsCellFree(nr, nc, used) || IsInLine(line, nr, nc)) continue;
                     var v = board.Solution[nr, nc];
                     if (!seenVals.Contains(v))
                         candidates.Add(new CellCoord(nr, nc));
@@ -952,7 +967,7 @@ namespace SudokuRoguelike.Sudoku
                 seenVals.Add(board.Solution[pick.Row, pick.Col]);
             }
 
-            return line.Cells.Count >= 3 ? line : null;
+            return line.Cells.Count >= 4 ? line : null;
         }
 
         // ── Full Kropki ──
@@ -997,10 +1012,11 @@ namespace SudokuRoguelike.Sudoku
             for (var r = 0; r < size; r++)
             for (var c = 0; c < size; c++)
             {
-                if (c + 1 < size && !(board.GivenMask[r, c] && board.GivenMask[r, c + 1]))
+                if (c + 1 < size && !board.GivenMask[r, c] && !board.GivenMask[r, c + 1])
                     pairs.Add((new CellCoord(r, c), new CellCoord(r, c + 1), board.Solution[r, c] + board.Solution[r, c + 1]));
-                if (r + 1 < size && !(board.GivenMask[r, c] && board.GivenMask[r + 1, c]))
+                if (r + 1 < size && !board.GivenMask[r, c] && !board.GivenMask[r + 1, c])
                     pairs.Add((new CellCoord(r, c), new CellCoord(r + 1, c), board.Solution[r, c] + board.Solution[r + 1, c]));
+
             }
 
             var baseCount = size <= 6 ? 5 : size <= 8 ? 8 : 10;
@@ -1177,8 +1193,8 @@ namespace SudokuRoguelike.Sudoku
 
             for (var i = dotsBefore; i < overlay.KropkiDots.Count; i++)
             {
-                _usedCells.Add(CellKey(overlay.KropkiDots[i].CellA.Row, overlay.KropkiDots[i].CellA.Col));
-                _usedCells.Add(CellKey(overlay.KropkiDots[i].CellB.Row, overlay.KropkiDots[i].CellB.Col));
+                UsedCells.Add(CellKey(overlay.KropkiDots[i].CellA.Row, overlay.KropkiDots[i].CellA.Col));
+                UsedCells.Add(CellKey(overlay.KropkiDots[i].CellB.Row, overlay.KropkiDots[i].CellB.Col));
             }
 
             for (var i = cagesBefore; i < overlay.KillerCages.Count; i++)
@@ -1186,12 +1202,12 @@ namespace SudokuRoguelike.Sudoku
 
             for (var i = arrowsBefore; i < overlay.Arrows.Count; i++)
             {
-                _usedCells.Add(CellKey(overlay.Arrows[i].CircleCell.Row, overlay.Arrows[i].CircleCell.Col));
+                UsedCells.Add(CellKey(overlay.Arrows[i].CircleCell.Row, overlay.Arrows[i].CircleCell.Col));
                 MarkCellsUsed(overlay.Arrows[i].ArrowCells);
             }
 
             for (var i = markersBefore; i < overlay.CellMarkers.Count; i++)
-                _usedCells.Add(CellKey(overlay.CellMarkers[i].Cell.Row, overlay.CellMarkers[i].Cell.Col));
+                UsedCells.Add(CellKey(overlay.CellMarkers[i].Cell.Row, overlay.CellMarkers[i].Cell.Col));
         }
     }
 }

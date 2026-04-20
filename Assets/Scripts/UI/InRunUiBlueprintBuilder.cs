@@ -22,10 +22,10 @@ namespace SudokuRoguelike.UI
 
         private void Awake()
         {
-            panelColor = new Color(0.10f, 0.15f, 0.12f, 0.90f);
-            accentColor = new Color(0.56f, 0.72f, 0.42f, 1f);
-            textColor = new Color(0.92f, 0.96f, 0.89f, 1f);
-            buttonColor = new Color(0.18f, 0.27f, 0.20f, 1f);
+            panelColor  = GamePalette.Panel;
+            accentColor = GamePalette.SuccessGreen;
+            textColor   = GamePalette.TextPrimary;
+            buttonColor = GamePalette.Button;
 
             titleFontSize = 24;
             bodyFontSize = 18;
@@ -101,7 +101,8 @@ namespace SudokuRoguelike.UI
         private GameObject BuildEventPanel(RectTransform root)
         {
             var panel = EnsureRect("EventPanel", root, new Vector2(0.12f, 0.12f), new Vector2(0.88f, 0.78f), Vector2.zero, Vector2.zero).gameObject;
-            EnsureOrGetImage(panel, panelColor);
+            EnsureOrGetImage(panel, new Color(panelColor.r, panelColor.g, panelColor.b, 0.40f)); // scrim: bg_event.png shows through
+            InRunUiFactory.AddPanelBackground(panel.transform, "bg_event");
 
             var controller = EnsureComponent<EventChoiceScreenController>(panel);
 
@@ -121,8 +122,9 @@ namespace SudokuRoguelike.UI
             var result = BuildText("ResultText", panel.transform as RectTransform, string.Empty, smallFontSize, TextAnchor.LowerLeft);
             SetRect(result.rectTransform, new Vector2(0.04f, 0.06f), new Vector2(0.75f, 0.18f), Vector2.zero, Vector2.zero);
 
-            var closeButton = BuildButton("CloseButton", panel.transform as RectTransform, "Close", bodyFontSize);
-            SetRect(closeButton.GetComponent<RectTransform>(), new Vector2(0.78f, 0.05f), new Vector2(0.96f, 0.18f), Vector2.zero, Vector2.zero);
+            var closeButton = BuildButton("CloseButton", panel.transform as RectTransform, "Back", bodyFontSize);
+            SetRect(closeButton.GetComponent<RectTransform>(), new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
+            ApplyButtonIcon(closeButton, "torii_lock");
             closeButton.onClick.RemoveAllListeners();
             closeButton.onClick.AddListener(controller.CloseEvent);
 
@@ -167,7 +169,7 @@ namespace SudokuRoguelike.UI
             SetRect(riskyPath.GetComponent<RectTransform>(), new Vector2(0.80f, 0.52f), new Vector2(0.93f, 0.88f), Vector2.zero, Vector2.zero);
             ApplyButtonIcon(riskyPath, "golden_koi");
 
-            var quitAndSave = BuildButton("BtnQuitSave", panel.transform as RectTransform, "Save & Quit (Q)", smallFontSize);
+            var quitAndSave = BuildButton("BtnQuitSave", panel.transform as RectTransform, "Save & Quit", smallFontSize);
             SetRect(quitAndSave.GetComponent<RectTransform>(), new Vector2(0.66f, 0.10f), new Vector2(0.93f, 0.46f), Vector2.zero, Vector2.zero);
             ApplyButtonIcon(quitAndSave, "torii_lock");
 
@@ -198,10 +200,15 @@ namespace SudokuRoguelike.UI
             RectTransform laneAPathRoot, laneBPathRoot;
             Button saveQuit;
             var panel = EnsureRect("PathOverviewPanel", root, new Vector2(0.03f, 0.03f), new Vector2(0.97f, 0.97f), Vector2.zero, Vector2.zero).gameObject;
-            EnsureOrGetImage(panel, new Color(panelColor.r, panelColor.g, panelColor.b, 0.97f));
+            EnsureOrGetImage(panel, new Color(panelColor.r, panelColor.g, panelColor.b, 0.97f)); // solid variant of panelColor
 
             var title = BuildText("PathOverviewTitle", panel.transform as RectTransform, "Garden Path Overview", 34, TextAnchor.UpperCenter);
-            SetRect(title.rectTransform, new Vector2(0.02f, 0.92f), new Vector2(0.98f, 0.99f), Vector2.zero, Vector2.zero);
+            // Anchored below the 22px FloorProgressBar strip — was 0.92–0.99 which overlapped it
+            SetRect(title.rectTransform, new Vector2(0.02f, 0.84f), new Vector2(0.98f, 0.93f), Vector2.zero, Vector2.zero);
+            // Shadow ensures the title reads on bright floor backgrounds (Garden Grove, Shrine Garden)
+            var titleShadow = title.gameObject.AddComponent<Shadow>();
+            titleShadow.effectColor    = new Color(0f, 0f, 0f, 0.80f);
+            titleShadow.effectDistance = new Vector2(2f, -2f);
 
             overviewText = BuildText("PathOverviewText", panel.transform as RectTransform, "", 20, TextAnchor.UpperCenter);
             SetRect(overviewText.rectTransform, new Vector2(0.06f, 0.82f), new Vector2(0.94f, 0.91f), Vector2.zero, Vector2.zero);
@@ -226,7 +233,7 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.92f, 0.70f),
                 "LaneBPathRoot");
 
-            saveQuit = BuildButton("BtnPathOverviewSaveQuit", panel.transform as RectTransform, "Save & Quit (Q)", 20);
+            saveQuit = BuildButton("BtnPathOverviewSaveQuit", panel.transform as RectTransform, "Save & Quit", 20);
             SetRect(saveQuit.GetComponent<RectTransform>(), new Vector2(0.72f, 0.10f), new Vector2(0.92f, 0.18f), Vector2.zero, Vector2.zero);
             ApplyButtonIcon(saveQuit, "torii_lock");
         }
@@ -234,10 +241,10 @@ namespace SudokuRoguelike.UI
         private RectTransform BuildPathLaneScroll(string name, RectTransform parent, Vector2 anchorMin, Vector2 anchorMax, string contentName)
         {
             var scrollRoot = EnsureRect(name, parent, anchorMin, anchorMax, Vector2.zero, Vector2.zero);
-            EnsureOrGetImage(scrollRoot.gameObject, new Color(0f, 0f, 0f, 0.12f));
+            EnsureOrGetImage(scrollRoot.gameObject, InRunUiFactory.LaneScrollBg);
 
             var viewport = EnsureRect("Viewport", scrollRoot, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
-            var viewportImage = EnsureOrGetImage(viewport.gameObject, new Color(1f, 1f, 1f, 0.02f));
+            var viewportImage = EnsureOrGetImage(viewport.gameObject, InRunUiFactory.LaneViewportBg);
             var mask = EnsureComponent<Mask>(viewport.gameObject);
             mask.showMaskGraphic = false;
             viewportImage.raycastTarget = true;
@@ -275,7 +282,8 @@ namespace SudokuRoguelike.UI
             Button saveQuit, optionsButton;
             Text statusText, hpText, pencilText;
             var panel = EnsureRect("SudokuGameplayPanel", root, new Vector2(0.03f, 0.03f), new Vector2(0.97f, 0.97f), Vector2.zero, Vector2.zero).gameObject;
-            EnsureOrGetImage(panel, new Color(panelColor.r, panelColor.g, panelColor.b, 0.97f));
+            EnsureOrGetImage(panel, new Color(panelColor.r, panelColor.g, panelColor.b, 0.40f)); // scrim: bg_puzzle_board.png shows through
+            InRunUiFactory.AddPanelBackground(panel.transform, "bg_puzzle_board");
 
             var title = BuildText("SudokuGameplayTitle", panel.transform as RectTransform, "Sudoku Puzzle", 34, TextAnchor.UpperCenter);
             SetRect(title.rectTransform, new Vector2(0.02f, 0.92f), new Vector2(0.98f, 0.99f), Vector2.zero, Vector2.zero);
@@ -334,8 +342,8 @@ namespace SudokuRoguelike.UI
             pencilBarFillImg.fillAmount = 1f;
             pencilBarFillImg.raycastTarget = false;
 
-            saveQuit = BuildButton("BtnSudokuSaveQuit", panel.transform as RectTransform, "Save & Quit (Q)", 18);
-            SetRect(saveQuit.GetComponent<RectTransform>(), new Vector2(0.80f, 0.84f), new Vector2(0.94f, 0.91f), Vector2.zero, Vector2.zero);
+            saveQuit = BuildButton("BtnSudokuSaveQuit", panel.transform as RectTransform, "Save & Quit", 18);
+            SetRect(saveQuit.GetComponent<RectTransform>(), new Vector2(0.72f, 0.01f), new Vector2(0.92f, 0.09f), Vector2.zero, Vector2.zero);
             ApplyButtonIcon(saveQuit, "torii_lock");
 
             optionsButton = BuildButton("BtnSudokuOptions", panel.transform as RectTransform, "Options", 18);
@@ -362,7 +370,8 @@ namespace SudokuRoguelike.UI
             Text summaryText, detailsText;
             Button backButton;
             var panel = EnsureRect("GameOverPanel", root, new Vector2(0.20f, 0.18f), new Vector2(0.80f, 0.82f), Vector2.zero, Vector2.zero).gameObject;
-            EnsureOrGetImage(panel, new Color(0.10f, 0.06f, 0.06f, 0.97f));
+            EnsureOrGetImage(panel, new Color(0.10f, 0.06f, 0.06f, 0.40f)); // scrim: bg_victory/bg_defeat loaded at runtime
+            InRunUiFactory.AddPanelBackground(panel.transform, ""); // texture set in EndScreenViewController.ShowGameOver
             var panelOutline = EnsureComponent<Outline>(panel);
             panelOutline.effectColor = new Color(0.70f, 0.20f, 0.15f, 0.55f);
             panelOutline.effectDistance = new Vector2(2f, -2f);
@@ -377,8 +386,8 @@ namespace SudokuRoguelike.UI
             SetRect(detailsText.rectTransform, new Vector2(0.08f, 0.20f), new Vector2(0.92f, 0.82f), Vector2.zero, Vector2.zero);
             detailsText.lineSpacing = 1.2f;
 
-            backButton = BuildButton("BtnGameOverBack", panel.transform as RectTransform, "Back to Menu", 17);
-            SetRect(backButton.GetComponent<RectTransform>(), new Vector2(0.34f, 0.04f), new Vector2(0.66f, 0.16f), Vector2.zero, Vector2.zero);
+            backButton = BuildButton("BtnGameOverBack", panel.transform as RectTransform, "Back", 18);
+            SetRect(backButton.GetComponent<RectTransform>(), new Vector2(0.54f, 0.04f), new Vector2(0.90f, 0.12f), Vector2.zero, Vector2.zero);
             ApplyButtonIcon(backButton, "torii_lock");
         }
 
@@ -386,42 +395,70 @@ namespace SudokuRoguelike.UI
         {
             var optCtrl = EnsureComponent<OptionsController>(gameObject);
 
-            var panel = EnsureRect("InGameOptionsPanel", root, new Vector2(0.25f, 0.20f), new Vector2(0.75f, 0.80f), Vector2.zero, Vector2.zero).gameObject;
+            var panel = EnsureRect("InGameOptionsPanel", root, new Vector2(0.18f, 0.08f), new Vector2(0.82f, 0.94f), Vector2.zero, Vector2.zero).gameObject;
             EnsureOrGetImage(panel, panelColor);
 
-            var title = BuildText("InGameOptionsTitle", panel.transform as RectTransform, "Options", 30, TextAnchor.UpperCenter);
-            SetRect(title.rectTransform, new Vector2(0.08f, 0.88f), new Vector2(0.92f, 0.97f), Vector2.zero, Vector2.zero);
+            var pr = panel.transform as RectTransform;
+            var opts = optCtrl.GetOptions();
 
-            var masterLabel = BuildText("IGMasterLabel", panel.transform as RectTransform, "Master Volume", 18, TextAnchor.MiddleLeft);
-            SetRect(masterLabel.rectTransform, new Vector2(0.10f, 0.76f), new Vector2(0.90f, 0.83f), Vector2.zero, Vector2.zero);
-            var masterSlider = BuildSlider("IGMasterSlider", panel.transform as RectTransform);
-            SetRect(masterSlider.GetComponent<RectTransform>(), new Vector2(0.10f, 0.70f), new Vector2(0.90f, 0.76f), Vector2.zero, Vector2.zero);
+            var title = BuildText("InGameOptionsTitle", pr, "Options", 28, TextAnchor.UpperCenter);
+            SetRect(title.rectTransform, new Vector2(0.08f, 0.93f), new Vector2(0.92f, 0.99f), Vector2.zero, Vector2.zero);
+
+            // ── Audio ──
+            var audioHdr = BuildText("IGAudioHdr", pr, "Audio", 17, TextAnchor.MiddleLeft);
+            audioHdr.color = new Color(0.75f, 0.72f, 0.55f, 1f);
+            SetRect(audioHdr.rectTransform, new Vector2(0.05f, 0.88f), new Vector2(0.95f, 0.92f), Vector2.zero, Vector2.zero);
+
+            var masterLabel = BuildText("IGMasterLabel", pr, "Master Volume", 15, TextAnchor.MiddleLeft);
+            SetRect(masterLabel.rectTransform, new Vector2(0.05f, 0.84f), new Vector2(0.48f, 0.88f), Vector2.zero, Vector2.zero);
+            var masterSlider = BuildSlider("IGMasterSlider", pr);
+            SetRect(masterSlider.GetComponent<RectTransform>(), new Vector2(0.05f, 0.80f), new Vector2(0.48f, 0.84f), Vector2.zero, Vector2.zero);
             masterSlider.minValue = 0f;
             masterSlider.maxValue = 1f;
-            masterSlider.SetValueWithoutNotify(optCtrl.GetOptions().Audio.MasterVolume);
+            masterSlider.SetValueWithoutNotify(opts.Audio.MasterVolume);
             masterSlider.onValueChanged.AddListener(v => optCtrl.SetMasterVolume(v));
 
-            var musicLabel = BuildText("IGMusicLabel", panel.transform as RectTransform, "Music Volume", 18, TextAnchor.MiddleLeft);
-            SetRect(musicLabel.rectTransform, new Vector2(0.10f, 0.62f), new Vector2(0.90f, 0.69f), Vector2.zero, Vector2.zero);
-            var musicSlider = BuildSlider("IGMusicSlider", panel.transform as RectTransform);
-            SetRect(musicSlider.GetComponent<RectTransform>(), new Vector2(0.10f, 0.56f), new Vector2(0.90f, 0.62f), Vector2.zero, Vector2.zero);
+            var musicLabel = BuildText("IGMusicLabel", pr, "Music Volume", 15, TextAnchor.MiddleLeft);
+            SetRect(musicLabel.rectTransform, new Vector2(0.52f, 0.84f), new Vector2(0.95f, 0.88f), Vector2.zero, Vector2.zero);
+            var musicSlider = BuildSlider("IGMusicSlider", pr);
+            SetRect(musicSlider.GetComponent<RectTransform>(), new Vector2(0.52f, 0.80f), new Vector2(0.95f, 0.84f), Vector2.zero, Vector2.zero);
             musicSlider.minValue = 0f;
             musicSlider.maxValue = 1f;
-            musicSlider.SetValueWithoutNotify(optCtrl.GetOptions().Audio.MusicVolume);
+            musicSlider.SetValueWithoutNotify(opts.Audio.MusicVolume);
             musicSlider.onValueChanged.AddListener(v => optCtrl.SetMusicVolume(v));
 
-            var sfxLabel = BuildText("IGSfxLabel", panel.transform as RectTransform, "SFX Volume", 18, TextAnchor.MiddleLeft);
-            SetRect(sfxLabel.rectTransform, new Vector2(0.10f, 0.48f), new Vector2(0.90f, 0.55f), Vector2.zero, Vector2.zero);
-            var sfxSlider = BuildSlider("IGSfxSlider", panel.transform as RectTransform);
-            SetRect(sfxSlider.GetComponent<RectTransform>(), new Vector2(0.10f, 0.42f), new Vector2(0.90f, 0.48f), Vector2.zero, Vector2.zero);
+            var sfxLabel = BuildText("IGSfxLabel", pr, "SFX Volume", 15, TextAnchor.MiddleLeft);
+            SetRect(sfxLabel.rectTransform, new Vector2(0.05f, 0.75f), new Vector2(0.95f, 0.79f), Vector2.zero, Vector2.zero);
+            var sfxSlider = BuildSlider("IGSfxSlider", pr);
+            SetRect(sfxSlider.GetComponent<RectTransform>(), new Vector2(0.05f, 0.71f), new Vector2(0.95f, 0.75f), Vector2.zero, Vector2.zero);
             sfxSlider.minValue = 0f;
             sfxSlider.maxValue = 1f;
-            sfxSlider.SetValueWithoutNotify(optCtrl.GetOptions().Audio.SfxVolume);
+            sfxSlider.SetValueWithoutNotify(opts.Audio.SfxVolume);
             sfxSlider.onValueChanged.AddListener(v => optCtrl.SetSfxVolume(v));
 
-            var highlightToggle = BuildToggle("IGHighlightToggle", panel.transform as RectTransform, "Highlight Errors");
-            SetRect(highlightToggle.GetComponent<RectTransform>(), new Vector2(0.10f, 0.34f), new Vector2(0.90f, 0.41f), Vector2.zero, Vector2.zero);
-            highlightToggle.SetIsOnWithoutNotify(optCtrl.GetOptions().Gameplay.HighlightConflicts);
+            var muteTgl = BuildToggle("IGMuteWhenUnfocusedToggle", pr, "Mute When Unfocused");
+            SetRect(muteTgl.GetComponent<RectTransform>(), new Vector2(0.05f, 0.66f), new Vector2(0.50f, 0.70f), Vector2.zero, Vector2.zero);
+            muteTgl.SetIsOnWithoutNotify(opts.Audio.MuteWhenUnfocused);
+            muteTgl.onValueChanged.AddListener(v => optCtrl.SetMuteWhenUnfocused(v));
+
+            // ── Display ──
+            var displayHdr = BuildText("IGDisplayHdr", pr, "Display", 17, TextAnchor.MiddleLeft);
+            displayHdr.color = new Color(0.75f, 0.72f, 0.55f, 1f);
+            SetRect(displayHdr.rectTransform, new Vector2(0.05f, 0.61f), new Vector2(0.95f, 0.65f), Vector2.zero, Vector2.zero);
+
+            var fullscreenTgl = BuildToggle("IGFullscreenToggle", pr, "Fullscreen");
+            SetRect(fullscreenTgl.GetComponent<RectTransform>(), new Vector2(0.05f, 0.56f), new Vector2(0.50f, 0.60f), Vector2.zero, Vector2.zero);
+            fullscreenTgl.SetIsOnWithoutNotify(opts.Graphics.Fullscreen);
+            fullscreenTgl.onValueChanged.AddListener(v => optCtrl.SetFullscreen(v));
+
+            // ── Gameplay ──
+            var gameHdr = BuildText("IGGameHdr", pr, "Gameplay", 17, TextAnchor.MiddleLeft);
+            gameHdr.color = new Color(0.75f, 0.72f, 0.55f, 1f);
+            SetRect(gameHdr.rectTransform, new Vector2(0.05f, 0.51f), new Vector2(0.95f, 0.55f), Vector2.zero, Vector2.zero);
+
+            var highlightToggle = BuildToggle("IGHighlightToggle", pr, "Highlight Errors");
+            SetRect(highlightToggle.GetComponent<RectTransform>(), new Vector2(0.05f, 0.46f), new Vector2(0.50f, 0.50f), Vector2.zero, Vector2.zero);
+            highlightToggle.SetIsOnWithoutNotify(opts.Gameplay.HighlightConflicts);
             highlightToggle.onValueChanged.AddListener(v =>
             {
                 optCtrl.SetHighlightConflicts(v);
@@ -429,8 +466,34 @@ namespace SudokuRoguelike.UI
                 if (rs != null) rs.SetHighlightConflictsLive(v);
             });
 
-            var closeBtn = BuildButton("BtnInGameOptionsClose", panel.transform as RectTransform, "Close", 20);
-            SetRect(closeBtn.GetComponent<RectTransform>(), new Vector2(0.36f, 0.08f), new Vector2(0.64f, 0.16f), Vector2.zero, Vector2.zero);
+            // ── Accessibility ──
+            var accHdr = BuildText("IGAccHdr", pr, "Accessibility", 17, TextAnchor.MiddleLeft);
+            accHdr.color = new Color(0.75f, 0.72f, 0.55f, 1f);
+            SetRect(accHdr.rectTransform, new Vector2(0.05f, 0.41f), new Vector2(0.95f, 0.45f), Vector2.zero, Vector2.zero);
+
+            var colorblindTgl = BuildToggle("IGColorblindToggle", pr, "Colorblind Mode");
+            SetRect(colorblindTgl.GetComponent<RectTransform>(), new Vector2(0.05f, 0.36f), new Vector2(0.50f, 0.40f), Vector2.zero, Vector2.zero);
+            colorblindTgl.SetIsOnWithoutNotify(opts.Accessibility.ColorblindMode);
+            colorblindTgl.onValueChanged.AddListener(v => optCtrl.SetColorblindMode(v));
+
+            var highContrastTgl = BuildToggle("IGHighContrastToggle", pr, "High Contrast");
+            SetRect(highContrastTgl.GetComponent<RectTransform>(), new Vector2(0.52f, 0.36f), new Vector2(0.97f, 0.40f), Vector2.zero, Vector2.zero);
+            highContrastTgl.SetIsOnWithoutNotify(opts.Accessibility.HighContrastMode);
+            highContrastTgl.onValueChanged.AddListener(v => optCtrl.SetHighContrast(v));
+
+            var reduceMotionTgl = BuildToggle("IGReduceMotionToggle", pr, "Reduce Motion");
+            SetRect(reduceMotionTgl.GetComponent<RectTransform>(), new Vector2(0.05f, 0.30f), new Vector2(0.50f, 0.34f), Vector2.zero, Vector2.zero);
+            reduceMotionTgl.SetIsOnWithoutNotify(opts.Accessibility.ReduceMotion);
+            reduceMotionTgl.onValueChanged.AddListener(v => optCtrl.SetReduceMotion(v));
+
+            var altSymbolsTgl = BuildToggle("IGAltSymbolsToggle", pr, "Alt Symbols");
+            SetRect(altSymbolsTgl.GetComponent<RectTransform>(), new Vector2(0.52f, 0.30f), new Vector2(0.97f, 0.34f), Vector2.zero, Vector2.zero);
+            altSymbolsTgl.SetIsOnWithoutNotify(opts.Accessibility.AlternativeConstraintSymbols);
+            altSymbolsTgl.onValueChanged.AddListener(v => optCtrl.SetAltSymbols(v));
+
+            var closeBtn = BuildButton("BtnInGameOptionsClose", pr, "Back", 18);
+            SetRect(closeBtn.GetComponent<RectTransform>(), new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
+            ApplyButtonIcon(closeBtn, "torii_lock");
             closeBtn.onClick.AddListener(() => panel.SetActive(false));
 
             return panel;
@@ -629,16 +692,9 @@ namespace SudokuRoguelike.UI
             return slider;
         }
 
-        private static Font GetBuiltInFont()
-        {
-            var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (font != null)
-            {
-                return font;
-            }
-
-            return Resources.GetBuiltinResource<Font>("Arial.ttf");
-        }
+        // V2: delegates to InRunUiFactory.GetFont() so both builders use the same
+        //     Resources/Fonts/MainFont.ttf path, falling back to the Unity built-in.
+        private static Font GetBuiltInFont() => InRunUiFactory.GetFont();
 
         private static Sprite BuildWhiteSprite()
         {

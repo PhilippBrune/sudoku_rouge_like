@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Sudoku;
 
 namespace SudokuRoguelike.Economy
 {
@@ -27,11 +28,37 @@ namespace SudokuRoguelike.Economy
             [RelicTier.Legendary] = new[] { RelicId.GoldenRoot, RelicId.SilentGrid, RelicId.ShiftingGarden, RelicId.EternalLotus, RelicId.DragonsEye }
         };
 
+        // ── Class-Exclusive Relic Definitions ──
+
+        private sealed class ExclusiveRelicDef
+        {
+            public ClassId ClassId;
+            public int UnlockLevel;
+        }
+
+        private static readonly Dictionary<RelicId, ExclusiveRelicDef> ClassExclusiveRelics = new()
+        {
+            [RelicId.FortunesLedger]  = new ExclusiveRelicDef { ClassId = ClassId.NumberFreak,       UnlockLevel = 30 },
+            [RelicId.TempleVow]       = new ExclusiveRelicDef { ClassId = ClassId.GardenMonk,        UnlockLevel = 30 },
+            [RelicId.EndlessArchive]  = new ExclusiveRelicDef { ClassId = ClassId.ShrineArchivist,   UnlockLevel = 30 },
+            [RelicId.GildedKoiScale]  = new ExclusiveRelicDef { ClassId = ClassId.KoiGambler,        UnlockLevel = 30 },
+            [RelicId.LoadBearingStone]= new ExclusiveRelicDef { ClassId = ClassId.StoneGardener,     UnlockLevel = 30 },
+            [RelicId.WardingFlame]    = new ExclusiveRelicDef { ClassId = ClassId.LanternSeer,       UnlockLevel = 30 },
+            [RelicId.DuelingReed]     = new ExclusiveRelicDef { ClassId = ClassId.ReedDuelist,       UnlockLevel = 30 },
+            [RelicId.AccurateMap]     = new ExclusiveRelicDef { ClassId = ClassId.QuietCartographer, UnlockLevel = 30 },
+        };
+
+        public static bool IsRelicExclusive(RelicId id) => ClassExclusiveRelics.ContainsKey(id);
+
+        public static ClassId GetExclusiveRelicClass(RelicId id) =>
+            ClassExclusiveRelics.TryGetValue(id, out var d) ? d.ClassId : (ClassId)0;
+
         public RelicService(int seed)
         {
             _random = new Random(seed);
         }
 
+        // [REQ: RELIC-ROLL-001] Relic tier weights: floor-based 5×5 table; tierBonus shifts weights up (risk route)
         public RelicInstance RollRelic(int floorIndex, int tierBonus = 0)
         {
             var tier = RollTier(floorIndex + tierBonus);
@@ -47,11 +74,26 @@ namespace SudokuRoguelike.Economy
         }
 
         /// <summary>Roll <paramref name="count"/> distinct relics for a choice panel.
-        /// Returns up to <paramref name="count"/> unique relics (may be fewer if the tier pool is small).</summary>
-        public List<RelicInstance> RollRelicChoices(int floorIndex, int count = 3, int tierBonus = 0)
+        /// Pass classId + classLevel to allow class-exclusive relic injection (25% chance if unlocked).</summary>
+        public List<RelicInstance> RollRelicChoices(int floorIndex, int count = 3, int tierBonus = 0,
+            ClassId classId = (ClassId)0, int classLevel = 0)
         {
             var choices = new List<RelicInstance>(count);
             var usedIds = new HashSet<RelicId>();
+
+            // 25% chance to inject the class-exclusive relic if unlocked
+            if (classId != (ClassId)0 && _random.NextDouble() < 0.25)
+            {
+                foreach (var kvp in ClassExclusiveRelics)
+                {
+                    if (kvp.Value.ClassId == classId && classLevel >= kvp.Value.UnlockLevel)
+                    {
+                        usedIds.Add(kvp.Key);
+                        choices.Add(new RelicInstance { Id = kvp.Key, Tier = RelicTier.Legendary, UsesRemaining = GetDefaultUses(kvp.Key) });
+                        break;
+                    }
+                }
+            }
 
             for (var attempt = 0; attempt < count * 4 && choices.Count < count; attempt++)
             {
@@ -64,6 +106,35 @@ namespace SudokuRoguelike.Economy
             }
 
             return choices;
+        }
+
+        /// <summary>Populates HeldRelics with <paramref name="count"/> random T1 starting relics at run start.
+        /// Class-exclusive relics (L30) are NOT pre-loaded — they remain pool-injection-only (found during the run).</summary>
+        public void AssignStartingRelics(RunState state, int count)
+        {
+            if (count <= 0) return;
+
+            var t1Pool = TierPool[RelicTier.Tier1];
+            var usedIds = new HashSet<RelicId>();
+
+            for (var i = 0; i < count; i++)
+            {
+                for (var attempt = 0; attempt < t1Pool.Length * 2; attempt++)
+                {
+                    var id = t1Pool[_random.Next(t1Pool.Length)];
+                    if (usedIds.Contains(id)) continue;
+                    usedIds.Add(id);
+                    state.HeldRelics.Add(new RelicInstance { Id = id, Tier = RelicTier.Tier1, UsesRemaining = GetDefaultUses(id) });
+                    break;
+                }
+            }
+
+            // Keep legacy compat fields in sync
+            if (state.HeldRelics.Count > 0)
+            {
+                state.HasRelic = true;
+                state.HeldRelic = state.HeldRelics[0];
+            }
         }
 
         public bool RollEliteRelicDrop(int floorIndex)
@@ -96,45 +167,274 @@ namespace SudokuRoguelike.Economy
                 RelicId.CrackedTeacup => 1,
                 RelicId.SilentGrid => 3,
                 RelicId.PhoenixFeather => 1,
+                RelicId.WardingFlame => 1, // once per run
                 _ => -1 // passive
             };
         }
 
+        // ── Relic list helpers ──
+
+        private static bool HasRelicOfType(RunState state, RelicId id) =>
+            state.HeldRelics != null && state.HeldRelics.Exists(r => r.Id == id);
+
+        private static RelicInstance FindRelicByType(RunState state, RelicId id) =>
+            state.HeldRelics?.Find(r => r.Id == id);
+
         // ── Relic Queries ──
 
         public static float GetShopRerollCostMultiplier(RunState state) =>
-            state.HasRelic && state.HeldRelic.Id == RelicId.MossToken ? 0.75f : 1.0f;
+            HasRelicOfType(state, RelicId.MossToken) ? 0.75f : 1.0f;
 
         public static float GetShopPriceMultiplier(RunState state) =>
-            state.HasRelic && state.HeldRelic.Id == RelicId.SpiritLantern ? 0.80f : 1.0f;
+            HasRelicOfType(state, RelicId.SpiritLantern) ? 0.80f : 1.0f;
 
         public static int GetBonusRewardSlots(RunState state) =>
-            state.HasRelic && state.HeldRelic.Id == RelicId.StoneSundial ? 1 : 0;
+            HasRelicOfType(state, RelicId.StoneSundial) ? 1 : 0;
 
         public static int GetRelicNodeTierBonus(RunState state) =>
-            state.HasRelic && state.HeldRelic.Id == RelicId.MoonstoneCompass ? 1 : 0;
+            HasRelicOfType(state, RelicId.MoonstoneCompass) ? 1 : 0;
 
         public static bool HasInfiniteItems(RunState state) =>
-            state.HasRelic && state.HeldRelic.Id == RelicId.EternalLotus;
+            HasRelicOfType(state, RelicId.EternalLotus);
+
+        /// <summary>First item use each puzzle is free (PaperCrane).</summary>
+        public static bool HasFirstItemFreeRelic(RunState state, LevelState level) =>
+            HasRelicOfType(state, RelicId.PaperCrane) && level.ItemsUsedThisLevel == 0;
+
+        /// <summary>Called on relic pickup: apply one-time stat buffs for the newly acquired relic.</summary>
+        public static void ApplyPickupPassives(RunState state, RelicInstance relic)
+        {
+            if (relic == null) return;
+            switch (relic.Id)
+            {
+                case RelicId.WoodenComb:
+                    state.MaxHP++;
+                    state.CurrentHP = Math.Min(state.MaxHP, state.CurrentHP + 1);
+                    break;
+                case RelicId.JadeHairpin:
+                    state.ItemSlots++;
+                    break;
+                case RelicId.SilentGrid:
+                    state.MistakeShieldCharges += relic.UsesRemaining > 0 ? relic.UsesRemaining : 3;
+                    break;
+            }
+        }
+
+        /// <summary>Called at puzzle start: apply per-puzzle relic bonuses for all held relics.</summary>
+        public static void OnPuzzleStart(RunState state, SudokuBoard board)
+        {
+            if (state.HeldRelics == null || state.HeldRelics.Count == 0 || board == null) return;
+            foreach (var relic in state.HeldRelics)
+            {
+                switch (relic.Id)
+                {
+                    case RelicId.SmoothPebble:
+                        state.CurrentPencil = Math.Min(state.MaxPencil, state.CurrentPencil + 2);
+                        break;
+                    case RelicId.KoiReflectionRelic:
+                        RevealOneCandidate(board);
+                        break;
+                    case RelicId.DragonsEye:
+                        SolveOneBox(board, state.Seed ^ state.CurrentFloor);
+                        break;
+                    case RelicId.TempleVow:
+                        state.TempleVowReady = true;
+                        break;
+                }
+            }
+        }
+
+        /// <summary>Check TempleVow trigger on HP change; heals 3 HP once per puzzle if HP ≤ 25%.
+        /// Call after any HP deduction.</summary>
+        public static void OnHpChanged(RunState state)
+        {
+            if (!HasRelicOfType(state, RelicId.TempleVow)) return;
+            if (!state.TempleVowReady) return;
+            if (state.MaxHP > 0 && (float)state.CurrentHP / state.MaxHP <= 0.25f)
+            {
+                state.CurrentHP = Math.Min(state.MaxHP, state.CurrentHP + 3);
+                state.TempleVowReady = false;
+            }
+        }
+
+        /// <summary>Called at puzzle completion: apply per-puzzle relic rewards for all held relics.</summary>
+        public static void OnPuzzleComplete(RunState state, LevelState level, ref int gold)
+        {
+            if (state.HeldRelics == null || state.HeldRelics.Count == 0) return;
+            foreach (var relic in state.HeldRelics)
+            {
+                switch (relic.Id)
+                {
+                    case RelicId.CopperTortoise:
+                        if (level.PerfectSoFar) gold += 15;
+                        break;
+                    case RelicId.TransmutedSigil:
+                        gold = (int)(gold * 1.25f);
+                        break;
+                    case RelicId.SakuraSeal:
+                        if (level.PerfectSoFar)
+                        {
+                            state.PerfectPuzzleStreak++;
+                            if (state.PerfectPuzzleStreak >= 3)
+                            {
+                                state.CurrentHP = Math.Min(state.MaxHP, state.CurrentHP + 1);
+                                state.PerfectPuzzleStreak = 0;
+                            }
+                        }
+                        else
+                        {
+                            state.PerfectPuzzleStreak = 0;
+                        }
+                        break;
+                    case RelicId.DuelingReed:
+                        if (level.NoPencilUsed) gold += 20;
+                        break;
+                }
+            }
+        }
+
+        /// <summary>Called on run victory: apply end-of-run relic bonuses.</summary>
+        public static void OnRunVictory(RunState state)
+        {
+            if (HasRelicOfType(state, RelicId.GildedKoiScale))
+                state.CurrentGold += state.CurrentGold;
+        }
+
+        /// <summary>Called after each correct placement: apply streak-based relic rewards.</summary>
+        public static void OnCorrectPlacement(RunState state)
+        {
+            if (state.HeldRelics == null || state.HeldRelics.Count == 0) return;
+            foreach (var relic in state.HeldRelics)
+            {
+                switch (relic.Id)
+                {
+                    case RelicId.MonkCharm:
+                        if (state.ComboStreak > 0 && state.ComboStreak % 5 == 0)
+                            state.CurrentGold += 2;
+                        break;
+                    case RelicId.FortunesLedger:
+                        state.FortunesLedgerCounter++;
+                        if (state.FortunesLedgerCounter >= 10)
+                        {
+                            state.RerollTokens++;
+                            state.FortunesLedgerCounter = 0;
+                        }
+                        break;
+                }
+            }
+        }
+
+        /// <summary>Called at floor start: apply per-floor relic effects for all held relics.</summary>
+        public static void OnFloorStart(RunState state)
+        {
+            if (state.HeldRelics == null || state.HeldRelics.Count == 0) return;
+            foreach (var relic in state.HeldRelics)
+            {
+                switch (relic.Id)
+                {
+                    case RelicId.WisteriaBranch:
+                        state.CurrentHP = Math.Min(state.MaxHP, state.CurrentHP + 2);
+                        break;
+                    case RelicId.GoldenRoot:
+                        var interest = Math.Max(1, (int)(state.CurrentGold * 0.5f));
+                        state.CurrentGold += interest;
+                        break;
+                    case RelicId.AccurateMap:
+                        state.AllNodesRevealed = true;
+                        break;
+                }
+            }
+        }
+
+        /// <summary>Called after a correct placement with board access (for EndlessArchive).</summary>
+        public static void OnCorrectPlacementWithBoard(RunState state, int row, SudokuBoard board)
+        {
+            if (!HasRelicOfType(state, RelicId.EndlessArchive) || board == null) return;
+            // Reveal correct candidate for first empty cell in same row
+            var size = board.Size;
+            for (var c = 0; c < size; c++)
+            {
+                if (board.Cells[row, c] != 0 || board.IsGiven(row, c)) continue;
+                var sol = board.Solution[row, c];
+                if (sol > 0) { board.AddPencilMark(row, c, sol); return; }
+            }
+        }
+
+        // Reveal the correct digit as a pencil mark in the first empty non-given cell
+        private static void RevealOneCandidate(SudokuBoard board)
+        {
+            var size = board.Size;
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
+            {
+                if (board.IsGiven(r, c) || board.Cells[r, c] != 0) continue;
+                var sol = board.Solution[r, c];
+                if (sol > 0) { board.AddPencilMark(r, c, sol); return; }
+            }
+        }
+
+        // Fill all empty cells in one randomly chosen region with their solution values.
+        // Chosen region must have at least one empty cell; solved cells are locked as given.
+        private static void SolveOneBox(SudokuBoard board, int seed)
+        {
+            var size = board.Size;
+            // Collect cells per region
+            var regionCells = new Dictionary<int, List<(int r, int c)>>();
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
+            {
+                var reg = board.RegionMap[r, c];
+                if (!regionCells.ContainsKey(reg))
+                    regionCells[reg] = new List<(int, int)>();
+                regionCells[reg].Add((r, c));
+            }
+            // Regions that still have at least one empty cell
+            var candidates = new List<int>();
+            foreach (var kv in regionCells)
+            {
+                foreach (var (r, c) in kv.Value)
+                    if (board.Cells[r, c] == 0) { candidates.Add(kv.Key); break; }
+            }
+            if (candidates.Count == 0) return;
+            var rng = new Random(seed);
+            var chosen = candidates[rng.Next(candidates.Count)];
+            foreach (var (r, c) in regionCells[chosen])
+            {
+                if (board.Cells[r, c] == 0 && board.Solution[r, c] > 0)
+                {
+                    board.PlaceValue(r, c, board.Solution[r, c]);
+                    board.GivenMask[r, c] = true; // lock as pre-filled
+                }
+            }
+        }
+
+        /// <summary>Called on any mistake: WardingFlame fires once per run to negate the HP loss.</summary>
+        public static bool TryWardingFlame(RunState state)
+        {
+            var relic = FindRelicByType(state, RelicId.WardingFlame);
+            if (relic == null) return false;
+            if (state.WardingFlameUsed || relic.UsesRemaining <= 0) return false;
+            state.WardingFlameUsed = true;
+            relic.UsesRemaining--;
+            return true; // absorb the HP loss
+        }
 
         public static bool TryPreventDeath(RunState state)
         {
-            if (!state.HasRelic || state.HeldRelic.Id != RelicId.PhoenixFeather) return false;
-            if (state.HeldRelic.UsesRemaining <= 0) return false;
-            state.HeldRelic.UsesRemaining--;
+            var relic = FindRelicByType(state, RelicId.PhoenixFeather);
+            if (relic == null) return false;
+            if (relic.UsesRemaining <= 0) return false;
+            relic.UsesRemaining--;
             state.CurrentHP = 1;
             return true;
         }
 
         public static bool TryAbsorbMistake(RunState state)
         {
-            if (!state.HasRelic) return false;
-            if (state.HeldRelic.Id == RelicId.CrackedTeacup && state.HeldRelic.UsesRemaining > 0)
-            {
-                state.HeldRelic.UsesRemaining--;
-                return true;
-            }
-            return false;
+            var relic = FindRelicByType(state, RelicId.CrackedTeacup);
+            if (relic == null || relic.UsesRemaining <= 0) return false;
+            relic.UsesRemaining--;
+            return true;
         }
 
         // ── Name & Description ──
@@ -166,6 +466,15 @@ namespace SudokuRoguelike.Economy
                 RelicId.ShiftingGarden => "Shifting Garden",
                 RelicId.EternalLotus => "Eternal Lotus",
                 RelicId.DragonsEye => "Dragon's Eye",
+                // Class-exclusive relics (L30)
+                RelicId.FortunesLedger   => "Fortune's Ledger",
+                RelicId.TempleVow        => "Temple Vow",
+                RelicId.EndlessArchive   => "Endless Archive",
+                RelicId.GildedKoiScale   => "Gilded Koi Scale",
+                RelicId.LoadBearingStone => "Load-Bearing Stone",
+                RelicId.WardingFlame     => "Warding Flame",
+                RelicId.DuelingReed      => "Dueling Reed",
+                RelicId.AccurateMap      => "Accurate Map",
                 _ => id.ToString()
             };
         }
@@ -197,6 +506,15 @@ namespace SudokuRoguelike.Economy
                 RelicId.ShiftingGarden    => "shifting_garden",
                 RelicId.EternalLotus      => "eternal_lotus",
                 RelicId.DragonsEye        => "dragons_eye",
+                // Class-exclusive relics (L30)
+                RelicId.FortunesLedger    => "fortunes_ledger",
+                RelicId.TempleVow         => "temple_vow",
+                RelicId.EndlessArchive    => "endless_archive",
+                RelicId.GildedKoiScale    => "gilded_koi_scale",
+                RelicId.LoadBearingStone  => "load_bearing_stone",
+                RelicId.WardingFlame      => "warding_flame",
+                RelicId.DuelingReed       => "dueling_reed",
+                RelicId.AccurateMap       => "accurate_map",
                 _ => ""
             };
         }
@@ -227,7 +545,16 @@ namespace SudokuRoguelike.Economy
                 RelicId.SilentGrid => "Next 3 mistakes are silent (no HP loss).",
                 RelicId.ShiftingGarden => "Puzzles occasionally reshuffle given digits.",
                 RelicId.EternalLotus => "Items are never consumed.",
-                RelicId.DragonsEye => "See one move into the future.",
+                RelicId.DragonsEye => "Start each puzzle with one fully solved box.",
+                // Class-exclusive relics (L30)
+                RelicId.FortunesLedger   => "Every 10 correct placements grant +1 Reroll Token. (NumberFreak exclusive)",
+                RelicId.TempleVow        => "When HP drops to 25% or below, heal 3 HP once per puzzle. (GardenMonk exclusive)",
+                RelicId.EndlessArchive   => "After each correct placement, reveal one candidate in the same row. (ShrineArchivist exclusive)",
+                RelicId.GildedKoiScale   => "On run victory, your current gold is doubled. (KoiGambler exclusive)",
+                RelicId.LoadBearingStone => "Each mistake also deducts from the boss penalty pool. (StoneGardener exclusive)",
+                RelicId.WardingFlame     => "Once per run, automatically absorb one mistake (no HP loss). (LanternSeer exclusive)",
+                RelicId.DuelingReed      => "Completing a puzzle with zero pencil marks grants +20 bonus gold. (ReedDuelist exclusive)",
+                RelicId.AccurateMap      => "All floor node types are permanently revealed. (QuietCartographer exclusive)",
                 _ => ""
             };
         }

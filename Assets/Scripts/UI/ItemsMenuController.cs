@@ -84,14 +84,15 @@ namespace SudokuRoguelike.UI
             var row = new GameObject("Entry_" + title);
             row.transform.SetParent(_contentRoot, false);
             var hGroup = row.AddComponent<HorizontalLayoutGroup>();
-            hGroup.childAlignment = TextAnchor.MiddleLeft;
+            hGroup.childAlignment = TextAnchor.UpperLeft;
             hGroup.spacing = 8f;
-            hGroup.padding = new RectOffset(4, 4, 2, 2);
+            hGroup.padding = new RectOffset(4, 4, 4, 4);
             hGroup.childForceExpandHeight = false;
             hGroup.childForceExpandWidth = false;
-            hGroup.childControlHeight = false;
-            hGroup.childControlWidth = false;
-            row.AddComponent<LayoutElement>().preferredHeight = 40f;
+            hGroup.childControlHeight = true;
+            hGroup.childControlWidth = true;
+            var rowLe = row.AddComponent<LayoutElement>();
+            rowLe.minHeight = 40f;
 
             // Icon image
             var iconGo = new GameObject("Icon");
@@ -102,6 +103,7 @@ namespace SudokuRoguelike.UI
             iconLe.preferredHeight = 36f;
             iconLe.minWidth = 36f;
             iconLe.minHeight = 36f;
+            iconLe.flexibleHeight = 0f;
 
             if (discovered && !string.IsNullOrEmpty(iconName))
             {
@@ -122,11 +124,11 @@ namespace SudokuRoguelike.UI
             var vGroup = textCol.AddComponent<VerticalLayoutGroup>();
             vGroup.childForceExpandWidth = true;
             vGroup.childForceExpandHeight = false;
-            vGroup.childControlHeight = false;
-            vGroup.spacing = 1f;
+            vGroup.childControlWidth = true;
+            vGroup.childControlHeight = true;
+            vGroup.spacing = 2f;
             var textColLe = textCol.AddComponent<LayoutElement>();
             textColLe.flexibleWidth = 1f;
-            textColLe.preferredHeight = 40f;
 
             var nameGo = new GameObject("Name");
             nameGo.transform.SetParent(textCol.transform, false);
@@ -136,7 +138,10 @@ namespace SudokuRoguelike.UI
             nameText.fontStyle = FontStyle.Bold;
             nameText.color = discovered ? DiscoveredColor : UndiscoveredColor;
             nameText.text = title;
-            nameGo.AddComponent<LayoutElement>().preferredHeight = 18f;
+            nameText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            nameText.verticalOverflow = VerticalWrapMode.Overflow;
+            var nameLe = nameGo.AddComponent<LayoutElement>();
+            nameLe.minHeight = 18f;
 
             var descGo = new GameObject("Desc");
             descGo.transform.SetParent(textCol.transform, false);
@@ -145,7 +150,10 @@ namespace SudokuRoguelike.UI
             descText.fontSize = 12;
             descText.color = discovered ? SubtextColor : UndiscoveredColor;
             descText.text = description;
-            descGo.AddComponent<LayoutElement>().preferredHeight = 18f;
+            descText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            descText.verticalOverflow = VerticalWrapMode.Overflow;
+            var descLe = descGo.AddComponent<LayoutElement>();
+            descLe.minHeight = 16f;
         }
 
         private static bool IsDiscovered(MetaProgressionState meta, ItemType type)

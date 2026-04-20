@@ -10,18 +10,64 @@ namespace SudokuRoguelike.UI
     /// </summary>
     internal static class InRunUiFactory
     {
-        // ── In-run panel/button color scheme (distinct from GamePalette) ──
-        internal static readonly Color PanelBg    = new Color(0.08f, 0.12f, 0.16f, 0.94f);
-        internal static readonly Color BtnColor   = new Color(0.15f, 0.22f, 0.29f, 0.94f);
-        internal static readonly Color AccentGold = new Color(0.98f, 0.83f, 0.26f, 1f);
-        internal static readonly Color TextColor  = new Color(0.96f, 0.93f, 0.82f, 1f);
+        // ── In-run panel/button color scheme ──
+        internal static readonly Color PanelBg           = new Color(0.08f, 0.12f, 0.16f, 0.94f);
+        internal static readonly Color BtnColor          = new Color(0.15f, 0.22f, 0.29f, 0.94f);
+        internal static readonly Color AccentGold        = GamePalette.AccentGold;
+        internal static readonly Color TextColor         = GamePalette.TextPrimary;
+
+        // Cursed / boss gate panels
+        internal static readonly Color CursedPanelBg    = new Color(0.18f, 0.06f, 0.06f, 0.96f);
+        internal static readonly Color CursedTitleRed   = new Color(0.90f, 0.30f, 0.20f, 1f);
+        internal static readonly Color WarmIvory        = new Color(0.95f, 0.85f, 0.75f, 1f);
+
+        // HUD modifier panels
+        internal static readonly Color ModBannerBg      = new Color(0.15f, 0.10f, 0.25f, 0.85f);
+        internal static readonly Color ModInfoBoxBg     = new Color(0.10f, 0.14f, 0.18f, 0.90f);
+
+        // Bag panel
+        internal static readonly Color BagPanelBg          = new Color(0.06f, 0.10f, 0.12f, 0.70f);
+        internal static readonly Color BagSlotBg            = new Color(0.10f, 0.16f, 0.20f, 0.80f);
+        internal static readonly Color BagSlotHighlight     = new Color(0.17f, 0.26f, 0.33f, 0.90f);
+        internal static readonly Color BagSlotPressed       = new Color(0.07f, 0.11f, 0.14f, 0.90f);
+        internal static readonly Color BagSlotDisabled      = new Color(0.06f, 0.09f, 0.11f, 0.45f);
+        internal static readonly Color BagHighlightSelected = new Color(
+            GamePalette.AccentGold.r * 0.5f, GamePalette.AccentGold.g * 0.5f, 0.10f, 0.90f);
+        internal static readonly Color PassiveLabelColor    = new Color(0.78f, 0.85f, 0.75f, 0.80f);
+
+        // Reward / rest / relic / swap panels
+        internal static readonly Color SwapPanelBg         = new Color(0.07f, 0.10f, 0.14f, 0.97f);
+        internal static readonly Color RestRelicPanelBg    = new Color(0.08f, 0.12f, 0.10f, 0.95f);
+
+        // Icon / slot states
+        internal static readonly Color IconNoSprite  = new Color(1f, 1f, 1f, 0.20f);
+        internal static readonly Color IconEmpty     = new Color(1f, 1f, 1f, 0.08f);
+        internal static readonly Color SlotEmptyText = new Color(0.45f, 0.45f, 0.45f, 0.55f);
+
+        // Unknown boss-mod icon placeholder
+        internal static readonly Color PlaceholderIconBg  = new Color(0.30f, 0.30f, 0.30f, 0.40f);
+        internal static readonly Color UnknownIconText    = new Color(0.70f, 0.70f, 0.70f, 0.90f);
+
+        // Numpad button states
+        internal static readonly Color NumpadDisabled    = new Color(0.13f, 0.13f, 0.13f, 0.80f);
+        internal static readonly Color NumpadCompleted   = new Color(0.10f, 0.10f, 0.10f, 0.50f);
+        internal static readonly Color NumpadActive      = new Color(0.19f, 0.30f, 0.20f, 1.00f);
+        internal static readonly Color NumpadPencilActive = new Color(0.31f, 0.43f, 0.28f, 1.00f);
+
+        // Scroll lane backgrounds (used in InRunUiBlueprintBuilder)
+        internal static readonly Color LaneScrollBg   = new Color(0f, 0f, 0f, 0.12f);
+        internal static readonly Color LaneViewportBg = new Color(1f, 1f, 1f, 0.02f);
 
         // ── Font ──
+        // V2: place a .ttf at Assets/Resources/Fonts/MainFont.ttf to use a custom font.
+        // Falls back to the Unity built-in LegacyRuntime/Arial if absent.
+        private const string CustomFontPath = "Fonts/MainFont";
         private static Font _font;
         internal static Font GetFont()
         {
             if (_font == null)
-                _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf")
+                _font = Resources.Load<Font>(CustomFontPath)
+                     ?? Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf")
                      ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
             return _font;
         }
@@ -98,7 +144,7 @@ namespace SudokuRoguelike.UI
             var rt = go.GetComponent<RectTransform>();
             rt.anchorMin = amin; rt.anchorMax = amax; rt.offsetMin = omin; rt.offsetMax = omax;
             var img = go.GetComponent<Image>();
-            img.color = new Color(1, 0.78f, 0.26f, 0);
+            img.color = new Color(AccentGold.r, AccentGold.g, AccentGold.b, 0);
             img.raycastTarget = false;
             return img;
         }
@@ -131,7 +177,34 @@ namespace SudokuRoguelike.UI
             StretchFill(t.rectTransform);
             t.verticalOverflow = VerticalWrapMode.Overflow;
 
-            return go.GetComponent<Button>();
+            var btn = go.GetComponent<Button>();
+            btn.navigation = new Navigation { mode = Navigation.Mode.Automatic };
+            var cols = btn.colors;
+            cols.highlightedColor = new Color(0.55f, 0.50f, 0.38f, 1f);
+            cols.selectedColor    = new Color(0.62f, 0.56f, 0.40f, 1f);
+            cols.pressedColor     = new Color(0.30f, 0.26f, 0.18f, 1f);
+            btn.colors = cols;
+            return btn;
+        }
+
+        /// <summary>
+        /// Sets EventSystem focus to the first interactable, active button in <paramref name="panel"/>.
+        /// Safe to call with a null panel or when EventSystem is absent.
+        /// </summary>
+        internal static void SelectFirstInteractable(GameObject panel)
+        {
+            if (panel == null) return;
+            var es = UnityEngine.EventSystems.EventSystem.current;
+            if (es == null) return;
+            var buttons = panel.GetComponentsInChildren<Button>(false);
+            for (var i = 0; i < buttons.Length; i++)
+            {
+                if (buttons[i].IsInteractable())
+                {
+                    es.SetSelectedGameObject(buttons[i].gameObject);
+                    return;
+                }
+            }
         }
 
         // ── Overlay panel (reward / shop) ──
@@ -159,6 +232,34 @@ namespace SudokuRoguelike.UI
             summary.rectTransform.offsetMax = Vector2.zero;
 
             return panel;
+        }
+
+        // ── Panel background art ──
+        /// <summary>
+        /// Inserts a RawImage background PNG as the first child of a panel (renders below all UI content).
+        /// Pass an empty <paramref name="bgTextureName"/> to create a placeholder whose texture is set at runtime.
+        /// </summary>
+        internal static RawImage AddPanelBackground(Transform panelTransform, string bgTextureName, float alpha = 0.85f)
+        {
+            var bgGo = new GameObject("PanelBackground", typeof(RectTransform), typeof(RawImage));
+            bgGo.transform.SetParent(panelTransform, false);
+            bgGo.transform.SetAsFirstSibling();
+            var rt = bgGo.GetComponent<RectTransform>();
+            rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
+            rt.offsetMin = rt.offsetMax = Vector2.zero;
+            var raw = bgGo.GetComponent<RawImage>();
+            if (!string.IsNullOrEmpty(bgTextureName))
+            {
+                var tex = Resources.Load<Texture2D>("background/" + bgTextureName);
+                raw.texture = tex;
+                raw.color   = new Color(1f, 1f, 1f, tex != null ? alpha : 0f);
+            }
+            else
+            {
+                raw.color = Color.clear; // caller sets texture + color at runtime
+            }
+            raw.raycastTarget = false;
+            return raw;
         }
 
         // ── Button icon ──
@@ -197,15 +298,15 @@ namespace SudokuRoguelike.UI
             else
             {
                 // "???" placeholder
-                img.color = new Color(0.3f, 0.3f, 0.3f, 0.4f);
+                img.color = PlaceholderIconBg;
                 var qText = new GameObject("UnknownLabel", typeof(RectTransform), typeof(Text));
                 qText.transform.SetParent(iconGo.transform, false);
                 var qt = qText.GetComponent<Text>();
                 qt.text = "???";
-                qt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+                qt.font = GetFont();
                 qt.fontSize = 22;
                 qt.alignment = TextAnchor.MiddleCenter;
-                qt.color = new Color(0.7f, 0.7f, 0.7f, 0.9f);
+                qt.color = UnknownIconText;
                 var qRt = qText.GetComponent<RectTransform>();
                 qRt.anchorMin = Vector2.zero;
                 qRt.anchorMax = Vector2.one;
@@ -226,14 +327,14 @@ namespace SudokuRoguelike.UI
             rt.offsetMax = Vector2.zero;
 
             var img = go.GetComponent<Image>();
-            img.color = new Color(0.10f, 0.16f, 0.20f, 0.80f);
+            img.color = BagSlotBg;
 
             var btn = go.GetComponent<Button>();
             var cols = btn.colors;
-            cols.normalColor = new Color(0.10f, 0.16f, 0.20f, 0.80f);
-            cols.highlightedColor = new Color(0.17f, 0.26f, 0.33f, 0.90f);
-            cols.pressedColor = new Color(0.07f, 0.11f, 0.14f, 0.90f);
-            cols.disabledColor = new Color(0.06f, 0.09f, 0.11f, 0.45f);
+            cols.normalColor    = BagSlotBg;
+            cols.highlightedColor = BagSlotHighlight;
+            cols.pressedColor   = BagSlotPressed;
+            cols.disabledColor  = BagSlotDisabled;
             btn.colors = cols;
 
             // Icon (left ~30%)
@@ -290,6 +391,19 @@ namespace SudokuRoguelike.UI
             BossModifierId.XVPairs           => "XV Pairs",
             BossModifierId.PrimeCells        => "Prime Cells",
             BossModifierId.FortressCells     => "Fortress Cells",
+            BossModifierId.RowWipe           => "Row Wipe",
+            BossModifierId.ColWipe           => "Column Wipe",
+            BossModifierId.DoublePenalty     => "Double Penalty",
+            BossModifierId.CellLock          => "Cell Lock",
+            BossModifierId.PencilBlind       => "Pencil Blind",
+            BossModifierId.BoxWipe           => "Box Wipe",
+            BossModifierId.CrossWipe         => "Cross Wipe",
+            BossModifierId.PencilDrain       => "Pencil Drain",
+            BossModifierId.GoldFine          => "Gold Fine",
+            BossModifierId.CountdownFill     => "Countdown Fill",
+            BossModifierId.HauntedCell       => "Haunted Cell",
+            BossModifierId.CrumblingRegion   => "Crumbling Region",
+            BossModifierId.PressureWave      => "Pressure Wave",
             _                                => m.ToString()
         };
 
@@ -304,7 +418,7 @@ namespace SudokuRoguelike.UI
             BossModifierId.KillerCages       => "Dashed cage: digits sum to the cage label; no repeats inside the cage.",
             BossModifierId.DifferenceKropki  => "White dot between cells: those two digits differ by exactly 1.",
             BossModifierId.RatioKropki       => "Black dot between cells: one digit is exactly double the other.",
-            BossModifierId.Palindrome        => "Grey line: digits read the same from either end of the line.",
+            BossModifierId.Palindrome        => "Purple line: digits read the same from either end of the line.",
             BossModifierId.Thermo            => "Orange line with bulb: digits must strictly increase from bulb to tip.",
             BossModifierId.BetweenLines      => "White line: every digit on the line must fall strictly between the two endpoint values.",
             BossModifierId.EvenOdd           => "Blue square = even digit. Orange circle = odd digit.",
@@ -325,7 +439,25 @@ namespace SudokuRoguelike.UI
             BossModifierId.XVPairs           => "X between two cells: they sum to 10. V between two cells: they sum to 5.",
             BossModifierId.PrimeCells        => "Gold 'P' cells must contain a prime digit: 2, 3, 5, or 7.",
             BossModifierId.FortressCells     => "Grey shaded cells must be strictly greater than every orthogonally adjacent unshaded cell.",
-            _                                => m.ToString()
+
+            // Boss debuffs
+            BossModifierId.RowWipe       => "Mistake: all your digits in that row are erased.",
+            BossModifierId.ColWipe       => "Mistake: all your digits in that column are erased.",
+            BossModifierId.DoublePenalty => "Mistakes deal 2 HP damage instead of 1.",
+            BossModifierId.CellLock      => "Mistake: that cell locks for 3 correct placements before you can edit it.",
+            BossModifierId.PencilBlind   => "Mistake: all pencil marks in that row and column are cleared.",
+            BossModifierId.BoxWipe       => "Mistake: all your digits in that box are erased.",
+            BossModifierId.CrossWipe     => "Mistake: all your digits in that row AND column are erased.",
+            BossModifierId.PencilDrain   => "Mistake: lose 3 pencil charges.",
+            BossModifierId.GoldFine      => "Mistake: lose 5 gold.",
+
+            // Pressure mechanics
+            BossModifierId.CountdownFill => "A cell counts down each turn — fill it before it reaches zero or lose HP.",
+            BossModifierId.HauntedCell   => "One cell is haunted. Every mistake you make elsewhere costs +1 extra HP until you correctly fill the haunted cell.",
+            BossModifierId.CrumblingRegion => "A region crumbles over time — digits placed there are erased if the region fully collapses.",
+            BossModifierId.PressureWave  => "Periodic waves sweep the board, briefly locking cells you haven't solved yet.",
+
+            _                            => m.ToString()
         };
     }
 }

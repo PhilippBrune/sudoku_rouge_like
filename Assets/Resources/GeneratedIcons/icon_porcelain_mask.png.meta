@@ -3,8 +3,8 @@ guid: 79df5ea89174ab64da4f6fec60776bad
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 373347418869536666
-    second: icon_porcelain_mask_0
+      213: -2786973980224559770
+    second: icon_Porcelain_Mask_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -46,7 +46,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: icon_porcelain_mask_0
+      name: icon_Porcelain_Mask_0
       rect:
         serializedVersion: 2
-        x: 0
+        x: 20
         y: 0
-        width: 64
-        height: 64
+        width: 152
+        height: 192
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: a971787df756e2500800000000000000
-      internalID: 373347418869536666
+      spriteID: 66565765eeda259d0800000000000000
+      internalID: -2786973980224559770
       vertices: []
       indices: 
       edges: []
@@ -125,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      icon_porcelain_mask_0: 373347418869536666
+      icon_Porcelain_Mask_0: -2786973980224559770
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

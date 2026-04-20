@@ -50,9 +50,29 @@ namespace SudokuRoguelike.UI
                 btn.interactable = inRange && !completed;
                 var img = btn.GetComponent<Image>();
                 if (img != null)
-                    img.color = !inRange ? new Color(0.13f, 0.13f, 0.13f, 0.8f)
-                        : completed  ? new Color(0.10f, 0.10f, 0.10f, 0.5f)
-                        : new Color(0.19f, 0.30f, 0.20f);
+                    img.color = !inRange  ? InRunUiFactory.NumpadDisabled
+                        : completed       ? InRunUiFactory.NumpadCompleted
+                        : InRunUiFactory.NumpadActive;
+            }
+        }
+
+        /// <summary>
+        /// Highlights the specified numpad button with a controller-cursor colour.
+        /// Pass null to clear the cursor highlight.
+        /// </summary>
+        public void HighlightControllerCursor(int? digitIndex)
+        {
+            for (var i = 0; i < _numpadButtons.Count; i++)
+            {
+                var img = _numpadButtons[i]?.GetComponent<Image>();
+                if (img == null) continue;
+                var isSelected = digitIndex.HasValue && i == digitIndex.Value;
+                var digit = i + 1;
+                var btn = _numpadButtons[i];
+                var inRange = btn != null && btn.interactable;
+                img.color = isSelected
+                    ? new Color(0.85f, 0.72f, 0.20f, 1f) // gold controller cursor
+                    : InRunUiFactory.NumpadActive;
             }
         }
 
@@ -65,7 +85,7 @@ namespace SudokuRoguelike.UI
                 if (lbl != null) lbl.text = _pencilMode ? "Mode: PENCIL" : "Mode: SOLVE";
                 var img = _pencilModeButton.GetComponent<Image>();
                 if (img != null)
-                    img.color = _pencilMode ? new Color(0.31f, 0.43f, 0.28f) : InRunUiFactory.BtnColor;
+                    img.color = _pencilMode ? InRunUiFactory.NumpadPencilActive : InRunUiFactory.BtnColor;
             }
         }
 
@@ -86,7 +106,7 @@ namespace SudokuRoguelike.UI
             {
                 var go = new GameObject($"Num_{v}", typeof(RectTransform), typeof(Image), typeof(Button));
                 go.transform.SetParent(_numpadRoot, false);
-                go.GetComponent<Image>().color = new Color(0.19f, 0.30f, 0.20f);
+                go.GetComponent<Image>().color = InRunUiFactory.NumpadActive;
                 var val = v;
                 go.GetComponent<Button>().onClick.AddListener(() =>
                 {

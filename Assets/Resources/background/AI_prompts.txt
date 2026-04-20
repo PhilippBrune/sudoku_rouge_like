@@ -1,0 +1,152 @@
+SUDOKU ROGUE-LIKE — BACKGROUND IMAGE GENERATION PROMPTS
+Screens missing original background art (10 screens)
+Style for all: atmospheric 2D game background concept art, hand-painted, painterly edges.
+For Midjourney add: --ar 16:9  (optionally --style raw)
+Stable Diffusion negative prompt: text, watermark, UI, characters, anime, logo
+All images should complement a dark semi-transparent UI overlay placed on top.
+Prefer muted / desaturated versions of the colour palette so UI remains readable.
+========================================================
+
+--- SPLASH / LOADING ---
+Suggested file: bg_splash.png
+Context: First thing the player sees. Simple, iconic, calm. Fades in from black.
+
+PROMPT:
+A single ancient Japanese stone garden seen from directly above at dawn, raked white gravel 
+forming gentle wave patterns around two moss-covered rocks. A faint sunrise glow touches the 
+horizon in the far distance. The composition is centred and symmetrical, deeply peaceful.
+Colour palette: warm ivory, pale grey stone, sage green moss, blush pink dawn sky.
+Style: atmospheric 2D game background concept art, hand-painted, minimal detail, 
+soft focus. No text, no characters, no UI, wide 16:9 landscape.
+
+--- PUZZLE BOARD ---
+Suggested file: bg_puzzle_board.png
+Context: Most time spent here. Behind the sudoku grid. Needs very low contrast so grid is
+readable. Should suggest an ancient writing surface or tatami floor.
+
+PROMPT:
+A close-up view of aged washi paper texture laid flat, faint ink brushstroke traces barely 
+visible — like a master's practice sheet. Soft grid lines underneath, a worn wooden table 
+edge visible at the far bottom. Very subtle, uniform, extremely low contrast.
+A single dried cherry blossom petal rests in the lower-right corner.
+Colour palette: warm parchment ivory, faint sepia ink, muted wood brown at edge.
+Style: atmospheric 2D game background concept art, hand-painted, very low contrast, 
+near-flat texture, suitable as a backdrop for a UI grid. No text, no characters, 
+wide 16:9 landscape.
+
+--- BOSS GATE ---
+Suggested file: bg_boss_gate.png
+Context: Player must choose boss modifiers before facing the boss. Tense, ceremonial moment.
+The gate itself — a torii — should dominate.
+
+PROMPT:
+A massive weathered red torii gate fills the centre of the frame, half-shrouded in 
+low-lying incense mist. The gate stands at the top of steep stone steps leading into 
+darkness below. Paper ofuda talismans hang from the crossbeam, gently swaying. Behind the 
+gate: total black, with faint ember sparks drifting upward. The stone steps are carved with 
+Japanese demon-ward glyphs. Everything feels like a threshold between worlds.
+Colour palette: deep crimson torii, charcoal black, ash grey stone, amber ember glow.
+Style: atmospheric 2D game background concept art, hand-painted, dramatic and foreboding, 
+strong central composition. No text, no characters, wide 16:9 landscape.
+
+--- SHOP / MERCHANT ---
+Suggested file: bg_shop.png
+Context: A rest stop between challenges. Should feel warm, inviting, slightly whimsical — 
+a travelling merchant's stall in the garden.
+
+PROMPT:
+A small open-air merchant stall tucked against a mossy garden wall, lit by a warm paper 
+lantern hanging overhead. Wooden shelves hold ceramic jars, scroll cases, and small relics 
+wrapped in silk cloth. A low wooden counter runs across the lower third. The stall's fabric 
+awning is faded indigo with a simple wave pattern. Through the open side: a moonlit koi pond.
+Colour palette: warm lantern amber, deep indigo fabric, mossy stone wall, moonlit blue water.
+Style: atmospheric 2D game background concept art, hand-painted, warm and inviting, 
+intimate scale. No text, no characters, wide 16:9 landscape.
+
+--- REWARD / LOOT ---
+Suggested file: bg_reward.png
+Context: Shown after completing a puzzle node — player picks an item or relic. 
+A moment of earned calm and discovery.
+
+PROMPT:
+A small stone altar platform in an open garden clearing, illuminated by a single shaft of 
+golden afternoon light filtering through tall bamboo. Three silk-draped pedestals sit on the 
+altar, each glowing faintly. The surrounding garden is lush and calm, cherry blossom petals 
+drifting slowly downward. The mood is reverent and celebratory — a sacred gift offering.
+Colour palette: warm gold shaft of light, sage green bamboo, soft white petals, grey stone.
+Style: atmospheric 2D game background concept art, hand-painted, luminous and serene. 
+No text, no characters, wide 16:9 landscape.
+
+--- CURSE PANEL ---
+Suggested file: bg_curse.png
+Context: Displays the player's active curses. Should feel ominous and oppressive, but 
+still within the garden world — like a corrupted corner of the garden.
+
+PROMPT:
+A overgrown garden corner at night where twisted black vines choke a crumbling stone 
+lantern. Dark thorned brambles spread across ancient paving stones. A sickly green mist 
+clings to the ground. One dying lantern flickers weakly, casting deep shadow. Ink-black 
+moths circle the light. The garden walls behind are covered in dark moss and faded warning 
+glyphs. The atmosphere is suffocating, cursed.
+Colour palette: near-black, deep moss green, sickly poison green mist, dying amber flicker.
+Style: atmospheric 2D game background concept art, hand-painted, oppressive and ominous, 
+high shadow contrast. No text, no characters, wide 16:9 landscape.
+
+--- EVENT CHOICE ---
+Suggested file: bg_event.png
+Context: A random narrative event — player reads a text prompt and picks an option. 
+Should evoke mystery and storytelling — like discovering a scene in the garden.
+
+PROMPT:
+A secluded moonlit garden courtyard discovered at night. A worn stone tablet stands at the 
+centre, half-covered in climbing moss, ancient text faintly carved into its face. Fireflies 
+drift through the still air. A cracked stone path splits in two directions, both disappearing 
+into shadow. Tall paper lanterns on iron posts provide pools of warm light. The feeling: 
+something old is asking a question, and the answer matters.
+Colour palette: deep night blue, warm lantern pools, silver moonlight, soft firefly gold.
+Style: atmospheric 2D game background concept art, hand-painted, mysterious and narrative, 
+wide 16:9 landscape. No text, no characters.
+
+--- END SCREEN — DEFEAT ---
+Suggested file: bg_defeat.png
+Context: Game over. Player's run has ended in failure. Should feel sorrowful but not 
+completely hopeless — the garden endures, even when the player does not.
+
+PROMPT:
+A garden path in autumn rain, the path ending abruptly at a collapsed stone bridge. Fallen 
+red maple leaves float in a dark puddle. A single extinguished paper lantern lies tipped 
+over on the ground. The gate ahead is sealed with heavy rope and an ofuda seal. Mist covers 
+everything beyond. The mood is quiet failure — the journey stopped here, but the garden 
+remains, patient.
+Colour palette: rain-grey stone, deep red fallen leaves, dark water, pale mist white.
+Style: atmospheric 2D game background concept art, hand-painted, melancholic, muted. 
+No text, no characters, wide 16:9 landscape.
+
+--- END SCREEN — VICTORY ---
+Suggested file: bg_victory.png
+Context: Run completed successfully. Should feel triumphant and transcendent — 
+the garden at its most beautiful.
+
+PROMPT:
+A Japanese garden at the peak of cherry blossom season, bathed in warm golden evening light. 
+A long straight stone bridge leads to a small pavilion island surrounded by still water 
+reflecting the pink blossoms above. Petals fill the air in a slow vertical drift. In the 
+far distance, a mountain peak touched by last light. The mood is earned peace — 
+the journey is complete.
+Colour palette: blush pink, warm gold, deep green water reflection, ivory stone.
+Style: atmospheric 2D game background concept art, hand-painted, luminous and triumphant, 
+wide 16:9 landscape. No text, no characters.
+
+--- KEYBINDINGS / ACCESSIBILITY PREVIEW ---
+Suggested file: bg_settings.png
+Context: Settings sub-panels (keybindings, accessibility preview). Should be neutral, 
+calm, and non-distracting. Re-uses the main menu garden feel but even quieter.
+
+PROMPT:
+A minimalist Japanese stone garden viewed from a gently elevated angle — just raked gravel, 
+three smooth rocks, and a single pruned pine tree in the far corner. Overcast soft light, 
+no harsh shadows. The scene is deliberate and orderly — a garden designed for contemplation 
+and quiet focus. Almost monochromatic.
+Colour palette: warm pale grey gravel, dark stone, muted sage green pine, soft white sky.
+Style: atmospheric 2D game background concept art, hand-painted, minimal and calm, 
+very low contrast. No text, no characters, wide 16:9 landscape.

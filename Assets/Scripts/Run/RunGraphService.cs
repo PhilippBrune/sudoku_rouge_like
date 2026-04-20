@@ -94,8 +94,8 @@ namespace SudokuRoguelike.Run
                 riskNodes[i].NextNodes.Add(riskNodes[i + 1].Index);
             if (riskNodes.Count > 0) riskNodes[riskNodes.Count - 1].NextNodes.Add(bossNode.Index);
 
-            // Cross-links
-            InsertCrossLinks(calmNodes, riskNodes);
+            // Cross-links — count scales with floor index (1 bridge on floor 1, up to 5 on floor 5)
+            var bridgePairs = InsertCrossLinks(calmNodes, riskNodes, floorIndex);
 
             // Enforce economy pacing
             EnforceEconomyFloor(calmNodes);
@@ -106,6 +106,9 @@ namespace SudokuRoguelike.Run
             // Assign canvas positions
             AssignCanvasPositions(calmNodes, riskNodes, floorIndex, seed);
 
+            // Phase 2: snap bridge pairs to the same CanvasX so dotted lines are vertical
+            AlignBridgeCanvasX(bridgePairs);
+
             return nodes;
         }
 
@@ -113,20 +116,18 @@ namespace SudokuRoguelike.Run
 
         private static void GetFloorLengths(int floorIndex, Random rng, out int calmLength, out int riskLength)
         {
-            int calmMin, calmMax, riskSub;
+            int calmMin, calmMax;
             switch (floorIndex)
             {
-                case 0: calmMin = 5; calmMax = 8; riskSub = 1; break;
-                case 1: calmMin = 6; calmMax = 9; riskSub = 2; break;
-                case 2: calmMin = 7; calmMax = 10; riskSub = 2; break;
-                case 3: calmMin = 8; calmMax = 11; riskSub = 3; break;
-                default: calmMin = 9; calmMax = 12; riskSub = 3; break;
+                case 0: calmMin = 5; calmMax = 8;  break;
+                case 1: calmMin = 6; calmMax = 9;  break;
+                case 2: calmMin = 7; calmMax = 10; break;
+                case 3: calmMin = 8; calmMax = 11; break;
+                default: calmMin = 9; calmMax = 12; break;
             }
 
             calmLength = rng.Next(calmMin, calmMax + 1);
-            var riskMin = Math.Max(3, calmLength - riskSub);
-            var riskMax = Math.Max(riskMin, calmLength - Math.Max(1, riskSub - 1));
-            riskLength = rng.Next(riskMin, riskMax + 1);
+            riskLength = Math.Max(3, calmLength - rng.Next(1, 3)); // risk path is 1-2 nodes shorter than calm
         }
 
         // ── Node Type Rolling ──
@@ -216,16 +217,72 @@ namespace SudokuRoguelike.Run
 
         // ── Cross-Links ──
 
-        private static void InsertCrossLinks(List<RunNode> calm, List<RunNode> risk)
+        /// <summary>
+        /// Inserts 1..floorIndex+1 bidirectional bridge edges between calm and risk lanes.
+        /// Bridges are evenly distributed across the interior of the shorter lane.
+        /// No two bridges share the same position index. Returns the placed (calm, risk) node pairs
+        /// so canvas positions can be aligned in a second pass.
+        /// </summary>
+        private static List<(RunNode calm, RunNode risk)> InsertCrossLinks(
+            List<RunNode> calm, List<RunNode> risk, int floorIndex)
         {
+            var pairs = new List<(RunNode, RunNode)>();
             var shortest = Math.Min(calm.Count, risk.Count);
-            if (shortest < 3) return;
 
-            var crossStep = Math.Clamp(shortest / 2, 1, shortest - 2);
-            if (crossStep < calm.Count && crossStep < risk.Count)
+            // Need at least 3 interior slots to place any bridge safely
+            if (shortest < 3) return pairs;
+
+            // Maximum bridges that can fit with at least 1-node spacing
+            var maxBridges = Math.Max(1, (shortest - 2) / 2);
+            var targetBridges = Math.Clamp(floorIndex + 1, 1, maxBridges);
+
+            var usedCalm = new HashSet<int>();
+            var usedRisk = new HashSet<int>();
+
+            for (var b = 0; b < targetBridges; b++)
             {
-                calm[crossStep].NextNodes.Add(risk[crossStep].Index);
-                risk[crossStep].NextNodes.Add(calm[crossStep].Index);
+                // Evenly distribute positions across interior [1 .. shortest-2]
+                var pos = (int)Math.Round((b + 1.0) * shortest / (targetBridges + 1.0));
+                var calmPos = Math.Clamp(pos, 1, calm.Count - 2);
+                var riskPos  = Math.Clamp(pos, 1, risk.Count  - 2);
+
+                // Nudge to avoid duplicate positions — try forward first, then backward
+                while (usedCalm.Contains(calmPos) && calmPos < calm.Count - 2) calmPos++;
+                if (usedCalm.Contains(calmPos)) // still blocked — try backward
+                    while (usedCalm.Contains(calmPos) && calmPos > 1) calmPos--;
+
+                while (usedRisk.Contains(riskPos) && riskPos < risk.Count - 2) riskPos++;
+                if (usedRisk.Contains(riskPos))  // still blocked — try backward
+                    while (usedRisk.Contains(riskPos) && riskPos > 1) riskPos--;
+                if (usedCalm.Contains(calmPos) || usedRisk.Contains(riskPos)) continue;
+
+                calm[calmPos].NextNodes.Add(risk[riskPos].Index);
+                risk[riskPos].NextNodes.Add(calm[calmPos].Index);
+                calm[calmPos].IsCrossLink = true;
+                calm[calmPos].Type        = NodeType.CrossLink;
+                risk[riskPos].IsCrossLink = true;
+                risk[riskPos].Type        = NodeType.CrossLink;
+
+                usedCalm.Add(calmPos);
+                usedRisk.Add(riskPos);
+                pairs.Add((calm[calmPos], risk[riskPos]));
+            }
+
+            return pairs;
+        }
+
+        /// <summary>
+        /// For each bridge pair, snap both nodes to the same CanvasX (their midpoint).
+        /// This makes the dotted bridge line vertical rather than diagonal.
+        /// Must be called after AssignCanvasPositions.
+        /// </summary>
+        private static void AlignBridgeCanvasX(List<(RunNode calm, RunNode risk)> pairs)
+        {
+            for (var i = 0; i < pairs.Count; i++)
+            {
+                var avgX = (pairs[i].calm.CanvasX + pairs[i].risk.CanvasX) * 0.5f;
+                pairs[i].calm.CanvasX = avgX;
+                pairs[i].risk.CanvasX = avgX;
             }
         }
 

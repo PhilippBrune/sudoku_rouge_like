@@ -492,6 +492,76 @@ namespace SudokuRoguelike.UI
             return MakeClip("sfx_victory", count, data);
         }
 
+        /// <summary>
+        /// Richer 4-second run-victory fanfare: ascending perfect cadence C–E–G–C with
+        /// harmonic overtones, a gentle bell layer, and a slow tail fade.
+        /// Played once when the player defeats the final boss and wins the run.
+        /// </summary>
+        public static AudioClip BuildRunVictoryFanfareSfx()
+        {
+            const float seconds = 4.0f;
+            var count = Mathf.RoundToInt(SampleRate * seconds);
+            var data  = new float[count];
+
+            // Four chords: C-maj, E-maj, G-maj, C-maj (octave up)
+            // Each chord = root + major-third + fifth + octave
+            var chords = new float[4][];
+            chords[0] = new[] { 261.63f, 329.63f, 392.00f, 523.25f };  // C major
+            chords[1] = new[] { 329.63f, 415.30f, 493.88f, 659.25f };  // E major
+            chords[2] = new[] { 392.00f, 493.88f, 587.33f, 783.99f };  // G major
+            chords[3] = new[] { 523.25f, 659.25f, 783.99f, 1046.50f }; // C major (high)
+
+            const float chordDur    = 0.80f;  // each chord lasts 0.8 s
+            const float attackTime  = 0.04f;
+            const float releaseRate = 2.20f;  // exp decay per chord
+
+            // Bell-like overtone layer on the final chord
+            const float bellStart = chordDur * 3f;
+            const float bellFreq  = 1046.50f * 2f; // two octaves above root
+
+            for (var i = 0; i < count; i++)
+            {
+                var t        = i / (float)SampleRate;
+                var chordIdx = Mathf.Min((int)(t / chordDur), 3);
+                var chordT   = t - chordIdx * chordDur;
+
+                // Amplitude envelope: short attack, exponential release
+                var attack = Mathf.Clamp01(chordT / attackTime);
+                var decay  = Mathf.Exp(-chordT * releaseRate);
+                var env    = attack * decay;
+
+                // Overall volume tapers in the tail (last second)
+                var globalFade = Mathf.Clamp01((seconds - t) / 1.0f);
+
+                // Sum chord tones
+                var signal = 0f;
+                var freqs  = chords[chordIdx];
+                signal += Mathf.Sin(2f * Mathf.PI * freqs[0] * t) * 0.22f;  // root
+                signal += Mathf.Sin(2f * Mathf.PI * freqs[1] * t) * 0.16f;  // major third
+                signal += Mathf.Sin(2f * Mathf.PI * freqs[2] * t) * 0.14f;  // fifth
+                signal += Mathf.Sin(2f * Mathf.PI * freqs[3] * t) * 0.10f;  // octave
+
+                // Warm second harmonic on root
+                signal += Mathf.Sin(2f * Mathf.PI * freqs[0] * 2f * t) * 0.06f;
+
+                signal *= env * globalFade;
+
+                // Bell overlay on final chord
+                if (t >= bellStart)
+                {
+                    var bt   = t - bellStart;
+                    var bEnv = Mathf.Exp(-bt * 4.0f);
+                    signal  += Mathf.Sin(2f * Mathf.PI * bellFreq * t) * 0.08f * bEnv * globalFade;
+                    // Bell shimmer (inharmonic partial)
+                    signal  += Mathf.Sin(2f * Mathf.PI * bellFreq * 1.41f * t) * 0.03f
+                               * Mathf.Exp(-bt * 7f) * globalFade;
+                }
+
+                data[i] = Mathf.Clamp(signal, -0.80f, 0.80f);
+            }
+            return MakeClip("sfx_run_victory_fanfare", count, data);
+        }
+
         public static AudioClip BuildGameOverStingerSfx()
         {
             const float seconds = 0.80f;

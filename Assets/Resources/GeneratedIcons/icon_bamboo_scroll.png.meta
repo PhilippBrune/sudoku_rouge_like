@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 18f15ea1e095b884ab25f094a5e41f21
+guid: 64760015436396e41bb03251f1d7fa84
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 5012454824838220251
-    second: icon_bamboo_scroll_0
+      213: 7013909802521817133
+    second: icon_Bamboo_Scroll_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -46,7 +46,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: icon_bamboo_scroll_0
+      name: icon_Bamboo_Scroll_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 64
-        height: 64
+        width: 192
+        height: 192
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: bd9cc272b11df8540800000000000000
-      internalID: 5012454824838220251
+      spriteID: d2071f9ddc9665160800000000000000
+      internalID: 7013909802521817133
       vertices: []
       indices: 
       edges: []
@@ -125,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      icon_bamboo_scroll_0: 5012454824838220251
+      icon_Bamboo_Scroll_0: 7013909802521817133
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 5e31873a16ede9e439128da80e946ad8
+guid: 5df45bdc656d08449b195b20457bfabf
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 6429892519837504921
-    second: icon_crimson_fan_0
+      213: 280758324914040297
+    second: icon_Crimson_Fan_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -46,7 +46,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: icon_crimson_fan_0
+      name: icon_Crimson_Fan_0
       rect:
         serializedVersion: 2
-        x: 0
+        x: 14
         y: 0
-        width: 64
-        height: 64
+        width: 164
+        height: 192
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 9951bd40e219b3950800000000000000
-      internalID: 6429892519837504921
+      spriteID: 9ed2c30853475e300800000000000000
+      internalID: 280758324914040297
       vertices: []
       indices: 
       edges: []
@@ -125,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      icon_crimson_fan_0: 6429892519837504921
+      icon_Crimson_Fan_0: 280758324914040297
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -3,8 +3,8 @@ guid: 14bcec9e977b9d041a127c386ea3e493
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 417262419581068107
-    second: icon_bud_0
+      213: -5520816330743883614
+    second: icon_Bud_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -46,7 +46,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: icon_bud_0
+      name: icon_Bud_0
       rect:
         serializedVersion: 2
-        x: 0
+        x: 20
         y: 0
-        width: 64
-        height: 64
+        width: 151
+        height: 192
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: b43ef39b5f96ac500800000000000000
-      internalID: 417262419581068107
+      spriteID: 2a8d5d73cce1263b0800000000000000
+      internalID: -5520816330743883614
       vertices: []
       indices: 
       edges: []
@@ -125,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      icon_bud_0: 417262419581068107
+      icon_Bud_0: -5520816330743883614
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -143,39 +143,49 @@ namespace SudokuRoguelike.UI
 
         private static AudioClip BuildStoneLanternWalk()
         {
-            const float seconds = 44f;
-            const float bpm = 65f;
-            var count = Mathf.RoundToInt(SampleRate * seconds);
-            var data = new float[count];
+            // Relaxed evening pace — slow koto arpeggios, breathy flute drone and
+            // warm bell overtones replace the Fire/Taiko combination.
+            const float seconds = 48f;
+            const float bpm     = 52f;
+            var count   = Mathf.RoundToInt(SampleRate * seconds);
+            var data    = new float[count];
             var beatLen = 60f / bpm;
+
+            // Pentatonic D-minor for a calm, introspective feel
+            var scale = PentatonicDMinor;
 
             for (var i = 0; i < count; i++)
             {
-                var t = i / (float)SampleRate;
+                var t    = (float)i / SampleRate;
                 var beat = t / beatLen;
 
-                var crackle = Mathf.Sin(t * 4217f) * Mathf.Sin(t * 6311f) * Mathf.Sin(t * 1973f);
-                var crackleEnv = Mathf.Abs(Mathf.Sin(t * 7.3f)) > 0.85f ? 1f : 0.2f;
-                var fire = crackle * 0.04f * crackleEnv;
+                // Slow breath envelope (inhale/exhale every ~4 beats)
+                var breath = 0.55f + 0.45f * Mathf.Sin(t * (Mathf.PI / (2f * beatLen)));
 
-                var vibrato = 1f + 0.003f * Mathf.Sin(t * 5f * Mathf.PI);
-                var erhu = (TriangleWave(2f * Mathf.PI * 82.41f * vibrato * t) * 0.09f +
-                            Mathf.Sin(2f * Mathf.PI * 123.47f * t) * 0.05f);
+                // Shakuhachi (flute) — long held notes, very soft
+                var fluteIdx   = (int)(beat * 0.25f) % scale.Length;
+                var fluteFreq  = scale[fluteIdx] * 0.5f; // one octave down
+                var fluteVib   = 1f + 0.004f * Mathf.Sin(t * 4.2f * Mathf.PI);
+                var flute      = TriangleWave(2f * Mathf.PI * fluteFreq * fluteVib * t) * 0.13f * breath;
 
-                var taikoPhase = (beat * 0.125f) % 1f;
-                var taikoEnv = taikoPhase < 0.05f ? Mathf.Exp(-taikoPhase * beatLen * 8f * 8f) : 0f;
-                var taiko = Mathf.Sin(2f * Mathf.PI * 60f * t) * 0.10f * taikoEnv;
+                // Koto plucks — gentle arpeggios, two per beat
+                var kotoPhase  = (beat * 2f) % 1f;
+                var kotoDecay  = Mathf.Exp(-kotoPhase * beatLen * 0.5f * 6f);
+                var kotoIdx    = (int)(beat * 2f) % scale.Length;
+                var koto       = Mathf.Sin(2f * Mathf.PI * scale[kotoIdx] * t) * 0.11f * kotoDecay;
 
-                var melIdx = (int)(beat * 0.2f) % EMinor.Length;
-                var melPhase = (beat * 0.2f) % 1f;
-                var melDecay = Mathf.Exp(-melPhase * beatLen * 5f * 3f);
-                var melody = TriangleWave(2f * Mathf.PI * EMinor[melIdx] * 0.5f * t) * 0.06f * melDecay;
+                // Distant bell overtone — swell in and fade every 12 s
+                var bellCycle  = t % 12f;
+                var bellEnv    = Mathf.Exp(-bellCycle * 0.5f) * 0.06f;
+                var bell       = (Mathf.Sin(2f * Mathf.PI * 440f * t) * 0.6f
+                                + Mathf.Sin(2f * Mathf.PI * 880f * t) * 0.3f
+                                + Mathf.Sin(2f * Mathf.PI * 1320f  * t) * 0.1f) * bellEnv;
 
-                var rustle = Mathf.Sin(t * 8317f) * Mathf.Sin(t * 2113f) * 0.015f;
-                var rustleSwell = 0.5f + 0.5f * Mathf.Sin(t * 0.08f * Mathf.PI);
-                rustle *= rustleSwell;
+                // Very gentle wind-texture underscore
+                var wind = (Mathf.Sin(t * 2313f) * Mathf.Sin(t * 4871f)) * 0.02f
+                           * (0.5f + 0.5f * Mathf.Sin(t * 0.11f * Mathf.PI));
 
-                data[i] = Mathf.Clamp(fire + erhu + taiko + melody + rustle, -0.55f, 0.55f);
+                data[i] = Mathf.Clamp(flute + koto + bell + wind, -0.55f, 0.55f);
             }
 
             return MakeClip("FloorLoop_StoneLantern", count, data);

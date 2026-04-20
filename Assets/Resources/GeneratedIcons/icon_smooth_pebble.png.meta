@@ -3,8 +3,11 @@ guid: 5f1e98245bd8aa840afaf9d95dbb3a7e
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 7839287377673899818
-    second: icon_smooth_pebble_0
+      213: -5265286633702002912
+    second: icon_Smooth_Pebble_0
+  - first:
+      213: 2662704772708641350
+    second: icon_Smooth_Pebble_1
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +40,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -46,7 +49,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -100,13 +103,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: icon_smooth_pebble_0
+      name: icon_Smooth_Pebble_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 0
-        width: 64
-        height: 64
+        y: 28
+        width: 93
+        height: 137
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +118,30 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: a2fc47ee55ebacc60800000000000000
-      internalID: 7839287377673899818
+      spriteID: 02f649d04b1fde6b0800000000000000
+      internalID: -5265286633702002912
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icon_Smooth_Pebble_1
+      rect:
+        serializedVersion: 2
+        x: 99
+        y: 28
+        width: 93
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 64a290712e3d3f420800000000000000
+      internalID: 2662704772708641350
       vertices: []
       indices: 
       edges: []
@@ -125,7 +150,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -135,7 +160,8 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      icon_smooth_pebble_0: 7839287377673899818
+      icon_Smooth_Pebble_0: -5265286633702002912
+      icon_Smooth_Pebble_1: 2662704772708641350
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

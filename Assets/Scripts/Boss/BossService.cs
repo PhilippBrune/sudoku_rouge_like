@@ -41,7 +41,26 @@ namespace SudokuRoguelike.Boss
             [BossModifierId.GreaterLessThan]   = (2, 0.30f),
             [BossModifierId.XVPairs]           = (2, 0.30f),
             [BossModifierId.PrimeCells]        = (1, 0.20f),
-            [BossModifierId.FortressCells]     = (2, 0.35f)
+            [BossModifierId.FortressCells]     = (2, 0.35f),
+
+            // Boss debuffs (IDs 94–102) — reactive penalties on wrong placement
+            // [REQ: DEBUFF-HOOK-011] All debuff entries registered here; IDs ≥94 excluded from BuildEligiblePool
+            [BossModifierId.RowWipe]       = (3, 0.55f), // [REQ: DEBUFF-DEF-001]
+            [BossModifierId.ColWipe]       = (3, 0.55f), // [REQ: DEBUFF-DEF-002]
+            [BossModifierId.DoublePenalty] = (2, 0.40f), // [REQ: DEBUFF-DEF-012]
+            [BossModifierId.CellLock]      = (2, 0.45f), // [REQ: DEBUFF-DEF-018]
+            [BossModifierId.PencilBlind]   = (3, 0.50f), // [REQ: DEBUFF-DEF-007]
+            [BossModifierId.BoxWipe]       = (3, 0.55f), // [REQ: DEBUFF-DEF-003]
+            [BossModifierId.CrossWipe]     = (4, 0.70f), // [REQ: DEBUFF-DEF-004]
+            [BossModifierId.PencilDrain]   = (2, 0.35f), // [REQ: DEBUFF-DEF-013]
+            [BossModifierId.GoldFine]      = (2, 0.30f), // [REQ: DEBUFF-DEF-014]
+
+            // Pressure mechanics (IDs 103–106) — in-puzzle urgency timers (rolled via dedicated path)
+            // [REQ: PRESSURE-ROLL-004] registered here so BuildEligiblePool can exclude them; actual rolling in RunDirector.RollPressureMechanic
+            [BossModifierId.CountdownFill]   = (2, 0.35f),
+            [BossModifierId.HauntedCell]     = (2, 0.30f),
+            [BossModifierId.CrumblingRegion] = (3, 0.50f),
+            [BossModifierId.PressureWave]    = (4, 0.60f)  // [REQ: PRESSURE-ROLL-005] floor 3+ only
         };
 
         public BossService(int seed)
@@ -96,6 +115,7 @@ namespace SudokuRoguelike.Boss
         /// Roll floor modifiers for the given floor. Floor N has N−1 modifiers (Floor 1 = 0).
         /// Excludes modifiers that require board sizes larger than the floor's minimum.
         /// </summary>
+        // [REQ: BOSS-FLOOR-001] Floor N has N−1 floor modifiers; rolls from eligible pool at floor entry
         public List<BossModifierId> RollFloorModifiers(int floor, int minBoardSize)
         {
             var count = floor; // Floor 0(1st)=0, Floor 1(2nd)=1, Floor 2(3rd)=2, ..., Floor 4(5th)=4
@@ -121,8 +141,19 @@ namespace SudokuRoguelike.Boss
             var pool = new List<BossModifierId>();
             foreach (var pair in ModifierData)
             {
+                // [REQ: DEBUFF-HOOK-011] IDs ≥94 are debuffs/pressure — exclude from player-facing modifier rolling
+                var id = (int)pair.Key;
+                if (id >= 94) continue;
+
+                // Modular Regions disabled by design decision
+                if (pair.Key == BossModifierId.ModularRegions) continue;
+
                 // Board size restrictions: German Whispers and Killer Cages require ≥ 7×7
                 if (minBoardSize < 7 && (pair.Key == BossModifierId.GermanWhispers || pair.Key == BossModifierId.KillerCages))
+                    continue;
+
+                // Entropy requires exactly 9×9 (low/mid/high bands are 1-3/4-6/7-9)
+                if (pair.Key == BossModifierId.EntropyGlobal && minBoardSize < 9)
                     continue;
 
                 if (exclude != null && exclude.Contains(pair.Key))
@@ -136,12 +167,15 @@ namespace SudokuRoguelike.Boss
         private List<BossModifierId> DrawDistinct(List<BossModifierId> pool, int count)
         {
             var result = new List<BossModifierId>();
+            var seen   = new HashSet<BossModifierId>();
             var safeCount = Math.Min(count, pool.Count);
             for (var i = 0; i < safeCount; i++)
             {
-                var idx = _random.Next(pool.Count);
-                result.Add(pool[idx]);
+                var idx  = _random.Next(pool.Count);
+                var pick = pool[idx];
                 pool.RemoveAt(idx);
+                if (seen.Add(pick))   // HashSet.Add returns false for duplicates
+                    result.Add(pick);
             }
             return result;
         }
@@ -228,6 +262,11 @@ namespace SudokuRoguelike.Boss
                 BossModifierId.XVPairs             => "XV Pairs",
                 BossModifierId.PrimeCells          => "Prime Cells",
                 BossModifierId.FortressCells       => "Fortress Cells",
+                BossModifierId.RowWipe             => "Row Wipe",
+                BossModifierId.ColWipe             => "Column Wipe",
+                BossModifierId.DoublePenalty       => "Double Penalty",
+                BossModifierId.CellLock            => "Cell Lock",
+                BossModifierId.PencilBlind         => "Pencil Blind",
                 _ => id.ToString()
             };
         }
@@ -266,10 +305,18 @@ namespace SudokuRoguelike.Boss
                 BossModifierId.XVPairs             => "X between two cells: they sum to 10. V between two cells: they sum to 5.",
                 BossModifierId.PrimeCells          => "Marked cells (shown with a P) must contain a prime digit: 2, 3, 5, or 7.",
                 BossModifierId.FortressCells       => "Grey-shaded cells must be strictly greater than every orthogonally adjacent non-shaded cell.",
+
+                // Boss debuffs
+                BossModifierId.RowWipe       => "Wrong placement: all your digits in that row are erased.",
+                BossModifierId.ColWipe       => "Wrong placement: all your digits in that column are erased.",
+                BossModifierId.DoublePenalty => "Wrong placements deal 2 HP damage instead of 1.",
+                BossModifierId.CellLock      => "Wrong placement: the cell locks for 3 correct placements before you can edit it again.",
+                BossModifierId.PencilBlind   => "Wrong placement: all pencil marks in that row and column are cleared.",
                 _ => ""
             };
         }
 
+        // [REQ: BOSS-INT-001] [REQ: BOSS-INT-002] Intensity for run number: 1-2=Low, 3-5=Med, 6-8=High, 9+=VH
         public static BossModifierIntensity IntensityForRunNumber(int runNumber)
         {
             if (runNumber <= 2) return BossModifierIntensity.Low;

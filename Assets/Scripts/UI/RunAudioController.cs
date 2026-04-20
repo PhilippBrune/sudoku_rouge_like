@@ -17,6 +17,7 @@ namespace SudokuRoguelike.UI
 
         private SaveFileService _save;
         private ProfileService _profile;
+        private int _lastActiveSlot = -1;
 
         private AudioSource _musicSource;
         private AudioSource _sfxSource;
@@ -62,6 +63,7 @@ namespace SudokuRoguelike.UI
         private AudioClip _achievementSfx;
         private AudioClip _xpBarFillSfx;
         private AudioClip _victorySfx;
+        private AudioClip _runVictoryFanfareSfx;
 
         private AudioClip _buttonHoverSfx;
         private AudioClip _buttonClickSfx;
@@ -71,12 +73,29 @@ namespace SudokuRoguelike.UI
         private AudioClip _relicRevealSfx;
 
         private Context _context = Context.Path;
+        private bool _startCompleted;
 
         private void Awake()
         {
-            _save = new SaveFileService();
-            _profile = new ProfileService();
+            // Singleton guard: destroy duplicate if one already exists across scene loads.
+            // Keep Awake minimal — only DontDestroyOnLoad and save-service wiring here.
+            // AudioSource setup and clip generation moved to Start() so the audio driver's
+            // realtime thread has finished initialising before we touch it (avoids ADTM timeout).
+            if (FindFirstObjectByType<RunAudioController>() != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            DontDestroyOnLoad(gameObject);
 
+            _lastActiveSlot = SaveProfileService.ActiveSlot;
+            _save = new SaveFileService(_lastActiveSlot);
+            _profile = new ProfileService(_save);
+        }
+
+        private void Start()
+        {
+            // Configure the AudioSource that was required by [RequireComponent]
             _musicSource = GetComponent<AudioSource>();
             _musicSource.loop = true;
             _musicSource.playOnAwake = false;
@@ -152,6 +171,7 @@ namespace SudokuRoguelike.UI
             _achievementSfx = ProceduralSfxLibrary.BuildAchievementSfx();
             _xpBarFillSfx = ProceduralSfxLibrary.BuildXpBarFillSfx();
             _victorySfx = ProceduralSfxLibrary.BuildVictoryStingerSfx();
+            _runVictoryFanfareSfx = ProceduralSfxLibrary.BuildRunVictoryFanfareSfx();
 
             _buttonHoverSfx = ProceduralSfxLibrary.BuildButtonHoverSfx();
             _buttonClickSfx = ProceduralSfxLibrary.BuildButtonClickSfx();
@@ -159,39 +179,61 @@ namespace SudokuRoguelike.UI
             _menuCloseSfx = ProceduralSfxLibrary.BuildMenuCloseSfx();
             _itemRewardSfx = ProceduralSfxLibrary.BuildItemRewardSfx();
             _relicRevealSfx = ProceduralSfxLibrary.BuildRelicRevealSfx();
-        }
 
-        private void Start()
-        {
-            SetContext(Context.Path);
+            _startCompleted = true;
+            SetContext(_context); // apply any context set before Start completed
         }
 
         private float _nextProfileRefresh;
+
+        private void OnApplicationPause(bool paused)
+        {
+            if (paused)
+            {
+                _musicSource?.Pause();
+                _bossSource?.Pause();
+            }
+            else
+            {
+                _musicSource?.UnPause();
+                if (_bossLayerActive) _bossSource?.UnPause();
+            }
+        }
 
         private void Update()
         {
             if (Time.unscaledTime >= _nextProfileRefresh)
             {
                 _nextProfileRefresh = Time.unscaledTime + 1f;
+                var activeSlot = SaveProfileService.ActiveSlot;
+                if (activeSlot != _lastActiveSlot)
+                {
+                    _lastActiveSlot = activeSlot;
+                    _save = new SaveFileService(activeSlot);
+                    _profile = new ProfileService(_save);
+                }
                 if (_save.HasSaveFile())
                     _profile.ApplyEnvelope(_save.Load());
             }
 
-            var opts = _profile.LoadOptions();
-            var muted = opts.Audio.MuteAll;
-            var baseVolume = Mathf.Clamp01(opts.Audio.MasterVolume);
-            var musicVol = baseVolume * Mathf.Clamp01(opts.Audio.MusicVolume) * 0.75f;
+            // Read volumes from OptionsController.LiveAudio (updated immediately on slider drag)
+            // instead of disk-polling, so Music/SFX/UI sliders give real-time audio feedback.
+            var audio = OptionsController.LiveAudio;
+            var muted = audio.MuteAll;
+            var baseVolume = Mathf.Clamp01(audio.MasterVolume);
+            var musicVol = baseVolume * Mathf.Clamp01(audio.MusicVolume) * 0.75f;
             var duckMul = _isDucking ? 0.8f : 1f;
+            var pathMul = _context == Context.Path ? 0.6f : 1f;
             _musicSource.mute = muted;
             _sfxSource.mute = muted;
             _uiSource.mute = muted;
             _bossSource.mute = muted;
-            _musicSource.volume = musicVol * duckMul;
-            _sfxSource.volume = baseVolume * Mathf.Clamp01(opts.Audio.SfxVolume) * 0.55f;
-            _uiSource.volume = baseVolume * Mathf.Clamp01(opts.Audio.UiVolume) * 0.65f;
+            _musicSource.volume = musicVol * duckMul * pathMul;
+            _sfxSource.volume = baseVolume * Mathf.Clamp01(audio.SfxVolume) * 0.55f;
+            _uiSource.volume = baseVolume * Mathf.Clamp01(audio.UiVolume) * 0.65f;
             _bossSource.volume = _bossLayerActive ? musicVol * 0.6f * duckMul : 0f;
 
-            if (_context == Context.Puzzle && !_musicSource.mute)
+            if ((_context == Context.Puzzle || _context == Context.Path) && !_musicSource.mute)
             {
                 if (_musicSource.clip != null && !_musicSource.isPlaying)
                     _musicSource.Play();
@@ -200,8 +242,19 @@ namespace SudokuRoguelike.UI
 
         public void SetContext(Context context)
         {
+            // Called before Start() has initialised AudioSources (e.g. on the same frame
+            // the controller is instantiated). Cache the context; Start() will apply it.
+            if (!_startCompleted) { _context = context; return; }
+
             if (_context == context && _musicSource.isPlaying) return;
             _context = context;
+
+            // Cancel any crossfade in progress so it doesn't fight the new clip assignment.
+            if (_crossfadeCoroutine != null)
+            {
+                StopCoroutine(_crossfadeCoroutine);
+                _crossfadeCoroutine = null;
+            }
 
             if (context != Context.Puzzle && _bossLayerActive)
                 StopBossLayer();
@@ -209,6 +262,7 @@ namespace SudokuRoguelike.UI
             _musicSource.clip = context switch
             {
                 Context.Puzzle => _puzzleLoop,
+                Context.Path   => _puzzleLoop,   // floor loop at 60 % volume (see Update)
                 Context.Shop => _shopLoop,
                 Context.Rest => _restLoop,
                 _ => null
@@ -256,6 +310,8 @@ namespace SudokuRoguelike.UI
         public void PlayAchievement() => PlaySfx(_achievementSfx, 0.9f);
         public void PlayXpBarFill() => PlaySfx(_xpBarFillSfx, 0.7f);
         public void PlayVictory() => PlaySfx(_victorySfx, 1f);
+        /// <summary>4-second ascending cadence fanfare — played only on final-boss run victory.</summary>
+        public void PlayRunVictoryFanfare() => PlaySfx(_runVictoryFanfareSfx, 1f);
 
         public void PlayButtonHover() => PlayUi(_buttonHoverSfx, 0.4f);
         public void PlayButtonClick() => PlayUi(_buttonClickSfx, 0.6f);
@@ -292,6 +348,25 @@ namespace SudokuRoguelike.UI
         {
             _bossLayerActive = false;
             _bossSource.Stop();
+        }
+
+        /// <summary>
+        /// Immediately stops all looping music (puzzle loop + boss layer) and any
+        /// in-progress crossfade. Call this before returning to the main menu so
+        /// run music does not overlap with the menu music track.
+        /// </summary>
+        public void StopAll()
+        {
+            if (_crossfadeCoroutine != null)
+            {
+                StopCoroutine(_crossfadeCoroutine);
+                _crossfadeCoroutine = null;
+            }
+            // Reset context to Path (clip = null) BEFORE stopping, so the Update()
+            // auto-restart guard cannot replay music on the next frame.
+            _context = Context.Path;
+            if (_musicSource != null) { _musicSource.clip = null; _musicSource.Stop(); }
+            if (_bossSource  != null) { _bossLayerActive = false; _bossSource.Stop(); }
         }
 
         public void SetMusicDucking(bool ducking)

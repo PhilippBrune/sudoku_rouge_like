@@ -3,8 +3,8 @@ guid: 03fdbaeff524cdb488644a7a36cda753
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -2065047505994705113
-    second: icon_koi_reflection_0
+      213: 5009353915395366932
+    second: icon_Koi_Reflection_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -46,7 +46,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: icon_koi_reflection_0
+      name: icon_Koi_Reflection_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 0
-        width: 64
-        height: 64
+        y: 2
+        width: 192
+        height: 188
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 72711e00c3a7753e0800000000000000
-      internalID: -2065047505994705113
+      spriteID: 4106a5968dcc48540800000000000000
+      internalID: 5009353915395366932
       vertices: []
       indices: 
       edges: []
@@ -125,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      icon_koi_reflection_0: -2065047505994705113
+      icon_Koi_Reflection_0: 5009353915395366932
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

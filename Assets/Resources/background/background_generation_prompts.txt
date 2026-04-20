@@ -1,0 +1,78 @@
+SUDOKU ROGUE-LIKE — BACKGROUND IMAGE GENERATION PROMPTS
+Floor-themed garden path backgrounds, one per floor.
+Style for all: atmospheric 2D game background concept art, hand-painted, painterly edges.
+Composition for all: wide 16:9 landscape, split-path fork motif (calm left / risk right), no text, no characters.
+For Midjourney add: --ar 16:9  (optionally --style raw to reduce over-stylisation)
+For Stable Diffusion negative prompt: text, watermark, UI, characters, anime
+========================================================
+
+--- FLOOR 0 — Garden Grove ---
+File: bg_Garden_Grove.png
+Lane names: Garden Walk (calm) / Briar Crossing (risk)
+Particle tint: pale green (#8DD161)
+
+PROMPT:
+A serene Japanese bamboo garden seen from a low, intimate angle. Tall pale-green bamboo stalks
+rise out of frame, their segmented joints catching soft morning light. Dense ground ferns and
+moss-covered stepping stones fill the lower third. A narrow dirt path winds between tangled
+briar roots on one side and the open bamboo grove on the other, implying a gentle choice.
+Soft pale-green ambient light filters through the canopy, casting dappled shadows.
+Colour palette: sage green, warm ivory, deep forest shadow.
+Style: atmospheric 2D game background concept art, hand-painted, slightly desaturated,
+painterly edges. No text, no characters, wide 16:9 landscape composition.
+
+--- FLOOR 1 — Koi Garden ---
+File: bg_Koi_Garden.png
+Lane names: Koi Shore (calm) / Vine Path (risk)
+Particle tint: dark green (#1F521700)
+
+PROMPT:
+A twilight koi garden at the edge of a dark still pond. Massive lily pads rest on near-black
+water, faint golden koi silhouettes visible beneath the surface. Dense hanging vines drape
+from mossy stone walls to the left; a narrow muddy shore path curves to the right along the
+water's edge. Overcast sky, the only light coming from a single paper lantern reflected in
+the water. Colour palette: deep forest green, near-black, muted gold accents, pale lantern
+yellow. Style: atmospheric 2D game background concept art, painterly, moody and slightly
+ominous. No text, no characters, wide 16:9 landscape composition.
+
+--- FLOOR 2 — Koi Terrace ---
+File: bg_Koi_Terrace.png
+Lane names: Stone Bridge (calm) / Deep Current (risk)
+Particle tint: light blue (#61A6E6)
+
+PROMPT:
+A weathered stone bridge spanning a deep, fast-moving river in a misty mountain gorge.
+Concentric water ripples spread where the current eddies below. Smooth grey stepping-stone
+architecture, moss growing between the cracks. Cool blue mist rises from the water, partially
+obscuring distant cedar trees. One side of the bridge feels safe; the other descends toward
+roaring dark rapids below. Colour palette: slate blue, cool grey stone, deep navy water,
+pale mist white. Style: atmospheric 2D game background concept art, painterly, melancholic
+and vast. No text, no characters, wide 16:9 landscape composition.
+
+--- FLOOR 3 — Shrine Garden ---
+File: bg_Shrine_Garden.png
+Lane names: Temple Walk (calm) / Demon Trail (risk)
+Particle tint: amber (#EBB338)
+
+PROMPT:
+A stone-paved temple courtyard lit by rows of hanging amber paper lanterns at dusk. Ancient
+torii gates recede into the distance down the right fork of a split path; the left path
+descends into a torchlit tunnel carved with demon carvings and Sanskrit-like glyphs. Incense
+smoke drifts across warm lantern-glow. Fallen orange leaves cover the courtyard.
+Colour palette: amber, warm terracotta, deep shadow black, muted gold.
+Style: atmospheric 2D game background concept art, painterly, ceremonial and slightly
+foreboding. No text, no characters, wide 16:9 landscape composition.
+
+--- FLOOR 4 — Demon Summit ---
+File: bg_Demon_Summit.png
+Lane names: Summit Path (calm) / Abyss Edge (risk)
+Particle tint: dark orange / ember (#E64D14)
+
+PROMPT:
+A volcanic mountain summit path at night. The left trail narrows to a ridge walk above crimson
+clouds, with distant peaks silhouetted against a blood-red sky. The right trail drops sharply
+toward a glowing abyss, ember sparks drifting upward from below. A crumbling red torii gate
+stands at the fork, scorched but still standing. The ground is cracked obsidian with veins
+of molten orange. Colour palette: deep charcoal, blood red, ember orange, black sky.
+Style: atmospheric 2D game background concept art, painterly, dramatic and dangerous,
+high contrast. No text, no characters, wide 16:9 landscape composition.

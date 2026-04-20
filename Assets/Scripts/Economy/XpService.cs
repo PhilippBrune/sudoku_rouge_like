@@ -6,6 +6,7 @@ namespace SudokuRoguelike.Economy
 {
     public sealed class XpService
     {
+        // [REQ: XP-TILE-001] Entry point: CalculateTile returns full TileXpEntry with per-component breakdown
         public static TileXpEntry CalculateTile(int boardSize, int stars, int activeModCount,
             bool isBoss, bool perfectSolve)
         {

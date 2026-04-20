@@ -3,8 +3,8 @@ guid: 4a6898a382ebc674bbdb79eea2ede8e4
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -7063872031816573313
-    second: icon_arrow_sum_0
+      213: -203500660062732910
+    second: icon_Arrow_Sum_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -46,7 +46,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: icon_arrow_sum_0
+      name: icon_Arrow_Sum_0
       rect:
         serializedVersion: 2
-        x: 0
+        x: 26
         y: 0
-        width: 64
-        height: 64
+        width: 139
+        height: 192
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: f7e91c420d518fd90800000000000000
-      internalID: -7063872031816573313
+      spriteID: 29d37655a350d2df0800000000000000
+      internalID: -203500660062732910
       vertices: []
       indices: 
       edges: []
@@ -125,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      icon_arrow_sum_0: -7063872031816573313
+      icon_Arrow_Sum_0: -203500660062732910
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

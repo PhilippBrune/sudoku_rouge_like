@@ -246,7 +246,7 @@ namespace SudokuRoguelike.Sudoku
             for (var i = 0; i < overlay.KropkiDots.Count; i++)
             {
                 var dot = overlay.KropkiDots[i];
-                if (dot.IsBlack) continue;
+                if (dot.IsBlack || dot.SumValue > 0) continue;  // skip black dots and sum dots
                 int otherVal;
                 if (dot.CellA.Row == row && dot.CellA.Col == col)
                     otherVal = board.Cells[dot.CellB.Row, dot.CellB.Col];
@@ -532,6 +532,35 @@ namespace SudokuRoguelike.Sudoku
             {
                 if (!CheckWindow(board, row, col, value, start, start + 1, start + 2, false)) return false;
             }
+            // Box-level entropy: each half of a box must not contain duplicate groups
+            if (!CheckBoxEntropy(board, row, col, value)) return false;
+            return true;
+        }
+
+        private static bool CheckBoxEntropy(SudokuBoard board, int row, int col, int value)
+        {
+            var size = board.Size;
+            var regionId = board.RegionMap[row, col];
+            // Collect all values in this region
+            var regionVals = new System.Collections.Generic.List<int>(size);
+            regionVals.Add(value);
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
+            {
+                if (r == row && c == col) continue;
+                if (board.RegionMap[r, c] != regionId) continue;
+                var v = board.Cells[r, c];
+                if (v != 0) regionVals.Add(v);
+            }
+            if (regionVals.Count < 3) return true; // not enough cells placed to check
+            // Each group may appear at most ⌊regionSize/3⌋ times
+            var maxPerGroup = size / 3;
+            if (maxPerGroup < 1) return true;
+            var groupCounts = new int[3];
+            for (var i = 0; i < regionVals.Count; i++)
+                groupCounts[Group(regionVals[i])]++;
+            for (var g = 0; g < 3; g++)
+                if (groupCounts[g] > maxPerGroup) return false;
             return true;
         }
 

@@ -12,15 +12,10 @@ namespace SudokuRoguelike.Run
             _random = new Random(seed);
         }
 
-        public void ApplyVariance(LevelConfig config, int depth, int floorIndex)
+        public void ApplyVariance(LevelConfig config, int depth, int floorIndex, int maxRegionVariant = 3)
         {
-            // Star variance: +/-1 occasionally
-            if (_random.NextDouble() < 0.20)
-            {
-                var delta = _random.NextDouble() < 0.5 ? -1 : 1;
-                config.Stars = Math.Clamp(config.Stars + delta, 1, 6);
-            }
-
+            // Note: star difficulty is now set deterministically by RollStars (floor table + 20% upward
+            // variance baked in). No star mutation is applied here.
             // Size variance: +/-1 for non-boss
             if (!config.IsBoss && _random.NextDouble() < 0.15)
             {
@@ -28,10 +23,10 @@ namespace SudokuRoguelike.Run
                 config.BoardSize = Math.Clamp(config.BoardSize + delta, 5, 9);
             }
 
-            // Region variant refresh
+            // Region variant refresh — clamped to allowed range
             if (_random.NextDouble() < 0.30)
             {
-                config.RegionVariant = _random.Next(4);
+                config.RegionVariant = _random.Next(maxRegionVariant + 1);
             }
         }
     }

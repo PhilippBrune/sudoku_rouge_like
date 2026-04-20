@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace SudokuRoguelike.UI
 {
@@ -87,6 +88,48 @@ namespace SudokuRoguelike.UI
             onUpdate?.Invoke(to);
         }
 
+        /// <summary>Fades a CanvasGroup from alpha 0 to 1 over <paramref name="duration"/> seconds.</summary>
+        public static IEnumerator FadeIn(CanvasGroup cg, float duration)
+        {
+            if (cg == null) yield break;
+            cg.alpha = 0f;
+            if (duration <= 0f) { cg.alpha = 1f; yield break; }
+            var elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                cg.alpha = Ease(Mathf.Clamp01(elapsed / duration), EaseType.EaseOut);
+                yield return null;
+            }
+            cg.alpha = 1f;
+        }
+
+        /// <summary>Fades a CanvasGroup from alpha 1 to 0 over <paramref name="duration"/> seconds.</summary>
+        public static IEnumerator FadeOut(CanvasGroup cg, float duration)
+        {
+            if (cg == null) yield break;
+            cg.alpha = 1f;
+            if (duration <= 0f) { cg.alpha = 0f; yield break; }
+            var elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                cg.alpha = 1f - Ease(Mathf.Clamp01(elapsed / duration), EaseType.EaseOut);
+                yield return null;
+            }
+            cg.alpha = 0f;
+        }
+
+        /// <summary>Briefly flashes a Graphic to <paramref name="flashColor"/> and back.</summary>
+        public static IEnumerator FlashColor(Graphic graphic, Color flashColor, float duration)
+        {
+            if (graphic == null || duration <= 0f) yield break;
+            var original = graphic.color;
+            graphic.color = flashColor;
+            yield return new WaitForSecondsRealtime(duration * 0.5f);
+            graphic.color = original;
+        }
+
         public static IEnumerator PulseScale(Transform target, float baseScale, float peakScale,
             float duration)
         {
@@ -96,6 +139,7 @@ namespace SudokuRoguelike.UI
             var elapsed = 0f;
             while (elapsed < half)
             {
+                if (target == null) yield break;
                 elapsed += Time.unscaledDeltaTime;
                 var t = Mathf.Clamp01(elapsed / half);
                 var s = Mathf.Lerp(baseScale, peakScale, t);
@@ -106,13 +150,14 @@ namespace SudokuRoguelike.UI
             elapsed = 0f;
             while (elapsed < half)
             {
+                if (target == null) yield break;
                 elapsed += Time.unscaledDeltaTime;
                 var t = Mathf.Clamp01(elapsed / half);
                 var s = Mathf.Lerp(peakScale, baseScale, t);
                 target.localScale = new Vector3(s, s, 1f);
                 yield return null;
             }
-            target.localScale = new Vector3(baseScale, baseScale, 1f);
+            if (target != null) target.localScale = new Vector3(baseScale, baseScale, 1f);
         }
     }
 }

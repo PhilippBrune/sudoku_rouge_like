@@ -12,10 +12,17 @@ namespace SudokuRoguelike.Core
         public MetaProgressionState MetaProgress = new MetaProgressionState();
         public RunState ActiveRunState;
         public PuzzleSaveState ActivePuzzle;
+
+        // Separate slot so Seasonal Challenge (Monthly Walk) does not overwrite an in-progress run.
+        public RunState ActiveSeasonalRunState;
+        public PuzzleSaveState ActiveSeasonalPuzzle;
+
         public TutorialProgressState TutorialProgress = new TutorialProgressState();
         public ProfileStats Statistics = new ProfileStats();
         public MasteryAchievementState Mastery = new MasteryAchievementState();
         public CompletionTrackerState Completion = new CompletionTrackerState();
+        public DailyGoalState DailyGoals = new DailyGoalState();
+        public SeasonalChallengeState SeasonalChallenge = new SeasonalChallengeState();
     }
 
     [Serializable]
@@ -51,7 +58,7 @@ namespace SudokuRoguelike.Core
     {
         public int ResolutionWidth = 1920;
         public int ResolutionHeight = 1080;
-        public bool Fullscreen;
+        public bool Fullscreen = true;
         public float ParticleIntensity = 1.0f;
         public bool ScreenShake = true;
         public bool VSync = true;
@@ -77,6 +84,7 @@ namespace SudokuRoguelike.Core
         public bool HighlightConflicts = true;
         public bool ShowCandidateCount = true;
         public bool CursorSnapOnSelection;
+        public bool ControllerRumbleEnabled = true;
     }
 
     [Serializable]
@@ -211,5 +219,140 @@ namespace SudokuRoguelike.Core
         public List<BossModifierId> ClearedModifiers = new List<BossModifierId>();
         public List<ClassId> ClassesAtLevel30 = new List<ClassId>();
         public bool AllRelicsDiscovered;
+    }
+
+    [Serializable]
+    public sealed class DailyGoalState
+    {
+        public string LastGoalDate;           // "yyyy-MM-dd" of the last day goals were generated
+        public int[] TodayGoalIds = new int[3]; // indices into the full goal pool
+        public bool[] TodayGoalCompleted = new bool[3];
+
+        public int CurrentStreak;
+        public string LastStreakDate;         // last date all 3 goals were completed
+
+        public int TotalInkStamps;
+        public List<int> UnlockedCosmetics = new List<int>(); // indices of unlocked cosmetics
+
+        // Pending run-start rewards (applied at next LaunchRun)
+        public int PendingStartGold;
+        public int PendingStartRerollTokens;
+    }
+
+    [Serializable]
+    public sealed class SeasonalChallengeState
+    {
+        // Key: "YYYY-MM" (e.g. "2026-04"); parallel lists for JsonUtility compat
+        public List<string> BestScoreKeys    = new List<string>();
+        public List<int>    BestScoreValues  = new List<int>();
+
+        // Optional: breakdown for the best score attempt (same index as BestScoreKeys)
+        // -1 indicates "unknown / not recorded" (older saves).
+        public List<int> BestHpRemainingValues   = new List<int>();
+        public List<int> BestPencilUsedValues    = new List<int>();
+        public List<int> BestTimeSecondsValues   = new List<int>();
+
+        public int GetBest(int year, int month)
+        {
+            var key = $"{year:D4}-{month:D2}";
+            var idx = BestScoreKeys.IndexOf(key);
+            return idx >= 0 && idx < BestScoreValues.Count ? BestScoreValues[idx] : 0;
+        }
+
+        public bool TryGetBestBreakdown(int year, int month,
+            out int score,
+            out int hpRemaining,
+            out int pencilUsed,
+            out int timeSeconds)
+        {
+            score = 0;
+            hpRemaining = -1;
+            pencilUsed = -1;
+            timeSeconds = -1;
+
+            var key = $"{year:D4}-{month:D2}";
+            var idx = BestScoreKeys.IndexOf(key);
+            if (idx < 0) return false;
+
+            if (idx < BestScoreValues.Count) score = BestScoreValues[idx];
+            if (idx < BestHpRemainingValues.Count) hpRemaining = BestHpRemainingValues[idx];
+            if (idx < BestPencilUsedValues.Count) pencilUsed = BestPencilUsedValues[idx];
+            if (idx < BestTimeSecondsValues.Count) timeSeconds = BestTimeSecondsValues[idx];
+
+            return score > 0;
+        }
+
+        public void SetBest(int year, int month, int score)
+        {
+            // Legacy setter: updates score only.
+            var key = $"{year:D4}-{month:D2}";
+            var idx = BestScoreKeys.IndexOf(key);
+            if (idx >= 0)
+            {
+                if (idx < BestScoreValues.Count && score > BestScoreValues[idx])
+                    BestScoreValues[idx] = score;
+            }
+            else
+            {
+                BestScoreKeys.Add(key);
+                BestScoreValues.Add(score);
+            }
+        }
+
+        public void SetBest(int year, int month, int score, int hpRemaining, int pencilUsed, int timeSeconds)
+        {
+            var key = $"{year:D4}-{month:D2}";
+            var idx = BestScoreKeys.IndexOf(key);
+
+            if (idx >= 0)
+            {
+                if (idx < BestScoreValues.Count && score <= BestScoreValues[idx]) return;
+
+                EnsureBreakdownListsLength(idx + 1);
+                if (idx < BestScoreValues.Count) BestScoreValues[idx] = score;
+                else
+                {
+                    // Repair mismatched legacy data (shouldn't happen but keep safe).
+                    while (BestScoreValues.Count < idx) BestScoreValues.Add(0);
+                    BestScoreValues.Add(score);
+                }
+
+                BestHpRemainingValues[idx] = hpRemaining;
+                BestPencilUsedValues[idx] = pencilUsed;
+                BestTimeSecondsValues[idx] = timeSeconds;
+            }
+            else
+            {
+                BestScoreKeys.Add(key);
+                BestScoreValues.Add(score);
+                BestHpRemainingValues.Add(hpRemaining);
+                BestPencilUsedValues.Add(pencilUsed);
+                BestTimeSecondsValues.Add(timeSeconds);
+            }
+        }
+
+        private void EnsureBreakdownListsLength(int count)
+        {
+            while (BestHpRemainingValues.Count < count) BestHpRemainingValues.Add(-1);
+            while (BestPencilUsedValues.Count < count) BestPencilUsedValues.Add(-1);
+            while (BestTimeSecondsValues.Count < count) BestTimeSecondsValues.Add(-1);
+        }
+    }
+
+    /// <summary>
+    /// Lightweight summary of a save slot shown on the profile-select screen.
+    /// Derived from the full SaveFileEnvelope at load time — never persisted separately.
+    /// </summary>
+    public sealed class ProfileSlotSummary
+    {
+        public int SlotIndex;          // 0, 1, or 2
+        public bool IsEmpty;
+        public string DisplayName;     // e.g. "Profile 1"
+        public ClassId LastPlayedClass;
+        public int TotalRunsStarted;
+        public int TotalRunsCompleted;
+        public int TotalBossesDefeated;
+        public bool HasActiveRun;
+        public string LastPlayedUtc;   // ISO timestamp from envelope
     }
 }

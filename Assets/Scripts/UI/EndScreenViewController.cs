@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Economy;
 using SudokuRoguelike.Run;
 using SudokuRoguelike.Save;
 using UnityEngine;
@@ -51,30 +53,49 @@ namespace SudokuRoguelike.UI
 
         public void ShowGameOver(RunDirector run, bool victory)
         {
+            // Seasonal challenge: show score result instead of normal end screen
+            if (run?.State?.IsSeasonalChallenge == true)
+            {
+                ShowSeasonalResult(run, victory);
+                return;
+            }
+
             // Panels hidden by InRunController before calling ShowGameOver
             if (_gameOverPanel != null) _gameOverPanel.SetActive(true);
+
+            // Load the correct background art (placeholder added in BuildGameOverPanel)
+            if (_gameOverPanel != null)
+            {
+                var bgImg = _gameOverPanel.transform.Find("PanelBackground")?.GetComponent<RawImage>();
+                if (bgImg != null)
+                {
+                    var tex = Resources.Load<Texture2D>(victory ? "background/bg_victory" : "background/bg_defeat");
+                    bgImg.texture = tex;
+                    bgImg.color   = new Color(1f, 1f, 1f, tex != null ? 0.85f : 0f);
+                }
+            }
 
             // Dynamic title
             if (_gameOverSummary != null)
             {
                 _gameOverSummary.text = victory ? "Victory!" : "Defeat";
                 _gameOverSummary.color = victory
-                    ? new Color(0.85f, 0.75f, 0.20f, 1f)
-                    : new Color(0.90f, 0.30f, 0.20f, 1f);
+                    ? GamePalette.WinGold
+                    : InRunUiFactory.CursedTitleRed;
             }
 
             // Snapshot XP before persisting so we can show level-up
             var classId = run.State.ClassId;
-            var snapshotSave = new SaveFileService();
+            var snapshotSave = new SaveFileService(SaveProfileService.ActiveSlot);
             var preXp = snapshotSave.HasSaveFile()
                 ? GetClassTotalXpFromSave(snapshotSave.Load(), classId) : 0;
             var preLevel = XpTable.DeriveLevel(preXp);
 
             var result = _map.BuildRunResult(victory, 0, 0);
-            PersistResult(result, run);
+            var newUnlocks = PersistResult(result, run);
 
             // Load updated XP after persist; fallback to in-memory calculation
-            var postSave = new SaveFileService();
+            var postSave = new SaveFileService(SaveProfileService.ActiveSlot);
             var postXp = postSave.HasSaveFile()
                 ? GetClassTotalXpFromSave(postSave.Load(), classId) : preXp + (result?.XpEarned ?? 0);
             var postLevel = XpTable.DeriveLevel(postXp);
@@ -123,6 +144,75 @@ namespace SudokuRoguelike.UI
                     sb.AppendLine(presenter.BuildRunScoreBreakdown(result));
                 }
 
+                // New class unlocks
+                if (newUnlocks != null && newUnlocks.Count > 0)
+                {
+                    sb.AppendLine();
+                    sb.AppendLine("NEW UNLOCK\u00a0—");
+                    foreach (var cid in newUnlocks)
+                        sb.AppendLine($"  \u2605 {cid} is now available!");
+                }
+
+                _gameOverDetails.text = sb.ToString().TrimEnd();
+            }
+        }
+
+        private void ShowSeasonalResult(RunDirector run, bool completed)
+        {
+            if (_gameOverPanel != null) _gameOverPanel.SetActive(true);
+
+            var now = DateTime.Today;
+            var level = run.CurrentLevelState;
+            var state = run.State;
+
+            var cellsCorrect = level?.CorrectPlacements ?? 0;
+            var mistakes = level?.Mistakes ?? 0;
+            var pencilLeft = state.CurrentPencil;
+            var score = SeasonalChallengeService.CalculateScore(cellsCorrect, mistakes, pencilLeft, state.MaxPencil);
+            var grade = SeasonalChallengeService.GetGrade(score, completed);
+            var theme = SeasonalChallengeService.GetThemeName(now.Year, now.Month);
+
+            if (_gameOverSummary != null)
+            {
+                _gameOverSummary.text = $"Monthly Walk\n{theme}";
+                _gameOverSummary.color = GamePalette.WinGold;
+            }
+
+            // Persist personal best
+            var save = new SaveFileService(SaveProfileService.ActiveSlot);
+            var envelope = save.HasSaveFile() ? save.Load() : new SaveFileEnvelope();
+            if (envelope.SeasonalChallenge == null) envelope.SeasonalChallenge = new SeasonalChallengeState();
+            var prevBest = envelope.SeasonalChallenge.GetBest(now.Year, now.Month);
+
+            var hpRemaining = state.CurrentHP;
+            var pencilUsed = Math.Max(0, state.MaxPencil - state.CurrentPencil);
+            var timeSeconds = Mathf.RoundToInt(state.TotalRunSeconds);
+
+            if (completed)
+                envelope.SeasonalChallenge.SetBest(now.Year, now.Month, score, hpRemaining, pencilUsed, timeSeconds);
+
+            envelope.ActiveSeasonalRunState = null;
+            envelope.ActiveSeasonalPuzzle = null;
+            save.Save(envelope);
+
+            if (_gameOverDetails != null)
+            {
+                var sb = new StringBuilder();
+                sb.AppendLine($"Grade:  {grade}");
+                sb.AppendLine($"Score:  {score:N0}");
+                sb.AppendLine();
+                sb.AppendLine($"Cells Correct:  {cellsCorrect}");
+                sb.AppendLine($"Mistakes:       {mistakes}");
+                sb.AppendLine($"Pencil Left:    {pencilLeft} / {state.MaxPencil}");
+                sb.AppendLine();
+                if (completed && score > prevBest && prevBest > 0)
+                    sb.AppendLine($"New Personal Best!  (prev: {prevBest:N0})");
+                else if (prevBest > 0)
+                    sb.AppendLine($"Personal Best:  {prevBest:N0}");
+                else
+                    sb.AppendLine("First attempt this month!");
+                sb.AppendLine();
+                sb.AppendLine(SeasonalChallengeService.GetCountdownLabel(DateTime.Today));
                 _gameOverDetails.text = sb.ToString().TrimEnd();
             }
         }
@@ -136,28 +226,28 @@ namespace SudokuRoguelike.UI
             return 0;
         }
 
-        private void PersistResult(RunResult result, RunDirector run)
+        private List<ClassId> PersistResult(RunResult result, RunDirector run)
         {
-            if (result == null || result.TutorialMode) return;
+            if (result == null || result.TutorialMode) return null;
+            if (run?.State?.IsSeasonalChallenge == true) return null; // seasonal: no progression
 
             if (run != null)
             {
-                result.ItemsUsedThisRun = run.GetAnalytics()?.TotalItemsUsed
+                var analytics = run.GetAnalytics();
+                result.ItemsUsedThisRun = analytics?.TotalItemsUsed
                     ?? run.CurrentLevelState?.ItemsUsedThisLevel ?? 0;
                 result.AcquiredRelic = run.State.HasRelic;
+                if (analytics != null)
+                    result.ClearedStageNoPencilNoHpLoss = analytics.TotalMistakes == 0 && !analytics.PencilEverUsed;
             }
 
-            var profile = new ProfileService(new SaveFileService());
-            profile.RecordRunAndGetNewUnlocks(result);
+            var save = new SaveFileService(SaveProfileService.ActiveSlot);
+            var profile = new ProfileService(save);
+            var newUnlocks = profile.RecordRunAndGetNewUnlocks(result);
+            // ActiveRunState is cleared inside RecordRunAndGetNewUnlocks to avoid a race condition
+            // where a second async save would overwrite the meta progress from the first save.
 
-            var save = new SaveFileService();
-            if (save.HasSaveFile())
-            {
-                var envelope = save.Load();
-                envelope.ActiveRunState = null;
-                envelope.ActivePuzzle = null;
-                save.Save(envelope);
-            }
+            return newUnlocks;
         }
     }
 }

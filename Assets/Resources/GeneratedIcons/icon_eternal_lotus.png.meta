@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: c38741d8ba2932e4c9b340493d5aebb8
+guid: 3fd29571660e63441b24c20f5368eee9
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -5931721667659547056
-    second: icon_eternal_lotus_0
+      213: -5420943149131794873
+    second: icon_Eternal_Lotus_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -46,7 +46,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: icon_eternal_lotus_0
+      name: icon_Eternal_Lotus_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 0
-        width: 64
-        height: 64
+        y: 3
+        width: 192
+        height: 187
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 05e3aa4229a4eada0800000000000000
-      internalID: -5931721667659547056
+      spriteID: 74679606de0f4c4b0800000000000000
+      internalID: -5420943149131794873
       vertices: []
       indices: 
       edges: []
@@ -125,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      icon_eternal_lotus_0: -5931721667659547056
+      icon_Eternal_Lotus_0: -5420943149131794873
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

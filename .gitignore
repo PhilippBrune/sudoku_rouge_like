@@ -27,6 +27,7 @@ Recordings/
 *.mdb
 *.opendb
 *.VC.db
+*.py
 
 # Unity crash reports
 sysinfo.txt

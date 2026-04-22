@@ -5,12 +5,14 @@ namespace SudokuRoguelike.Meta
 {
     public sealed class ClassGardenProgressionService
     {
+        // [REQ: META-XP-001] Adds to TotalXp — the single persistent XP value per class
         public void AddXp(MetaProgressionState meta, ClassId classId, int xpAmount)
         {
             var entry = FindOrCreateEntry(meta, classId);
             entry.TotalXp += xpAmount;
         }
 
+        // [REQ: META-XP-001] [REQ: XP-CURVE-002] Level derived at runtime from TotalXp via DeriveLevel
         public int GetLevel(MetaProgressionState meta, ClassId classId)
         {
             var entry = FindEntry(meta, classId);
@@ -23,12 +25,16 @@ namespace SudokuRoguelike.Meta
             return entry?.TotalXp ?? 0;
         }
 
+        // [REQ: META-PRESTIGE-001] PrestigeTier 0–9 per class
         public int GetPrestigeTier(MetaProgressionState meta, ClassId classId)
         {
             var entry = FindEntry(meta, classId);
             return entry?.PrestigeTier ?? 0;
         }
 
+        // [REQ: META-PRESTIGE-001] Requires Level 40
+        // [REQ: META-PRESTIGE-002] Boss gate: cumulative defeats >= (PrestigeTier + 1) × 3
+        // [REQ: META-PRESTIGE-003] On prestige: TotalXp=0, PrestigeTier++
         public bool TryPrestige(MetaProgressionState meta, ClassId classId)
         {
             var entry = FindOrCreateEntry(meta, classId);

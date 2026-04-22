@@ -27,6 +27,8 @@ Recordings/
 *.mdb
 *.opendb
 *.VC.db
+*.py
+*.ps1
 
 # Unity crash reports
 sysinfo.txt
@@ -91,3 +93,12 @@ Assets/Scripts/My project/UserSettings/
 # Local git hooks helpers
 # ============================================================
 .githooks/*.local
+
+# ============================================================
+# No CI / git hook artifacts in this repo
+# ============================================================
+.github/
+.githooks/
+
+# Build output
+bin/

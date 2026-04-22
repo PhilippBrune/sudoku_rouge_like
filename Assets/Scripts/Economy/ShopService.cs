@@ -14,6 +14,8 @@ namespace SudokuRoguelike.Economy
             _random = new Random(seed);
         }
 
+        // [REQ: ECON-SHOP-001] Shop: 3 items + optional relic per visit
+        // [REQ: SHOP-PRICE-001] [REQ: ECON-SHOP-002] Price: BasePrice × (1 + FloorIndex × 0.5) × priceMultiplier
         public List<ShopOffer> BuildOffers(int floorIndex, int classLevel, float priceMultiplier)
         {
             var offers = new List<ShopOffer>();

@@ -13,13 +13,16 @@ namespace SudokuRoguelike.Run
         public bool RunCompleted;
         public int PerfectPuzzleCount;
         public int CursedPuzzlesCompleted;
+        public bool PencilEverUsed;
         public List<TileXpEntry> TileXpLog = new List<TileXpEntry>();
+        private readonly List<int> _mistakesPerPuzzle = new List<int>();
 
         public void RecordPuzzleSolved(int mistakes, int goldEarned)
         {
             TotalPuzzlesSolved++;
             TotalMistakes += mistakes;
             TotalGoldEarned += goldEarned;
+            _mistakesPerPuzzle.Add(mistakes);
         }
 
         public void RecordItemUsed()
@@ -45,6 +48,11 @@ namespace SudokuRoguelike.Run
         public void RecordCursedPuzzleCompleted()
         {
             CursedPuzzlesCompleted++;
+        }
+
+        public void RecordPencilPlaced()
+        {
+            PencilEverUsed = true;
         }
 
         public void RecordTileXp(TileXpEntry entry)
@@ -77,7 +85,8 @@ namespace SudokuRoguelike.Run
 
             for (var i = 0; i < TileXpLog.Count; i++)
             {
-                var mistakes = i < TileXpLog.Count ? 0 : 0;
+                var mistakes = i < _mistakesPerPuzzle.Count ? _mistakesPerPuzzle[i] : 0;
+                if (mistakes > highestMistakes) highestMistakes = mistakes;
                 result.MistakesPerPuzzle.Add(mistakes);
             }
 

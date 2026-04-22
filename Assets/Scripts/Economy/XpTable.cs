@@ -5,6 +5,7 @@ namespace SudokuRoguelike.Economy
 {
     public static class XpTable
     {
+        // [REQ: XP-TILE-002] Base XP per board size: 5×5=30, 6×6=45, 7×7=60, 8×8=90, 9×9=120
         public static int BaseXpForBoardSize(int boardSize)
         {
             switch (boardSize)
@@ -18,6 +19,7 @@ namespace SudokuRoguelike.Economy
             }
         }
 
+        // [REQ: XP-TILE-003] Star multiplier: 1★=×1.0, 2★=×1.2, 3-4★=×1.5, 5-6★=×2.0
         public static float StarMultiplier(int stars)
         {
             switch (stars)
@@ -32,10 +34,12 @@ namespace SudokuRoguelike.Economy
             }
         }
 
+        // [REQ: XP-TILE-004] Boss ×1.5; Mod bonus +15 per active mod (boss only); Perfect +25 flat
         public const float BossMultiplier = 1.5f;
         public const int ModifierBonusPerMod = 15;
         public const int PerfectBonus = 25;
 
+        // [REQ: XP-CURVE-001] L1-15: 50+(n-1)×10; L16-40: prev+35 per level
         public static int XpToNextLevel(int currentLevel)
         {
             if (currentLevel < 1) return 50;
@@ -56,6 +60,7 @@ namespace SudokuRoguelike.Economy
             return total;
         }
 
+        // [REQ: XP-CURVE-002] Derives level at runtime from cumulative TotalXp; never store level directly
         public static int DeriveLevel(int totalXp)
         {
             var cumulative = 0;

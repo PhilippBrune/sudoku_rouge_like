@@ -1,0 +1,20 @@
+Pause Menu (bg_menu_pause.png)
+Prompt: pixel art scene background, wide 16:9 landscape, Kyoto zen garden palette. A single red maple leaf floating perfectly still on the surface of a dark, calm pond. Soft ripples frozen in time. Symmetrical composition with an empty center for UI. Soft top-left light, flat shading, crisp edges, no anti-aliasing.
+
+2. Profile Select (bg_menu_profile.png)
+Prompt: pixel art scene background, wide 16:9 landscape, Kyoto zen garden palette. Three stone lanterns (tōrō) lined up along a mossy path that curves into the background. The center of the screen is an open view of the path, providing space for UI cards. Evening twilight, soft lantern glow, desaturated greens and greys, flat shading, crisp edges.
+
+3. Spirit Trials Tier Select / Results (bg_menu_trials.png)
+Prompt: pixel art scene background, wide 16:9 landscape, Kyoto zen garden palette. A mystical clearing with ancient Jizo stone statues wearing small red bibs, partially hidden by low-hanging morning mist. A large torii gate silhouette in the far distance. Center kept clear and atmospheric. Ethereal soft light, flat shading, crisp edges.
+
+4. Daily / Seasonal Challenge (bg_menu_challenges.png)
+Prompt: pixel art scene background, wide 16:9 landscape, Kyoto zen garden palette. A large, gnarled cherry blossom tree standing on a small hill. The left side shows spring blossoms, the right side suggests falling autumn leaves (subtle transition). The center is a clear view of the horizon. Soft natural colors, flat shading, crisp edges.
+
+5. Credits (bg_menu_credits.png)
+Prompt: pixel art scene background, wide 16:9 landscape, Kyoto zen garden palette. A view from a high wooden veranda (engawa) looking out over a vast valley of bamboo forest towards a distant, hazy mountain peak. The veranda floor in the foreground provides a dark frame, center is open for scrolling text. Peaceful sunset light, flat shading, crisp edges.
+
+6. Keybindings / Settings (bg_menu_settings.png)
+Prompt: pixel art scene background, wide 16:9 landscape, Kyoto zen garden palette. A top-down-angled view of a large, flat dark slate stone table in a garden shed. Bamboo water pipes (shishi-odoshi) visible at the very edges. The stone surface is uniform and low-contrast to ensure legibility of keybind text. Minimalist, organized, flat shading, crisp edges.
+
+7. Endless Zen Results / Leaderboard (bg_menu_zen_results.png)
+Prompt: pixel art scene background, wide 16:9 landscape, Kyoto zen garden palette. A vast, perfectly raked white gravel garden seen from a low angle. The patterns of the gravel lead the eye toward the center, which remains empty. A few distant, small rocks with moss. High serenity, very low contrast, morning sun, flat shading, crisp edges.

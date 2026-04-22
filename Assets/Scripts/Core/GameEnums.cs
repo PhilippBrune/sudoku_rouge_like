@@ -17,7 +17,8 @@ namespace SudokuRoguelike.Core
         GardenRun,
         Tutorial,
         EndlessZen,
-        SpiritTrials
+        SpiritTrials,
+        SeasonalChallenge
     }
 
     public enum BossModifierId
@@ -120,7 +121,26 @@ namespace SudokuRoguelike.Core
         LoopConstraint = 90,       // Path: specified digits collectively form a single closed loop
         DigitGraph = 91,           // Meta: a graph over digits; adjacent-in-graph digits obey positional rule
         SelfReferentialGrid = 92,  // Meta: a cell's digit encodes a count/property of the whole grid
-        ConstraintNegationZone = 93// Meta: cells inside a zone invert one active modifier rule
+        ConstraintNegationZone = 93,// Meta: cells inside a zone invert one active modifier rule
+
+        // ── Boss debuffs (IDs 94–102) — reactive penalty effects on wrong placement ──
+        // [REQ: DEBUFF-HOOK-010] All debuffs registered here; IDs ≥94 excluded from normal modifier pool in BossService
+        RowWipe       = 94,  // [REQ: DEBUFF-DEF-001] Wrong placement clears all player-placed digits in that row
+        ColWipe       = 95,  // [REQ: DEBUFF-DEF-002] Wrong placement clears all player-placed digits in that column
+        DoublePenalty = 96,  // [REQ: DEBUFF-DEF-012] Wrong placements deal 2 HP instead of 1
+        CellLock      = 97,  // [REQ: DEBUFF-DEF-018] Wrong cell becomes uneditable for 3 correct placements
+        PencilBlind   = 98,  // [REQ: DEBUFF-DEF-007] Wrong placement clears all pencil marks in row + column
+        BoxWipe       = 99,  // [REQ: DEBUFF-DEF-003] Wrong placement clears all player-placed digits in same region
+        CrossWipe     = 100, // [REQ: DEBUFF-DEF-004] Wrong placement clears entire row AND column
+        PencilDrain   = 101, // [REQ: DEBUFF-DEF-013] Wrong placement costs 1 extra pencil charge
+        GoldFine      = 102, // [REQ: DEBUFF-DEF-014] Wrong placement deducts 5 gold (clamped to 0)
+
+        // ── Pressure mechanics (IDs 103–106) — in-puzzle urgency timers ──
+        // [REQ: PRESSURE-ROLL-004] registered in BossService.ModifierData; rolled via RunDirector.RollPressureMechanic
+        CountdownFill  = 103, // A set of cells must be filled within N placements or HP is lost
+        HauntedCell    = 104, // One cell haunts the board — mistakes cost extra HP while it is unfilled
+        CrumblingRegion = 105,// Cells in a region weaken on each mistake and auto-fill (with HP cost) at 0
+        PressureWave   = 106  // [REQ: PRESSURE-ROLL-005] floor 3+ only; every W placements a new countdown spawns
     }
 
     public enum BossModifierIntensity
@@ -129,6 +149,19 @@ namespace SudokuRoguelike.Core
         Medium,
         High,
         VeryHigh
+    }
+
+    /// <summary>Defines the geometric scope of a PressureThreat.</summary>
+    // [REQ: PRESSURE-INIT-001] used by RunDirector.PickCountdownScope + SelectThreatCells
+    // [REQ: PRESSURE-UI-010] Row/Col/Box scopes need region border-strip rendering (not yet implemented)
+    // [REQ: PRESSURE-UI-011] Chain scope needs animated line rendering (not yet implemented)
+    public enum ThreatScope
+    {
+        SingleCell, // exactly one empty cell must be filled
+        Box,        // all empty cells in a box/region must be filled
+        Row,        // all empty cells in a row must be filled
+        Column,     // all empty cells in a column must be filled
+        Chain       // a chain of 3–5 connected empty cells; success awards +1 HP [REQ: PRESSURE-TICK-004]
     }
 
     public enum LineType
@@ -228,7 +261,16 @@ namespace SudokuRoguelike.Core
         TempleIncense,
         KoiDragonScale,
         GoldenKintsugiJar,
-        SilkFan
+        SilkFan,
+        // ── Class-exclusive unlocks ──
+        LoadedCoin,        // NumberFreak L15: force re-roll one Nothing slot
+        MonksBeads,        // GardenMonk L15: next 5 correct placements each restore 1 HP
+        AnnotatedFolio,    // ShrineArchivist L15: auto-pencil cells with exactly 2 candidates
+        DoubleOrQuits,     // KoiGambler L15: 50% chance gold ×2 or ÷2 before item screen
+        WornChisel,        // StoneGardener L15: shop items cost 30% less this floor
+        DimLantern,        // LanternSeer L15: reveal boss modifier list for current floor
+        ReedPledge,        // ReedDuelist L15: commit no-pencil run for bonus rewards
+        SurveyNotes        // QuietCartographer L15: reveal all node types and star ratings
     }
 
     public enum RelicId
@@ -255,7 +297,16 @@ namespace SudokuRoguelike.Core
         SilentGrid,
         ShiftingGarden,
         EternalLotus,
-        DragonsEye
+        DragonsEye,
+        // ── Class-exclusive unlocks ──
+        FortunesLedger,    // NumberFreak L30: every 10th correct placement grants +1 Reroll Token
+        TempleVow,         // GardenMonk L30: when HP ≤ 25%, next correct placement restores 2 HP (once/puzzle)
+        EndlessArchive,    // ShrineArchivist L30: pencil marks no longer consume Pencil units
+        GildedKoiScale,    // KoiGambler L30: lucky proc 25%→35%, gold proc grants +2 instead of +1
+        LoadBearingStone,  // StoneGardener L30: 30% chance to retain 1 charge when item exhausted
+        WardingFlame,      // LanternSeer L30: once/run, auto-removes worst modifier at boss gate
+        DuelingReed,       // ReedDuelist L30: perfect no-pencil solve grants +2 Pencil +1 Reroll Token
+        AccurateMap        // QuietCartographer L30: once/floor, all nodes revealed automatically
     }
 
     public enum RelicTier
@@ -334,7 +385,10 @@ namespace SudokuRoguelike.Core
         SaveConflict,
         ConfirmQuit,
         ConfirmDeleteSave,
-        Onboarding
+        Onboarding,
+        ProfileSelect,   // 3-slot profile selection / creation / deletion
+        Keybindings,     // keyboard + controller rebinding panel
+        Accessibility    // per-toggle descriptions + visual preview board
     }
 
     public enum AppScreen

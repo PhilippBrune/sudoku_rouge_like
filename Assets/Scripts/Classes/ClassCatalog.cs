@@ -10,6 +10,7 @@ namespace SudokuRoguelike.Classes
         public int BaseHP;
         public int BasePencil;
         public int BaseItemSlots;
+        public int BaseStartingRelics = 1;
         public string PassiveDescription;
         public string UnlockCondition;
     }
@@ -42,7 +43,7 @@ namespace SudokuRoguelike.Classes
             new ClassDefinition
             {
                 Id = ClassId.KoiGambler, Name = "Koi Gambler",
-                BaseHP = 9, BasePencil = 8, BaseItemSlots = 2,
+                BaseHP = 9, BasePencil = 8, BaseItemSlots = 2, BaseStartingRelics = 2,
                 PassiveDescription = "25% wrong costs 0 HP; 25% correct grants +1 Gold.",
                 UnlockCondition = "Collect 10 relics"
             },
@@ -93,35 +94,35 @@ namespace SudokuRoguelike.Classes
         private static readonly (int level, string unlock)[][] LevelUnlocks =
         {
             // NumberFreak
-            new[] { (3,"+ 1 Pencil"),(5,"+10 Starting Gold"),(7,"+2 HP"),(10,"+2 Pencil, +2 HP"),
-                    (13,"+10 Starting Gold"),(15,"+1 Reroll Token"),(18,"+1 Pencil"),(20,"+1 Item Slot"),
+            new[] { (3,"+ 1 Pencil"),(5,"+10 Starting Gold"),(7,"+2 HP"),(10,"+2 Pencil, +2 HP, +1 Starting Relic"),
+                    (13,"+10 Starting Gold"),(15,"+1 Reroll Token"),(18,"+1 Pencil"),(20,"+1 Item Slot, +1 Starting Relic"),
                     (25,"+2 HP, +2 Pencil"),(30,"Start: Rare Solver"),(35,"+1 Reroll Token"),(40,"Cosmetic: Golden Number frame") },
             // GardenMonk
             new[] { (3,"+1 Pencil"),(5,"+2 HP"),(7,"+10 Starting Gold"),(10,"+1 Item Slot"),
-                    (13,"+2 HP"),(15,"Passive: heal every 4 placements (was 5)"),(18,"+1 Pencil"),(20,"+2 HP, +1 Reroll Token"),
+                    (13,"+2 HP"),(15,"Passive: heal every 4 placements (was 5)"),(18,"+1 Pencil"),(20,"+2 HP, +1 Reroll Token, +1 Starting Relic"),
                     (25,"+1 Pencil"),(30,"Start: Meditation Stone"),(35,"+2 HP"),(40,"Cosmetic: Blooming Monk frame") },
             // ShrineArchivist
-            new[] { (3,"+2 Pencil"),(5,"+1 HP"),(7,"+10 Starting Gold"),(10,"+1 Reroll Token"),
+            new[] { (3,"+2 Pencil"),(5,"+1 HP"),(7,"+10 Starting Gold"),(10,"+1 Reroll Token, +1 Starting Relic"),
                     (13,"+2 Pencil"),(15,"+1 HP, +1 Item Slot"),(18,"+10 Starting Gold"),(20,"Passive: 2 free pencil uses/cell"),
                     (25,"+2 Pencil, +1 HP"),(30,"Start: Pattern Scroll"),(35,"+1 Reroll Token"),(40,"Cosmetic: Scroll Archive frame") },
             // KoiGambler
-            new[] { (3,"+1 HP"),(5,"+15 Starting Gold"),(7,"+1 Pencil"),(10,"Passive: correct gold chance 30%"),
+            new[] { (3,"+1 HP"),(5,"+15 Starting Gold"),(7,"+1 Pencil"),(10,"Passive: correct gold chance 30%, +1 Starting Relic"),
                     (13,"+1 HP"),(15,"+1 Item Slot"),(18,"+15 Starting Gold"),(20,"Passive: no-HP-loss chance 30%"),
                     (25,"+2 Pencil, +1 HP"),(30,"Start: Lucky Charm"),(35,"+1 Reroll Token"),(40,"Cosmetic: Golden Koi frame") },
             // StoneGardener
-            new[] { (3,"+1 Pencil"),(5,"+1 HP"),(7,"+1 Item Slot"),(10,"+10 Starting Gold"),
-                    (13,"+2 Pencil"),(15,"+1 HP, +1 Reroll Token"),(18,"+1 Item Slot"),(20,"Passive: 2 free items/level"),
+            new[] { (3,"+1 Pencil"),(5,"+1 HP"),(7,"+1 Item Slot"),(10,"+10 Starting Gold, +1 Starting Relic"),
+                    (13,"+2 Pencil"),(15,"+1 HP, +1 Reroll Token"),(18,"+1 Item Slot"),(20,"Passive: 2 free items/level, +1 Starting Relic"),
                     (25,"+2 HP"),(30,"Start: Harmony Charm"),(35,"+1 Pencil, +1 HP"),(40,"Cosmetic: Mossy Stone frame") },
             // LanternSeer
             new[] { (3,"+1 Pencil"),(5,"+1 HP"),(7,"+10 Starting Gold"),(10,"Passive: modifiers 25% weaker"),
-                    (13,"+2 Pencil"),(15,"+1 HP, +1 Reroll Token"),(18,"+1 Item Slot"),(20,"+2 HP"),
+                    (13,"+2 Pencil"),(15,"+1 HP, +1 Reroll Token"),(18,"+1 Item Slot"),(20,"+2 HP, +1 Starting Relic"),
                     (25,"Passive: modifiers 30% weaker"),(30,"Start: Lantern of Clarity"),(35,"+2 Pencil, +1 HP"),(40,"Cosmetic: Spirit Lantern frame") },
             // ReedDuelist
             new[] { (3,"+1 Pencil"),(5,"+1 HP"),(7,"+1 Reroll Token"),(10,"+10 Starting Gold"),
-                    (13,"+2 Pencil"),(15,"Passive: perfect no-pencil → +3 Pencil"),(18,"+1 HP"),(20,"+1 Item Slot"),
+                    (13,"+2 Pencil"),(15,"Passive: perfect no-pencil → +3 Pencil"),(18,"+1 HP"),(20,"+1 Item Slot, +1 Starting Relic"),
                     (25,"+2 HP, +1 Pencil"),(30,"Start: Tea of Focus"),(35,"+1 Reroll Token"),(40,"Cosmetic: Cutting Reed frame") },
             // QuietCartographer
-            new[] { (3,"+1 Pencil"),(5,"+10 Starting Gold"),(7,"+1 HP"),(10,"+1 Reroll Token"),
+            new[] { (3,"+1 Pencil"),(5,"+10 Starting Gold"),(7,"+1 HP"),(10,"+1 Reroll Token, +1 Starting Relic"),
                     (13,"+1 Pencil, +1 HP"),(15,"Passive: preview always active"),(18,"+10 Starting Gold"),(20,"+1 Item Slot"),
                     (25,"+2 Pencil, +1 HP"),(30,"Start: Compass of Order"),(35,"+2 HP"),(40,"Cosmetic: Ink Map frame") },
         };
@@ -160,14 +161,14 @@ namespace SudokuRoguelike.Classes
         {
             return id switch
             {
-                ClassId.NumberFreak       => "spin_coin",
-                ClassId.GardenMonk        => "enlightenment_tree",
-                ClassId.ShrineArchivist   => "scroll_graph",
-                ClassId.KoiGambler        => "golden_koi",
-                ClassId.StoneGardener     => "moss_stone",
-                ClassId.LanternSeer       => "garden_lantern",
-                ClassId.ReedDuelist       => "bamboo_scroll",
-                ClassId.QuietCartographer => "compass_of_order",
+                ClassId.NumberFreak       => "number_freak",
+                ClassId.GardenMonk        => "garden_monk",
+                ClassId.ShrineArchivist   => "shrine_archivist",
+                ClassId.KoiGambler        => "koi_gambler",
+                ClassId.StoneGardener     => "stone_gardener",
+                ClassId.LanternSeer       => "lantern_seer",
+                ClassId.ReedDuelist       => "reed_duelist",
+                ClassId.QuietCartographer => "quiet_cartographer",
                 _ => ""
             };
         }

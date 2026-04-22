@@ -9,7 +9,7 @@ namespace SudokuRoguelike.Save
 
         public RunResumeService()
         {
-            _saveFile = new SaveFileService();
+            _saveFile = new SaveFileService(SaveProfileService.ActiveSlot);
         }
 
         public RunResumeService(SaveFileService saveFile)
@@ -22,6 +22,7 @@ namespace SudokuRoguelike.Save
             return _saveFile.HasActiveRun();
         }
 
+        // [REQ: SAVE-RESUME-001] Restores full run state including boss modifier, AllowIrregularPuzzles
         public bool TryResumeFromSave(out RunState runState, out PuzzleSaveState puzzleState)
         {
             runState = null;
@@ -71,9 +72,28 @@ namespace SudokuRoguelike.Save
             return true;
         }
 
+        // [REQ: RELIC-SLOT-003] Legacy migration: if HasRelic + HeldRelic present but HeldRelics empty, migrate single relic into list
         private static void RestoreTransientState(RunState runState)
         {
             runState.SyncSeenModifiersFromList();
+
+            // Migrate legacy single-relic save data to HeldRelics list
+            if (runState.HasRelic && runState.HeldRelic != null
+                && (runState.HeldRelics == null || runState.HeldRelics.Count == 0))
+            {
+                if (runState.HeldRelics == null) runState.HeldRelics = new System.Collections.Generic.List<RelicInstance>();
+                runState.HeldRelics.Add(runState.HeldRelic);
+            }
+
+            // Migrate legacy single boss modifier → new list.
+            // Old saves used HasChosenBossModifier + ChosenBossModifierId; new code reads ChosenBossModifiers list.
+            if (runState.HasChosenBossModifier
+                && (runState.ChosenBossModifiers == null || runState.ChosenBossModifiers.Count == 0))
+            {
+                if (runState.ChosenBossModifiers == null)
+                    runState.ChosenBossModifiers = new System.Collections.Generic.List<BossModifierId>();
+                runState.ChosenBossModifiers.Add(runState.ChosenBossModifierId);
+            }
         }
     }
 }

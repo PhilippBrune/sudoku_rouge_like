@@ -1,0 +1,715 @@
+fileFormatVersion: 2
+guid: 64c0ca5eee56f29468a83cfd5737deba
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 9209899476673805619
+    second: icon_killer_cage_0
+  - first:
+      213: 5285081555598796546
+    second: icon_killer_cage_1
+  - first:
+      213: 1473887218137395499
+    second: icon_killer_cage_2
+  - first:
+      213: 7479113141420492348
+    second: icon_killer_cage_3
+  - first:
+      213: 5538304497766365851
+    second: icon_killer_cage_4
+  - first:
+      213: -7447627806772543952
+    second: icon_killer_cage_5
+  - first:
+      213: -2713986718541899545
+    second: icon_killer_cage_6
+  - first:
+      213: -5283530814669730314
+    second: icon_killer_cage_7
+  - first:
+      213: 1068748838747444254
+    second: icon_killer_cage_8
+  - first:
+      213: -3224064573371094747
+    second: icon_killer_cage_9
+  - first:
+      213: 3741419442682092672
+    second: icon_killer_cage_10
+  - first:
+      213: 2390550516539045347
+    second: icon_killer_cage_11
+  - first:
+      213: -8588440073084491486
+    second: icon_killer_cage_12
+  - first:
+      213: -8454972770768192689
+    second: icon_killer_cage_13
+  - first:
+      213: -2429477125721945212
+    second: icon_killer_cage_14
+  - first:
+      213: -4227801389638427968
+    second: icon_killer_cage_15
+  - first:
+      213: -2633440364907500959
+    second: icon_killer_cage_16
+  - first:
+      213: -3785932377960793858
+    second: icon_killer_cage_17
+  - first:
+      213: -7495444753442373166
+    second: icon_killer_cage_18
+  - first:
+      213: -3455831108171417682
+    second: icon_killer_cage_19
+  - first:
+      213: 6273038574511616790
+    second: icon_killer_cage_20
+  - first:
+      213: 4257018442405075303
+    second: icon_killer_cage_21
+  - first:
+      213: 175752697825294842
+    second: icon_killer_cage_22
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: icon_killer_cage_0
+      rect:
+        serializedVersion: 2
+        x: 56
+        y: 274
+        width: 50
+        height: 68
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 33db23427c220df70800000000000000
+      internalID: 9209899476673805619
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icon_killer_cage_1
+      rect:
+        serializedVersion: 2
+        x: 136
+        y: 324
+        width: 32
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2076f6a5ca1685940800000000000000
+      internalID: 5285081555598796546
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icon_killer_cage_2
+      rect:
+        serializedVersion: 2
+        x: 180
+        y: 324
+        width: 35
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b21711cad9c447410800000000000000
+      internalID: 1473887218137395499
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icon_killer_cage_3
+      rect:
+        serializedVersion: 2
+        x: 226
+        y: 324
+        width: 32
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c36035da6c52bc760800000000000000
+      internalID: 7479113141420492348
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icon_killer_cage_4
+      rect:
+        serializedVersion: 2
+        x: 270
+        y: 324
+        width: 36
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b9aff47f8920cdc40800000000000000
+      internalID: 5538304497766365851
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icon_killer_cage_5
+      rect:
+        serializedVersion: 2
+        x: 318
+        y: 310
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 03e300e08f5b4a890800000000000000
+      internalID: -7447627806772543952
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icon_killer_cage_6
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 226
+        width: 18
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7e89e24757bf55ad0800000000000000
+      internalID: -2713986718541899545
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icon_killer_cage_7
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 189
+        width: 128
+        height: 129
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6fdc7c7a7b02da6b0800000000000000
+      internalID: -5283530814669730314
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icon_killer_cage_8
+      rect:
+        serializedVersion: 2
+        x: 196
+        y: 190
+        width: 130
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e1417a70865f4de00800000000000000
+      internalID: 1068748838747444254
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icon_killer_cage_9
+      rect:
+        serializedVersion: 2
+        x: 330
+        y: 262
+        width: 18
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5296b433a52d143d0800000000000000
+      internalID: -3224064573371094747
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icon_killer_cage_10
+      rect:
+        serializedVersion: 2
+        x: 330
+        y: 216
+        width: 19
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 08c5ec409213ce330800000000000000
+      internalID: 3741419442682092672
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icon_killer_cage_11
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 176
+        width: 18
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e5bfe37701fc2120800000000000000
+      internalID: 2390550516539045347
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icon_killer_cage_12
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 56
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 229a11dc14bbfc880800000000000000
+      internalID: -8588440073084491486
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icon_killer_cage_13
+      rect:
+        serializedVersion: 2
+        x: 196
+        y: 56
+        width: 129
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f4bf2c4bf07e9aa80800000000000000
+      internalID: -8454972770768192689
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icon_killer_cage_14
+      rect:
+        serializedVersion: 2
+        x: 330
+        y: 170
+        width: 18
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 48b08631d63c84ed0800000000000000
+      internalID: -2429477125721945212
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icon_killer_cage_15
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 128
+        width: 18
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0cad2b53905d355c0800000000000000
+      internalID: -4227801389638427968
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icon_killer_cage_16
+      rect:
+        serializedVersion: 2
+        x: 330
+        y: 120
+        width: 20
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 16a6380d0f3247bd0800000000000000
+      internalID: -2633440364907500959
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icon_killer_cage_17
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 80
+        width: 18
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ef83ffb9f8aa57bc0800000000000000
+      internalID: -3785932377960793858
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icon_killer_cage_18
+      rect:
+        serializedVersion: 2
+        x: 330
+        y: 74
+        width: 18
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2d1808595b4daf790800000000000000
+      internalID: -7495444753442373166
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icon_killer_cage_19
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 30
+        width: 44
+        height: 39
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ea7b2b9baeb6a00d0800000000000000
+      internalID: -3455831108171417682
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icon_killer_cage_20
+      rect:
+        serializedVersion: 2
+        x: 94
+        y: 30
+        width: 35
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6137618f85f4e0750800000000000000
+      internalID: 6273038574511616790
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icon_killer_cage_21
+      rect:
+        serializedVersion: 2
+        x: 276
+        y: 30
+        width: 36
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 76957ddf7b7f31b30800000000000000
+      internalID: 4257018442405075303
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icon_killer_cage_22
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 30
+        width: 30
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: af97132c526607200800000000000000
+      internalID: 175752697825294842
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      icon_killer_cage_0: 9209899476673805619
+      icon_killer_cage_1: 5285081555598796546
+      icon_killer_cage_10: 3741419442682092672
+      icon_killer_cage_11: 2390550516539045347
+      icon_killer_cage_12: -8588440073084491486
+      icon_killer_cage_13: -8454972770768192689
+      icon_killer_cage_14: -2429477125721945212
+      icon_killer_cage_15: -4227801389638427968
+      icon_killer_cage_16: -2633440364907500959
+      icon_killer_cage_17: -3785932377960793858
+      icon_killer_cage_18: -7495444753442373166
+      icon_killer_cage_19: -3455831108171417682
+      icon_killer_cage_2: 1473887218137395499
+      icon_killer_cage_20: 6273038574511616790
+      icon_killer_cage_21: 4257018442405075303
+      icon_killer_cage_22: 175752697825294842
+      icon_killer_cage_3: 7479113141420492348
+      icon_killer_cage_4: 5538304497766365851
+      icon_killer_cage_5: -7447627806772543952
+      icon_killer_cage_6: -2713986718541899545
+      icon_killer_cage_7: -5283530814669730314
+      icon_killer_cage_8: 1068748838747444254
+      icon_killer_cage_9: -3224064573371094747
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

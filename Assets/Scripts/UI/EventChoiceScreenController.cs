@@ -15,6 +15,8 @@ namespace SudokuRoguelike.UI
         private RunMapController _runMap;
         private RunEvent _currentEvent;
 
+        public GameObject ActivePanel { get; private set; }
+
         public void Bind(RunMapController runMap)
         {
             _runMap = runMap;
@@ -40,10 +42,13 @@ namespace SudokuRoguelike.UI
             if (_resultText != null) _resultText.text = string.Empty;
 
             BuildOptionButtons(_currentEvent.Options);
+            ActivePanel = _panelRoot;
+            InRunUiFactory.SelectFirstInteractable(_panelRoot);
         }
 
         public void CloseEvent()
         {
+            ActivePanel = null;
             if (_panelRoot != null) _panelRoot.SetActive(false);
             ClearButtons();
             _currentEvent = null;
@@ -61,7 +66,7 @@ namespace SudokuRoguelike.UI
                 go.transform.SetParent(_optionsRoot, false);
 
                 var img = go.GetComponent<Image>();
-                img.color = new Color(0.15f, 0.22f, 0.29f, 0.9f);
+                img.color = InRunUiFactory.BtnColor;
 
                 var textGo = new GameObject("Label", typeof(RectTransform), typeof(Text));
                 textGo.transform.SetParent(go.transform, false);
@@ -72,14 +77,30 @@ namespace SudokuRoguelike.UI
                 rt.offsetMax = new Vector2(-8, -2);
                 var label = textGo.GetComponent<Text>();
                 label.text = $"{option.Label} — {option.EffectDescription}";
-                label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                label.font = InRunUiFactory.GetFont();
                 label.fontSize = 14;
-                label.color = new Color(0.96f, 0.93f, 0.82f);
+                label.color = InRunUiFactory.TextColor;
                 label.alignment = TextAnchor.MiddleLeft;
 
                 var optionIndex = i;
-                go.GetComponent<Button>().onClick.AddListener(() => OnOptionClicked(optionIndex));
+                var btn = go.GetComponent<Button>();
+                var cols = btn.colors;
+                cols.highlightedColor = InRunUiFactory.BtnHighlighted;
+                cols.selectedColor    = InRunUiFactory.BtnSelected;
+                cols.pressedColor     = InRunUiFactory.BtnPressed;
+                btn.colors = cols;
+                btn.onClick.AddListener(() => OnOptionClicked(optionIndex));
                 _spawnedButtons.Add(go);
+            }
+
+            // Explicit vertical nav chain between option buttons
+            for (var j = 0; j < _spawnedButtons.Count - 1; j++)
+            {
+                var a = _spawnedButtons[j]?.GetComponent<Button>();
+                var b = _spawnedButtons[j + 1]?.GetComponent<Button>();
+                if (a == null || b == null) continue;
+                var na = a.navigation; na.mode = Navigation.Mode.Explicit; na.selectOnDown = b; a.navigation = na;
+                var nb = b.navigation; nb.mode = Navigation.Mode.Explicit; nb.selectOnUp = a; b.navigation = nb;
             }
         }
 
@@ -87,15 +108,19 @@ namespace SudokuRoguelike.UI
         {
             if (_runMap == null) return;
 
-            _runMap.ChooseEventOption(optionIndex);
+            var summary = _runMap.ChooseEventOption(optionIndex);
             if (_resultText != null)
-                _resultText.text = "Choice resolved.";
+                _resultText.text = string.IsNullOrEmpty(summary) ? "Done." : summary;
 
             for (var i = 0; i < _spawnedButtons.Count; i++)
             {
                 var btn = _spawnedButtons[i]?.GetComponent<Button>();
                 if (btn != null) btn.interactable = false;
             }
+
+            // Refresh the curse panel now that state may have changed (e.g. Ink Peddler gave a curse)
+            var flowCtrl = GetComponentInParent<InRunUiFlowController>();
+            flowCtrl?.RefreshRuntimePanels();
         }
 
         private void ClearButtons()
@@ -107,5 +132,6 @@ namespace SudokuRoguelike.UI
             }
             _spawnedButtons.Clear();
         }
+
     }
 }

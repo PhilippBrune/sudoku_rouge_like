@@ -12,11 +12,10 @@ namespace SudokuRoguelike.Save
         private readonly ClassGardenProgressionService _garden = new ClassGardenProgressionService();
         private readonly ClassUnlockService _classUnlock = new ClassUnlockService();
         private readonly CompletionService _completion = new CompletionService();
-        private readonly MasteryService _mastery = new MasteryService();
 
         public ProfileService()
         {
-            _saveFile = new SaveFileService();
+            _saveFile = new SaveFileService(SaveProfileService.ActiveSlot);
         }
 
         public ProfileService(SaveFileService saveFile)
@@ -153,18 +152,29 @@ namespace SudokuRoguelike.Save
 
             stats.TotalPuzzlesSolved += result.TileXpEntries?.Count ?? 0;
 
-            if (result.Victory && result.BossPhaseReached > 0)
-                stats.TotalBossesDefeated++;
+            stats.TotalBossesDefeated += result.BossesDefeatedThisRun;
 
             // 2. Update class unlock progress
             var progress = meta.ClassUnlocks ?? new ClassUnlockProgress();
-            if (result.Victory) progress.BossesDefeated++;
+            progress.BossesDefeated += result.BossesDefeatedThisRun;
             progress.GoldCollected += result.GoldEarned;
             progress.ItemsUsed += result.ItemsUsedThisRun;
-            if (result.AcquiredRelic) progress.RelicsCollected++;
+            progress.RelicsCollected += result.RelicsCollectedThisRun;
             if (result.ClearedStageNoPencilNoHpLoss) progress.PerfectNoPencilStage = true;
 
+            // Check if item codex is now complete (all 26 item types discovered)
+            if (!progress.ItemCodexComplete && meta.ItemCodex?.Entries != null)
+            {
+                var allItems = System.Enum.GetValues(typeof(Core.ItemType));
+                var discovered = 0;
+                for (var ci = 0; ci < meta.ItemCodex.Entries.Count; ci++)
+                    if (meta.ItemCodex.Entries[ci].Discovered) discovered++;
+                if (discovered >= allItems.Length)
+                    progress.ItemCodexComplete = true;
+            }
+
             // 3. Commit XP to class (skip if tutorial)
+            // [REQ: XP-COMMIT-001] XP committed to class at run end only; no mid-run leveling
             if (!result.TutorialMode)
             {
                 _garden.AddXp(meta, result.PlayedClassId, result.XpEarned);
@@ -184,19 +194,6 @@ namespace SudokuRoguelike.Save
                 }
             }
 
-            // 6. Record boss modifier mastery
-            if (result.Victory && result.BossPhaseReached > 0 && result.TileXpEntries != null)
-            {
-                for (var i = 0; i < result.TileXpEntries.Count; i++)
-                {
-                    var tile = result.TileXpEntries[i];
-                    if (tile.IsBoss && tile.ModifierBonus > 0)
-                    {
-                        // Record modifier clears from the tile XP log
-                    }
-                }
-            }
-
             // 7. Evaluate class unlocks
             meta.ClassUnlocks = progress;
             newUnlocks = _classUnlock.CheckNewUnlocks(meta);
@@ -209,12 +206,17 @@ namespace SudokuRoguelike.Save
             if (stats.TotalBossesDefeated >= 1 && !meta.SpiritTrialsUnlocked)
                 meta.SpiritTrialsUnlocked = true;
 
-            // 10. Save
+            // 10. Save — also clear active run state here so no second save races against this one
             envelope.MetaProgress = meta;
             envelope.Statistics = stats;
             envelope.Mastery = mastery;
             envelope.Completion = completion;
             envelope.TimestampUtc = System.DateTime.UtcNow.ToString("o");
+            if (!result.TutorialMode)
+            {
+                envelope.ActiveRunState = null;
+                envelope.ActivePuzzle = null;
+            }
             _saveFile.Save(envelope);
 
             return newUnlocks;

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using SudokuRoguelike.Core;
 using UnityEngine;
@@ -9,7 +10,13 @@ namespace SudokuRoguelike.UI
         private readonly Stack<MenuScreen> _history = new Stack<MenuScreen>();
         private readonly Dictionary<MenuScreen, GameObject> _panels = new Dictionary<MenuScreen, GameObject>();
 
+        /// <summary>Fired with the newly-active panel immediately after it is shown.</summary>
+        public Action<GameObject> OnPanelShown;
+
         public MenuScreen CurrentScreen { get; private set; } = MenuScreen.MainMenu;
+
+        public GameObject CurrentPanel =>
+            _panels.TryGetValue(CurrentScreen, out var p) ? p : null;
 
         public void RegisterPanel(MenuScreen screen, GameObject panel)
         {
@@ -46,7 +53,10 @@ namespace SudokuRoguelike.UI
         private void SetActive(MenuScreen screen, bool active)
         {
             if (_panels.TryGetValue(screen, out var panel) && panel != null)
+            {
                 panel.SetActive(active);
+                if (active) OnPanelShown?.Invoke(panel);
+            }
         }
 
         private void HideAll()

@@ -15,7 +15,7 @@ namespace SudokuRoguelike.UI
         private void Awake()
         {
             _accessibility = new AccessibilityService();
-            _profile = new ProfileService();
+            _profile = new ProfileService(new SaveFileService(SaveProfileService.ActiveSlot));
             _primarySystem = CreateParticleSystem("AmbientPrimary");
             _secondarySystem = CreateParticleSystem("AmbientSecondary");
         }

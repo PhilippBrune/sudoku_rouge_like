@@ -1,76 +1,143 @@
-index,label,category,file
-0,Tea Cup,items,icon_tea_cup.png
-1,Moss Stone,items,icon_moss_stone.png
-2,Bamboo Scroll,items,icon_bamboo_scroll.png
-3,Rice Bowl,items,icon_rice_bowl.png
-4,Pebble,items,icon_pebble.png
-5,Jade Amulet,items,icon_jade_amulet.png
-6,Wind Bell,items,icon_wind_bell.png
-7,Garden Lantern,items,icon_garden_lantern.png
-8,Water Basin,items,icon_water_basin.png
-9,Golden Koi,items,icon_golden_koi.png
-10,Sacred Bell,items,icon_sacred_bell.png
-11,Temple Seal,items,icon_temple_seal.png
-12,Sun Medallion,items,icon_sun_medallion.png
-13,Enlightenment Tree,legendary,icon_enlightenment_tree.png
-14,Spirit Dragon Coin,legendary,icon_spirit_dragon_coin.png
-15,Infinite Lotus,legendary,icon_infinite_lotus.png
-16,Broken Mask,cursed,icon_broken_mask.png
-17,Withered Flower,cursed,icon_withered_flower.png
-18,Blood Ink Brush,cursed,icon_blood_ink_brush.png
-19,Fog Stone,cursed,icon_fog_stone.png
-20,Coin Sakura,class,icon_coin_sakura.png
-21,Moss Tree,class,icon_moss_tree.png
-22,Flowing Wind,class,icon_flowing_wind.png
-23,Geometric Seal,class,icon_geometric_seal.png
-24,Fractured Lantern,class,icon_fractured_lantern.png
-25,Elite Mask,node,icon_elite_mask.png
-26,Market Stall,node,icon_market_stall.png
-27,Campfire Stones,node,icon_campfire_stones.png
-28,Relic Pedestal,node,icon_relic_pedestal.png
-29,Triple Chest,node,icon_triple_chest.png
-30,Stone Altar,node,icon_stone_altar.png
-31,Moss Trap,node,icon_moss_trap.png
-32,Engraved Stone,node,icon_engraved_stone.png
-33,Demon Mask,boss,icon_demon_mask.png
-34,Sakura Coin,ui,icon_sakura_coin.png
-35,Petal Orb,ui,icon_petal_orb.png
-36,Flame Stone,ui,icon_flame_stone.png
-37,Cracked Tile,ui,icon_cracked_tile.png
-38,Flow Ribbon,ui,icon_flow_ribbon.png
-39,Golden Bloom,ui,icon_golden_bloom.png
-40,Torii Lock,ui,icon_torii_lock.png
-41,Scroll Stamp,ui,icon_scroll_stamp.png
-42,Ink Save,ui,icon_ink_save.png
-43,Stone Gear,ui,icon_stone_gear.png
-44,Language Scroll,ui,icon_language_scroll.png
-45,Temple Bell,ui,icon_temple_bell.png
-46,Framed Garden,ui,icon_framed_garden.png
-47,Fog Cloud,modifier,icon_fog_cloud.png
-48,Arrow Sum,modifier,icon_arrow_sum.png
-49,Green Whisper,modifier,icon_green_whisper.png
-50,Orange Whisper,modifier,icon_orange_whisper.png
-51,Parity Line,modifier,icon_parity_line.png
-52,Renban Chain,modifier,icon_renban_chain.png
-53,Killer Cage,modifier,icon_killer_cage.png
-54,White Dot,modifier,icon_white_dot.png
-55,Black Dot,modifier,icon_black_dot.png
-56,Segmented Blue Line,modifier,icon_segmented_blue_line.png
-57,RGB Circle,modifier,icon_rgb_circle.png
-58,Spin Coin,economy,icon_spin_coin.png
-59,Empty Slot,economy,icon_empty_slot.png
-60,Iron Latch,economy,icon_iron_latch.png
-61,Swap Arrows,economy,icon_swap_arrows.png
-62,Golden Bonsai,economy,icon_golden_bonsai.png
-63,Melting Relic,economy,icon_melting_relic.png
-64,Shattered Mask,economy,icon_shattered_mask.png
-65,Bud,meta,icon_bud.png
-66,Full Sakura,meta,icon_full_sakura.png
-67,Golden Sakura,meta,icon_golden_sakura.png
-68,Halo Bloom,meta,icon_halo_bloom.png
-69,Stacked Flame,meta,icon_stacked_flame.png
-70,Infinity Stone,meta,icon_infinity_stone.png
-71,Petal Hourglass,meta,icon_petal_hourglass.png
-72,Scroll Graph,meta,icon_scroll_graph.png
-73,Corrupted Path,meta,icon_corrupted_path.png
-74,Dual Mask,meta,icon_dual_mask.png
+﻿index,label,category,file,status
+1,Tea Cup,items,icon_tea_cup.png,reserved
+2,Moss Stone,items,icon_moss_stone.png,reserved
+3,Bamboo Scroll,items,icon_bamboo_scroll.png,active
+4,Rice Bowl,items,icon_rice_bowl.png,reserved
+5,Pebble,items,icon_pebble.png,reserved
+6,Jade Amulet,items,icon_jade_amulet.png,reserved
+7,Wind Bell,items,icon_wind_bell.png,reserved
+8,Garden Lantern,items,icon_garden_lantern.png,active
+9,Water Basin,items,icon_water_basin.png,reserved
+10,Golden Koi,items,icon_golden_koi.png,active
+11,Sacred Bell,items,icon_sacred_bell.png,reserved
+12,Temple Seal,items,icon_temple_seal.png,active
+13,Sun Medallion,items,icon_sun_medallion.png,reserved
+14,Enlightenment Tree,legendary,icon_enlightenment_tree.png,reserved
+15,Spirit Dragon Coin,legendary,icon_spirit_dragon_coin.png,reserved
+16,Broken Mask,cursed,icon_broken_mask.png,active
+17,Withered Flower,cursed,icon_withered_flower.png,active
+18,Blood Ink Brush,cursed,icon_blood_ink_brush.png,active
+19,Fog Stone,cursed,icon_fog_stone.png,active
+20,Number Freak,class,icon_number_freak.png,active
+21,Garden Monk,class,icon_garden_monk.png,active
+22,Shrine Archivist,class,icon_shrine_archivist.png,active
+23,Koi Gambler,class,icon_koi_gambler.png,active
+24,Stone Gardener,class,icon_stone_gardener.png,active
+25,Lantern Seer,class,icon_lantern_seer.png,active
+26,Reed Duelist,class,icon_reed_duelist.png,active
+27,Quiet Cartographer,class,icon_quiet_cartographer.png,active
+28,Elite Mask,node,icon_elite_mask.png,active
+29,Market Stall,node,icon_market_stall.png,active
+30,Campfire Stones,node,icon_campfire_stones.png,active
+31,Relic Pedestal,node,icon_relic_pedestal.png,active
+32,Moss Trap,node,icon_moss_trap.png,active
+33,Engraved Stone,node,icon_engraved_stone.png,active
+34,Demon Mask,node,icon_demon_mask.png,active
+35,Sakura Coin,economy,icon_sakura_coin.png,active
+36,Petal Orb,ui,icon_petal_orb.png,active
+37,Flame Stone,ui,icon_flame_stone.png,active
+38,Cracked Tile,cursed,icon_cracked_tile.png,active
+39,Flow Ribbon,ui,icon_flow_ribbon.png,active
+40,Golden Bloom,ui,icon_golden_bloom.png,active
+41,Torii Lock,ui,icon_torii_lock.png,active
+42,Scroll Stamp,ui,icon_scroll_stamp.png,active
+43,Ink Save,ui,icon_ink_save.png,active
+44,Stone Gear,ui,icon_stone_gear.png,active
+45,Language Scroll,ui,icon_language_scroll.png,active
+46,Temple Bell,ui,icon_temple_bell.png,active
+47,Framed Garden,ui,icon_framed_garden.png,active
+48,Fog Cloud,modifier,icon_fog_cloud.png,active
+49,Arrow Sum,modifier,icon_arrow_sum.png,active
+50,Parity Line,modifier,icon_parity_line.png,active
+51,Renban Chain,modifier,icon_renban_chain.png,active
+52,Killer Cage,modifier,icon_killer_cage.png,active
+53,White Dot,modifier,icon_white_dot.png,active
+54,Black Dot,modifier,icon_black_dot.png,active
+55,RGB Circle,modifier,icon_rgb_circle.png,active
+56,Spin Coin,economy,icon_spin_coin.png,active
+57,Empty Slot,economy,icon_empty_slot.png,active
+58,Iron Latch,economy,icon_iron_latch.png,active
+59,Swap Arrows,economy,icon_swap_arrows.png,active
+60,Golden Bonsai,economy,icon_golden_bonsai.png,active
+61,Melting Relic,economy,icon_melting_relic.png,active
+62,Shattered Mask,economy,icon_shattered_mask.png,active
+63,Bud,meta,icon_bud.png,active
+64,Full Sakura,meta,icon_full_sakura.png,active
+65,Golden Sakura,meta,icon_golden_sakura.png,active
+66,Halo Bloom,meta,icon_halo_bloom.png,active
+67,Stacked Flame,meta,icon_stacked_flame.png,active
+68,Infinity Stone,meta,icon_infinity_stone.png,active
+69,Petal Hourglass,meta,icon_petal_hourglass.png,active
+70,Scroll Graph,meta,icon_scroll_graph.png,active
+71,Corrupted Path,meta,icon_corrupted_path.png,active
+72,Dual Mask,meta,icon_dual_mask.png,active
+73,Golden Kintsugi Jar,items,icon_golden_kintsugi_jar.png,active
+74,Golden Root,legendary,icon_golden_root.png,active
+75,Ink Well,items,icon_ink_well.png,active
+76,Jade Hairpin,relic,icon_jade_hairpin.png,active
+77,Koi Dragon Scale,items,icon_koi_dragon_scale.png,active
+78,Koi Reflection,items,icon_koi_reflection.png,active
+79,Koi Reflection Relic,relic,icon_koi_reflection_relic.png,active
+80,Lantern of Clarity,items,icon_lantern_of_clarity.png,active
+81,Meditation Stone,items,icon_meditation_stone.png,active
+82,Monk Charm,relic,icon_monk_charm.png,active
+83,Moonstone Compass,relic,icon_moonstone_compass.png,active
+84,Moss Token,relic,icon_moss_token.png,active
+85,Nonconsecutive,modifier,icon_nonconsecutive.png,active
+86,Offering Bowl,items,icon_offering_bowl.png,active
+87,Palindrome Line,modifier,icon_palindrome_line.png,active
+88,Paper Crane,relic,icon_paper_crane.png,active
+89,Pattern Scroll,items,icon_pattern_scroll.png,active
+90,Phoenix Feather,relic,icon_phoenix_feather.png,active
+91,Porcelain Mask,relic,icon_porcelain_mask.png,active
+92,Pruning Shears,items,icon_pruning_shears.png,active
+93,Rice Paper Umbrella,items,icon_rice_paper_umbrella.png,active
+94,Sakura Seal,relic,icon_sakura_seal.png,active
+95,Shifting Garden,legendary,icon_shifting_garden.png,active
+96,Silent Grid,legendary,icon_silent_grid.png,active
+97,Silk Fan,items,icon_silk_fan.png,active
+98,Smooth Pebble,relic,icon_smooth_pebble.png,active
+99,Solver,items,icon_solver.png,active
+100,Spirit Lantern,relic,icon_spirit_lantern.png,active
+101,Stone Sundial,relic,icon_stone_sundial.png,active
+102,Temple Incense,items,icon_temple_incense.png,active
+103,Thermo Line,modifier,icon_thermo_line.png,active
+104,Transmuted Sigil,relic,icon_transmuted_sigil.png,active
+105,Wind Chime,items,icon_wind_chime.png,active
+106,Wisteria Branch,relic,icon_wisteria_branch.png,active
+107,Wooden Comb,relic,icon_wooden_comb.png,active
+108,Zen Sand Sifter,items,icon_zen_sand_sifter.png,active
+109,Finder,items,icon_finder.png,active
+110,Garden Rake,items,icon_garden_rake.png,active
+111,Ginkgo Leaf,items,icon_ginkgo_leaf.png,active
+112,Loaded Coin,items,icon_loaded_coin.png,active
+113,Monks Beads,items,icon_monks_beads.png,active
+114,Annotated Folio,items,icon_annotated_folio.png,active
+115,Double or Quits,items,icon_double_or_quits.png,active
+116,Worn Chisel,items,icon_worn_chisel.png,active
+117,Dim Lantern,items,icon_dim_lantern.png,active
+118,Reed Pledge,items,icon_reed_pledge.png,active
+119,Survey Notes,items,icon_survey_notes.png,active
+120,Cracked Teacup,relic,icon_cracked_teacup.png,active
+121,Copper Tortoise,relic,icon_copper_tortoise.png,active
+122,Crimson Fan,relic,icon_crimson_fan.png,active
+123,Eternal Lotus,legendary,icon_eternal_lotus.png,active
+124,Dragons Eye,legendary,icon_dragons_eye.png,active
+125,Fortunes Ledger,relic,icon_fortunes_ledger.png,active
+126,Temple Vow,relic,icon_temple_vow.png,active
+127,Endless Archive,relic,icon_endless_archive.png,active
+128,Gilded Koi Scale,relic,icon_gilded_koi_scale.png,active
+129,Load Bearing Stone,relic,icon_load_bearing_stone.png,active
+130,Warding Flame,relic,icon_warding_flame.png,active
+131,Dueling Reed,relic,icon_dueling_reed.png,active
+132,Accurate Map,relic,icon_accurate_map.png,active
+133,German Whisper,modifier,icon_german_whisper.png,active
+134,Dutch Whisper,modifier,icon_dutch_whisper.png,active
+135,Even Odd,modifier,icon_even_odd.png,active
+136,Antiknight,modifier,icon_antiknight.png,active
+137,Between Line,modifier,icon_between_line.png,active
+138,Compass of Order,items,icon_compass_of_order.png,reserved
+139,Bg Rest,background,bg_rest.png,active
+140,Bg Relic,background,bg_relic.png,active
+141,Bg Swap,background,bg_swap.png,active
+142,Ui Tutorial Progress,background,ui_tutorial_progress.png,unreferenced

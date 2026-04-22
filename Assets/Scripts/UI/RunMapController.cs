@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using SudokuRoguelike.Boss;
 using SudokuRoguelike.Core;
 using SudokuRoguelike.Run;
 using SudokuRoguelike.Save;
@@ -10,7 +12,6 @@ namespace SudokuRoguelike.UI
     {
         private SaveFileService _saveFile;
         private ProfileService _profile;
-        private RunResumeService _resume;
 
         private RunAutoSaveCoordinator _autoSave;
         private RunDirector _run;
@@ -20,44 +21,20 @@ namespace SudokuRoguelike.UI
 
         private void Awake()
         {
-            _saveFile = new SaveFileService();
-            _profile = new ProfileService();
-            _resume = new RunResumeService();
+            var slot = SaveProfileService.ActiveSlot;
+            _saveFile = new SaveFileService(slot);
+            _profile = new ProfileService(_saveFile);
         }
 
-        public void Initialize(LaunchRequest request, int seed)
-        {
-            _run = new RunDirector();
-            _run.StartRun(request, seed);
-            _rewardsGrantedForCurrentPuzzle = false;
-            PrepareFixedNodeConfigs();
-
-            var node = _run.GetCurrentNode();
-            var isBoss = node != null && node.Type == NodeType.Boss;
-            var isElite = node != null && node.Type == NodeType.ElitePuzzle;
-            var config = GetFixedLevelConfig(node) ?? _run.BuildLevelConfig(isBoss, isElite);
-            _run.StartLevel(config);
-            BindAutoSave();
-        }
-
-        public bool ResumeFromEnvelope(SaveFileEnvelope envelope)
-        {
-            if (envelope == null) return false;
-
-            _profile.ApplyEnvelope(envelope);
-            _run = new RunDirector();
-            var resumed = _resume.TryResumeFromSave(_run, envelope);
-            if (!resumed) return false;
-
-            BindAutoSave();
-            _rewardsGrantedForCurrentPuzzle = _run.CurrentLevelState != null && _run.IsLevelComplete;
-            PrepareFixedNodeConfigs();
-            return true;
-        }
-
-        public void BindRun(RunDirector run)
+        public void BindRun(RunDirector run, SaveFileService saveFile = null)
         {
             if (run == null) return;
+            if (saveFile != null)
+            {
+                _saveFile = saveFile;
+                _profile = new ProfileService(_saveFile);
+                _autoSave = null; // force rebuild in BindAutoSave with new file
+            }
             _run = run;
             _rewardsGrantedForCurrentPuzzle = _run.CurrentLevelState != null && _run.IsLevelComplete;
             PrepareFixedNodeConfigs();
@@ -90,14 +67,41 @@ namespace SudokuRoguelike.UI
             return _run?.CurrentFloorGraph ?? new List<RunNode>();
         }
 
-        public bool TryAdvanceToNodeAndStartPuzzle(int nodeIndex, out RunNode node, out LevelConfig nextLevel)
+        /// <summary>
+        /// Boss-specific async path. Advances to the boss node and starts overlay generation in the
+        /// background via <see cref="Run.RunDirector.StartLevelAsync"/>. The caller must poll
+        /// <c>Run.TryCompleteAsyncLevel()</c> each frame to detect when the level is ready.
+        /// </summary>
+        public bool TryAdvanceToBossNodeAsync(int nodeIndex, out RunNode node, out LevelConfig nextLevel)
+        {
+            node = null;
+            nextLevel = null;
+
+            if (_run == null || _run.State == null) return false;
+            if (!_run.TryAdvanceToNode(nodeIndex, false)) return false;
+
+            node = _run.GetCurrentNode();
+            if (node == null || node.Type != NodeType.Boss) return false;
+
+            // Always rebuild boss config after ChooseBossModifiers so ActiveModifiers includes
+            // the player's chosen modifier. The fixed-config cache was built at floor entry
+            // before the modifier was selected, so it never contains the chosen modifier.
+            nextLevel = _run.BuildLevelConfig(true, false, nodeIndex);
+            nextLevel.BoardSize = Mathf.Max(nextLevel.BoardSize, 8);
+
+            _run.StartLevelAsync(nextLevel);
+            _rewardsGrantedForCurrentPuzzle = false;
+            return true;
+        }
+
+        public bool TryAdvanceToNodeAndStartPuzzle(int nodeIndex, out RunNode node, out LevelConfig nextLevel, bool forced = false)
         {
             node = null;
             nextLevel = null;
 
             if (_run == null || _run.State == null) return false;
 
-            if (!_run.TryAdvanceToNode(nodeIndex)) return false;
+            if (!_run.TryAdvanceToNode(nodeIndex, forced)) return false;
 
             node = _run.GetCurrentNode();
             if (node == null) return false;
@@ -132,9 +136,9 @@ namespace SudokuRoguelike.UI
             return _run?.BuildCurrentEvent();
         }
 
-        public void ChooseEventOption(int optionIndex)
+        public string ChooseEventOption(int optionIndex)
         {
-            _run?.ResolveCurrentEventChoice(optionIndex);
+            return _run?.ResolveCurrentEventChoice(optionIndex) ?? string.Empty;
         }
 
         public RunResult BuildRunResult(bool victory, int bossPhaseReached, int secondsPlayed)
@@ -150,6 +154,7 @@ namespace SudokuRoguelike.UI
                 GoldEarned = _run.State.CurrentGold,
                 XpEarned = _run.GetTotalRunXp(),
                 BossPhaseReached = bossPhaseReached,
+                BossesDefeatedThisRun = _run.State.BossesDefeatedThisRun,
                 SecondsPlayed = secondsPlayed,
                 TutorialMode = _run.State.TutorialMode
             };
@@ -159,7 +164,14 @@ namespace SudokuRoguelike.UI
 
             var analytics = _run.GetAnalytics();
             if (analytics != null)
+            {
                 result.Analytics = analytics.Build();
+                result.ItemsUsedThisRun = analytics.TotalItemsUsed;
+                result.RunScore = result.Analytics.RunScore;
+            }
+
+            result.AcquiredRelic = _run.State.HasRelic;
+            result.RelicsCollectedThisRun = _run.State.HeldRelics?.Count ?? 0;
 
             return result;
         }
@@ -174,6 +186,7 @@ namespace SudokuRoguelike.UI
         }
 
         public RunDirector Run => _run;
+        public ProfileService Profile => _profile;
 
         /// <summary>Returns a short preview string for the boss node shown on the map,
         /// e.g. "3 mods — High intensity — Floor modifier: GermanWhispers".</summary>
@@ -195,8 +208,22 @@ namespace SudokuRoguelike.UI
                     sb.Append(FormatModName(floorMods[i]));
                 }
             }
-            var intensity = Economy.BossService.IntensityForRunNumber(_run.State.RunNumber);
+            var intensity = BossService.IntensityForRunNumber(_run.State.RunNumber);
             sb.Append($" | Intensity: {intensity}");
+            // DimLantern: reveal the modifier pool that will appear at the boss gate
+            if (_run.State.DimLanternUsed)
+            {
+                var choices = _run.RollBossModifierChoices();
+                if (choices != null && choices.Count > 0)
+                {
+                    sb.Append(" | Gate pool: ");
+                    for (var i = 0; i < choices.Count; i++)
+                    {
+                        if (i > 0) sb.Append(", ");
+                        sb.Append(FormatModName(choices[i]));
+                    }
+                }
+            }
             return sb.ToString();
         }
 
@@ -234,6 +261,8 @@ namespace SudokuRoguelike.UI
             _ => m.ToString()
         };
 
+        public void SaveNow() => _autoSave?.SaveBound();
+
         private void BindAutoSave()
         {
             if (_run == null) return;
@@ -259,8 +288,12 @@ namespace SudokuRoguelike.UI
 
                 if (isBoss)
                 {
-                    config.Stars = Mathf.Max(config.Stars, 4);
+                    // Stars are fixed per floor by RollStars — no override needed here
                     config.BoardSize = Mathf.Max(config.BoardSize, 8);
+                    // Pre-bake the boss board on a background thread so floor entry doesn't stutter.
+                    // StartLevelAsync reads volatile _preBakedBossBoard; falls back to sync if not ready.
+                    var bakeConfig = config.Clone();
+                    Task.Run(() => _run.BakeBossBoard(bakeConfig));
                 }
                 else if (node.Route == RouteType.RiskRoute)
                 {
@@ -299,7 +332,7 @@ namespace SudokuRoguelike.UI
 
                 if (isBoss)
                 {
-                    config.Stars = Mathf.Max(config.Stars, 4);
+                    // Stars are fixed per floor by RollStars — no override needed here
                     config.BoardSize = Mathf.Max(config.BoardSize, 8);
                 }
                 else if (node.Route == RouteType.RiskRoute)

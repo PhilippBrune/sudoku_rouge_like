@@ -100,6 +100,34 @@ namespace SudokuRoguelike.Run
         public static CurseDefinition GetDefinition(string id) =>
             CurseById.TryGetValue(id, out var def) ? def : null;
 
+        // Maps each curse ID to its icon in Resources/cursed/.
+        // Unique icons (prompts_cursed_2.txt) for the 10 new entries;
+        // shared fallbacks kept for the 7 curses without their own art yet.
+        private static readonly Dictionary<string, string> CurseIcons = new Dictionary<string, string>
+        {
+            { "hollow_pencil",      "hollow_pencil"    }, // unique icon (prompts_cursed_2)
+            { "fog_of_memory",      "fog_of_memory"    }, // unique icon (prompts_cursed_2)
+            { "misfortune",         "misfortune"       }, // unique icon (prompts_cursed_2)
+            { "bad_luck",           "bad_luck"         }, // unique icon (prompts_cursed_2)
+            { "price_gouge",        "price_gouge"      }, // unique icon (prompts_cursed_2)
+            { "inkblot",            "inkblot"          }, // unique icon (prompts_cursed_2)
+            { "crumbling_focus",    "crumbling_focus"  }, // unique icon (prompts_cursed_2)
+            { "sealed_eyes",        "sealed_eyes"      }, // unique icon (prompts_cursed_2)
+            { "phantom_pain",       "phantom_pain"     }, // unique icon (prompts_cursed_2)
+            { "weight_of_stone",    "weight_of_stone"  }, // unique icon (prompts_cursed_2)
+            // Shared icons — generate unique art from prompts_cursed_2 when ready
+            { "blurred_sight",      "fog_stone"        },
+            { "fraying_thread",     "cracked_tile"     },
+            { "counting_shadow",    "blood_ink_brush"  },
+            { "double_or_nothing",  "broken_mask"      },
+            { "restless_inventory", "withered_flower"  },
+            { "trembling_hand",     "withered_flower"  },
+            { "hollow_eye",         "withered_flower"  },
+        };
+
+        public static string GetIconName(string curseId) =>
+            CurseIcons.TryGetValue(curseId, out var icon) ? icon : "withered_flower";
+
         // ── Mutation ───────────────────────────────────────────────────────────
 
         /// <summary>Apply a curse to the run state. Returns false if already active.</summary>

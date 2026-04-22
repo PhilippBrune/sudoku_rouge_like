@@ -66,7 +66,7 @@ namespace SudokuRoguelike.UI
                 go.transform.SetParent(_optionsRoot, false);
 
                 var img = go.GetComponent<Image>();
-                img.color = new Color(0.15f, 0.22f, 0.29f, 0.9f);
+                img.color = InRunUiFactory.BtnColor;
 
                 var textGo = new GameObject("Label", typeof(RectTransform), typeof(Text));
                 textGo.transform.SetParent(go.transform, false);
@@ -77,13 +77,18 @@ namespace SudokuRoguelike.UI
                 rt.offsetMax = new Vector2(-8, -2);
                 var label = textGo.GetComponent<Text>();
                 label.text = $"{option.Label} — {option.EffectDescription}";
-                label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                label.font = InRunUiFactory.GetFont();
                 label.fontSize = 14;
-                label.color = new Color(0.96f, 0.93f, 0.82f);
+                label.color = InRunUiFactory.TextColor;
                 label.alignment = TextAnchor.MiddleLeft;
 
                 var optionIndex = i;
                 var btn = go.GetComponent<Button>();
+                var cols = btn.colors;
+                cols.highlightedColor = InRunUiFactory.BtnHighlighted;
+                cols.selectedColor    = InRunUiFactory.BtnSelected;
+                cols.pressedColor     = InRunUiFactory.BtnPressed;
+                btn.colors = cols;
                 btn.onClick.AddListener(() => OnOptionClicked(optionIndex));
                 _spawnedButtons.Add(go);
             }

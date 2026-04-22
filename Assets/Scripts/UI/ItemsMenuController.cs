@@ -43,7 +43,7 @@ namespace SudokuRoguelike.UI
                     AddIconEntry(ItemService.GetIconName(type),
                         ItemService.GetItemName(type),
                         ItemService.GetItemDescription(type, ItemRarity.Normal),
-                        discovered: true);
+                        discovered: true, subfolder: "items");
                 else
                     AddIconEntry("", "???", "Not yet discovered", discovered: false);
             }
@@ -59,7 +59,7 @@ namespace SudokuRoguelike.UI
                     AddIconEntry(RelicService.GetIconName(rid),
                         RelicService.GetRelicName(rid),
                         RelicService.GetRelicDescription(rid),
-                        discovered: true);
+                        discovered: true, subfolder: RelicService.GetIconFolder(rid));
                 else
                     AddIconEntry("", "???", "Not yet discovered", discovered: false);
             }
@@ -79,7 +79,7 @@ namespace SudokuRoguelike.UI
             le.preferredHeight = 32f;
         }
 
-        private void AddIconEntry(string iconName, string title, string description, bool discovered)
+        private void AddIconEntry(string iconName, string title, string description, bool discovered, string subfolder = "GeneratedIcons")
         {
             var row = new GameObject("Entry_" + title);
             row.transform.SetParent(_contentRoot, false);
@@ -107,7 +107,7 @@ namespace SudokuRoguelike.UI
 
             if (discovered && !string.IsNullOrEmpty(iconName))
             {
-                var sprite = Resources.Load<Sprite>("GeneratedIcons/icon_" + iconName);
+                var sprite = Resources.Load<Sprite>(subfolder + "/icon_" + iconName);
                 if (sprite != null)
                     iconImg.sprite = sprite;
                 else

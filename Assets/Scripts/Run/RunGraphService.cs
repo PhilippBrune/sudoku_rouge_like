@@ -103,6 +103,10 @@ namespace SudokuRoguelike.Run
             PreventAdjacentEconomy(calmNodes);
             PreventAdjacentEconomy(riskNodes);
 
+            // Guarantee at least one Shop per lane so players can always spend gold
+            EnsureMinimumShop(calmNodes, rng);
+            EnsureMinimumShop(riskNodes, rng);
+
             // Assign canvas positions
             AssignCanvasPositions(calmNodes, riskNodes, floorIndex, seed);
 
@@ -213,7 +217,38 @@ namespace SudokuRoguelike.Run
             }
         }
 
-        private static bool IsEconomy(NodeType type) => type == NodeType.Shop || type == NodeType.Rest;
+        /// <summary>
+        /// If the lane has no Shop node, convert the most central interior Puzzle/Relic/Rest node
+        /// to a Shop. Skips PreBoss/Boss terminals and already-adjacent economy nodes.
+        /// </summary>
+        private static void EnsureMinimumShop(List<RunNode> lane, Random rng)
+        {
+            if (lane.Count == 0) return;
+            var hasShop = false;
+            for (var i = 0; i < lane.Count; i++)
+                if (lane[i].Type == NodeType.Shop) { hasShop = true; break; }
+            if (hasShop) return;
+
+            // Pick a middle interior node that is safe to convert (not PreBoss, not adjacent to economy)
+            var mid = lane.Count / 2;
+            for (var offset = 0; offset <= mid; offset++)
+            {
+                foreach (var idx in new[] { mid - offset, mid + offset })
+                {
+                    if (idx < 0 || idx >= lane.Count) continue;
+                    if (lane[idx].Type == NodeType.PreBoss || lane[idx].Type == NodeType.Boss) continue;
+                    var prevEcon = idx > 0 && IsEconomy(lane[idx - 1].Type);
+                    var nextEcon = idx < lane.Count - 1 && IsEconomy(lane[idx + 1].Type);
+                    if (prevEcon || nextEcon) continue;
+                    lane[idx].Type = NodeType.Shop;
+                    return;
+                }
+            }
+        }
+
+        private static bool IsEconomy(NodeType type) =>
+            type == NodeType.Shop || type == NodeType.Rest
+            || type == NodeType.Relic || type == NodeType.CrossLink;
 
         // ── Cross-Links ──
 

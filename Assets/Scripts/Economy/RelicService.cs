@@ -53,6 +53,13 @@ namespace SudokuRoguelike.Economy
         public static ClassId GetExclusiveRelicClass(RelicId id) =>
             ClassExclusiveRelics.TryGetValue(id, out var d) ? d.ClassId : (ClassId)0;
 
+        public static RelicId? GetExclusiveRelicForClass(ClassId classId)
+        {
+            foreach (var kvp in ClassExclusiveRelics)
+                if (kvp.Value.ClassId == classId) return kvp.Key;
+            return null;
+        }
+
         public RelicService(int seed)
         {
             _random = new Random(seed);
@@ -174,7 +181,7 @@ namespace SudokuRoguelike.Economy
 
         // ── Relic list helpers ──
 
-        private static bool HasRelicOfType(RunState state, RelicId id) =>
+        public static bool HasRelicOfType(RunState state, RelicId id) =>
             state.HeldRelics != null && state.HeldRelics.Exists(r => r.Id == id);
 
         private static RelicInstance FindRelicByType(RunState state, RelicId id) =>
@@ -232,7 +239,7 @@ namespace SudokuRoguelike.Economy
                         state.CurrentPencil = Math.Min(state.MaxPencil, state.CurrentPencil + 2);
                         break;
                     case RelicId.KoiReflectionRelic:
-                        RevealOneCandidate(board);
+                        SolveNCells(board, 5, state.Seed ^ state.CurrentFloor);
                         break;
                     case RelicId.DragonsEye:
                         SolveOneBox(board, state.Seed ^ state.CurrentFloor);
@@ -252,7 +259,7 @@ namespace SudokuRoguelike.Economy
             if (!state.TempleVowReady) return;
             if (state.MaxHP > 0 && (float)state.CurrentHP / state.MaxHP <= 0.25f)
             {
-                state.CurrentHP = Math.Min(state.MaxHP, state.CurrentHP + 3);
+                state.CurrentHP = Math.Min(state.MaxHP, state.CurrentHP + 2);
                 state.TempleVowReady = false;
             }
         }
@@ -287,18 +294,18 @@ namespace SudokuRoguelike.Economy
                         }
                         break;
                     case RelicId.DuelingReed:
-                        if (level.NoPencilUsed) gold += 20;
+                        if (level.NoPencilUsed && level.Mistakes == 0)
+                        {
+                            state.CurrentPencil = Math.Min(state.MaxPencil, state.CurrentPencil + 2);
+                            state.RerollTokens++;
+                        }
                         break;
                 }
             }
         }
 
         /// <summary>Called on run victory: apply end-of-run relic bonuses.</summary>
-        public static void OnRunVictory(RunState state)
-        {
-            if (HasRelicOfType(state, RelicId.GildedKoiScale))
-                state.CurrentGold += state.CurrentGold;
-        }
+        public static void OnRunVictory(RunState state) { }
 
         /// <summary>Called after each correct placement: apply streak-based relic rewards.</summary>
         public static void OnCorrectPlacement(RunState state)
@@ -346,19 +353,9 @@ namespace SudokuRoguelike.Economy
             }
         }
 
-        /// <summary>Called after a correct placement with board access (for EndlessArchive).</summary>
-        public static void OnCorrectPlacementWithBoard(RunState state, int row, SudokuBoard board)
-        {
-            if (!HasRelicOfType(state, RelicId.EndlessArchive) || board == null) return;
-            // Reveal correct candidate for first empty cell in same row
-            var size = board.Size;
-            for (var c = 0; c < size; c++)
-            {
-                if (board.Cells[row, c] != 0 || board.IsGiven(row, c)) continue;
-                var sol = board.Solution[row, c];
-                if (sol > 0) { board.AddPencilMark(row, c, sol); return; }
-            }
-        }
+        /// <summary>Returns true when the player holds EndlessArchive (pencil marks cost 0).</summary>
+        public static bool HasEndlessArchive(RunState state) =>
+            HasRelicOfType(state, RelicId.EndlessArchive);
 
         // Reveal the correct digit as a pencil mark in the first empty non-given cell
         private static void RevealOneCandidate(SudokuBoard board)
@@ -370,6 +367,33 @@ namespace SudokuRoguelike.Economy
                 if (board.IsGiven(r, c) || board.Cells[r, c] != 0) continue;
                 var sol = board.Solution[r, c];
                 if (sol > 0) { board.AddPencilMark(r, c, sol); return; }
+            }
+        }
+
+        // Fill randomly chosen empty cells (up to <paramref name="count"/>) with their solution values,
+        // spread across the board using a seeded shuffle so the reveal feels varied each puzzle.
+        private static void SolveNCells(SudokuBoard board, int count, int seed)
+        {
+            var size = board.Size;
+            var emptyCells = new List<(int r, int c)>();
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
+                if (!board.IsGiven(r, c) && board.Cells[r, c] == 0 && board.Solution[r, c] > 0)
+                    emptyCells.Add((r, c));
+
+            // Fisher-Yates shuffle with deterministic seed for reproducibility on resume
+            var rng = new Random(seed);
+            for (var i = emptyCells.Count - 1; i > 0; i--)
+            {
+                var j = rng.Next(i + 1);
+                (emptyCells[i], emptyCells[j]) = (emptyCells[j], emptyCells[i]);
+            }
+
+            for (var i = 0; i < Math.Min(count, emptyCells.Count); i++)
+            {
+                var (r, c) = emptyCells[i];
+                board.PlaceValue(r, c, board.Solution[r, c]);
+                board.GivenMask[r, c] = true; // lock as pre-filled so it can't be erased
             }
         }
 
@@ -408,7 +432,7 @@ namespace SudokuRoguelike.Economy
             }
         }
 
-        /// <summary>Called on any mistake: WardingFlame fires once per run to negate the HP loss.</summary>
+        /// <summary>Called at boss gate: WardingFlame fires once per run to remove one modifier from the pool.</summary>
         public static bool TryWardingFlame(RunState state)
         {
             var relic = FindRelicByType(state, RelicId.WardingFlame);
@@ -487,7 +511,7 @@ namespace SudokuRoguelike.Economy
                 RelicId.CrackedTeacup     => "cracked_teacup",
                 RelicId.WoodenComb        => "wooden_comb",
                 RelicId.MossToken         => "moss_token",
-                RelicId.KoiReflectionRelic=> "koi_reflection_relic",
+                RelicId.KoiReflectionRelic=> "koi_reflection",
                 RelicId.MonkCharm         => "monk_charm",
                 RelicId.CopperTortoise    => "copper_tortoise",
                 RelicId.JadeHairpin       => "jade_hairpin",
@@ -519,6 +543,13 @@ namespace SudokuRoguelike.Economy
             };
         }
 
+        public static string GetIconFolder(RelicId id) => id switch
+        {
+            RelicId.GoldenRoot or RelicId.SilentGrid or RelicId.ShiftingGarden or
+            RelicId.EternalLotus or RelicId.DragonsEye => "legendary",
+            _ => "relic"
+        };
+
         public static string GetRelicDescription(RelicId id)
         {
             return id switch
@@ -527,7 +558,7 @@ namespace SudokuRoguelike.Economy
                 RelicId.CrackedTeacup => "Absorb the first mistake each puzzle (no HP loss).",
                 RelicId.WoodenComb => "+1 Max HP.",
                 RelicId.MossToken => "Shop rerolls cost 25% less.",
-                RelicId.KoiReflectionRelic => "Reveal one candidate per puzzle start.",
+                RelicId.KoiReflectionRelic => "Auto-solve 5 cells at the start of each puzzle.",
                 RelicId.MonkCharm => "5 correct placements in a row grants +2 gold.",
                 RelicId.CopperTortoise => "Perfect puzzle completion grants +15 gold.",
                 RelicId.JadeHairpin => "+1 item slot capacity.",

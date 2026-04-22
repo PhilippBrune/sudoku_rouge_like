@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using SudokuRoguelike.Core;
 using SudokuRoguelike.Classes;
 using SudokuRoguelike.Economy;
+using SudokuRoguelike.Items;
 
 namespace SudokuRoguelike.UI
 {
@@ -56,15 +57,25 @@ namespace SudokuRoguelike.UI
                 if (entry != null)
                 {
                     var level = XpTable.DeriveLevel(entry.TotalXp);
+                    var exItem  = ItemService.GetExclusiveItemForClass(classId);
+                    var exRelic = RelicService.GetExclusiveRelicForClass(classId);
+                    var itemStr  = exItem.HasValue  ? (level >= 15 ? ItemService.GetItemName(exItem.Value)   : "???") : "—";
+                    var relicStr = exRelic.HasValue ? (level >= 30 ? RelicService.GetRelicName(exRelic.Value) : "???") : "—";
                     text.color = UnlockedColor;
                     text.text = $"{def.Name}  —  Level {level}  (Prestige {entry.PrestigeTier})  —  {entry.TotalXp} XP\n" +
-                        $"    HP: {def.BaseHP}  Pencil: {def.BasePencil}  Slots: {def.BaseItemSlots}  |  {def.PassiveDescription}";
+                        $"    HP: {def.BaseHP}  Pencil: {def.BasePencil}  Slots: {def.BaseItemSlots}  |  {def.PassiveDescription}\n" +
+                        $"    L15 Exclusive: {itemStr}  |  L30 Exclusive: {relicStr}";
                 }
                 else if (isUnlocked)
                 {
+                    var exItem  = ItemService.GetExclusiveItemForClass(classId);
+                    var exRelic = RelicService.GetExclusiveRelicForClass(classId);
+                    var itemStr  = exItem.HasValue  ? "???" : "—";
+                    var relicStr = exRelic.HasValue ? "???" : "—";
                     text.color = UnlockedColor;
                     text.text = $"{def.Name}  —  Level 1  —  Not Started\n" +
-                        $"    HP: {def.BaseHP}  Pencil: {def.BasePencil}  Slots: {def.BaseItemSlots}  |  {def.PassiveDescription}";
+                        $"    HP: {def.BaseHP}  Pencil: {def.BasePencil}  Slots: {def.BaseItemSlots}  |  {def.PassiveDescription}\n" +
+                        $"    L15 Exclusive: {itemStr}  |  L30 Exclusive: {relicStr}";
                 }
                 else
                 {
@@ -73,7 +84,7 @@ namespace SudokuRoguelike.UI
                 }
 
                 var layout = go.AddComponent<LayoutElement>();
-                layout.preferredHeight = entry != null || isUnlocked ? 40 : 24;
+                layout.preferredHeight = entry != null || isUnlocked ? 60 : 24;
             }
         }
 

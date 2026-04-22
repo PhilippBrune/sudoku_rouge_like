@@ -49,6 +49,13 @@ namespace SudokuRoguelike.Items
         public static int GetExclusiveUnlockLevel(ItemType type) =>
             ClassExclusiveItems.TryGetValue(type, out var d) ? d.UnlockLevel : 0;
 
+        public static ItemType? GetExclusiveItemForClass(ClassId classId)
+        {
+            foreach (var kvp in ClassExclusiveItems)
+                if (kvp.Value.ClassId == classId) return kvp.Key;
+            return null;
+        }
+
         // ── Slot Rolling ──
 
         // [REQ: ITEM-SLOT-001] Item reward slots by star: 1★=2, 2★=3, 3★=3, 4★=4, 5★=5
@@ -120,7 +127,47 @@ namespace SudokuRoguelike.Items
                 };
             }
 
+            // Dedup: re-roll any slot whose item type was already offered in an earlier slot.
+            // Try up to 5 alternative rolls per duplicate so the pool stays exhaustible.
+            var seen = new HashSet<ItemType>();
+            for (var i = 0; i < slots.Count; i++)
+            {
+                if (slots[i] == null) continue;
+                if (!seen.Add(slots[i].Type))
+                {
+                    var rarity = slots[i].Rarity;
+                    var newType = slots[i].Type;
+                    for (var attempt = 0; attempt < 5 && seen.Contains(newType); attempt++)
+                        newType = RollItemType(rarity, classLevel, classId);
+                    if (newType != slots[i].Type)
+                    {
+                        slots[i] = new ItemInstance
+                        {
+                            Id = Guid.NewGuid().ToString("N"),
+                            Type = newType,
+                            Rarity = IsTiered(newType) ? rarity : GetFixedRarity(newType),
+                            Charges = 1
+                        };
+                        seen.Add(newType);
+                    }
+                }
+            }
+
             return slots;
+        }
+
+        /// <summary>Rolls one non-Nothing item for the LoadedCoin effect.</summary>
+        public ItemInstance RollOneItem(int stars, int classLevel, ClassId classId = (ClassId)0)
+        {
+            var rarity = RollItemRarity(stars, classLevel);
+            var type = RollItemType(rarity, classLevel, classId);
+            return new ItemInstance
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                Type = type,
+                Rarity = IsTiered(type) ? rarity : GetFixedRarity(type),
+                Charges = 1
+            };
         }
 
         // ── Rarity & Type ──
@@ -334,7 +381,7 @@ namespace SudokuRoguelike.Items
                 ItemType.OfferingBowl => "Sacrifice 1 HP to gain 30 gold.",
                 ItemType.PruningShears => "Remove one incorrect candidate from a cell.",
                 ItemType.ZenSandSifter => "Highlight all cells with exactly two candidates.",
-                ItemType.GinkgoLeaf => "Undo the last mistake and restore the lost HP.",
+                ItemType.GinkgoLeaf => "Undo the last mistake, restore the lost HP, and recover your combo.",
                 ItemType.RicePaperUmbrella => "Block the next mistake penalty (2 charges).",
                 ItemType.TempleIncense => $"Click {(rarity == ItemRarity.Epic ? 6 : rarity == ItemRarity.Rare ? 4 : 2)} empty cell(s) to fill their correct answer.",
                 ItemType.KoiDragonScale => "Complete the most-filled row, column, or box.",

@@ -34,6 +34,8 @@ namespace SudokuRoguelike.Bootstrap
         private SaveProfileService _profileSlots;
         private DailyGoalState _dailyGoals;
 
+        private SplashScreenController _splashInline;
+
         private void Awake()
         {
             _profileSlots = new SaveProfileService();
@@ -42,6 +44,14 @@ namespace SudokuRoguelike.Bootstrap
             _resumeService = new RunResumeService(_saveFileService);
             _autoSave = new RunAutoSaveCoordinator(_saveFileService);
             _run = new RunDirector();
+
+            // Create the splash in Awake so it covers the screen before any Start() builds game UI.
+            if (!SplashSceneBootstrap.HasShownSplash)
+            {
+                var splashGo = new GameObject("SplashScreenController");
+                _splashInline = splashGo.AddComponent<SplashScreenController>();
+                _splashInline.Initialize();
+            }
         }
 
         public SaveProfileService ProfileSlots => _profileSlots;
@@ -67,21 +77,6 @@ namespace SudokuRoguelike.Bootstrap
         {
             Application.runInBackground = true;
             LocalizationService.SetLanguage(_profileService.LoadOptions().Language);
-
-            // Create inline splash cover BEFORE building any UI, so the menu can't
-            // appear for even a single frame before the splash has loaded.
-            SplashScreenController splashInline = null;
-            if (!SplashSceneBootstrap.HasShownSplash)
-            {
-                // Load save early to extract the last floor for the splash tint (D)
-                var earlyEnvelope = _saveFileService.Load();
-                var lastFloor = earlyEnvelope?.ActiveRunState?.CurrentFloor ?? 0;
-                var splashTint = FloorThemeData.GetFloorTint(lastFloor);
-
-                var splashGo = new GameObject("SplashScreenController");
-                splashInline = splashGo.AddComponent<SplashScreenController>();
-                splashInline.Initialize(transform, splashTint);
-            }
 
             EnsureSceneInfrastructure();
 
@@ -138,15 +133,12 @@ namespace SudokuRoguelike.Bootstrap
 
             if (SplashSceneBootstrap.HasShownSplash)
             {
-                // Splash already played in its own scene — go straight to menu.
                 ShowMenuAfterSplash();
             }
             else
             {
-                // Inline splash fallback (editor Play Mode, no splash scene in build).
-                // 7 — Start music during the splash fade-in, not after
                 _menuMusic.Play();
-                splashInline.Show(ShowMenuAfterSplash);
+                _splashInline.Show(ShowMenuAfterSplash);
             }
         }
 

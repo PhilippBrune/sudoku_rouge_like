@@ -181,6 +181,7 @@ namespace SudokuRoguelike.Run
 
             // Reset per-floor item flags
             State.WornChiselActive = false;
+            State.DimLanternUsed = false;
             State.ShopRerollCount = 0;
 
             // Relic: floor-start effects (WisteriaBranch heal, GoldenRoot interest, AccurateMap)
@@ -602,7 +603,11 @@ namespace SudokuRoguelike.Run
                 CurrentLevelState.EnsureCountPlaced(CurrentBoard.Size);
                 if (value >= 1 && value <= CurrentBoard.Size)
                     CurrentLevelState.CountPlaced[value]++;
-                if (State.MonksBeadsCountdown > 0) State.MonksBeadsCountdown--;
+                if (State.MonksBeadsCountdown > 0)
+                {
+                    State.CurrentHP = Math.Min(State.MaxHP, State.CurrentHP + 1);
+                    State.MonksBeadsCountdown--;
+                }
                 ClassPassiveService.OnCorrectPlacement(State, CurrentLevelState);
                 TickLockedCells();
                 TickPressureThreats(row, col);
@@ -624,7 +629,6 @@ namespace SudokuRoguelike.Run
                 // Fog placement (lantern active): treat normally, no deferred logic.
 
                 RelicService.OnCorrectPlacement(State);
-                RelicService.OnCorrectPlacementWithBoard(State, row, CurrentBoard);
 
                 // Pencil mark cleanup: remove the placed digit from all cells in the same row and column.
                 var boardSize = CurrentBoard.Size;
@@ -636,6 +640,7 @@ namespace SudokuRoguelike.Run
                 return PlaceResult.Correct;
             }
 
+            State.LastComboBeforeMistake = State.ComboStreak;
             State.ComboStreak = 0;
             CurrentLevelState.Mistakes++;
             CurrentLevelState.PerfectSoFar = false;
@@ -691,9 +696,16 @@ namespace SudokuRoguelike.Run
             var free = isRemoving
                 || State.Mode == GameMode.Tutorial
                 || ClassPassiveService.IsPencilFree(State, CurrentLevelState, row, col, cellAlreadyHasMark)
-                || State.MonksBeadsCountdown > 0;
+                || RelicService.HasEndlessArchive(State);
 
             if (!free && State.CurrentPencil <= 0) return false;
+
+            // ReedPledge: any paid pencil use triggers penalty and cancels the pledge
+            if (!free && State.PledgeActive)
+            {
+                State.CurrentHP = Math.Max(0, State.CurrentHP - 1);
+                State.PledgeActive = false;
+            }
 
             CurrentBoard.TogglePencilMark(row, col, value);
             if (!free)
@@ -711,7 +723,7 @@ namespace SudokuRoguelike.Run
             if (State.MistakeShieldCharges > 0) { State.MistakeShieldCharges--; State.LastMistakeHpLost = 0; return; }
             if (ClassPassiveService.OnMistake(State)) { State.LastMistakeHpLost = 0; return; } // class passive absorbs
             if (RelicService.TryAbsorbMistake(State)) { State.LastMistakeHpLost = 0; return; }
-            if (RelicService.TryWardingFlame(State)) { State.LastMistakeHpLost = 0; return; }
+            State.MonksBeadsCountdown = 0; // any mistake cancels MonksBeads streak
 
             var newHp = State.CurrentHP - damage;
             if (newHp <= 0 && RelicService.TryPreventDeath(State))
@@ -1580,11 +1592,16 @@ namespace SudokuRoguelike.Run
 
             if (level.PerfectSoFar) _analytics?.RecordPerfectPuzzle();
 
-            // ReedPledge: if pledge was active and no pencil marks used, reward +2 HP
+            // ReedPledge: success = +4 Pencil, +30 Gold, +25 bonus XP
             if (State.PledgeActive)
             {
                 if (level.NoPencilUsed)
-                    State.CurrentHP = Math.Min(State.MaxHP, State.CurrentHP + 2);
+                {
+                    State.CurrentPencil = Math.Min(State.MaxPencil, State.CurrentPencil + 4);
+                    State.CurrentGold += 30;
+                    if (TileXpLog.Count > 0)
+                        TileXpLog[TileXpLog.Count - 1].TotalXp += 25;
+                }
                 State.PledgeActive = false;
             }
 
@@ -1656,6 +1673,16 @@ namespace SudokuRoguelike.Run
                 }
             }
 
+            // LoadedCoin: force-fill any Nothing slots, then consume the item
+            if (State.HeldItems.Exists(it => it?.Type == ItemType.LoadedCoin))
+            {
+                for (var i = 0; i < RolledItemSlots.Count; i++)
+                    if (RolledItemSlots[i] == null)
+                        RolledItemSlots[i] = _itemService.RollOneItem(stars, classLevel,
+                            State.IsSeasonalChallenge ? (ClassId)0 : State.ClassId);
+                State.HeldItems.RemoveAll(it => it?.Type == ItemType.LoadedCoin);
+            }
+
             return RolledItemSlots;
         }
 
@@ -1710,6 +1737,12 @@ namespace SudokuRoguelike.Run
             if (!free)
             {
                 item.Charges--;
+                // LoadBearingStone: 30% chance to retain 1 charge on exhaustion
+                if (item.Charges <= 0 && RelicService.HasRelicOfType(State, RelicId.LoadBearingStone))
+                {
+                    var retain = new System.Random(State.Seed ^ State.Depth ^ item.Id.GetHashCode()).NextDouble();
+                    if (retain < 0.30) item.Charges = 1;
+                }
                 if (item.Charges <= 0)
                     State.HeldItems.RemoveAt(inventoryIndex);
             }
@@ -1887,37 +1920,43 @@ namespace SudokuRoguelike.Run
                 // ── Class-exclusive items (L15) ──
 
                 case ItemType.LoadedCoin:
-                {
-                    State.RerollTokens++;
-                    return ItemEffectResult.Message("+1 Reroll Token.");
-                }
+                    return ItemEffectResult.Message("Next item reward screen: all Nothing slots replaced with real items.");
 
                 case ItemType.MonksBeads:
                 {
-                    State.MonksBeadsCountdown = 9;
-                    return ItemEffectResult.Message("Next 9 placements cost no pencil marks.");
+                    State.MonksBeadsCountdown = 5;
+                    return ItemEffectResult.Message("Next 5 correct placements each restore 1 HP.");
                 }
 
                 case ItemType.AnnotatedFolio:
                 {
-                    if (row < 0) return ItemEffectResult.Message("Select a cell first.");
-                    var annotated = new List<(int, int)>();
-                    RevealBoxCandidates(row, col, annotated);
-                    return ItemEffectResult.Hints(annotated, $"Revealed candidates for {annotated.Count} cell(s).");
+                    var markedCount = 0;
+                    var size = CurrentBoard.Size;
+                    for (var r = 0; r < size; r++)
+                    for (var c = 0; c < size; c++)
+                    {
+                        if (CurrentBoard.Cells[r, c] != 0 || CurrentBoard.IsGiven(r, c)) continue;
+                        var cands = GetValidCandidates(r, c);
+                        if (cands.Count == 2)
+                        {
+                            CurrentBoard.AddPencilMark(r, c, cands[0]);
+                            CurrentBoard.AddPencilMark(r, c, cands[1]);
+                            markedCount++;
+                        }
+                    }
+                    return ItemEffectResult.Message($"Auto-marked {markedCount} cell(s) with 2 candidates.");
                 }
 
                 case ItemType.DoubleOrQuits:
                 {
-                    // Resolved at level-end: store intent in a transient flag
-                    // For now, flip a coin immediately using run RNG
-                    var rng = new System.Random(State.Seed + State.Depth * 13);
+                    var rng = new System.Random(State.Seed + State.Depth * 13 + State.CurrentGold);
                     if (rng.NextDouble() < 0.5)
                     {
-                        State.CurrentGold += 30; // bonus placeholder (proper award at level-end)
-                        return ItemEffectResult.Message("Lucky! +30 bonus gold.");
+                        State.CurrentGold *= 2;
+                        return ItemEffectResult.Message($"Lucky! Gold doubled → {State.CurrentGold}g.");
                     }
-                    State.CurrentHP = Math.Max(0, State.CurrentHP - 1);
-                    return ItemEffectResult.Message("Unlucky — lost 1 HP.");
+                    State.CurrentGold /= 2;
+                    return ItemEffectResult.Message($"Unlucky. Gold halved → {State.CurrentGold}g.");
                 }
 
                 case ItemType.WornChisel:
@@ -1928,15 +1967,14 @@ namespace SudokuRoguelike.Run
 
                 case ItemType.DimLantern:
                 {
-                    // Clear fog from 3 random hidden cells (handled by board overlay logic)
-                    State.FogDisabledMoves += 3; // reuse fog counter as approximation
-                    return ItemEffectResult.Message("Fog cleared from 3 cells.");
+                    State.DimLanternUsed = true;
+                    return ItemEffectResult.Message("Boss modifier list revealed on the map.");
                 }
 
                 case ItemType.ReedPledge:
                 {
                     State.PledgeActive = true;
-                    return ItemEffectResult.Message("Pledge active: complete with zero pencil marks for +2 HP.");
+                    return ItemEffectResult.Message("Pledge active: no pencil marks → +4 Pencil, +30 Gold, +25 XP. Any pencil use: -1 HP.");
                 }
 
                 case ItemType.SurveyNotes:
@@ -1951,6 +1989,16 @@ namespace SudokuRoguelike.Run
         }
 
         // ── Item effect helpers ──────────────────────────────────────────────────
+
+        private List<int> GetValidCandidates(int row, int col)
+        {
+            var size = CurrentBoard.Size;
+            var result = new List<int>();
+            for (var v = 1; v <= size; v++)
+                if (ConstraintEngine.ValidateAll(CurrentBoard, row, col, v, CurrentOverlay))
+                    result.Add(v);
+            return result;
+        }
 
         private void RevealBoxCandidates(int row, int col, List<(int, int)> revealed)
         {

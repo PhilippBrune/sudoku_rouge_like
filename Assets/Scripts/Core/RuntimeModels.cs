@@ -78,6 +78,7 @@ namespace SudokuRoguelike.Core
         public int MistakeShieldCharges;   // RicePaperUmbrella: absorbs next N mistakes
         public int FogDisabledMoves;       // LanternOfClarity: fog disabled for next N moves
         public int LastMistakeHpLost;      // GinkgoLeaf: HP actually lost on last mistake (for restoration)
+        public int LastComboBeforeMistake;  // GinkgoLeaf: combo streak before last mistake (for restoration)
 
         // Run timer
         public float TotalRunSeconds;      // Accumulated puzzle time across all puzzles this run
@@ -87,6 +88,7 @@ namespace SudokuRoguelike.Core
         public bool WornChiselActive;      // StoneGardener L15: 30% shop discount active this floor
         public bool PledgeActive;          // ReedDuelist L15: no-pencil pledge in progress
         public bool AllNodesRevealed;      // QuietCartographer L15/L30: all floor nodes visible
+        public bool DimLanternUsed;        // LanternSeer L15: reveal boss modifier list on map this floor
         public int FortunesLedgerCounter;  // NumberFreak L30: correct placements since last Reroll Token
         public bool TempleVowReady;        // GardenMonk L30: trigger ready (HP ≤ 25%, fires once/puzzle)
         public bool WardingFlameUsed;      // LanternSeer L30: once-per-run auto-remove used

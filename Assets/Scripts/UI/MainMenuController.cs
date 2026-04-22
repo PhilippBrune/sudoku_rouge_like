@@ -710,6 +710,20 @@ namespace SudokuRoguelike.UI
                         if (itemsOnRow == 2 || ui == allUnlocks.Length - 1) { sb.AppendLine(); itemsOnRow = 0; }
                         else sb.Append("  ");
                     }
+                    sb.AppendLine("─ Exclusive Unlocks ─");
+                    var exItem = ItemService.GetExclusiveItemForClass(classId);
+                    var exRelic = RelicService.GetExclusiveRelicForClass(classId);
+                    if (exItem.HasValue)
+                    {
+                        sb.Append(level >= 15
+                            ? $"<color=#C8A44A>[L15✓] {ItemService.GetItemName(exItem.Value)}</color>"
+                            : "<color=#888888>[L15] Unlocks at Level 15: ???</color>");
+                        sb.Append("  ");
+                    }
+                    if (exRelic.HasValue)
+                        sb.AppendLine(level >= 30
+                            ? $"<color=#C8A44A>[L30✓] {RelicService.GetRelicName(exRelic.Value)}</color>"
+                            : "<color=#888888>[L30] Unlocks at Level 30: ???</color>");
                     _classInfoText.text = sb.ToString().TrimEnd();
                 }
                 else
@@ -732,6 +746,13 @@ namespace SudokuRoguelike.UI
                         if (itemsOnRow == 2 || ui == allUnlocks.Length - 1) { sb.AppendLine(); itemsOnRow = 0; }
                         else sb.Append("  ");
                     }
+                    sb.AppendLine("─ Exclusive Unlocks ─");
+                    var exItemL = ItemService.GetExclusiveItemForClass(classId);
+                    var exRelicL = RelicService.GetExclusiveRelicForClass(classId);
+                    if (exItemL.HasValue)
+                        sb.Append("<color=#888888>[L15] Unlocks at Level 15: ???</color>  ");
+                    if (exRelicL.HasValue)
+                        sb.AppendLine("<color=#888888>[L30] Unlocks at Level 30: ???</color>");
                     _classInfoText.text = sb.ToString().TrimEnd();
                 }
             }

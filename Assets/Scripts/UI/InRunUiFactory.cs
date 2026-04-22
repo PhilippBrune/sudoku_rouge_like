@@ -58,6 +58,13 @@ namespace SudokuRoguelike.UI
         internal static readonly Color LaneScrollBg   = new Color(0f, 0f, 0f, 0.12f);
         internal static readonly Color LaneViewportBg = new Color(1f, 1f, 1f, 0.02f);
 
+        // Button interaction states — used in CreatePanelButton and all overlay controllers
+        internal static readonly Color BtnHighlighted  = new Color(0.55f, 0.50f, 0.38f, 1f);
+        internal static readonly Color BtnSelected     = new Color(0.62f, 0.56f, 0.40f, 1f);
+        internal static readonly Color BtnPressed      = new Color(0.30f, 0.26f, 0.18f, 1f);
+        internal static readonly Color BtnDisabled     = new Color(0.30f, 0.30f, 0.35f, 0.90f);
+        internal static readonly Color RerollFreeColor = new Color(0.15f, 0.55f, 0.40f, 0.95f);
+
         // ── Font ──
         // V2: place a .ttf at Assets/Resources/Fonts/MainFont.ttf to use a custom font.
         // Falls back to the Unity built-in LegacyRuntime/Arial if absent.
@@ -180,9 +187,9 @@ namespace SudokuRoguelike.UI
             var btn = go.GetComponent<Button>();
             btn.navigation = new Navigation { mode = Navigation.Mode.Automatic };
             var cols = btn.colors;
-            cols.highlightedColor = new Color(0.55f, 0.50f, 0.38f, 1f);
-            cols.selectedColor    = new Color(0.62f, 0.56f, 0.40f, 1f);
-            cols.pressedColor     = new Color(0.30f, 0.26f, 0.18f, 1f);
+            cols.highlightedColor = BtnHighlighted;
+            cols.selectedColor    = BtnSelected;
+            cols.pressedColor     = BtnPressed;
             btn.colors = cols;
             return btn;
         }
@@ -210,7 +217,7 @@ namespace SudokuRoguelike.UI
         // ── Overlay panel (reward / shop) ──
         internal static GameObject CreateOverlayPanel(Transform parent, string name, string title)
         {
-            var panel = new GameObject(name, typeof(RectTransform), typeof(Image));
+            var panel = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(CanvasGroup));
             panel.transform.SetParent(parent, false);
             var pr = panel.GetComponent<RectTransform>();
             pr.anchorMin = new Vector2(0.20f, 0.18f);
@@ -251,6 +258,8 @@ namespace SudokuRoguelike.UI
             if (!string.IsNullOrEmpty(bgTextureName))
             {
                 var tex = Resources.Load<Texture2D>("background/" + bgTextureName);
+                if (tex == null)
+                    Debug.LogWarning($"[InRunUiFactory] Missing panel background: background/{bgTextureName}");
                 raw.texture = tex;
                 raw.color   = new Color(1f, 1f, 1f, tex != null ? alpha : 0f);
             }
@@ -263,9 +272,14 @@ namespace SudokuRoguelike.UI
         }
 
         // ── Button icon ──
-        internal static void SetButtonIcon(Button btn, string iconName, bool unknown = false)
+        internal static void SetButtonIcon(Button btn, string iconName, bool unknown = false, string subfolder = "GeneratedIcons")
         {
-            var sprite = unknown ? null : (string.IsNullOrEmpty(iconName) ? null : Resources.Load<Sprite>("GeneratedIcons/icon_" + iconName));
+            var spritePath = (!unknown && !string.IsNullOrEmpty(iconName))
+                ? subfolder + "/icon_" + iconName
+                : null;
+            var sprite = spritePath != null ? Resources.Load<Sprite>(spritePath) : null;
+            if (sprite == null && !unknown && !string.IsNullOrEmpty(iconName))
+                Debug.LogWarning($"[InRunUiFactory] Missing button icon: {spritePath}");
 
             // Reposition label to bottom
             var label = btn.transform.Find("Label")?.GetComponent<Text>();

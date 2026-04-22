@@ -55,6 +55,7 @@ namespace SudokuRoguelike.UI
             {
                 _shopPanel.SetActive(true);
                 ActivePanel = _shopPanel;
+                FadeInPanel(_shopPanel);
                 InRunUiFactory.SelectFirstInteractable(_shopPanel);
             }
         }
@@ -64,7 +65,7 @@ namespace SudokuRoguelike.UI
             if (_shopPanel != null || _pathPanel == null) return;
             _shopPanel = InRunUiFactory.CreateOverlayPanel(_pathPanel.transform, "ShopPanel", "Shop");
             var shopBase = InRunUiFactory.PanelBg;
-            _shopPanel.GetComponent<Image>().color = new Color(shopBase.r, shopBase.g, shopBase.b, 0.40f);
+            _shopPanel.GetComponent<Image>().color = new Color(shopBase.r, shopBase.g, shopBase.b, 0.72f);
             InRunUiFactory.AddPanelBackground(_shopPanel.transform, "bg_shop");
             _shopSummary = _shopPanel.transform.Find("Summary")?.GetComponent<Text>();
             _shopPanel.SetActive(false);
@@ -81,27 +82,45 @@ namespace SudokuRoguelike.UI
             if (_shopSummary != null && s != null)
                 _shopSummary.text = $"{ResourceHeader(s)}  |  Click an item to preview, then press Buy.";
 
-            for (var i = 0; i < Mathf.Min(3, _shopOffers.Count); i++)
+            var offerCount = Mathf.Min(3, _shopOffers.Count);
+            var offerBtns = new Button[offerCount];
+            for (var i = 0; i < offerCount; i++)
             {
                 var offer = _shopOffers[i];
                 var label = offer.Item != null
                     ? $"{ItemService.GetItemName(offer.Item.Type)}\n{offer.Price}g"
                     : $"Offer {offer.Price}g";
                 var btn = InRunUiFactory.CreatePanelButton(_shopPanel.transform, $"Offer_{i}",
-                    new Vector2(0.08f + i * 0.29f, 0.40f), new Vector2(0.08f + i * 0.29f + 0.26f, 0.70f), label);
+                    new Vector2(0.08f + i * 0.29f, 0.29f), new Vector2(0.08f + i * 0.29f + 0.26f, 0.54f), label);
                 if (offer.Item != null)
-                    InRunUiFactory.SetButtonIcon(btn, ItemService.GetIconName(offer.Item.Type));
+                    InRunUiFactory.SetButtonIcon(btn, ItemService.GetIconName(offer.Item.Type), false, "items");
                 var idx = i;
                 btn.onClick.AddListener(() => SelectShopOffer(idx));
+                offerBtns[i] = btn;
             }
 
             // Buy button (disabled until an offer is selected)
             var buyBtn = InRunUiFactory.CreatePanelButton(_shopPanel.transform, "Offer_buy",
-                new Vector2(0.35f, 0.26f), new Vector2(0.65f, 0.36f), "Buy");
+                new Vector2(0.35f, 0.17f), new Vector2(0.65f, 0.26f), "Buy");
             buyBtn.interactable = false;
             buyBtn.gameObject.name = "ShopBuyBtn";
             buyBtn.onClick.AddListener(TryBuySelectedOffer);
             _shopBuyButton = buyBtn;
+
+            // Explicit D-pad nav: left/right between offers, down to Buy
+            for (var i = 0; i < offerCount; i++)
+            {
+                var nav = new Navigation { mode = Navigation.Mode.Explicit };
+                if (i > 0)            nav.selectOnLeft  = offerBtns[i - 1];
+                if (i < offerCount-1) nav.selectOnRight = offerBtns[i + 1];
+                nav.selectOnDown = buyBtn;
+                offerBtns[i].navigation = nav;
+            }
+            // Buy: up goes to middle offer (or first if only one)
+            var buyNav = buyBtn.navigation;
+            buyNav.mode = Navigation.Mode.Explicit;
+            buyNav.selectOnUp = offerBtns[offerCount > 1 ? offerCount / 2 : 0];
+            buyBtn.navigation = buyNav;
 
             var run2      = _map?.Run;
             var tokens    = run2?.State.RerollTokens ?? 0;
@@ -110,13 +129,13 @@ namespace SudokuRoguelike.UI
                 ? $"Reroll ({tokens} token{(tokens != 1 ? "s" : "")})"
                 : $"Reroll ({rerollCost}g)";
             var rerollBtn = InRunUiFactory.CreatePanelButton(_shopPanel.transform, "Offer_reroll",
-                new Vector2(0.05f, 0.13f), new Vector2(0.30f, 0.23f), rerollLabel);
+                new Vector2(0.05f, 0.04f), new Vector2(0.30f, 0.14f), rerollLabel);
             rerollBtn.gameObject.name = "ShopRerollBtn";
             // Teal tint signals "free reroll available"; default button color otherwise.
             if (tokens > 0)
             {
                 var img = rerollBtn.GetComponent<Image>();
-                if (img != null) img.color = new Color(0.15f, 0.55f, 0.40f, 0.95f);
+                if (img != null) img.color = InRunUiFactory.RerollFreeColor;
             }
             rerollBtn.onClick.AddListener(() =>
             {
@@ -129,11 +148,12 @@ namespace SudokuRoguelike.UI
             });
 
             var skip = InRunUiFactory.CreatePanelButton(_shopPanel.transform, "Offer_skip",
-                new Vector2(0.70f, 0.13f), new Vector2(0.95f, 0.23f), "Skip");
+                new Vector2(0.70f, 0.04f), new Vector2(0.95f, 0.14f), "Skip");
             skip.onClick.AddListener(() =>
             {
                 _shopOffers.Clear();
                 _selectedShopOffer = -1;
+                ActivePanel = null;
                 InRunUiFactory.HidePanel(_shopPanel);
                 OnShopClosed?.Invoke();
             });
@@ -204,6 +224,7 @@ namespace SudokuRoguelike.UI
                         new ProfileService(new SaveFileService(SaveProfileService.ActiveSlot)).RecordItemDiscovery(offer.Item.Type);
                         _shopOffers.Clear();
                         _selectedShopOffer = -1;
+                        ActivePanel = null;
                         InRunUiFactory.HidePanel(_shopPanel);
                         OnShopClosed?.Invoke();
                     },
@@ -215,10 +236,19 @@ namespace SudokuRoguelike.UI
             var purchasedItem = offer.Item;
             _shopOffers.Clear();
             _selectedShopOffer = -1;
+            ActivePanel = null;
             InRunUiFactory.HidePanel(_shopPanel);
             if (purchasedItem != null)
                 new ProfileService(new SaveFileService(SaveProfileService.ActiveSlot)).RecordItemDiscovery(purchasedItem.Type);
             OnShopClosed?.Invoke();
+        }
+
+        private void FadeInPanel(GameObject panel)
+        {
+            var cg = panel.GetComponent<CanvasGroup>();
+            if (cg == null) cg = panel.AddComponent<CanvasGroup>();
+            cg.alpha = 0f;
+            StartCoroutine(AnimationHelper.FadeIn(cg, AnimationHelper.MenuPanelDuration));
         }
     }
 }

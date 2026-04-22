@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
@@ -138,20 +138,20 @@ namespace SudokuRoguelike.UI
             StyleSecondaryMenuButton(btnCred);
             StyleSecondaryMenuButton(btnQuit);
 
-            ApplyMenuButtonIcon(btnStart,    "GeneratedIcons/icon_engraved_stone"); // 4 — engraved stone tablet fits the garden-gate theme
-            ApplyMenuButtonIcon(btnResume,   "GeneratedIcons/icon_scroll_graph");
-            ApplyMenuButtonIcon(btnTut,      "GeneratedIcons/icon_bamboo_scroll");
-            ApplyMenuButtonIcon(btnMeta,     "GeneratedIcons/icon_golden_bloom");
-            ApplyMenuButtonIcon(btnModes,    "GeneratedIcons/icon_garden_lantern");
-            ApplyMenuButtonIcon(btnItems,    "GeneratedIcons/icon_triple_chest");
-            ApplyMenuButtonIcon(btnProfiles, "GeneratedIcons/icon_scroll_stamp");
-            ApplyMenuButtonIcon(btnOpt,      "GeneratedIcons/icon_stone_gear");
-            ApplyMenuButtonIcon(btnCred,     "GeneratedIcons/icon_language_scroll");
-            ApplyMenuButtonIcon(btnQuit,     "GeneratedIcons/icon_torii_lock");
+            ApplyMenuButtonIcon(btnStart,    "ui/icon_start_game");               // start: dedicated torii gate icon
+            ApplyMenuButtonIcon(btnResume,   "meta/icon_scroll_graph");
+            ApplyMenuButtonIcon(btnTut,      "items/icon_bamboo_scroll");
+            ApplyMenuButtonIcon(btnMeta,     "ui/icon_golden_bloom");
+            ApplyMenuButtonIcon(btnModes,    "items/icon_garden_lantern");
+            ApplyMenuButtonIcon(btnItems,    "items/icon_annotated_folio");
+            ApplyMenuButtonIcon(btnProfiles, "ui/icon_scroll_stamp");
+            ApplyMenuButtonIcon(btnOpt,      "ui/icon_stone_gear");
+            ApplyMenuButtonIcon(btnCred,     "ui/icon_language_scroll");
+            ApplyMenuButtonIcon(btnQuit,     "ui/icon_ink_save");
 
             // Apply art background to main-menu card if the asset is available
             var rootBgImg = EnsureOrGetImage(root.gameObject, BgColor);
-            var rootBgApplied = ApplyPanelBackground(rootBgImg, "GeneratedIcons/ui_main_menu");
+            var rootBgApplied = ApplyPanelBackground(rootBgImg, "background/bg_main_menu");
             if (rootBgApplied)
             {
                 // Art background overrides the stone tablet — revert card to transparent
@@ -289,7 +289,7 @@ namespace SudokuRoguelike.UI
                 lockRt.anchorMin = new Vector2(0.80f, 0.60f);
                 lockRt.anchorMax = new Vector2(1.00f, 1.00f);
                 lockRt.offsetMin = lockRt.offsetMax = Vector2.zero;
-                var lockSprite = Resources.Load<Sprite>("GeneratedIcons/icon_iron_latch"); // 5 — iron latch fits "locked gate" better than torii
+                var lockSprite = Resources.Load<Sprite>("ui/icon_torii_lock"); // torii gate padlock = locked content
                 var lockImg = lockIconGo.GetComponent<Image>();
                 lockImg.sprite = lockSprite;
                 lockImg.color = new Color(0.90f, 0.50f, 0.15f, 0.85f);
@@ -402,7 +402,7 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.54f, 0.10f), new Vector2(0.90f, 0.18f), Vector2.zero, Vector2.zero);
             confirm.onClick.RemoveAllListeners();
             confirm.onClick.AddListener(mc.ShowStartRunModal);
-            ApplyMenuButtonIcon(confirm, "GeneratedIcons/icon_bud");
+            ApplyMenuButtonIcon(confirm, "meta/icon_bud");
             var confirmLbl = confirm.transform.Find("Label")?.GetComponent<Text>();
             if (confirmLbl != null) confirmLbl.color = GamePalette.AccentGold;
 
@@ -412,10 +412,10 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
             back.onClick.RemoveAllListeners();
             back.onClick.AddListener(mc.BackToMainMenu);
-            ApplyMenuButtonIcon(back, "GeneratedIcons/icon_torii_lock");
+            ApplyMenuButtonIcon(back, "ui/icon_ink_save");
 
             // Apply art background if the asset is available
-            if (ApplyPanelBackground(panel.GetComponent<Image>(), "GeneratedIcons/ui_class_select"))
+            if (ApplyPanelBackground(panel.GetComponent<Image>(), "background/bg_class_select"))
             {
                 var contentImg = pr.GetComponent<Image>();
                 if (contentImg != null) contentImg.color = ContentScrimColor;
@@ -625,14 +625,14 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.10f, 0.01f), new Vector2(0.46f, 0.09f), Vector2.zero, Vector2.zero);
             startBtn.onClick.RemoveAllListeners();
             startBtn.onClick.AddListener(mc.StartTutorialGame);
-            ApplyMenuButtonIcon(startBtn, "GeneratedIcons/icon_bud");
+            ApplyMenuButtonIcon(startBtn, "meta/icon_bud");
 
             var backBtn = BuildButton("BtnTutBack", pr, T("Back"), 18);
             SetRect(backBtn.GetComponent<RectTransform>(),
                 new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
             backBtn.onClick.RemoveAllListeners();
             backBtn.onClick.AddListener(mc.BackToMainMenu);
-            ApplyMenuButtonIcon(backBtn, "GeneratedIcons/icon_torii_lock");
+            ApplyMenuButtonIcon(backBtn, "ui/icon_ink_save");
 
             // ── Modifier hover tooltip ──
             var ttBg = EnsureRect("ModTooltipBg", pr,
@@ -704,7 +704,7 @@ namespace SudokuRoguelike.UI
                 greaterLess, xvPairs, primeCells, fortressCells);
 
             // Apply art background if the asset is available
-            if (ApplyPanelBackground(panel.GetComponent<Image>(), "GeneratedIcons/ui_tutorial_setup"))
+            if (ApplyPanelBackground(panel.GetComponent<Image>(), "background/bg_tutorial_setup"))
             {
                 var contentImg = pr.GetComponent<Image>();
                 if (contentImg != null) contentImg.color = ContentScrimColor;
@@ -1076,7 +1076,7 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.05f, 0.01f), new Vector2(0.35f, 0.05f), Vector2.zero, Vector2.zero);
             back.onClick.RemoveAllListeners();
             back.onClick.AddListener(mc.BackToMainMenu);
-            ApplyMenuButtonIcon(back, "GeneratedIcons/icon_torii_lock");
+            ApplyMenuButtonIcon(back, "ui/icon_ink_save");
 
             var btnBasicsTut = BuildButton("BtnReplayBasicsTutorial", pr, T("Sudoku Tutorial"), 13);
             SetRect(btnBasicsTut.GetComponent<RectTransform>(),
@@ -1116,7 +1116,7 @@ namespace SudokuRoguelike.UI
             // Start on Audio tab
             ActivateTab(0);
 
-            if (ApplyPanelBackground(panel.GetComponent<Image>(), "GeneratedIcons/ui_options"))
+            if (ApplyPanelBackground(panel.GetComponent<Image>(), "background/bg_options"))
             {
                 var contentImg = pr.GetComponent<Image>();
                 if (contentImg != null) contentImg.color = ContentScrimColor;
@@ -1155,7 +1155,7 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
             back.onClick.RemoveAllListeners();
             back.onClick.AddListener(mc.BackToMainMenu);
-            ApplyMenuButtonIcon(back, "GeneratedIcons/icon_torii_lock");
+            ApplyMenuButtonIcon(back, "ui/icon_ink_save");
 
             panel.SetActive(false);
             return panel;
@@ -1188,11 +1188,11 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
             back.onClick.RemoveAllListeners();
             back.onClick.AddListener(mc.BackToMainMenu);
-            ApplyMenuButtonIcon(back, "GeneratedIcons/icon_torii_lock");
+            ApplyMenuButtonIcon(back, "ui/icon_ink_save");
 
             metaCtrl.Configure(scrollContent, summary);
 
-            if (ApplyPanelBackground(panel.GetComponent<Image>(), "GeneratedIcons/ui_meta_progression"))
+            if (ApplyPanelBackground(panel.GetComponent<Image>(), "background/bg_meta_progression"))
             {
                 var contentImg = pr.GetComponent<Image>();
                 if (contentImg != null) contentImg.color = ContentScrimColor;
@@ -1236,45 +1236,45 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.12f, 0.35f), new Vector2(0.88f, 0.43f), Vector2.zero, Vector2.zero);
             garden.onClick.RemoveAllListeners();
             garden.onClick.AddListener(mc.StartGame);
-            ApplyMenuButtonIcon(garden, "GeneratedIcons/icon_bud");
+            ApplyMenuButtonIcon(garden, "meta/icon_bud");
 
             var endless = BuildButton("BtnEndless", pr, "Start Endless Zen", 18);
             SetRect(endless.GetComponent<RectTransform>(),
                 new Vector2(0.12f, 0.26f), new Vector2(0.88f, 0.34f), Vector2.zero, Vector2.zero);
             endless.onClick.RemoveAllListeners();
             endless.onClick.AddListener(mc.StartEndlessZen);
-            ApplyMenuButtonIcon(endless, "GeneratedIcons/icon_infinite_lotus");
+            ApplyMenuButtonIcon(endless, "legendary/icon_eternal_lotus");
 
             var trials = BuildButton("BtnTrials", pr, "Start Spirit Trials", 18);
             SetRect(trials.GetComponent<RectTransform>(),
                 new Vector2(0.12f, 0.17f), new Vector2(0.88f, 0.25f), Vector2.zero, Vector2.zero);
             trials.onClick.RemoveAllListeners();
             trials.onClick.AddListener(mc.StartSpiritTrials);
-            ApplyMenuButtonIcon(trials, "GeneratedIcons/icon_temple_seal");
+            ApplyMenuButtonIcon(trials, "items/icon_temple_seal");
 
             var daily = BuildButton("BtnDailyWalk", pr, "Daily Walk", 18);
             SetRect(daily.GetComponent<RectTransform>(),
                 new Vector2(0.12f, 0.09f), new Vector2(0.49f, 0.16f), Vector2.zero, Vector2.zero);
             daily.onClick.RemoveAllListeners();
             daily.onClick.AddListener(mc.ShowDailyWalkPanel);
-            ApplyMenuButtonIcon(daily, "GeneratedIcons/icon_bud");
+            ApplyMenuButtonIcon(daily, "meta/icon_bud");
 
             var monthly = BuildButton("BtnMonthlyWalk", pr, "Monthly Walk", 18);
             SetRect(monthly.GetComponent<RectTransform>(),
                 new Vector2(0.51f, 0.09f), new Vector2(0.88f, 0.16f), Vector2.zero, Vector2.zero);
             monthly.onClick.RemoveAllListeners();
             monthly.onClick.AddListener(mc.ShowMonthlyWalkPanel);
-            ApplyMenuButtonIcon(monthly, "GeneratedIcons/icon_lantern_of_clarity");
+            ApplyMenuButtonIcon(monthly, "items/icon_lantern_of_clarity");
 
             var back = BuildButton("BtnModesBack", pr, "Back", 18);
             SetRect(back.GetComponent<RectTransform>(),
                 new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
             back.onClick.RemoveAllListeners();
             back.onClick.AddListener(mc.BackToMainMenu);
-            ApplyMenuButtonIcon(back, "GeneratedIcons/icon_torii_lock");
+            ApplyMenuButtonIcon(back, "ui/icon_ink_save");
 
             // Apply art background if the asset is available
-            if (ApplyPanelBackground(panel.GetComponent<Image>(), "GeneratedIcons/ui_game_modes"))
+            if (ApplyPanelBackground(panel.GetComponent<Image>(), "background/bg_game_modes"))
             {
                 var contentImg = pr.GetComponent<Image>();
                 if (contentImg != null) contentImg.color = ContentScrimColor;
@@ -1326,7 +1326,17 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
             back.onClick.RemoveAllListeners();
             back.onClick.AddListener(mc.ShowGameModes);
-            ApplyMenuButtonIcon(back, "GeneratedIcons/icon_torii_lock");
+            ApplyMenuButtonIcon(back, "ui/icon_ink_save");
+
+            if (ApplyPanelBackground(panel.GetComponent<Image>(), "background/bg_daily_walk"))
+            {
+                var contentImg = pr.GetComponent<Image>();
+                if (contentImg != null) contentImg.color = ContentScrimColor;
+                var contentOutline = pr.GetComponent<Outline>();
+                if (contentOutline != null) contentOutline.effectColor = Color.clear;
+                foreach (var btn in pr.GetComponentsInChildren<Button>(true))
+                    StyleButtonForBackground(btn);
+            }
 
             panel.SetActive(false);
             return panel;
@@ -1372,7 +1382,7 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.16f, 0.28f), new Vector2(0.84f, 0.38f), Vector2.zero, Vector2.zero);
             begin.onClick.RemoveAllListeners();
             begin.onClick.AddListener(mc.LaunchSeasonalChallenge);
-            ApplyMenuButtonIcon(begin, "GeneratedIcons/icon_lantern_of_clarity");
+            ApplyMenuButtonIcon(begin, "items/icon_lantern_of_clarity");
             begin.name = "BtnBeginMonthly";
 
             var back = BuildButton("BtnMonthlyBack", pr, "Back", 18);
@@ -1380,7 +1390,17 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
             back.onClick.RemoveAllListeners();
             back.onClick.AddListener(mc.ShowGameModes);
-            ApplyMenuButtonIcon(back, "GeneratedIcons/icon_torii_lock");
+            ApplyMenuButtonIcon(back, "ui/icon_ink_save");
+
+            if (ApplyPanelBackground(panel.GetComponent<Image>(), "background/bg_monthly_walk"))
+            {
+                var contentImg = pr.GetComponent<Image>();
+                if (contentImg != null) contentImg.color = ContentScrimColor;
+                var contentOutline = pr.GetComponent<Outline>();
+                if (contentOutline != null) contentOutline.effectColor = Color.clear;
+                foreach (var btn in pr.GetComponentsInChildren<Button>(true))
+                    StyleButtonForBackground(btn);
+            }
 
             panel.SetActive(false);
             return panel;
@@ -1409,11 +1429,11 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
             back.onClick.RemoveAllListeners();
             back.onClick.AddListener(mc.BackToMainMenu);
-            ApplyMenuButtonIcon(back, "GeneratedIcons/icon_torii_lock");
+            ApplyMenuButtonIcon(back, "ui/icon_ink_save");
 
             itemsCtrl.Configure(scrollContent);
 
-            if (ApplyPanelBackground(panel.GetComponent<Image>(), "GeneratedIcons/ui_items_menu"))
+            if (ApplyPanelBackground(panel.GetComponent<Image>(), "background/bg_items_menu"))
             {
                 var contentImg = pr.GetComponent<Image>();
                 if (contentImg != null) contentImg.color = ContentScrimColor;
@@ -1618,7 +1638,7 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
             back.onClick.RemoveAllListeners();
             back.onClick.AddListener(mc.BackFromPanel);
-            ApplyMenuButtonIcon(back, "GeneratedIcons/icon_torii_lock");
+            ApplyMenuButtonIcon(back, "ui/icon_ink_save");
 
             panel.SetActive(false);
             return panel;
@@ -1785,7 +1805,7 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
             back.onClick.RemoveAllListeners();
             back.onClick.AddListener(mc.BackFromPanel);
-            ApplyMenuButtonIcon(back, "GeneratedIcons/icon_torii_lock");
+            ApplyMenuButtonIcon(back, "ui/icon_ink_save");
 
             panel.SetActive(false);
             return panel;
@@ -1850,7 +1870,17 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
             back.onClick.RemoveAllListeners();
             back.onClick.AddListener(mc.BackToMainMenu);
-            ApplyMenuButtonIcon(back, "GeneratedIcons/icon_torii_lock");
+            ApplyMenuButtonIcon(back, "ui/icon_ink_save");
+
+            if (ApplyPanelBackground(panel.GetComponent<Image>(), "background/bg_profile_select"))
+            {
+                var contentImg = pr.GetComponent<Image>();
+                if (contentImg != null) contentImg.color = ContentScrimColor;
+                var contentOutline = pr.GetComponent<Outline>();
+                if (contentOutline != null) contentOutline.effectColor = Color.clear;
+                foreach (var btn in pr.GetComponentsInChildren<Button>(true))
+                    StyleButtonForBackground(btn);
+            }
 
             panel.SetActive(false);
             return panel;

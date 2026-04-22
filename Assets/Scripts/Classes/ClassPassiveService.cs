@@ -1,5 +1,6 @@
 using System;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Economy;
 
 namespace SudokuRoguelike.Classes
 {
@@ -25,12 +26,14 @@ namespace SudokuRoguelike.Classes
                     break;
 
                 case ClassId.KoiGambler:
-                    // 25% chance (+3% per prestige) correct placement grants +1 Gold
-                    var goldChance = KoiGoldChance(state);
+                    // GildedKoiScale: 25%→35% proc chance, +1 gold → +2 gold
+                    var hasScale = RelicService.HasRelicOfType(state, RelicId.GildedKoiScale);
+                    var goldChance = hasScale ? 0.35 : KoiGoldChance(state);
                     if (new Random(state.Seed ^ level.CorrectPlacements).NextDouble() < goldChance)
                     {
-                        state.CurrentGold++;
-                        return 1;
+                        var goldGain = hasScale ? 2 : 1;
+                        state.CurrentGold += goldGain;
+                        return goldGain;
                     }
                     break;
 
@@ -50,8 +53,9 @@ namespace SudokuRoguelike.Classes
         {
             if (state.ClassId == ClassId.KoiGambler)
             {
-                // 25% chance no HP cost on wrong placement (30% at KoiGambler L10+)
-                var noHpChance = KoiNoHpChance(state);
+                // GildedKoiScale: 25%→35% no-HP chance on wrong placement
+                var hasScale = RelicService.HasRelicOfType(state, RelicId.GildedKoiScale);
+                var noHpChance = hasScale ? 0.35 : KoiNoHpChance(state);
                 if (new Random(state.Seed ^ state.CurrentHP ^ state.CurrentGold).NextDouble() < noHpChance)
                     return true; // absorbed
             }

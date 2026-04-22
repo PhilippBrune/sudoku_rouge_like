@@ -186,6 +186,7 @@ namespace SudokuRoguelike.UI
         }
 
         public RunDirector Run => _run;
+        public ProfileService Profile => _profile;
 
         /// <summary>Returns a short preview string for the boss node shown on the map,
         /// e.g. "3 mods — High intensity — Floor modifier: GermanWhispers".</summary>
@@ -209,6 +210,20 @@ namespace SudokuRoguelike.UI
             }
             var intensity = BossService.IntensityForRunNumber(_run.State.RunNumber);
             sb.Append($" | Intensity: {intensity}");
+            // DimLantern: reveal the modifier pool that will appear at the boss gate
+            if (_run.State.DimLanternUsed)
+            {
+                var choices = _run.RollBossModifierChoices();
+                if (choices != null && choices.Count > 0)
+                {
+                    sb.Append(" | Gate pool: ");
+                    for (var i = 0; i < choices.Count; i++)
+                    {
+                        if (i > 0) sb.Append(", ");
+                        sb.Append(FormatModName(choices[i]));
+                    }
+                }
+            }
             return sb.ToString();
         }
 

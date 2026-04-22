@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using SudokuRoguelike.Boss;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Economy;
 using SudokuRoguelike.Run;
 using UnityEngine;
 using UnityEngine.UI;
@@ -78,7 +79,7 @@ namespace SudokuRoguelike.UI
             rt.offsetMin = Vector2.zero;
             rt.offsetMax = Vector2.zero;
             var cursedPanelBase = InRunUiFactory.CursedPanelBg;
-            panel.AddComponent<Image>().color = new Color(cursedPanelBase.r, cursedPanelBase.g, cursedPanelBase.b, 0.40f);
+            panel.AddComponent<Image>().color = new Color(cursedPanelBase.r, cursedPanelBase.g, cursedPanelBase.b, 0.80f);
             InRunUiFactory.AddPanelBackground(panel.transform, "bg_curse");
 
             var titleTxt = InRunUiFactory.CreateText(panel.transform, "Title", "Cursed Tile!", 18, TextAnchor.UpperCenter,
@@ -115,7 +116,16 @@ namespace SudokuRoguelike.UI
                 onDecline?.Invoke(normalConfig);
             });
 
+            // Explicit horizontal D-pad nav between the two choice buttons
+            var aNav = btnAccept.navigation;
+            aNav.mode = Navigation.Mode.Explicit; aNav.selectOnRight = btnDecline;
+            btnAccept.navigation = aNav;
+            var dNav = btnDecline.navigation;
+            dNav.mode = Navigation.Mode.Explicit; dNav.selectOnLeft = btnAccept;
+            btnDecline.navigation = dNav;
+
             ActivePanel = panel;
+            FadeInPanel(panel);
             InRunUiFactory.SelectFirstInteractable(panel);
         }
 
@@ -133,7 +143,7 @@ namespace SudokuRoguelike.UI
             pr.offsetMin = Vector2.zero;
             pr.offsetMax = Vector2.zero;
             var bossGatePanelBg = InRunUiFactory.PanelBg;
-            _bossGatePanel.GetComponent<Image>().color = new Color(bossGatePanelBg.r, bossGatePanelBg.g, bossGatePanelBg.b, 0.40f);
+            _bossGatePanel.GetComponent<Image>().color = new Color(bossGatePanelBg.r, bossGatePanelBg.g, bossGatePanelBg.b, 0.72f);
             InRunUiFactory.AddPanelBackground(_bossGatePanel.transform, "bg_boss_gate");
 
             _bossGateTitle = InRunUiFactory.CreateText(_bossGatePanel.transform, "Title",
@@ -157,7 +167,10 @@ namespace SudokuRoguelike.UI
                 var btn = InRunUiFactory.CreatePanelButton(_bossGatePanel.transform, $"Mod_{i}",
                     new Vector2(xMin, yMax - 0.22f), new Vector2(xMin + 0.28f, yMax),
                     labelText);
-                InRunUiFactory.SetButtonIcon(btn, seen ? BossService.GetIconName(mod) : null, !seen);
+                var modIconName = seen ? BossService.GetIconName(mod) : "";
+                if (seen && string.IsNullOrEmpty(modIconName))
+                    Debug.LogWarning($"[BossGateViewController] No icon mapped for seen modifier: {mod}");
+                InRunUiFactory.SetButtonIcon(btn, seen ? modIconName : "petal_orb", !seen, seen ? "modifier" : "ui");
                 var captured = mod;
                 btn.onClick.AddListener(() => ToggleBossModSelection(captured, btn));
             }
@@ -168,13 +181,60 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.35f, 0.02f), new Vector2(0.65f, 0.10f),
                 "Confirm");
             var confirmCols = confirmBtn.colors;
-            confirmCols.disabledColor = new Color(0.30f, 0.30f, 0.35f, 0.90f);
+            confirmCols.disabledColor = InRunUiFactory.BtnDisabled;
             confirmBtn.colors = confirmCols;
             confirmBtn.interactable = false;
             confirmBtn.onClick.AddListener(ConfirmBossGateAll);
             confirmBtn.gameObject.name = "ConfirmBossBtn";
 
+            // Wire explicit D-pad grid navigation (3-column layout)
+            var modCount = _bossGateOptions.Count;
+            for (var i = 0; i < modCount; i++)
+            {
+                var btnGo = _bossGatePanel.transform.Find($"Mod_{i}");
+                if (btnGo == null) continue;
+                var btn = btnGo.GetComponent<Button>();
+                if (btn == null) continue;
+                var nav = new Navigation { mode = Navigation.Mode.Explicit };
+                if (i % 3 < 2 && i + 1 < modCount)
+                    nav.selectOnRight = _bossGatePanel.transform.Find($"Mod_{i + 1}")?.GetComponent<Button>();
+                if (i % 3 > 0)
+                    nav.selectOnLeft  = _bossGatePanel.transform.Find($"Mod_{i - 1}")?.GetComponent<Button>();
+                nav.selectOnDown  = (i + 3 < modCount)
+                    ? _bossGatePanel.transform.Find($"Mod_{i + 3}")?.GetComponent<Button>()
+                    : confirmBtn;
+                if (i >= 3)
+                    nav.selectOnUp    = _bossGatePanel.transform.Find($"Mod_{i - 3}")?.GetComponent<Button>();
+                btn.navigation = nav;
+            }
+            // Confirm: up goes back to the first button in the last row
+            var lastRowFirst = (modCount / 3) * 3;
+            var cNav = confirmBtn.navigation;
+            cNav.mode = Navigation.Mode.Explicit;
+            cNav.selectOnUp = _bossGatePanel.transform.Find($"Mod_{lastRowFirst}")?.GetComponent<Button>();
+            confirmBtn.navigation = cNav;
+
+            // WardingFlame: show "Remove Modifier" button if relic held and not yet used
+            var run3 = _map?.Run;
+            if (run3 != null && RelicService.HasRelicOfType(run3.State, RelicId.WardingFlame) && !run3.State.WardingFlameUsed)
+            {
+                var wardingBtn = InRunUiFactory.CreatePanelButton(_bossGatePanel.transform, "BtnWardingFlame",
+                    new Vector2(0.05f, 0.02f), new Vector2(0.33f, 0.10f), "Warding Flame: Remove 1 Mod");
+                wardingBtn.onClick.AddListener(() =>
+                {
+                    if (_bossGateOptions.Count > 0 && RelicService.TryWardingFlame(run3.State))
+                    {
+                        _bossGateOptions.RemoveAt(0); // remove first (lowest-tier) option
+                        _selectedBossMods.RemoveAll(m => !_bossGateOptions.Contains(m));
+                        Object.Destroy(_bossGatePanel);
+                        _bossGatePanel = null;
+                        BuildBossGatePanel();
+                    }
+                });
+            }
+
             ActivePanel = _bossGatePanel;
+            FadeInPanel(_bossGatePanel);
             InRunUiFactory.SelectFirstInteractable(_bossGatePanel);
         }
 
@@ -241,6 +301,14 @@ namespace SudokuRoguelike.UI
             if (_bossGatePanel != null) { Object.Destroy(_bossGatePanel); _bossGatePanel = null; }
 
             OnModsConfirmed?.Invoke(new List<BossModifierId>(_selectedBossMods));
+        }
+
+        private void FadeInPanel(GameObject panel)
+        {
+            var cg = panel.GetComponent<CanvasGroup>();
+            if (cg == null) cg = panel.AddComponent<CanvasGroup>();
+            cg.alpha = 0f;
+            StartCoroutine(AnimationHelper.FadeIn(cg, AnimationHelper.MenuPanelDuration));
         }
     }
 }

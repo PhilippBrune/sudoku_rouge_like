@@ -118,15 +118,14 @@ namespace SudokuRoguelike.UI
             layout.childForceExpandWidth = true;
             layout.padding = new RectOffset(8, 8, 8, 8);
             EnsureComponent<ContentSizeFitter>(optionsArea.gameObject).verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            EnsureComponent<RectMask2D>(optionsArea.gameObject); // clips options that exceed the anchored region
 
             var result = BuildText("ResultText", panel.transform as RectTransform, string.Empty, smallFontSize, TextAnchor.LowerLeft);
             SetRect(result.rectTransform, new Vector2(0.04f, 0.06f), new Vector2(0.75f, 0.18f), Vector2.zero, Vector2.zero);
 
             var closeButton = BuildButton("CloseButton", panel.transform as RectTransform, "Back", bodyFontSize);
             SetRect(closeButton.GetComponent<RectTransform>(), new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
-            ApplyButtonIcon(closeButton, "torii_lock");
-            closeButton.onClick.RemoveAllListeners();
-            closeButton.onClick.AddListener(controller.CloseEvent);
+            ApplyButtonIcon(closeButton, "ink_save", "ui");
 
             controller.Configure(panel, title, result, optionsArea);
 
@@ -143,10 +142,19 @@ namespace SudokuRoguelike.UI
             var title = BuildText("TitleText", panel.transform as RectTransform, "Curses (0)", bodyFontSize, TextAnchor.UpperLeft);
             SetRect(title.rectTransform, new Vector2(0.06f, 0.80f), new Vector2(0.94f, 0.96f), Vector2.zero, Vector2.zero);
 
-            var list = BuildText("CurseListText", panel.transform as RectTransform, "No active curses.", smallFontSize, TextAnchor.UpperLeft);
-            SetRect(list.rectTransform, new Vector2(0.06f, 0.22f), new Vector2(0.94f, 0.78f), Vector2.zero, Vector2.zero);
+            // Icon column on the left — CursePanelController populates it dynamically per curse
+            var iconColGo = new GameObject("CurseIconColumn", typeof(RectTransform));
+            iconColGo.transform.SetParent(panel.transform, false);
+            var iconColRt = iconColGo.GetComponent<RectTransform>();
+            iconColRt.anchorMin = new Vector2(0.02f, 0.22f);
+            iconColRt.anchorMax = new Vector2(0.20f, 0.78f);
+            iconColRt.offsetMin = iconColRt.offsetMax = Vector2.zero;
 
-            controller.Configure(title, list);
+            // List text shifted right to leave room for icons
+            var list = BuildText("CurseListText", panel.transform as RectTransform, "No active curses.", smallFontSize, TextAnchor.UpperLeft);
+            SetRect(list.rectTransform, new Vector2(0.22f, 0.22f), new Vector2(0.94f, 0.78f), Vector2.zero, Vector2.zero);
+
+            controller.Configure(title, list, iconColRt);
             return panel;
         }
 
@@ -163,15 +171,15 @@ namespace SudokuRoguelike.UI
 
             var calmPath = BuildButton("BtnPathA", panel.transform as RectTransform, "Path A (A)", smallFontSize);
             SetRect(calmPath.GetComponent<RectTransform>(), new Vector2(0.66f, 0.52f), new Vector2(0.79f, 0.88f), Vector2.zero, Vector2.zero);
-            ApplyButtonIcon(calmPath, "bud");
+            ApplyButtonIcon(calmPath, "bud", "meta");
 
             var riskyPath = BuildButton("BtnPathB", panel.transform as RectTransform, "Path B (B)", smallFontSize);
             SetRect(riskyPath.GetComponent<RectTransform>(), new Vector2(0.80f, 0.52f), new Vector2(0.93f, 0.88f), Vector2.zero, Vector2.zero);
-            ApplyButtonIcon(riskyPath, "golden_koi");
+            ApplyButtonIcon(riskyPath, "golden_koi", "items");
 
             var quitAndSave = BuildButton("BtnQuitSave", panel.transform as RectTransform, "Save & Quit", smallFontSize);
             SetRect(quitAndSave.GetComponent<RectTransform>(), new Vector2(0.66f, 0.10f), new Vector2(0.93f, 0.46f), Vector2.zero, Vector2.zero);
-            ApplyButtonIcon(quitAndSave, "torii_lock");
+            ApplyButtonIcon(quitAndSave, "ink_save", "ui");
 
             return panel;
         }
@@ -196,84 +204,9 @@ namespace SudokuRoguelike.UI
 
         private void BuildPathOverviewPanel(RectTransform root)
         {
-            Text overviewText, laneAText, laneBText;
-            RectTransform laneAPathRoot, laneBPathRoot;
-            Button saveQuit;
             var panel = EnsureRect("PathOverviewPanel", root, new Vector2(0.03f, 0.03f), new Vector2(0.97f, 0.97f), Vector2.zero, Vector2.zero).gameObject;
-            EnsureOrGetImage(panel, new Color(panelColor.r, panelColor.g, panelColor.b, 0.97f)); // solid variant of panelColor
-
-            var title = BuildText("PathOverviewTitle", panel.transform as RectTransform, "Garden Path Overview", 34, TextAnchor.UpperCenter);
-            // Anchored below the 22px FloorProgressBar strip — was 0.92–0.99 which overlapped it
-            SetRect(title.rectTransform, new Vector2(0.02f, 0.84f), new Vector2(0.98f, 0.93f), Vector2.zero, Vector2.zero);
-            // Shadow ensures the title reads on bright floor backgrounds (Garden Grove, Shrine Garden)
-            var titleShadow = title.gameObject.AddComponent<Shadow>();
-            titleShadow.effectColor    = new Color(0f, 0f, 0f, 0.80f);
-            titleShadow.effectDistance = new Vector2(2f, -2f);
-
-            overviewText = BuildText("PathOverviewText", panel.transform as RectTransform, "", 20, TextAnchor.UpperCenter);
-            SetRect(overviewText.rectTransform, new Vector2(0.06f, 0.82f), new Vector2(0.94f, 0.91f), Vector2.zero, Vector2.zero);
-
-            laneAText = BuildText("PathLaneAText", panel.transform as RectTransform, "", 18, TextAnchor.UpperCenter);
-            SetRect(laneAText.rectTransform, new Vector2(0.08f, 0.72f), new Vector2(0.45f, 0.80f), Vector2.zero, Vector2.zero);
-
-            laneBText = BuildText("PathLaneBText", panel.transform as RectTransform, "", 18, TextAnchor.UpperCenter);
-            SetRect(laneBText.rectTransform, new Vector2(0.55f, 0.72f), new Vector2(0.92f, 0.80f), Vector2.zero, Vector2.zero);
-
-            laneAPathRoot = BuildPathLaneScroll(
-                "LaneAPathScroll",
-                panel.transform as RectTransform,
-                new Vector2(0.08f, 0.24f),
-                new Vector2(0.45f, 0.70f),
-                "LaneAPathRoot");
-
-            laneBPathRoot = BuildPathLaneScroll(
-                "LaneBPathScroll",
-                panel.transform as RectTransform,
-                new Vector2(0.55f, 0.24f),
-                new Vector2(0.92f, 0.70f),
-                "LaneBPathRoot");
-
-            saveQuit = BuildButton("BtnPathOverviewSaveQuit", panel.transform as RectTransform, "Save & Quit", 20);
-            SetRect(saveQuit.GetComponent<RectTransform>(), new Vector2(0.72f, 0.10f), new Vector2(0.92f, 0.18f), Vector2.zero, Vector2.zero);
-            ApplyButtonIcon(saveQuit, "torii_lock");
-        }
-
-        private RectTransform BuildPathLaneScroll(string name, RectTransform parent, Vector2 anchorMin, Vector2 anchorMax, string contentName)
-        {
-            var scrollRoot = EnsureRect(name, parent, anchorMin, anchorMax, Vector2.zero, Vector2.zero);
-            EnsureOrGetImage(scrollRoot.gameObject, InRunUiFactory.LaneScrollBg);
-
-            var viewport = EnsureRect("Viewport", scrollRoot, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
-            var viewportImage = EnsureOrGetImage(viewport.gameObject, InRunUiFactory.LaneViewportBg);
-            var mask = EnsureComponent<Mask>(viewport.gameObject);
-            mask.showMaskGraphic = false;
-            viewportImage.raycastTarget = true;
-
-            var content = EnsureRect(contentName, viewport, new Vector2(0f, 0f), new Vector2(1f, 1f), new Vector2(8f, 8f), new Vector2(-8f, -8f));
-            content.pivot = new Vector2(0.5f, 0.5f);
-
-            var layout = EnsureComponent<VerticalLayoutGroup>(content.gameObject);
-            layout.childAlignment = TextAnchor.UpperCenter;
-            layout.childControlHeight = true;
-            layout.childControlWidth = false;
-            layout.childForceExpandHeight = false;
-            layout.childForceExpandWidth = false;
-            layout.spacing = 8f;
-            layout.padding = new RectOffset(0, 0, 0, 0);
-
-            var fitter = EnsureComponent<ContentSizeFitter>(content.gameObject);
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-
-            var scroll = EnsureComponent<ScrollRect>(scrollRoot.gameObject);
-            scroll.viewport = viewport;
-            scroll.content = content;
-            scroll.horizontal = false;
-            scroll.vertical = true;
-            scroll.movementType = ScrollRect.MovementType.Clamped;
-            scroll.scrollSensitivity = 22f;
-
-            return content;
+            EnsureOrGetImage(panel, new Color(panelColor.r, panelColor.g, panelColor.b, 0.97f));
+            // Save & Quit button is built dynamically inside PathLegend by InRunController.RebuildPathCanvas
         }
 
         private void BuildSudokuGameplayPanel(RectTransform root)
@@ -291,9 +224,11 @@ namespace SudokuRoguelike.UI
             var levelInfo = BuildText("SudokuGameplayLevelInfo", panel.transform as RectTransform, "Level: -  Depth: -", 18, TextAnchor.MiddleCenter);
             SetRect(levelInfo.rectTransform, new Vector2(0.30f, 0.87f), new Vector2(0.70f, 0.92f), Vector2.zero, Vector2.zero);
 
-            var modifiersLabel = BuildText("SudokuGameplayModifiers", panel.transform as RectTransform, "", 13, TextAnchor.MiddleCenter);
-            SetRect(modifiersLabel.rectTransform, new Vector2(0.28f, 0.835f), new Vector2(0.72f, 0.865f), Vector2.zero, Vector2.zero);
-            modifiersLabel.color = new Color(1f, 0.65f, 0.30f, 1f);
+            // Dark scrim behind the center-top info band (LevelInfo + Modifiers + Status)
+            var infoScrim = EnsureRect("InfoScrimBg", panel.transform as RectTransform,
+                new Vector2(0.27f, 0.785f), new Vector2(0.73f, 0.925f), Vector2.zero, Vector2.zero);
+            var infoScrimImg = EnsureOrGetImage(infoScrim.gameObject, new Color(0.04f, 0.06f, 0.09f, 0.50f));
+            infoScrimImg.raycastTarget = false;
 
             statusText = BuildText("SudokuGameplayStatus", panel.transform as RectTransform, "Select a path and start solving.", 19, TextAnchor.MiddleLeft);
             SetRect(statusText.rectTransform, new Vector2(0.28f, 0.79f), new Vector2(0.72f, 0.83f), Vector2.zero, Vector2.zero);
@@ -344,11 +279,11 @@ namespace SudokuRoguelike.UI
 
             saveQuit = BuildButton("BtnSudokuSaveQuit", panel.transform as RectTransform, "Save & Quit", 18);
             SetRect(saveQuit.GetComponent<RectTransform>(), new Vector2(0.72f, 0.01f), new Vector2(0.92f, 0.09f), Vector2.zero, Vector2.zero);
-            ApplyButtonIcon(saveQuit, "torii_lock");
+            ApplyButtonIcon(saveQuit, "ink_save", "ui");
 
             optionsButton = BuildButton("BtnSudokuOptions", panel.transform as RectTransform, "Options", 18);
-            SetRect(optionsButton.GetComponent<RectTransform>(), new Vector2(0.80f, 0.92f), new Vector2(0.94f, 0.99f), Vector2.zero, Vector2.zero);
-            ApplyButtonIcon(optionsButton, "stone_gear");
+            SetRect(optionsButton.GetComponent<RectTransform>(), new Vector2(0.88f, 0.82f), new Vector2(0.99f, 0.91f), Vector2.zero, Vector2.zero);
+            ApplyButtonIcon(optionsButton, "stone_gear", "ui");
 
             gridRoot = EnsureRect("SudokuGameplayGridRoot", panel.transform as RectTransform, new Vector2(0.22f, 0.16f), new Vector2(0.70f, 0.76f), Vector2.zero, Vector2.zero);
             EnsureOrGetImage(gridRoot.gameObject, new Color(0f, 0f, 0f, 0.20f));
@@ -388,7 +323,7 @@ namespace SudokuRoguelike.UI
 
             backButton = BuildButton("BtnGameOverBack", panel.transform as RectTransform, "Back", 18);
             SetRect(backButton.GetComponent<RectTransform>(), new Vector2(0.54f, 0.04f), new Vector2(0.90f, 0.12f), Vector2.zero, Vector2.zero);
-            ApplyButtonIcon(backButton, "torii_lock");
+            ApplyButtonIcon(backButton, "ink_save", "ui");
         }
 
         private GameObject BuildInGameOptionsPanel(RectTransform root)
@@ -493,8 +428,7 @@ namespace SudokuRoguelike.UI
 
             var closeBtn = BuildButton("BtnInGameOptionsClose", pr, "Back", 18);
             SetRect(closeBtn.GetComponent<RectTransform>(), new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
-            ApplyButtonIcon(closeBtn, "torii_lock");
-            closeBtn.onClick.AddListener(() => panel.SetActive(false));
+            ApplyButtonIcon(closeBtn, "ink_save", "ui");
 
             return panel;
         }
@@ -502,7 +436,7 @@ namespace SudokuRoguelike.UI
         private Text BuildTutorialBanner(RectTransform root)
         {
             var label = BuildText("TutorialBanner", root, "TUTORIAL MODE\nNo Progression Rewards", bodyFontSize, TextAnchor.UpperRight);
-            SetRect(label.rectTransform, new Vector2(0.66f, 0.92f), new Vector2(0.98f, 0.995f), Vector2.zero, Vector2.zero);
+            SetRect(label.rectTransform, new Vector2(0.66f, 0.835f), new Vector2(0.98f, 0.920f), Vector2.zero, Vector2.zero);
             label.color = accentColor;
             return label;
         }
@@ -594,9 +528,9 @@ namespace SudokuRoguelike.UI
             return text;
         }
 
-        private static void ApplyButtonIcon(Button btn, string iconName)
+        private static void ApplyButtonIcon(Button btn, string iconName, string subfolder = "GeneratedIcons")
         {
-            var sprite = Resources.Load<Sprite>("GeneratedIcons/icon_" + iconName);
+            var sprite = Resources.Load<Sprite>(subfolder + "/icon_" + iconName);
             if (sprite == null) return;
 
             // Find or destroy existing Icon child to avoid duplicates on rebuild

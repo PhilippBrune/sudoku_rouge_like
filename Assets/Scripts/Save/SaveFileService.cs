@@ -33,26 +33,40 @@ namespace SudokuRoguelike.Save
             foreach (var path in new[] { SavePath, SavePath + ".bak" })
             {
                 if (!File.Exists(path)) continue;
-                try
+
+                // File.Replace() on Windows (via ReplaceFile()) briefly holds an exclusive
+                // lock on the destination while it performs the atomic swap, which can cause a
+                // sharing violation even though we open with FileShare.ReadWrite.
+                // FileShare.Delete additionally permits the rename/replace to proceed while we
+                // have a handle open.  The retry loop (3×5 ms) covers that tiny exclusive window.
+                string json = null;
+                for (int attempt = 0; attempt < 3; attempt++)
                 {
-                    // FileShare.ReadWrite allows the background write thread to Replace/Move
-                    // the file while we're reading it, preventing sharing violations.
-                    string json;
-                    using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                    using (var reader = new System.IO.StreamReader(fs, System.Text.Encoding.UTF8))
-                        json = reader.ReadToEnd();
-                    var result = JsonUtility.FromJson<SaveFileEnvelope>(json);
-                    if (result != null) return result;
+                    try
+                    {
+                        using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+                        using (var reader = new System.IO.StreamReader(fs, System.Text.Encoding.UTF8))
+                            json = reader.ReadToEnd();
+                        break; // success
+                    }
+                    catch (IOException) when (attempt < 2)
+                    {
+                        System.Threading.Thread.Sleep(5);
+                    }
+                    catch (Exception e)
+                    {
+                        // FileNotFound can occur in a rare race between Exists() and open.
+                        if (e is System.IO.FileNotFoundException)
+                            Debug.Log($"[SaveFileService] '{path}' not found on read — trying backup.");
+                        else
+                            Debug.LogWarning($"[SaveFileService] Failed to load '{path}': {e.Message} — trying backup.");
+                        break;
+                    }
                 }
-                catch (Exception e)
-                {
-                    // FileNotFound can occur in a rare race between Exists() and ReadAllText().
-                    // Other exceptions (parse errors, IO failures) are genuine warnings.
-                    if (e is System.IO.FileNotFoundException)
-                        Debug.Log($"[SaveFileService] '{path}' not found on read — trying backup.");
-                    else
-                        Debug.LogWarning($"[SaveFileService] Failed to load '{path}': {e.Message} — trying backup.");
-                }
+
+                if (json == null) continue;
+                var result = JsonUtility.FromJson<SaveFileEnvelope>(json);
+                if (result != null) return result;
             }
             return new SaveFileEnvelope();
         }

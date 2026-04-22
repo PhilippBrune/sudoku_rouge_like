@@ -172,6 +172,26 @@ namespace SudokuRoguelike.Core
         // ── Input query (keyboard OR gamepad) ────────────────────────────────────
 
         /// <summary>
+        /// Returns true if the action's gamepad button was pressed this frame,
+        /// OR if the left-stick axis crossed the threshold for movement actions.
+        /// Does NOT check the keyboard binding — use this inside gamepad-specific handlers
+        /// to avoid double-firing when arrow keys are also bound to the same action.
+        /// </summary>
+        public bool WasGamepadActionPressed(InputAction action)
+        {
+            var pad = GetGamepadDefault(action);
+            if (pad != KeyCode.None && Input.GetKeyDown(pad)) return true;
+            return action switch
+            {
+                InputAction.MoveUp    => WasAxisPressed(AxisVertical,   +1),
+                InputAction.MoveDown  => WasAxisPressed(AxisVertical,   -1),
+                InputAction.MoveLeft  => WasAxisPressed(AxisHorizontal, -1),
+                InputAction.MoveRight => WasAxisPressed(AxisHorizontal, +1),
+                _ => false
+            };
+        }
+
+        /// <summary>
         /// Returns true if the action's keyboard binding was pressed this frame,
         /// OR if the mapped gamepad button was pressed, OR if the left-stick axis
         /// crossed the threshold for movement actions.

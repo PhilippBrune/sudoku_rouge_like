@@ -22,6 +22,8 @@ namespace SudokuRoguelike.UI
         private GameObject _sudokuPanel;
         private Text _hpText;
         private Text _pencilText;
+        private Image _classBadgeIcon;
+        private Text  _classBadgeText;
 
         // ── HUD bar images ──
         private Image _hpBarFill;
@@ -169,6 +171,17 @@ namespace SudokuRoguelike.UI
             // Timer display — lazy-created the first time
             if (_timerText == null && _sudokuPanel != null)
             {
+                // Shared dark scrim behind both timers
+                var timerBg = new GameObject("TimerBg", typeof(RectTransform), typeof(Image));
+                timerBg.transform.SetParent(_sudokuPanel.transform, false);
+                var timerBgRt = timerBg.GetComponent<RectTransform>();
+                timerBgRt.anchorMin = new Vector2(0.71f, 0.89f);
+                timerBgRt.anchorMax = new Vector2(1.00f, 1.00f);
+                timerBgRt.offsetMin = Vector2.zero;
+                timerBgRt.offsetMax = Vector2.zero;
+                timerBg.GetComponent<Image>().color = new Color(0.04f, 0.05f, 0.08f, 0.55f);
+                timerBg.GetComponent<Image>().raycastTarget = false;
+
                 _timerText = InRunUiFactory.CreateText(_sudokuPanel.transform, "PuzzleTimer",
                     "", 12, TextAnchor.MiddleRight, new Color(0.80f, 0.77f, 0.60f, 0.80f));
                 var rt = _timerText.rectTransform;
@@ -183,7 +196,7 @@ namespace SudokuRoguelike.UI
             if (_runTimerText == null && _sudokuPanel != null)
             {
                 _runTimerText = InRunUiFactory.CreateText(_sudokuPanel.transform, "RunTimer",
-                    "", 10, TextAnchor.MiddleRight, new Color(0.65f, 0.62f, 0.45f, 0.65f));
+                    "", 10, TextAnchor.MiddleRight, new Color(0.75f, 0.72f, 0.55f, 0.88f));
                 var rt = _runTimerText.rectTransform;
                 rt.anchorMin = new Vector2(0.72f, 0.90f);
                 rt.anchorMax = new Vector2(0.99f, 0.95f);
@@ -231,6 +244,7 @@ namespace SudokuRoguelike.UI
             EnsureModifierInfoBox();
             EnsureComboCounter();
             EnsurePassiveLabel();
+            EnsureClassBadge();
             EnsureBagPanel();
             RefreshBag();
             if (_bagHighlightEndTime > 0f && Time.time > _bagHighlightEndTime)
@@ -369,13 +383,15 @@ namespace SudokuRoguelike.UI
 
             if (_comboText == null)
             {
-                var go = new GameObject("ComboCounter", typeof(RectTransform));
+                var go = new GameObject("ComboCounter", typeof(RectTransform), typeof(Image));
                 go.transform.SetParent(_sudokuPanel.transform, false);
                 var rt = go.GetComponent<RectTransform>();
-                rt.anchorMin = new Vector2(0.30f, 0.900f);
-                rt.anchorMax = new Vector2(0.70f, 0.945f);
+                rt.anchorMin = new Vector2(0.30f, 0.875f);
+                rt.anchorMax = new Vector2(0.70f, 0.918f);
                 rt.offsetMin = Vector2.zero;
                 rt.offsetMax = Vector2.zero;
+                go.GetComponent<Image>().color = new Color(0.04f, 0.05f, 0.08f, 0.60f);
+                go.GetComponent<Image>().raycastTarget = false;
                 _comboText = InRunUiFactory.CreateText(go.transform, "ComboText", "", 18, TextAnchor.MiddleCenter,
                     GamePalette.AccentGold);
             }
@@ -403,13 +419,15 @@ namespace SudokuRoguelike.UI
 
             if (_passiveText == null)
             {
-                var go = new GameObject("PassiveLabel", typeof(RectTransform));
+                var go = new GameObject("PassiveLabel", typeof(RectTransform), typeof(Image));
                 go.transform.SetParent(_sudokuPanel.transform, false);
                 var rt = go.GetComponent<RectTransform>();
                 rt.anchorMin = new Vector2(0.01f, 0.01f);
                 rt.anchorMax = new Vector2(0.46f, 0.06f);
                 rt.offsetMin = Vector2.zero;
                 rt.offsetMax = Vector2.zero;
+                go.GetComponent<Image>().color = new Color(0.04f, 0.06f, 0.08f, 0.55f);
+                go.GetComponent<Image>().raycastTarget = false;
                 _passiveText = InRunUiFactory.CreateText(go.transform, "PassiveText", "", 9, TextAnchor.MiddleLeft,
                     InRunUiFactory.PassiveLabelColor);
                 _passiveText.horizontalOverflow = HorizontalWrapMode.Wrap;
@@ -417,6 +435,76 @@ namespace SudokuRoguelike.UI
 
             var def = SudokuRoguelike.Classes.ClassCatalog.GetDefinition(run.State.ClassId);
             _passiveText.text = def != null ? $"Passive: {def.PassiveDescription}" : "";
+        }
+
+        // ────────────────────── Class XP badge ──────────────────────
+
+        private void EnsureClassBadge()
+        {
+            var run = _map?.Run;
+            if (run?.State == null || _sudokuPanel == null) return;
+
+            if (_classBadgeIcon == null)
+            {
+                // Small badge panel in top-right corner of sudoku panel
+                var badgeGo = new GameObject("ClassBadge", typeof(RectTransform), typeof(Image));
+                badgeGo.transform.SetParent(_sudokuPanel.transform, false);
+                var rt = badgeGo.GetComponent<RectTransform>();
+                rt.anchorMin = new Vector2(0.01f, 0.89f);
+                rt.anchorMax = new Vector2(0.22f, 1.00f);
+                rt.offsetMin = rt.offsetMax = Vector2.zero;
+                badgeGo.GetComponent<Image>().color = new Color(0.04f, 0.06f, 0.08f, 0.55f);
+                badgeGo.GetComponent<Image>().raycastTarget = false;
+
+                var iconGo = new GameObject("ClassIcon", typeof(RectTransform), typeof(Image));
+                iconGo.transform.SetParent(badgeGo.transform, false);
+                var iconRt = iconGo.GetComponent<RectTransform>();
+                iconRt.anchorMin = new Vector2(0.04f, 0.10f);
+                iconRt.anchorMax = new Vector2(0.36f, 0.90f);
+                iconRt.offsetMin = iconRt.offsetMax = Vector2.zero;
+                _classBadgeIcon = iconGo.GetComponent<Image>();
+                _classBadgeIcon.preserveAspect = true;
+                _classBadgeIcon.raycastTarget  = false;
+
+                _classBadgeText = InRunUiFactory.CreateText(badgeGo.transform, "ClassBadgeText",
+                    "", 9, TextAnchor.MiddleLeft, InRunUiFactory.TextColor);
+                _classBadgeText.rectTransform.anchorMin = new Vector2(0.38f, 0.04f);
+                _classBadgeText.rectTransform.anchorMax = new Vector2(0.98f, 0.96f);
+                _classBadgeText.rectTransform.offsetMin = _classBadgeText.rectTransform.offsetMax = Vector2.zero;
+                _classBadgeText.raycastTarget = false;
+            }
+
+            // Refresh icon (only load once per class since ClassId doesn't change in-run)
+            var classId = run.State.ClassId;
+            var classDef = SudokuRoguelike.Classes.ClassCatalog.GetDefinition(classId);
+            if (classDef != null)
+            {
+                var iconName = SudokuRoguelike.Classes.ClassCatalog.GetIconName(classId);
+                if (_classBadgeIcon.sprite == null)
+                    _classBadgeIcon.sprite = Resources.Load<Sprite>("class/icon_" + iconName);
+
+                // Read level + prestige from meta save
+                var garden = new SudokuRoguelike.Meta.ClassGardenProgressionService();
+                var meta   = _map.Profile?.Meta;
+                if (meta != null)
+                {
+                    var level   = garden.GetLevel(meta, classId);
+                    var prestige = garden.GetPrestigeTier(meta, classId);
+                    _classBadgeText.text = prestige > 0
+                        ? $"{classDef.Name}\nLv {level} ★{prestige}"
+                        : $"{classDef.Name}\nLv {level}";
+                    // Visual cue: prestige tier drives icon tint toward gold/flame
+                    _classBadgeIcon.color = prestige >= 5
+                        ? new Color(1.00f, 0.80f, 0.25f, 1f)   // golden sakura tier
+                        : prestige >= 1
+                            ? new Color(0.85f, 0.70f, 0.50f, 1f) // warm bloom tier
+                            : Color.white;
+                }
+                else
+                {
+                    _classBadgeText.text = classDef.Name;
+                }
+            }
         }
 
         // ────────────────────── Bag panel ──────────────────────
@@ -687,7 +775,7 @@ namespace SudokuRoguelike.UI
                     btn.interactable = true;
                     if (iconImg != null)
                     {
-                        var spr = Resources.Load<Sprite>("GeneratedIcons/icon_" + ItemService.GetIconName(item.Type));
+                        var spr = Resources.Load<Sprite>("items/icon_" + ItemService.GetIconName(item.Type));
                         iconImg.sprite = spr;
                         iconImg.color = spr != null ? Color.white : InRunUiFactory.IconNoSprite;
                         iconImg.preserveAspect = true;
@@ -702,7 +790,12 @@ namespace SudokuRoguelike.UI
                 else
                 {
                     btn.interactable = false;
-                    if (iconImg != null) { iconImg.sprite = null; iconImg.color = InRunUiFactory.IconEmpty; }
+                    if (iconImg != null)
+                    {
+                        iconImg.sprite = Resources.Load<Sprite>("economy/icon_empty_slot");
+                        iconImg.color = InRunUiFactory.IconEmpty;
+                        iconImg.preserveAspect = true;
+                    }
                     if (nameText != null)
                     {
                         nameText.text = "Empty";
@@ -723,7 +816,7 @@ namespace SudokuRoguelike.UI
                     _bagRelicButton.interactable = true;
                     if (iconImg != null)
                     {
-                        var spr = Resources.Load<Sprite>("GeneratedIcons/icon_" + RelicService.GetIconName(relic.Id));
+                        var spr = Resources.Load<Sprite>(RelicService.GetIconFolder(relic.Id) + "/icon_" + RelicService.GetIconName(relic.Id));
                         iconImg.sprite = spr;
                         iconImg.color = spr != null ? Color.white : InRunUiFactory.IconNoSprite;
                         iconImg.preserveAspect = true;
@@ -754,7 +847,7 @@ namespace SudokuRoguelike.UI
                 var relic   = (heldRelics != null && ri < heldRelics.Count) ? heldRelics[ri] : null;
                 if (relic != null && iconImg != null)
                 {
-                    var spr = Resources.Load<Sprite>("GeneratedIcons/icon_" + RelicService.GetIconName(relic.Id));
+                    var spr = Resources.Load<Sprite>(RelicService.GetIconFolder(relic.Id) + "/icon_" + RelicService.GetIconName(relic.Id));
                     iconImg.sprite = spr;
                     iconImg.color = spr != null ? Color.white : InRunUiFactory.IconNoSprite;
                     iconImg.preserveAspect = true;

@@ -202,19 +202,53 @@ namespace SudokuRoguelike.UI
         // Called from MainMenuController.OpenTutorial() to show only classes the player has unlocked
         public void RefreshClassDropdown(List<ClassId> unlockedClasses)
         {
-            if (_classDropdown == null || unlockedClasses == null || unlockedClasses.Count == 0) return;
+            if (unlockedClasses == null || unlockedClasses.Count == 0) return;
             _availableClasses = new List<ClassId>(unlockedClasses);
-            _classDropdown.ClearOptions();
-            var names = new List<string>();
-            for (var i = 0; i < _availableClasses.Count; i++)
-                names.Add(ClassCatalog.GetDefinition(_availableClasses[i]).Name);
-            _classDropdown.AddOptions(names);
-            if (_classDropdown.template != null)
-                _classDropdown.template.sizeDelta = new Vector2(0, Mathf.Min(_availableClasses.Count * 32f + 8f, 300f));
-            _classDropdown.value = 0;
+            if (_classDropdown != null)
+            {
+                _classDropdown.ClearOptions();
+                var names = new List<string>();
+                for (var i = 0; i < _availableClasses.Count; i++)
+                    names.Add(ClassCatalog.GetDefinition(_availableClasses[i]).Name);
+                _classDropdown.AddOptions(names);
+                if (_classDropdown.template != null)
+                    _classDropdown.template.sizeDelta = new Vector2(0, Mathf.Min(_availableClasses.Count * 32f + 8f, 300f));
+                _classDropdown.value = 0;
+            }
+            // MM-3: update the arrow-row label if one is registered
+            if (_classArrowLabel != null && _availableClasses.Count > 0)
+                _classArrowLabel.text = ClassCatalog.GetDefinition(_availableClasses[0]).Name;
+            SetClassIndex(0);
         }
 
         public int GetBoardSize() => _config?.BoardSize ?? 9;
         public int GetStars() => _config?.Stars ?? 1;
+
+        // ── MM-3: Public wrappers for arrow-row selectors (replaces Dropdown) ──────────────────
+
+        /// <summary>Stores the class-row RectTransform for show/hide by resource mode.</summary>
+        public void ConfigureArrowClassRow(RectTransform classRow) => _classRow = classRow;
+
+        /// <summary>Stores the Text label so RefreshClassDropdown can update it.</summary>
+        private Text _classArrowLabel;
+        public void SetClassArrowLabel(Text lbl) => _classArrowLabel = lbl;
+
+        public void SetBoardSizeIndex(int idx) => OnSizeChanged(idx);
+        public void SetStarsIndex(int idx)     => OnStarsChanged(idx);
+        public void SetRegionIndex(int idx)    => OnRegionChanged(idx);
+
+        public void SetResourceModeIndex(int idx)
+        {
+            if (_config == null) _config = new TutorialSetupConfig();
+            OnResourceModeDropdownChanged(idx);
+        }
+
+        public void SetClassIndex(int idx)
+        {
+            if (_config == null) _config = new TutorialSetupConfig();
+            if (idx >= 0 && idx < _availableClasses.Count)
+                _config.SimulationClassId = _availableClasses[idx];
+            UpdateStartButtonState();
+        }
     }
 }

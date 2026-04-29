@@ -513,6 +513,7 @@ namespace SudokuRoguelike.UI
             rt.anchorMax = new Vector2(0.99f, 0.28f);
             rt.offsetMin = rt.offsetMax = Vector2.zero;
             _panel.GetComponent<Image>().color = new Color(0.05f, 0.06f, 0.11f, 0.94f);
+            // bg_tutorial_progress removed — the solid Image above is sufficient background.
 
             var overrideCanvas = _panel.AddComponent<Canvas>();
             overrideCanvas.overrideSorting = true;
@@ -575,6 +576,7 @@ namespace SudokuRoguelike.UI
             nLabel.rectTransform.anchorMax = Vector2.one;
             nLabel.rectTransform.offsetMin = nLabel.rectTransform.offsetMax = Vector2.zero;
             _nextBtn = nextGo.GetComponent<Button>();
+            InRunUiFactory.ApplyActionIcon(_nextBtn, UiAction.Next);
             _nextBtn.onClick.AddListener(AdvanceStep);
 
             // ── Finish ✔ button ────────────────────────────────────────────────
@@ -591,6 +593,7 @@ namespace SudokuRoguelike.UI
             fLabel.rectTransform.anchorMax = Vector2.one;
             fLabel.rectTransform.offsetMin = fLabel.rectTransform.offsetMax = Vector2.zero;
             _finishBtn = finGo.GetComponent<Button>();
+            InRunUiFactory.ApplyActionIcon(_finishBtn, UiAction.Finish);
             _finishBtn.onClick.AddListener(Finish);
             _finishBtn.gameObject.SetActive(false);
         }

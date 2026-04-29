@@ -33,8 +33,8 @@ namespace SudokuRoguelike.Classes
             // ReedDuelist: complete the item codex
             TryUnlock(meta, ClassId.ReedDuelist, progress.ItemCodexComplete, unlocked);
 
-            // QuietCartographer: clear full stage with no pencil use and no HP loss
-            TryUnlock(meta, ClassId.QuietCartographer, progress.PerfectNoPencilStage, unlocked);
+            // QuietCartographer: complete a full run (all 5 floors + boss) with zero mistakes
+            TryUnlock(meta, ClassId.QuietCartographer, progress.PerfectFullRunAllFloors, unlocked);
 
             return unlocked;
         }

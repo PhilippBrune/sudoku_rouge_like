@@ -78,7 +78,7 @@ namespace SudokuRoguelike.Core
             [InputAction.BagNext]       = KeyCode.JoystickButton13,// D-down
             [InputAction.BagPrevious]   = KeyCode.JoystickButton12,// D-up
             [InputAction.UseItem]       = KeyCode.JoystickButton0, // A/Cross
-            [InputAction.InspectItem]   = KeyCode.None,
+            [InputAction.InspectItem]   = KeyCode.JoystickButton8, // L3/LS (PS-4)
             [InputAction.HighlightDigit]= KeyCode.JoystickButton9  // R3
         };
 

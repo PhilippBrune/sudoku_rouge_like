@@ -15,8 +15,9 @@ namespace SudokuRoguelike.Economy
         }
 
         // [REQ: ECON-SHOP-001] Shop: 3 items + optional relic per visit
-        // [REQ: SHOP-PRICE-001] [REQ: ECON-SHOP-002] Price: BasePrice × (1 + FloorIndex × 0.5) × priceMultiplier
-        public List<ShopOffer> BuildOffers(int floorIndex, int classLevel, float priceMultiplier)
+        // [REQ: SHOP-PRICE-001] [REQ: ECON-SHOP-002] Price: BasePrice × (1 + FloorIndex × 0.5) × priceMultiplier × harmonySurcharge
+        // [HARMONY-ECON-002] harmonySurcharge (1.00–1.50) applies the Harmony difficulty shop penalty on top of all other multipliers.
+        public List<ShopOffer> BuildOffers(int floorIndex, int classLevel, float priceMultiplier, float harmonySurcharge)
         {
             var offers = new List<ShopOffer>();
             var slotCount = GetShopSlotCount(floorIndex);
@@ -26,7 +27,7 @@ namespace SudokuRoguelike.Economy
                 var rarity = RollShopItemRarity(floorIndex, classLevel);
                 var type = RollShopItemType(rarity);
                 var basePrice = ItemService.GetBasePrice(rarity);
-                var scaledPrice = (int)Math.Round(basePrice * (1f + floorIndex * 0.5f) * priceMultiplier);
+                var scaledPrice = (int)Math.Round(basePrice * (1f + floorIndex * 0.5f) * priceMultiplier * harmonySurcharge);
 
                 offers.Add(new ShopOffer
                 {

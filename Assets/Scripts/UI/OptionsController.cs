@@ -16,6 +16,7 @@ namespace SudokuRoguelike.UI
         /// RunAudioController reads this each frame so volume changes are instant, not disk-polled.
         /// </summary>
         public static AudioSettingsModel LiveAudio { get; private set; } = new AudioSettingsModel();
+        public static AccessibilitySettings LiveAccessibility { get; private set; } = new AccessibilitySettings();
 
         private void Awake()
         {
@@ -48,6 +49,8 @@ namespace SudokuRoguelike.UI
             if (_profile == null) _profile = new ProfileService(_saveFile);
             _options = _profile.LoadOptions();
             LiveAudio = _options.Audio;
+            LiveAccessibility = _options.Accessibility ?? new AccessibilitySettings();
+            AccessibilityAnnouncementOverlay.SetEnabled(LiveAccessibility.ScreenReaderEnabled);
             RumbleService.Enabled = _options.Gameplay.ControllerRumbleEnabled;
             // Apply graphics settings immediately so they take effect on startup/slot switch
             AudioListener.volume = _options.Audio.MasterVolume;
@@ -127,6 +130,7 @@ namespace SudokuRoguelike.UI
         public void SetColorblindMode(bool on)
         {
             GetOptions().Accessibility.ColorblindMode = on;
+            LiveAccessibility = GetOptions().Accessibility;
             SaveOptions();
             NotifyAccessibilityChanged();
         }
@@ -134,6 +138,7 @@ namespace SudokuRoguelike.UI
         public void SetHighContrast(bool on)
         {
             GetOptions().Accessibility.HighContrastMode = on;
+            LiveAccessibility = GetOptions().Accessibility;
             SaveOptions();
             NotifyAccessibilityChanged();
         }
@@ -141,6 +146,7 @@ namespace SudokuRoguelike.UI
         public void SetReduceMotion(bool on)
         {
             GetOptions().Accessibility.ReduceMotion = on;
+            LiveAccessibility = GetOptions().Accessibility;
             SaveOptions();
             NotifyAccessibilityChanged();
         }
@@ -148,6 +154,7 @@ namespace SudokuRoguelike.UI
         public void SetAltSymbols(bool on)
         {
             GetOptions().Accessibility.AlternativeConstraintSymbols = on;
+            LiveAccessibility = GetOptions().Accessibility;
             SaveOptions();
             NotifyAccessibilityChanged();
         }
@@ -155,6 +162,15 @@ namespace SudokuRoguelike.UI
         public void SetFontScale(float scale)
         {
             GetOptions().Accessibility.FontScale = Mathf.Clamp(scale, 0.8f, 1.5f);
+            LiveAccessibility = GetOptions().Accessibility;
+            SaveOptions();
+            NotifyAccessibilityChanged();
+        }
+
+        public void SetScreenReaderEnabled(bool on)
+        {
+            GetOptions().Accessibility.ScreenReaderEnabled = on;
+            LiveAccessibility = GetOptions().Accessibility;
             SaveOptions();
             NotifyAccessibilityChanged();
         }
@@ -301,6 +317,7 @@ namespace SudokuRoguelike.UI
             acc.AlternativeConstraintSymbols   = defaults.AlternativeConstraintSymbols;
             acc.FontScale                      = defaults.FontScale;
             acc.ScreenReaderEnabled            = defaults.ScreenReaderEnabled;
+            LiveAccessibility                  = acc;
             SaveOptions();
             NotifyAccessibilityChanged();
         }
@@ -316,6 +333,7 @@ namespace SudokuRoguelike.UI
 
         private void NotifyAccessibilityChanged()
         {
+            AccessibilityAnnouncementOverlay.SetEnabled(LiveAccessibility.ScreenReaderEnabled);
             OnAccessibilityChanged?.Invoke();
             var runScreen = FindFirstObjectByType<InRunController>();
             runScreen?.NotifyAccessibilityChanged();

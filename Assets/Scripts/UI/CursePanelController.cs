@@ -89,8 +89,76 @@ namespace SudokuRoguelike.UI
                     Debug.LogWarning($"[CursePanelController] Missing curse icon: {iconName}");
                     img.color = new Color(0.55f, 0.15f, 0.15f, 0.45f); // muted red placeholder
                 }
+                AddFallbackBadge(iconGo.transform, curses[i].Id);
                 _iconPool.Add(img);
             }
+        }
+
+        private static void AddFallbackBadge(Transform iconRoot, string curseId)
+        {
+            if (iconRoot == null) return;
+
+            Color badgeColor;
+            string glyph;
+            switch (curseId)
+            {
+                case "blurred_sight":
+                    badgeColor = new Color(0.42f, 0.66f, 0.86f, 0.92f);
+                    glyph = "B";
+                    break;
+                case "fraying_thread":
+                    badgeColor = new Color(0.78f, 0.54f, 0.30f, 0.92f);
+                    glyph = "F";
+                    break;
+                case "counting_shadow":
+                    badgeColor = new Color(0.42f, 0.28f, 0.70f, 0.92f);
+                    glyph = "C";
+                    break;
+                case "double_or_nothing":
+                    badgeColor = new Color(0.90f, 0.24f, 0.18f, 0.92f);
+                    glyph = "2";
+                    break;
+                default:
+                    return;
+            }
+
+            var frameGo = new GameObject("CurseFallbackFrame", typeof(RectTransform), typeof(Image));
+            frameGo.transform.SetParent(iconRoot, false);
+            var frameRt = frameGo.GetComponent<RectTransform>();
+            frameRt.anchorMin = Vector2.zero;
+            frameRt.anchorMax = Vector2.one;
+            frameRt.offsetMin = Vector2.zero;
+            frameRt.offsetMax = Vector2.zero;
+            var frameImg = frameGo.GetComponent<Image>();
+            frameImg.color = new Color(badgeColor.r, badgeColor.g, badgeColor.b, 0.18f);
+            frameImg.raycastTarget = false;
+
+            var badgeGo = new GameObject("CurseFallbackBadge", typeof(RectTransform), typeof(Image));
+            badgeGo.transform.SetParent(iconRoot, false);
+            var badgeRt = badgeGo.GetComponent<RectTransform>();
+            badgeRt.anchorMin = new Vector2(0.62f, 0.00f);
+            badgeRt.anchorMax = new Vector2(1.00f, 0.38f);
+            badgeRt.offsetMin = Vector2.zero;
+            badgeRt.offsetMax = Vector2.zero;
+            var badgeImg = badgeGo.GetComponent<Image>();
+            badgeImg.color = badgeColor;
+            badgeImg.raycastTarget = false;
+
+            var labelGo = new GameObject("BadgeLabel", typeof(RectTransform), typeof(Text));
+            labelGo.transform.SetParent(badgeGo.transform, false);
+            var labelRt = labelGo.GetComponent<RectTransform>();
+            labelRt.anchorMin = Vector2.zero;
+            labelRt.anchorMax = Vector2.one;
+            labelRt.offsetMin = Vector2.zero;
+            labelRt.offsetMax = Vector2.zero;
+            var label = labelGo.GetComponent<Text>();
+            label.text = glyph;
+            label.font = InRunUiFactory.GetFont();
+            label.fontSize = 10;
+            label.fontStyle = FontStyle.Bold;
+            label.alignment = TextAnchor.MiddleCenter;
+            label.color = Color.white;
+            label.raycastTarget = false;
         }
 
         private void ClearIcons()

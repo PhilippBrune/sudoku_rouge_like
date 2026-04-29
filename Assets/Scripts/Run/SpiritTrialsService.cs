@@ -13,7 +13,7 @@ namespace SudokuRoguelike.Run
             _random = new Random(seed);
         }
 
-        public LevelConfig BuildTrialLevel(SpiritTrialsTier tier)
+        public LevelConfig BuildTrialLevel(SpiritTrialsTier tier, bool allowIrregularPuzzles)
         {
             // [TRIAL-SESSION-001] All tiers use 9×9 board per spec
             const int size = 9;
@@ -37,7 +37,7 @@ namespace SudokuRoguelike.Run
                 BoardSize = size,
                 Stars = stars,
                 MissingPercent = StarDensityService.MissingPercentForStars(stars),
-                RegionVariant = _random.Next(4),
+                RegionVariant = allowIrregularPuzzles ? _random.Next(4) : _random.Next(2),
                 IsBoss = modCount > 0,
                 Seed = _random.Next(),
                 Difficulty = (DifficultyTier)Math.Min((int)tier + 1, 5)
@@ -61,7 +61,7 @@ namespace SudokuRoguelike.Run
             return config;
         }
 
-        public static RunState CreateTrialRunState(SpiritTrialsTier tier, int seed)
+        public static RunState CreateTrialRunState(ClassId classId, SpiritTrialsTier tier, int seed, bool allowIrregularPuzzles)
         {
             // [TRIAL-RES-001] HP and Pencil per tier
             int hp, pencil;
@@ -79,6 +79,7 @@ namespace SudokuRoguelike.Run
 
             return new RunState
             {
+                ClassId = classId,
                 Mode = GameMode.SpiritTrials,
                 Seed = seed,
                 RunNumber = 1,
@@ -87,9 +88,12 @@ namespace SudokuRoguelike.Run
                 CurrentPencil = pencil,
                 MaxPencil = pencil,
                 CurrentGold = 0,
-                ItemSlots = 2,
+                ItemSlots = 0,
                 TotalFloors = 1,
-                DisableProgressionRewards = false
+                DisableProgressionRewards = true,
+                SpiritTrialsTier = tier,
+                AllowIrregularPuzzles = allowIrregularPuzzles,
+                HarmonyConfig = HarmonyDifficultyService.BuildConfig(0)
             };
         }
 

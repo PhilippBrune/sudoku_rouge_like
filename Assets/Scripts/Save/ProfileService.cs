@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using SudokuRoguelike.Classes;
 using SudokuRoguelike.Core;
 using SudokuRoguelike.Economy;
 using SudokuRoguelike.Meta;
+using SudokuRoguelike.Run;
 
 namespace SudokuRoguelike.Save
 {
@@ -129,7 +131,7 @@ namespace SudokuRoguelike.Save
         /// records boss mastery, recalculates completion, and saves.
         /// Returns list of newly unlocked class IDs.
         /// </summary>
-        public List<ClassId> RecordRunAndGetNewUnlocks(RunResult result)
+        public List<ClassId> RecordRunAndGetNewUnlocks(RunResult result, RunState liveRunState = null)
         {
             var newUnlocks = new List<ClassId>();
             if (result == null) return newUnlocks;
@@ -139,6 +141,7 @@ namespace SudokuRoguelike.Save
             var stats = envelope.Statistics ?? new ProfileStats();
             var mastery = envelope.Mastery ?? new MasteryAchievementState();
             var completion = envelope.Completion ?? new CompletionTrackerState();
+            ModifierDiscoveryService.SanitizeMetaProgress(meta);
 
             // 1. Update stats
             stats.TotalRunsStarted++;
@@ -161,6 +164,8 @@ namespace SudokuRoguelike.Save
             progress.ItemsUsed += result.ItemsUsedThisRun;
             progress.RelicsCollected += result.RelicsCollectedThisRun;
             if (result.ClearedStageNoPencilNoHpLoss) progress.PerfectNoPencilStage = true;
+            // [BUG-FIX] Perfect full run: victory with zero mistakes across all 5 floors.
+            if (result.Victory && result.MistakesMade == 0) progress.PerfectFullRunAllFloors = true;
 
             // Check if item codex is now complete (all 26 item types discovered)
             if (!progress.ItemCodexComplete && meta.ItemCodex?.Entries != null)
@@ -175,9 +180,22 @@ namespace SudokuRoguelike.Save
 
             // 3. Commit XP to class (skip if tutorial)
             // [REQ: XP-COMMIT-001] XP committed to class at run end only; no mid-run leveling
+            // [HARMONY-XP-001] XP is scaled by the harmony multiplier before commit.
+            // [HARMONY-XP-001] XP multiplier applies only on victory; defeats use ×1.0.
+            // [L4-B] On victory add flat HarmonyLevel × 50 bonus XP on top.
             if (!result.TutorialMode)
             {
-                _garden.AddXp(meta, result.PlayedClassId, result.XpEarned);
+                int xpToCommit;
+                if (result.Victory)
+                {
+                    xpToCommit = (int)Math.Round(result.XpEarned * HarmonyDifficultyService.GetXpMultiplier(result.HarmonyLevel));
+                    xpToCommit += result.HarmonyLevel * 50;
+                }
+                else
+                {
+                    xpToCommit = result.XpEarned;
+                }
+                _garden.AddXp(meta, result.PlayedClassId, xpToCommit);
 
                 // 4. Check class level for completion
                 var classLevel = _garden.GetLevel(meta, result.PlayedClassId);
@@ -202,9 +220,33 @@ namespace SudokuRoguelike.Save
             if (stats.TotalRunsStarted >= 10 && !meta.EndlessZenUnlocked)
                 meta.EndlessZenUnlocked = true;
 
+            // 8b. Evaluate Harmony level unlock [HARMONY-UNLOCK-001]
+            // Win at current max level (H0–H9) to unlock the next level (H1–H10).
+            // Requires at least 1 boss defeated during the run.
+            if (result.Victory
+                && result.Mode == GameMode.GardenRun
+                && result.HarmonyLevel == meta.MaxUnlockedHarmonyLevel
+                && result.BossesDefeatedThisRun >= 1
+                && meta.MaxUnlockedHarmonyLevel < 10)
+            {
+                meta.MaxUnlockedHarmonyLevel++;
+            }
+
             // 9. Evaluate spirit trials unlock (first boss defeat)
             if (stats.TotalBossesDefeated >= 1 && !meta.SpiritTrialsUnlocked)
                 meta.SpiritTrialsUnlocked = true;
+
+            // 9b. Evaluate Harmony achievements [HARMONY-ACHIEVE-001]
+            SteamAchievementService.EvaluateHarmonyAchievements(meta, mastery, result);
+
+            var discoveryAdded = ModifierDiscoveryService.MergeIntoMeta(meta, liveRunState?.SeenBossModifiers);
+            if (liveRunState?.SeenBossModifiers != null)
+            {
+                UnityEngine.Debug.Log(
+                    $"[ModifierDiscovery] End-of-run meta merge: added={discoveryAdded}, " +
+                    $"runSeen={ModifierDiscoveryService.Describe(liveRunState.SeenBossModifiers)}, " +
+                    $"metaNow={ModifierDiscoveryService.Describe(meta.DiscoveredBossModifiers)}");
+            }
 
             // 10. Save — also clear active run state here so no second save races against this one
             envelope.MetaProgress = meta;

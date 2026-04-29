@@ -1,143 +1,314 @@
-﻿index,label,category,file,status
-1,Tea Cup,items,icon_tea_cup.png,reserved
-2,Moss Stone,items,icon_moss_stone.png,reserved
-3,Bamboo Scroll,items,icon_bamboo_scroll.png,active
-4,Rice Bowl,items,icon_rice_bowl.png,reserved
-5,Pebble,items,icon_pebble.png,reserved
-6,Jade Amulet,items,icon_jade_amulet.png,reserved
-7,Wind Bell,items,icon_wind_bell.png,reserved
-8,Garden Lantern,items,icon_garden_lantern.png,active
-9,Water Basin,items,icon_water_basin.png,reserved
-10,Golden Koi,items,icon_golden_koi.png,active
-11,Sacred Bell,items,icon_sacred_bell.png,reserved
-12,Temple Seal,items,icon_temple_seal.png,active
-13,Sun Medallion,items,icon_sun_medallion.png,reserved
-14,Enlightenment Tree,legendary,icon_enlightenment_tree.png,reserved
-15,Spirit Dragon Coin,legendary,icon_spirit_dragon_coin.png,reserved
-16,Broken Mask,cursed,icon_broken_mask.png,active
-17,Withered Flower,cursed,icon_withered_flower.png,active
-18,Blood Ink Brush,cursed,icon_blood_ink_brush.png,active
-19,Fog Stone,cursed,icon_fog_stone.png,active
-20,Number Freak,class,icon_number_freak.png,active
-21,Garden Monk,class,icon_garden_monk.png,active
-22,Shrine Archivist,class,icon_shrine_archivist.png,active
-23,Koi Gambler,class,icon_koi_gambler.png,active
-24,Stone Gardener,class,icon_stone_gardener.png,active
-25,Lantern Seer,class,icon_lantern_seer.png,active
-26,Reed Duelist,class,icon_reed_duelist.png,active
-27,Quiet Cartographer,class,icon_quiet_cartographer.png,active
-28,Elite Mask,node,icon_elite_mask.png,active
-29,Market Stall,node,icon_market_stall.png,active
-30,Campfire Stones,node,icon_campfire_stones.png,active
-31,Relic Pedestal,node,icon_relic_pedestal.png,active
-32,Moss Trap,node,icon_moss_trap.png,active
-33,Engraved Stone,node,icon_engraved_stone.png,active
-34,Demon Mask,node,icon_demon_mask.png,active
-35,Sakura Coin,economy,icon_sakura_coin.png,active
-36,Petal Orb,ui,icon_petal_orb.png,active
-37,Flame Stone,ui,icon_flame_stone.png,active
-38,Cracked Tile,cursed,icon_cracked_tile.png,active
-39,Flow Ribbon,ui,icon_flow_ribbon.png,active
-40,Golden Bloom,ui,icon_golden_bloom.png,active
-41,Torii Lock,ui,icon_torii_lock.png,active
-42,Scroll Stamp,ui,icon_scroll_stamp.png,active
-43,Ink Save,ui,icon_ink_save.png,active
-44,Stone Gear,ui,icon_stone_gear.png,active
-45,Language Scroll,ui,icon_language_scroll.png,active
-46,Temple Bell,ui,icon_temple_bell.png,active
-47,Framed Garden,ui,icon_framed_garden.png,active
-48,Fog Cloud,modifier,icon_fog_cloud.png,active
-49,Arrow Sum,modifier,icon_arrow_sum.png,active
-50,Parity Line,modifier,icon_parity_line.png,active
-51,Renban Chain,modifier,icon_renban_chain.png,active
-52,Killer Cage,modifier,icon_killer_cage.png,active
-53,White Dot,modifier,icon_white_dot.png,active
-54,Black Dot,modifier,icon_black_dot.png,active
-55,RGB Circle,modifier,icon_rgb_circle.png,active
-56,Spin Coin,economy,icon_spin_coin.png,active
-57,Empty Slot,economy,icon_empty_slot.png,active
-58,Iron Latch,economy,icon_iron_latch.png,active
-59,Swap Arrows,economy,icon_swap_arrows.png,active
-60,Golden Bonsai,economy,icon_golden_bonsai.png,active
-61,Melting Relic,economy,icon_melting_relic.png,active
-62,Shattered Mask,economy,icon_shattered_mask.png,active
-63,Bud,meta,icon_bud.png,active
-64,Full Sakura,meta,icon_full_sakura.png,active
-65,Golden Sakura,meta,icon_golden_sakura.png,active
-66,Halo Bloom,meta,icon_halo_bloom.png,active
-67,Stacked Flame,meta,icon_stacked_flame.png,active
-68,Infinity Stone,meta,icon_infinity_stone.png,active
-69,Petal Hourglass,meta,icon_petal_hourglass.png,active
-70,Scroll Graph,meta,icon_scroll_graph.png,active
-71,Corrupted Path,meta,icon_corrupted_path.png,active
-72,Dual Mask,meta,icon_dual_mask.png,active
-73,Golden Kintsugi Jar,items,icon_golden_kintsugi_jar.png,active
-74,Golden Root,legendary,icon_golden_root.png,active
-75,Ink Well,items,icon_ink_well.png,active
-76,Jade Hairpin,relic,icon_jade_hairpin.png,active
-77,Koi Dragon Scale,items,icon_koi_dragon_scale.png,active
-78,Koi Reflection,items,icon_koi_reflection.png,active
-79,Koi Reflection Relic,relic,icon_koi_reflection_relic.png,active
-80,Lantern of Clarity,items,icon_lantern_of_clarity.png,active
-81,Meditation Stone,items,icon_meditation_stone.png,active
-82,Monk Charm,relic,icon_monk_charm.png,active
-83,Moonstone Compass,relic,icon_moonstone_compass.png,active
-84,Moss Token,relic,icon_moss_token.png,active
-85,Nonconsecutive,modifier,icon_nonconsecutive.png,active
-86,Offering Bowl,items,icon_offering_bowl.png,active
-87,Palindrome Line,modifier,icon_palindrome_line.png,active
-88,Paper Crane,relic,icon_paper_crane.png,active
-89,Pattern Scroll,items,icon_pattern_scroll.png,active
-90,Phoenix Feather,relic,icon_phoenix_feather.png,active
-91,Porcelain Mask,relic,icon_porcelain_mask.png,active
-92,Pruning Shears,items,icon_pruning_shears.png,active
-93,Rice Paper Umbrella,items,icon_rice_paper_umbrella.png,active
-94,Sakura Seal,relic,icon_sakura_seal.png,active
-95,Shifting Garden,legendary,icon_shifting_garden.png,active
-96,Silent Grid,legendary,icon_silent_grid.png,active
-97,Silk Fan,items,icon_silk_fan.png,active
-98,Smooth Pebble,relic,icon_smooth_pebble.png,active
-99,Solver,items,icon_solver.png,active
-100,Spirit Lantern,relic,icon_spirit_lantern.png,active
-101,Stone Sundial,relic,icon_stone_sundial.png,active
-102,Temple Incense,items,icon_temple_incense.png,active
-103,Thermo Line,modifier,icon_thermo_line.png,active
-104,Transmuted Sigil,relic,icon_transmuted_sigil.png,active
-105,Wind Chime,items,icon_wind_chime.png,active
-106,Wisteria Branch,relic,icon_wisteria_branch.png,active
-107,Wooden Comb,relic,icon_wooden_comb.png,active
-108,Zen Sand Sifter,items,icon_zen_sand_sifter.png,active
-109,Finder,items,icon_finder.png,active
-110,Garden Rake,items,icon_garden_rake.png,active
-111,Ginkgo Leaf,items,icon_ginkgo_leaf.png,active
-112,Loaded Coin,items,icon_loaded_coin.png,active
-113,Monks Beads,items,icon_monks_beads.png,active
-114,Annotated Folio,items,icon_annotated_folio.png,active
-115,Double or Quits,items,icon_double_or_quits.png,active
-116,Worn Chisel,items,icon_worn_chisel.png,active
-117,Dim Lantern,items,icon_dim_lantern.png,active
-118,Reed Pledge,items,icon_reed_pledge.png,active
-119,Survey Notes,items,icon_survey_notes.png,active
-120,Cracked Teacup,relic,icon_cracked_teacup.png,active
-121,Copper Tortoise,relic,icon_copper_tortoise.png,active
-122,Crimson Fan,relic,icon_crimson_fan.png,active
-123,Eternal Lotus,legendary,icon_eternal_lotus.png,active
-124,Dragons Eye,legendary,icon_dragons_eye.png,active
-125,Fortunes Ledger,relic,icon_fortunes_ledger.png,active
-126,Temple Vow,relic,icon_temple_vow.png,active
-127,Endless Archive,relic,icon_endless_archive.png,active
-128,Gilded Koi Scale,relic,icon_gilded_koi_scale.png,active
-129,Load Bearing Stone,relic,icon_load_bearing_stone.png,active
-130,Warding Flame,relic,icon_warding_flame.png,active
-131,Dueling Reed,relic,icon_dueling_reed.png,active
-132,Accurate Map,relic,icon_accurate_map.png,active
-133,German Whisper,modifier,icon_german_whisper.png,active
-134,Dutch Whisper,modifier,icon_dutch_whisper.png,active
-135,Even Odd,modifier,icon_even_odd.png,active
-136,Antiknight,modifier,icon_antiknight.png,active
-137,Between Line,modifier,icon_between_line.png,active
-138,Compass of Order,items,icon_compass_of_order.png,reserved
-139,Bg Rest,background,bg_rest.png,active
-140,Bg Relic,background,bg_relic.png,active
-141,Bg Swap,background,bg_swap.png,active
-142,Ui Tutorial Progress,background,ui_tutorial_progress.png,unreferenced
+﻿"index","label","category","file","status","reserved_path"
+"1","Tea Cup","items","icon_tea_cup.png","reserved",""
+"2","Moss Stone","items","icon_moss_stone.png","reserved",""
+"3","Bamboo Scroll","items","icon_bamboo_scroll.png","active",""
+"4","Rice Bowl","items","icon_rice_bowl.png","reserved",""
+"5","Pebble","items","icon_pebble.png","reserved",""
+"6","Jade Amulet","items","icon_jade_amulet.png","reserved",""
+"7","Wind Bell","items","icon_wind_bell.png","reserved",""
+"8","Garden Lantern","items","icon_garden_lantern.png","active",""
+"9","Water Basin","items","icon_water_basin.png","reserved",""
+"10","Golden Koi","items","icon_golden_koi.png","active",""
+"11","Sacred Bell","items","icon_sacred_bell.png","reserved",""
+"12","Temple Seal","items","icon_temple_seal.png","active",""
+"13","Sun Medallion","items","icon_sun_medallion.png","reserved",""
+"14","Enlightenment Tree","legendary","icon_enlightenment_tree.png","reserved","Assets/_ReservedArt/legendary/icon_enlightenment_tree.png"
+"15","Spirit Dragon Coin","legendary","icon_spirit_dragon_coin.png","reserved","Assets/_ReservedArt/legendary/icon_spirit_dragon_coin.png"
+"16","Broken Mask","cursed","icon_broken_mask.png","active",""
+"17","Withered Flower","cursed","icon_withered_flower.png","active",""
+"18","Blood Ink Brush","cursed","icon_blood_ink_brush.png","active",""
+"19","Fog Stone","cursed","icon_fog_stone.png","active",""
+"20","Number Freak","class","icon_number_freak.png","active",""
+"21","Garden Monk","class","icon_garden_monk.png","active",""
+"22","Shrine Archivist","class","icon_shrine_archivist.png","active",""
+"23","Koi Gambler","class","icon_koi_gambler.png","active",""
+"24","Stone Gardener","class","icon_stone_gardener.png","active",""
+"25","Lantern Seer","class","icon_lantern_seer.png","active",""
+"26","Reed Duelist","class","icon_reed_duelist.png","active",""
+"27","Quiet Cartographer","class","icon_quiet_cartographer.png","active",""
+"28","Elite Mask","node","icon_elite_mask.png","active",""
+"29","Market Stall","node","icon_market_stall.png","active",""
+"30","Campfire Stones","node","icon_campfire_stones.png","active",""
+"31","Relic Pedestal","node","icon_relic_pedestal.png","active",""
+"32","Moss Trap","node","icon_moss_trap.png","active",""
+"33","Engraved Stone","node","icon_engraved_stone.png","active",""
+"34","Demon Mask","node","icon_demon_mask.png","active",""
+"35","Sakura Coin","economy","icon_sakura_coin.png","active",""
+"36","Petal Orb","ui","icon_petal_orb.png","active",""
+"37","Flame Stone","ui","icon_flame_stone.png","reserved",""
+"38","Cracked Tile","cursed","icon_cracked_tile.png","active",""
+"39","Flow Ribbon","ui","icon_flow_ribbon.png","active",""
+"40","Golden Bloom","ui","icon_golden_bloom.png","active",""
+"41","Torii Lock","ui","icon_torii_lock.png","active",""
+"42","Scroll Stamp","ui","icon_scroll_stamp.png","active",""
+"43","Ink Save","ui","icon_ink_save.png","active",""
+"44","Stone Gear","ui","icon_stone_gear.png","active",""
+"45","Language Scroll","ui","icon_language_scroll.png","active",""
+"46","Temple Bell","ui","icon_temple_bell.png","reserved",""
+"47","Framed Garden","ui","icon_framed_garden.png","reserved",""
+"48","Fog Cloud","modifier","icon_fog_cloud.png","active",""
+"49","Arrow Sum","modifier","icon_arrow_sum.png","active",""
+"50","Parity Line","modifier","icon_parity_line.png","active",""
+"51","Renban Chain","modifier","icon_renban_chain.png","active",""
+"52","Killer Cage","modifier","icon_killer_cage.png","active",""
+"53","White Dot","modifier","icon_white_dot.png","active",""
+"54","Black Dot","modifier","icon_black_dot.png","active",""
+"55","Tricolor Regions","modifier","icon_tricolor_regions.png","active",""
+"56","Spin Coin","economy","icon_spin_coin.png","active",""
+"57","Empty Slot","economy","icon_empty_slot.png","active",""
+"58","Iron Latch","economy","icon_iron_latch.png","active",""
+"59","Swap Arrows","economy","icon_swap_arrows.png","active",""
+"60","Golden Bonsai","economy","icon_golden_bonsai.png","active",""
+"61","Melting Relic","economy","icon_melting_relic.png","active",""
+"62","Shattered Mask","economy","icon_shattered_mask.png","active",""
+"63","Bud","meta","icon_bud.png","active",""
+"64","Full Sakura","meta","icon_full_sakura.png","active",""
+"65","Golden Sakura","meta","icon_golden_sakura.png","active",""
+"66","Halo Bloom","meta","icon_halo_bloom.png","active",""
+"67","Stacked Flame","meta","icon_stacked_flame.png","active",""
+"68","Infinity Stone","meta","icon_infinity_stone.png","active",""
+"69","Petal Hourglass","meta","icon_petal_hourglass.png","active",""
+"70","Scroll Graph","meta","icon_scroll_graph.png","active",""
+"71","Corrupted Path","meta","icon_corrupted_path.png","active",""
+"72","Dual Mask","meta","icon_dual_mask.png","active",""
+"73","Golden Kintsugi Jar","items","icon_golden_kintsugi_jar.png","active",""
+"74","Golden Root","legendary","icon_golden_root.png","active",""
+"75","Ink Well","items","icon_ink_well.png","active",""
+"76","Jade Hairpin","relic","icon_jade_hairpin.png","active",""
+"77","Koi Dragon Scale","items","icon_koi_dragon_scale.png","active",""
+"78","Koi Reflection","items","icon_koi_reflection.png","active",""
+"79","Koi Reflection Relic","relic","icon_koi_reflection_relic.png","active",""
+"80","Lantern of Clarity","items","icon_lantern_of_clarity.png","active",""
+"81","Meditation Stone","items","icon_meditation_stone.png","active",""
+"82","Monk Charm","relic","icon_monk_charm.png","active",""
+"83","Moonstone Compass","relic","icon_moonstone_compass.png","active",""
+"84","Moss Token","relic","icon_moss_token.png","active",""
+"85","Nonconsecutive","modifier","icon_nonconsecutive.png","active",""
+"86","Offering Bowl","items","icon_offering_bowl.png","active",""
+"87","Palindrome Line","modifier","icon_palindrome_line.png","active",""
+"88","Paper Crane","relic","icon_paper_crane.png","active",""
+"89","Pattern Scroll","items","icon_pattern_scroll.png","active",""
+"90","Phoenix Feather","relic","icon_phoenix_feather.png","active",""
+"91","Porcelain Mask","relic","icon_porcelain_mask.png","active",""
+"92","Pruning Shears","items","icon_pruning_shears.png","active",""
+"93","Rice Paper Umbrella","items","icon_rice_paper_umbrella.png","active",""
+"94","Sakura Seal","relic","icon_sakura_seal.png","active",""
+"95","Shifting Garden","legendary","icon_shifting_garden.png","active",""
+"96","Silent Grid","legendary","icon_silent_grid.png","active",""
+"97","Silk Fan","items","icon_silk_fan.png","active",""
+"98","Smooth Pebble","relic","icon_smooth_pebble.png","active",""
+"99","Solver","items","icon_solver.png","active",""
+"100","Spirit Lantern","relic","icon_spirit_lantern.png","active",""
+"101","Stone Sundial","relic","icon_stone_sundial.png","active",""
+"102","Temple Incense","items","icon_temple_incense.png","active",""
+"103","Thermo Line","modifier","icon_thermo_line.png","active",""
+"104","Transmuted Sigil","relic","icon_transmuted_sigil.png","active",""
+"105","Wind Chime","items","icon_wind_chime.png","active",""
+"106","Wisteria Branch","relic","icon_wisteria_branch.png","active",""
+"107","Wooden Comb","relic","icon_wooden_comb.png","active",""
+"108","Zen Sand Sifter","items","icon_zen_sand_sifter.png","active",""
+"109","Finder","items","icon_finder.png","active",""
+"110","Garden Rake","items","icon_garden_rake.png","active",""
+"111","Ginkgo Leaf","items","icon_ginkgo_leaf.png","active",""
+"112","Loaded Coin","items","icon_loaded_coin.png","active",""
+"113","Monks Beads","items","icon_monks_beads.png","active",""
+"114","Annotated Folio","items","icon_annotated_folio.png","active",""
+"115","Double or Quits","items","icon_double_or_quits.png","active",""
+"116","Worn Chisel","items","icon_worn_chisel.png","active",""
+"117","Dim Lantern","items","icon_dim_lantern.png","active",""
+"118","Reed Pledge","items","icon_reed_pledge.png","active",""
+"119","Survey Notes","items","icon_survey_notes.png","active",""
+"120","Cracked Teacup","relic","icon_cracked_teacup.png","active",""
+"121","Copper Tortoise","relic","icon_copper_tortoise.png","active",""
+"122","Crimson Fan","relic","icon_crimson_fan.png","active",""
+"123","Eternal Lotus","legendary","icon_eternal_lotus.png","active",""
+"124","Dragons Eye","legendary","icon_dragons_eye.png","active",""
+"125","Fortunes Ledger","relic","icon_fortunes_ledger.png","active",""
+"126","Temple Vow","relic","icon_temple_vow.png","active",""
+"127","Endless Archive","relic","icon_endless_archive.png","active",""
+"128","Gilded Koi Scale","relic","icon_gilded_koi_scale.png","active",""
+"129","Load Bearing Stone","relic","icon_load_bearing_stone.png","active",""
+"130","Warding Flame","relic","icon_warding_flame.png","active",""
+"131","Dueling Reed","relic","icon_dueling_reed.png","active",""
+"132","Accurate Map","relic","icon_accurate_map.png","active",""
+"133","German Whisper","modifier","icon_german_whisper.png","active",""
+"134","Dutch Whisper","modifier","icon_dutch_whisper.png","active",""
+"135","Even Odd","modifier","icon_even_odd.png","active",""
+"136","Antiknight","modifier","icon_antiknight.png","active",""
+"137","Between Line","modifier","icon_between_line.png","active",""
+"138","Compass of Order","items","icon_compass_of_order.png","reserved",""
+"139","Bg Rest","background","bg_rest.png","active",""
+"140","Bg Relic","background","bg_relic.png","active",""
+"141","Bg Swap","background","bg_swap.png","active",""
+"142","Bg Tutorial Progress","background","bg_tutorial_progress.png","active",""
+"143","Bad Luck","cursed","icon_bad_luck.png","active",""
+"144","Crumbling Focus","cursed","icon_crumbling_focus.png","active",""
+"145","Fog of Memory","cursed","icon_fog_of_memory.png","active",""
+"146","Hollow Pencil","cursed","icon_hollow_pencil.png","active",""
+"147","Inkblot","cursed","icon_inkblot.png","active",""
+"148","Misfortune","cursed","icon_misfortune.png","active",""
+"149","Phantom Pain","cursed","icon_phantom_pain.png","active",""
+"150","Price Gouge","cursed","icon_price_gouge.png","active",""
+"151","Sealed Eyes","cursed","icon_sealed_eyes.png","active",""
+"152","Weight of Stone","cursed","icon_weight_of_stone.png","active",""
+"153","Antibishop","modifier","icon_antibishop.png","active",""
+"154","Antiking","modifier","icon_antiking.png","active",""
+"155","Consecutive Line","modifier","icon_consecutive_line.png","active",""
+"156","Distance Ge2","modifier","icon_distance_ge2.png","active",""
+"157","Fortress Cells","modifier","icon_fortress_cells.png","active",""
+"158","Full Kropki","modifier","icon_full_kropki.png","active",""
+"159","Greater Less","modifier","icon_greater_less.png","active",""
+"160","Modular Regions","modifier","icon_modular_regions.png","active",""
+"161","Nonconsec Diagonal","modifier","icon_nonconsec_diagonal.png","active",""
+"162","Prime Cells","modifier","icon_prime_cells.png","active",""
+"163","Slow Thermo","modifier","icon_slow_thermo.png","active",""
+"164","Sum Dot","modifier","icon_sum_dot.png","active",""
+"165","Unique Set Line","modifier","icon_unique_set_line.png","active",""
+"166","XV Pairs","modifier","icon_xv_pairs.png","active",""
+"167","Event Scroll","node","icon_event_scroll.png","active",""
+"168","Preboss Gate","node","icon_preboss_gate.png","active",""
+"169","Puzzle Tile","node","icon_puzzle_tile.png","active",""
+"170","Start Game","ui","icon_start_game.png","active",""
+"171","Bg Settings Menu","background","bg_settings_menu.png","active",""
+"172","Bg Settings Inrun","background","bg_settings_inrun.png","active",""
+"173","Bg Menu Trials Results","background","bg_menu_trials_results.png","deprecated",""
+"174","Bg Boss Cleared","background","bg_boss_cleared.png","pending",""
+"175","Reroll Arrow","ui","icon_reroll_arrow.png","pending",""
+"176","Back Leaf","ui","icon_back_leaf.png","pending",""
+"177","Gate Close","ui","icon_gate_close.png","pending",""
+"178","Resume Scroll","ui","icon_resume_scroll.png","pending",""
+"179","Tutorial Bamboo","ui","icon_tutorial_bamboo.png","pending",""
+"180","Modes Lantern","ui","icon_modes_lantern.png","pending",""
+"181","Items Codex","ui","icon_items_codex.png","pending",""
+"182","Profiles Mask","ui","icon_profiles_mask.png","pending",""
+"183","Bg Tutorial Setup","background","bg_tutorial_setup.png","active",""
+"184","Skip Stone","ui","icon_skip_stone.png","pending",""
+"185","Trade Coin","ui","icon_trade_coin.png","pending",""
+"186","Confirm Seal","ui","icon_confirm_seal.png","pending",""
+"187","Restless Inventory","cursed","icon_restless_inventory.png","pending",""
+"188","Trembling Hand","cursed","icon_trembling_hand.png","pending",""
+"189","Hollow Eye","cursed","icon_hollow_eye.png","pending",""
+"190","Bg Splash","background","bg_splash.png","pending",""
+"191","Bg Boss Gate","background","bg_boss_gate.png","active",""
+"192","Bg Class Select","background","bg_class_select.png","active",""
+"193","Bg Curse","background","bg_curse.png","active",""
+"194","Bg Daily Walk","background","bg_daily_walk.png","active",""
+"195","Bg Defeat","background","bg_defeat.png","active",""
+"196","Bg Demon Summit","background","bg_demon_summit.png","active",""
+"197","Bg Event","background","bg_event.png","active",""
+"198","Bg Game Modes","background","bg_game_modes.png","active",""
+"199","Bg Garden Grove","background","bg_garden_grove.png","active",""
+"200","Bg Items Menu","background","bg_items_menu.png","active",""
+"201","Bg Koi Garden","background","bg_koi_garden.png","active",""
+"202","Bg Koi Terrace","background","bg_koi_terrace.png","active",""
+"203","Bg Main Menu","background","bg_main_menu.png","active",""
+"204","Bg Menu Challenge","background","bg_menu_challenge.png","active",""
+"205","Bg Menu Credits","background","bg_menu_credits.png","active",""
+"206","Bg Menu Pause","background","bg_menu_pause.png","active",""
+"207","Bg Menu Profile","background","bg_menu_profile.png","active",""
+"208","Bg Menu Trials Select","background","bg_menu_trials_select.png","deprecated",""
+"209","Bg Menu Zen Leaderboard","background","bg_menu_zen_leaderboard.png","deprecated",""
+"210","Bg Menu Zen Results","background","bg_menu_zen_results.png","deprecated",""
+"211","Bg Meta Progression","background","bg_meta_progression.png","active",""
+"212","Bg Monthly Walk","background","bg_monthly_walk.png","active",""
+"213","Bg Puzzle Board","background","bg_puzzle_board.png","active",""
+"214","Bg Reward","background","bg_reward.png","active",""
+"215","Bg Shop","background","bg_shop.png","active",""
+"216","Bg Shrine Garden","background","bg_shrine_garden.png","active",""
+"217","Bg Trials Menu","background","bg_trials_menu.png","active",""
+"218","Bg Victory","background","bg_victory.png","active",""
+"219","Bg Zen Menu","background","bg_zen_menu.png","active",""
+"220","Demon Mask","boss","icon_demon_mask.png","active",""
+"221","Grove Spirit","boss","icon_grove_spirit.png","active",""
+"222","Koi Warden","boss","icon_koi_warden.png","active",""
+"223","Shrine Oni","boss","icon_shrine_oni.png","active",""
+"224","Stone Patriarch","boss","icon_stone_patriarch.png","active",""
+"225","Box Wipe","debuff","icon_box_wipe.png","active",""
+"226","Cell Lock","debuff","icon_cell_lock.png","active",""
+"227","Col Wipe","debuff","icon_col_wipe.png","active",""
+"228","Cross Wipe","debuff","icon_cross_wipe.png","active",""
+"229","Double Penalty","debuff","icon_double_penalty.png","active",""
+"230","Gold Fine","debuff","icon_gold_fine.png","active",""
+"231","Pencil Blind","debuff","icon_pencil_blind.png","active",""
+"232","Pencil Drain","debuff","icon_pencil_drain.png","active",""
+"233","Row Wipe","debuff","icon_row_wipe.png","active",""
+"234","Bamboo Compass","items","icon_bamboo_compass.png","active",""
+"235","Lantern Of Void","legendary","icon_lantern_of_void.png","active",""
+"236","Alternating Parity Line","modifier","icon_alternating_parity_line.png","active",""
+"237","Ambiguous Thermo","modifier","icon_ambiguous_thermo.png","active",""
+"238","Arrow Average","modifier","icon_arrow_average.png","active",""
+"239","Arrow Product","modifier","icon_arrow_product.png","active",""
+"240","Battlefield","modifier","icon_battlefield.png","active",""
+"241","Cage Difference","modifier","icon_cage_difference.png","active",""
+"242","Cage Product","modifier","icon_cage_product.png","active",""
+"243","Cage Ratio","modifier","icon_cage_ratio.png","active",""
+"244","Connected Regions","modifier","icon_connected_regions.png","active",""
+"245","Constraint Negation","modifier","icon_constraint_negation.png","active",""
+"246","Countdown Fill","modifier","icon_countdown_fill.png","active",""
+"247","Counting Circles","modifier","icon_counting_circles.png","active",""
+"248","Crumbling Region","modifier","icon_crumbling_region.png","active",""
+"249","Difference K","modifier","icon_difference_k.png","active",""
+"250","Digit Graph","modifier","icon_digit_graph.png","active",""
+"251","Disjoint Groups","modifier","icon_disjoint_groups.png","active",""
+"252","Distance Cell","modifier","icon_distance_cell.png","active",""
+"253","Distance Pair","modifier","icon_distance_pair.png","active",""
+"254","Double Arrow","modifier","icon_double_arrow.png","active",""
+"255","Entropic Line","modifier","icon_entropic_line.png","active",""
+"256","Extra Region","modifier","icon_extra_region.png","active",""
+"257","Fast Thermo","modifier","icon_fast_thermo.png","active",""
+"258","Full Black Kropki","modifier","icon_full_black_kropki.png","active",""
+"259","Full White Kropki","modifier","icon_full_white_kropki.png","active",""
+"260","Hamiltonian Path","modifier","icon_hamiltonian_path.png","active",""
+"261","Haunted Cell","modifier","icon_haunted_cell.png","active",""
+"262","High Low Alternating","modifier","icon_high_low_alternating.png","active",""
+"263","Hypersudoku","modifier","icon_hypersudoku.png","active",""
+"264","Index Cell","modifier","icon_index_cell.png","active",""
+"265","Index Line","modifier","icon_index_line.png","active",""
+"266","Index Parity","modifier","icon_index_parity.png","active",""
+"267","Inequality Chains","modifier","icon_inequality_chains.png","active",""
+"268","Killer Hidden Sum","modifier","icon_killer_hidden_sum.png","active",""
+"269","Knight King Combined","modifier","icon_knight_king_combined.png","active",""
+"270","Knight Path","modifier","icon_knight_path.png","active",""
+"271","Little Killer","modifier","icon_little_killer.png","active",""
+"272","Loop Constraint","modifier","icon_loop_constraint.png","active",""
+"273","Magic Square","modifier","icon_magic_square.png","active",""
+"274","Mirror Cells","modifier","icon_mirror_cells.png","active",""
+"275","Modular Global","modifier","icon_modular_global.png","active",""
+"276","Modular Line","modifier","icon_modular_line.png","active",""
+"277","Multiple Cells","modifier","icon_multiple_cells.png","active",""
+"278","N Line","modifier","icon_n_line.png","active",""
+"279","Nabner Line","modifier","icon_nabner_line.png","active",""
+"280","Nonconsec Line","modifier","icon_nonconsec_line.png","active",""
+"281","Opposite Cells Sum","modifier","icon_opposite_cells_sum.png","active",""
+"282","Outside Inequalities","modifier","icon_outside_inequalities.png","active",""
+"283","Pill Arrow","modifier","icon_pill_arrow.png","active",""
+"284","Pressure Wave","modifier","icon_pressure_wave.png","active",""
+"285","Quadruples","modifier","icon_quadruples.png","active",""
+"286","Ratio N","modifier","icon_ratio_n.png","active",""
+"287","Region Index Rule","modifier","icon_region_index_rule.png","active",""
+"288","Region Parity Balance","modifier","icon_region_parity_balance.png","active",""
+"289","Region Sum Equality","modifier","icon_region_sum_equality.png","active",""
+"290","Region Sum Line","modifier","icon_region_sum_line.png","active",""
+"291","Renban Cage","modifier","icon_renban_cage.png","active",""
+"292","Sandwich","modifier","icon_sandwich.png","active",""
+"293","Self Referential Grid","modifier","icon_self_referential_grid.png","active",""
+"294","Skyscraper Line","modifier","icon_skyscraper_line.png","active",""
+"295","Skyscrapers","modifier","icon_skyscrapers.png","active",""
+"296","Snake Constraint","modifier","icon_snake_constraint.png","active",""
+"297","Sum Line","modifier","icon_sum_line.png","active",""
+"298","Thermo Loop","modifier","icon_thermo_loop.png","active",""
+"299","Toroidal","modifier","icon_toroidal.png","active",""
+"300","Whisper Generalized","modifier","icon_whisper_generalized.png","active",""
+"301","Xsudoku","modifier","icon_xsudoku.png","active",""
+"302","Xsums","modifier","icon_xsums.png","active",""
+"303","Zipper Line","modifier","icon_zipper_line.png","active",""
+"304","Modifiers 2 Sub 56","modifier","modifiers_2_sub_56.png","active",""
+"305","Cracked Stone","relic","icon_cracked_stone.png","active",""
+"306","Frosted Mirror","relic","icon_frosted_mirror.png","active",""
+"307","Void Petal","relic","icon_void_petal.png","active",""
+"308","Credits Scroll","ui","icon_credits_scroll.png","active",""
+"309","Monthly Lantern","ui","icon_monthly_lantern.png","active",""
+"310","Start Run","ui","icon_start_run.png","active",""
+"311","Trials Seal","ui","icon_trials_seal.png","active",""
+"312","Zen Mode","ui","icon_zen_mode.png","active",""
+"313","Zen Records","ui","icon_zen_records.png","active",""

@@ -155,10 +155,22 @@ namespace SudokuRoguelike.Bootstrap
 
             _autoSave.ClearActiveRun();
             _run.StartRun(request, runtimeSeed);
-            _run.DailyGoals = _dailyGoals;
 
-            // Apply any pending run-start rewards from completed daily goals
-            if (_dailyGoals != null)
+            // Pre-seed modifier discovery so previously seen modifiers don't show as "???"
+            if (meta?.DiscoveredBossModifiers != null && meta.DiscoveredBossModifiers.Count > 0)
+            {
+                var seeded = ModifierDiscoveryService.SeedRunSeenModifiers(_run.State, meta.DiscoveredBossModifiers);
+                Debug.Log(
+                    $"[ModifierDiscovery] LaunchRun pre-seed: added={seeded}, " +
+                    $"meta={ModifierDiscoveryService.Describe(meta.DiscoveredBossModifiers)}, " +
+                    $"runSeen={ModifierDiscoveryService.Describe(_run.State.SeenBossModifiers)}");
+            }
+
+            var supportsRunProgression = request.Mode == GameMode.GardenRun;
+            _run.DailyGoals = supportsRunProgression ? _dailyGoals : null;
+
+            // Apply any pending run-start rewards from completed daily goals only to Garden Run.
+            if (supportsRunProgression && _dailyGoals != null)
                 DailyGoalService.ApplyPendingRewards(_dailyGoals, _run.State);
 
             _screenManager.ShowGame();
@@ -227,7 +239,10 @@ namespace SudokuRoguelike.Bootstrap
             {
                 ClassId = runState.ClassId,
                 Mode = runState.Mode,
-                AllowIrregularPuzzles = runState.AllowIrregularPuzzles
+                AllowIrregularPuzzles = runState.AllowIrregularPuzzles,
+                HarmonyLevel = runState.HarmonyLevel,
+                HarmonyPerk = runState.HarmonyPerk,
+                SelectedTier = runState.Mode == GameMode.SpiritTrials ? runState.SpiritTrialsTier : null
             };
 
             // Re-initialize services with the run's seed, then overlay saved progress
@@ -238,6 +253,17 @@ namespace SudokuRoguelike.Bootstrap
             var savedNodeIndex = runState.CurrentNodeIndex;
             _run.RebuildFloorGraph(); // rebuild for the restored floor/path state
             _run.State.CurrentNodeIndex = savedNodeIndex;
+
+            // Pre-seed the full cross-run discovery set so the boss gate correctly
+            // shows names for modifiers discovered in prior completed runs — not just
+            // those saved within this specific run's SeenBossModifierList.
+            var resumeMeta = _profileService.LoadMetaProgress();
+            if (resumeMeta?.DiscoveredBossModifiers != null)
+            {
+                foreach (var mod in resumeMeta.DiscoveredBossModifiers)
+                    _run.State.SeenBossModifiers.Add(mod);
+                _run.State.SyncSeenModifiersToList();
+            }
 
             if (puzzleState != null)
                 _run.TryRestorePuzzleSaveState(puzzleState);

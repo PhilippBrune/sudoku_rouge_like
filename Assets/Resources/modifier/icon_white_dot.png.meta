@@ -3,7 +3,7 @@ guid: be95cb4fcfbf29443ac02334f4c918e8
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -1122824425580322382
+      213: -5225064747091861553
     second: icon_white_dot_0
   externalObjects: {}
   serializedVersion: 13
@@ -51,7 +51,6 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -103,20 +102,20 @@ TextureImporter:
       name: icon_white_dot_0
       rect:
         serializedVersion: 2
-        x: 96
-        y: 98
-        width: 192
-        height: 188
+        x: 0
+        y: 0
+        width: 384
+        height: 384
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 2b12728422dea60f0800000000000000
-      internalID: -1122824425580322382
+      spriteID: 7fab7a5f8e575bb4ab516bb44e0cace0
+      internalID: -5225064747091861553
       vertices: []
       indices: 
       edges: []
@@ -135,7 +134,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      icon_white_dot_0: -1122824425580322382
+      icon_white_dot_0: -5225064747091861553
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -23,57 +23,57 @@ namespace SudokuRoguelike.Classes
             {
                 Id = ClassId.NumberFreak, Name = "Number Freak",
                 BaseHP = 10, BasePencil = 10, BaseItemSlots = 2,
-                PassiveDescription = "+1 Reroll Token",
+                PassiveDescription = "After completing a puzzle with zero mistakes: +1 Reroll Token.",
                 UnlockCondition = "Default (always unlocked)"
             },
             new ClassDefinition
             {
                 Id = ClassId.GardenMonk, Name = "Garden Monk",
                 BaseHP = 14, BasePencil = 5, BaseItemSlots = 1,
-                PassiveDescription = "Every 5 correct placements: +1 HP. Cannot buy Pencil mid-level.",
+                PassiveDescription = "Every 5 correct placements: +1 HP. Buying pencil mid-puzzle costs 1 HP instead of gold.",
                 UnlockCondition = "Defeat 2 bosses"
             },
             new ClassDefinition
             {
                 Id = ClassId.ShrineArchivist, Name = "Shrine Archivist",
                 BaseHP = 8, BasePencil = 15, BaseItemSlots = 2,
-                PassiveDescription = "First pencil mark in each cell is free.",
+                PassiveDescription = "Each pencil mark placed has a 25% chance to auto-reveal the correct digit for that cell.",
                 UnlockCondition = "Use 15 items"
             },
             new ClassDefinition
             {
                 Id = ClassId.KoiGambler, Name = "Koi Gambler",
                 BaseHP = 9, BasePencil = 8, BaseItemSlots = 2, BaseStartingRelics = 2,
-                PassiveDescription = "25% wrong costs 0 HP; 25% correct grants +1 Gold.",
+                PassiveDescription = "33% wrong costs 0 HP; 33% correct grants +3 Gold.",
                 UnlockCondition = "Collect 10 relics"
             },
             new ClassDefinition
             {
                 Id = ClassId.StoneGardener, Name = "Stone Gardener",
                 BaseHP = 11, BasePencil = 8, BaseItemSlots = 3,
-                PassiveDescription = "First item used each level is not consumed.",
+                PassiveDescription = "First item used each puzzle node is not consumed.",
                 UnlockCondition = "Defeat 10 bosses"
             },
             new ClassDefinition
             {
                 Id = ClassId.LanternSeer, Name = "Lantern Seer",
                 BaseHP = 7, BasePencil = 12, BaseItemSlots = 2,
-                PassiveDescription = "Boss modifiers are 20% weaker.",
+                PassiveDescription = "Boss modifiers are 30% weaker. Before each boss puzzle, preview all active modifiers and reroll one for free.",
                 UnlockCondition = "Collect 50,000 gold"
             },
             new ClassDefinition
             {
                 Id = ClassId.ReedDuelist, Name = "Reed Duelist",
                 BaseHP = 9, BasePencil = 9, BaseItemSlots = 2,
-                PassiveDescription = "Perfect no-pencil tile bonus: +2 Pencil.",
+                PassiveDescription = "Perfect no-pencil puzzle: +2 Pencil. Every 5 such puzzles in a run: +1 HP.",
                 UnlockCondition = "Find every unique item"
             },
             new ClassDefinition
             {
                 Id = ClassId.QuietCartographer, Name = "Quiet Cartographer",
                 BaseHP = 12, BasePencil = 6, BaseItemSlots = 1,
-                PassiveDescription = "Preview next tile's star & board size after perfect tile.",
-                UnlockCondition = "Clear stage with 0 pencil use & 0 HP loss"
+                PassiveDescription = "Preview next node's star & board size after a perfect tile. If you then choose that node, its difficulty is reduced by \u00bd star (min 1\u2605).",
+                UnlockCondition = "Complete a full run (all 5 floors + boss) with zero mistakes"
             }
         };
 

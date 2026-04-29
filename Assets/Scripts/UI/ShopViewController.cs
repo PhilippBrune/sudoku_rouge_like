@@ -96,12 +96,20 @@ namespace SudokuRoguelike.UI
                     InRunUiFactory.SetButtonIcon(btn, ItemService.GetIconName(offer.Item.Type), false, "items");
                 var idx = i;
                 btn.onClick.AddListener(() => SelectShopOffer(idx));
+
+                // SH-2: controller D-pad focus auto-previews the offer
+                var et = btn.gameObject.AddComponent<UnityEngine.EventSystems.EventTrigger>();
+                var selEntry = new UnityEngine.EventSystems.EventTrigger.Entry
+                    { eventID = UnityEngine.EventSystems.EventTriggerType.Select };
+                selEntry.callback.AddListener(_ => SelectShopOffer(idx));
+                et.triggers.Add(selEntry);
+
                 offerBtns[i] = btn;
             }
 
             // Buy button (disabled until an offer is selected)
-            var buyBtn = InRunUiFactory.CreatePanelButton(_shopPanel.transform, "Offer_buy",
-                new Vector2(0.35f, 0.17f), new Vector2(0.65f, 0.26f), "Buy");
+            var buyBtn = InRunUiFactory.CreateActionButton(_shopPanel.transform, "Offer_buy",
+                new Vector2(0.35f, 0.17f), new Vector2(0.65f, 0.26f), "Buy", UiAction.Buy, compact: true);
             buyBtn.interactable = false;
             buyBtn.gameObject.name = "ShopBuyBtn";
             buyBtn.onClick.AddListener(TryBuySelectedOffer);
@@ -128,8 +136,8 @@ namespace SudokuRoguelike.UI
             var rerollLabel = tokens > 0
                 ? $"Reroll ({tokens} token{(tokens != 1 ? "s" : "")})"
                 : $"Reroll ({rerollCost}g)";
-            var rerollBtn = InRunUiFactory.CreatePanelButton(_shopPanel.transform, "Offer_reroll",
-                new Vector2(0.05f, 0.04f), new Vector2(0.30f, 0.14f), rerollLabel);
+            var rerollBtn = InRunUiFactory.CreateActionButton(_shopPanel.transform, "Offer_reroll",
+                new Vector2(0.05f, 0.04f), new Vector2(0.30f, 0.14f), rerollLabel, UiAction.Reroll, compact: true);
             rerollBtn.gameObject.name = "ShopRerollBtn";
             // Teal tint signals "free reroll available"; default button color otherwise.
             if (tokens > 0)
@@ -147,8 +155,8 @@ namespace SudokuRoguelike.UI
                 RebuildShopButtons();
             });
 
-            var skip = InRunUiFactory.CreatePanelButton(_shopPanel.transform, "Offer_skip",
-                new Vector2(0.70f, 0.04f), new Vector2(0.95f, 0.14f), "Skip");
+            var skip = InRunUiFactory.CreateActionButton(_shopPanel.transform, "Offer_skip",
+                new Vector2(0.70f, 0.04f), new Vector2(0.95f, 0.14f), "Skip", UiAction.Skip, compact: true);
             skip.onClick.AddListener(() =>
             {
                 _shopOffers.Clear();
@@ -157,6 +165,35 @@ namespace SudokuRoguelike.UI
                 InRunUiFactory.HidePanel(_shopPanel);
                 OnShopClosed?.Invoke();
             });
+
+            // C3 — explicit D-pad nav so Reroll and Skip are reachable from Buy
+            var centerOffer = offerBtns[offerCount > 1 ? offerCount / 2 : 0];
+            buyNav = buyBtn.navigation;
+            buyNav.selectOnDown = rerollBtn;
+            buyBtn.navigation = buyNav;
+
+            var rerollNav = new Navigation { mode = Navigation.Mode.Explicit };
+            rerollNav.selectOnUp    = centerOffer;
+            rerollNav.selectOnRight = skip;
+            rerollBtn.navigation = rerollNav;
+
+            var skipNav = new Navigation { mode = Navigation.Mode.Explicit };
+            skipNav.selectOnUp   = centerOffer;
+            skipNav.selectOnLeft = rerollBtn;
+            skip.navigation = skipNav;
+        }
+
+        // SH-1: keyboard 1-3 shortcut focuses and previews the given offer slot
+        public void SelectSlotByIndex(int i)
+        {
+            if (_shopPanel == null || !_shopPanel.activeSelf) return;
+            var offerGo = _shopPanel.transform.Find($"Offer_{i}");
+            var btn = offerGo?.GetComponent<UnityEngine.UI.Button>();
+            if (btn != null && btn.IsInteractable())
+            {
+                UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(btn.gameObject);
+                SelectShopOffer(i);
+            }
         }
 
         private void SelectShopOffer(int idx)

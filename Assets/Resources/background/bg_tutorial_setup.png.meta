@@ -3,8 +3,8 @@ guid: 00c987f27e719a24e81f60e8fdc1d9ce
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -2732500679510861519
-    second: ui_tutorial_setup_0
+      213: 5523448642592032580
+    second: bg_tutorial_setup_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: ui_tutorial_setup_0
+      name: bg_tutorial_setup_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 1536
-        height: 1024
+        width: 1376
+        height: 768
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 139dd310c15341ad0800000000000000
-      internalID: -2732500679510861519
+      spriteID: 447cfc4a64b37ac40800000000000000
+      internalID: 5523448642592032580
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      ui_tutorial_setup_0: -2732500679510861519
+      bg_tutorial_setup_0: 5523448642592032580
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

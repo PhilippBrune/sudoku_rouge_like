@@ -6,7 +6,6 @@ namespace SudokuRoguelike.Save
     public sealed class RunAutoSaveCoordinator
     {
         private readonly SaveFileService _saveFile;
-        private readonly ProfileService _profile;
         private RunDirector _boundRun;
         // Envelope loaded once at Bind() and updated in memory — avoids disk read on every save.
         private SaveFileEnvelope _cachedEnvelope;
@@ -19,7 +18,6 @@ namespace SudokuRoguelike.Save
         public RunAutoSaveCoordinator(SaveFileService saveFile, ProfileService profile)
         {
             _saveFile = saveFile;
-            _profile = profile;
         }
 
         public void Bind(RunDirector run)
@@ -34,13 +32,24 @@ namespace SudokuRoguelike.Save
         public void Save(RunState runState, PuzzleSaveState puzzleState)
         {
             // Tutorial runs are not persisted — no resume, no progression
-            if (runState == null || runState.TutorialMode) return;
+            if (runState == null || runState.TutorialMode || runState.DisableProgressionRewards) return;
 
             runState.SyncSeenModifiersToList();
 
-            // Update cached envelope in memory — no disk read needed per save.
+            // Ensure envelope is loaded before accumulating — must precede the meta block so that
+            // a missing Bind() call never silently skips DiscoveredBossModifiers updates.
             if (_cachedEnvelope == null)
                 _cachedEnvelope = _saveFile.HasSaveFile() ? _saveFile.Load() : new SaveFileEnvelope();
+
+            // Accumulate cross-run modifier discovery into meta progression
+            if (_cachedEnvelope?.MetaProgress != null)
+            {
+                foreach (var mod in runState.SeenBossModifiers)
+                {
+                    if (!_cachedEnvelope.MetaProgress.DiscoveredBossModifiers.Contains(mod))
+                        _cachedEnvelope.MetaProgress.DiscoveredBossModifiers.Add(mod);
+                }
+            }
 
             if (runState.IsSeasonalChallenge)
             {

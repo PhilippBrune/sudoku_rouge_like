@@ -7,11 +7,13 @@ namespace SudokuRoguelike.Sudoku
     {
         public static SudokuBoard CreatePuzzle(int size, float missingPercent, int seed,
             int regionVariant = 0, bool nonconsecutive = false, bool antiknight = false,
-            bool nonconsecDiagonal = false)
+            bool nonconsecDiagonal = false, bool antibishop = false,
+            bool antiking = false, bool distanceGe2 = false)
         {
             var random = new Random(seed);
             var regionMap = BuildRegionMap(size, regionVariant);
-            var solution = GenerateSolvedBoard(size, regionMap, random, nonconsecutive, antiknight, nonconsecDiagonal);
+            var solution = GenerateSolvedBoard(size, regionMap, random, nonconsecutive, antiknight,
+                nonconsecDiagonal, antibishop, antiking, distanceGe2);
             var puzzle = (int[,])solution.Clone();
 
             var totalCells = size * size;
@@ -41,23 +43,37 @@ namespace SudokuRoguelike.Sudoku
         }
 
         private static int[,] GenerateSolvedBoard(int size, int[,] regionMap, Random random,
-            bool nonconsecutive = false, bool antiknight = false, bool nonconsecDiagonal = false)
+            bool nonconsecutive = false, bool antiknight = false, bool nonconsecDiagonal = false,
+            bool antibishop = false, bool antiking = false, bool distanceGe2 = false)
         {
-            var board = new int[size, size];
-            var rowMask = new int[size];
-            var colMask = new int[size];
-            var regionCount = CountDistinctRegions(regionMap, size);
-            var regionMask = new int[Math.Max(regionCount, size)];
+            const int maxAttempts = 64;
+            for (var attempt = 0; attempt < maxAttempts; attempt++)
+            {
+                var board = new int[size, size];
+                var rowMask = new int[size];
+                var colMask = new int[size];
+                var regionCount = CountDistinctRegions(regionMap, size);
+                var regionMask = new int[Math.Max(regionCount, size)];
 
-            if (!FillBoard(board, regionMap, size, rowMask, colMask, regionMask, random, nonconsecutive, antiknight, nonconsecDiagonal))
-                throw new InvalidOperationException($"Failed to generate solved board for size {size}.");
+                if (FillBoard(board, regionMap, size, rowMask, colMask, regionMask, random,
+                        nonconsecutive, antiknight, nonconsecDiagonal, antibishop, antiking, distanceGe2))
+                    return board;
 
-            return board;
+                // Reseed with a deterministic but different value so retries are reproducible
+                random = new Random(random.Next());
+            }
+
+            throw new InvalidOperationException(
+                $"Failed to generate solved board for size {size} after {maxAttempts} attempts " +
+                $"(nonconsecutive={nonconsecutive}, antiknight={antiknight}, " +
+                $"nonconsecDiagonal={nonconsecDiagonal}, antibishop={antibishop}, " +
+                $"antiking={antiking}, distanceGe2={distanceGe2}).");
         }
 
         private static bool FillBoard(int[,] board, int[,] regionMap, int size,
             int[] rowMask, int[] colMask, int[] regionMask, Random random,
-            bool nonconsecutive = false, bool antiknight = false, bool nonconsecDiagonal = false)
+            bool nonconsecutive = false, bool antiknight = false, bool nonconsecDiagonal = false,
+            bool antibishop = false, bool antiking = false, bool distanceGe2 = false)
         {
             if (!FindNextCell(board, regionMap, size, rowMask, colMask, regionMask,
                     out var row, out var col, out var candidates))
@@ -74,6 +90,8 @@ namespace SudokuRoguelike.Sudoku
                 if (nonconsecutive && ViolatesNonconsecutive(board, row, col, value, size)) continue;
                 if (antiknight && ViolatesAntiknight(board, row, col, value, size)) continue;
                 if (nonconsecDiagonal && ViolatesNonconsecDiagonal(board, row, col, value, size)) continue;
+                if (antibishop && ViolatesAntiBishop(board, row, col, value, size)) continue;
+                if ((antiking || distanceGe2) && ViolatesAntiking(board, row, col, value, size)) continue;
 
                 var bit = 1 << value;
 
@@ -82,7 +100,8 @@ namespace SudokuRoguelike.Sudoku
                 colMask[col] |= bit;
                 regionMask[region] |= bit;
 
-                if (FillBoard(board, regionMap, size, rowMask, colMask, regionMask, random, nonconsecutive, antiknight, nonconsecDiagonal))
+                if (FillBoard(board, regionMap, size, rowMask, colMask, regionMask, random,
+                        nonconsecutive, antiknight, nonconsecDiagonal, antibishop, antiking, distanceGe2))
                     return true;
 
                 board[row, col] = 0;
@@ -121,6 +140,20 @@ namespace SudokuRoguelike.Sudoku
             return false;
         }
 
+        private static bool ViolatesAntiking(int[,] board, int row, int col, int value, int size)
+        {
+            for (var dr = -1; dr <= 1; dr++)
+            for (var dc = -1; dc <= 1; dc++)
+            {
+                if (dr == 0 && dc == 0) continue;
+                var nr = row + dr;
+                var nc = col + dc;
+                if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
+                if (board[nr, nc] == value) return true;
+            }
+            return false;
+        }
+
         private static bool ViolatesNonconsecDiagonal(int[,] board, int row, int col, int value, int size)
         {
             int[] dr = { -1, -1, 1, 1 };
@@ -131,6 +164,18 @@ namespace SudokuRoguelike.Sudoku
                 if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
                 var v = board[nr, nc];
                 if (v != 0 && Math.Abs(value - v) == 1) return true;
+            }
+            return false;
+        }
+
+        private static bool ViolatesAntiBishop(int[,] board, int row, int col, int value, int size)
+        {
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
+            {
+                if (r == row && c == col) continue;
+                if (Math.Abs(r - row) != Math.Abs(c - col)) continue;
+                if (board[r, c] == value) return true;
             }
             return false;
         }

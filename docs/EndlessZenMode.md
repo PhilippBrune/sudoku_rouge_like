@@ -1,295 +1,107 @@
 # Endless Zen Mode
 
-**Version:** 1.2 | **Date:** 2026-04-14 | **Status:** implemented
-
-### Change History
-
-| Version | Date | Status | Changes |
-|---------|------|--------|---------|
-| 1.2 | 2026-04-14 | implemented | Added requirement IDs (ZENMODE-UNLOCK, ZENMODE-SESSION, ZENMODE-DEPTH, ZENMODE-POOL, ZENMODE-GEN, ZENMODE-RES, ZENMODE-SCORE). |
-| 1.1 | 2026-03-23 | implemented | Depth-based star and modifier formulas, class base HP instead of 999, HighestEndlessDepth tracking in ProfileStats, modifier pool from all 15 modifiers |
-| 1.0 | 2026-03-21 | implemented | Initial specification |
-
----
+**Version:** 2.0  
+**Date:** 2026-04-27  
+**Status:** implemented
 
 ## Overview
 
-Endless Zen is an **infinite relaxed progression mode** focused on sustained play without run failure pressure. Unlike Garden Run (5-floor roguelike) and Spirit Trials (timed competitive), Endless Zen offers an open-ended session where difficulty gradually increases through star progression and modifier stacking.
+Endless Zen is an infinite single-session puzzle chain. It now launches as a dedicated mode instead of reusing Garden Run map flow.
 
----
+Primary implementation references:
+
+- `Assets/Scripts/UI/MainMenuController.cs`
+- `Assets/Scripts/Run/EndlessZenService.cs`
+- `Assets/Scripts/Run/RunDirector.cs`
+- `Assets/Scripts/UI/InRunController.cs`
+- `Assets/Scripts/UI/EndScreenViewController.cs`
 
 ## Unlock Condition
 
-**[ZENMODE-UNLOCK-001]** Endless Zen is unlocked when `MetaProgressionState.EndlessZenUnlocked = true`. This flag is set when:
-- `ProfileStats.TotalRuns ≥ 10` (evaluated in `ProfileService.RecordRunAndGetNewUnlocks()`)
+`MetaProgressionState.EndlessZenUnlocked` is set once `ProfileStats.TotalRunsStarted >= 10`.
 
----
+Implementation reference:
 
-## Session Structure
+- `Assets/Scripts/Save/ProfileService.cs`
 
-**[ZENMODE-SESSION-001]** Session parameters:
+## Launch Flow
 
-| Parameter | Value |
-|-----------|-------|
-| Board Size | 9×9 (always) |
-| Difficulty | Diff5 (always) |
-| Star Rating | Scales with depth: `Clamp(1 + depth/4, 1, 5)` |
-| Timer | None |
-| Gold | Minimal — no shop, no spending |
-| Items | No item drops, no item rewards |
-| Relics | No relic nodes |
-| XP | No class XP earned |
-| Save & Resume | No — session must be completed in one sitting |
-| Run Failure | HP = 0 ends the session |
+Current menu flow:
 
-**[ZENMODE-SESSION-002]** HP uses class base HP (not 999) — class passives that restore HP still function within each puzzle.
+1. Open **Game Modes**
+2. Choose **Endless Zen**
+3. Pick a class
+4. Launch `GameMode.EndlessZen`
 
----
+The mode no longer opens the Garden Run path map. `InRunController.ShowPath()` detects Endless Zen and goes directly to the puzzle view.
 
-## Depth Progression
+## Session Rules
 
-**[ZENMODE-DEPTH-001]** Each level is one puzzle. Depth starts at 0 and increments after each solved puzzle.
+| Parameter | Current Behavior |
+|---|---|
+| Board size | Always `9x9` |
+| Floors / map | No floor graph, no route selection |
+| Gold | Starts at `0`; no progression reward flow |
+| Items | `ItemSlots = 0` |
+| Relics | None are granted during the session |
+| XP / meta rewards | Disabled via `DisableProgressionRewards = true` |
+| Save & Resume | Disabled |
+| Harmony | Forced to base config (`HarmonyLevel = 0`) |
+| Irregular toggle | Respected for region variant generation |
 
-### Star Scaling
+## Depth and Recovery Loop
 
-**[ZENMODE-DEPTH-002]** Star formula:
-```
-Stars = Clamp(1 + floor(depth / 4), 1, 5)
-```
+Depth starts at `0`. Each solved puzzle:
 
-| Depth | Stars | Missing % | 9×9 Givens |
-|:---:|:---:|:---:|:---:|
-| 0–3 | 1★ | 40% | 49 |
-| 4–7 | 2★ | 50% | 41 |
-| 8–11 | 3★ | 60% | 33 |
-| 12–15 | 4★ | 70% | 25 |
-| 16+ | 5★ | 80% | 17 |
+- increments `State.Depth`
+- restores `+1 HP` up to max
+- restores `+3 Pencil` up to max
+- generates the next board immediately
 
-**[ZENMODE-DEPTH-003]** Stars cap at 5★ — no 6★ in Endless Zen.
+Implementation reference:
 
-### Modifier Scaling
+- `RunDirector.AdvanceEndlessZenLevel()`
 
-**[ZENMODE-DEPTH-004]** Modifiers are added as depth increases, stacking constraint complexity:
+## Difficulty Scaling
 
-| Depth | Modifier Cap | Effect |
-|:---:|:---:|--------|
-| 0–9 | 1 modifier | Single constraint overlay |
-| 10–19 | 2 modifiers | Dual constraints, moderate complexity |
-| 20+ | 3 modifiers | Triple constraints, maximum pressure |
+### Stars
 
-Formula: `ModifierCap(depth) = depth < 10 ? 1 : depth < 20 ? 2 : 3`
+Star rating is computed as:
 
----
-
-## Modifier Pool
-
-All **15 modifiers** are eligible in Endless Zen. Board size restrictions still apply, but since Endless Zen is always 9×9, all modifiers meet the minimum size requirement.
-
-| # | Modifier | Type |
-|:---:|----------|------|
-| 1 | Parity Lines | Line |
-| 2 | Difference Kropki | Dot |
-| 3 | Dutch Whispers | Line |
-| 4 | Renban Lines | Line |
-| 5 | Ratio Kropki | Dot |
-| 6 | Killer Cages | Arithmetic |
-| 7 | Arrow Sums | Arithmetic |
-| 8 | Fog of War | Visibility |
-| 9 | German Whispers | Line |
-| 10 | Palindrome | Line |
-| 11 | Thermo | Line |
-| 12 | Between Lines | Line |
-| 13 | Even Odd | Cell-Level |
-| 14 | Nonconsecutive | Global Negative |
-| 15 | Antiknight | Global Negative |
-
-Modifiers are selected randomly (seeded) per level without duplicates. A new set is rolled for each depth.
-
-Nonconsecutive and Antiknight (no visible geometry) display a **text indicator in the HUD** so the player knows the global constraint is active.
-
----
-
-## Level Generation
-
-**[ZENMODE-GEN-001]** `EndlessZenService.BuildLevel(int depth, int seed)` generates each level:
-
-1. Board size = 9, Difficulty = Diff5
-2. Stars = `Clamp(1 + depth/4, 1, 5)`
-3. MissingPercent via `StarDensityService.MissingPercentForStars(stars)`
-4. IsBoss = false (no boss gates in Endless Zen)
-5. Select `ModifierCap(depth)` random modifiers from pool (no duplicates)
-6. Region variant = random (0–3, respects AllowIrregularPuzzles setting)
-
-Seed is derived from the session seed + depth index for deterministic generation.
-
----
-
-## Resources
-
-| Resource | Value | Notes |
-|----------|:---:|-------|
-| HP | Class base HP | Starts at class default, no restoration between levels |
-| Pencil | Class base Pencil | Replenished partially after each level (+3 per level) |
-| Items | None | No item inventory, no item rewards |
-| Relics | None | No relic slot |
-| Gold | None | No gold economy |
-
-### HP Attrition
-
-**[ZENMODE-RES-001]** HP attrition is the core session limiter. Between levels, the player receives **+1 HP** (flat, regardless of class). This prevents ultra-short sessions for low-HP classes while maintaining long-term pressure — even skilled players will eventually run out of HP.
-
-Class passives that restore HP (e.g. Garden Monk's heal every 5 correct placements) still function within each puzzle.
-
----
-
-## Scoring & High Score
-
-### Score Formula
-
-```
-EndlessScore = DepthReached
+```text
+Clamp(1 + depth / 4, 1, 5)
 ```
 
-The primary metric is **depth** (number of puzzles completed). Secondary metrics are tracked for display:
+### Modifier Count
 
-| Metric | Description |
-|--------|-------------|
-| Depth Reached | Primary score — number of puzzles completed |
-| Total Correct Placements | Sum of all correct digit placements |
-| Total Mistakes | Sum of all wrong placements |
-| Session Duration | Total time from first puzzle to session end |
-| Peak Star Rating | Highest star level reached |
-| Peak Modifier Count | Most simultaneous modifiers faced |
+Modifier cap is depth-based:
 
-### High Score Tracking
+- Depth `0-9`: 1 modifier
+- Depth `10-19`: 2 modifiers
+- Depth `20+`: 3 modifiers
 
-**[ZENMODE-SCORE-001]** `ProfileStats.HighestEndlessDepth` stores the all-time best depth. This is updated in `ProfileService.RecordRunAndGetNewUnlocks()`.
+Modifiers are drawn from the full `BossModifierId` enum pool. Region variant uses:
 
-### Achievements
+- `0-1` when irregular boards are off
+- `0-3` when irregular boards are on
 
-| Achievement | Condition |
-|------------|-----------|
-| Deep Meditation | Reach Endless Zen depth 20 |
-| Eternal Patience | Reach Endless Zen depth 50 |
+Implementation reference:
 
----
+- `EndlessZenService.BuildNextLevel()`
 
-## Session Flow
+## HUD and Results
 
-```
-1. Player selects Endless Zen from Game Modes menu
-2. Class selection (same as Garden Run — class passives apply)
-3. First puzzle generates (9×9, 1★, 1 modifier)
-4. Player solves puzzle
-5. On completion:
-   a. Depth increments
-   b. +1 HP restored, +3 Pencil restored
-   c. Brief depth counter animation
-   d. Next puzzle generates with updated stars/modifiers
-6. On HP = 0:
-   a. Session ends
-   b. Results screen:
-      - Depth Reached (large display)
-      - Session Duration
-      - Mistakes Made
-      - Personal best comparison
-      - New high score highlight if applicable
-   c. Update ProfileStats
-7. Return to Game Modes menu
-```
+- The HUD hides puzzle and run timers during Endless Zen.
+- Failure still uses HP reaching 0.
+- End results are shown through `EndScreenViewController.ShowEndlessZenResult()`.
+- Profile stats update `HighestEndlessDepth` and `TotalZenSessions`.
 
-### No Pause-Save
+## Explicit Non-Features
 
-Endless Zen has no save & resume. Closing the game or returning to menu ends the session. This is intentional — the mode rewards sustained focus in a single sitting.
+The current checked-in implementation does **not** include:
 
----
-
-## Differences from Garden Run
-
-| Aspect | Garden Run | Endless Zen |
-|--------|-----------|-------------|
-| Floors | 5 fixed floors | Infinite depth |
-| Path routing | Calm/Risk dual paths | Single linear progression |
-| Boss gates | Yes (modifier choice) | No — modifiers assigned automatically |
-| Items & relics | Full economy | Disabled |
-| Gold & shops | Active | Disabled |
-| XP rewards | Yes (per-tile) | No |
-| HP healing | Between floors + items | +1 HP per level + class passives |
-| Save & resume | Yes | No |
-| Board sizes | 5×5 → 9×9 | 9×9 only |
-| Star range | 1–6★ | 1–5★ |
-| Session length | ~45–90 min | Until HP = 0 |
-
----
-
-## Source Files
-
-| File | Purpose |
-|------|---------|
-| `Assets/Scripts/Run/EndlessZenService.cs` | `BuildLevel()`, `ModifierCap()`, modifier pool |
-| `Assets/Scripts/Core/RuntimeModels.cs` | `MetaProgressionState.EndlessZenUnlocked`, `ProfileStats.HighestEndlessDepth` |
-| `Assets/Scripts/Save/ProfileService.cs` | Unlock evaluation, high score recording |
-| `Assets/Scripts/Meta/SteamAchievementService.cs` | Endless-specific achievements |
-
----
-
-## Steam Leaderboard
-
-Endless Zen has a global Steam leaderboard for depth ranking, reusing the anti-cheat infrastructure from Spirit Trials.
-
-### Leaderboard
-
-| Leaderboard | Steam Name | Ranking | Tiebreaker |
-|-------------|-----------|---------|------------|
-| Endless Zen | `endless_zen_depth` | DepthReached (desc) | TotalMistakes (asc) |
-
-### Score Submission
-
-On session end:
-1. Upload `DepthReached` as the leaderboard score
-2. Attach `details[]`: sessionDurationMs, totalMistakes, totalCorrectPlacements, peakStarRating, peakModifierCount, classId
-3. Upload method: `KeepBest` — only improves the player's entry if the new depth exceeds the previous
-
-### Anti-Cheat
-
-Reuses the Spirit Trials move log system:
-- Each puzzle records a timestamped move log
-- Move logs for the full session are hashed (SHA-256) and submitted with the score
-- Replay verification: move logs can be replayed against seeded puzzles to verify depth
-- Flagging: sessions with suspicious patterns (< 5s per puzzle, zero pencil on 5★) are flagged for review
-
-### Display
-
-The Endless Zen results screen shows:
-- **Personal rank** (global position)
-- **Top 10** entries
-- **Nearby entries** (5 above, 5 below)
-- **Friends leaderboard** (Steam friends)
-
----
-
-## Open Issues
-
-No open issues remaining.
-
-
----
-
-## Requirements Traceability
-
-<!-- AUTO-GENERATED by SPICE pipeline. Do not edit manually. -->
-
-| REQ-ID | Title | Linked Systems |
-|--------|-------|----------------|
-| REQ-RUN-052 | "ENDLESS_ZEN_MODE | RunDirector, RunService", |
-| REQ-RUN-053 | "UNLOCK_CONDITION | ProfileService", |
-| REQ-RUN-054 | "SESSION_STRUCTURE | SessionState, DifficultyScaler", |
-| REQ-RUN-055 | "DEPTH_PROGRESSION | GameDirector, SessionState", |
-| REQ-RUN-056 | "STAR_SCALING | SessionState, StarRatingService", |
-| REQ-RUN-057 | "MODIFIER_SCALING | GameDirector, ModifierService", |
-| REQ-RUN-058 | "LEVEL_GENERATION | EndlessZenService", |
-| REQ-RUN-059 | "RESOURCES | GameState", |
-| REQ-RUN-060 | "HP_ATTRITION | GameDirector, ClassService", |
-| REQ-RUN-061 | "SCORE_FORMULA | SessionState, ProfileService", |
-| REQ-RUN-062 | "HIGH_SCORE_TRACKING | ProfileService", |
-| REQ-RUN-063 | "ACHIEVEMENTS | SteamAchievementService" |
+- save/resume
+- shops
+- reward screens
+- relic choices
+- Garden Run progression rewards

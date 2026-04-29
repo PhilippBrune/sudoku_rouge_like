@@ -98,6 +98,16 @@ namespace SudokuRoguelike.UI
             StartCoroutine(RebuildRewardButtonsStaggered());
         }
 
+        // RW-1: keyboard 1-3 shortcut claims the given reward slot directly
+        public void SelectRewardByIndex(int i)
+        {
+            if (_rewardPanel == null || !_rewardPanel.activeSelf) return;
+            var slotGo = _rewardPanel.transform.Find($"Slot_{i}");
+            var btn = slotGo?.GetComponent<UnityEngine.UI.Button>();
+            if (btn != null && btn.IsInteractable())
+                btn.onClick.Invoke();
+        }
+
         private void BuildRewardPanel()
         {
             if (_rewardPanel != null || _pathPanel == null) return;
@@ -170,6 +180,15 @@ namespace SudokuRoguelike.UI
                             ItemRarity.Rare => new Color(0.22f, 0.38f, 0.78f, 0.92f),  // blue
                             _              => img.color                                 // Normal: keep default
                         };
+                    // RW1: also tint the label text colour to match rarity
+                    var lbl = btn.transform.Find("Label")?.GetComponent<Text>();
+                    if (lbl != null)
+                        lbl.color = item.Rarity switch
+                        {
+                            ItemRarity.Epic => new Color(1.00f, 0.85f, 0.35f, 1f),   // warm gold
+                            ItemRarity.Rare => new Color(0.55f, 0.80f, 1.00f, 1f),   // light blue
+                            _              => lbl.color                              // Normal: keep default
+                        };
                 }
                 if (item != null)
                     InRunUiFactory.SetButtonIcon(btn, ItemService.GetIconName(item.Type), false, "items");
@@ -184,9 +203,9 @@ namespace SudokuRoguelike.UI
                 yield return new WaitForSecondsRealtime(AnimationHelper.RewardSlotDuration * 0.6f);
             }
 
-            // Skip button
-            var skip = InRunUiFactory.CreatePanelButton(_rewardPanel.transform, "Slot_skip",
-                new Vector2(0.35f, 0.06f), new Vector2(0.65f, 0.16f), "Skip");
+            // Skip button — F-QA: skip_stone unifies all skip actions (flow_ribbon kept for CrossLink map node)
+            var skip = InRunUiFactory.CreateActionButton(_rewardPanel.transform, "Slot_skip",
+                new Vector2(0.35f, 0.06f), new Vector2(0.65f, 0.16f), "Skip", UiAction.Skip);
             skip.onClick.AddListener(() =>
             {
                 _awaitingReward = false;
@@ -347,7 +366,7 @@ namespace SudokuRoguelike.UI
             }
 
             var abortBtn = InRunUiFactory.CreatePanelButton(_bagSwapPanel.transform, "SwapAbort",
-                new Vector2(0.30f, 0.04f), new Vector2(0.70f, 0.14f), "Keep Bag (Abort)");
+                new Vector2(0.20f, 0.02f), new Vector2(0.80f, 0.17f), "Keep Bag (Abort)");  // B1: taller for icon visibility
             InRunUiFactory.SetButtonIcon(abortBtn, "swap_arrows", false, "economy");
             abortBtn.onClick.AddListener(() => _onSwapAborted?.Invoke());
 
@@ -399,9 +418,9 @@ namespace SudokuRoguelike.UI
             restTitle.rectTransform.offsetMax = Vector2.zero;
 
             var healAmt = run.GetRestHealAmount();
-            var btnHeal = InRunUiFactory.CreatePanelButton(panel.transform, "BtnHeal",
+            var btnHeal = InRunUiFactory.CreateActionButton(panel.transform, "BtnHeal",
                 new Vector2(0.05f, 0.52f), new Vector2(0.95f, 0.70f),
-                $"Heal +{healAmt} HP");
+                $"Heal +{healAmt} HP", UiAction.Heal, compact: true);
             btnHeal.onClick.AddListener(() =>
             {
                 run.AcceptRestHeal();
@@ -410,9 +429,9 @@ namespace SudokuRoguelike.UI
                 Object.Destroy(panel);
             });
 
-            var btnPencil = InRunUiFactory.CreatePanelButton(panel.transform, "BtnPencil",
+            var btnPencil = InRunUiFactory.CreateActionButton(panel.transform, "BtnPencil",
                 new Vector2(0.05f, 0.30f), new Vector2(0.95f, 0.48f),
-                "+4 Pencil Marks");
+                "+4 Pencil Marks", UiAction.Pencil, compact: true);
             btnPencil.onClick.AddListener(() =>
             {
                 run.AcceptRestPencilBoost();
@@ -421,9 +440,9 @@ namespace SudokuRoguelike.UI
                 Object.Destroy(panel);
             });
 
-            var btnReroll = InRunUiFactory.CreatePanelButton(panel.transform, "BtnReroll",
+            var btnReroll = InRunUiFactory.CreateActionButton(panel.transform, "BtnReroll",
                 new Vector2(0.05f, 0.08f), new Vector2(0.95f, 0.26f),
-                "+1 Shop Reroll Token");
+                "+1 Shop Reroll Token", UiAction.Reroll, compact: true);
             btnReroll.onClick.AddListener(() =>
             {
                 run.AcceptRestRerollShop();
@@ -433,6 +452,7 @@ namespace SudokuRoguelike.UI
             });
 
             // 4th option: cleanse oldest curse — only shown when at least one curse is active
+            Button btnCleanse = null;
             if (run.HasAnyCurse())
             {
                 // Shift existing buttons up to make room
@@ -446,9 +466,9 @@ namespace SudokuRoguelike.UI
 
                 var activeCurses = run.GetActiveCurses();
                 var oldestName = activeCurses.Count > 0 ? activeCurses[0].Name : "curse";
-                var btnCleanse = InRunUiFactory.CreatePanelButton(panel.transform, "BtnCleanse",
+                btnCleanse = InRunUiFactory.CreateActionButton(panel.transform, "BtnCleanse",
                     new Vector2(0.05f, 0.08f), new Vector2(0.95f, 0.26f),
-                    $"Cleanse \"{oldestName}\"");
+                    $"Cleanse \"{oldestName}\"", UiAction.Cleanse, compact: true);
                 btnCleanse.onClick.AddListener(() =>
                 {
                     run.AcceptRestCurseRemoval();
@@ -456,6 +476,17 @@ namespace SudokuRoguelike.UI
                     ActivePanel = null;
                     Object.Destroy(panel);
                 });
+            }
+
+            // Explicit vertical D-pad nav for controller
+            var restBtns = new List<Button> { btnHeal, btnPencil, btnReroll };
+            if (btnCleanse != null) restBtns.Add(btnCleanse);
+            for (var i = 0; i < restBtns.Count; i++)
+            {
+                var nav = new Navigation { mode = Navigation.Mode.Explicit };
+                nav.selectOnUp   = restBtns[(i - 1 + restBtns.Count) % restBtns.Count];
+                nav.selectOnDown = restBtns[(i + 1) % restBtns.Count];
+                restBtns[i].navigation = nav;
             }
 
             ActivePanel = panel;
@@ -507,6 +538,9 @@ namespace SudokuRoguelike.UI
                 var btn = InRunUiFactory.CreatePanelButton(panel.transform, $"RelicBtn_{i}",
                     new Vector2(xMin, 0.10f), new Vector2(xMax, 0.82f), relicDesc);
                 InRunUiFactory.SetButtonIcon(btn, RelicService.GetIconName(relic.Id), false, RelicService.GetIconFolder(relic.Id));
+                var iconChild = btn.transform.Find("Icon");
+                if (iconChild != null)
+                    InRunUiFactory.AddRelicTierPip(iconChild, relic.Tier);
                 relicBtns[i] = btn;
                 var idx = i;
                 btn.onClick.AddListener(() =>
@@ -527,8 +561,8 @@ namespace SudokuRoguelike.UI
             }
 
             // Accept button — hidden until a relic is staged
-            acceptBtn = InRunUiFactory.CreatePanelButton(panel.transform, "BtnAccept",
-                new Vector2(0.25f, 0.01f), new Vector2(0.55f, 0.08f), "Accept");
+            acceptBtn = InRunUiFactory.CreateActionButton(panel.transform, "BtnAccept",
+                new Vector2(0.25f, 0.01f), new Vector2(0.55f, 0.08f), "Accept", UiAction.Accept);
             acceptBtn.gameObject.SetActive(false);
             acceptBtn.GetComponent<Image>().color = new Color(0.30f, 0.65f, 0.30f, 0.92f);
             acceptBtn.onClick.AddListener(() =>
@@ -544,8 +578,8 @@ namespace SudokuRoguelike.UI
             });
 
             // Skip / Leave button
-            var skip = InRunUiFactory.CreatePanelButton(panel.transform, "BtnSkip",
-                new Vector2(0.60f, 0.01f), new Vector2(0.96f, 0.08f), "Leave");
+            var skip = InRunUiFactory.CreateActionButton(panel.transform, "BtnSkip",
+                new Vector2(0.60f, 0.01f), new Vector2(0.96f, 0.08f), "Leave", UiAction.Leave);
             skip.onClick.AddListener(() =>
             {
                 OnStatusChanged?.Invoke("Left the relic.");
@@ -553,6 +587,25 @@ namespace SudokuRoguelike.UI
                 Object.Destroy(panel);
                 onDismissed?.Invoke();
             });
+
+            // Explicit D-pad nav: left/right between relics, down to skip; accept/skip up to middle relic
+            for (var i = 0; i < relicBtns.Length; i++)
+            {
+                var nav = new Navigation { mode = Navigation.Mode.Explicit };
+                if (i > 0)                     nav.selectOnLeft  = relicBtns[i - 1];
+                if (i < relicBtns.Length - 1)  nav.selectOnRight = relicBtns[i + 1];
+                nav.selectOnDown = skip;
+                relicBtns[i].navigation = nav;
+            }
+            var midRelic = relicBtns[relicBtns.Length / 2];
+            var skipNav = skip.navigation;
+            skipNav.mode = Navigation.Mode.Explicit;
+            skipNav.selectOnUp = midRelic;
+            skip.navigation = skipNav;
+            var acceptNav = acceptBtn.navigation;
+            acceptNav.mode = Navigation.Mode.Explicit;
+            acceptNav.selectOnUp = midRelic;
+            acceptBtn.navigation = acceptNav;
 
             ActivePanel = panel;
             FadeInPanel(panel);

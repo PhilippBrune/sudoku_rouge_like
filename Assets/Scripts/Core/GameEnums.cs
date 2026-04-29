@@ -270,7 +270,9 @@ namespace SudokuRoguelike.Core
         WornChisel,        // StoneGardener L15: shop items cost 30% less this floor
         DimLantern,        // LanternSeer L15: reveal boss modifier list for current floor
         ReedPledge,        // ReedDuelist L15: commit no-pencil run for bonus rewards
-        SurveyNotes        // QuietCartographer L15: reveal all node types and star ratings
+        SurveyNotes,       // QuietCartographer L15: reveal all node types and star ratings
+        // ── Harmony Difficulty items ──
+        BambooCompass      // [HARMONY-H3+] highlight 2 cells where next placement would violate a constraint
     }
 
     public enum RelicId
@@ -306,7 +308,12 @@ namespace SudokuRoguelike.Core
         LoadBearingStone,  // StoneGardener L30: 30% chance to retain 1 charge when item exhausted
         WardingFlame,      // LanternSeer L30: once/run, auto-removes worst modifier at boss gate
         DuelingReed,       // ReedDuelist L30: perfect no-pencil solve grants +2 Pencil +1 Reroll Token
-        AccurateMap        // QuietCartographer L30: once/floor, all nodes revealed automatically
+        AccurateMap,       // QuietCartographer L30: all nodes revealed automatically
+        // ── Harmony Difficulty relics ──
+        CrackedStone,      // [HARMONY-H2+] T1: +8g at run start, -1 starting HP
+        FrostedMirror,     // [HARMONY-H5+] T2: absorb 1 HP of mistake damage at cost of 3 pencil
+        VoidPetal,         // [HARMONY-H7+] T3: survive lethal hit at 1 HP, receive 1 Normal Solver (once/run)
+        LanternOfVoid      // [HARMONY-H9+] Legendary: boss modifiers never ???; +1g per active floor modifier per solve
     }
 
     public enum RelicTier
@@ -316,6 +323,19 @@ namespace SudokuRoguelike.Core
         Tier3,
         Tier4,
         Legendary
+    }
+
+    /// <summary>
+    /// Optional pre-run trade-offs available at specific Harmony difficulty levels.
+    /// [HARMONY-PERK-001] Player selects at most one perk per run.
+    /// </summary>
+    public enum HarmonyPerkId
+    {
+        None = 0,
+        MoonshadeOffering, // [HARMONY-H4+] Lose first puzzle reward slot → +20g, +2 pencil at start
+        ScholarsBurden,    // [HARMONY-H6+] Max item slots -1 → +5 pencil + 1 free Rare InkWell at start
+        VoidWard,          // [HARMONY-H8+] All positive floor effects disabled → start with 1 mistake-absorb charge
+        EmptyCanvas        // [HARMONY-H10] Start with 0 items → all item reward slots are Rare+ (no Nothing, no Normal)
     }
 
     public enum NodeType
@@ -388,7 +408,9 @@ namespace SudokuRoguelike.Core
         Onboarding,
         ProfileSelect,   // 3-slot profile selection / creation / deletion
         Keybindings,     // keyboard + controller rebinding panel
-        Accessibility    // per-toggle descriptions + visual preview board
+        Accessibility,   // per-toggle descriptions + visual preview board
+        SpiritTrialsTierSelect, // tier selection before a Spirit Trials run
+        EndlessZenLeaderboard   // personal best depth + records for Endless Zen
     }
 
     public enum AppScreen

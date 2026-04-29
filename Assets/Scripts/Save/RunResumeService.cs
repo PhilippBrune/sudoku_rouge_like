@@ -32,6 +32,7 @@ namespace SudokuRoguelike.Save
 
             var envelope = _saveFile.Load();
             if (envelope.ActiveRunState == null) return false;
+            if (envelope.ActiveRunState.DisableProgressionRewards) return false;
 
             runState = envelope.ActiveRunState;
             puzzleState = envelope.ActivePuzzle;
@@ -48,6 +49,7 @@ namespace SudokuRoguelike.Save
         {
             if (run == null || envelope == null) return false;
             if (envelope.ActiveRunState == null) return false;
+            if (envelope.ActiveRunState.DisableProgressionRewards) return false;
 
             var runState = envelope.ActiveRunState;
             RestoreTransientState(runState);
@@ -75,7 +77,12 @@ namespace SudokuRoguelike.Save
         // [REQ: RELIC-SLOT-003] Legacy migration: if HasRelic + HeldRelic present but HeldRelics empty, migrate single relic into list
         private static void RestoreTransientState(RunState runState)
         {
+            if (runState.SeenBossModifierList == null)
+                runState.SeenBossModifierList = new System.Collections.Generic.List<BossModifierId>();
+            if (runState.SeenBossModifiers == null)
+                runState.SeenBossModifiers = new System.Collections.Generic.HashSet<BossModifierId>();
             runState.SyncSeenModifiersFromList();
+            runState.HarmonyConfig = HarmonyDifficultyService.BuildConfig(runState.HarmonyLevel);
 
             // Migrate legacy single-relic save data to HeldRelics list
             if (runState.HasRelic && runState.HeldRelic != null

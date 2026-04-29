@@ -23,6 +23,7 @@ namespace SudokuRoguelike.Sudoku
 
         public static bool IsValidBoard(SudokuBoard board)
         {
+            if (board?.Solution == null) return false;
             var size = board.Size;
             for (var r = 0; r < size; r++)
             for (var c = 0; c < size; c++)

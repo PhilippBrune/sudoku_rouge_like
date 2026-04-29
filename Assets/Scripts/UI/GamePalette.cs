@@ -1,3 +1,4 @@
+using SudokuRoguelike.Core;
 using UnityEngine;
 
 namespace SudokuRoguelike.UI
@@ -119,6 +120,28 @@ namespace SudokuRoguelike.UI
         public static readonly Color HcTextOnDark   = new(0.95f, 0.93f, 0.88f, 1f); // light text for dark bg
         public static readonly Color HcPencilMark   = new(0.60f, 0.60f, 0.60f, 1f); // mid-grey pencil
 
+        // ── Per-class signature colors (F10/F26) ──────────────────────────────────
+        // Used to tint class-exclusive item/relic icons and class badge overlays.
+        // Apply as a 30% opacity tint in the bottom-left corner of affected icons.
+        public static readonly Color ClassColorNumberFreak       = new(0.30f, 0.62f, 0.95f, 0.30f); // cool blue
+        public static readonly Color ClassColorGardenMonk        = new(0.35f, 0.72f, 0.40f, 0.30f); // calm green
+        public static readonly Color ClassColorShrineArchivist   = new(0.85f, 0.75f, 0.35f, 0.30f); // scroll gold
+        public static readonly Color ClassColorKoiGambler        = new(0.90f, 0.45f, 0.18f, 0.30f); // koi orange
+        public static readonly Color ClassColorStoneGardener     = new(0.55f, 0.55f, 0.56f, 0.30f); // stone gray
+        public static readonly Color ClassColorLanternSeer       = new(0.95f, 0.85f, 0.20f, 0.30f); // lantern gold
+        public static readonly Color ClassColorReedDuelist       = new(0.30f, 0.82f, 0.70f, 0.30f); // reed teal
+        public static readonly Color ClassColorQuietCartographer = new(0.70f, 0.42f, 0.82f, 0.30f); // map violet
+
+        // ── Modifier subgroup accent colors (F27) ─────────────────────────────────
+        // Applied as a thin border tint when rendering modifier icons so similar
+        // icons are distinguishable at small sizes (24-32 px).
+        public static readonly Color ModGroupAntiMove  = new(0.88f, 0.25f, 0.25f, 0.55f); // red  — antiknight/antiking/antibishop
+        public static readonly Color ModGroupLine      = new(0.25f, 0.80f, 0.55f, 0.55f); // teal — whisper/parity/renban/palindrome/consecutive/thermo variants
+        public static readonly Color ModGroupDot       = new(0.85f, 0.85f, 0.85f, 0.55f); // white — kropki/white_dot/black_dot/sum_dot
+        public static readonly Color ModGroupCage      = new(0.85f, 0.20f, 0.15f, 0.45f); // crimson — killer/arrow
+        public static readonly Color ModGroupCell      = new(0.35f, 0.65f, 0.92f, 0.55f); // blue  — even_odd/prime/fortress/fog
+        public static readonly Color ModGroupGlobal    = new(0.65f, 0.40f, 0.85f, 0.55f); // violet — nonconsecutive/distance/modular/entropy
+
         // ── V5 sprite-swap flag ───────────────────────────────────────────────────
         /// <summary>
         /// When true, BoardViewController uses Sprite assets for cell markers (Killer, Kropki,
@@ -131,5 +154,50 @@ namespace SudokuRoguelike.UI
         // ── Alpha helper ──────────────────────────────────────────────────────────
         /// <summary>Returns <paramref name="c"/> with its alpha replaced by <paramref name="a"/>.</summary>
         public static Color WithAlpha(Color c, float a) => new Color(c.r, c.g, c.b, a);
+
+        // ── Class color lookup (F10/F26) ──────────────────────────────────────────
+        /// <summary>
+        /// Returns the per-class tint color for <paramref name="classId"/>.
+        /// Apply at 30% opacity to the bottom-left quadrant of class-exclusive item/relic icons.
+        /// </summary>
+        public static Color GetClassColor(ClassId classId) => classId switch
+        {
+            ClassId.NumberFreak       => ClassColorNumberFreak,
+            ClassId.GardenMonk        => ClassColorGardenMonk,
+            ClassId.ShrineArchivist   => ClassColorShrineArchivist,
+            ClassId.KoiGambler        => ClassColorKoiGambler,
+            ClassId.StoneGardener     => ClassColorStoneGardener,
+            ClassId.LanternSeer       => ClassColorLanternSeer,
+            ClassId.ReedDuelist       => ClassColorReedDuelist,
+            ClassId.QuietCartographer => ClassColorQuietCartographer,
+            _                         => Color.clear
+        };
+
+        // ── Modifier group lookup (F27) ───────────────────────────────────────────
+        /// <summary>
+        /// Returns the subgroup accent color for a modifier icon name, used as a thin border tint
+        /// when rendering modifier icons so similar icons are distinguishable at 24-32 px.
+        /// </summary>
+        public static Color GetModifierGroupColor(string iconName)
+        {
+            if (iconName == null) return Color.clear;
+            if (iconName.StartsWith("antiknight") || iconName.StartsWith("antiking") || iconName.StartsWith("antibishop") || iconName.StartsWith("nonconsec"))
+                return ModGroupAntiMove;
+            if (iconName.StartsWith("german") || iconName.StartsWith("dutch") || iconName.StartsWith("parity") ||
+                iconName.StartsWith("renban") || iconName.StartsWith("palindrome") || iconName.StartsWith("between") ||
+                iconName.StartsWith("consecutive") || iconName.StartsWith("thermo") || iconName.StartsWith("slow_thermo") ||
+                iconName.StartsWith("unique_set") || iconName.StartsWith("arrow"))
+                return ModGroupLine;
+            if (iconName.StartsWith("white_dot") || iconName.StartsWith("black_dot") || iconName.StartsWith("full_kropki") || iconName.StartsWith("sum_dot"))
+                return ModGroupDot;
+            if (iconName.StartsWith("killer") || iconName.StartsWith("arrow_sum"))
+                return ModGroupCage;
+            if (iconName.StartsWith("even_odd") || iconName.StartsWith("prime") || iconName.StartsWith("fortress") || iconName.StartsWith("fog"))
+                return ModGroupCell;
+            if (iconName.StartsWith("nonconsecutive") || iconName.StartsWith("distance") || iconName.StartsWith("modular") ||
+                iconName.StartsWith("tricolor") || iconName.StartsWith("greater"))
+                return ModGroupGlobal;
+            return Color.clear;
+        }
     }
 }

@@ -79,6 +79,16 @@ namespace SudokuRoguelike.Core
         public int FogDisabledMoves;       // LanternOfClarity: fog disabled for next N moves
         public int LastMistakeHpLost;      // GinkgoLeaf: HP actually lost on last mistake (for restoration)
         public int LastComboBeforeMistake;  // GinkgoLeaf: combo streak before last mistake (for restoration)
+        // Shield system (Silk Fan item):
+        // Absorbs incoming HP damage before CurrentHP is reduced. Resets at each puzzle start.
+        // Distinct from MistakeShieldCharges (which absorbs full mistake events at 0 HP cost).
+        public int ShieldPoints;
+        // True when the last ApplyMistakePenalty call was fully absorbed by ShieldPoints (no HP lost).
+        // Read by PlaceNumber to suppress combo-streak reset while the player is shielded.
+        public bool LastMistakeShieldAbsorbed;
+
+        // Spirit Trials tier (set by RunDirector.StartRun when Mode == SpiritTrials)
+        public SpiritTrialsTier SpiritTrialsTier;
 
         // Run timer
         public float TotalRunSeconds;      // Accumulated puzzle time across all puzzles this run
@@ -90,8 +100,37 @@ namespace SudokuRoguelike.Core
         public bool AllNodesRevealed;      // QuietCartographer L15/L30: all floor nodes visible
         public bool DimLanternUsed;        // LanternSeer L15: reveal boss modifier list on map this floor
         public int FortunesLedgerCounter;  // NumberFreak L30: correct placements since last Reroll Token
+        // [REDESIGN] ReedDuelist: count of puzzles completed with NoPencilUsed+PerfectSoFar this run.
+        // Every 5 such puzzles grants +1 HP.
+        public int NoPencilPerfectLevelCount;
+        // [REDESIGN] GoldenRoot relic: gold spent during the current floor (reset at each FloorStart).
+        public int GoldSpentThisFloor;
         public bool TempleVowReady;        // GardenMonk L30: trigger ready (HP ≤ 25%, fires once/puzzle)
+        // [REDESIGN] AccurateMap: guarantee one relic-tier node this floor (read by RunDirector).
+        public bool BonusRelicNodeThisFloor;
         public bool WardingFlameUsed;      // LanternSeer L30: once-per-run auto-remove used
+
+        // [HARMONY-001] Harmony difficulty level for this run (0-10). Set by RunArchetypeService.
+        public int HarmonyLevel;
+        // [HARMONY-002] HP cost per mistake. Base=1; scales at H5 (2), H9 (3).
+        public int MistakeHpCost = 1;
+        // [HARMONY-003] True at H7+. Combo streak decays by 1 every 8 correct placements with no combo bonus.
+        public bool ComboDecayEnabled;
+        // [HARMONY-004] Consecutive non-bonus placements. Every 8 increments decays ComboStreak by 1 when ComboDecayEnabled.
+        [System.NonSerialized] public int ComboNoGainStreak;
+        // [HARMONY-PERK-001] Optional pre-run perk active for this run.
+        public HarmonyPerkId HarmonyPerk;
+        // [HARMONY-PERK-002] Perk state flags read by RewardService and RunDirector.
+        public bool MoonshadeOfferingActive;     // first puzzle reward slot 1 forced Nothing
+        public bool ScholarsBurdenGrantsInkWell; // grant 1 free Rare InkWell at run start
+        public bool VoidWardActive;              // positive floor effects disabled
+        public bool EmptyCanvasActive;           // item reward slots guaranteed Rare+
+        // [HARMONY-RELIC-001] True when LanternOfVoid is held; boss modifier ??? labels permanently hidden.
+        public bool BossModifiersAlwaysHidden;
+        // [HARMONY-RELIC-002] Per-puzzle mistake count for CrackedStone; first mistake costs HP, subsequent absorbed.
+        [System.NonSerialized] public int CrackedStoneMistakesThisPuzzle;
+        // [HARMONY-CONFIG-CACHE] Rebuilt after load from HarmonyLevel; not persisted.
+        [System.NonSerialized] public SudokuRoguelike.Run.HarmonyConfig HarmonyConfig;
 
         // Mode flags
         public bool IsSeasonalChallenge;   // suppresses XP/gold awards, class passives, relics, curses
@@ -408,6 +447,12 @@ namespace SudokuRoguelike.Core
         public bool AllowIrregularPuzzles = true;
         /// <summary>Player's current class level; set by GameBootstrap before calling StartRun.</summary>
         public int ClassLevel = 1;
+        /// <summary>Tier for a Spirit Trials run. Null means default (Apprentice).</summary>
+        public SpiritTrialsTier? SelectedTier;
+        /// <summary>[HARMONY-001] Harmony difficulty level (0–10). 0 = Garden Path (base game).</summary>
+        public int HarmonyLevel;
+        /// <summary>[HARMONY-PERK-001] Optional pre-run trade-off selected by the player.</summary>
+        public HarmonyPerkId HarmonyPerk;
     }
 
     [Serializable]
@@ -465,8 +510,14 @@ namespace SudokuRoguelike.Core
         public bool AcquiredRelic;
         public bool FlawlessFloor;
         public int SpiritTrialScore;
+        /// <summary>Tier played in a Spirit Trials run.</summary>
+        public SpiritTrialsTier PlayedTier;
+        /// <summary>Depth reached in an Endless Zen session.</summary>
+        public int EndlessDepthReached;
 
         public List<TileXpEntry> TileXpEntries = new List<TileXpEntry>();
+        /// <summary>[HARMONY-001] Harmony level the run was played at (0-10).</summary>
+        public int HarmonyLevel;
     }
 
     [Serializable]

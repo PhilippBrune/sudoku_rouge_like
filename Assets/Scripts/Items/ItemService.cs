@@ -108,7 +108,7 @@ namespace SudokuRoguelike.Items
                     Id = Guid.NewGuid().ToString("N"),
                     Type = type,
                     Rarity = IsTiered(type) ? rarity : GetFixedRarity(type),
-                    Charges = 1
+                    Charges = GetDefaultCharges(type)
                 };
                 slots.Add(item);
                 hasReal = true;
@@ -123,7 +123,7 @@ namespace SudokuRoguelike.Items
                     Id = Guid.NewGuid().ToString("N"),
                     Type = type,
                     Rarity = IsTiered(type) ? rarity : GetFixedRarity(type),
-                    Charges = 1
+                    Charges = GetDefaultCharges(type)
                 };
             }
 
@@ -146,7 +146,7 @@ namespace SudokuRoguelike.Items
                             Id = Guid.NewGuid().ToString("N"),
                             Type = newType,
                             Rarity = IsTiered(newType) ? rarity : GetFixedRarity(newType),
-                            Charges = 1
+                            Charges = GetDefaultCharges(newType)
                         };
                         seen.Add(newType);
                     }
@@ -166,7 +166,7 @@ namespace SudokuRoguelike.Items
                 Id = Guid.NewGuid().ToString("N"),
                 Type = type,
                 Rarity = IsTiered(type) ? rarity : GetFixedRarity(type),
-                Charges = 1
+                Charges = GetDefaultCharges(type)
             };
         }
 
@@ -188,6 +188,14 @@ namespace SudokuRoguelike.Items
 
         private ItemType RollItemType(ItemRarity rarity, int classLevel, ClassId classId = (ClassId)0)
         {
+            // F9: The following items have CSV manifest entries and PNG art previews in
+            // Assets/Resources/GeneratedIcons/ but are intentionally ABSENT from every roll pool below.
+            // They are reserved for future mechanics and must not be added to tiered / rare / epic arrays:
+            //   Tea Cup, Moss Stone, Rice Bowl, Pebble, Jade Amulet, Wind Bell,
+            //   Water Basin, Sacred Bell, Sun Medallion, Compass of Order.
+            // Their PNG files exist only as approved art; adding them to any pool requires a
+            // separate design pass that defines their mechanical effects.
+
             // Class-exclusive item: 25% chance to inject the exclusive if unlocked
             if (classId != (ClassId)0 && _random.NextDouble() < 0.25)
             {
@@ -233,6 +241,8 @@ namespace SudokuRoguelike.Items
 
         public static ItemRarity GetFixedRarity(ItemType type)
         {
+            // F7: GardenRake, OfferingBowl, PruningShears, ZenSandSifter are obtainable ONLY via Event
+            // nodes or Shop stock. They are NOT in any roll pool — do not add them without a design pass.
             return type switch
             {
                 ItemType.GardenRake or ItemType.OfferingBowl or ItemType.PruningShears
@@ -247,14 +257,27 @@ namespace SudokuRoguelike.Items
             };
         }
 
+        // ── Shield (Silk Fan) ──
+
+        /// <summary>Shield points granted by one use of Silk Fan.</summary>
+        public static int GetSilkFanShieldAmount() => 5;
+
         // ── Item Effects (rarity-scaled) ──
-        // Rebalanced: Normal = old Epic baseline, Rare = old Epic +1, Epic = old Epic +2
+        // [REDESIGN] Solver: Normal = fill cell + highlight box candidates; Rare = fill cell + complete its box;
+        //            Epic = auto-complete best row, column, OR box (player's choice).
+        // GetSolverNeighborCount is kept for RunDirector compatibility; values updated to drive new tiers:
+        //   Normal=0 (highlight-only, no auto-neighbors), Rare=box, Epic=best-zone.
+        //   The actual box/zone logic is in RunDirector.ApplySolverItem — this flag drives which path.
 
         public static int GetSolverNeighborCount(ItemRarity rarity) =>
             rarity == ItemRarity.Epic ? 4 : rarity == ItemRarity.Rare ? 3 : 2;
 
+        // [REDESIGN] Finder: Epic tier reveals ALL cells of the same digit on the board.
         public static int GetFinderHighlightCount(ItemRarity rarity) =>
-            rarity == ItemRarity.Epic ? 4 : rarity == ItemRarity.Rare ? 3 : 2;
+            rarity == ItemRarity.Epic ? int.MaxValue : rarity == ItemRarity.Rare ? 3 : 1;
+
+        // Convenience: true when FinderHighlightCount means “reveal all matching cells”.
+        public static bool IsFinderRevealAll(ItemRarity rarity) => rarity == ItemRarity.Epic;
 
         public static int GetInkWellAmount(ItemRarity rarity) =>
             rarity == ItemRarity.Epic ? 12 : rarity == ItemRarity.Rare ? 11 : 10;
@@ -270,6 +293,13 @@ namespace SudokuRoguelike.Items
 
         public static int GetPatternScrollZones(ItemRarity rarity) =>
             rarity == ItemRarity.Epic ? 4 : rarity == ItemRarity.Rare ? 2 : 1;
+
+        /// <summary>
+        /// Default charge count for a newly-rolled item of the given type.
+        /// Most items have 1 charge; Silk Fan has 2 (its redesigned effect).
+        /// </summary>
+        public static int GetDefaultCharges(ItemType type) =>
+            type == ItemType.SilkFan ? 2 : 1;
 
         // ── Pricing ──
 
@@ -357,6 +387,8 @@ namespace SudokuRoguelike.Items
                 ItemType.DimLantern        => "dim_lantern",
                 ItemType.ReedPledge        => "reed_pledge",
                 ItemType.SurveyNotes       => "survey_notes",
+                // Harmony Difficulty items
+                ItemType.BambooCompass     => "bamboo_compass",
                 _ => ""
             };
         }
@@ -365,8 +397,21 @@ namespace SudokuRoguelike.Items
         {
             return type switch
             {
-                ItemType.Solver => $"Fill a cell with its correct digit + {GetSolverNeighborCount(rarity)} neighbors.",
-                ItemType.Finder => $"Highlight {GetFinderHighlightCount(rarity)} cell(s) matching the selected digit.",
+                // [REDESIGN] Solver tiers:
+                // Normal: fill selected cell + highlight remaining candidates in its box
+                // Rare:   fill selected cell + auto-complete its entire box
+                // Epic:   auto-complete the best (most-filled) row, column, OR box (player chooses zone)
+                ItemType.Solver => rarity == ItemRarity.Epic
+                    ? "Click a zone (row/column/box) to auto-complete it."
+                    : rarity == ItemRarity.Rare
+                        ? "Fill a cell with its correct digit and auto-complete its box."
+                        : "Fill a cell with its correct digit and highlight remaining candidates in its box.",
+
+                // [REDESIGN] Finder tiers:
+                // Normal: highlight 1 matching cell, Rare: highlight 3, Epic: reveal ALL cells of that digit
+                ItemType.Finder => rarity == ItemRarity.Epic
+                    ? "Reveal ALL unsolved cells containing the selected digit."
+                    : $"Highlight {GetFinderHighlightCount(rarity)} cell(s) matching the selected digit.",
                 ItemType.InkWell => $"Restore {GetInkWellAmount(rarity)} pencil marks.",
                 ItemType.MeditationStone => $"Restore {GetMeditationStoneAmount(rarity)} HP.",
                 ItemType.WindChime => rarity == ItemRarity.Epic
@@ -375,18 +420,25 @@ namespace SudokuRoguelike.Items
                         ? "Choose any 2 of row/column/box, then click a cell to fill them."
                         : "Choose row, column, OR box, then click a cell to fill it.",
                 ItemType.PatternScroll => $"Select {GetPatternScrollZones(rarity)} mechanic instance(s) to solve using the solution. ESC cancels.",
-                ItemType.KoiReflection => $"Click {GetKoiReflectionCells(rarity)} empty cell(s) to reveal their candidates.",
+                // [REDESIGN] Koi Reflection Epic: reveal candidates for every unsolved cell in the most ambiguous zone.
+                ItemType.KoiReflection => rarity == ItemRarity.Epic
+                    ? "Reveal candidates for every unsolved cell in the board's most ambiguous zone (row/column/box with most open cells)."
+                    : $"Click {GetKoiReflectionCells(rarity)} empty cell(s) to reveal their candidates.",
                 ItemType.LanternOfClarity => $"Disable fog for {GetLanternOfClarityMoves(rarity)} moves.",
                 ItemType.GardenRake => "Clear all pencil marks in the selected row and column.",
                 ItemType.OfferingBowl => "Sacrifice 1 HP to gain 30 gold.",
-                ItemType.PruningShears => "Remove one incorrect candidate from a cell.",
+                // [REDESIGN] Pruning Shears: remove ALL invalid candidates from a cell (not just one).
+                ItemType.PruningShears => "Remove all invalid candidates from a cell, leaving only valid possibilities.",
                 ItemType.ZenSandSifter => "Highlight all cells with exactly two candidates.",
                 ItemType.GinkgoLeaf => "Undo the last mistake, restore the lost HP, and recover your combo.",
                 ItemType.RicePaperUmbrella => "Block the next mistake penalty (2 charges).",
                 ItemType.TempleIncense => $"Click {(rarity == ItemRarity.Epic ? 6 : rarity == ItemRarity.Rare ? 4 : 2)} empty cell(s) to fill their correct answer.",
                 ItemType.KoiDragonScale => "Complete the most-filled row, column, or box.",
-                ItemType.GoldenKintsugiJar => "Highlight all current mistakes on the board.",
-                ItemType.SilkFan => "Swap two non-given cells.",
+                // [REDESIGN] Golden Kintsugi Jar: fix all current mistakes AND reveal correct digits.
+                ItemType.GoldenKintsugiJar => "Fix all current mistakes on the board and reveal the correct digits for all affected cells.",
+                // [REDESIGN] Silk Fan: generate 5 Shield. Absorbs HP damage before health bar.
+                // While shielded, mistakes don't break your combo. Shield resets each puzzle.
+                ItemType.SilkFan => $"Generate {GetSilkFanShieldAmount()} Shield. Shield absorbs HP damage before your health bar. While shielded, mistakes don't break your combo. Resets each puzzle.",
                 // Class-exclusive items (L15)
                 ItemType.LoadedCoin     => "Gain 1 Reroll Token. (NumberFreak exclusive)",
                 ItemType.MonksBeads     => "Your next 9 placements cost no pencil marks. (GardenMonk exclusive)",

@@ -3,7 +3,7 @@ guid: fb533d1be2b36a04aaaa6c79e7159ea8
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 7097185018630322081
+      213: -853863017433417611
     second: icon_black_dot_0
   externalObjects: {}
   serializedVersion: 13
@@ -51,7 +51,6 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -103,20 +102,20 @@ TextureImporter:
       name: icon_black_dot_0
       rect:
         serializedVersion: 2
-        x: 96
-        y: 98
-        width: 192
-        height: 188
+        x: 0
+        y: 0
+        width: 384
+        height: 384
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 1a73fa40c244e7260800000000000000
-      internalID: 7097185018630322081
+      spriteID: c4925208124e506da84b60e7972de0d9
+      internalID: -853863017433417611
       vertices: []
       indices: 
       edges: []
@@ -135,7 +134,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      icon_black_dot_0: 7097185018630322081
+      icon_black_dot_0: -853863017433417611
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

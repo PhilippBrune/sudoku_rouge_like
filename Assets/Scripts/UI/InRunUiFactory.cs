@@ -5,6 +5,28 @@ using UnityEngine.UI;
 
 namespace SudokuRoguelike.UI
 {
+    internal enum UiAction
+    {
+        Back,
+        Confirm,
+        Accept,
+        Cancel,
+        Decline,
+        Skip,
+        Leave,
+        Start,
+        Begin,
+        SaveQuit,
+        Reroll,
+        Buy,
+        Heal,
+        Pencil,
+        Cleanse,
+        WardingFlame,
+        Next,
+        Finish
+    }
+
     /// <summary>
     /// Shared static factory helpers for all in-run sub-controllers.
     /// </summary>
@@ -41,6 +63,11 @@ namespace SudokuRoguelike.UI
 
         // Icon / slot states
         internal static readonly Color IconNoSprite  = new Color(1f, 1f, 1f, 0.20f);
+        /// <summary>
+        /// F12: <c>icon_empty_slot</c> (economy/icon_empty_slot.png) is displayed in a bag panel slot
+        /// when no item currently occupies that slot. It is a passive placeholder — never interactive.
+        /// This color (near-transparent white) tints it down so it doesn't compete with filled slots.
+        /// </summary>
         internal static readonly Color IconEmpty     = new Color(1f, 1f, 1f, 0.08f);
         internal static readonly Color SlotEmptyText = new Color(0.45f, 0.45f, 0.45f, 0.55f);
 
@@ -60,7 +87,7 @@ namespace SudokuRoguelike.UI
 
         // Button interaction states — used in CreatePanelButton and all overlay controllers
         internal static readonly Color BtnHighlighted  = new Color(0.55f, 0.50f, 0.38f, 1f);
-        internal static readonly Color BtnSelected     = new Color(0.62f, 0.56f, 0.40f, 1f);
+        internal static readonly Color BtnSelected     = new Color(0.98f, 0.83f, 0.26f, 0.70f);
         internal static readonly Color BtnPressed      = new Color(0.30f, 0.26f, 0.18f, 1f);
         internal static readonly Color BtnDisabled     = new Color(0.30f, 0.30f, 0.35f, 0.90f);
         internal static readonly Color RerollFreeColor = new Color(0.15f, 0.55f, 0.40f, 0.95f);
@@ -194,6 +221,73 @@ namespace SudokuRoguelike.UI
             return btn;
         }
 
+        internal static Button CreateActionButton(Transform parent, string name,
+            Vector2 anchorMin, Vector2 anchorMax, string label, UiAction action, bool compact = false)
+        {
+            var btn = CreatePanelButton(parent, name, anchorMin, anchorMax, label);
+            ApplyActionIcon(btn, action, compact);
+            return btn;
+        }
+
+        internal static void ApplyActionIcon(Button btn, UiAction action, bool compact = false)
+        {
+            var iconRef = GetActionIcon(action);
+            SetButtonIcon(btn, iconRef.Name, false, iconRef.Subfolder, compact);
+        }
+
+        private static ActionIconRef GetActionIcon(UiAction action)
+        {
+            switch (action)
+            {
+                case UiAction.Back:
+                    return new ActionIconRef("back_leaf", "ui");
+                case UiAction.Confirm:
+                case UiAction.Accept:
+                    return new ActionIconRef("confirm_seal", "ui");
+                case UiAction.Cancel:
+                case UiAction.Decline:
+                    return new ActionIconRef("gate_close", "ui");
+                case UiAction.Skip:
+                case UiAction.Leave:
+                    return new ActionIconRef("skip_stone", "ui");
+                case UiAction.Start:
+                case UiAction.Begin:
+                    return new ActionIconRef("start_game", "ui");
+                case UiAction.SaveQuit:
+                    return new ActionIconRef("ink_save", "ui");
+                case UiAction.Reroll:
+                    return new ActionIconRef("reroll_arrow", "ui");
+                case UiAction.Buy:
+                    return new ActionIconRef("trade_coin", "ui");
+                case UiAction.Heal:
+                    return new ActionIconRef("petal_orb", "ui");
+                case UiAction.Pencil:
+                    return new ActionIconRef("ink_save", "ui");
+                case UiAction.Cleanse:
+                    return new ActionIconRef("flame_stone", "ui");
+                case UiAction.WardingFlame:
+                    return new ActionIconRef("warding_flame", "relic");
+                case UiAction.Next:
+                    return new ActionIconRef("resume_scroll", "ui");
+                case UiAction.Finish:
+                    return new ActionIconRef("start_game", "ui");
+                default:
+                    return new ActionIconRef("confirm_seal", "ui");
+            }
+        }
+
+        private struct ActionIconRef
+        {
+            internal readonly string Name;
+            internal readonly string Subfolder;
+
+            internal ActionIconRef(string name, string subfolder)
+            {
+                Name = name;
+                Subfolder = subfolder;
+            }
+        }
+
         /// <summary>
         /// Sets EventSystem focus to the first interactable, active button in <paramref name="panel"/>.
         /// Safe to call with a null panel or when EventSystem is absent.
@@ -272,8 +366,56 @@ namespace SudokuRoguelike.UI
         }
 
         // ── Button icon ──
-        internal static void SetButtonIcon(Button btn, string iconName, bool unknown = false, string subfolder = "GeneratedIcons")
+        internal sealed class ThemedModalShell
         {
+            internal GameObject Root;
+            internal RectTransform Panel;
+        }
+
+        internal static ThemedModalShell CreateThemedModalShell(Transform parent, string name,
+            Vector2 panelAnchorMin, Vector2 panelAnchorMax, string backgroundName = null, float backgroundAlpha = 0.18f)
+        {
+            var root = new GameObject(name, typeof(RectTransform), typeof(Image));
+            root.transform.SetParent(parent, false);
+            var rootRt = root.GetComponent<RectTransform>();
+            StretchFill(rootRt);
+            var scrim = root.GetComponent<Image>();
+            scrim.color = new Color(0.02f, 0.025f, 0.03f, 0.76f);
+
+            var panelGo = new GameObject("ThemedPanel", typeof(RectTransform), typeof(Image), typeof(Outline));
+            panelGo.transform.SetParent(root.transform, false);
+            var panelRt = panelGo.GetComponent<RectTransform>();
+            panelRt.anchorMin = panelAnchorMin;
+            panelRt.anchorMax = panelAnchorMax;
+            panelRt.offsetMin = Vector2.zero;
+            panelRt.offsetMax = Vector2.zero;
+            StyleThemedPanel(panelGo, backgroundName, backgroundAlpha);
+
+            return new ThemedModalShell { Root = root, Panel = panelRt };
+        }
+
+        internal static void StyleThemedPanel(GameObject panel, string backgroundName = null, float backgroundAlpha = 0.16f)
+        {
+            if (panel == null) return;
+            var img = panel.GetComponent<Image>() ?? panel.AddComponent<Image>();
+            img.color = new Color(0.15f, 0.13f, 0.10f, 0.96f);
+
+            var outline = panel.GetComponent<Outline>() ?? panel.AddComponent<Outline>();
+            outline.effectColor = new Color(GamePalette.AccentGold.r, GamePalette.AccentGold.g, GamePalette.AccentGold.b, 0.58f);
+            outline.effectDistance = new Vector2(2f, -2f);
+
+            if (!string.IsNullOrEmpty(backgroundName))
+                AddPanelBackground(panel.transform, backgroundName, backgroundAlpha);
+        }
+
+        // compact=true: side-by-side layout (icon left, label right) for small/short buttons.
+        // compact=false: stacked layout (icon top, label bottom) for tall standalone buttons.
+        internal static void SetButtonIcon(Button btn, string iconName, bool unknown = false,
+            string subfolder = "GeneratedIcons", bool compact = false)
+        {
+            if (btn == null) return;
+            ClearNamedChildren(btn.transform, "Icon");
+
             var spritePath = (!unknown && !string.IsNullOrEmpty(iconName))
                 ? subfolder + "/icon_" + iconName
                 : null;
@@ -281,8 +423,59 @@ namespace SudokuRoguelike.UI
             if (sprite == null && !unknown && !string.IsNullOrEmpty(iconName))
                 Debug.LogWarning($"[InRunUiFactory] Missing button icon: {spritePath}");
 
-            // Reposition label to bottom
             var label = btn.transform.Find("Label")?.GetComponent<Text>();
+
+            if (compact)
+            {
+                // Side-by-side: icon on left (anchor-based height), label fills the rest.
+                if (label != null)
+                {
+                    label.rectTransform.anchorMin = new Vector2(0.25f, 0.05f);
+                    label.rectTransform.anchorMax = new Vector2(0.98f, 0.95f);
+                    label.rectTransform.offsetMin = Vector2.zero;
+                    label.rectTransform.offsetMax = Vector2.zero;
+                    label.fontSize = 11;
+                    label.verticalOverflow = VerticalWrapMode.Overflow;
+                }
+
+                if (sprite == null && !unknown) return;
+
+                var iconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+                iconGo.transform.SetParent(btn.transform, false);
+                var iconRt = iconGo.GetComponent<RectTransform>();
+                // Anchor-based height (80% of button) + fixed width — scales with button.
+                iconRt.anchorMin = new Vector2(0f, 0.10f);
+                iconRt.anchorMax = new Vector2(0f, 0.90f);
+                iconRt.pivot     = new Vector2(0f, 0.5f);
+                iconRt.anchoredPosition = new Vector2(6f, 0f);
+                iconRt.sizeDelta = new Vector2(36f, 0f);
+                var img = iconGo.GetComponent<Image>();
+                if (sprite != null)
+                {
+                    img.sprite = sprite;
+                    img.preserveAspect = true;
+                }
+                else
+                {
+                    img.color = PlaceholderIconBg;
+                    var qText = new GameObject("UnknownLabel", typeof(RectTransform), typeof(Text));
+                    qText.transform.SetParent(iconGo.transform, false);
+                    var qt = qText.GetComponent<Text>();
+                    qt.text = "???";
+                    qt.font = GetFont();
+                    qt.fontSize = 16;
+                    qt.alignment = TextAnchor.MiddleCenter;
+                    qt.color = UnknownIconText;
+                    var qRt = qText.GetComponent<RectTransform>();
+                    qRt.anchorMin = Vector2.zero;
+                    qRt.anchorMax = Vector2.one;
+                    qRt.offsetMin = Vector2.zero;
+                    qRt.offsetMax = Vector2.zero;
+                }
+                return;
+            }
+
+            // Stacked layout: reposition label to bottom, icon fills top portion.
             if (label != null)
             {
                 label.rectTransform.anchorMin = new Vector2(0.02f, 0.02f);
@@ -295,26 +488,24 @@ namespace SudokuRoguelike.UI
 
             if (sprite == null && !unknown) return;
 
-            // Icon fills top 60% of button
-            var iconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
-            iconGo.transform.SetParent(btn.transform, false);
-            var iconRt = iconGo.GetComponent<RectTransform>();
-            iconRt.anchorMin = new Vector2(0.05f, 0.38f);
-            iconRt.anchorMax = new Vector2(0.95f, 0.97f);
-            iconRt.offsetMin = Vector2.zero;
-            iconRt.offsetMax = Vector2.zero;
-            var img = iconGo.GetComponent<Image>();
+            var iconGoS = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+            iconGoS.transform.SetParent(btn.transform, false);
+            var iconRtS = iconGoS.GetComponent<RectTransform>();
+            iconRtS.anchorMin = new Vector2(0.08f, 0.40f);
+            iconRtS.anchorMax = new Vector2(0.92f, 0.94f);
+            iconRtS.offsetMin = Vector2.zero;
+            iconRtS.offsetMax = Vector2.zero;
+            var imgS = iconGoS.GetComponent<Image>();
             if (sprite != null)
             {
-                img.sprite = sprite;
-                img.preserveAspect = true;
+                imgS.sprite = sprite;
+                imgS.preserveAspect = true;
             }
             else
             {
-                // "???" placeholder
-                img.color = PlaceholderIconBg;
+                imgS.color = PlaceholderIconBg;
                 var qText = new GameObject("UnknownLabel", typeof(RectTransform), typeof(Text));
-                qText.transform.SetParent(iconGo.transform, false);
+                qText.transform.SetParent(iconGoS.transform, false);
                 var qt = qText.GetComponent<Text>();
                 qt.text = "???";
                 qt.font = GetFont();
@@ -327,6 +518,13 @@ namespace SudokuRoguelike.UI
                 qRt.offsetMin = Vector2.zero;
                 qRt.offsetMax = Vector2.zero;
             }
+
+            // A-9B: LayoutElement ensures consistent minimum icon size across all button sizes
+            var le = iconGoS.AddComponent<LayoutElement>();
+            le.minWidth      = 32f;
+            le.minHeight     = 32f;
+            le.preferredWidth  = 48f;
+            le.preferredHeight = 48f;
         }
 
         // ── Bag slot button ──
@@ -359,7 +557,9 @@ namespace SudokuRoguelike.UI
             iconRt.anchorMax = new Vector2(0.36f, 0.88f);
             iconRt.offsetMin = Vector2.zero;
             iconRt.offsetMax = Vector2.zero;
-            iconGo.GetComponent<Image>().raycastTarget = false;
+            var iconBtnImg = iconGo.GetComponent<Image>();
+            iconBtnImg.raycastTarget = false;
+            iconBtnImg.preserveAspect = true;  // L8: ensures empty-slot icon is never cut off
 
             // Name text (right of icon)
             var nameText = CreateText(go.transform, "NameText", "", 10, TextAnchor.MiddleLeft, TextColor);
@@ -473,5 +673,162 @@ namespace SudokuRoguelike.UI
 
             _                            => m.ToString()
         };
+
+        // ── Rarity pip overlay (F11/F25) ──────────────────────────────────────────
+        /// <summary>
+        /// Adds a small colored pip in the top-right corner of <paramref name="itemIconTransform"/>
+        /// to signal item rarity at a glance in the bag panel and reward screen.
+        /// <list type="bullet">
+        ///   <item><term>Normal</term>  <description>No pip (returns null).</description></item>
+        ///   <item><term>Rare</term>    <description>Teal dot (AccentGold family, desaturated teal).</description></item>
+        ///   <item><term>Legendary</term><description>Gold dot (GamePalette.AccentGold).</description></item>
+        /// </list>
+        /// The pip is a <c>raycastTarget=false</c> Image so it never intercepts pointer events.
+        /// </summary>
+        internal static Image AddRarityPip(Transform itemIconTransform, ItemRarity rarity)
+        {
+            if (rarity == ItemRarity.Normal) return null;
+
+            var pip = new GameObject("RarityPip", typeof(RectTransform), typeof(Image));
+            pip.transform.SetParent(itemIconTransform, false);
+            var rt = pip.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.62f, 0.62f);
+            rt.anchorMax = new Vector2(0.97f, 0.97f);
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+
+            var img = pip.GetComponent<Image>();
+            img.color = rarity switch
+            {
+                ItemRarity.Rare => new Color(0.30f, 0.82f, 0.72f, 0.90f), // teal
+                ItemRarity.Epic => new Color(GamePalette.AccentGold.r, GamePalette.AccentGold.g, 0.15f, 0.95f), // gold
+                _                                          => Color.clear
+            };
+            img.raycastTarget = false;
+            return img;
+        }
+
+        // ── Confirm button icon reservation (F13) ──────────────────────────────────
+        internal static Image AddRelicTierPip(Transform relicIconTransform, RelicTier tier)
+        {
+            if (relicIconTransform == null) return null;
+
+            ClearNamedChildren(relicIconTransform, "RelicTier");
+
+            var border = new GameObject("RelicTierFrame", typeof(RectTransform), typeof(Image));
+            border.transform.SetParent(relicIconTransform, false);
+            var borderRt = border.GetComponent<RectTransform>();
+            borderRt.anchorMin = Vector2.zero;
+            borderRt.anchorMax = Vector2.one;
+            borderRt.offsetMin = new Vector2(1f, 1f);
+            borderRt.offsetMax = new Vector2(-1f, -1f);
+            var borderImg = border.GetComponent<Image>();
+            borderImg.color = GetRelicTierBorderColor(tier);
+            borderImg.raycastTarget = false;
+
+            var pip = new GameObject("RelicTierPip", typeof(RectTransform), typeof(Image));
+            pip.transform.SetParent(relicIconTransform, false);
+            var pipRt = pip.GetComponent<RectTransform>();
+            pipRt.anchorMin = new Vector2(0.62f, 0.62f);
+            pipRt.anchorMax = new Vector2(0.97f, 0.97f);
+            pipRt.offsetMin = Vector2.zero;
+            pipRt.offsetMax = Vector2.zero;
+            var pipImg = pip.GetComponent<Image>();
+            pipImg.color = GetRelicTierPipColor(tier);
+            pipImg.raycastTarget = false;
+
+            if (tier == RelicTier.Legendary)
+            {
+                var inner = new GameObject("RelicTierPipInner", typeof(RectTransform), typeof(Image));
+                inner.transform.SetParent(pip.transform, false);
+                var innerRt = inner.GetComponent<RectTransform>();
+                innerRt.anchorMin = new Vector2(0.26f, 0.26f);
+                innerRt.anchorMax = new Vector2(0.74f, 0.74f);
+                innerRt.offsetMin = Vector2.zero;
+                innerRt.offsetMax = Vector2.zero;
+                var innerImg = inner.GetComponent<Image>();
+                innerImg.color = new Color(GamePalette.AccentGold.r, GamePalette.AccentGold.g, 0.12f, 0.98f);
+                innerImg.raycastTarget = false;
+            }
+
+            return pipImg;
+        }
+
+        private static Color GetRelicTierBorderColor(RelicTier tier)
+        {
+            switch (tier)
+            {
+                case RelicTier.Tier2:
+                    return new Color(0.42f, 0.58f, 0.66f, 0.34f);
+                case RelicTier.Tier3:
+                    return new Color(0.23f, 0.78f, 0.72f, 0.42f);
+                case RelicTier.Tier4:
+                    return new Color(GamePalette.AccentGold.r, GamePalette.AccentGold.g, 0.14f, 0.52f);
+                case RelicTier.Legendary:
+                    return new Color(0.88f, 0.20f, 0.16f, 0.62f);
+                default:
+                    return new Color(0.48f, 0.44f, 0.36f, 0.24f);
+            }
+        }
+
+        private static Color GetRelicTierPipColor(RelicTier tier)
+        {
+            switch (tier)
+            {
+                case RelicTier.Tier2:
+                    return new Color(0.46f, 0.65f, 0.76f, 0.88f);
+                case RelicTier.Tier3:
+                    return new Color(0.30f, 0.82f, 0.72f, 0.92f);
+                case RelicTier.Tier4:
+                    return new Color(GamePalette.AccentGold.r, GamePalette.AccentGold.g, 0.15f, 0.96f);
+                case RelicTier.Legendary:
+                    return new Color(0.92f, 0.18f, 0.16f, 0.96f);
+                default:
+                    return new Color(0.58f, 0.54f, 0.46f, 0.78f);
+            }
+        }
+
+        // UiAction centralizes action icon semantics. Confirm/Accept use confirm_seal;
+        // scroll_stamp remains reserved for future stamped-scroll interactions.
+
+        // ── Modifier subgroup border (F27) ──────────────────────────────────────────
+        /// <summary>
+        /// Adds a thin colored stripe at the bottom of a modifier button's icon area to indicate
+        /// which subgroup the modifier belongs to (line, dot, cage, cell, anti-move, global).
+        /// This ensures visually similar modifier icons are distinguishable at 24-32 px.
+        /// Call after <see cref="SetButtonIcon"/> so the Icon child already exists.
+        /// </summary>
+        internal static void AddModifierGroupMarker(Button btn, string modIconName)
+        {
+            if (btn == null || string.IsNullOrEmpty(modIconName)) return;
+            var groupColor = GamePalette.GetModifierGroupColor(modIconName);
+            if (groupColor == Color.clear) return;
+            var iconChild = btn.transform.Find("Icon");
+            if (iconChild == null) return;
+
+            // Bottom stripe — increased height (0.08→0.12) for better visibility
+            var stripe = new GameObject("GroupStripe", typeof(RectTransform), typeof(Image));
+            stripe.transform.SetParent(iconChild, false);
+            var rt = stripe.GetComponent<RectTransform>();
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = new Vector2(1f, 0.12f); // F16: increased from 0.08 for readability
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+            var img = stripe.GetComponent<Image>();
+            img.color = groupColor;
+            img.raycastTarget = false;
+
+            // F16: left-edge stripe — adds a second colour anchor along the left side
+            var leftStripe = new GameObject("GroupStripeLeft", typeof(RectTransform), typeof(Image));
+            leftStripe.transform.SetParent(iconChild, false);
+            var lRt = leftStripe.GetComponent<RectTransform>();
+            lRt.anchorMin = Vector2.zero;
+            lRt.anchorMax = new Vector2(0.06f, 1f);
+            lRt.offsetMin = Vector2.zero;
+            lRt.offsetMax = Vector2.zero;
+            var lImg = leftStripe.GetComponent<Image>();
+            lImg.color = groupColor;
+            lImg.raycastTarget = false;
+        }
     }
 }

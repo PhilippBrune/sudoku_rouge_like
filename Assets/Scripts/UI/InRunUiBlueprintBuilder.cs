@@ -125,7 +125,7 @@ namespace SudokuRoguelike.UI
 
             var closeButton = BuildButton("CloseButton", panel.transform as RectTransform, "Back", bodyFontSize);
             SetRect(closeButton.GetComponent<RectTransform>(), new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
-            ApplyButtonIcon(closeButton, "ink_save", "ui");
+            ApplyButtonIcon(closeButton, "back_leaf", "ui"); // F16: back/close uses dedicated back_leaf icon
 
             controller.Configure(panel, title, result, optionsArea);
 
@@ -218,25 +218,33 @@ namespace SudokuRoguelike.UI
             EnsureOrGetImage(panel, new Color(panelColor.r, panelColor.g, panelColor.b, 0.40f)); // scrim: bg_puzzle_board.png shows through
             InRunUiFactory.AddPanelBackground(panel.transform, "bg_puzzle_board");
 
-            var title = BuildText("SudokuGameplayTitle", panel.transform as RectTransform, "Sudoku Puzzle", 34, TextAnchor.UpperCenter);
-            SetRect(title.rectTransform, new Vector2(0.02f, 0.92f), new Vector2(0.98f, 0.99f), Vector2.zero, Vector2.zero);
-
-            var levelInfo = BuildText("SudokuGameplayLevelInfo", panel.transform as RectTransform, "Level: -  Depth: -", 18, TextAnchor.MiddleCenter);
-            SetRect(levelInfo.rectTransform, new Vector2(0.30f, 0.87f), new Vector2(0.70f, 0.92f), Vector2.zero, Vector2.zero);
-
-            // Dark scrim behind the center-top info band (LevelInfo + Modifiers + Status)
+            // Dark scrim behind the center-top info band — created before the title so it renders beneath it.
             var infoScrim = EnsureRect("InfoScrimBg", panel.transform as RectTransform,
-                new Vector2(0.27f, 0.785f), new Vector2(0.73f, 0.925f), Vector2.zero, Vector2.zero);
+                new Vector2(0.22f, 0.79f), new Vector2(0.70f, 1.00f), Vector2.zero, Vector2.zero);
             var infoScrimImg = EnsureOrGetImage(infoScrim.gameObject, new Color(0.04f, 0.06f, 0.09f, 0.50f));
             infoScrimImg.raycastTarget = false;
 
+            // Title is a child of InfoScrimBg so it always renders above the scrim and can't drift out of it.
+            // Anchors within the scrim: top 67–100% maps to panel y=0.93–1.00 within scrim y=0.79–1.00.
+            var title = BuildText("SudokuGameplayTitle", infoScrim, "Sudoku Puzzle", 34, TextAnchor.UpperCenter);
+            SetRect(title.rectTransform, new Vector2(0.03f, 0.66f), new Vector2(0.97f, 1.00f), Vector2.zero, Vector2.zero);
+
+            var levelInfo = BuildText("SudokuGameplayLevelInfo", panel.transform as RectTransform, "Level: -  Depth: -", 18, TextAnchor.MiddleCenter);
+            SetRect(levelInfo.rectTransform, new Vector2(0.22f, 0.83f), new Vector2(0.70f, 0.875f), Vector2.zero, Vector2.zero);
+
             statusText = BuildText("SudokuGameplayStatus", panel.transform as RectTransform, "Select a path and start solving.", 19, TextAnchor.MiddleLeft);
-            SetRect(statusText.rectTransform, new Vector2(0.28f, 0.79f), new Vector2(0.72f, 0.83f), Vector2.zero, Vector2.zero);
+            SetRect(statusText.rectTransform, new Vector2(0.22f, 0.79f), new Vector2(0.70f, 0.83f), Vector2.zero, Vector2.zero);
+
+            // Unified scrim covering class badge + HP + Pencil, all within BAG column width
+            var hpPencilScrim = EnsureRect("HpPencilScrim", panel.transform as RectTransform,
+                new Vector2(0.01f, 0.75f), new Vector2(0.21f, 1.00f), Vector2.zero, Vector2.zero);
+            var hpPencilScrimImg = EnsureOrGetImage(hpPencilScrim.gameObject, new Color(0.04f, 0.05f, 0.08f, 0.50f));
+            hpPencilScrimImg.raycastTarget = false;
 
             hpText = BuildText("SudokuGameplayHp", panel.transform as RectTransform, "HP: -", 18, TextAnchor.MiddleLeft);
-            SetRect(hpText.rectTransform, new Vector2(0.03f, 0.83f), new Vector2(0.13f, 0.89f), Vector2.zero, Vector2.zero);
+            SetRect(hpText.rectTransform, new Vector2(0.02f, 0.85f), new Vector2(0.09f, 0.89f), Vector2.zero, Vector2.zero);
 
-            var hpBarBgRect = EnsureRect("HpBarBg", panel.transform as RectTransform, new Vector2(0.14f, 0.847f), new Vector2(0.26f, 0.878f), Vector2.zero, Vector2.zero);
+            var hpBarBgRect = EnsureRect("HpBarBg", panel.transform as RectTransform, new Vector2(0.09f, 0.847f), new Vector2(0.20f, 0.878f), Vector2.zero, Vector2.zero);
             var hpBarBgImg = EnsureOrGetImage(hpBarBgRect.gameObject, new Color(0.08f, 0.06f, 0.06f, 0.85f));
             hpBarBgImg.raycastTarget = false;
             var hpBarFillGo = new GameObject("HpBarFill", typeof(RectTransform), typeof(Image));
@@ -256,9 +264,9 @@ namespace SudokuRoguelike.UI
             hpBarFillImg.raycastTarget = false;
 
             pencilText = BuildText("SudokuGameplayPencil", panel.transform as RectTransform, "Pencil: -", 18, TextAnchor.MiddleLeft);
-            SetRect(pencilText.rectTransform, new Vector2(0.03f, 0.76f), new Vector2(0.13f, 0.82f), Vector2.zero, Vector2.zero);
+            SetRect(pencilText.rectTransform, new Vector2(0.02f, 0.79f), new Vector2(0.09f, 0.83f), Vector2.zero, Vector2.zero);
 
-            var pencilBarBgRect = EnsureRect("PencilBarBg", panel.transform as RectTransform, new Vector2(0.14f, 0.777f), new Vector2(0.26f, 0.808f), Vector2.zero, Vector2.zero);
+            var pencilBarBgRect = EnsureRect("PencilBarBg", panel.transform as RectTransform, new Vector2(0.09f, 0.777f), new Vector2(0.20f, 0.808f), Vector2.zero, Vector2.zero);
             var pencilBarBgImg = EnsureOrGetImage(pencilBarBgRect.gameObject, new Color(0.06f, 0.06f, 0.08f, 0.85f));
             pencilBarBgImg.raycastTarget = false;
             var pencilBarFillGo = new GameObject("PencilBarFill", typeof(RectTransform), typeof(Image));
@@ -278,24 +286,24 @@ namespace SudokuRoguelike.UI
             pencilBarFillImg.raycastTarget = false;
 
             saveQuit = BuildButton("BtnSudokuSaveQuit", panel.transform as RectTransform, "Save & Quit", 18);
-            SetRect(saveQuit.GetComponent<RectTransform>(), new Vector2(0.72f, 0.01f), new Vector2(0.92f, 0.09f), Vector2.zero, Vector2.zero);
+            SetRect(saveQuit.GetComponent<RectTransform>(), new Vector2(0.74f, 0.01f), new Vector2(0.93f, 0.08f), Vector2.zero, Vector2.zero);
             ApplyButtonIcon(saveQuit, "ink_save", "ui");
 
             optionsButton = BuildButton("BtnSudokuOptions", panel.transform as RectTransform, "Options", 18);
-            SetRect(optionsButton.GetComponent<RectTransform>(), new Vector2(0.88f, 0.82f), new Vector2(0.99f, 0.91f), Vector2.zero, Vector2.zero);
+            SetRect(optionsButton.GetComponent<RectTransform>(), new Vector2(0.74f, 0.34f), new Vector2(0.93f, 0.41f), Vector2.zero, Vector2.zero);
             ApplyButtonIcon(optionsButton, "stone_gear", "ui");
 
             gridRoot = EnsureRect("SudokuGameplayGridRoot", panel.transform as RectTransform, new Vector2(0.22f, 0.16f), new Vector2(0.70f, 0.76f), Vector2.zero, Vector2.zero);
             EnsureOrGetImage(gridRoot.gameObject, new Color(0f, 0f, 0f, 0.20f));
 
-            numpadRoot = EnsureRect("SudokuGameplayNumpadRoot", panel.transform as RectTransform, new Vector2(0.74f, 0.28f), new Vector2(0.93f, 0.72f), Vector2.zero, Vector2.zero);
+            numpadRoot = EnsureRect("SudokuGameplayNumpadRoot", panel.transform as RectTransform, new Vector2(0.74f, 0.42f), new Vector2(0.93f, 0.72f), Vector2.zero, Vector2.zero);
             EnsureOrGetImage(numpadRoot.gameObject, new Color(0f, 0f, 0f, 0.20f));
 
             var hint = BuildText("SudokuGameplayHint", panel.transform as RectTransform, "Use numpad buttons or keyboard 1-9.\nSingle click: select cell\nDouble click filled cell: highlight same numbers", 20, TextAnchor.UpperLeft);
-            SetRect(hint.rectTransform, new Vector2(0.74f, 0.72f), new Vector2(0.94f, 0.82f), Vector2.zero, Vector2.zero);
+            SetRect(hint.rectTransform, new Vector2(0.74f, 0.73f), new Vector2(0.93f, 0.84f), Vector2.zero, Vector2.zero);
 
             var bossDesc = BuildText("SudokuGameplayBossDesc", panel.transform as RectTransform, string.Empty, 20, TextAnchor.UpperLeft);
-            SetRect(bossDesc.rectTransform, new Vector2(0.74f, 0.08f), new Vector2(0.97f, 0.27f), Vector2.zero, Vector2.zero);
+            SetRect(bossDesc.rectTransform, new Vector2(0.74f, 0.09f), new Vector2(0.93f, 0.33f), Vector2.zero, Vector2.zero);
             bossDesc.color = new Color(1f, 0.65f, 0.30f, 1f);
             bossDesc.gameObject.SetActive(false);
         }
@@ -323,7 +331,7 @@ namespace SudokuRoguelike.UI
 
             backButton = BuildButton("BtnGameOverBack", panel.transform as RectTransform, "Back", 18);
             SetRect(backButton.GetComponent<RectTransform>(), new Vector2(0.54f, 0.04f), new Vector2(0.90f, 0.12f), Vector2.zero, Vector2.zero);
-            ApplyButtonIcon(backButton, "ink_save", "ui");
+            ApplyButtonIcon(backButton, "back_leaf", "ui"); // F16: back/close uses dedicated back_leaf icon
         }
 
         private GameObject BuildInGameOptionsPanel(RectTransform root)
@@ -331,7 +339,8 @@ namespace SudokuRoguelike.UI
             var optCtrl = EnsureComponent<OptionsController>(gameObject);
 
             var panel = EnsureRect("InGameOptionsPanel", root, new Vector2(0.18f, 0.08f), new Vector2(0.82f, 0.94f), Vector2.zero, Vector2.zero).gameObject;
-            EnsureOrGetImage(panel, panelColor);
+            EnsureOrGetImage(panel, new Color(panelColor.r, panelColor.g, panelColor.b, 0.40f)); // scrim: bg_menu_pause shows through
+            InRunUiFactory.AddPanelBackground(panel.transform, "bg_menu_pause");
 
             var pr = panel.transform as RectTransform;
             var opts = optCtrl.GetOptions();
@@ -428,15 +437,20 @@ namespace SudokuRoguelike.UI
 
             var closeBtn = BuildButton("BtnInGameOptionsClose", pr, "Back", 18);
             SetRect(closeBtn.GetComponent<RectTransform>(), new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
-            ApplyButtonIcon(closeBtn, "ink_save", "ui");
+            ApplyButtonIcon(closeBtn, "back_leaf", "ui"); // F16: back/close uses dedicated back_leaf icon
 
             return panel;
         }
 
         private Text BuildTutorialBanner(RectTransform root)
         {
-            var label = BuildText("TutorialBanner", root, "TUTORIAL MODE\nNo Progression Rewards", bodyFontSize, TextAnchor.UpperRight);
-            SetRect(label.rectTransform, new Vector2(0.66f, 0.835f), new Vector2(0.98f, 0.920f), Vector2.zero, Vector2.zero);
+            var bannerPanel = EnsureRect("TutorialBannerPanel", root,
+                new Vector2(0.66f, 0.835f), new Vector2(0.98f, 0.920f), Vector2.zero, Vector2.zero).gameObject;
+            EnsureOrGetImage(bannerPanel, new Color(0.04f, 0.06f, 0.04f, 0.72f));
+            // bg_tutorial_progress removed — the dark tinted Image above is sufficient background.
+
+            var label = BuildText("TutorialBanner", bannerPanel.transform as RectTransform, "TUTORIAL MODE\nNo Progression Rewards", bodyFontSize, TextAnchor.UpperRight);
+            SetRect(label.rectTransform, new Vector2(0.02f, 0.04f), new Vector2(0.98f, 0.96f), Vector2.zero, Vector2.zero);
             label.color = accentColor;
             return label;
         }
@@ -537,22 +551,24 @@ namespace SudokuRoguelike.UI
             var existingIcon = btn.transform.Find("Icon");
             if (existingIcon != null) DestroyImmediate(existingIcon.gameObject);
 
-            // Shift label text right to make room for a fixed-size icon
+            // Shift label text right to make room for icon
             var label = btn.transform.Find("Label")?.GetComponent<RectTransform>();
             if (label != null)
                 label.offsetMin = new Vector2(50f, label.offsetMin.y);
 
-            // Fixed 36×36 pixel icon anchored to the left edge
+            // Anchor-based height (80% of button) + fixed width so the icon
+            // scales with the button and never overflows a small rect.
             var iconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
             iconGo.transform.SetParent(btn.transform, false);
             var ir = iconGo.GetComponent<RectTransform>();
-            ir.anchorMin = new Vector2(0f, 0.5f);
-            ir.anchorMax = new Vector2(0f, 0.5f);
-            ir.pivot = new Vector2(0f, 0.5f);
+            ir.anchorMin = new Vector2(0f, 0.10f);
+            ir.anchorMax = new Vector2(0f, 0.90f);
+            ir.pivot     = new Vector2(0f, 0.5f);
             ir.anchoredPosition = new Vector2(6f, 0f);
-            ir.sizeDelta = new Vector2(36f, 36f);
+            ir.sizeDelta = new Vector2(36f, 0f); // height from anchors; width fixed at 36px
             var iconImg = iconGo.GetComponent<Image>();
             iconImg.sprite = sprite;
+            iconImg.preserveAspect = true;
             iconImg.raycastTarget = false;
         }
 

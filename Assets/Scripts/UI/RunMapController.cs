@@ -155,8 +155,12 @@ namespace SudokuRoguelike.UI
                 XpEarned = _run.GetTotalRunXp(),
                 BossPhaseReached = bossPhaseReached,
                 BossesDefeatedThisRun = _run.State.BossesDefeatedThisRun,
-                SecondsPlayed = secondsPlayed,
-                TutorialMode = _run.State.TutorialMode
+                MistakesMade = _run.GetAnalytics()?.TotalMistakes ?? _run.CurrentLevelState?.Mistakes ?? 0,
+                SecondsPlayed = secondsPlayed > 0 ? secondsPlayed : Mathf.RoundToInt(_run.State.TotalRunSeconds),
+                TutorialMode = _run.State.TutorialMode,
+                DisableProgressionRewards = _run.State.DisableProgressionRewards,
+                PlayedTier = _run.State.SpiritTrialsTier,
+                HarmonyLevel = _run.State.HarmonyLevel
             };
 
             for (var i = 0; i < _run.TileXpLog.Count; i++)
@@ -183,6 +187,7 @@ namespace SudokuRoguelike.UI
             _rewardsGrantedForCurrentPuzzle = false;
             _fixedNodeConfigs.Clear();
             PrepareFixedNodeConfigs();
+            SaveNow();
         }
 
         public RunDirector Run => _run;

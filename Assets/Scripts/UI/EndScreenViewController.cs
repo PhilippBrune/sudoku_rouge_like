@@ -51,6 +51,65 @@ namespace SudokuRoguelike.UI
             ShowGameOver(run, false);
         }
 
+        /// <summary>
+        /// F22: Shows the boss-cleared interstitial panel using bg_boss_cleared.png as the background.
+        /// Call from InRunController immediately after a non-final boss puzzle is solved, before
+        /// advancing to the next floor. The panel uses the same _gameOverPanel structure so it
+        /// auto-hides when the next level loads.
+        /// </summary>
+        public void ShowBossCleared(RunDirector run, Action onContinue = null, string continueLabel = "Continue →")
+        {
+            if (_gameOverPanel != null) _gameOverPanel.SetActive(true);
+            if (_gameOverPanel != null)
+            {
+                var bgImg = _gameOverPanel.transform.Find("PanelBackground")?.GetComponent<RawImage>();
+                if (bgImg != null)
+                {
+                    var tex = Resources.Load<Texture2D>("background/bg_boss_cleared");
+                    bgImg.texture = tex;
+                    bgImg.color   = new Color(1f, 1f, 1f, tex != null ? 0.85f : 0f);
+                }
+
+                // Add a "Continue" button so the player controls when to advance, not a timer.
+                var existingContinue = _gameOverPanel.transform.Find("BossClearedContinueBtn");
+                if (existingContinue != null) UnityEngine.Object.Destroy(existingContinue.gameObject);
+                if (onContinue != null)
+                {
+                    var btnGo = new GameObject("BossClearedContinueBtn", typeof(RectTransform), typeof(Image), typeof(Button));
+                    btnGo.transform.SetParent(_gameOverPanel.transform, false);
+                    var rt = btnGo.GetComponent<RectTransform>();
+                    rt.anchorMin = new Vector2(0.35f, 0.08f);
+                    rt.anchorMax = new Vector2(0.65f, 0.18f);
+                    rt.offsetMin = rt.offsetMax = Vector2.zero;
+                    btnGo.GetComponent<Image>().color = new Color(0.20f, 0.16f, 0.10f, 0.90f);
+                    var lbl = new GameObject("Label", typeof(RectTransform), typeof(Text));
+                    lbl.transform.SetParent(btnGo.transform, false);
+                    var lblRt = lbl.GetComponent<RectTransform>();
+                    lblRt.anchorMin = Vector2.zero; lblRt.anchorMax = Vector2.one;
+                    lblRt.offsetMin = lblRt.offsetMax = Vector2.zero;
+                    var lblTxt = lbl.GetComponent<Text>();
+                    lblTxt.text = continueLabel;
+                    lblTxt.alignment = TextAnchor.MiddleCenter;
+                    lblTxt.fontSize = 16;
+                    lblTxt.color = GamePalette.WinGold;
+                    var btn = btnGo.GetComponent<Button>();
+                    btn.onClick.AddListener(() => onContinue?.Invoke());
+                }
+            }
+            if (_gameOverSummary != null)
+            {
+                _gameOverSummary.text = "Boss Defeated!";
+                _gameOverSummary.color = GamePalette.WinGold;
+            }
+        }
+
+        /// <summary>Hides the boss-cleared interstitial panel. Only call from a player-triggered action.</summary>
+        public void HideBossCleared()
+        {
+            if (_gameOverPanel != null && _gameOverPanel.activeSelf)
+                _gameOverPanel.SetActive(false);
+        }
+
         public void ShowGameOver(RunDirector run, bool victory)
         {
             // Seasonal challenge: show score result instead of normal end screen
@@ -217,6 +276,158 @@ namespace SudokuRoguelike.UI
             }
         }
 
+        public void ShowSpiritTrialsResult(RunDirector run, bool completed)
+        {
+            if (_gameOverPanel != null) _gameOverPanel.SetActive(true);
+
+            var bgImg = _gameOverPanel?.transform.Find("PanelBackground")?.GetComponent<RawImage>();
+            if (bgImg != null)
+            {
+                var tex = Resources.Load<Texture2D>("background/bg_trials_menu");
+                bgImg.texture = tex;
+                bgImg.color   = new Color(1f, 1f, 1f, tex != null ? 0.85f : 0f);
+            }
+
+            var state = run?.State;
+            var level = run?.CurrentLevelState;
+            if (state == null) return;
+
+            var tier       = state.SpiritTrialsTier;
+            var tierName   = tier.ToString();
+            var seconds    = state.TotalRunSeconds;
+            var modCount   = run?.CurrentLevelConfig?.ActiveModifiers?.Count ?? 0;
+            var cells      = level?.CorrectPlacements ?? 0;
+            var pencilUsed = level?.PencilMarksUsed   ?? 0;
+            var mistakes   = level?.Mistakes          ?? 0;
+
+            var score = completed
+                ? SpiritTrialsService.CalculateScore(tier, seconds, modCount, cells, pencilUsed, mistakes)
+                : 0;
+
+            if (_gameOverSummary != null)
+            {
+                _gameOverSummary.text  = completed
+                    ? $"Spirit Trials\n{tierName} — Complete!"
+                    : $"Spirit Trials\n{tierName} — Failed";
+                _gameOverSummary.color = completed ? GamePalette.WinGold : InRunUiFactory.CursedTitleRed;
+            }
+
+            // Persist personal best per tier
+            var save     = new SaveFileService(SaveProfileService.ActiveSlot);
+            var envelope = save.HasSaveFile() ? save.Load() : new SaveFileEnvelope();
+            if (envelope.Statistics == null) envelope.Statistics = new ProfileStats();
+            var stats = envelope.Statistics;
+
+            int prevBest = tier switch
+            {
+                SpiritTrialsTier.Apprentice  => stats.TrialsBestScore_Apprentice,
+                SpiritTrialsTier.Adept       => stats.TrialsBestScore_Adept,
+                SpiritTrialsTier.Master      => stats.TrialsBestScore_Master,
+                _                            => stats.TrialsBestScore_Grandmaster,
+            };
+
+            if (completed && score > prevBest)
+            {
+                switch (tier)
+                {
+                    case SpiritTrialsTier.Apprentice:  stats.TrialsBestScore_Apprentice  = score; break;
+                    case SpiritTrialsTier.Adept:       stats.TrialsBestScore_Adept       = score; break;
+                    case SpiritTrialsTier.Master:      stats.TrialsBestScore_Master      = score; break;
+                    default:                           stats.TrialsBestScore_Grandmaster = score; break;
+                }
+                new ProfileService(save).UpdateStats(envelope, stats);
+            }
+
+            if (_gameOverDetails != null)
+            {
+                var mins = (int)(seconds / 60);
+                var secs = (int)(seconds % 60);
+                var sb   = new StringBuilder();
+                if (completed)
+                {
+                    sb.AppendLine($"Score:          {score:N0}");
+                    sb.AppendLine($"Time:           {mins}:{secs:D2}");
+                    sb.AppendLine($"Cells Filled:   {cells}");
+                    sb.AppendLine($"Pencil Marks:   {pencilUsed}");
+                    sb.AppendLine($"Mistakes:       {mistakes}");
+                    if (modCount > 0) sb.AppendLine($"Modifiers:      +{modCount}");
+                    sb.AppendLine();
+                    if (score > prevBest && prevBest > 0)
+                        sb.AppendLine($"New Personal Best!  (prev: {prevBest:N0})");
+                    else if (prevBest > 0)
+                        sb.AppendLine($"Personal Best:  {prevBest:N0}");
+                    else
+                        sb.AppendLine("First completion!");
+                }
+                else
+                {
+                    sb.AppendLine("The spirit trials await again.");
+                    sb.AppendLine();
+                    sb.AppendLine($"Cells Filled:   {cells}");
+                    sb.AppendLine($"Mistakes:       {mistakes}");
+                    if (prevBest > 0) sb.AppendLine($"Best Score:     {prevBest:N0}");
+                }
+                _gameOverDetails.text = sb.ToString().TrimEnd();
+            }
+        }
+
+        public void ShowEndlessZenResult(RunDirector run)
+        {
+            if (_gameOverPanel != null) _gameOverPanel.SetActive(true);
+
+            var bgImg = _gameOverPanel?.transform.Find("PanelBackground")?.GetComponent<RawImage>();
+            if (bgImg != null)
+            {
+                var tex = Resources.Load<Texture2D>("background/bg_zen_menu");
+                bgImg.texture = tex;
+                bgImg.color   = new Color(1f, 1f, 1f, tex != null ? 0.85f : 0f);
+            }
+
+            var state   = run?.State;
+            var level   = run?.CurrentLevelState;
+            var depth   = state?.Depth ?? 0;
+            var seconds = state?.TotalRunSeconds ?? 0f;
+            var mistakes = run?.GetAnalytics()?.TotalMistakes ?? level?.Mistakes ?? 0;
+
+            if (_gameOverSummary != null)
+            {
+                _gameOverSummary.text  = $"Endless Zen\nDepth {depth}";
+                _gameOverSummary.color = GamePalette.WinGold;
+            }
+
+            // Persist depth + session count
+            var save     = new SaveFileService(SaveProfileService.ActiveSlot);
+            var envelope = save.HasSaveFile() ? save.Load() : new SaveFileEnvelope();
+            if (envelope.Statistics == null) envelope.Statistics = new ProfileStats();
+            var stats   = envelope.Statistics;
+            var prevBest = stats.HighestEndlessDepth;
+            var isNewBest = depth > prevBest;
+
+            if (isNewBest) stats.HighestEndlessDepth = depth;
+            stats.TotalZenSessions += 1;
+            new ProfileService(save).UpdateStats(envelope, stats);
+
+            if (_gameOverDetails != null)
+            {
+                var mins = (int)(seconds / 60);
+                var secs = (int)(seconds % 60);
+                var sb   = new StringBuilder();
+                sb.AppendLine($"Depth Reached:  {depth}");
+                sb.AppendLine($"Session Time:   {mins}:{secs:D2}");
+                sb.AppendLine($"Mistakes:       {mistakes}");
+                sb.AppendLine();
+                if (isNewBest && prevBest > 0)
+                    sb.AppendLine($"New Personal Best!  (prev: {prevBest})");
+                else if (prevBest > 0)
+                    sb.AppendLine($"Personal Best:  {prevBest}");
+                else
+                    sb.AppendLine("First Endless Zen session!");
+                sb.AppendLine();
+                sb.AppendLine($"Total Sessions: {stats.TotalZenSessions}");
+                _gameOverDetails.text = sb.ToString().TrimEnd();
+            }
+        }
+
         private static int GetClassTotalXpFromSave(SaveFileEnvelope envelope, ClassId classId)
         {
             var entries = envelope?.MetaProgress?.GardenProgression?.ClassEntries;
@@ -230,6 +441,7 @@ namespace SudokuRoguelike.UI
         {
             if (result == null || result.TutorialMode) return null;
             if (run?.State?.IsSeasonalChallenge == true) return null; // seasonal: no progression
+            if (result.DisableProgressionRewards || result.Mode != GameMode.GardenRun) return null;
 
             if (run != null)
             {
@@ -243,7 +455,7 @@ namespace SudokuRoguelike.UI
 
             var save = new SaveFileService(SaveProfileService.ActiveSlot);
             var profile = new ProfileService(save);
-            var newUnlocks = profile.RecordRunAndGetNewUnlocks(result);
+            var newUnlocks = profile.RecordRunAndGetNewUnlocks(result, run?.State);
             // ActiveRunState is cleared inside RecordRunAndGetNewUnlocks to avoid a race condition
             // where a second async save would overwrite the meta progress from the first save.
 

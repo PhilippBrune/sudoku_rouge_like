@@ -26,12 +26,12 @@ namespace SudokuRoguelike.Classes
                     break;
 
                 case ClassId.KoiGambler:
-                    // GildedKoiScale: 25%→35% proc chance, +1 gold → +2 gold
+                    // GildedKoiScale: raises proc chance to 40% and gold grant to +5
                     var hasScale = RelicService.HasRelicOfType(state, RelicId.GildedKoiScale);
-                    var goldChance = hasScale ? 0.35 : KoiGoldChance(state);
+                    var goldChance = hasScale ? 0.40 : KoiGoldChance(state);
                     if (new Random(state.Seed ^ level.CorrectPlacements).NextDouble() < goldChance)
                     {
-                        var goldGain = hasScale ? 2 : 1;
+                        var goldGain = hasScale ? 5 : KoiGoldGain(state);
                         state.CurrentGold += goldGain;
                         return goldGain;
                     }
@@ -53,11 +53,14 @@ namespace SudokuRoguelike.Classes
         {
             if (state.ClassId == ClassId.KoiGambler)
             {
-                // GildedKoiScale: 25%→35% no-HP chance on wrong placement
+                // GildedKoiScale: 40% no-HP chance on wrong placement; also gives +1 Reroll Token as consolation
                 var hasScale = RelicService.HasRelicOfType(state, RelicId.GildedKoiScale);
-                var noHpChance = hasScale ? 0.35 : KoiNoHpChance(state);
+                var noHpChance = hasScale ? 0.40 : KoiNoHpChance(state);
                 if (new Random(state.Seed ^ state.CurrentHP ^ state.CurrentGold).NextDouble() < noHpChance)
+                {
+                    if (hasScale) state.RerollTokens++; // consolation token on bad-proc absorb
                     return true; // absorbed
+                }
             }
             return false;
         }
@@ -73,6 +76,17 @@ namespace SudokuRoguelike.Classes
             // Free on first mark per cell; upgrades at L20 → first 2 marks per cell free
             var freeMarks = ShrineArchivistFreeMarks(state);
             return !cellAlreadyHasMark; // first mark is always free; L20 upgrade tracked separately
+        }
+
+        /// <summary>
+        /// [REDESIGN] ShrineArchivist: each pencil mark has a 25% chance to auto-reveal the correct digit.
+        /// Call after a pencil mark is placed. Returns true if the cell should be auto-filled with its solution value.
+        /// </summary>
+        public static bool TryArchivistReveal(RunState state, LevelState level, int row, int col)
+        {
+            if (state.ClassId != ClassId.ShrineArchivist) return false;
+            // 25% chance; seeded so reveals are deterministic on resume
+            return new Random(state.Seed ^ row * 100 + col ^ level.PencilMarksUsed).NextDouble() < 0.25;
         }
 
         // ── On level complete ────────────────────────────────────────────────────
@@ -117,6 +131,16 @@ namespace SudokuRoguelike.Classes
             return level.ItemsUsedThisLevel < freeUses;
         }
 
+        // ── GardenMonk: HP-trade pencil purchase ────────────────────────────────
+
+        /// <summary>
+        /// [REDESIGN] GardenMonk: buying pencil mid-puzzle costs 1 HP instead of gold.
+        /// Returns true when the HP-trade replaces the gold cost.
+        /// Call from the shop/HUD pencil-buy path: deduct 1 HP and skip the gold deduction.
+        /// </summary>
+        public static bool GardenMonkPencilBuyIsHPTrade(RunState state)
+            => state.ClassId == ClassId.GardenMonk;
+
         // ── LanternSeer: modifier weakening ─────────────────────────────────────
 
         /// <summary>Returns the modifier intensity reduction factor for LanternSeer (0 = no reduction).</summary>
@@ -150,13 +174,17 @@ namespace SudokuRoguelike.Classes
         private static double KoiGoldChance(RunState state)
         {
             var level = GetClassLevel(state);
-            return level >= 10 ? 0.30 : 0.25;
+            // [REDESIGN] Base 33%; L10 upgrade kept for parity with old milestone
+            return level >= 10 ? 0.35 : 0.33;
         }
+
+        private static int KoiGoldGain(RunState state) => 3; // [REDESIGN] +3 gold (was +1)
 
         private static double KoiNoHpChance(RunState state)
         {
             var level = GetClassLevel(state);
-            return level >= 20 ? 0.30 : 0.25;
+            // [REDESIGN] Base 33%; L20 upgrade kept for parity
+            return level >= 20 ? 0.35 : 0.33;
         }
 
         private static int ShrineArchivistFreeMarks(RunState state)
@@ -180,9 +208,10 @@ namespace SudokuRoguelike.Classes
         private static float LanternSeerWeakenFactor(RunState state)
         {
             var level = GetClassLevel(state);
-            if (level >= 25) return 0.30f;
-            if (level >= 10) return 0.25f;
-            return 0.20f;
+            // [REDESIGN] Base 30% (was 20%); L10: 35%; L25: 40%
+            if (level >= 25) return 0.40f;
+            if (level >= 10) return 0.35f;
+            return 0.30f;
         }
 
         private static bool QuietCartographerAlwaysPreview(RunState state)

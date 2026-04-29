@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Run;
 using SudokuRoguelike.Sudoku;
 
 namespace SudokuRoguelike.Economy
@@ -19,14 +20,63 @@ namespace SudokuRoguelike.Economy
             new[] { 0.00f, 0.10f, 0.25f, 0.35f, 0.30f }
         };
 
+        // Base pools (always available at H0).
+        private static readonly RelicId[] BaseT1Pool = { RelicId.SmoothPebble, RelicId.CrackedTeacup, RelicId.WoodenComb, RelicId.MossToken };
+        private static readonly RelicId[] BaseT2Pool = { RelicId.KoiReflectionRelic, RelicId.MonkCharm, RelicId.CopperTortoise, RelicId.JadeHairpin, RelicId.StoneSundial };
+        private static readonly RelicId[] BaseT3Pool = { RelicId.SakuraSeal, RelicId.CrimsonFan, RelicId.WisteriaBranch, RelicId.PaperCrane, RelicId.PorcelainMask };
+        private static readonly RelicId[] BaseT4Pool = { RelicId.TransmutedSigil, RelicId.PhoenixFeather, RelicId.SpiritLantern, RelicId.MoonstoneCompass };
+        private static readonly RelicId[] BaseLegPool = { RelicId.GoldenRoot, RelicId.SilentGrid, RelicId.ShiftingGarden, RelicId.EternalLotus, RelicId.DragonsEye };
+
+        // [HARMONY] Harmony-gated relic entries: (RelicId, Tier, MinHarmonyLevel)
+        private static readonly (RelicId Id, RelicTier Tier, int MinHarmony)[] HarmonyRelics =
+        {
+            (RelicId.CrackedStone,   RelicTier.Tier1,    2),
+            (RelicId.FrostedMirror,  RelicTier.Tier2,    5),
+            (RelicId.VoidPetal,      RelicTier.Tier3,    7),
+            (RelicId.LanternOfVoid,  RelicTier.Legendary, 9),
+        };
+
+        // Kept for backward-compat callers that don't pass harmonyLevel.
         private static readonly Dictionary<RelicTier, RelicId[]> TierPool = new()
         {
-            [RelicTier.Tier1] = new[] { RelicId.SmoothPebble, RelicId.CrackedTeacup, RelicId.WoodenComb, RelicId.MossToken },
-            [RelicTier.Tier2] = new[] { RelicId.KoiReflectionRelic, RelicId.MonkCharm, RelicId.CopperTortoise, RelicId.JadeHairpin, RelicId.StoneSundial },
-            [RelicTier.Tier3] = new[] { RelicId.SakuraSeal, RelicId.CrimsonFan, RelicId.WisteriaBranch, RelicId.PaperCrane, RelicId.PorcelainMask },
-            [RelicTier.Tier4] = new[] { RelicId.TransmutedSigil, RelicId.PhoenixFeather, RelicId.SpiritLantern, RelicId.MoonstoneCompass },
-            [RelicTier.Legendary] = new[] { RelicId.GoldenRoot, RelicId.SilentGrid, RelicId.ShiftingGarden, RelicId.EternalLotus, RelicId.DragonsEye }
+            [RelicTier.Tier1]    = BaseT1Pool,
+            [RelicTier.Tier2]    = BaseT2Pool,
+            [RelicTier.Tier3]    = BaseT3Pool,
+            [RelicTier.Tier4]    = BaseT4Pool,
+            [RelicTier.Legendary] = BaseLegPool
         };
+
+        // Build a runtime pool dictionary that includes harmony-gated relics.
+        private static Dictionary<RelicTier, RelicId[]> BuildHarmonyPool(int harmonyLevel)
+        {
+            var t1  = new List<RelicId>(BaseT1Pool);
+            var t2  = new List<RelicId>(BaseT2Pool);
+            var t3  = new List<RelicId>(BaseT3Pool);
+            var t4  = new List<RelicId>(BaseT4Pool);
+            var leg = new List<RelicId>(BaseLegPool);
+
+            foreach (var (id, tier, minH) in HarmonyRelics)
+            {
+                if (harmonyLevel < minH) continue;
+                switch (tier)
+                {
+                    case RelicTier.Tier1:    t1.Add(id);  break;
+                    case RelicTier.Tier2:    t2.Add(id);  break;
+                    case RelicTier.Tier3:    t3.Add(id);  break;
+                    case RelicTier.Tier4:    t4.Add(id);  break;
+                    case RelicTier.Legendary: leg.Add(id); break;
+                }
+            }
+
+            return new Dictionary<RelicTier, RelicId[]>
+            {
+                [RelicTier.Tier1]    = t1.ToArray(),
+                [RelicTier.Tier2]    = t2.ToArray(),
+                [RelicTier.Tier3]    = t3.ToArray(),
+                [RelicTier.Tier4]    = t4.ToArray(),
+                [RelicTier.Legendary] = leg.ToArray()
+            };
+        }
 
         // ── Class-Exclusive Relic Definitions ──
 
@@ -66,10 +116,11 @@ namespace SudokuRoguelike.Economy
         }
 
         // [REQ: RELIC-ROLL-001] Relic tier weights: floor-based 5×5 table; tierBonus shifts weights up (risk route)
-        public RelicInstance RollRelic(int floorIndex, int tierBonus = 0)
+        // [HARMONY] harmonyLevel gates which relics are available.
+        public RelicInstance RollRelic(int floorIndex, int tierBonus = 0, int harmonyLevel = 0)
         {
             var tier = RollTier(floorIndex + tierBonus);
-            var pool = TierPool[tier];
+            var pool = BuildHarmonyPool(harmonyLevel)[tier];
             var id = pool[_random.Next(pool.Length)];
 
             return new RelicInstance
@@ -81,9 +132,10 @@ namespace SudokuRoguelike.Economy
         }
 
         /// <summary>Roll <paramref name="count"/> distinct relics for a choice panel.
-        /// Pass classId + classLevel to allow class-exclusive relic injection (25% chance if unlocked).</summary>
+        /// Pass classId + classLevel to allow class-exclusive relic injection (25% chance if unlocked).
+        /// [HARMONY] harmonyLevel gates which relics can appear.</summary>
         public List<RelicInstance> RollRelicChoices(int floorIndex, int count = 3, int tierBonus = 0,
-            ClassId classId = (ClassId)0, int classLevel = 0)
+            ClassId classId = (ClassId)0, int classLevel = 0, int harmonyLevel = 0)
         {
             var choices = new List<RelicInstance>(count);
             var usedIds = new HashSet<RelicId>();
@@ -102,10 +154,11 @@ namespace SudokuRoguelike.Economy
                 }
             }
 
+            var activePool = BuildHarmonyPool(harmonyLevel);
             for (var attempt = 0; attempt < count * 4 && choices.Count < count; attempt++)
             {
                 var tier = RollTier(floorIndex + tierBonus);
-                var pool = TierPool[tier];
+                var pool = activePool[tier];
                 var id = pool[_random.Next(pool.Length)];
                 if (usedIds.Contains(id)) continue;
                 usedIds.Add(id);
@@ -116,12 +169,23 @@ namespace SudokuRoguelike.Economy
         }
 
         /// <summary>Populates HeldRelics with <paramref name="count"/> random T1 starting relics at run start.
-        /// Class-exclusive relics (L30) are NOT pre-loaded — they remain pool-injection-only (found during the run).</summary>
-        public void AssignStartingRelics(RunState state, int count)
+        /// Class-exclusive relics (L30) are NOT pre-loaded — they remain pool-injection-only (found during the run).
+        /// [HARMONY-FLAG-002] At H7+ only T1 relics are offered at run start; harmony relics are still gated by harmonyLevel.</summary>
+        public void AssignStartingRelics(RunState state, int count, int harmonyLevel = 0)
         {
             if (count <= 0) return;
 
-            var t1Pool = TierPool[RelicTier.Tier1];
+            // At H7+ starting relics are T1 only (no higher tiers). Harmony-gated T1 relics included if available.
+            // [M1-B] When StartingRelicT1Only is active, class-exclusive relics are also suppressed from the starting pool.
+            var t1Pool = BuildHarmonyPool(harmonyLevel)[RelicTier.Tier1];
+            var config = SudokuRoguelike.Run.HarmonyDifficultyService.BuildConfig(harmonyLevel);
+            if (config.StartingRelicT1Only)
+            {
+                var filtered = new System.Collections.Generic.List<RelicId>();
+                foreach (var id in t1Pool)
+                    if (!IsRelicExclusive(id)) filtered.Add(id);
+                if (filtered.Count > 0) t1Pool = filtered.ToArray();
+            }
             var usedIds = new HashSet<RelicId>();
 
             for (var i = 0; i < count; i++)
@@ -172,11 +236,52 @@ namespace SudokuRoguelike.Economy
             return id switch
             {
                 RelicId.CrackedTeacup => 1,
-                RelicId.SilentGrid => 3,
+                RelicId.SilentGrid    => 3,
                 RelicId.PhoenixFeather => 1,
-                RelicId.WardingFlame => 1, // once per run
+                RelicId.WardingFlame  => 1, // once per run
+                RelicId.VoidPetal     => 1, // [HARMONY] once per run
                 _ => -1 // passive
             };
+        }
+
+        // ── Harmony relic helpers ────────────────────────────────────────────────────────────────
+
+        /// <summary>[HARMONY-RELIC-002] CrackedStone: first mistake per puzzle costs HP and increments the counter;
+        /// subsequent mistakes in the same puzzle are fully absorbed (no HP loss).
+        /// Returns true if the mistake was absorbed (no HP should be deducted).</summary>
+        public static bool TryCrackedStoneAbsorb(RunState state)
+        {
+            if (!HasRelicOfType(state, RelicId.CrackedStone)) return false;
+            if (state.CrackedStoneMistakesThisPuzzle > 0) return true; // absorb
+            state.CrackedStoneMistakesThisPuzzle++;  // first mistake — count it, let HP loss proceed
+            return false;
+        }
+
+        /// <summary>[HARMONY-FLAG-002] LanternOfVoid: when held, boss modifier ??? labels are never shown.</summary>
+        public static bool ShouldHideBossModifiers(RunState state) =>
+            state.BossModifiersAlwaysHidden;
+
+        /// <summary>[HARMONY] FrostedMirror: absorb 1 HP of mistake damage at cost of 3 pencil.
+        /// Returns the final HP damage after absorption (0 if fully absorbed).
+        /// At H5+ each mistake after the first is partially absorbed (1 HP reduced per proc).</summary>
+        public static int ApplyFrostedMirror(RunState state, int hpDamage)
+        {
+            if (hpDamage <= 0) return hpDamage;
+            if (!HasRelicOfType(state, RelicId.FrostedMirror)) return hpDamage;
+            if (state.CurrentPencil < 3) return hpDamage;
+            state.CurrentPencil -= 3;
+            return Math.Max(0, hpDamage - 1);
+        }
+
+        /// <summary>[HARMONY] VoidPetal: survive a lethal hit at 1 HP once per run.
+        /// Caller is responsible for granting 1 free Normal Solver item if slots allow.</summary>
+        public static bool TryVoidPetal(RunState state)
+        {
+            var relic = FindRelicByType(state, RelicId.VoidPetal);
+            if (relic == null || relic.UsesRemaining <= 0) return false;
+            relic.UsesRemaining--;
+            state.CurrentHP = 1;
+            return true;
         }
 
         // ── Relic list helpers ──
@@ -186,6 +291,22 @@ namespace SudokuRoguelike.Economy
 
         private static RelicInstance FindRelicByType(RunState state, RelicId id) =>
             state.HeldRelics?.Find(r => r.Id == id);
+
+        /// <summary>
+        /// Returns the base pool tier for a relic, used to drive visual rarity pip on UI slots.
+        /// Harmony-gated relics return their explicit tier; class-exclusive relics return Tier3.
+        /// </summary>
+        public static RelicTier GetBaseTier(RelicId id)
+        {
+            if (Array.IndexOf(BaseLegPool, id) >= 0) return RelicTier.Legendary;
+            if (Array.IndexOf(BaseT4Pool, id) >= 0) return RelicTier.Tier4;
+            if (Array.IndexOf(BaseT3Pool, id) >= 0) return RelicTier.Tier3;
+            if (Array.IndexOf(BaseT2Pool, id) >= 0) return RelicTier.Tier2;
+            for (var i = 0; i < HarmonyRelics.Length; i++)
+                if (HarmonyRelics[i].Id == id) return HarmonyRelics[i].Tier;
+            if (ClassExclusiveRelics.ContainsKey(id)) return RelicTier.Tier3;
+            return RelicTier.Tier1;
+        }
 
         // ── Relic Queries ──
 
@@ -224,6 +345,9 @@ namespace SudokuRoguelike.Economy
                 case RelicId.SilentGrid:
                     state.MistakeShieldCharges += relic.UsesRemaining > 0 ? relic.UsesRemaining : 3;
                     break;
+                case RelicId.LanternOfVoid:
+                    state.BossModifiersAlwaysHidden = true;
+                    break;
             }
         }
 
@@ -239,7 +363,8 @@ namespace SudokuRoguelike.Economy
                         state.CurrentPencil = Math.Min(state.MaxPencil, state.CurrentPencil + 2);
                         break;
                     case RelicId.KoiReflectionRelic:
-                        SolveNCells(board, 5, state.Seed ^ state.CurrentFloor);
+                        // [REDESIGN] Reveal candidates (not solve) for 5 empty cells; feels like insight, not a solve.
+                        RevealNCandidates(board, 5, state.Seed ^ state.CurrentFloor);
                         break;
                     case RelicId.DragonsEye:
                         SolveOneBox(board, state.Seed ^ state.CurrentFloor);
@@ -249,6 +374,8 @@ namespace SudokuRoguelike.Economy
                         break;
                 }
             }
+            // [C1-B] Reset per-puzzle CrackedStone mistake counter
+            state.CrackedStoneMistakesThisPuzzle = 0;
         }
 
         /// <summary>Check TempleVow trigger on HP change; heals 3 HP once per puzzle if HP ≤ 25%.
@@ -279,13 +406,18 @@ namespace SudokuRoguelike.Economy
                         gold = (int)(gold * 1.25f);
                         break;
                     case RelicId.SakuraSeal:
+                        // [REDESIGN] Heal 1 HP at streak ≥ 2; heal 3 HP (total) at streak ≥ 5.
                         if (level.PerfectSoFar)
                         {
                             state.PerfectPuzzleStreak++;
-                            if (state.PerfectPuzzleStreak >= 3)
+                            if (state.PerfectPuzzleStreak >= 5)
+                            {
+                                state.CurrentHP = Math.Min(state.MaxHP, state.CurrentHP + 3);
+                                state.PerfectPuzzleStreak = 0;
+                            }
+                            else if (state.PerfectPuzzleStreak >= 2)
                             {
                                 state.CurrentHP = Math.Min(state.MaxHP, state.CurrentHP + 1);
-                                state.PerfectPuzzleStreak = 0;
                             }
                         }
                         else
@@ -299,6 +431,15 @@ namespace SudokuRoguelike.Economy
                             state.CurrentPencil = Math.Min(state.MaxPencil, state.CurrentPencil + 2);
                             state.RerollTokens++;
                         }
+                        break;
+                    case RelicId.LoadBearingStone:
+                        // [REDESIGN] Each non-absorbed mistake generates 5 bonus gold at end of puzzle.
+                        if (level.Mistakes > 0)
+                            gold += level.Mistakes * 5;
+                        break;
+                    case RelicId.LanternOfVoid:
+                        // [HARMONY] +1 gold per active floor modifier on puzzle completion.
+                        gold += state.ActiveFloorModifiers?.Count ?? 0;
                         break;
                 }
             }
@@ -316,16 +457,23 @@ namespace SudokuRoguelike.Economy
                 switch (relic.Id)
                 {
                     case RelicId.MonkCharm:
+                        // [REDESIGN] Every 5-combo: +5 gold AND +1 Pencil (was +2 gold only)
                         if (state.ComboStreak > 0 && state.ComboStreak % 5 == 0)
-                            state.CurrentGold += 2;
+                        {
+                            state.CurrentGold += 5;
+                            state.CurrentPencil = Math.Min(state.MaxPencil, state.CurrentPencil + 1);
+                        }
                         break;
                     case RelicId.FortunesLedger:
+                        // [REDESIGN] Keep every-10 path; add perfect-streak burst (every 5 combo → +2 tokens)
                         state.FortunesLedgerCounter++;
                         if (state.FortunesLedgerCounter >= 10)
                         {
                             state.RerollTokens++;
                             state.FortunesLedgerCounter = 0;
                         }
+                        if (state.ComboStreak > 0 && state.ComboStreak % 5 == 0)
+                            state.RerollTokens += 2;
                         break;
                 }
             }
@@ -343,11 +491,23 @@ namespace SudokuRoguelike.Economy
                         state.CurrentHP = Math.Min(state.MaxHP, state.CurrentHP + 2);
                         break;
                     case RelicId.GoldenRoot:
-                        var interest = Math.Max(1, (int)(state.CurrentGold * 0.5f));
-                        state.CurrentGold += interest;
+                        // [REDESIGN] Interest = 30% of gold SPENT this floor (not 50% of current gold).
+                        // GoldSpentThisFloor is tracked in RunState; reset it after consuming.
+                        if (state.GoldSpentThisFloor > 0)
+                        {
+                            var interest = Math.Max(1, (int)(state.GoldSpentThisFloor * 0.30f));
+                            state.CurrentGold += interest;
+                        }
+                        state.GoldSpentThisFloor = 0;
+                        break;
+                    case RelicId.SilentGrid:
+                        // [REDESIGN] Reset 3 mistake-shield charges at the start of every floor (was once per run).
+                        state.MistakeShieldCharges = 3;
                         break;
                     case RelicId.AccurateMap:
+                        // Reveal all nodes on the map; also guarantee at least one relic-tier reward node.
                         state.AllNodesRevealed = true;
+                        state.BonusRelicNodeThisFloor = true; // RunDirector reads this when building node rewards
                         break;
                 }
             }
@@ -356,6 +516,32 @@ namespace SudokuRoguelike.Economy
         /// <summary>Returns true when the player holds EndlessArchive (pencil marks cost 0).</summary>
         public static bool HasEndlessArchive(RunState state) =>
             HasRelicOfType(state, RelicId.EndlessArchive);
+
+        // [REDESIGN] Reveal the correct digit as a pencil mark for <count> randomly chosen empty cells.
+        // Unlike SolveNCells, this does NOT fill the cell — it only adds a pencil mark so the player
+        // still needs to confirm the placement. Deterministic via seed.
+        private static void RevealNCandidates(SudokuBoard board, int count, int seed)
+        {
+            var size = board.Size;
+            var emptyCells = new List<(int r, int c)>();
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
+                if (!board.IsGiven(r, c) && board.Cells[r, c] == 0 && board.Solution[r, c] > 0)
+                    emptyCells.Add((r, c));
+
+            var rng = new Random(seed);
+            for (var i = emptyCells.Count - 1; i > 0; i--)
+            {
+                var j = rng.Next(i + 1);
+                (emptyCells[i], emptyCells[j]) = (emptyCells[j], emptyCells[i]);
+            }
+
+            for (var i = 0; i < Math.Min(count, emptyCells.Count); i++)
+            {
+                var (r, c) = emptyCells[i];
+                board.AddPencilMark(r, c, board.Solution[r, c]);
+            }
+        }
 
         // Reveal the correct digit as a pencil mark in the first empty non-given cell
         private static void RevealOneCandidate(SudokuBoard board)
@@ -499,6 +685,11 @@ namespace SudokuRoguelike.Economy
                 RelicId.WardingFlame     => "Warding Flame",
                 RelicId.DuelingReed      => "Dueling Reed",
                 RelicId.AccurateMap      => "Accurate Map",
+                // Harmony-gated relics
+                RelicId.CrackedStone     => "Cracked Stone",
+                RelicId.FrostedMirror    => "Frosted Mirror",
+                RelicId.VoidPetal        => "Void Petal",
+                RelicId.LanternOfVoid    => "Lantern of Void",
                 _ => id.ToString()
             };
         }
@@ -511,7 +702,7 @@ namespace SudokuRoguelike.Economy
                 RelicId.CrackedTeacup     => "cracked_teacup",
                 RelicId.WoodenComb        => "wooden_comb",
                 RelicId.MossToken         => "moss_token",
-                RelicId.KoiReflectionRelic=> "koi_reflection",
+                RelicId.KoiReflectionRelic=> "koi_reflection_relic",
                 RelicId.MonkCharm         => "monk_charm",
                 RelicId.CopperTortoise    => "copper_tortoise",
                 RelicId.JadeHairpin       => "jade_hairpin",
@@ -539,6 +730,11 @@ namespace SudokuRoguelike.Economy
                 RelicId.WardingFlame      => "warding_flame",
                 RelicId.DuelingReed       => "dueling_reed",
                 RelicId.AccurateMap       => "accurate_map",
+                // Harmony-gated relics
+                RelicId.CrackedStone      => "cracked_stone",
+                RelicId.FrostedMirror     => "frosted_mirror",
+                RelicId.VoidPetal         => "void_petal",
+                RelicId.LanternOfVoid     => "lantern_of_void",
                 _ => ""
             };
         }
@@ -546,7 +742,8 @@ namespace SudokuRoguelike.Economy
         public static string GetIconFolder(RelicId id) => id switch
         {
             RelicId.GoldenRoot or RelicId.SilentGrid or RelicId.ShiftingGarden or
-            RelicId.EternalLotus or RelicId.DragonsEye => "legendary",
+            RelicId.EternalLotus or RelicId.DragonsEye or
+            RelicId.LanternOfVoid => "legendary",  // [HARMONY] legendary-tier harmony relic
             _ => "relic"
         };
 
@@ -558,13 +755,13 @@ namespace SudokuRoguelike.Economy
                 RelicId.CrackedTeacup => "Absorb the first mistake each puzzle (no HP loss).",
                 RelicId.WoodenComb => "+1 Max HP.",
                 RelicId.MossToken => "Shop rerolls cost 25% less.",
-                RelicId.KoiReflectionRelic => "Auto-solve 5 cells at the start of each puzzle.",
-                RelicId.MonkCharm => "5 correct placements in a row grants +2 gold.",
+                RelicId.KoiReflectionRelic => "Reveal the correct candidates for 5 random empty cells at puzzle start (no auto-fill).",
+                RelicId.MonkCharm => "Every 5-hit combo: +5 gold AND +1 pencil.",
                 RelicId.CopperTortoise => "Perfect puzzle completion grants +15 gold.",
                 RelicId.JadeHairpin => "+1 item slot capacity.",
                 RelicId.StoneSundial => "+1 reward slot after each puzzle.",
-                RelicId.SakuraSeal => "No-hit puzzle streak: heal 1 HP after 3 puzzles.",
-                RelicId.CrimsonFan => "Reduce boss modifier intensity by one step.",
+                RelicId.SakuraSeal => "Perfect-puzzle streak: +1 HP at streak >=2; +3 HP (reset) at streak >=5.",
+                RelicId.CrimsonFan => "Reduce all boss modifier intensities by one step.",
                 RelicId.WisteriaBranch => "Heal 2 HP at the start of each floor.",
                 RelicId.PaperCrane => "First item use each puzzle is free (no charge cost).",
                 RelicId.PorcelainMask => "Elite reward rarity upgraded by one tier.",
@@ -572,20 +769,25 @@ namespace SudokuRoguelike.Economy
                 RelicId.PhoenixFeather => "Prevent death once per run (heal to 1 HP).",
                 RelicId.SpiritLantern => "Shop prices reduced by 20%.",
                 RelicId.MoonstoneCompass => "Relic node tier boosted by +1.",
-                RelicId.GoldenRoot => "+50% gold interest at floor end.",
-                RelicId.SilentGrid => "Next 3 mistakes are silent (no HP loss).",
-                RelicId.ShiftingGarden => "Puzzles occasionally reshuffle given digits.",
+                RelicId.GoldenRoot => "At floor start, gain 30% of the gold spent during the previous floor.",
+                RelicId.SilentGrid => "Start each floor with 3 fresh mistake-shield charges (each absorbed mistake costs 0 HP).",
+                RelicId.ShiftingGarden => "Once per floor, a random given digit is relocated to another valid cell, keeping the puzzle uniquely solvable.",
                 RelicId.EternalLotus => "Items are never consumed.",
                 RelicId.DragonsEye => "Start each puzzle with one fully solved box.",
                 // Class-exclusive relics (L30)
-                RelicId.FortunesLedger   => "Every 10 correct placements grant +1 Reroll Token. (NumberFreak exclusive)",
+                RelicId.FortunesLedger   => "Every 10 correct placements: +1 Reroll Token. Every 5-hit combo: +2 Reroll Tokens. (NumberFreak exclusive)",
                 RelicId.TempleVow        => "When HP drops to 25% or below, heal 3 HP once per puzzle. (GardenMonk exclusive)",
                 RelicId.EndlessArchive   => "After each correct placement, reveal one candidate in the same row. (ShrineArchivist exclusive)",
-                RelicId.GildedKoiScale   => "On run victory, your current gold is doubled. (KoiGambler exclusive)",
-                RelicId.LoadBearingStone => "Each mistake also deducts from the boss penalty pool. (StoneGardener exclusive)",
+                RelicId.GildedKoiScale   => "Boosts Koi Gambler procs to 40%: lucky hit grants +5 gold, absorbed mistake grants +1 Reroll Token. (KoiGambler exclusive)",
+                RelicId.LoadBearingStone => "Each non-absorbed mistake generates 5 bonus gold at end of puzzle. (StoneGardener exclusive)",
                 RelicId.WardingFlame     => "Once per run, automatically absorb one mistake (no HP loss). (LanternSeer exclusive)",
                 RelicId.DuelingReed      => "Completing a puzzle with zero pencil marks grants +20 bonus gold. (ReedDuelist exclusive)",
-                RelicId.AccurateMap      => "All floor node types are permanently revealed. (QuietCartographer exclusive)",
+                RelicId.AccurateMap      => "All floor nodes permanently revealed. Guarantees one relic-tier reward node per floor. (QuietCartographer exclusive)",
+                // Harmony-gated relics
+                RelicId.CrackedStone     => "[H2+] Each mistake after the first in a puzzle deals 0 HP (stone absorbs). Passive; unlimited.",
+                RelicId.FrostedMirror    => "[H5+] Once per mistake: spend 3 pencil to absorb 1 HP of damage (auto-triggers if pencil ≥ 3). At H5+ each hit after the first in a puzzle is partially reduced.",
+                RelicId.VoidPetal        => "[H7+] Once per run: survive a lethal hit at 1 HP. Grants 1 free Normal Solver upon activation.",
+                RelicId.LanternOfVoid    => "[H9+] Boss modifier labels are always hidden (no auto-reveal on repeat). Earn +1 gold per active floor modifier on puzzle completion.",
                 _ => ""
             };
         }

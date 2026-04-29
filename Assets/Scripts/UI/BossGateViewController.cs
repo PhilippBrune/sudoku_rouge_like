@@ -4,6 +4,7 @@ using SudokuRoguelike.Boss;
 using SudokuRoguelike.Core;
 using SudokuRoguelike.Economy;
 using SudokuRoguelike.Run;
+using SudokuRoguelike.Save;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -80,6 +81,8 @@ namespace SudokuRoguelike.UI
             rt.offsetMax = Vector2.zero;
             var cursedPanelBase = InRunUiFactory.CursedPanelBg;
             panel.AddComponent<Image>().color = new Color(cursedPanelBase.r, cursedPanelBase.g, cursedPanelBase.b, 0.80f);
+            // F23: bg_curse is a full-screen dark overlay behind this panel, not a board replacement.
+            // It visually signals the cursed state while the board remains playable beneath.
             InRunUiFactory.AddPanelBackground(panel.transform, "bg_curse");
 
             var titleTxt = InRunUiFactory.CreateText(panel.transform, "Title", "Cursed Tile!", 18, TextAnchor.UpperCenter,
@@ -97,8 +100,8 @@ namespace SudokuRoguelike.UI
             descTxt.rectTransform.offsetMin = Vector2.zero;
             descTxt.rectTransform.offsetMax = Vector2.zero;
 
-            var btnAccept = InRunUiFactory.CreatePanelButton(panel.transform, "BtnAccept",
-                new Vector2(0.05f, 0.20f), new Vector2(0.45f, 0.40f), "Accept Curse");
+            var btnAccept = InRunUiFactory.CreateActionButton(panel.transform, "BtnAccept",
+                new Vector2(0.05f, 0.20f), new Vector2(0.45f, 0.40f), "Accept Curse", UiAction.Accept);
             btnAccept.onClick.AddListener(() =>
             {
                 ActivePanel = null;
@@ -106,8 +109,8 @@ namespace SudokuRoguelike.UI
                 onAccept?.Invoke(cursedConfig);
             });
 
-            var btnDecline = InRunUiFactory.CreatePanelButton(panel.transform, "BtnDecline",
-                new Vector2(0.55f, 0.20f), new Vector2(0.95f, 0.40f), "Decline");
+            var btnDecline = InRunUiFactory.CreateActionButton(panel.transform, "BtnDecline",
+                new Vector2(0.55f, 0.20f), new Vector2(0.95f, 0.40f), "Decline", UiAction.Decline);
             btnDecline.onClick.AddListener(() =>
             {
                 var normalConfig = run.BuildLevelConfig(false, false, node.Index);
@@ -154,6 +157,29 @@ namespace SudokuRoguelike.UI
             _bossGateTitle.rectTransform.offsetMin = Vector2.zero;
             _bossGateTitle.rectTransform.offsetMax = Vector2.zero;
 
+            // Boss avatar — floor-specific icon displayed in the top-left of the panel
+            var bossAvatarName = (_map?.Run?.State?.CurrentFloor ?? 4) switch
+            {
+                0 => "grove_spirit",
+                1 => "koi_warden",
+                2 => "shrine_oni",
+                3 => "stone_patriarch",
+                _ => "demon_mask"
+            };
+            var avatarSpr = Resources.Load<Sprite>("boss/icon_" + bossAvatarName);
+            if (avatarSpr != null)
+            {
+                var avatarGo = new GameObject("BossAvatar", typeof(RectTransform), typeof(Image));
+                avatarGo.transform.SetParent(_bossGatePanel.transform, false);
+                var avatarRt = avatarGo.GetComponent<RectTransform>();
+                avatarRt.anchorMin = new Vector2(0.02f, 0.87f);
+                avatarRt.anchorMax = new Vector2(0.13f, 0.99f);
+                avatarRt.offsetMin = Vector2.zero;
+                avatarRt.offsetMax = Vector2.zero;
+                avatarGo.GetComponent<Image>().sprite = avatarSpr;
+                avatarGo.GetComponent<Image>().preserveAspect = true;
+            }
+
             var run2 = _map?.Run;
             var seenMods = run2?.State?.SeenBossModifiers;
             for (var i = 0; i < _bossGateOptions.Count; i++)
@@ -164,22 +190,27 @@ namespace SudokuRoguelike.UI
                 var xMin = 0.05f + col * 0.31f;
                 var yMax = 0.85f - row * 0.25f;
                 var labelText = seen ? $"{InRunUiFactory.FormatModName(mod)}\n{InRunUiFactory.GetModDesc(mod)}" : "???";
+                Debug.Log(
+                    $"[ModifierDiscovery] Boss gate label: mod={mod}, seen={seen}, " +
+                    $"runSeen={ModifierDiscoveryService.Describe(seenMods)}, label={(seen ? "revealed" : "???")}");
                 var btn = InRunUiFactory.CreatePanelButton(_bossGatePanel.transform, $"Mod_{i}",
                     new Vector2(xMin, yMax - 0.22f), new Vector2(xMin + 0.28f, yMax),
                     labelText);
                 var modIconName = seen ? BossService.GetIconName(mod) : "";
                 if (seen && string.IsNullOrEmpty(modIconName))
                     Debug.LogWarning($"[BossGateViewController] No icon mapped for seen modifier: {mod}");
-                InRunUiFactory.SetButtonIcon(btn, seen ? modIconName : "petal_orb", !seen, seen ? "modifier" : "ui");
+                InRunUiFactory.SetButtonIcon(btn, seen ? modIconName : "petal_orb", !seen, seen ? BossService.GetIconFolder(mod) : "ui"); // F-QA: debuff icons routed to debuff/ subfolder
+                // F27: add a subgroup stripe so visually similar modifier icons are distinguishable at small sizes
+                if (seen) InRunUiFactory.AddModifierGroupMarker(btn, modIconName);
                 var captured = mod;
                 btn.onClick.AddListener(() => ToggleBossModSelection(captured, btn));
             }
 
             // Confirm button (disabled until enough picks).
             // Override disabledColor so the button stays visible when not yet interactable.
-            var confirmBtn = InRunUiFactory.CreatePanelButton(_bossGatePanel.transform, "ConfirmBoss",
+            var confirmBtn = InRunUiFactory.CreateActionButton(_bossGatePanel.transform, "ConfirmBoss",
                 new Vector2(0.35f, 0.02f), new Vector2(0.65f, 0.10f),
-                "Confirm");
+                "Confirm", UiAction.Confirm);
             var confirmCols = confirmBtn.colors;
             confirmCols.disabledColor = InRunUiFactory.BtnDisabled;
             confirmBtn.colors = confirmCols;
@@ -218,8 +249,8 @@ namespace SudokuRoguelike.UI
             var run3 = _map?.Run;
             if (run3 != null && RelicService.HasRelicOfType(run3.State, RelicId.WardingFlame) && !run3.State.WardingFlameUsed)
             {
-                var wardingBtn = InRunUiFactory.CreatePanelButton(_bossGatePanel.transform, "BtnWardingFlame",
-                    new Vector2(0.05f, 0.02f), new Vector2(0.33f, 0.10f), "Warding Flame: Remove 1 Mod");
+                var wardingBtn = InRunUiFactory.CreateActionButton(_bossGatePanel.transform, "BtnWardingFlame",
+                    new Vector2(0.05f, 0.02f), new Vector2(0.33f, 0.10f), "Warding Flame: Remove 1 Mod", UiAction.WardingFlame);
                 wardingBtn.onClick.AddListener(() =>
                 {
                     if (_bossGateOptions.Count > 0 && RelicService.TryWardingFlame(run3.State))
@@ -298,6 +329,7 @@ namespace SudokuRoguelike.UI
             ActivePanel = null;
             var run = _map?.Run;
             if (run != null) run.ChooseBossModifiers(new List<BossModifierId>(_selectedBossMods));
+            _map?.SaveNow();
             if (_bossGatePanel != null) { Object.Destroy(_bossGatePanel); _bossGatePanel = null; }
 
             OnModsConfirmed?.Invoke(new List<BossModifierId>(_selectedBossMods));

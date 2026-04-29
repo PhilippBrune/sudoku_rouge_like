@@ -54,7 +54,7 @@ Unity 6 LTS
 unity.com
 
 **Unity Packages**
-Unity Input System · Unity 2D (Sprite, Tilemap) · Unity UI (uGUI) ·
+Custom Input Remap Layer · Unity 2D (Sprite, Tilemap) · Unity UI (uGUI) ·
 Unity Analytics · Unity Test Framework · Unity Audio
 All packages © Unity Technologies, distributed under the Unity
 Package Distribution License.

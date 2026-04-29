@@ -13,6 +13,8 @@ namespace SudokuRoguelike.Save
         public const int MaxSlots = 3;
 
         private readonly int _slotIndex;
+        private static readonly object _writeQueueLock = new object();
+        private static Task _pendingWrite = Task.CompletedTask;
 
         public SaveFileService(int slotIndex = 0)
         {
@@ -29,6 +31,8 @@ namespace SudokuRoguelike.Save
 
         public SaveFileEnvelope Load()
         {
+            WaitForPendingWrites();
+
             // Try primary file, then .bak fallback (crash-safe recovery)
             foreach (var path in new[] { SavePath, SavePath + ".bak" })
             {
@@ -38,7 +42,7 @@ namespace SudokuRoguelike.Save
                 // lock on the destination while it performs the atomic swap, which can cause a
                 // sharing violation even though we open with FileShare.ReadWrite.
                 // FileShare.Delete additionally permits the rename/replace to proceed while we
-                // have a handle open.  The retry loop (3×5 ms) covers that tiny exclusive window.
+                // have a handle open. The retry loop (3x5 ms) covers that tiny exclusive window.
                 string json = null;
                 for (int attempt = 0; attempt < 3; attempt++)
                 {
@@ -47,7 +51,7 @@ namespace SudokuRoguelike.Save
                         using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
                         using (var reader = new System.IO.StreamReader(fs, System.Text.Encoding.UTF8))
                             json = reader.ReadToEnd();
-                        break; // success
+                        break;
                     }
                     catch (IOException) when (attempt < 2)
                     {
@@ -56,24 +60,25 @@ namespace SudokuRoguelike.Save
                     catch (Exception e)
                     {
                         // FileNotFound can occur in a rare race between Exists() and open.
-                        if (e is System.IO.FileNotFoundException)
-                            Debug.Log($"[SaveFileService] '{path}' not found on read — trying backup.");
+                        if (e is FileNotFoundException)
+                            Debug.Log($"[SaveFileService] '{path}' not found on read - trying backup.");
                         else
-                            Debug.LogWarning($"[SaveFileService] Failed to load '{path}': {e.Message} — trying backup.");
+                            Debug.LogWarning($"[SaveFileService] Failed to load '{path}': {e.Message} - trying backup.");
                         break;
                     }
                 }
 
                 if (json == null) continue;
                 var result = JsonUtility.FromJson<SaveFileEnvelope>(json);
-                if (result != null) return result;
+                if (result != null)
+                {
+                    SanitizeEnvelope(result);
+                    return result;
+                }
             }
+
             return new SaveFileEnvelope();
         }
-
-        // Serializes on the calling (main) thread; file I/O runs on a background thread.
-        // Static lock prevents overlapping writes from rapid successive saves.
-        private static readonly object _writeLock = new object();
 
         public void Save(SaveFileEnvelope envelope)
         {
@@ -89,29 +94,13 @@ namespace SudokuRoguelike.Save
                 return;
             }
 
-            var savePath = SavePath; // capture before leaving main thread
-            Task.Run(() =>
+            var savePath = SavePath;
+            lock (_writeQueueLock)
             {
-                lock (_writeLock)
-                {
-                    try
-                    {
-                        var tmpPath = savePath + ".tmp";
-                        var bakPath = savePath + ".bak";
-                        // Write to temp first — if the process crashes here the real save is untouched
-                        File.WriteAllText(tmpPath, json);
-                        // Atomic replace: promotes the temp file over the live save and keeps a .bak copy
-                        if (File.Exists(savePath))
-                            File.Replace(tmpPath, savePath, bakPath);
-                        else
-                            File.Move(tmpPath, savePath);
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogError($"[SaveFileService] Failed to write save: {e.Message}");
-                    }
-                }
-            });
+                _pendingWrite = _pendingWrite.ContinueWith(
+                    _ => WriteEnvelope(savePath, json),
+                    TaskScheduler.Default);
+            }
         }
 
         public void DeleteSaveFile()
@@ -133,8 +122,68 @@ namespace SudokuRoguelike.Save
         {
             if (!HasSaveFile()) return false;
             var envelope = Load();
-            // Tutorial runs are never resumable — they don't save progress
-            return envelope.ActiveRunState != null && !envelope.ActiveRunState.TutorialMode;
+            // Tutorial runs are never resumable - they do not save progress.
+            return envelope.ActiveRunState != null
+                && !envelope.ActiveRunState.TutorialMode
+                && !envelope.ActiveRunState.DisableProgressionRewards;
+        }
+
+        // [BUG-FIX] Post-deserialization normalization: Unity's JsonUtility bypasses C# field
+        // initializers, so collections that default to non-empty must be seeded explicitly here.
+        private static void SanitizeEnvelope(SaveFileEnvelope envelope)
+        {
+            if (envelope.MetaProgress == null)
+                envelope.MetaProgress = new MetaProgressionState();
+
+            var meta = envelope.MetaProgress;
+            if (meta.UnlockedClasses == null)
+                meta.UnlockedClasses = new System.Collections.Generic.List<ClassId>();
+
+            // NumberFreak is always unlocked - ensure it is present after deserialization.
+            if (!meta.UnlockedClasses.Contains(ClassId.NumberFreak))
+                meta.UnlockedClasses.Insert(0, ClassId.NumberFreak);
+
+            if (meta.ClassUnlocks == null)
+                meta.ClassUnlocks = new ClassUnlockProgress();
+
+            ModifierDiscoveryService.SanitizeMetaProgress(meta);
+
+            // [HARMONY-SAVE-001] Clamp harmony fields and ensure list is initialised.
+            meta.MaxUnlockedHarmonyLevel = Math.Clamp(meta.MaxUnlockedHarmonyLevel, 0, 10);
+            meta.LastSelectedHarmonyLevel = Math.Clamp(meta.LastSelectedHarmonyLevel, 0, meta.MaxUnlockedHarmonyLevel);
+            if (meta.HarmonyBadgeFlags == null)
+                meta.HarmonyBadgeFlags = new System.Collections.Generic.List<int>();
+            if (meta.HarmonyV5PlusWins == null)
+                meta.HarmonyV5PlusWins = new System.Collections.Generic.List<ClassId>();
+        }
+
+        private static void WaitForPendingWrites()
+        {
+            Task pending;
+            lock (_writeQueueLock)
+                pending = _pendingWrite;
+
+            pending.GetAwaiter().GetResult();
+        }
+
+        private static void WriteEnvelope(string savePath, string json)
+        {
+            try
+            {
+                var tmpPath = savePath + ".tmp";
+                var bakPath = savePath + ".bak";
+                // Write to temp first - if the process crashes here the real save is untouched.
+                File.WriteAllText(tmpPath, json);
+                // Atomic replace: promotes the temp file over the live save and keeps a .bak copy.
+                if (File.Exists(savePath))
+                    File.Replace(tmpPath, savePath, bakPath);
+                else
+                    File.Move(tmpPath, savePath);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[SaveFileService] Failed to write save: {e.Message}");
+            }
         }
     }
 }

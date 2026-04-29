@@ -101,6 +101,15 @@ namespace SudokuRoguelike.Core
         public bool EndlessZenUnlocked;
         public bool SpiritTrialsUnlocked;
         public bool HiddenDualModifierBossUnlocked;
+        public List<BossModifierId> DiscoveredBossModifiers = new List<BossModifierId>();
+        // [HARMONY-UNLOCK-001] Global Harmony difficulty level progression (0–10).
+        // MaxUnlockedHarmonyLevel is never decremented; LastSelectedHarmonyLevel clamped to it on load.
+        public int MaxUnlockedHarmonyLevel;
+        public int LastSelectedHarmonyLevel;
+        // [HARMONY-BADGE-001] Per-level bitmask: bit0 = perfect-run badge, bit1 = speed badge.
+        public List<int> HarmonyBadgeFlags = new List<int>();
+        // [HARMONY-ACHIEVE-001] Classes that have won GardenRun at H5+ (for "Master of Harmony" achievement).
+        public List<ClassId> HarmonyV5PlusWins = new List<ClassId>();
     }
 
     [Serializable]
@@ -126,6 +135,9 @@ namespace SudokuRoguelike.Core
         public int GoldCollected;
         public bool ItemCodexComplete;
         public bool PerfectNoPencilStage;
+        // [BUG-FIX] True when the player completes a full run (all 5 floors + boss) with zero mistakes.
+        // Replaces PerfectNoPencilStage as the QuietCartographer unlock gate.
+        public bool PerfectFullRunAllFloors;
     }
 
     [Serializable]
@@ -156,6 +168,25 @@ namespace SudokuRoguelike.Core
         public List<MoveSaveData> Moves = new List<MoveSaveData>();
         public List<PencilMarkSaveData> PencilMarks = new List<PencilMarkSaveData>();
         public List<int> FogHiddenCells = new List<int>();
+
+        // Boss debuff CellLock state: Key=row*100+col, Value=placements until unlock
+        public List<LockedCellSaveData> LockedCells = new List<LockedCellSaveData>();
+        // blurred_sight curse: cells whose pencil marks are currently hidden
+        public List<BlurredCellSaveData> BlurredPencilCells = new List<BlurredCellSaveData>();
+    }
+
+    [Serializable]
+    public sealed class LockedCellSaveData
+    {
+        public int Key;   // row*100+col
+        public int Count; // placements remaining until unlock
+    }
+
+    [Serializable]
+    public sealed class BlurredCellSaveData
+    {
+        public int Row;
+        public int Col;
     }
 
     [Serializable]
@@ -194,6 +225,15 @@ namespace SudokuRoguelike.Core
         public int TotalItemsUsed;
         public long TotalPlayTimeMs;
         public int HighestEndlessDepth;
+
+        // Spirit Trials personal best scores per tier
+        public int TrialsBestScore_Apprentice;
+        public int TrialsBestScore_Adept;
+        public int TrialsBestScore_Master;
+        public int TrialsBestScore_Grandmaster;
+
+        // Endless Zen session tracking
+        public int TotalZenSessions;
     }
 
     [Serializable]

@@ -26,6 +26,18 @@ namespace SudokuRoguelike.UI
         private RectTransform _panelRt;
         private float _panelW, _panelH;
 
+        /// <summary>Re-initialize in-place for a new floor without destroying and re-adding the component.</summary>
+        public void Reinitialize(RectTransform panel, int floor)
+        {
+            // Destroy the old particle GameObjects before creating new ones.
+            if (_particles != null)
+                for (var p = 0; p < _particles.Length; p++)
+                    if (_particles[p].Rt != null)
+                        Destroy(_particles[p].Rt.gameObject);
+            _particles = null;
+            Initialize(panel, floor);
+        }
+
         /// <summary>
         /// Call once after the panel layout is known.
         /// <paramref name="floor"/> 0–4 determines particle colour and direction.

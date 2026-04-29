@@ -13,7 +13,7 @@ namespace SudokuRoguelike.Run
             _random = new Random(seed);
         }
 
-        public LevelConfig BuildNextLevel(int depth, int preferredSize = 0, int preferredStars = 0)
+        public LevelConfig BuildNextLevel(int depth, bool allowIrregularPuzzles, int preferredSize = 0, int preferredStars = 0)
         {
             // [ZENMODE-SESSION-001] Board size always 9×9 per spec
             const int size = 9;
@@ -30,7 +30,7 @@ namespace SudokuRoguelike.Run
                 BoardSize = size,
                 Stars = stars,
                 MissingPercent = StarDensityService.MissingPercentForStars(stars),
-                RegionVariant = _random.Next(4),
+                RegionVariant = allowIrregularPuzzles ? _random.Next(4) : _random.Next(2),
                 IsBoss = false,
                 Seed = _random.Next(),
                 Difficulty = DifficultyTier.Diff5   // [ZENMODE-SESSION-001] always Diff5
@@ -53,7 +53,7 @@ namespace SudokuRoguelike.Run
             return config;
         }
 
-        public static RunState CreateZenRunState(ClassId classId, int seed)
+        public static RunState CreateZenRunState(ClassId classId, int seed, bool allowIrregularPuzzles)
         {
             var stats = Classes.ClassCatalog.GetDefinition(classId);
             return new RunState
@@ -67,9 +67,11 @@ namespace SudokuRoguelike.Run
                 CurrentPencil = stats.BasePencil,
                 MaxPencil = stats.BasePencil,
                 CurrentGold = 0,
-                ItemSlots = stats.BaseItemSlots,
+                ItemSlots = 0,
                 TotalFloors = 1,
-                DisableProgressionRewards = true
+                DisableProgressionRewards = true,
+                AllowIrregularPuzzles = allowIrregularPuzzles,
+                HarmonyConfig = HarmonyDifficultyService.BuildConfig(0)
             };
         }
     }

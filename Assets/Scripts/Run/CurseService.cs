@@ -120,13 +120,20 @@ namespace SudokuRoguelike.Run
             { "fraying_thread",     "cracked_tile"     },
             { "counting_shadow",    "blood_ink_brush"  },
             { "double_or_nothing",  "broken_mask"      },
-            { "restless_inventory", "withered_flower"  },
-            { "trembling_hand",     "withered_flower"  },
-            { "hollow_eye",         "withered_flower"  },
+            // F5: unique icons — pending generation (tbc/tbc_curse_icons.txt)
+            { "restless_inventory", "restless_inventory" },
+            { "trembling_hand",     "trembling_hand"     },
+            { "hollow_eye",         "hollow_eye"         },
         };
 
         public static string GetIconName(string curseId) =>
             CurseIcons.TryGetValue(curseId, out var icon) ? icon : "withered_flower";
+
+        // F23: bg_curse.png (background/bg_curse.png) is a full-screen darkening overlay applied
+        // to the ENTIRE game panel when any curse is active. It is NOT a board replacement —
+        // the sudoku board remains visible underneath. The overlay is rendered by CursePanelController
+        // behind the side-panel curse list at a low alpha (≈ 0.25) to visually signal a cursed state.
+        // Do not use it as a tile background or swap it for any board-level texture.
 
         // ── Mutation ───────────────────────────────────────────────────────────
 

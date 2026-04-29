@@ -3,8 +3,8 @@ guid: 4793d374f9fe1af4d8019952e2ce8a25
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -768280438054752666
-    second: ui_tutorial_progress_0
+      213: -944391850438893892
+    second: bg_tutorial_progress_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: ui_tutorial_progress_0
+      name: bg_tutorial_progress_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 1536
-        height: 1024
+        width: 1376
+        height: 768
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 66e6dd913058655f0800000000000000
-      internalID: -768280438054752666
+      spriteID: cbed0d99d98d4e2f0800000000000000
+      internalID: -944391850438893892
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      ui_tutorial_progress_0: -768280438054752666
+      bg_tutorial_progress_0: -944391850438893892
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

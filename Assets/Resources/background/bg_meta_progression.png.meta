@@ -3,8 +3,8 @@ guid: 744a09d5df5fc324dbb2dcb5fbcb3039
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -643952754329804149
-    second: ui_meta_progression_0
+      213: -1417481406547213877
+    second: bg_meta_progression_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: ui_meta_progression_0
+      name: bg_meta_progression_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 1536
-        height: 1024
+        width: 1376
+        height: 768
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: b82a90ab1683017f0800000000000000
-      internalID: -643952754329804149
+      spriteID: bc1480fbb28145ce0800000000000000
+      internalID: -1417481406547213877
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      ui_meta_progression_0: -643952754329804149
+      bg_meta_progression_0: -1417481406547213877
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

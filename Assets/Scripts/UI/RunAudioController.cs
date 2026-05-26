@@ -1,5 +1,4 @@
 using System.Collections;
-using SudokuRoguelike.Save;
 using UnityEngine;
 
 namespace SudokuRoguelike.UI
@@ -14,10 +13,6 @@ namespace SudokuRoguelike.UI
             Shop,
             Rest
         }
-
-        private SaveFileService _save;
-        private ProfileService _profile;
-        private int _lastActiveSlot = -1;
 
         private AudioSource _musicSource;
         private AudioSource _sfxSource;
@@ -74,6 +69,7 @@ namespace SudokuRoguelike.UI
 
         private Context _context = Context.Path;
         private bool _startCompleted;
+        private bool _contextRequested;
 
         private void Awake()
         {
@@ -88,9 +84,6 @@ namespace SudokuRoguelike.UI
             }
             DontDestroyOnLoad(gameObject);
 
-            _lastActiveSlot = SaveProfileService.ActiveSlot;
-            _save = new SaveFileService(_lastActiveSlot);
-            _profile = new ProfileService(_save);
         }
 
         private void Start()
@@ -129,62 +122,69 @@ namespace SudokuRoguelike.UI
                     mainCam.gameObject.AddComponent<AudioListener>();
             }
 
-            if (_save.HasSaveFile())
-                _profile.ApplyEnvelope(_save.Load());
-
-            _puzzleLoop = ProceduralSfxLibrary.BuildPuzzleLoop();
-            _shopLoop = ProceduralSfxLibrary.BuildShopLoop();
-            _restLoop = ProceduralSfxLibrary.BuildRestLoop();
+            _puzzleLoop = AudioAssetService.GetClip(
+                AudioClipId.MusicPuzzleLoop,
+                ProceduralSfxLibrary.BuildPuzzleLoop);
+            _shopLoop = AudioAssetService.GetClip(
+                AudioClipId.MusicShopLoop,
+                ProceduralSfxLibrary.BuildShopLoop);
+            _restLoop = AudioAssetService.GetClip(
+                AudioClipId.MusicRestLoop,
+                ProceduralSfxLibrary.BuildRestLoop);
 
             for (var f = 0; f < 5; f++)
             {
-                _floorLoops[f] = FloorMusicGenerator.BuildFloorLoop(f);
-                _bossLayers[f] = FloorMusicGenerator.BuildBossLayer(f);
+                var floorIndex = f;
+                _floorLoops[f] = AudioAssetService.GetFloorLoop(
+                    floorIndex,
+                    () => FloorMusicGenerator.BuildFloorLoop(floorIndex));
+                _bossLayers[f] = AudioAssetService.GetBossLayer(
+                    floorIndex,
+                    () => FloorMusicGenerator.BuildBossLayer(floorIndex));
             }
 
-            _wrongSfx = ProceduralSfxLibrary.BuildWrongPlaceSfx();
-            _solvedSfx = ProceduralSfxLibrary.BuildLevelCompleteSfx();
-            _shopPurchaseSfx = ProceduralSfxLibrary.BuildShopPurchaseSfx();
-            _shopRerollSfx = ProceduralSfxLibrary.BuildShopRerollSfx();
-            _itemUseSfx = ProceduralSfxLibrary.BuildItemUseSfx();
-            _rewardClaimSfx = ProceduralSfxLibrary.BuildRewardClaimSfx();
-            _pathAdvanceSfx = ProceduralSfxLibrary.BuildPathAdvanceSfx();
-            _correctPlaceSfx = ProceduralSfxLibrary.BuildCorrectPlaceSfx();
-            _cellSelectSfx = ProceduralSfxLibrary.BuildCellSelectSfx();
-            _pencilToggleSfx = ProceduralSfxLibrary.BuildPencilToggleSfx();
-            _restHealSfx = ProceduralSfxLibrary.BuildRestHealSfx();
-            _gameOverSfx = ProceduralSfxLibrary.BuildGameOverStingerSfx();
-            _relicPickupSfx = ProceduralSfxLibrary.BuildRelicPickupSfx();
+            _wrongSfx = AudioAssetService.GetClip(AudioClipId.SfxWrongPlacement, ProceduralSfxLibrary.BuildWrongPlaceSfx);
+            _solvedSfx = AudioAssetService.GetClip(AudioClipId.SfxPuzzleSolved, ProceduralSfxLibrary.BuildLevelCompleteSfx);
+            _shopPurchaseSfx = AudioAssetService.GetClip(AudioClipId.SfxShopPurchase, ProceduralSfxLibrary.BuildShopPurchaseSfx);
+            _shopRerollSfx = AudioAssetService.GetClip(AudioClipId.SfxShopReroll, ProceduralSfxLibrary.BuildShopRerollSfx);
+            _itemUseSfx = AudioAssetService.GetClip(AudioClipId.SfxItemUse, ProceduralSfxLibrary.BuildItemUseSfx);
+            _rewardClaimSfx = AudioAssetService.GetClip(AudioClipId.SfxRewardClaim, ProceduralSfxLibrary.BuildRewardClaimSfx);
+            _pathAdvanceSfx = AudioAssetService.GetClip(AudioClipId.SfxPathAdvance, ProceduralSfxLibrary.BuildPathAdvanceSfx);
+            _correctPlaceSfx = AudioAssetService.GetClip(AudioClipId.SfxCorrectPlacement, ProceduralSfxLibrary.BuildCorrectPlaceSfx);
+            _cellSelectSfx = AudioAssetService.GetClip(AudioClipId.SfxCellSelect, ProceduralSfxLibrary.BuildCellSelectSfx);
+            _pencilToggleSfx = AudioAssetService.GetClip(AudioClipId.SfxPencilToggle, ProceduralSfxLibrary.BuildPencilToggleSfx);
+            _restHealSfx = AudioAssetService.GetClip(AudioClipId.SfxRestHeal, ProceduralSfxLibrary.BuildRestHealSfx);
+            _gameOverSfx = AudioAssetService.GetClip(AudioClipId.SfxGameOver, ProceduralSfxLibrary.BuildGameOverStingerSfx);
+            _relicPickupSfx = AudioAssetService.GetClip(AudioClipId.SfxRelicPickup, ProceduralSfxLibrary.BuildRelicPickupSfx);
 
-            _combo5Sfx = ProceduralSfxLibrary.BuildCombo5Sfx();
-            _combo10Sfx = ProceduralSfxLibrary.BuildCombo10Sfx();
-            _comboBreakSfx = ProceduralSfxLibrary.BuildComboBreakSfx();
-            _hpLossSfx = ProceduralSfxLibrary.BuildHpLossSfx();
-            _hpCriticalSfx = ProceduralSfxLibrary.BuildHpCriticalSfx();
-            _pencilDepletedSfx = ProceduralSfxLibrary.BuildPencilDepletedSfx();
-            _goldGainSfx = ProceduralSfxLibrary.BuildGoldGainSfx();
-            _fogRevealSfx = ProceduralSfxLibrary.BuildFogRevealSfx();
-            _modifierActivateSfx = ProceduralSfxLibrary.BuildModifierActivateSfx();
-            _bossGateOpenSfx = ProceduralSfxLibrary.BuildBossGateOpenSfx();
-            _floorTransitionSfx = ProceduralSfxLibrary.BuildFloorTransitionSfx();
-            _levelUpSfx = ProceduralSfxLibrary.BuildLevelUpSfx();
-            _achievementSfx = ProceduralSfxLibrary.BuildAchievementSfx();
-            _xpBarFillSfx = ProceduralSfxLibrary.BuildXpBarFillSfx();
-            _victorySfx = ProceduralSfxLibrary.BuildVictoryStingerSfx();
-            _runVictoryFanfareSfx = ProceduralSfxLibrary.BuildRunVictoryFanfareSfx();
+            _combo5Sfx = AudioAssetService.GetClip(AudioClipId.SfxCombo5, ProceduralSfxLibrary.BuildCombo5Sfx);
+            _combo10Sfx = AudioAssetService.GetClip(AudioClipId.SfxCombo10, ProceduralSfxLibrary.BuildCombo10Sfx);
+            _comboBreakSfx = AudioAssetService.GetClip(AudioClipId.SfxComboBreak, ProceduralSfxLibrary.BuildComboBreakSfx);
+            _hpLossSfx = AudioAssetService.GetClip(AudioClipId.SfxHpLoss, ProceduralSfxLibrary.BuildHpLossSfx);
+            _hpCriticalSfx = AudioAssetService.GetClip(AudioClipId.SfxHpCritical, ProceduralSfxLibrary.BuildHpCriticalSfx);
+            _pencilDepletedSfx = AudioAssetService.GetClip(AudioClipId.SfxPencilDepleted, ProceduralSfxLibrary.BuildPencilDepletedSfx);
+            _goldGainSfx = AudioAssetService.GetClip(AudioClipId.SfxGoldGain, ProceduralSfxLibrary.BuildGoldGainSfx);
+            _fogRevealSfx = AudioAssetService.GetClip(AudioClipId.SfxFogReveal, ProceduralSfxLibrary.BuildFogRevealSfx);
+            _modifierActivateSfx = AudioAssetService.GetClip(AudioClipId.SfxModifierActivate, ProceduralSfxLibrary.BuildModifierActivateSfx);
+            _bossGateOpenSfx = AudioAssetService.GetClip(AudioClipId.SfxBossGateOpen, ProceduralSfxLibrary.BuildBossGateOpenSfx);
+            _floorTransitionSfx = AudioAssetService.GetClip(AudioClipId.SfxFloorTransition, ProceduralSfxLibrary.BuildFloorTransitionSfx);
+            _levelUpSfx = AudioAssetService.GetClip(AudioClipId.SfxLevelUp, ProceduralSfxLibrary.BuildLevelUpSfx);
+            _achievementSfx = AudioAssetService.GetClip(AudioClipId.SfxAchievement, ProceduralSfxLibrary.BuildAchievementSfx);
+            _xpBarFillSfx = AudioAssetService.GetClip(AudioClipId.SfxXpBarFill, ProceduralSfxLibrary.BuildXpBarFillSfx);
+            _victorySfx = AudioAssetService.GetClip(AudioClipId.SfxVictory, ProceduralSfxLibrary.BuildVictoryStingerSfx);
+            _runVictoryFanfareSfx = AudioAssetService.GetClip(AudioClipId.SfxRunVictoryFanfare, ProceduralSfxLibrary.BuildRunVictoryFanfareSfx);
 
-            _buttonHoverSfx = ProceduralSfxLibrary.BuildButtonHoverSfx();
-            _buttonClickSfx = ProceduralSfxLibrary.BuildButtonClickSfx();
-            _menuOpenSfx = ProceduralSfxLibrary.BuildMenuOpenSfx();
-            _menuCloseSfx = ProceduralSfxLibrary.BuildMenuCloseSfx();
-            _itemRewardSfx = ProceduralSfxLibrary.BuildItemRewardSfx();
-            _relicRevealSfx = ProceduralSfxLibrary.BuildRelicRevealSfx();
+            _buttonHoverSfx = AudioAssetService.GetClip(AudioClipId.UiButtonHover, ProceduralSfxLibrary.BuildButtonHoverSfx);
+            _buttonClickSfx = AudioAssetService.GetClip(AudioClipId.UiButtonClick, ProceduralSfxLibrary.BuildButtonClickSfx);
+            _menuOpenSfx = AudioAssetService.GetClip(AudioClipId.UiMenuOpen, ProceduralSfxLibrary.BuildMenuOpenSfx);
+            _menuCloseSfx = AudioAssetService.GetClip(AudioClipId.UiMenuClose, ProceduralSfxLibrary.BuildMenuCloseSfx);
+            _itemRewardSfx = AudioAssetService.GetClip(AudioClipId.UiItemReward, ProceduralSfxLibrary.BuildItemRewardSfx);
+            _relicRevealSfx = AudioAssetService.GetClip(AudioClipId.UiRelicReveal, ProceduralSfxLibrary.BuildRelicRevealSfx);
 
             _startCompleted = true;
-            SetContext(_context); // apply any context set before Start completed
+            if (_contextRequested)
+                SetContext(_context);
         }
-
-        private float _nextProfileRefresh;
 
         private void OnApplicationPause(bool paused)
         {
@@ -202,20 +202,6 @@ namespace SudokuRoguelike.UI
 
         private void Update()
         {
-            if (Time.unscaledTime >= _nextProfileRefresh)
-            {
-                _nextProfileRefresh = Time.unscaledTime + 1f;
-                var activeSlot = SaveProfileService.ActiveSlot;
-                if (activeSlot != _lastActiveSlot)
-                {
-                    _lastActiveSlot = activeSlot;
-                    _save = new SaveFileService(activeSlot);
-                    _profile = new ProfileService(_save);
-                }
-                if (_save.HasSaveFile())
-                    _profile.ApplyEnvelope(_save.Load());
-            }
-
             // Read volumes from OptionsController.LiveAudio (updated immediately on slider drag)
             // instead of disk-polling, so Music/SFX/UI sliders give real-time audio feedback.
             var audio = OptionsController.LiveAudio;
@@ -244,6 +230,7 @@ namespace SudokuRoguelike.UI
         {
             // Called before Start() has initialised AudioSources (e.g. on the same frame
             // the controller is instantiated). Cache the context; Start() will apply it.
+            _contextRequested = true;
             if (!_startCompleted) { _context = context; return; }
 
             if (_context == context && _musicSource.isPlaying) return;
@@ -365,6 +352,7 @@ namespace SudokuRoguelike.UI
             // Reset context to Path (clip = null) BEFORE stopping, so the Update()
             // auto-restart guard cannot replay music on the next frame.
             _context = Context.Path;
+            _contextRequested = false;
             if (_musicSource != null) { _musicSource.clip = null; _musicSource.Stop(); }
             if (_bossSource  != null) { _bossLayerActive = false; _bossSource.Stop(); }
         }

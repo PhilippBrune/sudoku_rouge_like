@@ -12,7 +12,23 @@ namespace SudokuRoguelike.Run
     /// </summary>
     public static class SeasonalChallengeService
     {
-        private static readonly string[] ThemeNames =
+        private static readonly string[] ThemeKeys =
+        {
+            "Seasonal.Theme.EntranceGarden",
+            "Seasonal.Theme.PondPath",
+            "Seasonal.Theme.OldTreeGrove",
+            "Seasonal.Theme.FountainPlaza",
+            "Seasonal.Theme.FarBench",
+            "Seasonal.Theme.MorningMist",
+            "Seasonal.Theme.AutumnColours",
+            "Seasonal.Theme.AfterRain",
+            "Seasonal.Theme.StoneBridge",
+            "Seasonal.Theme.IceCreamCart",
+            "Seasonal.Theme.LanternFestival",
+            "Seasonal.Theme.IronGate"
+        };
+
+        private static readonly string[] ThemeFallbacks =
         {
             "The Entrance Garden",  // seed % 12 == 0
             "The Pond Path",
@@ -30,16 +46,19 @@ namespace SudokuRoguelike.Run
 
         // ── Seed & Theme ─────────────────────────────────────────────────────
 
+        // [REQ: META-ASCEND-004] [REQ: SEASON-SEED-001] BuildSeed: monthly seed = (year × 100) + month — same board for all players in the month
         public static int BuildSeed(int year, int month) => year * 100 + month;
 
         public static string GetThemeName(int year, int month)
         {
             var seed = BuildSeed(year, month);
-            return ThemeNames[seed % 12];
+            var index = seed % ThemeKeys.Length;
+            return LocalizationService.T(ThemeKeys[index], ThemeFallbacks[index]);
         }
 
         // ── Config & RunState ────────────────────────────────────────────────
 
+        // [REQ: SEASON-PUZZLE-001] Builds a fixed 9×9 4★ LevelConfig seeded by year+month (same board for all players this month)
         public static LevelConfig BuildChallengeConfig(int year, int month)
         {
             var seed = BuildSeed(year, month);
@@ -57,7 +76,8 @@ namespace SudokuRoguelike.Run
                 IsBoss = false,
                 Intensity = BossModifierIntensity.High,
                 Seed = seed,
-                ActiveModifiers = modifiers
+                ActiveModifiers = modifiers,
+                RequireUniqueModifierSolution = modifiers.Count > 0
             };
         }
 
@@ -111,23 +131,38 @@ namespace SudokuRoguelike.Run
             var firstOfNext = new DateTime(today.Year, today.Month, 1).AddMonths(1);
             var daysLeft = (firstOfNext.Date - today.Date).Days;
 
-            if (daysLeft == 0) return "Resets today";
-            if (daysLeft == 1) return "Resets tomorrow";
-            return $"Resets in {daysLeft} days";
+            if (daysLeft == 0)
+                return LocalizationService.T("Seasonal.Countdown.Today", "Resets today");
+            if (daysLeft == 1)
+                return LocalizationService.T("Seasonal.Countdown.Tomorrow", "Resets tomorrow");
+            return LocalizationService.Format("Seasonal.Countdown.Days", "Resets in {0} days", daysLeft);
         }
 
         public static string GetPanelSubtitle(LevelConfig cfg)
         {
+            var boardLabel = LocalizationService.T("Seasonal.PanelSubtitle.Board", "9\u00d79  \u2605\u2605\u2605\u2605");
             if (cfg == null || cfg.ActiveModifiers == null || cfg.ActiveModifiers.Count == 0)
-                return "9\u00d79  \u2605\u2605\u2605\u2605";
+                return boardLabel;
 
             var mods = new System.Text.StringBuilder();
             foreach (var m in cfg.ActiveModifiers)
             {
                 if (mods.Length > 0) mods.Append(", ");
-                mods.Append(m.ToString());
+                mods.Append(BossService.GetModifierName(m));
             }
-            return $"9\u00d79  \u2605\u2605\u2605\u2605  {mods}";
+            return LocalizationService.Format("Seasonal.PanelSubtitle.WithModifiers", "{0}  {1}", boardLabel, mods);
+        }
+
+        public static IEnumerable<string> GetLocalizationKeys()
+        {
+            foreach (var key in ThemeKeys)
+                yield return key;
+
+            yield return "Seasonal.Countdown.Today";
+            yield return "Seasonal.Countdown.Tomorrow";
+            yield return "Seasonal.Countdown.Days";
+            yield return "Seasonal.PanelSubtitle.Board";
+            yield return "Seasonal.PanelSubtitle.WithModifiers";
         }
 
         // ── Internal ─────────────────────────────────────────────────────────

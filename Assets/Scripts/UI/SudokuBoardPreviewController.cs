@@ -1,4 +1,5 @@
 using System.Text;
+using SudokuRoguelike.Core;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -36,9 +37,13 @@ namespace SudokuRoguelike.UI
             if (board == null)
             {
                 if (_boardText != null)
-                    _boardText.text = "Sudoku board not initialized yet.";
+                    _boardText.text = LocalizationService.T(
+                        "InRun.BoardPreview.NotInitialized",
+                        "Sudoku board not initialized yet.");
                 if (_statusText != null)
-                    _statusText.text = "Hint: Start a run from Main Menu.";
+                    _statusText.text = LocalizationService.T(
+                        "InRun.BoardPreview.StartRunHint",
+                        "Hint: Start a run from Main Menu.");
                 return;
             }
 
@@ -61,8 +66,15 @@ namespace SudokuRoguelike.UI
             if (_statusText != null)
             {
                 var solved = run.IsLevelComplete;
-                _statusText.text =
-                    $"Board: {size}x{size} | Stars: {run.CurrentLevelConfig?.Stars ?? 0} | Solved: {(solved ? "Yes" : "No")}";
+                var solvedLabel = solved
+                    ? LocalizationService.T("Common.Yes", "Yes")
+                    : LocalizationService.T("Common.No", "No");
+                _statusText.text = LocalizationService.Format(
+                    "InRun.BoardPreview.Status",
+                    "Board: {0}x{0} | Stars: {1} | Solved: {2}",
+                    size,
+                    run.CurrentLevelConfig?.Stars ?? 0,
+                    solvedLabel);
             }
         }
     }

@@ -40,6 +40,7 @@ namespace SudokuRoguelike.Sudoku
         private static bool IsCellFree(int r, int c, bool[,] used)
             => !used[r, c] && !UsedCells.Contains(CellKey(r, c));
 
+        // [REQ: GEN-MOD-001] [REQ: BOSS-MOD-003] Generate: single entry point for all modifier overlays; dispatches per-modifier to dedicated geometry generators
         public static ModifierOverlayData Generate(SudokuBoard board, List<BossModifierId> modifiers, int seed,
             BossModifierIntensity intensity = BossModifierIntensity.Medium)
         {

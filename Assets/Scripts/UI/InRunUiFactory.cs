@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using SudokuRoguelike.Boss;
 using SudokuRoguelike.Core;
 using UnityEngine;
@@ -32,11 +33,14 @@ namespace SudokuRoguelike.UI
     /// </summary>
     internal static class InRunUiFactory
     {
+        private static readonly Dictionary<string, Sprite> ResourceSpriteCache = new Dictionary<string, Sprite>();
+
         // ── In-run panel/button color scheme ──
         internal static readonly Color PanelBg           = new Color(0.08f, 0.12f, 0.16f, 0.94f);
         internal static readonly Color BtnColor          = new Color(0.15f, 0.22f, 0.29f, 0.94f);
         internal static readonly Color AccentGold        = GamePalette.AccentGold;
         internal static readonly Color TextColor         = GamePalette.TextPrimary;
+        internal static readonly Color SudokuPuzzleBoxBg = new Color(0.04f, 0.05f, 0.08f, 0.50f);
 
         // Cursed / boss gate panels
         internal static readonly Color CursedPanelBg    = new Color(0.18f, 0.06f, 0.06f, 0.96f);
@@ -44,12 +48,12 @@ namespace SudokuRoguelike.UI
         internal static readonly Color WarmIvory        = new Color(0.95f, 0.85f, 0.75f, 1f);
 
         // HUD modifier panels
-        internal static readonly Color ModBannerBg      = new Color(0.15f, 0.10f, 0.25f, 0.85f);
-        internal static readonly Color ModInfoBoxBg     = new Color(0.10f, 0.14f, 0.18f, 0.90f);
+        internal static readonly Color ModBannerBg      = SudokuPuzzleBoxBg;
+        internal static readonly Color ModInfoBoxBg     = SudokuPuzzleBoxBg;
 
         // Bag panel
-        internal static readonly Color BagPanelBg          = new Color(0.06f, 0.10f, 0.12f, 0.70f);
-        internal static readonly Color BagSlotBg            = new Color(0.10f, 0.16f, 0.20f, 0.80f);
+        internal static readonly Color BagPanelBg          = SudokuPuzzleBoxBg;
+        internal static readonly Color BagSlotBg            = SudokuPuzzleBoxBg;
         internal static readonly Color BagSlotHighlight     = new Color(0.17f, 0.26f, 0.33f, 0.90f);
         internal static readonly Color BagSlotPressed       = new Color(0.07f, 0.11f, 0.14f, 0.90f);
         internal static readonly Color BagSlotDisabled      = new Color(0.06f, 0.09f, 0.11f, 0.45f);
@@ -95,16 +99,7 @@ namespace SudokuRoguelike.UI
         // ── Font ──
         // V2: place a .ttf at Assets/Resources/Fonts/MainFont.ttf to use a custom font.
         // Falls back to the Unity built-in LegacyRuntime/Arial if absent.
-        private const string CustomFontPath = "Fonts/MainFont";
-        private static Font _font;
-        internal static Font GetFont()
-        {
-            if (_font == null)
-                _font = Resources.Load<Font>(CustomFontPath)
-                     ?? Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf")
-                     ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
-            return _font;
-        }
+        internal static Font GetFont() => FontAssetService.GetFont();
 
         // ── Text ──
         internal static Text CreateText(Transform parent, string name, string content,
@@ -167,6 +162,15 @@ namespace SudokuRoguelike.UI
             fill.sprite = Sprite.Create(tex, new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f));
             fill.type = Image.Type.Filled;
             fill.fillMethod = Image.FillMethod.Horizontal;
+        }
+
+        // ── Focus colors ──
+        internal static void ApplyFocusColors(UnityEngine.UI.Selectable sel)
+        {
+            if (sel == null) return;
+            var c = sel.colors;
+            c.selectedColor = BtnSelected;
+            sel.colors = c;
         }
 
         // ── Border helper ──
@@ -233,6 +237,8 @@ namespace SudokuRoguelike.UI
         {
             var iconRef = GetActionIcon(action);
             SetButtonIcon(btn, iconRef.Name, false, iconRef.Subfolder, compact);
+            if (compact)
+                ApplyWideCompactActionIconFit(btn);
         }
 
         private static ActionIconRef GetActionIcon(UiAction action)
@@ -419,7 +425,7 @@ namespace SudokuRoguelike.UI
             var spritePath = (!unknown && !string.IsNullOrEmpty(iconName))
                 ? subfolder + "/icon_" + iconName
                 : null;
-            var sprite = spritePath != null ? Resources.Load<Sprite>(spritePath) : null;
+            var sprite = spritePath != null ? LoadResourceSprite(spritePath) : null;
             if (sprite == null && !unknown && !string.IsNullOrEmpty(iconName))
                 Debug.LogWarning($"[InRunUiFactory] Missing button icon: {spritePath}");
 
@@ -427,10 +433,10 @@ namespace SudokuRoguelike.UI
 
             if (compact)
             {
-                // Side-by-side: icon on left (anchor-based height), label fills the rest.
+                // Side-by-side: icon on left (anchor-based square), label fills the rest.
                 if (label != null)
                 {
-                    label.rectTransform.anchorMin = new Vector2(0.25f, 0.05f);
+                    label.rectTransform.anchorMin = new Vector2(0.30f, 0.05f);
                     label.rectTransform.anchorMax = new Vector2(0.98f, 0.95f);
                     label.rectTransform.offsetMin = Vector2.zero;
                     label.rectTransform.offsetMax = Vector2.zero;
@@ -443,12 +449,13 @@ namespace SudokuRoguelike.UI
                 var iconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
                 iconGo.transform.SetParent(btn.transform, false);
                 var iconRt = iconGo.GetComponent<RectTransform>();
-                // Anchor-based height (80% of button) + fixed width — scales with button.
-                iconRt.anchorMin = new Vector2(0f, 0.10f);
-                iconRt.anchorMax = new Vector2(0f, 0.90f);
+                // Purely anchor-based square container — no fixed sizeDelta so wide sprites don't clip.
+                iconRt.anchorMin = new Vector2(0.02f, 0.08f);
+                iconRt.anchorMax = new Vector2(0.28f, 0.92f);
                 iconRt.pivot     = new Vector2(0f, 0.5f);
-                iconRt.anchoredPosition = new Vector2(6f, 0f);
-                iconRt.sizeDelta = new Vector2(36f, 0f);
+                iconRt.offsetMin = Vector2.zero;
+                iconRt.offsetMax = Vector2.zero;
+                iconRt.sizeDelta = Vector2.zero;
                 var img = iconGo.GetComponent<Image>();
                 if (sprite != null)
                 {
@@ -525,6 +532,119 @@ namespace SudokuRoguelike.UI
             le.minHeight     = 32f;
             le.preferredWidth  = 48f;
             le.preferredHeight = 48f;
+        }
+
+        internal static Sprite LoadResourceSprite(string spritePath)
+        {
+            if (string.IsNullOrEmpty(spritePath))
+                return null;
+
+            if (ResourceSpriteCache.TryGetValue(spritePath, out var cached))
+                return cached;
+
+            var sprites = Resources.LoadAll<Sprite>(spritePath);
+            if (sprites != null && sprites.Length > 0)
+            {
+                // Some UI icons are composites, and legendary art may have a narrow
+                // imported sprite rect. In those cases display the complete texture.
+                if (ShouldUseFullTextureComposition(spritePath, sprites.Length))
+                {
+                    var composite = LoadFullTextureSprite(spritePath);
+                    if (composite != null)
+                    {
+                        ResourceSpriteCache[spritePath] = composite;
+                        return composite;
+                    }
+                }
+
+                Sprite best = null;
+                var bestArea = -1f;
+                for (var i = 0; i < sprites.Length; i++)
+                {
+                    var candidate = sprites[i];
+                    if (candidate == null)
+                        continue;
+
+                    var rect = candidate.rect;
+                    var area = rect.width * rect.height;
+                    if (area <= bestArea)
+                        continue;
+
+                    best = candidate;
+                    bestArea = area;
+                }
+
+                ResourceSpriteCache[spritePath] = best;
+                return best;
+            }
+
+            var sprite = Resources.Load<Sprite>(spritePath);
+            if (sprite != null)
+            {
+                ResourceSpriteCache[spritePath] = sprite;
+                return sprite;
+            }
+
+            var fullTextureSprite = LoadFullTextureSprite(spritePath);
+            if (fullTextureSprite != null)
+            {
+                ResourceSpriteCache[spritePath] = fullTextureSprite;
+                return fullTextureSprite;
+            }
+
+            ResourceSpriteCache[spritePath] = null;
+            return null;
+        }
+
+        private static bool ShouldUseFullTextureComposition(string spritePath, int spriteCount)
+        {
+            return spriteCount > 1
+                || spritePath.StartsWith("legendary/", System.StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static Sprite LoadFullTextureSprite(string spritePath)
+        {
+            var texture = Resources.Load<Texture2D>(spritePath);
+            return texture != null
+                ? Sprite.Create(
+                    texture,
+                    new Rect(0f, 0f, texture.width, texture.height),
+                    new Vector2(0.5f, 0.5f),
+                    100f)
+                : null;
+        }
+
+        // Compact action icon fit for short/wide Buy/Reroll buttons used by Shop and Rest screens.
+        private static void ApplyWideCompactActionIconFit(Button btn)
+        {
+            if (btn == null) return;
+
+            var label = btn.transform.Find("Label")?.GetComponent<Text>();
+            if (label != null)
+            {
+                label.rectTransform.anchorMin = new Vector2(0.28f, 0.05f);
+                label.rectTransform.anchorMax = new Vector2(0.98f, 0.95f);
+                label.rectTransform.offsetMin = Vector2.zero;
+                label.rectTransform.offsetMax = Vector2.zero;
+            }
+
+            var iconRt = btn.transform.Find("Icon") as RectTransform;
+            if (iconRt == null) return;
+
+            iconRt.anchorMin = new Vector2(0.035f, 0.10f);
+            iconRt.anchorMax = new Vector2(0.245f, 0.90f);
+            iconRt.pivot = new Vector2(0.5f, 0.5f);
+            iconRt.offsetMin = Vector2.zero;
+            iconRt.offsetMax = Vector2.zero;
+            iconRt.sizeDelta = Vector2.zero;
+
+            var img = iconRt.GetComponent<Image>();
+            if (img != null)
+            {
+                img.type = Image.Type.Simple;
+                img.preserveAspect = true;
+                img.raycastTarget = false;
+            }
         }
 
         // ── Bag slot button ──
@@ -628,7 +748,7 @@ namespace SudokuRoguelike.UI
             BossModifierId.GermanWhispers    => "Green line: neighbours on the line must differ by 5 or more.",
             BossModifierId.DutchWhispers     => "Teal line: neighbours on the line must differ by 4 or more.",
             BossModifierId.ParityLines       => "Cyan line: adjacent cells must strictly alternate between odd and even.",
-            BossModifierId.RenbanLines       => "Pink line: all digits on the line form a consecutive set (any order).",
+            BossModifierId.RenbanLines       => "Orange line: all digits on the line form a consecutive set (any order).",
             BossModifierId.KillerCages       => "Dashed cage: digits sum to the cage label; no repeats inside the cage.",
             BossModifierId.DifferenceKropki  => "White dot between cells: those two digits differ by exactly 1.",
             BossModifierId.RatioKropki       => "Black dot between cells: one digit is exactly double the other.",
@@ -675,37 +795,12 @@ namespace SudokuRoguelike.UI
         };
 
         // ── Rarity pip overlay (F11/F25) ──────────────────────────────────────────
-        /// <summary>
-        /// Adds a small colored pip in the top-right corner of <paramref name="itemIconTransform"/>
-        /// to signal item rarity at a glance in the bag panel and reward screen.
-        /// <list type="bullet">
-        ///   <item><term>Normal</term>  <description>No pip (returns null).</description></item>
-        ///   <item><term>Rare</term>    <description>Teal dot (AccentGold family, desaturated teal).</description></item>
-        ///   <item><term>Legendary</term><description>Gold dot (GamePalette.AccentGold).</description></item>
-        /// </list>
-        /// The pip is a <c>raycastTarget=false</c> Image so it never intercepts pointer events.
-        /// </summary>
+        // Corner rarity/tier overlays are intentionally disabled so item and relic art stays unobstructed.
         internal static Image AddRarityPip(Transform itemIconTransform, ItemRarity rarity)
         {
-            if (rarity == ItemRarity.Normal) return null;
-
-            var pip = new GameObject("RarityPip", typeof(RectTransform), typeof(Image));
-            pip.transform.SetParent(itemIconTransform, false);
-            var rt = pip.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0.62f, 0.62f);
-            rt.anchorMax = new Vector2(0.97f, 0.97f);
-            rt.offsetMin = Vector2.zero;
-            rt.offsetMax = Vector2.zero;
-
-            var img = pip.GetComponent<Image>();
-            img.color = rarity switch
-            {
-                ItemRarity.Rare => new Color(0.30f, 0.82f, 0.72f, 0.90f), // teal
-                ItemRarity.Epic => new Color(GamePalette.AccentGold.r, GamePalette.AccentGold.g, 0.15f, 0.95f), // gold
-                _                                          => Color.clear
-            };
-            img.raycastTarget = false;
-            return img;
+            if (itemIconTransform != null)
+                ClearNamedChildren(itemIconTransform, "RarityPip");
+            return null;
         }
 
         // ── Confirm button icon reservation (F13) ──────────────────────────────────
@@ -714,78 +809,7 @@ namespace SudokuRoguelike.UI
             if (relicIconTransform == null) return null;
 
             ClearNamedChildren(relicIconTransform, "RelicTier");
-
-            var border = new GameObject("RelicTierFrame", typeof(RectTransform), typeof(Image));
-            border.transform.SetParent(relicIconTransform, false);
-            var borderRt = border.GetComponent<RectTransform>();
-            borderRt.anchorMin = Vector2.zero;
-            borderRt.anchorMax = Vector2.one;
-            borderRt.offsetMin = new Vector2(1f, 1f);
-            borderRt.offsetMax = new Vector2(-1f, -1f);
-            var borderImg = border.GetComponent<Image>();
-            borderImg.color = GetRelicTierBorderColor(tier);
-            borderImg.raycastTarget = false;
-
-            var pip = new GameObject("RelicTierPip", typeof(RectTransform), typeof(Image));
-            pip.transform.SetParent(relicIconTransform, false);
-            var pipRt = pip.GetComponent<RectTransform>();
-            pipRt.anchorMin = new Vector2(0.62f, 0.62f);
-            pipRt.anchorMax = new Vector2(0.97f, 0.97f);
-            pipRt.offsetMin = Vector2.zero;
-            pipRt.offsetMax = Vector2.zero;
-            var pipImg = pip.GetComponent<Image>();
-            pipImg.color = GetRelicTierPipColor(tier);
-            pipImg.raycastTarget = false;
-
-            if (tier == RelicTier.Legendary)
-            {
-                var inner = new GameObject("RelicTierPipInner", typeof(RectTransform), typeof(Image));
-                inner.transform.SetParent(pip.transform, false);
-                var innerRt = inner.GetComponent<RectTransform>();
-                innerRt.anchorMin = new Vector2(0.26f, 0.26f);
-                innerRt.anchorMax = new Vector2(0.74f, 0.74f);
-                innerRt.offsetMin = Vector2.zero;
-                innerRt.offsetMax = Vector2.zero;
-                var innerImg = inner.GetComponent<Image>();
-                innerImg.color = new Color(GamePalette.AccentGold.r, GamePalette.AccentGold.g, 0.12f, 0.98f);
-                innerImg.raycastTarget = false;
-            }
-
-            return pipImg;
-        }
-
-        private static Color GetRelicTierBorderColor(RelicTier tier)
-        {
-            switch (tier)
-            {
-                case RelicTier.Tier2:
-                    return new Color(0.42f, 0.58f, 0.66f, 0.34f);
-                case RelicTier.Tier3:
-                    return new Color(0.23f, 0.78f, 0.72f, 0.42f);
-                case RelicTier.Tier4:
-                    return new Color(GamePalette.AccentGold.r, GamePalette.AccentGold.g, 0.14f, 0.52f);
-                case RelicTier.Legendary:
-                    return new Color(0.88f, 0.20f, 0.16f, 0.62f);
-                default:
-                    return new Color(0.48f, 0.44f, 0.36f, 0.24f);
-            }
-        }
-
-        private static Color GetRelicTierPipColor(RelicTier tier)
-        {
-            switch (tier)
-            {
-                case RelicTier.Tier2:
-                    return new Color(0.46f, 0.65f, 0.76f, 0.88f);
-                case RelicTier.Tier3:
-                    return new Color(0.30f, 0.82f, 0.72f, 0.92f);
-                case RelicTier.Tier4:
-                    return new Color(GamePalette.AccentGold.r, GamePalette.AccentGold.g, 0.15f, 0.96f);
-                case RelicTier.Legendary:
-                    return new Color(0.92f, 0.18f, 0.16f, 0.96f);
-                default:
-                    return new Color(0.58f, 0.54f, 0.46f, 0.78f);
-            }
+            return null;
         }
 
         // UiAction centralizes action icon semantics. Confirm/Accept use confirm_seal;

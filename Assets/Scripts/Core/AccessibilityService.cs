@@ -24,6 +24,8 @@ namespace SudokuRoguelike.Core
         public float FontScale      => _settings?.FontScale                     ?? 1f;
         public bool ScreenShakeEnabled => _graphics?.ScreenShake               ?? true;
         public float ParticleIntensity => _graphics?.ParticleIntensity          ?? 1f;
+        public float DisplayBrightness => Mathf.Clamp01(_graphics?.Brightness ?? 0.5f);
+        public float DisplayContrast   => Mathf.Clamp01(_graphics?.Contrast   ?? 0.5f);
 
         public void Refresh(AccessibilitySettings accessibility, GraphicsSettingsModel graphics)
         {
@@ -73,13 +75,25 @@ namespace SudokuRoguelike.Core
         /// </summary>
         public Color GetCellColor(Color baseColor)
         {
-            return ActiveColorMode switch
+            var adjusted = ActiveColorMode switch
             {
                 ColorMode.Protanopia   => SimulateProtanopia(baseColor),
                 ColorMode.Deuteranopia => SimulateDeuteranopia(baseColor),
                 ColorMode.HighContrast => ToHighContrast(baseColor),
                 _                      => baseColor
             };
+            return ApplyDisplayCalibration(adjusted);
+        }
+
+        public Color ApplyDisplayCalibration(Color baseColor)
+        {
+            var contrast = Mathf.Lerp(0.75f, 1.35f, DisplayContrast);
+            var brightnessOffset = (DisplayBrightness - 0.5f) * 0.30f;
+            return new Color(
+                Mathf.Clamp01(((baseColor.r - 0.5f) * contrast) + 0.5f + brightnessOffset),
+                Mathf.Clamp01(((baseColor.g - 0.5f) * contrast) + 0.5f + brightnessOffset),
+                Mathf.Clamp01(((baseColor.b - 0.5f) * contrast) + 0.5f + brightnessOffset),
+                baseColor.a);
         }
 
         // ── Colour-blind simulation (simple linear approximation) ─────────────────

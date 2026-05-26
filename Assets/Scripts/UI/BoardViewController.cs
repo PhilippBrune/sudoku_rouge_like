@@ -598,6 +598,7 @@ namespace SudokuRoguelike.UI
             var tH = cH * _boardSize + sY * (_boardSize - 1);
 
             // Lines
+            // [REQ: ACCESS-OVERLAY-001] Overlay rendering applies accessibility multipliers: GetLineWidthMultiplier ×1.5 (wide lines), GetOverlayAlpha ×1.4 (stronger tints)
             var lineWidthMult = accessibility.GetLineWidthMultiplier();
             for (var li = 0; li < overlay.Lines.Count; li++)
             {
@@ -632,6 +633,14 @@ namespace SudokuRoguelike.UI
                     DrawRingDot(line.Cells[0], color, ringOuter + 3f, cW, cH, sX, sY, tW, tH);
                     DrawRingDot(line.Cells[line.Cells.Count - 1], color, ringOuter + 3f, cW, cH, sX, sY, tW, tH);
                 }
+
+                if (accessibility != null && accessibility.UseAltSymbols && line.Cells.Count > 0)
+                {
+                    var fc = line.Cells[0];
+                    var abbrX = fc.Col * (cW + sX) + cW * 0.5f - tW * 0.5f;
+                    var abbrY = -(fc.Row * (cH + sY) + cH * 0.5f - tH * 0.5f);
+                    DrawOverlayText(abbrX, abbrY, BossService.GetLineTypeAbbreviation(line.Type), 8, Color.white);
+                }
             }
 
             // Kropki dots
@@ -648,9 +657,17 @@ namespace SudokuRoguelike.UI
                     DrawOverlayText(px, py, dot.SumValue.ToString(), 9, Color.white);
                 }
                 else if (dot.IsBlack)
+                {
                     DrawCircle(px, py, 10f, GamePalette.OverlayKropkiBlack);
+                    if (accessibility != null && accessibility.UseAltSymbols)
+                        DrawOverlayText(px, py, "KR", 7, Color.white);
+                }
                 else
+                {
                     DrawRingAtPos(px, py, 10f, GamePalette.OverlayKropkiWhite);
+                    if (accessibility != null && accessibility.UseAltSymbols)
+                        DrawOverlayText(px, py, "KC", 7, Color.white);
+                }
             }
 
             // Pair constraints (Greater/Less Than and XV Pairs)
@@ -719,13 +736,13 @@ namespace SudokuRoguelike.UI
                     var cellBottom =  cellTop  - cH;
                     var cellRight  =  cellLeft + cW;
                     if (IsCageEdge(r, c, _boardSize, 0)) // TOP
-                        DrawCageStrip(cellLeft + inset, cellTop - inset - thick, cW - inset * 2f, thick);
+                        DrawDashedCageHorizontal(cellLeft + inset, cellTop - inset - thick, cW - inset * 2f, thick);
                     if (IsCageEdge(r, c, _boardSize, 1)) // BOTTOM
-                        DrawCageStrip(cellLeft + inset, cellBottom + inset, cW - inset * 2f, thick);
+                        DrawDashedCageHorizontal(cellLeft + inset, cellBottom + inset, cW - inset * 2f, thick);
                     if (IsCageEdge(r, c, _boardSize, 2)) // LEFT
-                        DrawCageStrip(cellLeft + inset, cellBottom + inset, thick, cH - inset * 2f);
+                        DrawDashedCageVertical(cellLeft + inset, cellBottom + inset, thick, cH - inset * 2f);
                     if (IsCageEdge(r, c, _boardSize, 3)) // RIGHT
-                        DrawCageStrip(cellRight - inset - thick, cellBottom + inset, thick, cH - inset * 2f);
+                        DrawDashedCageVertical(cellRight - inset - thick, cellBottom + inset, thick, cH - inset * 2f);
                 }
             }
 
@@ -760,9 +777,15 @@ namespace SudokuRoguelike.UI
                     sq.GetComponent<Image>().color = GamePalette.OverlayEvenMarker;
                     sq.GetComponent<Image>().raycastTarget = false;
                     _overlayObjects.Add(sq);
+                    if (accessibility != null && accessibility.UseAltSymbols)
+                        DrawOverlayText(px, py, "EV", 8, Color.white);
                 }
                 else if (m.Type == MarkerType.Odd)
+                {
                     DrawCircle(px, py, cW * 0.35f, GamePalette.OverlayOddMarker);
+                    if (accessibility != null && accessibility.UseAltSymbols)
+                        DrawOverlayText(px, py, "OD", 8, Color.white);
+                }
                 else if (m.Type == MarkerType.Prime)
                 {
                     DrawCircle(px, py, cW * 0.36f, GamePalette.OverlayPrimeCircle);
@@ -780,6 +803,8 @@ namespace SudokuRoguelike.UI
                     sq.GetComponent<Image>().color = GamePalette.OverlayFortress;
                     sq.GetComponent<Image>().raycastTarget = false;
                     _overlayObjects.Add(sq);
+                    if (accessibility != null && accessibility.UseAltSymbols)
+                        DrawOverlayText(px, py, "FC", 8, Color.white);
                 }
             }
         }
@@ -946,6 +971,22 @@ namespace SudokuRoguelike.UI
             _overlayObjects.Add(go);
         }
 
+        private void DrawDashedCageHorizontal(float left, float bottom, float width, float thickness)
+        {
+            const float dash = 8f;
+            const float gap = 5f;
+            for (var x = 0f; x < width; x += dash + gap)
+                DrawCageStrip(left + x, bottom, Mathf.Min(dash, width - x), thickness);
+        }
+
+        private void DrawDashedCageVertical(float left, float bottom, float thickness, float height)
+        {
+            const float dash = 8f;
+            const float gap = 5f;
+            for (var y = 0f; y < height; y += dash + gap)
+                DrawCageStrip(left, bottom + y, thickness, Mathf.Min(dash, height - y));
+        }
+
         private void DrawCageSum(float x, float y, int sum, float cW, float cH)
         {
             var bg = new GameObject("CageSumBg", typeof(RectTransform), typeof(Image));
@@ -954,11 +995,12 @@ namespace SudokuRoguelike.UI
             bgRt.anchorMin = bgRt.anchorMax = new Vector2(0.5f, 0.5f);
             bgRt.pivot = new Vector2(0, 1);
             bgRt.anchoredPosition = new Vector2(x, y);
-            bgRt.sizeDelta = new Vector2(cW * 0.46f, cH * 0.30f);
+            bgRt.sizeDelta = new Vector2(cW * 0.50f, cH * 0.30f);
             bg.GetComponent<Image>().color = GamePalette.OverlayCageFogBg;
             bg.GetComponent<Image>().raycastTarget = false;
 
-            var txt = InRunUiFactory.CreateText(bg.transform, "Sum", sum.ToString(), 11, TextAnchor.MiddleCenter, KillerBorder);
+            var txt = InRunUiFactory.CreateText(bg.transform, "Sum", sum.ToString(), 12, TextAnchor.MiddleCenter, KillerBorder);
+            txt.fontStyle = FontStyle.Bold;
             InRunUiFactory.StretchFill(txt.rectTransform);
             txt.raycastTarget = false;
             _overlayObjects.Add(bg);

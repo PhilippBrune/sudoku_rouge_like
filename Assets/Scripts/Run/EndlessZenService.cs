@@ -15,14 +15,14 @@ namespace SudokuRoguelike.Run
 
         public LevelConfig BuildNextLevel(int depth, bool allowIrregularPuzzles, int preferredSize = 0, int preferredStars = 0)
         {
-            // [ZENMODE-SESSION-001] Board size always 9×9 per spec
+            // [REQ: ZENMODE-SESSION-001] Board size always 9×9 per spec
             const int size = 9;
 
-            // [ZENMODE-DEPTH-002] Depth-based star scaling: Clamp(1 + depth/4, 1, 5)
+            // [REQ: ZENMODE-DEPTH-002] [REQ: ZENMODE-DEPTH-003] Depth-based star scaling: Clamp(1 + depth/4, 1, 5) — capped at 5★
             var stars = Math.Clamp(1 + depth / 4, 1, 5);
             if (preferredStars > 0) stars = Math.Clamp(preferredStars, 1, 5);
 
-            // [ZENMODE-DEPTH-004] Modifier cap: depth<10→1, depth<20→2, depth≥20→3
+            // [REQ: ZENMODE-DEPTH-004] Modifier cap: depth<10→1, depth<20→2, depth≥20→3
             var modCap = depth < 10 ? 1 : depth < 20 ? 2 : 3;
 
             var config = new LevelConfig
@@ -33,7 +33,7 @@ namespace SudokuRoguelike.Run
                 RegionVariant = allowIrregularPuzzles ? _random.Next(4) : _random.Next(2),
                 IsBoss = false,
                 Seed = _random.Next(),
-                Difficulty = DifficultyTier.Diff5   // [ZENMODE-SESSION-001] always Diff5
+                Difficulty = DifficultyTier.Diff5   // [REQ: ZENMODE-SESSION-001] always Diff5
             };
 
             if (modCap > 0)
@@ -55,6 +55,7 @@ namespace SudokuRoguelike.Run
 
         public static RunState CreateZenRunState(ClassId classId, int seed, bool allowIrregularPuzzles)
         {
+            // [REQ: ZENMODE-SESSION-002] HP uses class base HP; class passives still apply
             var stats = Classes.ClassCatalog.GetDefinition(classId);
             return new RunState
             {

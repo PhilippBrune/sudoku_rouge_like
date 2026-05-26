@@ -15,11 +15,11 @@ namespace SudokuRoguelike.Run
 
         public LevelConfig BuildTrialLevel(SpiritTrialsTier tier, bool allowIrregularPuzzles)
         {
-            // [TRIAL-SESSION-001] All tiers use 9×9 board per spec
+            // [REQ: TRIAL-SESSION-001] All tiers use 9×9 board per spec
             const int size = 9;
             int stars, modCount;
 
-            // [TRIAL-TIER-001]
+            // [REQ: TRIAL-TIER-001]
             switch (tier)
             {
                 case SpiritTrialsTier.Apprentice:
@@ -40,11 +40,13 @@ namespace SudokuRoguelike.Run
                 RegionVariant = allowIrregularPuzzles ? _random.Next(4) : _random.Next(2),
                 IsBoss = modCount > 0,
                 Seed = _random.Next(),
-                Difficulty = (DifficultyTier)Math.Min((int)tier + 1, 5)
+                Difficulty = (DifficultyTier)Math.Min((int)tier + 1, 5),
+                RequireUniqueModifierSolution = modCount > 0
             };
 
             if (modCount > 0)
             {
+                // [REQ: TRIAL-TIER-002] Modifiers assigned randomly (seeded); player cannot choose
                 // Draw from all 15 modifiers
                 var pool = new List<BossModifierId>();
                 foreach (BossModifierId mod in Enum.GetValues(typeof(BossModifierId)))
@@ -98,7 +100,7 @@ namespace SudokuRoguelike.Run
         }
 
         /// <summary>
-        /// Calculate Spirit Trials score per spec [TRIAL-SCORE-005].
+        /// Calculate Spirit Trials score per spec [REQ: TRIAL-SCORE-005].
         /// FinalScore = floor((BasePoints × SpeedMultiplier) + ConstraintBonus + PencilBonus − MistakePenalty)
         /// </summary>
         /// <param name="cellsToFill">Cells the player had to fill (board cells − givens).</param>
@@ -106,7 +108,7 @@ namespace SudokuRoguelike.Run
         public static int CalculateScore(SpiritTrialsTier tier, float secondsPlayed, int modCount,
             int cellsToFill, int pencilMarksUsed, int mistakes)
         {
-            // [TRIAL-SCORE-001] BasePoints = CellsToFill × PointsPerCell
+            // [REQ: TRIAL-SCORE-001] BasePoints = CellsToFill × PointsPerCell
             int pointsPerCell = tier switch
             {
                 SpiritTrialsTier.Apprentice => 10,
@@ -116,7 +118,7 @@ namespace SudokuRoguelike.Run
             };
             var basePoints = cellsToFill * pointsPerCell;
 
-            // [TRIAL-SCORE-002] SpeedMultiplier = max(0.5, 2.0 − ElapsedSeconds / ParTime)
+            // [REQ: TRIAL-SCORE-002] SpeedMultiplier = max(0.5, 2.0 − ElapsedSeconds / ParTime)
             float parTime = tier switch
             {
                 SpiritTrialsTier.Apprentice => 300f,
@@ -126,10 +128,10 @@ namespace SudokuRoguelike.Run
             };
             var speedMult = Math.Max(0.5f, 2.0f - secondsPlayed / parTime);
 
-            // [TRIAL-SCORE-003] ConstraintBonus
+            // [REQ: TRIAL-SCORE-003] ConstraintBonus
             var constraintBonus = modCount switch { 1 => 100, 2 => 300, _ => 0 };
 
-            // [TRIAL-SCORE-004] Mistake penalty per tier
+            // [REQ: TRIAL-SCORE-004] Mistake penalty per tier
             int penaltyPerMistake = tier switch
             {
                 SpiritTrialsTier.Apprentice => 20,
@@ -142,7 +144,8 @@ namespace SudokuRoguelike.Run
             // PencilBonus: max(0, (30 − pencilMarksUsed) × 5)
             var pencilBonus = Math.Max(0, (30 - pencilMarksUsed) * 5);
 
-            // [TRIAL-SCORE-005] Final = floor(base × speed) + constraint + pencil − mistakes
+            // [REQ: TRIAL-SCORE-005] Final = floor(base × speed) + constraint + pencil − mistakes
+            // [REQ: TRIAL-SCORE-006] Minimum score 0 (never negative)
             return Math.Max(0, (int)(basePoints * speedMult) + constraintBonus + pencilBonus - mistakePenalty);
         }
     }

@@ -82,3 +82,10 @@ The following are **not** implemented in the checked files:
 - Steam Input or platform accessibility middleware
 
 This spec intentionally matches the current implementation rather than earlier platform-integration plans.
+
+## Production Validation
+
+Release validation for these features is tracked in
+`docs/accessibility-validation.md`. That checklist defines the required
+colorblind, high-contrast, reduce-motion, font-scale, alternative-symbol,
+caption, and rumble validation matrix for beta and release-candidate builds.

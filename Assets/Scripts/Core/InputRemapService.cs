@@ -128,18 +128,21 @@ namespace SudokuRoguelike.Core
 
         public void SetBinding(InputAction action, KeyCode newKey)
         {
+            EnsureOverridesLoaded();
             _overrides[action] = newKey;
             SaveOverrides();
         }
 
         public void ResetBinding(InputAction action)
         {
+            EnsureOverridesLoaded();
             _overrides.Remove(action);
             SaveOverrides();
         }
 
         public void ResetAllBindings()
         {
+            EnsureOverridesLoaded();
             _overrides.Clear();
             SaveOverrides();
         }
@@ -308,7 +311,6 @@ namespace SudokuRoguelike.Core
 
         private void SaveOverrides()
         {
-            EnsureOverridesLoaded();
             var entries = new List<string>();
             foreach (var kvp in _overrides)
                 entries.Add($"{kvp.Key}={kvp.Value}");

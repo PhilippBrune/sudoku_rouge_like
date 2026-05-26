@@ -31,8 +31,11 @@ namespace SudokuRoguelike.Save
         // [REQ: SAVE-TUTO-001] Tutorial runs are not persisted
         public void Save(RunState runState, PuzzleSaveState puzzleState)
         {
-            // Tutorial runs are not persisted — no resume, no progression
-            if (runState == null || runState.TutorialMode || runState.DisableProgressionRewards) return;
+            if (runState == null || runState.TutorialMode) return;
+
+            // Seasonal challenge saves go to a separate slot — do NOT block on DisableProgressionRewards.
+            // For all other modes (e.g. SpiritTrials which also sets DisableProgressionRewards), skip.
+            if (!runState.IsSeasonalChallenge && runState.DisableProgressionRewards) return;
 
             runState.SyncSeenModifiersToList();
 
@@ -66,6 +69,10 @@ namespace SudokuRoguelike.Save
             if (_boundRun?.DailyGoals != null)
                 _cachedEnvelope.DailyGoals = _boundRun.DailyGoals;
 
+            UnityEngine.Debug.Log(
+                $"[AutoSave] HP={runState.CurrentHP} Pencil={runState.CurrentPencil} " +
+                $"Items={runState.HeldItems?.Count ?? 0} NodeIdx={runState.CurrentNodeIndex} " +
+                $"Floor={runState.CurrentFloor} RunNum={runState.RunNumber}");
             _saveFile.Save(_cachedEnvelope);
         }
 
@@ -74,8 +81,8 @@ namespace SudokuRoguelike.Save
             if (_boundRun == null) return;
             var puzzle = _boundRun.ExportPuzzleSaveState();
             Save(_boundRun.State, puzzle);
-            // NOTE — Pressure mechanics (CountdownFill, HauntedCell, CrumblingRegion, PressureWave)
-            // are stored as [NonSerialized] ephemeral fields on LevelState and are NOT persisted here.
+            // [REQ: PRESSURE-SAVE-003] Pressure mechanics (CountdownFill, HauntedCell, CrumblingRegion, PressureWave)
+            // NOTE — are stored as [NonSerialized] ephemeral fields on LevelState and are NOT persisted here.
             // On resume via RunResumeService, RunDirector.StartLevel is called which re-runs
             // InitializePressureMechanics with the same config seed, reconstructing all threat state
             // from scratch. This is intentional: mid-puzzle pressure state cannot be meaningfully

@@ -31,6 +31,7 @@ namespace SudokuRoguelike.Core
         // Inventory
         public List<ItemInstance> HeldItems = new List<ItemInstance>();
 
+        // [REQ: RELIC-SLOT-001] HasRelic + HeldRelic: legacy single-slot relic fields kept for save-file compatibility
         // Relic inventory — unlimited slots; HasRelic/HeldRelic kept for save-file compatibility
         public bool HasRelic;                                    // legacy compat — true when any relic is held
         public RelicInstance HeldRelic;                          // legacy compat — first relic added
@@ -57,6 +58,7 @@ namespace SudokuRoguelike.Core
         public int PerfectPuzzleStreak; // used by SakuraSeal relic
 
         // Positive floor effect (one per floor, rolled alongside floor modifiers)
+        // [REQ: MAP-FX-003] HasPositiveFloorEffect and ActivePositiveFloorEffect store the current floor bonus
         public bool HasPositiveFloorEffect;
         public PositiveFloorEffect ActivePositiveFloorEffect;
 
@@ -79,6 +81,8 @@ namespace SudokuRoguelike.Core
         public int FogDisabledMoves;       // LanternOfClarity: fog disabled for next N moves
         public int LastMistakeHpLost;      // GinkgoLeaf: HP actually lost on last mistake (for restoration)
         public int LastComboBeforeMistake;  // GinkgoLeaf: combo streak before last mistake (for restoration)
+        public int LastMistakeRow = -1;     // GinkgoLeaf: last wrong non-given placement row
+        public int LastMistakeCol = -1;     // GinkgoLeaf: last wrong non-given placement column
         // Shield system (Silk Fan item):
         // Absorbs incoming HP damage before CurrentHP is reduced. Resets at each puzzle start.
         // Distinct from MistakeShieldCharges (which absorbs full mistake events at 0 HP cost).
@@ -86,12 +90,19 @@ namespace SudokuRoguelike.Core
         // True when the last ApplyMistakePenalty call was fully absorbed by ShieldPoints (no HP lost).
         // Read by PlaceNumber to suppress combo-streak reset while the player is shielded.
         public bool LastMistakeShieldAbsorbed;
+        // GoldenKoi: when true, grants +10g per star rating on puzzle completion (cleared after payout).
+        public bool GoldenKoiActive;
+        // TempleStamp: when true, all mistake HP damage is absorbed silently this puzzle; cleared on completion.
+        public bool TempleSealActive;
 
         // Spirit Trials tier (set by RunDirector.StartRun when Mode == SpiritTrials)
         public SpiritTrialsTier SpiritTrialsTier;
 
         // Run timer
         public float TotalRunSeconds;      // Accumulated puzzle time across all puzzles this run
+
+        // Per-floor snapshot — HP at the moment the current floor's first puzzle started
+        public int HpAtFloorStart;
 
         // Class-exclusive item effect state
         public int MonksBeadsCountdown;    // GardenMonk L15: placements remaining in current bead sequence
@@ -105,6 +116,11 @@ namespace SudokuRoguelike.Core
         public int NoPencilPerfectLevelCount;
         // [REDESIGN] GoldenRoot relic: gold spent during the current floor (reset at each FloorStart).
         public int GoldSpentThisFloor;
+        // [REQ: DAILY-GOAL-001] Cumulative run-level counters for daily goal evaluation.
+        public int GoldSpentThisRun;
+        public int GoldCollectedThisRun;
+        public int HpAtCurrentFloorEntry; // HP when player entered the current floor (before relic heals)
+        public int ItemsUsedThisRun;
         public bool TempleVowReady;        // GardenMonk L30: trigger ready (HP ≤ 25%, fires once/puzzle)
         // [REDESIGN] AccurateMap: guarantee one relic-tier node this floor (read by RunDirector).
         public bool BonusRelicNodeThisFloor;
@@ -135,7 +151,7 @@ namespace SudokuRoguelike.Core
         // Mode flags
         public bool IsSeasonalChallenge;   // suppresses XP/gold awards, class passives, relics, curses
 
-        // Curse system — [REQ: CURSE-DATA-001] [REQ: CURSE-STACK-003]
+        // Curse system — [REQ: CURSE-DATA-001] [REQ: CURSE-STACK-003] [REQ: CURSE-INT-012]
         public List<string> ActiveCurseIds = new List<string>();
         public bool TremblingHandFired;    // reset each puzzle — tracks first-placement curse
 
@@ -188,6 +204,7 @@ namespace SudokuRoguelike.Core
         public BossModifierIntensity Intensity = BossModifierIntensity.Medium;
         public int Seed;
         public DifficultyTier Difficulty = DifficultyTier.Diff1;
+        public bool RequireUniqueModifierSolution;
 
         public LevelConfig Clone()
         {
@@ -205,7 +222,8 @@ namespace SudokuRoguelike.Core
                 CursedXpMult = CursedXpMult,
                 Intensity = Intensity,
                 Seed = Seed,
-                Difficulty = Difficulty
+                Difficulty = Difficulty,
+                RequireUniqueModifierSolution = RequireUniqueModifierSolution
             };
             clone.ActiveModifiers.AddRange(ActiveModifiers);
             return clone;
@@ -216,6 +234,7 @@ namespace SudokuRoguelike.Core
     public sealed class LevelState
     {
         public int Mistakes;
+        public int HpLost;
         public int CorrectPlacements;
         public int PencilMarksUsed;
         public int ItemsUsedThisLevel;
@@ -299,6 +318,17 @@ namespace SudokuRoguelike.Core
 
         [System.NonSerialized]
         public bool WaveRipplePending; // [REQ: PRESSURE-UI-009] triggers ripple animation on next render
+
+        // ── Boss debuffs Batch 2 (RevealCost + CellBlur) state ── [REQ: DEBUFF-HOOK-022]
+        // [REQ: DEBUFF-DEF-015] RevealCost: item use blocked for N correct placements after a mistake
+        [System.NonSerialized]
+        public int ItemUseBlockedMoves;
+
+        // [REQ: DEBUFF-DEF-011] CellBlur: cells whose digit labels are visually hidden
+        [System.NonSerialized]
+        public HashSet<(int row, int col)> CellBlurCells = new HashSet<(int, int)>();
+        [System.NonSerialized]
+        public int CellBlurMovesLeft;
     }
 
     /// <summary>
@@ -494,6 +524,7 @@ namespace SudokuRoguelike.Core
         public int ItemsUsedThisRun;
         public int RelicsCollectedThisRun;
         public int PerfectPuzzleCount;
+        // [REQ: MAP-NODE-CURSED-004] CursedPuzzlesAccepted: count of cursed offers accepted this run
         public int CursedPuzzlesAccepted;
         public int RunScore;
         public bool FoundAllUniqueItems;

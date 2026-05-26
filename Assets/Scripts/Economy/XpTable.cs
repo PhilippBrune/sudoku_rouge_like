@@ -60,7 +60,8 @@ namespace SudokuRoguelike.Economy
             return total;
         }
 
-        // [REQ: XP-CURVE-002] Derives level at runtime from cumulative TotalXp; never store level directly
+        // [REQ: XP-CURVE-002] [REQ: META-XP-002] Two-phase XP curve: L1–15 uses 50+(n-1)×10; L16–40 adds 35 per level
+        // [REQ: META-XP-003] Total XP to reach L40 = 16,860
         public static int DeriveLevel(int totalXp)
         {
             var cumulative = 0;

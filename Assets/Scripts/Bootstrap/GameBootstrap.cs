@@ -24,6 +24,7 @@ namespace SudokuRoguelike.Bootstrap
         private ScreenManager _screenManager;
         private MenuMusicController _menuMusic;
         private RunAudioController  _runAudio;
+        private readonly StartupFlowController _startupFlow = new StartupFlowController();
 
         public RunDirector Run => _run;
         public ProfileService Profile => _profileService;
@@ -33,12 +34,14 @@ namespace SudokuRoguelike.Bootstrap
 
         private SaveProfileService _profileSlots;
         private DailyGoalState _dailyGoals;
+        private bool _hadAnyProfileAtStartup;
 
         private SplashScreenController _splashInline;
 
         private void Awake()
         {
             _profileSlots = new SaveProfileService();
+            _hadAnyProfileAtStartup = _profileSlots.AnySlotExists();
             _saveFileService = new SaveFileService(SaveProfileService.ActiveSlot);
             _profileService = new ProfileService(_saveFileService);
             _resumeService = new RunResumeService(_saveFileService);
@@ -57,6 +60,7 @@ namespace SudokuRoguelike.Bootstrap
         public SaveProfileService ProfileSlots => _profileSlots;
 
         /// <summary>
+        // [REQ: SAVE-SLOT-003] ApplySlotChange: re-wires all save/profile/resume services to the newly active slot after a profile switch
         /// Re-wires all save/profile services to the newly selected slot.
         /// Call after SaveProfileService.ActiveSlot has been updated.
         /// </summary>
@@ -113,22 +117,11 @@ namespace SudokuRoguelike.Bootstrap
 
                 // If no save files exist at all → jump straight to profile select so the
                 // player picks / creates their first profile before hitting the main menu.
+                // [REQ: INPUT-PROFILE-001] No save files → ShowProfileSelect() on first launch
                 var mc = FindAnyObjectByType<MainMenuController>();
                 if (mc == null) return;
 
-                if (!_profileSlots.AnySlotExists())
-                {
-                    mc.ShowProfileSelect();
-                }
-                else
-                {
-                    mc.ShowMainMenu();
-                    // [REQ: TUTO-BASICS-TRIGGER-001] trigger if "sudoku_basics" not in CompletedKeys
-                    // [REQ: TUTO-BASICS-TRIGGER-002] only triggers once (skipped on subsequent launches)
-                    // [REQ: TUTO-BASICS-TRIGGER-003] prompt appears after main menu loads
-                    if (!mc.HasCompletedSudokuBasics())
-                        mc.ShowSudokuBasicsPrompt();
-                }
+                RunStartupFlow(mc, true);
             }
 
             if (SplashSceneBootstrap.HasShownSplash)
@@ -138,8 +131,81 @@ namespace SudokuRoguelike.Bootstrap
             else
             {
                 _menuMusic.Play();
-                _splashInline.Show(ShowMenuAfterSplash);
+                // Hide all canvases beneath the splash so scene-level UI doesn't bleed through.
+                var hiddenCanvases = new System.Collections.Generic.List<Canvas>();
+                foreach (var c in FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+                {
+                    if (c.sortingOrder < 32767 && c.enabled)
+                    {
+                        c.enabled = false;
+                        hiddenCanvases.Add(c);
+                    }
+                }
+                _splashInline.Show(() =>
+                {
+                    foreach (var c in hiddenCanvases)
+                        if (c != null) c.enabled = true;
+                    ShowMenuAfterSplash();
+                });
             }
+        }
+
+        private void OnApplicationQuit()
+        {
+            SaveFileService.FlushSharedPendingWrites();
+        }
+
+        public void ContinueStartupAfterProfileSelection(MainMenuController menu)
+        {
+            RunStartupFlow(menu, false);
+        }
+
+        private void RunStartupFlow(MainMenuController menu, bool allowProfileSelection)
+        {
+            if (menu == null) return;
+
+            var hasAnyProfile = allowProfileSelection
+                ? _hadAnyProfileAtStartup
+                : _profileSlots.AnySlotExists();
+            var envelope = hasAnyProfile || !allowProfileSelection
+                ? _saveFileService.Load()
+                : new SaveFileEnvelope();
+            var next = _startupFlow.GetNextStep(new StartupFlowContext
+            {
+                AllowProfileSelection = allowProfileSelection,
+                HasAnyProfile = hasAnyProfile,
+                Envelope = envelope,
+                SudokuBasicsComplete = menu.HasCompletedSudokuBasics()
+            });
+
+            switch (next)
+            {
+                case StartupFlowStep.ProfileSelect:
+                    menu.ShowProfileSelect();
+                    break;
+                case StartupFlowStep.FirstRunSetup:
+                    menu.ShowMainMenu();
+                    menu.ShowFirstRunSetupPrompt(() => ContinueAfterFirstRunSetup(menu));
+                    break;
+                case StartupFlowStep.SudokuBasicsPrompt:
+                    menu.ShowMainMenu();
+                    menu.ShowSudokuBasicsPrompt();
+                    break;
+                default:
+                    menu.ShowMainMenu();
+                    break;
+            }
+        }
+
+        private void ContinueAfterFirstRunSetup(MainMenuController menu)
+        {
+            LocalizationService.SetLanguage(_profileService.LoadOptions().Language);
+            menu.RefreshLanguage();
+
+            var refreshedMenu = FindAnyObjectByType<MainMenuController>() ?? menu;
+            refreshedMenu.ShowMainMenu();
+            if (!refreshedMenu.HasCompletedSudokuBasics())
+                refreshedMenu.ShowSudokuBasicsPrompt();
         }
 
         // ── Launch Methods ──
@@ -173,6 +239,15 @@ namespace SudokuRoguelike.Bootstrap
             if (supportsRunProgression && _dailyGoals != null)
                 DailyGoalService.ApplyPendingRewards(_dailyGoals, _run.State);
 
+            // Daily goals: t3_new_class — fire when this class hasn't been played in 7+ days.
+            // Record class played regardless so the next run of the same class won't re-trigger.
+            if (supportsRunProgression && _dailyGoals != null)
+            {
+                if (DailyGoalService.HasBeenUnusedForDays(_dailyGoals, request.ClassId, DateTime.Today))
+                    DailyGoalService.EvaluateInRun(_dailyGoals, _run.State, null, DailyGoalService.TriggerNewClassUsed);
+                DailyGoalService.RecordClassPlayed(_dailyGoals, request.ClassId, DateTime.Today);
+            }
+
             _screenManager.ShowGame();
             BindRunToMap();
 
@@ -182,18 +257,30 @@ namespace SudokuRoguelike.Bootstrap
         public void LaunchSeasonalChallenge()
         {
             var now = DateTime.Today;
-            var runState = SeasonalChallengeService.CreateChallengeRunState(now.Year, now.Month);
-            var levelConfig = SeasonalChallengeService.BuildChallengeConfig(now.Year, now.Month);
-
             _menuMusic.Stop();
-            _run.RestoreState(runState);
             _run.DailyGoals = null; // no daily goal tracking in seasonal
-            _run.StartSeasonalChallenge(levelConfig);
+
+            // Resume in-progress attempt if one was saved for the current month.
+            if (_resumeService.TryResumeSeasonalFromSave(now.Year, now.Month,
+                out var savedState, out var savedPuzzle))
+            {
+                _run.RestoreState(savedState);
+                _run.StartSeasonalChallenge(SeasonalChallengeService.BuildChallengeConfig(now.Year, now.Month));
+                if (savedPuzzle != null)
+                    _run.TryRestorePuzzleSaveState(savedPuzzle);
+                Debug.Log($"[GameBootstrap] Resumed Seasonal Challenge {now.Year}-{now.Month:D2}");
+            }
+            else
+            {
+                var runState = SeasonalChallengeService.CreateChallengeRunState(now.Year, now.Month);
+                var levelConfig = SeasonalChallengeService.BuildChallengeConfig(now.Year, now.Month);
+                _run.RestoreState(runState);
+                _run.StartSeasonalChallenge(levelConfig);
+                Debug.Log($"[GameBootstrap] Launched Seasonal Challenge {now.Year}-{now.Month:D2}");
+            }
 
             _screenManager.ShowGame();
             BindRunToMap();
-
-            Debug.Log($"[GameBootstrap] Launched Seasonal Challenge {now.Year}-{now.Month:D2}");
         }
 
         public void LaunchTutorial(TutorialSetupConfig setup)
@@ -253,6 +340,10 @@ namespace SudokuRoguelike.Bootstrap
             var savedNodeIndex = runState.CurrentNodeIndex;
             _run.RebuildFloorGraph(); // rebuild for the restored floor/path state
             _run.State.CurrentNodeIndex = savedNodeIndex;
+            Debug.Log(
+                $"[ResumeRestore] HP={_run.State.CurrentHP} Pencil={_run.State.CurrentPencil} " +
+                $"Items={_run.State.HeldItems?.Count ?? 0} NodeIdx={_run.State.CurrentNodeIndex} " +
+                $"Floor={_run.State.CurrentFloor} RunNum={_run.State.RunNumber}");
 
             // Pre-seed the full cross-run discovery set so the boss gate correctly
             // shows names for modifiers discovered in prior completed runs — not just
@@ -310,13 +401,17 @@ namespace SudokuRoguelike.Bootstrap
             return _resumeService.HasActiveRun();
         }
 
+        public bool HasResumableSeasonalRun()
+        {
+            var now = DateTime.Today;
+            return _resumeService.HasActiveSeasonalRun(now.Year, now.Month);
+        }
+
         private void OnApplicationFocus(bool hasFocus)
         {
-            var opts = _profileService.LoadOptions();
-            if (opts.Audio.MuteWhenUnfocused)
-                AudioListener.pause = !hasFocus;
-            else
-                AudioListener.pause = false;
+            var opts = _profileService?.LoadOptions();
+            var muteWhenUnfocused = opts?.Audio?.MuteWhenUnfocused ?? false;
+            AudioListener.pause = muteWhenUnfocused && !hasFocus;
         }
 
         // ── Infrastructure ──

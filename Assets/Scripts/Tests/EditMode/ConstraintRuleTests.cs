@@ -315,6 +315,17 @@ namespace SudokuRoguelike.Tests
         // ── FullKropkiRule ────────────────────────────────────────────────────────
 
         [Test]
+        public void RatioKropki_AndDistanceGe2_AllowAnAdjacentRatioPair()
+        {
+            var board = Empty9x9();
+            board.Cells[4, 5] = 6;
+            var overlay = BlackDotOverlay(4, 4, 4, 5);
+
+            Assert.IsTrue(new RatioKropkiRule().IsValid(board, 4, 4, 3, overlay));
+            Assert.IsTrue(new DistanceGe2Rule().IsValid(board, 4, 4, 3, overlay));
+        }
+
+        [Test]
         public void FullKropki_NotActive_NoConstraint()
         {
             var board   = Empty9x9();

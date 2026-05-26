@@ -63,7 +63,7 @@ namespace SudokuRoguelike.UI
         private void BuildShopPanel()
         {
             if (_shopPanel != null || _pathPanel == null) return;
-            _shopPanel = InRunUiFactory.CreateOverlayPanel(_pathPanel.transform, "ShopPanel", "Shop");
+            _shopPanel = InRunUiFactory.CreateOverlayPanel(_pathPanel.transform, "ShopPanel", T("InRun.Shop.Title"));
             var shopBase = InRunUiFactory.PanelBg;
             _shopPanel.GetComponent<Image>().color = new Color(shopBase.r, shopBase.g, shopBase.b, 0.72f);
             InRunUiFactory.AddPanelBackground(_shopPanel.transform, "bg_shop");
@@ -80,7 +80,7 @@ namespace SudokuRoguelike.UI
 
             var s = _map?.Run?.State;
             if (_shopSummary != null && s != null)
-                _shopSummary.text = $"{ResourceHeader(s)}  |  Click an item to preview, then press Buy.";
+                _shopSummary.text = F("InRun.Shop.SummaryHint", ResourceHeader(s));
 
             var offerCount = Mathf.Min(3, _shopOffers.Count);
             var offerBtns = new Button[offerCount];
@@ -88,8 +88,8 @@ namespace SudokuRoguelike.UI
             {
                 var offer = _shopOffers[i];
                 var label = offer.Item != null
-                    ? $"{ItemService.GetItemName(offer.Item.Type)}\n{offer.Price}g"
-                    : $"Offer {offer.Price}g";
+                    ? F("InRun.Shop.Offer.Item", ItemService.GetItemName(offer.Item.Type), offer.Price)
+                    : F("InRun.Shop.Offer.Generic", offer.Price);
                 var btn = InRunUiFactory.CreatePanelButton(_shopPanel.transform, $"Offer_{i}",
                     new Vector2(0.08f + i * 0.29f, 0.29f), new Vector2(0.08f + i * 0.29f + 0.26f, 0.54f), label);
                 if (offer.Item != null)
@@ -109,7 +109,7 @@ namespace SudokuRoguelike.UI
 
             // Buy button (disabled until an offer is selected)
             var buyBtn = InRunUiFactory.CreateActionButton(_shopPanel.transform, "Offer_buy",
-                new Vector2(0.35f, 0.17f), new Vector2(0.65f, 0.26f), "Buy", UiAction.Buy, compact: true);
+                new Vector2(0.35f, 0.17f), new Vector2(0.65f, 0.26f), T("InRun.Shop.Buy"), UiAction.Buy, compact: true);
             buyBtn.interactable = false;
             buyBtn.gameObject.name = "ShopBuyBtn";
             buyBtn.onClick.AddListener(TryBuySelectedOffer);
@@ -134,8 +134,13 @@ namespace SudokuRoguelike.UI
             var tokens    = run2?.State.RerollTokens ?? 0;
             var rerollCost = run2 != null ? run2.GetShopRerollCost() : 15;
             var rerollLabel = tokens > 0
-                ? $"Reroll ({tokens} token{(tokens != 1 ? "s" : "")})"
-                : $"Reroll ({rerollCost}g)";
+                ? LocalizationService.FormatPlural(
+                    tokens,
+                    "InRun.Shop.Reroll.Token.One",
+                    "InRun.Shop.Reroll.Token.Many",
+                    "Reroll ({0} token)",
+                    "Reroll ({0} tokens)")
+                : F("InRun.Shop.Reroll.Gold", rerollCost);
             var rerollBtn = InRunUiFactory.CreateActionButton(_shopPanel.transform, "Offer_reroll",
                 new Vector2(0.05f, 0.04f), new Vector2(0.30f, 0.14f), rerollLabel, UiAction.Reroll, compact: true);
             rerollBtn.gameObject.name = "ShopRerollBtn";
@@ -149,14 +154,14 @@ namespace SudokuRoguelike.UI
             {
                 var run = _map?.Run;
                 if (run == null) return;
-                if (!run.RerollShop()) { OnStatusChanged?.Invoke("Not enough gold."); return; }
+                if (!run.RerollShop()) { OnStatusChanged?.Invoke(T("InRun.Shop.NotEnoughGold")); return; }
                 _shopOffers.Clear();
                 _shopOffers.AddRange(run.CurrentShopOffers);
                 RebuildShopButtons();
             });
 
             var skip = InRunUiFactory.CreateActionButton(_shopPanel.transform, "Offer_skip",
-                new Vector2(0.70f, 0.04f), new Vector2(0.95f, 0.14f), "Skip", UiAction.Skip, compact: true);
+                new Vector2(0.70f, 0.04f), new Vector2(0.95f, 0.14f), T("InRun.Shop.Skip"), UiAction.Skip, compact: true);
             skip.onClick.AddListener(() =>
             {
                 _shopOffers.Clear();
@@ -205,10 +210,15 @@ namespace SudokuRoguelike.UI
             if (_shopSummary != null && offer != null)
             {
                 var s = _map?.Run?.State;
-                var header = s != null ? $"{ResourceHeader(s)}  |  " : "";
+                var header = s != null ? ResourceHeader(s) : "";
                 var desc = offer.Item != null
-                    ? $"{header}{ItemService.GetItemName(offer.Item.Type)} ({offer.Item.Rarity}) \u2014 {offer.Price}g\n{ItemService.GetItemDescription(offer.Item.Type, offer.Item.Rarity)}"
-                    : $"{header}Offer \u2014 {offer.Price}g";
+                    ? F("InRun.Shop.Preview.Item",
+                        header,
+                        ItemService.GetItemName(offer.Item.Type),
+                        RarityLabel(offer.Item.Rarity),
+                        offer.Price,
+                        ItemService.GetItemDescription(offer.Item.Type, offer.Item.Rarity))
+                    : F("InRun.Shop.Preview.Generic", header, offer.Price);
                 _shopSummary.text = desc;
             }
 
@@ -230,7 +240,7 @@ namespace SudokuRoguelike.UI
 
         /// <summary>Builds the gold + token header shown in the shop summary line.</summary>
         private static string ResourceHeader(RunState s) =>
-            $"Gold: {s.CurrentGold}  |  Tokens: {s.RerollTokens}";
+            F("InRun.Shop.ResourceHeader", s.CurrentGold, s.RerollTokens);
 
         private void TryBuySelectedOffer()
         {
@@ -240,7 +250,7 @@ namespace SudokuRoguelike.UI
             if (offer == null || offer.Item == null) return;
 
             // Gold check before proceeding
-            if (run.State.CurrentGold < offer.Price) { OnStatusChanged?.Invoke("Not enough gold."); return; }
+            if (run.State.CurrentGold < offer.Price) { OnStatusChanged?.Invoke(T("InRun.Shop.NotEnoughGold")); return; }
 
             if (offer.Item != null && run.IsBagFull())
             {
@@ -254,7 +264,7 @@ namespace SudokuRoguelike.UI
                     {
                         if (!run.TryPurchaseShopOffer(selectedOfferIdx))
                         {
-                            OnStatusChanged?.Invoke("Not enough gold.");
+                            OnStatusChanged?.Invoke(T("InRun.Shop.NotEnoughGold"));
                             return;
                         }
                         run.ReplaceItemInInventory(slotToReplace, offer.Item);
@@ -269,7 +279,7 @@ namespace SudokuRoguelike.UI
                 return;
             }
 
-            if (!run.TryPurchaseShopOffer(_selectedShopOffer)) { OnStatusChanged?.Invoke("Not enough gold."); return; }
+            if (!run.TryPurchaseShopOffer(_selectedShopOffer)) { OnStatusChanged?.Invoke(T("InRun.Shop.NotEnoughGold")); return; }
             var purchasedItem = offer.Item;
             _shopOffers.Clear();
             _selectedShopOffer = -1;
@@ -287,5 +297,13 @@ namespace SudokuRoguelike.UI
             cg.alpha = 0f;
             StartCoroutine(AnimationHelper.FadeIn(cg, AnimationHelper.MenuPanelDuration));
         }
+
+        private static string T(string key) => LocalizationService.T(key);
+
+        private static string F(string key, params object[] args) =>
+            LocalizationService.Format(key, key, args);
+
+        private static string RarityLabel(ItemRarity rarity) =>
+            LocalizationService.T($"Item.Rarity.{rarity}", rarity.ToString());
     }
 }

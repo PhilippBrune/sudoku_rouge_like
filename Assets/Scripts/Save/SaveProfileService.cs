@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 using SudokuRoguelike.Core;
 
@@ -9,11 +9,12 @@ namespace SudokuRoguelike.Save
     /// Each slot is a separate JSON file (save_profile_0/1/2.json).
     /// The active slot is persisted in PlayerPrefs so it survives across sessions.
     /// </summary>
+    // [REQ: SAVE-SLOT-002] SaveProfileService: cross-slot manager - ActiveSlot stored in PlayerPrefs (key "ActiveProfileSlot"), 3 slots max
     public sealed class SaveProfileService
     {
         private const string ActiveSlotPrefKey = "ActiveProfileSlot";
 
-        // ── Active slot ──────────────────────────────────────────────────────────
+        // â”€â”€ Active slot â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         public static int ActiveSlot
         {
@@ -27,7 +28,7 @@ namespace SudokuRoguelike.Save
 
         public SaveFileService GetActiveService() => new SaveFileService(ActiveSlot);
 
-        // ── Slot summaries ───────────────────────────────────────────────────────
+        // â”€â”€ Slot summaries â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         /// <summary>Returns one summary per slot (always MaxSlots entries).</summary>
         public ProfileSlotSummary[] GetAllSlotSummaries()
@@ -68,7 +69,7 @@ namespace SudokuRoguelike.Save
             };
         }
 
-        // ── Select / create ──────────────────────────────────────────────────────
+        // â”€â”€ Select / create â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         /// <summary>Switch the active slot. Creates an empty save file if the slot is new.</summary>
         public void SelectSlot(int slot)
@@ -79,7 +80,7 @@ namespace SudokuRoguelike.Save
                 svc.Save(new SaveFileEnvelope { TimestampUtc = DateTime.UtcNow.ToString("o") });
         }
 
-        // ── Delete ───────────────────────────────────────────────────────────────
+        // â”€â”€ Delete â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         public void DeleteSlot(int slot)
         {
@@ -90,7 +91,7 @@ namespace SudokuRoguelike.Save
                 ActiveSlot = 0;
         }
 
-        // ── Any non-empty slot? ──────────────────────────────────────────────────
+        // â”€â”€ Any non-empty slot? â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         public bool AnySlotExists()
         {

@@ -22,6 +22,34 @@ namespace SudokuRoguelike.Save
             return _saveFile.HasActiveRun();
         }
 
+        public bool HasActiveSeasonalRun(int year, int month)
+        {
+            return _saveFile.HasActiveSeasonalRun(year, month);
+        }
+
+        /// <summary>
+        /// Attempts to restore a saved Seasonal Challenge puzzle for the given month.
+        /// Returns false if no matching save exists.
+        /// </summary>
+        public bool TryResumeSeasonalFromSave(int year, int month,
+            out RunState runState, out PuzzleSaveState puzzleState)
+        {
+            runState = null;
+            puzzleState = null;
+
+            if (!_saveFile.HasSaveFile()) return false;
+            var envelope = _saveFile.Load();
+            var saved = envelope.ActiveSeasonalRunState;
+            if (!SaveFileService.IsResumableSeasonalRunState(saved) || saved.Seed != year * 100 + month) return false;
+
+            runState = saved;
+            puzzleState = SaveFileService.IsUsablePuzzleSave(envelope.ActiveSeasonalPuzzle)
+                ? envelope.ActiveSeasonalPuzzle
+                : null;
+            RestoreTransientState(runState);
+            return true;
+        }
+
         // [REQ: SAVE-RESUME-001] Restores full run state including boss modifier, AllowIrregularPuzzles
         public bool TryResumeFromSave(out RunState runState, out PuzzleSaveState puzzleState)
         {
@@ -31,11 +59,12 @@ namespace SudokuRoguelike.Save
             if (!_saveFile.HasSaveFile()) return false;
 
             var envelope = _saveFile.Load();
-            if (envelope.ActiveRunState == null) return false;
-            if (envelope.ActiveRunState.DisableProgressionRewards) return false;
+            if (!SaveFileService.IsResumableRunState(envelope.ActiveRunState)) return false;
 
             runState = envelope.ActiveRunState;
-            puzzleState = envelope.ActivePuzzle;
+            puzzleState = SaveFileService.IsUsablePuzzleSave(envelope.ActivePuzzle)
+                ? envelope.ActivePuzzle
+                : null;
 
             RestoreTransientState(runState);
             return true;
@@ -48,8 +77,7 @@ namespace SudokuRoguelike.Save
         public bool TryResumeFromSave(RunDirector run, SaveFileEnvelope envelope)
         {
             if (run == null || envelope == null) return false;
-            if (envelope.ActiveRunState == null) return false;
-            if (envelope.ActiveRunState.DisableProgressionRewards) return false;
+            if (!SaveFileService.IsResumableRunState(envelope.ActiveRunState)) return false;
 
             var runState = envelope.ActiveRunState;
             RestoreTransientState(runState);
@@ -68,7 +96,7 @@ namespace SudokuRoguelike.Save
             run.RebuildFloorGraph();
 
             // Restore puzzle if available
-            if (envelope.ActivePuzzle != null)
+            if (SaveFileService.IsUsablePuzzleSave(envelope.ActivePuzzle))
                 run.TryRestorePuzzleSaveState(envelope.ActivePuzzle);
 
             return true;
@@ -77,6 +105,10 @@ namespace SudokuRoguelike.Save
         // [REQ: RELIC-SLOT-003] Legacy migration: if HasRelic + HeldRelic present but HeldRelics empty, migrate single relic into list
         private static void RestoreTransientState(RunState runState)
         {
+            runState.ActiveFloorModifiers ??= new System.Collections.Generic.List<BossModifierId>();
+            runState.ChosenBossModifiers  ??= new System.Collections.Generic.List<BossModifierId>();
+            runState.HeldRelics           ??= new System.Collections.Generic.List<RelicInstance>();
+
             if (runState.SeenBossModifierList == null)
                 runState.SeenBossModifierList = new System.Collections.Generic.List<BossModifierId>();
             if (runState.SeenBossModifiers == null)

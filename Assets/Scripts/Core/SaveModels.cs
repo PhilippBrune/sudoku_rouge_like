@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace SudokuRoguelike.Core
 {
+    // [REQ: SAVE-SERIAL-001] All save data classes are [Serializable] and round-trip through JsonUtility; SaveFileEnvelope is the root JSON object
     [Serializable]
     public sealed class SaveFileEnvelope
     {
@@ -21,8 +22,8 @@ namespace SudokuRoguelike.Core
         public ProfileStats Statistics = new ProfileStats();
         public MasteryAchievementState Mastery = new MasteryAchievementState();
         public CompletionTrackerState Completion = new CompletionTrackerState();
-        public DailyGoalState DailyGoals = new DailyGoalState();
-        public SeasonalChallengeState SeasonalChallenge = new SeasonalChallengeState();
+        public DailyGoalState DailyGoals = new DailyGoalState();           // [REQ: DAILY-GOAL-005]
+        public SeasonalChallengeState SeasonalChallenge = new SeasonalChallengeState(); // [REQ: SEASON-SCORE-001]
     }
 
     [Serializable]
@@ -39,6 +40,16 @@ namespace SudokuRoguelike.Core
         public AccessibilitySettings Accessibility = new AccessibilitySettings();
         public GameplaySettings Gameplay = new GameplaySettings();
         public LanguageOption Language = LanguageOption.English;
+        public FirstRunSetupState FirstRun = new FirstRunSetupState();
+    }
+
+    [Serializable]
+    public sealed class FirstRunSetupState
+    {
+        public bool LanguageSelected;
+        public bool AccessibilityReviewed;
+        public string AcceptedLegalNoticeVersion;
+        public string CompletedUtc;
     }
 
     [Serializable]
@@ -59,6 +70,9 @@ namespace SudokuRoguelike.Core
         public int ResolutionWidth = 1920;
         public int ResolutionHeight = 1080;
         public bool Fullscreen = true;
+        public DisplayModeOption DisplayMode = DisplayModeOption.Fullscreen;
+        public float Brightness = 0.5f;
+        public float Contrast = 0.5f;
         public float ParticleIntensity = 1.0f;
         public bool ScreenShake = true;
         public bool VSync = true;
@@ -95,6 +109,10 @@ namespace SudokuRoguelike.Core
         public GardenProgressionData GardenProgression = new GardenProgressionData();
         public ClassUnlockProgress ClassUnlocks = new ClassUnlockProgress();
         public ItemCodexData ItemCodex = new ItemCodexData();
+        // [REQ: META-ASCEND-001] AscensionLevel: global prestige layer above per-class prestige
+        // [REQ: META-ASCEND-002] ApplyAscension: increments AscensionLevel, +1 MaxStarCap, sets SeasonalChallengeUnlocked
+        // [REQ: META-ASCEND-003] TryPrestigeReset: resets AscensionLevel=0, MaxStarCap=5
+        // [REQ: SEASON-UNLOCK-001] Seasonal challenge unlocked after first ascension (AscensionLevel >= 1)
         public int AscensionLevel;
         public int PrestigeCount;
         public int MaxStarCap = 6;
@@ -126,6 +144,7 @@ namespace SudokuRoguelike.Core
         public int PrestigeTier;
     }
 
+    // [REQ: META-UNLOCK-001] ClassUnlockProgress: cumulative counters for the 8-class unlock system; persisted in MetaProgressionState.ClassUnlocks
     [Serializable]
     public sealed class ClassUnlockProgress
     {
@@ -224,8 +243,10 @@ namespace SudokuRoguelike.Core
         public int TotalBossesDefeated;
         public int TotalItemsUsed;
         public long TotalPlayTimeMs;
+        // [REQ: ZENMODE-SCORE-001] ProfileStats.HighestEndlessDepth tracks personal best depth
         public int HighestEndlessDepth;
 
+        // [REQ: TRIAL-LEAD-001] Per-tier personal bests in ProfileStats
         // Spirit Trials personal best scores per tier
         public int TrialsBestScore_Apprentice;
         public int TrialsBestScore_Adept;
@@ -261,6 +282,7 @@ namespace SudokuRoguelike.Core
         public bool AllRelicsDiscovered;
     }
 
+    // [REQ: DAILY-GOAL-001] [REQ: DAILY-GOAL-002] [REQ: DAILY-GOAL-003] DailyGoalState: date-seeded goals, InkStamps currency, streak tracking
     [Serializable]
     public sealed class DailyGoalState
     {
@@ -268,17 +290,23 @@ namespace SudokuRoguelike.Core
         public int[] TodayGoalIds = new int[3]; // indices into the full goal pool
         public bool[] TodayGoalCompleted = new bool[3];
 
-        public int CurrentStreak;
+        public int CurrentStreak;             // [REQ: DAILY-GOAL-003]
         public string LastStreakDate;         // last date all 3 goals were completed
 
-        public int TotalInkStamps;
+        public int TotalInkStamps;            // [REQ: DAILY-GOAL-002]
         public List<int> UnlockedCosmetics = new List<int>(); // indices of unlocked cosmetics
 
         // Pending run-start rewards (applied at next LaunchRun)
         public int PendingStartGold;
         public int PendingStartRerollTokens;
+
+        // Per-class last-played dates (parallel lists for JsonUtility compat)
+        // [REQ: DAILY-GOAL-001] t3_new_class goal: fire when selected class unused for 7+ days
+        public List<int> ClassLastPlayedIds = new List<int>();
+        public List<string> ClassLastPlayedDates = new List<string>();
     }
 
+    // [REQ: SEASON-SCORE-001] SeasonalChallengeState: personal best score stored locally per calendar month
     [Serializable]
     public sealed class SeasonalChallengeState
     {

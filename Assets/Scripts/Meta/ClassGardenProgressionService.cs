@@ -34,7 +34,7 @@ namespace SudokuRoguelike.Meta
 
         // [REQ: META-PRESTIGE-001] Requires Level 40
         // [REQ: META-PRESTIGE-002] Boss gate: cumulative defeats >= (PrestigeTier + 1) × 3
-        // [REQ: META-PRESTIGE-003] On prestige: TotalXp=0, PrestigeTier++
+        // [REQ: META-PRESTIGE-003] [REQ: META-PRESTIGE-004] On prestige: TotalXp=0, PrestigeTier++
         public bool TryPrestige(MetaProgressionState meta, ClassId classId)
         {
             var entry = FindOrCreateEntry(meta, classId);

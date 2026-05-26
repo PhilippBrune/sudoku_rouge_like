@@ -120,7 +120,7 @@ The audio design follows a **natural materials tonal palette**: wood, wind, wate
 
 ### Menu Music Style
 
-`AudioSettingsModel.MenuMusicStyleIndex` allows the player to select between menu music variants (dropdown in Options). Exact styles TBD based on asset production.
+`AudioSettingsModel.MenuMusicStyleIndex` allows the player to select between menu music variants in Options. Current release-facing styles are Garden Theme (`menu_loop`), Bamboo Courtyard (`floor_00_bamboo_courtyard`), and Rest Garden (`rest_loop`); all are authored clips in `Assets/Resources/audio/music/`.
 
 ### SFX Palette
 

@@ -35,7 +35,9 @@ namespace SudokuRoguelike.UI
         private static void SetBest(Text label, int score)
         {
             if (label == null) return;
-            label.text = score > 0 ? $"Best: {score:N0}" : "Best: \u2014";
+            label.text = score > 0
+                ? LocalizationService.Format("SpiritTrials.BestScore", "Best: {0:N0}", score)
+                : LocalizationService.T("SpiritTrials.BestPlaceholder");
         }
     }
 }

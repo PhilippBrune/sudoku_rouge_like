@@ -1,13 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 using SudokuRoguelike.Bootstrap;
 using SudokuRoguelike.Classes;
 using SudokuRoguelike.Core;
-using SudokuRoguelike.Economy;
-using SudokuRoguelike.Items;
 using SudokuRoguelike.Run;
 using SudokuRoguelike.Save;
 
@@ -72,8 +69,27 @@ namespace SudokuRoguelike.UI
         private ClassId? _highlightedClassId;
         private GameObject _startRunConfirmOverlay;   // #8 modal
         private GameObject _sudokuBasicsOverlay;      // #14 dismiss
+        private GameObject _firstRunSetupOverlay;
         private GameObject _classLockTooltipPanel;    // C-3 lock tooltip
         private Text       _classLockTooltipText;
+
+        private static string HarmonyName(int level)
+        {
+            return LocalizationService.T($"Harmony.Name.{Math.Clamp(level, 0, 10)}",
+                HarmonyDifficultyService.GetDisplayName(level));
+        }
+
+        private static string HarmonyPerkName(HarmonyPerkId perk)
+        {
+            return LocalizationService.T($"Harmony.Perk.Name.{perk}",
+                HarmonyDifficultyService.GetPerkDisplayName(perk));
+        }
+
+        private static string HarmonyPerkDescription(HarmonyPerkId perk)
+        {
+            return LocalizationService.T($"Harmony.Perk.Description.{perk}",
+                HarmonyDifficultyService.GetPerkDescription(perk));
+        }
 
         private void Awake()
         {
@@ -102,6 +118,19 @@ namespace SudokuRoguelike.UI
 
             if (!Input.anyKeyDown) return;
 
+            if (_firstRunSetupOverlay != null && _firstRunSetupOverlay.activeSelf)
+            {
+                if (Input.GetKeyDown(KeyCode.JoystickButton0) || Input.GetKeyDown(KeyCode.Return))
+                {
+                    var es = UnityEngine.EventSystems.EventSystem.current;
+                    var selected = es?.currentSelectedGameObject;
+                    var btn = selected != null ? selected.GetComponent<Button>() : null;
+                    if (btn != null && btn.interactable)
+                        btn.onClick.Invoke();
+                }
+                return;
+            }
+
             // #14 — B/Escape dismisses the first-run Sudoku basics onboarding overlay
             if (_sudokuBasicsOverlay != null && _sudokuBasicsOverlay.activeSelf)
             {
@@ -109,9 +138,7 @@ namespace SudokuRoguelike.UI
                 if (Input.GetKeyDown(KeyCode.JoystickButton0) || Input.GetKeyDown(KeyCode.Return)
                     || Input.GetKeyDown(KeyCode.JoystickButton1) || Input.GetKeyDown(KeyCode.Escape))
                 {
-                    Destroy(_sudokuBasicsOverlay);
-                    _sudokuBasicsOverlay = null;
-                    MarkSudokuBasicsComplete();
+                    ExecuteMainMenuCancelRoute(CancelRouteAction.DismissSudokuBasicsOverlay);
                     return;
                 }
             }
@@ -129,21 +156,14 @@ namespace SudokuRoguelike.UI
                 }
                 if (Input.GetKeyDown(KeyCode.JoystickButton1) || Input.GetKeyDown(KeyCode.Escape))
                 {
-                    Destroy(_startRunConfirmOverlay);
-                    _startRunConfirmOverlay = null;
+                    ExecuteMainMenuCancelRoute(CancelRouteAction.DismissStartRunConfirmation);
                     return;
                 }
             }
 
             // B button / Escape = back/cancel  (X-1: Escape now handles class select + all panels)
-            if (Input.GetKeyDown(KeyCode.JoystickButton1) || Input.GetKeyDown(KeyCode.Escape))
-            {
-                var current = _menu.CurrentScreen;
-                if (current == MenuScreen.MainMenu)
-                    return; // nothing to go back to on the root screen
-                BackFromPanel();
+            if (TryHandleMainMenuCancelInput())
                 return;
-            }
 
             // A (JoystickButton0) / R3 (JoystickButton9, legacy alias) = confirm selected button (G1-A)
             if (Input.GetKeyDown(KeyCode.JoystickButton0) || Input.GetKeyDown(KeyCode.JoystickButton9))
@@ -163,6 +183,53 @@ namespace SudokuRoguelike.UI
             // We set the first interactable button in the active panel whenever selection is lost.
             EnsureControllerSelection();
         }
+
+        private bool TryHandleMainMenuCancelInput()
+        {
+            if (!Input.GetKeyDown(KeyCode.JoystickButton1) && !Input.GetKeyDown(KeyCode.Escape))
+                return false;
+
+            ExecuteMainMenuCancelRoute(CancelRouteContract.ResolveMainMenuCancel(
+                new MainMenuCancelContext(
+                    IsActive(_firstRunSetupOverlay),
+                    IsActive(_sudokuBasicsOverlay),
+                    IsActive(_startRunConfirmOverlay),
+                    _menu?.CurrentScreen ?? MenuScreen.MainMenu)));
+            return true;
+        }
+
+        private void ExecuteMainMenuCancelRoute(CancelRouteAction route)
+        {
+            switch (route)
+            {
+                case CancelRouteAction.DismissSudokuBasicsOverlay:
+                    DismissSudokuBasicsOverlay();
+                    break;
+                case CancelRouteAction.DismissStartRunConfirmation:
+                    DismissStartRunConfirmation();
+                    break;
+                case CancelRouteAction.BackFromMenuPanel:
+                    BackFromPanel();
+                    break;
+            }
+        }
+
+        private void DismissSudokuBasicsOverlay()
+        {
+            if (_sudokuBasicsOverlay == null) return;
+            Destroy(_sudokuBasicsOverlay);
+            _sudokuBasicsOverlay = null;
+            MarkSudokuBasicsComplete();
+        }
+
+        private void DismissStartRunConfirmation()
+        {
+            if (_startRunConfirmOverlay == null) return;
+            Destroy(_startRunConfirmOverlay);
+            _startRunConfirmOverlay = null;
+        }
+
+        private static bool IsActive(GameObject go) => go != null && go.activeSelf;
 
         // MM-2/MM-6: scroll the active panel's first ScrollRect using the vertical axis input.
         private void ScrollActivePanelIfNeeded()
@@ -281,7 +348,9 @@ namespace SudokuRoguelike.UI
             _pendingLaunchMode = GameMode.GardenRun;
             RefreshClassLockStates();
             _menu.Show(MenuScreen.ClassSelect);
-            SetStatus("Select a class for Garden Run.");
+            SetStatus(LocalizationService.T(
+                "MainMenu.Status.SelectGardenClass",
+                "Select a class for Garden Run."));
         }
         public void OpenTutorial()
         {
@@ -298,6 +367,7 @@ namespace SudokuRoguelike.UI
             if (unlocked.Count == 0) unlocked.Add(ClassId.NumberFreak);
             _tutorialMenuController?.RefreshClassDropdown(unlocked);
             _menu.Show(MenuScreen.TutorialSetup);
+            InRunUiFactory.SelectFirstInteractable(_tutorialSetupPanel);
         }
         public void OpenOptions() => _menu.Show(MenuScreen.Options);
         public void OpenCredits() => _menu.Show(MenuScreen.Credits);
@@ -330,11 +400,12 @@ namespace SudokuRoguelike.UI
         /// Forces the options panel to re-read option values and refresh all UI widgets.
         /// Called after a Reset-to-Defaults action so sliders and toggles snap to default positions.
         /// </summary>
-        public void RefreshOptionsPanel() => _optionsController?.OnSlotChanged?.Invoke();
+        public void RefreshOptionsPanel() => _optionsController?.NotifyOptionsChangedForUiRefresh();
 
         public void BackToMainMenu() => _menu.ShowMainMenu();
         public void BackFromPanel() => _menu.Back();
 
+        // [REQ: DAILY-GOAL-004] Daily Walk widget: shows today's 3 goals, streak, InkStamp count, reset countdown
         public void ShowDailyWalkPanel()
         {
             HideAllPanels();
@@ -385,30 +456,50 @@ namespace SudokuRoguelike.UI
 
             var tomorrow = DateTime.Today.AddDays(1);
             var resetIn = tomorrow - DateTime.Now;
-            var resetLabel = $"Resets in {(int)resetIn.TotalHours:D2}:{resetIn.Minutes:D2}";
+            var resetLabel = LocalizationService.Format(
+                "Challenge.Daily.ResetIn",
+                "Resets in {0:D2}:{1:D2}",
+                (int)resetIn.TotalHours,
+                resetIn.Minutes);
 
             FindAndSetText(_dailyWalkPanel, "StreakLabel",
-                $"Streak: {goals.CurrentStreak} day{(goals.CurrentStreak == 1 ? "" : "s")}");
+                LocalizationService.FormatPlural(
+                    goals.CurrentStreak,
+                    "Challenge.Daily.Streak.One",
+                    "Challenge.Daily.Streak.Many",
+                    "Streak: {0} day",
+                    "Streak: {0} days"));
             FindAndSetText(_dailyWalkPanel, "StampsLabel",
-                $"Ink Stamps: {goals.TotalInkStamps}  ·  {completedCount}/3 today  ·  {resetLabel}");
+                LocalizationService.Format(
+                    "Challenge.Daily.StampsSummary",
+                    "Ink Stamps: {0}  -  {1}/3 today  -  {2}",
+                    goals.TotalInkStamps,
+                    completedCount,
+                    resetLabel));
 
             for (var i = 0; i < 3; i++)
             {
                 var done = goals.TodayGoalCompleted[i];
                 var tierTag = defs[i].Tier switch
                 {
-                    DailyGoalService.GoalTier.Easy   => "[Easy]   ",
-                    DailyGoalService.GoalTier.Medium => "[Medium] ",
-                    DailyGoalService.GoalTier.Hard   => "[Hard]   ",
+                    DailyGoalService.GoalTier.Easy   => LocalizationService.T("Challenge.Daily.Tier.Easy", "[Easy]   "),
+                    DailyGoalService.GoalTier.Medium => LocalizationService.T("Challenge.Daily.Tier.Medium", "[Medium] "),
+                    DailyGoalService.GoalTier.Hard   => LocalizationService.T("Challenge.Daily.Tier.Hard", "[Hard]   "),
                     _                                => ""
                 };
                 var statusMark = done ? "\u2713 " : "\u25cb ";
-                var rewardPart = done ? "" : $"  \u2192 {defs[i].RewardDescription}";
+                var rewardPart = done
+                    ? ""
+                    : LocalizationService.Format(
+                        "Challenge.Daily.GoalRewardSuffix",
+                        "  -> {0}",
+                        DailyGoalService.GetRewardDescription(defs[i]));
                 FindAndSetText(_dailyWalkPanel, $"Goal{i}",
-                    $"{statusMark}{tierTag}{defs[i].Description}{rewardPart}");
+                    $"{statusMark}{tierTag}{DailyGoalService.GetGoalDescription(defs[i])}{rewardPart}");
             }
         }
 
+        // [REQ: SEASON-UI-001] Monthly Walk panel: prominent main menu panel showing theme, personal best, countdown-to-reset
         private void RefreshMonthlyWalkPanel()
         {
             if (_monthlyWalkPanel == null) return;
@@ -427,20 +518,34 @@ namespace SudokuRoguelike.UI
             var best = seasonal?.GetBest(now.Year, now.Month) ?? 0;
 
             FindAndSetText(_monthlyWalkPanel, "MonthlyBestLabel",
-                best > 0 ? $"Personal Best: {best:N0}" : "Personal Best: —");
+                best > 0
+                    ? LocalizationService.Format("Challenge.Monthly.PersonalBest", "Personal Best: {0:N0}", best)
+                    : LocalizationService.T("Challenge.Monthly.PersonalBest.None", "Personal Best: -"));
 
             if (best > 0 && seasonal != null
                 && seasonal.TryGetBestBreakdown(now.Year, now.Month,
                     out _, out var hp, out var pencilUsed, out var timeSeconds))
             {
-                var hpPart = hp >= 0 ? $"HP: {hp}" : "HP: —";
-                var pencilPart = pencilUsed >= 0 ? $"Pencil used: {pencilUsed}" : "Pencil used: —";
+                var hpPart = hp >= 0
+                    ? LocalizationService.Format("Challenge.Monthly.Best.Hp", "HP: {0}", hp)
+                    : LocalizationService.T("Challenge.Monthly.Best.Hp.None", "HP: -");
+                var pencilPart = pencilUsed >= 0
+                    ? LocalizationService.Format("Challenge.Monthly.Best.PencilUsed", "Pencil used: {0}", pencilUsed)
+                    : LocalizationService.T("Challenge.Monthly.Best.PencilUsed.None", "Pencil used: -");
                 var timePart = timeSeconds >= 0
-                    ? $"Time: {timeSeconds / 60:00}:{timeSeconds % 60:00}"
-                    : "Time: —";
+                    ? LocalizationService.Format(
+                        "Challenge.Monthly.Best.Time",
+                        "Time: {0}",
+                        $"{timeSeconds / 60:00}:{timeSeconds % 60:00}")
+                    : LocalizationService.T("Challenge.Monthly.Best.Time.None", "Time: -");
 
                 FindAndSetText(_monthlyWalkPanel, "MonthlyBestBreakdownLabel",
-                    $"{hpPart}  ·  {pencilPart}  ·  {timePart}");
+                    LocalizationService.Format(
+                        "Challenge.Monthly.BestBreakdown",
+                        "{0}  -  {1}  -  {2}",
+                        hpPart,
+                        pencilPart,
+                        timePart));
             }
             else
             {
@@ -470,6 +575,7 @@ namespace SudokuRoguelike.UI
             _menu.Show(MenuScreen.ProfileSelect);
         }
 
+        // [REQ: INPUT-PROFILE-002] SelectProfileSlot/DeleteProfileSlot/RefreshProfileSelectCards: manage 3-slot profile selection, deletion, and card display
         public void SelectProfileSlot(int slot)
         {
             _profileSlots.SelectSlot(slot);
@@ -480,6 +586,12 @@ namespace SudokuRoguelike.UI
             _profile = new ProfileService(_save);
 
             LocalizationService.SetLanguage(_profile.LoadOptions().Language);
+            if (_gameBootstrap != null)
+            {
+                _gameBootstrap.ContinueStartupAfterProfileSelection(this);
+                return;
+            }
+
             ShowMainMenu();
 
             // New profile (tutorial not yet seen) → prompt to play the intro tutorial.
@@ -497,7 +609,7 @@ namespace SudokuRoguelike.UI
             _profile = new ProfileService(_save);
 
             RefreshProfileSelectCards();
-            SetStatus($"Profile {slot + 1} deleted.");
+            SetStatus(LocalizationService.Format("ProfileSelect.Status.Deleted", "Profile {0} deleted.", slot + 1));
         }
 
         private void RefreshProfileSelectCards()
@@ -517,17 +629,21 @@ namespace SudokuRoguelike.UI
 
                 if (s.IsEmpty)
                 {
-                    txt.text = "Empty\n\nClick Load to\ncreate a new profile.";
+                    txt.text = LocalizationService.T("Profile.EmptySlot");
                 }
                 else
                 {
-                    var runInfo = s.HasActiveRun ? " (run in progress)" : "";
-                    var lastPlayed = string.IsNullOrEmpty(s.LastPlayedUtc) ? "Never"
+                    var runInfo = s.HasActiveRun ? " (" + LocalizationService.T("run in progress") + ")" : "";
+                    var lastPlayed = string.IsNullOrEmpty(s.LastPlayedUtc) ? LocalizationService.T("Never")
                         : System.DateTime.Parse(s.LastPlayedUtc).ToString("yyyy-MM-dd");
-                    txt.text = $"Class: {s.LastPlayedClass}\n"
-                             + $"Runs: {s.TotalRunsStarted} started / {s.TotalRunsCompleted} won\n"
-                             + $"Bosses: {s.TotalBossesDefeated}\n"
-                             + $"Last played: {lastPlayed}{runInfo}";
+                    txt.text = LocalizationService.Format("Profile.SlotInfo",
+                        "Class: {0}\nRuns: {1} started / {2} won\nBosses: {3}\nLast played: {4}{5}",
+                        s.LastPlayedClass,
+                        s.TotalRunsStarted,
+                        s.TotalRunsCompleted,
+                        s.TotalBossesDefeated,
+                        lastPlayed,
+                        runInfo);
                 }
 
                 // Mark active slot with gold outline on the card
@@ -553,7 +669,9 @@ namespace SudokuRoguelike.UI
             }
             else
             {
-                SetStatus(LocalizationService.T("No run to resume."));
+                SetStatus(LocalizationService.T(
+                    "MainMenu.Status.NoRunToResume",
+                    "No run to resume."));
             }
         }
 
@@ -570,7 +688,7 @@ namespace SudokuRoguelike.UI
                 if (lbl != null)
                 {
                     // [UX-FIX] Show plain "Resume" (greyed) when no run is active — no run details.
-                    lbl.text  = "Resume";
+                    lbl.text  = LocalizationService.T("Resume");
                     lbl.color = GamePalette.WithAlpha(GamePalette.AccentGold, 0.35f);
                 }
                 return;
@@ -584,7 +702,12 @@ namespace SudokuRoguelike.UI
             var env = _save.HasSaveFile() ? _save.Load() : null;
             var rs = env?.ActiveRunState;
             if (rs != null && lbl != null)
-                lbl.text = $"Resume  ·  {ClassCatalog.GetDefinition(rs.ClassId).Name}  ·  Floor {rs.CurrentFloor + 1}  ·  HP {rs.CurrentHP}/{rs.MaxHP}";
+                lbl.text = LocalizationService.Format("Resume.Button.Active",
+                    "Resume  -  {0}  -  Floor {1}  -  HP {2}/{3}",
+                    ClassCatalog.GetDefinition(rs.ClassId).Name,
+                    rs.CurrentFloor + 1,
+                    rs.CurrentHP,
+                    rs.MaxHP);
         }
 
         // ── Class Select ──
@@ -600,6 +723,8 @@ namespace SudokuRoguelike.UI
             _classLockOverlays[classId] = overlay;
         }
 
+        // [REQ: META-UNLOCK-003] RefreshClassLockStates: unlocked classes shown fully interactive with normal colours
+        // [REQ: META-UNLOCK-004] Locked classes are greyed out (button non-interactive, lock icon overlay visible, muted text colour)
         public void RefreshClassLockStates()
         {
             var meta = _profile.LoadMetaProgress();
@@ -628,7 +753,10 @@ namespace SudokuRoguelike.UI
         {
             if (_harmonyReadout == null || _gameModesController == null) return;
             var level = _gameModesController.SelectedHarmonyLevel;
-            _harmonyReadout.text = $"Difficulty: {HarmonyDifficultyService.GetDisplayName(level)}  ({HarmonyDifficultyService.GetHudLabel(level)})";
+            _harmonyReadout.text = LocalizationService.Format("Harmony.Readout",
+                "Difficulty: {0}  ({1})",
+                HarmonyName(level),
+                HarmonyDifficultyService.GetHudLabel(level));
         }
 
         // C-3 — Hover tooltip showing unlock condition for locked class buttons
@@ -640,7 +768,7 @@ namespace SudokuRoguelike.UI
             // [UX-FIX] Never show unlock progress tooltip for classes the player already has.
             if (isUnlocked) return;
 
-            var progress = GetUnlockProgress(classId, meta);
+            var progress = MainMenuClassInfoPresenter.GetUnlockProgress(classId, meta);
 
             // Only show tooltip if there is unlock progress to display
             if (progress == null) return;
@@ -736,90 +864,13 @@ namespace SudokuRoguelike.UI
             // Update class info text
             if (_classInfoText != null)
             {
-                var def = ClassCatalog.GetDefinition(classId);
                 var meta = _profile.LoadMetaProgress();
                 var isUnlocked = IsClassUnlockedOrDebug(classId, meta);
-                var allUnlocks = ClassCatalog.GetAllUnlocks(classId);
+                var view = MainMenuClassInfoPresenter.Build(classId, meta, isUnlocked);
 
                 _classInfoText.supportRichText = true;
-                if (isUnlocked)
-                {
-                    // Derive level and XP progress
-                    var garden = meta?.GardenProgression;
-                    var totalXp = 0;
-                    if (garden != null)
-                        for (var i = 0; i < garden.ClassEntries.Count; i++)
-                            if (garden.ClassEntries[i].ClassId == classId) { totalXp = garden.ClassEntries[i].TotalXp; break; }
-
-                    var level = XpTable.DeriveLevel(totalXp);
-                    var xpIntoLevel = totalXp - XpTable.CumulativeXpForLevel(level);
-                    var xpToNext = level < 40 ? XpTable.XpToNextLevel(level) : 0;
-
-                    _classInfoText.color = new Color(0.96f, 0.93f, 0.82f, 1f);
-                    var sb = new StringBuilder();
-                    sb.Append($"<b>{LocalizationService.T(def.Name)}</b>  Lv{level}{(level >= 40 ? " MAX" : "")}");
-                    sb.AppendLine(level < 40 ? $"   XP: {xpIntoLevel}/{xpToNext}" : $"   XP: MAX");
-                    sb.AppendLine($"HP:{def.BaseHP}  Pencil:{def.BasePencil}  Slots:{def.BaseItemSlots}  |  {def.PassiveDescription}");
-                    // Compact unlock table: 3 per row, highlight achieved (gold) vs upcoming (dim)
-                    sb.AppendLine("─ Level Unlocks ─");
-                    var itemsOnRow = 0;
-                    for (var ui = 0; ui < allUnlocks.Length; ui++)
-                    {
-                        var (ulvl, udesc) = allUnlocks[ui];
-                        var achieved = ulvl <= level;
-                        if (achieved)
-                            sb.Append($"<color=#C8A44A>[L{ulvl}✓]</color> {udesc}");
-                        else
-                            sb.Append($"<color=#888888>[L{ulvl}]</color> {udesc}");
-                        itemsOnRow++;
-                        if (itemsOnRow == 2 || ui == allUnlocks.Length - 1) { sb.AppendLine(); itemsOnRow = 0; }
-                        else sb.Append("  ");
-                    }
-                    sb.AppendLine("─ Exclusive Unlocks ─");
-                    var exItem = ItemService.GetExclusiveItemForClass(classId);
-                    var exRelic = RelicService.GetExclusiveRelicForClass(classId);
-                    if (exItem.HasValue)
-                    {
-                        sb.Append(level >= 15
-                            ? $"<color=#C8A44A>[L15✓] {ItemService.GetItemName(exItem.Value)}</color>"
-                            : "<color=#888888>[L15] Unlocks at Level 15: ???</color>");
-                        sb.Append("  ");
-                    }
-                    if (exRelic.HasValue)
-                        sb.AppendLine(level >= 30
-                            ? $"<color=#C8A44A>[L30✓] {RelicService.GetRelicName(exRelic.Value)}</color>"
-                            : "<color=#888888>[L30] Unlocks at Level 30: ???</color>");
-                    _classInfoText.text = sb.ToString().TrimEnd();
-                }
-                else
-                {
-                    _classInfoText.color = new Color(0.80f, 0.55f, 0.35f, 1f);
-                    var sb = new StringBuilder();
-                    sb.AppendLine($"<b>{LocalizationService.T(def.Name)}  —  LOCKED</b>");
-                    sb.Append($"Unlock: {def.UnlockCondition}");
-                    var progress = GetUnlockProgress(classId, meta);
-                    if (!string.IsNullOrEmpty(progress)) sb.AppendLine($"   ({progress})");
-                    else sb.AppendLine();
-                    sb.AppendLine($"HP:{def.BaseHP}  Pencil:{def.BasePencil}  Slots:{def.BaseItemSlots}  |  {def.PassiveDescription}");
-                    sb.AppendLine("─ Level Unlocks (preview) ─");
-                    var itemsOnRow = 0;
-                    for (var ui = 0; ui < allUnlocks.Length; ui++)
-                    {
-                        var (ulvl, udesc) = allUnlocks[ui];
-                        sb.Append($"<color=#888888>[L{ulvl}]</color> {udesc}");
-                        itemsOnRow++;
-                        if (itemsOnRow == 2 || ui == allUnlocks.Length - 1) { sb.AppendLine(); itemsOnRow = 0; }
-                        else sb.Append("  ");
-                    }
-                    sb.AppendLine("─ Exclusive Unlocks ─");
-                    var exItemL = ItemService.GetExclusiveItemForClass(classId);
-                    var exRelicL = RelicService.GetExclusiveRelicForClass(classId);
-                    if (exItemL.HasValue)
-                        sb.Append("<color=#888888>[L15] Unlocks at Level 15: ???</color>  ");
-                    if (exRelicL.HasValue)
-                        sb.AppendLine("<color=#888888>[L30] Unlocks at Level 30: ???</color>");
-                    _classInfoText.text = sb.ToString().TrimEnd();
-                }
+                _classInfoText.color = view.Color;
+                _classInfoText.text = view.Text;
             }
         }
 
@@ -830,7 +881,9 @@ namespace SudokuRoguelike.UI
             var meta = _profile.LoadMetaProgress();
             if (!IsClassUnlockedOrDebug(_selectedClass, meta))
             {
-                SetStatus(LocalizationService.T("Class not yet unlocked."));
+                SetStatus(LocalizationService.T(
+                    "MainMenu.Status.ClassLocked",
+                    "Class not yet unlocked."));
                 return;
             }
 
@@ -862,7 +915,9 @@ namespace SudokuRoguelike.UI
             var meta = _profile.LoadMetaProgress();
             if (!IsClassUnlockedOrDebug(_selectedClass, meta))
             {
-                SetStatus(LocalizationService.T("Class not yet unlocked."));
+                SetStatus(LocalizationService.T(
+                    "MainMenu.Status.ClassLocked",
+                    "Class not yet unlocked."));
                 return;
             }
 
@@ -912,7 +967,7 @@ namespace SudokuRoguelike.UI
 
             // Passive description
             var passiveTxt = InRunUiFactory.CreateText(overlay.transform, "Passive",
-                def.PassiveDescription, 12, TextAnchor.UpperCenter,
+                MainMenuClassInfoPresenter.GetClassPassive(def), 12, TextAnchor.UpperCenter,
                 new Color(0.90f, 0.87f, 0.72f, 1f));
             passiveTxt.rectTransform.anchorMin = new Vector2(0.05f, 0.38f);
             passiveTxt.rectTransform.anchorMax = new Vector2(0.95f, 0.62f);
@@ -921,7 +976,7 @@ namespace SudokuRoguelike.UI
 
             // Stats line
             var statsTxt = InRunUiFactory.CreateText(overlay.transform, "Stats",
-                $"HP: {def.BaseHP}  ·  Pencil: {def.BasePencil}  ·  Item Slots: {def.BaseItemSlots}",
+                LocalizationService.Format("RunConfirm.StatsLine", "HP: {0}  -  Pencil: {1}  -  Item Slots: {2}", def.BaseHP, def.BasePencil, def.BaseItemSlots),
                 11, TextAnchor.UpperCenter, new Color(0.75f, 0.72f, 0.58f, 1f));
             statsTxt.rectTransform.anchorMin = new Vector2(0.05f, 0.28f);
             statsTxt.rectTransform.anchorMax = new Vector2(0.95f, 0.40f);
@@ -929,9 +984,9 @@ namespace SudokuRoguelike.UI
 
             var modeLabel = _pendingLaunchMode switch
             {
-                GameMode.EndlessZen   => "Mode: Endless Zen",
-                GameMode.SpiritTrials => $"Mode: Spirit Trials  Â·  Tier: {_pendingTrialsTier}",
-                _                     => $"Mode: Garden Run  Â·  Harmony: {HarmonyDifficultyService.GetDisplayName(_gameModesController?.SelectedHarmonyLevel ?? 0)}"
+                GameMode.EndlessZen => LocalizationService.T("RunConfirm.Mode.EndlessZen", "Mode: Endless Zen"),
+                GameMode.SpiritTrials => LocalizationService.Format("RunConfirm.Mode.SpiritTrials", "Mode: Spirit Trials  -  Tier: {0}", _pendingTrialsTier),
+                _ => LocalizationService.Format("RunConfirm.Mode.GardenRun", "Mode: Garden Run  -  Harmony: {0}", HarmonyName(_gameModesController?.SelectedHarmonyLevel ?? 0))
             };
             var modeTxt = InRunUiFactory.CreateText(overlay.transform, "ModeState",
                 modeLabel, 10, TextAnchor.UpperCenter, new Color(0.86f, 0.82f, 0.66f, 1f));
@@ -940,7 +995,7 @@ namespace SudokuRoguelike.UI
             modeTxt.rectTransform.offsetMin = modeTxt.rectTransform.offsetMax = Vector2.zero;
 
             // C-4 — Show irregular toggle state in modal
-            var irregularLine = _allowIrregularPuzzles ? "Irregular puzzles: ON" : "Irregular puzzles: off";
+            var irregularLine = LocalizationService.T(_allowIrregularPuzzles ? "RunConfirm.Irregular.On" : "RunConfirm.Irregular.Off", _allowIrregularPuzzles ? "Irregular puzzles: ON" : "Irregular puzzles: off");
             var irregularTxt = InRunUiFactory.CreateText(overlay.transform, "IrregularState",
                 irregularLine, 10, TextAnchor.UpperCenter,
                 _allowIrregularPuzzles
@@ -952,7 +1007,7 @@ namespace SudokuRoguelike.UI
 
             // "Begin" button — shifted down to leave room for C-4 irregular line
             var beginBtn = InRunUiFactory.CreateActionButton(overlay.transform, "BtnBegin",
-                new Vector2(0.08f, 0.03f), new Vector2(0.46f, 0.20f), "Begin", UiAction.Begin);
+                new Vector2(0.08f, 0.03f), new Vector2(0.46f, 0.20f), LocalizationService.T("Begin"), UiAction.Begin);
             var beginLbl = beginBtn.transform.Find("Label")?.GetComponent<Text>();
             if (beginLbl != null) beginLbl.color = GamePalette.AccentGold;
             beginBtn.onClick.AddListener(() =>
@@ -964,7 +1019,7 @@ namespace SudokuRoguelike.UI
 
             // "Back" button
             var backBtn = InRunUiFactory.CreateActionButton(overlay.transform, "BtnBack",
-                new Vector2(0.54f, 0.03f), new Vector2(0.92f, 0.20f), "Back", UiAction.Back);
+                new Vector2(0.54f, 0.03f), new Vector2(0.92f, 0.20f), LocalizationService.T("Back"), UiAction.Back);
             backBtn.onClick.AddListener(() =>
             {
                 Destroy(overlayRoot);
@@ -1007,14 +1062,18 @@ namespace SudokuRoguelike.UI
             var meta = _profile.LoadMetaProgress();
             if (!_debugEnableAllFeatures && !(meta?.EndlessZenUnlocked ?? false))
             {
-                SetStatus("Endless Zen unlocks after 10 run starts.");
+                SetStatus(LocalizationService.T(
+                    "MainMenu.Status.EndlessZenLocked",
+                    "Endless Zen unlocks after 10 run starts."));
                 return;
             }
 
             _pendingLaunchMode = GameMode.EndlessZen;
             RefreshClassLockStates();
             _menu.Show(MenuScreen.ClassSelect);
-            SetStatus("Select a class for Endless Zen.");
+            SetStatus(LocalizationService.T(
+                "MainMenu.Status.SelectEndlessZenClass",
+                "Select a class for Endless Zen."));
         }
 
         public void ShowSpiritTrialsTierSelect()
@@ -1036,7 +1095,9 @@ namespace SudokuRoguelike.UI
             var meta = _profile.LoadMetaProgress();
             if (!_debugEnableAllFeatures && !(meta?.SpiritTrialsUnlocked ?? false))
             {
-                SetStatus("Spirit Trials unlock after your first boss defeat.");
+                SetStatus(LocalizationService.T(
+                    "MainMenu.Status.SpiritTrialsLocked",
+                    "Spirit Trials unlock after your first boss defeat."));
                 return;
             }
 
@@ -1044,7 +1105,8 @@ namespace SudokuRoguelike.UI
             _pendingTrialsTier = tier;
             RefreshClassLockStates();
             _menu.Show(MenuScreen.ClassSelect);
-            SetStatus($"Select a class for Spirit Trials ({tier}).");
+            SetStatus(LocalizationService.Format("MainMenu.Status.SelectSpiritTrialsClass",
+                "Select a class for Spirit Trials ({0}).", tier));
         }
 
         public void StartSpiritTrials()
@@ -1057,7 +1119,9 @@ namespace SudokuRoguelike.UI
         public void OnDebugEnableAllChanged(bool isOn)
         {
             _debugEnableAllFeatures = isOn;
-            SetStatus(isOn ? "Debug: All features enabled." : "Debug mode off.");
+            SetStatus(isOn
+                ? LocalizationService.T("MainMenu.Status.DebugEnabled", "Debug: All features enabled.")
+                : LocalizationService.T("MainMenu.Status.DebugDisabled", "Debug mode off."));
         }
 
         // ── Quit ──
@@ -1114,26 +1178,29 @@ namespace SudokuRoguelike.UI
             var maxUnlocked = _gameModesController?.GetMaxUnlockedHarmonyLevel(meta) ?? 0;
             var perk = _gameModesController?.SelectedHarmonyPerk ?? HarmonyPerkId.None;
 
-            SetPanelButtonState("BtnEndless", endlessUnlocked, endlessUnlocked ? "Start Endless Zen" : "Endless Zen (Locked)");
-            SetPanelButtonState("BtnZenRecords", endlessUnlocked, "Records");
-            SetPanelButtonState("BtnTrials", trialsUnlocked, trialsUnlocked ? "Spirit Trials" : "Spirit Trials (Locked)");
+            SetPanelButtonState("BtnEndless", endlessUnlocked, LocalizationService.T(endlessUnlocked ? "Start Endless Zen" : "Endless Zen (Locked)"));
+            SetPanelButtonState("BtnZenRecords", endlessUnlocked, LocalizationService.T("Records"));
+            SetPanelButtonState("BtnTrials", trialsUnlocked, LocalizationService.T(trialsUnlocked ? "Spirit Trials" : "Spirit Trials (Locked)"));
             SetPanelButtonState("BtnHarmonyPrev", harmonyLevel > 0, "<");
             SetPanelButtonState("BtnHarmonyNext", harmonyLevel < maxUnlocked, ">");
 
-            SetPanelText("HarmonySelectedLabel",
-                $"{HarmonyDifficultyService.GetDisplayName(harmonyLevel)}  ({HarmonyDifficultyService.GetHudLabel(harmonyLevel)})");
-            SetPanelText("HarmonySubLabel",
-                $"Unlocked range: H0-H{maxUnlocked}  •  XP ×{HarmonyDifficultyService.GetXpMultiplier(harmonyLevel):0.0}");
+            SetPanelText("HarmonySelectedLabel", LocalizationService.Format("Harmony.SelectedLabel",
+                "{0}  ({1})",
+                HarmonyName(harmonyLevel),
+                HarmonyDifficultyService.GetHudLabel(harmonyLevel)));
+            SetPanelText("HarmonySubLabel", LocalizationService.Format("Harmony.SubLabel", "Unlocked range: H0-H{0}  -  XP x{1:0.0}", maxUnlocked, HarmonyDifficultyService.GetXpMultiplier(harmonyLevel)));
 
             var perkUnlocked = harmonyLevel >= 4;
             SetPanelButtonState("BtnHarmonyPerk", perkUnlocked,
                 perkUnlocked
-                    ? $"Perk: {HarmonyDifficultyService.GetPerkDisplayName(perk)}"
-                    : "Perk: Locked until H4");
+                    ? LocalizationService.Format("Harmony.Perk.Button", "Perk: {0}", HarmonyPerkName(perk))
+                    : LocalizationService.T("Perk: Locked until H4"));
             SetPanelText("HarmonyPerkDesc",
                 perkUnlocked
-                    ? HarmonyDifficultyService.GetPerkDescription(perk)
-                    : "Perks unlock at H4, H6, H8, and H10.");
+                    ? HarmonyPerkDescription(perk)
+                    : LocalizationService.T(
+                        "MainMenu.Perks.UnlockHint",
+                        "Perks unlock at H4, H6, H8, and H10."));
         }
 
         private void SetPanelButtonState(string buttonName, bool interactable, string label)
@@ -1158,6 +1225,28 @@ namespace SudokuRoguelike.UI
         }
 
         // ── Sudoku Basics First-Time Tutorial ──
+
+        public void ShowFirstRunSetupPrompt(Action onCompleted)
+        {
+            if (_firstRunSetupOverlay != null)
+                Destroy(_firstRunSetupOverlay);
+
+            var canvas = _menuCanvas != null ? _menuCanvas : FindFirstObjectByType<Canvas>();
+            if (canvas == null)
+            {
+                Debug.LogWarning("[MainMenuController] Cannot show first-run setup: menu canvas not found.");
+                onCompleted?.Invoke();
+                return;
+            }
+
+            var modal = FirstRunSetupModalController.Show(canvas, _save, () =>
+            {
+                _firstRunSetupOverlay = null;
+                onCompleted?.Invoke();
+            });
+
+            _firstRunSetupOverlay = modal != null ? modal.Root : null;
+        }
 
         public bool HasCompletedSudokuBasics()
         {
@@ -1184,14 +1273,14 @@ namespace SudokuRoguelike.UI
 
             // Title
             var title = InRunUiFactory.CreateText(overlay.transform, "Title",
-                "Welcome to Run of the Nine.",
+                LocalizationService.T("Welcome to Run of the Nine."),
                 18, TextAnchor.UpperCenter, GamePalette.AccentGold);
             title.rectTransform.anchorMin = new Vector2(0.05f, 0.72f);
             title.rectTransform.anchorMax = new Vector2(0.95f, 0.92f);
             title.rectTransform.offsetMin = title.rectTransform.offsetMax = Vector2.zero;
 
             var body = InRunUiFactory.CreateText(overlay.transform, "Body",
-                "Do you want a quick introduction to how Sudoku puzzles work?\n(This takes about 2 minutes.)",
+                LocalizationService.T("SudokuBasicsPrompt.Body"),
                 14, TextAnchor.MiddleCenter, new Color(0.92f, 0.90f, 0.82f));
             body.rectTransform.anchorMin = new Vector2(0.05f, 0.40f);
             body.rectTransform.anchorMax = new Vector2(0.95f, 0.70f);
@@ -1200,7 +1289,7 @@ namespace SudokuRoguelike.UI
 
             // "Yes, show me" button
             var yesBtn = InRunUiFactory.CreateActionButton(overlay.transform, "BtnYes",
-                new Vector2(0.08f, 0.08f), new Vector2(0.46f, 0.32f), "Yes, show me", UiAction.Start);
+                new Vector2(0.08f, 0.08f), new Vector2(0.46f, 0.32f), LocalizationService.T("Yes, show me"), UiAction.Start);
             yesBtn.onClick.AddListener(() =>
             {
                 _sudokuBasicsOverlay = null;
@@ -1211,7 +1300,7 @@ namespace SudokuRoguelike.UI
 
             // "Skip" button
             var skipBtn = InRunUiFactory.CreateActionButton(overlay.transform, "BtnSkip",
-                new Vector2(0.54f, 0.08f), new Vector2(0.92f, 0.32f), "Skip", UiAction.Skip);
+                new Vector2(0.54f, 0.08f), new Vector2(0.92f, 0.32f), LocalizationService.T("Skip"), UiAction.Skip);
             skipBtn.onClick.AddListener(() =>
             {
                 _sudokuBasicsOverlay = null;
@@ -1236,24 +1325,5 @@ namespace SudokuRoguelike.UI
             _save.Save(envelope);
         }
 
-        /// <summary>Returns a "X/Y" progress string for the class's unlock condition, or null if N/A.</summary>
-        private static string GetUnlockProgress(ClassId classId, MetaProgressionState meta)
-        {
-            var p = meta?.ClassUnlocks;
-            if (p == null) return null;
-            return classId switch
-            {
-                ClassId.GardenMonk        => $"Bosses defeated: {p.BossesDefeated}/2",
-                ClassId.ShrineArchivist   => $"Items used: {p.ItemsUsed}/15",
-                ClassId.KoiGambler        => $"Relics collected: {p.RelicsCollected}/10",
-                ClassId.StoneGardener     => $"Bosses defeated: {p.BossesDefeated}/10",
-                ClassId.LanternSeer       => $"Gold collected: {p.GoldCollected:N0}/50,000",
-                ClassId.ReedDuelist       => p.ItemCodexComplete ? "Item codex: complete!" : "Item codex: not yet complete",
-                ClassId.QuietCartographer => p.PerfectFullRunAllFloors
-                    ? "Perfect run (0 mistakes, all 5 floors): achieved!"
-                    : "Perfect run (0 mistakes, all 5 floors): not yet achieved",
-                _ => null
-            };
-        }
     }
 }

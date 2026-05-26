@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using SudokuRoguelike.Classes;
 using SudokuRoguelike.Core;
 using SudokuRoguelike.Economy;
 using SudokuRoguelike.Run;
@@ -57,8 +58,9 @@ namespace SudokuRoguelike.UI
         /// advancing to the next floor. The panel uses the same _gameOverPanel structure so it
         /// auto-hides when the next level loads.
         /// </summary>
-        public void ShowBossCleared(RunDirector run, Action onContinue = null, string continueLabel = "Continue →")
+        public void ShowBossCleared(RunDirector run, Action onContinue = null, string continueLabel = null)
         {
+            ClearBossClearedDynamicContent();
             if (_gameOverPanel != null) _gameOverPanel.SetActive(true);
             if (_gameOverPanel != null)
             {
@@ -70,9 +72,45 @@ namespace SudokuRoguelike.UI
                     bgImg.color   = new Color(1f, 1f, 1f, tex != null ? 0.85f : 0f);
                 }
 
+                // 9.1 — hide the Back button; it belongs to game-over context only
+                if (_gameOverBackBtn != null)
+                    _gameOverBackBtn.gameObject.SetActive(false);
+
+                // 9.2 — hide the details info block (class/floor/XP), belongs to game-over context only
+                SetGameOverDetailsScrimActive(false);
+                if (_gameOverDetails != null)
+                {
+                    _gameOverDetails.text = string.Empty;
+                    _gameOverDetails.gameObject.SetActive(false);
+                }
+
                 // Add a "Continue" button so the player controls when to advance, not a timer.
                 var existingContinue = _gameOverPanel.transform.Find("BossClearedContinueBtn");
                 if (existingContinue != null) UnityEngine.Object.Destroy(existingContinue.gameObject);
+
+                // 9.3 — per-floor stats panel
+                var existingStats = _gameOverPanel.transform.Find("BossClearedStats");
+                if (existingStats != null) UnityEngine.Object.Destroy(existingStats.gameObject);
+                if (run != null)
+                {
+                    var statsStr = BuildBossClearedStatsText(run);
+                    var statsGo = new GameObject("BossClearedStats", typeof(RectTransform), typeof(Text));
+                    statsGo.transform.SetParent(_gameOverPanel.transform, false);
+                    var statsRt = statsGo.GetComponent<RectTransform>();
+                    statsRt.anchorMin = new Vector2(0.30f, 0.36f);
+                    statsRt.anchorMax = new Vector2(0.70f, 0.58f);
+                    statsRt.offsetMin = statsRt.offsetMax = Vector2.zero;
+                    var statsTxt = statsGo.GetComponent<Text>();
+                    statsTxt.text = statsStr;
+                    statsTxt.alignment = TextAnchor.MiddleCenter;
+                    statsTxt.fontSize = 22;
+                    statsTxt.color = GamePalette.WinGold;
+                    statsTxt.font = FontAssetService.GetFont();
+                    var statsShadow = statsGo.AddComponent<Shadow>();
+                    statsShadow.effectColor = new Color(0f, 0f, 0f, 0.90f);
+                    statsShadow.effectDistance = new Vector2(2f, -2f);
+                }
+
                 if (onContinue != null)
                 {
                     var btnGo = new GameObject("BossClearedContinueBtn", typeof(RectTransform), typeof(Image), typeof(Button));
@@ -88,24 +126,67 @@ namespace SudokuRoguelike.UI
                     lblRt.anchorMin = Vector2.zero; lblRt.anchorMax = Vector2.one;
                     lblRt.offsetMin = lblRt.offsetMax = Vector2.zero;
                     var lblTxt = lbl.GetComponent<Text>();
-                    lblTxt.text = continueLabel;
+                    lblTxt.text = continueLabel ?? T("InRun.End.BossCleared.Continue");
                     lblTxt.alignment = TextAnchor.MiddleCenter;
                     lblTxt.fontSize = 16;
                     lblTxt.color = GamePalette.WinGold;
+                    lblTxt.font = FontAssetService.GetFont();
                     var btn = btnGo.GetComponent<Button>();
                     btn.onClick.AddListener(() => onContinue?.Invoke());
                 }
             }
             if (_gameOverSummary != null)
             {
-                _gameOverSummary.text = "Boss Defeated!";
+                _gameOverSummary.text = T("InRun.End.BossCleared.Title");
                 _gameOverSummary.color = GamePalette.WinGold;
             }
+        }
+
+        public readonly struct BossClearedStatsSnapshot
+        {
+            public BossClearedStatsSnapshot(int mistakes, int hpLost, int itemsUsed, int pencilMarks)
+            {
+                Mistakes = mistakes;
+                HpLost = hpLost;
+                ItemsUsed = itemsUsed;
+                PencilMarks = pencilMarks;
+            }
+
+            public int Mistakes { get; }
+            public int HpLost { get; }
+            public int ItemsUsed { get; }
+            public int PencilMarks { get; }
+        }
+
+        public static BossClearedStatsSnapshot BuildBossClearedStats(RunDirector run)
+        {
+            var level = run?.CurrentLevelState;
+            return new BossClearedStatsSnapshot(
+                level?.Mistakes ?? 0,
+                level?.HpLost ?? 0,
+                level?.ItemsUsedThisLevel ?? 0,
+                level?.PencilMarksUsed ?? 0);
+        }
+
+        public static string BuildBossClearedStatsText(RunDirector run)
+        {
+            var stats = BuildBossClearedStats(run);
+            return F(
+                "InRun.End.BossCleared.Stats",
+                stats.Mistakes,
+                stats.HpLost,
+                stats.ItemsUsed,
+                stats.PencilMarks);
         }
 
         /// <summary>Hides the boss-cleared interstitial panel. Only call from a player-triggered action.</summary>
         public void HideBossCleared()
         {
+            ClearBossClearedDynamicContent();
+            // Restore elements hidden during ShowBossCleared before deactivating the panel
+            if (_gameOverBackBtn != null) _gameOverBackBtn.gameObject.SetActive(true);
+            if (_gameOverDetails != null) _gameOverDetails.gameObject.SetActive(true);
+            SetGameOverDetailsScrimActive(true);
             if (_gameOverPanel != null && _gameOverPanel.activeSelf)
                 _gameOverPanel.SetActive(false);
         }
@@ -118,6 +199,8 @@ namespace SudokuRoguelike.UI
                 ShowSeasonalResult(run, victory);
                 return;
             }
+
+            ClearBossClearedDynamicContent();
 
             // Panels hidden by InRunController before calling ShowGameOver
             if (_gameOverPanel != null) _gameOverPanel.SetActive(true);
@@ -134,10 +217,16 @@ namespace SudokuRoguelike.UI
                 }
             }
 
+            // Restore elements that may have been hidden by ShowBossCleared
+            if (_gameOverBackBtn != null) _gameOverBackBtn.gameObject.SetActive(true);
+            if (_gameOverDetails != null) _gameOverDetails.gameObject.SetActive(true);
+            SetGameOverDetailsScrimActive(true);
+            ConfigureOutcomeButton(victory);
+
             // Dynamic title
             if (_gameOverSummary != null)
             {
-                _gameOverSummary.text = victory ? "Victory!" : "Defeat";
+                _gameOverSummary.text = victory ? T("InRun.End.Title.Victory") : T("InRun.End.Title.Defeat");
                 _gameOverSummary.color = victory
                     ? GamePalette.WinGold
                     : InRunUiFactory.CursedTitleRed;
@@ -166,17 +255,20 @@ namespace SudokuRoguelike.UI
                 var sb = new StringBuilder();
 
                 // Run summary
-                sb.AppendLine($"Class: {classId}   Floor: {run.State.Depth}");
-                sb.AppendLine($"HP: {run.State.CurrentHP}/{run.State.MaxHP}   Gold: {run.State.CurrentGold}");
+                var className = ClassLabel(classId);
+                sb.AppendLine(ParkNarrativeService.GetRunEndFlavor(victory, classId));
+                sb.AppendLine();
+                sb.AppendLine(F("InRun.End.Detail.ClassFloor", className, run.State.Depth));
+                sb.AppendLine(F("InRun.End.Detail.HpGold", run.State.CurrentHP, run.State.MaxHP, run.State.CurrentGold));
 
                 // XP earned this run
                 var xpEarned = result?.XpEarned ?? 0;
-                sb.AppendLine($"XP Earned This Run: +{xpEarned}");
+                sb.AppendLine(F("InRun.End.Detail.XpEarned", xpEarned));
                 sb.AppendLine();
 
                 // Level-up notification
                 if (preLevel != postLevel)
-                    sb.AppendLine($"  Level Up!  {preLevel}  \u2192  {postLevel}");
+                    sb.AppendLine(F("InRun.End.Detail.LevelUp", preLevel, postLevel));
 
                 // XP progress bar toward next level
                 if (postLevel < 40)
@@ -186,13 +278,13 @@ namespace SudokuRoguelike.UI
                         ? Math.Min(barLen, (int)(postXpInto * barLen / (float)postXpToNext))
                         : 0;
                     var bar = new string('=', filled) + new string('-', barLen - filled);
-                    sb.AppendLine($"{classId}  Lv {postLevel}");
-                    sb.AppendLine($"[{bar}]  {postXpInto} / {postXpToNext} XP");
-                    sb.AppendLine($"(to Level {postLevel + 1})");
+                    sb.AppendLine(F("InRun.End.Detail.ClassLevel", className, postLevel));
+                    sb.AppendLine(F("InRun.End.Detail.XpBar", bar, postXpInto, postXpToNext));
+                    sb.AppendLine(F("InRun.End.Detail.ToLevel", postLevel + 1));
                 }
                 else
                 {
-                    sb.AppendLine($"{classId}  Level MAX  (Lv 40)");
+                    sb.AppendLine(F("InRun.End.Detail.LevelMax", className));
                 }
 
                 // Run score
@@ -207,9 +299,9 @@ namespace SudokuRoguelike.UI
                 if (newUnlocks != null && newUnlocks.Count > 0)
                 {
                     sb.AppendLine();
-                    sb.AppendLine("NEW UNLOCK\u00a0—");
+                    sb.AppendLine(T("InRun.End.Detail.NewUnlockHeader"));
                     foreach (var cid in newUnlocks)
-                        sb.AppendLine($"  \u2605 {cid} is now available!");
+                        sb.AppendLine(F("InRun.End.Detail.ClassUnlocked", ClassLabel(cid)));
                 }
 
                 _gameOverDetails.text = sb.ToString().TrimEnd();
@@ -233,7 +325,7 @@ namespace SudokuRoguelike.UI
 
             if (_gameOverSummary != null)
             {
-                _gameOverSummary.text = $"Monthly Walk\n{theme}";
+                _gameOverSummary.text = F("InRun.End.Seasonal.Title", theme);
                 _gameOverSummary.color = GamePalette.WinGold;
             }
 
@@ -250,6 +342,18 @@ namespace SudokuRoguelike.UI
             if (completed)
                 envelope.SeasonalChallenge.SetBest(now.Year, now.Month, score, hpRemaining, pencilUsed, timeSeconds);
 
+            // Award Ink Stamps: +2 for S grade, +1 for first-ever monthly completion (regardless of grade).
+            // [REQ: SEASONAL-STAMP-001]
+            if (completed)
+            {
+                if (envelope.DailyGoals == null) envelope.DailyGoals = new DailyGoalState();
+                var isFirstCompletion = prevBest == 0;
+                if (isFirstCompletion)
+                    envelope.DailyGoals.TotalInkStamps += 1;
+                if (grade == "S")
+                    envelope.DailyGoals.TotalInkStamps += 2;
+            }
+
             envelope.ActiveSeasonalRunState = null;
             envelope.ActiveSeasonalPuzzle = null;
             save.Save(envelope);
@@ -257,19 +361,23 @@ namespace SudokuRoguelike.UI
             if (_gameOverDetails != null)
             {
                 var sb = new StringBuilder();
-                sb.AppendLine($"Grade:  {grade}");
-                sb.AppendLine($"Score:  {score:N0}");
+                sb.AppendLine(F("InRun.End.Seasonal.Grade", grade));
+                sb.AppendLine(F("InRun.End.Seasonal.Score", score));
                 sb.AppendLine();
-                sb.AppendLine($"Cells Correct:  {cellsCorrect}");
-                sb.AppendLine($"Mistakes:       {mistakes}");
-                sb.AppendLine($"Pencil Left:    {pencilLeft} / {state.MaxPencil}");
+                sb.AppendLine(F("InRun.End.Seasonal.CellsCorrect", cellsCorrect));
+                sb.AppendLine(F("InRun.End.Seasonal.Mistakes", mistakes));
+                sb.AppendLine(F("InRun.End.Seasonal.PencilLeft", pencilLeft, state.MaxPencil));
                 sb.AppendLine();
                 if (completed && score > prevBest && prevBest > 0)
-                    sb.AppendLine($"New Personal Best!  (prev: {prevBest:N0})");
+                    sb.AppendLine(F("InRun.End.Seasonal.NewPersonalBest", prevBest));
                 else if (prevBest > 0)
-                    sb.AppendLine($"Personal Best:  {prevBest:N0}");
+                    sb.AppendLine(F("InRun.End.Seasonal.PersonalBest", prevBest));
                 else
-                    sb.AppendLine("First attempt this month!");
+                    sb.AppendLine(T("InRun.End.Seasonal.FirstAttempt"));
+                if (completed && prevBest == 0)
+                    sb.AppendLine(T("InRun.End.Seasonal.InkStampFirst"));
+                if (completed && grade == "S")
+                    sb.AppendLine(T("InRun.End.Seasonal.InkStampS"));
                 sb.AppendLine();
                 sb.AppendLine(SeasonalChallengeService.GetCountdownLabel(DateTime.Today));
                 _gameOverDetails.text = sb.ToString().TrimEnd();
@@ -293,7 +401,7 @@ namespace SudokuRoguelike.UI
             if (state == null) return;
 
             var tier       = state.SpiritTrialsTier;
-            var tierName   = tier.ToString();
+            var tierName   = SpiritTierLabel(tier);
             var seconds    = state.TotalRunSeconds;
             var modCount   = run?.CurrentLevelConfig?.ActiveModifiers?.Count ?? 0;
             var cells      = level?.CorrectPlacements ?? 0;
@@ -307,8 +415,8 @@ namespace SudokuRoguelike.UI
             if (_gameOverSummary != null)
             {
                 _gameOverSummary.text  = completed
-                    ? $"Spirit Trials\n{tierName} — Complete!"
-                    : $"Spirit Trials\n{tierName} — Failed";
+                    ? F("InRun.End.Trials.TitleComplete", tierName)
+                    : F("InRun.End.Trials.TitleFailed", tierName);
                 _gameOverSummary.color = completed ? GamePalette.WinGold : InRunUiFactory.CursedTitleRed;
             }
 
@@ -345,27 +453,27 @@ namespace SudokuRoguelike.UI
                 var sb   = new StringBuilder();
                 if (completed)
                 {
-                    sb.AppendLine($"Score:          {score:N0}");
-                    sb.AppendLine($"Time:           {mins}:{secs:D2}");
-                    sb.AppendLine($"Cells Filled:   {cells}");
-                    sb.AppendLine($"Pencil Marks:   {pencilUsed}");
-                    sb.AppendLine($"Mistakes:       {mistakes}");
-                    if (modCount > 0) sb.AppendLine($"Modifiers:      +{modCount}");
+                    sb.AppendLine(F("InRun.End.Trials.Score", score));
+                    sb.AppendLine(F("InRun.End.Trials.Time", mins, secs));
+                    sb.AppendLine(F("InRun.End.Trials.CellsFilled", cells));
+                    sb.AppendLine(F("InRun.End.Trials.PencilMarks", pencilUsed));
+                    sb.AppendLine(F("InRun.End.Trials.Mistakes", mistakes));
+                    if (modCount > 0) sb.AppendLine(F("InRun.End.Trials.Modifiers", modCount));
                     sb.AppendLine();
                     if (score > prevBest && prevBest > 0)
-                        sb.AppendLine($"New Personal Best!  (prev: {prevBest:N0})");
+                        sb.AppendLine(F("InRun.End.Trials.NewPersonalBest", prevBest));
                     else if (prevBest > 0)
-                        sb.AppendLine($"Personal Best:  {prevBest:N0}");
+                        sb.AppendLine(F("InRun.End.Trials.PersonalBest", prevBest));
                     else
-                        sb.AppendLine("First completion!");
+                        sb.AppendLine(T("InRun.End.Trials.FirstCompletion"));
                 }
                 else
                 {
-                    sb.AppendLine("The spirit trials await again.");
+                    sb.AppendLine(T("InRun.End.Trials.AwaitAgain"));
                     sb.AppendLine();
-                    sb.AppendLine($"Cells Filled:   {cells}");
-                    sb.AppendLine($"Mistakes:       {mistakes}");
-                    if (prevBest > 0) sb.AppendLine($"Best Score:     {prevBest:N0}");
+                    sb.AppendLine(F("InRun.End.Trials.CellsFilled", cells));
+                    sb.AppendLine(F("InRun.End.Trials.Mistakes", mistakes));
+                    if (prevBest > 0) sb.AppendLine(F("InRun.End.Trials.BestScore", prevBest));
                 }
                 _gameOverDetails.text = sb.ToString().TrimEnd();
             }
@@ -391,7 +499,7 @@ namespace SudokuRoguelike.UI
 
             if (_gameOverSummary != null)
             {
-                _gameOverSummary.text  = $"Endless Zen\nDepth {depth}";
+                _gameOverSummary.text  = F("InRun.End.Zen.Title", depth);
                 _gameOverSummary.color = GamePalette.WinGold;
             }
 
@@ -412,21 +520,65 @@ namespace SudokuRoguelike.UI
                 var mins = (int)(seconds / 60);
                 var secs = (int)(seconds % 60);
                 var sb   = new StringBuilder();
-                sb.AppendLine($"Depth Reached:  {depth}");
-                sb.AppendLine($"Session Time:   {mins}:{secs:D2}");
-                sb.AppendLine($"Mistakes:       {mistakes}");
+                sb.AppendLine(F("InRun.End.Zen.DepthReached", depth));
+                sb.AppendLine(F("InRun.End.Zen.SessionTime", mins, secs));
+                sb.AppendLine(F("InRun.End.Zen.Mistakes", mistakes));
                 sb.AppendLine();
                 if (isNewBest && prevBest > 0)
-                    sb.AppendLine($"New Personal Best!  (prev: {prevBest})");
+                    sb.AppendLine(F("InRun.End.Zen.NewPersonalBest", prevBest));
                 else if (prevBest > 0)
-                    sb.AppendLine($"Personal Best:  {prevBest}");
+                    sb.AppendLine(F("InRun.End.Zen.PersonalBest", prevBest));
                 else
-                    sb.AppendLine("First Endless Zen session!");
+                    sb.AppendLine(T("InRun.End.Zen.FirstSession"));
                 sb.AppendLine();
-                sb.AppendLine($"Total Sessions: {stats.TotalZenSessions}");
+                sb.AppendLine(F("InRun.End.Zen.TotalSessions", stats.TotalZenSessions));
                 _gameOverDetails.text = sb.ToString().TrimEnd();
             }
         }
+
+        private static string T(string key) => LocalizationService.T(key);
+
+        private void SetGameOverDetailsScrimActive(bool active)
+        {
+            var scrim = _gameOverPanel != null ? _gameOverPanel.transform.Find("GameOverDetailsScrim") : null;
+            if (scrim != null) scrim.gameObject.SetActive(active);
+        }
+
+        private void ClearBossClearedDynamicContent()
+        {
+            if (_gameOverPanel == null) return;
+            RemoveDynamicChild("BossClearedContinueBtn");
+            RemoveDynamicChild("BossClearedStats");
+        }
+
+        private void RemoveDynamicChild(string name)
+        {
+            var child = _gameOverPanel.transform.Find(name);
+            if (child == null) return;
+            child.gameObject.SetActive(false);
+            UnityEngine.Object.Destroy(child.gameObject);
+        }
+
+        private void ConfigureOutcomeButton(bool victory)
+        {
+            if (_gameOverBackBtn == null) return;
+            InRunUiFactory.ApplyActionIcon(_gameOverBackBtn, victory ? UiAction.Confirm : UiAction.Back, compact: true);
+            var label = _gameOverBackBtn.transform.Find("Label")?.GetComponent<Text>();
+            if (label != null)
+                label.text = victory ? T("InRun.End.ClaimReward") : T("Back");
+        }
+
+        private static string F(string key, params object[] args) =>
+            LocalizationService.Format(key, key, args);
+
+        private static string ClassLabel(ClassId classId)
+        {
+            var def = ClassCatalog.GetDefinition(classId);
+            return def != null ? LocalizationService.T(def.Name, def.Name) : classId.ToString();
+        }
+
+        private static string SpiritTierLabel(SpiritTrialsTier tier) =>
+            LocalizationService.T($"SpiritTrials.Tier.{tier}", tier.ToString());
 
         private static int GetClassTotalXpFromSave(SaveFileEnvelope envelope, ClassId classId)
         {

@@ -35,14 +35,27 @@ and UI layout conceived and directed by Philipp Brune.
 Concept icon art generated with the assistance of Fooocus
 (open-source AI image generation).
 All prompts, curation, and creative direction by Philipp Brune.
+Runtime asset provenance is tracked in
+docs/legal/asset-provenance-register.md.
 
 **Music & Audio**
-Procedurally generated at runtime. Composition structure,
-sound design, and audio direction by Philipp Brune,
-with assistance from AI tools (see AI Assistance).
+Authored candidate music, SFX, and UI audio generated through
+project-owned procedural synthesis. Composition structure, sound
+design, and audio direction by Philipp Brune, with assistance from AI
+tools (see AI Assistance). Runtime procedural fallback remains
+available for development builds if an authored clip is missing.
 
-[PLACEHOLDER — list any third-party fonts, sprites, or audio
-files here if applicable, with their respective licenses]
+**Font**
+Roboto Regular by Google is bundled as the baseline UI font:
+Assets/Resources/Fonts/MainFont.ttf.
+Licensed under the Apache License 2.0.
+Font notice: docs/legal/third-party/Roboto-NOTICE.md.
+Bundled license text: docs/legal/third-party/APACHE-2.0.txt.
+
+No third-party sprite or stock audio asset files are currently declared
+beyond the credits and notices listed in this document. Any future
+third-party asset files must be listed here with source and license
+before release.
 
 ---
 
@@ -55,13 +68,24 @@ unity.com
 
 **Unity Packages**
 Custom Input Remap Layer · Unity 2D (Sprite, Tilemap) · Unity UI (uGUI) ·
-Unity Analytics · Unity Test Framework · Unity Audio
+Unity Test Framework · Unity Audio
 All packages © Unity Technologies, distributed under the Unity
 Package Distribution License.
 
+**Third-Party Development Tools**
+Google Mobile Dependency Resolver for Unity, version 1.2.185
+Bundled editor tooling under Assets/MobileDependencyResolver/Editor.
+Licensed under the Apache License 2.0.
+Full license text: Assets/MobileDependencyResolver/Editor/LICENSE.
+
 **Platform Services**
-Steam® — Achievements & Leaderboards
-Steamworks SDK © Valve Corporation
+Local achievement tracking is implemented. A Steamworks-compatible
+achievement bridge is present and activates only in builds where a
+supported Steamworks SDK assembly is imported.
+
+No Steamworks SDK binaries are bundled in this repository. Add the SDK
+package, license notices, and platform validation before claiming Steam
+release support.
 
 ---
 
@@ -86,7 +110,7 @@ for all content rests with the developer.
 
 ## Special Thanks
 
-[PLACEHOLDER — playtesters, community members, family & friends]
+No public special-thanks names are listed for this build.
 
 ---
 
@@ -116,6 +140,15 @@ All other trademarks, trade names, and brand names referenced herein
 are the property of their respective owners and are used for
 identification purposes only.
 
+**Privacy & Analytics Notice**
+No platform telemetry or Unity Analytics package is enabled in the release
+baseline. Current local run summaries are used only for in-game end-screen
+statistics and are not transmitted by a platform analytics service.
+Privacy notice: docs/legal/privacy-analytics-notice.md.
+
 **Asset Licenses**
-[PLACEHOLDER — list any third-party font, audio, or artwork
-licenses here if applicable]
+Third-party font notices are listed above and tracked in
+docs/legal/asset-provenance-register.md. No separate third-party stock
+audio or artwork asset licenses are currently declared beyond the
+notices above. Any future third-party asset must be added here with
+source, author, license, and file path before release.

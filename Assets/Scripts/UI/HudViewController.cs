@@ -41,6 +41,7 @@ namespace SudokuRoguelike.UI
         private Text _modifierInfoText;
 
         // ── Combo / Passive ──
+        private GameObject _comboBox;
         private Text _comboText;
         private Text _passiveText;
 
@@ -69,6 +70,8 @@ namespace SudokuRoguelike.UI
         // ── Dirty-flag cache: avoid per-frame string allocations when values haven't changed ──
         private int _cachedHp = -1, _cachedMaxHp = -1, _cachedShield = -1;
         private int _cachedPencil = -1, _cachedMaxPencil = -1;
+        private int _cachedHpBarHp = -1, _cachedHpBarMax = -1;
+        private int _cachedPencilBarPencil = -1, _cachedPencilBarMax = -1;
         private int _cachedTimerSec = -2, _cachedRunTimerSec = -2;
 
         // ── Bag icon cache: sprites preloaded on first use, reused on every subsequent frame ──
@@ -107,6 +110,18 @@ namespace SudokuRoguelike.UI
             _pencilText = pencilText;
             _bagItemButtons = new List<Button>();
             _bagHighlightCells = new HashSet<(int, int)>();
+            RemoveLegacyTimerBacking();
+        }
+
+        private void RemoveLegacyTimerBacking()
+        {
+            var timerBg = _sudokuPanel != null ? _sudokuPanel.transform.Find("TimerBg") : null;
+            if (timerBg == null) return;
+
+            if (Application.isPlaying)
+                Destroy(timerBg.gameObject);
+            else
+                DestroyImmediate(timerBg.gameObject);
         }
 
         // Cached sprite lookup — loads from Resources on first access, returns cached on subsequent calls.
@@ -114,9 +129,49 @@ namespace SudokuRoguelike.UI
         {
             if (string.IsNullOrEmpty(path)) return null;
             if (_bagIconCache.TryGetValue(path, out var cached)) return cached;
-            var s = Resources.Load<Sprite>(path);
-            if (s != null) _bagIconCache[path] = s;
+            var s = InRunUiFactory.LoadResourceSprite(path);
+            _bagIconCache[path] = s;
             return s;
+        }
+
+        private Sprite GetFullTextureBagIcon(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return null;
+
+            var cacheKey = path + "#full";
+            if (_bagIconCache.TryGetValue(cacheKey, out var cached)) return cached;
+
+            var texture = Resources.Load<Texture2D>(path);
+            var sprite = texture != null
+                ? Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), 100f)
+                : GetBagIcon(path);
+
+            _bagIconCache[cacheKey] = sprite;
+            return sprite;
+        }
+
+        private static void SetBagItemIconLayout(Image iconImg, bool empty)
+        {
+            if (iconImg == null) return;
+
+            var rt = iconImg.rectTransform;
+            if (empty)
+            {
+                rt.anchorMin = new Vector2(0.05f, 0.16f);
+                rt.anchorMax = new Vector2(0.31f, 0.84f);
+            }
+            else
+            {
+                rt.anchorMin = new Vector2(0.04f, 0.12f);
+                rt.anchorMax = new Vector2(0.36f, 0.88f);
+            }
+
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+            rt.sizeDelta = Vector2.zero;
+            iconImg.type = Image.Type.Simple;
+            iconImg.preserveAspect = true;
+            iconImg.raycastTarget = false;
         }
 
         public void StartPuzzleTimer()
@@ -155,7 +210,7 @@ namespace SudokuRoguelike.UI
             if (item != null)
             {
                 var desc = ItemService.GetItemDescription(item.Type, item.Rarity);
-                OnStatusChanged?.Invoke($"{ItemService.GetItemName(item.Type)}: {desc}  [A to use]");
+                OnStatusChanged?.Invoke(F("InRun.Hud.Status.ItemControllerHint", ItemService.GetItemName(item.Type), desc));
             }
         }
 
@@ -189,7 +244,7 @@ namespace SudokuRoguelike.UI
             if (item == null) return;
             var name = ItemService.GetItemName(item.Type);
             var desc = ItemService.GetItemDescription(item.Type, item.Rarity);
-            OnStatusChanged?.Invoke($"{name} [{item.Rarity}]: {desc}");
+            OnStatusChanged?.Invoke(F("InRun.Hud.Status.ItemInspect", name, RarityLabel(item.Rarity), desc));
         }
 
         public void Refresh(RunState state, LevelConfig levelConfig)
@@ -200,13 +255,13 @@ namespace SudokuRoguelike.UI
             {
                 _cachedHp    = state.CurrentHP;
                 _cachedMaxHp = state.MaxHP;
-                _hpText.text = $"HP: {state.CurrentHP}/{state.MaxHP}";
+                _hpText.text = F("InRun.Hud.Hp", state.CurrentHP, state.MaxHP);
             }
             if (_pencilText != null && (state.CurrentPencil != _cachedPencil || state.MaxPencil != _cachedMaxPencil))
             {
                 _cachedPencil    = state.CurrentPencil;
                 _cachedMaxPencil = state.MaxPencil;
-                _pencilText.text = $"Pencil: {state.CurrentPencil}/{state.MaxPencil}";
+                _pencilText.text = F("InRun.Hud.Pencil", state.CurrentPencil, state.MaxPencil);
             }
 
             if (_hpBarFill == null && _sudokuPanel != null)
@@ -218,41 +273,46 @@ namespace SudokuRoguelike.UI
                 if (pBg != null) _pencilBarFill = pBg.Find("PencilBarFill")?.GetComponent<Image>();
             }
 
+            RemoveLegacyTimerBacking();
+
             // Timer display — lazy-created the first time
             if (_timerText == null && _sudokuPanel != null)
             {
-                // Shared dark scrim behind both timers
-                var timerBg = new GameObject("TimerBg", typeof(RectTransform), typeof(Image));
-                timerBg.transform.SetParent(_sudokuPanel.transform, false);
-                var timerBgRt = timerBg.GetComponent<RectTransform>();
-                timerBgRt.anchorMin = new Vector2(0.73f, 0.85f);
-                timerBgRt.anchorMax = new Vector2(0.94f, 1.00f);
-                timerBgRt.offsetMin = Vector2.zero;
-                timerBgRt.offsetMax = Vector2.zero;
-                timerBg.GetComponent<Image>().color = new Color(0.04f, 0.05f, 0.08f, 0.72f);
-                timerBg.GetComponent<Image>().raycastTarget = false;
-
                 _timerText = InRunUiFactory.CreateText(_sudokuPanel.transform, "PuzzleTimer",
-                    "", 12, TextAnchor.MiddleRight, new Color(0.80f, 0.77f, 0.60f, 0.88f));
+                    "", 15, TextAnchor.MiddleRight, new Color(1.00f, 0.96f, 0.74f, 1.00f));
                 var rt = _timerText.rectTransform;
-                rt.anchorMin = new Vector2(0.74f, 0.93f);
+                rt.anchorMin = new Vector2(0.74f, 0.94f);
                 rt.anchorMax = new Vector2(0.93f, 1.00f);
                 rt.offsetMin = Vector2.zero;
                 rt.offsetMax = Vector2.zero;
+                _timerText.fontStyle = FontStyle.Bold;
                 _timerText.raycastTarget = false;
+                var shadow = _timerText.gameObject.AddComponent<Shadow>();
+                shadow.effectColor = new Color(0f, 0f, 0f, 0.92f);
+                shadow.effectDistance = new Vector2(1f, -1f);
+                var outline = _timerText.gameObject.AddComponent<Outline>();
+                outline.effectColor = new Color(0f, 0f, 0f, 0.90f);
+                outline.effectDistance = new Vector2(1f, -1f);
             }
 
             // Run total timer — positioned just below puzzle timer
             if (_runTimerText == null && _sudokuPanel != null)
             {
                 _runTimerText = InRunUiFactory.CreateText(_sudokuPanel.transform, "RunTimer",
-                    "", 10, TextAnchor.MiddleRight, new Color(0.75f, 0.72f, 0.55f, 0.88f));
+                    "", 12, TextAnchor.MiddleRight, new Color(0.96f, 0.91f, 0.68f, 0.98f));
                 var rt = _runTimerText.rectTransform;
-                rt.anchorMin = new Vector2(0.74f, 0.86f);
-                rt.anchorMax = new Vector2(0.93f, 0.93f);
+                rt.anchorMin = new Vector2(0.74f, 0.88f);
+                rt.anchorMax = new Vector2(0.93f, 0.94f);
                 rt.offsetMin = Vector2.zero;
                 rt.offsetMax = Vector2.zero;
+                _runTimerText.fontStyle = FontStyle.Bold;
                 _runTimerText.raycastTarget = false;
+                var shadow = _runTimerText.gameObject.AddComponent<Shadow>();
+                shadow.effectColor = new Color(0f, 0f, 0f, 0.92f);
+                shadow.effectDistance = new Vector2(1f, -1f);
+                var outline = _runTimerText.gameObject.AddComponent<Outline>();
+                outline.effectColor = new Color(0f, 0f, 0f, 0.90f);
+                outline.effectDistance = new Vector2(1f, -1f);
             }
 
             if (_timerText != null)
@@ -290,7 +350,7 @@ namespace SudokuRoguelike.UI
                     if (totalSec != _cachedRunTimerSec)
                     {
                         _cachedRunTimerSec = totalSec;
-                        _runTimerText.text = $"Run: {totalSec / 60:00}:{totalSec % 60:00}";
+                        _runTimerText.text = F("InRun.Hud.RunTimer", $"{totalSec / 60:00}:{totalSec % 60:00}");
                     }
                 }
                 else
@@ -299,8 +359,10 @@ namespace SudokuRoguelike.UI
                 }
             }
 
-            if (_hpBarFill != null && (state.CurrentHP != _cachedHp || state.MaxHP != _cachedMaxHp || state.ShieldPoints != _cachedShield))
+            if (_hpBarFill != null && (state.CurrentHP != _cachedHpBarHp || state.MaxHP != _cachedHpBarMax || state.ShieldPoints != _cachedShield))
             {
+                _cachedHpBarHp = state.CurrentHP;
+                _cachedHpBarMax = state.MaxHP;
                 _cachedShield = state.ShieldPoints;
                 InRunUiFactory.EnsureBarSprite(_hpBarFill);
                 _hpBarFill.fillAmount = state.MaxHP > 0 ? Mathf.Clamp01(state.CurrentHP / (float)state.MaxHP) : 0;
@@ -316,7 +378,7 @@ namespace SudokuRoguelike.UI
                     badgeRt.offsetMin = Vector2.zero;
                     badgeRt.offsetMax = Vector2.zero;
                     _shieldBadgeText = badgeGo.GetComponent<Text>();
-                    _shieldBadgeText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                    _shieldBadgeText.font = FontAssetService.GetFont();
                     _shieldBadgeText.fontSize = 10;
                     _shieldBadgeText.fontStyle = FontStyle.Bold;
                     _shieldBadgeText.alignment = TextAnchor.MiddleCenter;
@@ -325,8 +387,10 @@ namespace SudokuRoguelike.UI
                 }
                 _shieldBadgeText.text = state.ShieldPoints > 0 ? $"\u26CA {state.ShieldPoints}" : string.Empty;
             }
-            if (_pencilBarFill != null && (state.CurrentPencil != _cachedPencil || state.MaxPencil != _cachedMaxPencil))
+            if (_pencilBarFill != null && (state.CurrentPencil != _cachedPencilBarPencil || state.MaxPencil != _cachedPencilBarMax))
             {
+                _cachedPencilBarPencil = state.CurrentPencil;
+                _cachedPencilBarMax = state.MaxPencil;
                 InRunUiFactory.EnsureBarSprite(_pencilBarFill);
                 _pencilBarFill.fillAmount = state.MaxPencil > 0 ? Mathf.Clamp01(state.CurrentPencil / (float)state.MaxPencil) : 0;
             }
@@ -368,8 +432,9 @@ namespace SudokuRoguelike.UI
                 _floorModBanner = new GameObject("FloorModBanner", typeof(RectTransform), typeof(Image));
                 _floorModBanner.transform.SetParent(_sudokuPanel.transform, false);
                 var rt = _floorModBanner.GetComponent<RectTransform>();
-                rt.anchorMin = new Vector2(0.22f, 0.835f);
-                rt.anchorMax = new Vector2(0.70f, 0.865f);
+                // Dedicated lane between title (0.93-1.00) and level info (0.83-0.875).
+                rt.anchorMin = new Vector2(0.24f, 0.885f);
+                rt.anchorMax = new Vector2(0.68f, 0.920f);
                 rt.offsetMin = Vector2.zero;
                 rt.offsetMax = Vector2.zero;
                 _floorModBanner.GetComponent<Image>().color = InRunUiFactory.ModBannerBg;
@@ -390,11 +455,11 @@ namespace SudokuRoguelike.UI
                 {
                     _cachedFloorModsRef      = mods;
                     _cachedFloorModIsSpecial = specialMode;
-                    var sb = new StringBuilder(specialMode ? "Active Modifiers: " : "Floor Modifiers: ");
+                    var sb = new StringBuilder(T(specialMode ? "InRun.Hud.ActiveModifiers" : "InRun.Hud.FloorModifiers"));
                     for (var i = 0; i < mods.Count; i++)
                     {
                         if (i > 0) sb.Append(" | ");
-                        sb.Append(InRunUiFactory.FormatModName(mods[i]));
+                        sb.Append(BossService.GetModifierName(mods[i]));
                     }
                     _cachedFloorModText = sb.ToString();
                 }
@@ -449,9 +514,9 @@ namespace SudokuRoguelike.UI
                     for (var i = 0; i < activeMods.Count; i++)
                     {
                         if (i > 0) sb.Append('\n');
-                        sb.Append(InRunUiFactory.FormatModName(activeMods[i]));
+                        sb.Append(BossService.GetModifierName(activeMods[i]));
                         sb.Append(": ");
-                        sb.Append(InRunUiFactory.GetModDesc(activeMods[i]));
+                        sb.Append(BossService.GetModifierDescription(activeMods[i]));
                     }
                     _cachedModInfoText = sb.ToString();
 
@@ -488,13 +553,14 @@ namespace SudokuRoguelike.UI
             if (_comboText == null)
             {
                 var go = new GameObject("ComboCounter", typeof(RectTransform), typeof(Image));
+                _comboBox = go;
                 go.transform.SetParent(_sudokuPanel.transform, false);
                 var rt = go.GetComponent<RectTransform>();
-                rt.anchorMin = new Vector2(0.22f, 0.875f);
-                rt.anchorMax = new Vector2(0.70f, 0.918f);
+                rt.anchorMin = new Vector2(0.24f, 0.885f);
+                rt.anchorMax = new Vector2(0.68f, 0.920f);
                 rt.offsetMin = Vector2.zero;
                 rt.offsetMax = Vector2.zero;
-                go.GetComponent<Image>().color = new Color(0.04f, 0.05f, 0.08f, 0.60f);
+                go.GetComponent<Image>().color = InRunUiFactory.SudokuPuzzleBoxBg;
                 go.GetComponent<Image>().raycastTarget = false;
                 _comboText = InRunUiFactory.CreateText(go.transform, "ComboText", "", 18, TextAnchor.MiddleCenter,
                     GamePalette.AccentGold);
@@ -504,14 +570,17 @@ namespace SudokuRoguelike.UI
             if (streak >= 2)
             {
                 var wasHidden = !_comboText.gameObject.activeSelf;
-                _comboText.text = $"Combo \u00d7{streak}!";
+                _comboText.text = F("InRun.Hud.Combo", streak);
+                if (_comboBox != null) _comboBox.SetActive(true);
                 _comboText.gameObject.SetActive(true);
+                if (_floorModBanner != null) _floorModBanner.SetActive(false);
                 if (wasHidden && _comboText.rectTransform != null)
                     StartCoroutine(AnimationHelper.PulseScale(
                         _comboText.rectTransform, 1f, 1.18f, AnimationHelper.ComboPulseDuration));
             }
             else
             {
+                if (_comboBox != null) _comboBox.SetActive(false);
                 _comboText.gameObject.SetActive(false);
             }
         }
@@ -526,20 +595,31 @@ namespace SudokuRoguelike.UI
                 var go = new GameObject("PassiveLabel", typeof(RectTransform), typeof(Image));
                 go.transform.SetParent(_sudokuPanel.transform, false);
                 var rt = go.GetComponent<RectTransform>();
-                // L5: passive sits in the space freed below the bag panel (bag bottom raised to 0.10)
+                // Compact lane below the bag panel; text size adapts instead of widening across the board.
                 rt.anchorMin = new Vector2(0.01f, 0.01f);
                 rt.anchorMax = new Vector2(0.21f, 0.09f);
                 rt.offsetMin = Vector2.zero;
                 rt.offsetMax = Vector2.zero;
-                go.GetComponent<Image>().color = new Color(0.04f, 0.06f, 0.08f, 0.55f);
+                go.GetComponent<Image>().color = InRunUiFactory.SudokuPuzzleBoxBg;
                 go.GetComponent<Image>().raycastTarget = false;
-                _passiveText = InRunUiFactory.CreateText(go.transform, "PassiveText", "", 9, TextAnchor.MiddleLeft,
+                _passiveText = InRunUiFactory.CreateText(go.transform, "PassiveText", "", 11, TextAnchor.MiddleLeft,
                     InRunUiFactory.PassiveLabelColor);
                 _passiveText.horizontalOverflow = HorizontalWrapMode.Wrap;
+                _passiveText.verticalOverflow = VerticalWrapMode.Truncate;
+                _passiveText.resizeTextForBestFit = true;
+                _passiveText.resizeTextMinSize = 8;
+                _passiveText.resizeTextMaxSize = 11;
+                _passiveText.lineSpacing = 0.90f;
+                _passiveText.rectTransform.anchorMin = Vector2.zero;
+                _passiveText.rectTransform.anchorMax = Vector2.one;
+                _passiveText.rectTransform.offsetMin = new Vector2(6f, 2f);
+                _passiveText.rectTransform.offsetMax = new Vector2(-6f, -2f);
             }
 
             var def = SudokuRoguelike.Classes.ClassCatalog.GetDefinition(run.State.ClassId);
-            _passiveText.text = def != null ? $"Passive: {def.PassiveDescription}" : "";
+            _passiveText.text = def != null
+                ? F("InRun.Hud.Passive", LocalizationService.T($"Class.Passive.{def.Id}", def.PassiveDescription))
+                : "";
         }
 
         // ────────────────────── Class XP badge ──────────────────────
@@ -551,15 +631,13 @@ namespace SudokuRoguelike.UI
 
             if (_classBadgeIcon == null)
             {
-                // Small badge panel in top-right corner of sudoku panel
-                var badgeGo = new GameObject("ClassBadge", typeof(RectTransform), typeof(Image));
+                // HpPencilScrim already provides the shared backing for class, HP, and pencil.
+                var badgeGo = new GameObject("ClassBadge", typeof(RectTransform));
                 badgeGo.transform.SetParent(_sudokuPanel.transform, false);
                 var rt = badgeGo.GetComponent<RectTransform>();
                 rt.anchorMin = new Vector2(0.01f, 0.89f);
                 rt.anchorMax = new Vector2(0.21f, 1.00f);
                 rt.offsetMin = rt.offsetMax = Vector2.zero;
-                badgeGo.GetComponent<Image>().color = new Color(0.04f, 0.06f, 0.08f, 0.55f);
-                badgeGo.GetComponent<Image>().raycastTarget = false;
 
                 var iconGo = new GameObject("ClassIcon", typeof(RectTransform), typeof(Image));
                 iconGo.transform.SetParent(badgeGo.transform, false);
@@ -600,7 +678,18 @@ namespace SudokuRoguelike.UI
                         var prestige = garden.GetPrestigeTier(meta, classId);
                         _cachedClassBadgeText  = prestige > 0
                             ? $"{classDef.Name}\nLv {level} ★{prestige}"
-                            : $"{classDef.Name}\nLv {level}";
+                            : $"{LocalizationService.T(classDef.Name)}\nLv {level}";
+                        if (prestige > 0)
+                            _cachedClassBadgeText = F(
+                                "InRun.Hud.ClassBadge.Prestige",
+                                LocalizationService.T(classDef.Name),
+                                level,
+                                prestige);
+                        else
+                            _cachedClassBadgeText = F(
+                                "InRun.Hud.ClassBadge",
+                                LocalizationService.T(classDef.Name),
+                                level);
                         _cachedClassBadgeColor = prestige >= 5
                             ? new Color(1.00f, 0.80f, 0.25f, 1f)
                             : prestige >= 1
@@ -609,7 +698,7 @@ namespace SudokuRoguelike.UI
                     }
                     else
                     {
-                        _cachedClassBadgeText  = classDef.Name;
+                        _cachedClassBadgeText  = LocalizationService.T(classDef.Name);
                         _cachedClassBadgeColor = Color.white;
                     }
                 }
@@ -653,7 +742,7 @@ namespace SudokuRoguelike.UI
                 bagGo.GetComponent<Image>().color = InRunUiFactory.BagPanelBg;
                 _bagPanel = bagGo;
 
-                var title = InRunUiFactory.CreateText(bagGo.transform, "BagTitle", "BAG", 13,
+                var title = InRunUiFactory.CreateText(bagGo.transform, "BagTitle", T("InRun.Hud.BagTitle"), 13,
                     TextAnchor.MiddleCenter, InRunUiFactory.AccentGold);
                 title.rectTransform.anchorMin = new Vector2(0.02f, 0.93f);
                 title.rectTransform.anchorMax = new Vector2(0.98f, 1.00f);
@@ -671,9 +760,9 @@ namespace SudokuRoguelike.UI
                 divGo.GetComponent<Image>().color = GamePalette.AccentGoldSubtle;
 
                 // Relics section label
-                var relicTitle = InRunUiFactory.CreateText(bagGo.transform, "RelicTitle", "RELICS", 9,
-                    TextAnchor.MiddleCenter, new Color(0.75f, 0.65f, 0.40f, 0.90f));
-                relicTitle.rectTransform.anchorMin = new Vector2(0.02f, 0.44f);
+                var relicTitle = InRunUiFactory.CreateText(bagGo.transform, "RelicTitle", T("InRun.Hud.RelicsTitle"), 13,
+                    TextAnchor.MiddleCenter, InRunUiFactory.AccentGold);
+                relicTitle.rectTransform.anchorMin = new Vector2(0.02f, 0.43f);
                 relicTitle.rectTransform.anchorMax = new Vector2(0.98f, 0.47f);
                 relicTitle.rectTransform.offsetMin = Vector2.zero;
                 relicTitle.rectTransform.offsetMax = Vector2.zero;
@@ -730,8 +819,8 @@ namespace SudokuRoguelike.UI
                 return;
             }
 
-            // Relic area: 0.02-0.43 (bottom half of bag, below divider)
-            // Pack up to 4 mini-icons per row (each ~25% width)
+            // Relic area: 0.02-0.43 (bottom half of bag, below divider).
+            // Pack up to 4 mini-icons per row; each slot is square, with width controlling height.
             const int perRow    = 4;
             const float relicAreaBottom = 0.02f;
             const float relicAreaTop    = 0.43f;
@@ -756,6 +845,9 @@ namespace SudokuRoguelike.UI
                 rt.anchorMax = new Vector2(xMax, yMax);
                 rt.offsetMin = Vector2.zero;
                 rt.offsetMax = Vector2.zero;
+                var aspect = go.AddComponent<AspectRatioFitter>();
+                aspect.aspectMode = AspectRatioFitter.AspectMode.WidthControlsHeight;
+                aspect.aspectRatio = 1f;
                 go.GetComponent<Image>().color = InRunUiFactory.BagSlotBg;
 
                 // Icon fills the slot (no text — compact 25% size)
@@ -896,6 +988,7 @@ namespace SudokuRoguelike.UI
                     btn.interactable = true;
                     if (iconImg != null)
                     {
+                        SetBagItemIconLayout(iconImg, false);
                         var spr = GetBagIcon("items/icon_" + ItemService.GetIconName(item.Type));
                         iconImg.sprite = spr;
                         iconImg.color = spr != null ? Color.white : InRunUiFactory.IconNoSprite;
@@ -936,7 +1029,7 @@ namespace SudokuRoguelike.UI
                     if (nameText != null)
                     {
                         var chargeTxt = item.Charges > 1 ? $" \u00d7{item.Charges}" : "";
-                        nameText.text = $"{ItemService.GetItemName(item.Type)}{chargeTxt}\n<size=8>{item.Rarity}</size>";
+                        nameText.text = F("InRun.Hud.ItemSlot", ItemService.GetItemName(item.Type), chargeTxt, RarityLabel(item.Rarity));
                         nameText.color = InRunUiFactory.TextColor;
                     }
                 }
@@ -956,14 +1049,15 @@ namespace SudokuRoguelike.UI
                     }
                     if (iconImg != null)
                     {
-                        if (_emptySlotSprite == null) _emptySlotSprite = Resources.Load<Sprite>("economy/icon_empty_slot");
+                        SetBagItemIconLayout(iconImg, true);
+                        if (_emptySlotSprite == null) _emptySlotSprite = GetFullTextureBagIcon("economy/icon_empty_slot");
                         iconImg.sprite = _emptySlotSprite;
-                        iconImg.color = InRunUiFactory.IconEmpty;
+                        iconImg.color = _emptySlotSprite != null ? InRunUiFactory.IconEmpty : Color.clear;
                         iconImg.preserveAspect = true;
                     }
                     if (nameText != null)
                     {
-                        nameText.text = "Empty";
+                        nameText.text = T("InRun.Common.Empty");
                         nameText.color = InRunUiFactory.SlotEmptyText;
                     }
                 }
@@ -992,9 +1086,9 @@ namespace SudokuRoguelike.UI
                     }
                     if (nameText != null)
                     {
-                        var useTxt = relic.UsesRemaining < 0 ? "Passive"
-                            : relic.UsesRemaining == 0 ? "Spent" : $"\u00d7{relic.UsesRemaining}";
-                        nameText.text = $"{RelicService.GetRelicName(relic.Id)}\n<size=8>{useTxt}</size>";
+                        var useTxt = relic.UsesRemaining < 0 ? T("InRun.Hud.RelicPassive")
+                            : relic.UsesRemaining == 0 ? T("InRun.Hud.RelicSpent") : $"\u00d7{relic.UsesRemaining}";
+                        nameText.text = F("InRun.Hud.RelicSlot", RelicService.GetRelicName(relic.Id), useTxt);
                         nameText.color = GamePalette.AccentGold;
                     }
                 }
@@ -1007,7 +1101,7 @@ namespace SudokuRoguelike.UI
                         iconImg.color = InRunUiFactory.IconEmpty;
                         InRunUiFactory.ClearNamedChildren(iconImg.transform, "RelicTier");
                     }
-                    if (nameText != null) { nameText.text = "No Relic"; nameText.color = InRunUiFactory.SlotEmptyText; }
+                    if (nameText != null) { nameText.text = T("InRun.Hud.NoRelic"); nameText.color = InRunUiFactory.SlotEmptyText; }
                 }
             }
 
@@ -1057,7 +1151,7 @@ namespace SudokuRoguelike.UI
                 _selectedBagSlot = idx;
                 RefreshBagHighlights();
                 var desc = ItemService.GetItemDescription(item.Type, item.Rarity);
-                OnStatusChanged?.Invoke($"{ItemService.GetItemName(item.Type)}: {desc}  [click again to use]");
+                OnStatusChanged?.Invoke(F("InRun.Hud.Status.ItemClickHint", ItemService.GetItemName(item.Type), desc));
             }
         }
 
@@ -1080,7 +1174,15 @@ namespace SudokuRoguelike.UI
             var state = _map?.Run?.State;
             if (state?.HeldRelics == null || idx >= state.HeldRelics.Count) return;
             var relic = state.HeldRelics[idx];
-            OnStatusChanged?.Invoke($"{RelicService.GetRelicName(relic.Id)}: {RelicService.GetRelicDescription(relic.Id)}");
+            OnStatusChanged?.Invoke(F("InRun.Hud.Status.RelicInspect", RelicService.GetRelicName(relic.Id), RelicService.GetRelicDescription(relic.Id)));
         }
+
+        private static string T(string key) => LocalizationService.T(key);
+
+        private static string F(string key, params object[] args) =>
+            LocalizationService.Format(key, key, args);
+
+        private static string RarityLabel(ItemRarity rarity) =>
+            LocalizationService.T($"Item.Rarity.{rarity}", rarity.ToString());
     }
 }

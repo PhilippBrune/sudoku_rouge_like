@@ -13,6 +13,7 @@ namespace SudokuRoguelike.UI
     /// Supports per-row highlight on listen (M8), conflict detection (M6),
     /// and RefreshAllLabels for profile-slot switches (M7).
     /// </summary>
+    // [REQ: INPUT-REMAP-004] KeybindingsPanelController: manages full listen → capture → conflict-check → save rebind flow
     public sealed class KeybindingsPanelController : MonoBehaviour
     {
         private InputRemapService _remap;
@@ -55,7 +56,11 @@ namespace SudokuRoguelike.UI
                 _pendingConflictAction = _listeningAction;
                 _pendingConflictKey    = pressed;
                 var conflictLabel = GetActionLabel(conflict.Value);
-                SetStatus($"'{InputRemapService.FormatKeyCode(pressed)}' is already bound to [{conflictLabel}]. Press again to override, or Esc to cancel.");
+                SetStatus(LocalizationService.Format(
+                    "Keybindings.Status.Conflict",
+                    "'{0}' is already bound to [{1}]. Press again to override, or Esc to cancel.",
+                    InputRemapService.FormatKeyCode(pressed),
+                    conflictLabel));
                 return;
             }
 
@@ -68,11 +73,14 @@ namespace SudokuRoguelike.UI
             {
                 _remap.ResetBinding(conflict.Value);
                 RefreshLabel(conflict.Value);
-                SetStatus($"Binding saved. [{GetActionLabel(conflict.Value)}] was unbound.");
+                SetStatus(LocalizationService.Format(
+                    "Keybindings.Status.SavedWithUnbind",
+                    "Binding saved. [{0}] was unbound.",
+                    GetActionLabel(conflict.Value)));
             }
             else
             {
-                SetStatus("Binding saved.");
+                SetStatus(LocalizationService.T("Keybindings.Status.Saved"));
             }
 
             RestoreRowColor(_listeningAction.Value);
@@ -92,7 +100,10 @@ namespace SudokuRoguelike.UI
             _pendingConflictKey    = KeyCode.None;
 
             HighlightRow(action);
-            SetStatus($"Press a key to bind [{InputRemapService.GetDefault(action)} → new key] (Esc to cancel)...");
+            SetStatus(LocalizationService.Format(
+                "Keybindings.Status.Listen",
+                "Press a key to bind [{0} -> new key] (Esc to cancel)...",
+                InputRemapService.GetDefault(action)));
         }
 
         private void CancelListening()
@@ -103,7 +114,7 @@ namespace SudokuRoguelike.UI
             _listeningAction       = null;
             _pendingConflictAction = null;
             _pendingConflictKey    = KeyCode.None;
-            SetStatus("Rebind cancelled.");
+            SetStatus(LocalizationService.T("Keybindings.Status.Cancelled"));
         }
 
         public void ResetAll()
@@ -111,7 +122,7 @@ namespace SudokuRoguelike.UI
             _remap?.ResetAllBindings();
             foreach (InputAction a in Enum.GetValues(typeof(InputAction)))
                 RefreshLabel(a);
-            SetStatus("All bindings reset to defaults.");
+            SetStatus(LocalizationService.T("Keybindings.Status.ResetAll"));
         }
 
         /// <summary>Refreshes all displayed key labels — call after a profile-slot switch.</summary>
@@ -161,7 +172,34 @@ namespace SudokuRoguelike.UI
             if (_statusText != null) _statusText.text = msg;
         }
 
-        private static string GetActionLabel(InputAction action) => action switch
+        public static string GetActionLabel(InputAction action)
+        {
+            return LocalizationService.T(GetActionLabelKey(action), GetActionFallback(action));
+        }
+
+        private static string GetActionLabelKey(InputAction action) => action switch
+        {
+            InputAction.MoveUp         => "Keybindings.Action.MoveUp",
+            InputAction.MoveDown       => "Keybindings.Action.MoveDown",
+            InputAction.MoveLeft       => "Keybindings.Action.MoveLeft",
+            InputAction.MoveRight      => "Keybindings.Action.MoveRight",
+            InputAction.TogglePencil   => "Keybindings.Action.TogglePencil",
+            InputAction.ClearCell      => "Keybindings.Action.ClearCell",
+            InputAction.UndoLastDigit  => "Keybindings.Action.UndoLastDigit",
+            InputAction.HighlightDigit => "Keybindings.Action.HighlightDigit",
+            InputAction.BagNext        => "Keybindings.Action.BagNext",
+            InputAction.BagPrevious    => "Keybindings.Action.BagPrevious",
+            InputAction.UseItem        => "Keybindings.Action.UseItem",
+            InputAction.InspectItem    => "Keybindings.Action.InspectItem",
+            InputAction.Confirm        => "Keybindings.Action.Confirm",
+            InputAction.Cancel         => "Keybindings.Action.Cancel",
+            InputAction.SkipAnimation  => "Keybindings.Action.SkipAnimation",
+            InputAction.TabNext        => "Keybindings.Action.TabNext",
+            InputAction.TabPrevious    => "Keybindings.Action.TabPrevious",
+            _                          => action.ToString()
+        };
+
+        private static string GetActionFallback(InputAction action) => action switch
         {
             InputAction.MoveUp         => "Move Up",
             InputAction.MoveDown       => "Move Down",
@@ -169,17 +207,17 @@ namespace SudokuRoguelike.UI
             InputAction.MoveRight      => "Move Right",
             InputAction.TogglePencil   => "Toggle Pencil",
             InputAction.ClearCell      => "Clear Cell",
-            InputAction.UndoLastDigit  => "Undo",
+            InputAction.UndoLastDigit  => "Undo Last Digit",
             InputAction.HighlightDigit => "Highlight Digit",
-            InputAction.BagNext        => "Bag Next",
-            InputAction.BagPrevious    => "Bag Prev",
+            InputAction.BagNext        => "Bag Next Slot",
+            InputAction.BagPrevious    => "Bag Prev Slot",
             InputAction.UseItem        => "Use Item",
             InputAction.InspectItem    => "Inspect Item",
             InputAction.Confirm        => "Confirm",
             InputAction.Cancel         => "Cancel",
             InputAction.SkipAnimation  => "Skip Animation",
             InputAction.TabNext        => "Tab Next",
-            InputAction.TabPrevious    => "Tab Prev",
+            InputAction.TabPrevious    => "Tab Previous",
             _                          => action.ToString()
         };
     }

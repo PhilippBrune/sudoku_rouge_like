@@ -1,6 +1,8 @@
 # Park Story Draft
 
-**Version:** 1.0 | **Date:** 2026-04-09 | **Status:** implemented
+**Version:** 1.0 | **Date:** 2026-04-09 | **Status:** superseded
+
+This draft records an earlier grounded city-park premise. The current production direction is the Japanese garden spirit roguelike described in `docs/narrative-direction.md`, `docs/GameDesignSpec.md`, `docs/AudioVisualDirection.md`, and the localized `ParkNarrativeService` content.
 
 ---
 

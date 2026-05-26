@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using SudokuRoguelike.Boss;
 using SudokuRoguelike.Core;
@@ -18,6 +20,12 @@ namespace SudokuRoguelike.UI
         private RunDirector _autoSaveBoundRun;
         private bool _rewardsGrantedForCurrentPuzzle;
         private readonly Dictionary<int, LevelConfig> _fixedNodeConfigs = new Dictionary<int, LevelConfig>();
+        private RunNavigationSnapshot _pendingGenerationRollback;
+        private bool _hasPendingGenerationRollback;
+        private readonly SemaphoreSlim _preBakeGate = new SemaphoreSlim(2, 2);
+        // Cancellation token for background node pre-bake tasks.
+        // Renewed at every floor change and run bind to abort stale tasks from the previous floor.
+        private CancellationTokenSource _preBakeCancel = new CancellationTokenSource();
 
         private void Awake()
         {
@@ -35,13 +43,21 @@ namespace SudokuRoguelike.UI
                 _profile = new ProfileService(_saveFile);
                 _autoSave = null; // force rebuild in BindAutoSave with new file
             }
+            // Cancel any in-flight pre-bake tasks from a previous run before spawning new ones.
+            if (_run != null)
+            {
+                _preBakeCancel.Cancel();
+                _preBakeCancel = new CancellationTokenSource();
+                _run.ClearPreBakedNodePuzzles();
+            }
             _run = run;
             _rewardsGrantedForCurrentPuzzle = _run.CurrentLevelState != null && _run.IsLevelComplete;
             PrepareFixedNodeConfigs();
             BindAutoSave();
         }
 
-        public bool TryClaimCurrentPuzzleRewards(out int goldEarned, out List<ItemInstance> slots)
+        public bool TryClaimCurrentPuzzleRewards(out int goldEarned, out List<ItemInstance> slots,
+            bool buildItemSlots = true)
         {
             goldEarned = 0;
             slots = new List<ItemInstance>();
@@ -57,7 +73,8 @@ namespace SudokuRoguelike.UI
             _run.CompleteLevelAndGrantRewards();
             goldEarned = Mathf.Max(0, _run.State.CurrentGold - beforeGold);
 
-            slots = _run.BuildItemRewardSlots() ?? new List<ItemInstance>();
+            if (buildItemSlots)
+                slots = _run.BuildItemRewardSlots() ?? new List<ItemInstance>();
             _rewardsGrantedForCurrentPuzzle = true;
             return true;
         }
@@ -78,10 +95,15 @@ namespace SudokuRoguelike.UI
             nextLevel = null;
 
             if (_run == null || _run.State == null) return false;
+            var rollback = _run.CaptureNavigationSnapshot();
             if (!_run.TryAdvanceToNode(nodeIndex, false)) return false;
 
             node = _run.GetCurrentNode();
-            if (node == null || node.Type != NodeType.Boss) return false;
+            if (node == null || node.Type != NodeType.Boss)
+            {
+                _run.RestoreNavigationSnapshot(rollback);
+                return false;
+            }
 
             // Always rebuild boss config after ChooseBossModifiers so ActiveModifiers includes
             // the player's chosen modifier. The fixed-config cache was built at floor entry
@@ -89,7 +111,9 @@ namespace SudokuRoguelike.UI
             nextLevel = _run.BuildLevelConfig(true, false, nodeIndex);
             nextLevel.BoardSize = Mathf.Max(nextLevel.BoardSize, 8);
 
+            CancelPreBakeForInteractiveGeneration();
             _run.StartLevelAsync(nextLevel);
+            StorePendingGenerationRollback(rollback);
             _rewardsGrantedForCurrentPuzzle = false;
             return true;
         }
@@ -101,14 +125,23 @@ namespace SudokuRoguelike.UI
 
             if (_run == null || _run.State == null) return false;
 
+            var rollback = _run.CaptureNavigationSnapshot();
             if (!_run.TryAdvanceToNode(nodeIndex, forced)) return false;
 
             node = _run.GetCurrentNode();
-            if (node == null) return false;
+            if (node == null)
+            {
+                _run.RestoreNavigationSnapshot(rollback);
+                return false;
+            }
 
             if (!RequiresPuzzleNode(node.Type))
             {
                 nextLevel = null;
+                if (node.Type == NodeType.Cursed)
+                    StorePendingGenerationRollback(rollback);
+                else
+                    ClearPendingGenerationRollback();
                 return true;
             }
 
@@ -120,9 +153,68 @@ namespace SudokuRoguelike.UI
                 nextLevel = _run.BuildLevelConfig(isBoss, isElite);
             }
 
-            _run.StartLevel(nextLevel);
+            // Use a pre-baked puzzle if the background task finished in time; otherwise generate async.
+            if (_run.TryConsumePreBakedNode(nodeIndex, out var preBakedBoard, out var preBakedOverlay))
+            {
+                Debug.Log($"[RunMapController] Pre-baked hit for node {nodeIndex} — skipping synchronous generation.");
+                _run.StartLevelWithPreBakedPuzzle(nextLevel, preBakedBoard, preBakedOverlay);
+                ClearPendingGenerationRollback();
+            }
+            else
+            {
+                CancelPreBakeForInteractiveGeneration();
+                _run.StartLevelAsync(nextLevel);
+                StorePendingGenerationRollback(rollback);
+            }
             _rewardsGrantedForCurrentPuzzle = false;
             return true;
+        }
+
+        public RunNavigationSnapshot CaptureNavigationSnapshot()
+        {
+            return _run != null ? _run.CaptureNavigationSnapshot() : default;
+        }
+
+        public void StartPuzzleAsyncWithRollback(LevelConfig config, RunNavigationSnapshot rollback)
+        {
+            if (_run == null || config == null) return;
+            CancelPreBakeForInteractiveGeneration();
+            _run.StartLevelAsync(config);
+            StorePendingGenerationRollback(rollback);
+            _rewardsGrantedForCurrentPuzzle = false;
+        }
+
+        public void StartPuzzleAsync(LevelConfig config)
+        {
+            if (_run == null || config == null) return;
+            CancelPreBakeForInteractiveGeneration();
+            _run.StartLevelAsync(config);
+            _rewardsGrantedForCurrentPuzzle = false;
+        }
+
+        public void ClearPendingGenerationRollback()
+        {
+            _hasPendingGenerationRollback = false;
+            _pendingGenerationRollback = default;
+        }
+
+        public void RollbackPendingGeneration()
+        {
+            if (_run == null || !_hasPendingGenerationRollback) return;
+            _run.RestoreNavigationSnapshot(_pendingGenerationRollback);
+            ClearPendingGenerationRollback();
+        }
+
+        private void StorePendingGenerationRollback(RunNavigationSnapshot rollback)
+        {
+            _pendingGenerationRollback = rollback;
+            _hasPendingGenerationRollback = true;
+        }
+
+        private void CancelPreBakeForInteractiveGeneration()
+        {
+            _preBakeCancel.Cancel();
+            _preBakeCancel = new CancellationTokenSource();
         }
 
         private static bool RequiresPuzzleNode(NodeType type)
@@ -186,6 +278,10 @@ namespace SudokuRoguelike.UI
             _run.AdvanceToNextFloor();
             _rewardsGrantedForCurrentPuzzle = false;
             _fixedNodeConfigs.Clear();
+            // Cancel background tasks from the previous floor and start fresh.
+            _preBakeCancel.Cancel();
+            _preBakeCancel = new CancellationTokenSource();
+            _run.ClearPreBakedNodePuzzles();
             PrepareFixedNodeConfigs();
             SaveNow();
         }
@@ -233,6 +329,7 @@ namespace SudokuRoguelike.UI
         }
 
         /// <summary>Short label for the active positive floor effect shown on the path overview.</summary>
+        // [REQ: MAP-FX-004] GetPositiveFloorEffectLabel: returns display text for the active floor bonus
         public string GetPositiveFloorEffectLabel()
         {
             if (_run?.State == null || !_run.State.HasPositiveFloorEffect) return "";
@@ -298,7 +395,8 @@ namespace SudokuRoguelike.UI
                     // Pre-bake the boss board on a background thread so floor entry doesn't stutter.
                     // StartLevelAsync reads volatile _preBakedBossBoard; falls back to sync if not ready.
                     var bakeConfig = config.Clone();
-                    Task.Run(() => _run.BakeBossBoard(bakeConfig));
+                    var token = _preBakeCancel.Token;
+                    QueuePreBake(() => _run.BakeBossBoard(bakeConfig, token), token, $"boss node {i}");
                 }
                 else if (node.Route == RouteType.RiskRoute)
                 {
@@ -309,7 +407,47 @@ namespace SudokuRoguelike.UI
                 }
 
                 _fixedNodeConfigs[i] = config.Clone();
+
+                // Pre-bake the full puzzle (board + overlay) for all non-boss puzzle nodes so
+                // TryAdvanceToNodeAndStartPuzzle can skip synchronous generation entirely.
+                if (!isBoss && RequiresPuzzleNode(node.Type))
+                {
+                    var capturedConfig = config.Clone();
+                    var capturedIndex  = i;
+                    var token          = _preBakeCancel.Token;
+                    QueuePreBake(
+                        () => _run.BakeNodePuzzle(capturedConfig, capturedIndex, token),
+                        token,
+                        $"node {capturedIndex}");
+                }
             }
+        }
+
+        private void QueuePreBake(Action action, CancellationToken token, string label)
+        {
+            Task.Run(() =>
+            {
+                var entered = false;
+                try
+                {
+                    _preBakeGate.Wait(token);
+                    entered = true;
+                    token.ThrowIfCancellationRequested();
+                    action();
+                }
+                catch (OperationCanceledException)
+                {
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"[RunMapController] Pre-bake failed for {label}: {ex.Message}");
+                }
+                finally
+                {
+                    if (entered)
+                        _preBakeGate.Release();
+                }
+            }, token);
         }
 
         public LevelConfig GetFixedLevelConfig(RunNode node)

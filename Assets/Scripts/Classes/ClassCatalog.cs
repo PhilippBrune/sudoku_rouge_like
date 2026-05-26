@@ -30,7 +30,7 @@ namespace SudokuRoguelike.Classes
             {
                 Id = ClassId.GardenMonk, Name = "Garden Monk",
                 BaseHP = 14, BasePencil = 5, BaseItemSlots = 1,
-                PassiveDescription = "Every 5 correct placements: +1 HP. Buying pencil mid-puzzle costs 1 HP instead of gold.",
+                PassiveDescription = "Every 5 correct placements: +1 HP. Level 15+: every 4.",
                 UnlockCondition = "Defeat 2 bosses"
             },
             new ClassDefinition

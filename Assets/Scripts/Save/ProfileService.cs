@@ -77,6 +77,8 @@ namespace SudokuRoguelike.Save
         /// Marks an item type as discovered in the item codex and saves.
         /// Safe to call multiple times — no-ops if already discovered.
         /// </summary>
+        // [REQ: META-CODEX-001] RecordItemDiscovery + RecordRelicDiscovery: item & relic codex discovery tracking
+        // [REQ: META-CODEX-002] Entry is marked Discovered on first acquisition only; subsequent calls are no-ops
         public void RecordItemDiscovery(ItemType type)
         {
             var envelope = _saveFile.Load();
@@ -131,6 +133,7 @@ namespace SudokuRoguelike.Save
         /// records boss mastery, recalculates completion, and saves.
         /// Returns list of newly unlocked class IDs.
         /// </summary>
+        // [REQ: META-UNLOCK-002] [REQ: META-XP-004] RecordRunAndGetNewUnlocks: XP committed at run end only (no mid-run leveling); evaluates all 8 class unlock conditions
         public List<ClassId> RecordRunAndGetNewUnlocks(RunResult result, RunState liveRunState = null)
         {
             var newUnlocks = new List<ClassId>();
@@ -217,6 +220,7 @@ namespace SudokuRoguelike.Save
             newUnlocks = _classUnlock.CheckNewUnlocks(meta);
 
             // 8. Evaluate endless zen unlock (10 runs)
+            // [REQ: ZENMODE-UNLOCK-001] Unlocked when TotalRuns ≥ 10
             if (stats.TotalRunsStarted >= 10 && !meta.EndlessZenUnlocked)
                 meta.EndlessZenUnlocked = true;
 
@@ -233,6 +237,7 @@ namespace SudokuRoguelike.Save
             }
 
             // 9. Evaluate spirit trials unlock (first boss defeat)
+            // [REQ: TRIAL-UNLOCK-001] Unlocked after first boss defeat (full run completion)
             if (stats.TotalBossesDefeated >= 1 && !meta.SpiritTrialsUnlocked)
                 meta.SpiritTrialsUnlocked = true;
 

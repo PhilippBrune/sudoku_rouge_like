@@ -11,16 +11,17 @@ namespace SudokuRoguelike.Boss
 
         // MinBoardSize: 0=any, 5=short-line/parity ok on 5×5, 6=needs ≥6 cells of geometry,
         //              7=cage-based needs ≥7, 9=entropy requires full digit range 1-9
+        // [REQ: BOSS-MOD-002] ModifierData: tier/impact/minBoardSize per modifier — used for eligibility filtering, difficulty scaling, and board-size gating
         private static readonly Dictionary<BossModifierId, (int Tier, float Impact, int MinBoardSize)> ModifierData = new()
         {
             [BossModifierId.ParityLines]     = (1, 0.15f, 5),
             [BossModifierId.DifferenceKropki] = (1, 0.20f, 0),
-            [BossModifierId.Nonconsecutive]  = (1, 0.25f, 0),
+            [BossModifierId.Nonconsecutive]  = (1, 0.25f, 6),
             [BossModifierId.DutchWhispers]   = (2, 0.30f, 6),
             [BossModifierId.RenbanLines]     = (2, 0.35f, 5),
             [BossModifierId.RatioKropki]     = (2, 0.40f, 0),
             [BossModifierId.Palindrome]      = (2, 0.30f, 6),
-            [BossModifierId.Antiknight]      = (2, 0.35f, 0),
+            [BossModifierId.Antiknight]      = (2, 0.35f, 6),
             [BossModifierId.EvenOdd]         = (2, 0.25f, 0),
             [BossModifierId.KillerCages]     = (3, 0.50f, 7),
             [BossModifierId.ArrowSums]       = (3, 0.55f, 6),
@@ -30,9 +31,9 @@ namespace SudokuRoguelike.Boss
             [BossModifierId.GermanWhispers]  = (5, 0.75f, 7),
 
             // Extended pool (IDs 15-29)
-            [BossModifierId.Antiking]          = (2, 0.30f, 0),
-            [BossModifierId.AntiBishop]        = (3, 0.45f, 6),
-            [BossModifierId.NonconsecDiagonal] = (2, 0.28f, 5),
+            [BossModifierId.Antiking]          = (2, 0.30f, 6),
+            [BossModifierId.AntiBishop]        = (3, 0.45f, 7),
+            [BossModifierId.NonconsecDiagonal] = (2, 0.28f, 6),
             [BossModifierId.DistanceGe2]       = (2, 0.32f, 6),
             [BossModifierId.EntropyGlobal]     = (4, 0.60f, 9),
             [BossModifierId.ModularRegions]    = (3, 0.40f, 0),
@@ -63,7 +64,14 @@ namespace SudokuRoguelike.Boss
             [BossModifierId.CountdownFill]   = (2, 0.35f, 0),
             [BossModifierId.HauntedCell]     = (2, 0.30f, 0),
             [BossModifierId.CrumblingRegion] = (3, 0.50f, 0),
-            [BossModifierId.PressureWave]    = (4, 0.60f, 0)  // [REQ: PRESSURE-ROLL-005] floor 3+ only
+            [BossModifierId.PressureWave]    = (4, 0.60f, 0), // [REQ: PRESSURE-ROLL-005] floor 3+ only
+
+            // [REQ: DEBUFF-HOOK-021] Boss debuffs Batch 2 (IDs 107–111) registered in ModifierData; all excluded from player pool via ≥94 guard in BuildEligiblePool
+            [BossModifierId.RadiusWipe]     = (3, 0.50f, 0), // [REQ: DEBUFF-DEF-005]
+            [BossModifierId.PencilScramble] = (4, 0.65f, 0), // [REQ: DEBUFF-DEF-008]
+            [BossModifierId.GivenReveal]    = (2, 0.40f, 0), // [REQ: DEBUFF-DEF-017]
+            [BossModifierId.RevealCost]     = (2, 0.30f, 0), // [REQ: DEBUFF-DEF-015]
+            [BossModifierId.CellBlur]       = (2, 0.35f, 0)  // [REQ: DEBUFF-DEF-011]
         };
 
         public BossService(int seed)
@@ -79,6 +87,34 @@ namespace SudokuRoguelike.Boss
         public int GetTier(BossModifierId id)
         {
             return ModifierData.TryGetValue(id, out var data) ? data.Tier : 1;
+        }
+
+        /// <summary>
+        /// AntiBishop has no valid board in the shipped 8x8 normal or irregular region layouts.
+        /// Keep it visible for reference/tutorial content, but do not generate it in a run.
+        /// </summary>
+        public static bool IsSupportedForGeneratedRun(BossModifierId modifier) =>
+            modifier != BossModifierId.AntiBishop;
+
+        /// <summary>
+        /// Returns false for modifier pairs that are individually valid but are not stable
+        /// together within the bounded runtime generation budget.
+        /// </summary>
+        public static bool CanCombineModifiers(IList<BossModifierId> selected, BossModifierId candidate)
+        {
+            if (selected == null) return true;
+            for (var i = 0; i < selected.Count; i++)
+            {
+                if (IsBlockedCombination(selected[i], candidate))
+                    return false;
+            }
+            return true;
+        }
+
+        private static bool IsBlockedCombination(BossModifierId first, BossModifierId second)
+        {
+            return (first == BossModifierId.RatioKropki && second == BossModifierId.DistanceGe2)
+                || (first == BossModifierId.DistanceGe2 && second == BossModifierId.RatioKropki);
         }
 
         [System.Obsolete("Use RollBossChoices(floor, activeFloorModifiers, minBoardSize, harmonyLevel) to ensure board-size filtering.")]
@@ -118,6 +154,7 @@ namespace SudokuRoguelike.Boss
             return DrawDistinct(pool, shown);
         }
 
+        // [REQ: BOSS-FLOOR-002] BuildEligiblePool: boss choice pool excludes active floor modifiers (passed as exclude); prevents duplicate modifier stacking
         private List<BossModifierId> BuildEligiblePool(List<BossModifierId> exclude, int minBoardSize)
         {
             var pool = new List<BossModifierId>();
@@ -130,10 +167,15 @@ namespace SudokuRoguelike.Boss
                 // Modular Regions disabled by design decision
                 if (pair.Key == BossModifierId.ModularRegions) continue;
 
+                if (!IsSupportedForGeneratedRun(pair.Key)) continue;
+
                 // Board-size gate: MinBoardSize=0 means any size is fine
                 if (pair.Value.MinBoardSize > minBoardSize) continue;
 
                 if (exclude != null && exclude.Contains(pair.Key))
+                    continue;
+
+                if (!CanCombineModifiers(exclude, pair.Key))
                     continue;
 
                 pool.Add(pair.Key);
@@ -145,14 +187,16 @@ namespace SudokuRoguelike.Boss
         {
             var result = new List<BossModifierId>();
             var seen   = new HashSet<BossModifierId>();
-            var safeCount = Math.Min(count, pool.Count);
-            for (var i = 0; i < safeCount; i++)
+            for (var i = 0; i < count && pool.Count > 0; i++)
             {
                 var idx  = _random.Next(pool.Count);
                 var pick = pool[idx];
                 pool.RemoveAt(idx);
                 if (seen.Add(pick))   // HashSet.Add returns false for duplicates
+                {
                     result.Add(pick);
+                    pool.RemoveAll(candidate => !CanCombineModifiers(result, candidate));
+                }
             }
             return result;
         }
@@ -171,14 +215,17 @@ namespace SudokuRoguelike.Boss
 
         public static string GetIconFolder(BossModifierId id)
         {
-            return id switch
+            var fallback = id switch
             {
                 BossModifierId.RowWipe or BossModifierId.ColWipe or BossModifierId.DoublePenalty
                     or BossModifierId.CellLock or BossModifierId.PencilBlind or BossModifierId.BoxWipe
                     or BossModifierId.CrossWipe or BossModifierId.PencilDrain or BossModifierId.GoldFine
+                    or BossModifierId.RadiusWipe or BossModifierId.PencilScramble or BossModifierId.GivenReveal
+                    or BossModifierId.RevealCost or BossModifierId.CellBlur
                     => "debuff",
                 _ => "modifier"
             };
+            return fallback;
         }
 
         public static string GetIconName(BossModifierId id)
@@ -295,13 +342,66 @@ namespace SudokuRoguelike.Boss
                 BossModifierId.HauntedCell            => "haunted_cell",
                 BossModifierId.CrumblingRegion        => "crumbling_region",
                 BossModifierId.PressureWave           => "pressure_wave",
+                // Boss debuffs Batch 2 (IDs 107–111)
+                // Batch 2 debuffs reuse the closest shipped debuff art until unique icons land.
+                BossModifierId.RadiusWipe             => "cross_wipe",
+                BossModifierId.PencilScramble         => "pencil_drain",
+                BossModifierId.GivenReveal            => "cell_lock",
+                BossModifierId.RevealCost             => "gold_fine",
+                BossModifierId.CellBlur               => "pencil_blind",
                 _ => ""
             };
         }
 
+        private static readonly BossModifierId[] LocalizedNameIds =
+        {
+            BossModifierId.GermanWhispers, BossModifierId.DutchWhispers, BossModifierId.ParityLines,
+            BossModifierId.RenbanLines, BossModifierId.DifferenceKropki, BossModifierId.RatioKropki,
+            BossModifierId.KillerCages, BossModifierId.ArrowSums, BossModifierId.FogOfWar,
+            BossModifierId.Palindrome, BossModifierId.Thermo, BossModifierId.BetweenLines,
+            BossModifierId.EvenOdd, BossModifierId.Nonconsecutive, BossModifierId.Antiknight,
+            BossModifierId.Antiking, BossModifierId.AntiBishop, BossModifierId.NonconsecDiagonal,
+            BossModifierId.DistanceGe2, BossModifierId.EntropyGlobal, BossModifierId.ModularRegions,
+            BossModifierId.ConsecutiveLine, BossModifierId.SlowThermo, BossModifierId.UniqueSetLine,
+            BossModifierId.FullKropki, BossModifierId.SumKropki, BossModifierId.GreaterLessThan,
+            BossModifierId.XVPairs, BossModifierId.PrimeCells, BossModifierId.FortressCells,
+            BossModifierId.RowWipe, BossModifierId.ColWipe, BossModifierId.DoublePenalty,
+            BossModifierId.CellLock, BossModifierId.PencilBlind, BossModifierId.RadiusWipe,
+            BossModifierId.PencilScramble, BossModifierId.GivenReveal, BossModifierId.RevealCost,
+            BossModifierId.CellBlur
+        };
+
+        private static readonly BossModifierId[] LocalizedDescriptionIds =
+        {
+            BossModifierId.GermanWhispers, BossModifierId.DutchWhispers, BossModifierId.ParityLines,
+            BossModifierId.RenbanLines, BossModifierId.DifferenceKropki, BossModifierId.RatioKropki,
+            BossModifierId.KillerCages, BossModifierId.ArrowSums, BossModifierId.FogOfWar,
+            BossModifierId.Palindrome, BossModifierId.Thermo, BossModifierId.BetweenLines,
+            BossModifierId.EvenOdd, BossModifierId.Nonconsecutive, BossModifierId.Antiknight,
+            BossModifierId.Antiking, BossModifierId.AntiBishop, BossModifierId.NonconsecDiagonal,
+            BossModifierId.DistanceGe2, BossModifierId.EntropyGlobal, BossModifierId.ModularRegions,
+            BossModifierId.ConsecutiveLine, BossModifierId.SlowThermo, BossModifierId.UniqueSetLine,
+            BossModifierId.FullKropki, BossModifierId.SumKropki, BossModifierId.GreaterLessThan,
+            BossModifierId.XVPairs, BossModifierId.PrimeCells, BossModifierId.FortressCells,
+            BossModifierId.RowWipe, BossModifierId.ColWipe, BossModifierId.DoublePenalty,
+            BossModifierId.CellLock, BossModifierId.PencilBlind
+        };
+
+        private static string BossNameKey(BossModifierId id) => $"Boss.Name.{id}";
+
+        private static string BossDescriptionKey(BossModifierId id) => $"Boss.Description.{id}";
+
+        public static IEnumerable<string> GetLocalizationKeys()
+        {
+            foreach (var id in LocalizedNameIds)
+                yield return BossNameKey(id);
+            foreach (var id in LocalizedDescriptionIds)
+                yield return BossDescriptionKey(id);
+        }
+
         public static string GetModifierName(BossModifierId id)
         {
-            return id switch
+            var fallback = id switch
             {
                 BossModifierId.GermanWhispers => "German Whispers",
                 BossModifierId.DutchWhispers => "Dutch Whispers",
@@ -338,13 +438,19 @@ namespace SudokuRoguelike.Boss
                 BossModifierId.DoublePenalty       => "Double Penalty",
                 BossModifierId.CellLock            => "Cell Lock",
                 BossModifierId.PencilBlind         => "Pencil Blind",
+                BossModifierId.RadiusWipe          => "Radius Wipe",
+                BossModifierId.PencilScramble      => "Pencil Scramble",
+                BossModifierId.GivenReveal         => "Given Reveal",
+                BossModifierId.RevealCost          => "Item Block",
+                BossModifierId.CellBlur            => "Cell Blur",
                 _ => id.ToString()
             };
+            return LocalizationService.T(BossNameKey(id), fallback);
         }
 
         public static string GetModifierDescription(BossModifierId id)
         {
-            return id switch
+            var fallback = id switch
             {
                 BossModifierId.GermanWhispers => "Adjacent cells on green lines must differ by 5 or more. Example: 1-7-2-8.",
                 BossModifierId.DutchWhispers => "Adjacent cells on teal lines must differ by 4 or more. Example: 1-6-2-7.",
@@ -384,6 +490,62 @@ namespace SudokuRoguelike.Boss
                 BossModifierId.CellLock      => "Wrong placement: the cell locks for 3 correct placements before you can edit it again.",
                 BossModifierId.PencilBlind   => "Wrong placement: all pencil marks in that row and column are cleared.",
                 _ => ""
+            };
+            return string.IsNullOrEmpty(fallback)
+                ? string.Empty
+                : LocalizationService.T(BossDescriptionKey(id), fallback);
+        }
+
+        public static string GetLineTypeAbbreviation(LineType type) => type switch
+        {
+            LineType.GermanWhispers  => "GW",
+            LineType.DutchWhispers   => "DW",
+            LineType.ParityLine      => "PR",
+            LineType.RenbanLine      => "RB",
+            LineType.Palindrome      => "PA",
+            LineType.Thermo          => "TH",
+            LineType.BetweenLine     => "BL",
+            LineType.ConsecutiveLine => "CL",
+            LineType.SlowThermo      => "ST",
+            LineType.UniqueSetLine   => "UL",
+            _                        => "??"
+        };
+
+        public static string GetConstraintAbbreviation(BossModifierId id)
+        {
+            return id switch
+            {
+                BossModifierId.GermanWhispers   => "GW",
+                BossModifierId.DutchWhispers    => "DW",
+                BossModifierId.ParityLines      => "PR",
+                BossModifierId.RenbanLines      => "RB",
+                BossModifierId.DifferenceKropki => "WD",
+                BossModifierId.RatioKropki      => "BD",
+                BossModifierId.KillerCages      => "KG",
+                BossModifierId.ArrowSums        => "AR",
+                BossModifierId.FogOfWar         => "FG",
+                BossModifierId.Palindrome       => "PL",
+                BossModifierId.Thermo           => "TH",
+                BossModifierId.BetweenLines     => "BL",
+                BossModifierId.EvenOdd          => "EO",
+                BossModifierId.Nonconsecutive   => "NC",
+                BossModifierId.Antiknight       => "AK",
+                BossModifierId.Antiking         => "AI",
+                BossModifierId.AntiBishop       => "AB",
+                BossModifierId.NonconsecDiagonal=> "ND",
+                BossModifierId.DistanceGe2      => "D2",
+                BossModifierId.EntropyGlobal    => "EN",
+                BossModifierId.ModularRegions   => "MR",
+                BossModifierId.ConsecutiveLine  => "CL",
+                BossModifierId.SlowThermo       => "ST",
+                BossModifierId.UniqueSetLine    => "UL",
+                BossModifierId.FullKropki       => "FK",
+                BossModifierId.SumKropki        => "SK",
+                BossModifierId.GreaterLessThan  => "GL",
+                BossModifierId.XVPairs          => "XV",
+                BossModifierId.PrimeCells       => "PM",
+                BossModifierId.FortressCells    => "FC",
+                _                              => "??"
             };
         }
 

@@ -35,7 +35,7 @@ namespace SudokuRoguelike.Run
                 Description = "All shop items cost 35% more." },
 
             // ── Medium (MinFloor 1) ────────────────────────────────────────────
-            new CurseDefinition { Id = "inkblot",           Name = "Inkblot",             Severity = CurseSeverity.Medium, MinFloor = 1,  // [REQ: CURSE-POOL-006]
+            new CurseDefinition { Id = "inkblot",           Name = "Inkblot",             Severity = CurseSeverity.Medium, MinFloor = 1,  // [REQ: CURSE-POOL-006] [REQ: CURSE-INT-006] Board setup: inkblot marks 3 cells as fogged at puzzle start
                 Description = "3 random cells are fogged at puzzle start." },
             new CurseDefinition { Id = "crumbling_focus",   Name = "Crumbling Focus",     Severity = CurseSeverity.Medium, MinFloor = 1,  // [REQ: CURSE-POOL-007]
                 Description = "Max Pencil reduced by 4 immediately." },
@@ -99,6 +99,21 @@ namespace SudokuRoguelike.Run
 
         public static CurseDefinition GetDefinition(string id) =>
             CurseById.TryGetValue(id, out var def) ? def : null;
+
+        public static string GetLocalizedName(CurseDefinition curse) =>
+            curse == null ? string.Empty : LocalizationService.T($"Curse.{curse.Id}.Name", curse.Name);
+
+        public static string GetLocalizedDescription(CurseDefinition curse) =>
+            curse == null ? string.Empty : LocalizationService.T($"Curse.{curse.Id}.Description", curse.Description);
+
+        public static IEnumerable<string> GetLocalizationKeys()
+        {
+            for (var i = 0; i < AllCurses.Count; i++)
+            {
+                yield return $"Curse.{AllCurses[i].Id}.Name";
+                yield return $"Curse.{AllCurses[i].Id}.Description";
+            }
+        }
 
         // Maps each curse ID to its icon in Resources/cursed/.
         // Unique icons (prompts_cursed_2.txt) for the 10 new entries;

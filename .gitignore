@@ -27,6 +27,7 @@ Recordings/
 *.mdb
 *.opendb
 *.VC.db
+*.lscache
 *.py
 *.ps1
 
@@ -66,6 +67,8 @@ _empty/
 # One-off utility scripts and scan output
 _scan_*.py
 _scan_result*.txt
+_coverage_result.txt
+_gaps_detail.txt
 agent.ps1
 
 # ============================================================
@@ -95,10 +98,22 @@ Assets/Scripts/My project/UserSettings/
 .githooks/*.local
 
 # ============================================================
-# No CI / git hook artifacts in this repo
+# Local git hook helpers only; CI workflow definitions are tracked
 # ============================================================
-.github/
 .githooks/
+!.github/
+!.github/workflows/
+!.github/workflows/*.yml
+!.github/workflows/*.yaml
 
 # Build output
 bin/
+
+# Unity batchmode test output
+TestResults/
+
+# Repo-managed workflow scripts
+!tools/
+!tools/run-unity-tests.ps1
+!tools/*.ps1
+!tools/*.py

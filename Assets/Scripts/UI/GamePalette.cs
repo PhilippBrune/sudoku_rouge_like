@@ -45,13 +45,13 @@ namespace SudokuRoguelike.UI
 
         // ── Board borders ────────────────────────────────────────────────────────
         public static readonly Color RegionBorder = new(1f,    0.78f, 0.24f, 0.72f);
-        public static readonly Color KillerBorder = new(0.85f, 0.15f, 0.12f, 0.90f);
+        public static readonly Color KillerBorder = new(0.98f, 0.74f, 0.26f, 0.94f);
 
         // ── Modifier line colors ─────────────────────────────────────────────────
         public static readonly Color LineGermanWhispers  = new(0.20f, 0.72f, 0.30f, 0.55f);
         public static readonly Color LineDutchWhispers   = new(0.10f, 0.95f, 0.78f, 0.75f);
         public static readonly Color LineParityLine      = new(0.10f, 0.88f, 0.80f, 0.70f);
-        public static readonly Color LineRenbanLine      = new(0.80f, 0.35f, 0.65f, 0.55f);
+        public static readonly Color LineRenbanLine      = new(0.95f, 0.52f, 0.12f, 0.75f);
         public static readonly Color LinePalindrome      = new(0.55f, 0.30f, 0.85f, 1.0f);
         public static readonly Color LineThermo          = new(0.85f, 0.45f, 0.10f, 0.70f);
         public static readonly Color LineBetweenLine     = new(0.90f, 0.90f, 0.90f, 0.60f);

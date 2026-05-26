@@ -106,3 +106,9 @@ Important restore detail:
 The checked repo does **not** include active cloud-save or conflict-resolution services. Earlier design references to `SteamCloudSyncService`, `SaveConflictService`, or provider abstractions do not match the current checked files.
 
 This implementation is local-slot based only.
+
+`Assets/Scripts/Platform/PlatformServices.cs` now exposes this explicitly through
+`LocalOnlyCloudSaveProvider`, which reports cloud save as `NotConfigured`.
+Future Steam Cloud or platform-sync work should hang off that capability surface
+only after conflict resolution, offline behavior, and migration tests are
+defined.

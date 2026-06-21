@@ -11,6 +11,9 @@ namespace SudokuRoguelike.Tests
     public sealed class GeneratedUiWiringContractTests
     {
         private const string MainMenuPath = "Assets/Scripts/UI/MainMenuBlueprintBuilder.cs";
+        private const string MainMenuControllerPath = "Assets/Scripts/UI/MainMenuController.cs";
+        private const string TutorialMenuControllerPath = "Assets/Scripts/UI/TutorialMenuController.cs";
+        private const string TutorialModeServicePath = "Assets/Scripts/Tutorial/TutorialModeService.cs";
         private const string ChallengePanelsPath = "Assets/Scripts/UI/MainMenuBlueprintBuilder.ChallengePanels.cs";
         private const string InRunBlueprintPath = "Assets/Scripts/UI/InRunUiBlueprintBuilder.cs";
         private const string InRunControllerPath = "Assets/Scripts/UI/InRunController.cs";
@@ -112,6 +115,49 @@ namespace SudokuRoguelike.Tests
                 .ToArray();
 
             Assert.IsEmpty(missing);
+        }
+
+        [Test]
+        public void CustomPuzzleModes_DisableUnavailableChoicesAndValidateBeforeLaunch()
+        {
+            var blueprintSource = ReadSource(MainMenuPath);
+            var menuSource = ReadSource(MainMenuControllerPath);
+            var customSource = ReadSource(TutorialMenuControllerPath);
+            var serviceSource = ReadSource(TutorialModeServicePath);
+
+            StringAssert.Contains("T(\"Sudoku Modes (max 5)\")", blueprintSource);
+            StringAssert.Contains("new[] { \"5x5\", \"6x6\", \"7x7\", \"8x8\", \"9x9\" }", blueprintSource);
+            StringAssert.Contains("CustomSelectionSummaryBg", blueprintSource);
+            StringAssert.Contains("ModTooltipBg", blueprintSource);
+            StringAssert.Contains("tutCtrl.SetSelectionSummaryText(selectionSummary)", blueprintSource);
+            StringAssert.Contains("SetSelectionSummaryText(Text text)", customSource);
+            StringAssert.Contains("RefreshModifierAvailability()", customSource);
+            StringAssert.Contains("toggle.interactable = canSelect", customSource);
+            StringAssert.Contains("CustomModifierLimit = 5", serviceSource);
+            StringAssert.Contains("TryValidateCustomSetup(setup", menuSource);
+        }
+
+        [Test]
+        public void OptionsAndDebugControls_UseDistinctMusicFallbacksAndScopedDebugHotkeys()
+        {
+            var blueprintSource = ReadSource(MainMenuPath);
+            var musicSource = ReadSource("Assets/Scripts/UI/MenuMusicController.cs");
+            var previewSource = ReadSource("Assets/Scripts/UI/AccessibilityPreviewController.cs");
+            var optionsSource = ReadSource("Assets/Scripts/UI/OptionsController.cs");
+            var hotkeysSource = ReadSource("Assets/Scripts/Bootstrap/DebugHotkeys.cs");
+            var bootstrapSource = ReadSource("Assets/Scripts/Bootstrap/GameBootstrap.cs");
+            var menuSource = ReadSource(MainMenuControllerPath);
+
+            StringAssert.Contains("() => BuildFallbackLoop(normalized)", musicSource);
+            StringAssert.Contains("ProceduralSfxLibrary.BuildPuzzleLoop()", musicSource);
+            StringAssert.Contains("ProceduralSfxLibrary.BuildRestLoop()", musicSource);
+            StringAssert.DoesNotContain("lbl.fontSize = 20", blueprintSource);
+            StringAssert.Contains("UpdateScale(acc?.FontScale ?? 1f)", previewSource);
+            StringAssert.Contains("Screen reader captions enabled.", optionsSource);
+            StringAssert.Contains("RuntimeDebugEnabled", hotkeysSource);
+            StringAssert.Contains("if (!RuntimeDebugEnabled) return;", hotkeysSource);
+            StringAssert.Contains("#if UNITY_EDITOR || DEVELOPMENT_BUILD", bootstrapSource);
+            StringAssert.Contains("DebugHotkeys.SetRuntimeDebugEnabled(isOn)", menuSource);
         }
 
         [Test]
@@ -502,7 +548,7 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
-        public void KillerCages_UseDashedGoldOutlinesAndReadableSums()
+        public void KillerCages_UseDashedRedOutlinesAndReadableSums()
         {
             var boardSource = ReadSource(BoardViewControllerPath);
             var paletteSource = ReadSource(GamePalettePath);
@@ -511,7 +557,7 @@ namespace SudokuRoguelike.Tests
             StringAssert.Contains("DrawDashedCageVertical", boardSource);
             StringAssert.Contains("const float dash = 8f", boardSource);
             StringAssert.Contains("txt.fontStyle = FontStyle.Bold", boardSource);
-            StringAssert.Contains("KillerBorder = new(0.98f, 0.74f, 0.26f, 0.94f)", paletteSource);
+            StringAssert.Contains("KillerBorder = new(0.94f, 0.26f, 0.22f, 1.00f)", paletteSource);
         }
 
         [Test]
@@ -522,7 +568,7 @@ namespace SudokuRoguelike.Tests
 
             StringAssert.Contains("ClearBossClearedDynamicContent()", endSource);
             StringAssert.Contains("RemoveDynamicChild(\"BossClearedContinueBtn\")", endSource);
-            StringAssert.Contains("label.text = victory ? T(\"InRun.End.ClaimReward\") : T(\"Back\")", endSource);
+            StringAssert.Contains("label.text = T(\"Back\")", endSource);
             StringAssert.Contains("_map.TryClaimCurrentPuzzleRewards(out _, out _, buildItemSlots: false)", runSource);
             StringAssert.Contains("run.GetAnalytics()?.RecordRunComplete()", runSource);
             Assert.That(runSource, Does.Not.Contain("ShowBossCleared(_map.Run, onClaim, \"Claim Reward"));
@@ -599,6 +645,7 @@ namespace SudokuRoguelike.Tests
             StringAssert.Contains("if (_comboBox != null) _comboBox.SetActive(true)", hudSource);
             StringAssert.Contains("if (_comboBox != null) _comboBox.SetActive(false)", hudSource);
             StringAssert.Contains("if (_floorModBanner != null) _floorModBanner.SetActive(false)", hudSource);
+            StringAssert.Contains("isActiveAndEnabled && gameObject.activeInHierarchy", hudSource);
         }
 
         private static SourceControlExpectation Button(

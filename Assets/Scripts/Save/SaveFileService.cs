@@ -306,6 +306,9 @@ namespace SudokuRoguelike.Save
             options.Graphics.Contrast = Mathf.Clamp01(options.Graphics.Contrast);
             options.Graphics.ParticleIntensity = Mathf.Clamp01(options.Graphics.ParticleIntensity);
 
+            if (options.Graphics.ResolutionWidth  <= 0) options.Graphics.ResolutionWidth  = 1920;
+            if (options.Graphics.ResolutionHeight <= 0) options.Graphics.ResolutionHeight = 1080;
+
             if (!Enum.IsDefined(typeof(DisplayModeOption), options.Graphics.DisplayMode))
                 options.Graphics.DisplayMode = DisplayModeOption.Fullscreen;
 

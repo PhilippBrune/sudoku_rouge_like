@@ -61,8 +61,12 @@ namespace SudokuRoguelike.UI
             RumbleService.Enabled = _options.Gameplay.ControllerRumbleEnabled;
             // Apply graphics settings immediately so they take effect on startup/slot switch
             AudioListener.volume = _options.Audio.MasterVolume;
-            ApplyDisplayMode(_options.Graphics);
-            QualitySettings.vSyncCount = _options.Graphics.VSync ? 1 : 0;
+            var gfx = _options.Graphics;
+            ApplyDisplayMode(gfx);
+            if (gfx.ResolutionWidth > 0 && gfx.ResolutionHeight > 0)
+                Screen.SetResolution(gfx.ResolutionWidth, gfx.ResolutionHeight,
+                    ToUnityFullScreenMode(gfx.DisplayMode));
+            QualitySettings.vSyncCount = gfx.VSync ? 1 : 0;
         }
 
         public OptionsState GetOptions()
@@ -180,6 +184,9 @@ namespace SudokuRoguelike.UI
             LiveAccessibility = GetOptions().Accessibility;
             SaveOptions();
             NotifyAccessibilityChanged();
+            if (on)
+                AccessibilityAnnouncementOverlay.Announce(
+                    LocalizationService.T("Accessibility.ScreenReader.Enabled", "Screen reader captions enabled."));
         }
 
         // ── Gameplay ──────────────────────────────────────────────────────────────

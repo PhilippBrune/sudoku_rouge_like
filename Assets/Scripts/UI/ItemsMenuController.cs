@@ -115,7 +115,7 @@ namespace SudokuRoguelike.UI
             var total = 0;
             foreach (var id in modIds)
             {
-                if ((int)id >= 94) continue; // skip debuffs/pressure
+                if (!BossService.IsImplementedModifier(id)) continue;
                 total++;
                 if (meta?.DiscoveredBossModifiers != null && meta.DiscoveredBossModifiers.Contains(id))
                     discovered++;
@@ -124,7 +124,7 @@ namespace SudokuRoguelike.UI
 
             foreach (var id in modIds)
             {
-                if ((int)id >= 94) continue; // debuffs are not shown in codex
+                if (!BossService.IsImplementedModifier(id)) continue;
                 var isDiscovered = meta?.DiscoveredBossModifiers != null
                     && meta.DiscoveredBossModifiers.Contains(id);
                 if (isDiscovered)
@@ -151,9 +151,13 @@ namespace SudokuRoguelike.UI
             var img = btn.GetComponent<Image>();
             if (img != null) img.color = active ? TabActiveColor : TabInactiveColor;
             var txt = btn.GetComponentInChildren<Text>();
-            if (txt != null) txt.color = active
-                ? new Color(0.08f, 0.06f, 0.04f, 1f)
-                : new Color(0.80f, 0.78f, 0.68f, 1f);
+            if (txt != null)
+            {
+                txt.fontStyle = active ? FontStyle.Bold : FontStyle.Normal;
+                txt.color = active
+                    ? new Color(0.06f, 0.04f, 0.02f, 1f)
+                    : new Color(0.72f, 0.70f, 0.60f, 0.90f);
+            }
         }
 
         private static string T(string key, string fallback) => LocalizationService.T(key, fallback);

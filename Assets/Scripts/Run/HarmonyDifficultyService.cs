@@ -268,6 +268,26 @@ namespace SudokuRoguelike.Run
         }
 
         /// <summary>
+        /// Returns a short description of what changes at this level compared to the previous one.
+        /// Used in the Game Modes panel to inform the player of new penalties/changes before starting.
+        /// </summary>
+        public static string GetDescription(int level) => level switch
+        {
+            0  => "Base difficulty. No penalties.",
+            1  => "Gold \u22124%. Shop prices +5%. Puzzles slightly larger and harder.",
+            2  => "Gold \u22124%. Shop +5%. Larger grids more frequent.",
+            3  => "Gold \u22124%. Shop +5%. Starting HP \u22121.",
+            4  => "Gold \u22124%. Shop +5%. Boss gate shows +1 extra option. Starting pencil \u22121. Perks unlock.",
+            5  => "Gold \u22124%. Shop +5%. Mistakes cost 2 HP. Starting rerolls \u22121. Boss ??? labels never auto-revealed on repeat. 6\u2605 puzzles now possible.",
+            6  => "Gold \u22124%. Shop +5%. Starting HP \u22121 again. Item slot cap \u22121. Extra floor modifier per floor.",
+            7  => "Gold \u22124%. Shop +5%. Boss gate +1 more option. Combo decay active. Starting relics Tier 1 only. Mistakes also drain 1 pencil. Starting pencil \u22121.",
+            8  => "Gold \u22124%. Shop +5%. Item slot cap \u22121 again. Starting rerolls \u22121.",
+            9  => "Gold \u22124%. Shop +5%. Starting HP \u22121. Mistakes cost 3 HP. More floor and boss modifiers. Cursed puzzle gold bonus suppressed.",
+            10 => "Gold \u22124%. Shop +5%. Rest heals only 50%. Starting pencil \u22121.",
+            _  => ""
+        };
+
+        /// <summary>
         /// [HARMONY-XP-001] XP multiplier applied to class XP at run end.
         /// Formula: 1.0 + level × 0.1, capped at 2.0 at H10.
         /// </summary>

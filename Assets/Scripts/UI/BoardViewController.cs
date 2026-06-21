@@ -48,6 +48,12 @@ namespace SudokuRoguelike.UI
         private HashSet<(int, int)> _conflictPreviewCells = new HashSet<(int, int)>();
         private int _prevConflictRow = -2, _prevConflictCol = -2, _prevConflictValue = -1;
 
+        // ── Forbidden-empty-cell cache (digit-based structural constraint preview) ──
+        // Shows empty cells where the highlighted digit cannot be placed.
+        private readonly HashSet<(int, int)> _forbiddenEmptyCells = new HashSet<(int, int)>();
+        private int _prevForbiddenValue = -1;
+        private uint _prevForbiddenChecksum = uint.MaxValue;
+
         // ── Per-cell conflict cache (HasConflict) ──
         // Rebuilt only when the board state changes (digit placed/removed), not on every render.
         // Change detected via Knuth multiplicative checksum over all placed cell values.
@@ -139,6 +145,97 @@ namespace SudokuRoguelike.UI
 
         public void ClearGlobalConstraintHighlight() => _globalConstraintHighlight.Clear();
 
+        private void RebuildForbiddenEmptyCells(SudokuBoard board, int value)
+        {
+            _forbiddenEmptyCells.Clear();
+            if (value <= 0) return;
+            var cfg = _map?.Run?.CurrentLevelConfig;
+            if (cfg == null) return;
+            var mods = cfg.ActiveModifiers;
+            var antiknight   = mods.Contains(BossModifierId.Antiknight)   || mods.Contains(BossModifierId.KnightKingCombined);
+            var antiking     = mods.Contains(BossModifierId.Antiking)     || mods.Contains(BossModifierId.KnightKingCombined);
+            var antibishop   = mods.Contains(BossModifierId.AntiBishop);
+            var nonconsec    = mods.Contains(BossModifierId.Nonconsecutive);
+            var nonconsecDiag = mods.Contains(BossModifierId.NonconsecDiagonal);
+            var distGe2      = mods.Contains(BossModifierId.DistanceGe2);
+            if (!antiknight && !antiking && !antibishop && !nonconsec && !nonconsecDiag && !distGe2) return;
+            var size = board.Size;
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
+            {
+                if (board.Cells[r, c] != 0) continue;
+                if (IsForbiddenByStructural(board, r, c, value, size,
+                        antiknight, antiking, antibishop, nonconsec, nonconsecDiag, distGe2))
+                    _forbiddenEmptyCells.Add((r, c));
+            }
+        }
+
+        private static bool IsForbiddenByStructural(SudokuBoard board, int row, int col, int value, int size,
+            bool antiknight, bool antiking, bool antibishop, bool nonconsec, bool nonconsecDiag, bool distGe2)
+        {
+            if (antiknight)
+            {
+                int[] dr = { -2, -2, -1, -1, 1, 1, 2, 2 };
+                int[] dc = { -1,  1, -2,  2, -2, 2, -1, 1 };
+                for (var i = 0; i < 8; i++)
+                {
+                    var nr = row + dr[i]; var nc = col + dc[i];
+                    if (nr >= 0 && nr < size && nc >= 0 && nc < size && board.Cells[nr, nc] == value) return true;
+                }
+            }
+            if (antiking || distGe2)
+            {
+                for (var dr = -1; dr <= 1; dr++)
+                for (var dc = -1; dc <= 1; dc++)
+                {
+                    if (dr == 0 && dc == 0) continue;
+                    var nr = row + dr; var nc = col + dc;
+                    if (nr >= 0 && nr < size && nc >= 0 && nc < size && board.Cells[nr, nc] == value) return true;
+                }
+            }
+            if (antibishop)
+            {
+                int[] drs = { -1, -1,  1, 1 };
+                int[] dcs = { -1,  1, -1, 1 };
+                for (var d = 0; d < 4; d++)
+                for (var step = 1; step < size; step++)
+                {
+                    var nr = row + drs[d] * step; var nc = col + dcs[d] * step;
+                    if (nr < 0 || nr >= size || nc < 0 || nc >= size) break;
+                    if (board.Cells[nr, nc] == value) return true;
+                }
+            }
+            if (nonconsec)
+            {
+                int[] dr = { -1, 1,  0, 0 };
+                int[] dc = {  0, 0, -1, 1 };
+                for (var i = 0; i < 4; i++)
+                {
+                    var nr = row + dr[i]; var nc = col + dc[i];
+                    if (nr >= 0 && nr < size && nc >= 0 && nc < size)
+                    {
+                        var v = board.Cells[nr, nc];
+                        if (v != 0 && Math.Abs(v - value) == 1) return true;
+                    }
+                }
+            }
+            if (nonconsecDiag)
+            {
+                int[] dr = { -1, -1, 1,  1 };
+                int[] dc = { -1,  1, -1, 1 };
+                for (var i = 0; i < 4; i++)
+                {
+                    var nr = row + dr[i]; var nc = col + dc[i];
+                    if (nr >= 0 && nr < size && nc >= 0 && nc < size)
+                    {
+                        var v = board.Cells[nr, nc];
+                        if (v != 0 && Math.Abs(v - value) == 1) return true;
+                    }
+                }
+            }
+            return false;
+        }
+
         /// <summary>V6: Plays a brief scale-punch on the cell at (row, col) when a digit is placed.</summary>
         public void PlayDigitPlaced(int row, int col)
         {
@@ -223,6 +320,14 @@ namespace SudokuRoguelike.UI
                 _prevConflictRow = _prevConflictCol = -2; _prevConflictValue = -1;
             }
 
+            // Rebuild forbidden empty cells when digit or board state changes.
+            if (highlightValue != _prevForbiddenValue || boardChecksum != _prevForbiddenChecksum)
+            {
+                RebuildForbiddenEmptyCells(board, highlightValue);
+                _prevForbiddenValue    = highlightValue;
+                _prevForbiddenChecksum = boardChecksum;
+            }
+
             for (var i = 0; i < _cells.Count; i++)
             {
                 var cell = _cells[i];
@@ -252,6 +357,12 @@ namespace SudokuRoguelike.UI
                 // if highlightValue were placed at the selected cell.
                 if (_conflictPreviewCells.Count > 0 && _conflictPreviewCells.Contains((cell.Row, cell.Col)))
                     c = Color.Lerp(c, AntiknightForbidColor, 0.70f);
+
+                // Forbidden empty cells: empty cells where the highlighted digit cannot be placed
+                // due to active structural constraints (Anti-Knight/King/Bishop, Nonconsecutive, etc.).
+                // Uses the same colour as the row/column highlight — both indicate "digit can't go here".
+                if (val == 0 && _forbiddenEmptyCells.Count > 0 && _forbiddenEmptyCells.Contains((cell.Row, cell.Col)))
+                    c = RowColHL;
 
                 if (bagHighlightCells != null && bagHighlightCells.Contains((cell.Row, cell.Col)))
                     c = Color.Lerp(c, BagHighlightColor, 0.65f);

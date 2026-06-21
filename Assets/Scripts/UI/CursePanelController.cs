@@ -61,8 +61,8 @@ namespace SudokuRoguelike.UI
                 if (i > 0) sb.Append('\n');
                 sb.Append(F(
                     "InRun.Curse.Line",
-                    CurseService.GetLocalizedName(curses[i]),
-                    CurseService.GetLocalizedDescription(curses[i])));
+                    curses[i].Name,
+                    curses[i].Description));
             }
             _curseListText.text = sb.ToString();
 

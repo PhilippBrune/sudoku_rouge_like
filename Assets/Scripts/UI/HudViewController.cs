@@ -327,7 +327,18 @@ namespace SudokuRoguelike.UI
                     if (elapsed != _cachedTimerSec)
                     {
                         _cachedTimerSec = elapsed;
-                        _timerText.text = $"{elapsed / 60:00}:{elapsed % 60:00}";
+                        if (state.Mode == GameMode.SpiritTrials)
+                        {
+                            var parSec = (int)SpiritTrialsService.GetParTimeSeconds(state.SpiritTrialsTier);
+                            _timerText.text = $"{elapsed / 60:00}:{elapsed % 60:00} ({parSec / 60:00}:{parSec % 60:00})";
+                            _timerText.color = elapsed > parSec
+                                ? new Color(1.00f, 0.30f, 0.20f, 1.00f)
+                                : new Color(1.00f, 0.96f, 0.74f, 1.00f);
+                        }
+                        else
+                        {
+                            _timerText.text = $"{elapsed / 60:00}:{elapsed % 60:00}";
+                        }
                     }
                 }
                 else
@@ -574,7 +585,7 @@ namespace SudokuRoguelike.UI
                 if (_comboBox != null) _comboBox.SetActive(true);
                 _comboText.gameObject.SetActive(true);
                 if (_floorModBanner != null) _floorModBanner.SetActive(false);
-                if (wasHidden && _comboText.rectTransform != null)
+                if (wasHidden && _comboText.rectTransform != null && isActiveAndEnabled && gameObject.activeInHierarchy)
                     StartCoroutine(AnimationHelper.PulseScale(
                         _comboText.rectTransform, 1f, 1.18f, AnimationHelper.ComboPulseDuration));
             }

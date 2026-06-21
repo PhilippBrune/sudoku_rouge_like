@@ -75,11 +75,15 @@ namespace SudokuRoguelike.Bootstrap
             _dailyGoals = envelope.DailyGoals ?? new DailyGoalState();
             DailyGoalService.RefreshIfNewDay(_dailyGoals, DateTime.Today);
             _run.DailyGoals = _dailyGoals;
+            // Persist the refreshed daily goals to the newly active slot immediately.
+            envelope.DailyGoals = _dailyGoals;
+            _saveFileService.Save(envelope);
         }
 
         private void Start()
         {
             Application.runInBackground = true;
+            SteamLeaderboardService.Initialize();
             LocalizationService.SetLanguage(_profileService.LoadOptions().Language);
 
             EnsureSceneInfrastructure();
@@ -90,9 +94,13 @@ namespace SudokuRoguelike.Bootstrap
             DailyGoalService.RefreshIfNewDay(_dailyGoals, DateTime.Today);
             _run.DailyGoals = _dailyGoals;
 
-            // Persist refreshed state immediately so streak updates aren't lost
-            envelope.DailyGoals = _dailyGoals;
-            _saveFileService.Save(envelope);
+            // Only persist if we already have an active profile — avoids creating
+            // save_profile_0.json before the user completes the profile-selection flow on first launch.
+            if (_hadAnyProfileAtStartup)
+            {
+                envelope.DailyGoals = _dailyGoals;
+                _saveFileService.Save(envelope);
+            }
 
             if (resumeRunIfAvailable && _resumeService.HasActiveRun())
             {
@@ -285,6 +293,12 @@ namespace SudokuRoguelike.Bootstrap
 
         public void LaunchTutorial(TutorialSetupConfig setup)
         {
+            if (!TutorialModeService.TryValidateCustomSetup(setup, out var failureMessage))
+            {
+                Debug.LogWarning($"[GameBootstrap] Custom puzzle rejected before generation: {failureMessage}");
+                return;
+            }
+
             var runtimeSeed = BuildRuntimeSeed(seed);
             _menuMusic.Stop();
             _run.StartTutorialRun(setup, runtimeSeed);
@@ -463,7 +477,7 @@ namespace SudokuRoguelike.Bootstrap
             if (gameBuilder == null)
                 gameBuilder = gameGroup.AddComponent<InRunUiBlueprintBuilder>();
             gameBuilder.BuildBlueprint();
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (gameGroup.GetComponent<DebugHotkeys>() == null)
                 gameGroup.AddComponent<DebugHotkeys>();
 #endif

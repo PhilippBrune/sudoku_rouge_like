@@ -99,6 +99,15 @@ namespace SudokuRoguelike.Run
             };
         }
 
+        /// <summary>Returns the par time in seconds for the given Spirit Trials tier.</summary>
+        public static float GetParTimeSeconds(SpiritTrialsTier tier) => tier switch
+        {
+            SpiritTrialsTier.Apprentice => 300f,
+            SpiritTrialsTier.Adept      => 420f,
+            SpiritTrialsTier.Master     => 540f,
+            _                           => 720f  // Grandmaster
+        };
+
         /// <summary>
         /// Calculate Spirit Trials score per spec [REQ: TRIAL-SCORE-005].
         /// FinalScore = floor((BasePoints × SpeedMultiplier) + ConstraintBonus + PencilBonus − MistakePenalty)

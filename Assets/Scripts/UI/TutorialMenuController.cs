@@ -1,18 +1,42 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using SudokuRoguelike.Boss;
 using SudokuRoguelike.Classes;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Tutorial;
 
 namespace SudokuRoguelike.UI
 {
     public sealed class TutorialMenuController : MonoBehaviour
     {
+        private static readonly BossModifierId[] CustomModifiers =
+        {
+            BossModifierId.GermanWhispers, BossModifierId.DutchWhispers,
+            BossModifierId.ParityLines, BossModifierId.RenbanLines,
+            BossModifierId.DifferenceKropki, BossModifierId.RatioKropki,
+            BossModifierId.KillerCages, BossModifierId.ArrowSums,
+            BossModifierId.FogOfWar, BossModifierId.Palindrome,
+            BossModifierId.Thermo, BossModifierId.BetweenLines,
+            BossModifierId.EvenOdd, BossModifierId.Nonconsecutive,
+            BossModifierId.Antiknight, BossModifierId.Antiking,
+            BossModifierId.AntiBishop, BossModifierId.NonconsecDiagonal,
+            BossModifierId.DistanceGe2, BossModifierId.EntropyGlobal,
+            BossModifierId.ModularRegions, BossModifierId.ConsecutiveLine,
+            BossModifierId.SlowThermo, BossModifierId.UniqueSetLine,
+            BossModifierId.FullKropki, BossModifierId.SumKropki,
+            BossModifierId.GreaterLessThan, BossModifierId.XVPairs,
+            BossModifierId.PrimeCells, BossModifierId.FortressCells
+        };
+
         private Dropdown _sizeDropdown;
         private Dropdown _starsDropdown;
         private Dropdown _regionDropdown;
         private Toggle[] _modifierToggles;
         private Button _startButton;
+        private Text _selectionSummaryText;
+        private readonly Dictionary<Toggle, Color> _modifierLabelColors = new Dictionary<Toggle, Color>();
 
         // Resource mode
         private Toggle _freeModeToggle;     // legacy — kept for backwards compat, may be null
@@ -45,7 +69,7 @@ namespace SudokuRoguelike.UI
             _regionDropdown = regionDropdown;
             _startButton = startButton;
             _modifierToggles = modifierToggles;
-            _config = new TutorialSetupConfig { BoardSize = 5 }; // match dropdown default (index 0 = 5×5)
+            _config = new TutorialSetupConfig { BoardSize = 5, Stars = 2 };
 
             if (_sizeDropdown != null)
                 _sizeDropdown.onValueChanged.AddListener(OnSizeChanged);
@@ -57,8 +81,14 @@ namespace SudokuRoguelike.UI
             if (_modifierToggles != null)
                 for (var i = 0; i < _modifierToggles.Length; i++)
                     if (_modifierToggles[i] != null)
-                        _modifierToggles[i].onValueChanged.AddListener(_ => UpdateStartButtonState());
+                    {
+                        var label = _modifierToggles[i].transform.Find("Label")?.GetComponent<Text>();
+                        if (label != null)
+                            _modifierLabelColors[_modifierToggles[i]] = label.color;
+                        _modifierToggles[i].onValueChanged.AddListener(_ => OnModifierSelectionChanged());
+                    }
 
+            RefreshModifierAvailability();
             UpdateStartButtonState();
         }
 
@@ -96,6 +126,7 @@ namespace SudokuRoguelike.UI
                 _config.ResourceMode = isFree ? TutorialResourceMode.Free : TutorialResourceMode.Simulation;
             if (_classRow != null)
                 _classRow.gameObject.SetActive(!isFree);
+            RefreshSelectionSummary();
             UpdateStartButtonState();
         }
 
@@ -105,6 +136,7 @@ namespace SudokuRoguelike.UI
                 _config.ResourceMode = isFree ? TutorialResourceMode.Free : TutorialResourceMode.Simulation;
             if (_classRow != null)
                 _classRow.gameObject.SetActive(!isFree);
+            RefreshSelectionSummary();
             UpdateStartButtonState();
         }
 
@@ -112,37 +144,8 @@ namespace SudokuRoguelike.UI
         {
             if (_config == null) _config = new TutorialSetupConfig();
 
-            _config.SelectedModifiers.Clear();
-            if (_modifierToggles != null)
-            {
-                var allModifiers = new[]
-                {
-                    // Original 15
-                    BossModifierId.GermanWhispers, BossModifierId.DutchWhispers,
-                    BossModifierId.ParityLines, BossModifierId.RenbanLines,
-                    BossModifierId.DifferenceKropki, BossModifierId.RatioKropki,
-                    BossModifierId.KillerCages, BossModifierId.ArrowSums,
-                    BossModifierId.FogOfWar, BossModifierId.Palindrome,
-                    BossModifierId.Thermo, BossModifierId.BetweenLines,
-                    BossModifierId.EvenOdd, BossModifierId.Nonconsecutive,
-                    BossModifierId.Antiknight,
-                    // Extended 15
-                    BossModifierId.Antiking, BossModifierId.AntiBishop,
-                    BossModifierId.NonconsecDiagonal, BossModifierId.DistanceGe2,
-                    BossModifierId.EntropyGlobal, BossModifierId.ModularRegions,
-                    BossModifierId.ConsecutiveLine, BossModifierId.SlowThermo,
-                    BossModifierId.UniqueSetLine, BossModifierId.FullKropki,
-                    BossModifierId.SumKropki, BossModifierId.GreaterLessThan,
-                    BossModifierId.XVPairs, BossModifierId.PrimeCells,
-                    BossModifierId.FortressCells
-                };
-
-                for (var i = 0; i < _modifierToggles.Length && i < allModifiers.Length; i++)
-                {
-                    if (_modifierToggles[i] != null && _modifierToggles[i].isOn)
-                        _config.SelectedModifiers.Add(allModifiers[i]);
-                }
-            }
+            RefreshModifierAvailability();
+            SyncSelectedModifiersToConfig();
 
             // Resource mode
             if (_resourceModeDrop != null)
@@ -160,25 +163,85 @@ namespace SudokuRoguelike.UI
             return _config;
         }
 
+        private void OnModifierSelectionChanged()
+        {
+            RefreshModifierAvailability();
+            UpdateStartButtonState();
+        }
+
+        private void RefreshModifierAvailability()
+        {
+            if (_config == null || _modifierToggles == null) return;
+
+            var accepted = new List<BossModifierId>();
+            var count = Mathf.Min(_modifierToggles.Length, CustomModifiers.Length);
+            for (var i = 0; i < count; i++)
+            {
+                var toggle = _modifierToggles[i];
+                if (toggle == null || !toggle.isOn) continue;
+
+                if (TutorialModeService.CanAddCustomModifier(
+                    _config.BoardSize, accepted, CustomModifiers[i], out _))
+                {
+                    accepted.Add(CustomModifiers[i]);
+                }
+                else
+                {
+                    toggle.SetIsOnWithoutNotify(false);
+                }
+            }
+
+            for (var i = 0; i < count; i++)
+            {
+                var toggle = _modifierToggles[i];
+                if (toggle == null) continue;
+
+                var modifier = CustomModifiers[i];
+                var canSelect = accepted.Contains(modifier)
+                    || TutorialModeService.CanAddCustomModifier(
+                        _config.BoardSize, accepted, modifier, out _);
+                toggle.interactable = canSelect;
+
+                var label = toggle.transform.Find("Label")?.GetComponent<Text>();
+                if (label == null) continue;
+                if (!_modifierLabelColors.TryGetValue(toggle, out var normalColor))
+                    normalColor = label.color;
+                label.color = canSelect
+                    ? normalColor
+                    : new Color(0.42f, 0.42f, 0.42f, 0.78f);
+            }
+
+            SyncSelectedModifiersToConfig();
+            RefreshSelectionSummary();
+        }
+
+        private void SyncSelectedModifiersToConfig()
+        {
+            if (_config == null) return;
+            _config.SelectedModifiers.Clear();
+            if (_modifierToggles == null) return;
+
+            var count = Mathf.Min(_modifierToggles.Length, CustomModifiers.Length);
+            for (var i = 0; i < count; i++)
+            {
+                if (_modifierToggles[i] != null && _modifierToggles[i].isOn)
+                    _config.SelectedModifiers.Add(CustomModifiers[i]);
+            }
+        }
+
         private void UpdateStartButtonState()
         {
             if (_startButton == null) return;
-            // 7-star (index 6) requires at least one modifier to be selected
-            var is7Star = _config != null && _config.Stars == 7;
-            if (!is7Star) { _startButton.interactable = true; return; }
-
-            var anyModOn = false;
-            if (_modifierToggles != null)
-                for (var i = 0; i < _modifierToggles.Length; i++)
-                    if (_modifierToggles[i] != null && _modifierToggles[i].isOn)
-                    { anyModOn = true; break; }
-
-            _startButton.interactable = anyModOn;
+            SyncSelectedModifiersToConfig();
+            _startButton.interactable = TutorialModeService.TryValidateCustomSetup(
+                _config, out _);
         }
 
         private void OnSizeChanged(int index)
         {
             _config.BoardSize = 5 + index; // 0→5, 1→6, ... 4→9
+            RefreshModifierAvailability();
+            UpdateStartButtonState();
         }
 
         private void OnStarsChanged(int index)
@@ -197,6 +260,8 @@ namespace SudokuRoguelike.UI
                 2 => 3,
                 _ => 0
             };
+            RefreshModifierAvailability();
+            UpdateStartButtonState();
         }
 
         // Called from MainMenuController.OpenTutorial() to show only classes the player has unlocked
@@ -224,6 +289,12 @@ namespace SudokuRoguelike.UI
         public int GetBoardSize() => _config?.BoardSize ?? 9;
         public int GetStars() => _config?.Stars ?? 1;
 
+        public void SetSelectionSummaryText(Text text)
+        {
+            _selectionSummaryText = text;
+            RefreshSelectionSummary();
+        }
+
         // ── MM-3: Public wrappers for arrow-row selectors (replaces Dropdown) ──────────────────
 
         /// <summary>Stores the class-row RectTransform for show/hide by resource mode.</summary>
@@ -248,7 +319,114 @@ namespace SudokuRoguelike.UI
             if (_config == null) _config = new TutorialSetupConfig();
             if (idx >= 0 && idx < _availableClasses.Count)
                 _config.SimulationClassId = _availableClasses[idx];
+            RefreshSelectionSummary();
             UpdateStartButtonState();
+        }
+
+        private void RefreshSelectionSummary()
+        {
+            if (_selectionSummaryText == null || _config == null) return;
+
+            var region = _config.RegionVariant switch
+            {
+                1 => "Alt Rectangular",
+                >= 2 => "Jigsaw",
+                _ => "Standard"
+            };
+            var resource = _config.ResourceMode == TutorialResourceMode.Simulation
+                ? "Class-Based"
+                : "Free";
+
+            var mods = "None";
+            if (_config.SelectedModifiers != null && _config.SelectedModifiers.Count > 0)
+            {
+                var names = new List<string>(_config.SelectedModifiers.Count);
+                for (var i = 0; i < _config.SelectedModifiers.Count; i++)
+                    names.Add(BossService.GetModifierName(_config.SelectedModifiers[i]));
+                mods = string.Join(", ", names);
+            }
+
+            _selectionSummaryText.text =
+                $"Size: {_config.BoardSize}x{_config.BoardSize}   Difficulty: {_config.Stars} star(s)\n" +
+                $"Region: {region}   Resources: {resource}\n" +
+                $"Modes ({_config.SelectedModifiers.Count}/{TutorialModeService.CustomModifierLimit}): {mods}";
+        }
+
+        // ── Gamepad D-pad navigation ─────────────────────────────────────────────────
+
+        private List<Selectable> _gpSelectables;
+        private int _gpIndex;
+        private float _gpPrevV;
+        private const float GpAxisThreshold = 0.5f;
+
+        private void OnEnable()
+        {
+            _gpSelectables = null;
+            _gpIndex = 0;
+            _gpPrevV = 0f;
+        }
+
+        private void Update()
+        {
+            if (!HasAnyGamepadInput()) return;
+            BuildSelectablesIfNeeded();
+            if (_gpSelectables == null || _gpSelectables.Count == 0) return;
+
+            var v = Input.GetAxis("Vertical");
+            var moveUp   = (Input.GetKeyDown(KeyCode.JoystickButton12) ||
+                            (v >  GpAxisThreshold && _gpPrevV <= GpAxisThreshold));
+            var moveDown = (Input.GetKeyDown(KeyCode.JoystickButton13) ||
+                            (v < -GpAxisThreshold && _gpPrevV >= -GpAxisThreshold));
+            _gpPrevV = v;
+
+            if (moveDown) GpNavigateTo((_gpIndex + 1) % _gpSelectables.Count);
+            if (moveUp)   GpNavigateTo((_gpIndex - 1 + _gpSelectables.Count) % _gpSelectables.Count);
+
+            if (Input.GetKeyDown(KeyCode.JoystickButton0))
+                GpConfirm(_gpSelectables[_gpIndex]);
+        }
+
+        private void GpNavigateTo(int index)
+        {
+            _gpIndex = index;
+            var sel = _gpSelectables[_gpIndex];
+            if (sel != null)
+                EventSystem.current?.SetSelectedGameObject(sel.gameObject);
+        }
+
+        private static void GpConfirm(Selectable sel)
+        {
+            if (sel == null) return;
+            if (sel is Button btn)         { btn.onClick.Invoke(); return; }
+            if (sel is Toggle tgl)         { tgl.isOn = !tgl.isOn; return; }
+            if (sel is Dropdown dd)        { dd.Show(); return; }
+        }
+
+        private void BuildSelectablesIfNeeded()
+        {
+            if (_gpSelectables != null) return;
+            _gpSelectables = new List<Selectable>();
+            AddGp(_sizeDropdown);
+            AddGp(_starsDropdown);
+            AddGp(_regionDropdown);
+            AddGp(_resourceModeDrop);
+            AddGp(_classDropdown);
+            if (_modifierToggles != null)
+                foreach (var t in _modifierToggles) AddGp(t);
+            AddGp(_startButton);
+        }
+
+        private void AddGp(Selectable s)
+        {
+            if (s != null) _gpSelectables.Add(s);
+        }
+
+        private static bool HasAnyGamepadInput()
+        {
+            if (!Input.anyKeyDown && Mathf.Abs(Input.GetAxis("Vertical")) < 0.1f) return false;
+            for (var k = 0; k < 20; k++)
+                if (Input.GetKeyDown(KeyCode.JoystickButton0 + k)) return true;
+            return Mathf.Abs(Input.GetAxis("Vertical")) >= GpAxisThreshold;
         }
     }
 }

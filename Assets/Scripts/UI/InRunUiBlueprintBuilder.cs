@@ -389,12 +389,12 @@ namespace SudokuRoguelike.UI
 
             // Details: runs, XP, level progress — larger area for readability
             var detailsScrim = EnsureRect("GameOverDetailsScrim", panel.transform as RectTransform,
-                new Vector2(0.06f, 0.14f), new Vector2(0.60f, 0.84f), Vector2.zero, Vector2.zero);
+                new Vector2(0.06f, 0.06f), new Vector2(0.60f, 0.84f), Vector2.zero, Vector2.zero);
             var detailsScrimImg = EnsureOrGetImage(detailsScrim.gameObject, new Color(0.03f, 0.025f, 0.02f, 0.68f));
             detailsScrimImg.raycastTarget = false;
 
             detailsText = BuildText("GameOverDetails", panel.transform as RectTransform, string.Empty, 14, TextAnchor.UpperLeft);
-            SetRect(detailsText.rectTransform, new Vector2(0.08f, 0.17f), new Vector2(0.58f, 0.81f), Vector2.zero, Vector2.zero);
+            SetRect(detailsText.rectTransform, new Vector2(0.08f, 0.09f), new Vector2(0.58f, 0.81f), Vector2.zero, Vector2.zero);
             detailsText.color = InRunUiFactory.WarmIvory;
             detailsText.lineSpacing = 1.18f;
             var detailsShadow = EnsureComponent<Shadow>(detailsText.gameObject);

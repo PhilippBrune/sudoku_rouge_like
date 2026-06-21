@@ -21,18 +21,9 @@ namespace SudokuRoguelike.UI
         public void Refresh()
         {
             if (_bannerText == null) return;
-
-            var run = _runMapController?.Run;
-            var isTutorial = run?.State != null && run.State.Mode == GameMode.Tutorial;
-            if (_bannerPanel != null)
-                _bannerPanel.SetActive(isTutorial);
-            _bannerText.gameObject.SetActive(isTutorial);
-            if (isTutorial)
-            {
-                _bannerText.text = LocalizationService.T(
-                    "InRun.TutorialBanner",
-                    "TUTORIAL MODE\nNo Progression Rewards");
-            }
+            // Banner is intentionally hidden; Custom Puzzle mode does not need a tutorial overlay.
+            if (_bannerPanel != null) _bannerPanel.SetActive(false);
+            _bannerText.gameObject.SetActive(false);
         }
 
         private void Update()

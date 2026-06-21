@@ -308,7 +308,7 @@ namespace SudokuRoguelike.UI
             _rewardView.Configure(map, _pathPanel);
             _shopView.Configure(map, _pathPanel,
                 (item, onReplace, onAbort) => _rewardView.ShowBagSwapPanel(item, onReplace, onAbort));
-            _bossGateView.Configure(map);
+            _bossGateView.Configure(map, uiRoot);
             _endScreenView.Configure(map, _gameOverPanel, goSummary, goDetails, goBack);
             _uiFlowCtrl = GetComponent<InRunUiFlowController>();
             _eventChoiceView = _uiFlowCtrl?.EventChoiceScreen;
@@ -364,6 +364,7 @@ namespace SudokuRoguelike.UI
             if (_inGameOptionsPanel != null) _inGameOptionsPanel.SetActive(false);
             _boardView.TutorialHighlightMap = null;
             _basicsTutorial = null;
+            _boardView?.MarkOverlayDirty();
             WireInGameButtons();
             ShowPath();
         }
@@ -503,6 +504,8 @@ namespace SudokuRoguelike.UI
 
         private void Update()
         {
+            InputRemapService.UpdateCursorVisibility();
+
             if (_map == null) return;
             var run = _map.Run;
 
@@ -1583,47 +1586,58 @@ namespace SudokuRoguelike.UI
                 sqBtn.colors          = sqCb;
                 sqBtn.targetGraphic   = sqImg;
                 _saveQuitImg = sqImg;
-                sqBtn.onClick.AddListener(() =>
+
+                var isTutorialQuit = run?.State?.TutorialMode ?? false;
+                if (isTutorialQuit)
                 {
-                    if (!_saveQuitPending)
-                    {
-                        _saveQuitPending = true;
-                        if (_saveQuitLbl != null) _saveQuitLbl.text = "Confirm?";
-                        if (_saveQuitImg != null) _saveQuitImg.color = new Color(0.55f, 0.18f, 0.10f, 0.95f);
-                        if (_saveQuitResetCo != null) StopCoroutine(_saveQuitResetCo);
-                        _saveQuitResetCo = StartCoroutine(ResetSaveQuitConfirm(3f));
-                    }
-                    else
-                    {
-                        if (_saveQuitResetCo != null) { StopCoroutine(_saveQuitResetCo); _saveQuitResetCo = null; }
-                        _saveQuitPending = false;
-                        SaveAndQuit();
-                    }
-                });
-                var sqIconSprite = InRunUiFactory.LoadResourceSprite("ui/icon_ink_save");
-                if (sqIconSprite != null)
-                {
-                    var sqIconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
-                    sqIconGo.transform.SetParent(sqRt, false);
-                    var sqIconRt = sqIconGo.GetComponent<RectTransform>();
-                    sqIconRt.anchorMin = new Vector2(0.04f, 0.10f);
-                    sqIconRt.anchorMax = new Vector2(0.22f, 0.90f);
-                    sqIconRt.offsetMin = sqIconRt.offsetMax = Vector2.zero;
-                    var sqIconImg = sqIconGo.GetComponent<Image>();
-                    sqIconImg.sprite       = sqIconSprite;
-                    sqIconImg.preserveAspect = true;
-                    sqIconImg.raycastTarget  = false;
+                    // Custom Puzzle: plain single-click Quit, no icon, no confirm step
+                    sqBtn.onClick.AddListener(SaveAndQuit);
                 }
-                var sqLbl = InRunUiFactory.CreateText(sqRt, "Label", T("InRun.Path.SaveAndQuit"),
-                    11, TextAnchor.MiddleLeft, new Color(0.92f, 0.88f, 0.78f, 1f));
-                sqLbl.rectTransform.anchorMin = new Vector2(0.25f, 0f);
+                else
+                {
+                    sqBtn.onClick.AddListener(() =>
+                    {
+                        if (!_saveQuitPending)
+                        {
+                            _saveQuitPending = true;
+                            if (_saveQuitLbl != null) _saveQuitLbl.text = "Confirm?";
+                            if (_saveQuitImg != null) _saveQuitImg.color = new Color(0.55f, 0.18f, 0.10f, 0.95f);
+                            if (_saveQuitResetCo != null) StopCoroutine(_saveQuitResetCo);
+                            _saveQuitResetCo = StartCoroutine(ResetSaveQuitConfirm(3f));
+                        }
+                        else
+                        {
+                            if (_saveQuitResetCo != null) { StopCoroutine(_saveQuitResetCo); _saveQuitResetCo = null; }
+                            _saveQuitPending = false;
+                            SaveAndQuit();
+                        }
+                    });
+                    var sqIconSprite = InRunUiFactory.LoadResourceSprite("ui/icon_ink_save");
+                    if (sqIconSprite != null)
+                    {
+                        var sqIconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+                        sqIconGo.transform.SetParent(sqRt, false);
+                        var sqIconRt = sqIconGo.GetComponent<RectTransform>();
+                        sqIconRt.anchorMin = new Vector2(0.04f, 0.10f);
+                        sqIconRt.anchorMax = new Vector2(0.22f, 0.90f);
+                        sqIconRt.offsetMin = sqIconRt.offsetMax = Vector2.zero;
+                        var sqIconImg = sqIconGo.GetComponent<Image>();
+                        sqIconImg.sprite       = sqIconSprite;
+                        sqIconImg.preserveAspect = true;
+                        sqIconImg.raycastTarget  = false;
+                    }
+                }
+                var sqLblText = isTutorialQuit ? T("InRun.Path.Quit") : T("InRun.Path.SaveAndQuit");
+                var sqLbl = InRunUiFactory.CreateText(sqRt, "Label", sqLblText,
+                    11, TextAnchor.MiddleCenter, new Color(0.92f, 0.88f, 0.78f, 1f));
+                sqLbl.rectTransform.anchorMin = isTutorialQuit ? new Vector2(0.02f, 0f) : new Vector2(0.25f, 0f);
                 sqLbl.rectTransform.anchorMax = new Vector2(0.98f, 1f);
                 sqLbl.rectTransform.offsetMin = sqLbl.rectTransform.offsetMax = Vector2.zero;
                 sqLbl.resizeTextForBestFit = true;
                 sqLbl.resizeTextMinSize   = 9;
                 sqLbl.resizeTextMaxSize   = 11;
                 sqLbl.raycastTarget = false;
-                _saveQuitLbl = sqLbl;
+                if (!isTutorialQuit) _saveQuitLbl = sqLbl;
             }
 
             // Floor transition: fade the path canvas in each rebuild
@@ -3237,6 +3251,10 @@ namespace SudokuRoguelike.UI
                     selBtn.onClick.Invoke();
             }
 
+            // Start (JoystickButton7): open options panel from path screen
+            if (Input.GetKeyDown(KeyCode.JoystickButton7))
+                ToggleOptionsPanel();
+
             // MAP-2: B (JoystickButton1) shows a quit-confirm modal instead of double-press
             if (Input.GetKeyDown(KeyCode.JoystickButton1) && !_pathQuitModalActive)
                 ExecuteInRunCancelRoute(CancelRouteContract.ResolveInRunGamepadCancel(BuildInRunCancelContext()));
@@ -3244,6 +3262,10 @@ namespace SudokuRoguelike.UI
 
         private void HandleGamepadPuzzleFocus()
         {
+            // Start (JoystickButton7): toggle options panel
+            if (Input.GetKeyDown(KeyCode.JoystickButton7))
+            { ToggleOptionsPanel(); return; }
+
             // D-Pad + left stick: move cell selection (gamepad-only — keyboard arrows are handled below
             // in the direct keyboard section to avoid double-firing the same MoveSelection call).
             if (_inputRemap.WasGamepadActionPressed(InputAction.MoveUp))    MoveSelection(-1, 0);
@@ -3265,6 +3287,10 @@ namespace SudokuRoguelike.UI
                 _pendingKeyboardDigit = _gbNumpadRow * 3 + _gbNumpadCol + 1;
                 _numpadView?.HighlightControllerCursor(_gbNumpadRow * 3 + _gbNumpadCol);
             }
+
+            // B (JoystickButton1): immediate exit when defeat screen is shown (no long-press)
+            if (Input.GetKeyDown(KeyCode.JoystickButton1) && _gameOverPanel != null && _gameOverPanel.activeSelf)
+            { SaveAndQuit(); return; }
 
             // PS-2: B (JoystickButton1) long-press (≥0.4 s) clears cell; short press acts as cancel only
             if (Input.GetKey(KeyCode.JoystickButton1))
@@ -4015,8 +4041,10 @@ namespace SudokuRoguelike.UI
             }
 
             // _justCompletedNodeIndex is set in OnPostRewardReady after reward screen dismissed
+            var completingNode = _map?.Run?.GetCurrentNode();
+            var completingIsBoss = completingNode?.Type == NodeType.Boss;
             _justCompletedNodeIndex = -1;
-            ShowPath();
+            if (!completingIsBoss) ShowPath();
             _audio?.PlayPuzzleSolved();
             RumbleService.PulsePuzzleSolved(this);
             _boardView?.FlashBoardSolved();
@@ -4234,6 +4262,19 @@ namespace SudokuRoguelike.UI
 
             var bootstrap = FindFirstObjectByType<Bootstrap.GameBootstrap>();
             if (bootstrap != null) bootstrap.ReturnToMenu();
+
+            // Navigate to the appropriate panel after returning to menu.
+            var mc = FindFirstObjectByType<MainMenuController>();
+            if (mc != null)
+            {
+                var runMode = _map?.Run?.State?.Mode;
+                if (runMode == GameMode.SpiritTrials)
+                    mc.ShowSpiritTrialsTierSelect();
+                else if (runMode == GameMode.EndlessZen && (_gameOverPanel?.activeSelf ?? false))
+                    mc.BackToMainMenu();
+                else
+                    mc.ShowMainMenu(); // refreshes the Resume button so saved GardenRuns are immediately resumable
+            }
 
             // Seasonal challenge should land back on the Monthly Walk panel with refreshed PB info.
             if (decision.ShouldShowMonthlyWalkPanel)

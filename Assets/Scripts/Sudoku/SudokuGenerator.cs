@@ -8,12 +8,12 @@ namespace SudokuRoguelike.Sudoku
         public static SudokuBoard CreatePuzzle(int size, float missingPercent, int seed,
             int regionVariant = 0, bool nonconsecutive = false, bool antiknight = false,
             bool nonconsecDiagonal = false, bool antibishop = false,
-            bool antiking = false, bool distanceGe2 = false)
+            bool antiking = false, bool distanceGe2 = false, bool entropy = false)
         {
             var random = new Random(seed);
             var regionMap = BuildRegionMap(size, regionVariant);
             var solution = GenerateSolvedBoard(size, regionMap, random, nonconsecutive, antiknight,
-                nonconsecDiagonal, antibishop, antiking, distanceGe2);
+                nonconsecDiagonal, antibishop, antiking, distanceGe2, entropy);
             var puzzle = (int[,])solution.Clone();
 
             var totalCells = size * size;
@@ -48,14 +48,14 @@ namespace SudokuRoguelike.Sudoku
         public static SudokuBoard CreatePuzzleWithUniquenessCheck(int size, float missingPercent, int seed,
             int regionVariant = 0, bool nonconsecutive = false, bool antiknight = false,
             bool nonconsecDiagonal = false, bool antibishop = false,
-            bool antiking = false, bool distanceGe2 = false,
+            bool antiking = false, bool distanceGe2 = false, bool entropy = false,
             GenerationDeadline deadline = default)
         {
             deadline.ThrowIfExceeded();
             var random = new Random(seed);
             var regionMap = BuildRegionMap(size, regionVariant);
             var solution = GenerateSolvedBoard(size, regionMap, random, nonconsecutive, antiknight,
-                nonconsecDiagonal, antibishop, antiking, distanceGe2, deadline);
+                nonconsecDiagonal, antibishop, antiking, distanceGe2, entropy, deadline);
 
             var totalCells = size * size;
 
@@ -84,7 +84,7 @@ namespace SudokuRoguelike.Sudoku
                 puzzle[row, col] = 0;
 
                 if (HasUniqueSolution(puzzle, regionMap, size, nonconsecutive, antiknight,
-                        nonconsecDiagonal, antibishop, antiking, distanceGe2, deadline))
+                        nonconsecDiagonal, antibishop, antiking, distanceGe2, entropy, deadline))
                 {
                     removed++;
                 }
@@ -101,6 +101,7 @@ namespace SudokuRoguelike.Sudoku
         private static int[,] GenerateSolvedBoard(int size, int[,] regionMap, Random random,
             bool nonconsecutive = false, bool antiknight = false, bool nonconsecDiagonal = false,
             bool antibishop = false, bool antiking = false, bool distanceGe2 = false,
+            bool entropy = false,
             GenerationDeadline deadline = default)
         {
             const int maxAttempts = 64;
@@ -115,7 +116,7 @@ namespace SudokuRoguelike.Sudoku
 
                 if (FillBoard(board, regionMap, size, rowMask, colMask, regionMask, random,
                         nonconsecutive, antiknight, nonconsecDiagonal, antibishop, antiking, distanceGe2,
-                        deadline))
+                        entropy, deadline))
                     return board;
 
                 // Reseed with a deterministic but different value so retries are reproducible
@@ -126,7 +127,7 @@ namespace SudokuRoguelike.Sudoku
                 $"Failed to generate solved board for size {size} after {maxAttempts} attempts " +
                 $"(nonconsecutive={nonconsecutive}, antiknight={antiknight}, " +
                 $"nonconsecDiagonal={nonconsecDiagonal}, antibishop={antibishop}, " +
-                $"antiking={antiking}, distanceGe2={distanceGe2}).");
+                $"antiking={antiking}, distanceGe2={distanceGe2}, entropy={entropy}).");
         }
 
         // [REQ: GEN-SOLVE-001] FillBoard: MRV (minimum remaining values) + seeded shuffle of candidates + recursive backtracking
@@ -134,12 +135,13 @@ namespace SudokuRoguelike.Sudoku
             int[] rowMask, int[] colMask, int[] regionMask, Random random,
             bool nonconsecutive = false, bool antiknight = false, bool nonconsecDiagonal = false,
             bool antibishop = false, bool antiking = false, bool distanceGe2 = false,
+            bool entropy = false,
             GenerationDeadline deadline = default)
         {
             deadline.ThrowIfExceeded();
             if (!FindNextCell(board, regionMap, size, rowMask, colMask, regionMask,
                     nonconsecutive, antiknight, nonconsecDiagonal, antibishop, antiking, distanceGe2,
-                    out var row, out var col, out var candidates))
+                    entropy, out var row, out var col, out var candidates))
                 return true;
 
             Shuffle(candidates, random);
@@ -155,6 +157,7 @@ namespace SudokuRoguelike.Sudoku
                 if (nonconsecDiagonal && ViolatesNonconsecDiagonal(board, row, col, value, size)) continue;
                 if (antibishop && ViolatesAntiBishop(board, row, col, value, size)) continue;
                 if ((antiking || distanceGe2) && ViolatesAntiking(board, row, col, value, size)) continue;
+                if (entropy && ViolatesEntropy(board, row, col, value, size)) continue;
 
                 var bit = 1 << value;
 
@@ -165,7 +168,7 @@ namespace SudokuRoguelike.Sudoku
 
                 if (FillBoard(board, regionMap, size, rowMask, colMask, regionMask, random,
                         nonconsecutive, antiknight, nonconsecDiagonal, antibishop, antiking, distanceGe2,
-                        deadline))
+                        entropy, deadline))
                     return true;
 
                 board[row, col] = 0;
@@ -247,7 +250,7 @@ namespace SudokuRoguelike.Sudoku
         private static bool FindNextCell(int[,] board, int[,] regionMap, int size,
             int[] rowMask, int[] colMask, int[] regionMask,
             bool nonconsecutive, bool antiknight, bool nonconsecDiagonal,
-            bool antibishop, bool antiking, bool distanceGe2,
+            bool antibishop, bool antiking, bool distanceGe2, bool entropy,
             out int bestRow, out int bestCol, out List<int> bestCandidates)
         {
             bestRow = -1;
@@ -268,7 +271,7 @@ namespace SudokuRoguelike.Sudoku
                     if ((usedMask & (1 << value)) != 0) continue;
                     if (!AllowsStructuralPlacement(board, row, col, value, size,
                             nonconsecutive, antiknight, nonconsecDiagonal,
-                            antibishop, antiking, distanceGe2))
+                            antibishop, antiking, distanceGe2, entropy))
                         continue;
                     candidates.Add(value);
                 }
@@ -296,15 +299,43 @@ namespace SudokuRoguelike.Sudoku
 
         private static bool AllowsStructuralPlacement(int[,] board, int row, int col, int value, int size,
             bool nonconsecutive, bool antiknight, bool nonconsecDiagonal,
-            bool antibishop, bool antiking, bool distanceGe2)
+            bool antibishop, bool antiking, bool distanceGe2, bool entropy = false)
         {
             if (nonconsecutive && ViolatesNonconsecutive(board, row, col, value, size)) return false;
             if (antiknight && ViolatesAntiknight(board, row, col, value, size)) return false;
             if (nonconsecDiagonal && ViolatesNonconsecDiagonal(board, row, col, value, size)) return false;
             if (antibishop && ViolatesAntiBishop(board, row, col, value, size)) return false;
             if ((antiking || distanceGe2) && ViolatesAntiking(board, row, col, value, size)) return false;
+            if (entropy && ViolatesEntropy(board, row, col, value, size)) return false;
             return true;
         }
+
+        private static bool ViolatesEntropy(int[,] board, int row, int col, int value, int size)
+        {
+            // Check all windows of 3 consecutive cells in the same row that include col
+            for (var start = Math.Max(0, col - 2); start <= Math.Min(size - 3, col); start++)
+            {
+                var a = start     == col ? value : board[row, start];
+                var b = start + 1 == col ? value : board[row, start + 1];
+                var c = start + 2 == col ? value : board[row, start + 2];
+                if (a == 0 || b == 0 || c == 0) continue; // window not fully filled yet
+                var groups = (1 << EntropyGroup(a)) | (1 << EntropyGroup(b)) | (1 << EntropyGroup(c));
+                if (groups != 0b111) return true;
+            }
+            // Check all windows of 3 consecutive cells in the same col that include row
+            for (var start = Math.Max(0, row - 2); start <= Math.Min(size - 3, row); start++)
+            {
+                var a = start     == row ? value : board[start,     col];
+                var b = start + 1 == row ? value : board[start + 1, col];
+                var c = start + 2 == row ? value : board[start + 2, col];
+                if (a == 0 || b == 0 || c == 0) continue;
+                var groups = (1 << EntropyGroup(a)) | (1 << EntropyGroup(b)) | (1 << EntropyGroup(c));
+                if (groups != 0b111) return true;
+            }
+            return false;
+        }
+
+        private static int EntropyGroup(int v) => v <= 3 ? 0 : v <= 6 ? 1 : 2;
 
         // ── Region Maps ──
 
@@ -600,7 +631,7 @@ namespace SudokuRoguelike.Sudoku
         // Fast path: naked-singles propagation. Falls back to bounded backtracking (cap = 2).
         private static bool HasUniqueSolution(int[,] puzzle, int[,] regionMap, int size,
             bool nonconsecutive, bool antiknight, bool nonconsecDiagonal,
-            bool antibishop, bool antiking, bool distanceGe2,
+            bool antibishop, bool antiking, bool distanceGe2, bool entropy = false,
             GenerationDeadline deadline = default)
         {
             deadline.ThrowIfExceeded();
@@ -629,7 +660,7 @@ namespace SudokuRoguelike.Sudoku
             var count = 0;
             CountSolutionsCapped(work, regionMap, size, rowMask, colMask, regionMask,
                 nonconsecutive, antiknight, nonconsecDiagonal, antibishop, antiking, distanceGe2,
-                ref count, limit: 2, deadline);
+                entropy, ref count, limit: 2, deadline);
             return count == 1;
         }
 
@@ -639,7 +670,7 @@ namespace SudokuRoguelike.Sudoku
         private static void CountSolutionsCapped(int[,] board, int[,] regionMap, int size,
             int[] rowMask, int[] colMask, int[] regionMask,
             bool nonconsecutive, bool antiknight, bool nonconsecDiagonal,
-            bool antibishop, bool antiking, bool distanceGe2,
+            bool antibishop, bool antiking, bool distanceGe2, bool entropy,
             ref int count, int limit,
             GenerationDeadline deadline = default)
         {
@@ -660,7 +691,7 @@ namespace SudokuRoguelike.Sudoku
                     if ((used & (1 << v)) != 0) continue;
                     if (AllowsStructuralPlacement(board, row, col, v, size,
                             nonconsecutive, antiknight, nonconsecDiagonal,
-                            antibishop, antiking, distanceGe2))
+                            antibishop, antiking, distanceGe2, entropy))
                         cnt++;
                 }
                 if (cnt == 0) return; // dead end — this branch has no solution
@@ -677,7 +708,7 @@ namespace SudokuRoguelike.Sudoku
                 if ((usedForBest & (1 << v)) != 0) continue;
                 if (!AllowsStructuralPlacement(board, bestRow, bestCol, v, size,
                         nonconsecutive, antiknight, nonconsecDiagonal,
-                        antibishop, antiking, distanceGe2))
+                        antibishop, antiking, distanceGe2, entropy))
                     continue;
 
                 var bit = 1 << v;
@@ -688,7 +719,7 @@ namespace SudokuRoguelike.Sudoku
 
                 CountSolutionsCapped(board, regionMap, size, rowMask, colMask, regionMask,
                     nonconsecutive, antiknight, nonconsecDiagonal, antibishop, antiking, distanceGe2,
-                    ref count, limit, deadline);
+                    entropy, ref count, limit, deadline);
 
                 board[bestRow, bestCol] = 0;
                 rowMask[bestRow]        &= ~bit;

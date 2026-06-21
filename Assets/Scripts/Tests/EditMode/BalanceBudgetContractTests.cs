@@ -7,6 +7,7 @@ using SudokuRoguelike.Core;
 using SudokuRoguelike.Economy;
 using SudokuRoguelike.Items;
 using SudokuRoguelike.Run;
+using SudokuRoguelike.Tutorial;
 
 namespace SudokuRoguelike.Tests
 {
@@ -109,7 +110,7 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
-        public void UnsupportedAntiBishop_IsExcludedFromRandomModifierRolls()
+        public void AntiBishop_IsOnlyRolledForNineByNineBoards()
         {
             var method = typeof(BossService).GetMethod(
                 "BuildEligiblePool",
@@ -118,11 +119,13 @@ namespace SudokuRoguelike.Tests
 
             var service = new BossService(seed: 33);
             var sizeSix = (List<BossModifierId>)method.Invoke(service, new object[] { null, 6 });
-            var sizeSeven = (List<BossModifierId>)method.Invoke(service, new object[] { null, 7 });
+            var sizeEight = (List<BossModifierId>)method.Invoke(service, new object[] { null, 8 });
+            var sizeNine = (List<BossModifierId>)method.Invoke(service, new object[] { null, 9 });
 
-            Assert.IsFalse(BossService.IsSupportedForGeneratedRun(BossModifierId.AntiBishop));
+            Assert.IsTrue(BossService.IsSupportedForGeneratedRun(BossModifierId.AntiBishop));
             CollectionAssert.DoesNotContain(sizeSix, BossModifierId.AntiBishop);
-            CollectionAssert.DoesNotContain(sizeSeven, BossModifierId.AntiBishop);
+            CollectionAssert.DoesNotContain(sizeEight, BossModifierId.AntiBishop);
+            CollectionAssert.Contains(sizeNine, BossModifierId.AntiBishop);
         }
 
         [Test]
@@ -174,6 +177,61 @@ namespace SudokuRoguelike.Tests
                     BossModifierId.RatioKropki,
                     $"boss options reintroduced the excluded pair for seed {seed}.");
             }
+        }
+
+        [Test]
+        public void CustomPuzzleValidation_RejectsUnsupportedSizeAndStructuralCombinations()
+        {
+            Assert.IsFalse(TutorialModeService.CanAddCustomModifier(
+                requestedBoardSize: 5,
+                selectedModifiers: new List<BossModifierId>(),
+                candidate: BossModifierId.KillerCages,
+                out _));
+            Assert.IsFalse(TutorialModeService.CanAddCustomModifier(
+                requestedBoardSize: 8,
+                selectedModifiers: new List<BossModifierId>(),
+                candidate: BossModifierId.AntiBishop,
+                out _));
+            Assert.IsTrue(TutorialModeService.CanAddCustomModifier(
+                requestedBoardSize: 9,
+                selectedModifiers: new List<BossModifierId>(),
+                candidate: BossModifierId.AntiBishop,
+                out _));
+            Assert.IsFalse(TutorialModeService.CanAddCustomModifier(
+                requestedBoardSize: 7,
+                selectedModifiers: new List<BossModifierId>(),
+                candidate: BossModifierId.Antiknight,
+                out _));
+            Assert.IsFalse(TutorialModeService.CanAddCustomModifier(
+                requestedBoardSize: 6,
+                selectedModifiers: new List<BossModifierId> { BossModifierId.Antiknight },
+                candidate: BossModifierId.Antiking,
+                out _));
+            Assert.IsFalse(TutorialModeService.CanAddCustomModifier(
+                requestedBoardSize: 8,
+                selectedModifiers: new List<BossModifierId> { BossModifierId.RatioKropki },
+                candidate: BossModifierId.DistanceGe2,
+                out _));
+        }
+
+        [Test]
+        public void CustomPuzzleValidation_AllowsAtMostFiveModifiers()
+        {
+            var setup = new TutorialSetupConfig { BoardSize = 9, Stars = 3 };
+            setup.SelectedModifiers.AddRange(new[]
+            {
+                BossModifierId.EvenOdd,
+                BossModifierId.ParityLines,
+                BossModifierId.RenbanLines,
+                BossModifierId.DifferenceKropki,
+                BossModifierId.PrimeCells
+            });
+
+            Assert.IsTrue(TutorialModeService.TryValidateCustomSetup(setup, out _));
+
+            setup.SelectedModifiers.Add(BossModifierId.FogOfWar);
+            Assert.IsFalse(TutorialModeService.TryValidateCustomSetup(setup, out var failureMessage));
+            StringAssert.Contains("5", failureMessage);
         }
 
         private static void AssertWeightBudget(float[] weights, string label)

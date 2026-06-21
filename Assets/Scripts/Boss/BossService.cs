@@ -32,11 +32,11 @@ namespace SudokuRoguelike.Boss
 
             // Extended pool (IDs 15-29)
             [BossModifierId.Antiking]          = (2, 0.30f, 6),
-            [BossModifierId.AntiBishop]        = (3, 0.45f, 7),
+            [BossModifierId.AntiBishop]        = (3, 0.45f, 9),
             [BossModifierId.NonconsecDiagonal] = (2, 0.28f, 6),
             [BossModifierId.DistanceGe2]       = (2, 0.32f, 6),
             [BossModifierId.EntropyGlobal]     = (4, 0.60f, 9),
-            [BossModifierId.ModularRegions]    = (3, 0.40f, 0),
+            [BossModifierId.ModularRegions]    = (3, 0.40f, 7),
             [BossModifierId.ConsecutiveLine]   = (2, 0.35f, 6),
             [BossModifierId.SlowThermo]        = (2, 0.30f, 6),
             [BossModifierId.UniqueSetLine]     = (2, 0.30f, 5),
@@ -89,12 +89,35 @@ namespace SudokuRoguelike.Boss
             return ModifierData.TryGetValue(id, out var data) ? data.Tier : 1;
         }
 
+        public static int GetMinimumBoardSize(BossModifierId modifier)
+        {
+            return ModifierData.TryGetValue(modifier, out var data)
+                ? Math.Max(5, data.MinBoardSize)
+                : 5;
+        }
+
         /// <summary>
-        /// AntiBishop has no valid board in the shipped 8x8 normal or irregular region layouts.
-        /// Keep it visible for reference/tutorial content, but do not generate it in a run.
+        /// Returns true if the modifier is a fully implemented player-eligible modifier
+        /// (i.e. registered in ModifierData and not a debuff or pressure mechanic).
         /// </summary>
-        public static bool IsSupportedForGeneratedRun(BossModifierId modifier) =>
-            modifier != BossModifierId.AntiBishop;
+        public static bool IsImplementedModifier(BossModifierId modifier) =>
+            (int)modifier < 94 && ModifierData.ContainsKey(modifier);
+
+        public static bool IsBoardShapingModifier(BossModifierId modifier)
+        {
+            return modifier == BossModifierId.Nonconsecutive
+                || modifier == BossModifierId.Antiknight
+                || modifier == BossModifierId.NonconsecDiagonal
+                || modifier == BossModifierId.AntiBishop
+                || modifier == BossModifierId.Antiking
+                || modifier == BossModifierId.DistanceGe2;
+        }
+
+        /// <summary>
+        /// AntiBishop is offered only through the board-size gate. It is too constrained for
+        /// smaller shipped layouts, but 9x9 generation remains supported.
+        /// </summary>
+        public static bool IsSupportedForGeneratedRun(BossModifierId modifier) => true;
 
         /// <summary>
         /// Returns false for modifier pairs that are individually valid but are not stable
@@ -114,7 +137,11 @@ namespace SudokuRoguelike.Boss
         private static bool IsBlockedCombination(BossModifierId first, BossModifierId second)
         {
             return (first == BossModifierId.RatioKropki && second == BossModifierId.DistanceGe2)
-                || (first == BossModifierId.DistanceGe2 && second == BossModifierId.RatioKropki);
+                || (first == BossModifierId.DistanceGe2 && second == BossModifierId.RatioKropki)
+                // DistanceGe2 + NonconsecDiagonal both constrain diagonal adjacency and together
+                // over-constrain the board to the point the backtracker reliably times out.
+                || (first == BossModifierId.DistanceGe2 && second == BossModifierId.NonconsecDiagonal)
+                || (first == BossModifierId.NonconsecDiagonal && second == BossModifierId.DistanceGe2);
         }
 
         [System.Obsolete("Use RollBossChoices(floor, activeFloorModifiers, minBoardSize, harmonyLevel) to ensure board-size filtering.")]
@@ -131,11 +158,14 @@ namespace SudokuRoguelike.Boss
         /// (per <see cref="HarmonyDifficultyService.GetBonusFloorModifiers"/>).
         /// Excludes modifiers that require board sizes larger than the floor's minimum.
         /// </summary>
-        // [REQ: BOSS-FLOOR-001] Floor N has N−1 floor modifiers; rolls from eligible pool at floor entry
+        // [REQ: BOSS-FLOOR-001] Floor modifier counts by floor index (0-based): 0,1,1,1,2
+        private static readonly int[] BaseFloorModifierCounts = { 0, 1, 1, 1, 2 };
         public List<BossModifierId> RollFloorModifiers(int floor, int minBoardSize, int harmonyLevel)
         {
             var harmonyBonus = HarmonyDifficultyService.GetBonusFloorModifiers(harmonyLevel, floor);
-            var count = floor + harmonyBonus; // Floor 0(1st)=0, Floor 1(2nd)=1, ..., Floor 4(5th)=4
+            var baseCount = floor >= 0 && floor < BaseFloorModifierCounts.Length
+                ? BaseFloorModifierCounts[floor] : floor;
+            var count = baseCount + harmonyBonus;
             if (count == 0) return new List<BossModifierId>();
 
             var pool = BuildEligiblePool(null, minBoardSize);

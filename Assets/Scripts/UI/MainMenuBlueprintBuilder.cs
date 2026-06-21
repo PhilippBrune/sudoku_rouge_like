@@ -446,7 +446,7 @@ namespace SudokuRoguelike.UI
 
             // Class info panel: y=0.19-0.48 (height=0.29), below row3 (bottom?0.49), above controls (top?0.18)
             var infoBg = EnsureRect("ClassInfoBg", pr,
-                new Vector2(0.06f, 0.19f), new Vector2(0.94f, 0.48f), Vector2.zero, Vector2.zero);
+                new Vector2(0.10f, 0.19f), new Vector2(0.90f, 0.48f), Vector2.zero, Vector2.zero);
             EnsureOrGetImage(infoBg.gameObject, GamePalette.MenuInfoBg);
             var infoOutline = EnsureComponent<Outline>(infoBg.gameObject);
             infoOutline.effectColor = GamePalette.AccentGoldFaint;
@@ -531,13 +531,35 @@ namespace SudokuRoguelike.UI
             back.onClick.AddListener(mc.BackToMainMenu);
             ApplyMenuButtonIcon(back, "ui/icon_back_leaf"); // F16: back/close uses dedicated back_leaf icon;
 
-            // Harmony readout: small reminder of selected difficulty in bottom-left corner
-            var harmonyReadout = BuildText("HarmonyReadout", pr, "", 10, TextAnchor.MiddleLeft);
+            // Harmony difficulty selector: < readout > in bottom-left corner
+            var btnHarmonyPrevClass = BuildButton("BtnHarmonyPrevClass", pr, "<", 14);
+            SetRect(btnHarmonyPrevClass.GetComponent<RectTransform>(),
+                new Vector2(0.10f, 0.01f), new Vector2(0.16f, 0.09f), Vector2.zero, Vector2.zero);
+            btnHarmonyPrevClass.onClick.RemoveAllListeners();
+            btnHarmonyPrevClass.onClick.AddListener(() => mc.StepHarmonyClassLevel(-1));
+            mc.SetHarmonyPrevClassBtn(btnHarmonyPrevClass);
+
+            var harmonyReadout = BuildText("HarmonyReadout", pr, "", 10, TextAnchor.MiddleCenter);
             SetRect(harmonyReadout.rectTransform,
-                new Vector2(0.10f, 0.01f), new Vector2(0.46f, 0.09f), Vector2.zero, Vector2.zero);
+                new Vector2(0.17f, 0.01f), new Vector2(0.39f, 0.09f), Vector2.zero, Vector2.zero);
             harmonyReadout.color = GamePalette.TextMuted;
             harmonyReadout.raycastTarget = false;
             mc.SetHarmonyReadout(harmonyReadout);
+
+            var btnHarmonyNextClass = BuildButton("BtnHarmonyNextClass", pr, ">", 14);
+            SetRect(btnHarmonyNextClass.GetComponent<RectTransform>(),
+                new Vector2(0.40f, 0.01f), new Vector2(0.46f, 0.09f), Vector2.zero, Vector2.zero);
+            btnHarmonyNextClass.onClick.RemoveAllListeners();
+            btnHarmonyNextClass.onClick.AddListener(() => mc.StepHarmonyClassLevel(+1));
+            mc.SetHarmonyNextClassBtn(btnHarmonyNextClass);
+
+            // Harmony difficulty description — shown to the right of Allow Irregular toggle
+            var harmonyDescClass = BuildText("HarmonyDescriptionLabel", pr, "", 9, TextAnchor.MiddleLeft);
+            SetRect(harmonyDescClass.rectTransform,
+                new Vector2(0.48f, 0.10f), new Vector2(0.90f, 0.18f), Vector2.zero, Vector2.zero);
+            harmonyDescClass.color = GamePalette.TextMuted;
+            harmonyDescClass.raycastTarget = false;
+            mc.SetHarmonyDescriptionLabel(harmonyDescClass);
 
             // Apply art background if the asset is available
             if (ApplyPanelBackground(panel.GetComponent<Image>(), "background/bg_class_select"))
@@ -564,7 +586,7 @@ namespace SudokuRoguelike.UI
             TutorialMenuController tutCtrl)
         {
             var panel = MakePanel("TutorialSetupPanel", root,
-                new Vector2(0.22f, 0.05f), new Vector2(0.78f, 0.95f));
+                new Vector2(0.14f, 0.05f), new Vector2(0.86f, 0.95f));
             var pr = GetPanelContent(panel);
 
             var title = BuildText("Title", pr, T("Custom Puzzle"), 28, TextAnchor.UpperCenter);
@@ -618,7 +640,7 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.04f, 0.84f), new Vector2(0.28f, 0.89f), Vector2.zero, Vector2.zero);
             BuildArrowSelector("BoardSize", pr,
                 new Vector2(0.30f, 0.84f), new Vector2(0.96f, 0.89f),
-                new[] { "5?5", "6?6", "7?7", "8?8", "9?9" }, 0,
+                new[] { "5x5", "6x6", "7x7", "8x8", "9x9" }, 0,
                 tutCtrl.SetBoardSizeIndex);
 
             // Stars
@@ -675,14 +697,14 @@ namespace SudokuRoguelike.UI
             tutCtrl.SetClassArrowLabel(classArrowLabel);
 
             // -- Sudoku Modes label --
-            var modsTitle = BuildText("ModsTitle", pr, T("Sudoku Modes"), 15, TextAnchor.MiddleLeft);
+            var modsTitle = BuildText("ModsTitle", pr, T("Sudoku Modes (max 5)"), 15, TextAnchor.MiddleLeft);
             modsTitle.fontStyle = FontStyle.Bold;
             modsTitle.color = AccentColor;
             SetRect(modsTitle.rectTransform,
                 new Vector2(0.04f, 0.52f), new Vector2(0.96f, 0.56f), Vector2.zero, Vector2.zero);
 
             // -- 6 modifier columns (30 total: 15 original + 15 extended) --
-            var colW = 0.94f / 6f;
+            var colW = 0.68f / 6f;
 
             RectTransform MakeCol(string colName, int idx)
             {
@@ -778,7 +800,7 @@ namespace SudokuRoguelike.UI
             // Bottom controls
             var startBtn = BuildButton("BtnTutStart", pr, T("Start Puzzle"), 15);
             SetRect(startBtn.GetComponent<RectTransform>(),
-                new Vector2(0.10f, 0.01f), new Vector2(0.46f, 0.09f), Vector2.zero, Vector2.zero);
+                new Vector2(0.02f, 0.01f), new Vector2(0.46f, 0.09f), Vector2.zero, Vector2.zero);
             startBtn.onClick.RemoveAllListeners();
             startBtn.onClick.AddListener(mc.StartTutorialGame);
             ApplyMenuButtonIcon(startBtn, "ui/icon_start_run");             // F-QA: dedicated start-run icon
@@ -792,28 +814,30 @@ namespace SudokuRoguelike.UI
 
             // -- Modifier hover tooltip --
             var ttBg = EnsureRect("ModTooltipBg", pr,
-                new Vector2(0.04f, 0.01f), new Vector2(0.59f, 0.09f), Vector2.zero, Vector2.zero);
+                new Vector2(0.72f, 0.10f), new Vector2(0.90f, 0.51f), Vector2.zero, Vector2.zero);
             var ttImg = EnsureComponent<Image>(ttBg.gameObject);
             ttImg.color = GamePalette.ShadowDark;
             var ttTextRect = EnsureRect("ModTooltipText", ttBg,
-                new Vector2(0.01f, 0f), new Vector2(0.99f, 1f), Vector2.zero, Vector2.zero);
+                new Vector2(0.04f, 0.06f), new Vector2(0.96f, 0.94f), Vector2.zero, Vector2.zero);
             var ttText = EnsureComponent<Text>(ttTextRect.gameObject);
             ttText.font = GetBuiltInFont();
             ttText.fontSize = 11;
             ttText.color = TxtColor;
-            ttText.alignment = TextAnchor.MiddleLeft;
+            ttText.alignment = TextAnchor.UpperLeft;
             ttText.horizontalOverflow = HorizontalWrapMode.Wrap;
             ttText.verticalOverflow = VerticalWrapMode.Overflow;
-            ttBg.gameObject.SetActive(false);
+            var defaultTooltip = T("Hover a Sudoku mode for details.");
+            ttText.text = defaultTooltip;
+            ttBg.gameObject.SetActive(true);
 
             void WireTip(Toggle tgl, string desc)
             {
                 var et = EnsureComponent<EventTrigger>(tgl.gameObject);
                 var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-                enter.callback.AddListener(_ => { ttText.text = desc; ttBg.gameObject.SetActive(true); });
+                enter.callback.AddListener(_ => ttText.text = desc);
                 et.triggers.Add(enter);
                 var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
-                exit.callback.AddListener(_ => ttBg.gameObject.SetActive(false));
+                exit.callback.AddListener(_ => ttText.text = defaultTooltip);
                 et.triggers.Add(exit);
             }
 
@@ -836,8 +860,8 @@ namespace SudokuRoguelike.UI
             WireTip(antibishop,    "Global: no two cells on the same diagonal may share a digit.");
             WireTip(nonconsecDiag, "Global: diagonally adjacent cells cannot be consecutive (e.g. 4 cannot touch 3 or 5 diagonally).");
             WireTip(distGe2,       "Global: equal digits must be at least 2 cells apart (no king-adjacent equal digits).");
-            WireTip(entropy,       "Every 3 consecutive row/col cells must contain one low (1?3), one mid (4?6), and one high (7?9) digit.");
-            WireTip(modular,       "Every box region must contain at least one digit from {1?3}, {4?6}, and {7?9}.");
+            WireTip(entropy,       "Every 3 consecutive row/col cells must contain one low (1-3), one mid (4-6), and one high (7-9) digit.");
+            WireTip(modular,       "Every box region must contain at least one digit from {1-3}, {4-6}, and {7-9}.");
             WireTip(consecLine,    "Orange line: adjacent cells on the line must differ by exactly 1 (e.g. 3-4-5).");
             WireTip(slowThermo,    "Purple line with open bulb: digits must increase or stay equal from bulb to tip (e.g. 2-2-3-5).");
             WireTip(uniqueSet,     "Sky-blue line: no digit may repeat anywhere on the line.");
@@ -1196,16 +1220,6 @@ namespace SudokuRoguelike.UI
             langDrop.ClearOptions();
             langDrop.AddOptions(new System.Collections.Generic.List<string> { "English", "Deutsch" });
             FitDropdownToItems(langDrop);
-            var langItem = langDrop.template?.Find("Viewport/Content/Item");
-            if (langItem != null)
-            {
-                var le = langItem.GetComponent<LayoutElement>();
-                if (le != null) le.minHeight = 50f;
-                var lbl = langItem.Find("Item Label")?.GetComponent<Text>();
-                if (lbl != null) lbl.fontSize = 20;
-            }
-            langDrop.template.sizeDelta = new Vector2(langDrop.template.sizeDelta.x,
-                Mathf.Min(langDrop.options.Count * 54f + 8f, 300f));
             langDrop.SetValueWithoutNotify((int)opts.Language);
 
             // Explicit D-pad nav: Fullscreen ? ScreenShake ? resDrop ? langDrop
@@ -1659,19 +1673,19 @@ namespace SudokuRoguelike.UI
 
             var btnHarmonyPrev = BuildButton("BtnHarmonyPrev", pr, "<", 20);
             SetRect(btnHarmonyPrev.GetComponent<RectTransform>(),
-                new Vector2(0.10f, 0.75f), new Vector2(0.20f, 0.82f), Vector2.zero, Vector2.zero);
+                new Vector2(0.10f, 0.75f), new Vector2(0.16f, 0.82f), Vector2.zero, Vector2.zero);
 
             var harmonyValue = BuildText("HarmonySelectedLabel", pr, "", 16, TextAnchor.MiddleCenter);
             SetRect(harmonyValue.rectTransform,
-                new Vector2(0.22f, 0.75f), new Vector2(0.78f, 0.82f), Vector2.zero, Vector2.zero);
+                new Vector2(0.17f, 0.75f), new Vector2(0.39f, 0.82f), Vector2.zero, Vector2.zero);
 
             var btnHarmonyNext = BuildButton("BtnHarmonyNext", pr, ">", 20);
             SetRect(btnHarmonyNext.GetComponent<RectTransform>(),
-                new Vector2(0.80f, 0.75f), new Vector2(0.90f, 0.82f), Vector2.zero, Vector2.zero);
+                new Vector2(0.40f, 0.75f), new Vector2(0.46f, 0.82f), Vector2.zero, Vector2.zero);
 
             var harmonySub = BuildText("HarmonySubLabel", pr, "", 12, TextAnchor.MiddleCenter);
             SetRect(harmonySub.rectTransform,
-                new Vector2(0.10f, 0.70f), new Vector2(0.90f, 0.75f), Vector2.zero, Vector2.zero);
+                new Vector2(0.10f, 0.70f), new Vector2(0.46f, 0.75f), Vector2.zero, Vector2.zero);
 
             var btnHarmonyPerk = BuildButton("BtnHarmonyPerk", pr, "", 15);
             SetRect(btnHarmonyPerk.GetComponent<RectTransform>(),
@@ -1691,6 +1705,8 @@ namespace SudokuRoguelike.UI
             garden.onClick.RemoveAllListeners();
             garden.onClick.AddListener(mc.StartGame);
             ApplyMenuButtonIcon(garden, "ui/icon_framed_garden");           // F-QA: garden-specific icon (was unused)
+            // Align icon left edge with half-width buttons (DailyWalk) by using narrower anchor
+            { var ic = garden.transform.Find("Icon") as RectTransform; if (ic != null) { ic.anchorMin = new Vector2(0.01f, 0.16f); ic.anchorMax = new Vector2(0.07f, 0.84f); ic.offsetMin = ic.offsetMax = Vector2.zero; } var lb = garden.transform.Find("Label") as RectTransform; if (lb != null) { lb.anchorMin = new Vector2(0.09f, 0f); lb.anchorMax = new Vector2(0.98f, 1f); lb.offsetMin = lb.offsetMax = Vector2.zero; } }
 
             var endless = BuildButton("BtnEndless", pr, T("Start Endless Zen"), 18);
             SetRect(endless.GetComponent<RectTransform>(),
@@ -1712,6 +1728,8 @@ namespace SudokuRoguelike.UI
             trials.onClick.RemoveAllListeners();
             trials.onClick.AddListener(mc.ShowSpiritTrialsTierSelect);
             ApplyMenuButtonIcon(trials, "ui/icon_trials_seal");             // F-QA: dedicated trials icon (temple_seal reserved for item)
+            // Align icon left edge with half-width buttons (DailyWalk)
+            { var ic = trials.transform.Find("Icon") as RectTransform; if (ic != null) { ic.anchorMin = new Vector2(0.01f, 0.16f); ic.anchorMax = new Vector2(0.07f, 0.84f); ic.offsetMin = ic.offsetMax = Vector2.zero; } var lb = trials.transform.Find("Label") as RectTransform; if (lb != null) { lb.anchorMin = new Vector2(0.09f, 0f); lb.anchorMax = new Vector2(0.98f, 1f); lb.offsetMin = lb.offsetMax = Vector2.zero; } }
 
             var daily = BuildButton("BtnDailyWalk", pr, T("Daily Walk"), 18);
             SetRect(daily.GetComponent<RectTransform>(),
@@ -2292,12 +2310,12 @@ namespace SudokuRoguelike.UI
                     11,
                     TextAnchor.MiddleRight);
                 SetRect(statsLbl.rectTransform,
-                    new Vector2(0.44f, 0.52f), new Vector2(0.98f, 0.96f), Vector2.zero, Vector2.zero);
+                    new Vector2(0.44f, 0.52f), new Vector2(0.86f, 0.96f), Vector2.zero, Vector2.zero);
 
                 // Personal best (right-bottom)
                 var bestLbl = BuildText($"TierBest_{i}", rowBg, T("SpiritTrials.BestPlaceholder"), 11, TextAnchor.MiddleRight);
                 SetRect(bestLbl.rectTransform,
-                    new Vector2(0.44f, 0.06f), new Vector2(0.98f, 0.50f), Vector2.zero, Vector2.zero);
+                    new Vector2(0.44f, 0.06f), new Vector2(0.86f, 0.50f), Vector2.zero, Vector2.zero);
                 bestLbl.color = GamePalette.TextMuted;
                 bestLabels[i] = bestLbl;
 

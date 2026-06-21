@@ -244,6 +244,9 @@ namespace SudokuRoguelike.Save
             // 9b. Evaluate Harmony achievements [HARMONY-ACHIEVE-001]
             SteamAchievementService.EvaluateHarmonyAchievements(meta, mastery, result);
 
+            // 9c. Mirror cumulative stats to Steam (no-op if SDK not present)
+            SteamStatsService.SyncFromLocalStats(stats);
+
             var discoveryAdded = ModifierDiscoveryService.MergeIntoMeta(meta, liveRunState?.SeenBossModifiers);
             if (liveRunState?.SeenBossModifiers != null)
             {

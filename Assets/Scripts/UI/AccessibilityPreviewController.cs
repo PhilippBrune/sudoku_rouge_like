@@ -180,6 +180,8 @@ namespace SudokuRoguelike.UI
 
         public void Refresh(AccessibilitySettings acc)
         {
+            UpdateScale(acc?.FontScale ?? 1f);
+
             var accessSvc = new AccessibilityService();
             accessSvc.Refresh(acc, new GraphicsSettingsModel());
 

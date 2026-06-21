@@ -265,6 +265,34 @@ namespace SudokuRoguelike.Core
             return KeyCode.None;
         }
 
+        /// <summary>
+        /// Call once per frame (e.g. at the top of a MonoBehaviour.Update).
+        /// Hides the cursor when gamepad input is detected; shows it when the mouse moves.
+        /// </summary>
+        public static void UpdateCursorVisibility()
+        {
+            // Any joystick button pressed this frame?
+            var anyGamepad = false;
+            for (var k = 0; k < 20 && !anyGamepad; k++)
+                anyGamepad = Input.GetKeyDown(KeyCode.JoystickButton0 + k);
+
+            // Any analogue stick above threshold?
+            if (!anyGamepad)
+                anyGamepad = Mathf.Abs(Input.GetAxis("Horizontal")) > AxisThreshold
+                          || Mathf.Abs(Input.GetAxis("Vertical"))   > AxisThreshold;
+
+            if (anyGamepad)
+            {
+                Cursor.visible = false;
+                return;
+            }
+
+            // Mouse moved or clicked → restore cursor
+            if (Input.GetAxis("Mouse X") != 0f || Input.GetAxis("Mouse Y") != 0f
+                || Input.GetMouseButton(0) || Input.GetMouseButton(1))
+                Cursor.visible = true;
+        }
+
         public string GetDisplayName(InputAction action)
         {
             var k = GetBinding(action);

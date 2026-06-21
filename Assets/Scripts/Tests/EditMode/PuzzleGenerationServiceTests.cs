@@ -199,6 +199,22 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
+        public void KillerCages_GeneratedCellsFormOrthogonallyConnectedShapes()
+        {
+            var modifiers = new List<BossModifierId> { BossModifierId.KillerCages };
+            var board = Ambiguous4x4Puzzle();
+
+            for (var seed = 0; seed < 128; seed++)
+            {
+                var overlay = ModifierGeometryGenerator.Generate(board, modifiers, seed);
+                Assert.Greater(overlay.KillerCages.Count, 0, $"seed {seed} did not create a cage");
+
+                for (var cageIndex = 0; cageIndex < overlay.KillerCages.Count; cageIndex++)
+                    AssertOrthogonallyConnected(overlay.KillerCages[cageIndex], seed, cageIndex);
+            }
+        }
+
+        [Test]
         public void ScoredModifierModes_RequestUniqueModifierSolutionGate()
         {
             var spiritTrials = new SpiritTrialsService(seed: 123);
@@ -320,7 +336,7 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
-        public void GeneratedConfigSanitizer_RemovesAntiBishopAndBlockedModifierPair()
+        public void GeneratedConfigSanitizer_KeepsSupportedAntiBishopAndRemovesBlockedModifierPair()
         {
             var config = new LevelConfig { BoardSize = 8 };
             config.ActiveModifiers.Add(BossModifierId.EvenOdd);
@@ -331,7 +347,7 @@ namespace SudokuRoguelike.Tests
             SanitizeGeneratedLevelConfigForTests(config);
 
             CollectionAssert.AreEqual(
-                new[] { BossModifierId.EvenOdd, BossModifierId.RatioKropki },
+                new[] { BossModifierId.EvenOdd, BossModifierId.AntiBishop, BossModifierId.RatioKropki },
                 config.ActiveModifiers);
         }
 
@@ -560,6 +576,33 @@ namespace SudokuRoguelike.Tests
             };
 
             return new SudokuBoard(4, solution, cells, RegionMap4x4());
+        }
+
+        private static void AssertOrthogonallyConnected(KillerCage cage, int seed, int cageIndex)
+        {
+            var pending = new Queue<CellCoord>();
+            var visited = new HashSet<CellCoord>();
+            pending.Enqueue(cage.Cells[0]);
+            visited.Add(cage.Cells[0]);
+
+            while (pending.Count > 0)
+            {
+                var cell = pending.Dequeue();
+                for (var i = 0; i < cage.Cells.Count; i++)
+                {
+                    var neighbor = cage.Cells[i];
+                    if (visited.Contains(neighbor)) continue;
+                    var distance = System.Math.Abs(cell.Row - neighbor.Row) + System.Math.Abs(cell.Col - neighbor.Col);
+                    if (distance != 1) continue;
+                    visited.Add(neighbor);
+                    pending.Enqueue(neighbor);
+                }
+            }
+
+            Assert.AreEqual(
+                cage.Cells.Count,
+                visited.Count,
+                $"seed {seed} cage {cageIndex} contains cells connected only diagonally");
         }
 
         private static int[,] RegionMap4x4()

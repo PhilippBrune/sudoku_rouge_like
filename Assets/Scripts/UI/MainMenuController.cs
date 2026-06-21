@@ -7,6 +7,7 @@ using SudokuRoguelike.Classes;
 using SudokuRoguelike.Core;
 using SudokuRoguelike.Run;
 using SudokuRoguelike.Save;
+using SudokuRoguelike.Tutorial;
 
 namespace SudokuRoguelike.UI
 {
@@ -64,6 +65,9 @@ namespace SudokuRoguelike.UI
         private Button _resumeButton;
         private Text _classInfoText;
         private Text _harmonyReadout;
+        private Text _harmonyDescriptionLabel;
+        private Button _harmonyPrevClassBtn;
+        private Button _harmonyNextClassBtn;
         private readonly Dictionary<ClassId, Button> _classButtons = new Dictionary<ClassId, Button>();
         private readonly Dictionary<ClassId, GameObject> _classLockOverlays = new Dictionary<ClassId, GameObject>();
         private ClassId? _highlightedClassId;
@@ -113,6 +117,8 @@ namespace SudokuRoguelike.UI
         // left-stick / d-pad → navigate via EventSystem
         private void Update()
         {
+            InputRemapService.UpdateCursorVisibility();
+
             // MM-2/MM-6: axis-driven scroll for scrollable panels (runs every frame, before anyKeyDown guard)
             ScrollActivePanelIfNeeded();
 
@@ -748,15 +754,34 @@ namespace SudokuRoguelike.UI
         }
 
         public void SetHarmonyReadout(Text readout) => _harmonyReadout = readout;
+        public void SetHarmonyDescriptionLabel(Text lbl) => _harmonyDescriptionLabel = lbl;
+        public void SetHarmonyPrevClassBtn(Button btn) => _harmonyPrevClassBtn = btn;
+        public void SetHarmonyNextClassBtn(Button btn) => _harmonyNextClassBtn = btn;
+
+        public void StepHarmonyClassLevel(int delta)
+        {
+            var meta = _profile.LoadMetaProgress();
+            _gameModesController?.StepHarmonyLevel(delta, meta);
+            RefreshHarmonyReadout();
+        }
 
         private void RefreshHarmonyReadout()
         {
-            if (_harmonyReadout == null || _gameModesController == null) return;
+            if (_gameModesController == null) return;
             var level = _gameModesController.SelectedHarmonyLevel;
-            _harmonyReadout.text = LocalizationService.Format("Harmony.Readout",
-                "Difficulty: {0}  ({1})",
-                HarmonyName(level),
-                HarmonyDifficultyService.GetHudLabel(level));
+            if (_harmonyReadout != null)
+                _harmonyReadout.text = LocalizationService.Format("Harmony.Readout",
+                    "{0}  ({1})",
+                    HarmonyName(level),
+                    HarmonyDifficultyService.GetHudLabel(level));
+            if (_harmonyDescriptionLabel != null)
+                _harmonyDescriptionLabel.text = LocalizationService.T(
+                    "Harmony.Description." + level,
+                    HarmonyDifficultyService.GetDescription(level));
+            var meta = _profile.LoadMetaProgress();
+            var maxUnlocked = _gameModesController.GetMaxUnlockedHarmonyLevel(meta);
+            if (_harmonyPrevClassBtn != null) _harmonyPrevClassBtn.interactable = level > 0;
+            if (_harmonyNextClassBtn != null) _harmonyNextClassBtn.interactable = level < maxUnlocked;
         }
 
         // C-3 — Hover tooltip showing unlock condition for locked class buttons
@@ -1052,6 +1077,12 @@ namespace SudokuRoguelike.UI
             if (_gameBootstrap == null || _tutorialMenuController == null) return;
 
             var setup = _tutorialMenuController.GetConfig();
+            if (!TutorialModeService.TryValidateCustomSetup(setup, out var failureMessage))
+            {
+                SetStatus(failureMessage);
+                return;
+            }
+
             _gameBootstrap.LaunchTutorial(setup);
         }
 
@@ -1119,6 +1150,9 @@ namespace SudokuRoguelike.UI
         public void OnDebugEnableAllChanged(bool isOn)
         {
             _debugEnableAllFeatures = isOn;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            DebugHotkeys.SetRuntimeDebugEnabled(isOn);
+#endif
             SetStatus(isOn
                 ? LocalizationService.T("MainMenu.Status.DebugEnabled", "Debug: All features enabled.")
                 : LocalizationService.T("MainMenu.Status.DebugDisabled", "Debug mode off."));

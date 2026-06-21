@@ -41,10 +41,23 @@ namespace SudokuRoguelike.UI
             _styleIndex = normalized;
             _audioSource.clip = AudioAssetService.GetClip(
                 AudioAssetService.GetMenuMusicStyleLoopId(normalized),
-                ProceduralSfxLibrary.BuildMenuLoop);
+                () => BuildFallbackLoop(normalized));
 
             if (wasPlaying && _audioSource.clip != null)
                 _audioSource.Play();
+        }
+
+        private static AudioClip BuildFallbackLoop(int styleIndex)
+        {
+            switch (AudioAssetService.NormalizeMenuMusicStyleIndex(styleIndex))
+            {
+                case 1:
+                    return ProceduralSfxLibrary.BuildPuzzleLoop();
+                case 2:
+                    return ProceduralSfxLibrary.BuildRestLoop();
+                default:
+                    return ProceduralSfxLibrary.BuildMenuLoop();
+            }
         }
 
         public void SetVolume(float volume)

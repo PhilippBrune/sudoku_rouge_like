@@ -527,6 +527,7 @@ namespace SudokuRoguelike.Run
                 config.ActiveModifiers.Contains(BossModifierId.AntiBishop),
                 config.ActiveModifiers.Contains(BossModifierId.Antiking),
                 config.ActiveModifiers.Contains(BossModifierId.DistanceGe2),
+                config.ActiveModifiers.Contains(BossModifierId.EntropyGlobal),
                 deadline);
         }
 
@@ -562,7 +563,11 @@ namespace SudokuRoguelike.Run
                 return null;
 
             var fallbackMetrics = new PuzzleGenerationMetrics();
-            var fallbackSettings = SelectAsyncGenerationSettings(fallbackConfig);
+            // Use the synchronous (more generous) budget for the fallback: we have already
+            // exhausted the primary budget, and this is the last-resort path. ParallelOverlaySeeds
+            // is not used by CreatePuzzleForConfigWithBudgetedRetries, so SynchronousDefault
+            // (5 retries × 4 000 ms) is safe to use on the background thread.
+            var fallbackSettings = PuzzleGenerationSettings.SynchronousDefault;
             var fallbackBoard = CreatePuzzleForConfigWithBudgetedRetries(
                 fallbackConfig,
                 seed,
@@ -730,9 +735,9 @@ namespace SudokuRoguelike.Run
             {
                 case BossModifierId.GermanWhispers:
                 case BossModifierId.KillerCages:
-                case BossModifierId.AntiBishop:
                     return 7;
                 case BossModifierId.EntropyGlobal:
+                case BossModifierId.AntiBishop:
                     return 9;
                 case BossModifierId.DutchWhispers:
                 case BossModifierId.Nonconsecutive:
@@ -1132,25 +1137,28 @@ namespace SudokuRoguelike.Run
             CurrentBoard   = _asyncResult.Board;
             CurrentOverlay = _asyncResult.Overlay;
 
+            var effectiveModsAsync = config.ActiveModifiers;
             if (config.ActiveModifiers.Count > 0 && !HasAllModifiersPresent(config.ActiveModifiers, CurrentOverlay))
             {
-                // Async overlay did not cover all modifiers — drop those without geometry to prevent
-                // the constraint engine from registering rules against non-existent overlay data.
-                for (var i = config.ActiveModifiers.Count - 1; i >= 0; i--)
+                // Async overlay did not cover all modifiers — build a copy that excludes those
+                // without geometry. Do NOT mutate config.ActiveModifiers so the HUD info-box
+                // can still display what the player selected.
+                effectiveModsAsync = new System.Collections.Generic.List<BossModifierId>(config.ActiveModifiers);
+                for (var i = effectiveModsAsync.Count - 1; i >= 0; i--)
                 {
-                    if (!IsModifierPresentInOverlay(config.ActiveModifiers[i], CurrentOverlay))
+                    if (!IsModifierPresentInOverlay(effectiveModsAsync[i], CurrentOverlay))
                     {
-                        Debug.LogWarning($"[RunDirector] TryCompleteAsyncLevel: dropping modifier {config.ActiveModifiers[i]} — no overlay geometry in async result.");
-                        config.ActiveModifiers.RemoveAt(i);
+                        Debug.LogWarning($"[RunDirector] TryCompleteAsyncLevel: dropping modifier {effectiveModsAsync[i]} from engine — no overlay geometry in async result.");
+                        effectiveModsAsync.RemoveAt(i);
                     }
                 }
             }
 
-            if (config.ActiveModifiers.Count > 0)
+            if (effectiveModsAsync.Count > 0)
                 ClearOverlayCellsFromGivenMask();
 
             ConstraintEngine = new SudokuConstraintEngine();
-            var rules = ModifierFactory.BuildRules(config.ActiveModifiers);
+            var rules = ModifierFactory.BuildRules(effectiveModsAsync);
             for (var i = 0; i < rules.Count; i++)
                 ConstraintEngine.RegisterRule(rules[i]);
 
@@ -1290,26 +1298,31 @@ namespace SudokuRoguelike.Run
             CurrentBoard = generationResult.Board;
             CurrentOverlay = generationResult.Overlay;
 
+            // effectiveMods = modifiers that actually have overlay geometry.
+            // We do NOT mutate config.ActiveModifiers so the HUD info-box can still display
+            // whatever the player selected (even if the overlay was incomplete).
+            var effectiveMods = config.ActiveModifiers;
             if (config.ActiveModifiers.Count > 0 && !generationResult.HasCompleteOverlay)
             {
-                // Overlay exhausted — drop modifiers that have no geometry to prevent the
-                // constraint engine from registering rules against non-existent overlay data.
-                for (var i = config.ActiveModifiers.Count - 1; i >= 0; i--)
+                // Overlay exhausted — build a copy that excludes modifiers with no geometry so
+                // the constraint engine never registers rules against non-existent overlay data.
+                effectiveMods = new System.Collections.Generic.List<BossModifierId>(config.ActiveModifiers);
+                for (var i = effectiveMods.Count - 1; i >= 0; i--)
                 {
-                    if (!IsModifierPresentInOverlay(config.ActiveModifiers[i], CurrentOverlay))
+                    if (!IsModifierPresentInOverlay(effectiveMods[i], CurrentOverlay))
                     {
-                        Debug.LogWarning($"[RunDirector] StartLevel: dropping modifier {config.ActiveModifiers[i]} — no overlay geometry after all retries.");
-                        config.ActiveModifiers.RemoveAt(i);
+                        Debug.LogWarning($"[RunDirector] StartLevel: dropping modifier {effectiveMods[i]} from engine — no overlay geometry after all retries.");
+                        effectiveMods.RemoveAt(i);
                     }
                 }
             }
 
-            if (config.ActiveModifiers.Count > 0)
+            if (effectiveMods.Count > 0)
                 ClearOverlayCellsFromGivenMask();
 
             // Build constraint engine
             ConstraintEngine = new SudokuConstraintEngine();
-            var rules = ModifierFactory.BuildRules(config.ActiveModifiers);
+            var rules = ModifierFactory.BuildRules(effectiveMods);
             for (var i = 0; i < rules.Count; i++)
                 ConstraintEngine.RegisterRule(rules[i]);
 

@@ -17,6 +17,7 @@ namespace SudokuRoguelike.UI
     public sealed class BossGateViewController : MonoBehaviour
     {
         private RunMapController _map;
+        private RectTransform _uiRoot;
 
         private GameObject _bossGatePanel;
         private bool _awaitingBossGate;
@@ -30,9 +31,10 @@ namespace SudokuRoguelike.UI
         public bool IsAwaiting => _awaitingBossGate;
         public GameObject ActivePanel { get; private set; }
 
-        public void Configure(RunMapController map)
+        public void Configure(RunMapController map, RectTransform uiRoot)
         {
             _map = map;
+            _uiRoot = uiRoot;
             _bossGateOptions = new List<BossModifierId>();
             _selectedBossMods = new List<BossModifierId>();
         }
@@ -136,11 +138,10 @@ namespace SudokuRoguelike.UI
         private void BuildBossGatePanel()
         {
             if (_bossGatePanel != null) Object.Destroy(_bossGatePanel);
-            var canvas = Object.FindFirstObjectByType<Canvas>();
-            if (canvas == null) return;
+            if (_uiRoot == null) return;
 
             _bossGatePanel = new GameObject("BossGatePanel", typeof(RectTransform), typeof(Image));
-            _bossGatePanel.transform.SetParent(canvas.transform, false);
+            _bossGatePanel.transform.SetParent(_uiRoot, false);
             var pr = _bossGatePanel.GetComponent<RectTransform>();
             pr.anchorMin = new Vector2(0.15f, 0.10f);
             pr.anchorMax = new Vector2(0.85f, 0.90f);

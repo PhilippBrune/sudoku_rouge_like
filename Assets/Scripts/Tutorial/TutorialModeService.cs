@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using SudokuRoguelike.Boss;
 using SudokuRoguelike.Classes;
 using SudokuRoguelike.Core;
 using SudokuRoguelike.Sudoku;
@@ -7,6 +9,8 @@ namespace SudokuRoguelike.Tutorial
 {
     public sealed class TutorialModeService
     {
+        public const int CustomModifierLimit = 5;
+
         /// <summary>
         /// Returns missing percent range for a given star rating.
         /// Min = stars% (e.g. 6★ = 90%), Max = next_star% - 1% (e.g. 6★ max = 99%).
@@ -21,11 +25,131 @@ namespace SudokuRoguelike.Tutorial
             return (min, next - 0.01f);
         }
 
+        public static bool CanAddCustomModifier(
+            int requestedBoardSize,
+            IList<BossModifierId> selectedModifiers,
+            BossModifierId candidate,
+            out string failureMessage)
+        {
+            var boardSize = Math.Clamp(requestedBoardSize, 5, 9);
+            var selected = selectedModifiers ?? Array.Empty<BossModifierId>();
+            var name = BossService.GetModifierName(candidate);
+
+            if (!BossService.IsSupportedForGeneratedRun(candidate))
+            {
+                failureMessage = LocalizationService.Format(
+                    "CustomPuzzle.Validation.Unsupported",
+                    "{0} is not available for generated puzzles.",
+                    name);
+                return false;
+            }
+
+            var minimumSize = BossService.GetMinimumBoardSize(candidate);
+            if (boardSize < minimumSize)
+            {
+                failureMessage = LocalizationService.Format(
+                    "CustomPuzzle.Validation.MinSize",
+                    "{0} requires at least a {1}x{1} board.",
+                    name, minimumSize);
+                return false;
+            }
+
+            if (BossService.IsBoardShapingModifier(candidate) && boardSize == 7)
+            {
+                failureMessage = LocalizationService.Format(
+                    "CustomPuzzle.Validation.StructuralSeven",
+                    "{0} is not available on 7x7 boards. Choose 6x6 or 8x8 and above.",
+                    name);
+                return false;
+            }
+
+            if (selected.Count >= CustomModifierLimit)
+            {
+                failureMessage = LocalizationService.Format(
+                    "CustomPuzzle.Validation.Limit",
+                    "Choose no more than {0} Sudoku modes.",
+                    CustomModifierLimit);
+                return false;
+            }
+
+            if (!BossService.CanCombineModifiers(selected, candidate))
+            {
+                failureMessage = LocalizationService.Format(
+                    "CustomPuzzle.Validation.Combination",
+                    "{0} cannot be combined with the selected Sudoku modes.",
+                    name);
+                return false;
+            }
+
+            var structuralCount = BossService.IsBoardShapingModifier(candidate) ? 1 : 0;
+            for (var i = 0; i < selected.Count; i++)
+            {
+                if (BossService.IsBoardShapingModifier(selected[i]))
+                    structuralCount++;
+            }
+
+            if (structuralCount >= 2 && boardSize < 8)
+            {
+                failureMessage = LocalizationService.T(
+                    "CustomPuzzle.Validation.StructuralStack",
+                    "Two global structural modes require an 8x8 or 9x9 board.");
+                return false;
+            }
+
+            failureMessage = null;
+            return true;
+        }
+
+        public static bool TryValidateCustomSetup(TutorialSetupConfig setup, out string failureMessage)
+        {
+            if (setup == null)
+            {
+                failureMessage = LocalizationService.T(
+                    "CustomPuzzle.Validation.Missing",
+                    "Custom puzzle configuration is missing.");
+                return false;
+            }
+
+            var selected = setup.SelectedModifiers ?? new List<BossModifierId>();
+            var accepted = new List<BossModifierId>(selected.Count);
+            for (var i = 0; i < selected.Count; i++)
+            {
+                var modifier = selected[i];
+                if (accepted.Contains(modifier))
+                {
+                    failureMessage = LocalizationService.T(
+                        "CustomPuzzle.Validation.Duplicate",
+                        "Each Sudoku mode can be selected only once.");
+                    return false;
+                }
+
+                if (!CanAddCustomModifier(setup.BoardSize, accepted, modifier, out failureMessage))
+                    return false;
+
+                accepted.Add(modifier);
+            }
+
+            if (Math.Clamp(setup.Stars, 1, 7) == 7 && accepted.Count == 0)
+            {
+                failureMessage = LocalizationService.T(
+                    "CustomPuzzle.Validation.SevenStar",
+                    "A 7-star custom puzzle requires at least one Sudoku mode.");
+                return false;
+            }
+
+            failureMessage = null;
+            return true;
+        }
+
         // [REQ: TUTO-BASICS-BOARD-001] Builds level config for the tutorial; seed drives missing-percent selection
         public LevelConfig BuildTutorialLevel(TutorialSetupConfig setup, int seed)
         {
+            if (!TryValidateCustomSetup(setup, out var failureMessage))
+                throw new ArgumentException(failureMessage, nameof(setup));
+
             var stars = Math.Clamp(setup.Stars, 1, 7);
             var boardSize = Math.Clamp(setup.BoardSize, 5, 9);
+            var selectedModifiers = setup.SelectedModifiers ?? new List<BossModifierId>();
 
             float missingPercent;
             if (stars >= 7)
@@ -45,12 +169,12 @@ namespace SudokuRoguelike.Tutorial
                 Stars = stars,
                 MissingPercent = missingPercent,
                 RegionVariant = setup.RegionVariant,
-                IsBoss = setup.SelectedModifiers.Count > 0,
+                IsBoss = selectedModifiers.Count > 0,
                 Seed = seed,
                 Difficulty = DifficultyTier.Diff1
             };
 
-            config.ActiveModifiers.AddRange(setup.SelectedModifiers);
+            config.ActiveModifiers.AddRange(selectedModifiers);
 
             return config;
         }

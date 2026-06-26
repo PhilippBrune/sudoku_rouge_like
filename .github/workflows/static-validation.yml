@@ -1,0 +1,129 @@
+name: Static Validation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  repository-checks:
+    name: Repository checks
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate required files and localization catalogs
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $requiredFiles = @(
+            "docs/development.md",
+            "docs/ci-validation.md",
+            "docs/smoke-test-readiness.md",
+            "tools/run-unity-tests.ps1",
+            "sudoku_rouge_like.slnx",
+            "Game.csproj",
+            "GameTests.EditMode.csproj",
+            "GameTests.PlayMode.csproj",
+            "Assets/Resources/Localization/en.json",
+            "Assets/Resources/Localization/de.json",
+            "Assets/Resources/Fonts/MainFont.ttf",
+            "docs/legal/third-party/Roboto-NOTICE.md",
+            "docs/legal/third-party/APACHE-2.0.txt"
+          )
+
+          foreach ($path in $requiredFiles) {
+            if (!(Test-Path -LiteralPath $path)) {
+              throw "Required file is missing: $path"
+            }
+          }
+
+          if (Test-Path -LiteralPath "sudoku_rouge_like.sln") {
+            throw "Retired root solution must remain absent. Use sudoku_rouge_like.slnx for direct dotnet compile smoke checks."
+          }
+
+          $runtimeBackgroundPrompts = Get-ChildItem -LiteralPath "Assets/Resources/background" -Filter "*.txt" -File -ErrorAction SilentlyContinue
+          if ($runtimeBackgroundPrompts.Count -gt 0) {
+            throw "Prompt/source text files must stay outside runtime Resources. Move them to docs/art-source/background."
+          }
+
+          foreach ($path in @(
+            "docs/art-source/background/AI_prompts.txt",
+            "docs/art-source/background/AI_prompts_2.txt",
+            "docs/art-source/background/background_generation_prompts.txt"
+          )) {
+            if (!(Test-Path -LiteralPath $path)) {
+              throw "Background prompt/source file is missing: $path"
+            }
+          }
+
+          foreach ($catalog in @("Assets/Resources/Localization/en.json", "Assets/Resources/Localization/de.json")) {
+            Get-Content -LiteralPath $catalog -Raw | ConvertFrom-Json | Out-Null
+            Write-Host "Validated localization catalog: $catalog"
+          }
+
+      - name: Validate README local links
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $readme = Get-Content -LiteralPath "README.md" -Raw
+          $matches = [regex]::Matches($readme, '\[[^\]]+\]\(([^)]+)\)')
+
+          foreach ($match in $matches) {
+            $target = $match.Groups[1].Value.Trim()
+            if ([string]::IsNullOrWhiteSpace($target)) {
+              continue
+            }
+
+            if ($target -match '^(https?:|mailto:)' -or $target.StartsWith("#")) {
+              continue
+            }
+
+            $pathOnly = ($target -split '#', 2)[0]
+            if ([string]::IsNullOrWhiteSpace($pathOnly)) {
+              continue
+            }
+
+            $normalized = $pathOnly -replace '/', [IO.Path]::DirectorySeparatorChar
+            if (!(Test-Path -LiteralPath $normalized)) {
+              throw "README link target is missing: $target"
+            }
+          }
+
+          Write-Host "README local markdown links are valid."
+
+      - name: Dotnet compile smoke when Unity references are available
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $unityEngine = "C:\Program Files\Unity\Hub\Editor\6000.3.10f1\Editor\Data\Managed\UnityEngine\UnityEngine.dll"
+          $unityUi = "Library\ScriptAssemblies\UnityEngine.UI.dll"
+
+          if ((Test-Path -LiteralPath $unityEngine) -and (Test-Path -LiteralPath $unityUi)) {
+            dotnet build sudoku_rouge_like.slnx --verbosity minimal
+          } else {
+            Write-Warning "Skipping dotnet build because Unity editor assemblies or generated Library assemblies are unavailable on this runner."
+            Write-Warning "Run tools/run-unity-tests.ps1 locally or enable the unity-batchmode job on a licensed Unity runner for authoritative validation."
+          }
+
+  unity-batchmode:
+    name: Unity batchmode tests
+    runs-on: windows-latest
+    if: ${{ vars.RUN_UNITY_BATCHMODE == 'true' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Unity tests
+        shell: pwsh
+        run: |
+          .\tools\run-unity-tests.ps1 -TestPlatform All

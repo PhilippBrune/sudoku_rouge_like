@@ -1,4 +1,4 @@
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 using SudokuRoguelike.Bootstrap;
 using SudokuRoguelike.Core;
 using UnityEngine;
@@ -13,9 +13,16 @@ namespace SudokuRoguelike.UI
 {
     public sealed class DebugHotkeys : MonoBehaviour
     {
+        public static bool RuntimeDebugEnabled { get; private set; }
+
         private InRunUiFlowController _inRunUiFlow;
         private RunMapController _runMapController;
         private Text _debugText;
+
+        public static void SetRuntimeDebugEnabled(bool enabled)
+        {
+            RuntimeDebugEnabled = enabled;
+        }
 
         public void Configure(InRunUiFlowController flowController, RunMapController mapController, Text debugText = null)
         {
@@ -31,6 +38,8 @@ namespace SudokuRoguelike.UI
 
         private void Update()
         {
+            if (!RuntimeDebugEnabled) return;
+
             EnsureBindings();
             if (WasKeyPressed(KeyCode.E)) OpenEventPanel();
             if (WasKeyPressed(KeyCode.C)) CloseEventPanel();

@@ -17,6 +17,7 @@ namespace SudokuRoguelike.UI
     public sealed class BossGateViewController : MonoBehaviour
     {
         private RunMapController _map;
+        private RectTransform _uiRoot;
 
         private GameObject _bossGatePanel;
         private bool _awaitingBossGate;
@@ -30,9 +31,10 @@ namespace SudokuRoguelike.UI
         public bool IsAwaiting => _awaitingBossGate;
         public GameObject ActivePanel { get; private set; }
 
-        public void Configure(RunMapController map)
+        public void Configure(RunMapController map, RectTransform uiRoot)
         {
             _map = map;
+            _uiRoot = uiRoot;
             _bossGateOptions = new List<BossModifierId>();
             _selectedBossMods = new List<BossModifierId>();
         }
@@ -68,7 +70,7 @@ namespace SudokuRoguelike.UI
             // Build a preview of what the cursed level would look like
             var cursedConfig = run.BuildCursedLevelConfig(node.Index);
             var extraMod = cursedConfig.ActiveModifiers.Count > 0
-                ? InRunUiFactory.FormatModName(cursedConfig.ActiveModifiers[cursedConfig.ActiveModifiers.Count - 1])
+                ? BossService.GetModifierName(cursedConfig.ActiveModifiers[cursedConfig.ActiveModifiers.Count - 1])
                 : "?";
 
             if (pathPanel == null) return;
@@ -85,7 +87,7 @@ namespace SudokuRoguelike.UI
             // It visually signals the cursed state while the board remains playable beneath.
             InRunUiFactory.AddPanelBackground(panel.transform, "bg_curse");
 
-            var titleTxt = InRunUiFactory.CreateText(panel.transform, "Title", "Cursed Tile!", 18, TextAnchor.UpperCenter,
+            var titleTxt = InRunUiFactory.CreateText(panel.transform, "Title", T("InRun.Cursed.Title"), 18, TextAnchor.UpperCenter,
                 InRunUiFactory.CursedTitleRed);
             titleTxt.rectTransform.anchorMin = new Vector2(0.05f, 0.80f);
             titleTxt.rectTransform.anchorMax = new Vector2(0.95f, 0.97f);
@@ -93,7 +95,7 @@ namespace SudokuRoguelike.UI
             titleTxt.rectTransform.offsetMax = Vector2.zero;
 
             var descTxt = InRunUiFactory.CreateText(panel.transform, "Desc",
-                $"Extra modifier: {extraMod}\n+50% Gold & XP if you clear it.\nFail to complete? Normal penalties apply.",
+                F("InRun.Cursed.Description", extraMod),
                 12, TextAnchor.MiddleCenter, InRunUiFactory.WarmIvory);
             descTxt.rectTransform.anchorMin = new Vector2(0.05f, 0.45f);
             descTxt.rectTransform.anchorMax = new Vector2(0.95f, 0.78f);
@@ -101,7 +103,7 @@ namespace SudokuRoguelike.UI
             descTxt.rectTransform.offsetMax = Vector2.zero;
 
             var btnAccept = InRunUiFactory.CreateActionButton(panel.transform, "BtnAccept",
-                new Vector2(0.05f, 0.20f), new Vector2(0.45f, 0.40f), "Accept Curse", UiAction.Accept);
+                new Vector2(0.05f, 0.20f), new Vector2(0.45f, 0.40f), T("InRun.Cursed.Accept"), UiAction.Accept);
             btnAccept.onClick.AddListener(() =>
             {
                 ActivePanel = null;
@@ -110,9 +112,10 @@ namespace SudokuRoguelike.UI
             });
 
             var btnDecline = InRunUiFactory.CreateActionButton(panel.transform, "BtnDecline",
-                new Vector2(0.55f, 0.20f), new Vector2(0.95f, 0.40f), "Decline", UiAction.Decline);
+                new Vector2(0.55f, 0.20f), new Vector2(0.95f, 0.40f), T("Decline"), UiAction.Decline);
             btnDecline.onClick.AddListener(() =>
             {
+                // [REQ: MAP-NODE-CURSED-003] Decline: standard puzzle built with no cursed multipliers or extra modifier
                 var normalConfig = run.BuildLevelConfig(false, false, node.Index);
                 ActivePanel = null;
                 Object.Destroy(panel);
@@ -135,11 +138,10 @@ namespace SudokuRoguelike.UI
         private void BuildBossGatePanel()
         {
             if (_bossGatePanel != null) Object.Destroy(_bossGatePanel);
-            var canvas = Object.FindFirstObjectByType<Canvas>();
-            if (canvas == null) return;
+            if (_uiRoot == null) return;
 
             _bossGatePanel = new GameObject("BossGatePanel", typeof(RectTransform), typeof(Image));
-            _bossGatePanel.transform.SetParent(canvas.transform, false);
+            _bossGatePanel.transform.SetParent(_uiRoot, false);
             var pr = _bossGatePanel.GetComponent<RectTransform>();
             pr.anchorMin = new Vector2(0.15f, 0.10f);
             pr.anchorMax = new Vector2(0.85f, 0.90f);
@@ -150,7 +152,7 @@ namespace SudokuRoguelike.UI
             InRunUiFactory.AddPanelBackground(_bossGatePanel.transform, "bg_boss_gate");
 
             _bossGateTitle = InRunUiFactory.CreateText(_bossGatePanel.transform, "Title",
-                $"Boss Gate \u2014 Pick {_bossPicksRequired} Modifiers (0/{_bossPicksRequired})",
+                BossGateTitle(0),
                 18, TextAnchor.MiddleCenter, InRunUiFactory.AccentGold);
             _bossGateTitle.rectTransform.anchorMin = new Vector2(0.05f, 0.90f);
             _bossGateTitle.rectTransform.anchorMax = new Vector2(0.95f, 0.98f);
@@ -189,7 +191,7 @@ namespace SudokuRoguelike.UI
                 var col = i % 3; var row = i / 3;
                 var xMin = 0.05f + col * 0.31f;
                 var yMax = 0.85f - row * 0.25f;
-                var labelText = seen ? $"{InRunUiFactory.FormatModName(mod)}\n{InRunUiFactory.GetModDesc(mod)}" : "???";
+                var labelText = seen ? $"{BossService.GetModifierName(mod)}\n{BossService.GetModifierDescription(mod)}" : "???";
                 Debug.Log(
                     $"[ModifierDiscovery] Boss gate label: mod={mod}, seen={seen}, " +
                     $"runSeen={ModifierDiscoveryService.Describe(seenMods)}, label={(seen ? "revealed" : "???")}");
@@ -200,8 +202,25 @@ namespace SudokuRoguelike.UI
                 if (seen && string.IsNullOrEmpty(modIconName))
                     Debug.LogWarning($"[BossGateViewController] No icon mapped for seen modifier: {mod}");
                 InRunUiFactory.SetButtonIcon(btn, seen ? modIconName : "petal_orb", !seen, seen ? BossService.GetIconFolder(mod) : "ui"); // F-QA: debuff icons routed to debuff/ subfolder
-                // F27: add a subgroup stripe so visually similar modifier icons are distinguishable at small sizes
-                if (seen) InRunUiFactory.AddModifierGroupMarker(btn, modIconName);
+                // Alt Constraint Symbols: overlay abbreviation text on the icon area for accessibility
+                if (seen && OptionsController.LiveAccessibility != null
+                    && OptionsController.LiveAccessibility.AlternativeConstraintSymbols)
+                {
+                    var abbr = BossService.GetConstraintAbbreviation(mod);
+                    var abbrGo = new GameObject("AbbrLabel", typeof(RectTransform), typeof(Text));
+                    abbrGo.transform.SetParent(btn.transform, false);
+                    var abbrRt = abbrGo.GetComponent<RectTransform>();
+                    abbrRt.anchorMin = new Vector2(0f, 0.08f);
+                    abbrRt.anchorMax = new Vector2(0.30f, 0.92f);
+                    abbrRt.offsetMin = abbrRt.offsetMax = Vector2.zero;
+                    var abbrTxt = abbrGo.GetComponent<Text>();
+                    abbrTxt.text = abbr;
+                    abbrTxt.font = FontAssetService.GetFont();
+                    abbrTxt.fontSize = 14;
+                    abbrTxt.fontStyle = FontStyle.Bold;
+                    abbrTxt.alignment = TextAnchor.MiddleCenter;
+                    abbrTxt.color = GamePalette.WinGold;
+                }
                 var captured = mod;
                 btn.onClick.AddListener(() => ToggleBossModSelection(captured, btn));
             }
@@ -210,7 +229,7 @@ namespace SudokuRoguelike.UI
             // Override disabledColor so the button stays visible when not yet interactable.
             var confirmBtn = InRunUiFactory.CreateActionButton(_bossGatePanel.transform, "ConfirmBoss",
                 new Vector2(0.35f, 0.02f), new Vector2(0.65f, 0.10f),
-                "Confirm", UiAction.Confirm);
+                T("Confirm"), UiAction.Confirm);
             var confirmCols = confirmBtn.colors;
             confirmCols.disabledColor = InRunUiFactory.BtnDisabled;
             confirmBtn.colors = confirmCols;
@@ -250,7 +269,7 @@ namespace SudokuRoguelike.UI
             if (run3 != null && RelicService.HasRelicOfType(run3.State, RelicId.WardingFlame) && !run3.State.WardingFlameUsed)
             {
                 var wardingBtn = InRunUiFactory.CreateActionButton(_bossGatePanel.transform, "BtnWardingFlame",
-                    new Vector2(0.05f, 0.02f), new Vector2(0.33f, 0.10f), "Warding Flame: Remove 1 Mod", UiAction.WardingFlame);
+                    new Vector2(0.05f, 0.02f), new Vector2(0.33f, 0.10f), T("InRun.BossGate.WardingFlame"), UiAction.WardingFlame);
                 wardingBtn.onClick.AddListener(() =>
                 {
                     if (_bossGateOptions.Count > 0 && RelicService.TryWardingFlame(run3.State))
@@ -287,7 +306,7 @@ namespace SudokuRoguelike.UI
 
             // Update title
             if (_bossGateTitle != null)
-                _bossGateTitle.text = $"Boss Gate \u2014 Pick {_bossPicksRequired} Modifiers ({_selectedBossMods.Count}/{_bossPicksRequired})";
+                _bossGateTitle.text = BossGateTitle(_selectedBossMods.Count);
 
             // Enable/disable confirm
             var confirmGo = _bossGatePanel?.transform.Find("ConfirmBossBtn");
@@ -342,5 +361,17 @@ namespace SudokuRoguelike.UI
             cg.alpha = 0f;
             StartCoroutine(AnimationHelper.FadeIn(cg, AnimationHelper.MenuPanelDuration));
         }
+
+        private string BossGateTitle(int selectedCount) =>
+            LocalizationService.Format(
+                "InRun.BossGate.Title",
+                "Boss Gate - Pick {0} Modifiers ({1}/{0})",
+                _bossPicksRequired,
+                selectedCount);
+
+        private static string T(string key) => LocalizationService.T(key);
+
+        private static string F(string key, params object[] args) =>
+            LocalizationService.Format(key, key, args);
     }
 }

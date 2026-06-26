@@ -55,7 +55,7 @@ namespace SudokuRoguelike.UI
             if (!_map.TryClaimCurrentPuzzleRewards(out var gold, out var slots))
             {
                 _awaitingReward = false;
-                OnStatusChanged?.Invoke("No rewards.");
+                OnStatusChanged?.Invoke(T("InRun.Reward.NoRewards"));
                 InRunUiFactory.HidePanel(_rewardPanel);
                 OnPostRewardReady?.Invoke();
                 return;
@@ -82,11 +82,36 @@ namespace SudokuRoguelike.UI
                 if (run?.TileXpLog != null && run.TileXpLog.Count > 0)
                     xp = run.TileXpLog[run.TileXpLog.Count - 1].TotalXp;
 
+                /*
                 _rewardSummary.text =
                     $"Rewards:  +{gold}g  ·  HP {hp}  ·  Pencil {pencil}\n" +
                     $"Unlocks:  +{xp} XP\n" +
                     $"Stats:    {mistakes} mistake{(mistakes == 1 ? "" : "s")}  ·  {(perfect ? "Perfect" : "Not perfect")}  ·  {(noPencil ? "No pencil" : "Pencil used")}\n" +
                     $"Choose a reward  ({slots.Count} item{(slots.Count == 1 ? "" : "s")}):";
+                */
+
+                _rewardSummary.text = F(
+                    "InRun.Reward.Summary",
+                    gold,
+                    hp,
+                    pencil,
+                    xp,
+                    mistakes,
+                    LocalizationService.Plural(
+                        mistakes,
+                        "InRun.Reward.Mistake.One",
+                        "InRun.Reward.Mistake.Many",
+                        "mistake",
+                        "mistakes"),
+                    T(perfect ? "InRun.Reward.Perfect" : "InRun.Reward.NotPerfect"),
+                    T(noPencil ? "InRun.Reward.NoPencil" : "InRun.Reward.PencilUsed"),
+                    slots.Count,
+                    LocalizationService.Plural(
+                        slots.Count,
+                        "InRun.Reward.Item.One",
+                        "InRun.Reward.Item.Many",
+                        "item",
+                        "items"));
             }
 
             if (_rewardPanel != null)
@@ -111,10 +136,27 @@ namespace SudokuRoguelike.UI
         private void BuildRewardPanel()
         {
             if (_rewardPanel != null || _pathPanel == null) return;
-            _rewardPanel = InRunUiFactory.CreateOverlayPanel(_pathPanel.transform, "RewardPanel", "Rewards");
+            _rewardPanel = InRunUiFactory.CreateOverlayPanel(_pathPanel.transform, "RewardPanel", T("InRun.Reward.Title"));
+            var panelRt = _rewardPanel.GetComponent<RectTransform>();
+            panelRt.anchorMin = new Vector2(0.06f, 0.12f);
+            panelRt.anchorMax = new Vector2(0.94f, 0.84f);
+            panelRt.offsetMin = Vector2.zero;
+            panelRt.offsetMax = Vector2.zero;
+
             var rewardBase = InRunUiFactory.PanelBg;
             _rewardPanel.GetComponent<Image>().color = new Color(rewardBase.r, rewardBase.g, rewardBase.b, 0.72f);
             InRunUiFactory.AddPanelBackground(_rewardPanel.transform, "bg_reward");
+
+            var title = _rewardPanel.transform.Find("Title")?.GetComponent<Text>();
+            if (title != null)
+            {
+                title.color = new Color(0.08f, 0.11f, 0.07f, 1f);
+                title.fontStyle = FontStyle.Bold;
+                var titleOutline = title.gameObject.AddComponent<Outline>();
+                titleOutline.effectColor = new Color(GamePalette.TextPrimary.r, GamePalette.TextPrimary.g, GamePalette.TextPrimary.b, 0.80f);
+                titleOutline.effectDistance = new Vector2(1.5f, -1.5f);
+            }
+
             _rewardSummary = _rewardPanel.transform.Find("Summary")?.GetComponent<Text>();
             if (_rewardSummary != null)
             {
@@ -136,12 +178,12 @@ namespace SudokuRoguelike.UI
             if (_rewardPanel == null) yield break;
             InRunUiFactory.ClearNamedChildren(_rewardPanel.transform, "Slot_");
 
-            var cols = Mathf.Clamp(_rewardSlots.Count, 1, 3);
+            var cols = Mathf.Clamp(_rewardSlots.Count, 1, 4);
             var totalRows = Mathf.CeilToInt(_rewardSlots.Count / (float)cols);
 
-            const float left = 0.06f;
-            const float right = 0.94f;
-            const float colGap = 0.03f;
+            const float left = 0.04f;
+            const float right = 0.96f;
+            const float colGap = 0.025f;
             var btnW = (right - left - colGap * (cols - 1)) / cols;
 
             const float top = 0.60f;
@@ -164,8 +206,8 @@ namespace SudokuRoguelike.UI
                 var yMin = yMax - btnH;
 
                 var itemLabel = item != null
-                    ? $"{ItemService.GetItemName(item.Type)} ({item.Rarity})\n{ItemService.GetItemDescription(item.Type, item.Rarity)}"
-                    : "Nothing";
+                    ? F("InRun.Reward.ItemChoice", ItemService.GetItemName(item.Type), RarityLabel(item.Rarity), ItemService.GetItemDescription(item.Type, item.Rarity))
+                    : T("InRun.Reward.Nothing");
 
                 var btn = InRunUiFactory.CreatePanelButton(_rewardPanel.transform, $"Slot_{i}",
                     new Vector2(xMin, yMin), new Vector2(xMax, yMax), itemLabel);
@@ -205,7 +247,7 @@ namespace SudokuRoguelike.UI
 
             // Skip button — F-QA: skip_stone unifies all skip actions (flow_ribbon kept for CrossLink map node)
             var skip = InRunUiFactory.CreateActionButton(_rewardPanel.transform, "Slot_skip",
-                new Vector2(0.35f, 0.06f), new Vector2(0.65f, 0.16f), "Skip", UiAction.Skip);
+                new Vector2(0.35f, 0.06f), new Vector2(0.65f, 0.16f), T("Skip"), UiAction.Skip);
             skip.onClick.AddListener(() =>
             {
                 _awaitingReward = false;
@@ -335,7 +377,7 @@ namespace SudokuRoguelike.UI
             outline.effectDistance = new Vector2(2f, -2f);
 
             var title = InRunUiFactory.CreateText(_bagSwapPanel.transform, "SwapTitle",
-                $"Bag Full \u2014 Choose a slot to replace with:\n{ItemService.GetItemName(newItem.Type)} ({newItem.Rarity})\n{ItemService.GetItemDescription(newItem.Type, newItem.Rarity)}",
+                F("InRun.BagSwap.Title", ItemService.GetItemName(newItem.Type), RarityLabel(newItem.Rarity), ItemService.GetItemDescription(newItem.Type, newItem.Rarity)),
                 13, TextAnchor.UpperCenter, InRunUiFactory.AccentGold);
             title.rectTransform.anchorMin = new Vector2(0.04f, 0.72f);
             title.rectTransform.anchorMax = new Vector2(0.96f, 0.98f);
@@ -354,8 +396,8 @@ namespace SudokuRoguelike.UI
                 var xMin = 0.05f + col * 0.32f;
                 var yMax = 0.68f - row * 0.25f;
                 var label = item != null
-                    ? $"{ItemService.GetItemName(item.Type)}\n{item.Rarity}"
-                    : "Empty";
+                    ? F("InRun.BagSwap.Slot", ItemService.GetItemName(item.Type), RarityLabel(item.Rarity))
+                    : T("InRun.Common.Empty");
                 var slotBtn = InRunUiFactory.CreatePanelButton(_bagSwapPanel.transform, $"SwapSlot_{i}",
                     new Vector2(xMin, yMax - 0.20f), new Vector2(xMin + 0.29f, yMax), label);
                 if (item != null)
@@ -366,7 +408,7 @@ namespace SudokuRoguelike.UI
             }
 
             var abortBtn = InRunUiFactory.CreatePanelButton(_bagSwapPanel.transform, "SwapAbort",
-                new Vector2(0.20f, 0.02f), new Vector2(0.80f, 0.17f), "Keep Bag (Abort)");  // B1: taller for icon visibility
+                new Vector2(0.20f, 0.02f), new Vector2(0.80f, 0.17f), T("InRun.BagSwap.KeepBag"));  // B1: taller for icon visibility
             InRunUiFactory.SetButtonIcon(abortBtn, "swap_arrows", false, "economy");
             abortBtn.onClick.AddListener(() => _onSwapAborted?.Invoke());
 
@@ -393,7 +435,8 @@ namespace SudokuRoguelike.UI
         }
 
         // ────────────────────── Rest choice panel ──────────────────────
-
+        // [REQ: CURSE-ACQUIRE-005] Rest node shows 3 options (Heal / +Pencil / +Reroll) when no curses are active
+        // [REQ: CURSE-ACQUIRE-004] Rest node adds a 4th "Cleanse" option when at least one curse is active
         public void ShowRestChoicePanel()
         {
             var run = _map?.Run;
@@ -410,7 +453,7 @@ namespace SudokuRoguelike.UI
             bg.color = InRunUiFactory.RestRelicPanelBg;
             InRunUiFactory.AddPanelBackground(panel.transform, "bg_rest");
 
-            var restTitle = InRunUiFactory.CreateText(panel.transform, "Title", "Rest \u2014 Choose one:", 16, TextAnchor.UpperCenter,
+            var restTitle = InRunUiFactory.CreateText(panel.transform, "Title", T("InRun.Rest.Title"), 22, TextAnchor.UpperCenter,
                 GamePalette.AccentGold);
             restTitle.rectTransform.anchorMin = new Vector2(0.05f, 0.75f);
             restTitle.rectTransform.anchorMax = new Vector2(0.95f, 0.95f);
@@ -420,33 +463,36 @@ namespace SudokuRoguelike.UI
             var healAmt = run.GetRestHealAmount();
             var btnHeal = InRunUiFactory.CreateActionButton(panel.transform, "BtnHeal",
                 new Vector2(0.05f, 0.52f), new Vector2(0.95f, 0.70f),
-                $"Heal +{healAmt} HP", UiAction.Heal, compact: true);
+                F("InRun.Rest.Heal", healAmt), UiAction.Heal, compact: true);
+            ConfigureRestActionLabel(btnHeal);
             btnHeal.onClick.AddListener(() =>
             {
                 run.AcceptRestHeal();
-                OnStatusChanged?.Invoke($"Rested. +{healAmt} HP");
+                OnStatusChanged?.Invoke(F("InRun.Rest.Status.Healed", healAmt));
                 ActivePanel = null;
                 Object.Destroy(panel);
             });
 
             var btnPencil = InRunUiFactory.CreateActionButton(panel.transform, "BtnPencil",
                 new Vector2(0.05f, 0.30f), new Vector2(0.95f, 0.48f),
-                "+4 Pencil Marks", UiAction.Pencil, compact: true);
+                T("InRun.Rest.Pencil"), UiAction.Pencil, compact: true);
+            ConfigureRestActionLabel(btnPencil);
             btnPencil.onClick.AddListener(() =>
             {
                 run.AcceptRestPencilBoost();
-                OnStatusChanged?.Invoke("Rested. +4 Pencil");
+                OnStatusChanged?.Invoke(T("InRun.Rest.Status.Pencil"));
                 ActivePanel = null;
                 Object.Destroy(panel);
             });
 
             var btnReroll = InRunUiFactory.CreateActionButton(panel.transform, "BtnReroll",
                 new Vector2(0.05f, 0.08f), new Vector2(0.95f, 0.26f),
-                "+1 Shop Reroll Token", UiAction.Reroll, compact: true);
+                T("InRun.Rest.Reroll"), UiAction.Reroll, compact: true);
+            ConfigureRestActionLabel(btnReroll);
             btnReroll.onClick.AddListener(() =>
             {
                 run.AcceptRestRerollShop();
-                OnStatusChanged?.Invoke("Rested. +1 Reroll");
+                OnStatusChanged?.Invoke(T("InRun.Rest.Status.Reroll"));
                 ActivePanel = null;
                 Object.Destroy(panel);
             });
@@ -465,14 +511,15 @@ namespace SudokuRoguelike.UI
                 btnReroll.GetComponent<RectTransform>().anchorMax  += new Vector2(0, shift);
 
                 var activeCurses = run.GetActiveCurses();
-                var oldestName = activeCurses.Count > 0 ? activeCurses[0].Name : "curse";
+                var oldestName = activeCurses.Count > 0 ? activeCurses[0].Name : T("InRun.Curse.Generic");
                 btnCleanse = InRunUiFactory.CreateActionButton(panel.transform, "BtnCleanse",
                     new Vector2(0.05f, 0.08f), new Vector2(0.95f, 0.26f),
-                    $"Cleanse \"{oldestName}\"", UiAction.Cleanse, compact: true);
+                    F("InRun.Rest.Cleanse", oldestName), UiAction.Cleanse, compact: true);
+                ConfigureRestActionLabel(btnCleanse);
                 btnCleanse.onClick.AddListener(() =>
                 {
                     run.AcceptRestCurseRemoval();
-                    OnStatusChanged?.Invoke($"Cleansed: {oldestName}");
+                    OnStatusChanged?.Invoke(F("InRun.Rest.Status.Cleansed", oldestName));
                     ActivePanel = null;
                     Object.Destroy(panel);
                 });
@@ -491,7 +538,63 @@ namespace SudokuRoguelike.UI
 
             ActivePanel = panel;
             FadeInPanel(panel);
+            StartCoroutine(FocusNextFrame(panel));
+        }
+
+        private static void ConfigureRestActionLabel(Button button)
+        {
+            var label = button?.transform.Find("Label")?.GetComponent<Text>();
+            if (label == null) return;
+
+            label.fontSize = 18;
+            label.resizeTextForBestFit = true;
+            label.resizeTextMinSize = 14;
+            label.resizeTextMaxSize = 18;
+            label.horizontalOverflow = HorizontalWrapMode.Overflow;
+            label.verticalOverflow = VerticalWrapMode.Truncate;
+        }
+
+        private IEnumerator FocusNextFrame(GameObject panel)
+        {
+            yield return null;
             InRunUiFactory.SelectFirstInteractable(panel);
+        }
+
+        private static void ConfigureRelicChoiceButtonLayout(Button button)
+        {
+            if (button == null) return;
+
+            var label = button.transform.Find("Label")?.GetComponent<Text>();
+            if (label != null)
+            {
+                label.rectTransform.anchorMin = new Vector2(0.08f, 0.10f);
+                label.rectTransform.anchorMax = new Vector2(0.92f, 0.35f);
+                label.rectTransform.offsetMin = Vector2.zero;
+                label.rectTransform.offsetMax = Vector2.zero;
+                label.alignment = TextAnchor.UpperCenter;
+                label.fontSize = 12;
+                label.resizeTextForBestFit = true;
+                label.resizeTextMinSize = 9;
+                label.resizeTextMaxSize = 12;
+                label.horizontalOverflow = HorizontalWrapMode.Wrap;
+                label.verticalOverflow = VerticalWrapMode.Truncate;
+            }
+
+            var iconRt = button.transform.Find("Icon") as RectTransform;
+            if (iconRt == null) return;
+
+            iconRt.anchorMin = new Vector2(0.16f, 0.43f);
+            iconRt.anchorMax = new Vector2(0.84f, 0.86f);
+            iconRt.offsetMin = Vector2.zero;
+            iconRt.offsetMax = Vector2.zero;
+            iconRt.sizeDelta = Vector2.zero;
+
+            var icon = iconRt.GetComponent<Image>();
+            if (icon != null)
+            {
+                icon.preserveAspect = true;
+                icon.raycastTarget = false;
+            }
         }
 
         // ────────────────────── Relic choice panel ──────────────────────
@@ -511,7 +614,7 @@ namespace SudokuRoguelike.UI
             panel.AddComponent<Image>().color = InRunUiFactory.RestRelicPanelBg;
             InRunUiFactory.AddPanelBackground(panel.transform, "bg_relic");
 
-            var relicTitle = InRunUiFactory.CreateText(panel.transform, "Title", "Relic Node \u2014 Choose one:", 16, TextAnchor.UpperCenter,
+            var relicTitle = InRunUiFactory.CreateText(panel.transform, "Title", T("InRun.Relic.Title"), 16, TextAnchor.UpperCenter,
                 GamePalette.AccentGold);
             relicTitle.rectTransform.anchorMin = new Vector2(0.05f, 0.88f);
             relicTitle.rectTransform.anchorMax = new Vector2(0.95f, 0.98f);
@@ -531,9 +634,11 @@ namespace SudokuRoguelike.UI
                 var xMin = 0.04f + i * colW;
                 var xMax = xMin + colW - 0.04f;
 
-                var relicDesc = $"{RelicService.GetRelicName(relic.Id)}\n" +
-                                $"[{relic.Tier}]\n\n" +
-                                RelicService.GetRelicDescription(relic.Id);
+                var relicDesc = F(
+                    "InRun.Relic.Choice",
+                    RelicService.GetRelicName(relic.Id),
+                    TierLabel(relic.Tier),
+                    RelicService.GetRelicDescription(relic.Id));
 
                 var btn = InRunUiFactory.CreatePanelButton(panel.transform, $"RelicBtn_{i}",
                     new Vector2(xMin, 0.10f), new Vector2(xMax, 0.82f), relicDesc);
@@ -541,6 +646,7 @@ namespace SudokuRoguelike.UI
                 var iconChild = btn.transform.Find("Icon");
                 if (iconChild != null)
                     InRunUiFactory.AddRelicTierPip(iconChild, relic.Tier);
+                ConfigureRelicChoiceButtonLayout(btn);
                 relicBtns[i] = btn;
                 var idx = i;
                 btn.onClick.AddListener(() =>
@@ -562,7 +668,7 @@ namespace SudokuRoguelike.UI
 
             // Accept button — hidden until a relic is staged
             acceptBtn = InRunUiFactory.CreateActionButton(panel.transform, "BtnAccept",
-                new Vector2(0.25f, 0.01f), new Vector2(0.55f, 0.08f), "Accept", UiAction.Accept);
+                new Vector2(0.25f, 0.01f), new Vector2(0.55f, 0.08f), T("Accept"), UiAction.Accept);
             acceptBtn.gameObject.SetActive(false);
             acceptBtn.GetComponent<Image>().color = new Color(0.30f, 0.65f, 0.30f, 0.92f);
             acceptBtn.onClick.AddListener(() =>
@@ -571,7 +677,7 @@ namespace SudokuRoguelike.UI
                 var chosen = choices[stagedIndex];
                 run.AcceptRelicChoice(stagedIndex);
                 new ProfileService(new SaveFileService(SaveProfileService.ActiveSlot)).RecordRelicDiscovery(chosen.Id);
-                OnStatusChanged?.Invoke($"Relic: {RelicService.GetRelicName(chosen.Id)}");
+                OnStatusChanged?.Invoke(F("InRun.Relic.Status.Accepted", RelicService.GetRelicName(chosen.Id)));
                 ActivePanel = null;
                 Object.Destroy(panel);
                 onDismissed?.Invoke();
@@ -579,10 +685,10 @@ namespace SudokuRoguelike.UI
 
             // Skip / Leave button
             var skip = InRunUiFactory.CreateActionButton(panel.transform, "BtnSkip",
-                new Vector2(0.60f, 0.01f), new Vector2(0.96f, 0.08f), "Leave", UiAction.Leave);
+                new Vector2(0.60f, 0.01f), new Vector2(0.96f, 0.08f), T("Leave"), UiAction.Leave);
             skip.onClick.AddListener(() =>
             {
-                OnStatusChanged?.Invoke("Left the relic.");
+                OnStatusChanged?.Invoke(T("InRun.Relic.Status.Left"));
                 ActivePanel = null;
                 Object.Destroy(panel);
                 onDismissed?.Invoke();
@@ -629,11 +735,22 @@ namespace SudokuRoguelike.UI
             var evt = _map.OpenEventNode();
             if (evt == null || evt.Options.Count == 0)
             {
-                OnStatusChanged?.Invoke("Event: nothing happened.");
+                OnStatusChanged?.Invoke(T("InRun.Event.Status.Nothing"));
                 return;
             }
             _map.ChooseEventOption(0);
-            OnStatusChanged?.Invoke($"Event: {evt.Title}\nChose: {evt.Options[0].Label}");
+            OnStatusChanged?.Invoke(F("InRun.Event.Status.Chose", evt.Title, evt.Options[0].Label));
         }
+
+        private static string T(string key) => LocalizationService.T(key);
+
+        private static string F(string key, params object[] args) =>
+            LocalizationService.Format(key, key, args);
+
+        private static string RarityLabel(ItemRarity rarity) =>
+            LocalizationService.T($"Item.Rarity.{rarity}", rarity.ToString());
+
+        private static string TierLabel(RelicTier tier) =>
+            LocalizationService.T($"Relic.Tier.{tier}", tier.ToString());
     }
 }

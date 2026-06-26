@@ -1,4 +1,4 @@
-﻿# Requirement Traceability Map â€” All Systems
+# Requirement Traceability Map â€” All Systems
 
 **Updated:** 2026-04-15
 
@@ -11,7 +11,7 @@ Legend: âœ… Implemented | âš ï¸ Partial | âŒ Not Implemented | ð
 | System Prefix | Spec File | Status |
 |--------------|-----------|--------|
 | [PRESSURE](#pressure-mechanics) | `docs/PressureMechanicsSpec.md` | âœ… |
-| [DEBUFF](#boss-debuffs) | `docs/BossDebuffEffects.md` | âœ… (9 of 18) |
+| [DEBUFF](#boss-debuffs) | `docs/BossDebuffEffects.md` | ✅ (14 of 18) |
 | [CURSE](#curse-system) | `docs/CurseSystem.md` | âœ… |
 | [META](#meta-progression) | `docs/MetaProgressionSystem.md` | âœ… |
 | [ZENMODE](#endless-zen-mode) | `docs/EndlessZenMode.md` | âœ… |
@@ -26,9 +26,9 @@ Legend: âœ… Implemented | âš ï¸ Partial | âŒ Not Implemented | ð
 | [INPUT](#input--profiles) | `docs/InputAndProfilesSpec.md` | âœ… |
 | [ACCESS](#accessibility) | `docs/AccessibilitySpec.md` | âœ… |
 | [ECON](#gold-economy) | `docs/GoldEconomySystem.md` | âœ… |
-| [SEASON](#seasonal-challenge) | `docs/SeasonalChallengeSpec.md` | ðŸ†• |
-| [DAILY](#daily-goal-system) | `docs/DailyGoalSystem.md` | ðŸ†• |
-| [CLASS](#class-progression-unlocks) | `docs/ClassProgressionUnlocks.md` | ðŸ†• |
+| [SEASON](#seasonal-challenge) | `docs/SeasonalChallengeSpec.md` | ✅ |
+| [DAILY](#daily-goal-system) | `docs/DailyGoalSystem.md` | ✅ |
+| [CLASS](#class-progression-unlocks) | `docs/ClassProgressionUnlocks.md` | ✅ |
 
 ---
 
@@ -66,7 +66,7 @@ Legend: âœ… Implemented | âš ï¸ Partial | âŒ Not Implemented | ð
 | ID | Description | File | Method / Location | Status |
 |----|-------------|------|-------------------|--------|
 | PRESSURE-TICK-001 | Correct placement decrements all counters | `Assets/Scripts/Run/RunDirector.cs` | `TickPressureThreats` â€” counter loop step 1 | âœ… |
-| PRESSURE-TICK-002 | Wrong placement also decrements counters | `Assets/Scripts/Run/RunDirector.cs` | `PlaceNumber` â€” incorrect path after `Mistakes++` | âŒ |
+| PRESSURE-TICK-002 | Wrong placement also decrements counters | `Assets/Scripts/Run/RunDirector.cs` | `PlaceNumber` â€” incorrect path after `Mistakes++` | ✅ |
 | PRESSURE-TICK-003 | Success when last cell placed | `Assets/Scripts/Run/RunDirector.cs` | `TickPressureThreats` â€” success check step 2 | âœ… |
 | PRESSURE-TICK-004 | Chain success +1 HP | `Assets/Scripts/Run/RunDirector.cs` | `TickPressureThreats` â€” `if (threat.IsChain)` | âœ… |
 | PRESSURE-TICK-005 | Expiry 2 HP per unfilled cell | `Assets/Scripts/Run/RunDirector.cs` | `TickPressureThreats` â€” expiry branch | âœ… |
@@ -77,7 +77,7 @@ Legend: âœ… Implemented | âš ï¸ Partial | âŒ Not Implemented | ð
 | PRESSURE-TICK-010 | HauntedCell extra HP on mistake | `Assets/Scripts/Run/RunDirector.cs` | `TickPressureMistake` â€” HauntedCell block | âœ… |
 | PRESSURE-TICK-011 | HauntedCell DoublePenalty stacking | `Assets/Scripts/Run/RunDirector.cs` | `TickPressureMistake` â€” `extraDmg` calc | âœ… |
 | PRESSURE-TICK-012 | CrumblingRegion all-cell erosion | `Assets/Scripts/Run/RunDirector.cs` | `TickPressureMistake` â€” CrumblingCells loop | âœ… |
-| PRESSURE-TICK-013 | CrumblingRegion VeryHigh first-cell only | `Assets/Scripts/Run/RunDirector.cs` | `TickPressureMistake` â€” needs `CrumblingVeryHigh` branch | âŒ |
+| PRESSURE-TICK-013 | CrumblingRegion VeryHigh first-cell only | `Assets/Scripts/Run/RunDirector.cs` | `TickPressureMistake` â€” needs `CrumblingVeryHigh` branch | ✅ |
 | PRESSURE-TICK-014 | Fragility 0 â†’ AutoFill trigger | `Assets/Scripts/Run/RunDirector.cs` | `TickPressureMistake` â€” `if <= 0` | âœ… |
 | PRESSURE-TICK-015 | AutoFill places solution, costs HP | `Assets/Scripts/Run/RunDirector.cs` | `AutoFillCrumbledCell` | âœ… |
 | PRESSURE-TICK-016 | AutoFill silently resolves threats | `Assets/Scripts/Run/RunDirector.cs` | `AutoFillCrumbledCell` â€” threat loop | âœ… |
@@ -134,19 +134,19 @@ Legend: âœ… Implemented | âš ï¸ Partial | âŒ Not Implemented | ð
 | DEBUFF-DEF-002 | ColWipe | 95 | On mistake: clears player-placed digits in same column | âœ… |
 | DEBUFF-DEF-003 | BoxWipe | 99 | On mistake: clears player-placed digits in same region | âœ… |
 | DEBUFF-DEF-004 | CrossWipe | 100 | On mistake: clears row AND column (combined) | âœ… |
-| DEBUFF-DEF-005 | RadiusWipe | â€” | On mistake: clears within 2-cell Chebyshev radius | âŒ |
+| DEBUFF-DEF-005 | RadiusWipe | 107 | On mistake: clears within 2-cell Chebyshev radius | ✅ |
 | DEBUFF-DEF-006 | PencilPoison | â€” | On mistake: adds wrong pencil marks to row | âŒ |
 | DEBUFF-DEF-007 | PencilBlind | 98 | On mistake: removes all pencil marks in row+column | âœ… |
-| DEBUFF-DEF-008 | PencilScramble | â€” | On mistake: scrambles all pencil marks board-wide | âŒ |
+| DEBUFF-DEF-008 | PencilScramble | 108 | On mistake: scrambles all pencil marks board-wide | ✅ |
 | DEBUFF-DEF-009 | FogPulse | â€” | On mistake: adds fog ring for 3 moves | âŒ |
 | DEBUFF-DEF-010 | NumberBlind | â€” | On mistake: hides placed digit board-wide for 2 moves | âŒ |
-| DEBUFF-DEF-011 | CellBlur | â€” | On mistake: hides digit labels in 3Ã—3 area briefly | âŒ |
+| DEBUFF-DEF-011 | CellBlur | 111 | On mistake: hides digit labels in 3Ã—3 area briefly | ✅ |
 | DEBUFF-DEF-012 | DoublePenalty | 96 | Wrong placements deal 2 HP instead of 1 | âœ… |
 | DEBUFF-DEF-013 | PencilDrain | 101 | Each wrong placement costs 1 extra pencil charge | âœ… |
 | DEBUFF-DEF-014 | GoldFine | 102 | Deducts 5 gold per mistake (clamped to 0) | âœ… |
-| DEBUFF-DEF-015 | RevealCost | â€” | Blocks next item use for 2 moves after mistake | âŒ |
+| DEBUFF-DEF-015 | RevealCost | 110 | Blocks next item use for 2 moves after mistake | ✅ |
 | DEBUFF-DEF-016 | DigitShift | â€” | After mistake: swap solution values between cells | âŒ |
-| DEBUFF-DEF-017 | GivenReveal | â€” | After mistake: convert 1â€“3 correct digits to given | âŒ |
+| DEBUFF-DEF-017 | GivenReveal | 109 | After mistake: convert 1â€“3 correct digits to given | ✅ |
 | DEBUFF-DEF-018 | CellLock | 97 | After mistake: wrong cell un-editable for 3 placements | âœ… |
 
 ### Integration Hooks
@@ -165,8 +165,16 @@ Legend: âœ… Implemented | âš ï¸ Partial | âŒ Not Implemented | ð
 | DEBUFF-HOOK-010 | `BossModifierId` enum 94â€“102 | `Assets/Scripts/Core/GameEnums.cs` | `BossModifierId` | âœ… |
 | DEBUFF-HOOK-011 | `BossService` ModifierData IDs 94â€“102; IDs â‰¥94 excluded from pool | `Assets/Scripts/Boss/BossService.cs` | `ModifierData`, `BuildEligiblePool` | âœ… |
 | DEBUFF-HOOK-012 | `BoardViewController` CellLocked tint (deep magenta) | `Assets/Scripts/UI/BoardViewController.cs` | `RenderBoard` | âœ… |
-| DEBUFF-HOOK-013 | `InRunController` blocks input on locked cells | `Assets/Scripts/UI/InRunController.cs` | Input handlers | âœ… |
-
+| DEBUFF-HOOK-013 | `InRunController` blocks input on locked cells | `Assets/Scripts/UI/InRunController.cs` | Input handlers | ✅ |
+| DEBUFF-HOOK-014 | RadiusWipe → `ClearBoardRadius(row,col)` | `Assets/Scripts/Run/RunDirector.cs` | `ApplyMistakePenalty(int,int)` | ✅ |
+| DEBUFF-HOOK-015 | PencilScramble → `ScramblePencilMarks()` | `Assets/Scripts/Run/RunDirector.cs` | `ApplyMistakePenalty(int,int)` | ✅ |
+| DEBUFF-HOOK-016 | GivenReveal → `ConvertCellsToGiven(2)` | `Assets/Scripts/Run/RunDirector.cs` | `ApplyMistakePenalty(int,int)` | ✅ |
+| DEBUFF-HOOK-017 | RevealCost → `ItemUseBlockedMoves = max(current, 2)` on mistake | `Assets/Scripts/Run/RunDirector.cs` | `ApplyMistakePenalty(int,int)` | ✅ |
+| DEBUFF-HOOK-018 | CellBlur → `ApplyCellBlur(row,col)` | `Assets/Scripts/Run/RunDirector.cs` | `ApplyMistakePenalty(int,int)` | ✅ |
+| DEBUFF-HOOK-019 | `TickDebuffTimers()` after every correct placement — decrements RevealCost + CellBlur counters | `Assets/Scripts/Run/RunDirector.cs` | `PlaceNumber` | ✅ |
+| DEBUFF-HOOK-020 | `BossModifierId` enum 107–111 (Batch 2 debuffs) | `Assets/Scripts/Core/GameEnums.cs` | `BossModifierId` | ✅ |
+| DEBUFF-HOOK-021 | `BossService` ModifierData IDs 107–111; all excluded from pool via ≥94 guard | `Assets/Scripts/Boss/BossService.cs` | `ModifierData`, `BuildEligiblePool` | ✅ |
+| DEBUFF-HOOK-022 | `LevelState.ItemUseBlockedMoves`, `CellBlurCells`, `CellBlurMovesLeft` `[NonSerialized]` | `Assets/Scripts/Core/RuntimeModels.cs` | `LevelState` | ✅ |
 ---
 
 ## Curse System
@@ -481,43 +489,43 @@ Key requirements (see spec for full list):
 
 ## Seasonal Challenge
 
-**Spec:** `docs/SeasonalChallengeSpec.md` â€” **Status: ðŸ†• Not yet implemented**
+**Spec:** `docs/SeasonalChallengeSpec.md` â€” **Status: ✅ Implemented**
 
 | ID | Description | File | Method | Status |
 |----|-------------|------|--------|--------|
 | SEASON-UNLOCK-001 | Unlocked after first ascension (`SeasonalChallengeUnlocked = true`) | `Assets/Scripts/Meta/AscensionService.cs` | `ApplyAscension` | âœ… seed logic |
 | SEASON-SEED-001 | Monthly seed: `(year Ã— 100) + month` | `Assets/Scripts/Meta/AscensionService.cs` | `BuildMonthlySeed` | âœ… |
-| SEASON-PUZZLE-001 | Fixed 9Ã—9 4â˜… puzzle from monthly seed | â€” | â€” | ðŸ†• |
-| SEASON-SCORE-001 | Personal best stored locally | â€” | `SeasonalChallengeState` | ðŸ†• |
-| SEASON-UI-001 | Prominent main menu panel with countdown | â€” | â€” | ðŸ†• |
-| SEASON-UI-002 | `GameMode.SeasonalChallenge` enum value | `Assets/Scripts/Core/GameEnums.cs` | `GameMode` | ðŸ†• |
+| SEASON-PUZZLE-001 | Fixed 9Ã—9 4â˜… puzzle from monthly seed | `Assets/Scripts/Run/SeasonalChallengeService.cs` | `BuildChallengeConfig` | ✅ |
+| SEASON-SCORE-001 | Personal best stored locally | `Assets/Scripts/Core/SaveModels.cs` | `SeasonalChallengeState` | ✅ |
+| SEASON-UI-001 | Prominent main menu panel with countdown | `Assets/Scripts/UI/MainMenuController.cs` | `RefreshMonthlyWalkPanel` | ✅ |
+| SEASON-UI-002 | `GameMode.SeasonalChallenge` enum value | `Assets/Scripts/Core/GameEnums.cs` | `GameMode` | ✅ |
 
 ---
 
 ## Daily Goal System
 
-**Spec:** `docs/DailyGoalSystem.md` â€” **Status: ðŸ†• Not yet implemented**
+**Spec:** `docs/DailyGoalSystem.md` â€” **Status: ✅ Implemented**
 
 | ID | Description | File | Method | Status |
 |----|-------------|------|--------|--------|
-| DAILY-GOAL-001 | 3 daily goals per day (date-seeded, no network) | â€” | â€” | ðŸ†• |
-| DAILY-GOAL-002 | Ink Stamps cosmetic currency from goal completion | â€” | â€” | ðŸ†• |
-| DAILY-GOAL-003 | Streak tracking (consecutive days) | â€” | `DailyGoalState` | ðŸ†• |
-| DAILY-GOAL-004 | Daily Walk widget on main menu | â€” | â€” | ðŸ†• |
-| DAILY-GOAL-005 | `DailyGoalState` in `ProfileSaveData` | `Assets/Scripts/Core/SaveModels.cs` | `ProfileSaveData` | ðŸ†• |
+| DAILY-GOAL-001 | 3 daily goals per day (date-seeded, no network) | `Assets/Scripts/Core/SaveModels.cs` | `DailyGoalState` | ✅ |
+| DAILY-GOAL-002 | Ink Stamps cosmetic currency from goal completion | `Assets/Scripts/Core/SaveModels.cs` | `DailyGoalState` | ✅ |
+| DAILY-GOAL-003 | Streak tracking (consecutive days) | `Assets/Scripts/Core/SaveModels.cs` | `DailyGoalState` | ✅ |
+| DAILY-GOAL-004 | Daily Walk widget on main menu | `Assets/Scripts/UI/MainMenuController.cs` | `ShowDailyWalkPanel` | ✅ |
+| DAILY-GOAL-005 | `DailyGoalState` in `ProfileSaveData` | `Assets/Scripts/Core/SaveModels.cs` | `SaveFileEnvelope` | ✅ |
 
 ---
 
 ## Class Progression Unlocks
 
-**Spec:** `docs/ClassProgressionUnlocks.md` â€” **Status: ðŸ†• Not yet implemented**
+**Spec:** `docs/ClassProgressionUnlocks.md` â€” **Status: ✅ Implemented**
 
 | ID | Description | File | Method | Status |
 |----|-------------|------|--------|--------|
-| CLASS-EXCL-001 | 16 class-exclusive unlocks: 8 items (L15) + 8 relics (L30) per class | â€” | â€” | ðŸ†• |
-| CLASS-EXCL-002 | `ClassExclusive` flag on item/relic definitions | â€” | Item/relic catalog | ðŸ†• |
-| CLASS-EXCL-003 | `ClassUnlockLevel` (15 or 30) on item/relic definitions | â€” | Item/relic catalog | ðŸ†• |
-| CLASS-EXCL-004 | Exclusive items/relics only rollable for their associated class | â€” | `ItemService`, `RelicService` | ðŸ†• |
+| CLASS-EXCL-001 | 16 class-exclusive unlocks: 8 items (L15) + 8 relics (L30) per class | `Assets/Scripts/Items/ItemService.cs`, `RelicService.cs` | `ClassExclusiveItems`, `ClassExclusiveRelics` | ✅ |
+| CLASS-EXCL-002 | `ClassExclusive` flag on item/relic definitions | `Assets/Scripts/Items/ItemService.cs`, `RelicService.cs` | `ExclusiveDef`, `ExclusiveRelicDef` | ✅ |
+| CLASS-EXCL-003 | `ClassUnlockLevel` (15 or 30) on item/relic definitions | `Assets/Scripts/Items/ItemService.cs`, `RelicService.cs` | `UnlockLevel` = 15 (items), 30 (relics) | ✅ |
+| CLASS-EXCL-004 | Exclusive items/relics only rollable for their associated class | `Assets/Scripts/Items/ItemService.cs`, `RelicService.cs` | `IsAvailableForClass`, `RollRelicChoices` | ✅ |
 
 ---
 

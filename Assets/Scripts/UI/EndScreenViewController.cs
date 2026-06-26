@@ -57,7 +57,7 @@ namespace SudokuRoguelike.UI
         /// advancing to the next floor. The panel uses the same _gameOverPanel structure so it
         /// auto-hides when the next level loads.
         /// </summary>
-        public void ShowBossCleared(RunDirector run, Action onContinue = null, string continueLabel = "Continue →")
+        public void ShowBossCleared(RunDirector run, Action onContinue = null)
         {
             if (_gameOverPanel != null) _gameOverPanel.SetActive(true);
             if (_gameOverPanel != null)
@@ -88,7 +88,7 @@ namespace SudokuRoguelike.UI
                     lblRt.anchorMin = Vector2.zero; lblRt.anchorMax = Vector2.one;
                     lblRt.offsetMin = lblRt.offsetMax = Vector2.zero;
                     var lblTxt = lbl.GetComponent<Text>();
-                    lblTxt.text = continueLabel;
+                    lblTxt.text = "Continue →";
                     lblTxt.alignment = TextAnchor.MiddleCenter;
                     lblTxt.fontSize = 16;
                     lblTxt.color = GamePalette.WinGold;
@@ -103,11 +103,10 @@ namespace SudokuRoguelike.UI
             }
         }
 
-        /// <summary>Hides the boss-cleared interstitial panel. Only call from a player-triggered action.</summary>
+        /// <summary>Hides the boss-cleared interstitial panel — called after the timed pause.</summary>
         public void HideBossCleared()
         {
-            if (_gameOverPanel != null && _gameOverPanel.activeSelf)
-                _gameOverPanel.SetActive(false);
+            if (_gameOverPanel != null) _gameOverPanel.SetActive(false);
         }
 
         public void ShowGameOver(RunDirector run, bool victory)
@@ -120,7 +119,11 @@ namespace SudokuRoguelike.UI
             }
 
             // Panels hidden by InRunController before calling ShowGameOver
-            if (_gameOverPanel != null) _gameOverPanel.SetActive(true);
+            if (_gameOverPanel != null)
+            {
+                _gameOverPanel.SetActive(true);
+                InRunUiFactory.SelectFirstInteractable(_gameOverPanel);
+            }
 
             // Load the correct background art (placeholder added in BuildGameOverPanel)
             if (_gameOverPanel != null)
@@ -152,6 +155,9 @@ namespace SudokuRoguelike.UI
 
             var result = _map.BuildRunResult(victory, 0, 0);
             var newUnlocks = PersistResult(result, run);
+
+            if (victory && result?.Mode == SudokuRoguelike.Core.GameMode.GardenRun && result.XpEarned > 0)
+                SudokuRoguelike.Meta.SteamLeaderboardService.SubmitRunScore(result.XpEarned);
 
             // Load updated XP after persist; fallback to in-memory calculation
             var postSave = new SaveFileService(SaveProfileService.ActiveSlot);
@@ -426,6 +432,26 @@ namespace SudokuRoguelike.UI
                 sb.AppendLine($"Total Sessions: {stats.TotalZenSessions}");
                 _gameOverDetails.text = sb.ToString().TrimEnd();
             }
+        }
+
+        public struct BossClearedStats
+        {
+            public int Mistakes;
+            public int HpLost;
+            public int ItemsUsed;
+            public int PencilMarks;
+        }
+
+        public static BossClearedStats BuildBossClearedStats(RunDirector run)
+        {
+            var level = run?.CurrentLevelState;
+            return new BossClearedStats
+            {
+                Mistakes    = level?.Mistakes             ?? 0,
+                HpLost      = level?.HpLost               ?? 0,
+                ItemsUsed   = level?.ItemsUsedThisLevel   ?? 0,
+                PencilMarks = level?.PencilMarksUsed      ?? 0,
+            };
         }
 
         private static int GetClassTotalXpFromSave(SaveFileEnvelope envelope, ClassId classId)

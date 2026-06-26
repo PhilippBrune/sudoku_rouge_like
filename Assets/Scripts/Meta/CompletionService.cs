@@ -27,6 +27,7 @@ namespace SudokuRoguelike.Meta
                 state.ClassesAtLevel30.Add(classId);
         }
 
+        // [REQ: META-COMPLETE-001] GetCompletionPercent: 4 categories each worth 25% — size×star combos, all modifiers, classes at L30, all relics discovered
         public float GetCompletionPercent(CompletionTrackerState state)
         {
             if (state == null) return 0f;

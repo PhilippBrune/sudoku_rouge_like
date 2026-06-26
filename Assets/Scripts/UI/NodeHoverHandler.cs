@@ -19,6 +19,7 @@ namespace SudokuRoguelike.UI
         private RunNode _node;
         private LevelConfig _config;
         private bool _isInvalidFirst;
+        private bool _isHidden;
 
         // Delegate slots — set once, shared across all nodes in the same rebuild.
         private Action<RunNode, LevelConfig, Vector2> _onShow;
@@ -29,6 +30,7 @@ namespace SudokuRoguelike.UI
             RunNode node,
             LevelConfig config,
             bool isInvalidFirst,
+            bool isHidden,
             Action<RunNode, LevelConfig, Vector2> onShow,
             Action onHide,
             Action<Vector2> onShowBlocked)
@@ -36,6 +38,7 @@ namespace SudokuRoguelike.UI
             _node           = node;
             _config         = config;
             _isInvalidFirst = isInvalidFirst;
+            _isHidden       = isHidden;
             _onShow         = onShow;
             _onHide         = onHide;
             _onShowBlocked  = onShowBlocked;
@@ -44,6 +47,7 @@ namespace SudokuRoguelike.UI
         public void OnPointerEnter(PointerEventData e)
         {
             if (_node == null || _node.Visited) return;
+            if (_isHidden) return; // undiscovered node — no tooltip
             if (_isInvalidFirst) _onShowBlocked?.Invoke(e.position);
             else                 _onShow?.Invoke(_node, _config, e.position);
         }
@@ -52,7 +56,7 @@ namespace SudokuRoguelike.UI
 
         public void OnSelect(BaseEventData e)
         {
-            if (_node == null || _node.Visited || _isInvalidFirst) return;
+            if (_node == null || _node.Visited || _isInvalidFirst || _isHidden) return;
             _onShow?.Invoke(_node, _config, Vector2.zero);
         }
 

@@ -33,10 +33,8 @@ namespace SudokuRoguelike.Sudoku
 
         public bool IsGiven(int row, int col) => GivenMask[row, col];
 
-        // A cell is "correct" when it has a value that does not conflict with
-        // any other already-placed value in the same row, column, or region.
-        // The generated Solution is intentionally NOT consulted here — puzzles
-        // may have multiple valid completions and the player may find any of them.
+        // [REQ: GEN-VALID-001] IsCorrectAt: placement is valid when it satisfies all standard row/column/region constraints
+        // (solution value not consulted — any valid completion is accepted, supporting multiple-solution puzzles)
         public bool IsCorrectAt(int row, int col)
         {
             var v = Cells[row, col];

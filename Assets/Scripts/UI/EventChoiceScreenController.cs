@@ -76,7 +76,11 @@ namespace SudokuRoguelike.UI
                 rt.offsetMin = new Vector2(8, 2);
                 rt.offsetMax = new Vector2(-8, -2);
                 var label = textGo.GetComponent<Text>();
-                label.text = $"{option.Label} — {option.EffectDescription}";
+                label.text = LocalizationService.Format(
+                    "RunEvent.OptionLabelWithEffect",
+                    "{0} - {1}",
+                    option.Label,
+                    option.EffectDescription);
                 label.font = InRunUiFactory.GetFont();
                 label.fontSize = 14;
                 label.color = InRunUiFactory.TextColor;
@@ -110,7 +114,9 @@ namespace SudokuRoguelike.UI
 
             var summary = _runMap.ChooseEventOption(optionIndex);
             if (_resultText != null)
-                _resultText.text = string.IsNullOrEmpty(summary) ? "Done." : summary;
+                _resultText.text = string.IsNullOrEmpty(summary)
+                    ? LocalizationService.T("RunEvent.Result.Done", "Done.")
+                    : summary;
 
             for (var i = 0; i < _spawnedButtons.Count; i++)
             {

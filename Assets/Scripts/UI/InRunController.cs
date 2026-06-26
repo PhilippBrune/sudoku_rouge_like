@@ -75,6 +75,7 @@ namespace SudokuRoguelike.UI
 
         // ── Gamepad overlay focus — reused each frame to avoid per-frame allocation ──
         private readonly List<Button> _overlayBtnCache = new List<Button>();
+        private readonly List<Selectable> _optionsFocusCache = new List<Selectable>();
 
         // ── Swap state (Silk Fan item) ──
         private bool _swapMode;
@@ -123,13 +124,19 @@ namespace SudokuRoguelike.UI
         private float _pathBConfirmTimer;   // retained but unused after MAP-2 rework
         private float _bButtonHoldTime;      // PS-2: tracks how long B is held in puzzle focus
         private bool  _pathQuitModalActive;  // MAP-2: true while the path quit-confirm modal is shown
-        private int   _prevJoystickCount = -1; // G1-B: cached joystick count for fast change detection
 
         // ── Item state ──
         private HashSet<(int row, int col)> _bagHighlightCells;
 
         // Fog moves are stored in RunState.FogDisabledMoves (persisted); read via this accessor
-        private int _fogDisabledMovesRemaining => _map?.Run?.State?.FogDisabledMoves ?? 0;
+        private int _fogDisabledMovesRemaining =>
+            (_gardenLanternUnfogUntil > 0f && Time.realtimeSinceStartup < _gardenLanternUnfogUntil)
+                ? int.MaxValue
+                : (_map?.Run?.State?.FogDisabledMoves ?? 0);
+
+        // Garden Lantern: real-time timestamp (Time.realtimeSinceStartup) at which the 15-second
+        // fog reveal expires. 0 when no lantern is active. Not persisted — save+quit re-fogs the board.
+        private float _gardenLanternUnfogUntil;
         private float _bagHighlightEndTime;
 
         // ── Path overlay ──
@@ -181,19 +188,24 @@ namespace SudokuRoguelike.UI
         private int _bossNodeIndex = -1;
 
         // ── Boss Awakening async loading ──
-        private LevelConfig _pendingBossLevel;
+        private LevelConfig _pendingAsyncLevel;
         private GameObject _bossAwakeningPanel;
         private CanvasGroup _bossAwakeningCg;
+        private Text _bossAwakeningLabel;
+        private Coroutine _bossAwakeningDotsCoroutine;
+        private string _asyncGenerationBaseText = "Creating Puzzle";
 
         // ── Controller feedback ──
         private RectTransform _uiRoot;
         private Text  _controllerIndicatorText;
         private Image _victoryFlashOverlay;
-        private float _controllerIndicatorTimer;
 
         // ── Systems ──
         private RunAudioController _audio;
         private AccessibilityService _accessibility = new AccessibilityService();
+        private readonly ControllerIndicatorPoller _controllerIndicatorPoller = new ControllerIndicatorPoller();
+        private readonly AsyncLevelCompletionPresenter _asyncLevelCompletionPresenter = new AsyncLevelCompletionPresenter();
+        private readonly TimedVisualStateController _timedVisualStateController = new TimedVisualStateController();
 
         // ── Icon cache: all node/legend sprites preloaded once at Awake ──
         private readonly Dictionary<string, Sprite> _nodeIconCache = new Dictionary<string, Sprite>();
@@ -297,7 +309,7 @@ namespace SudokuRoguelike.UI
             _rewardView.Configure(map, _pathPanel);
             _shopView.Configure(map, _pathPanel,
                 (item, onReplace, onAbort) => _rewardView.ShowBagSwapPanel(item, onReplace, onAbort));
-            _bossGateView.Configure(map);
+            _bossGateView.Configure(map, uiRoot);
             _endScreenView.Configure(map, _gameOverPanel, goSummary, goDetails, goBack);
             _uiFlowCtrl = GetComponent<InRunUiFlowController>();
             _eventChoiceView = _uiFlowCtrl?.EventChoiceScreen;
@@ -353,10 +365,12 @@ namespace SudokuRoguelike.UI
             if (_inGameOptionsPanel != null) _inGameOptionsPanel.SetActive(false);
             _boardView.TutorialHighlightMap = null;
             _basicsTutorial = null;
+            _boardView?.MarkOverlayDirty();
             WireInGameButtons();
             ShowPath();
         }
 
+        // [REQ: ACCESS-COLOR-002] NotifyAccessibilityChanged: called by OptionsController on SetColorblindMode/SetHighContrast; rebuilds board overlay and refreshes particles
         public void NotifyAccessibilityChanged()
         {
             RefreshAccessibility();
@@ -365,6 +379,7 @@ namespace SudokuRoguelike.UI
                 _boardView.MarkOverlayDirty();
                 RebuildBoard();
             }
+            // [REQ: ACCESS-PARTICLE-001] Particles (ambient seasonal FX) are refreshed on every accessibility change; AmbientParticleController.RefreshSettings stops them when ReduceMotion=true
             FindFirstObjectByType<AmbientParticleController>()?.RefreshSettings();
         }
 
@@ -427,8 +442,76 @@ namespace SudokuRoguelike.UI
             var nowActive = !_inGameOptionsPanel.activeSelf;
             _inGameOptionsPanel.SetActive(nowActive);
             if (nowActive)
-                InRunUiFactory.SelectFirstInteractable(_inGameOptionsPanel);
+            {
+                RebuildOptionsFocusCache();
+                var es = UnityEngine.EventSystems.EventSystem.current;
+                if (_optionsFocusCache.Count > 0)
+                    es?.SetSelectedGameObject(_optionsFocusCache[0].gameObject);
+                else
+                    InRunUiFactory.SelectFirstInteractable(_inGameOptionsPanel);
+            }
         }
+
+        private void RebuildOptionsFocusCache()
+        {
+            _optionsFocusCache.Clear();
+            if (_inGameOptionsPanel == null) return;
+            foreach (var sel in _inGameOptionsPanel.GetComponentsInChildren<Selectable>(false))
+            {
+                if (sel.IsInteractable() && sel.gameObject.activeInHierarchy)
+                    _optionsFocusCache.Add(sel);
+            }
+        }
+
+        private InRunCancelContext BuildInRunCancelContext()
+        {
+            var overlayActive = TryGetActiveOverlay(out _);
+            return new InRunCancelContext(
+                IsActive(_inGameOptionsPanel),
+                overlayActive,
+                IsActive(_pathPanel),
+                _pathQuitModalActive,
+                _gbControllerInItemsFocus,
+                HasPendingItemInteraction);
+        }
+
+        private bool HasPendingItemInteraction =>
+            _windChimeChoosingHouses || _windChimePending ||
+            _templeIncensePending || _koiReflectionPending ||
+            _swapMode || _patternScrollPending;
+
+        private void ExecuteInRunCancelRoute(CancelRouteAction route)
+        {
+            switch (route)
+            {
+                case CancelRouteAction.CloseInRunOptions:
+                    if (IsActive(_inGameOptionsPanel))
+                        ToggleOptionsPanel();
+                    _inputRemap.Tick();
+                    break;
+                case CancelRouteAction.ExitItemsFocus:
+                    ExitItemsFocus();
+                    _inputRemap.Tick();
+                    break;
+                case CancelRouteAction.CancelPendingItemInteraction:
+                    CancelPendingItemInteraction();
+                    _inputRemap.Tick();
+                    break;
+                case CancelRouteAction.ShowPathQuitConfirmation:
+                    ShowPathQuitConfirmModal();
+                    _inputRemap.Tick();
+                    break;
+            }
+        }
+
+        private void ExitItemsFocus()
+        {
+            _gbControllerInItemsFocus = false;
+            _numpadView?.HighlightControllerCursor(null);
+            SetStatus(T("Puzzle mode  (Tab for items)"));
+        }
+
+        private static bool IsActive(GameObject go) => go != null && go.activeSelf;
 
         public void SetInGameOptionsPanel(GameObject panel) => _inGameOptionsPanel = panel;
         public void SaveAndQuitPublic() => SaveAndQuit();
@@ -440,34 +523,45 @@ namespace SudokuRoguelike.UI
 
         private void Update()
         {
+            InputRemapService.UpdateCursorVisibility();
+
             if (_map == null) return;
             var run = _map.Run;
 
-            // Refresh controller indicator and check joystick count every 2 s.
-            // GetJoystickNames() allocates a string array each call — poll on the timer
-            // rather than every frame to eliminate the per-frame allocation.
-            _controllerIndicatorTimer -= Time.deltaTime;
-            if (_controllerIndicatorTimer <= 0f)
+            if (_timedVisualStateController.HasExpired(_gardenLanternUnfogUntil, Time.realtimeSinceStartup))
             {
-                _controllerIndicatorTimer = 2f;
-                var joystickCount = Input.GetJoystickNames().Length;
-                if (joystickCount != _prevJoystickCount)
-                    _prevJoystickCount = joystickCount;
-                if (_controllerIndicatorText != null)
-                    _controllerIndicatorText.text = ControllerGlyphService.GetIndicatorLabel();
+                _gardenLanternUnfogUntil = 0f;
+                RenderBoard();
+            }
+
+            if (_controllerIndicatorPoller.Tick(Time.deltaTime, out var controllerIndicatorLabel) &&
+                _controllerIndicatorText != null)
+            {
+                _controllerIndicatorText.text = controllerIndicatorLabel;
             }
 
             if (run == null) return;
 
             if (!_resumeApplied) { ApplyResumeState(); return; }
 
-            // Poll async boss level completion — finalize state and show puzzle once overlay is ready.
-            if (_pendingBossLevel != null && run.TryCompleteAsyncLevel())
+            // Poll async puzzle generation completion; finalize state and show puzzle once ready.
+            if (_pendingAsyncLevel != null && run.TryCompleteAsyncLevel())
             {
-                var level = _pendingBossLevel;
-                _pendingBossLevel = null;
+                var completionView = _asyncLevelCompletionPresenter.BuildCompletedView(
+                    _pendingAsyncLevel,
+                    run.CurrentBoard != null);
+                _pendingAsyncLevel = null;
                 HideBossAwakeningPanel();
-                SetStatus($"Boss - {level.BoardSize}x{level.BoardSize} {level.Stars}*");
+                if (completionView.State == AsyncLevelCompletionViewState.Failed)
+                {
+                    _map.RollbackPendingGeneration();
+                    SetStatus(completionView.LocalizeStatus ? T(completionView.StatusText) : completionView.StatusText);
+                    ShowPath();
+                    return;
+                }
+
+                _map.ClearPendingGenerationRollback();
+                SetStatus(completionView.LocalizeStatus ? T(completionView.StatusText) : completionView.StatusText);
                 ShowSudoku();
                 RebuildBoard();
             }
@@ -506,6 +600,8 @@ namespace SudokuRoguelike.UI
                 HandleCompletion();
                 _hudView.Refresh(run.State, run.CurrentLevelConfig);
                 CheckGameOver();
+                if (Input.GetKeyDown(KeyCode.Q)) SaveAndQuit();
+                if (Input.GetKeyDown(KeyCode.O)) ToggleOptionsPanel();
             }
 
             // Q shortcut works on path overview too (not just inside a puzzle)
@@ -586,6 +682,7 @@ namespace SudokuRoguelike.UI
             _hudView?.StartPuzzleTimer();
         }
 
+        // [REQ: TRIAL-SESSION-002] Timer starts on first cell interaction via EnsureSpiritTrialsTimerStarted
         private void EnsureSpiritTrialsTimerStarted()
         {
             var state = _map?.Run?.State;
@@ -629,28 +726,36 @@ namespace SudokuRoguelike.UI
 
             var nameTxt = InRunUiFactory.CreateText(card.transform, "ClassName",
                 LocalizationService.T(def.Name), 28, TextAnchor.MiddleCenter, GamePalette.AccentGold);
-            nameTxt.rectTransform.anchorMin = new Vector2(0.1f, 0.44f);
-            nameTxt.rectTransform.anchorMax = new Vector2(0.9f, 0.56f);
+            nameTxt.rectTransform.anchorMin = new Vector2(0.1f, 0.49f);
+            nameTxt.rectTransform.anchorMax = new Vector2(0.9f, 0.58f);
             nameTxt.rectTransform.offsetMin = nameTxt.rectTransform.offsetMax = Vector2.zero;
             nameTxt.fontStyle = FontStyle.Bold;
 
+            var narrativeTxt = InRunUiFactory.CreateText(card.transform, "ClassNarrative",
+                ParkNarrativeService.GetClassIntroFlavor(run.State.ClassId), 13, TextAnchor.UpperCenter,
+                new Color(0.82f, 0.80f, 0.68f, 1f));
+            narrativeTxt.rectTransform.anchorMin = new Vector2(0.08f, 0.34f);
+            narrativeTxt.rectTransform.anchorMax = new Vector2(0.92f, 0.48f);
+            narrativeTxt.rectTransform.offsetMin = narrativeTxt.rectTransform.offsetMax = Vector2.zero;
+            narrativeTxt.horizontalOverflow = HorizontalWrapMode.Wrap;
+
             var passiveTxt = InRunUiFactory.CreateText(card.transform, "Passive",
-                def.PassiveDescription, 14, TextAnchor.UpperCenter,
+                LocalizationService.T($"Class.Passive.{def.Id}", def.PassiveDescription), 14, TextAnchor.UpperCenter,
                 new Color(0.90f, 0.87f, 0.72f, 1f));
-            passiveTxt.rectTransform.anchorMin = new Vector2(0.08f, 0.26f);
-            passiveTxt.rectTransform.anchorMax = new Vector2(0.92f, 0.44f);
+            passiveTxt.rectTransform.anchorMin = new Vector2(0.08f, 0.20f);
+            passiveTxt.rectTransform.anchorMax = new Vector2(0.92f, 0.34f);
             passiveTxt.rectTransform.offsetMin = passiveTxt.rectTransform.offsetMax = Vector2.zero;
             passiveTxt.horizontalOverflow = HorizontalWrapMode.Wrap;
 
             var floorTxt = InRunUiFactory.CreateText(card.transform, "FloorLabel",
-                "Floor 1", 18, TextAnchor.MiddleCenter,
+                LocalizationService.Format("InRun.ClassIntro.Floor", "Floor {0}", 1), 18, TextAnchor.MiddleCenter,
                 new Color(0.75f, 0.72f, 0.58f, 1f));
-            floorTxt.rectTransform.anchorMin = new Vector2(0.1f, 0.16f);
-            floorTxt.rectTransform.anchorMax = new Vector2(0.9f, 0.26f);
+            floorTxt.rectTransform.anchorMin = new Vector2(0.1f, 0.13f);
+            floorTxt.rectTransform.anchorMax = new Vector2(0.9f, 0.20f);
             floorTxt.rectTransform.offsetMin = floorTxt.rectTransform.offsetMax = Vector2.zero;
 
             var dismissTxt = InRunUiFactory.CreateText(card.transform, "Dismiss",
-                "Tap or press any button to begin", 11, TextAnchor.MiddleCenter,
+                T("InRun.ClassIntro.BeginHint"), 11, TextAnchor.MiddleCenter,
                 new Color(0.60f, 0.58f, 0.48f, 1f));
             dismissTxt.rectTransform.anchorMin = new Vector2(0.1f, 0.07f);
             dismissTxt.rectTransform.anchorMax = new Vector2(0.9f, 0.14f);
@@ -728,11 +833,12 @@ namespace SudokuRoguelike.UI
             labelRt.offsetMin = Vector2.zero;
             labelRt.offsetMax = Vector2.zero;
             var txt = label.AddComponent<Text>();
-            txt.text = "Boss Awakening...";
+            txt.text = "Creating Puzzle...";
             txt.alignment = TextAnchor.MiddleCenter;
             txt.fontSize = 28;
             txt.color = new Color(1f, 0.85f, 0.4f, 1f);
-            txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            txt.font = FontAssetService.GetFont();
+            _bossAwakeningLabel = txt;
 
             _bossAwakeningCg = go.AddComponent<CanvasGroup>();
             _bossAwakeningCg.alpha = 0f;
@@ -740,19 +846,43 @@ namespace SudokuRoguelike.UI
             _bossAwakeningPanel = go;
         }
 
-        private void ShowBossAwakeningPanel()
+        private void ShowBossAwakeningPanel(string label = "Creating Puzzle")
         {
             if (_bossAwakeningPanel == null) return;
             _bossAwakeningPanel.SetActive(true);
+            if (_bossAwakeningLabel != null)
+                _bossAwakeningLabel.text = label + "...";
+            _asyncGenerationBaseText = label;
             var dur = _accessibility.GetAnimationDuration(AnimationHelper.MenuPanelDuration);
             StartCoroutine(AnimationHelper.FadeIn(_bossAwakeningCg, dur));
+            if (_bossAwakeningDotsCoroutine != null) StopCoroutine(_bossAwakeningDotsCoroutine);
+            _bossAwakeningDotsCoroutine = StartCoroutine(AnimateBossAwakeningDots());
         }
 
         private void HideBossAwakeningPanel()
         {
             if (_bossAwakeningPanel == null) return;
+            if (_bossAwakeningDotsCoroutine != null)
+            {
+                StopCoroutine(_bossAwakeningDotsCoroutine);
+                _bossAwakeningDotsCoroutine = null;
+            }
             _bossAwakeningPanel.SetActive(false);
             if (_bossAwakeningCg != null) _bossAwakeningCg.alpha = 0f;
+        }
+
+        private System.Collections.IEnumerator AnimateBossAwakeningDots()
+        {
+            var wait = new WaitForSeconds(0.45f);
+            var dots = new[] { ".", "..", "..." };
+            var i = 0;
+            while (true)
+            {
+                if (_bossAwakeningLabel != null)
+                    _bossAwakeningLabel.text = _asyncGenerationBaseText + dots[i % dots.Length];
+                i++;
+                yield return wait;
+            }
         }
 
         private static void SetActive(GameObject go, bool active)
@@ -902,7 +1032,7 @@ namespace SudokuRoguelike.UI
                     bandGo.GetComponent<Image>().color = new Color(
                         GamePalette.AccentGold.r, GamePalette.AccentGold.g, GamePalette.AccentGold.b, 0.22f);
                     var bandTxt = InRunUiFactory.CreateText(bandGo.transform, "Msg",
-                        "Select a Puzzle tile to begin your run.", 13,
+                        T("InRun.Path.FirstPickHint"), 13,
                         TextAnchor.MiddleCenter, GamePalette.TextPrimary);
                     bandTxt.rectTransform.anchorMin = Vector2.zero;
                     bandTxt.rectTransform.anchorMax = Vector2.one;
@@ -1048,14 +1178,14 @@ namespace SudokuRoguelike.UI
             RebuildFloorProgressStrip(run);
 
             // Suggestion 1: floor-themed lane names — situates the player inside the world
-            var (calmLaneName, riskLaneName) = run.State.CurrentFloor switch
+            var (calmLaneNameKey, riskLaneNameKey) = run.State.CurrentFloor switch
             {
-                0 => ("Garden Walk",    "Briar Crossing"),
-                1 => ("Koi Shore",      "Vine Path"),
-                2 => ("Stone Bridge",   "Deep Current"),
-                3 => ("Temple Walk",    "Demon Trail"),
-                4 => ("Summit Path",    "Abyss Edge"),
-                _ => ("Calm Path",      "Risk Path"),
+                0 => ("InRun.Path.Lane.GardenWalk",  "InRun.Path.Lane.BriarCrossing"),
+                1 => ("InRun.Path.Lane.KoiShore",    "InRun.Path.Lane.VinePath"),
+                2 => ("InRun.Path.Lane.StoneBridge", "InRun.Path.Lane.DeepCurrent"),
+                3 => ("InRun.Path.Lane.TempleWalk",  "InRun.Path.Lane.DemonTrail"),
+                4 => ("InRun.Path.Lane.SummitPath",  "InRun.Path.Lane.AbyssEdge"),
+                _ => ("InRun.Path.Lane.CalmPath",    "InRun.Path.Lane.RiskPath"),
             };
 
             // Bridge pairs: crossing a bridge gives access to the partner tile on the other lane,
@@ -1067,10 +1197,10 @@ namespace SudokuRoguelike.UI
 
             if (calmLane.Count > 0)
                 DrawRouteLane(_pathOverlayRoot, calmLane, w, h, calmBg, calmOutline, "CalmLane",
-                    $"{calmLaneName}  ·  {calmDisplayCount} tile{(calmDisplayCount == 1 ? "" : "s")}");
+                    BuildLaneLabel(calmLaneNameKey, calmDisplayCount));
             if (riskLane.Count > 0)
                 DrawRouteLane(_pathOverlayRoot, riskLane, w, h, riskBg, riskOutline, "RiskLane",
-                    $"{riskLaneName}  ·  {riskDisplayCount} tile{(riskDisplayCount == 1 ? "" : "s")}");
+                    BuildLaneLabel(riskLaneNameKey, riskDisplayCount));
 
             var accentColor   = InRunUiFactory.AccentGold;
             var bossGateColor = GamePalette.BossGateNode;
@@ -1189,7 +1319,12 @@ namespace SudokuRoguelike.UI
                 var isInvalidFirstPick = isFirstPick && !IsPuzzleNodeType(node.Type)
                     && node.Type != NodeType.Start;
 
-                var color = node.Visited ? new Color(floorTint.r, floorTint.g, floorTint.b, 0.4f)
+                // SurveyNotes / AccurateMap: hide unvisited, unreachable non-structural nodes until AllNodesRevealed.
+                var isHidden = !node.Visited && !canReach && !run.State.AllNodesRevealed
+                    && node.Type != NodeType.Start && node.Type != NodeType.Boss && node.Type != NodeType.CrossLink;
+
+                var color = isHidden ? new Color(0.18f, 0.18f, 0.22f, 0.65f)
+                    : node.Visited ? new Color(floorTint.r, floorTint.g, floorTint.b, 0.4f)
                     : isCurrent ? accentColor
                     : node.Type == NodeType.Boss ? bossGateColor
                     : node.Type == NodeType.CrossLink
@@ -1201,7 +1336,7 @@ namespace SudokuRoguelike.UI
                     : isInvalidFirstPick ? new Color(0.25f, 0.25f, 0.28f, 0.55f)
                     : floorTint;
 
-                var nodeConfig = IsPuzzleNodeType(node.Type) ? _map.GetFixedLevelConfig(node) : null;
+                var nodeConfig = !isHidden && IsPuzzleNodeType(node.Type) ? _map.GetFixedLevelConfig(node) : null;
 
                 // Thematic 5: detect if this bridge node was used as a departure point this run
                 var bridgeWasUsed = false;
@@ -1220,7 +1355,7 @@ namespace SudokuRoguelike.UI
                     }
                 }
 
-                var btn = CreateNodeButton(_pathOverlayRoot, node, pos, color, nodeConfig, floorTint, bridgeWasUsed);
+                var btn = CreateNodeButton(_pathOverlayRoot, node, pos, color, nodeConfig, floorTint, bridgeWasUsed, isHidden);
                 btn.interactable = canReach && !node.Visited && !isInvalidFirstPick;
                 _allNodeButtons.Add((btn, pos.x)); // F10
 
@@ -1260,7 +1395,7 @@ namespace SudokuRoguelike.UI
                 // Hover/select tooltip — NodeHoverHandler implements the pointer interfaces
                 // directly, avoiding EventTrigger.Entry + lambda allocations per node.
                 var hover = btn.gameObject.AddComponent<NodeHoverHandler>();
-                hover.Setup(capturedNode, capturedConfig, isInvalidFirstPick,
+                hover.Setup(capturedNode, capturedConfig, isInvalidFirstPick, isHidden,
                     _showNodeTooltipAction, _hideNodeTooltipAction, _showBlockedTooltipAction);
 
                 if (canReach && !node.Visited)
@@ -1358,7 +1493,7 @@ namespace SudokuRoguelike.UI
 
                 // "Legend" title label (before icon list)
                 const float legendTitleW = 0.10f;
-                var title = InRunUiFactory.CreateText(legendRt, "LegendTitle", "Legend",
+                var title = InRunUiFactory.CreateText(legendRt, "LegendTitle", T("InRun.Path.LegendTitle"),
                     9, TextAnchor.MiddleLeft, new Color(0.82f, 0.80f, 0.70f, 0.90f));
                 title.fontStyle = FontStyle.Bold;
                 title.rectTransform.anchorMin = new Vector2(0f, 0f);
@@ -1369,16 +1504,16 @@ namespace SudokuRoguelike.UI
 
                 // Legend entries reflect what players actually encounter on the path.
                 // Event nodes were removed in R36 so they are excluded here.
-                var legendEntries = new (string Path, string Label)[]
+                var legendEntries = new (string Path, string LabelKey, string ObjectName)[]
                 {
-                    ("node/icon_puzzle_tile",     "Puzzle"),
-                    ("node/icon_elite_mask",      "Elite"),
-                    ("node/icon_preboss_gate",    "Pre-Boss"),
-                    ("node/icon_demon_mask",      "Boss"),
-                    ("node/icon_market_stall",    "Shop"),
-                    ("node/icon_campfire_stones", "Rest"),
-                    ("node/icon_relic_pedestal",  "Relic"),
-                    ("node/icon_moss_trap",       "Cursed"),
+                    ("node/icon_puzzle_tile",     "InRun.Path.Node.Puzzle",  "Puzzle"),
+                    ("node/icon_elite_mask",      "InRun.Path.Node.Elite",   "Elite"),
+                    ("node/icon_preboss_gate",    "InRun.Path.Node.PreBoss", "PreBoss"),
+                    ("node/icon_demon_mask",      "InRun.Path.Node.Boss",    "Boss"),
+                    ("node/icon_market_stall",    "InRun.Path.Node.Shop",    "Shop"),
+                    ("node/icon_campfire_stones", "InRun.Path.Node.Rest",    "Rest"),
+                    ("node/icon_relic_pedestal",  "InRun.Path.Node.Relic",   "Relic"),
+                    ("node/icon_moss_trap",       "InRun.Path.Node.Cursed",  "Cursed"),
                 };
 
                 var entryCount = legendEntries.Length;
@@ -1386,11 +1521,12 @@ namespace SudokuRoguelike.UI
                 var legendColor = new Color(0.78f, 0.75f, 0.62f, 0.75f);
                 for (var ei = 0; ei < entryCount; ei++)
                 {
-                    var (iconPath, label) = legendEntries[ei];
+                    var (iconPath, labelKey, objectName) = legendEntries[ei];
+                    var label = T(labelKey);
                     var xMin = legendTitleW + (float)ei / entryCount * (legendEntriesEnd - legendTitleW);
                     var xMax = legendTitleW + (float)(ei + 1) / entryCount * (legendEntriesEnd - legendTitleW);
 
-                    var entryGo = new GameObject($"LegendEntry_{label}", typeof(RectTransform));
+                    var entryGo = new GameObject($"LegendEntry_{objectName}", typeof(RectTransform));
                     entryGo.transform.SetParent(legendRt, false);
                     var entryRt = entryGo.GetComponent<RectTransform>();
                     entryRt.anchorMin = new Vector2(xMin, 0f);
@@ -1469,47 +1605,58 @@ namespace SudokuRoguelike.UI
                 sqBtn.colors          = sqCb;
                 sqBtn.targetGraphic   = sqImg;
                 _saveQuitImg = sqImg;
-                sqBtn.onClick.AddListener(() =>
+
+                var isTutorialQuit = run?.State?.TutorialMode ?? false;
+                if (isTutorialQuit)
                 {
-                    if (!_saveQuitPending)
-                    {
-                        _saveQuitPending = true;
-                        if (_saveQuitLbl != null) _saveQuitLbl.text = "Confirm?";
-                        if (_saveQuitImg != null) _saveQuitImg.color = new Color(0.55f, 0.18f, 0.10f, 0.95f);
-                        if (_saveQuitResetCo != null) StopCoroutine(_saveQuitResetCo);
-                        _saveQuitResetCo = StartCoroutine(ResetSaveQuitConfirm(3f));
-                    }
-                    else
-                    {
-                        if (_saveQuitResetCo != null) { StopCoroutine(_saveQuitResetCo); _saveQuitResetCo = null; }
-                        _saveQuitPending = false;
-                        SaveAndQuit();
-                    }
-                });
-                var sqIconSprite = Resources.Load<Sprite>("ui/icon_ink_save");
-                if (sqIconSprite != null)
-                {
-                    var sqIconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
-                    sqIconGo.transform.SetParent(sqRt, false);
-                    var sqIconRt = sqIconGo.GetComponent<RectTransform>();
-                    sqIconRt.anchorMin = new Vector2(0.04f, 0.10f);
-                    sqIconRt.anchorMax = new Vector2(0.22f, 0.90f);
-                    sqIconRt.offsetMin = sqIconRt.offsetMax = Vector2.zero;
-                    var sqIconImg = sqIconGo.GetComponent<Image>();
-                    sqIconImg.sprite       = sqIconSprite;
-                    sqIconImg.preserveAspect = true;
-                    sqIconImg.raycastTarget  = false;
+                    // Custom Puzzle: plain single-click Quit, no icon, no confirm step
+                    sqBtn.onClick.AddListener(SaveAndQuit);
                 }
-                var sqLbl = InRunUiFactory.CreateText(sqRt, "Label", "Save & Quit",
-                    11, TextAnchor.MiddleLeft, new Color(0.92f, 0.88f, 0.78f, 1f));
-                sqLbl.rectTransform.anchorMin = new Vector2(0.25f, 0f);
+                else
+                {
+                    sqBtn.onClick.AddListener(() =>
+                    {
+                        if (!_saveQuitPending)
+                        {
+                            _saveQuitPending = true;
+                            if (_saveQuitLbl != null) _saveQuitLbl.text = "Confirm?";
+                            if (_saveQuitImg != null) _saveQuitImg.color = new Color(0.55f, 0.18f, 0.10f, 0.95f);
+                            if (_saveQuitResetCo != null) StopCoroutine(_saveQuitResetCo);
+                            _saveQuitResetCo = StartCoroutine(ResetSaveQuitConfirm(3f));
+                        }
+                        else
+                        {
+                            if (_saveQuitResetCo != null) { StopCoroutine(_saveQuitResetCo); _saveQuitResetCo = null; }
+                            _saveQuitPending = false;
+                            SaveAndQuit();
+                        }
+                    });
+                    var sqIconSprite = InRunUiFactory.LoadResourceSprite("ui/icon_ink_save");
+                    if (sqIconSprite != null)
+                    {
+                        var sqIconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+                        sqIconGo.transform.SetParent(sqRt, false);
+                        var sqIconRt = sqIconGo.GetComponent<RectTransform>();
+                        sqIconRt.anchorMin = new Vector2(0.04f, 0.10f);
+                        sqIconRt.anchorMax = new Vector2(0.22f, 0.90f);
+                        sqIconRt.offsetMin = sqIconRt.offsetMax = Vector2.zero;
+                        var sqIconImg = sqIconGo.GetComponent<Image>();
+                        sqIconImg.sprite       = sqIconSprite;
+                        sqIconImg.preserveAspect = true;
+                        sqIconImg.raycastTarget  = false;
+                    }
+                }
+                var sqLblText = isTutorialQuit ? T("InRun.Path.Quit") : T("InRun.Path.SaveAndQuit");
+                var sqLbl = InRunUiFactory.CreateText(sqRt, "Label", sqLblText,
+                    11, TextAnchor.MiddleCenter, new Color(0.92f, 0.88f, 0.78f, 1f));
+                sqLbl.rectTransform.anchorMin = isTutorialQuit ? new Vector2(0.02f, 0f) : new Vector2(0.25f, 0f);
                 sqLbl.rectTransform.anchorMax = new Vector2(0.98f, 1f);
                 sqLbl.rectTransform.offsetMin = sqLbl.rectTransform.offsetMax = Vector2.zero;
                 sqLbl.resizeTextForBestFit = true;
                 sqLbl.resizeTextMinSize   = 9;
                 sqLbl.resizeTextMaxSize   = 11;
                 sqLbl.raycastTarget = false;
-                _saveQuitLbl = sqLbl;
+                if (!isTutorialQuit) _saveQuitLbl = sqLbl;
             }
 
             // Floor transition: fade the path canvas in each rebuild
@@ -1614,6 +1761,13 @@ namespace SudokuRoguelike.UI
             ol.effectDistance = new Vector2(4f, -4f);
         }
 
+        private static string BuildLaneLabel(string laneNameKey, int tileCount)
+        {
+            var labelKey = tileCount == 1 ? "InRun.Path.LaneLabel.One" : "InRun.Path.LaneLabel.Many";
+            var fallback = tileCount == 1 ? "{0}  \u00b7  {1} tile" : "{0}  \u00b7  {1} tiles";
+            return LocalizationService.Format(labelKey, fallback, T(laneNameKey), tileCount);
+        }
+
         private void DrawRouteLane(RectTransform parent, List<RunNode> laneNodes, float w, float h,
             Color boxColor, Color outlineColor, string goName, string label)
         {
@@ -1636,7 +1790,7 @@ namespace SudokuRoguelike.UI
             var centerX = (minPx + maxPx) * 0.5f;
             var centerY = (minPy + maxPy) * 0.5f;
 
-            var go = new GameObject(goName, typeof(RectTransform), typeof(Image));
+            var go = new GameObject(goName, typeof(RectTransform));
             go.transform.SetParent(parent, false);
             go.transform.SetAsFirstSibling();
             var rt = go.GetComponent<RectTransform>();
@@ -1645,10 +1799,6 @@ namespace SudokuRoguelike.UI
             rt.pivot = new Vector2(0.5f, 0.5f);
             rt.anchoredPosition = new Vector2(centerX, centerY);
             rt.sizeDelta = new Vector2(boxW, boxH);
-
-            var img = go.GetComponent<Image>();
-            img.color = boxColor;
-            img.raycastTarget = false;
 
             // Fog-band: subtle top-edge separator line instead of hard outline
             var sep = new GameObject("LaneSep", typeof(RectTransform), typeof(Image));
@@ -1693,7 +1843,7 @@ namespace SudokuRoguelike.UI
             tipCanvas.sortingOrder = 50;
             tipPanel.AddComponent<UnityEngine.UI.GraphicRaycaster>();
             var tipTxt = InRunUiFactory.CreateText(tipPanel.transform, "TipTxt",
-                "You may cross lanes at the cost of lane balance — each route must have tiles remaining.",
+                T("InRun.Path.CrossLaneTip"),
                 9, TextAnchor.MiddleLeft, new Color(0.90f, 0.87f, 0.72f, 1f));
             tipTxt.rectTransform.anchorMin = Vector2.zero;
             tipTxt.rectTransform.anchorMax = Vector2.one;
@@ -1857,7 +2007,7 @@ namespace SudokuRoguelike.UI
 
             if (!_map.TryAdvanceToNodeAndStartPuzzle(nodeIndex, out var arrivedNode, out var level, forced: isCrossRoute))
             {
-                SetStatus("Cannot move there.");
+                SetStatus(T("Cannot move there."));
                 return;
             }
 
@@ -1888,6 +2038,15 @@ namespace SudokuRoguelike.UI
                 StartCoroutine(ClearPathMessageAfterDelay(4f));
             }
 
+            if (hasPuzzleLevel && _map.Run.IsAsyncLevelPending)
+            {
+                _pendingAsyncLevel = level;
+                SetStatus(T("Creating puzzle..."));
+                ShowPath();
+                ShowBossAwakeningPanel("Creating Puzzle");
+                return;
+            }
+
             if (arrivedNode.Type == NodeType.Shop) { _shopView.ShowShop(); return; }
             if (arrivedNode.Type == NodeType.Rest) { _rewardView.ShowRestChoicePanel(); ShowPath(); return; }
             if (arrivedNode.Type == NodeType.Event)
@@ -1915,32 +2074,50 @@ namespace SudokuRoguelike.UI
                 _bossGateView.ShowCursedNodePanel(_pathPanel, cursedNode,
                     cfg =>
                     {
-                        _map.Run.StartLevel(cfg);
+                        _map.StartPuzzleAsync(cfg);
+                        _map.Run.OnCursedNodeAccepted();
                         _completionHandled = false; _boardView.MarkOverlayDirty();
                         _selectedRow = -1; _selectedCol = -1; _highlightValue = 0;
                         CancelPendingItemInteraction(false);
                         _bagHighlightCells.Clear();
                         _bagHighlightEndTime = 0f;
-                        SetStatus($"Cursed {cfg.BoardSize}×{cfg.BoardSize} {cfg.Stars}★");
-                        ShowSudoku(); RebuildBoard();
+                        SetStatus(LocalizationService.Format(
+                            "InRun.Status.CursedPuzzle",
+                            "Cursed {0}\u00d7{0} {1}\u2605",
+                            cfg.BoardSize,
+                            cfg.Stars));
+                        _pendingAsyncLevel = cfg;
+                        ShowPath();
+                        ShowBossAwakeningPanel("Creating Puzzle");
                     },
                     cfg =>
                     {
-                        _map.Run.StartLevel(cfg);
+                        _map.StartPuzzleAsync(cfg);
                         _completionHandled = false; _boardView.MarkOverlayDirty();
                         _selectedRow = -1; _selectedCol = -1; _highlightValue = 0;
                         CancelPendingItemInteraction(false);
                         _bagHighlightCells.Clear();
                         _bagHighlightEndTime = 0f;
-                        SetStatus($"{cfg.BoardSize}×{cfg.BoardSize} {cfg.Stars}★");
-                        ShowSudoku(); RebuildBoard();
+                        SetStatus(LocalizationService.Format(
+                            "InRun.Status.PuzzleNode",
+                            "{0}\u00d7{0} {1}\u2605",
+                            cfg.BoardSize,
+                            cfg.Stars));
+                        _pendingAsyncLevel = cfg;
+                        ShowPath();
+                        ShowBossAwakeningPanel("Creating Puzzle");
                     });
                 return;
             }
 
             if (!hasPuzzleLevel) { ShowPath(); return; }
 
-            SetStatus($"{arrivedNode.Type} - {level.BoardSize}x{level.BoardSize} {level.Stars}*");
+            SetStatus(LocalizationService.Format(
+                "InRun.Status.ArrivedPuzzle",
+                "{0} - {1}x{1} {2}*",
+                GetNodeLabel(arrivedNode.Type),
+                level.BoardSize,
+                level.Stars));
             ShowSudoku();
             RebuildBoard();
         }
@@ -2066,8 +2243,9 @@ namespace SudokuRoguelike.UI
 
         private void EnsurePathOverlayRoot()
         {
-            if (_pathOverlayRoot != null || _pathPanel == null) return;
+            if (_pathPanel == null) return;
             var panelRt = _pathPanel.GetComponent<RectTransform>();
+            if (_pathOverlayRoot != null) return;
 
             // Previous-floor background — sits behind current, used for cross-fade on floor advance
             var bgPrevGo = new GameObject("FloorBackgroundPrev", typeof(RectTransform), typeof(RawImage));
@@ -2101,7 +2279,7 @@ namespace SudokuRoguelike.UI
             _bgScrimImg.color         = new Color(0f, 0f, 0f, 0.40f); // overridden per floor
             _bgScrimImg.raycastTarget = false;
 
-            // Stats bar — 30 px tall, sits between FloorProgressBar (22 px + 4 gap = -26) and the map scroll area
+            // Stats row — 30 px tall, sits between FloorProgressBar (22 px + 4 gap = -26) and the map scroll area.
             var statsBarGo = new GameObject("PathStatsBar", typeof(RectTransform), typeof(Image));
             statsBarGo.transform.SetParent(panelRt, false);
             var statsBarRt    = statsBarGo.GetComponent<RectTransform>();
@@ -2111,19 +2289,22 @@ namespace SudokuRoguelike.UI
             statsBarRt.offsetMin  = new Vector2(2f,  -56f); // top of bar = 26px below panel top (below FloorProgressBar)
             statsBarRt.offsetMax  = new Vector2(-2f, -26f); // 30 px tall
             var statsBarImg = statsBarGo.GetComponent<Image>();
-            statsBarImg.color         = new Color(0f, 0f, 0f, 0.45f);
+            statsBarImg.color = new Color(0.04f, 0.05f, 0.08f, 0.50f);
             statsBarImg.raycastTarget = false;
+
             var statsText = InRunUiFactory.CreateText(statsBarGo.transform, "PathStatsText",
                 "", 13, TextAnchor.MiddleLeft, new Color(0.88f, 0.86f, 0.76f, 0.92f));
             statsText.rectTransform.anchorMin = Vector2.zero;
-            statsText.rectTransform.anchorMax = Vector2.one;
+            statsText.rectTransform.anchorMax = new Vector2(0.62f, 1f);
             statsText.rectTransform.offsetMin = new Vector2(10f, 0f);
             statsText.rectTransform.offsetMax = new Vector2(-10f, 0f);
             statsText.resizeTextForBestFit = true;
             statsText.resizeTextMinSize   = 10;
             statsText.resizeTextMaxSize   = 13;
             statsText.raycastTarget = false;
-            statsText.rectTransform.offsetMax = new Vector2(-88f, 0f); // leave 88px on right for gold display
+            var statsShadow = statsText.gameObject.AddComponent<Shadow>();
+            statsShadow.effectColor    = new Color(0f, 0f, 0f, 0.78f);
+            statsShadow.effectDistance = new Vector2(1f, -1f);
             _pathStatsBar = statsText;
 
             // Gold coin icon — rightmost 26px of the stats bar
@@ -2274,9 +2455,11 @@ namespace SudokuRoguelike.UI
                 sb.Append($"\n{config.BoardSize}×{config.BoardSize}  ★ {Mathf.Clamp(config.Stars, 1, 6)}");
             _nodeTooltipText.text = sb.ToString();
             var panelRt = _pathPanel.GetComponent<RectTransform>();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(panelRt);
+            Canvas.ForceUpdateCanvases();
             RectTransformUtility.ScreenPointToLocalPointInRectangle(panelRt, screenPos, null, out var local);
             var rt = _nodeTooltipPanel.GetComponent<RectTransform>();
-            rt.anchoredPosition = ClampedTooltipPosition(local, panelRt);
+            rt.anchoredPosition = ClampedTooltipPosition(local, panelRt, rt.sizeDelta.x, rt.sizeDelta.y, 12f);
             _nodeTooltipPanel.SetActive(true);
             _nodeTooltipPanel.transform.SetAsLastSibling();
         }
@@ -2555,7 +2738,7 @@ namespace SudokuRoguelike.UI
         private static bool IsPuzzleNodeType(NodeType t) =>
             t == NodeType.Puzzle || t == NodeType.ElitePuzzle || t == NodeType.PreBoss || t == NodeType.Boss;
 
-        private Button CreateNodeButton(RectTransform parent, RunNode node, Vector2 pos, Color color, LevelConfig config = null, Color floorTint = default, bool bridgeWasUsed = false)
+        private Button CreateNodeButton(RectTransform parent, RunNode node, Vector2 pos, Color color, LevelConfig config = null, Color floorTint = default, bool bridgeWasUsed = false, bool hidden = false)
         {
             var isBoss = node.Type == NodeType.Boss;
             // Thematic 1: per-type sizing — Boss gets a banner gate shape; Elite is visibly larger than standard
@@ -2579,8 +2762,8 @@ namespace SudokuRoguelike.UI
             rt.anchoredPosition = pos;
             go.GetComponent<Image>().color = color;
 
-            // Try to load icon
-            var iconPath = GetNodeIconPath(node.Type);
+            // Try to load icon — hidden (undiscovered) nodes show only a "?" label, no icon
+            var iconPath = hidden ? null : GetNodeIconPath(node.Type);
             var sprite   = string.IsNullOrEmpty(iconPath) ? null
                 : _nodeIconCache.TryGetValue(iconPath, out var cached) ? cached
                 : Resources.Load<Sprite>(iconPath);
@@ -2618,7 +2801,8 @@ namespace SudokuRoguelike.UI
             }
             else
             {
-                var lbl = InRunUiFactory.CreateText(go.transform, "Label", GetNodeLabelShort(node),
+                var nodeLabel = hidden ? "?" : GetNodeLabelShort(node);
+                var lbl = InRunUiFactory.CreateText(go.transform, "Label", nodeLabel,
                     isBoss ? 13 : 11, TextAnchor.MiddleCenter, InRunUiFactory.TextColor);
                 InRunUiFactory.StretchFill(lbl.rectTransform);
                 lbl.resizeTextForBestFit = true;
@@ -2688,7 +2872,9 @@ namespace SudokuRoguelike.UI
                 }
             }
 
-            return go.GetComponent<Button>();
+            var btn = go.GetComponent<Button>();
+            InRunUiFactory.ApplyFocusColors(btn);
+            return btn;
         }
 
         private static string GetNodeIconPath(NodeType t) => t switch
@@ -2709,33 +2895,33 @@ namespace SudokuRoguelike.UI
 
         private static string GetNodeLabelShort(RunNode node) => node.Type switch
         {
-            NodeType.Start       => "Start",
-            NodeType.Puzzle      => "Puzzle",
-            NodeType.ElitePuzzle => "Elite",
-            NodeType.Shop        => "Shop",
-            NodeType.Rest        => "Rest",
-            NodeType.Relic       => "Relic",
-            NodeType.Event       => "Event",
-            NodeType.PreBoss     => "Pre-Boss",
-            NodeType.Boss        => "Boss\nGate",
-            NodeType.Cursed      => "Cursed",
-            NodeType.CrossLink   => "Bridge",
+            NodeType.Start       => T("InRun.Path.Node.Start"),
+            NodeType.Puzzle      => T("InRun.Path.Node.Puzzle"),
+            NodeType.ElitePuzzle => T("InRun.Path.Node.Elite"),
+            NodeType.Shop        => T("InRun.Path.Node.Shop"),
+            NodeType.Rest        => T("InRun.Path.Node.Rest"),
+            NodeType.Relic       => T("InRun.Path.Node.Relic"),
+            NodeType.Event       => T("InRun.Path.Node.Event"),
+            NodeType.PreBoss     => T("InRun.Path.Node.PreBoss"),
+            NodeType.Boss        => T("InRun.Path.Node.BossGateShort"),
+            NodeType.Cursed      => T("InRun.Path.Node.Cursed"),
+            NodeType.CrossLink   => T("InRun.Path.Node.Bridge"),
             _                    => "?"
         };
 
         private static string GetNodeLabel(NodeType t) => t switch
         {
-            NodeType.Start       => "Start",
-            NodeType.Puzzle      => "Puzzle",
-            NodeType.ElitePuzzle => "Elite",
-            NodeType.Shop        => "Shop",
-            NodeType.Rest        => "Rest",
-            NodeType.Relic       => "Relic",
-            NodeType.Event       => "Event",
-            NodeType.PreBoss     => "Elite",
-            NodeType.Boss        => "Boss Gate",
-            NodeType.Cursed      => "Cursed",
-            NodeType.CrossLink   => "Bridge",
+            NodeType.Start       => T("InRun.Path.Node.Start"),
+            NodeType.Puzzle      => T("InRun.Path.Node.Puzzle"),
+            NodeType.ElitePuzzle => T("InRun.Path.Node.Elite"),
+            NodeType.Shop        => T("InRun.Path.Node.Shop"),
+            NodeType.Rest        => T("InRun.Path.Node.Rest"),
+            NodeType.Relic       => T("InRun.Path.Node.Relic"),
+            NodeType.Event       => T("InRun.Path.Node.Event"),
+            NodeType.PreBoss     => T("InRun.Path.Node.Elite"),
+            NodeType.Boss        => T("InRun.Path.Node.BossGate"),
+            NodeType.Cursed      => T("InRun.Path.Node.Cursed"),
+            NodeType.CrossLink   => T("InRun.Path.Node.Bridge"),
             _                    => "?"
         };
 
@@ -2753,18 +2939,7 @@ namespace SudokuRoguelike.UI
 
             if (Input.GetKeyDown(KeyCode.Escape))
             {
-                // If items focus is active, Esc exits it rather than cancelling item interactions
-                if (_gbControllerInItemsFocus)
-                {
-                    _gbControllerInItemsFocus = false;
-                    _numpadView?.HighlightControllerCursor(null);
-                    SetStatus("Puzzle mode  (Tab for items)");
-                    _inputRemap.Tick();
-                    return;
-                }
-                if (_windChimeChoosingHouses || _windChimePending ||
-                    _templeIncensePending || _koiReflectionPending || _swapMode || _patternScrollPending)
-                    CancelPendingItemInteraction();
+                ExecuteInRunCancelRoute(CancelRouteContract.ResolveInRunKeyboardCancel(BuildInRunCancelContext()));
                 return;
             }
 
@@ -2825,7 +3000,7 @@ namespace SudokuRoguelike.UI
                     // Switch to items focus and select first slot
                     _gbControllerInItemsFocus = true;
                     _hudView?.ControllerSelectBagSlot(0);
-                    SetStatus("Items focus  (Tab to cycle, Enter to use, Esc or Tab back)");
+                    SetStatus(T("Items focus  (Tab to cycle, Enter to use, Esc or Tab back)"));
                 }
                 _inputRemap.Tick();
                 return;
@@ -2882,7 +3057,7 @@ namespace SudokuRoguelike.UI
                     _selectedCol = _lastPlacedCol;
                     _lastPlacedRow = -1;
                     RenderBoard();
-                    SetStatus("Undo: last digit cleared.");
+                    SetStatus(T("Undo: last digit cleared."));
                 }
                 _inputRemap.Tick();
                 return;
@@ -2899,7 +3074,7 @@ namespace SudokuRoguelike.UI
                     {
                         _highlightValue = (_highlightValue == val) ? 0 : val;
                         RenderBoard();
-                        SetStatus(_highlightValue > 0 ? $"Highlighting {val}." : "Highlight cleared.");
+                        SetStatus(_highlightValue > 0 ? Tf("Highlighting {0}.", val) : T("Highlight cleared."));
                     }
                 }
             }
@@ -2954,7 +3129,7 @@ namespace SudokuRoguelike.UI
 
             // A (JoystickButton0) = confirm / invoke selected button
             if (Input.GetKeyDown(KeyCode.JoystickButton0))
-                _overlayBtnCache[Mathf.Clamp(curIdx, 0, _overlayBtnCache.Count - 1)].onClick.Invoke();
+                _overlayBtnCache[Mathf.Clamp(curIdx, 0, _overlayBtnCache.Count - 1)].SafeInvoke("OverlayGamepad-A");
 
             // B (JoystickButton1) = invoke skip / abort / cancel button if one exists
             if (Input.GetKeyDown(KeyCode.JoystickButton1))
@@ -2962,15 +3137,49 @@ namespace SudokuRoguelike.UI
                 Button skip = null;
                 for (var k = _overlayBtnCache.Count - 1; k >= 0; k--)
                 {
-                    var n = _overlayBtnCache[k].name;
-                    if (n.IndexOf("skip",   StringComparison.OrdinalIgnoreCase) >= 0 ||
-                        n.IndexOf("abort",  StringComparison.OrdinalIgnoreCase) >= 0 ||
-                        n.IndexOf("cancel", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                        n.IndexOf("leave",  StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (CancelRouteContract.IsOverlayCancelControlName(_overlayBtnCache[k].name))
                     { skip = _overlayBtnCache[k]; break; }
                 }
                 skip?.onClick.Invoke();
             }
+        }
+
+        private void HandleGamepadOptionsFocus()
+        {
+            if (_optionsFocusCache.Count == 0) RebuildOptionsFocusCache();
+            if (_optionsFocusCache.Count == 0) return;
+
+            var es = UnityEngine.EventSystems.EventSystem.current;
+            var curGo = es?.currentSelectedGameObject;
+            var curSel = curGo != null ? curGo.GetComponent<Selectable>() : null;
+            var idx = curSel != null ? _optionsFocusCache.IndexOf(curSel) : 0;
+            if (idx < 0) idx = 0;
+
+            // Up/Down cycles elements; Left/Right adjusts sliders
+            var moveDown = _inputRemap.WasActionPressed(InputAction.MoveDown);
+            var moveUp   = _inputRemap.WasActionPressed(InputAction.MoveUp);
+            if (moveDown) idx = (idx + 1) % _optionsFocusCache.Count;
+            if (moveUp)   idx = (idx + _optionsFocusCache.Count - 1) % _optionsFocusCache.Count;
+            if (moveDown || moveUp)
+                es?.SetSelectedGameObject(_optionsFocusCache[idx].gameObject);
+
+            var moveRight = _inputRemap.WasActionPressed(InputAction.MoveRight);
+            var moveLeft  = _inputRemap.WasActionPressed(InputAction.MoveLeft);
+            if ((moveRight || moveLeft) && _optionsFocusCache[idx] is Slider sl)
+                sl.value = Mathf.Clamp(sl.value + (moveRight ? 0.1f : -0.1f) * (sl.maxValue - sl.minValue),
+                    sl.minValue, sl.maxValue);
+
+            // A: invoke button or flip toggle
+            if (Input.GetKeyDown(KeyCode.JoystickButton0))
+            {
+                var sel = _optionsFocusCache[idx];
+                if (sel is Button btn) btn.onClick.Invoke();
+                else if (sel is Toggle tgl) tgl.isOn = !tgl.isOn;
+            }
+
+            // B / Start: close options panel
+            if (Input.GetKeyDown(KeyCode.JoystickButton1) || Input.GetKeyDown(KeyCode.JoystickButton7))
+                ToggleOptionsPanel();
         }
 
         private void HandleGamepadTutorialFocus()
@@ -2991,10 +3200,10 @@ namespace SudokuRoguelike.UI
 
         private void HandleGamepadController()
         {
-            // Start (JoystickButton7): save & quit to menu (pause equivalent)
+            // Start (JoystickButton7): open/close in-game options panel (save & quit lives inside)
             if (Input.GetKeyDown(KeyCode.JoystickButton7))
             {
-                SaveAndQuit();
+                ToggleOptionsPanel();
                 return;
             }
 
@@ -3008,9 +3217,7 @@ namespace SudokuRoguelike.UI
             // ── In-game options panel ─────────────────────────────────────────────
             if (_inGameOptionsPanel != null && _inGameOptionsPanel.activeSelf)
             {
-                HandleGamepadOverlayFocus(_inGameOptionsPanel);
-                if (Input.GetKeyDown(KeyCode.JoystickButton1))
-                    ToggleOptionsPanel();
+                HandleGamepadOptionsFocus();
                 return;
             }
 
@@ -3040,7 +3247,7 @@ namespace SudokuRoguelike.UI
                 else
                 {
                     _numpadView?.HighlightControllerCursor(_gbNumpadRow * 3 + _gbNumpadCol);
-                    SetStatus("[Controller] Puzzle mode  (LB to switch)");
+                    SetStatus(T("[Controller] Puzzle mode  (LB to switch)"));
                 }
             }
 
@@ -3074,7 +3281,7 @@ namespace SudokuRoguelike.UI
                 // Highlight via EventSystem selection
                 UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(
                     selBtn != null ? selBtn.gameObject : null);
-                SetStatus($"[Controller] Node {_gbPathCursor + 1}/{_gbReachableNodeButtons.Count}  —  A to enter");
+                SetStatus(Tf("[Controller] Node {0}/{1}  —  A to enter", _gbPathCursor + 1, _gbReachableNodeButtons.Count));
             }
 
             // LT / RT: free-scroll the path map left/right
@@ -3099,13 +3306,21 @@ namespace SudokuRoguelike.UI
                     selBtn.onClick.Invoke();
             }
 
+            // Start (JoystickButton7): open options panel from path screen
+            if (Input.GetKeyDown(KeyCode.JoystickButton7))
+                ToggleOptionsPanel();
+
             // MAP-2: B (JoystickButton1) shows a quit-confirm modal instead of double-press
             if (Input.GetKeyDown(KeyCode.JoystickButton1) && !_pathQuitModalActive)
-                ShowPathQuitConfirmModal();
+                ExecuteInRunCancelRoute(CancelRouteContract.ResolveInRunGamepadCancel(BuildInRunCancelContext()));
         }
 
         private void HandleGamepadPuzzleFocus()
         {
+            // Start (JoystickButton7): toggle options panel
+            if (Input.GetKeyDown(KeyCode.JoystickButton7))
+            { ToggleOptionsPanel(); return; }
+
             // D-Pad + left stick: move cell selection (gamepad-only — keyboard arrows are handled below
             // in the direct keyboard section to avoid double-firing the same MoveSelection call).
             if (_inputRemap.WasGamepadActionPressed(InputAction.MoveUp))    MoveSelection(-1, 0);
@@ -3127,6 +3342,10 @@ namespace SudokuRoguelike.UI
                 _pendingKeyboardDigit = _gbNumpadRow * 3 + _gbNumpadCol + 1;
                 _numpadView?.HighlightControllerCursor(_gbNumpadRow * 3 + _gbNumpadCol);
             }
+
+            // B (JoystickButton1): immediate exit when defeat screen is shown (no long-press)
+            if (Input.GetKeyDown(KeyCode.JoystickButton1) && _gameOverPanel != null && _gameOverPanel.activeSelf)
+            { SaveAndQuit(); return; }
 
             // PS-2: B (JoystickButton1) long-press (≥0.4 s) clears cell; short press acts as cancel only
             if (Input.GetKey(KeyCode.JoystickButton1))
@@ -3154,7 +3373,7 @@ namespace SudokuRoguelike.UI
                     ClearCell();
                     _lastPlacedRow = -1;
                     _lastPlacedCol = -1;
-                    SetStatus("Undo: last digit cleared.");
+                    SetStatus(T("Undo: last digit cleared."));
                 }
             }
 
@@ -3169,7 +3388,7 @@ namespace SudokuRoguelike.UI
                     {
                         _highlightValue = (_highlightValue == val) ? 0 : val;
                         RenderBoard();
-                        SetStatus(_highlightValue > 0 ? $"Highlighting {val}." : "Highlight cleared.");
+                        SetStatus(_highlightValue > 0 ? Tf("Highlighting {0}.", val) : T("Highlight cleared."));
                     }
                 }
             }
@@ -3259,8 +3478,8 @@ namespace SudokuRoguelike.UI
             txtRt.offsetMin = Vector2.zero;
             txtRt.offsetMax = Vector2.zero;
             var txt = txtGo.AddComponent<UnityEngine.UI.Text>();
-            txt.text = "Save and quit?";
-            txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            txt.text = T("InRun.Path.QuitPrompt");
+            txt.font = FontAssetService.GetFont();
             txt.fontSize = 20;
             txt.alignment = TextAnchor.MiddleCenter;
             txt.color = Color.white;
@@ -3277,8 +3496,8 @@ namespace SudokuRoguelike.UI
                 return btn;
             }
 
-            var quitBtn = MakeModalBtn("BtnQuit", "Quit", new Vector2(0.06f, 0.07f), new Vector2(0.46f, 0.50f), UiAction.SaveQuit);
-            var stayBtn = MakeModalBtn("BtnStay", "Stay", new Vector2(0.54f, 0.07f), new Vector2(0.94f, 0.50f), UiAction.Cancel);
+            var quitBtn = MakeModalBtn("BtnQuit", T("InRun.Path.Quit"), new Vector2(0.06f, 0.07f), new Vector2(0.46f, 0.50f), UiAction.SaveQuit);
+            var stayBtn = MakeModalBtn("BtnStay", T("InRun.Path.Stay"), new Vector2(0.54f, 0.07f), new Vector2(0.94f, 0.50f), UiAction.Cancel);
 
             // D-pad nav between the two buttons
             var qNav = quitBtn.navigation;
@@ -3306,7 +3525,7 @@ namespace SudokuRoguelike.UI
             foreach (var b in allBtns)
                 if (b.IsInteractable()) interactable.Add(b);
             if (idx >= 0 && idx < interactable.Count)
-                interactable[idx].onClick.Invoke();
+                interactable[idx].SafeInvoke("EventChoice");
         }
 
         private void CancelPendingItemInteraction(bool showStatus = true)
@@ -3326,7 +3545,7 @@ namespace SudokuRoguelike.UI
             if (_patternScrollOverlay != null) { UnityEngine.Object.Destroy(_patternScrollOverlay); _patternScrollOverlay = null; }
             _swapMode = false;
             _swapRow1 = -1; _swapCol1 = -1;
-            if (showStatus) SetStatus("Cancelled.");
+            if (showStatus) SetStatus(T("Cancelled."));
         }
 
         // ── Pattern Scroll: build stable instance list from current overlay ──
@@ -3398,7 +3617,10 @@ namespace SudokuRoguelike.UI
 
             // ── Title (visible during Selecting state only — hidden in Idle/Applied) ──
             var titleGo = InRunUiFactory.CreateText(overlay.transform, "Title",
-                $"Pattern Scroll  ({_patternScrollChargesLeft} remaining)\nSelect a mechanic instance — Press ESC to cancel",
+                LocalizationService.Format(
+                    "InRun.PatternScroll.Title",
+                    "Pattern Scroll  ({0} remaining)\nSelect a mechanic instance \u2014 Press ESC to cancel",
+                    _patternScrollChargesLeft),
                 11, TextAnchor.UpperCenter, GamePalette.AccentGold);
             titleGo.rectTransform.anchorMin = new Vector2(0.02f, 0.91f);
             titleGo.rectTransform.anchorMax = new Vector2(0.98f, 1.00f);
@@ -3409,7 +3631,7 @@ namespace SudokuRoguelike.UI
             if (mechanics.Count == 0)
             {
                 var none = InRunUiFactory.CreateText(overlay.transform, "None",
-                    "No mechanic instances found on this puzzle.", 11,
+                    T("InRun.PatternScroll.Empty"), 11,
                     TextAnchor.MiddleCenter, GamePalette.TextPrimary);
                 none.rectTransform.anchorMin = new Vector2(0.04f, 0.12f);
                 none.rectTransform.anchorMax = new Vector2(0.96f, 0.88f);
@@ -3439,7 +3661,7 @@ namespace SudokuRoguelike.UI
 
             // ── Confirm button (Confirmed state) – hidden until a mechanic is staged ──
             var confirmBtn = InRunUiFactory.CreateActionButton(overlay.transform, "BtnConfirmScroll",
-                new Vector2(0.10f, 0.01f), new Vector2(0.90f, 0.08f), "Confirm Selection", UiAction.Confirm);
+                new Vector2(0.10f, 0.01f), new Vector2(0.90f, 0.08f), T("InRun.PatternScroll.ConfirmSelection"), UiAction.Confirm);
             confirmBtn.GetComponent<Image>().color = new Color(0.25f, 0.60f, 0.28f, 0.93f);
             confirmBtn.gameObject.SetActive(_patternScrollStagedIndex >= 0);
             confirmBtn.onClick.AddListener(PatternScrollConfirmSelection);
@@ -3478,7 +3700,7 @@ namespace SudokuRoguelike.UI
             if (img != null) img.color = new Color(0.95f, 0.80f, 0.25f, 0.95f);
 
             confirmBtn.gameObject.SetActive(true);
-            SetStatus($"Pattern Scroll: '{_patternScrollMechanics[index].label}' staged. Click Confirm to apply — ESC cancels.");
+            SetStatus(Tf("Pattern Scroll: '{0}' staged. Click Confirm to apply — ESC cancels.", _patternScrollMechanics[index].label));
         }
 
         // ── Confirmed → Applied: fill cells and advance or finish ──
@@ -3517,12 +3739,12 @@ namespace SudokuRoguelike.UI
                 _patternScrollSolvedIds = null;
                 if (_patternScrollOverlay != null)
                 { UnityEngine.Object.Destroy(_patternScrollOverlay); _patternScrollOverlay = null; }
-                SetStatus($"Pattern Scroll: solved '{label}', filled {filled} cell(s). Done.");
+                SetStatus(Tf("Pattern Scroll: solved '{0}', filled {1} cell(s). Done.", label, filled));
             }
             else
             {
                 // Back to Selecting with updated solved set
-                SetStatus($"Pattern Scroll: solved '{label}' (+{filled} cells). {_patternScrollChargesLeft} selection(s) left — Press ESC to cancel.");
+                SetStatus(Tf("Pattern Scroll: solved '{0}' (+{1} cells). {2} selection(s) left — Press ESC to cancel.", label, filled, _patternScrollChargesLeft));
                 ShowPatternScrollOverlay();
             }
         }
@@ -3563,11 +3785,11 @@ namespace SudokuRoguelike.UI
                              selected == 2 ? (_windChimeFillRow && _windChimeFillCol ? "row + column" :
                                               _windChimeFillRow && _windChimeFillBox ? "row + box" : "column + box") :
                              _windChimeFillRow ? "row" : _windChimeFillCol ? "column" : "box");
-                SetStatus($"Wind Chime: click a cell to fill its {label}. ESC cancels.");
+                SetStatus(Tf("Wind Chime: click a cell to fill its {0}. ESC cancels.", label));
             }
             else
             {
-                SetStatus($"Wind Chime: {r} {c} {b}  — select {remain} more (1=Row 2=Col 3=Box). ESC cancels.");
+                SetStatus(Tf("Wind Chime: {0} {1} {2}  — select {3} more (1=Row 2=Col 3=Box). ESC cancels.", r, c, b, remain));
             }
         }
 
@@ -3666,22 +3888,22 @@ namespace SudokuRoguelike.UI
             // Safety window: ignore digit input for a brief period after cell selection
             // to prevent accidental placements on touch/fast keyboard usage.
             if (Time.realtimeSinceStartup - _cellSelectedTime < CellSelectInputDelay) return;
-            if (board.GivenMask[_selectedRow, _selectedCol]) { SetStatus("Given cell."); return; }
-            if (run.GetLockedCells().Contains((_selectedRow, _selectedCol))) { SetStatus("Cell is locked!"); return; } // [REQ: DEBUFF-HOOK-013] block digit input on locked cells
+            if (board.GivenMask[_selectedRow, _selectedCol]) { SetStatus(T("Given cell.")); return; }
+            if (run.GetLockedCells().Contains((_selectedRow, _selectedCol))) { SetStatus(T("Cell is locked!")); return; } // [REQ: DEBUFF-HOOK-013] block digit input on locked cells
             if (value < 1 || value > board.Size) return;
 
             // Basics tutorial: lock input to the guided cell during step 6
             if (_basicsTutorial != null && _basicsTutorial.IsInputLockedToCell(_selectedRow, _selectedCol))
-            { SetStatus("Try the highlighted cell!"); return; }
+            { SetStatus(T("Try the highlighted cell!")); return; }
 
             if (_pencilMode)
             {
-                if (board.Cells[_selectedRow, _selectedCol] != 0) { SetStatus("Clear cell first."); return; }
+                if (board.Cells[_selectedRow, _selectedCol] != 0) { SetStatus(T("Clear cell first.")); return; }
                 if (!run.TryAddPencilMark(_selectedRow, _selectedCol, value))
-                    SetStatus("No pencil charges.");
+                    SetStatus(T("No pencil charges."));
                 else
                 {
-                    SetStatus($"Pencil: {value}");
+                    SetStatus(Tf("Pencil: {0}", value));
                     run.GetAnalytics()?.RecordPencilPlaced();
                     _basicsTutorial?.OnPlayerAddedPencilMark(_selectedRow, _selectedCol, value);
                     if (SudokuRoguelike.Run.CurseService.IsActive(run.State, "blurred_sight")) // [REQ: CURSE-INT-009] blurred_sight: hide pencil marks 1.5 s after placement
@@ -3697,7 +3919,7 @@ namespace SudokuRoguelike.UI
 
             // During a pencil-interaction tutorial step, block final number placement.
             if (_basicsTutorial != null && _basicsTutorial.IsOnPencilStep)
-            { SetStatus("Use pencil mode for this step!"); return; }
+            { SetStatus(T("Use pencil mode for this step!")); return; }
 
             var result = run.PlaceNumber(_selectedRow, _selectedCol, value);
             // Notify basics tutorial of the placement
@@ -3712,12 +3934,12 @@ namespace SudokuRoguelike.UI
                 _boardView?.PlayDigitPlaced(_selectedRow, _selectedCol);
                 RumbleService.PulseCorrect(this);
                 _map?.SaveNow();
-                SetStatus($"Placed {value}.");
+                SetStatus(Tf("Placed {0}.", value));
             }
             else if (result == PlaceResult.IsGiven)
-                SetStatus("Given cell.");
+                SetStatus(T("Given cell."));
             else if (result == PlaceResult.IsPresolved)
-                SetStatus("Locked cell.");
+                SetStatus(T("Locked cell."));
             else
             {
                 _lastMistakeRow = _selectedRow;
@@ -3726,13 +3948,14 @@ namespace SudokuRoguelike.UI
                     var shielded = run.State.MistakeShieldCharges > 0;
                     run.ApplyMistakePenalty(_selectedRow, _selectedCol); // handles shield + class passive + relic
                     if (shielded)
-                        SetStatus($"Umbrella blocked the penalty! ({run.State.MistakeShieldCharges} left)");
+                        SetStatus(Tf("Umbrella blocked the penalty! ({0} left)", run.State.MistakeShieldCharges));
                     else
                     {
                         _audio?.PlayWrongPlacement();
                         _audio?.PlayHpLoss();
                         RumbleService.PulseMistake(this);
-                        SetStatus($"{value} conflicts! HP: {run.State.CurrentHP}");
+                        SetStatus(Tf("{0} conflicts! HP: {1}", value, run.State.CurrentHP));
+                        // [REQ: ACCESS-MOTION-001] Screen shake skipped entirely when ReduceMotion is enabled
                         if (!_accessibility.IsReduceMotion)
                             StartCoroutine(AnimationHelper.ScreenShake(
                                 _sudokuPanel != null ? _sudokuPanel.transform : transform,
@@ -3809,12 +4032,12 @@ namespace SudokuRoguelike.UI
                     _audio?.PlayPuzzleSolved();
                     RumbleService.PulsePuzzleSolved(this);
                     _boardView?.FlashBoardSolved();
-                    SetStatus("Puzzle solved! Well done!");
+                    SetStatus(T("Puzzle solved! Well done!"));
                     StartCoroutine(ReturnToMenuAfterDelay(2.5f));
                 }
                 else
                 {
-                    SetStatus("Tutorial solved!");
+                    SetStatus(T("Tutorial solved!"));
                     SaveAndQuit();
                 }
                 return;
@@ -3845,7 +4068,7 @@ namespace SudokuRoguelike.UI
                 _hudView?.StopPuzzleTimer();
 
                 run.AdvanceEndlessZenLevel();
-                SetStatus($"Endless Zen  Â·  Depth {run.State.Depth}");
+                SetStatus(Tf("Endless Zen  Â·  Depth {0}", run.State.Depth));
                 _audio?.PlayPuzzleSolved();
                 RumbleService.PulsePuzzleSolved(this);
                 _boardView?.FlashBoardSolved();
@@ -3873,8 +4096,10 @@ namespace SudokuRoguelike.UI
             }
 
             // _justCompletedNodeIndex is set in OnPostRewardReady after reward screen dismissed
+            var completingNode = _map?.Run?.GetCurrentNode();
+            var completingIsBoss = completingNode?.Type == NodeType.Boss;
             _justCompletedNodeIndex = -1;
-            ShowPath();
+            if (!completingIsBoss) ShowPath();
             _audio?.PlayPuzzleSolved();
             RumbleService.PulsePuzzleSolved(this);
             _boardView?.FlashBoardSolved();
@@ -3892,6 +4117,11 @@ namespace SudokuRoguelike.UI
             var runState = _map?.Run?.State;
             var isFinalBoss = isBoss && runState != null && runState.CurrentFloor >= runState.TotalFloors - 1;
 
+            // Boss nodes do not show normal item rewards, but they must still grant
+            // completion rewards and record boss defeat/statistics before end-screen persistence.
+            if (isBoss)
+                _map.TryClaimCurrentPuzzleRewards(out _, out _, buildItemSlots: false);
+
             if (isFinalBoss)
             {
                 // Final boss: skip reward — OnPostRewardReady handles victory sequence directly
@@ -3907,7 +4137,7 @@ namespace SudokuRoguelike.UI
                 System.Action onClaim = choices != null && choices.Count > 0
                     ? () => { _endScreenView?.HideBossCleared(); _rewardView.ShowRelicChoicePanel(choices, OnPostRewardReady); }
                     : (System.Action)OnPostRewardReady;
-                _endScreenView.ShowBossCleared(_map.Run, onClaim, "Claim Reward →");
+                _endScreenView.ShowBossCleared(_map.Run, onClaim);
                 yield break;
             }
 
@@ -3952,6 +4182,7 @@ namespace SudokuRoguelike.UI
                     // Fire run-won hooks
                     RelicService.OnRunVictory(s);
                     var run = _map.Run;
+                    run.GetAnalytics()?.RecordRunComplete();
                     if (run.DailyGoals != null && !s.IsSeasonalChallenge)
                         DailyGoalService.EvaluateInRun(run.DailyGoals, s, run.CurrentLevelState, DailyGoalService.TriggerRunWon);
                     _audio?.SetContext(RunAudioController.Context.Path); // stop puzzle loop before stinger
@@ -3988,7 +4219,7 @@ namespace SudokuRoguelike.UI
             var floorFlavor = SudokuRoguelike.Run.ParkNarrativeService.GetFloorEntryFlavor(newFloor);
             _pathMessage = floorFlavor;
             StartCoroutine(ClearPathMessageAfterDelay(5f));
-            SetStatus("Garden cleared! Next floor...");
+            SetStatus(T("Garden cleared! Next floor..."));
             _justCompletedNodeIndex = -1; // floor advance: no ring (node is gone)
             ShowPath();
             _completedRingArmed = false;
@@ -4009,7 +4240,7 @@ namespace SudokuRoguelike.UI
             // stays unblocked. ShowSudoku / RebuildBoard are called from Update once async is done.
             if (!_map.TryAdvanceToBossNodeAsync(idx, out _, out var level)) return;
 
-            _pendingBossLevel  = level;
+            _pendingAsyncLevel = level;
             _pathMessage       = string.Empty;
             _completionHandled = false;
             _boardView.MarkOverlayDirty();
@@ -4020,7 +4251,7 @@ namespace SudokuRoguelike.UI
             _bagHighlightCells.Clear();
             _bagHighlightEndTime = 0f;
 
-            ShowBossAwakeningPanel();
+            ShowBossAwakeningPanel("Boss Awakening");
         }
 
         // ─────────────────────────── Save / Resume ───────────────────────────
@@ -4032,28 +4263,32 @@ namespace SudokuRoguelike.UI
             // Guard: if the puzzle panel is visible but the board hasn't finished loading yet
             // (async generation still in flight), saving would capture an incomplete state.
             var inPuzzle = _sudokuPanel != null && _sudokuPanel.activeSelf;
-            if (inPuzzle && (_map?.Run?.CurrentBoard == null || _map?.Run?.CurrentLevelState == null))
+            var run = _map?.Run;
+            var onEndScreen = _gameOverPanel != null && _gameOverPanel.activeSelf;
+            var decision = InRunSaveQuitPolicy.Resolve(new InRunSaveQuitContext(
+                inPuzzle,
+                run?.CurrentBoard != null,
+                run?.CurrentLevelState != null,
+                onEndScreen,
+                run?.State));
+
+            if (decision.ShouldBlockReturn)
             {
-                SetStatus("Puzzle is still loading — please wait a moment before saving.");
+                SetStatus(T(decision.BlockedStatusKey));
                 Time.timeScale = 1f; // ensure timeScale stays unblocked
                 return;
             }
 
-            var runWasSeasonal = _map?.Run?.State?.IsSeasonalChallenge == true;
-            var supportsResume = _map?.Run?.State != null && !_map.Run.State.DisableProgressionRewards;
-
-            // Avoid writing an autosave from the end screen — result screens already clear the active-run save.
-            var onEndScreen = _gameOverPanel != null && _gameOverPanel.activeSelf;
-            if (!onEndScreen && supportsResume)
+            if (decision.PersistenceAction == InRunSaveQuitPersistenceAction.SaveResumeState)
             {
                 // Accumulate current puzzle's elapsed time into the run total before saving,
                 // so the run timer persists correctly across Save & Quit / Resume cycles.
-                var runState = _map?.Run?.State;
+                var runState = run?.State;
                 if (runState != null)
                     runState.TotalRunSeconds += _hudView?.GetPuzzleElapsed() ?? 0f;
                 _map?.SaveNow();
             }
-            else if (!onEndScreen)
+            else if (decision.PersistenceAction == InRunSaveQuitPersistenceAction.ClearNonProgressionAutosave)
             {
                 var safeSave = new Save.SaveFileService(Save.SaveProfileService.ActiveSlot);
                 var safeEnv = safeSave.Load();
@@ -4064,7 +4299,7 @@ namespace SudokuRoguelike.UI
                     safeSave.Save(safeEnv);
                 }
             }
-            else if (!runWasSeasonal)
+            else if (decision.PersistenceAction == InRunSaveQuitPersistenceAction.ClearFinishedGardenRun)
             {
                 // [BUG-FIX] Safety net: the end screen calls RecordRunAndGetNewUnlocks (async save) to
                 // clear ActiveRunState. In rare edge cases (exception in PersistResult, quick close, etc.)
@@ -4083,8 +4318,21 @@ namespace SudokuRoguelike.UI
             var bootstrap = FindFirstObjectByType<Bootstrap.GameBootstrap>();
             if (bootstrap != null) bootstrap.ReturnToMenu();
 
+            // Navigate to the appropriate panel after returning to menu.
+            var mc = FindFirstObjectByType<MainMenuController>();
+            if (mc != null)
+            {
+                var runMode = _map?.Run?.State?.Mode;
+                if (runMode == GameMode.SpiritTrials)
+                    mc.ShowSpiritTrialsTierSelect();
+                else if (runMode == GameMode.EndlessZen && (_gameOverPanel?.activeSelf ?? false))
+                    mc.BackToMainMenu();
+                else
+                    mc.ShowMainMenu(); // refreshes the Resume button so saved GardenRuns are immediately resumable
+            }
+
             // Seasonal challenge should land back on the Monthly Walk panel with refreshed PB info.
-            if (runWasSeasonal)
+            if (decision.ShouldShowMonthlyWalkPanel)
                 FindFirstObjectByType<MainMenuController>()?.ShowMonthlyWalkPanel();
         }
 
@@ -4100,7 +4348,7 @@ namespace SudokuRoguelike.UI
             _pencilMode = false;
             _numpadView?.SetPencilMode(false);
             RebuildBoard();
-            SetStatus("Solve the remaining cells on your own!");
+            SetStatus(T("Solve the remaining cells on your own!"));
         }
 
         private System.Collections.IEnumerator ReturnToMenuAfterDelay(float delay)
@@ -4141,6 +4389,9 @@ namespace SudokuRoguelike.UI
 
         // ─────────────────────────── Helpers ───────────────────────────
 
+        private static string T(string key) => LocalizationService.T(key);
+        private static string Tf(string key, params object[] args) => string.Format(LocalizationService.T(key), args);
+
         private void SetStatus(string msg)
         {
             if (_statusText != null) _statusText.text = msg;
@@ -4161,7 +4412,7 @@ namespace SudokuRoguelike.UI
             rt.anchoredPosition = new Vector2(-4f, -4f);
             rt.sizeDelta        = new Vector2(80f, 22f);
             var t               = go.GetComponent<Text>();
-            t.font              = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            t.font              = FontAssetService.GetFont();
             t.fontSize          = 11;
             t.color             = new Color(0.98f, 0.83f, 0.26f, 0.70f);
             t.alignment         = TextAnchor.UpperRight;
@@ -4400,7 +4651,7 @@ namespace SudokuRoguelike.UI
                     var amount = ItemService.GetInkWellAmount(item.Rarity);
                     s.CurrentPencil = Math.Min(s.MaxPencil, s.CurrentPencil + amount);
                     run.TryUseItem(slotIndex);
-                    SetStatus($"Ink Well: restored {amount} pencil marks.");
+                    SetStatus(Tf("Ink Well: restored {0} pencil marks.", amount));
                     break;
                 }
 
@@ -4410,29 +4661,29 @@ namespace SudokuRoguelike.UI
                     var amount = ItemService.GetMeditationStoneAmount(item.Rarity);
                     s.CurrentHP = Math.Min(s.MaxHP, s.CurrentHP + amount);
                     run.TryUseItem(slotIndex);
-                    SetStatus($"Meditation Stone: restored {amount} HP.");
+                    SetStatus(Tf("Meditation Stone: restored {0} HP.", amount));
                     break;
                 }
 
                 // ── Offering Bowl: sacrifice HP for gold ──
                 case ItemType.OfferingBowl:
                 {
-                    if (s.CurrentHP <= 1) { SetStatus("Not enough HP to sacrifice."); return; }
+                    if (s.CurrentHP <= 1) { SetStatus(T("Not enough HP to sacrifice.")); return; }
                     s.CurrentHP -= 1;
                     s.CurrentGold += 30;
                     run.TryUseItem(slotIndex);
-                    SetStatus("Offering Bowl: -1 HP, +30 gold.");
+                    SetStatus(T("Offering Bowl: -1 HP, +30 gold."));
                     break;
                 }
 
                 // ── Solver: fill selected cell (+neighbours) ──
                 case ItemType.Solver:
                 {
-                    if (board == null || _selectedRow < 0) { SetStatus("Select a cell first."); return; }
+                    if (board == null || _selectedRow < 0) { SetStatus(T("Select a cell first.")); return; }
                     var neighbors = ItemService.GetSolverNeighborCount(item.Rarity);
                     var filled    = SolveCells(board, run, _selectedRow, _selectedCol, neighbors);
                     run.TryUseItem(slotIndex);
-                    SetStatus($"Solver: filled {filled} cell(s).");
+                    SetStatus(Tf("Solver: filled {0} cell(s).", filled));
                     _boardView.RenderBoard(board, _selectedRow, _selectedCol, _highlightValue,
                         HasActiveModifier(BossModifierId.Antiknight), _bagHighlightCells, _fogDisabledMovesRemaining);
                     break;
@@ -4441,7 +4692,7 @@ namespace SudokuRoguelike.UI
                 // ── Finder: highlight cells matching selected digit in solution ──
                 case ItemType.Finder:
                 {
-                    if (board == null || _highlightValue <= 0) { SetStatus("Select a number first."); return; }
+                    if (board == null || _highlightValue <= 0) { SetStatus(T("Select a number first.")); return; }
                     var count = ItemService.GetFinderHighlightCount(item.Rarity);
                     var found = 0;
                     _bagHighlightCells.Clear();
@@ -4454,7 +4705,7 @@ namespace SudokuRoguelike.UI
                     }
                     run.TryUseItem(slotIndex);
                     _bagHighlightEndTime = Time.time + 4f;
-                    SetStatus($"Finder: highlighted {found} cell(s) for {_highlightValue}.");
+                    SetStatus(Tf("Finder: highlighted {0} cell(s) for {1}.", found, _highlightValue));
                     _boardView.RenderBoard(board, _selectedRow, _selectedCol, _highlightValue,
                         HasActiveModifier(BossModifierId.Antiknight), _bagHighlightCells, _fogDisabledMovesRemaining);
                     break;
@@ -4463,14 +4714,14 @@ namespace SudokuRoguelike.UI
                 // ── Pattern Scroll: player selects N distinct mechanic instances to solve ──
                 case ItemType.PatternScroll:
                 {
-                    if (board == null) { SetStatus("No active board."); return; }
+                    if (board == null) { SetStatus(T("No active board.")); return; }
                     run.TryUseItem(slotIndex);
                     _patternScrollPending     = true;
                     _patternScrollChargesLeft = ItemService.GetPatternScrollZones(item.Rarity);
                     _patternScrollMechanics   = null;   // will be built fresh in ShowPatternScrollOverlay
                     _patternScrollSolvedIds   = null;
                     _patternScrollStagedIndex = -1;
-                    SetStatus($"Pattern Scroll: select {_patternScrollChargesLeft} mechanic(s) to solve. Press ESC to cancel.");
+                    SetStatus(Tf("Pattern Scroll: select {0} mechanic(s) to solve. Press ESC to cancel.", _patternScrollChargesLeft));
                     ShowPatternScrollOverlay();
                     break;
                 }
@@ -4478,12 +4729,12 @@ namespace SudokuRoguelike.UI
                 // ── Koi Reflection: player selects cells to reveal candidates for ──
                 case ItemType.KoiReflection:
                 {
-                    if (board == null) { SetStatus("No active board."); return; }
+                    if (board == null) { SetStatus(T("No active board.")); return; }
                     var count = ItemService.GetKoiReflectionCells(item.Rarity);
                     run.TryUseItem(slotIndex);
                     _koiReflectionPending = true;
                     _koiReflectionChargesLeft = count;
-                    SetStatus($"Koi Reflection: click {count} cell(s) to reveal candidates.");
+                    SetStatus(Tf("Koi Reflection: click {0} cell(s) to reveal candidates.", count));
                     break;
                 }
 
@@ -4493,7 +4744,7 @@ namespace SudokuRoguelike.UI
                     var moves = ItemService.GetLanternOfClarityMoves(item.Rarity);
                     run.State.FogDisabledMoves += moves;
                     run.TryUseItem(slotIndex);
-                    SetStatus($"Lantern of Clarity: fog disabled for {run.State.FogDisabledMoves} moves.");
+                    SetStatus(Tf("Lantern of Clarity: fog disabled for {0} moves.", run.State.FogDisabledMoves));
                     if (board != null)
                         _boardView.RenderBoard(board, _selectedRow, _selectedCol, _highlightValue,
                             HasActiveModifier(BossModifierId.Antiknight), _bagHighlightCells, _fogDisabledMovesRemaining);
@@ -4503,14 +4754,14 @@ namespace SudokuRoguelike.UI
                 // ── Garden Rake: clear pencil marks in selected row + column ──
                 case ItemType.GardenRake:
                 {
-                    if (board == null || _selectedRow < 0) { SetStatus("Select a cell first."); return; }
+                    if (board == null || _selectedRow < 0) { SetStatus(T("Select a cell first.")); return; }
                     for (var i2 = 0; i2 < board.Size; i2++)
                     {
                         board.ClearPencilMarks(_selectedRow, i2);
                         board.ClearPencilMarks(i2, _selectedCol);
                     }
                     run.TryUseItem(slotIndex);
-                    SetStatus($"Garden Rake: cleared row {_selectedRow + 1} and col {_selectedCol + 1}.");
+                    SetStatus(Tf("Garden Rake: cleared row {0} and col {1}.", _selectedRow + 1, _selectedCol + 1));
                     _boardView.RenderBoard(board, _selectedRow, _selectedCol, _highlightValue,
                         HasActiveModifier(BossModifierId.Antiknight), _bagHighlightCells, _fogDisabledMovesRemaining);
                     break;
@@ -4519,8 +4770,8 @@ namespace SudokuRoguelike.UI
                 // ── Pruning Shears: remove one incorrect candidate from selected cell ──
                 case ItemType.PruningShears:
                 {
-                    if (board == null || _selectedRow < 0) { SetStatus("Select a cell first."); return; }
-                    if (board.Cells[_selectedRow, _selectedCol] != 0) { SetStatus("Cell is already filled."); return; }
+                    if (board == null || _selectedRow < 0) { SetStatus(T("Select a cell first.")); return; }
+                    if (board.Cells[_selectedRow, _selectedCol] != 0) { SetStatus(T("Cell is already filled.")); return; }
                     var marks   = board.GetPencilMarks(_selectedRow, _selectedCol);
                     var correct = board.Solution[_selectedRow, _selectedCol];
                     var removed = false;
@@ -4528,9 +4779,9 @@ namespace SudokuRoguelike.UI
                     {
                         if (v != correct) { board.RemovePencilMark(_selectedRow, _selectedCol, v); removed = true; break; }
                     }
-                    if (!removed) { SetStatus("No incorrect candidates to prune."); return; }
+                    if (!removed) { SetStatus(T("No incorrect candidates to prune.")); return; }
                     run.TryUseItem(slotIndex);
-                    SetStatus("Pruning Shears: removed one incorrect candidate.");
+                    SetStatus(T("Pruning Shears: removed one incorrect candidate."));
                     _boardView.RenderBoard(board, _selectedRow, _selectedCol, _highlightValue,
                         HasActiveModifier(BossModifierId.Antiknight), _bagHighlightCells, _fogDisabledMovesRemaining);
                     break;
@@ -4539,7 +4790,7 @@ namespace SudokuRoguelike.UI
                 // ── Zen Sand Sifter: highlight cells with exactly two candidates ──
                 case ItemType.ZenSandSifter:
                 {
-                    if (board == null) { SetStatus("No active board."); return; }
+                    if (board == null) { SetStatus(T("No active board.")); return; }
                     _bagHighlightCells.Clear();
                     for (var r = 0; r < board.Size; r++)
                     for (var c = 0; c < board.Size; c++)
@@ -4558,7 +4809,7 @@ namespace SudokuRoguelike.UI
                     }
                     run.TryUseItem(slotIndex);
                     _bagHighlightEndTime = Time.time + 5f;
-                    SetStatus($"Zen Sand Sifter: {_bagHighlightCells.Count} cells with exactly 2 candidates.");
+                    SetStatus(Tf("Zen Sand Sifter: {0} cells with exactly 2 candidates.", _bagHighlightCells.Count));
                     _boardView.RenderBoard(board, _selectedRow, _selectedCol, _highlightValue,
                         HasActiveModifier(BossModifierId.Antiknight), _bagHighlightCells, _fogDisabledMovesRemaining);
                     break;
@@ -4567,15 +4818,20 @@ namespace SudokuRoguelike.UI
                 // ── Ginkgo Leaf: undo last mistake placement ──
                 case ItemType.GinkgoLeaf:
                 {
-                    if (board == null || _lastMistakeRow < 0) { SetStatus("No mistake to undo."); return; }
-                    board.PlaceValue(_lastMistakeRow, _lastMistakeCol, 0);
-                    var hpRestore = Math.Max(1, s.LastMistakeHpLost);
-                    s.CurrentHP = Math.Min(s.MaxHP, s.CurrentHP + hpRestore);
-                    // Also restore the combo streak that was lost on the mistake
-                    if (s.LastComboBeforeMistake > 0)
-                        s.ComboStreak = s.LastComboBeforeMistake;
+                    if (board == null) { SetStatus(T("No active board.")); return; }
+                    if (s.LastMistakeRow < 0 && _lastMistakeRow >= 0)
+                    {
+                        s.LastMistakeRow = _lastMistakeRow;
+                        s.LastMistakeCol = _lastMistakeCol;
+                    }
+                    var effect = run.ApplyItemEffect(item);
+                    if (effect.Kind != ItemEffectResult.ResultKind.BoardChanged)
+                    {
+                        SetStatus(T(effect.Text));
+                        return;
+                    }
                     run.TryUseItem(slotIndex);
-                    SetStatus($"Ginkgo Leaf: mistake undone, +{hpRestore} HP, combo restored.");
+                    SetStatus(T(effect.Text));
                     _lastMistakeRow = -1;
                     _lastMistakeCol = -1;
                     _boardView.RenderBoard(board, _selectedRow, _selectedCol, _highlightValue,
@@ -4588,30 +4844,30 @@ namespace SudokuRoguelike.UI
                 {
                     run.State.MistakeShieldCharges += 2;
                     run.TryUseItem(slotIndex);
-                    SetStatus($"Rice Paper Umbrella: next {run.State.MistakeShieldCharges} mistake(s) won't cost HP.");
+                    SetStatus(Tf("Rice Paper Umbrella: next {0} mistake(s) won't cost HP.", run.State.MistakeShieldCharges));
                     break;
                 }
 
                 // ── Temple Incense: player clicks N cells to fill correct answer ──
                 case ItemType.TempleIncense:
                 {
-                    if (board == null) { SetStatus("No active board."); return; }
+                    if (board == null) { SetStatus(T("No active board.")); return; }
                     var count = item.Rarity == ItemRarity.Epic ? 6 : item.Rarity == ItemRarity.Rare ? 4 : 2;
                     run.TryUseItem(slotIndex);
                     _templeIncensePending = true;
                     _templeIncenseChargesLeft = count;
-                    SetStatus($"Temple Incense: click {count} empty cell(s) to fill their correct answer.");
+                    SetStatus(Tf("Temple Incense: click {0} empty cell(s) to fill their correct answer.", count));
                     break;
                 }
 
                 // ── Koi Dragon Scale: fill the most-complete unit ──
                 case ItemType.KoiDragonScale:
                 {
-                    if (board == null) { SetStatus("No active board."); return; }
+                    if (board == null) { SetStatus(T("No active board.")); return; }
                     var count = FillMostCompleteUnit(board, run);
-                    if (count == 0) { SetStatus("No incomplete unit found."); return; }
+                    if (count == 0) { SetStatus(T("No incomplete unit found.")); return; }
                     run.TryUseItem(slotIndex);
-                    SetStatus($"Koi Dragon Scale: filled {count} cell(s) in the most-complete unit.");
+                    SetStatus(Tf("Koi Dragon Scale: filled {0} cell(s) in the most-complete unit.", count));
                     _boardView.RenderBoard(board, _selectedRow, _selectedCol, _highlightValue,
                         HasActiveModifier(BossModifierId.Antiknight), _bagHighlightCells, _fogDisabledMovesRemaining);
                     break;
@@ -4620,7 +4876,7 @@ namespace SudokuRoguelike.UI
                 // ── Golden Kintsugi Jar: highlight all mistakes ──
                 case ItemType.GoldenKintsugiJar:
                 {
-                    if (board == null) { SetStatus("No active board."); return; }
+                    if (board == null) { SetStatus(T("No active board.")); return; }
                     _bagHighlightCells.Clear();
                     for (var r = 0; r < board.Size; r++)
                     for (var c = 0; c < board.Size; c++)
@@ -4631,7 +4887,7 @@ namespace SudokuRoguelike.UI
                     }
                     run.TryUseItem(slotIndex);
                     _bagHighlightEndTime = Time.time + 6f;
-                    SetStatus($"Golden Kintsugi Jar: found {_bagHighlightCells.Count} mistake(s).");
+                    SetStatus(Tf("Golden Kintsugi Jar: found {0} mistake(s).", _bagHighlightCells.Count));
                     _boardView.RenderBoard(board, _selectedRow, _selectedCol, _highlightValue,
                         HasActiveModifier(BossModifierId.Antiknight), _bagHighlightCells, _fogDisabledMovesRemaining);
                     break;
@@ -4643,15 +4899,64 @@ namespace SudokuRoguelike.UI
                     var amount = ItemService.GetSilkFanShieldAmount();
                     s.ShieldPoints += amount;
                     run.TryUseItem(slotIndex);
-                    SetStatus($"Silk Fan: +{amount} Shield. Mistakes won't break your combo while shielded.");
+                    SetStatus(Tf("Silk Fan: +{0} Shield. Mistakes won't break your combo while shielded.", amount));
                     _hudView?.Refresh(s, run.CurrentLevelConfig);
+                    break;
+                }
+
+                // ── Bamboo Scroll: reveal star ratings of reachable next nodes ──
+                case ItemType.BambooScroll:
+                {
+                    var reachableIdx = run.GetReachableNodes();
+                    if (reachableIdx.Count == 0) { SetStatus(T("Bamboo Scroll: no upcoming nodes found.")); break; }
+                    var parts = new System.Text.StringBuilder("Bamboo Scroll — next nodes: ");
+                    var graph = run.CurrentFloorGraph;
+                    for (var i = 0; i < reachableIdx.Count; i++)
+                    {
+                        var node = graph[reachableIdx[i]];
+                        var cfg = _map.GetFixedLevelConfig(node);
+                        var stars = cfg != null ? cfg.Stars : 0;
+                        if (i > 0) parts.Append(" | ");
+                        parts.Append(stars > 0 ? new string('★', stars) : node.Type.ToString());
+                    }
+                    run.TryUseItem(slotIndex);
+                    SetStatus(parts.ToString());
+                    break;
+                }
+
+                // ── Garden Lantern: illuminate all fogged cells for 15 seconds ──
+                case ItemType.GardenLantern:
+                {
+                    _gardenLanternUnfogUntil = Time.realtimeSinceStartup + 15f;
+                    run.TryUseItem(slotIndex);
+                    SetStatus(T("Garden Lantern: fog lifted for 15 seconds."));
+                    RenderBoard();
+                    break;
+                }
+
+                // ── Golden Koi: +10g per star at puzzle completion ──
+                case ItemType.GoldenKoi:
+                {
+                    s.GoldenKoiActive = true;
+                    run.TryUseItem(slotIndex);
+                    var stars = run.CurrentLevelConfig?.Stars ?? 0;
+                    SetStatus(Tf("Golden Koi: active — +{0}g when this puzzle is completed.", stars * 10));
+                    break;
+                }
+
+                // ── Temple Stamp: lock HP this puzzle (mistakes cost 0 HP) ──
+                case ItemType.TempleStamp:
+                {
+                    s.TempleSealActive = true;
+                    run.TryUseItem(slotIndex);
+                    SetStatus(T("Temple Stamp: HP locked this puzzle — mistakes deal no damage."));
                     break;
                 }
 
                 // ── Wind Chime: player selects which house(s) to fill ──
                 case ItemType.WindChime:
                 {
-                    if (board == null) { SetStatus("No active board."); return; }
+                    if (board == null) { SetStatus(T("No active board.")); return; }
                     run.TryUseItem(slotIndex);
                     _windChimeRarity = item.Rarity;
                     _windChimeFillRow = _windChimeFillCol = _windChimeFillBox = false;
@@ -4660,19 +4965,19 @@ namespace SudokuRoguelike.UI
                         // Epic: all 3 houses — skip choice, go straight to cell-click
                         _windChimeFillRow = _windChimeFillCol = _windChimeFillBox = true;
                         _windChimePending = true;
-                        SetStatus("Wind Chime: click any cell to fill its row + column + box. ESC cancels.");
+                        SetStatus(T("Wind Chime: click any cell to fill its row + column + box. ESC cancels."));
                     }
                     else
                     {
                         _windChimeMaxHouses      = item.Rarity == ItemRarity.Rare ? 2 : 1;
                         _windChimeChoosingHouses = true;
-                        SetStatus($"Wind Chime: press 1=Row 2=Col 3=Box to select {_windChimeMaxHouses} house(s). ESC cancels.");
+                        SetStatus(Tf("Wind Chime: press 1=Row 2=Col 3=Box to select {0} house(s). ESC cancels.", _windChimeMaxHouses));
                     }
                     break;
                 }
 
                 default:
-                    SetStatus($"Used {ItemService.GetItemName(item.Type)}.");
+                    SetStatus(Tf("Used {0}.", ItemService.GetItemName(item.Type)));
                     run.TryUseItem(slotIndex);
                     break;
             }
@@ -4765,7 +5070,7 @@ namespace SudokuRoguelike.UI
             if (board == null) { _koiReflectionPending = false; return; }
             if (board.GivenMask[r, c] || board.Cells[r, c] != 0)
             {
-                SetStatus($"Koi Reflection: pick an empty cell ({_koiReflectionChargesLeft} remaining).");
+                SetStatus(Tf("Koi Reflection: pick an empty cell ({0} remaining).", _koiReflectionChargesLeft));
                 return;
             }
             var usedMask = 0;
@@ -4782,11 +5087,11 @@ namespace SudokuRoguelike.UI
             if (_koiReflectionChargesLeft <= 0)
             {
                 _koiReflectionPending = false;
-                SetStatus("Koi Reflection: candidates revealed.");
+                SetStatus(T("Koi Reflection: candidates revealed."));
             }
             else
             {
-                SetStatus($"Koi Reflection: candidates revealed ({_koiReflectionChargesLeft} remaining).");
+                SetStatus(Tf("Koi Reflection: candidates revealed ({0} remaining).", _koiReflectionChargesLeft));
             }
             RenderBoard();
         }
@@ -4821,7 +5126,7 @@ namespace SudokuRoguelike.UI
             _windChimePending = false;
             _windChimeFillRow = _windChimeFillCol = _windChimeFillBox = false;
             _map?.SaveNow();
-            SetStatus($"Wind Chime: filled {filled} cell(s).");
+            SetStatus(Tf("Wind Chime: filled {0} cell(s).", filled));
             RenderBoard();
         }
 
@@ -4832,7 +5137,7 @@ namespace SudokuRoguelike.UI
             if (board == null) { _templeIncensePending = false; return; }
             if (board.GivenMask[r, c] || board.Cells[r, c] != 0)
             {
-                SetStatus($"Temple Incense: pick an empty cell ({_templeIncenseChargesLeft} remaining).");
+                SetStatus(Tf("Temple Incense: pick an empty cell ({0} remaining).", _templeIncenseChargesLeft));
                 return;
             }
             run.PlaceNumber(r, c, board.Solution[r, c]);
@@ -4841,11 +5146,11 @@ namespace SudokuRoguelike.UI
             {
                 _templeIncensePending = false;
                 _map?.SaveNow();
-                SetStatus("Temple Incense: done.");
+                SetStatus(T("Temple Incense: done."));
             }
             else
             {
-                SetStatus($"Temple Incense: filled ({_templeIncenseChargesLeft} remaining).");
+                SetStatus(Tf("Temple Incense: filled ({0} remaining).", _templeIncenseChargesLeft));
             }
             RenderBoard();
         }
@@ -4854,25 +5159,35 @@ namespace SudokuRoguelike.UI
         {
             var board = _map?.Run?.CurrentBoard;
             if (board == null) { _swapMode = false; return; }
-            if (board.GivenMask[r, c]) { SetStatus("Can't swap a given cell. Click another."); return; }
+            if (board.GivenMask[r, c]) { SetStatus(T("Can't swap a given cell. Click another.")); return; }
 
             if (_swapRow1 < 0)
             {
                 _swapRow1 = r; _swapCol1 = c;
-                SetStatus($"Silk Fan: first cell ({r + 1},{c + 1}) selected. Click second cell.");
+                SetStatus(Tf("Silk Fan: first cell ({0},{1}) selected. Click second cell.", r + 1, c + 1));
             }
             else
             {
-                if (r == _swapRow1 && c == _swapCol1) { SetStatus("Silk Fan: same cell. Pick a different one."); return; }
+                if (r == _swapRow1 && c == _swapCol1) { SetStatus(T("Silk Fan: same cell. Pick a different one.")); return; }
                 var val1 = board.Cells[_swapRow1, _swapCol1];
                 var val2 = board.Cells[r, c];
                 board.PlaceValue(_swapRow1, _swapCol1, val2);
                 board.PlaceValue(r, c, val1);
                 _swapMode = false;
                 _swapRow1 = -1; _swapCol1 = -1;
-                SetStatus("Silk Fan: swapped cells.");
+                SetStatus(T("Silk Fan: swapped cells."));
                 RenderBoard();
             }
+        }
+
+        private void OnDestroy()
+        {
+            foreach (var btn in _overlayBtnCache) btn?.onClick.RemoveAllListeners();
+            _overlayBtnCache.Clear();
+            foreach (var btn in _gbReachableNodeButtons) btn?.onClick.RemoveAllListeners();
+            _gbReachableNodeButtons.Clear();
+            foreach (var entry in _allNodeButtons) entry.btn?.onClick.RemoveAllListeners();
+            _allNodeButtons.Clear();
         }
     }
 }

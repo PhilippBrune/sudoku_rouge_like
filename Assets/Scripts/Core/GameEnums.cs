@@ -18,9 +18,10 @@ namespace SudokuRoguelike.Core
         Tutorial,
         EndlessZen,
         SpiritTrials,
-        SeasonalChallenge
+        SeasonalChallenge // [REQ: SEASON-UI-002]
     }
 
+    // [REQ: BOSS-MOD-001] BossModifierId: 15 active modifier IDs (0–14) plus extended pool and system IDs (debuffs ≥94, pressure ≥103)
     public enum BossModifierId
     {
         // ── Active pool (1–15, fully implemented) ──
@@ -140,7 +141,14 @@ namespace SudokuRoguelike.Core
         CountdownFill  = 103, // A set of cells must be filled within N placements or HP is lost
         HauntedCell    = 104, // One cell haunts the board — mistakes cost extra HP while it is unfilled
         CrumblingRegion = 105,// Cells in a region weaken on each mistake and auto-fill (with HP cost) at 0
-        PressureWave   = 106  // [REQ: PRESSURE-ROLL-005] floor 3+ only; every W placements a new countdown spawns
+        PressureWave   = 106, // [REQ: PRESSURE-ROLL-005] floor 3+ only; every W placements a new countdown spawns
+
+        // ── Boss debuffs Batch 2 (IDs 107–111) — area / pencil / state effects on wrong placement [REQ: DEBUFF-HOOK-020] ──
+        RadiusWipe     = 107, // [REQ: DEBUFF-DEF-005] Wrong placement clears player-placed digits within Chebyshev radius 2
+        PencilScramble = 108, // [REQ: DEBUFF-DEF-008] Wrong placement scrambles all pencil marks board-wide
+        GivenReveal    = 109, // [REQ: DEBUFF-DEF-017] Wrong placement promotes 1–3 correct digits to given (non-editable)
+        RevealCost     = 110, // [REQ: DEBUFF-DEF-015] Wrong placement blocks item use for 2 correct placements
+        CellBlur       = 111  // [REQ: DEBUFF-DEF-011] Wrong placement hides digit labels in 3×3 area for 3 correct placements
     }
 
     public enum BossModifierIntensity
@@ -272,7 +280,12 @@ namespace SudokuRoguelike.Core
         ReedPledge,        // ReedDuelist L15: commit no-pencil run for bonus rewards
         SurveyNotes,       // QuietCartographer L15: reveal all node types and star ratings
         // ── Harmony Difficulty items ──
-        BambooCompass      // [HARMONY-H3+] highlight 2 cells where next placement would violate a constraint
+        BambooCompass,     // [HARMONY-H3+] highlight 2 cells where next placement would violate a constraint
+        // ── General-pool items (previously unregistered) ──
+        BambooScroll,      // Normal: reveal star ratings of your next available path nodes
+        GardenLantern,     // Normal: illuminate all fogged cells for 15 seconds, then re-fog
+        GoldenKoi,         // Rare: grant +10g per star rating when this puzzle is completed
+        TempleStamp        // Rare: all wrong placements this puzzle cost 0 HP; consumed on completion
     }
 
     public enum RelicId
@@ -424,6 +437,13 @@ namespace SudokuRoguelike.Core
     {
         English,
         German
+    }
+
+    public enum DisplayModeOption
+    {
+        Fullscreen,
+        Borderless,
+        Windowed
     }
 
     public enum RunSaveTrigger

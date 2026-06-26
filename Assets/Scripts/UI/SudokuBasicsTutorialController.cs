@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SudokuRoguelike.Core;
 using SudokuRoguelike.Sudoku;
 using UnityEngine;
 using UnityEngine.UI;
@@ -183,8 +184,8 @@ namespace SudokuRoguelike.UI
                 if (_hintLabel != null)
                 {
                     _hintLabel.text = remaining == 1
-                        ? "Good! Now add the other candidate mark."
-                        : $"Good! {remaining} more marks to add.";
+                        ? T("SudokuBasics.Hint.AddOtherCandidate", "Good! Now add the other candidate mark.")
+                        : F("SudokuBasics.Hint.MoreMarks", "Good! {0} more marks to add.", remaining);
                     _hintLabel.gameObject.SetActive(true);
                 }
             }
@@ -267,72 +268,71 @@ namespace SudokuRoguelike.UI
             // ── 0: The Grid ───────────────────────────────────────────────────
             steps.Add(new StepDef
             {
-                Title = "Welcome to Sudoku",
-                Body  = "Fill every empty cell using the numbers 1 to " + size + ".\n" +
-                        "No number can appear twice in any row, column, or 2\u00d73 box."
+                Title = T("SudokuBasics.Step0.Title", "Welcome to Sudoku"),
+                Body  = F("SudokuBasics.Step0.Body",
+                    "Fill every empty cell using the numbers 1 to {0}.\nNo number can appear twice in any row, column, or 2x3 box.",
+                    size)
             });
 
             // ── 1: Row Rule ───────────────────────────────────────────────────
             steps.Add(new StepDef
             {
-                Title      = "The Row Rule",
-                Body       = "Every ROW must contain each number exactly once.\n" +
-                             "The highlighted row has some given numbers and some empty cells to fill.",
+                Title      = T("SudokuBasics.Step1.Title", "The Row Rule"),
+                Body       = T("SudokuBasics.Step1.Body",
+                    "Every ROW must contain each number exactly once.\nThe highlighted row has some given numbers and some empty cells to fill."),
                 Highlights = MakeRowHL(0, size)
             });
 
             // ── 2: Column Rule ────────────────────────────────────────────────
             steps.Add(new StepDef
             {
-                Title      = "The Column Rule",
-                Body       = "Every COLUMN must also use each number exactly once.\n" +
-                             "The highlighted column has some numbers given and some still missing.",
+                Title      = T("SudokuBasics.Step2.Title", "The Column Rule"),
+                Body       = T("SudokuBasics.Step2.Body",
+                    "Every COLUMN must also use each number exactly once.\nThe highlighted column has some numbers given and some still missing."),
                 Highlights = MakeColHL(1, size)
             });
 
             // ── 3: Box Rule ───────────────────────────────────────────────────
             steps.Add(new StepDef
             {
-                Title      = "The Box Rule",
-                Body       = "Every 2\u00d73 BOX must contain all six numbers as well.\n" +
-                             "The highlighted box has 1, 3, 4, 5 \u2014 it still needs 2 and 6.",
+                Title      = T("SudokuBasics.Step3.Title", "The Box Rule"),
+                Body       = T("SudokuBasics.Step3.Body",
+                    "Every 2x3 BOX must contain all six numbers as well.\nThe highlighted box has 1, 3, 4, 5 - it still needs 2 and 6."),
                 Highlights = MakeBoxHL(0, 3, 2, 3)
             });
 
             // ── 4: Row elimination analysis ───────────────────────────────────
             steps.Add(new StepDef
             {
-                Title      = "Finding the Answer",
-                Body       = "We\u2019ll solve the highlighted cell.\n" +
-                             "Row 3 already has 5, 2, 3, 4 \u2014 so only 1 or 6 could go here.",
+                Title      = T("SudokuBasics.Step4.Title", "Finding the Answer"),
+                Body       = T("SudokuBasics.Step4.Body",
+                    "We'll solve the highlighted cell.\nRow 3 already has 5, 2, 3, 4 - so only 1 or 6 could go here."),
                 Highlights = MakeRowHL(3, size, target: (3, 1))
             });
 
             // ── 5: Column elimination analysis ────────────────────────────────
             steps.Add(new StepDef
             {
-                Title      = "Narrow It Down",
-                Body       = "Column 1 already has 5, 3, 4, 1.\n" +
-                             "That eliminates 1 \u2014 and the row already ruled out 2, 3, 4.\n" +
-                             "Combining both, only ONE number is left...",
+                Title      = T("SudokuBasics.Step5.Title", "Narrow It Down"),
+                Body       = T("SudokuBasics.Step5.Body",
+                    "Column 1 already has 5, 3, 4, 1.\nThat eliminates 1 - and the row already ruled out 2, 3, 4.\nCombining both, only ONE number is left..."),
                 Highlights = MakeColHL(1, size, target: (3, 1))
             });
 
             // ── 6: Conclusion ─────────────────────────────────────────────────
             steps.Add(new StepDef
             {
-                Title      = "Only One Answer!",
-                Body       = "Row 3 rules out 2, 3, 4, 5.\n" +
-                             "Column 1 rules out 1, 3, 4, 5.\n" +
-                             "The only number that satisfies both rules is: 6",
+                Title      = T("SudokuBasics.Step6.Title", "Only One Answer!"),
+                Body       = T("SudokuBasics.Step6.Body",
+                    "Row 3 rules out 2, 3, 4, 5.\nColumn 1 rules out 1, 3, 4, 5.\nThe only number that satisfies both rules is: 6"),
                 Highlights = MakeRowColHL(3, 1, size, target: (3, 1))
             });
 
             // ── 7: Interaction — place 6 at (3,1) ────────────────────────────
             steps.Add(new StepDef
             {
-                Title         = "Your Turn!",
-                Body          = "Tap the highlighted cell, then press 6 on the numpad.",
+                Title         = T("SudokuBasics.Step7.Title", "Your Turn!"),
+                Body          = T("SudokuBasics.Step7.Body", "Tap the highlighted cell, then press 6 on the numpad."),
                 Highlights    = MakeSingleHL(3, 1, TutorialCellHighlight.Target),
                 RequiresInput = true,
                 TargetRow     = 3,
@@ -343,18 +343,18 @@ namespace SudokuRoguelike.UI
             // ── 8: Post-placement explanation ─────────────────────────────────
             steps.Add(new StepDef
             {
-                Title      = "Well Done!",
-                Body       = "Row 3 now has 5, 6, 2, 3, 4.\n" +
-                             "What\u2019s the only missing number for the last empty cell in row 3?",
+                Title      = T("SudokuBasics.Step8.Title", "Well Done!"),
+                Body       = T("SudokuBasics.Step8.Body",
+                    "Row 3 now has 5, 6, 2, 3, 4.\nWhat's the only missing number for the last empty cell in row 3?"),
                 Highlights = MakeRowHL(3, size, target: (3, 2))
             });
 
             // ── 9: Interaction — place 1 at (3,2) ────────────────────────────
             steps.Add(new StepDef
             {
-                Title         = "One More!",
-                Body          = "Row 3 has 5, 6, 2, 3, 4 \u2014 only 1 is left.\n" +
-                                "Tap this cell and press 1.",
+                Title         = T("SudokuBasics.Step9.Title", "One More!"),
+                Body          = T("SudokuBasics.Step9.Body",
+                    "Row 3 has 5, 6, 2, 3, 4 - only 1 is left.\nTap this cell and press 1."),
                 Highlights    = MakeSingleHL(3, 2, TutorialCellHighlight.Target),
                 RequiresInput = true,
                 TargetRow     = 3,
@@ -365,20 +365,18 @@ namespace SudokuRoguelike.UI
             // ── 10: Introduce Pencil Marks ────────────────────────────────────
             steps.Add(new StepDef
             {
-                Title      = "Pencil Marks",
-                Body       = "Sometimes two numbers could fit a cell at first glance.\n" +
-                             "Pencil marks let you note candidates so you can eliminate\n" +
-                             "wrong options step by step.",
+                Title      = T("SudokuBasics.Step10.Title", "Pencil Marks"),
+                Body       = T("SudokuBasics.Step10.Body",
+                    "Sometimes two numbers could fit a cell at first glance.\nPencil marks let you note candidates so you can eliminate\nwrong options step by step."),
                 Highlights = MakeSingleHL(0, 1, TutorialCellHighlight.Focus)
             });
 
             // ── 11: PencilInteraction — mark 2 and 6 in (0,1) ────────────────
             steps.Add(new StepDef
             {
-                Title              = "Mark Your Candidates",
-                Body               = "Row 0 is missing 2 and 6 \u2014 either could fit here.\n" +
-                                     "Pencil mode is now active. Press 2 then 6 to mark\n" +
-                                     "both numbers as candidates.",
+                Title              = T("SudokuBasics.Step11.Title", "Mark Your Candidates"),
+                Body               = T("SudokuBasics.Step11.Body",
+                    "Row 0 is missing 2 and 6 - either could fit here.\nPencil mode is now active. Press 2 then 6 to mark\nboth numbers as candidates."),
                 Highlights         = MakeRowHL(0, size, target: (0, 1)),
                 RequiresPencilMarks = true,
                 TargetRow          = 0,
@@ -389,9 +387,9 @@ namespace SudokuRoguelike.UI
             // ── 12: Elimination explanation — remove mark 6 programmatically ──
             steps.Add(new StepDef
             {
-                Title      = "Eliminate With Logic",
-                Body       = "Column 1 already contains 6 \u2014 so 6 cannot go here!\n" +
-                             "The invalid candidate is crossed off. Only 2 remains.",
+                Title      = T("SudokuBasics.Step12.Title", "Eliminate With Logic"),
+                Body       = T("SudokuBasics.Step12.Body",
+                    "Column 1 already contains 6 - so 6 cannot go here!\nThe invalid candidate is crossed off. Only 2 remains."),
                 Highlights = MakeColHL(1, size, target: (0, 1)),
                 OnEnter    = b => b?.RemovePencilMark(0, 1, 6)
             });
@@ -399,9 +397,9 @@ namespace SudokuRoguelike.UI
             // ── 13: Interaction — commit 2 at (0,1) ──────────────────────────
             steps.Add(new StepDef
             {
-                Title         = "Commit the Answer",
-                Body          = "One pencil mark left \u2014 that\u2019s your answer!\n" +
-                                "Turn off pencil mode, tap this cell, and press 2.",
+                Title         = T("SudokuBasics.Step13.Title", "Commit the Answer"),
+                Body          = T("SudokuBasics.Step13.Body",
+                    "One pencil mark left - that's your answer!\nTurn off pencil mode, tap this cell, and press 2."),
                 Highlights    = MakeSingleHL(0, 1, TutorialCellHighlight.Target),
                 RequiresInput = true,
                 TargetRow     = 0,
@@ -412,10 +410,9 @@ namespace SudokuRoguelike.UI
             // ── 14: Free-play release ─────────────────────────────────────────
             steps.Add(new StepDef
             {
-                Title = "You\u2019ve Got It!",
-                Body  = "Use rows, columns, boxes, and pencil marks to reason through every cell.\n" +
-                        "When only one number fits \u2014 that\u2019s your answer!\n\n" +
-                        "Finish solving the rest of the puzzle on your own."
+                Title = T("SudokuBasics.Step14.Title", "You've Got It!"),
+                Body  = T("SudokuBasics.Step14.Body",
+                    "Use rows, columns, boxes, and pencil marks to reason through every cell.\nWhen only one number fits - that's your answer!\n\nFinish solving the rest of the puzzle on your own.")
             });
 
             return steps;
@@ -476,19 +473,20 @@ namespace SudokuRoguelike.UI
         private string BuildConstraintHint(int row, int col, int value, int correctValue)
         {
             var board = GetBoard?.Invoke();
-            if (board == null) return "That doesn\u2019t fit \u2014 check the row and column.";
+            if (board == null)
+                return T("SudokuBasics.Hint.CheckRowColumn", "That doesn't fit - check the row and column.");
 
             for (var c = 0; c < board.Size; c++)
             {
                 if (c == col) continue;
                 if (board.Cells[row, c] == value)
-                    return value + " is already in this row! Try " + correctValue + ".";
+                    return F("SudokuBasics.Hint.RowConflict", "{0} is already in this row! Try {1}.", value, correctValue);
             }
             for (var r = 0; r < board.Size; r++)
             {
                 if (r == row) continue;
                 if (board.Cells[r, col] == value)
-                    return value + " is already in this column! Try " + correctValue + ".";
+                    return F("SudokuBasics.Hint.ColumnConflict", "{0} is already in this column! Try {1}.", value, correctValue);
             }
             var regionId = board.RegionMap[row, col];
             for (var r = 0; r < board.Size; r++)
@@ -496,10 +494,15 @@ namespace SudokuRoguelike.UI
             {
                 if (r == row && c == col) continue;
                 if (board.RegionMap[r, c] == regionId && board.Cells[r, c] == value)
-                    return value + " is already in this box! Try " + correctValue + ".";
+                    return F("SudokuBasics.Hint.BoxConflict", "{0} is already in this box! Try {1}.", value, correctValue);
             }
-            return "That doesn\u2019t fit here. The answer is " + correctValue + ".";
+            return F("SudokuBasics.Hint.AnswerIs", "That doesn't fit here. The answer is {0}.", correctValue);
         }
+
+        private static string T(string key, string fallback) => LocalizationService.T(key, fallback);
+
+        private static string F(string key, string fallback, params object[] args)
+            => LocalizationService.Format(key, fallback, args);
 
         // ── UI construction ───────────────────────────────────────────────────
 
@@ -570,7 +573,8 @@ namespace SudokuRoguelike.UI
             brt.anchorMax = new Vector2(0.98f, 0.88f);
             brt.offsetMin = brt.offsetMax = Vector2.zero;
             nextGo.GetComponent<Image>().color = new Color(0.14f, 0.44f, 0.22f, 0.95f);
-            var nLabel = InRunUiFactory.CreateText(nextGo.transform, "Label", "Next \u2192",
+            var nLabel = InRunUiFactory.CreateText(nextGo.transform, "Label",
+                T("SudokuBasics.Button.Next", "Next"),
                 14, TextAnchor.MiddleCenter, Color.white);
             nLabel.rectTransform.anchorMin = Vector2.zero;
             nLabel.rectTransform.anchorMax = Vector2.one;
@@ -587,7 +591,8 @@ namespace SudokuRoguelike.UI
             frt.anchorMax = new Vector2(0.98f, 0.88f);
             frt.offsetMin = frt.offsetMax = Vector2.zero;
             finGo.GetComponent<Image>().color = new Color(0.55f, 0.35f, 0.12f, 0.95f);
-            var fLabel = InRunUiFactory.CreateText(finGo.transform, "Label", "Play! \u25ba",
+            var fLabel = InRunUiFactory.CreateText(finGo.transform, "Label",
+                T("SudokuBasics.Button.Play", "Play!"),
                 14, TextAnchor.MiddleCenter, Color.white);
             fLabel.rectTransform.anchorMin = Vector2.zero;
             fLabel.rectTransform.anchorMax = Vector2.one;

@@ -6,6 +6,7 @@ namespace SudokuRoguelike.Run
 {
     public sealed class RunGraphService
     {
+        // [REQ: MAP-STRUCT-002] BuildFloorGraph: single entry point — Shared Start node → Calm/Risk lane nodes → Boss Gate, then edges + cross-links
         public List<RunNode> BuildFloorGraph(int floorIndex, int seed)
         {
             var rng = new Random(seed + floorIndex * 7919);
@@ -27,6 +28,7 @@ namespace SudokuRoguelike.Run
             };
             nodes.Add(startNode);
 
+            // [REQ: MAP-ROUTE-001] Calm route: lower-risk lane; node count scales with floor (5–12 interior nodes)
             // Calm route nodes
             var calmNodes = new List<RunNode>();
             for (var step = 0; step < calmLength; step++)
@@ -47,6 +49,7 @@ namespace SudokuRoguelike.Run
                 nodes.Add(node);
             }
 
+            // [REQ: MAP-ROUTE-002] Risk route: higher-pressure lane (1–2 nodes shorter than calm); higher ElitePuzzle weight
             // Risk route nodes
             var riskNodes = new List<RunNode>();
             for (var step = 0; step < riskLength; step++)
@@ -252,6 +255,7 @@ namespace SudokuRoguelike.Run
 
         // ── Cross-Links ──
 
+        // [REQ: MAP-CROSS-001] InsertCrossLinks: bidirectional bridges between lanes; count = floor+1 (clamped); evenly distributed, no two share a position index
         /// <summary>
         /// Inserts 1..floorIndex+1 bidirectional bridge edges between calm and risk lanes.
         /// Bridges are evenly distributed across the interior of the shorter lane.

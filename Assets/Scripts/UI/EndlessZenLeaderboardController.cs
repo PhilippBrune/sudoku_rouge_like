@@ -24,10 +24,10 @@ namespace SudokuRoguelike.UI
             if (stats == null) return;
             if (_bestDepthLabel != null)
                 _bestDepthLabel.text = stats.HighestEndlessDepth > 0
-                    ? $"Personal Best: Depth {stats.HighestEndlessDepth}"
-                    : "Personal Best: \u2014";
+                    ? LocalizationService.Format("EndlessZen.PersonalBestDepth", "Personal Best: Depth {0}", stats.HighestEndlessDepth)
+                    : LocalizationService.T("EndlessZen.PersonalBestPlaceholder");
             if (_totalSessionsLabel != null)
-                _totalSessionsLabel.text = $"Total Sessions: {stats.TotalZenSessions}";
+                _totalSessionsLabel.text = LocalizationService.Format("EndlessZen.TotalSessions", "Total Sessions: {0}", stats.TotalZenSessions);
         }
     }
 }

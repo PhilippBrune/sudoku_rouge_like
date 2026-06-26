@@ -7,6 +7,7 @@ namespace SudokuRoguelike.Sudoku
     public static class ModifierGeometryGenerator
     {
         private static readonly (int Dr, int Dc)[] Dirs = { (-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (1, 1), (-1, 1), (1, -1) };
+        private static readonly (int Dr, int Dc)[] CageDirs = { (-1, 0), (1, 0), (0, -1), (0, 1) };
 
         private static float IntensityScale(BossModifierIntensity intensity) => intensity switch
         {
@@ -40,6 +41,7 @@ namespace SudokuRoguelike.Sudoku
         private static bool IsCellFree(int r, int c, bool[,] used)
             => !used[r, c] && !UsedCells.Contains(CellKey(r, c));
 
+        // [REQ: GEN-MOD-001] [REQ: BOSS-MOD-003] Generate: single entry point for all modifier overlays; dispatches per-modifier to dedicated geometry generators
         public static ModifierOverlayData Generate(SudokuBoard board, List<BossModifierId> modifiers, int seed,
             BossModifierIntensity intensity = BossModifierIntensity.Medium)
         {
@@ -650,10 +652,19 @@ namespace SudokuRoguelike.Sudoku
             var baseTarget = size <= 6 ? 3 : size <= 8 ? 4 : 5;
             var target = ScaledCount(baseTarget, scale, 1, 10);
             var used = new bool[size, size];
+            var starts = new List<CellCoord>(size * size);
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
+                if (IsCellFree(r, c, used))
+                    starts.Add(new CellCoord(r, c));
+            Shuffle(starts, rng);
 
-            for (var attempt = 0; attempt < target * 20 && overlay.KillerCages.Count < target; attempt++)
+            for (var attempt = 0; attempt < starts.Count && overlay.KillerCages.Count < target; attempt++)
             {
-                var cage = TryBuildCage(board, rng, used, size);
+                var start = starts[attempt];
+                if (!IsCellFree(start.Row, start.Col, used)) continue;
+
+                var cage = TryBuildCage(board, rng, used, size, start);
                 if (cage == null) continue;
 
                 overlay.KillerCages.Add(cage);
@@ -662,10 +673,10 @@ namespace SudokuRoguelike.Sudoku
             }
         }
 
-        private static KillerCage TryBuildCage(SudokuBoard board, Random rng, bool[,] used, int size)
+        private static KillerCage TryBuildCage(SudokuBoard board, Random rng, bool[,] used, int size, CellCoord start)
         {
-            var startRow = rng.Next(size);
-            var startCol = rng.Next(size);
+            var startRow = start.Row;
+            var startCol = start.Col;
             if (!IsCellFree(startRow, startCol, used)) return null;
 
             var cage = new KillerCage();
@@ -677,19 +688,21 @@ namespace SudokuRoguelike.Sudoku
             for (var step = 1; step < targetSize; step++)
             {
                 var candidates = new List<CellCoord>();
+                var candidateKeys = new HashSet<long>();
 
                 for (var ci = 0; ci < cage.Cells.Count; ci++)
                 {
                     var cell = cage.Cells[ci];
-                    for (var d = 0; d < Dirs.Length; d++)
+                    for (var d = 0; d < CageDirs.Length; d++)
                     {
-                        var nr = cell.Row + Dirs[d].Dr;
-                        var nc = cell.Col + Dirs[d].Dc;
+                        var nr = cell.Row + CageDirs[d].Dr;
+                        var nc = cell.Col + CageDirs[d].Dc;
                         if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
                         if (used[nr, nc] || IsInCage(cage, nr, nc)) continue;
 
                         var val = board.Solution[nr, nc];
                         if (values.Contains(val)) continue;
+                        if (!candidateKeys.Add(CellKey(nr, nc))) continue;
 
                         candidates.Add(new CellCoord(nr, nc));
                     }

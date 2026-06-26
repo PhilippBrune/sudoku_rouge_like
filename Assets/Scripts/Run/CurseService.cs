@@ -129,6 +129,15 @@ namespace SudokuRoguelike.Run
         public static string GetIconName(string curseId) =>
             CurseIcons.TryGetValue(curseId, out var icon) ? icon : "withered_flower";
 
+        public static IEnumerable<string> GetLocalizationKeys()
+        {
+            for (var i = 0; i < AllCurses.Count; i++)
+            {
+                yield return $"Curse.{AllCurses[i].Id}.Name";
+                yield return $"Curse.{AllCurses[i].Id}.Description";
+            }
+        }
+
         // F23: bg_curse.png (background/bg_curse.png) is a full-screen darkening overlay applied
         // to the ENTIRE game panel when any curse is active. It is NOT a board replacement —
         // the sudoku board remains visible underneath. The overlay is rendered by CursePanelController

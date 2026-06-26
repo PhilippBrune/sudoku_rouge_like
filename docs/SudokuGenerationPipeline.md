@@ -248,9 +248,14 @@ The pipeline targets **unique-solution puzzles** where the combination of base S
 **With modifiers (boss puzzles, tutorial with modifiers):**
 - Modifiers add constraints that restrict the solution space
 - The combined constraint set (base rules + modifier rules) should ideally produce a unique solution
-- The generator does not currently validate uniqueness post-removal, but the modifier geometry is generated from the solved board, ensuring all constraints are consistent with at least one valid solution
+- Spirit Trials and Monthly Walk validate modifier-aware uniqueness after overlay generation when active modifiers are present
+- Garden Run, bosses, and tutorial modifier puzzles do not yet require this gate
 
-**Future enhancement:** A post-removal uniqueness checker that verifies exactly one solution exists given all active constraints. This would run the backtracking solver on the puzzle (not the solution) with all modifier rules active and confirm it finds exactly one completion. Priority: high for Spirit Trials (competitive integrity), medium for Garden Run.
+**Current competitive gate:** `LevelConfig.RequireUniqueModifierSolution` causes
+`PuzzleGenerationService` to run the backtracking solver on the puzzle grid with
+the generated overlay and all active modifier rules. If uniqueness cannot be
+verified within the existing retry/budget window, generation fails instead of
+silently accepting the ambiguous competitive puzzle.
 
 ---
 
@@ -303,26 +308,26 @@ The entire pipeline is deterministic given the same seed:
 7★ (100% missing) is tutorial-only and **requires at least one modifier** to be active. The UI blocks puzzle start without a modifier toggle enabled. This ensures the player has constraint information to work with on an empty grid.
 
 ### Uniqueness via Modifiers
-Modifiers are intended to constrain the solution space toward a single valid solution. A post-removal uniqueness validation step is required (see REQ-UNIQUE below).
+Modifiers are intended to constrain the solution space toward a single valid solution. A post-removal uniqueness validation step is now required for competitive modifier puzzles and remains recommended for Garden Run.
 
 ---
 
 ## Post-Removal Uniqueness Checker
 
-**Priority:** High (Spirit Trials), Medium (Garden Run)
+**Priority:** Implemented for Spirit Trials and Monthly Walk; Medium (Garden Run)
 **Blocker for:** Competitive integrity (Spirit Trials), puzzle quality
 
 The pipeline shall validate that the puzzle + active modifier constraints produce exactly one valid solution.
 
 **Implementation requirements:**
 1. Run the backtracking solver on the puzzle grid (not the solution) with all active `IOrderedConstraintRule` instances registered in the `SudokuConstraintEngine`
-2. If the solver finds more than one completion, remove additional cells or regenerate with a shifted seed
-3. Retry up to `maxAttempts` before falling back to the unvalidated puzzle
-4. Entry point: `SudokuGenerator.CreatePuzzleWithUniquenessCheck(size, missingPercent, seed, regionVariant, constraintEngine, maxAttempts)`
+2. If the solver finds more than one completion, retry board/overlay generation within the configured budget
+3. Competitive configurations fail generation when uniqueness cannot be verified
+4. Entry point: `PuzzleGenerationService.Generate()` when `LevelConfig.RequireUniqueModifierSolution` is true
 5. Internal methods: `HasUniqueSolution`, `CountSolutions`, `CountCandidates`, `IsValidPlacement`
 6. All active `IOrderedConstraintRule` instances are checked via `IsValidPlacement` during the solve
 
-**Spirit Trials requirement:** All Spirit Trials puzzles **must** use the uniqueness-checked path. A puzzle that passes uniqueness validation gets a `IsUniqueSolution = true` flag on the board, which the anti-cheat system can verify.
+**Spirit Trials requirement:** Spirit Trials modifier puzzles **must** use the uniqueness-checked path. `PuzzleGenerationResult.UniqueModifierSolutionVerified` and `PuzzleGenerationMetrics.UniqueSolutionVerified` record the successful gate.
 
 ---
 

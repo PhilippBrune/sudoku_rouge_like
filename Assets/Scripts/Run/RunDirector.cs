@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using SudokuRoguelike.Boss;
@@ -29,6 +31,7 @@ namespace SudokuRoguelike.Run
         private RouteService _routeService;
         private EndlessZenService _endlessZenService;
         private SpiritTrialsService _spiritTrialsService;
+        private readonly PuzzleGenerationService _puzzleGenerationService = new PuzzleGenerationService();
 
         // ── State ──
         public RunState State { get; private set; }
@@ -52,19 +55,29 @@ namespace SudokuRoguelike.Run
         /// <summary>Injected by GameBootstrap after profile load. Used for daily goal evaluation.</summary>
         public DailyGoalState DailyGoals { get; set; }
 
-        // Pre-baked boss board generated at floor entry to eliminate the freeze on modifier confirm.
+        // Pre-baked boss board generated at floor entry to reduce the work done when modifiers are confirmed.
         // Written on a background thread — volatile ensures the main thread sees the write.
-        // Null means StartLevel/StartLevelAsync fall back to sync generation.
+        // Null means StartLevel/StartLevelAsync generate a fresh board through PuzzleGenerationService.
         private volatile SudokuBoard _preBakedBossBoard;
         private volatile LevelConfig _preBakedBossConfig;
 
+        // Pre-baked full puzzles (board + overlay) for non-boss floor nodes, keyed by node index.
+        // Populated in background tasks spawned by RunMapController.PrepareFixedNodeConfigs.
+        // ConcurrentDictionary: written on background threads, read+removed on the main thread.
+        private readonly ConcurrentDictionary<int, (SudokuBoard board, ModifierOverlayData overlay)>
+            _preBakedNodePuzzles = new ConcurrentDictionary<int, (SudokuBoard, ModifierOverlayData)>();
+
         // Async overlay generation — background task state for StartLevelAsync / TryCompleteAsyncLevel.
+        // _asyncResult is written inside Task.Run and read on the main thread after Task.IsCompleted
+        // returns true; Task completion acts as the memory barrier — no volatile needed.
         private Task _pendingOverlayTask;
-        private SudokuBoard _asyncResultBoard;
-        private ModifierOverlayData _asyncResultOverlay;
+        private AsyncLevelResult _asyncResult;
         private LevelConfig _pendingLevelConfig;
+        private CancellationTokenSource _pendingLevelGenerationCancel;
 
         public bool IsAsyncLevelPending => _pendingOverlayTask != null && !_pendingOverlayTask.IsCompleted;
+        public PuzzleGenerationMetrics LastGenerationMetrics { get; private set; }
+        public IReadOnlyList<BossModifierId> LastGenerationMissingModifiers { get; private set; } = new List<BossModifierId>();
 
         // ── Init ──
 
@@ -89,8 +102,14 @@ namespace SudokuRoguelike.Run
             RolledItemSlots    = null;
             BossModifierChoices = null;
             RolledRelicChoices = null;
+            _pendingLevelGenerationCancel?.Cancel();
+            _pendingLevelGenerationCancel = null;
+            _pendingOverlayTask = null;
+            _pendingLevelConfig = null;
+            _asyncResult = default;
             _preBakedBossBoard = null;
             _preBakedBossConfig = null;
+            _preBakedNodePuzzles.Clear();
             TileXpLog.Clear();
             InitServices(seed);
             _analytics = new PostRunAnalyticsService();
@@ -121,6 +140,7 @@ namespace SudokuRoguelike.Run
             _relicService.AssignStartingRelics(State, startingRelicCount, State.HarmonyLevel);
             RollFloorModifiers();
             RebuildFloorGraph();
+            State.HpAtCurrentFloorEntry = State.CurrentHP; // floor 0 entry HP for full_hp_floor goal
         }
 
         /// <summary>Start a Seasonal Challenge run using a pre-built RunState and LevelConfig.
@@ -201,10 +221,12 @@ namespace SudokuRoguelike.Run
             State.CurrentNodeIndex = 0;
         }
 
+        // [REQ: MAP-STRUCT-001] AdvanceToNextFloor: run spans exactly 5 floors (index 0–4); floor 4 boss win = run complete
         public void AdvanceToNextFloor()
         {
             State.CurrentFloor++;
             State.Depth = 0;
+            State.HpAtCurrentFloorEntry = State.CurrentHP; // capture before relic heals apply
 
             // Clear boss modifiers from previous floor
             State.ChosenBossModifiers.Clear();
@@ -239,7 +261,9 @@ namespace SudokuRoguelike.Run
         {
             if (State == null || State.Mode != GameMode.EndlessZen) return;
 
+            // [REQ: ZENMODE-DEPTH-001] Depth starts at 0; increments after each solved puzzle
             State.Depth++;
+            // [REQ: ZENMODE-RES-001] Between levels: +1 HP and +3 pencil restored
             State.CurrentHP = Math.Min(State.MaxHP, State.CurrentHP + 1);
             State.CurrentPencil = Math.Min(State.MaxPencil, State.CurrentPencil + 3);
 
@@ -262,6 +286,9 @@ namespace SudokuRoguelike.Run
                 $"runSeen={ModifierDiscoveryService.Describe(State.SeenBossModifiers)}");
 
             // Roll positive floor effect (one per floor, starting from floor 0)
+            // [REQ: MAP-FX-001] One random positive floor effect rolled per floor
+            // [REQ: MAP-FX-002] Seeded from RunState.Seed + CurrentFloor * 6271
+            // [REQ: MAP-FX-005] Each non-None effect has equal probability (uniform pick from index 1+)
             // [M6-A] Skip if VoidWard is active; apply PositiveEffectMult to spawn probability.
             var positiveEffectProb = State.HarmonyConfig.PositiveEffectMult;
             if (!State.VoidWardActive && positiveEffectProb > 0f)
@@ -283,11 +310,29 @@ namespace SudokuRoguelike.Run
         public LevelConfig BuildLevelConfig(bool isBoss, bool isElite = false, int nodeIndex = 0,
             bool isPreBoss = false)
         {
+            SanitizeGeneratedModifierList(State.ActiveFloorModifiers, "saved floor modifiers");
+            if (isBoss)
+                SanitizeGeneratedModifierList(State.ChosenBossModifiers, "saved boss modifiers");
+
             var floor = State.CurrentFloor;
             var minSize = FloorThemeData.GetMinBoardSize(floor);
             var maxSize = FloorThemeData.GetMaxBoardSize(floor);
             var rng = new System.Random(State.Seed + State.Depth * 31 + floor * 997 + nodeIndex * 13);
-            var size = rng.Next(minSize, maxSize + 1);
+            // Pre-compute minimum board size from the modifiers that will be active so the rolled
+            // size already satisfies constraints — avoids post-hoc board-size bumps that misalign
+            // the RegionVariant with the final BoardSize.
+            var modMinSize = ComputeMinBoardSizeForModifiers(State.ActiveFloorModifiers);
+            if (isBoss) modMinSize = Math.Max(modMinSize, ComputeMinBoardSizeForModifiers(State.ChosenBossModifiers));
+            var requiredMinSize = Math.Max(minSize, modMinSize);
+            var size = requiredMinSize <= maxSize
+                ? rng.Next(requiredMinSize, maxSize + 1)
+                : requiredMinSize;
+            if ((HasBoardShapingModifier(State.ActiveFloorModifiers)
+                    || (isBoss && HasBoardShapingModifier(State.ChosenBossModifiers)))
+                && size == 7)
+            {
+                size = minSize <= 6 ? 6 : 8;
+            }
             var stars = RollStars(rng, floor, isBoss, isElite);
 
             var config = new LevelConfig
@@ -295,6 +340,7 @@ namespace SudokuRoguelike.Run
                 BoardSize = size,
                 Stars = stars,
                 MissingPercent = StarDensityService.MissingPercentForStars(stars),
+                // [REQ: GEN-REGION-003] AllowIrregularPuzzles=false restricts to variants 0–1 (rectangular only); true allows all 4
                 RegionVariant = State.AllowIrregularPuzzles ? rng.Next(4) : rng.Next(2),
                 IsBoss = isBoss,
                 IsElite = isElite,
@@ -310,8 +356,10 @@ namespace SudokuRoguelike.Run
             {
                 for (var i = 0; i < State.ActiveFloorModifiers.Count; i++)
                 {
-                    if (!config.ActiveModifiers.Contains(State.ActiveFloorModifiers[i]))
-                        config.ActiveModifiers.Add(State.ActiveFloorModifiers[i]);
+                    var modifier = State.ActiveFloorModifiers[i];
+                    if (!config.ActiveModifiers.Contains(modifier)
+                        && BossService.CanCombineModifiers(config.ActiveModifiers, modifier))
+                        config.ActiveModifiers.Add(modifier);
                 }
             }
 
@@ -320,8 +368,10 @@ namespace SudokuRoguelike.Run
             {
                 for (var i = 0; i < State.ChosenBossModifiers.Count; i++)
                 {
-                    if (!config.ActiveModifiers.Contains(State.ChosenBossModifiers[i]))
-                        config.ActiveModifiers.Add(State.ChosenBossModifiers[i]);
+                    var modifier = State.ChosenBossModifiers[i];
+                    if (!config.ActiveModifiers.Contains(modifier)
+                        && BossService.CanCombineModifiers(config.ActiveModifiers, modifier))
+                        config.ActiveModifiers.Add(modifier);
                 }
                 Debug.Log($"[RunDirector] BuildLevelConfig (boss): ChosenBossModifiers={State.ChosenBossModifiers.Count}, ActiveModifiers={config.ActiveModifiers.Count} [{string.Join(", ", config.ActiveModifiers)}]");
             }
@@ -340,6 +390,8 @@ namespace SudokuRoguelike.Run
             return config;
         }
 
+        // [REQ: MAP-NODE-CURSED-001] BuildCursedLevelConfig: produces the Accept path puzzle with IsCursed=true
+        // [REQ: MAP-NODE-CURSED-002] CursedGoldMult/CursedXpMult=1.5 and one extra random modifier added
         /// <summary>Build a Cursed version of a normal LevelConfig.
         /// Stacks one extra floor modifier (randomly chosen from unseen pool) and applies +50% gold/XP.</summary>
         public LevelConfig BuildCursedLevelConfig(int nodeIndex = 0)
@@ -356,36 +408,273 @@ namespace SudokuRoguelike.Run
             for (var attempts = 0; attempts < 20; attempts++)
             {
                 var pick = (BossModifierId)allIds[rng.Next(15)];
-                if (!config.ActiveModifiers.Contains(pick))
+                if (!config.ActiveModifiers.Contains(pick)
+                    && BossService.CanCombineModifiers(config.ActiveModifiers, pick))
                 {
                     config.ActiveModifiers.Add(pick);
                     break;
                 }
             }
+            SanitizeGeneratedLevelConfig(config);
             EnsureBoardSizeSupportsActiveModifiers(config);
             return config;
         }
 
-        private static SudokuBoard CreatePuzzleForConfig(LevelConfig config, int seed)
+        private static SudokuBoard CreatePuzzleForConfig(LevelConfig config, int seed,
+            GenerationDeadline deadline = default)
         {
-            return SudokuGenerator.CreatePuzzle(
+            for (var attempt = 0; attempt < 4; attempt++)
+            {
+                deadline.ThrowIfExceeded();
+                var usedSeed = attempt == 0 ? seed : (seed ^ (0xF1D00000 + attempt));
+                try
+                {
+                    return CreatePuzzleForConfigSingleAttempt(config, unchecked((int)usedSeed), deadline);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    Debug.LogWarning($"[RunDirector] CreatePuzzleForConfig: generation failed (attempt {attempt + 1}/4, seed={usedSeed}, size={config.BoardSize}): {ex.Message}");
+                }
+            }
+            Debug.LogError($"[RunDirector] CreatePuzzleForConfig: all 4 attempts exhausted for size={config.BoardSize}. Returning null board.");
+            return null;
+        }
+
+        private static SudokuBoard CreatePuzzleForConfigWithBudgetedRetries(
+            LevelConfig config,
+            int seed,
+            PuzzleGenerationSettings settings,
+            CancellationToken cancellationToken,
+            PuzzleGenerationMetrics metrics,
+            bool logAttemptWarnings = true)
+        {
+            settings ??= PuzzleGenerationSettings.SynchronousDefault;
+            metrics ??= new PuzzleGenerationMetrics();
+
+            var attempts = Math.Max(1, settings.BoardRetries);
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            var rng = new System.Random(seed ^ unchecked((int)0x6D2B79F5));
+
+            for (var attempt = 0; attempt < attempts; attempt++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var usedSeed = attempt == 0 ? seed : rng.Next();
+                metrics.BoardRetriesAttempted++;
+
+                try
+                {
+                    var board = CreatePuzzleForConfigSingleAttempt(
+                        config,
+                        usedSeed,
+                        new GenerationDeadline(settings.TimeBudgetMs, cancellationToken));
+                    metrics.ElapsedMilliseconds = stopwatch.ElapsedMilliseconds;
+                    if (board != null)
+                    {
+                        metrics.BudgetExceeded = false;
+                        metrics.LastError = null;
+                        return board;
+                    }
+
+                    metrics.BoardGenerationFailures++;
+                    metrics.LastError = "Board generation returned null.";
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (TimeoutException ex)
+                {
+                    metrics.BoardGenerationFailures++;
+                    metrics.BudgetExceeded = true;
+                    metrics.ElapsedMilliseconds = stopwatch.ElapsedMilliseconds;
+                    metrics.LastError = ex.Message;
+                    if (logAttemptWarnings)
+                    {
+                        Debug.LogWarning(
+                            $"[RunDirector] CreatePuzzleForConfig: timed out " +
+                            $"(attempt {attempt + 1}/{attempts}, seed={usedSeed}, size={config.BoardSize}, " +
+                            $"mods=[{string.Join(", ", config.ActiveModifiers)}]): {ex.Message}");
+                    }
+                }
+                catch (InvalidOperationException ex)
+                {
+                    metrics.BoardGenerationFailures++;
+                    metrics.ElapsedMilliseconds = stopwatch.ElapsedMilliseconds;
+                    metrics.LastError = ex.Message;
+                    if (logAttemptWarnings)
+                    {
+                        Debug.LogWarning(
+                            $"[RunDirector] CreatePuzzleForConfig: generation failed " +
+                            $"(attempt {attempt + 1}/{attempts}, seed={usedSeed}, size={config.BoardSize}): {ex.Message}");
+                    }
+                }
+            }
+
+            metrics.ElapsedMilliseconds = stopwatch.ElapsedMilliseconds;
+            return null;
+        }
+
+        private static SudokuBoard CreatePuzzleForConfigSingleAttempt(
+            LevelConfig config,
+            int seed,
+            GenerationDeadline deadline = default)
+        {
+            return SudokuGenerator.CreatePuzzleWithUniquenessCheck(
                 config.BoardSize, config.MissingPercent, seed, config.RegionVariant,
                 config.ActiveModifiers.Contains(BossModifierId.Nonconsecutive),
                 config.ActiveModifiers.Contains(BossModifierId.Antiknight),
                 config.ActiveModifiers.Contains(BossModifierId.NonconsecDiagonal),
                 config.ActiveModifiers.Contains(BossModifierId.AntiBishop),
                 config.ActiveModifiers.Contains(BossModifierId.Antiking),
-                config.ActiveModifiers.Contains(BossModifierId.DistanceGe2));
+                config.ActiveModifiers.Contains(BossModifierId.DistanceGe2),
+                config.ActiveModifiers.Contains(BossModifierId.EntropyGlobal),
+                deadline);
+        }
+
+        private static void IncludeInitialBoardMetrics(
+            PuzzleGenerationMetrics target,
+            PuzzleGenerationMetrics initialBoardMetrics)
+        {
+            if (target == null || initialBoardMetrics == null) return;
+
+            target.BoardRetriesAttempted += initialBoardMetrics.BoardRetriesAttempted;
+            target.BoardGenerationFailures += initialBoardMetrics.BoardGenerationFailures;
+            target.BudgetExceeded |= initialBoardMetrics.BudgetExceeded;
+            target.ElapsedMilliseconds += initialBoardMetrics.ElapsedMilliseconds;
+            if (!string.IsNullOrEmpty(initialBoardMetrics.LastError)
+                && string.IsNullOrEmpty(target.LastError))
+            {
+                target.LastError = initialBoardMetrics.LastError;
+            }
+        }
+
+        private static SudokuBoard TryCreateBoardAfterDroppingBoardShapingModifiers(
+            LevelConfig originalConfig,
+            int seed,
+            CancellationToken cancellationToken,
+            PuzzleGenerationMetrics aggregateMetrics,
+            out LevelConfig effectiveConfig,
+            out List<BossModifierId> droppedModifiers)
+        {
+            effectiveConfig = originalConfig;
+            droppedModifiers = new List<BossModifierId>();
+
+            if (!TryBuildBoardGenerationFallbackConfig(originalConfig, out var fallbackConfig, out var fallbackDropped))
+                return null;
+
+            var fallbackMetrics = new PuzzleGenerationMetrics();
+            // Use the synchronous (more generous) budget for the fallback: we have already
+            // exhausted the primary budget, and this is the last-resort path. ParallelOverlaySeeds
+            // is not used by CreatePuzzleForConfigWithBudgetedRetries, so SynchronousDefault
+            // (5 retries × 4 000 ms) is safe to use on the background thread.
+            var fallbackSettings = PuzzleGenerationSettings.SynchronousDefault;
+            var fallbackBoard = CreatePuzzleForConfigWithBudgetedRetries(
+                fallbackConfig,
+                seed,
+                fallbackSettings,
+                cancellationToken,
+                fallbackMetrics,
+                logAttemptWarnings: false);
+
+            IncludeInitialBoardMetrics(aggregateMetrics, fallbackMetrics);
+            if (fallbackBoard == null)
+                return null;
+
+            effectiveConfig = fallbackConfig;
+            droppedModifiers = fallbackDropped;
+            aggregateMetrics.BudgetExceeded = true;
+            aggregateMetrics.LastError =
+                $"Dropped board-shaping modifiers after generation failure: {string.Join(", ", droppedModifiers)}.";
+
+            Debug.LogWarning(
+                $"[RunDirector] Board generation failed for mods=[{string.Join(", ", originalConfig.ActiveModifiers)}]. " +
+                $"Starting this puzzle without board-shaping modifiers=[{string.Join(", ", droppedModifiers)}].");
+
+            return fallbackBoard;
         }
 
         private static bool HasBoardShapingModifier(LevelConfig config)
         {
-            return config.ActiveModifiers.Contains(BossModifierId.Nonconsecutive)
-                || config.ActiveModifiers.Contains(BossModifierId.Antiknight)
-                || config.ActiveModifiers.Contains(BossModifierId.NonconsecDiagonal)
-                || config.ActiveModifiers.Contains(BossModifierId.AntiBishop)
-                || config.ActiveModifiers.Contains(BossModifierId.Antiking)
-                || config.ActiveModifiers.Contains(BossModifierId.DistanceGe2);
+            return HasBoardShapingModifier(config?.ActiveModifiers);
+        }
+
+        private static void SanitizeGeneratedLevelConfig(LevelConfig config)
+        {
+            if (config == null) return;
+            SanitizeGeneratedModifierList(config.ActiveModifiers, "prepared level configuration");
+        }
+
+        private static void SanitizeGeneratedModifierList(List<BossModifierId> modifiers, string source)
+        {
+            if (modifiers == null || modifiers.Count == 0) return;
+
+            var accepted = new List<BossModifierId>(modifiers.Count);
+            var removed = new List<BossModifierId>();
+            for (var i = 0; i < modifiers.Count; i++)
+            {
+                var modifier = modifiers[i];
+                if (!BossService.IsSupportedForGeneratedRun(modifier)
+                    || !BossService.CanCombineModifiers(accepted, modifier))
+                {
+                    removed.Add(modifier);
+                    continue;
+                }
+                accepted.Add(modifier);
+            }
+
+            if (removed.Count == 0) return;
+
+            modifiers.Clear();
+            modifiers.AddRange(accepted);
+            Debug.Log(
+                $"[RunDirector] Removed unsupported generated modifiers from {source}: " +
+                $"{string.Join(", ", removed)}.");
+        }
+
+        private static bool HasBoardShapingModifier(IList<BossModifierId> modifiers)
+        {
+            if (modifiers == null) return false;
+            for (var i = 0; i < modifiers.Count; i++)
+            {
+                if (IsBoardShapingModifier(modifiers[i]))
+                    return true;
+            }
+            return false;
+        }
+
+        private static bool TryBuildBoardGenerationFallbackConfig(
+            LevelConfig source,
+            out LevelConfig fallback,
+            out List<BossModifierId> droppedModifiers)
+        {
+            fallback = null;
+            droppedModifiers = new List<BossModifierId>();
+
+            if (source?.ActiveModifiers == null || source.ActiveModifiers.Count == 0)
+                return false;
+
+            fallback = source.Clone();
+            for (var i = fallback.ActiveModifiers.Count - 1; i >= 0; i--)
+            {
+                var modifier = fallback.ActiveModifiers[i];
+                if (!IsBoardShapingModifier(modifier))
+                    continue;
+
+                droppedModifiers.Add(modifier);
+                fallback.ActiveModifiers.RemoveAt(i);
+            }
+
+            if (droppedModifiers.Count == 0)
+            {
+                fallback = null;
+                return false;
+            }
+
+            droppedModifiers.Reverse();
+            if (fallback.ActiveModifiers.Count == 0)
+                fallback.RequireUniqueModifierSolution = false;
+
+            return true;
         }
 
         private static void EnsureBoardSizeSupportsActiveModifiers(LevelConfig config)
@@ -404,7 +693,12 @@ namespace SudokuRoguelike.Run
 
             // Multiple global geometry constraints can over-constrain 5x5/6x6 boards.
             if (boardShapingCount >= 2)
-                requiredSize = Math.Max(requiredSize, 7);
+                requiredSize = Math.Max(requiredSize, 8);
+
+            // All generated 7x7 regions are irregular; current structural-board generation
+            // is reliable on 6x6 and 8x8+, but not on the 7x7 templates.
+            if (boardShapingCount > 0 && (config.BoardSize == 7 || requiredSize == 7))
+                requiredSize = Math.Max(requiredSize, 8);
 
             if (config.BoardSize >= requiredSize) return;
 
@@ -415,18 +709,41 @@ namespace SudokuRoguelike.Run
                 $"for active modifiers: {string.Join(", ", config.ActiveModifiers)}");
         }
 
+        private static int ComputeMinBoardSizeForModifiers(IList<BossModifierId> modifiers)
+        {
+            if (modifiers == null || modifiers.Count == 0) return 5;
+            var required = 5;
+            var shapingCount = 0;
+            for (var i = 0; i < modifiers.Count; i++)
+            {
+                required = Math.Max(required, GetMinimumBoardSizeForModifier(modifiers[i]));
+                if (IsBoardShapingModifier(modifiers[i])) shapingCount++;
+            }
+            if (shapingCount >= 2) required = Math.Max(required, 8);
+            return required;
+        }
+
+        private static bool IsModifierPresentInOverlay(BossModifierId mod, ModifierOverlayData overlay)
+        {
+            var temp = new List<BossModifierId>(1) { mod };
+            return HasAllModifiersPresent(temp, overlay);
+        }
+
         private static int GetMinimumBoardSizeForModifier(BossModifierId mod)
         {
             switch (mod)
             {
                 case BossModifierId.GermanWhispers:
                 case BossModifierId.KillerCages:
-                case BossModifierId.AntiBishop:
                     return 7;
                 case BossModifierId.EntropyGlobal:
+                case BossModifierId.AntiBishop:
                     return 9;
                 case BossModifierId.DutchWhispers:
+                case BossModifierId.Nonconsecutive:
+                case BossModifierId.Antiknight:
                 case BossModifierId.Antiking:
+                case BossModifierId.NonconsecDiagonal:
                 case BossModifierId.DistanceGe2:
                 case BossModifierId.FullKropki:
                 case BossModifierId.FortressCells:
@@ -448,16 +765,164 @@ namespace SudokuRoguelike.Run
 
         /// <summary>
         /// Pre-generate the boss board at floor entry so StartLevel can skip board generation when
-        /// the player confirms modifiers. Structural modifiers are not yet known, so the board is
-        /// generated without them; StartLevel discards the bake if any structural modifier is chosen.
+        /// the player confirms modifiers. Uses the structural modifiers already present in the config
+        /// (floor-level mods) so the bake is valid whenever the player's boss choices do not add or
+        /// remove any structural modifier.
         /// Safe to call off the main thread — SudokuGenerator uses no Unity APIs.
         /// </summary>
-        public void BakeBossBoard(LevelConfig config)
+        public void BakeBossBoard(LevelConfig config, CancellationToken cancel = default)
         {
-            _preBakedBossBoard = SudokuGenerator.CreatePuzzle(
-                config.BoardSize, config.MissingPercent, config.Seed, config.RegionVariant,
-                false, false, false);
-            _preBakedBossConfig = config.Clone();
+            try
+            {
+                SanitizeGeneratedLevelConfig(config);
+                EnsureBoardSizeSupportsActiveModifiers(config);
+                var metrics = new PuzzleGenerationMetrics();
+                var settings = SelectAsyncGenerationSettings(config);
+                _preBakedBossBoard = CreatePuzzleForConfigWithBudgetedRetries(
+                    config,
+                    config.Seed,
+                    settings,
+                    cancel,
+                    metrics,
+                    logAttemptWarnings: false);
+                if (_preBakedBossBoard != null && !cancel.IsCancellationRequested)
+                    _preBakedBossConfig = config.Clone();
+                else if (!cancel.IsCancellationRequested)
+                    Debug.Log($"[RunDirector] BakeBossBoard skipped: {metrics.LastError ?? "board generation returned null"}");
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[RunDirector] BakeBossBoard failed: {ex.Message}");
+            }
+        }
+
+        // Pre-generate the full puzzle (board + overlay) for a non-boss node on a background thread.
+        // Results are stored in _preBakedNodePuzzles; consume via TryConsumePreBakedNode.
+        // Safe to call from any thread — CreatePuzzleForConfig and PuzzleGenerationService use no Unity APIs.
+        public void BakeNodePuzzle(LevelConfig config, int nodeIndex, CancellationToken cancel)
+        {
+            SanitizeGeneratedLevelConfig(config);
+            EnsureBoardSizeSupportsActiveModifiers(config);
+            PuzzleGenerationSettings settings = HasBoardShapingModifier(config)
+                ? PuzzleGenerationSettings.StructuralModifierDefault
+                : PuzzleGenerationSettings.SynchronousDefault;
+            SudokuBoard board;
+            var boardMetrics = new PuzzleGenerationMetrics();
+            try
+            {
+                board = CreatePuzzleForConfigWithBudgetedRetries(
+                    config,
+                    config.Seed,
+                    settings,
+                    cancel,
+                    boardMetrics,
+                    logAttemptWarnings: false);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[RunDirector] BakeNodePuzzle: board generation failed for node {nodeIndex}: {ex.Message}");
+                return;
+            }
+
+            if (board == null || cancel.IsCancellationRequested)
+            {
+                if (!cancel.IsCancellationRequested)
+                {
+                    Debug.Log(
+                        $"[RunDirector] BakeNodePuzzle: board generation failed for node {nodeIndex}: " +
+                        $"{boardMetrics.LastError ?? "board generation returned null"}");
+                }
+                return;
+            }
+
+            var levelRng = new System.Random(config.Seed ^ 0x1A2B3C4D);
+            var result   = _puzzleGenerationService.Generate(
+                config, board, levelRng.Next(), CreatePuzzleForConfig,
+                settings, cancel);
+            IncludeInitialBoardMetrics(result.Metrics, boardMetrics);
+
+            if (result.IsSuccess && !cancel.IsCancellationRequested)
+            {
+                _preBakedNodePuzzles[nodeIndex] = (result.Board, result.Overlay);
+                Debug.Log($"[RunDirector] BakeNodePuzzle: node {nodeIndex} pre-baked (size={config.BoardSize}, mods={config.ActiveModifiers.Count}).");
+            }
+            else if (!cancel.IsCancellationRequested)
+            {
+                Debug.Log(
+                    $"[RunDirector] BakeNodePuzzle: node {nodeIndex} pre-bake failed " +
+                    $"({result.FailureReason}) size={config.BoardSize}, stars={config.Stars}, seed={config.Seed}.");
+            }
+        }
+
+        // Atomically reads and removes a pre-baked puzzle for the given node index.
+        // Returns false when the background task hasn't finished yet (or was cancelled);
+        // the caller should fall back to synchronous StartLevel in that case.
+        public bool TryConsumePreBakedNode(int nodeIndex, out SudokuBoard board, out ModifierOverlayData overlay)
+        {
+            if (_preBakedNodePuzzles.TryRemove(nodeIndex, out var bake))
+            {
+                board   = bake.board;
+                overlay = bake.overlay;
+                return true;
+            }
+            board   = null;
+            overlay = null;
+            return false;
+        }
+
+        // Discard all pre-baked non-boss node puzzles. Call at floor change and run start.
+        public void ClearPreBakedNodePuzzles() => _preBakedNodePuzzles.Clear();
+
+        /// <summary>
+        /// Identical to <see cref="StartLevel"/> but skips board and overlay generation by using
+        /// the pre-baked results from <see cref="BakeNodePuzzle"/>.
+        /// </summary>
+        public void StartLevelWithPreBakedPuzzle(LevelConfig config, SudokuBoard board, ModifierOverlayData overlay)
+        {
+            SanitizeGeneratedLevelConfig(config);
+            EnsureBoardSizeSupportsActiveModifiers(config);
+
+            _pendingLevelGenerationCancel?.Cancel();
+            _pendingLevelGenerationCancel = null;
+            _pendingOverlayTask = null;
+            _pendingLevelConfig = null;
+            _asyncResult        = default;
+
+            CurrentLevelConfig = config;
+            CurrentLevelState  = new LevelState();
+            State.HpAtFloorStart = State.CurrentHP;
+
+            _preBakedBossBoard  = null;
+            _preBakedBossConfig = null;
+
+            CurrentBoard   = board;
+            CurrentOverlay = overlay;
+
+            LastGenerationMetrics          = new PuzzleGenerationMetrics();
+            LastGenerationMissingModifiers = new List<BossModifierId>();
+
+            if (config.ActiveModifiers.Count > 0)
+                ClearOverlayCellsFromGivenMask();
+
+            ConstraintEngine = new SudokuConstraintEngine();
+            var rules = ModifierFactory.BuildRules(config.ActiveModifiers);
+            for (var i = 0; i < rules.Count; i++)
+                ConstraintEngine.RegisterRule(rules[i]);
+
+            RelicService.OnPuzzleStart(State, CurrentBoard);
+            CurseService.OnPuzzleStart(State);
+            State.ShieldPoints = 0;
+            State.LastMistakeShieldAbsorbed = false;
+
+            var pressureRng = new System.Random(config.Seed ^ 0x50A4B3C2);
+            InitializePressureMechanics(config, CurrentBoard, CurrentLevelState, pressureRng);
         }
 
         /// <summary>
@@ -468,46 +933,162 @@ namespace SudokuRoguelike.Run
         /// </summary>
         public void StartLevelAsync(LevelConfig config)
         {
+            SanitizeGeneratedLevelConfig(config);
             EnsureBoardSizeSupportsActiveModifiers(config);
             Debug.Log($"[RunDirector] StartLevelAsync: ActiveModifiers={config.ActiveModifiers.Count} [{string.Join(", ", config.ActiveModifiers)}]");
+            _pendingLevelGenerationCancel?.Cancel();
+            _pendingLevelGenerationCancel = new CancellationTokenSource();
+            var cancellationToken = _pendingLevelGenerationCancel.Token;
             CurrentLevelConfig = config;
             CurrentLevelState  = new LevelState();
+            State.HpAtFloorStart = State.CurrentHP;
             _pendingLevelConfig = config;
-            _asyncResultBoard   = null;
-            _asyncResultOverlay = null;
+            _asyncResult        = AsyncLevelResult.Pending();
 
             // Pre-initialise an empty constraint engine so PlaceNumber is never called against a null
             // engine while the background overlay task is still in flight.
             // TryCompleteAsyncLevel will replace it with the fully-wired engine once generation finishes.
             ConstraintEngine = new SudokuConstraintEngine();
 
-            // Board setup (main thread — instant when pre-bake hits).
-            var hasStructuralMod = HasBoardShapingModifier(config);
-
-            SudokuBoard initialBoard;
+            // Capture any valid pre-bake before clearing the fields so the background thread can
+            // use it without touching the volatile fields after Task.Run starts.
+            // Board generation (CreatePuzzleForConfig) runs inside Task.Run — the main thread is
+            // no longer blocked during the Boss Awakening panel animation.
+            SudokuBoard capturedPreBake = null;
             if (config.IsBoss && _preBakedBossBoard != null
                 && _preBakedBossConfig != null
                 && _preBakedBossConfig.Seed == config.Seed
                 && _preBakedBossConfig.BoardSize == config.BoardSize
-                && !hasStructuralMod)
+                && StructuralModsMatch(config.ActiveModifiers, _preBakedBossConfig.ActiveModifiers))
             {
-                initialBoard = _preBakedBossBoard;
+                capturedPreBake = _preBakedBossBoard;
+                Debug.Log("[RunDirector] StartLevelAsync: pre-bake hit — structural mods match, board generation skipped.");
             }
             else
             {
-                initialBoard = CreatePuzzleForConfig(config, config.Seed);
+                Debug.Log("[RunDirector] StartLevelAsync: pre-bake miss — structural mods changed or no pre-bake, board generation deferred to background thread.");
             }
             _preBakedBossBoard  = null;
             _preBakedBossConfig = null;
 
-            var levelRng = new System.Random(config.Seed ^ 0x1A2B3C4D);
+            var levelRng  = new System.Random(config.Seed ^ 0x1A2B3C4D);
+            var settings  = SelectAsyncGenerationSettings(config);
 
             _pendingOverlayTask = Task.Run(() =>
             {
-                var (board, overlay) = GenerateOverlayWithRetries(initialBoard, config, levelRng);
-                _asyncResultBoard   = board;
-                _asyncResultOverlay = overlay;
+                try
+                {
+                    // SudokuGenerator uses no Unity APIs — safe to call from a background thread.
+                    var initialBoardMetrics = new PuzzleGenerationMetrics();
+                    var generationConfig = config;
+                    var droppedBoardShapingModifiers = new List<BossModifierId>();
+                    var initialBoard = capturedPreBake;
+                    if (initialBoard == null)
+                    {
+                        initialBoard = CreatePuzzleForConfigWithBudgetedRetries(
+                            config,
+                            config.Seed,
+                            settings,
+                            cancellationToken,
+                            initialBoardMetrics,
+                            logAttemptWarnings: false);
+
+                        if (initialBoard == null)
+                        {
+                            initialBoard = TryCreateBoardAfterDroppingBoardShapingModifiers(
+                                config,
+                                config.Seed,
+                                cancellationToken,
+                                initialBoardMetrics,
+                                out generationConfig,
+                                out droppedBoardShapingModifiers);
+                        }
+                    }
+                    if (initialBoard == null)
+                    {
+                        _asyncResult = AsyncLevelResult.Failure(
+                            initialBoardMetrics.BudgetExceeded
+                                ? AsyncLevelFailureReason.BudgetExceeded
+                                : AsyncLevelFailureReason.GenerationFailed,
+                            initialBoardMetrics);
+                        return;
+                    }
+
+                    if (!ReferenceEquals(generationConfig, config))
+                        _pendingLevelConfig = generationConfig;
+
+                    var generationSettings = ReferenceEquals(generationConfig, config)
+                        ? settings
+                        : SelectAsyncGenerationSettings(generationConfig);
+                    var result = _puzzleGenerationService.Generate(
+                        generationConfig,
+                        initialBoard,
+                        levelRng.Next(),
+                        CreatePuzzleForConfig,
+                        generationSettings,
+                        cancellationToken);
+                    if (capturedPreBake == null)
+                        IncludeInitialBoardMetrics(result.Metrics, initialBoardMetrics);
+
+                    _asyncResult = result.IsSuccess
+                        ? AsyncLevelResult.Success(result, droppedBoardShapingModifiers)
+                        : AsyncLevelResult.Failure(MapFailureReason(result.FailureReason), result.Metrics);
+                }
+                catch (OperationCanceledException)
+                {
+                    _asyncResult = AsyncLevelResult.Failure(AsyncLevelFailureReason.Cancelled);
+                }
+                catch (TimeoutException ex)
+                {
+                    Debug.LogWarning($"[RunDirector] Async puzzle generation timed out: {ex.Message}");
+                    _asyncResult = AsyncLevelResult.Failure(
+                        AsyncLevelFailureReason.BudgetExceeded,
+                        new PuzzleGenerationMetrics
+                        {
+                            BudgetExceeded = true,
+                            LastError = ex.Message
+                        });
+                }
+                catch (Exception ex)
+                {
+                    // Unity logging is thread-safe; message is queued to the main thread.
+                    Debug.LogError($"[RunDirector] Async overlay generation threw: {ex.Message}");
+                    _asyncResult = AsyncLevelResult.Failure(AsyncLevelFailureReason.TaskFaulted);
+                }
             });
+        }
+
+        /// <summary>
+        /// Returns generation settings tuned for the given config.
+        /// High-complexity boss puzzles (7+ modifiers) use fewer overlay seed attempts so the first
+        /// valid overlay is accepted sooner, with an extended time budget for board generation.
+        /// </summary>
+        private static PuzzleGenerationSettings SelectAsyncGenerationSettings(LevelConfig config)
+        {
+            if (HasBoardShapingModifier(config))
+                return PuzzleGenerationSettings.StructuralModifierDefault;
+            if (config.IsBoss && config.ActiveModifiers != null && config.ActiveModifiers.Count >= 7)
+                return PuzzleGenerationSettings.HighComplexityBossDefault;
+            return PuzzleGenerationSettings.AsyncBossDefault;
+        }
+
+        // Returns true when the structural modifier subset of both lists is identical.
+        // The pre-bake is valid whenever the player's boss choices leave the structural set unchanged.
+        private static bool StructuralModsMatch(IList<BossModifierId> a, IList<BossModifierId> b)
+        {
+            BossModifierId[] structural =
+            {
+                BossModifierId.Nonconsecutive, BossModifierId.Antiknight,
+                BossModifierId.NonconsecDiagonal, BossModifierId.AntiBishop,
+                BossModifierId.Antiking, BossModifierId.DistanceGe2
+            };
+            foreach (var mod in structural)
+            {
+                var inA = a != null && a.Contains(mod);
+                var inB = b != null && b.Contains(mod);
+                if (inA != inB) return false;
+            }
+            return true;
         }
 
         /// <summary>
@@ -521,20 +1102,9 @@ namespace SudokuRoguelike.Run
 
             var config = _pendingLevelConfig;
 
-            // If the background task faulted (e.g. a generator threw on an unusual board/modifier
-            // combination), fall back to synchronous generation so the modifier is still applied.
-            if (_pendingOverlayTask.IsFaulted)
-            {
-                Debug.LogError($"[RunDirector] Async boss overlay faulted: " +
-                    $"{_pendingOverlayTask.Exception?.Flatten().InnerException?.Message ?? "unknown error"}. " +
-                    "Falling back to synchronous generation.");
-                _pendingOverlayTask = null;
-                _pendingLevelConfig = null;
-                if (config != null) StartLevel(config);
-                return config != null;
-            }
-
-            Debug.Log($"[RunDirector] TryCompleteAsyncLevel: config mods={config?.ActiveModifiers?.Count ?? -1}, board={(_asyncResultBoard != null ? "ok" : "NULL")}, overlay={(_asyncResultOverlay != null ? "ok" : "NULL")}");
+            Debug.Log($"[RunDirector] TryCompleteAsyncLevel: config mods={config?.ActiveModifiers?.Count ?? -1}, success={_asyncResult.IsSuccess}, reason={_asyncResult.FailureReason}");
+            LastGenerationMetrics = _asyncResult.Metrics;
+            LastGenerationMissingModifiers = _asyncResult.MissingModifiers ?? new List<BossModifierId>();
 
             if (config == null)
             {
@@ -543,150 +1113,216 @@ namespace SudokuRoguelike.Run
                 return false;
             }
 
-            CurrentBoard  = _asyncResultBoard;
-            CurrentOverlay = _asyncResultOverlay ?? new ModifierOverlayData();
+            // AsyncLevelResult.IsSuccess is false when the background task threw or board generation
+            // failed. Do not fall back to synchronous generation here; the UI handles the controlled
+            // failure state without blocking the main thread.
+            if (!_asyncResult.IsSuccess)
+            {
+                Debug.LogWarning($"[RunDirector] TryCompleteAsyncLevel: async generation failed " +
+                    $"({_asyncResult.FailureReason}) — leaving puzzle unloaded.");
+                LogGenerationFailure("TryCompleteAsyncLevel", config, _asyncResult.FailureReason, _asyncResult.Metrics);
+                _pendingOverlayTask = null;
+                _pendingLevelConfig = null;
+                _pendingLevelGenerationCancel?.Dispose();
+                _pendingLevelGenerationCancel = null;
+                CurrentLevelConfig = null;
+                CurrentLevelState = null;
+                CurrentBoard = null;
+                CurrentOverlay = new ModifierOverlayData();
+                ConstraintEngine = null;
+                return true;
+            }
 
-            if (config.ActiveModifiers.Count > 0)
+            CurrentLevelConfig = config;
+            CurrentBoard   = _asyncResult.Board;
+            CurrentOverlay = _asyncResult.Overlay;
+
+            var effectiveModsAsync = config.ActiveModifiers;
+            if (config.ActiveModifiers.Count > 0 && !HasAllModifiersPresent(config.ActiveModifiers, CurrentOverlay))
+            {
+                // Async overlay did not cover all modifiers — build a copy that excludes those
+                // without geometry. Do NOT mutate config.ActiveModifiers so the HUD info-box
+                // can still display what the player selected.
+                effectiveModsAsync = new System.Collections.Generic.List<BossModifierId>(config.ActiveModifiers);
+                for (var i = effectiveModsAsync.Count - 1; i >= 0; i--)
+                {
+                    if (!IsModifierPresentInOverlay(effectiveModsAsync[i], CurrentOverlay))
+                    {
+                        Debug.LogWarning($"[RunDirector] TryCompleteAsyncLevel: dropping modifier {effectiveModsAsync[i]} from engine — no overlay geometry in async result.");
+                        effectiveModsAsync.RemoveAt(i);
+                    }
+                }
+            }
+
+            if (effectiveModsAsync.Count > 0)
                 ClearOverlayCellsFromGivenMask();
 
             ConstraintEngine = new SudokuConstraintEngine();
-            var rules = ModifierFactory.BuildRules(config.ActiveModifiers);
+            var rules = ModifierFactory.BuildRules(effectiveModsAsync);
             for (var i = 0; i < rules.Count; i++)
                 ConstraintEngine.RegisterRule(rules[i]);
 
             RelicService.OnPuzzleStart(State, CurrentBoard);
             CurseService.OnPuzzleStart(State);
+            State.ShieldPoints = 0;
+            State.LastMistakeShieldAbsorbed = false;
 
             var pressureRng = new System.Random(config.Seed ^ 0x50A4B3C2);
             InitializePressureMechanics(config, CurrentBoard, CurrentLevelState, pressureRng);
 
             _pendingOverlayTask = null;
             _pendingLevelConfig = null;
+            _pendingLevelGenerationCancel?.Dispose();
+            _pendingLevelGenerationCancel = null;
             return true;
         }
 
-        /// <summary>Pure function — safe to call from a background thread (no Unity APIs).</summary>
-        private static (SudokuBoard Board, ModifierOverlayData Overlay) GenerateOverlayWithRetries(
-            SudokuBoard initialBoard, LevelConfig config, System.Random levelRng)
+        private static AsyncLevelFailureReason MapFailureReason(PuzzleGenerationFailureReason reason)
         {
-            var overlay = new ModifierOverlayData();
-            if (config.ActiveModifiers.Count == 0)
-                return (initialBoard, overlay);
-
-            var workingBoard = initialBoard;
-            var overlayValid = false;
-
-            // 3 board retries × 8 parallel seed attempts = 24 max generations (was 5×12=60).
-            for (var boardRetry = 0; boardRetry < 3 && !overlayValid; boardRetry++)
+            switch (reason)
             {
-                if (boardRetry > 0)
-                {
-                    workingBoard = CreatePuzzleForConfig(config, levelRng.Next());
-                }
-
-                // Generate all seeds upfront (Random is not thread-safe), then run in parallel.
-                const int SeedCount = 8;
-                var seeds = new int[SeedCount];
-                for (var i = 0; i < SeedCount; i++) seeds[i] = levelRng.Next();
-
-                var overlays = new ModifierOverlayData[SeedCount];
-                var capturedBoard = workingBoard;
-                Parallel.For(0, SeedCount, i =>
-                {
-                    overlays[i] = ModifierGeometryGenerator.Generate(
-                        capturedBoard, config.ActiveModifiers, seeds[i], config.Intensity);
-                });
-
-                // Pick the first valid result by seed index (deterministic ordering).
-                overlay = null;
-                for (var i = 0; i < SeedCount; i++)
-                {
-                    if (overlays[i] == null) continue;
-                    if (overlay == null) overlay = overlays[i]; // first non-null as fallback
-                    if (HasAllModifiersPresent(config.ActiveModifiers, overlays[i]))
-                    {
-                        overlay = overlays[i];
-                        break;
-                    }
-                }
-                overlay ??= new ModifierOverlayData(); // all seeds failed — use empty overlay
-
-                overlayValid = HasAllModifiersPresent(config.ActiveModifiers, overlay);
+                case PuzzleGenerationFailureReason.BoardGenerationFailed:
+                    return AsyncLevelFailureReason.GenerationFailed;
+                case PuzzleGenerationFailureReason.BudgetExceeded:
+                    return AsyncLevelFailureReason.BudgetExceeded;
+                case PuzzleGenerationFailureReason.Cancelled:
+                    return AsyncLevelFailureReason.Cancelled;
+                case PuzzleGenerationFailureReason.TaskFaulted:
+                    return AsyncLevelFailureReason.TaskFaulted;
+                case PuzzleGenerationFailureReason.UniqueSolutionNotFound:
+                    return AsyncLevelFailureReason.GenerationFailed;
+                default:
+                    return AsyncLevelFailureReason.None;
             }
+        }
 
-            return (workingBoard, overlay);
+        private static void LogGenerationFailure(
+            string source,
+            LevelConfig config,
+            AsyncLevelFailureReason reason,
+            PuzzleGenerationMetrics metrics)
+        {
+            if (config == null) return;
+
+            var mods = config.ActiveModifiers == null || config.ActiveModifiers.Count == 0
+                ? "none"
+                : string.Join(", ", config.ActiveModifiers);
+            var elapsed = metrics?.ElapsedMilliseconds ?? 0;
+            var error = string.IsNullOrEmpty(metrics?.LastError) ? "none" : metrics.LastError;
+            Debug.LogWarning(
+                $"[RunDirector] {source}: puzzle generation failed " +
+                $"reason={reason}, size={config.BoardSize}, stars={config.Stars}, " +
+                $"region={config.RegionVariant}, seed={config.Seed}, boss={config.IsBoss}, " +
+                $"elite={config.IsElite}, preBoss={config.IsPreBoss}, cursed={config.IsCursed}, " +
+                $"mods=[{mods}], elapsedMs={elapsed}, error={error}");
         }
 
         public void StartLevel(LevelConfig config)
         {
+            SanitizeGeneratedLevelConfig(config);
             EnsureBoardSizeSupportsActiveModifiers(config);
 
             // Discard any in-flight async boss task so its completion cannot overwrite
             // the board/overlay/rules we're about to build synchronously here.
+            _pendingLevelGenerationCancel?.Cancel();
+            _pendingLevelGenerationCancel = null;
             _pendingOverlayTask = null;
             _pendingLevelConfig = null;
-            _asyncResultBoard   = null;
-            _asyncResultOverlay = null;
+            _asyncResult        = default;
 
             CurrentLevelConfig = config;
             CurrentLevelState = new LevelState();
+            State.HpAtFloorStart = State.CurrentHP;
 
             var levelRng = new System.Random(config.Seed ^ 0x1A2B3C4D);
+            var settings = PuzzleGenerationSettings.SynchronousDefault;
+            var deadline = new GenerationDeadline(settings.TimeBudgetMs);
 
-            // Use pre-baked board if it matches this config and no structural modifiers were chosen.
-            // Structural modifiers change the solved board, so pre-bakes without them are invalid.
-            // generation, so bakes generated without them are invalid when those mods are active.
-            var hasStructuralMod = HasBoardShapingModifier(config);
-
+            // Use pre-baked board when seed, size, and structural mods all match.
             if (config.IsBoss && _preBakedBossBoard != null
                 && _preBakedBossConfig != null
                 && _preBakedBossConfig.Seed == config.Seed
                 && _preBakedBossConfig.BoardSize == config.BoardSize
-                && !hasStructuralMod)
+                && StructuralModsMatch(config.ActiveModifiers, _preBakedBossConfig.ActiveModifiers))
             {
                 CurrentBoard = _preBakedBossBoard;
             }
             else
             {
-                CurrentBoard = CreatePuzzleForConfig(config, config.Seed);
+                try
+                {
+                    CurrentBoard = CreatePuzzleForConfig(config, config.Seed, deadline);
+                }
+                catch (TimeoutException ex)
+                {
+                    Debug.LogError($"[RunDirector] StartLevel: board generation timed out for seed={config.Seed}, size={config.BoardSize}: {ex.Message}");
+                    LogGenerationFailure(
+                        "StartLevel",
+                        config,
+                        AsyncLevelFailureReason.BudgetExceeded,
+                        new PuzzleGenerationMetrics { BudgetExceeded = true, LastError = ex.Message });
+                    CurrentBoard = null;
+                    CurrentOverlay = new ModifierOverlayData();
+                    return;
+                }
+                if (CurrentBoard == null)
+                {
+                    Debug.LogError($"[RunDirector] StartLevel: board generation failed for seed={config.Seed}, size={config.BoardSize}. Aborting.");
+                    LogGenerationFailure("StartLevel", config, AsyncLevelFailureReason.GenerationFailed, null);
+                    return;
+                }
             }
 
             _preBakedBossBoard = null;
             _preBakedBossConfig = null;
 
-            // Generate modifier overlay — retry on different boards/seeds until all
-            // active modifiers have at least one overlay element (e.g. a board may have
-            // no valid thermo paths, no ratio pairs, etc.)
-            CurrentOverlay = new ModifierOverlayData();
-            if (config.ActiveModifiers.Count > 0)
+            var generationResult = _puzzleGenerationService.Generate(
+                config,
+                CurrentBoard,
+                levelRng.Next(),
+                CreatePuzzleForConfig,
+                settings);
+
+            LastGenerationMetrics = generationResult.Metrics;
+            LastGenerationMissingModifiers = generationResult.MissingModifiers;
+
+            if (!generationResult.IsSuccess)
             {
-                var overlayValid = false;
-                for (var boardRetry = 0; boardRetry < 5 && !overlayValid; boardRetry++)
-                {
-                    if (boardRetry > 0)
-                    {
-                        CurrentBoard = CreatePuzzleForConfig(config, levelRng.Next());
-                    }
-
-                    CurrentOverlay = ModifierGeometryGenerator.Generate(
-                        CurrentBoard, config.ActiveModifiers, levelRng.Next(), config.Intensity);
-
-                    // Retry overlay seed on the same board a few times
-                    for (var seedRetry = 0; seedRetry < 12 && !HasAllModifiersPresent(config.ActiveModifiers, CurrentOverlay); seedRetry++)
-                    {
-                        CurrentOverlay = ModifierGeometryGenerator.Generate(
-                            CurrentBoard, config.ActiveModifiers, levelRng.Next(), config.Intensity);
-                    }
-
-                    overlayValid = HasAllModifiersPresent(config.ActiveModifiers, CurrentOverlay);
-                }
-
-                ClearOverlayCellsFromGivenMask();
+                Debug.LogError($"[RunDirector] StartLevel: generation failed ({generationResult.FailureReason}). Aborting.");
+                LogGenerationFailure("StartLevel", config, MapFailureReason(generationResult.FailureReason), generationResult.Metrics);
+                CurrentBoard = null;
+                CurrentOverlay = new ModifierOverlayData();
+                return;
             }
+
+            CurrentBoard = generationResult.Board;
+            CurrentOverlay = generationResult.Overlay;
+
+            // effectiveMods = modifiers that actually have overlay geometry.
+            // We do NOT mutate config.ActiveModifiers so the HUD info-box can still display
+            // whatever the player selected (even if the overlay was incomplete).
+            var effectiveMods = config.ActiveModifiers;
+            if (config.ActiveModifiers.Count > 0 && !generationResult.HasCompleteOverlay)
+            {
+                // Overlay exhausted — build a copy that excludes modifiers with no geometry so
+                // the constraint engine never registers rules against non-existent overlay data.
+                effectiveMods = new System.Collections.Generic.List<BossModifierId>(config.ActiveModifiers);
+                for (var i = effectiveMods.Count - 1; i >= 0; i--)
+                {
+                    if (!IsModifierPresentInOverlay(effectiveMods[i], CurrentOverlay))
+                    {
+                        Debug.LogWarning($"[RunDirector] StartLevel: dropping modifier {effectiveMods[i]} from engine — no overlay geometry after all retries.");
+                        effectiveMods.RemoveAt(i);
+                    }
+                }
+            }
+
+            if (effectiveMods.Count > 0)
+                ClearOverlayCellsFromGivenMask();
 
             // Build constraint engine
             ConstraintEngine = new SudokuConstraintEngine();
-            var rules = ModifierFactory.BuildRules(config.ActiveModifiers);
+            var rules = ModifierFactory.BuildRules(effectiveMods);
             for (var i = 0; i < rules.Count; i++)
                 ConstraintEngine.RegisterRule(rules[i]);
 
@@ -698,7 +1334,7 @@ namespace SudokuRoguelike.Run
             State.ShieldPoints = 0;
             State.LastMistakeShieldAbsorbed = false;
 
-            // Initialise pressure mechanics (floor-gated; no-op in tutorial)
+            // [REQ: PRESSURE-SAVE-002] InitializePressureMechanics is called at the end of every StartLevel path (floor-gated; no-op in tutorial)
             var pressureRng = new System.Random(config.Seed ^ 0x50A4B3C2);
             InitializePressureMechanics(config, CurrentBoard, CurrentLevelState, pressureRng);
         }
@@ -729,6 +1365,7 @@ namespace SudokuRoguelike.Run
                 return PlaceResult.Correct; // confirmation deferred until fog lifts
             }
 
+            // [REQ: GEN-VALID-002] Placement validity determined by SudokuConstraintEngine.ValidateAll (all active modifier rules)
             var isValid = ConstraintEngine.ValidateAll(CurrentBoard, row, col, value, CurrentOverlay);
 
             CurrentBoard.PlaceValue(row, col, value);
@@ -753,6 +1390,7 @@ namespace SudokuRoguelike.Run
                 }
                 ClassPassiveService.OnCorrectPlacement(State, CurrentLevelState);
                 TickLockedCells();
+                TickDebuffTimers(); // [REQ: DEBUFF-HOOK-019] decrements RevealCost + CellBlur counters on correct placement
                 TickPressureThreats(row, col);
                 if (State.FogDisabledMoves > 0) State.FogDisabledMoves--;
 
@@ -784,6 +1422,8 @@ namespace SudokuRoguelike.Run
             }
 
             State.LastComboBeforeMistake = State.ComboStreak;
+            State.LastMistakeRow = row;
+            State.LastMistakeCol = col;
             // Shield: if the mistake was fully absorbed by ShieldPoints, preserve the combo streak.
             if (!State.LastMistakeShieldAbsorbed)
                 State.ComboStreak = 0;
@@ -828,6 +1468,9 @@ namespace SudokuRoguelike.Run
                     // Deferred wrong placement revealed — apply full debuff-aware penalty.
                     CurrentLevelState.Mistakes++;
                     CurrentLevelState.PerfectSoFar = false;
+                    State.LastComboBeforeMistake = State.ComboStreak;
+                    State.LastMistakeRow = r;
+                    State.LastMistakeCol = c;
                     ApplyMistakePenalty(r, c);
                 }
             }
@@ -859,14 +1502,20 @@ namespace SudokuRoguelike.Run
                 State.CurrentPencil = Math.Max(0, State.CurrentPencil - pencilCost);
                 CurrentLevelState.PencilMarksUsed++;
                 CurrentLevelState.NoPencilUsed = false;
+                if (DailyGoals != null && !State.IsSeasonalChallenge)
+                    DailyGoalService.EvaluateInRun(DailyGoals, State, CurrentLevelState, DailyGoalService.TriggerPencilMarkUsed);
             }
             return true;
         }
 
+        // [REQ: PRESSURE-TICK-019] ApplyMistakePenalty(int damage): single HP-deduct overload — all pressure/debuff HP costs route through here
         public void ApplyMistakePenalty(int damage = 1)
         {
             // Clear per-call flag before any early returns
             State.LastMistakeShieldAbsorbed = false;
+
+            // TempleStamp: HP is locked for the entire puzzle — absorb all damage silently.
+            if (State.TempleSealActive) { State.LastMistakeHpLost = 0; return; }
 
             if (State.MistakeShieldCharges > 0) { State.MistakeShieldCharges--; State.LastMistakeHpLost = 0; return; }
             if (ClassPassiveService.OnMistake(State)) { State.LastMistakeHpLost = 0; return; } // class passive absorbs
@@ -888,17 +1537,21 @@ namespace SudokuRoguelike.Run
                 // Partial absorb: remaining damage hits HP, combo is NOT protected.
             }
 
+            var hpBefore = State.CurrentHP;
             var newHp = State.CurrentHP - damage;
             if (newHp <= 0 && RelicService.TryPreventDeath(State))
             {
+                State.LastMistakeHpLost = Math.Max(0, hpBefore - State.CurrentHP);
+                if (CurrentLevelState != null)
+                    CurrentLevelState.HpLost += State.LastMistakeHpLost;
                 RelicService.OnHpChanged(State);
-                State.LastMistakeHpLost = 0;
                 return;
             }
 
-            var hpBefore = State.CurrentHP;
             State.CurrentHP = Math.Max(0, newHp);
             State.LastMistakeHpLost = hpBefore - State.CurrentHP;
+            if (CurrentLevelState != null)
+                CurrentLevelState.HpLost += State.LastMistakeHpLost;
             RelicService.OnHpChanged(State);
         }
 
@@ -948,6 +1601,28 @@ namespace SudokuRoguelike.Run
 
             // Pressure: mistake-driven effects (HauntedCell extra HP, CrumblingRegion fragility)
             TickPressureMistake(row, col);
+            // [REQ: PRESSURE-TICK-002] Wrong placements also decrement all active threat counters
+            TickPressureThreats(row, col);
+
+            // [REQ: DEBUFF-DEF-005] [REQ: DEBUFF-HOOK-014] RadiusWipe: clear all non-given digits within Chebyshev radius 2
+            if (IsDebuffActive(BossModifierId.RadiusWipe))
+                ClearBoardRadius(row, col);
+
+            // [REQ: DEBUFF-DEF-008] [REQ: DEBUFF-HOOK-015] PencilScramble: scramble all pencil marks board-wide with random wrong values
+            if (IsDebuffActive(BossModifierId.PencilScramble))
+                ScramblePencilMarks();
+
+            // [REQ: DEBUFF-DEF-017] [REQ: DEBUFF-HOOK-016] GivenReveal: promote up to 2 correctly placed non-given digits to given
+            if (IsDebuffActive(BossModifierId.GivenReveal))
+                ConvertCellsToGiven(2);
+
+            // [REQ: DEBUFF-DEF-015] [REQ: DEBUFF-HOOK-017] RevealCost: block item use for 2 correct placements
+            if (IsDebuffActive(BossModifierId.RevealCost))
+                CurrentLevelState.ItemUseBlockedMoves = Math.Max(CurrentLevelState.ItemUseBlockedMoves, 2);
+
+            // [REQ: DEBUFF-DEF-011] [REQ: DEBUFF-HOOK-018] CellBlur: hide digit labels in 3×3 area for 3 correct placements
+            if (IsDebuffActive(BossModifierId.CellBlur))
+                ApplyCellBlur(row, col);
         }
 
         private bool IsDebuffActive(BossModifierId mod)
@@ -998,6 +1673,70 @@ namespace SudokuRoguelike.Run
                 CurrentBoard.ClearPencilMarks(r, col);
         }
 
+        // [REQ: DEBUFF-DEF-005] RadiusWipe: clear all non-given digits within Chebyshev radius of the mistake cell
+        private void ClearBoardRadius(int row, int col, int radius = 2)
+        {
+            if (CurrentBoard == null) return;
+            var size = CurrentBoard.Size;
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
+                if (Math.Max(Math.Abs(r - row), Math.Abs(c - col)) <= radius && !CurrentBoard.IsGiven(r, c))
+                    CurrentBoard.ClearValue(r, c);
+        }
+
+        // [REQ: DEBUFF-DEF-008] PencilScramble: replace pencil marks in all empty cells with random wrong values
+        private void ScramblePencilMarks()
+        {
+            if (CurrentBoard == null || CurrentLevelState == null) return;
+            var size = CurrentBoard.Size;
+            var rng = new System.Random((State?.Seed ?? 0) ^ CurrentLevelState.Mistakes);
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
+            {
+                if (CurrentBoard.Cells[r, c] != 0) continue;
+                CurrentBoard.ClearPencilMarks(r, c);
+                var markCount = 2 + rng.Next(2); // 2 or 3 marks per empty cell
+                for (var i = 0; i < markCount; i++)
+                {
+                    var mark = 1 + rng.Next(size);
+                    if (mark != CurrentBoard.Solution[r, c])
+                        CurrentBoard.AddPencilMark(r, c, mark);
+                }
+            }
+        }
+
+        // [REQ: DEBUFF-DEF-017] GivenReveal: promote up to `count` correctly placed non-given cells to given
+        private void ConvertCellsToGiven(int count)
+        {
+            if (CurrentBoard == null || CurrentLevelState == null) return;
+            var size = CurrentBoard.Size;
+            var candidates = new List<(int r, int c)>();
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
+                if (!CurrentBoard.IsGiven(r, c) && CurrentBoard.Cells[r, c] != 0 && CurrentBoard.IsCorrectAt(r, c))
+                    candidates.Add((r, c));
+            var rng = new System.Random((State?.Seed ?? 0) ^ CurrentLevelState.Mistakes);
+            var toConvert = Math.Min(count, candidates.Count);
+            for (var i = 0; i < toConvert; i++)
+            {
+                var idx = rng.Next(candidates.Count);
+                var (r, c) = candidates[idx];
+                candidates.RemoveAt(idx);
+                CurrentBoard.GivenMask[r, c] = true;
+            }
+        }
+
+        // [REQ: DEBUFF-DEF-011] CellBlur: mark cells in a (2*radius+1)² area as blurred for `duration` correct placements
+        private void ApplyCellBlur(int row, int col, int radius = 1, int duration = 3)
+        {
+            if (CurrentBoard == null || CurrentLevelState == null) return;
+            var size = CurrentBoard.Size;
+            for (var r = Math.Max(0, row - radius); r <= Math.Min(size - 1, row + radius); r++)
+            for (var c = Math.Max(0, col - radius); c <= Math.Min(size - 1, col + radius); c++)
+                CurrentLevelState.CellBlurCells.Add((r, c));
+            CurrentLevelState.CellBlurMovesLeft = Math.Max(CurrentLevelState.CellBlurMovesLeft, duration);
+        }
+
         private void LockCell(int row, int col)
         {
             if (CurrentLevelState == null) return;
@@ -1024,6 +1763,23 @@ namespace SudokuRoguelike.Run
             }
             for (var i = 0; i < toRemove.Count; i++)
                 CurrentLevelState.LockedCells.Remove(toRemove[i]);
+        }
+
+        /// <summary>
+        /// Called after each correct placement. Decrements RevealCost and CellBlur timers.
+        /// </summary>
+        // [REQ: DEBUFF-DEF-015] RevealCost timer; [REQ: DEBUFF-DEF-011] CellBlur timer
+        private void TickDebuffTimers()
+        {
+            if (CurrentLevelState == null) return;
+            if (CurrentLevelState.ItemUseBlockedMoves > 0)
+                CurrentLevelState.ItemUseBlockedMoves--;
+            if (CurrentLevelState.CellBlurMovesLeft > 0)
+            {
+                CurrentLevelState.CellBlurMovesLeft--;
+                if (CurrentLevelState.CellBlurMovesLeft == 0)
+                    CurrentLevelState.CellBlurCells.Clear();
+            }
         }
 
         /// <summary>Returns the set of currently locked cell positions as (row, col) pairs.</summary>
@@ -1077,6 +1833,14 @@ namespace SudokuRoguelike.Run
         // [REQ: PRESSURE-INIT-003] CrumblingRegion  [PRESSURE-INIT-004] PressureWave
         // [REQ: PRESSURE-INIT-005] Chain length     [PRESSURE-INIT-006] PresolvedCells exclusion
         // [REQ: PRESSURE-INIT-007] counting_shadow  [PRESSURE-INIT-008] hollow_eye
+        // [REQ: PRESSURE-INIT-001] InitializePressureMechanics: sets up all pressure state for the level
+        // [REQ: PRESSURE-INIT-002] HauntedCell: intensity-keyed selection via SelectHauntedCell
+        // [REQ: PRESSURE-INIT-004] PressureWave: WaveInterval/WaveThreatCounter/WaveCounter initialized
+        // [REQ: PRESSURE-INIT-006] PresolvedCells excluded from all cell selection helpers
+        // [REQ: PRESSURE-INIT-008] hollow_eye curse: haunts a cell when HauntedCell == (-1,-1)
+        // [REQ: PRESSURE-EDGE-002] CrumblingRegion: falls back when no qualifying region found (regionType < 0)
+        // [REQ: PRESSURE-EDGE-005] counting_shadow + modifier coexist additively
+        // [REQ: PRESSURE-EDGE-006] hollow_eye defers when HauntedCell already set by modifier
         private void InitializePressureMechanics(LevelConfig config, SudokuBoard board,
             LevelState levelState, System.Random rng)
         {
@@ -1172,6 +1936,7 @@ namespace SudokuRoguelike.Run
                 {
                     // [REQ: PRESSURE-UI-004] flash unfilled cells red on expiry (wrong-placement path)
                     foreach (var c in threat.Cells) ls.ExpiryFlashCells.Add(c);
+                    // [REQ: PRESSURE-TICK-006] DoublePenalty doubles expiry damage (4 instead of 2 per cell)
                     var penaltyPer = IsDebuffActive(BossModifierId.DoublePenalty) ? 4 : 2;
                     var count = threat.Cells.Count;
                     for (var j = 0; j < count; j++) ApplyMistakePenalty(penaltyPer);
@@ -1187,6 +1952,7 @@ namespace SudokuRoguelike.Run
                 ls.WaveCounter--;
                 if (ls.WaveCounter <= 0)
                 {
+                    // [REQ: PRESSURE-TICK-008] Wave spawn capped at 3 active wave threats
                     if (ls.WaveSpawnCount < 3)
                         SpawnWaveThreat();
                     ls.WaveCounter = ls.WaveInterval;
@@ -1271,6 +2037,7 @@ namespace SudokuRoguelike.Run
             // HauntedCell: mistake elsewhere costs 1 extra HP while the haunted cell is unfilled
             if (ls.HauntedCell != (-1, -1) && (row, col) != ls.HauntedCell)
             {
+                // [REQ: PRESSURE-TICK-011] HauntedCell stacks with DoublePenalty: extraDmg = 2 instead of 1
                 var extraDmg = IsDebuffActive(BossModifierId.DoublePenalty) ? 2 : 1;
                 ApplyMistakePenalty(extraDmg);
             }
@@ -1287,6 +2054,7 @@ namespace SudokuRoguelike.Run
                     if (firstKey != int.MaxValue)
                     {
                         ls.CrumblingCells[firstKey]--;
+                        // [REQ: PRESSURE-TICK-014] fragility reaches 0 → AutoFill triggers (VeryHigh path)
                         if (ls.CrumblingCells[firstKey] <= 0)
                             AutoFillCrumbledCell(firstKey / 100, firstKey % 100);
                     }
@@ -1299,6 +2067,7 @@ namespace SudokuRoguelike.Run
                     {
                         if (!ls.CrumblingCells.ContainsKey(k)) continue;
                         ls.CrumblingCells[k]--;
+                        // [REQ: PRESSURE-TICK-014] fragility reaches 0 → AutoFill triggers (Normal/High path)
                         if (ls.CrumblingCells[k] <= 0)
                             AutoFillCrumbledCell(k / 100, k % 100);
                     }
@@ -1311,8 +2080,11 @@ namespace SudokuRoguelike.Run
         /// removes it from CrumblingCells, and silently resolves any threats targeting it.
         /// Auto-fill is NOT a player placement and does NOT advance threat counters.
         /// </summary>
-        // [REQ: PRESSURE-TICK-015] place solution value + HP cost  [PRESSURE-TICK-016] silent threat resolve
-        // [REQ: PRESSURE-TICK-017] no counter decrement             [PRESSURE-TICK-018] clear haunting
+        // [REQ: PRESSURE-TICK-015] place solution value + HP cost
+        // [REQ: PRESSURE-TICK-016] AutoFill silently resolves threats targeting the crumbled cell
+        // [REQ: PRESSURE-TICK-017] no threat counter decrement on auto-fill
+        // [REQ: PRESSURE-TICK-018] clears HauntedCell if it was the crumbled cell
+        // [REQ: PRESSURE-EDGE-004] Haunted + Crumbling same cell: haunting cleared on auto-fill
         private void AutoFillCrumbledCell(int row, int col)
         {
             if (CurrentBoard == null || CurrentLevelState == null) return;
@@ -1406,6 +2178,8 @@ namespace SudokuRoguelike.Run
             return scopes[rng.Next(scopes.Length)];
         }
 
+        // [REQ: PRESSURE-INIT-006] PresolvedCells excluded from threat cell candidates
+        // [REQ: PRESSURE-EDGE-001] Chain scope: if chain grows to <3 cells, falls back to SingleCell
         private System.Collections.Generic.List<(int row, int col)> SelectThreatCells(
             SudokuBoard board, ThreatScope scope, System.Random rng)
         {
@@ -1705,6 +2479,7 @@ namespace SudokuRoguelike.Run
             State.FogDisabledMoves     = 0;
             State.MonksBeadsCountdown  = 0;
             State.WornChiselActive     = false;
+            State.TempleSealActive     = false;
             if (level?.FogPendingCells != null)
                 level.FogPendingCells.Clear();
 
@@ -1742,7 +2517,21 @@ namespace SudokuRoguelike.Run
 
             // Relic: puzzle-complete gold adjustments (CopperTortoise, TransmutedSigil, SakuraSeal)
             RelicService.OnPuzzleComplete(State, level, ref goldBase);
+
+            // GoldenKoi: +10g per puzzle star rating, then consumed.
+            if (State.GoldenKoiActive)
+            {
+                goldBase += config.Stars * 10;
+                State.GoldenKoiActive = false;
+            }
+
             State.CurrentGold += goldBase;
+            if (DailyGoals != null && !State.IsSeasonalChallenge)
+            {
+                State.GoldCollectedThisRun += goldBase;
+                if (State.GoldCollectedThisRun >= 150)
+                    DailyGoalService.EvaluateInRun(DailyGoals, State, CurrentLevelState, DailyGoalService.TriggerCollected150Gold);
+            }
 
             var xpEntry = XpService.CalculateTile(
                 config.BoardSize, config.Stars,
@@ -1796,6 +2585,10 @@ namespace SudokuRoguelike.Run
                         DailyGoalService.EvaluateInRun(DailyGoals, State, level, DailyGoalService.TriggerNoMistakeBoss);
                     if (State.CurrentFloor == 2) // floor index 2 = floor 3
                         DailyGoalService.EvaluateInRun(DailyGoals, State, level, DailyGoalService.TriggerBossFloor3);
+                    if (State.CurrentFloor == 4) // floor index 4 = floor 5 (final boss = run won)
+                        DailyGoalService.EvaluateInRun(DailyGoals, State, level, DailyGoalService.TriggerRunWon);
+                    if (State.CurrentHP >= State.HpAtCurrentFloorEntry)
+                        DailyGoalService.EvaluateInRun(DailyGoals, State, level, DailyGoalService.TriggerFullHpFloor);
                 }
             }
 
@@ -1890,12 +2683,32 @@ namespace SudokuRoguelike.Run
             var item = State.HeldItems[inventoryIndex];
             if (item == null) return false;
 
+            // [REQ: DEBUFF-DEF-015] RevealCost: item use is blocked while the counter is active
+            if (CurrentLevelState?.ItemUseBlockedMoves > 0) return false;
+
             var free = ClassPassiveService.IsItemUseFree(State, CurrentLevelState)
                 || RelicService.HasInfiniteItems(State)
                 || RelicService.HasFirstItemFreeRelic(State, CurrentLevelState);
 
-            CurrentLevelState.ItemsUsedThisLevel++;
+            switch (item.Type)
+            {
+                case ItemType.GoldenKoi:
+                    State.GoldenKoiActive = true;
+                    break;
+                case ItemType.TempleStamp:
+                    State.TempleSealActive = true;
+                    break;
+            }
+
+            if (CurrentLevelState != null)
+                CurrentLevelState.ItemsUsedThisLevel++;
+            State.ItemsUsedThisRun++;
             _analytics?.RecordItemUsed();
+            if (DailyGoals != null && !State.IsSeasonalChallenge)
+            {
+                if (State.ItemsUsedThisRun >= 2)
+                    DailyGoalService.EvaluateInRun(DailyGoals, State, CurrentLevelState, DailyGoalService.TriggerUsed2Items);
+            }
 
             if (!free)
             {
@@ -2032,11 +2845,38 @@ namespace SudokuRoguelike.Run
 
                 case ItemType.GinkgoLeaf:
                 {
-                    // Undo last non-given placement (clear the most recently placed non-zero non-given cell)
-                    var undone = TryUndoLastPlacement();
+                    var undone = TryUndoLastMistakePlacement();
+                    var hpRestored = 0;
+                    if (undone)
+                    {
+                        hpRestored = Math.Max(0, State.LastMistakeHpLost);
+                        if (hpRestored > 0)
+                        {
+                            State.CurrentHP = Math.Min(State.MaxHP, State.CurrentHP + hpRestored);
+                            if (CurrentLevelState != null)
+                                CurrentLevelState.HpLost = Math.Max(0, CurrentLevelState.HpLost - hpRestored);
+                        }
+                        if (CurrentLevelState != null && CurrentLevelState.Mistakes > 0)
+                        {
+                            CurrentLevelState.Mistakes--;
+                            if (CurrentLevelState.Mistakes == 0)
+                                CurrentLevelState.PerfectSoFar = true;
+                        }
+                        if (State.LastComboBeforeMistake > 0)
+                            State.ComboStreak = State.LastComboBeforeMistake;
+                        State.LastMistakeHpLost = 0;
+                        State.LastComboBeforeMistake = 0;
+                        State.LastMistakeRow = -1;
+                        State.LastMistakeCol = -1;
+                    }
                     return undone
-                        ? ItemEffectResult.BoardChanged("Last placement undone.")
-                        : ItemEffectResult.Message("Nothing to undo.");
+                        ? ItemEffectResult.BoardChanged(LocalizationService.Format(
+                            "Item.Effect.GinkgoLeaf.Restored",
+                            "Ginkgo Leaf: mistake undone, +{0} HP, combo restored.",
+                            hpRestored))
+                        : ItemEffectResult.Message(LocalizationService.T(
+                            "Item.Effect.GinkgoLeaf.NothingToUndo",
+                            "Nothing to undo."));
                 }
 
                 case ItemType.SilkFan:
@@ -2269,6 +3109,22 @@ namespace SudokuRoguelike.Run
             return false;
         }
 
+        private bool TryUndoLastMistakePlacement()
+        {
+            if (CurrentBoard == null || State == null) return false;
+            var row = State.LastMistakeRow;
+            var col = State.LastMistakeCol;
+            if (row < 0 || col < 0 || row >= CurrentBoard.Size || col >= CurrentBoard.Size)
+                return false;
+            if (CurrentBoard.IsGiven(row, col) || CurrentBoard.Cells[row, col] == 0)
+                return false;
+            if (CurrentBoard.Cells[row, col] == CurrentBoard.Solution[row, col])
+                return false;
+
+            CurrentBoard.ClearValue(row, col);
+            return true;
+        }
+
         private List<(int, int)> FindMatchingCells(int digit, int size, int maxCount)
         {
             var result = new List<(int, int)>();
@@ -2327,7 +3183,8 @@ namespace SudokuRoguelike.Run
                                 * CurseService.GetShopPriceMultiplier(State)
                                 * (State.WornChiselActive ? 0.70f : 1.0f);
             var classLevel = GetCurrentClassLevel();
-            CurrentShopOffers = _shopService.BuildOffers(State.CurrentFloor, classLevel, priceMultiplier, State.HarmonyConfig.ShopSurcharge);
+            var shopClassId = State.IsSeasonalChallenge ? (ClassId)0 : State.ClassId;
+            CurrentShopOffers = _shopService.BuildOffers(State.CurrentFloor, classLevel, priceMultiplier, State.HarmonyConfig.ShopSurcharge, shopClassId);
             return CurrentShopOffers;
         }
 
@@ -2347,6 +3204,12 @@ namespace SudokuRoguelike.Run
             var cost = GetShopRerollCost();
             if (State.CurrentGold < cost) return false;
             State.CurrentGold -= cost;
+            if (DailyGoals != null && !State.IsSeasonalChallenge)
+            {
+                State.GoldSpentThisRun += cost;
+                if (State.GoldSpentThisRun >= 50)
+                    DailyGoalService.EvaluateInRun(DailyGoals, State, CurrentLevelState, DailyGoalService.TriggerSpentGold50);
+            }
             State.ShopRerollCount++;
             BuildShopOffers();
             return true;
@@ -2360,6 +3223,12 @@ namespace SudokuRoguelike.Run
             if (offer.IsSold || State.CurrentGold < offer.Price) return false;
 
             State.CurrentGold -= offer.Price;
+            if (DailyGoals != null && !State.IsSeasonalChallenge)
+            {
+                State.GoldSpentThisRun += offer.Price;
+                if (State.GoldSpentThisRun >= 50)
+                    DailyGoalService.EvaluateInRun(DailyGoals, State, CurrentLevelState, DailyGoalService.TriggerSpentGold50);
+            }
             offer.IsSold = true;
             AddItemToInventory(offer.Item);
             return true;
@@ -2371,6 +3240,12 @@ namespace SudokuRoguelike.Run
             if (State.CurrentGold < price) return false;
 
             State.CurrentGold -= price;
+            if (DailyGoals != null && !State.IsSeasonalChallenge)
+            {
+                State.GoldSpentThisRun += price;
+                if (State.GoldSpentThisRun >= 50)
+                    DailyGoalService.EvaluateInRun(DailyGoals, State, CurrentLevelState, DailyGoalService.TriggerSpentGold50);
+            }
             State.CurrentHP = Math.Min(State.MaxHP, State.CurrentHP + 1);
             State.PencilPurchaseCount++;
             return true;
@@ -2393,19 +3268,29 @@ namespace SudokuRoguelike.Run
         public void ChooseBossModifiers(List<BossModifierId> chosen)
         {
             State.ChosenBossModifiers.Clear();
+            State.HasChosenBossModifier = false;
             if (chosen == null) return;
 
             for (var i = 0; i < chosen.Count; i++)
             {
-                State.ChosenBossModifiers.Add(chosen[i]);
-                State.SeenBossModifiers.Add(chosen[i]);
+                var modifier = chosen[i];
+                if (!BossService.IsSupportedForGeneratedRun(modifier)
+                    || !BossService.CanCombineModifiers(State.ChosenBossModifiers, modifier))
+                {
+                    Debug.LogWarning(
+                        $"[RunDirector] Ignored incompatible boss modifier selection: {modifier}.");
+                    continue;
+                }
+
+                State.ChosenBossModifiers.Add(modifier);
+                State.SeenBossModifiers.Add(modifier);
             }
 
             // Keep legacy singular field in sync for save compat
-            if (chosen.Count > 0)
+            if (State.ChosenBossModifiers.Count > 0)
             {
                 State.HasChosenBossModifier = true;
-                State.ChosenBossModifierId = chosen[0];
+                State.ChosenBossModifierId = State.ChosenBossModifiers[0];
             }
 
             Debug.Log(
@@ -2445,7 +3330,7 @@ namespace SudokuRoguelike.Run
             return _relicService.RollRelic(State.CurrentFloor, tierBonus);
         }
 
-        /// <summary>Roll 3 distinct relics for a choice panel. Caches result in RolledRelicChoices.</summary>
+        /// <summary>Roll distinct choices for this panel; copies may still be acquired across different nodes.</summary>
         public List<RelicInstance> RollRelicChoices(int count = 3)
         {
             var tierBonus = RelicService.GetRelicNodeTierBonus(State);
@@ -2474,9 +3359,16 @@ namespace SudokuRoguelike.Run
                 DailyGoalService.EvaluateInRun(DailyGoals, State, CurrentLevelState, DailyGoalService.TriggerRelicCollected);
         }
 
+        /// <summary>Called when the player accepts a Cursed node offer.</summary>
+        public void OnCursedNodeAccepted()
+        {
+            if (DailyGoals == null || State.IsSeasonalChallenge) return;
+            DailyGoalService.EvaluateInRun(DailyGoals, State, CurrentLevelState, DailyGoalService.TriggerAcceptedCursed);
+        }
+
         // ── Curse API ── [REQ: CURSE-DATA-002]
 
-        // [REQ: CURSE-INT-001] ApplyCurse routes from event/item sources into CurseService
+        // [REQ: CURSE-INT-001] [REQ: CURSE-ACQUIRE-001] [REQ: CURSE-ACQUIRE-002] ApplyCurse: unified entry point for all curse acquisition (events, items, rest trades)
         public bool ApplyCurse(string curseId) => CurseService.ApplyCurse(State, curseId);
         public bool RemoveCurse(string curseId = null) => CurseService.TryRemoveCurse(State, curseId);
         public CurseDefinition RollCurse() => _curseService.RollCurse(State.CurrentFloor, State);
@@ -2507,6 +3399,61 @@ namespace SudokuRoguelike.Run
         }
 
         // ── Navigation ──
+
+        public RunNavigationSnapshot CaptureNavigationSnapshot()
+        {
+            var visited = CurrentFloorGraph == null ? null : new bool[CurrentFloorGraph.Count];
+            var reachable = CurrentFloorGraph == null ? null : new bool[CurrentFloorGraph.Count];
+            if (CurrentFloorGraph != null)
+            {
+                for (var i = 0; i < CurrentFloorGraph.Count; i++)
+                {
+                    visited[i] = CurrentFloorGraph[i].Visited;
+                    reachable[i] = CurrentFloorGraph[i].Reachable;
+                }
+            }
+
+            return new RunNavigationSnapshot(
+                State?.CurrentNodeIndex ?? -1,
+                State?.Depth ?? 0,
+                State?.NodePath?.Count ?? 0,
+                State?.RouteHistory?.Count ?? 0,
+                visited,
+                reachable);
+        }
+
+        public void RestoreNavigationSnapshot(RunNavigationSnapshot snapshot)
+        {
+            if (State == null) return;
+
+            State.CurrentNodeIndex = snapshot.CurrentNodeIndex;
+            State.Depth = snapshot.Depth;
+            TrimList(State.NodePath, snapshot.NodePathCount);
+            TrimList(State.RouteHistory, snapshot.RouteHistoryCount);
+
+            if (CurrentFloorGraph != null && snapshot.Visited != null && snapshot.Reachable != null)
+            {
+                var count = Math.Min(CurrentFloorGraph.Count, Math.Min(snapshot.Visited.Length, snapshot.Reachable.Length));
+                for (var i = 0; i < count; i++)
+                {
+                    CurrentFloorGraph[i].Visited = snapshot.Visited[i];
+                    CurrentFloorGraph[i].Reachable = snapshot.Reachable[i];
+                }
+            }
+
+            CurrentLevelConfig = null;
+            CurrentLevelState = null;
+            CurrentBoard = null;
+            CurrentOverlay = null;
+            ConstraintEngine = null;
+        }
+
+        private static void TrimList<T>(List<T> list, int count)
+        {
+            if (list == null) return;
+            while (list.Count > count)
+                list.RemoveAt(list.Count - 1);
+        }
 
         public bool TryAdvanceToNode(int nodeIndex, bool forced = false)
         {
@@ -2618,7 +3565,7 @@ namespace SudokuRoguelike.Run
 
         public bool TryRestorePuzzleSaveState(PuzzleSaveState save)
         {
-            if (save == null) return false;
+            if (!SaveFileService.IsUsablePuzzleSave(save)) return false;
 
             var size = save.BoardSize;
             var solution = new int[size, size];
@@ -2832,6 +3779,126 @@ namespace SudokuRoguelike.Run
 
         public PostRunAnalyticsService GetAnalytics() => _analytics;
         public int GetTotalRunXp() => XpService.SumRunXp(TileXpLog);
+    }
+
+    public readonly struct RunNavigationSnapshot
+    {
+        internal readonly int CurrentNodeIndex;
+        internal readonly int Depth;
+        internal readonly int NodePathCount;
+        internal readonly int RouteHistoryCount;
+        internal readonly bool[] Visited;
+        internal readonly bool[] Reachable;
+
+        internal RunNavigationSnapshot(
+            int currentNodeIndex,
+            int depth,
+            int nodePathCount,
+            int routeHistoryCount,
+            bool[] visited,
+            bool[] reachable)
+        {
+            CurrentNodeIndex = currentNodeIndex;
+            Depth = depth;
+            NodePathCount = nodePathCount;
+            RouteHistoryCount = routeHistoryCount;
+            Visited = visited;
+            Reachable = reachable;
+        }
+    }
+
+    public enum AsyncLevelFailureReason
+    {
+        None,
+        GenerationFailed,
+        ModifierGeometryFailed,
+        TaskFaulted,
+        BudgetExceeded,
+        Cancelled
+    }
+
+    /// <summary>
+    /// Carries the result of a background overlay generation initiated by
+    /// <see cref="RunDirector.StartLevelAsync"/>. Construct via the
+    /// <see cref="Success"/>, <see cref="Failure"/>, and <see cref="Pending"/> factory methods.
+    /// Only access <see cref="Board"/> and <see cref="Overlay"/> when <see cref="IsSuccess"/> is true.
+    /// </summary>
+    public readonly struct AsyncLevelResult
+    {
+        public readonly bool IsSuccess;
+        public readonly SudokuBoard Board;
+        public readonly ModifierOverlayData Overlay;
+        public readonly AsyncLevelFailureReason FailureReason;
+        public readonly PuzzleGenerationMetrics Metrics;
+        public readonly IReadOnlyList<BossModifierId> MissingModifiers;
+
+        private AsyncLevelResult(
+            bool ok,
+            SudokuBoard board,
+            ModifierOverlayData overlay,
+            AsyncLevelFailureReason reason,
+            PuzzleGenerationMetrics metrics,
+            IReadOnlyList<BossModifierId> missingModifiers)
+        {
+            IsSuccess     = ok;
+            Board         = board;
+            Overlay       = overlay;
+            FailureReason = reason;
+            Metrics       = metrics;
+            MissingModifiers = missingModifiers;
+        }
+
+        /// <summary>Successful result. <paramref name="overlay"/> may be null (replaced with empty).</summary>
+        public static AsyncLevelResult Success(SudokuBoard board, ModifierOverlayData overlay)
+            => new AsyncLevelResult(
+                true,
+                board,
+                overlay ?? new ModifierOverlayData(),
+                AsyncLevelFailureReason.None,
+                new PuzzleGenerationMetrics(),
+                new List<BossModifierId>());
+
+        public static AsyncLevelResult Success(PuzzleGenerationResult result)
+            => Success(result, null);
+
+        public static AsyncLevelResult Success(
+            PuzzleGenerationResult result,
+            IReadOnlyList<BossModifierId> additionalMissingModifiers)
+            => new AsyncLevelResult(
+                true,
+                result.Board,
+                result.Overlay ?? new ModifierOverlayData(),
+                AsyncLevelFailureReason.None,
+                result.Metrics,
+                MergeMissingModifiers(additionalMissingModifiers, result.MissingModifiers));
+
+        /// <summary>Failure result. <see cref="Board"/> and <see cref="Overlay"/> will be null.</summary>
+        public static AsyncLevelResult Failure(AsyncLevelFailureReason reason, PuzzleGenerationMetrics metrics = null)
+            => new AsyncLevelResult(false, null, null, reason, metrics ?? new PuzzleGenerationMetrics(), new List<BossModifierId>());
+
+        /// <summary>Initial state — set before the background task begins.</summary>
+        public static AsyncLevelResult Pending()
+            => new AsyncLevelResult(false, null, null, AsyncLevelFailureReason.None, new PuzzleGenerationMetrics(), new List<BossModifierId>());
+
+        private static IReadOnlyList<BossModifierId> MergeMissingModifiers(
+            IReadOnlyList<BossModifierId> first,
+            IReadOnlyList<BossModifierId> second)
+        {
+            var merged = new List<BossModifierId>();
+            AddMissingModifiers(merged, first);
+            AddMissingModifiers(merged, second);
+            return merged;
+        }
+
+        private static void AddMissingModifiers(List<BossModifierId> target, IReadOnlyList<BossModifierId> source)
+        {
+            if (source == null) return;
+            for (var i = 0; i < source.Count; i++)
+            {
+                if (!target.Contains(source[i]))
+                    target.Add(source[i]);
+            }
+        }
     }
 
     public enum PlaceResult

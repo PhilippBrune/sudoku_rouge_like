@@ -78,12 +78,13 @@ namespace SudokuRoguelike.Economy
             };
         }
 
-        // ── Class-Exclusive Relic Definitions ──
+        // ── Class-Exclusive Relic Definitions ── [REQ: CLASS-EXCL-001] [REQ: CLASS-EXCL-002] [REQ: CLASS-EXCL-003]
+        // 8 class-exclusive relics (L30), one per class; UnlockLevel = 30
 
         private sealed class ExclusiveRelicDef
         {
-            public ClassId ClassId;
-            public int UnlockLevel;
+            public ClassId ClassId;    // [REQ: CLASS-EXCL-002]
+            public int UnlockLevel;   // [REQ: CLASS-EXCL-003]
         }
 
         private static readonly Dictionary<RelicId, ExclusiveRelicDef> ClassExclusiveRelics = new()
@@ -131,14 +132,16 @@ namespace SudokuRoguelike.Economy
             };
         }
 
-        /// <summary>Roll <paramref name="count"/> distinct relics for a choice panel.
-        /// Pass classId + classLevel to allow class-exclusive relic injection (25% chance if unlocked).
+        /// <summary>Roll up to <paramref name="count"/> distinct relics for a single choice panel.
+        /// Copies may still be found on later relic nodes. Pass classId + classLevel to allow
+        /// class-exclusive relic injection (25% chance if unlocked).
         /// [HARMONY] harmonyLevel gates which relics can appear.</summary>
+        // [REQ: CLASS-EXCL-004] 25% inject: exclusive relic only if classId matches and classLevel >= 30
         public List<RelicInstance> RollRelicChoices(int floorIndex, int count = 3, int tierBonus = 0,
             ClassId classId = (ClassId)0, int classLevel = 0, int harmonyLevel = 0)
         {
             var choices = new List<RelicInstance>(count);
-            var usedIds = new HashSet<RelicId>();
+            var offeredIds = new HashSet<RelicId>();
 
             // 25% chance to inject the class-exclusive relic if unlocked
             if (classId != (ClassId)0 && _random.NextDouble() < 0.25)
@@ -147,21 +150,49 @@ namespace SudokuRoguelike.Economy
                 {
                     if (kvp.Value.ClassId == classId && classLevel >= kvp.Value.UnlockLevel)
                     {
-                        usedIds.Add(kvp.Key);
                         choices.Add(new RelicInstance { Id = kvp.Key, Tier = RelicTier.Legendary, UsesRemaining = GetDefaultUses(kvp.Key) });
+                        offeredIds.Add(kvp.Key);
                         break;
                     }
                 }
             }
 
             var activePool = BuildHarmonyPool(harmonyLevel);
-            for (var attempt = 0; attempt < count * 4 && choices.Count < count; attempt++)
+            var availableByTier = new Dictionary<RelicTier, List<RelicId>>();
+            var availableCount = 0;
+            foreach (var pair in activePool)
+            {
+                var available = new List<RelicId>(pair.Value.Length);
+                for (var i = 0; i < pair.Value.Length; i++)
+                {
+                    if (!offeredIds.Contains(pair.Value[i]))
+                        available.Add(pair.Value[i]);
+                }
+                availableByTier[pair.Key] = available;
+                availableCount += available.Count;
+            }
+
+            while (choices.Count < count && availableCount > 0)
             {
                 var tier = RollTier(floorIndex + tierBonus);
-                var pool = activePool[tier];
-                var id = pool[_random.Next(pool.Length)];
-                if (usedIds.Contains(id)) continue;
-                usedIds.Add(id);
+                var pool = availableByTier[tier];
+                if (pool.Count == 0)
+                {
+                    var availableTiers = new List<RelicTier>();
+                    foreach (var pair in availableByTier)
+                    {
+                        if (pair.Value.Count > 0)
+                            availableTiers.Add(pair.Key);
+                    }
+                    tier = availableTiers[_random.Next(availableTiers.Count)];
+                    pool = availableByTier[tier];
+                }
+
+                var index = _random.Next(pool.Count);
+                var id = pool[index];
+                pool.RemoveAt(index);
+                availableCount--;
+                offeredIds.Add(id);
                 choices.Add(new RelicInstance { Id = id, Tier = tier, UsesRemaining = GetDefaultUses(id) });
             }
 
@@ -186,18 +217,12 @@ namespace SudokuRoguelike.Economy
                     if (!IsRelicExclusive(id)) filtered.Add(id);
                 if (filtered.Count > 0) t1Pool = filtered.ToArray();
             }
-            var usedIds = new HashSet<RelicId>();
-
             for (var i = 0; i < count; i++)
             {
-                for (var attempt = 0; attempt < t1Pool.Length * 2; attempt++)
-                {
-                    var id = t1Pool[_random.Next(t1Pool.Length)];
-                    if (usedIds.Contains(id)) continue;
-                    usedIds.Add(id);
-                    state.HeldRelics.Add(new RelicInstance { Id = id, Tier = RelicTier.Tier1, UsesRemaining = GetDefaultUses(id) });
-                    break;
-                }
+                var id = t1Pool[_random.Next(t1Pool.Length)];
+                var relic = new RelicInstance { Id = id, Tier = RelicTier.Tier1, UsesRemaining = GetDefaultUses(id) };
+                state.HeldRelics.Add(relic);
+                ApplyPickupPassives(state, relic);
             }
 
             // Keep legacy compat fields in sync
@@ -233,7 +258,7 @@ namespace SudokuRoguelike.Economy
 
         private static int GetDefaultUses(RelicId id)
         {
-            return id switch
+            var fallback = id switch
             {
                 RelicId.CrackedTeacup => 1,
                 RelicId.SilentGrid    => 3,
@@ -242,6 +267,7 @@ namespace SudokuRoguelike.Economy
                 RelicId.VoidPetal     => 1, // [HARMONY] once per run
                 _ => -1 // passive
             };
+            return fallback;
         }
 
         // ── Harmony relic helpers ────────────────────────────────────────────────────────────────
@@ -289,8 +315,19 @@ namespace SudokuRoguelike.Economy
         public static bool HasRelicOfType(RunState state, RelicId id) =>
             state.HeldRelics != null && state.HeldRelics.Exists(r => r.Id == id);
 
+        public static int CountRelicsOfType(RunState state, RelicId id)
+        {
+            if (state?.HeldRelics == null) return 0;
+            var count = 0;
+            for (var i = 0; i < state.HeldRelics.Count; i++)
+                if (state.HeldRelics[i]?.Id == id)
+                    count++;
+            return count;
+        }
+
         private static RelicInstance FindRelicByType(RunState state, RelicId id) =>
-            state.HeldRelics?.Find(r => r.Id == id);
+            state.HeldRelics?.Find(r => r.Id == id && r.UsesRemaining != 0)
+            ?? state.HeldRelics?.Find(r => r.Id == id);
 
         /// <summary>
         /// Returns the base pool tier for a relic, used to drive visual rarity pip on UI slots.
@@ -311,23 +348,23 @@ namespace SudokuRoguelike.Economy
         // ── Relic Queries ──
 
         public static float GetShopRerollCostMultiplier(RunState state) =>
-            HasRelicOfType(state, RelicId.MossToken) ? 0.75f : 1.0f;
+            (float)Math.Pow(0.75f, CountRelicsOfType(state, RelicId.MossToken));
 
         public static float GetShopPriceMultiplier(RunState state) =>
-            HasRelicOfType(state, RelicId.SpiritLantern) ? 0.80f : 1.0f;
+            (float)Math.Pow(0.80f, CountRelicsOfType(state, RelicId.SpiritLantern));
 
         public static int GetBonusRewardSlots(RunState state) =>
-            HasRelicOfType(state, RelicId.StoneSundial) ? 1 : 0;
+            CountRelicsOfType(state, RelicId.StoneSundial);
 
         public static int GetRelicNodeTierBonus(RunState state) =>
-            HasRelicOfType(state, RelicId.MoonstoneCompass) ? 1 : 0;
+            CountRelicsOfType(state, RelicId.MoonstoneCompass);
 
         public static bool HasInfiniteItems(RunState state) =>
             HasRelicOfType(state, RelicId.EternalLotus);
 
         /// <summary>First item use each puzzle is free (PaperCrane).</summary>
         public static bool HasFirstItemFreeRelic(RunState state, LevelState level) =>
-            HasRelicOfType(state, RelicId.PaperCrane) && level.ItemsUsedThisLevel == 0;
+            level != null && level.ItemsUsedThisLevel < CountRelicsOfType(state, RelicId.PaperCrane);
 
         /// <summary>Called on relic pickup: apply one-time stat buffs for the newly acquired relic.</summary>
         public static void ApplyPickupPassives(RunState state, RelicInstance relic)
@@ -649,9 +686,22 @@ namespace SudokuRoguelike.Economy
 
         // ── Name & Description ──
 
+        private static string RelicNameKey(RelicId id) => $"Relic.Name.{id}";
+
+        private static string RelicDescriptionKey(RelicId id) => $"Relic.Description.{id}";
+
+        public static IEnumerable<string> GetLocalizationKeys()
+        {
+            foreach (RelicId id in Enum.GetValues(typeof(RelicId)))
+            {
+                yield return RelicNameKey(id);
+                yield return RelicDescriptionKey(id);
+            }
+        }
+
         public static string GetRelicName(RelicId id)
         {
-            return id switch
+            var fallback = id switch
             {
                 RelicId.SmoothPebble => "Smooth Pebble",
                 RelicId.CrackedTeacup => "Cracked Teacup",
@@ -692,6 +742,7 @@ namespace SudokuRoguelike.Economy
                 RelicId.LanternOfVoid    => "Lantern of Void",
                 _ => id.ToString()
             };
+            return LocalizationService.T(RelicNameKey(id), fallback);
         }
 
         public static string GetIconName(RelicId id)
@@ -749,7 +800,7 @@ namespace SudokuRoguelike.Economy
 
         public static string GetRelicDescription(RelicId id)
         {
-            return id switch
+            var fallback = id switch
             {
                 RelicId.SmoothPebble => "Start each puzzle with +2 pencil marks.",
                 RelicId.CrackedTeacup => "Absorb the first mistake each puzzle (no HP loss).",
@@ -790,6 +841,9 @@ namespace SudokuRoguelike.Economy
                 RelicId.LanternOfVoid    => "[H9+] Boss modifier labels are always hidden (no auto-reveal on repeat). Earn +1 gold per active floor modifier on puzzle completion.",
                 _ => ""
             };
+            return string.IsNullOrEmpty(fallback)
+                ? string.Empty
+                : LocalizationService.T(RelicDescriptionKey(id), fallback);
         }
     }
 }

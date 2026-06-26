@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using SudokuRoguelike.Core;
 using SudokuRoguelike.Run;
 using UnityEngine;
 using UnityEngine.UI;
@@ -29,6 +30,7 @@ namespace SudokuRoguelike.UI
             _iconColumn   = iconColumn;
         }
 
+        // [REQ: CURSE-INT-011] RefreshPanel: renders all active curse names + icons; called at node arrival, cleanse, and run-state transitions
         public void RefreshPanel()
         {
             var state = _runMap?.Run?.State;
@@ -36,20 +38,20 @@ namespace SudokuRoguelike.UI
 
             if (state == null)
             {
-                if (_titleText != null)    _titleText.text    = "Curses (0)";
-                if (_curseListText != null) _curseListText.text = "No active curses.";
+                if (_titleText != null)    _titleText.text    = F("InRun.Curse.Title", 0);
+                if (_curseListText != null) _curseListText.text = T("InRun.Curse.None");
                 return;
             }
 
             var curses = CurseService.GetActiveCurses(state);
             if (_titleText != null)
-                _titleText.text = curses.Count > 0 ? $"Curses ({curses.Count})" : "Curses (0)";
+                _titleText.text = F("InRun.Curse.Title", curses.Count);
 
             if (_curseListText == null) return;
 
             if (curses.Count == 0)
             {
-                _curseListText.text = "No active curses.";
+                _curseListText.text = T("InRun.Curse.None");
                 return;
             }
 
@@ -57,7 +59,10 @@ namespace SudokuRoguelike.UI
             for (var i = 0; i < curses.Count; i++)
             {
                 if (i > 0) sb.Append('\n');
-                sb.Append($"{curses[i].Name} \u2014 {curses[i].Description}");
+                sb.Append(F(
+                    "InRun.Curse.Line",
+                    curses[i].Name,
+                    curses[i].Description));
             }
             _curseListText.text = sb.ToString();
 
@@ -167,5 +172,10 @@ namespace SudokuRoguelike.UI
                 if (_iconPool[i] != null) Destroy(_iconPool[i].gameObject);
             _iconPool.Clear();
         }
+
+        private static string T(string key) => LocalizationService.T(key);
+
+        private static string F(string key, params object[] args) =>
+            LocalizationService.Format(key, key, args);
     }
 }

@@ -5,31 +5,47 @@ namespace SudokuRoguelike.Sudoku
     public static class SudokuBacktrackingSolver
     {
         public static bool HasUniqueSolution(SudokuBoard board, ModifierOverlayData overlay = null,
-            SudokuConstraintEngine engine = null)
+            SudokuConstraintEngine engine = null,
+            GenerationDeadline deadline = default)
         {
-            return CountSolutions(board, 2, overlay, engine) == 1;
+            return CountSolutions(board, 2, overlay, engine, deadline) == 1;
         }
 
         public static int CountSolutions(SudokuBoard board, int maxCount = 2,
-            ModifierOverlayData overlay = null, SudokuConstraintEngine engine = null)
+            ModifierOverlayData overlay = null, SudokuConstraintEngine engine = null,
+            GenerationDeadline deadline = default)
         {
+            deadline.ThrowIfExceeded();
             var size = board.Size;
             var grid = new int[size, size];
             Array.Copy(board.Cells, grid, board.Cells.Length);
+            var workingBoard = new SudokuBoard(size, new int[size, size], grid, board.RegionMap);
+
+            if (!ExistingCellsAreValid(workingBoard, overlay, engine, deadline))
+                return 0;
 
             var count = 0;
-            SolveCount(grid, board.RegionMap, size, overlay, engine, ref count, maxCount);
+            SolveCount(workingBoard, overlay, engine, ref count, maxCount, deadline);
             return count;
         }
 
         public static bool TrySolve(SudokuBoard board, out int[,] solution,
-            ModifierOverlayData overlay = null, SudokuConstraintEngine engine = null)
+            ModifierOverlayData overlay = null, SudokuConstraintEngine engine = null,
+            GenerationDeadline deadline = default)
         {
+            deadline.ThrowIfExceeded();
             var size = board.Size;
             var grid = new int[size, size];
             Array.Copy(board.Cells, grid, board.Cells.Length);
+            var workingBoard = new SudokuBoard(size, new int[size, size], grid, board.RegionMap);
 
-            if (SolveFirst(grid, board.RegionMap, size, overlay, engine))
+            if (!ExistingCellsAreValid(workingBoard, overlay, engine, deadline))
+            {
+                solution = null;
+                return false;
+            }
+
+            if (SolveFirst(workingBoard, overlay, engine, deadline))
             {
                 solution = grid;
                 return true;
@@ -39,10 +55,14 @@ namespace SudokuRoguelike.Sudoku
             return false;
         }
 
-        private static void SolveCount(int[,] grid, int[,] regionMap, int size,
-            ModifierOverlayData overlay, SudokuConstraintEngine engine, ref int count, int maxCount)
+        private static void SolveCount(SudokuBoard workingBoard, ModifierOverlayData overlay,
+            SudokuConstraintEngine engine, ref int count, int maxCount,
+            GenerationDeadline deadline = default)
         {
-            if (!FindEmpty(grid, size, out var row, out var col))
+            deadline.ThrowIfExceeded();
+            var grid = workingBoard.Cells;
+            var size = workingBoard.Size;
+            if (!FindMostConstrainedEmpty(workingBoard, overlay, engine, out var row, out var col, deadline))
             {
                 count++;
                 return;
@@ -50,28 +70,31 @@ namespace SudokuRoguelike.Sudoku
 
             for (var v = 1; v <= size; v++)
             {
-                if (!IsPlacementValid(grid, regionMap, size, row, col, v)) continue;
-                // TODO: add constraint engine validation when SudokuBoard can be efficiently reused
+                if (!IsCandidateValid(workingBoard, overlay, engine, row, col, v)) continue;
 
                 grid[row, col] = v;
-                SolveCount(grid, regionMap, size, overlay, engine, ref count, maxCount);
+                SolveCount(workingBoard, overlay, engine, ref count, maxCount, deadline);
                 grid[row, col] = 0;
                 if (count >= maxCount) return;
             }
         }
 
-        private static bool SolveFirst(int[,] grid, int[,] regionMap, int size,
-            ModifierOverlayData overlay, SudokuConstraintEngine engine)
+        private static bool SolveFirst(SudokuBoard workingBoard, ModifierOverlayData overlay,
+            SudokuConstraintEngine engine,
+            GenerationDeadline deadline = default)
         {
-            if (!FindEmpty(grid, size, out var row, out var col))
+            deadline.ThrowIfExceeded();
+            var grid = workingBoard.Cells;
+            var size = workingBoard.Size;
+            if (!FindMostConstrainedEmpty(workingBoard, overlay, engine, out var row, out var col, deadline))
                 return true;
 
             for (var v = 1; v <= size; v++)
             {
-                if (!IsPlacementValid(grid, regionMap, size, row, col, v)) continue;
+                if (!IsCandidateValid(workingBoard, overlay, engine, row, col, v)) continue;
 
                 grid[row, col] = v;
-                if (SolveFirst(grid, regionMap, size, overlay, engine))
+                if (SolveFirst(workingBoard, overlay, engine, deadline))
                     return true;
                 grid[row, col] = 0;
             }
@@ -79,21 +102,41 @@ namespace SudokuRoguelike.Sudoku
             return false;
         }
 
-        private static bool FindEmpty(int[,] grid, int size, out int row, out int col)
+        private static bool FindMostConstrainedEmpty(SudokuBoard board, ModifierOverlayData overlay,
+            SudokuConstraintEngine engine, out int row, out int col,
+            GenerationDeadline deadline = default)
         {
-            for (var r = 0; r < size; r++)
-            for (var c = 0; c < size; c++)
+            row = -1;
+            col = -1;
+            var bestCandidateCount = int.MaxValue;
+            for (var r = 0; r < board.Size; r++)
+            for (var c = 0; c < board.Size; c++)
             {
-                if (grid[r, c] == 0)
+                deadline.ThrowIfExceeded();
+                if (board.Cells[r, c] != 0) continue;
+
+                var candidateCount = 0;
+                for (var value = 1; value <= board.Size; value++)
                 {
+                    if (IsCandidateValid(board, overlay, engine, r, c, value))
+                        candidateCount++;
+                }
+
+                if (candidateCount < bestCandidateCount)
+                {
+                    bestCandidateCount = candidateCount;
                     row = r;
                     col = c;
-                    return true;
+                    if (candidateCount == 0)
+                        return true;
+                    if (candidateCount == 1)
+                        return true;
                 }
             }
 
-            row = -1;
-            col = -1;
+            if (row >= 0)
+                return true;
+
             return false;
         }
 
@@ -115,6 +158,40 @@ namespace SudokuRoguelike.Sudoku
             }
 
             return true;
+        }
+
+        private static bool ExistingCellsAreValid(SudokuBoard board, ModifierOverlayData overlay,
+            SudokuConstraintEngine engine,
+            GenerationDeadline deadline = default)
+        {
+            var size = board.Size;
+            for (var r = 0; r < size; r++)
+            for (var c = 0; c < size; c++)
+            {
+                deadline.ThrowIfExceeded();
+                var value = board.Cells[r, c];
+                if (value == 0) continue;
+                if (value < 1 || value > size) return false;
+
+                board.Cells[r, c] = 0;
+                var valid = engine != null
+                    ? engine.ValidateAll(board, r, c, value, overlay)
+                    : SudokuValidator.IsMoveValid(board, r, c, value);
+                board.Cells[r, c] = value;
+
+                if (!valid) return false;
+            }
+
+            return true;
+        }
+
+        private static bool IsCandidateValid(SudokuBoard board, ModifierOverlayData overlay,
+            SudokuConstraintEngine engine, int row, int col, int value)
+        {
+            if (!IsPlacementValid(board.Cells, board.RegionMap, board.Size, row, col, value))
+                return false;
+
+            return engine == null || engine.ValidateAll(board, row, col, value, overlay);
         }
     }
 }

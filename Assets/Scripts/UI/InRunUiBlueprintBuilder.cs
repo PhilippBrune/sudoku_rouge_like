@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using SudokuRoguelike.Core;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem.UI;
 #endif
@@ -9,6 +10,9 @@ namespace SudokuRoguelike.UI
 {
     public sealed class InRunUiBlueprintBuilder : MonoBehaviour
     {
+        // Unified dark box color used across the Sudoku Puzzle screen.
+        private static readonly Color ScrimColor = InRunUiFactory.SudokuPuzzleBoxBg;
+
         private RunMapController runMapController;
 
         private Color panelColor;
@@ -19,6 +23,9 @@ namespace SudokuRoguelike.UI
         private int titleFontSize;
         private int bodyFontSize;
         private int smallFontSize;
+
+        private static string T(string key, string englishFallback = null) =>
+            LocalizationService.T(key, englishFallback);
 
         private void Awake()
         {
@@ -76,9 +83,14 @@ namespace SudokuRoguelike.UI
             sudokuPanel.SetActive(false);
             inGameOptionsPanel.SetActive(false);
             tutorialLabel.gameObject.SetActive(false);
+            if (tutorialLabel.transform.parent != null)
+                tutorialLabel.transform.parent.gameObject.SetActive(false);
 
             if (runMapController == null)
                 runMapController = EnsureComponent<RunMapController>(root.gameObject);
+
+            var tutorialBanner = EnsureComponent<TutorialRunBannerController>(root.gameObject);
+            tutorialBanner.Configure(runMapController, tutorialLabel);
 
             runScreen.Configure(runMapController, root);
         }
@@ -106,7 +118,8 @@ namespace SudokuRoguelike.UI
 
             var controller = EnsureComponent<EventChoiceScreenController>(panel);
 
-            var title = BuildText("PromptText", panel.transform as RectTransform, "Event", titleFontSize, TextAnchor.UpperLeft);
+            var title = BuildText("PromptText", panel.transform as RectTransform,
+                T("InRun.Blueprint.EventTitle", "Event"), titleFontSize, TextAnchor.UpperLeft);
             SetRect(title.rectTransform, new Vector2(0.04f, 0.72f), new Vector2(0.96f, 0.95f), Vector2.zero, Vector2.zero);
 
             var optionsArea = EnsureRect("OptionsRoot", panel.transform as RectTransform, new Vector2(0.04f, 0.22f), new Vector2(0.96f, 0.70f), Vector2.zero, Vector2.zero);
@@ -123,7 +136,7 @@ namespace SudokuRoguelike.UI
             var result = BuildText("ResultText", panel.transform as RectTransform, string.Empty, smallFontSize, TextAnchor.LowerLeft);
             SetRect(result.rectTransform, new Vector2(0.04f, 0.06f), new Vector2(0.75f, 0.18f), Vector2.zero, Vector2.zero);
 
-            var closeButton = BuildButton("CloseButton", panel.transform as RectTransform, "Back", bodyFontSize);
+            var closeButton = BuildButton("CloseButton", panel.transform as RectTransform, T("Back", "Back"), bodyFontSize);
             SetRect(closeButton.GetComponent<RectTransform>(), new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
             ApplyButtonIcon(closeButton, "back_leaf", "ui"); // F16: back/close uses dedicated back_leaf icon
 
@@ -139,7 +152,8 @@ namespace SudokuRoguelike.UI
             EnsureOrGetImage(panel, panelColor);
             var controller = EnsureComponent<CursePanelController>(panel);
 
-            var title = BuildText("TitleText", panel.transform as RectTransform, "Curses (0)", bodyFontSize, TextAnchor.UpperLeft);
+            var title = BuildText("TitleText", panel.transform as RectTransform,
+                LocalizationService.Format("InRun.Curse.Title", "Curses ({0})", 0), bodyFontSize, TextAnchor.UpperLeft);
             SetRect(title.rectTransform, new Vector2(0.06f, 0.80f), new Vector2(0.94f, 0.96f), Vector2.zero, Vector2.zero);
 
             // Icon column on the left — CursePanelController populates it dynamically per curse
@@ -151,7 +165,8 @@ namespace SudokuRoguelike.UI
             iconColRt.offsetMin = iconColRt.offsetMax = Vector2.zero;
 
             // List text shifted right to leave room for icons
-            var list = BuildText("CurseListText", panel.transform as RectTransform, "No active curses.", smallFontSize, TextAnchor.UpperLeft);
+            var list = BuildText("CurseListText", panel.transform as RectTransform,
+                T("InRun.Curse.None", "No active curses."), smallFontSize, TextAnchor.UpperLeft);
             SetRect(list.rectTransform, new Vector2(0.22f, 0.22f), new Vector2(0.94f, 0.78f), Vector2.zero, Vector2.zero);
 
             controller.Configure(title, list, iconColRt);
@@ -163,21 +178,26 @@ namespace SudokuRoguelike.UI
             var panel = EnsureRect("DebugControlsPanel", root, new Vector2(0.32f, 0.58f), new Vector2(0.98f, 0.74f), Vector2.zero, Vector2.zero).gameObject;
             EnsureOrGetImage(panel, panelColor);
 
-            var title = BuildText("DebugTitle", panel.transform as RectTransform, "Garden Paths", bodyFontSize, TextAnchor.UpperLeft);
+            var title = BuildText("DebugTitle", panel.transform as RectTransform,
+                T("InRun.Blueprint.PathDebugTitle", "Garden Paths"), bodyFontSize, TextAnchor.UpperLeft);
             SetRect(title.rectTransform, new Vector2(0.02f, 0.66f), new Vector2(0.20f, 0.96f), Vector2.zero, Vector2.zero);
 
-            var hint = BuildText("PathPreviewText", panel.transform as RectTransform, "Path A/B previews appear here.", smallFontSize, TextAnchor.UpperLeft);
+            var hint = BuildText("PathPreviewText", panel.transform as RectTransform,
+                T("InRun.Blueprint.PathPreviewHint", "Path A/B previews appear here."), smallFontSize, TextAnchor.UpperLeft);
             SetRect(hint.rectTransform, new Vector2(0.22f, 0.10f), new Vector2(0.64f, 0.92f), Vector2.zero, Vector2.zero);
 
-            var calmPath = BuildButton("BtnPathA", panel.transform as RectTransform, "Path A (A)", smallFontSize);
+            var calmPath = BuildButton("BtnPathA", panel.transform as RectTransform,
+                T("InRun.Blueprint.PathA", "Path A (A)"), smallFontSize);
             SetRect(calmPath.GetComponent<RectTransform>(), new Vector2(0.66f, 0.52f), new Vector2(0.79f, 0.88f), Vector2.zero, Vector2.zero);
             ApplyButtonIcon(calmPath, "bud", "meta");
 
-            var riskyPath = BuildButton("BtnPathB", panel.transform as RectTransform, "Path B (B)", smallFontSize);
+            var riskyPath = BuildButton("BtnPathB", panel.transform as RectTransform,
+                T("InRun.Blueprint.PathB", "Path B (B)"), smallFontSize);
             SetRect(riskyPath.GetComponent<RectTransform>(), new Vector2(0.80f, 0.52f), new Vector2(0.93f, 0.88f), Vector2.zero, Vector2.zero);
             ApplyButtonIcon(riskyPath, "golden_koi", "items");
 
-            var quitAndSave = BuildButton("BtnQuitSave", panel.transform as RectTransform, "Save & Quit", smallFontSize);
+            var quitAndSave = BuildButton("BtnQuitSave", panel.transform as RectTransform,
+                T("InRun.Path.SaveAndQuit", "Save & Quit"), smallFontSize);
             SetRect(quitAndSave.GetComponent<RectTransform>(), new Vector2(0.66f, 0.10f), new Vector2(0.93f, 0.46f), Vector2.zero, Vector2.zero);
             ApplyButtonIcon(quitAndSave, "ink_save", "ui");
 
@@ -190,7 +210,8 @@ namespace SudokuRoguelike.UI
             var panel = EnsureRect("SudokuBoardPanel", root, new Vector2(0.02f, 0.10f), new Vector2(0.30f, 0.56f), Vector2.zero, Vector2.zero).gameObject;
             EnsureOrGetImage(panel, panelColor);
 
-            var title = BuildText("SudokuBoardTitle", panel.transform as RectTransform, "Sudoku Board", bodyFontSize, TextAnchor.UpperCenter);
+            var title = BuildText("SudokuBoardTitle", panel.transform as RectTransform,
+                T("InRun.Blueprint.SudokuBoardTitle", "Sudoku Board"), bodyFontSize, TextAnchor.UpperCenter);
             SetRect(title.rectTransform, new Vector2(0.04f, 0.88f), new Vector2(0.96f, 0.98f), Vector2.zero, Vector2.zero);
 
             boardText = BuildText("SudokuBoardText", panel.transform as RectTransform, "", smallFontSize, TextAnchor.UpperLeft);
@@ -221,27 +242,34 @@ namespace SudokuRoguelike.UI
             // Dark scrim behind the center-top info band — created before the title so it renders beneath it.
             var infoScrim = EnsureRect("InfoScrimBg", panel.transform as RectTransform,
                 new Vector2(0.22f, 0.79f), new Vector2(0.70f, 1.00f), Vector2.zero, Vector2.zero);
-            var infoScrimImg = EnsureOrGetImage(infoScrim.gameObject, new Color(0.04f, 0.06f, 0.09f, 0.50f));
+            var infoScrimImg = EnsureOrGetImage(infoScrim.gameObject, ScrimColor);
             infoScrimImg.raycastTarget = false;
 
             // Title is a child of InfoScrimBg so it always renders above the scrim and can't drift out of it.
             // Anchors within the scrim: top 67–100% maps to panel y=0.93–1.00 within scrim y=0.79–1.00.
-            var title = BuildText("SudokuGameplayTitle", infoScrim, "Sudoku Puzzle", 34, TextAnchor.UpperCenter);
+            var title = BuildText("SudokuGameplayTitle", infoScrim,
+                T("InRun.Blueprint.SudokuGameplayTitle", "Sudoku Puzzle"), 34, TextAnchor.UpperCenter);
             SetRect(title.rectTransform, new Vector2(0.03f, 0.66f), new Vector2(0.97f, 1.00f), Vector2.zero, Vector2.zero);
 
-            var levelInfo = BuildText("SudokuGameplayLevelInfo", panel.transform as RectTransform, "Level: -  Depth: -", 18, TextAnchor.MiddleCenter);
+            var levelInfo = BuildText("SudokuGameplayLevelInfo", panel.transform as RectTransform,
+                T("InRun.Blueprint.LevelDepthPlaceholder", "Level: -  Depth: -"), 18, TextAnchor.MiddleCenter);
             SetRect(levelInfo.rectTransform, new Vector2(0.22f, 0.83f), new Vector2(0.70f, 0.875f), Vector2.zero, Vector2.zero);
 
-            statusText = BuildText("SudokuGameplayStatus", panel.transform as RectTransform, "Select a path and start solving.", 19, TextAnchor.MiddleLeft);
+            statusText = BuildText("SudokuGameplayStatus", panel.transform as RectTransform,
+                T("InRun.Blueprint.SelectPathStatus", "Select a path and start solving."), 19, TextAnchor.MiddleLeft);
             SetRect(statusText.rectTransform, new Vector2(0.22f, 0.79f), new Vector2(0.70f, 0.83f), Vector2.zero, Vector2.zero);
 
             // Unified scrim covering class badge + HP + Pencil, all within BAG column width
             var hpPencilScrim = EnsureRect("HpPencilScrim", panel.transform as RectTransform,
                 new Vector2(0.01f, 0.75f), new Vector2(0.21f, 1.00f), Vector2.zero, Vector2.zero);
-            var hpPencilScrimImg = EnsureOrGetImage(hpPencilScrim.gameObject, new Color(0.04f, 0.05f, 0.08f, 0.50f));
+            var hpPencilScrimImg = EnsureOrGetImage(hpPencilScrim.gameObject, ScrimColor);
             hpPencilScrimImg.raycastTarget = false;
+            // Remove any stray Outline component that produces a double-border effect
+            var scrimOutline = hpPencilScrim.GetComponent<UnityEngine.UI.Outline>();
+            if (scrimOutline != null) UnityEngine.Object.Destroy(scrimOutline);
 
-            hpText = BuildText("SudokuGameplayHp", panel.transform as RectTransform, "HP: -", 18, TextAnchor.MiddleLeft);
+            hpText = BuildText("SudokuGameplayHp", panel.transform as RectTransform,
+                T("InRun.Blueprint.HpPlaceholder", "HP: -"), 18, TextAnchor.MiddleLeft);
             SetRect(hpText.rectTransform, new Vector2(0.02f, 0.85f), new Vector2(0.09f, 0.89f), Vector2.zero, Vector2.zero);
 
             var hpBarBgRect = EnsureRect("HpBarBg", panel.transform as RectTransform, new Vector2(0.09f, 0.847f), new Vector2(0.20f, 0.878f), Vector2.zero, Vector2.zero);
@@ -263,7 +291,8 @@ namespace SudokuRoguelike.UI
             hpBarFillImg.fillAmount = 1f;
             hpBarFillImg.raycastTarget = false;
 
-            pencilText = BuildText("SudokuGameplayPencil", panel.transform as RectTransform, "Pencil: -", 18, TextAnchor.MiddleLeft);
+            pencilText = BuildText("SudokuGameplayPencil", panel.transform as RectTransform,
+                T("InRun.Blueprint.PencilPlaceholder", "Pencil: -"), 18, TextAnchor.MiddleLeft);
             SetRect(pencilText.rectTransform, new Vector2(0.02f, 0.79f), new Vector2(0.09f, 0.83f), Vector2.zero, Vector2.zero);
 
             var pencilBarBgRect = EnsureRect("PencilBarBg", panel.transform as RectTransform, new Vector2(0.09f, 0.777f), new Vector2(0.20f, 0.808f), Vector2.zero, Vector2.zero);
@@ -285,22 +314,52 @@ namespace SudokuRoguelike.UI
             pencilBarFillImg.fillAmount = 1f;
             pencilBarFillImg.raycastTarget = false;
 
-            saveQuit = BuildButton("BtnSudokuSaveQuit", panel.transform as RectTransform, "Save & Quit", 18);
+            saveQuit = BuildButton("BtnSudokuSaveQuit", panel.transform as RectTransform,
+                T("InRun.Path.SaveAndQuit", "Save & Quit"), 18);
             SetRect(saveQuit.GetComponent<RectTransform>(), new Vector2(0.74f, 0.01f), new Vector2(0.93f, 0.08f), Vector2.zero, Vector2.zero);
             ApplyButtonIcon(saveQuit, "ink_save", "ui");
+            var sqShortcut = BuildText("ShortcutLabel", saveQuit.GetComponent<RectTransform>(), "(Q)", 10, TextAnchor.LowerRight);
+            SetRect(sqShortcut.rectTransform, new Vector2(0.60f, 0.05f), new Vector2(0.98f, 0.48f), Vector2.zero, Vector2.zero);
+            sqShortcut.color = GamePalette.TextMuted;
 
-            optionsButton = BuildButton("BtnSudokuOptions", panel.transform as RectTransform, "Options", 18);
+            optionsButton = BuildButton("BtnSudokuOptions", panel.transform as RectTransform, T("Options", "Options"), 18);
             SetRect(optionsButton.GetComponent<RectTransform>(), new Vector2(0.74f, 0.34f), new Vector2(0.93f, 0.41f), Vector2.zero, Vector2.zero);
             ApplyButtonIcon(optionsButton, "stone_gear", "ui");
+            var optShortcut = BuildText("ShortcutLabel", optionsButton.GetComponent<RectTransform>(), "(O)", 10, TextAnchor.LowerRight);
+            SetRect(optShortcut.rectTransform, new Vector2(0.60f, 0.05f), new Vector2(0.98f, 0.48f), Vector2.zero, Vector2.zero);
+            optShortcut.color = GamePalette.TextMuted;
+
+            // Keyboard nav: Save&Quit ↔ Options (vertical pair)
+            InRunUiFactory.ApplyFocusColors(saveQuit);
+            InRunUiFactory.ApplyFocusColors(optionsButton);
+            var sqNav = saveQuit.navigation;
+            sqNav.mode = Navigation.Mode.Explicit;
+            sqNav.selectOnUp = optionsButton;
+            saveQuit.navigation = sqNav;
+            var optNav = optionsButton.navigation;
+            optNav.mode = Navigation.Mode.Explicit;
+            optNav.selectOnDown = saveQuit;
+            optionsButton.navigation = optNav;
 
             gridRoot = EnsureRect("SudokuGameplayGridRoot", panel.transform as RectTransform, new Vector2(0.22f, 0.16f), new Vector2(0.70f, 0.76f), Vector2.zero, Vector2.zero);
-            EnsureOrGetImage(gridRoot.gameObject, new Color(0f, 0f, 0f, 0.20f));
+            EnsureOrGetImage(gridRoot.gameObject, InRunUiFactory.SudokuPuzzleBoxBg);
 
             numpadRoot = EnsureRect("SudokuGameplayNumpadRoot", panel.transform as RectTransform, new Vector2(0.74f, 0.42f), new Vector2(0.93f, 0.72f), Vector2.zero, Vector2.zero);
-            EnsureOrGetImage(numpadRoot.gameObject, new Color(0f, 0f, 0f, 0.20f));
+            EnsureOrGetImage(numpadRoot.gameObject, InRunUiFactory.SudokuPuzzleBoxBg);
 
-            var hint = BuildText("SudokuGameplayHint", panel.transform as RectTransform, "Use numpad buttons or keyboard 1-9.\nSingle click: select cell\nDouble click filled cell: highlight same numbers", 20, TextAnchor.UpperLeft);
-            SetRect(hint.rectTransform, new Vector2(0.74f, 0.73f), new Vector2(0.93f, 0.84f), Vector2.zero, Vector2.zero);
+            var hintBg = EnsureRect("SudokuGameplayHintBg", panel.transform as RectTransform,
+                new Vector2(0.74f, 0.725f), new Vector2(0.93f, 0.845f), Vector2.zero, Vector2.zero);
+            var hintBgImg = EnsureOrGetImage(hintBg.gameObject, InRunUiFactory.SudokuPuzzleBoxBg);
+            hintBgImg.raycastTarget = false;
+
+            var hint = BuildText("SudokuGameplayHint", panel.transform as RectTransform,
+                T("InRun.Blueprint.PuzzleHint", "Use numpad buttons or keyboard 1-9.\nSingle click: select cell\nDouble click filled cell: highlight same numbers"),
+                18, TextAnchor.UpperLeft);
+            SetRect(hint.rectTransform, new Vector2(0.745f, 0.73f), new Vector2(0.925f, 0.84f), Vector2.zero, Vector2.zero);
+            hint.color = GamePalette.TextPrimary;
+            var hintShadow = hint.gameObject.AddComponent<Shadow>();
+            hintShadow.effectColor = new Color(0f, 0f, 0f, 0.65f);
+            hintShadow.effectDistance = new Vector2(1f, -1f);
 
             var bossDesc = BuildText("SudokuGameplayBossDesc", panel.transform as RectTransform, string.Empty, 20, TextAnchor.UpperLeft);
             SetRect(bossDesc.rectTransform, new Vector2(0.74f, 0.09f), new Vector2(0.93f, 0.33f), Vector2.zero, Vector2.zero);
@@ -312,7 +371,7 @@ namespace SudokuRoguelike.UI
         {
             Text summaryText, detailsText;
             Button backButton;
-            var panel = EnsureRect("GameOverPanel", root, new Vector2(0.20f, 0.18f), new Vector2(0.80f, 0.82f), Vector2.zero, Vector2.zero).gameObject;
+            var panel = EnsureRect("GameOverPanel", root, new Vector2(0.05f, 0.06f), new Vector2(0.95f, 0.94f), Vector2.zero, Vector2.zero).gameObject;
             EnsureOrGetImage(panel, new Color(0.10f, 0.06f, 0.06f, 0.40f)); // scrim: bg_victory/bg_defeat loaded at runtime
             InRunUiFactory.AddPanelBackground(panel.transform, ""); // texture set in EndScreenViewController.ShowGameOver
             var panelOutline = EnsureComponent<Outline>(panel);
@@ -320,17 +379,30 @@ namespace SudokuRoguelike.UI
             panelOutline.effectDistance = new Vector2(2f, -2f);
 
             // Dynamic title — "Game Over" or "Victory!" set at runtime
-            summaryText = BuildText("GameOverTitle", panel.transform as RectTransform, "Game Over", 34, TextAnchor.UpperCenter);
+            summaryText = BuildText("GameOverTitle", panel.transform as RectTransform,
+                T("InRun.Blueprint.GameOverTitle", "Game Over"), 34, TextAnchor.UpperCenter);
             summaryText.fontStyle = FontStyle.Bold;
-            SetRect(summaryText.rectTransform, new Vector2(0.06f, 0.84f), new Vector2(0.94f, 0.97f), Vector2.zero, Vector2.zero);
+            SetRect(summaryText.rectTransform, new Vector2(0.06f, 0.88f), new Vector2(0.94f, 0.97f), Vector2.zero, Vector2.zero);
+            var titleShadow = EnsureComponent<Shadow>(summaryText.gameObject);
+            titleShadow.effectColor = new Color(0f, 0f, 0f, 0.80f);
+            titleShadow.effectDistance = new Vector2(1f, -1f);
 
             // Details: runs, XP, level progress — larger area for readability
-            detailsText = BuildText("GameOverDetails", panel.transform as RectTransform, string.Empty, 14, TextAnchor.UpperLeft);
-            SetRect(detailsText.rectTransform, new Vector2(0.08f, 0.20f), new Vector2(0.92f, 0.82f), Vector2.zero, Vector2.zero);
-            detailsText.lineSpacing = 1.2f;
+            var detailsScrim = EnsureRect("GameOverDetailsScrim", panel.transform as RectTransform,
+                new Vector2(0.06f, 0.06f), new Vector2(0.60f, 0.84f), Vector2.zero, Vector2.zero);
+            var detailsScrimImg = EnsureOrGetImage(detailsScrim.gameObject, new Color(0.03f, 0.025f, 0.02f, 0.68f));
+            detailsScrimImg.raycastTarget = false;
 
-            backButton = BuildButton("BtnGameOverBack", panel.transform as RectTransform, "Back", 18);
-            SetRect(backButton.GetComponent<RectTransform>(), new Vector2(0.54f, 0.04f), new Vector2(0.90f, 0.12f), Vector2.zero, Vector2.zero);
+            detailsText = BuildText("GameOverDetails", panel.transform as RectTransform, string.Empty, 14, TextAnchor.UpperLeft);
+            SetRect(detailsText.rectTransform, new Vector2(0.08f, 0.09f), new Vector2(0.58f, 0.81f), Vector2.zero, Vector2.zero);
+            detailsText.color = InRunUiFactory.WarmIvory;
+            detailsText.lineSpacing = 1.18f;
+            var detailsShadow = EnsureComponent<Shadow>(detailsText.gameObject);
+            detailsShadow.effectColor = new Color(0f, 0f, 0f, 0.85f);
+            detailsShadow.effectDistance = new Vector2(1f, -1f);
+
+            backButton = BuildButton("BtnGameOverBack", panel.transform as RectTransform, T("Back", "Back"), 18);
+            SetRect(backButton.GetComponent<RectTransform>(), new Vector2(0.66f, 0.06f), new Vector2(0.93f, 0.15f), Vector2.zero, Vector2.zero);
             ApplyButtonIcon(backButton, "back_leaf", "ui"); // F16: back/close uses dedicated back_leaf icon
         }
 
@@ -338,22 +410,26 @@ namespace SudokuRoguelike.UI
         {
             var optCtrl = EnsureComponent<OptionsController>(gameObject);
 
-            var panel = EnsureRect("InGameOptionsPanel", root, new Vector2(0.18f, 0.08f), new Vector2(0.82f, 0.94f), Vector2.zero, Vector2.zero).gameObject;
-            EnsureOrGetImage(panel, new Color(panelColor.r, panelColor.g, panelColor.b, 0.40f)); // scrim: bg_menu_pause shows through
-            InRunUiFactory.AddPanelBackground(panel.transform, "bg_menu_pause");
+            var panel = EnsureRect("InGameOptionsPanel", root, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero).gameObject;
+            EnsureOrGetImage(panel, new Color(0.055f, 0.07f, 0.065f, 1f));
+            InRunUiFactory.ClearNamedChildren(panel.transform, "PanelBackground");
 
             var pr = panel.transform as RectTransform;
             var opts = optCtrl.GetOptions();
 
-            var title = BuildText("InGameOptionsTitle", pr, "Options", 28, TextAnchor.UpperCenter);
+            var title = BuildText("InGameOptionsTitle", pr, T("Options", "Options"), 28, TextAnchor.UpperCenter);
             SetRect(title.rectTransform, new Vector2(0.08f, 0.93f), new Vector2(0.92f, 0.99f), Vector2.zero, Vector2.zero);
 
             // ── Audio ──
-            var audioHdr = BuildText("IGAudioHdr", pr, "Audio", 17, TextAnchor.MiddleLeft);
+            var audioHdr = BuildText("IGAudioHdr", pr, T("Audio", "Audio"), 17, TextAnchor.MiddleLeft);
             audioHdr.color = new Color(0.75f, 0.72f, 0.55f, 1f);
             SetRect(audioHdr.rectTransform, new Vector2(0.05f, 0.88f), new Vector2(0.95f, 0.92f), Vector2.zero, Vector2.zero);
 
-            var masterLabel = BuildText("IGMasterLabel", pr, "Master Volume", 15, TextAnchor.MiddleLeft);
+            string FormatPercent(float value) => Mathf.RoundToInt(Mathf.Clamp01(value) * 100f) + "%";
+            string FormatAudioLabel(string label, float value) => label + " " + FormatPercent(value);
+
+            var masterText = T("Master Volume", "Master Volume");
+            var masterLabel = BuildText("IGMasterLabel", pr, FormatAudioLabel(masterText, opts.Audio.MasterVolume), 15, TextAnchor.MiddleLeft);
             SetRect(masterLabel.rectTransform, new Vector2(0.05f, 0.84f), new Vector2(0.48f, 0.88f), Vector2.zero, Vector2.zero);
             var masterSlider = BuildSlider("IGMasterSlider", pr);
             SetRect(masterSlider.GetComponent<RectTransform>(), new Vector2(0.05f, 0.80f), new Vector2(0.48f, 0.84f), Vector2.zero, Vector2.zero);
@@ -361,8 +437,18 @@ namespace SudokuRoguelike.UI
             masterSlider.maxValue = 1f;
             masterSlider.SetValueWithoutNotify(opts.Audio.MasterVolume);
             masterSlider.onValueChanged.AddListener(v => optCtrl.SetMasterVolume(v));
+            var masterPct = BuildText("IGMasterPct", pr, FormatPercent(opts.Audio.MasterVolume), 13, TextAnchor.MiddleRight);
+            SetRect(masterPct.rectTransform, new Vector2(0.38f, 0.84f), new Vector2(0.48f, 0.88f), Vector2.zero, Vector2.zero);
+            masterPct.color = GamePalette.TextMuted;
+            masterPct.raycastTarget = false;
+            masterSlider.onValueChanged.AddListener(v =>
+            {
+                masterLabel.text = FormatAudioLabel(masterText, v);
+                masterPct.text = FormatPercent(v);
+            });
 
-            var musicLabel = BuildText("IGMusicLabel", pr, "Music Volume", 15, TextAnchor.MiddleLeft);
+            var musicText = T("Music Volume", "Music Volume");
+            var musicLabel = BuildText("IGMusicLabel", pr, FormatAudioLabel(musicText, opts.Audio.MusicVolume), 15, TextAnchor.MiddleLeft);
             SetRect(musicLabel.rectTransform, new Vector2(0.52f, 0.84f), new Vector2(0.95f, 0.88f), Vector2.zero, Vector2.zero);
             var musicSlider = BuildSlider("IGMusicSlider", pr);
             SetRect(musicSlider.GetComponent<RectTransform>(), new Vector2(0.52f, 0.80f), new Vector2(0.95f, 0.84f), Vector2.zero, Vector2.zero);
@@ -370,37 +456,76 @@ namespace SudokuRoguelike.UI
             musicSlider.maxValue = 1f;
             musicSlider.SetValueWithoutNotify(opts.Audio.MusicVolume);
             musicSlider.onValueChanged.AddListener(v => optCtrl.SetMusicVolume(v));
+            var musicPct = BuildText("IGMusicPct", pr, FormatPercent(opts.Audio.MusicVolume), 13, TextAnchor.MiddleRight);
+            SetRect(musicPct.rectTransform, new Vector2(0.85f, 0.84f), new Vector2(0.95f, 0.88f), Vector2.zero, Vector2.zero);
+            musicPct.color = GamePalette.TextMuted;
+            musicPct.raycastTarget = false;
+            musicSlider.onValueChanged.AddListener(v =>
+            {
+                musicLabel.text = FormatAudioLabel(musicText, v);
+                musicPct.text = FormatPercent(v);
+            });
 
-            var sfxLabel = BuildText("IGSfxLabel", pr, "SFX Volume", 15, TextAnchor.MiddleLeft);
-            SetRect(sfxLabel.rectTransform, new Vector2(0.05f, 0.75f), new Vector2(0.95f, 0.79f), Vector2.zero, Vector2.zero);
+            var sfxText = T("SFX Volume", "SFX Volume");
+            var sfxLabel = BuildText("IGSfxLabel", pr, FormatAudioLabel(sfxText, opts.Audio.SfxVolume), 15, TextAnchor.MiddleLeft);
+            SetRect(sfxLabel.rectTransform, new Vector2(0.05f, 0.75f), new Vector2(0.48f, 0.79f), Vector2.zero, Vector2.zero);
             var sfxSlider = BuildSlider("IGSfxSlider", pr);
-            SetRect(sfxSlider.GetComponent<RectTransform>(), new Vector2(0.05f, 0.71f), new Vector2(0.95f, 0.75f), Vector2.zero, Vector2.zero);
+            SetRect(sfxSlider.GetComponent<RectTransform>(), new Vector2(0.05f, 0.71f), new Vector2(0.48f, 0.75f), Vector2.zero, Vector2.zero);
             sfxSlider.minValue = 0f;
             sfxSlider.maxValue = 1f;
             sfxSlider.SetValueWithoutNotify(opts.Audio.SfxVolume);
             sfxSlider.onValueChanged.AddListener(v => optCtrl.SetSfxVolume(v));
+            var sfxPct = BuildText("IGSfxPct", pr, FormatPercent(opts.Audio.SfxVolume), 13, TextAnchor.MiddleRight);
+            SetRect(sfxPct.rectTransform, new Vector2(0.38f, 0.75f), new Vector2(0.48f, 0.79f), Vector2.zero, Vector2.zero);
+            sfxPct.color = GamePalette.TextMuted;
+            sfxPct.raycastTarget = false;
+            sfxSlider.onValueChanged.AddListener(v =>
+            {
+                sfxLabel.text = FormatAudioLabel(sfxText, v);
+                sfxPct.text = FormatPercent(v);
+            });
 
-            var muteTgl = BuildToggle("IGMuteWhenUnfocusedToggle", pr, "Mute When Unfocused");
+            var uiText = T("UI Volume", "UI Volume");
+            var uiLabel = BuildText("IGUiLabel", pr, FormatAudioLabel(uiText, opts.Audio.UiVolume), 15, TextAnchor.MiddleLeft);
+            SetRect(uiLabel.rectTransform, new Vector2(0.52f, 0.75f), new Vector2(0.95f, 0.79f), Vector2.zero, Vector2.zero);
+            var uiSlider = BuildSlider("IGUiSlider", pr);
+            SetRect(uiSlider.GetComponent<RectTransform>(), new Vector2(0.52f, 0.71f), new Vector2(0.95f, 0.75f), Vector2.zero, Vector2.zero);
+            uiSlider.minValue = 0f;
+            uiSlider.maxValue = 1f;
+            uiSlider.SetValueWithoutNotify(opts.Audio.UiVolume);
+            uiSlider.onValueChanged.AddListener(v => optCtrl.SetUiVolume(v));
+            var uiPct = BuildText("IGUiPct", pr, FormatPercent(opts.Audio.UiVolume), 13, TextAnchor.MiddleRight);
+            SetRect(uiPct.rectTransform, new Vector2(0.85f, 0.75f), new Vector2(0.95f, 0.79f), Vector2.zero, Vector2.zero);
+            uiPct.color = GamePalette.TextMuted;
+            uiPct.raycastTarget = false;
+            uiSlider.onValueChanged.AddListener(v =>
+            {
+                uiLabel.text = FormatAudioLabel(uiText, v);
+                uiPct.text = FormatPercent(v);
+            });
+
+            var muteTgl = BuildToggle("IGMuteWhenUnfocusedToggle", pr,
+                T("InRun.Options.MuteWhenUnfocused", "Mute When Unfocused"));
             SetRect(muteTgl.GetComponent<RectTransform>(), new Vector2(0.05f, 0.66f), new Vector2(0.50f, 0.70f), Vector2.zero, Vector2.zero);
             muteTgl.SetIsOnWithoutNotify(opts.Audio.MuteWhenUnfocused);
             muteTgl.onValueChanged.AddListener(v => optCtrl.SetMuteWhenUnfocused(v));
 
             // ── Display ──
-            var displayHdr = BuildText("IGDisplayHdr", pr, "Display", 17, TextAnchor.MiddleLeft);
+            var displayHdr = BuildText("IGDisplayHdr", pr, T("Display", "Display"), 17, TextAnchor.MiddleLeft);
             displayHdr.color = new Color(0.75f, 0.72f, 0.55f, 1f);
             SetRect(displayHdr.rectTransform, new Vector2(0.05f, 0.61f), new Vector2(0.95f, 0.65f), Vector2.zero, Vector2.zero);
 
-            var fullscreenTgl = BuildToggle("IGFullscreenToggle", pr, "Fullscreen");
+            var fullscreenTgl = BuildToggle("IGFullscreenToggle", pr, T("Fullscreen", "Fullscreen"));
             SetRect(fullscreenTgl.GetComponent<RectTransform>(), new Vector2(0.05f, 0.56f), new Vector2(0.50f, 0.60f), Vector2.zero, Vector2.zero);
             fullscreenTgl.SetIsOnWithoutNotify(opts.Graphics.Fullscreen);
             fullscreenTgl.onValueChanged.AddListener(v => optCtrl.SetFullscreen(v));
 
             // ── Gameplay ──
-            var gameHdr = BuildText("IGGameHdr", pr, "Gameplay", 17, TextAnchor.MiddleLeft);
+            var gameHdr = BuildText("IGGameHdr", pr, T("Gameplay", "Gameplay"), 17, TextAnchor.MiddleLeft);
             gameHdr.color = new Color(0.75f, 0.72f, 0.55f, 1f);
             SetRect(gameHdr.rectTransform, new Vector2(0.05f, 0.51f), new Vector2(0.95f, 0.55f), Vector2.zero, Vector2.zero);
 
-            var highlightToggle = BuildToggle("IGHighlightToggle", pr, "Highlight Errors");
+            var highlightToggle = BuildToggle("IGHighlightToggle", pr, T("Highlight Errors", "Highlight Errors"));
             SetRect(highlightToggle.GetComponent<RectTransform>(), new Vector2(0.05f, 0.46f), new Vector2(0.50f, 0.50f), Vector2.zero, Vector2.zero);
             highlightToggle.SetIsOnWithoutNotify(opts.Gameplay.HighlightConflicts);
             highlightToggle.onValueChanged.AddListener(v =>
@@ -411,33 +536,54 @@ namespace SudokuRoguelike.UI
             });
 
             // ── Accessibility ──
-            var accHdr = BuildText("IGAccHdr", pr, "Accessibility", 17, TextAnchor.MiddleLeft);
+            var accHdr = BuildText("IGAccHdr", pr, T("Accessibility", "Accessibility"), 17, TextAnchor.MiddleLeft);
             accHdr.color = new Color(0.75f, 0.72f, 0.55f, 1f);
             SetRect(accHdr.rectTransform, new Vector2(0.05f, 0.41f), new Vector2(0.95f, 0.45f), Vector2.zero, Vector2.zero);
 
-            var colorblindTgl = BuildToggle("IGColorblindToggle", pr, "Colorblind Mode");
+            var colorblindTgl = BuildToggle("IGColorblindToggle", pr, T("Colorblind Mode", "Colorblind Mode"));
             SetRect(colorblindTgl.GetComponent<RectTransform>(), new Vector2(0.05f, 0.36f), new Vector2(0.50f, 0.40f), Vector2.zero, Vector2.zero);
             colorblindTgl.SetIsOnWithoutNotify(opts.Accessibility.ColorblindMode);
             colorblindTgl.onValueChanged.AddListener(v => optCtrl.SetColorblindMode(v));
 
-            var highContrastTgl = BuildToggle("IGHighContrastToggle", pr, "High Contrast");
+            var highContrastTgl = BuildToggle("IGHighContrastToggle", pr, T("High Contrast", "High Contrast"));
             SetRect(highContrastTgl.GetComponent<RectTransform>(), new Vector2(0.52f, 0.36f), new Vector2(0.97f, 0.40f), Vector2.zero, Vector2.zero);
             highContrastTgl.SetIsOnWithoutNotify(opts.Accessibility.HighContrastMode);
             highContrastTgl.onValueChanged.AddListener(v => optCtrl.SetHighContrast(v));
 
-            var reduceMotionTgl = BuildToggle("IGReduceMotionToggle", pr, "Reduce Motion");
+            var reduceMotionTgl = BuildToggle("IGReduceMotionToggle", pr, T("Reduce Motion", "Reduce Motion"));
             SetRect(reduceMotionTgl.GetComponent<RectTransform>(), new Vector2(0.05f, 0.30f), new Vector2(0.50f, 0.34f), Vector2.zero, Vector2.zero);
             reduceMotionTgl.SetIsOnWithoutNotify(opts.Accessibility.ReduceMotion);
             reduceMotionTgl.onValueChanged.AddListener(v => optCtrl.SetReduceMotion(v));
 
-            var altSymbolsTgl = BuildToggle("IGAltSymbolsToggle", pr, "Alt Symbols");
+            var altSymbolsTgl = BuildToggle("IGAltSymbolsToggle", pr,
+                T("InRun.Options.AltSymbols", "Alt Symbols"));
             SetRect(altSymbolsTgl.GetComponent<RectTransform>(), new Vector2(0.52f, 0.30f), new Vector2(0.97f, 0.34f), Vector2.zero, Vector2.zero);
             altSymbolsTgl.SetIsOnWithoutNotify(opts.Accessibility.AlternativeConstraintSymbols);
             altSymbolsTgl.onValueChanged.AddListener(v => optCtrl.SetAltSymbols(v));
 
-            var closeBtn = BuildButton("BtnInGameOptionsClose", pr, "Back", 18);
+            var runScreen = root.GetComponent<InRunController>() ?? root.GetComponentInParent<InRunController>();
+            var saveQuitBtn = BuildButton("BtnInGameOptionsSaveQuit", pr, T("InRun.Options.SaveQuit", "Save & Quit"), 18);
+            SetRect(saveQuitBtn.GetComponent<RectTransform>(), new Vector2(0.05f, 0.01f), new Vector2(0.46f, 0.09f), Vector2.zero, Vector2.zero);
+            if (runScreen != null)
+                saveQuitBtn.onClick.AddListener(runScreen.SaveAndQuitPublic);
+
+            var closeBtn = BuildButton("BtnInGameOptionsClose", pr, T("Back", "Back"), 18);
             SetRect(closeBtn.GetComponent<RectTransform>(), new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
             ApplyButtonIcon(closeBtn, "back_leaf", "ui"); // F16: back/close uses dedicated back_leaf icon
+
+            // Apply gold focus highlight to all interactive elements
+            InRunUiFactory.ApplyFocusColors(masterSlider);
+            InRunUiFactory.ApplyFocusColors(musicSlider);
+            InRunUiFactory.ApplyFocusColors(sfxSlider);
+            InRunUiFactory.ApplyFocusColors(uiSlider);
+            InRunUiFactory.ApplyFocusColors(muteTgl);
+            InRunUiFactory.ApplyFocusColors(fullscreenTgl);
+            InRunUiFactory.ApplyFocusColors(highlightToggle);
+            InRunUiFactory.ApplyFocusColors(colorblindTgl);
+            InRunUiFactory.ApplyFocusColors(highContrastTgl);
+            InRunUiFactory.ApplyFocusColors(reduceMotionTgl);
+            InRunUiFactory.ApplyFocusColors(altSymbolsTgl);
+            InRunUiFactory.ApplyFocusColors(saveQuitBtn);
 
             return panel;
         }
@@ -449,7 +595,9 @@ namespace SudokuRoguelike.UI
             EnsureOrGetImage(bannerPanel, new Color(0.04f, 0.06f, 0.04f, 0.72f));
             // bg_tutorial_progress removed — the dark tinted Image above is sufficient background.
 
-            var label = BuildText("TutorialBanner", bannerPanel.transform as RectTransform, "TUTORIAL MODE\nNo Progression Rewards", bodyFontSize, TextAnchor.UpperRight);
+            var label = BuildText("TutorialBanner", bannerPanel.transform as RectTransform,
+                T("InRun.Blueprint.TutorialBanner", "TUTORIAL MODE\nNo Progression Rewards"),
+                bodyFontSize, TextAnchor.UpperRight);
             SetRect(label.rectTransform, new Vector2(0.02f, 0.04f), new Vector2(0.98f, 0.96f), Vector2.zero, Vector2.zero);
             label.color = accentColor;
             return label;
@@ -644,7 +792,7 @@ namespace SudokuRoguelike.UI
 
         // V2: delegates to InRunUiFactory.GetFont() so both builders use the same
         //     Resources/Fonts/MainFont.ttf path, falling back to the Unity built-in.
-        private static Font GetBuiltInFont() => InRunUiFactory.GetFont();
+        private static Font GetBuiltInFont() => FontAssetService.GetFont();
 
         private static Sprite BuildWhiteSprite()
         {

@@ -84,7 +84,7 @@ namespace SudokuRoguelike.UI
             textRect.offsetMax = new Vector2(-12f, -6f);
 
             _label = textGo.GetComponent<Text>();
-            _label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            _label.font = FontAssetService.GetFont();
             _label.fontSize = 14;
             _label.alignment = TextAnchor.MiddleLeft;
             _label.color = GamePalette.TextPrimary;

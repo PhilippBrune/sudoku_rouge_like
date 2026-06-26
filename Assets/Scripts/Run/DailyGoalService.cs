@@ -65,6 +65,29 @@ namespace SudokuRoguelike.Run
 
         public static GoalDefinition GetGoal(int index) => AllGoals[index];
 
+        public static string GetGoalDescription(GoalDefinition goal)
+        {
+            return goal == null
+                ? string.Empty
+                : LocalizationService.T($"Challenge.Daily.Goal.{goal.Id}.Description", goal.Description);
+        }
+
+        public static string GetRewardDescription(GoalDefinition goal)
+        {
+            return goal == null
+                ? string.Empty
+                : LocalizationService.T($"Challenge.Daily.Goal.{goal.Id}.Reward", goal.RewardDescription);
+        }
+
+        public static IEnumerable<string> GetLocalizationKeys()
+        {
+            for (var i = 0; i < AllGoals.Length; i++)
+            {
+                yield return $"Challenge.Daily.Goal.{AllGoals[i].Id}.Description";
+                yield return $"Challenge.Daily.Goal.{AllGoals[i].Id}.Reward";
+            }
+        }
+
         /// <summary>Returns today's 3 goal definitions from the state.</summary>
         public static GoalDefinition[] GetTodayGoals(DailyGoalState state)
         {
@@ -205,6 +228,38 @@ namespace SudokuRoguelike.Run
         public const string TriggerBossFloor3         = "boss_floor3";
         public const string TriggerRunWon             = "run_won";
         public const string TriggerNewClassUsed       = "new_class_used";
+
+        // ── Class-play tracking (for t3_new_class) ───────────────────────────
+
+        /// <summary>
+        /// Returns true when <paramref name="classId"/> has not been used in any run
+        /// for at least <paramref name="days"/> days, or has never been played.
+        /// </summary>
+        public static bool HasBeenUnusedForDays(DailyGoalState state, ClassId classId, DateTime today, int days = 7)
+        {
+            var id = (int)classId;
+            var idx = state.ClassLastPlayedIds.IndexOf(id);
+            if (idx < 0) return true; // never played → counts as unused
+            if (!DateTime.TryParse(state.ClassLastPlayedDates[idx], out var lastDate)) return true;
+            return (today - lastDate).TotalDays >= days;
+        }
+
+        /// <summary>Record that <paramref name="classId"/> was played on <paramref name="today"/>.</summary>
+        public static void RecordClassPlayed(DailyGoalState state, ClassId classId, DateTime today)
+        {
+            var id = (int)classId;
+            var idx = state.ClassLastPlayedIds.IndexOf(id);
+            var dateStr = today.ToString("yyyy-MM-dd");
+            if (idx < 0)
+            {
+                state.ClassLastPlayedIds.Add(id);
+                state.ClassLastPlayedDates.Add(dateStr);
+            }
+            else
+            {
+                state.ClassLastPlayedDates[idx] = dateStr;
+            }
+        }
 
         // ── Internal ─────────────────────────────────────────────────────────
 

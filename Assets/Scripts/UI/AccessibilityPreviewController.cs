@@ -40,6 +40,13 @@ namespace SudokuRoguelike.UI
         private readonly Text[,]   _cellText    = new Text[Size, Size];
         private readonly Text[,]   _pencilText  = new Text[Size, Size];
 
+        private Text _sampleTitle;
+        private Text _sampleBody;
+        private Text _sampleHint;
+        private const int BaseTitleSize = 20;
+        private const int BaseBodySize  = 13;
+        private const int BaseHintSize  = 10;
+
         private OptionsController _optCtrl;
 
         // ── Public API ───────────────────────────────────────────────────────
@@ -49,8 +56,19 @@ namespace SudokuRoguelike.UI
             _optCtrl = optCtrl;
             BuildBoard(GetComponent<RectTransform>());
             Refresh(optCtrl.GetOptions().Accessibility);
+            UpdateScale(optCtrl.GetOptions().Accessibility.FontScale);
             optCtrl.OnAccessibilityChanged += () => Refresh(_optCtrl.GetOptions().Accessibility);
             optCtrl.OnSlotChanged          += () => Refresh(_optCtrl.GetOptions().Accessibility);
+        }
+
+        public void UpdateScale(float scale)
+        {
+            if (_sampleTitle != null)
+                _sampleTitle.fontSize = Mathf.RoundToInt(BaseTitleSize * scale);
+            if (_sampleBody != null)
+                _sampleBody.fontSize = Mathf.RoundToInt(BaseBodySize * scale);
+            if (_sampleHint != null)
+                _sampleHint.fontSize = Mathf.RoundToInt(BaseHintSize * scale);
         }
 
         // ── Board construction ───────────────────────────────────────────────
@@ -62,16 +80,33 @@ namespace SudokuRoguelike.UI
             if (borderBg == null) borderBg = container.gameObject.AddComponent<Image>();
             borderBg.color = new Color(0.04f, 0.06f, 0.05f, 1f);
 
-            const float cellW = 1f / Size;
-            const float cellH = 1f / Size;
-            const float pad   = 0.01f;
+            // ── Text scale samples (lower 30% of preview) ────────────────────
+            var font = FontAssetService.GetFont();
+            _sampleTitle = MakeSampleText(container, "SampleTitle",
+                LocalizationService.T("Accessibility.Preview.SampleTitle", "Heading"), BaseTitleSize,
+                new Vector2(0.04f, 0.02f), new Vector2(0.96f, 0.16f), TextAnchor.MiddleLeft,
+                new Color(0.96f, 0.93f, 0.82f, 1f), font);
+            _sampleBody  = MakeSampleText(container, "SampleBody",
+                LocalizationService.T("Accessibility.Preview.SampleBody", "Body text example"), BaseBodySize,
+                new Vector2(0.04f, 0.14f), new Vector2(0.96f, 0.24f), TextAnchor.MiddleLeft,
+                new Color(0.80f, 0.78f, 0.68f, 1f), font);
+            _sampleHint  = MakeSampleText(container, "SampleHint",
+                LocalizationService.T("Accessibility.Preview.SampleHint", "Hint / small caption"), BaseHintSize,
+                new Vector2(0.04f, 0.24f), new Vector2(0.96f, 0.30f), TextAnchor.MiddleLeft,
+                new Color(0.60f, 0.57f, 0.50f, 1f), font);
+
+            const float cellW    = 1f / Size;
+            const float boardH   = 0.68f; // board occupies top 68% of preview; bottom 32% = text samples
+            const float cellH    = boardH / Size;
+            const float boardTop = 1f;
+            const float pad      = 0.01f;
 
             for (var r = 0; r < Size; r++)
             {
                 for (var c = 0; c < Size; c++)
                 {
                     float xMin = c * cellW;
-                    float yMin = 1f - (r + 1) * cellH;
+                    float yMin = boardTop - (r + 1) * cellH;
 
                     // ── Cell background ──────────────────────────────────────
                     var bgGo = new GameObject($"Cell_{r}_{c}",
@@ -96,7 +131,7 @@ namespace SudokuRoguelike.UI
                         ptRt.offsetMin = new Vector2(3f, 3f);
                         ptRt.offsetMax = new Vector2(-3f, -3f);
                         var pt = ptGo.GetComponent<Text>();
-                        pt.font      = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                        pt.font      = FontAssetService.GetFont();
                         pt.fontSize  = 9;
                         pt.alignment = TextAnchor.UpperLeft;
                         pt.text      = "2  4";
@@ -114,7 +149,7 @@ namespace SudokuRoguelike.UI
                         txtRt.offsetMin = Vector2.zero;
                         txtRt.offsetMax = Vector2.zero;
                         var txt = txtGo.GetComponent<Text>();
-                        txt.font      = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                        txt.font      = FontAssetService.GetFont();
                         txt.fontSize  = 18;
                         txt.alignment = TextAnchor.MiddleCenter;
                         txt.fontStyle = Kinds[r, c] == CellKind.Given
@@ -126,10 +161,27 @@ namespace SudokuRoguelike.UI
             }
         }
 
+        private static Text MakeSampleText(RectTransform parent, string name, string content,
+            int fontSize, Vector2 amin, Vector2 amax, TextAnchor anchor, Color color, Font font)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(Text));
+            go.transform.SetParent(parent, false);
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = amin; rt.anchorMax = amax;
+            rt.offsetMin = Vector2.zero; rt.offsetMax = Vector2.zero;
+            var t = go.GetComponent<Text>();
+            t.font = font; t.text = content; t.fontSize = fontSize;
+            t.alignment = anchor; t.color = color;
+            t.raycastTarget = false;
+            return t;
+        }
+
         // ── Refresh ───────────────────────────────────────────────────────────
 
         public void Refresh(AccessibilitySettings acc)
         {
+            UpdateScale(acc?.FontScale ?? 1f);
+
             var accessSvc = new AccessibilityService();
             accessSvc.Refresh(acc, new GraphicsSettingsModel());
 

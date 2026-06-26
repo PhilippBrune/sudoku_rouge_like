@@ -17,7 +17,9 @@ namespace SudokuRoguelike.Economy
         // [REQ: ECON-SHOP-001] Shop: 3 items + optional relic per visit
         // [REQ: SHOP-PRICE-001] [REQ: ECON-SHOP-002] Price: BasePrice × (1 + FloorIndex × 0.5) × priceMultiplier × harmonySurcharge
         // [HARMONY-ECON-002] harmonySurcharge (1.00–1.50) applies the Harmony difficulty shop penalty on top of all other multipliers.
-        public List<ShopOffer> BuildOffers(int floorIndex, int classLevel, float priceMultiplier, float harmonySurcharge)
+        // [REQ: CLASS-SHOP-001] Class-exclusive items can appear in shops at 25% injection chance when unlocked.
+        public List<ShopOffer> BuildOffers(int floorIndex, int classLevel, float priceMultiplier, float harmonySurcharge,
+            ClassId classId = (ClassId)0)
         {
             var offers = new List<ShopOffer>();
             var slotCount = GetShopSlotCount(floorIndex);
@@ -25,7 +27,7 @@ namespace SudokuRoguelike.Economy
             for (var i = 0; i < slotCount; i++)
             {
                 var rarity = RollShopItemRarity(floorIndex, classLevel);
-                var type = RollShopItemType(rarity);
+                var type = RollShopItemType(rarity, classId, classLevel);
                 var basePrice = ItemService.GetBasePrice(rarity);
                 var scaledPrice = (int)Math.Round(basePrice * (1f + floorIndex * 0.5f) * priceMultiplier * harmonySurcharge);
 
@@ -75,8 +77,16 @@ namespace SudokuRoguelike.Economy
             return roll < rareChance ? ItemRarity.Rare : ItemRarity.Normal;
         }
 
-        private ItemType RollShopItemType(ItemRarity rarity)
+        private ItemType RollShopItemType(ItemRarity rarity, ClassId classId = (ClassId)0, int classLevel = 0)
         {
+            // Class-exclusive item: 25% chance to inject the exclusive if unlocked
+            if (classId != (ClassId)0 && _random.NextDouble() < 0.25)
+            {
+                var exclusive = ItemService.GetExclusiveItemForClass(classId);
+                if (exclusive.HasValue && ItemService.IsAvailableForClass(exclusive.Value, classId, classLevel))
+                    return exclusive.Value;
+            }
+
             var resourceTypes = new[]
             {
                 ItemType.InkWell, ItemType.MeditationStone, ItemType.WindChime,

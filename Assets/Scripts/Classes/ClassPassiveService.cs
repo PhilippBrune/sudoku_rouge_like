@@ -19,9 +19,10 @@ namespace SudokuRoguelike.Classes
             switch (state.ClassId)
             {
                 case ClassId.GardenMonk:
-                    // Heal every 5 correct placements (upgrades at L15 → every 4)
-                    var healInterval = GardenMonkHealInterval(state);
-                    if (level.CorrectPlacements % healInterval == 0)
+                    var healInterval = GetGardenMonkHealInterval(state);
+                    if (level.CorrectPlacements > 0
+                        && level.CorrectPlacements % healInterval == 0
+                        && state.CurrentHP < state.MaxHP)
                         state.CurrentHP = Math.Min(state.MaxHP, state.CurrentHP + 1);
                     break;
 
@@ -131,12 +132,11 @@ namespace SudokuRoguelike.Classes
             return level.ItemsUsedThisLevel < freeUses;
         }
 
-        // ── GardenMonk: HP-trade pencil purchase ────────────────────────────────
+        // ── GardenMonk: legacy pencil purchase hook ─────────────────────────────
 
         /// <summary>
-        /// [REDESIGN] GardenMonk: buying pencil mid-puzzle costs 1 HP instead of gold.
-        /// Returns true when the HP-trade replaces the gold cost.
-        /// Call from the shop/HUD pencil-buy path: deduct 1 HP and skip the gold deduction.
+        /// Legacy compatibility hook for older pencil-purchase paths.
+        /// The current UI does not expose a pencil purchase mechanic.
         /// </summary>
         public static bool GardenMonkPencilBuyIsHPTrade(RunState state)
             => state.ClassId == ClassId.GardenMonk;
@@ -164,9 +164,8 @@ namespace SudokuRoguelike.Classes
 
         // ── Helpers: level-scaled thresholds ────────────────────────────────────
 
-        private static int GardenMonkHealInterval(RunState state)
+        public static int GetGardenMonkHealInterval(RunState state)
         {
-            // Upgrade at L15: heal every 4 instead of 5
             var level = GetClassLevel(state);
             return level >= 15 ? 4 : 5;
         }
@@ -219,15 +218,9 @@ namespace SudokuRoguelike.Classes
             return GetClassLevel(state) >= 15;
         }
 
-        // Reads class level from XP stored in RunState (via XpService pattern).
-        // RunState doesn't store the level directly — derive it from XP service.
         private static int GetClassLevel(RunState state)
         {
-            // XP is committed at run end, so during a run we don't have the exact level.
-            // Use RunNumber as a rough proxy: each run ~200 XP → L1 per ~1 run early on.
-            // A proper implementation would pass the level in from ClassGardenProgressionService.
-            // For now, the passive uses a conservative base — upgrades are cosmetic accuracy improvements.
-            return Math.Min(40, 1 + state.RunNumber * 2);
+            return Math.Clamp(state?.ClassLevel ?? 1, 1, 40);
         }
     }
 }

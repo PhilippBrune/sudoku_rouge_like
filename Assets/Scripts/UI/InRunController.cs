@@ -75,6 +75,7 @@ namespace SudokuRoguelike.UI
 
         // ── Gamepad overlay focus — reused each frame to avoid per-frame allocation ──
         private readonly List<Button> _overlayBtnCache = new List<Button>();
+        private readonly List<Selectable> _optionsFocusCache = new List<Selectable>();
 
         // ── Swap state (Silk Fan item) ──
         private bool _swapMode;
@@ -441,7 +442,25 @@ namespace SudokuRoguelike.UI
             var nowActive = !_inGameOptionsPanel.activeSelf;
             _inGameOptionsPanel.SetActive(nowActive);
             if (nowActive)
-                InRunUiFactory.SelectFirstInteractable(_inGameOptionsPanel);
+            {
+                RebuildOptionsFocusCache();
+                var es = UnityEngine.EventSystems.EventSystem.current;
+                if (_optionsFocusCache.Count > 0)
+                    es?.SetSelectedGameObject(_optionsFocusCache[0].gameObject);
+                else
+                    InRunUiFactory.SelectFirstInteractable(_inGameOptionsPanel);
+            }
+        }
+
+        private void RebuildOptionsFocusCache()
+        {
+            _optionsFocusCache.Clear();
+            if (_inGameOptionsPanel == null) return;
+            foreach (var sel in _inGameOptionsPanel.GetComponentsInChildren<Selectable>(false))
+            {
+                if (sel.IsInteractable() && sel.gameObject.activeInHierarchy)
+                    _optionsFocusCache.Add(sel);
+            }
         }
 
         private InRunCancelContext BuildInRunCancelContext()
@@ -3125,6 +3144,44 @@ namespace SudokuRoguelike.UI
             }
         }
 
+        private void HandleGamepadOptionsFocus()
+        {
+            if (_optionsFocusCache.Count == 0) RebuildOptionsFocusCache();
+            if (_optionsFocusCache.Count == 0) return;
+
+            var es = UnityEngine.EventSystems.EventSystem.current;
+            var curGo = es?.currentSelectedGameObject;
+            var curSel = curGo != null ? curGo.GetComponent<Selectable>() : null;
+            var idx = curSel != null ? _optionsFocusCache.IndexOf(curSel) : 0;
+            if (idx < 0) idx = 0;
+
+            // Up/Down cycles elements; Left/Right adjusts sliders
+            var moveDown = _inputRemap.WasActionPressed(InputAction.MoveDown);
+            var moveUp   = _inputRemap.WasActionPressed(InputAction.MoveUp);
+            if (moveDown) idx = (idx + 1) % _optionsFocusCache.Count;
+            if (moveUp)   idx = (idx + _optionsFocusCache.Count - 1) % _optionsFocusCache.Count;
+            if (moveDown || moveUp)
+                es?.SetSelectedGameObject(_optionsFocusCache[idx].gameObject);
+
+            var moveRight = _inputRemap.WasActionPressed(InputAction.MoveRight);
+            var moveLeft  = _inputRemap.WasActionPressed(InputAction.MoveLeft);
+            if ((moveRight || moveLeft) && _optionsFocusCache[idx] is Slider sl)
+                sl.value = Mathf.Clamp(sl.value + (moveRight ? 0.1f : -0.1f) * (sl.maxValue - sl.minValue),
+                    sl.minValue, sl.maxValue);
+
+            // A: invoke button or flip toggle
+            if (Input.GetKeyDown(KeyCode.JoystickButton0))
+            {
+                var sel = _optionsFocusCache[idx];
+                if (sel is Button btn) btn.onClick.Invoke();
+                else if (sel is Toggle tgl) tgl.isOn = !tgl.isOn;
+            }
+
+            // B / Start: close options panel
+            if (Input.GetKeyDown(KeyCode.JoystickButton1) || Input.GetKeyDown(KeyCode.JoystickButton7))
+                ToggleOptionsPanel();
+        }
+
         private void HandleGamepadTutorialFocus()
         {
             if (_basicsTutorial == null) return;
@@ -3143,10 +3200,10 @@ namespace SudokuRoguelike.UI
 
         private void HandleGamepadController()
         {
-            // Start (JoystickButton7): save & quit to menu (pause equivalent)
+            // Start (JoystickButton7): open/close in-game options panel (save & quit lives inside)
             if (Input.GetKeyDown(KeyCode.JoystickButton7))
             {
-                SaveAndQuit();
+                ToggleOptionsPanel();
                 return;
             }
 
@@ -3160,9 +3217,7 @@ namespace SudokuRoguelike.UI
             // ── In-game options panel ─────────────────────────────────────────────
             if (_inGameOptionsPanel != null && _inGameOptionsPanel.activeSelf)
             {
-                HandleGamepadOverlayFocus(_inGameOptionsPanel);
-                if (Input.GetKeyDown(KeyCode.JoystickButton1))
-                    ExecuteInRunCancelRoute(CancelRouteContract.ResolveInRunGamepadCancel(BuildInRunCancelContext()));
+                HandleGamepadOptionsFocus();
                 return;
             }
 

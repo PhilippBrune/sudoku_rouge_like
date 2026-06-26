@@ -561,6 +561,12 @@ namespace SudokuRoguelike.UI
             altSymbolsTgl.SetIsOnWithoutNotify(opts.Accessibility.AlternativeConstraintSymbols);
             altSymbolsTgl.onValueChanged.AddListener(v => optCtrl.SetAltSymbols(v));
 
+            var runScreen = root.GetComponent<InRunController>() ?? root.GetComponentInParent<InRunController>();
+            var saveQuitBtn = BuildButton("BtnInGameOptionsSaveQuit", pr, T("InRun.Options.SaveQuit", "Save & Quit"), 18);
+            SetRect(saveQuitBtn.GetComponent<RectTransform>(), new Vector2(0.05f, 0.01f), new Vector2(0.46f, 0.09f), Vector2.zero, Vector2.zero);
+            if (runScreen != null)
+                saveQuitBtn.onClick.AddListener(runScreen.SaveAndQuitPublic);
+
             var closeBtn = BuildButton("BtnInGameOptionsClose", pr, T("Back", "Back"), 18);
             SetRect(closeBtn.GetComponent<RectTransform>(), new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
             ApplyButtonIcon(closeBtn, "back_leaf", "ui"); // F16: back/close uses dedicated back_leaf icon
@@ -577,6 +583,7 @@ namespace SudokuRoguelike.UI
             InRunUiFactory.ApplyFocusColors(highContrastTgl);
             InRunUiFactory.ApplyFocusColors(reduceMotionTgl);
             InRunUiFactory.ApplyFocusColors(altSymbolsTgl);
+            InRunUiFactory.ApplyFocusColors(saveQuitBtn);
 
             return panel;
         }

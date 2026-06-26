@@ -122,6 +122,9 @@ namespace SudokuRoguelike.UI
             // MM-2/MM-6: axis-driven scroll for scrollable panels (runs every frame, before anyKeyDown guard)
             ScrollActivePanelIfNeeded();
 
+            // Run every frame so D-pad axis input can navigate without a button press first.
+            EnsureControllerSelection();
+
             if (!Input.anyKeyDown) return;
 
             if (_firstRunSetupOverlay != null && _firstRunSetupOverlay.activeSelf)
@@ -185,8 +188,6 @@ namespace SudokuRoguelike.UI
                 return;
             }
 
-            // Ensure an EventSystem selection exists so the stick can navigate.
-            // We set the first interactable button in the active panel whenever selection is lost.
             EnsureControllerSelection();
         }
 

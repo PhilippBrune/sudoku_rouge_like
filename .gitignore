@@ -117,3 +117,9 @@ TestResults/
 !tools/run-unity-tests.ps1
 !tools/*.ps1
 !tools/*.py
+
+# CI-required solution and project files (must stay tracked despite *.slnx / *.csproj rules above)
+!sudoku_rouge_like.slnx
+!Game.csproj
+!GameTests.EditMode.csproj
+!GameTests.PlayMode.csproj

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using SudokuRoguelike.Bootstrap;
 using SudokuRoguelike.Classes;
@@ -134,11 +135,22 @@ namespace SudokuRoguelike.UI
             {
                 if (Input.GetKeyDown(KeyCode.JoystickButton0) || Input.GetKeyDown(KeyCode.Return))
                 {
-                    var es = UnityEngine.EventSystems.EventSystem.current;
-                    var selected = es?.currentSelectedGameObject;
-                    var btn = selected != null ? selected.GetComponent<Button>() : null;
-                    if (btn != null && btn.interactable)
-                        btn.onClick.Invoke();
+                    var es = EventSystem.current;
+                    var sel = es?.currentSelectedGameObject;
+                    if (sel != null)
+                    {
+                        var btn = sel.GetComponent<Button>();
+                        if (btn != null && btn.interactable)
+                            btn.onClick.Invoke();
+                        else
+                        {
+                            var tgl = sel.GetComponent<Toggle>();
+                            if (tgl != null && tgl.interactable)
+                                tgl.isOn = !tgl.isOn;
+                            else
+                                ExecuteEvents.Execute(sel, new BaseEventData(es), ExecuteEvents.submitHandler);
+                        }
+                    }
                 }
                 return;
             }
@@ -177,16 +189,26 @@ namespace SudokuRoguelike.UI
             if (TryHandleMainMenuCancelInput())
                 return;
 
-            // A (JoystickButton0) / R3 (JoystickButton9, legacy alias) = confirm selected button (G1-A)
+            // A (JoystickButton0) / R3 (JoystickButton9, legacy alias) = confirm selected element (G1-A)
             if (Input.GetKeyDown(KeyCode.JoystickButton0) || Input.GetKeyDown(KeyCode.JoystickButton9))
             {
-                var es = UnityEngine.EventSystems.EventSystem.current;
+                var es = EventSystem.current;
                 var sel = es?.currentSelectedGameObject;
                 if (sel != null)
                 {
                     var btn = sel.GetComponent<Button>();
                     if (btn != null && btn.interactable)
+                    {
                         btn.onClick.Invoke();
+                    }
+                    else
+                    {
+                        var tgl = sel.GetComponent<Toggle>();
+                        if (tgl != null && tgl.interactable)
+                            tgl.isOn = !tgl.isOn;
+                        else
+                            ExecuteEvents.Execute(sel, new BaseEventData(es), ExecuteEvents.submitHandler);
+                    }
                 }
                 return;
             }
@@ -265,13 +287,13 @@ namespace SudokuRoguelike.UI
             var panel = _menu?.CurrentPanel;
             if (panel == null) return;
 
-            var active = new List<Button>();
-            foreach (var b in panel.GetComponentsInChildren<Button>(true))
-                if (b.interactable && b.gameObject.activeInHierarchy) active.Add(b);
+            var active = new List<Selectable>();
+            foreach (var s in panel.GetComponentsInChildren<Selectable>(true))
+                if (s.interactable && s.gameObject.activeInHierarchy) active.Add(s);
             if (active.Count == 0) return;
 
-            var es = UnityEngine.EventSystems.EventSystem.current;
-            var cur = es?.currentSelectedGameObject?.GetComponent<Button>();
+            var es = EventSystem.current;
+            var cur = es?.currentSelectedGameObject?.GetComponent<Selectable>();
             var idx = cur != null ? active.IndexOf(cur) : 0;
             if (idx < 0) idx = 0;
 

@@ -122,8 +122,11 @@ namespace SudokuRoguelike.UI
             // MM-2/MM-6: axis-driven scroll for scrollable panels (runs every frame, before anyKeyDown guard)
             ScrollActivePanelIfNeeded();
 
+            _inputRemap.Tick();
+
             // Run every frame so D-pad axis input can navigate without a button press first.
             EnsureControllerSelection();
+            HandleMenuGamepadNavigation();
 
             if (!Input.anyKeyDown) return;
 
@@ -249,6 +252,32 @@ namespace SudokuRoguelike.UI
             if (Mathf.Abs(v) < 0.1f) return;
             sr.verticalNormalizedPosition = Mathf.Clamp01(
                 sr.verticalNormalizedPosition + v * Time.unscaledDeltaTime * 0.8f);
+        }
+
+        private void HandleMenuGamepadNavigation()
+        {
+            var moveNext = _inputRemap.WasActionPressed(InputAction.MoveDown)
+                        || _inputRemap.WasActionPressed(InputAction.MoveRight);
+            var movePrev = _inputRemap.WasActionPressed(InputAction.MoveUp)
+                        || _inputRemap.WasActionPressed(InputAction.MoveLeft);
+            if (!moveNext && !movePrev) return;
+
+            var panel = _menu?.CurrentPanel;
+            if (panel == null) return;
+
+            var active = new List<Button>();
+            foreach (var b in panel.GetComponentsInChildren<Button>(true))
+                if (b.interactable && b.gameObject.activeInHierarchy) active.Add(b);
+            if (active.Count == 0) return;
+
+            var es = UnityEngine.EventSystems.EventSystem.current;
+            var cur = es?.currentSelectedGameObject?.GetComponent<Button>();
+            var idx = cur != null ? active.IndexOf(cur) : 0;
+            if (idx < 0) idx = 0;
+
+            idx = moveNext ? (idx + 1) % active.Count
+                           : (idx + active.Count - 1) % active.Count;
+            es?.SetSelectedGameObject(active[idx].gameObject);
         }
 
         private void EnsureControllerSelection()

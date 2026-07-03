@@ -3200,6 +3200,8 @@ namespace SudokuRoguelike.UI
 
         private void HandleGamepadController()
         {
+            _inputRemap.Tick();
+
             // Start (JoystickButton7): open/close in-game options panel (save & quit lives inside)
             if (Input.GetKeyDown(KeyCode.JoystickButton7))
             {

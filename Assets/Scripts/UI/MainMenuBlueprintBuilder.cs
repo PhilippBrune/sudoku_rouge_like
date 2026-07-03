@@ -1218,7 +1218,7 @@ namespace SudokuRoguelike.UI
             SetRect(langDrop.GetComponent<RectTransform>(),
                 new Vector2(0.23f, 0.08f), new Vector2(0.65f, 0.20f), Vector2.zero, Vector2.zero);
             langDrop.ClearOptions();
-            langDrop.AddOptions(new System.Collections.Generic.List<string> { "English", "Deutsch" });
+            langDrop.AddOptions(new System.Collections.Generic.List<string> { "English", "Deutsch", "Français", "Español", "Português (BR)" });
             FitDropdownToItems(langDrop);
             langDrop.SetValueWithoutNotify((int)opts.Language);
 

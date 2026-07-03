@@ -7,13 +7,19 @@ namespace SudokuRoguelike.Core
 {
     public static class LocalizationService
     {
-        private const string EnglishCatalogResourcePath = "Localization/en";
-        private const string GermanCatalogResourcePath = "Localization/de";
+        private const string EnglishCatalogResourcePath    = "Localization/en";
+        private const string GermanCatalogResourcePath     = "Localization/de";
+        private const string FrenchCatalogResourcePath     = "Localization/fr";
+        private const string SpanishCatalogResourcePath    = "Localization/es";
+        private const string PortugueseCatalogResourcePath = "Localization/pt";
 
         private static LanguageOption _current = LanguageOption.English;
         private static readonly HashSet<string> _missingGermanKeys = new HashSet<string>();
         private static readonly Dictionary<string, string> ExternalEn = new Dictionary<string, string>();
         private static readonly Dictionary<string, string> ExternalDe = new Dictionary<string, string>();
+        private static readonly Dictionary<string, string> ExternalFr = new Dictionary<string, string>();
+        private static readonly Dictionary<string, string> ExternalEs = new Dictionary<string, string>();
+        private static readonly Dictionary<string, string> ExternalPt = new Dictionary<string, string>();
         private static readonly List<string> _externalCatalogDiagnostics = new List<string>();
         private static bool _externalCatalogsLoaded;
 
@@ -450,6 +456,9 @@ namespace SudokuRoguelike.Core
             { "FirstRun.LanguageHeader", "Language" },
             { "FirstRun.Language.English", "English" },
             { "FirstRun.Language.German", "Deutsch" },
+            { "FirstRun.Language.French", "Français" },
+            { "FirstRun.Language.Spanish", "Español" },
+            { "FirstRun.Language.BrazilianPortuguese", "Português (BR)" },
             { "FirstRun.AccessibilityHeader", "Accessibility basics" },
             { "FirstRun.Accessibility.Colorblind", "Colorblind mode" },
             { "FirstRun.Accessibility.HighContrast", "High contrast" },
@@ -534,6 +543,9 @@ namespace SudokuRoguelike.Core
             { "FirstRun.LanguageHeader", "Sprache" },
             { "FirstRun.Language.English", "English" },
             { "FirstRun.Language.German", "Deutsch" },
+            { "FirstRun.Language.French", "Französisch" },
+            { "FirstRun.Language.Spanish", "Spanisch" },
+            { "FirstRun.Language.BrazilianPortuguese", "Brasilianisches Portugiesisch" },
             { "FirstRun.AccessibilityHeader", "Grundlagen der Barrierefreiheit" },
             { "FirstRun.Accessibility.Colorblind", "Farbenblind-Modus" },
             { "FirstRun.Accessibility.HighContrast", "Hoher Kontrast" },
@@ -1524,7 +1536,14 @@ namespace SudokuRoguelike.Core
         public static int GetExternalCatalogEntryCount(LanguageOption language)
         {
             EnsureExternalCatalogsLoaded();
-            return language == LanguageOption.German ? ExternalDe.Count : ExternalEn.Count;
+            return language switch
+            {
+                LanguageOption.German              => ExternalDe.Count,
+                LanguageOption.French              => ExternalFr.Count,
+                LanguageOption.Spanish             => ExternalEs.Count,
+                LanguageOption.BrazilianPortuguese => ExternalPt.Count,
+                _                                  => ExternalEn.Count,
+            };
         }
 
         public static bool HasExternalCatalogEntry(LanguageOption language, string key)
@@ -1533,9 +1552,14 @@ namespace SudokuRoguelike.Core
                 return false;
 
             EnsureExternalCatalogsLoaded();
-            return language == LanguageOption.German
-                ? ExternalDe.ContainsKey(key)
-                : ExternalEn.ContainsKey(key);
+            return language switch
+            {
+                LanguageOption.German              => ExternalDe.ContainsKey(key),
+                LanguageOption.French              => ExternalFr.ContainsKey(key),
+                LanguageOption.Spanish             => ExternalEs.ContainsKey(key),
+                LanguageOption.BrazilianPortuguese => ExternalPt.ContainsKey(key),
+                _                                  => ExternalEn.ContainsKey(key),
+            };
         }
 
         public static string T(string key)
@@ -1554,20 +1578,20 @@ namespace SudokuRoguelike.Core
             {
                 if (ExternalEn.TryGetValue(key, out var externalEnglish))
                     return externalEnglish;
-
                 return En.TryGetValue(key, out var en) ? en : englishFallback ?? key;
             }
 
-            if (ExternalDe.TryGetValue(key, out var externalGerman))
-                return externalGerman;
+            var ext = GetExternalCurrent();
+            if (ext.TryGetValue(key, out var translated))
+                return translated;
 
-            if (De.TryGetValue(key, out var val))
-                return val;
+            // German also checks its hardcoded fallback dict before English
+            if (_current == LanguageOption.German && De.TryGetValue(key, out var deVal))
+                return deVal;
 
             _missingGermanKeys.Add(key);
             if (ExternalEn.TryGetValue(key, out var externalFallback))
                 return externalFallback;
-
             return En.TryGetValue(key, out var fallback) ? fallback : englishFallback ?? key;
         }
 
@@ -1607,14 +1631,26 @@ namespace SudokuRoguelike.Core
                 args);
         }
 
+        private static Dictionary<string, string> GetExternalCurrent() => _current switch
+        {
+            LanguageOption.German              => ExternalDe,
+            LanguageOption.French              => ExternalFr,
+            LanguageOption.Spanish             => ExternalEs,
+            LanguageOption.BrazilianPortuguese => ExternalPt,
+            _                                  => ExternalEn,
+        };
+
         private static void EnsureExternalCatalogsLoaded()
         {
             if (_externalCatalogsLoaded)
                 return;
 
             _externalCatalogsLoaded = true;
-            LoadExternalCatalog(EnglishCatalogResourcePath, ExternalEn, "English");
-            LoadExternalCatalog(GermanCatalogResourcePath, ExternalDe, "German");
+            LoadExternalCatalog(EnglishCatalogResourcePath,    ExternalEn, "English");
+            LoadExternalCatalog(GermanCatalogResourcePath,     ExternalDe, "German");
+            LoadExternalCatalog(FrenchCatalogResourcePath,     ExternalFr, "French");
+            LoadExternalCatalog(SpanishCatalogResourcePath,    ExternalEs, "Spanish");
+            LoadExternalCatalog(PortugueseCatalogResourcePath, ExternalPt, "Portuguese");
         }
 
         private static void LoadExternalCatalog(string resourcePath, Dictionary<string, string> target, string languageName)

@@ -435,8 +435,11 @@ namespace SudokuRoguelike.Core
 
     public enum LanguageOption
     {
-        English,
-        German
+        English             = 0,
+        German              = 1,
+        French              = 2,
+        Spanish             = 3,
+        BrazilianPortuguese = 4
     }
 
     public enum DisplayModeOption

@@ -31,6 +31,7 @@ namespace SudokuRoguelike.UI
         private Text _readerLabel;
         private Button _englishButton;
         private Button _germanButton;
+        private Text _gamepadHintText;
 
         public GameObject Root => gameObject;
 
@@ -109,6 +110,9 @@ namespace SudokuRoguelike.UI
             _continueLabel = GetButtonLabel(continueButton);
             continueButton.onClick.AddListener(CompleteSetup);
 
+            _gamepadHintText = CreateText(panel, "GamepadHint", 9, TextAnchor.MiddleRight, GamePalette.TextMuted,
+                new Vector2(0.55f, 0.90f), new Vector2(0.98f, 0.96f));
+
             RefreshLocalizedText();
             UpdateLanguageButtonState();
             EventSystem.current?.SetSelectedGameObject(continueButton.gameObject);
@@ -156,6 +160,19 @@ namespace SudokuRoguelike.UI
             var completed = _onCompleted;
             Destroy(gameObject);
             completed?.Invoke();
+        }
+
+        private void Update()
+        {
+            if (_gamepadHintText == null) return;
+            var platform = ControllerGlyphService.Detect();
+            if (platform == ControllerPlatform.None)
+            {
+                _gamepadHintText.text = string.Empty;
+                return;
+            }
+            var (confirm, _, _, _) = ControllerGlyphService.GetFaceLabels();
+            _gamepadHintText.text = $"[{confirm}] Confirm  ·  D-Pad";
         }
 
         private void RefreshLocalizedText()

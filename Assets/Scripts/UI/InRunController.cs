@@ -123,6 +123,7 @@ namespace SudokuRoguelike.UI
         private float _triggerLPrev, _triggerRPrev;
         private float _pathBConfirmTimer;   // retained but unused after MAP-2 rework
         private float _bButtonHoldTime;      // PS-2: tracks how long B is held in puzzle focus
+        private float _selectButtonHoldTime; // tracks how long Select is held for hold-to-save shortcut
         private bool  _pathQuitModalActive;  // MAP-2: true while the path quit-confirm modal is shown
 
         // ── Item state ──
@@ -3395,12 +3396,21 @@ namespace SudokuRoguelike.UI
                 }
             }
 
-            // Select/Back (JoystickButton6): advance end-screen / skip to next step
-            if (Input.GetKeyDown(KeyCode.JoystickButton6))
+            // Select/Back (JoystickButton6): immediate exit from game-over; hold ≥1.5 s to save & quit
+            if (Input.GetKeyDown(KeyCode.JoystickButton6) && _gameOverPanel != null && _gameOverPanel.activeSelf)
             {
-                // If the game-over screen is shown, pressing Select returns to menu
-                if (_gameOverPanel != null && _gameOverPanel.activeSelf)
-                    SaveAndQuit();
+                _selectButtonHoldTime = 0f;
+                SaveAndQuit();
+                return;
+            }
+            if (Input.GetKey(KeyCode.JoystickButton6))
+                _selectButtonHoldTime += Time.unscaledDeltaTime;
+            else
+                _selectButtonHoldTime = 0f;
+            if (_selectButtonHoldTime >= 1.5f)
+            {
+                _selectButtonHoldTime = -999f;
+                SaveAndQuit();
             }
 
             // Right stick: navigate 3×3 numpad cursor

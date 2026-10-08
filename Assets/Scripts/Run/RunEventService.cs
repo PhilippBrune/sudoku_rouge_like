@@ -7,7 +7,11 @@ namespace SudokuRoguelike.Run
 {
     public sealed class RunEventService
     {
-        private readonly Random _random;
+        private Random _random;
+
+        /// <summary>[REQ: REQ-RUN-103] Starts a fresh random stream for one decision. RunDirector seeds it from the
+        /// run seed and the player's position, so a roll is the same before and after Save &amp; Quit (GAP-018).</summary>
+        public void ReseedForDecision(int decisionSeed) => _random = new Random(decisionSeed);
         private readonly ItemService _itemService;
 
         private static readonly (string id, int optionCount)[] EventLocalizationSpecs =
@@ -99,7 +103,7 @@ namespace SudokuRoguelike.Run
             // ── Rewards ──
             if (option.GoldGain > 0)
             {
-                state.CurrentGold += option.GoldGain;
+                state.GainGold(option.GoldGain);
                 parts.Add(LocalizationService.Format("RunEvent.Result.GoldGain", "+{0} gold", option.GoldGain));
             }
             if (option.HpGain > 0)

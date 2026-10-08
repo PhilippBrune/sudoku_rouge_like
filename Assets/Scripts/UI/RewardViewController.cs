@@ -250,11 +250,19 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.35f, 0.06f), new Vector2(0.65f, 0.16f), T("Skip"), UiAction.Skip);
             skip.onClick.AddListener(() =>
             {
+                GrantNothingReward();
                 _awaitingReward = false;
                 ActivePanel = null;
                 InRunUiFactory.HidePanel(_rewardPanel);
                 OnPostRewardReady?.Invoke();
             });
+
+            // [REQ: REQ-ITEM-100] Reroll the item slots (GAP-015): a reroll token first, otherwise gold.
+            var reroll = BuildRewardRerollButton();
+            var rerollNav = reroll.navigation;
+            rerollNav.mode = Navigation.Mode.Explicit;
+            rerollNav.selectOnRight = skip;
+            reroll.navigation = rerollNav;
 
             // Explicit D-pad navigation: grid left/right, row up/down, last row → skip
             for (var i = 0; i < slotBtns.Length; i++)
@@ -274,7 +282,10 @@ namespace SudokuRoguelike.UI
             var skipNav = skip.navigation;
             skipNav.mode = Navigation.Mode.Explicit;
             skipNav.selectOnUp = slotBtns.Length > 0 ? slotBtns[lastRowFirst] : null;
+            skipNav.selectOnLeft = reroll;
             skip.navigation = skipNav;
+            rerollNav.selectOnUp = skipNav.selectOnUp;
+            reroll.navigation = rerollNav;
 
             // All buttons now exist — set controller focus to first reward button
             InRunUiFactory.SelectFirstInteractable(_rewardPanel);
@@ -317,12 +328,44 @@ namespace SudokuRoguelike.UI
                 run.PickRewardItem(index);
                 new ProfileService(new SaveFileService(SaveProfileService.ActiveSlot)).RecordItemDiscovery(claimed.Type);
             }
+            else
+                GrantNothingReward();   // a Nothing slot was chosen
 
             _awaitingReward = false;
             _rewardSlots.Clear();
             ActivePanel = null;
             InRunUiFactory.HidePanel(_rewardPanel);
             OnPostRewardReady?.Invoke();
+        }
+
+        private Button BuildRewardRerollButton()
+        {
+            var run = _map?.Run;
+            var label = run != null && run.State.RerollTokens > 0
+                ? T("InRun.Reward.RerollToken")
+                : F("InRun.Reward.RerollGold", run?.GetRewardRerollCost() ?? 0);
+            var reroll = InRunUiFactory.CreateActionButton(_rewardPanel.transform, "Slot_reroll",
+                new Vector2(0.06f, 0.06f), new Vector2(0.32f, 0.16f), label, UiAction.Reroll);
+            reroll.interactable = run != null && run.CanRerollReward();
+            reroll.onClick.AddListener(() =>
+            {
+                var rerolled = _map?.Run?.RerollRewardSlots();
+                if (rerolled == null)
+                {
+                    OnStatusChanged?.Invoke(T("InRun.Reward.RerollUnavailable"));
+                    return;
+                }
+                OnStatusChanged?.Invoke(T("InRun.Reward.Rerolled"));
+                RerollRewardSlots(new List<ItemInstance>(rerolled));
+            });
+            return reroll;
+        }
+
+        // [REQ: REQ-ITEM-100] Choosing Nothing (a Nothing slot or Skip) grants 5 gold × floor number (SPEC-AMB-007).
+        private void GrantNothingReward()
+        {
+            var gold = _map?.Run?.TakeNothingReward() ?? 0;
+            if (gold > 0) OnStatusChanged?.Invoke(F("InRun.Reward.NothingGold", gold));
         }
 
         public void RerollRewardSlots(List<ItemInstance> newSlots)
@@ -675,7 +718,7 @@ namespace SudokuRoguelike.UI
             {
                 if (stagedIndex < 0 || stagedIndex >= choices.Count) return;
                 var chosen = choices[stagedIndex];
-                run.AcceptRelicChoice(stagedIndex);
+                run.AcceptRelicChoice(chosen); // the instance shown on the panel (GAP-021)
                 new ProfileService(new SaveFileService(SaveProfileService.ActiveSlot)).RecordRelicDiscovery(chosen.Id);
                 OnStatusChanged?.Invoke(F("InRun.Relic.Status.Accepted", RelicService.GetRelicName(chosen.Id)));
                 ActivePanel = null;

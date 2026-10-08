@@ -13,7 +13,7 @@ namespace SudokuRoguelike.Tests
         [Test]
         public void PressureMechanics_HaveVisibleAndAccessibleFeedbackHooks()
         {
-            var source = File.ReadAllText(InRunControllerPath);
+            var source = SourceText.ReadClass(InRunControllerPath);
 
             StringAssert.Contains("BuildPressureRenderData", source);
             StringAssert.Contains("ExpiryFlashCells", source);
@@ -57,7 +57,7 @@ namespace SudokuRoguelike.Tests
         [Test]
         public void PendingItemInteractions_ExposeStatusAndCancellationFeedback()
         {
-            var source = File.ReadAllText(InRunControllerPath);
+            var source = SourceText.ReadClass(InRunControllerPath);
 
             StringAssert.Contains("_patternScrollPending", source);
             StringAssert.Contains("_koiReflectionPending", source);

@@ -84,7 +84,7 @@ namespace SudokuRoguelike.Bootstrap
         {
             Application.runInBackground = true;
             SteamLeaderboardService.Initialize();
-            LocalizationService.SetLanguage(_profileService.LoadOptions().Language);
+            ApplySavedLanguage();
 
             EnsureSceneInfrastructure();
 
@@ -185,6 +185,9 @@ namespace SudokuRoguelike.Bootstrap
                 Envelope = envelope,
                 SudokuBasicsComplete = menu.HasCompletedSudokuBasics()
             });
+            // [REQ: REQ-UI-100] GAP-006: record the chosen step, so a skipped profile select or setup shows in the log.
+            Debug.Log($"[GameBootstrap] Startup step: {next} (anyProfile={hasAnyProfile}, " +
+                      $"profileSelectionAllowed={allowProfileSelection}, firstRunDone={StartupFlowController.IsFirstRunSetupComplete(envelope)}).");
 
             switch (next)
             {
@@ -205,9 +208,16 @@ namespace SudokuRoguelike.Bootstrap
             }
         }
 
+        // Null-safe: callbacks can arrive before the profile service exists.
+        private void ApplySavedLanguage()
+        {
+            var options = _profileService?.LoadOptions();
+            if (options != null) LocalizationService.SetLanguage(options.Language);
+        }
+
         private void ContinueAfterFirstRunSetup(MainMenuController menu)
         {
-            LocalizationService.SetLanguage(_profileService.LoadOptions().Language);
+            ApplySavedLanguage();
             menu.RefreshLanguage();
 
             var refreshedMenu = FindAnyObjectByType<MainMenuController>() ?? menu;
@@ -220,7 +230,8 @@ namespace SudokuRoguelike.Bootstrap
 
         public void LaunchRun(LaunchRequest request)
         {
-            var runtimeSeed = BuildRuntimeSeed(seed);
+            // [REQ: REQ-RUN-100] A player-entered seed reproduces the run (GAP-020).
+            var runtimeSeed = request.HasSeed ? request.Seed : BuildRuntimeSeed(seed);
             _menuMusic.Stop();
 
             // Populate class level from meta progression so stat bonuses are applied correctly
@@ -262,10 +273,13 @@ namespace SudokuRoguelike.Bootstrap
             Debug.Log($"[GameBootstrap] Launched {request.Mode} as {request.ClassId}, seed={runtimeSeed}");
         }
 
-        public void LaunchSeasonalChallenge()
+        /// <summary>
+        /// Starts or resumes this month's Seasonal Challenge. Returns false, and stays on the menu,
+        /// when the puzzle could not be generated (GAP-004).
+        /// </summary>
+        public bool LaunchSeasonalChallenge()
         {
             var now = DateTime.Today;
-            _menuMusic.Stop();
             _run.DailyGoals = null; // no daily goal tracking in seasonal
 
             // Resume in-progress attempt if one was saved for the current month.
@@ -273,9 +287,13 @@ namespace SudokuRoguelike.Bootstrap
                 out var savedState, out var savedPuzzle))
             {
                 _run.RestoreState(savedState);
-                _run.StartSeasonalChallenge(SeasonalChallengeService.BuildChallengeConfig(now.Year, now.Month));
-                if (savedPuzzle != null)
-                    _run.TryRestorePuzzleSaveState(savedPuzzle);
+                // Saves carrying their level definition resume without regenerating the puzzle.
+                if (!_run.ResumeSeasonalChallenge(savedPuzzle))
+                {
+                    _run.StartSeasonalChallenge(SeasonalChallengeService.BuildChallengeConfig(now.Year, now.Month));
+                    if (savedPuzzle != null && _run.CurrentBoard != null)
+                        _run.TryRestorePuzzleSaveState(savedPuzzle);
+                }
                 Debug.Log($"[GameBootstrap] Resumed Seasonal Challenge {now.Year}-{now.Month:D2}");
             }
             else
@@ -284,11 +302,20 @@ namespace SudokuRoguelike.Bootstrap
                 var levelConfig = SeasonalChallengeService.BuildChallengeConfig(now.Year, now.Month);
                 _run.RestoreState(runState);
                 _run.StartSeasonalChallenge(levelConfig);
-                Debug.Log($"[GameBootstrap] Launched Seasonal Challenge {now.Year}-{now.Month:D2}");
             }
 
+            // [REQ: SEASON-PUZZLE-001] Never enter the puzzle screen without a puzzle (GAP-004).
+            if (_run.CurrentBoard == null)
+            {
+                Debug.LogWarning($"[GameBootstrap] Seasonal Challenge {now.Year}-{now.Month:D2} could not be generated; staying on the menu.");
+                return false;
+            }
+
+            Debug.Log($"[GameBootstrap] Launched Seasonal Challenge {now.Year}-{now.Month:D2}");
+            _menuMusic.Stop();
             _screenManager.ShowGame();
             BindRunToMap();
+            return true;
         }
 
         public void LaunchTutorial(TutorialSetupConfig setup)
@@ -336,24 +363,9 @@ namespace SudokuRoguelike.Bootstrap
 
             _menuMusic.Stop();
 
-            var request = new LaunchRequest
-            {
-                ClassId = runState.ClassId,
-                Mode = runState.Mode,
-                AllowIrregularPuzzles = runState.AllowIrregularPuzzles,
-                HarmonyLevel = runState.HarmonyLevel,
-                HarmonyPerk = runState.HarmonyPerk,
-                SelectedTier = runState.Mode == GameMode.SpiritTrials ? runState.SpiritTrialsTier : null
-            };
-
-            // Re-initialize services with the run's seed, then overlay saved progress
-            // (HP, floor, items, relics, curses, NodePath, etc.)
-
-            _run.StartRun(request, runState.Seed);
-            _run.RestoreState(runState);
-            var savedNodeIndex = runState.CurrentNodeIndex;
-            _run.RebuildFloorGraph(); // rebuild for the restored floor/path state
-            _run.State.CurrentNodeIndex = savedNodeIndex;
+            // Re-initialize services with the run's seed, overlay saved progress (HP, floor, items,
+            // relics, curses, NodePath, ...) and restore the mid-puzzle state, if any.
+            RunResumeService.ApplyToRunDirector(_run, runState, puzzleState);
             Debug.Log(
                 $"[ResumeRestore] HP={_run.State.CurrentHP} Pencil={_run.State.CurrentPencil} " +
                 $"Items={_run.State.HeldItems?.Count ?? 0} NodeIdx={_run.State.CurrentNodeIndex} " +
@@ -369,9 +381,6 @@ namespace SudokuRoguelike.Bootstrap
                     _run.State.SeenBossModifiers.Add(mod);
                 _run.State.SyncSeenModifiersToList();
             }
-
-            if (puzzleState != null)
-                _run.TryRestorePuzzleSaveState(puzzleState);
 
             _screenManager.ShowGame();
             BindRunToMap();
@@ -413,6 +422,19 @@ namespace SudokuRoguelike.Bootstrap
         public bool HasResumableRun()
         {
             return _resumeService.HasActiveRun();
+        }
+
+        /// <summary>
+        /// Ends the saved Garden Run as a defeat before a new run replaces it: its XP and progress are recorded and
+        /// the save is cleared (GAP-032).
+        /// </summary>
+        // [REQ: REQ-RUN-101] Abandoning a run records its result like any other defeat.
+        public bool AbandonSavedRun()
+        {
+            var result = _resumeService.AbandonSavedRun(_profileService);
+            if (result == null) return false;
+            Debug.Log($"[GameBootstrap] Abandoned saved run (class {result.PlayedClassId}, XP {result.XpEarned}).");
+            return true;
         }
 
         public bool HasResumableSeasonalRun()

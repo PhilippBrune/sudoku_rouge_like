@@ -40,7 +40,7 @@ namespace SudokuRoguelike.UI
                     : T("EndPresenter.Tile.Puzzle", "Puzzle");
                 var line = F(
                     "EndPresenter.TileLine",
-                    "  {0} {1}x{1} {2}*: {3} XP",
+                    "  {0} {1}×{1} {2}★: {3} XP",
                     label,
                     tile.BoardSize,
                     tile.Stars,

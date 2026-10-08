@@ -6,7 +6,11 @@ namespace SudokuRoguelike.Items
 {
     public sealed class ItemService
     {
-        private readonly Random _random;
+        private Random _random;
+
+        /// <summary>[REQ: REQ-RUN-103] Starts a fresh random stream for one decision. RunDirector seeds it from the
+        /// run seed and the player's position, so a roll is the same before and after Save &amp; Quit (GAP-018).</summary>
+        public void ReseedForDecision(int decisionSeed) => _random = new Random(decisionSeed);
 
         public ItemService(int seed)
         {
@@ -504,7 +508,7 @@ namespace SudokuRoguelike.Items
                 ItemType.WornChisel     => LocalizationService.T(ItemDescriptionKey(type, rarity), "30% discount at the next shop. (StoneGardener exclusive)"),
                 ItemType.DimLantern     => LocalizationService.T(ItemDescriptionKey(type, rarity), "Remove fog from 3 random hidden cells permanently. (LanternSeer exclusive)"),
                 ItemType.ReedPledge     => LocalizationService.T(ItemDescriptionKey(type, rarity), "Complete this puzzle using zero pencil marks for +2 HP. (ReedDuelist exclusive)"),
-                ItemType.SurveyNotes    => LocalizationService.T(ItemDescriptionKey(type, rarity), "Reveal all node types on the current floor. (QuietCartographer exclusive)"),
+                ItemType.SurveyNotes    => LocalizationService.T(ItemDescriptionKey(type, rarity), "Shows the board size and stars of every tile on this floor. (QuietCartographer exclusive)"),
                 ItemType.BambooCompass  => LocalizationService.T(ItemDescriptionKey(type, rarity), "Highlight 2 cells where the next placement would likely violate an active constraint."),
                 // General-pool items
                 ItemType.BambooScroll   => LocalizationService.T(ItemDescriptionKey(type, rarity), "Reveal the star rating of all upcoming path nodes."),

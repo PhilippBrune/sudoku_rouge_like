@@ -82,7 +82,8 @@ namespace SudokuRoguelike.Tests
 
         private static IEnumerable<UiTextCall> FindRawGeneratedUiTextCalls(params string[] paths)
         {
-            foreach (var path in paths)
+            // Scan focused partial files (X.*.cs) too, so text moved out of a controller stays covered.
+            foreach (var path in paths.SelectMany(SourceText.WithPartials).Distinct())
             {
                 var text = File.ReadAllText(path);
                 foreach (var call in FindCalls(path, text))
@@ -203,6 +204,8 @@ namespace SudokuRoguelike.Tests
                 || expression == "\"?\""
                 || expression == "\"???\""
                 || expression == "\"\\u2713\""
+                || expression == "\"\\u21C4\""   // cross-link badge glyph
+                || expression == "\"\\u25BC\""   // player marker fallback glyph
                 || expression == "\"\u2713\"";
         }
 

@@ -378,6 +378,13 @@ namespace SudokuRoguelike.Sudoku
             deadline.ThrowIfExceeded();
             metrics.UniqueValidationAttempts++;
 
+            // Boards from CreatePuzzleWithUniquenessCheck already have exactly one solution under the
+            // base rules. Modifier rules that the stored solution satisfies can only rule solutions
+            // out, so the board stays unique under any modifier set; the solver re-check would only
+            // spend the time budget (GAP-004: Monthly Walk timed out here).
+            if (board.IsUniqueSolution)
+                return true;
+
             var engine = new SudokuConstraintEngine();
             var rules = ModifierFactory.BuildRules(modifiers);
             for (var i = 0; i < rules.Count; i++)

@@ -10,6 +10,7 @@ namespace SudokuRoguelike.Tests
     /// to diagnose.
     /// </summary>
     [TestFixture]
+    [Requirement("GEN-MOD-001", "GEN-VALID-002")]
     public class ConstraintRuleTests
     {
         // ── Helpers ──────────────────────────────────────────────────────────────

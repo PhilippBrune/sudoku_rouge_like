@@ -40,15 +40,17 @@ namespace SudokuRoguelike.UI
                     localizeStatus: true);
             }
 
-            var label = "Puzzle";
-            if (level.IsBoss) label = "Boss";
-            else if (level.IsCursed) label = "Cursed";
-            else if (level.IsElite) label = "Elite";
-            else if (level.IsPreBoss) label = "Pre-Boss";
+            // [REQ: REQ-UI-101] Localized node label; size and stars written "7×7 3★" everywhere (GAP-019, GAP-029).
+            var labelKey = "InRun.Path.Node.Puzzle";
+            if (level.IsBoss) labelKey = "InRun.Path.Node.Boss";
+            else if (level.IsCursed) labelKey = "InRun.Path.Node.Cursed";
+            else if (level.IsElite) labelKey = "InRun.Path.Node.Elite";
+            else if (level.IsPreBoss) labelKey = "InRun.Path.Node.PreBoss";
 
             return new AsyncLevelCompletionView(
                 AsyncLevelCompletionViewState.Ready,
-                $"{label} - {level.BoardSize}x{level.BoardSize} {level.Stars}*",
+                LocalizationService.Format("InRun.Status.ArrivedPuzzle", "{0} - {1}×{1} {2}★",
+                    LocalizationService.T(labelKey), level.BoardSize, level.Stars),
                 localizeStatus: false);
         }
     }

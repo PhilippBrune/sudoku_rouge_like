@@ -27,7 +27,7 @@ namespace SudokuRoguelike.Tests
             _originalActiveSlot = SaveProfileService.ActiveSlot;
             _originalLanguage = LocalizationService.Current;
 
-            Directory.CreateDirectory(Application.persistentDataPath);
+            Directory.CreateDirectory(SaveFileService.SaveRoot);
             PreserveAndClearSlot(TestSlot);
 
             SaveProfileService.ActiveSlot = TestSlot;
@@ -177,7 +177,7 @@ namespace SudokuRoguelike.Tests
 
         private void PreserveAndClearSlot(int slotIndex)
         {
-            var savePath = Path.Combine(Application.persistentDataPath, $"save_profile_{slotIndex}.json");
+            var savePath = Path.Combine(SaveFileService.SaveRoot, $"save_profile_{slotIndex}.json");
             PreserveAndDelete(savePath);
             PreserveAndDelete(savePath + ".bak");
             PreserveAndDelete(savePath + ".tmp");

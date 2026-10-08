@@ -7,6 +7,7 @@ using UnityEngine;
 namespace SudokuRoguelike.Tests
 {
     [TestFixture]
+    [Requirement("INPUT-REMAP-001", "INPUT-REMAP-002")]
     public sealed class InputRemapServiceTests
     {
         private const int PrimaryTestSlot = SaveFileService.MaxSlots - 1;

@@ -20,6 +20,7 @@ namespace SudokuRoguelike.Tests
         private const string RunMapControllerPath = "Assets/Scripts/UI/RunMapController.cs";
         private const string InRunUiFactoryPath = "Assets/Scripts/UI/InRunUiFactory.cs";
         private const string GamePalettePath = "Assets/Scripts/UI/GamePalette.cs";
+        private const string BossServicePath = "Assets/Scripts/Boss/BossService.cs";
         private const string BoardViewControllerPath = "Assets/Scripts/UI/BoardViewController.cs";
         private const string BossGateViewControllerPath = "Assets/Scripts/UI/BossGateViewController.cs";
         private const string HudViewControllerPath = "Assets/Scripts/UI/HudViewController.cs";
@@ -80,6 +81,10 @@ namespace SudokuRoguelike.Tests
 
             Button("InRun", InRunBlueprintPath, "BtnSudokuSaveQuit", "SaveAndQuit", InRunControllerPath),
             Button("InRun", InRunBlueprintPath, "BtnSudokuOptions", "ToggleOptionsPanel", InRunControllerPath),
+            // [REQ: REQ-ECON-100] GAP-016 buy-pencil HUD button
+            Button("InRun", InRunBlueprintPath, "BtnBuyPencil", "BuyPencil", InRunControllerPath),
+            // [REQ: REQ-ITEM-100] GAP-015 reward reroll (built at runtime by RewardViewController)
+            Button("InRunReward", RewardViewControllerPath, "Slot_reroll", "RerollRewardSlots", RewardViewControllerPath),
             Button("InRunOptions", InRunBlueprintPath, "BtnInGameOptionsClose", "ToggleOptionsPanel", InRunControllerPath),
             Toggle("InRunOptions", InRunBlueprintPath, "IGMuteWhenUnfocusedToggle", "SetMuteWhenUnfocused"),
             Slider("InRunOptions", InRunBlueprintPath, "IGMasterSlider", "SetMasterVolume"),
@@ -428,7 +433,8 @@ namespace SudokuRoguelike.Tests
             StringAssert.Contains("InRunUiFactory.LoadResourceSprite(\"ui/icon_ink_save\")", inRunSource);
             StringAssert.Contains("new GameObject(\"Icon\", typeof(RectTransform), typeof(Image))", inRunSource);
             StringAssert.Contains("sqIconImg.preserveAspect = true", inRunSource);
-            StringAssert.Contains("sqLbl.rectTransform.anchorMin = new Vector2(0.25f, 0f)", inRunSource);
+            // The label starts at 25 % (after the ink icon); tutorial runs show a text-only "Quit".
+            StringAssert.Contains("sqLbl.rectTransform.anchorMin = isTutorialQuit ? new Vector2(0.02f, 0f) : new Vector2(0.25f, 0f)", inRunSource);
         }
 
         [Test]
@@ -448,7 +454,9 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
-        public void TutorialBannerPanel_HidesWholeTopRightBackingOutsideTutorialRuns()
+        // The banner was deliberately retired in 0826fec ("Custom Puzzle mode does not need a tutorial
+        // overlay"); the test now guards that the whole backing stays hidden (GAP-010 triage).
+        public void TutorialBannerPanel_KeepsWholeTopRightBackingHidden()
         {
             var blueprintSource = ReadSource(InRunBlueprintPath);
             var bannerSource = ReadSource(TutorialRunBannerControllerPath);
@@ -458,8 +466,8 @@ namespace SudokuRoguelike.Tests
             StringAssert.Contains("tutorialLabel.transform.parent.gameObject.SetActive(false)", blueprintSource);
             StringAssert.Contains("private GameObject _bannerPanel", bannerSource);
             StringAssert.Contains("_bannerPanel = _bannerText != null ? _bannerText.transform.parent?.gameObject : null", bannerSource);
-            StringAssert.Contains("_bannerPanel.SetActive(isTutorial)", bannerSource);
-            StringAssert.Contains("_bannerText.gameObject.SetActive(isTutorial)", bannerSource);
+            StringAssert.Contains("_bannerPanel.SetActive(false)", bannerSource);
+            StringAssert.Contains("_bannerText.gameObject.SetActive(false)", bannerSource);
         }
 
         [Test]
@@ -498,6 +506,7 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
+        [Requirement("REQ-BOSS-107", "REQ-UI-107")]
         public void BossClearedRewardScreen_HidesDetailsScrimAndCentersStats()
         {
             var endSource = ReadSource(EndScreenViewControllerPath);
@@ -561,6 +570,7 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
+        [Requirement("REQ-BOSS-107", "REQ-UI-107")]
         public void VictoryScreen_ClearsBossInterstitialAndCommitsFinalBossRewards()
         {
             var endSource = ReadSource(EndScreenViewControllerPath);
@@ -607,13 +617,14 @@ namespace SudokuRoguelike.Tests
         public void RenbanLines_RenderOrangeToMatchRuleText()
         {
             var paletteSource = ReadSource(GamePalettePath);
-            var factorySource = ReadSource(InRunUiFactoryPath);
+            // The in-run rule text comes from BossService (InRunUiFactory's unused copy was removed in 1.1).
+            var bossSource = ReadSource(BossServicePath);
             var mainMenuSource = ReadSource(MainMenuPath);
 
             StringAssert.Contains("LineRenbanLine      = new(0.95f, 0.52f, 0.12f, 0.75f)", paletteSource);
-            StringAssert.Contains("Orange line: all digits on the line form a consecutive set", factorySource);
+            StringAssert.Contains("Cells on orange lines form a consecutive set", bossSource);
             StringAssert.Contains("Orange line: all digits on the line form a consecutive set", mainMenuSource);
-            Assert.That(factorySource, Does.Not.Contain("Pink line: all digits on the line form a consecutive set"));
+            Assert.That(bossSource, Does.Not.Contain("Pink line"));
             Assert.That(mainMenuSource, Does.Not.Contain("Pink line: all digits on the line form a consecutive set"));
         }
 
@@ -733,6 +744,19 @@ namespace SudokuRoguelike.Tests
                 {
                     return true;
                 }
+
+                // Factory-wired controls: the action is passed in the same builder call
+                // (e.g. BuildMenuButton(card, "BtnStart", ..., mc.StartGame)), and the builder
+                // registers it with onClick.AddListener. A nearby AddListener is not required.
+                var statementEnd = source.IndexOf(';', index);
+                if (statementEnd < 0) continue;
+                var statementStart = source.LastIndexOf('\n', index) + 1;
+                var statement = source.Substring(statementStart, statementEnd - statementStart);
+                if (statement.Contains(control.ActionToken)
+                    && GetBuilderTokens(control.ControlType).Any(statement.Contains))
+                {
+                    return true;
+                }
             }
 
             return false;
@@ -743,7 +767,8 @@ namespace SudokuRoguelike.Tests
             switch (controlType)
             {
                 case GeneratedUiControlType.Button:
-                    return new[] { "BuildButton", "BuildMenuButton" };
+                    // Runtime panels create their buttons through InRunUiFactory.
+                    return new[] { "BuildButton", "BuildMenuButton", "CreateActionButton", "CreatePanelButton" };
                 case GeneratedUiControlType.Toggle:
                     return new[] { "BuildToggle", "BuildOptionToggle" };
                 case GeneratedUiControlType.Dropdown:
@@ -757,7 +782,7 @@ namespace SudokuRoguelike.Tests
 
         private static string ReadSource(string path)
         {
-            return File.ReadAllText(path);
+            return SourceText.ReadClass(path);
         }
 
         private static IEnumerable<int> AllIndexesOf(string source, string token)

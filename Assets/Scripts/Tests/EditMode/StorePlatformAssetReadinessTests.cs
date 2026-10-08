@@ -20,7 +20,8 @@ namespace SudokuRoguelike.Tests
             Assert.That(checklist, Does.Contain("app icon"));
             Assert.That(checklist, Does.Contain("controller glyph"));
             Assert.That(checklist, Does.Contain("trailer"));
-            Assert.That(checklist, Does.Contain("RELEASE_BLOCKER"));
+            Assert.That(checklist, Does.Contain("Screenshots"));
+            Assert.That(checklist, Does.Contain("OWNER_ACTION"));
         }
 
         [Test]
@@ -30,7 +31,7 @@ namespace SudokuRoguelike.Tests
 
             Assert.That(manifest, Does.Contain("PRG-STORE-ASSETS"));
             Assert.That(manifest, Does.Contain("`docs/release/store-platform-asset-checklist.md`"));
-            Assert.That(manifest, Does.Contain("Store capsule, header, library art, and platform icon package are missing."));
+            Assert.That(manifest, Does.Contain("Store capsule, header, library art, and platform icon package are managed in the Steamworks portal"));
         }
 
         [Test]
@@ -43,7 +44,7 @@ namespace SudokuRoguelike.Tests
                 "library_hero.png",
                 "app_icon.png",
                 "controller_glyphs.png"),
-                "Store/platform assets exist now; update the release checklist and platform manifest exit criteria.");
+                "Store art is kept in the Steamworks portal (docs/release/store-platform-asset-checklist.md); a copy in Assets would ship in the build.");
         }
 
         private static bool ExistsAny(string root, params string[] fileNames)

@@ -24,6 +24,11 @@ namespace SudokuRoguelike.Economy
 
             return new TileXpEntry
             {
+                // [REQ: XP-LOG-001] [REQ: META-COMPLETE-001] The breakdown and completion tracking key on
+                // these; they were left at 0/false, so every tile logged as "0x0_s0" (GAP-009).
+                BoardSize = boardSize,
+                Stars = stars,
+                IsBoss = isBoss,
                 BaseXp = baseXp,
                 StarMultiplier = starMult,
                 BossMultiplier = bossMult,

@@ -43,15 +43,17 @@
     <UnityVersion>6000.3.10f1</UnityVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Analyzer Include="C:\Users\Philipp\.vscode\extensions\visualstudiotoolsforunity.vstuc-1.2.2\Analyzers\Microsoft.Unity.Analyzers.dll" />
+    <Analyzer Include="C:\Users\Philipp\.vscode\extensions\visualstudiotoolsforunity.vstuc-1.3.2\Analyzers\Microsoft.Unity.Analyzers.dll" />
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.3.10f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.SourceGenerators.dll" />
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.3.10f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.3.10f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\Tests\EditMode\StorePlatformAssetReadinessTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\RunSeedAndAbandonTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\AdvancedFeedbackReadinessTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\CancelRouteContractTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\DocText.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\ReleaseReadinessStatusTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\BuildWorkflowReadinessTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\LocalizationCatalogQualityTests.cs" />
@@ -59,41 +61,68 @@
     <Compile Include="Assets\Scripts\Tests\EditMode\RequirementTraceabilityReadinessTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\XpTableTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\AssetProvenanceRegisterTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\BossDebuffTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\ReviewDiagnosticsTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\GeneratedUiRebuildTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\PlatformServiceRegistryTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\ReleaseLocalizationReadinessTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\TestSaveIsolation.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\RequirementAttribute.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\PlatformReleaseReadinessTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\BackgroundAssetBudgetTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\ConstraintRuleTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\ModifierDiscoveryPersistenceTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\DailyStreakTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\GameplayEffectContractTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\AudioAssetServiceTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\PressureRollTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\ControllerSizeBudgetTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\AccessibilityReadinessTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\ReviewDiagnostics3Tests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\ReviewDiagnostics2Tests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\OptionsPersistenceTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\GeneratedUiLocalizationCoverageTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\DropdownCompatibilityTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\ResumeMidPuzzleTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\SmokeTestReadinessTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\CompletionTrackingTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\PrestigeTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\RunFlowAcceptanceTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\SudokuBacktrackingSolverTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\RequirementTraceabilityTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\GeneratedUiRegistryTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\MainMenuBlueprintBuilderExtractionTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\ReservedArtManifestTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\HarmonyEffectsTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\LegalReleaseReadinessTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\TechnicalDebtRegisterTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\CreditsLegalContentTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\AutosaveMergeTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\SteamAchievementServiceTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\GenerationReliabilityTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\NodeConfigPreviewTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\ConditionalButtonStateTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\StartupExperienceReadinessTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\ControllerPartialExtractionTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\DeterminismAcrossResumeTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\InRunSaveQuitPolicyTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\EconomyActionTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\SaveDurabilityReadinessTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\PerformanceReadinessTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\InRunUpdateHelperTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\InputRemapServiceTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\FontAssetServiceTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\ClassRosterTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\PuzzleGenerationServiceTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\GeneratedUiWiringContractTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\SourceText.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\SudokuBasicsStepsTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\RunGraphTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\PlacementRulesTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\BalanceBudgetContractTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\CurseEffectTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\RestNodeValuesTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\SpecAlignmentTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Scripts\Tests\EditMode\GameTests.EditMode.asmdef" />

@@ -11,6 +11,7 @@ namespace SudokuRoguelike.Tests
     /// Target: ~80 runs to Level 40 (16,860 total XP; ~211 XP/run average).
     /// </summary>
     [TestFixture]
+    [Requirement("XP-CURVE-001", "XP-CURVE-002", "XP-TILE-002", "XP-TILE-003", "XP-TILE-004", "META-XP-002", "META-XP-003")]
     public class XpTableTests
     {
         // ── XP-to-next-level formula ─────────────────────────────────────────

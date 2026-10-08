@@ -12,6 +12,7 @@ using SudokuRoguelike.Tutorial;
 namespace SudokuRoguelike.Tests
 {
     [TestFixture]
+    [Requirement("BOSS-MOD-002", "REQ-BOSS-100", "REQ-BOSS-106", "ITEM-SLOT-001")]
     public sealed class BalanceBudgetContractTests
     {
         [Test]
@@ -110,7 +111,9 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
-        public void AntiBishop_IsOnlyRolledForNineByNineBoards()
+        // [REQ: BOSS-MOD-002] Anti-Bishop covers two diagonal steps (SPEC-CONF-038) and is eligible from 6×6.
+        [Requirement("BOSS-MOD-002")]
+        public void AntiBishop_IsEligibleFromSixBySix()
         {
             var method = typeof(BossService).GetMethod(
                 "BuildEligiblePool",
@@ -118,13 +121,13 @@ namespace SudokuRoguelike.Tests
             Assert.NotNull(method);
 
             var service = new BossService(seed: 33);
+            var sizeFive = (List<BossModifierId>)method.Invoke(service, new object[] { null, 5 });
             var sizeSix = (List<BossModifierId>)method.Invoke(service, new object[] { null, 6 });
-            var sizeEight = (List<BossModifierId>)method.Invoke(service, new object[] { null, 8 });
             var sizeNine = (List<BossModifierId>)method.Invoke(service, new object[] { null, 9 });
 
             Assert.IsTrue(BossService.IsSupportedForGeneratedRun(BossModifierId.AntiBishop));
-            CollectionAssert.DoesNotContain(sizeSix, BossModifierId.AntiBishop);
-            CollectionAssert.DoesNotContain(sizeEight, BossModifierId.AntiBishop);
+            CollectionAssert.DoesNotContain(sizeFive, BossModifierId.AntiBishop);
+            CollectionAssert.Contains(sizeSix, BossModifierId.AntiBishop);
             CollectionAssert.Contains(sizeNine, BossModifierId.AntiBishop);
         }
 
@@ -188,13 +191,18 @@ namespace SudokuRoguelike.Tests
                 candidate: BossModifierId.KillerCages,
                 out _));
             Assert.IsFalse(TutorialModeService.CanAddCustomModifier(
-                requestedBoardSize: 8,
+                requestedBoardSize: 5,
                 selectedModifiers: new List<BossModifierId>(),
                 candidate: BossModifierId.AntiBishop,
                 out _));
             Assert.IsTrue(TutorialModeService.CanAddCustomModifier(
-                requestedBoardSize: 9,
+                requestedBoardSize: 8,
                 selectedModifiers: new List<BossModifierId>(),
+                candidate: BossModifierId.AntiBishop,
+                out _));
+            Assert.IsFalse(TutorialModeService.CanAddCustomModifier(
+                requestedBoardSize: 9,
+                selectedModifiers: new List<BossModifierId> { BossModifierId.Antiknight },
                 candidate: BossModifierId.AntiBishop,
                 out _));
             Assert.IsFalse(TutorialModeService.CanAddCustomModifier(

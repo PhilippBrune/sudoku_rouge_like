@@ -7,6 +7,7 @@ using SudokuRoguelike.Sudoku;
 namespace SudokuRoguelike.Tests
 {
     [TestFixture]
+    [Requirement("GEN-SOLVE-001")]
     public sealed class SudokuBacktrackingSolverTests
     {
         [Test]

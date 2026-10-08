@@ -32,13 +32,20 @@ namespace SudokuRoguelike.Run
             return def.BaseStartingRelics + bonus;
         }
 
-        public static RunState CreateRunState(ClassId classId, int seed,
-            bool allowIrregular = true, int classLevel = 1,
-            int harmonyLevel = 0, HarmonyPerkId harmonyPerk = HarmonyPerkId.None)
+        /// <summary>Stat bonuses from the class's level milestones up to <paramref name="classLevel"/>.</summary>
+        // [REQ: REQ-CLASS-103] Shared by run start and the class screen's "base (+bonus)" display (GAP-023).
+        public readonly struct LevelBonuses
         {
-            var def = ClassCatalog.GetDefinition(classId);
+            public readonly int Hp, Pencil, Gold, Slots, Rerolls;
 
-            // Accumulate all stat bonuses from level milestones earned up to classLevel.
+            public LevelBonuses(int hp, int pencil, int gold, int slots, int rerolls)
+            {
+                Hp = hp; Pencil = pencil; Gold = gold; Slots = slots; Rerolls = rerolls;
+            }
+        }
+
+        public static LevelBonuses GetLevelBonuses(ClassId classId, int classLevel)
+        {
             int bonusHp = 0, bonusPencil = 0, bonusGold = 0, bonusSlots = 0, bonusRerolls = 0;
             var unlocks = ClassCatalog.GetAllUnlocks(classId);
             if (unlocks != null)
@@ -60,6 +67,19 @@ namespace SudokuRoguelike.Run
                     }
                 }
             }
+            return new LevelBonuses(bonusHp, bonusPencil, bonusGold, bonusSlots, bonusRerolls);
+        }
+
+        public static RunState CreateRunState(ClassId classId, int seed,
+            bool allowIrregular = true, int classLevel = 1,
+            int harmonyLevel = 0, HarmonyPerkId harmonyPerk = HarmonyPerkId.None)
+        {
+            var def = ClassCatalog.GetDefinition(classId);
+
+            // Accumulate all stat bonuses from level milestones earned up to classLevel.
+            var bonus = GetLevelBonuses(classId, classLevel);
+            int bonusHp = bonus.Hp, bonusPencil = bonus.Pencil, bonusGold = bonus.Gold,
+                bonusSlots = bonus.Slots, bonusRerolls = bonus.Rerolls;
 
             // [HARMONY-CONFIG-001] Build harmony config and apply all difficulty scaling.
             var harmony = HarmonyDifficultyService.BuildConfig(harmonyLevel);

@@ -8,6 +8,7 @@ using UnityEngine;
 namespace SudokuRoguelike.Tests
 {
     [TestFixture]
+    [Requirement("REQ-SAVE-102", "SAVE-AUTO-001", "SAVE-SLOT-001")]
     public sealed class SaveDurabilityReadinessTests
     {
         private const int TestSlot = SaveFileService.MaxSlots - 1;
@@ -26,11 +27,11 @@ namespace SudokuRoguelike.Tests
             SaveFileService.FlushSharedPendingWrites();
             SaveWriteQueue.Shared.ResetDiagnostics();
 
-            _savePath = Path.Combine(Application.persistentDataPath, $"save_profile_{TestSlot}.json");
+            _savePath = Path.Combine(SaveFileService.SaveRoot, $"save_profile_{TestSlot}.json");
             _backupPath = _savePath + ".bak";
             _tempPath = _savePath + ".tmp";
 
-            Directory.CreateDirectory(Application.persistentDataPath);
+            Directory.CreateDirectory(SaveFileService.SaveRoot);
 
             _originalSaveJson = File.Exists(_savePath) ? File.ReadAllText(_savePath) : null;
             _originalBackupJson = File.Exists(_backupPath) ? File.ReadAllText(_backupPath) : null;
@@ -191,6 +192,7 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
+        [Requirement("SAVE-TUTO-001")]
         public void Autosave_SkipsTutorialAndNonSeasonalProgressionDisabledRuns()
         {
             var queue = new SaveWriteQueue();

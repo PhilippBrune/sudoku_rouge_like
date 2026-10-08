@@ -39,7 +39,9 @@ namespace SudokuRoguelike.Tests
             var inGameGermanCredits = BuildInGameCreditsText(LanguageOption.German);
 
             Assert.That(credits, Does.Contain("Google Mobile Dependency Resolver for Unity"));
-            Assert.That(credits, Does.Contain("No Steamworks SDK binaries are bundled"));
+            // SPEC-PROC-007 (2026-10-07): Steamworks.NET and the Steam API redistributables ship; the notices name them.
+            Assert.That(credits, Does.Contain("Steamworks.NET by Riley Labrecque"));
+            Assert.That(credits, Does.Not.Contain("No Steamworks SDK binaries are bundled"));
             Assert.That(credits, Does.Contain("No third-party sprite or stock audio asset files are currently declared"));
             Assert.That(credits, Does.Contain("Roboto Regular by Google"));
             Assert.That(credits, Does.Contain("Privacy & Analytics Notice"));
@@ -48,7 +50,9 @@ namespace SudokuRoguelike.Tests
             Assert.That(credits, Does.Not.Contain("Unity Analytics packages are present"));
 
             Assert.That(notices, Does.Contain("Google Mobile Dependency Resolver For Unity"));
-            Assert.That(notices, Does.Contain("No Steamworks SDK binaries are currently bundled"));
+            Assert.That(notices, Does.Contain("Steamworks.NET"));
+            Assert.That(notices, Does.Contain("Steamworks SDK Access Agreement"));
+            Assert.That(notices, Does.Not.Contain("No Steamworks SDK binaries are currently bundled"));
             Assert.That(notices, Does.Contain("Roboto Regular"));
 
             Assert.That(provenance, Does.Contain("Assets/Resources/Fonts/"));
@@ -60,7 +64,8 @@ namespace SudokuRoguelike.Tests
             Assert.That(inGameCreditsSource, Does.Contain("Credits.Body.PrivacyAnalyticsNotice"));
             Assert.That(inGameCreditsSource, Does.Contain("Credits.Body.AssetLicenses"));
             Assert.That(inGameEnglishCredits, Does.Contain("Google Mobile Dependency Resolver for Unity"));
-            Assert.That(inGameEnglishCredits, Does.Contain("No Steamworks SDK binaries are bundled"));
+            Assert.That(inGameEnglishCredits, Does.Contain("Steamworks.NET by Riley Labrecque"));
+            Assert.That(inGameEnglishCredits, Does.Contain("Steamworks SDK Access Agreement"));
             Assert.That(inGameEnglishCredits, Does.Contain("No third-party sprite or stock audio asset files are currently declared"));
             Assert.That(inGameEnglishCredits, Does.Contain("Roboto Regular by Google"));
             Assert.That(inGameEnglishCredits, Does.Contain("Privacy & Analytics Notice"));
@@ -82,7 +87,7 @@ namespace SudokuRoguelike.Tests
             Assert.That(manifest, Does.Not.Contain("\"com.unity.services.analytics\""));
             Assert.That(manifest, Does.Not.Contain("\"com.unity.modules.unityanalytics\""));
 
-            Assert.That(checklist, Does.Contain("Status: **not platform-release ready**"));
+            Assert.That(checklist, Does.Contain("Status: **release candidate (owner actions open)**"));
             Assert.That(checklist, Does.Contain("Unity Analytics packages are not present"));
             Assert.That(checklist, Does.Contain("privacy/analytics as"));
             Assert.That(checklist, Does.Not.Contain("Privacy/analytics release policy is not finalized"));

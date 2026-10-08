@@ -20,11 +20,26 @@ namespace SudokuRoguelike.Save
             _writeQueue = writeQueue ?? SaveWriteQueue.Shared;
         }
 
-        private string SavePath => Path.Combine(
-            Application.persistentDataPath, $"save_profile_{_slotIndex}.json");
+        /// <summary>
+        /// Directory that holds the slot files. Defaults to Application.persistentDataPath.
+        /// Automated tests point this at a temporary directory so they never read or write the
+        /// player's real saves (GAP-010). Production code never sets it.
+        /// </summary>
+        public static string RootDirectoryOverride { get; set; }
+
+        public static string SaveRoot =>
+            string.IsNullOrEmpty(RootDirectoryOverride) ? Application.persistentDataPath : RootDirectoryOverride;
+
+        public static string GetSlotPath(int slotIndex) =>
+            Path.Combine(SaveRoot, $"save_profile_{Math.Max(0, Math.Min(slotIndex, MaxSlots - 1))}.json");
+
+        private string SavePath => GetSlotPath(_slotIndex);
 
         public bool HasSaveFile()
         {
+            // A queued autosave may not have reached the disk yet (e.g. Save & Quit followed by
+            // Resume); wait for it so the file check sees the latest state.
+            FlushPendingWrites();
             return File.Exists(SavePath);
         }
 
@@ -322,6 +337,9 @@ namespace SudokuRoguelike.Save
         {
             var tmpPath = savePath + ".tmp";
             var bakPath = savePath + ".bak";
+            var directory = Path.GetDirectoryName(savePath);
+            if (!string.IsNullOrEmpty(directory))
+                Directory.CreateDirectory(directory);
             // Write to temp first - if the process crashes here the real save is untouched.
             File.WriteAllText(tmpPath, json);
             // Atomic replace: promotes the temp file over the live save and keeps a .bak copy.

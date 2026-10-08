@@ -100,6 +100,8 @@ namespace SudokuRoguelike.UI
                 elapsed += Time.unscaledDeltaTime;
                 cg.alpha = Ease(Mathf.Clamp01(elapsed / duration), EaseType.EaseOut);
                 yield return null;
+                // The panel can be destroyed mid-fade (e.g. a relic accepted during the fade-in).
+                if (cg == null) yield break;
             }
             cg.alpha = 1f;
         }
@@ -116,6 +118,7 @@ namespace SudokuRoguelike.UI
                 elapsed += Time.unscaledDeltaTime;
                 cg.alpha = 1f - Ease(Mathf.Clamp01(elapsed / duration), EaseType.EaseOut);
                 yield return null;
+                if (cg == null) yield break;
             }
             cg.alpha = 0f;
         }

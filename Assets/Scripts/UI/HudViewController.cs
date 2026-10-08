@@ -15,7 +15,7 @@ namespace SudokuRoguelike.UI
     /// Owns the in-puzzle HUD (HP/pencil bars, modifier banner, combo counter, passive label)
     /// and the bag panel (item + relic slots).
     /// </summary>
-    public sealed class HudViewController : MonoBehaviour
+    public sealed partial class HudViewController : MonoBehaviour
     {
         // ── Injected ──
         private RunMapController _map;
@@ -408,6 +408,7 @@ namespace SudokuRoguelike.UI
 
             EnsureFloorModBanner();
             EnsureModifierInfoBox();
+            EnsureModifierLegend();
             EnsureComboCounter();
             EnsurePassiveLabel();
             EnsureClassBadge();
@@ -670,12 +671,17 @@ namespace SudokuRoguelike.UI
 
             // Refresh icon (only load once per class since ClassId doesn't change in-run)
             var classId = run.State.ClassId;
+            // GAP-029: modes without a class (Monthly Walk) showed an empty white portrait; the badge is hidden there.
+            var hasClass = System.Enum.IsDefined(typeof(ClassId), classId);
+            _classBadgeIcon.transform.parent.gameObject.SetActive(hasClass);
+            if (!hasClass) return;
             var classDef = SudokuRoguelike.Classes.ClassCatalog.GetDefinition(classId);
             if (classDef != null)
             {
                 var iconName = SudokuRoguelike.Classes.ClassCatalog.GetIconName(classId);
                 if (_classBadgeIcon.sprite == null)
                     _classBadgeIcon.sprite = Resources.Load<Sprite>("class/icon_" + iconName);
+                _classBadgeIcon.enabled = _classBadgeIcon.sprite != null;
 
                 // Populate badge cache once per puzzle; level/prestige don't change mid-run
                 if (!_classBadgeCacheValid)

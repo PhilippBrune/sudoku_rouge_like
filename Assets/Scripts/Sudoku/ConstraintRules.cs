@@ -450,20 +450,26 @@ namespace SudokuRoguelike.Sudoku
         }
     }
 
-    // AntiBishop: no cell on the same diagonal can have the same digit
+    // AntiBishop: a digit may not repeat on a diagonal within DiagonalRange steps (SPEC-CONF-038, decided 2026-10-06).
+    // The original whole-diagonal rule cannot be satisfied on 6×6, 8×8 or 9×9 boards: with row and column uniqueness
+    // every digit would have to form an n-queens solution, and those partitions exist only for n ≡ 1 or 5 (mod 6).
     public sealed class AntiBishopRule : IOrderedConstraintRule
     {
+        public const int DiagonalRange = SudokuGenerator.AntiBishopDiagonalRange;
+
         public ConstraintRuleCategory Category => ConstraintRuleCategory.GlobalNegative;
 
         public bool IsValid(SudokuBoard board, int row, int col, int value, ModifierOverlayData overlay)
         {
             var size = board.Size;
-            for (var r = 0; r < size; r++)
-            for (var c = 0; c < size; c++)
+            for (var step = 1; step <= DiagonalRange; step++)
+            for (var dr = -1; dr <= 1; dr += 2)
+            for (var dc = -1; dc <= 1; dc += 2)
             {
-                if (r == row && c == col) continue;
-                if (Math.Abs(r - row) == Math.Abs(c - col))
-                    if (board.Cells[r, c] == value) return false;
+                var r = row + dr * step;
+                var c = col + dc * step;
+                if (r < 0 || r >= size || c < 0 || c >= size) continue;
+                if (board.Cells[r, c] == value) return false;
             }
             return true;
         }

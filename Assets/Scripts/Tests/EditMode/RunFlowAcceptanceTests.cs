@@ -7,6 +7,7 @@ using SudokuRoguelike.Run;
 namespace SudokuRoguelike.Tests
 {
     [TestFixture]
+    [Requirement("REQ-BOSS-101", "REQ-XP-100", "XP-LOG-001", "XP-TILE-001")]
     public sealed class RunFlowAcceptanceTests
     {
         [Test]
@@ -111,6 +112,7 @@ namespace SudokuRoguelike.Tests
 
 
         [Test]
+        [Requirement("REQ-TUT-101")]
         public void TutorialRun_CanCompletePuzzleWithoutProgressionRewards()
         {
             var run = new RunDirector();

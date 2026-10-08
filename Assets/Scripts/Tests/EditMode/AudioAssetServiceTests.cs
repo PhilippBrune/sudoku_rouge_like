@@ -8,6 +8,7 @@ using UnityEngine;
 namespace SudokuRoguelike.Tests
 {
     [TestFixture]
+    [Requirement("REQ-AUDIO-100")]
     public class AudioAssetServiceTests
     {
         [TearDown]
@@ -138,18 +139,17 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
-        public void MenuMusicController_InitializeRestoresMissingAudioSource()
+        // MenuMusicController declares [RequireComponent(typeof(AudioSource))], so Unity adds the source
+        // and refuses to remove it; the old "missing source" precondition could never hold (GAP-010 triage).
+        [Requirement("REQ-AUDIO-100")]
+        public void MenuMusicController_InitializeConfiguresRequiredAudioSource()
         {
             var go = new GameObject("MenuMusicControllerTest");
 
             try
             {
                 var controller = go.AddComponent<MenuMusicController>();
-                var source = go.GetComponent<AudioSource>();
-                if (source != null)
-                    UnityEngine.Object.DestroyImmediate(source);
-
-                Assert.IsNull(go.GetComponent<AudioSource>());
+                Assert.IsNotNull(go.GetComponent<AudioSource>(), "RequireComponent must add the AudioSource.");
 
                 Assert.DoesNotThrow(() => controller.Initialize());
 

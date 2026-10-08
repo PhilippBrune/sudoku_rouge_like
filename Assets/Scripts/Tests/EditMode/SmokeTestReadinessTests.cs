@@ -13,7 +13,7 @@ namespace SudokuRoguelike.Tests
         [Test]
         public void SmokeManifest_TracksRequiredRuntimeAndGeneratedUiScenarios()
         {
-            var manifest = File.ReadAllText(ManifestPath);
+            var manifest = DocText.Read(ManifestPath);
 
             StringAssert.Contains("SMOKE-EDIT-RUNFLOW", manifest);
             StringAssert.Contains("RunFlowAcceptanceTests.cs", manifest);
@@ -45,7 +45,7 @@ namespace SudokuRoguelike.Tests
         public void WorkflowAndDevelopmentDocs_MakeUnityRuntimeGateExplicit()
         {
             var workflow = File.ReadAllText(WorkflowPath);
-            var development = File.ReadAllText(DevelopmentDocPath);
+            var development = DocText.Read(DevelopmentDocPath);
 
             StringAssert.Contains("docs/smoke-test-readiness.md", workflow);
             StringAssert.Contains("unity-batchmode", workflow);

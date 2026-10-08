@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SudokuRoguelike.Boss;
 using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.Run
@@ -47,17 +48,9 @@ namespace SudokuRoguelike.Run
             if (modCount > 0)
             {
                 // [REQ: TRIAL-TIER-002] Modifiers assigned randomly (seeded); player cannot choose
-                // Draw from all 15 modifiers
-                var pool = new List<BossModifierId>();
-                foreach (BossModifierId mod in Enum.GetValues(typeof(BossModifierId)))
-                    pool.Add(mod);
-
-                for (var i = 0; i < modCount && pool.Count > 0; i++)
-                {
-                    var idx = _random.Next(pool.Count);
-                    config.ActiveModifiers.Add(pool[idx]);
-                    pool.RemoveAt(idx);
-                }
+                // [REQ: REQ-MODE-101] Draw only modifiers that have a rule and generate on 9×9 (GAP-007)
+                var pool = BossService.GetGeneratablePlayerModifiers(size);
+                config.ActiveModifiers.AddRange(BossService.DrawCombinable(pool, modCount, _random));
             }
 
             return config;

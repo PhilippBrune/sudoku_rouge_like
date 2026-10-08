@@ -1,10 +1,16 @@
 using System;
 using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using SudokuRoguelike.Platform;
 
 namespace SudokuRoguelike.Tests
 {
+    // SPEC-PROC-005 (2026-10-07): the release documents exist again and describe the 1.1.0 Steam release. These tests
+    // keep them consistent with the repository: every runtime release blocker is listed, the gate states match what is
+    // bundled, and the version matches the player settings. (The 1.0-era version pinned an internal-validation baseline
+    // that stopped being true when Steamworks.NET was added.)
     [TestFixture]
     public sealed class PlatformReleaseReadinessTests
     {
@@ -14,6 +20,14 @@ namespace SudokuRoguelike.Tests
         private const string ProjectSettingsPath = "ProjectSettings/ProjectSettings.asset";
         private const string PackageManifestPath = "Packages/manifest.json";
 
+        private static readonly string[] Gates =
+        {
+            "PRG-STEAM-SDK", "PRG-STEAM-APPID", "PRG-ACHIEVEMENTS", "PRG-STATS-LEADERBOARD", "PRG-CLOUD-SAVE",
+            "PRG-PRIVACY", "PRG-PLAYER-METADATA", "PRG-STORE-ASSETS", "PRG-PLATFORM-BUILDS", "PRG-LOCALIZATION", "PRG-AUDIO"
+        };
+
+        private static readonly string[] States = { "READY", "OWNER_ACTION", "RELEASE_BLOCKER", "MILESTONE_DEFERRED" };
+
         [TearDown]
         public void TearDown()
         {
@@ -21,115 +35,77 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
-        public void PlatformReleaseGate_DocumentsCurrentRegistryBlockers()
+        public void EveryRuntimeReleaseBlocker_IsListedInChecklistAndManifest()
         {
             var checklist = File.ReadAllText(PlatformChecklistPath);
             var manifest = File.ReadAllText(PlatformManifestPath);
             var status = PlatformServiceRegistry.CurrentStatus;
 
             Assert.IsTrue(status.HasReleaseBlockers);
-            CollectionAssert.Contains(status.ReleaseBlockers, "Platform achievements are not release-verified.");
-            CollectionAssert.Contains(status.ReleaseBlockers, "Cloud save is not configured; local saves only.");
-            CollectionAssert.DoesNotContain(status.ReleaseBlockers, "Privacy/analytics notice is not finalized.");
-
-            Assert.That(checklist, Does.Contain("Platform achievements are not release-verified."));
-            Assert.That(checklist, Does.Contain("Cloud save is not configured; local saves only."));
-            Assert.That(checklist, Does.Contain("Unity Analytics packages are not present."));
-            Assert.That(manifest, Does.Contain("PRG-ACHIEVEMENTS"));
-            Assert.That(manifest, Does.Contain("Platform achievements are not release-verified."));
-            Assert.That(manifest, Does.Contain("PRG-CLOUD-SAVE"));
-            Assert.That(manifest, Does.Contain("Save system is local-only."));
-            Assert.That(manifest, Does.Contain("PRG-PRIVACY"));
-            Assert.That(manifest, Does.Contain("No platform telemetry package is configured"));
-            Assert.That(manifest, Does.Contain("READY"));
+            foreach (var blocker in status.ReleaseBlockers)
+            {
+                StringAssert.Contains(blocker, checklist, "checklist misses a runtime blocker");
+                StringAssert.Contains(blocker, manifest, "manifest misses a runtime blocker");
+            }
         }
 
         [Test]
-        public void PlatformReleaseGate_DetectsDevelopmentPlayerMetadataAndMissingIcons()
-        {
-            var projectSettings = File.ReadAllText(ProjectSettingsPath);
-            var checklist = File.ReadAllText(PlatformChecklistPath);
-
-            Assert.That(projectSettings, Does.Contain("companyName: DefaultCompany"));
-            Assert.That(projectSettings, Does.Contain("productName: sudoku_rouge_like"));
-            Assert.That(projectSettings, Does.Contain("applicationIdentifier: {}"));
-            Assert.That(projectSettings, Does.Contain("m_BuildTargetIcons: []"));
-            Assert.That(projectSettings, Does.Contain("m_BuildTargetPlatformIcons: []"));
-
-            Assert.That(checklist, Does.Contain("Player metadata still uses development defaults."));
-            Assert.That(checklist, Does.Contain("Store/platform art package is missing."));
-        }
-
-        [Test]
-        public void PlatformReleaseManifest_TracksEveryOpenReleaseDecision()
+        public void Manifest_HasEveryGate_WithOneKnownState()
         {
             var manifest = File.ReadAllText(PlatformManifestPath);
-
-            Assert.That(manifest, Does.Contain("Current approved milestone: internal development validation."));
-            Assert.That(manifest, Does.Contain("Option A internal-validation baseline"));
-            Assert.That(manifest, Does.Contain("Do not mark the project platform-release ready"));
-            Assert.That(manifest, Does.Contain("RELEASE_BLOCKER"));
-            Assert.That(manifest, Does.Contain("MILESTONE_DEFERRED"));
-
-            AssertManifestDecision(manifest, "PRG-STEAM-SDK", "Steamworks SDK binaries are not bundled.", "RELEASE_BLOCKER");
-            AssertManifestDecision(manifest, "PRG-ACHIEVEMENTS", "Platform achievements", "RELEASE_BLOCKER");
-            AssertManifestDecision(manifest, "PRG-CLOUD-SAVE", "Save system is local-only.", "MILESTONE_DEFERRED");
-            AssertManifestDecision(manifest, "PRG-PRIVACY", "No platform telemetry package is configured", "READY");
-            AssertManifestDecision(manifest, "PRG-PLAYER-METADATA", "Unity player settings still use development defaults.", "RELEASE_BLOCKER");
-            AssertManifestDecision(manifest, "PRG-STORE-ASSETS", "Store capsule, header, library art, and platform icon package are missing.", "RELEASE_BLOCKER");
-            AssertManifestDecision(manifest, "PRG-PLATFORM-BUILDS", "No target platform build validation is recorded.", "RELEASE_BLOCKER");
-
+            foreach (var gate in Gates)
+            {
+                var row = manifest.Split('\n').FirstOrDefault(line => line.StartsWith("| " + gate + " |", StringComparison.Ordinal));
+                Assert.NotNull(row, $"{gate} row missing");
+                Assert.AreEqual(1, States.Count(state => row.Contains("| " + state + " |")), $"{gate}: exactly one state expected");
+            }
             Assert.That(manifest, Does.Contain("Exit Criteria"));
             Assert.That(manifest, Does.Contain("Owner Area"));
             Assert.That(manifest, Does.Contain("Repository Evidence"));
         }
 
         [Test]
-        public void InternalValidationBaseline_DoesNotClaimPlatformReleaseReadiness()
+        public void GateStates_MatchWhatTheRepositoryBundles()
         {
-            var checklist = File.ReadAllText(PlatformChecklistPath);
             var manifest = File.ReadAllText(PlatformManifestPath);
+            var packages = File.ReadAllText(PackageManifestPath);
 
-            Assert.That(checklist, Does.Contain("Option A Internal-Validation Baseline"));
-            Assert.That(checklist, Does.Contain("does not claim Steam, store, cloud-save, or platform-release readiness"));
-            Assert.That(checklist, Does.Contain("all public-release blockers remain visible"));
+            var steamBundled = ExistsAny("Assets", "steam_api64.dll") && ExistsAny("Assets", "steam_api.dll");
+            Assert.AreEqual(steamBundled, GateState(manifest, "PRG-STEAM-SDK") == "READY",
+                "PRG-STEAM-SDK must be READY exactly when the Steam API redistributables are bundled");
 
-            Assert.That(manifest, Does.Contain("Public release state: blocked."));
-            Assert.That(manifest, Does.Contain("Store submission state: blocked."));
-            Assert.That(manifest, Does.Contain("Steam runtime validation state: blocked."));
-            Assert.That(manifest, Does.Contain("do not claim platform-release readiness"));
-
-            Assert.That(checklist, Does.Not.Contain("Status: **platform-release ready**"));
-            Assert.That(manifest, Does.Not.Contain("Public release state: ready."));
-            Assert.That(manifest, Does.Not.Contain("Store submission state: ready."));
-            Assert.That(manifest, Does.Not.Contain("Steam runtime validation state: ready."));
+            var analyticsFree = !packages.Contains("\"com.unity.analytics\"")
+                                && !packages.Contains("\"com.unity.services.analytics\"")
+                                && !packages.Contains("\"com.unity.modules.unityanalytics\"");
+            Assert.IsTrue(analyticsFree, "an analytics package was added; update PRG-PRIVACY and the privacy notice");
+            Assert.AreEqual("READY", GateState(manifest, "PRG-PRIVACY"));
         }
 
         [Test]
-        public void PlatformReleaseGate_DetectsAnalyticsFreeBaselineAndStoreAssetBlockers()
+        public void Manifest_NamesThePlayerSettingsVersionAndCompany()
         {
-            var manifest = File.ReadAllText(PackageManifestPath);
+            var settings = File.ReadAllText(ProjectSettingsPath);
+            var manifest = File.ReadAllText(PlatformManifestPath);
+            var version = Regex.Match(settings, @"bundleVersion: (\S+)").Groups[1].Value;
+            var company = Regex.Match(settings, @"companyName: (\S+)").Groups[1].Value;
+
+            StringAssert.Contains("Release:** " + version, manifest, "manifest release version differs from bundleVersion");
+            StringAssert.Contains("Company `" + company + "`", manifest);
+        }
+
+        [Test]
+        public void Checklist_DoesNotClaimReleaseWhileGatesAreOpen()
+        {
             var checklist = File.ReadAllText(PlatformChecklistPath);
+            var manifest = File.ReadAllText(PlatformManifestPath);
+            var openGates = Gates.Count(gate => GateState(manifest, gate) != "READY" && GateState(manifest, gate) != "MILESTONE_DEFERRED");
 
-            Assert.That(manifest, Does.Not.Contain("\"com.unity.analytics\""));
-            Assert.That(manifest, Does.Not.Contain("\"com.unity.services.analytics\""));
-            Assert.That(manifest, Does.Not.Contain("\"com.unity.modules.unityanalytics\""));
-
-            Assert.IsFalse(ExistsAny(
-                "Assets",
-                "Steamworks.NET.dll",
-                "steam_api64.dll",
-                "steam_api.dll"));
-            Assert.IsFalse(ExistsAny(
-                "Assets",
-                "store_capsule.png",
-                "store_header.png",
-                "library_hero.png",
-                "app_icon.png"));
-
-            Assert.That(checklist, Does.Contain("Steam SDK is not imported."));
+            if (openGates > 0)
+            {
+                Assert.That(checklist, Does.Not.Contain("Status: **platform-release ready**"));
+                Assert.That(manifest, Does.Contain("Public release state: blocked"));
+            }
             Assert.That(checklist, Does.Contain("Unity Analytics packages are not present."));
-            Assert.That(checklist, Does.Contain("Store/platform art package is missing."));
         }
 
         [Test]
@@ -147,32 +123,21 @@ namespace SudokuRoguelike.Tests
             Assert.That(register, Does.Contain("Do not market cloud save"));
         }
 
+        private static string GateState(string manifest, string gate)
+        {
+            var row = manifest.Split('\n').FirstOrDefault(line => line.StartsWith("| " + gate + " |", StringComparison.Ordinal));
+            return row == null ? null : States.FirstOrDefault(state => row.Contains("| " + state + " |"));
+        }
+
         private static bool ExistsAny(string root, params string[] fileNames)
         {
             if (!Directory.Exists(root))
                 return false;
-
             foreach (var fileName in fileNames)
-            {
-                foreach (var path in Directory.EnumerateFiles(root, fileName, SearchOption.AllDirectories))
-                {
-                    if (path.IndexOf(".meta", StringComparison.OrdinalIgnoreCase) < 0)
-                        return true;
-                }
-            }
-
+            foreach (var path in Directory.EnumerateFiles(root, fileName, SearchOption.AllDirectories))
+                if (path.IndexOf(".meta", StringComparison.OrdinalIgnoreCase) < 0)
+                    return true;
             return false;
-        }
-
-        private static void AssertManifestDecision(
-            string manifest,
-            string id,
-            string evidence,
-            string gateState)
-        {
-            Assert.That(manifest, Does.Contain(id));
-            Assert.That(manifest, Does.Contain(evidence));
-            Assert.That(manifest, Does.Contain(gateState));
         }
     }
 }

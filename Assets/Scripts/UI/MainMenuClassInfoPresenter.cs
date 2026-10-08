@@ -4,6 +4,7 @@ using SudokuRoguelike.Classes;
 using SudokuRoguelike.Core;
 using SudokuRoguelike.Economy;
 using SudokuRoguelike.Items;
+using SudokuRoguelike.Run;
 
 namespace SudokuRoguelike.UI
 {
@@ -79,7 +80,7 @@ namespace SudokuRoguelike.UI
             sb.AppendLine(level < 40
                 ? LocalizationService.Format("Class.XpLine", "   XP: {0}/{1}", xpIntoLevel, xpToNext)
                 : LocalizationService.T("Class.XpMaxLine", "   XP: MAX"));
-            AppendClassSummary(sb, def);
+            AppendClassSummary(sb, def, level);
             sb.AppendLine(LocalizationService.T("Class.LevelUnlocksHeader", "- Level Unlocks -"));
 
             AppendLevelUnlocks(sb, allUnlocks, level);
@@ -108,7 +109,7 @@ namespace SudokuRoguelike.UI
             if (!string.IsNullOrEmpty(progress)) sb.AppendLine($"   ({progress})");
             else sb.AppendLine();
 
-            AppendClassSummary(sb, def);
+            AppendClassSummary(sb, def, 1);
             sb.AppendLine(LocalizationService.T("Class.LevelUnlocksPreviewHeader", "- Level Unlocks (preview) -"));
             AppendLevelUnlocks(sb, allUnlocks, null);
             AppendExclusiveUnlocks(sb, classId, null, true);
@@ -135,15 +136,25 @@ namespace SudokuRoguelike.UI
             return LocalizationService.T($"Class.UnlockCondition.{def.Id}", def.UnlockCondition);
         }
 
-        private static void AppendClassSummary(StringBuilder sb, ClassDefinition def)
+        // [REQ: REQ-CLASS-103] Run-start stats as "base (+level bonus)", e.g. "HP:10 (+5)" (GAP-023).
+        private static void AppendClassSummary(StringBuilder sb, ClassDefinition def, int classLevel)
         {
-            sb.AppendLine(LocalizationService.Format("Class.SummaryLine",
-                "HP:{0}  Pencil:{1}  Slots:{2}  |  {3}",
-                def.BaseHP,
-                def.BasePencil,
-                def.BaseItemSlots,
-                GetClassPassive(def)));
+            sb.AppendLine(BuildStatsLine(def, classLevel));
         }
+
+        public static string BuildStatsLine(ClassDefinition def, int classLevel)
+        {
+            var bonus = RunArchetypeService.GetLevelBonuses(def.Id, classLevel);
+            return LocalizationService.Format("Class.SummaryLine",
+                "HP:{0}  Pencil:{1}  Slots:{2}  |  {3}",
+                WithBonus(def.BaseHP, bonus.Hp),
+                WithBonus(def.BasePencil, bonus.Pencil),
+                WithBonus(def.BaseItemSlots, bonus.Slots),
+                GetClassPassive(def));
+        }
+
+        public static string WithBonus(int baseValue, int bonus) =>
+            bonus > 0 ? $"{baseValue} (+{bonus})" : baseValue.ToString();
 
         private static void AppendLevelUnlocks(
             StringBuilder sb,

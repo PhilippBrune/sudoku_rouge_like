@@ -26,6 +26,7 @@ namespace SudokuRoguelike.Tests
                 { "GeneratedIcons", Set(".csv") },
                 { "items", Set(".png") },
                 { "legendary", Set(".png") },
+                { "Localization", Set(".json") },
                 { "meta", Set(".png") },
                 { "modifier", Set(".png") },
                 { "node", Set(".png") },

@@ -12,7 +12,7 @@ using SudokuRoguelike.Tutorial;
 
 namespace SudokuRoguelike.UI
 {
-    public sealed class MainMenuController : MonoBehaviour
+    public sealed partial class MainMenuController : MonoBehaviour
     {
         // ── Panel References ──
         private GameObject _mainMenuPanel;
@@ -44,7 +44,7 @@ namespace SudokuRoguelike.UI
 
         // ── State ──
         private ClassId _selectedClass = ClassId.NumberFreak;
-        private bool _allowIrregularPuzzles = false;
+        private bool _allowIrregularPuzzles = true; // SPEC-CONF-031: matches the toggle and RunState default
         private bool _debugEnableAllFeatures;
         private GameMode _pendingLaunchMode = GameMode.GardenRun;
         private SpiritTrialsTier _pendingTrialsTier = SpiritTrialsTier.Apprentice;
@@ -53,6 +53,11 @@ namespace SudokuRoguelike.UI
         private MenuFlowService _menu;
         private SaveFileService _save;
         private ProfileService _profile;
+
+        private ProfileService Profile
+        {
+            get { EnsureInitialized(); return _profile; }
+        }
         private SaveProfileService _profileSlots;
         private ClassUnlockService _classUnlockService;
         private InputRemapService _inputRemap;
@@ -96,8 +101,13 @@ namespace SudokuRoguelike.UI
                 HarmonyDifficultyService.GetPerkDescription(perk));
         }
 
-        private void Awake()
+        private void Awake() => EnsureInitialized();
+
+        // The generated menu builder configures this controller and calls into it while building,
+        // which in edit-mode tests happens before Awake runs; initialise on first use as well.
+        private void EnsureInitialized()
         {
+            if (_menu != null) return;
             _inputRemap = new InputRemapService();
             _menu = new MenuFlowService();
             _menu.OnPanelShown += SelectFirstInPanel;
@@ -107,8 +117,13 @@ namespace SudokuRoguelike.UI
             _classUnlockService = new ClassUnlockService();
         }
 
+        // [REQ: INPUT-PROFILE-001] [REQ: REQ-UI-100] GAP-006: GameBootstrap's startup flow can pick a screen (Profile
+        // Select) before this Start runs; showing the main menu here unconditionally replaced it on a fresh install.
+        private bool _startupScreenChosen;
+
         private void Start()
         {
+            if (_startupScreenChosen) return;
             ShowMainMenu();
         }
 
@@ -119,6 +134,12 @@ namespace SudokuRoguelike.UI
         private void Update()
         {
             InputRemapService.UpdateCursorVisibility();
+
+            // GAP-029: the lock tooltip lives on the canvas root; leaving class select (Back, B) fires no pointer-exit,
+            // so it used to stay on the main menu.
+            if (_classLockTooltipPanel != null && _classLockTooltipPanel.activeSelf
+                && (_classSelectPanel == null || !_classSelectPanel.activeInHierarchy))
+                HideClassLockTooltip();
 
             // MM-2/MM-6: axis-driven scroll for scrollable panels (runs every frame, before anyKeyDown guard)
             ScrollActivePanelIfNeeded();
@@ -341,6 +362,7 @@ namespace SudokuRoguelike.UI
             SpiritTrialsTierSelectController trialsSelectCtrl = null,
             EndlessZenLeaderboardController zenLeaderboardCtrl = null)
         {
+            EnsureInitialized();
             _gameBootstrap = bootstrap;
             _mainMenuPanel = mainMenuPanel;
             _classSelectPanel = classSelectPanel;
@@ -361,6 +383,7 @@ namespace SudokuRoguelike.UI
             _optionsController = optionsCtrl;
             _tutorialMenuController = tutorialCtrl;
             _metaProgressionController = metaCtrl;
+            if (metaCtrl != null) metaCtrl.PrestigeRequested = PrestigeClass;
             _gameModesController = modesCtrl;
             _itemsMenuController = itemsCtrl;
             _keybindingsController = keybindCtrl;
@@ -395,6 +418,7 @@ namespace SudokuRoguelike.UI
 
         public void ShowMainMenu()
         {
+            _startupScreenChosen = true;
             _menu.ShowMainMenu();
             SetupResumeButton();
             RefreshClassLockStates();
@@ -412,7 +436,7 @@ namespace SudokuRoguelike.UI
         }
         public void OpenTutorial()
         {
-            var meta = _profile.LoadMetaProgress();
+            var meta = Profile.LoadMetaProgress();
             var unlocked = new List<ClassId>();
             var allClasses = new[]
             {
@@ -431,16 +455,25 @@ namespace SudokuRoguelike.UI
         public void OpenCredits() => _menu.Show(MenuScreen.Credits);
         public void OpenItems()
         {
-            var meta = _profile.LoadMetaProgress();
+            var meta = Profile.LoadMetaProgress();
             _itemsMenuController?.Refresh(meta);
             _menu.Show(MenuScreen.Items);
         }
 
         public void OpenMetaProgression()
         {
-            var meta = _profile.LoadMetaProgress();
+            var meta = Profile.LoadMetaProgress();
             _metaProgressionController?.Refresh(meta);
             _menu.Show(MenuScreen.MetaProgression);
+        }
+
+        // [REQ: META-PRESTIGE-004] GAP-017: prestige a level-40 class from the Meta Progression panel.
+        private void PrestigeClass(ClassId classId)
+        {
+            var done = Profile.TryPrestigeClass(classId);
+            Debug.Log($"[MainMenu] Prestige {classId}: {(done ? "done" : "not eligible")}.");
+            // The rebuilt rows drop the selection; EnsureControllerSelection picks the panel's first button again.
+            _metaProgressionController?.Refresh(Profile.LoadMetaProgress());
         }
 
         public void OpenGameModes()    => ShowGameModes();
@@ -487,7 +520,12 @@ namespace SudokuRoguelike.UI
         public void LaunchSeasonalChallenge()
         {
             if (_gameBootstrap == null) return;
-            _gameBootstrap.LaunchSeasonalChallenge();
+            if (!_gameBootstrap.LaunchSeasonalChallenge())
+            {
+                SetStatus(LocalizationService.T(
+                    "Seasonal.Status.GenerationFailed",
+                    "This month's puzzle could not be prepared. Please try again."));
+            }
         }
 
         private void HideAllPanels()
@@ -629,6 +667,7 @@ namespace SudokuRoguelike.UI
 
         public void ShowProfileSelect()
         {
+            _startupScreenChosen = true;
             RefreshProfileSelectCards();
             _menu.Show(MenuScreen.ProfileSelect);
         }
@@ -643,7 +682,7 @@ namespace SudokuRoguelike.UI
             _save = new SaveFileService(SaveProfileService.ActiveSlot);
             _profile = new ProfileService(_save);
 
-            LocalizationService.SetLanguage(_profile.LoadOptions().Language);
+            LocalizationService.SetLanguage(Profile.LoadOptions().Language);
             if (_gameBootstrap != null)
             {
                 _gameBootstrap.ContinueStartupAfterProfileSelection(this);
@@ -762,7 +801,7 @@ namespace SudokuRoguelike.UI
             if (rs != null && lbl != null)
                 lbl.text = LocalizationService.Format("Resume.Button.Active",
                     "Resume  -  {0}  -  Floor {1}  -  HP {2}/{3}",
-                    ClassCatalog.GetDefinition(rs.ClassId).Name,
+                    LocalizationService.T(ClassCatalog.GetDefinition(rs.ClassId).Name), // GAP-019: class name was English
                     rs.CurrentFloor + 1,
                     rs.CurrentHP,
                     rs.MaxHP);
@@ -785,18 +824,23 @@ namespace SudokuRoguelike.UI
         // [REQ: META-UNLOCK-004] Locked classes are greyed out (button non-interactive, lock icon overlay visible, muted text colour)
         public void RefreshClassLockStates()
         {
-            var meta = _profile.LoadMetaProgress();
+            var meta = Profile.LoadMetaProgress();
             foreach (var kvp in _classButtons)
             {
                 var locked = !IsClassUnlockedOrDebug(kvp.Key, meta);
                 // C-3 — Block interaction on locked buttons
                 kvp.Value.interactable = !locked;
+                // GAP-029: Unity's default disabled tint (50 % alpha) turned locked cards dark-on-dark; the colours
+                // below are shown as set, with a light label on both states.
+                var colors = kvp.Value.colors;
+                colors.disabledColor = Color.white;
+                kvp.Value.colors = colors;
                 var img = kvp.Value.GetComponent<UnityEngine.UI.Image>();
                 if (img != null)
-                    img.color = locked ? new Color(0.82f, 0.75f, 0.62f, 0.92f) : new Color(0.40f, 0.37f, 0.32f, 0.80f);
+                    img.color = locked ? new Color(0.16f, 0.15f, 0.13f, 0.92f) : new Color(0.40f, 0.37f, 0.32f, 0.80f);
                 var lbl = kvp.Value.transform.Find("Label")?.GetComponent<Text>();
                 if (lbl != null)
-                    lbl.color = locked ? new Color(0.12f, 0.10f, 0.08f, 1f) : new Color(0.65f, 0.60f, 0.50f, 1f);
+                    lbl.color = locked ? new Color(0.72f, 0.69f, 0.62f, 1f) : new Color(0.96f, 0.93f, 0.82f, 1f);
 
                 // #6 — show/hide lock icon overlay
                 if (_classLockOverlays.TryGetValue(kvp.Key, out var lockGo) && lockGo != null)
@@ -812,7 +856,7 @@ namespace SudokuRoguelike.UI
 
         public void StepHarmonyClassLevel(int delta)
         {
-            var meta = _profile.LoadMetaProgress();
+            var meta = Profile.LoadMetaProgress();
             _gameModesController?.StepHarmonyLevel(delta, meta);
             RefreshHarmonyReadout();
         }
@@ -830,7 +874,7 @@ namespace SudokuRoguelike.UI
                 _harmonyDescriptionLabel.text = LocalizationService.T(
                     "Harmony.Description." + level,
                     HarmonyDifficultyService.GetDescription(level));
-            var meta = _profile.LoadMetaProgress();
+            var meta = Profile.LoadMetaProgress();
             var maxUnlocked = _gameModesController.GetMaxUnlockedHarmonyLevel(meta);
             if (_harmonyPrevClassBtn != null) _harmonyPrevClassBtn.interactable = level > 0;
             if (_harmonyNextClassBtn != null) _harmonyNextClassBtn.interactable = level < maxUnlocked;
@@ -839,7 +883,7 @@ namespace SudokuRoguelike.UI
         // C-3 — Hover tooltip showing unlock condition for locked class buttons
         public void ShowClassLockTooltip(ClassId classId, Vector2 screenPos)
         {
-            var meta = _profile.LoadMetaProgress();
+            var meta = Profile.LoadMetaProgress();
             var isUnlocked = IsClassUnlockedOrDebug(classId, meta);
 
             // [UX-FIX] Never show unlock progress tooltip for classes the player already has.
@@ -941,7 +985,7 @@ namespace SudokuRoguelike.UI
             // Update class info text
             if (_classInfoText != null)
             {
-                var meta = _profile.LoadMetaProgress();
+                var meta = Profile.LoadMetaProgress();
                 var isUnlocked = IsClassUnlockedOrDebug(classId, meta);
                 var view = MainMenuClassInfoPresenter.Build(classId, meta, isUnlocked);
 
@@ -955,7 +999,7 @@ namespace SudokuRoguelike.UI
         {
             if (_gameBootstrap == null) return;
 
-            var meta = _profile.LoadMetaProgress();
+            var meta = Profile.LoadMetaProgress();
             if (!IsClassUnlockedOrDebug(_selectedClass, meta))
             {
                 SetStatus(LocalizationService.T(
@@ -970,6 +1014,7 @@ namespace SudokuRoguelike.UI
                 Mode = _pendingLaunchMode,
                 AllowIrregularPuzzles = _allowIrregularPuzzles
             };
+            ApplyPendingSeed(request);
 
             if (_pendingLaunchMode == GameMode.GardenRun)
             {
@@ -989,7 +1034,7 @@ namespace SudokuRoguelike.UI
         {
             if (_gameBootstrap == null) return;
 
-            var meta = _profile.LoadMetaProgress();
+            var meta = Profile.LoadMetaProgress();
             if (!IsClassUnlockedOrDebug(_selectedClass, meta))
             {
                 SetStatus(LocalizationService.T(
@@ -1005,7 +1050,7 @@ namespace SudokuRoguelike.UI
             if (canvas == null) { ConfirmClassAndStart(); return; }
 
             var shell = InRunUiFactory.CreateThemedModalShell(canvas.transform, "StartRunModal",
-                new Vector2(0.18f, 0.28f), new Vector2(0.82f, 0.72f), "bg_class_select", 0.12f);
+                new Vector2(0.18f, 0.20f), new Vector2(0.82f, 0.80f), "bg_class_select", 0.12f);
             var overlayRoot = shell.Root;
             var overlay = shell.Panel.gameObject;
             _startRunConfirmOverlay = overlayRoot;
@@ -1025,8 +1070,8 @@ namespace SudokuRoguelike.UI
                 var iconGo = new GameObject("ClassIcon", typeof(RectTransform), typeof(Image));
                 iconGo.transform.SetParent(overlay.transform, false);
                 var iconRt = iconGo.GetComponent<RectTransform>();
-                iconRt.anchorMin = new Vector2(0.38f, 0.72f);
-                iconRt.anchorMax = new Vector2(0.62f, 0.96f);
+                iconRt.anchorMin = new Vector2(0.40f, 0.80f);
+                iconRt.anchorMax = new Vector2(0.60f, 0.97f);
                 iconRt.offsetMin = iconRt.offsetMax = Vector2.zero;
                 var iconImg = iconGo.GetComponent<Image>();
                 iconImg.sprite = iconSprite;
@@ -1037,8 +1082,8 @@ namespace SudokuRoguelike.UI
             // Class name
             var nameTxt = InRunUiFactory.CreateText(overlay.transform, "ClassName",
                 LocalizationService.T(def.Name), 22, TextAnchor.UpperCenter, GamePalette.AccentGold);
-            nameTxt.rectTransform.anchorMin = new Vector2(0.05f, 0.60f);
-            nameTxt.rectTransform.anchorMax = new Vector2(0.95f, 0.76f);
+            nameTxt.rectTransform.anchorMin = new Vector2(0.05f, 0.70f);
+            nameTxt.rectTransform.anchorMax = new Vector2(0.95f, 0.81f);
             nameTxt.rectTransform.offsetMin = nameTxt.rectTransform.offsetMax = Vector2.zero;
             nameTxt.fontStyle = FontStyle.Bold;
 
@@ -1046,17 +1091,23 @@ namespace SudokuRoguelike.UI
             var passiveTxt = InRunUiFactory.CreateText(overlay.transform, "Passive",
                 MainMenuClassInfoPresenter.GetClassPassive(def), 12, TextAnchor.UpperCenter,
                 new Color(0.90f, 0.87f, 0.72f, 1f));
-            passiveTxt.rectTransform.anchorMin = new Vector2(0.05f, 0.38f);
-            passiveTxt.rectTransform.anchorMax = new Vector2(0.95f, 0.62f);
+            passiveTxt.rectTransform.anchorMin = new Vector2(0.05f, 0.53f);
+            passiveTxt.rectTransform.anchorMax = new Vector2(0.95f, 0.71f);
             passiveTxt.rectTransform.offsetMin = passiveTxt.rectTransform.offsetMax = Vector2.zero;
             passiveTxt.horizontalOverflow = HorizontalWrapMode.Wrap;
 
             // Stats line
+            // GAP-023: stats at run start, as "base (+level bonus)".
+            var bonus = RunArchetypeService.GetLevelBonuses(_selectedClass,
+                new SudokuRoguelike.Meta.ClassGardenProgressionService().GetLevel(meta, _selectedClass));
             var statsTxt = InRunUiFactory.CreateText(overlay.transform, "Stats",
-                LocalizationService.Format("RunConfirm.StatsLine", "HP: {0}  -  Pencil: {1}  -  Item Slots: {2}", def.BaseHP, def.BasePencil, def.BaseItemSlots),
+                LocalizationService.Format("RunConfirm.StatsLine", "HP: {0}  -  Pencil: {1}  -  Item Slots: {2}",
+                    MainMenuClassInfoPresenter.WithBonus(def.BaseHP, bonus.Hp),
+                    MainMenuClassInfoPresenter.WithBonus(def.BasePencil, bonus.Pencil),
+                    MainMenuClassInfoPresenter.WithBonus(def.BaseItemSlots, bonus.Slots)),
                 11, TextAnchor.UpperCenter, new Color(0.75f, 0.72f, 0.58f, 1f));
-            statsTxt.rectTransform.anchorMin = new Vector2(0.05f, 0.28f);
-            statsTxt.rectTransform.anchorMax = new Vector2(0.95f, 0.40f);
+            statsTxt.rectTransform.anchorMin = new Vector2(0.05f, 0.46f);
+            statsTxt.rectTransform.anchorMax = new Vector2(0.95f, 0.54f);
             statsTxt.rectTransform.offsetMin = statsTxt.rectTransform.offsetMax = Vector2.zero;
 
             var modeLabel = _pendingLaunchMode switch
@@ -1067,8 +1118,8 @@ namespace SudokuRoguelike.UI
             };
             var modeTxt = InRunUiFactory.CreateText(overlay.transform, "ModeState",
                 modeLabel, 10, TextAnchor.UpperCenter, new Color(0.86f, 0.82f, 0.66f, 1f));
-            modeTxt.rectTransform.anchorMin = new Vector2(0.05f, 0.22f);
-            modeTxt.rectTransform.anchorMax = new Vector2(0.95f, 0.30f);
+            modeTxt.rectTransform.anchorMin = new Vector2(0.05f, 0.41f);
+            modeTxt.rectTransform.anchorMax = new Vector2(0.95f, 0.47f);
             modeTxt.rectTransform.offsetMin = modeTxt.rectTransform.offsetMax = Vector2.zero;
 
             // C-4 — Show irregular toggle state in modal
@@ -1078,25 +1129,33 @@ namespace SudokuRoguelike.UI
                 _allowIrregularPuzzles
                     ? new Color(0.90f, 0.75f, 0.30f, 1f)
                     : new Color(0.60f, 0.58f, 0.48f, 0.70f));
-            irregularTxt.rectTransform.anchorMin = new Vector2(0.05f, 0.16f);
-            irregularTxt.rectTransform.anchorMax = new Vector2(0.95f, 0.23f);
+            irregularTxt.rectTransform.anchorMin = new Vector2(0.05f, 0.36f);
+            irregularTxt.rectTransform.anchorMax = new Vector2(0.95f, 0.42f);
             irregularTxt.rectTransform.offsetMin = irregularTxt.rectTransform.offsetMax = Vector2.zero;
+
+            // GAP-020: optional seed; GAP-032: warn that a saved run would be abandoned.
+            var abandonsSavedRun = _gameBootstrap.HasResumableRun();
+            BuildStartRunExtras(overlay.transform, abandonsSavedRun);
 
             // "Begin" button — shifted down to leave room for C-4 irregular line
             var beginBtn = InRunUiFactory.CreateActionButton(overlay.transform, "BtnBegin",
-                new Vector2(0.08f, 0.03f), new Vector2(0.46f, 0.20f), LocalizationService.T("Begin"), UiAction.Begin);
+                new Vector2(0.08f, 0.02f), new Vector2(0.46f, 0.13f),
+                abandonsSavedRun ? LocalizationService.T("RunConfirm.AbandonAndBegin", "Abandon & Begin") : LocalizationService.T("Begin"),
+                UiAction.Begin);
+            ConfigureModalActionLabel(beginBtn);
             var beginLbl = beginBtn.transform.Find("Label")?.GetComponent<Text>();
             if (beginLbl != null) beginLbl.color = GamePalette.AccentGold;
             beginBtn.onClick.AddListener(() =>
             {
                 Destroy(overlayRoot);
                 _startRunConfirmOverlay = null;
-                ConfirmClassAndStart();
+                BeginRunFromModal(abandonsSavedRun);
             });
 
             // "Back" button
             var backBtn = InRunUiFactory.CreateActionButton(overlay.transform, "BtnBack",
-                new Vector2(0.54f, 0.03f), new Vector2(0.92f, 0.20f), LocalizationService.T("Back"), UiAction.Back);
+                new Vector2(0.54f, 0.02f), new Vector2(0.92f, 0.13f), LocalizationService.T("Back"), UiAction.Back);
+            ConfigureModalActionLabel(backBtn);
             backBtn.onClick.AddListener(() =>
             {
                 Destroy(overlayRoot);
@@ -1142,7 +1201,7 @@ namespace SudokuRoguelike.UI
 
         public void StartEndlessZen()
         {
-            var meta = _profile.LoadMetaProgress();
+            var meta = Profile.LoadMetaProgress();
             if (!_debugEnableAllFeatures && !(meta?.EndlessZenUnlocked ?? false))
             {
                 SetStatus(LocalizationService.T(
@@ -1161,21 +1220,21 @@ namespace SudokuRoguelike.UI
 
         public void ShowSpiritTrialsTierSelect()
         {
-            var stats = _profile?.LoadStats();
+            var stats = Profile.LoadStats();
             _trialsSelectCtrl?.Refresh(stats);
             _menu.Show(MenuScreen.SpiritTrialsTierSelect);
         }
 
         public void ShowZenLeaderboard()
         {
-            var stats = _profile?.LoadStats();
+            var stats = Profile.LoadStats();
             _zenLeaderboardCtrl?.Refresh(stats);
             _menu.Show(MenuScreen.EndlessZenLeaderboard);
         }
 
         public void StartSpiritTrials(SpiritTrialsTier tier)
         {
-            var meta = _profile.LoadMetaProgress();
+            var meta = Profile.LoadMetaProgress();
             if (!_debugEnableAllFeatures && !(meta?.SpiritTrialsUnlocked ?? false))
             {
                 SetStatus(LocalizationService.T(
@@ -1234,7 +1293,7 @@ namespace SudokuRoguelike.UI
 
         public void RefreshLanguage()
         {
-            var lang = _profile.LoadOptions().Language;
+            var lang = Profile.LoadOptions().Language;
             // Rebuild menu to apply new language
             var builder = GetComponent<MainMenuBlueprintBuilder>();
             if (builder != null)
@@ -1255,7 +1314,7 @@ namespace SudokuRoguelike.UI
 
         private void RefreshGameModesPanel()
         {
-            var meta = _profile.LoadMetaProgress();
+            var meta = Profile.LoadMetaProgress();
             _gameModesController?.LoadFromMeta(meta);
 
             var endlessUnlocked = _debugEnableAllFeatures || (meta?.EndlessZenUnlocked ?? false);
@@ -1376,6 +1435,7 @@ namespace SudokuRoguelike.UI
             // "Yes, show me" button
             var yesBtn = InRunUiFactory.CreateActionButton(overlay.transform, "BtnYes",
                 new Vector2(0.08f, 0.08f), new Vector2(0.46f, 0.32f), LocalizationService.T("Yes, show me"), UiAction.Start);
+            ConfigureModalActionLabel(yesBtn);
             yesBtn.onClick.AddListener(() =>
             {
                 _sudokuBasicsOverlay = null;
@@ -1387,6 +1447,7 @@ namespace SudokuRoguelike.UI
             // "Skip" button
             var skipBtn = InRunUiFactory.CreateActionButton(overlay.transform, "BtnSkip",
                 new Vector2(0.54f, 0.08f), new Vector2(0.92f, 0.32f), LocalizationService.T("Skip"), UiAction.Skip);
+            ConfigureModalActionLabel(skipBtn);
             skipBtn.onClick.AddListener(() =>
             {
                 _sudokuBasicsOverlay = null;

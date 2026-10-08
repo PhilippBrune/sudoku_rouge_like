@@ -33,7 +33,7 @@ namespace SudokuRoguelike.Classes
                     if (new Random(state.Seed ^ level.CorrectPlacements).NextDouble() < goldChance)
                     {
                         var goldGain = hasScale ? 5 : KoiGoldGain(state);
-                        state.CurrentGold += goldGain;
+                        state.GainGold(goldGain);
                         return goldGain;
                     }
                     break;
@@ -132,14 +132,13 @@ namespace SudokuRoguelike.Classes
             return level.ItemsUsedThisLevel < freeUses;
         }
 
-        // ── GardenMonk: legacy pencil purchase hook ─────────────────────────────
+        // ── GardenMonk: pencil purchase restriction ─────────────────────────────
 
         /// <summary>
-        /// Legacy compatibility hook for older pencil-purchase paths.
-        /// The current UI does not expose a pencil purchase mechanic.
+        /// [REQ: REQ-ECON-100] Garden Monk cannot buy pencil mid-level (GDS §6.1); every other class can.
         /// </summary>
-        public static bool GardenMonkPencilBuyIsHPTrade(RunState state)
-            => state.ClassId == ClassId.GardenMonk;
+        public static bool CanBuyPencilMidLevel(RunState state)
+            => state.ClassId != ClassId.GardenMonk;
 
         // ── LanternSeer: modifier weakening ─────────────────────────────────────
 

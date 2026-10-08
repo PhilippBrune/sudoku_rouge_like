@@ -39,6 +39,9 @@ namespace SudokuRoguelike.Economy
         public const int ModifierBonusPerMod = 15;
         public const int PerfectBonus = 25;
 
+        // [REQ: XP-CURVE-002] Level cap; CumulativeXpForLevel(MaxLevel) = 16,860 XP.
+        public const int MaxLevel = 40;
+
         // [REQ: XP-CURVE-001] L1-15: 50+(n-1)×10; L16-40: prev+35 per level
         public static int XpToNextLevel(int currentLevel)
         {
@@ -65,14 +68,14 @@ namespace SudokuRoguelike.Economy
         public static int DeriveLevel(int totalXp)
         {
             var cumulative = 0;
-            for (var level = 1; level <= 40; level++)
+            for (var level = 1; level <= MaxLevel; level++)
             {
                 var needed = XpToNextLevel(level);
                 if (cumulative + needed > totalXp)
                     return level;
                 cumulative += needed;
             }
-            return 40;
+            return MaxLevel;
         }
 
         public static int CalculateTileXp(int boardSize, int stars, int activeModCount, bool isBoss, bool perfectSolve)

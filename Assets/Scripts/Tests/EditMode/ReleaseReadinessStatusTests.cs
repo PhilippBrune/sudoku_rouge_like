@@ -13,14 +13,14 @@ namespace SudokuRoguelike.Tests
         {
             var status = File.ReadAllText(ReleaseStatusPath);
 
-            StringAssert.Contains("Prototype-to-alpha hardening", status);
-            StringAssert.Contains("Alpha Readiness Hardening", status);
-            StringAssert.Contains("Release readiness score: **68/100**", status);
+            // SPEC-PROC-005: the status page describes the 1.1.0 Steam release and points to its evidence.
+            StringAssert.Contains("second Steam release (1.1.0)", status);
             StringAssert.Contains("Unity batchmode EditMode and PlayMode XML results", status);
             StringAssert.Contains("Unity Profiler captures on target hardware", status);
             StringAssert.Contains("docs/release/platform-release-manifest.md", status);
+            StringAssert.Contains("docs/release/platform-readiness-checklist.md", status);
             StringAssert.Contains("docs/repository-working-tree-triage.md", status);
-            StringAssert.Contains("Do not label this project beta", status);
+            StringAssert.Contains("docs/review/E2E_TEST_REPORT.md", status);
         }
     }
 }

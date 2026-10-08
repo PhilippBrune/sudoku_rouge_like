@@ -41,6 +41,10 @@ namespace SudokuRoguelike.Core
         public List<int> RouteHistory = new List<int>();
         public List<int> NodePath = new List<int>();
 
+        // [REQ: REQ-SUD-101] Level seeds whose generation failed (one entry per failure). A retry of the
+        // same level salts its seed by the failure count, so a failing seed never blocks the run (GAP-003).
+        public List<int> FailedGenerationSeeds = new List<int>();
+
         // [REQ: BOSS-FLOOR-003] Floor modifiers stored in RunState for persistence (applied to all puzzles on the current floor)
         public List<BossModifierId> ActiveFloorModifiers = new List<BossModifierId>();
 
@@ -71,10 +75,28 @@ namespace SudokuRoguelike.Core
 
         // Economy tracking
         public float GlobalGoldMultiplier = 1.0f;
-        public int PencilPurchaseCount;
+        public int PencilPurchaseCount;    // emergency HP heals bought in the shop (name kept for save compatibility)
+        // [REQ: REQ-ECON-100] Pencil purchases during puzzles this run (GAP-016; separate from the emergency heal counter).
+        public int PencilBoughtCount;
+        // [REQ: REQ-ITEM-100] Item reward rerolls this run (GAP-015).
+        public int RewardRerollCount;
         public int RerollCount;
         public int ShopRerollCount;
+        // [REQ: REQ-RUN-103] [REQ: REQ-PATH-102] Puzzle configs of the current floor's nodes (one per node index), built
+        // once at floor entry and saved, so map previews and puzzles do not change after Save & Quit (GAP-018/GAP-013).
+        public int NodeConfigsFloor = -1;
+        // [REQ: MAP-CROSS-001] Layout version of the current floor graph (RunGraphService.CurrentGraphVersion). Missing in
+        // 1.0 saves (0 = legacy bridges), so a resumed floor keeps the graph it was played on.
+        public int FloorGraphVersion;
+        public List<LevelConfig> NodeConfigs = new List<LevelConfig>();
         public int BossesDefeatedThisRun;  // boss puzzles cleared during this run
+        // [REQ: META-COMPLETE-001] Player modifiers of bosses defeated in this run (saved with the run).
+        public List<BossModifierId> ClearedBossModifiersThisRun = new List<BossModifierId>();
+
+        // [REQ: XP-LOG-001] Per-tile XP and run analytics are saved with the run, so XP, item counts and the run
+        // score of tiles before a resume are not lost (GAP-038). Saves from 1.0 start with empty logs.
+        public List<TileXpEntry> TileXpLog = new List<TileXpEntry>();
+        public SudokuRoguelike.Run.PostRunAnalyticsService Analytics = new SudokuRoguelike.Run.PostRunAnalyticsService();
 
         // Item effect state
         public int MistakeShieldCharges;   // RicePaperUmbrella: absorbs next N mistakes
@@ -118,7 +140,17 @@ namespace SudokuRoguelike.Core
         public int GoldSpentThisFloor;
         // [REQ: DAILY-GOAL-001] Cumulative run-level counters for daily goal evaluation.
         public int GoldSpentThisRun;
+        // [REQ: REQ-ECON-101] All gold gained during the run (puzzles, relics, passives, events, goals), counted
+        // whether or not it is spent later. Feeds RunResult.GoldEarned and the cumulative gold unlocks (GAP-027).
         public int GoldCollectedThisRun;
+
+        /// <summary>Adds gold the player gains during the run and counts it as collected.</summary>
+        public void GainGold(int amount)
+        {
+            if (amount <= 0) return;
+            CurrentGold += amount;
+            GoldCollectedThisRun += amount;
+        }
         public int HpAtCurrentFloorEntry; // HP when player entered the current floor (before relic heals)
         public int ItemsUsedThisRun;
         public bool TempleVowReady;        // GardenMonk L30: trigger ready (HP ≤ 25%, fires once/puzzle)
@@ -130,10 +162,8 @@ namespace SudokuRoguelike.Core
         public int HarmonyLevel;
         // [HARMONY-002] HP cost per mistake. Base=1; scales at H5 (2), H9 (3).
         public int MistakeHpCost = 1;
-        // [HARMONY-003] True at H7+. Combo streak decays by 1 every 8 correct placements with no combo bonus.
+        // [HARMONY-003] True at H7+. The combo carried into each new puzzle is halved (RunDirector.PrepareRunStateForNewPuzzle).
         public bool ComboDecayEnabled;
-        // [HARMONY-004] Consecutive non-bonus placements. Every 8 increments decays ComboStreak by 1 when ComboDecayEnabled.
-        [System.NonSerialized] public int ComboNoGainStreak;
         // [HARMONY-PERK-001] Optional pre-run perk active for this run.
         public HarmonyPerkId HarmonyPerk;
         // [HARMONY-PERK-002] Perk state flags read by RewardService and RunDirector.
@@ -483,6 +513,9 @@ namespace SudokuRoguelike.Core
         public int HarmonyLevel;
         /// <summary>[HARMONY-PERK-001] Optional pre-run trade-off selected by the player.</summary>
         public HarmonyPerkId HarmonyPerk;
+        /// <summary>[REQ: REQ-RUN-100] Seed entered on the start-run screen; without it the run gets a random seed (GAP-020).</summary>
+        public bool HasSeed;
+        public int Seed;
     }
 
     [Serializable]
@@ -549,6 +582,8 @@ namespace SudokuRoguelike.Core
         public List<TileXpEntry> TileXpEntries = new List<TileXpEntry>();
         /// <summary>[HARMONY-001] Harmony level the run was played at (0-10).</summary>
         public int HarmonyLevel;
+        /// <summary>[REQ: META-COMPLETE-001] Player modifiers active on bosses defeated in this run.</summary>
+        public List<BossModifierId> ClearedBossModifiers = new List<BossModifierId>();
     }
 
     [Serializable]

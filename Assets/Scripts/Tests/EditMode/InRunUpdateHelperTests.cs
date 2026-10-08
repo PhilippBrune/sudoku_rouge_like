@@ -7,6 +7,19 @@ namespace SudokuRoguelike.Tests
     [TestFixture]
     public sealed class InRunUpdateHelperTests
     {
+        private LanguageOption _language;
+
+        // The completion status is localized since 1.1; the expectations below are the English texts.
+        [SetUp]
+        public void UseEnglish()
+        {
+            _language = LocalizationService.Current;
+            LocalizationService.SetLanguage(LanguageOption.English);
+        }
+
+        [TearDown]
+        public void RestoreLanguage() => LocalizationService.SetLanguage(_language);
+
         [Test]
         public void ControllerIndicatorPoller_PollsImmediatelyThenWaitsForInterval()
         {
@@ -63,7 +76,7 @@ namespace SudokuRoguelike.Tests
 
             Assert.AreEqual(AsyncLevelCompletionViewState.Ready, view.State);
             Assert.IsFalse(view.LocalizeStatus);
-            Assert.AreEqual("Boss - 9x9 3*", view.StatusText);
+            Assert.AreEqual("Boss - 9×9 3★", view.StatusText, "GAP-029: one notation, 9×9 3★");
         }
 
         [Test]
@@ -75,7 +88,7 @@ namespace SudokuRoguelike.Tests
 
             Assert.AreEqual(AsyncLevelCompletionViewState.Ready, view.State);
             Assert.IsFalse(view.LocalizeStatus);
-            Assert.AreEqual("Puzzle - 6x6 2*", view.StatusText);
+            Assert.AreEqual("Puzzle - 6×6 2★", view.StatusText);
         }
 
         [Test]

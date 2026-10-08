@@ -94,7 +94,7 @@ namespace SudokuRoguelike.Classes
         private static readonly (int level, string unlock)[][] LevelUnlocks =
         {
             // NumberFreak
-            new[] { (3,"+ 1 Pencil"),(5,"+10 Starting Gold"),(7,"+2 HP"),(10,"+2 Pencil, +2 HP, +1 Starting Relic"),
+            new[] { (3,"+1 Pencil"),(5,"+10 Starting Gold"),(7,"+2 HP"),(10,"+2 Pencil, +2 HP, +1 Starting Relic"),
                     (13,"+10 Starting Gold"),(15,"+1 Reroll Token"),(18,"+1 Pencil"),(20,"+1 Item Slot, +1 Starting Relic"),
                     (25,"+2 HP, +2 Pencil"),(30,"Start: Rare Solver"),(35,"+1 Reroll Token"),(40,"Cosmetic: Golden Number frame") },
             // GardenMonk

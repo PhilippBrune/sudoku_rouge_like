@@ -5,6 +5,9 @@ namespace SudokuRoguelike.Meta
 {
     public sealed class CompletionService
     {
+        /// <summary>Number of player modifiers a boss can carry (eligible on a 9×9 board).</summary>
+        public static int ClearableModifierCount => SudokuRoguelike.Boss.BossService.GetGeneratablePlayerModifiers(9).Count;
+
         public void RecordPuzzleCompletion(CompletionTrackerState state, int boardSize, int stars)
         {
             if (state == null) return;
@@ -38,8 +41,9 @@ namespace SudokuRoguelike.Meta
             // Category A: 30 size×star combos (5 sizes × 6 stars)
             var comboPercent = Mathf.Clamp01(state.ClearedSizeStarCombos.Count / 30f);
 
-            // Category B: all 15 modifiers cleared
-            var modPercent = Mathf.Clamp01(state.ClearedModifiers.Count / 15f);
+            // Category B: every player modifier that runs can offer has been cleared on a boss
+            // (30 IDs minus the disabled Modular Regions; SPEC-CONF-019).
+            var modPercent = Mathf.Clamp01(state.ClearedModifiers.Count / (float)Mathf.Max(1, ClearableModifierCount));
 
             // Category C: all 8 classes at L30+
             var classPercent = Mathf.Clamp01(state.ClassesAtLevel30.Count / 8f);

@@ -15,6 +15,7 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
+        [Requirement("HARMONY-ACHIEVE-001")]
         public void EvaluateHarmonyAchievements_PersistsAndForwardsUnlockedIds()
         {
             var bridge = new RecordingAchievementBridge();

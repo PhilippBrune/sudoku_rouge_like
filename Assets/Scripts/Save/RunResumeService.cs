@@ -17,6 +17,21 @@ namespace SudokuRoguelike.Save
             _saveFile = saveFile;
         }
 
+        /// <summary>
+        /// Ends the saved Garden Run as a defeat before a new run replaces it: its XP and progress are recorded and
+        /// the save is cleared. Returns the recorded result, or null when there is no saved run (GAP-032).
+        /// </summary>
+        // [REQ: REQ-RUN-101] Abandoning a run records its result like any other defeat.
+        public RunResult AbandonSavedRun(ProfileService profile)
+        {
+            if (profile == null || !TryResumeFromSave(out var runState, out _)) return null;
+            var abandoned = new RunDirector();
+            ApplyToRunDirector(abandoned, runState, null);
+            var result = RunResultFactory.Build(abandoned, victory: false, bossPhaseReached: 0, secondsPlayed: 0);
+            profile.RecordRunAndGetNewUnlocks(result, abandoned.State);
+            return result;
+        }
+
         public bool HasActiveRun()
         {
             return _saveFile.HasActiveRun();
@@ -82,24 +97,39 @@ namespace SudokuRoguelike.Save
             var runState = envelope.ActiveRunState;
             RestoreTransientState(runState);
 
-            // Initialize services via a throwaway StartRun, then replace state
+            var puzzle = SaveFileService.IsUsablePuzzleSave(envelope.ActivePuzzle) ? envelope.ActivePuzzle : null;
+            ApplyToRunDirector(run, runState, puzzle);
+            return true;
+        }
+
+        /// <summary>
+        /// Rebuilds a RunDirector from a loaded run state and optional mid-puzzle save. This is the one
+        /// resume sequence used by GameBootstrap.LaunchResume, so tests can drive the exact game path.
+        /// </summary>
+        // [REQ: SAVE-RESUME-001] Services re-seeded, state restored, floor graph and node position rebuilt,
+        // then the puzzle (board, rules, overlay, counters, pressure) restored (GAP-001)
+        public static void ApplyToRunDirector(RunDirector run, RunState runState, PuzzleSaveState puzzleState)
+        {
             var request = new LaunchRequest
             {
                 ClassId = runState.ClassId,
                 Mode = runState.Mode,
-                AllowIrregularPuzzles = runState.AllowIrregularPuzzles
+                AllowIrregularPuzzles = runState.AllowIrregularPuzzles,
+                HarmonyLevel = runState.HarmonyLevel,
+                HarmonyPerk = runState.HarmonyPerk,
+                SelectedTier = runState.Mode == GameMode.SpiritTrials ? runState.SpiritTrialsTier : null
             };
+
+            // Re-initialize services with the run's seed, then overlay saved progress
+            // (HP, floor, items, relics, curses, NodePath, etc.)
             run.StartRun(request, runState.Seed);
             run.RestoreState(runState);
+            var savedNodeIndex = runState.CurrentNodeIndex;
+            run.RebuildFloorGraph(); // rebuild for the restored floor/path state
+            run.State.CurrentNodeIndex = savedNodeIndex;
 
-            // Rebuild floor graph for current floor
-            run.RebuildFloorGraph();
-
-            // Restore puzzle if available
-            if (SaveFileService.IsUsablePuzzleSave(envelope.ActivePuzzle))
-                run.TryRestorePuzzleSaveState(envelope.ActivePuzzle);
-
-            return true;
+            if (puzzleState != null)
+                run.TryRestorePuzzleSaveState(puzzleState);
         }
 
         // [REQ: RELIC-SLOT-003] Legacy migration: if HasRelic + HeldRelic present but HeldRelics empty, migrate single relic into list
@@ -108,6 +138,7 @@ namespace SudokuRoguelike.Save
             runState.ActiveFloorModifiers ??= new System.Collections.Generic.List<BossModifierId>();
             runState.ChosenBossModifiers  ??= new System.Collections.Generic.List<BossModifierId>();
             runState.HeldRelics           ??= new System.Collections.Generic.List<RelicInstance>();
+            runState.FailedGenerationSeeds ??= new System.Collections.Generic.List<int>();
 
             if (runState.SeenBossModifierList == null)
                 runState.SeenBossModifierList = new System.Collections.Generic.List<BossModifierId>();

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using SudokuRoguelike.Sudoku;
 using UnityEngine;
 using UnityEngine.UI;
+using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.UI
 {
@@ -82,7 +83,7 @@ namespace SudokuRoguelike.UI
             if (_pencilModeButton != null)
             {
                 var lbl = _pencilModeButton.GetComponentInChildren<Text>();
-                if (lbl != null) lbl.text = _pencilMode ? "Mode: PENCIL" : "Mode: SOLVE";
+                if (lbl != null) lbl.text = ModeLabel(_pencilMode);
                 var img = _pencilModeButton.GetComponent<Image>();
                 if (img != null)
                     img.color = _pencilMode ? InRunUiFactory.NumpadPencilActive : InRunUiFactory.BtnColor;
@@ -134,8 +135,13 @@ namespace SudokuRoguelike.UI
                 SetPencilMode(_pencilMode);
                 OnPencilModeToggled?.Invoke();
             });
-            var pmLbl = InRunUiFactory.CreateText(pmGo.transform, "L", "Mode: SOLVE", 13, TextAnchor.MiddleCenter, InRunUiFactory.TextColor);
+            var pmLbl = InRunUiFactory.CreateText(pmGo.transform, "L", ModeLabel(false), 13, TextAnchor.MiddleCenter, InRunUiFactory.TextColor);
             InRunUiFactory.StretchFill(pmLbl.rectTransform);
         }
+
+        // GAP-019: localized numpad mode label.
+        private static string ModeLabel(bool pencil) => pencil
+            ? LocalizationService.T("InRun.Numpad.ModePencil", "Mode: PENCIL")
+            : LocalizationService.T("InRun.Numpad.ModeSolve", "Mode: SOLVE");
     }
 }

@@ -149,7 +149,7 @@ namespace SudokuRoguelike.Run
             new[] {  0f, 10f, 17f, 28f, 45f },  // H7
             new[] {  0f,  5f, 15f, 27f, 53f },  // H8
             new[] {  0f,  0f, 12f, 28f, 60f },  // H9
-            new[] {  0f,  0f,  5f, 25f, 70f },  // H10
+            new[] {  0f,  0f,  0f, 25f, 75f },  // H10 (spec §4.5; SPEC-CONF-025)
         };
 
         // ── Star weights [1★ … 6★] ──────────────────────────────────────────────────────────────
@@ -178,9 +178,10 @@ namespace SudokuRoguelike.Run
           /*H0 */ new object[] { 0, 0, 1.00f, 1.00f, 0, 0, 1, false, 0, 0, 0.000f, 1.00f, false, false, false, false, false, 1.0f },
           /*H1 */ new object[] { 0, 0, 0.96f, 1.05f, 0, 0, 1, false, 0, 0, 0.015f, 0.93f, false, false, false, false, false, 1.1f },
           /*H2 */ new object[] { 0, 0, 0.92f, 1.10f, 0, 0, 1, false, 0, 0, 0.030f, 0.86f, false, false, false, false, false, 1.2f },
-          /*H3 */ new object[] { 0, 0, 0.88f, 1.15f, 0, 1, 1, false, 0, 0, 0.045f, 0.79f, false, false, false, false, false, 1.3f },
-          /*H4 */ new object[] { 0, 1, 0.84f, 1.20f, 0, 1, 1, false, 1, 0, 0.060f, 0.72f, false, false, false, false, false, 1.4f },
-          /*H5 */ new object[] { 0, 1, 0.80f, 1.25f, 1, 1, 2, false, 1, 0, 0.075f, 0.65f,  true, false, false, false, false, 1.5f },
+          // H3–H5: bF = 1 applies on floors 2–4 only (see GetBonusFloorModifiers). H4 boss options bonus is 0 (spec §4.4).
+          /*H3 */ new object[] { 1, 0, 0.88f, 1.15f, 0, 1, 1, false, 0, 0, 0.045f, 0.79f, false, false, false, false, false, 1.3f },
+          /*H4 */ new object[] { 1, 0, 0.84f, 1.20f, 0, 1, 1, false, 1, 0, 0.060f, 0.72f, false, false, false, false, false, 1.4f },
+          /*H5 */ new object[] { 1, 1, 0.80f, 1.25f, 1, 1, 2, false, 1, 0, 0.075f, 0.65f,  true, false, false, false, false, 1.5f },
           /*H6 */ new object[] { 1, 1, 0.76f, 1.30f, 1, 2, 2, false, 1, 1, 0.090f, 0.58f,  true, false, false, false, false, 1.6f },
           /*H7 */ new object[] { 1, 2, 0.72f, 1.35f, 1, 2, 2,  true, 2, 1, 0.105f, 0.51f,  true,  true,  true, false, false, 1.7f },
           /*H8 */ new object[] { 1, 2, 0.68f, 1.40f, 2, 2, 2,  true, 2, 2, 0.120f, 0.44f,  true,  true,  true, false, false, 1.8f },
@@ -223,18 +224,63 @@ namespace SudokuRoguelike.Run
 
         /// <summary>
         /// [HARMONY-BOSS-001] Returns the extra floor modifier count for a specific floor index
-        /// at the given harmony level. Zen 3–5 only applies the bonus on floors 2–4 (indices).
+        /// at the given harmony level (spec §4.4): H3–H5 +1 on floors 2–4 only (0-based indices 1–3),
+        /// H6–H8 +1 on every floor, H9–H10 +2 on every floor.
         /// </summary>
         public static int GetBonusFloorModifiers(int harmonyLevel, int floorIndex)
         {
             var config = BuildConfig(harmonyLevel);
-            int raw;
-            if (harmonyLevel >= 9)                          raw = 2;
-            else if (harmonyLevel >= 6)                     raw = 1;
-            else if (harmonyLevel >= 3 && floorIndex >= 2) raw = 1;
-            else                                            raw = 0;
-            return Math.Min(config.BonusFloorModifiersBase, raw);
+            var level = config.Level;
+            if (level >= 3 && level <= 5)
+                return floorIndex >= 1 && floorIndex <= 3 ? config.BonusFloorModifiersBase : 0;
+            return config.BonusFloorModifiersBase;
         }
+
+        /// <summary>[HARMONY-BOSS-002] Added to both options shown and picks required at the boss gate.</summary>
+        public static int GetBossOptionsBonus(int harmonyLevel) => BuildConfig(harmonyLevel).BossOptionsBonus;
+
+        /// <summary>
+        /// [REQ: REQ-HARM-100] Picks a board size inside the floor's range [min, max] with the Harmony grid weights
+        /// (spec §4.5) renormalised to that range. When every size in the range has weight 0, the largest one is used.
+        /// </summary>
+        public static int PickBoardSize(HarmonyConfig config, int min, int max, Random rng)
+        {
+            if (max <= min) return min;
+            var weights = config.GridSizeWeights ?? GridWeights[0];
+            var total = 0f;
+            for (var s = min; s <= max; s++) total += WeightAt(weights, s - 5);
+            if (total <= 0f) return max;
+            var roll = (float)rng.NextDouble() * total;
+            for (var s = min; s <= max; s++)
+            {
+                roll -= WeightAt(weights, s - 5);
+                if (roll < 0f) return s;
+            }
+            return max;
+        }
+
+        /// <summary>
+        /// [REQ: REQ-HARM-100] Star level for an upward star variance roll: drawn with the Harmony star weights
+        /// (spec §4.6) among the levels above <paramref name="baseStars"/> up to <paramref name="maxStars"/>.
+        /// Returns <paramref name="baseStars"/> when no higher level has weight.
+        /// </summary>
+        public static int PickStarsAbove(HarmonyConfig config, int baseStars, int maxStars, Random rng)
+        {
+            var weights = config.StarWeights ?? StarWeights[0];
+            var total = 0f;
+            for (var s = baseStars + 1; s <= maxStars; s++) total += WeightAt(weights, s - 1);
+            if (total <= 0f) return Math.Min(baseStars + 1, maxStars);
+            var roll = (float)rng.NextDouble() * total;
+            for (var s = baseStars + 1; s <= maxStars; s++)
+            {
+                roll -= WeightAt(weights, s - 1);
+                if (roll < 0f) return s;
+            }
+            return maxStars;
+        }
+
+        private static float WeightAt(float[] weights, int index) =>
+            index >= 0 && index < weights.Length ? Math.Max(0f, weights[index]) : 0f;
 
         /// <summary>
         /// [HARMONY-DISPLAY-001] Player-facing display name for each Harmony level.
@@ -276,14 +322,14 @@ namespace SudokuRoguelike.Run
             0  => "Base difficulty. No penalties.",
             1  => "Gold \u22124%. Shop prices +5%. Puzzles slightly larger and harder.",
             2  => "Gold \u22124%. Shop +5%. Larger grids more frequent.",
-            3  => "Gold \u22124%. Shop +5%. Starting HP \u22121.",
-            4  => "Gold \u22124%. Shop +5%. Boss gate shows +1 extra option. Starting pencil \u22121. Perks unlock.",
-            5  => "Gold \u22124%. Shop +5%. Mistakes cost 2 HP. Starting rerolls \u22121. Boss ??? labels never auto-revealed on repeat. 6\u2605 puzzles now possible.",
-            6  => "Gold \u22124%. Shop +5%. Starting HP \u22121 again. Item slot cap \u22121. Extra floor modifier per floor.",
-            7  => "Gold \u22124%. Shop +5%. Boss gate +1 more option. Combo decay active. Starting relics Tier 1 only. Mistakes also drain 1 pencil. Starting pencil \u22121.",
+            3  => "Gold \u22124%. Shop +5%. Starting HP \u22121. +1 floor modifier on floors 2\u20134. 5\u2605 puzzles now possible.",
+            4  => "Gold \u22124%. Shop +5%. Starting pencil \u22121. Perks unlock.",
+            5  => "Gold \u22124%. Shop +5%. Mistakes cost 2 HP. Starting rerolls \u22121. Boss gate +1 option. Boss ??? labels never auto-revealed on repeat. 6\u2605 puzzles now possible.",
+            6  => "Gold \u22124%. Shop +5%. Starting HP \u22121 again. Item slot cap \u22121. +1 floor modifier on every floor.",
+            7  => "Gold \u22124%. Shop +5%. Boss gate +1 more option. Combo halves at each puzzle start. Starting relics Tier 1 only. Mistakes also drain 1 pencil. Starting pencil \u22121.",
             8  => "Gold \u22124%. Shop +5%. Item slot cap \u22121 again. Starting rerolls \u22121.",
-            9  => "Gold \u22124%. Shop +5%. Starting HP \u22121. Mistakes cost 3 HP. More floor and boss modifiers. Cursed puzzle gold bonus suppressed.",
-            10 => "Gold \u22124%. Shop +5%. Rest heals only 50%. Starting pencil \u22121.",
+            9  => "Gold \u22124%. Shop +5%. Starting HP \u22121. Mistakes cost 3 HP. +2 floor modifiers per floor; boss gate +1 more option. Cursed puzzle bonus suppressed.",
+            10 => "Gold \u22124%. Shop +5%. Rest heals only 50%. Starting pencil \u22121. Mostly 9\u00d79 grids.",
             _  => ""
         };
 

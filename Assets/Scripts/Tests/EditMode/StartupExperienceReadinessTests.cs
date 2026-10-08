@@ -4,6 +4,7 @@ using NUnit.Framework;
 namespace SudokuRoguelike.Tests
 {
     [TestFixture]
+    [Requirement("INTRO-001")]
     public sealed class StartupExperienceReadinessTests
     {
         private const string BuildSettingsPath = "ProjectSettings/EditorBuildSettings.asset";
@@ -84,8 +85,6 @@ namespace SudokuRoguelike.Tests
                 "FirstRun.Title",
                 "FirstRun.Body",
                 "FirstRun.LanguageHeader",
-                "FirstRun.Language.English",
-                "FirstRun.Language.German",
                 "FirstRun.AccessibilityHeader",
                 "FirstRun.Accessibility.Colorblind",
                 "FirstRun.Accessibility.HighContrast",
@@ -99,9 +98,14 @@ namespace SudokuRoguelike.Tests
                 Assert.That(controller, Does.Contain(key), $"{key} is not wired into the first-run modal.");
             }
 
+            // SPEC-CONF-032: the language row offers every shipped catalog; labels use "FirstRun.Language.<option>".
+            Assert.That(controller, Does.Contain("\"FirstRun.Language.\" + Languages[i]"));
+            foreach (var language in System.Enum.GetNames(typeof(SudokuRoguelike.Core.LanguageOption)))
+                Assert.That(controller, Does.Contain("LanguageOption." + language),
+                    $"{language} is not offered in first-run setup.");
+
             Assert.That(controller, Does.Contain("CompleteSetup"));
-            Assert.That(controller, Does.Contain("SelectLanguage(LanguageOption.English)"));
-            Assert.That(controller, Does.Contain("SelectLanguage(LanguageOption.German)"));
+            Assert.That(controller, Does.Contain("SelectLanguage(language)"));
             Assert.That(controller, Does.Contain("ColorblindMode"));
             Assert.That(controller, Does.Contain("HighContrast"));
             Assert.That(controller, Does.Contain("ReduceMotion"));
@@ -121,7 +125,9 @@ namespace SudokuRoguelike.Tests
             var gameBootstrap = File.ReadAllText(GameBootstrapPath);
             var development = File.ReadAllText(DevelopmentDocPath);
 
-            Assert.That(splashBootstrap, Does.Contain("LoadScene(\"Prototype\")"));
+            // The target scene is an Inspector field defaulting to the gameplay scene "Prototype".
+            Assert.That(splashBootstrap, Does.Contain("mainSceneName = \"Prototype\""));
+            Assert.That(splashBootstrap, Does.Contain("SceneManager.LoadScene(mainSceneName)"));
             Assert.That(splashBootstrap, Does.Contain("HasShownSplash = true"));
             Assert.That(gameBootstrap, Does.Contain("SplashSceneBootstrap.HasShownSplash"));
             Assert.That(gameBootstrap, Does.Contain("SplashScreenController"));

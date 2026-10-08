@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
 using NUnit.Framework;
@@ -10,6 +11,7 @@ using SudokuRoguelike.Sudoku;
 namespace SudokuRoguelike.Tests
 {
     [TestFixture]
+    [Requirement("GEN-REGION-001", "GEN-REGION-002", "REQ-SUD-100")]
     public sealed class PuzzleGenerationServiceTests
     {
         [Test]
@@ -285,32 +287,43 @@ namespace SudokuRoguelike.Tests
                 SelectAsyncGenerationSettingsForTests(structuralNonBoss));
         }
 
+        // [REQ: REQ-SUD-101] [REQ: REQ-BOSS-101] GAP-003/GAP-005 fallback order: rectangular regions first,
+        // then floor (optional) board-shaping modifiers, and only last the player-chosen ones.
         [Test]
-        public void BoardGenerationFallback_DropsOnlyBoardShapingModifiers()
+        [Requirement("REQ-SUD-101", "REQ-BOSS-101")]
+        public void BoardGenerationFallback_TriesRectangularThenFloorThenChosenBoardShapingModifiers()
         {
             var config = new LevelConfig
             {
-                BoardSize = 8,
+                BoardSize = 9,
+                RegionVariant = 3,
                 IsBoss = true,
                 RequireUniqueModifierSolution = true
             };
             config.ActiveModifiers.Add(BossModifierId.FortressCells);
-            config.ActiveModifiers.Add(BossModifierId.AntiBishop);
+            config.ActiveModifiers.Add(BossModifierId.Antiking);
+            config.ActiveModifiers.Add(BossModifierId.Nonconsecutive);
             config.ActiveModifiers.Add(BossModifierId.ConsecutiveLine);
+            var chosen = new List<BossModifierId> { BossModifierId.Nonconsecutive };
 
-            Assert.IsTrue(TryBuildBoardGenerationFallbackConfigForTests(
-                config,
-                out var fallback,
-                out var dropped));
+            var steps = BuildBoardFallbackStepsForTests(config, chosen);
 
-            CollectionAssert.AreEqual(
-                new[] { BossModifierId.AntiBishop },
-                dropped);
+            Assert.AreEqual(3, steps.Count);
+            Assert.AreEqual(1, steps[0].config.RegionVariant, "first fallback keeps every modifier on rectangular regions");
+            CollectionAssert.AreEqual(config.ActiveModifiers, steps[0].config.ActiveModifiers);
+            CollectionAssert.IsEmpty(steps[0].dropped);
+
+            CollectionAssert.AreEqual(new[] { BossModifierId.Antiking }, steps[1].dropped);
+            CollectionAssert.Contains(steps[1].config.ActiveModifiers, BossModifierId.Nonconsecutive,
+                "the chosen modifier survives the floor-modifier fallback");
+
+            CollectionAssert.AreEqual(new[] { BossModifierId.Antiking, BossModifierId.Nonconsecutive }, steps[2].dropped);
             CollectionAssert.AreEqual(
                 new[] { BossModifierId.FortressCells, BossModifierId.ConsecutiveLine },
-                fallback.ActiveModifiers);
-            CollectionAssert.Contains(config.ActiveModifiers, BossModifierId.AntiBishop);
-            Assert.IsTrue(fallback.RequireUniqueModifierSolution);
+                steps[2].config.ActiveModifiers);
+            Assert.IsTrue(steps[2].config.RequireUniqueModifierSolution);
+            Assert.AreEqual(3, config.RegionVariant, "the source config is not mutated");
+            Assert.AreEqual(4, config.ActiveModifiers.Count, "the source config is not mutated");
         }
 
         [Test]
@@ -336,13 +349,17 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
-        public void GeneratedConfigSanitizer_KeepsSupportedAntiBishopAndRemovesBlockedModifierPair()
+        // [REQ: REQ-SUD-101] The sanitizer keeps generatable modifiers (Anti-Bishop is supported again, SPEC-CONF-038)
+        // and resolves blocked pairs by dropping the later entry (RatioKropki/DistanceGe2, AntiBishop/Antiknight).
+        [Requirement("REQ-SUD-101")]
+        public void GeneratedConfigSanitizer_KeepsSupportedModifiersAndResolvesBlockedPairs()
         {
             var config = new LevelConfig { BoardSize = 8 };
             config.ActiveModifiers.Add(BossModifierId.EvenOdd);
             config.ActiveModifiers.Add(BossModifierId.AntiBishop);
             config.ActiveModifiers.Add(BossModifierId.RatioKropki);
             config.ActiveModifiers.Add(BossModifierId.DistanceGe2);
+            config.ActiveModifiers.Add(BossModifierId.Antiknight);
 
             SanitizeGeneratedLevelConfigForTests(config);
 
@@ -435,21 +452,17 @@ namespace SudokuRoguelike.Tests
             return (PuzzleGenerationSettings)method.Invoke(null, new object[] { config });
         }
 
-        private static bool TryBuildBoardGenerationFallbackConfigForTests(
+        private static List<(LevelConfig config, List<BossModifierId> dropped, string label)> BuildBoardFallbackStepsForTests(
             LevelConfig config,
-            out LevelConfig fallback,
-            out List<BossModifierId> dropped)
+            IList<BossModifierId> mandatory)
         {
             var method = typeof(RunDirector).GetMethod(
-                "TryBuildBoardGenerationFallbackConfig",
+                "BuildBoardFallbackSteps",
                 BindingFlags.NonPublic | BindingFlags.Static);
-            Assert.IsNotNull(method, "RunDirector.TryBuildBoardGenerationFallbackConfig should stay available for fallback contract tests.");
+            Assert.IsNotNull(method, "RunDirector.BuildBoardFallbackSteps should stay available for fallback contract tests.");
 
-            var args = new object[] { config, null, null };
-            var ok = (bool)method.Invoke(null, args);
-            fallback = (LevelConfig)args[1];
-            dropped = (List<BossModifierId>)args[2];
-            return ok;
+            var steps = (IEnumerable<(LevelConfig, List<BossModifierId>, string)>)method.Invoke(null, new object[] { config, mandatory });
+            return steps.ToList();
         }
 
         private static void EnsureBoardSizeSupportsActiveModifiersForTests(LevelConfig config)

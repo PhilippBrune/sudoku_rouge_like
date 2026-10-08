@@ -329,27 +329,29 @@ namespace SudokuRoguelike.UI
 
             var region = _config.RegionVariant switch
             {
-                1 => "Alt Rectangular",
-                >= 2 => "Jigsaw",
-                _ => "Standard"
+                1 => LocalizationService.T("CustomPuzzle.Region.Alt", "Alt Rectangular"),
+                >= 2 => LocalizationService.T("CustomPuzzle.Region.Jigsaw", "Jigsaw"),
+                _ => LocalizationService.T("CustomPuzzle.Region.Standard", "Standard")
             };
             var resource = _config.ResourceMode == TutorialResourceMode.Simulation
-                ? "Class-Based"
-                : "Free";
+                ? LocalizationService.T("CustomPuzzle.Resources.ClassBased", "Class-Based")
+                : LocalizationService.T("CustomPuzzle.Resources.Free", "Free");
 
-            var mods = "None";
-            if (_config.SelectedModifiers != null && _config.SelectedModifiers.Count > 0)
+            var selectedCount = _config.SelectedModifiers?.Count ?? 0;
+            var mods = LocalizationService.T("CustomPuzzle.Summary.None", "None");
+            if (selectedCount > 0)
             {
-                var names = new List<string>(_config.SelectedModifiers.Count);
-                for (var i = 0; i < _config.SelectedModifiers.Count; i++)
+                var names = new List<string>(selectedCount);
+                for (var i = 0; i < selectedCount; i++)
                     names.Add(BossService.GetModifierName(_config.SelectedModifiers[i]));
                 mods = string.Join(", ", names);
             }
 
-            _selectionSummaryText.text =
-                $"Size: {_config.BoardSize}x{_config.BoardSize}   Difficulty: {_config.Stars} star(s)\n" +
-                $"Region: {region}   Resources: {resource}\n" +
-                $"Modes ({_config.SelectedModifiers.Count}/{TutorialModeService.CustomModifierLimit}): {mods}";
+            _selectionSummaryText.text = LocalizationService.Format(
+                "CustomPuzzle.Summary",
+                "Size: {0}x{0}   Difficulty: {1} star(s)\nRegion: {2}   Resources: {3}\nModes ({4}/{5}): {6}",
+                _config.BoardSize, _config.Stars, region, resource,
+                selectedCount, TutorialModeService.CustomModifierLimit, mods);
         }
 
         // ── Gamepad D-pad navigation ─────────────────────────────────────────────────

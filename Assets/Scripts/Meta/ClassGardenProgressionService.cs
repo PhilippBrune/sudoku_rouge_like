@@ -1,3 +1,4 @@
+using System;
 using SudokuRoguelike.Core;
 using SudokuRoguelike.Economy;
 
@@ -6,10 +7,14 @@ namespace SudokuRoguelike.Meta
     public sealed class ClassGardenProgressionService
     {
         // [REQ: META-XP-001] Adds to TotalXp — the single persistent XP value per class
+        // [REQ: XP-CURVE-002] XP above the Level 40 threshold is discarded (ClassXpProgressionSystem §Excess XP,
+        // SPEC-CONF-034). A class that already stored more keeps its value; prestige resets TotalXp to 0.
         public void AddXp(MetaProgressionState meta, ClassId classId, int xpAmount)
         {
             var entry = FindOrCreateEntry(meta, classId);
-            entry.TotalXp += xpAmount;
+            var cap = XpTable.CumulativeXpForLevel(XpTable.MaxLevel);
+            if (entry.TotalXp >= cap || xpAmount <= 0) return;
+            entry.TotalXp = Math.Min(cap, entry.TotalXp + xpAmount);
         }
 
         // [REQ: META-XP-001] [REQ: XP-CURVE-002] Level derived at runtime from TotalXp via DeriveLevel
@@ -32,20 +37,27 @@ namespace SudokuRoguelike.Meta
             return entry?.PrestigeTier ?? 0;
         }
 
-        // [REQ: META-PRESTIGE-001] Requires Level 40
-        // [REQ: META-PRESTIGE-002] Boss gate: cumulative defeats >= (PrestigeTier + 1) × 3
-        // [REQ: META-PRESTIGE-003] [REQ: META-PRESTIGE-004] On prestige: TotalXp=0, PrestigeTier++
+        public const int MaxPrestigeTier = 9;
+
+        // [REQ: META-PRESTIGE-003] Boss gate: cumulative boss defeats >= (PrestigeTier + 1) × 3
+        public static int RequiredBossesForPrestige(int prestigeTier) => (prestigeTier + 1) * 3;
+
+        // [REQ: META-PRESTIGE-001] [REQ: META-PRESTIGE-002] [REQ: META-PRESTIGE-003]
+        // Level 40, a tier below 9 and the boss gate (GAP-017).
+        public bool CanPrestige(MetaProgressionState meta, ClassId classId)
+        {
+            var entry = FindEntry(meta, classId);
+            if (entry == null) return false;
+            return XpTable.DeriveLevel(entry.TotalXp) >= XpTable.MaxLevel
+                && entry.PrestigeTier < MaxPrestigeTier
+                && (meta.ClassUnlocks?.BossesDefeated ?? 0) >= RequiredBossesForPrestige(entry.PrestigeTier);
+        }
+
+        // [REQ: META-PRESTIGE-004] On prestige: TotalXp=0, PrestigeTier++
         public bool TryPrestige(MetaProgressionState meta, ClassId classId)
         {
-            var entry = FindOrCreateEntry(meta, classId);
-            var level = XpTable.DeriveLevel(entry.TotalXp);
-            if (level < 40 || entry.PrestigeTier >= 9) return false;
-
-            // Boss-gate: cumulative boss defeats >= (PrestigeTier + 1) × 3
-            var requiredBosses = (entry.PrestigeTier + 1) * 3;
-            var bossesDefeated = meta.ClassUnlocks?.BossesDefeated ?? 0;
-            if (bossesDefeated < requiredBosses) return false;
-
+            if (!CanPrestige(meta, classId)) return false;
+            var entry = FindEntry(meta, classId);
             entry.PrestigeTier++;
             entry.TotalXp = 0;
             return true;

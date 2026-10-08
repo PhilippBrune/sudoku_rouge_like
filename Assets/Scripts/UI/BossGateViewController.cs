@@ -116,7 +116,7 @@ namespace SudokuRoguelike.UI
             btnDecline.onClick.AddListener(() =>
             {
                 // [REQ: MAP-NODE-CURSED-003] Decline: standard puzzle built with no cursed multipliers or extra modifier
-                var normalConfig = run.BuildLevelConfig(false, false, node.Index);
+                var normalConfig = run.BuildNodeLevelConfig(node, node.Index);
                 ActivePanel = null;
                 Object.Destroy(panel);
                 onDecline?.Invoke(normalConfig);
@@ -159,6 +159,24 @@ namespace SudokuRoguelike.UI
             _bossGateTitle.rectTransform.offsetMin = Vector2.zero;
             _bossGateTitle.rectTransform.offsetMax = Vector2.zero;
 
+            // [REQ: REQ-BOSS-103] Intensity label under the title (GAP-025).
+            // [REQ: REQ-BOSS-108] From Floor 3 the boss's debuff is announced here too (GAP-026).
+            var gateState = _map?.Run?.State;
+            if (gateState != null)
+            {
+                var info = F("InRun.BossGate.Intensity",
+                    BossService.GetIntensityName(BossService.IntensityForRunNumber(gateState.RunNumber)));
+                if (_map.Run.GetBossDebuffForCurrentFloor() is { } debuff)
+                    info += "\n" + F("InRun.BossGate.Debuff",
+                        BossService.GetModifierName(debuff), BossService.GetModifierDescription(debuff));
+                var infoTxt = InRunUiFactory.CreateText(_bossGatePanel.transform, "GateInfo", info,
+                    12, TextAnchor.MiddleCenter, InRunUiFactory.WarmIvory);
+                infoTxt.rectTransform.anchorMin = new Vector2(0.14f, 0.85f);
+                infoTxt.rectTransform.anchorMax = new Vector2(0.95f, 0.905f);
+                infoTxt.rectTransform.offsetMin = Vector2.zero;
+                infoTxt.rectTransform.offsetMax = Vector2.zero;
+            }
+
             // Boss avatar — floor-specific icon displayed in the top-left of the panel
             var bossAvatarName = (_map?.Run?.State?.CurrentFloor ?? 4) switch
             {
@@ -184,10 +202,14 @@ namespace SudokuRoguelike.UI
 
             var run2 = _map?.Run;
             var seenMods = run2?.State?.SeenBossModifiers;
+            // [REQ: HARMONY-FLAG-001] H5+ never reveals seen modifiers; the Lantern of Void relic hides them too.
+            var masked = run2?.State != null
+                && (HarmonyDifficultyService.BuildConfig(run2.State.HarmonyLevel).HintMaskingEnabled
+                    || RelicService.ShouldHideBossModifiers(run2.State));
             for (var i = 0; i < _bossGateOptions.Count; i++)
             {
                 var mod = _bossGateOptions[i];
-                var seen = seenMods != null && seenMods.Contains(mod);
+                var seen = !masked && seenMods != null && seenMods.Contains(mod);
                 var col = i % 3; var row = i / 3;
                 var xMin = 0.05f + col * 0.31f;
                 var yMax = 0.85f - row * 0.25f;
@@ -362,11 +384,14 @@ namespace SudokuRoguelike.UI
             StartCoroutine(AnimationHelper.FadeIn(cg, AnimationHelper.MenuPanelDuration));
         }
 
+        // GAP-019: singular/plural ("Pick 1 Modifier", not "Pick 1 Modifiers").
         private string BossGateTitle(int selectedCount) =>
-            LocalizationService.Format(
-                "InRun.BossGate.Title",
-                "Boss Gate - Pick {0} Modifiers ({1}/{0})",
+            LocalizationService.FormatPlural(
                 _bossPicksRequired,
+                "InRun.BossGate.Title.One",
+                "InRun.BossGate.Title",
+                "Boss Gate - Pick {0} Modifier ({1}/{0})",
+                "Boss Gate - Pick {0} Modifiers ({1}/{0})",
                 selectedCount);
 
         private static string T(string key) => LocalizationService.T(key);

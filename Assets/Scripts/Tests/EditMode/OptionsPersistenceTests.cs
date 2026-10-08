@@ -9,6 +9,7 @@ using UnityEngine;
 namespace SudokuRoguelike.Tests
 {
     [TestFixture]
+    [Requirement("REQ-AUDIO-101")]
     public sealed class OptionsPersistenceTests
     {
         private const int PrimaryTestSlot = SaveFileService.MaxSlots - 1;
@@ -36,7 +37,7 @@ namespace SudokuRoguelike.Tests
             _originalFullScreen = Screen.fullScreen;
             _originalRumbleEnabled = RumbleService.Enabled;
 
-            Directory.CreateDirectory(Application.persistentDataPath);
+            Directory.CreateDirectory(SaveFileService.SaveRoot);
             PreserveAndClearSlot(PrimaryTestSlot);
             PreserveAndClearSlot(IsolationTestSlot);
 
@@ -210,7 +211,7 @@ namespace SudokuRoguelike.Tests
 
         private void PreserveAndClearSlot(int slotIndex)
         {
-            var savePath = Path.Combine(Application.persistentDataPath, $"save_profile_{slotIndex}.json");
+            var savePath = Path.Combine(SaveFileService.SaveRoot, $"save_profile_{slotIndex}.json");
             PreserveAndDelete(savePath);
             PreserveAndDelete(savePath + ".bak");
             PreserveAndDelete(savePath + ".tmp");

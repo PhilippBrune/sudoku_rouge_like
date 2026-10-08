@@ -94,17 +94,49 @@ namespace SudokuRoguelike.Sudoku
                 }
             }
 
-            return new SudokuBoard(size, solution, puzzle, regionMap);
+            // Every removal above kept a single base-rule solution, so the givens are unique.
+            return new SudokuBoard(size, solution, puzzle, regionMap) { IsUniqueSolution = true };
         }
 
-        // [REQ: GEN-SOLVE-001] GenerateSolvedBoard: seeded shuffle + up to 64 retries; delegates to FillBoard (MRV backtracking)
+        // Backtracking run time is heavy-tailed: most seeds fill in a few thousand nodes, a few get
+        // stuck in futile subtrees for seconds. Each attempt therefore gets a node budget; when it
+        // runs out the search restarts with a new deterministic shuffle, and the budget doubles every
+        // few attempts so layouts with rare solutions still get long searches (GAP-003).
+        private const int FillNodeBudgetPerCell = 60;
+        private const int FillBudgetDoublingInterval = 8;
+        private const int UniquenessNodeBudgetPerCell = 100;
+
+        private sealed class SearchBudget
+        {
+            public int Nodes;
+            public int Limit;
+            public bool Exhausted;
+
+            public bool Spend()
+            {
+                if (++Nodes <= Limit) return true;
+                Exhausted = true;
+                return false;
+            }
+
+            public void Reset(int limit)
+            {
+                Nodes = 0;
+                Limit = limit;
+                Exhausted = false;
+            }
+        }
+
+        // [REQ: GEN-SOLVE-001] GenerateSolvedBoard: seeded shuffle + budgeted restarts; delegates to FillBoard (MRV backtracking)
         private static int[,] GenerateSolvedBoard(int size, int[,] regionMap, Random random,
             bool nonconsecutive = false, bool antiknight = false, bool nonconsecDiagonal = false,
             bool antibishop = false, bool antiking = false, bool distanceGe2 = false,
             bool entropy = false,
             GenerationDeadline deadline = default)
         {
-            const int maxAttempts = 64;
+            const int maxAttempts = 160;
+            var budget = new SearchBudget();
+            var baseLimit = Math.Max(1000, size * size * FillNodeBudgetPerCell);
             for (var attempt = 0; attempt < maxAttempts; attempt++)
             {
                 deadline.ThrowIfExceeded();
@@ -114,10 +146,16 @@ namespace SudokuRoguelike.Sudoku
                 var regionCount = CountDistinctRegions(regionMap, size);
                 var regionMask = new int[Math.Max(regionCount, size)];
 
+                var doublings = Math.Min(attempt / FillBudgetDoublingInterval, 12);
+                budget.Reset((int)Math.Min(int.MaxValue, (long)baseLimit << doublings));
                 if (FillBoard(board, regionMap, size, rowMask, colMask, regionMask, random,
                         nonconsecutive, antiknight, nonconsecDiagonal, antibishop, antiking, distanceGe2,
-                        entropy, deadline))
+                        entropy, deadline, budget))
                     return board;
+
+                // The whole search space was explored without a solution: no ordering can succeed.
+                if (!budget.Exhausted)
+                    break;
 
                 // Reseed with a deterministic but different value so retries are reproducible
                 random = new Random(random.Next());
@@ -136,9 +174,11 @@ namespace SudokuRoguelike.Sudoku
             bool nonconsecutive = false, bool antiknight = false, bool nonconsecDiagonal = false,
             bool antibishop = false, bool antiking = false, bool distanceGe2 = false,
             bool entropy = false,
-            GenerationDeadline deadline = default)
+            GenerationDeadline deadline = default,
+            SearchBudget budget = null)
         {
             deadline.ThrowIfExceeded();
+            if (budget != null && !budget.Spend()) return false;
             if (!FindNextCell(board, regionMap, size, rowMask, colMask, regionMask,
                     nonconsecutive, antiknight, nonconsecDiagonal, antibishop, antiking, distanceGe2,
                     entropy, out var row, out var col, out var candidates))
@@ -168,13 +208,14 @@ namespace SudokuRoguelike.Sudoku
 
                 if (FillBoard(board, regionMap, size, rowMask, colMask, regionMask, random,
                         nonconsecutive, antiknight, nonconsecDiagonal, antibishop, antiking, distanceGe2,
-                        entropy, deadline))
+                        entropy, deadline, budget))
                     return true;
 
                 board[row, col] = 0;
                 rowMask[row] &= ~bit;
                 colMask[col] &= ~bit;
                 regionMask[region] &= ~bit;
+                if (budget != null && budget.Exhausted) return false;
             }
 
             return false;
@@ -235,13 +276,19 @@ namespace SudokuRoguelike.Sudoku
             return false;
         }
 
+        // Anti-Bishop reach (SPEC-CONF-038): a digit may not repeat within this many diagonal steps.
+        // AntiBishopRule and the board highlight use the same constant.
+        public const int AntiBishopDiagonalRange = 2;
+
         private static bool ViolatesAntiBishop(int[,] board, int row, int col, int value, int size)
         {
-            for (var r = 0; r < size; r++)
-            for (var c = 0; c < size; c++)
+            for (var step = 1; step <= AntiBishopDiagonalRange; step++)
+            for (var dr = -1; dr <= 1; dr += 2)
+            for (var dc = -1; dc <= 1; dc += 2)
             {
-                if (r == row && c == col) continue;
-                if (Math.Abs(r - row) != Math.Abs(c - col)) continue;
+                var r = row + dr * step;
+                var c = col + dc * step;
+                if (r < 0 || r >= size || c < 0 || c >= size) continue;
                 if (board[r, c] == value) return true;
             }
             return false;
@@ -656,12 +703,16 @@ namespace SudokuRoguelike.Sudoku
                 regionMask[regionMap[r, c]] |= bit;
             }
 
-            // Count solutions on the propagation-reduced board; bail early at 2.
+            // Count solutions on the propagation-reduced board; bail early at 2. The search is
+            // node-bounded: if uniqueness cannot be proven within the budget the removal is treated
+            // as ambiguous and the clue stays, so the puzzle remains unique (GAP-003).
             var count = 0;
+            var budget = new SearchBudget();
+            budget.Reset(Math.Max(2000, size * size * UniquenessNodeBudgetPerCell));
             CountSolutionsCapped(work, regionMap, size, rowMask, colMask, regionMask,
                 nonconsecutive, antiknight, nonconsecDiagonal, antibishop, antiking, distanceGe2,
-                entropy, ref count, limit: 2, deadline);
-            return count == 1;
+                entropy, ref count, limit: 2, deadline, budget);
+            return count == 1 && !budget.Exhausted;
         }
 
         // Counts valid completions of `board` via MRV backtracking, stopping when `count` reaches `limit`.
@@ -672,10 +723,12 @@ namespace SudokuRoguelike.Sudoku
             bool nonconsecutive, bool antiknight, bool nonconsecDiagonal,
             bool antibishop, bool antiking, bool distanceGe2, bool entropy,
             ref int count, int limit,
-            GenerationDeadline deadline = default)
+            GenerationDeadline deadline = default,
+            SearchBudget budget = null)
         {
             deadline.ThrowIfExceeded();
             if (count >= limit) return;
+            if (budget != null && !budget.Spend()) return;
 
             // MRV: choose the empty cell with the fewest remaining candidates.
             var bestRow = -1; var bestCol = -1; var bestCount = int.MaxValue;
@@ -719,13 +772,14 @@ namespace SudokuRoguelike.Sudoku
 
                 CountSolutionsCapped(board, regionMap, size, rowMask, colMask, regionMask,
                     nonconsecutive, antiknight, nonconsecDiagonal, antibishop, antiking, distanceGe2,
-                    entropy, ref count, limit, deadline);
+                    entropy, ref count, limit, deadline, budget);
 
                 board[bestRow, bestCol] = 0;
                 rowMask[bestRow]        &= ~bit;
                 colMask[bestCol]        &= ~bit;
                 regionMask[region]      &= ~bit;
                 if (count >= limit) return;
+                if (budget != null && budget.Exhausted) return;
             }
         }
     }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SudokuRoguelike.Boss;
 using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.Run
@@ -38,16 +39,10 @@ namespace SudokuRoguelike.Run
 
             if (modCap > 0)
             {
-                var pool = new List<BossModifierId>();
-                foreach (BossModifierId mod in Enum.GetValues(typeof(BossModifierId)))
-                    pool.Add(mod);
-
-                for (var i = 0; i < modCap && pool.Count > 0; i++)
-                {
-                    var idx = _random.Next(pool.Count);
-                    config.ActiveModifiers.Add(pool[idx]);
-                    pool.RemoveAt(idx);
-                }
+                // [REQ: REQ-MODE-101] Draw only modifiers that have a rule and generate on 9×9
+                // (the whole enum included inert future IDs, debuffs and pressure mechanics, GAP-007).
+                var pool = BossService.GetGeneratablePlayerModifiers(size);
+                config.ActiveModifiers.AddRange(BossService.DrawCombinable(pool, modCap, _random));
             }
 
             return config;

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
+using UnityEngine.TestTools;
 using SudokuRoguelike.Bootstrap;
 using SudokuRoguelike.Boss;
 using SudokuRoguelike.Core;
@@ -15,6 +16,7 @@ using UnityEngine;
 namespace SudokuRoguelike.Tests
 {
     [TestFixture]
+    [Requirement("REQ-BOSS-102", "SAVE-SERIAL-001", "SAVE-SERIAL-002", "SAVE-SERIAL-003")]
     public class ModifierDiscoveryPersistenceTests
     {
         private const int TestSlot = SaveFileService.MaxSlots - 1;
@@ -31,11 +33,11 @@ namespace SudokuRoguelike.Tests
         {
             SaveFileService.FlushSharedPendingWrites();
 
-            _savePath = Path.Combine(Application.persistentDataPath, $"save_profile_{TestSlot}.json");
+            _savePath = Path.Combine(SaveFileService.SaveRoot, $"save_profile_{TestSlot}.json");
             _backupPath = _savePath + ".bak";
             _tempPath = _savePath + ".tmp";
 
-            Directory.CreateDirectory(Application.persistentDataPath);
+            Directory.CreateDirectory(SaveFileService.SaveRoot);
 
             _originalSaveJson = File.Exists(_savePath) ? File.ReadAllText(_savePath) : null;
             _originalBackupJson = File.Exists(_backupPath) ? File.ReadAllText(_backupPath) : null;
@@ -211,11 +213,11 @@ namespace SudokuRoguelike.Tests
         {
             SaveFileService.FlushSharedPendingWrites();
 
-            _savePath = Path.Combine(Application.persistentDataPath, $"save_profile_{TestSlot}.json");
+            _savePath = Path.Combine(SaveFileService.SaveRoot, $"save_profile_{TestSlot}.json");
             _backupPath = _savePath + ".bak";
             _tempPath = _savePath + ".tmp";
 
-            Directory.CreateDirectory(Application.persistentDataPath);
+            Directory.CreateDirectory(SaveFileService.SaveRoot);
 
             _originalSaveJson = File.Exists(_savePath) ? File.ReadAllText(_savePath) : null;
             _originalBackupJson = File.Exists(_backupPath) ? File.ReadAllText(_backupPath) : null;
@@ -259,6 +261,8 @@ namespace SudokuRoguelike.Tests
             var queue = new SaveWriteQueue();
             var order = new List<int>();
 
+            // The queue reports failed writes as errors by design; this one is provoked on purpose.
+            LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("Save write failed: expected test failure"));
             queue.Enqueue(() => throw new IOException("expected test failure"));
             queue.Enqueue(() => order.Add(2));
             queue.Flush();
@@ -540,7 +544,7 @@ namespace SudokuRoguelike.Tests
             StringAssert.Contains("Torii", ParkNarrativeService.GetRunEndFlavor(true, ClassId.KoiGambler));
             CollectionAssert.IsEmpty(LocalizationService.MissingGermanKeys);
 
-            var introSource = File.ReadAllText("Assets/Scripts/UI/InRunController.cs");
+            var introSource = SourceText.ReadClass("Assets/Scripts/UI/InRunController.cs");
             StringAssert.Contains("ParkNarrativeService.GetClassIntroFlavor", introSource);
 
             var endSource = File.ReadAllText("Assets/Scripts/UI/EndScreenViewController.cs");
@@ -663,6 +667,10 @@ namespace SudokuRoguelike.Tests
                 "FirstRun.LanguageHeader",
                 "FirstRun.Language.English",
                 "FirstRun.Language.German",
+                "FirstRun.Language.French",
+                "FirstRun.Language.Spanish",
+                "FirstRun.Language.BrazilianPortuguese",
+                "FirstRun.GamepadHint",
                 "FirstRun.AccessibilityHeader",
                 "FirstRun.Accessibility.Colorblind",
                 "FirstRun.Accessibility.HighContrast",
@@ -879,7 +887,6 @@ namespace SudokuRoguelike.Tests
                 "Keybindings.Action.MoveRight",
                 "Keybindings.Action.TogglePencil",
                 "Keybindings.Action.ClearCell",
-                "Keybindings.Action.UndoLastDigit",
                 "Keybindings.Action.HighlightDigit",
                 "Keybindings.Action.BagNext",
                 "Keybindings.Action.BagPrevious",
@@ -1168,6 +1175,7 @@ namespace SudokuRoguelike.Tests
     }
 
     [TestFixture]
+    [Requirement("META-UNLOCK-003")]
     public class MainMenuClassInfoPresenterTests
     {
         [TearDown]

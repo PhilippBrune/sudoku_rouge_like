@@ -22,15 +22,19 @@ namespace SudokuRoguelike.UI
         private Text _legalHeader;
         private Text _legalBody;
         private Text _moreOptionsHint;
-        private Text _englishLabel;
-        private Text _germanLabel;
         private Text _continueLabel;
         private Text _colorblindLabel;
         private Text _contrastLabel;
         private Text _motionLabel;
         private Text _readerLabel;
-        private Button _englishButton;
-        private Button _germanButton;
+        // [REQ: REQ-UI-101] SPEC-CONF-032: every shipped catalog is offered (GAP-019).
+        private static readonly LanguageOption[] Languages =
+        {
+            LanguageOption.English, LanguageOption.German, LanguageOption.French,
+            LanguageOption.Spanish, LanguageOption.BrazilianPortuguese
+        };
+        private readonly Button[] _languageButtons = new Button[Languages.Length];
+        private readonly Text[] _languageLabels = new Text[Languages.Length];
         private Text _gamepadHintText;
 
         public GameObject Root => gameObject;
@@ -74,14 +78,17 @@ namespace SudokuRoguelike.UI
 
             _languageHeader = CreateText(panel, "LanguageHeader", 16, TextAnchor.MiddleLeft, GamePalette.AccentGold,
                 new Vector2(0.08f, 0.66f), new Vector2(0.92f, 0.72f));
-            _englishButton = InRunUiFactory.CreateActionButton(panel, "BtnLanguageEnglish",
-                new Vector2(0.08f, 0.57f), new Vector2(0.48f, 0.65f), "", UiAction.Confirm);
-            _germanButton = InRunUiFactory.CreateActionButton(panel, "BtnLanguageGerman",
-                new Vector2(0.52f, 0.57f), new Vector2(0.92f, 0.65f), "", UiAction.Confirm);
-            _englishLabel = GetButtonLabel(_englishButton);
-            _germanLabel = GetButtonLabel(_germanButton);
-            _englishButton.onClick.AddListener(() => SelectLanguage(LanguageOption.English));
-            _germanButton.onClick.AddListener(() => SelectLanguage(LanguageOption.German));
+            const float rowMin = 0.08f, rowMax = 0.92f, gap = 0.01f;
+            var width = (rowMax - rowMin - gap * (Languages.Length - 1)) / Languages.Length;
+            for (var i = 0; i < Languages.Length; i++)
+            {
+                var language = Languages[i];
+                var xMin = rowMin + i * (width + gap);
+                _languageButtons[i] = InRunUiFactory.CreateActionButton(panel, "BtnLanguage" + language,
+                    new Vector2(xMin, 0.57f), new Vector2(xMin + width, 0.65f), "", UiAction.Confirm);
+                _languageLabels[i] = GetButtonLabel(_languageButtons[i]);
+                _languageButtons[i].onClick.AddListener(() => SelectLanguage(language));
+            }
 
             _accessibilityHeader = CreateText(panel, "AccessibilityHeader", 16, TextAnchor.MiddleLeft, GamePalette.AccentGold,
                 new Vector2(0.08f, 0.48f), new Vector2(0.92f, 0.54f));
@@ -107,6 +114,7 @@ namespace SudokuRoguelike.UI
 
             var continueButton = InRunUiFactory.CreateActionButton(panel, "BtnContinueFirstRun",
                 new Vector2(0.30f, 0.02f), new Vector2(0.70f, 0.08f), "", UiAction.Accept);
+            MainMenuController.ConfigureModalActionLabel(continueButton);
             _continueLabel = GetButtonLabel(continueButton);
             continueButton.onClick.AddListener(CompleteSetup);
 
@@ -172,7 +180,7 @@ namespace SudokuRoguelike.UI
                 return;
             }
             var (confirm, _, _, _) = ControllerGlyphService.GetFaceLabels();
-            _gamepadHintText.text = $"[{confirm}] Confirm  ·  D-Pad";
+            _gamepadHintText.text = LocalizationService.Format("FirstRun.GamepadHint", "[{0}] Confirm  ·  D-Pad", confirm);
         }
 
         private void RefreshLocalizedText()
@@ -184,8 +192,8 @@ namespace SudokuRoguelike.UI
             SetText(_legalHeader, "FirstRun.LegalHeader");
             SetText(_legalBody, "FirstRun.LegalBody");
             SetText(_moreOptionsHint, "FirstRun.MoreOptionsHint");
-            SetText(_englishLabel, "FirstRun.Language.English");
-            SetText(_germanLabel, "FirstRun.Language.German");
+            for (var i = 0; i < Languages.Length; i++)
+                SetText(_languageLabels[i], "FirstRun.Language." + Languages[i]);
             SetText(_continueLabel, "FirstRun.Continue");
             SetText(_colorblindLabel, "FirstRun.Accessibility.Colorblind");
             SetText(_contrastLabel, "FirstRun.Accessibility.HighContrast");
@@ -201,8 +209,8 @@ namespace SudokuRoguelike.UI
 
         private void UpdateLanguageButtonState()
         {
-            SetSelected(_englishButton, _selectedLanguage == LanguageOption.English);
-            SetSelected(_germanButton, _selectedLanguage == LanguageOption.German);
+            for (var i = 0; i < Languages.Length; i++)
+                SetSelected(_languageButtons[i], _selectedLanguage == Languages[i]);
         }
 
         private static void SetSelected(Button button, bool selected)
@@ -257,11 +265,23 @@ namespace SudokuRoguelike.UI
             var toggle = row.GetComponent<Toggle>();
             toggle.targetGraphic = bg;
 
+            // GAP-029: an always-visible box, so "off" reads as an empty box and "on" as a filled one.
+            var box = new GameObject("Box", typeof(RectTransform), typeof(Image), typeof(Outline));
+            box.transform.SetParent(row.transform, false);
+            var boxRt = box.GetComponent<RectTransform>();
+            boxRt.anchorMin = new Vector2(0.02f, 0.14f);
+            boxRt.anchorMax = new Vector2(0.10f, 0.86f);
+            boxRt.offsetMin = boxRt.offsetMax = Vector2.zero;
+            box.GetComponent<Image>().color = new Color(0.02f, 0.02f, 0.02f, 0.90f);
+            box.GetComponent<Image>().raycastTarget = false;
+            box.GetComponent<Outline>().effectColor = GamePalette.AccentGold;
+            box.GetComponent<Outline>().effectDistance = new Vector2(1.5f, -1.5f);
+
             var check = new GameObject("Checkmark", typeof(RectTransform), typeof(Image));
-            check.transform.SetParent(row.transform, false);
+            check.transform.SetParent(box.transform, false);
             var checkRt = check.GetComponent<RectTransform>();
-            checkRt.anchorMin = new Vector2(0.02f, 0.18f);
-            checkRt.anchorMax = new Vector2(0.10f, 0.82f);
+            checkRt.anchorMin = new Vector2(0.18f, 0.18f);
+            checkRt.anchorMax = new Vector2(0.82f, 0.82f);
             checkRt.offsetMin = Vector2.zero;
             checkRt.offsetMax = Vector2.zero;
             var checkImg = check.GetComponent<Image>();

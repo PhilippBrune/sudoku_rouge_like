@@ -14,6 +14,7 @@ using UnityEngine.UI;
 namespace SudokuRoguelike.Tests
 {
     [TestFixture]
+    [Requirement("REQ-UI-102")]
     public sealed class GeneratedUiPlayModeTraversalTests
     {
         private const int TestSlot = SaveFileService.MaxSlots - 1;
@@ -35,11 +36,11 @@ namespace SudokuRoguelike.Tests
             _originalActiveSlot = SaveProfileService.ActiveSlot;
             SaveProfileService.ActiveSlot = TestSlot;
 
-            _savePath = Path.Combine(Application.persistentDataPath, $"save_profile_{TestSlot}.json");
+            _savePath = Path.Combine(SaveFileService.SaveRoot, $"save_profile_{TestSlot}.json");
             _backupPath = _savePath + ".bak";
             _tempPath = _savePath + ".tmp";
 
-            Directory.CreateDirectory(Application.persistentDataPath);
+            Directory.CreateDirectory(SaveFileService.SaveRoot);
 
             _originalSaveJson = File.Exists(_savePath) ? File.ReadAllText(_savePath) : null;
             _originalBackupJson = File.Exists(_backupPath) ? File.ReadAllText(_backupPath) : null;
@@ -110,6 +111,14 @@ namespace SudokuRoguelike.Tests
         [UnityTest]
         public IEnumerator NestedMenuButtons_ReturnToOwningPanels()
         {
+            // Endless Zen records and Spirit Trials are locked on a fresh profile by design
+            // (ConditionalButtonStateTests); unlock them so every nested panel can be visited.
+            new SaveFileService(TestSlot).Save(new SaveFileEnvelope
+            {
+                MetaProgress = new MetaProgressionState { EndlessZenUnlocked = true, SpiritTrialsUnlocked = true }
+            });
+            SaveFileService.FlushSharedPendingWrites();
+
             var host = BuildMainMenuHarness();
             yield return null;
 
@@ -174,6 +183,45 @@ namespace SudokuRoguelike.Tests
             AssertPanelActive(host, "GameModesPanel");
         }
 
+        // 1.1 (2026-10-07): Daily/Monthly widgets on the main menu (SPEC-CONF-027, GAP-028) and the
+        // "Allow irregular puzzles" toggle ON by default (SPEC-CONF-031, GAP-029).
+        [UnityTest]
+        [Requirement("REQ-UI-106", "DAILY-GOAL-004", "SEASON-UI-001", "GEN-REGION-003")]
+        public IEnumerator HomeWidgets_OpenDailyAndMonthly_AndIrregularPuzzlesDefaultOn()
+        {
+            var host = BuildMainMenuHarness();
+            yield return null;
+
+            AssertPanelActive(host, "MenuCard");
+            AssertPanelActive(host, "DailyWidget");
+            AssertPanelActive(host, "MonthlyWidget");
+            Assert.IsNotEmpty(FindObject(FindObject(host, "DailyWidget"), "WidgetInfo").GetComponent<Text>().text);
+            Assert.IsNotEmpty(FindObject(FindObject(host, "MonthlyWidget"), "WidgetInfo").GetComponent<Text>().text);
+
+            ClickButton(host, "BtnDailyWidget");
+            yield return null;
+            AssertPanelActive(host, "DailyWalkPanel");
+            ClickButton(host, "BtnDailyBack");
+            yield return null;
+            ClickButton(host, "BtnModesBack");
+            yield return null;
+            AssertPanelActive(host, "MenuCard");
+
+            ClickButton(host, "BtnMonthlyWidget");
+            yield return null;
+            AssertPanelActive(host, "MonthlyWalkPanel");
+            ClickButton(host, "BtnMonthlyBack");
+            yield return null;
+            ClickButton(host, "BtnModesBack");
+            yield return null;
+            AssertPanelActive(host, "MenuCard");
+
+            ClickButton(host, "BtnStart");
+            yield return null;
+            AssertPanelActive(host, "ClassSelectPanel");
+            Assert.IsTrue(FindObject(host, "TglAllowIrregular").GetComponent<Toggle>().isOn, "irregular puzzles are ON by default");
+        }
+
         [UnityTest]
         public IEnumerator OptionsPanelTabsAndLanguageConfirmation_AreRuntimeNavigable()
         {
@@ -188,7 +236,7 @@ namespace SudokuRoguelike.Tests
             AssertPanelInactive(host, "GameSection");
             AssertButtonActive(host, "MasterVolumeDec");
             AssertButtonActive(host, "MasterVolumeInc");
-            AssertToggleActive(host, "MuteAll");
+            AssertToggleActive(host, "MuteAllToggle");
             AssertDropdownActive(host, "MenuMusicStyleDropdown");
 
             ClickButton(host, "TabDisplay");
@@ -215,8 +263,8 @@ namespace SudokuRoguelike.Tests
             AssertPanelInactive(host, "AudioSection");
             AssertPanelInactive(host, "DisplaySection");
             AssertPanelActive(host, "GameSection");
-            AssertToggleActive(host, "HighlightErrors");
-            AssertToggleActive(host, "ControllerRumble");
+            AssertToggleActive(host, "HighlightErrorsToggle");
+            AssertToggleActive(host, "ControllerRumbleToggle");
 
             ClickButton(host, "BtnOptBack");
             yield return null;

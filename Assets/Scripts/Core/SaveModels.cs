@@ -109,10 +109,8 @@ namespace SudokuRoguelike.Core
         public GardenProgressionData GardenProgression = new GardenProgressionData();
         public ClassUnlockProgress ClassUnlocks = new ClassUnlockProgress();
         public ItemCodexData ItemCodex = new ItemCodexData();
-        // [REQ: META-ASCEND-001] AscensionLevel: global prestige layer above per-class prestige
-        // [REQ: META-ASCEND-002] ApplyAscension: increments AscensionLevel, +1 MaxStarCap, sets SeasonalChallengeUnlocked
-        // [REQ: META-ASCEND-003] TryPrestigeReset: resets AscensionLevel=0, MaxStarCap=5
-        // [REQ: SEASON-UNLOCK-001] Seasonal challenge unlocked after first ascension (AscensionLevel >= 1)
+        // META-ASCEND-001..003: Ascension is not built (deferred, FUTURE-009). AscensionLevel, PrestigeCount and MaxStarCap
+        // stay for save compatibility. [REQ: SEASON-UNLOCK-001] The Monthly Walk is always available (SPEC-CONF-026).
         public int AscensionLevel;
         public int PrestigeCount;
         public int MaxStarCap = 6;
@@ -192,6 +190,25 @@ namespace SudokuRoguelike.Core
         public List<LockedCellSaveData> LockedCells = new List<LockedCellSaveData>();
         // blurred_sight curse: cells whose pencil marks are currently hidden
         public List<BlurredCellSaveData> BlurredPencilCells = new List<BlurredCellSaveData>();
+
+        // [REQ: SAVE-RESUME-001] Level definition, modifier overlay and level counters, so a
+        // mid-puzzle resume rebuilds the constraint engine, overlay and pressure state (GAP-001).
+        // JsonUtility writes null custom-class fields as default objects, so the Has* flags tell
+        // a real value apart from the default one in saves written before these fields existed.
+        public bool HasLevelConfig;
+        public LevelConfig LevelConfig = new LevelConfig();
+        public bool HasOverlay;
+        public SudokuRoguelike.Sudoku.ModifierOverlayData Overlay = new SudokuRoguelike.Sudoku.ModifierOverlayData();
+        public bool HasLevelCounters;
+        public int Mistakes;
+        public int HpLost;
+        public int CorrectPlacements;
+        public int PencilMarksUsed;
+        public int ItemsUsedThisLevel;
+        public bool PerfectSoFar = true;
+        public bool NoPencilUsed = true;
+        // Fog of War placements whose correctness is still deferred: row*100+col
+        public List<int> FogPendingCells = new List<int>();
     }
 
     [Serializable]

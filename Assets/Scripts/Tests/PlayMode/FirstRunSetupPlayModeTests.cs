@@ -15,6 +15,7 @@ using UnityEngine.UI;
 namespace SudokuRoguelike.Tests
 {
     [TestFixture]
+    [Requirement("REQ-UI-100", "INTRO-002")]
     public sealed class FirstRunSetupPlayModeTests
     {
         private const int TestSlot = SaveFileService.MaxSlots - 1;
@@ -36,11 +37,11 @@ namespace SudokuRoguelike.Tests
             _originalActiveSlot = SaveProfileService.ActiveSlot;
             SaveProfileService.ActiveSlot = TestSlot;
 
-            _savePath = Path.Combine(Application.persistentDataPath, $"save_profile_{TestSlot}.json");
+            _savePath = Path.Combine(SaveFileService.SaveRoot, $"save_profile_{TestSlot}.json");
             _backupPath = _savePath + ".bak";
             _tempPath = _savePath + ".tmp";
 
-            Directory.CreateDirectory(Application.persistentDataPath);
+            Directory.CreateDirectory(SaveFileService.SaveRoot);
 
             _originalSaveJson = File.Exists(_savePath) ? File.ReadAllText(_savePath) : null;
             _originalBackupJson = File.Exists(_backupPath) ? File.ReadAllText(_backupPath) : null;

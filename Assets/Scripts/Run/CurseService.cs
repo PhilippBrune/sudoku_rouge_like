@@ -17,7 +17,11 @@ namespace SudokuRoguelike.Run
 
     public sealed class CurseService
     {
-        private readonly Random _random;
+        private Random _random;
+
+        /// <summary>[REQ: REQ-RUN-103] Starts a fresh random stream for one decision. RunDirector seeds it from the
+        /// run seed and the player's position, so a roll is the same before and after Save &amp; Quit (GAP-018).</summary>
+        public void ReseedForDecision(int decisionSeed) => _random = new Random(decisionSeed);
 
         // [REQ: CURSE-POOL-001..015] Full curse pool; IDs match CURSE-POOL-* in REQUIREMENT_MAP
         private static readonly List<CurseDefinition> AllCurses = new List<CurseDefinition>
@@ -35,7 +39,7 @@ namespace SudokuRoguelike.Run
                 Description = "All shop items cost 35% more." },
 
             // ── Medium (MinFloor 1) ────────────────────────────────────────────
-            new CurseDefinition { Id = "inkblot",           Name = "Inkblot",             Severity = CurseSeverity.Medium, MinFloor = 1,  // [REQ: CURSE-POOL-006]
+            new CurseDefinition { Id = "inkblot",           Name = "Inkblot",             Severity = CurseSeverity.Medium, MinFloor = 1,  // [REQ: CURSE-POOL-006] [REQ: CURSE-INT-006] Board setup: inkblot marks 3 cells as fogged at puzzle start
                 Description = "3 random cells are fogged at puzzle start." },
             new CurseDefinition { Id = "crumbling_focus",   Name = "Crumbling Focus",     Severity = CurseSeverity.Medium, MinFloor = 1,  // [REQ: CURSE-POOL-007]
                 Description = "Max Pencil reduced by 4 immediately." },
@@ -100,6 +104,21 @@ namespace SudokuRoguelike.Run
         public static CurseDefinition GetDefinition(string id) =>
             CurseById.TryGetValue(id, out var def) ? def : null;
 
+        public static string GetLocalizedName(CurseDefinition curse) =>
+            curse == null ? string.Empty : LocalizationService.T($"Curse.{curse.Id}.Name", curse.Name);
+
+        public static string GetLocalizedDescription(CurseDefinition curse) =>
+            curse == null ? string.Empty : LocalizationService.T($"Curse.{curse.Id}.Description", curse.Description);
+
+        public static IEnumerable<string> GetLocalizationKeys()
+        {
+            for (var i = 0; i < AllCurses.Count; i++)
+            {
+                yield return $"Curse.{AllCurses[i].Id}.Name";
+                yield return $"Curse.{AllCurses[i].Id}.Description";
+            }
+        }
+
         // Maps each curse ID to its icon in Resources/cursed/.
         // Unique icons (prompts_cursed_2.txt) for the 10 new entries;
         // shared fallbacks kept for the 7 curses without their own art yet.
@@ -128,15 +147,6 @@ namespace SudokuRoguelike.Run
 
         public static string GetIconName(string curseId) =>
             CurseIcons.TryGetValue(curseId, out var icon) ? icon : "withered_flower";
-
-        public static IEnumerable<string> GetLocalizationKeys()
-        {
-            for (var i = 0; i < AllCurses.Count; i++)
-            {
-                yield return $"Curse.{AllCurses[i].Id}.Name";
-                yield return $"Curse.{AllCurses[i].Id}.Description";
-            }
-        }
 
         // F23: bg_curse.png (background/bg_curse.png) is a full-screen darkening overlay applied
         // to the ENTIRE game panel when any curse is active. It is NOT a board replacement —

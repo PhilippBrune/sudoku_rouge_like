@@ -11,7 +11,7 @@ namespace SudokuRoguelike.Core
         Digit1, Digit2, Digit3, Digit4, Digit5, Digit6, Digit7, Digit8, Digit9,
         TogglePencil, ClearCell,
         Confirm, Cancel, TabNext, TabPrevious, SkipAnimation,
-        UndoLastDigit, BagNext, BagPrevious, UseItem, InspectItem,
+        BagNext, BagPrevious, UseItem, InspectItem,   // UndoLastDigit removed in 1.1 (SPEC-CONF-016)
         HighlightDigit
     }
 
@@ -41,7 +41,6 @@ namespace SudokuRoguelike.Core
             [InputAction.TabNext]        = KeyCode.Tab,
             [InputAction.TabPrevious]    = KeyCode.LeftShift,
             [InputAction.SkipAnimation]  = KeyCode.Space,
-            [InputAction.UndoLastDigit]  = KeyCode.Z,             // Ctrl+Z handled in InRunController
             [InputAction.BagNext]        = KeyCode.None,          // Tab cycles bag when items-focus active
             [InputAction.BagPrevious]    = KeyCode.None,
             [InputAction.UseItem]        = KeyCode.Return,
@@ -74,7 +73,6 @@ namespace SudokuRoguelike.Core
             [InputAction.TabNext]       = KeyCode.JoystickButton5, // RB/R1
             [InputAction.TabPrevious]   = KeyCode.JoystickButton4, // LB/L1
             [InputAction.SkipAnimation] = KeyCode.JoystickButton6, // Select/Back
-            [InputAction.UndoLastDigit] = KeyCode.JoystickButton3, // Y/Triangle
             [InputAction.BagNext]       = KeyCode.JoystickButton13,// D-down
             [InputAction.BagPrevious]   = KeyCode.JoystickButton12,// D-up
             [InputAction.UseItem]       = KeyCode.JoystickButton0, // A/Cross
@@ -94,6 +92,7 @@ namespace SudokuRoguelike.Core
         // Debounce: track which axis direction was already "pressed" this frame
         private bool _axisUpConsumed, _axisDownConsumed, _axisLeftConsumed, _axisRightConsumed;
         private float _prevH, _prevV;
+        private float _currH, _currV;
 
         public InputRemapService()
         {
@@ -225,23 +224,23 @@ namespace SudokuRoguelike.Core
         /// </summary>
         public void Tick()
         {
-            var h = Input.GetAxis(AxisHorizontal);
-            var v = Input.GetAxis(AxisVertical);
+            _prevH = _currH;
+            _prevV = _currV;
 
-            _axisLeftConsumed  = h < -AxisThreshold && _prevH >= -AxisThreshold ? false : _axisLeftConsumed;
-            _axisRightConsumed = h >  AxisThreshold && _prevH <=  AxisThreshold ? false : _axisRightConsumed;
-            _axisDownConsumed  = v < -AxisThreshold && _prevV >= -AxisThreshold ? false : _axisDownConsumed;
-            _axisUpConsumed    = v >  AxisThreshold && _prevV <=  AxisThreshold ? false : _axisUpConsumed;
+            _currH = Input.GetAxis(AxisHorizontal);
+            _currV = Input.GetAxis(AxisVertical);
 
-            _prevH = h;
-            _prevV = v;
+            _axisLeftConsumed  = _currH < -AxisThreshold && _prevH >= -AxisThreshold ? false : _axisLeftConsumed;
+            _axisRightConsumed = _currH >  AxisThreshold && _prevH <=  AxisThreshold ? false : _axisRightConsumed;
+            _axisDownConsumed  = _currV < -AxisThreshold && _prevV >= -AxisThreshold ? false : _axisDownConsumed;
+            _axisUpConsumed    = _currV >  AxisThreshold && _prevV <=  AxisThreshold ? false : _axisUpConsumed;
         }
 
         private bool WasAxisPressed(string axis, int sign)
         {
-            var val = Input.GetAxis(axis);
-            var crossed = sign > 0 ? (val > AxisThreshold) : (val < -AxisThreshold);
+            var val     = axis == AxisHorizontal ? _currH : _currV;
             var prevVal = axis == AxisHorizontal ? _prevH : _prevV;
+            var crossed  = sign > 0 ? (val > AxisThreshold) : (val < -AxisThreshold);
             var wasBelow = sign > 0 ? (prevVal <= AxisThreshold) : (prevVal >= -AxisThreshold);
             return crossed && wasBelow;
         }

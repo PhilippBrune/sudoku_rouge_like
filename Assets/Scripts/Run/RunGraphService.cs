@@ -6,8 +6,15 @@ namespace SudokuRoguelike.Run
 {
     public sealed class RunGraphService
     {
+        /// <summary>
+        /// Graph layout version stored in <c>RunState.FloorGraphVersion</c>. 0/1: legacy layout with floor+1 "Bridge"
+        /// tiles (saves from 1.0 keep it until their next floor). 2: one cross-connection per floor between two tiles
+        /// that keep their type (MAP-CROSS-001, SPEC-CONF-010, 2026-10-06).
+        /// </summary>
+        public const int CurrentGraphVersion = 2;
+
         // [REQ: MAP-STRUCT-002] BuildFloorGraph: single entry point — Shared Start node → Calm/Risk lane nodes → Boss Gate, then edges + cross-links
-        public List<RunNode> BuildFloorGraph(int floorIndex, int seed)
+        public List<RunNode> BuildFloorGraph(int floorIndex, int seed, int graphVersion = CurrentGraphVersion)
         {
             var rng = new Random(seed + floorIndex * 7919);
             GetFloorLengths(floorIndex, rng, out var calmLength, out var riskLength);
@@ -97,8 +104,9 @@ namespace SudokuRoguelike.Run
                 riskNodes[i].NextNodes.Add(riskNodes[i + 1].Index);
             if (riskNodes.Count > 0) riskNodes[riskNodes.Count - 1].NextNodes.Add(bossNode.Index);
 
-            // Cross-links — count scales with floor index (1 bridge on floor 1, up to 5 on floor 5)
-            var bridgePairs = InsertCrossLinks(calmNodes, riskNodes, floorIndex);
+            var bridgePairs = graphVersion >= 2
+                ? InsertSingleCrossLink(calmNodes, riskNodes)
+                : InsertCrossLinks(calmNodes, riskNodes, floorIndex);
 
             // Enforce economy pacing
             EnforceEconomyFloor(calmNodes);
@@ -255,7 +263,25 @@ namespace SudokuRoguelike.Run
 
         // ── Cross-Links ──
 
-        // [REQ: MAP-CROSS-001] InsertCrossLinks: bidirectional bridges between lanes; count = floor+1 (clamped); evenly distributed, no two share a position index
+        // [REQ: MAP-CROSS-001] Exactly one cross-connection per floor, between the Calm tile at index floor(CalmLength/2)
+        // and the Risk tile at index floor(RiskLength/2). Both tiles keep their type (Puzzle, Shop, …); IsCrossLink marks
+        // them, and the edge lets the player switch lanes there. The pre-boss tile at the end of a lane is never an anchor.
+        private static List<(RunNode calm, RunNode risk)> InsertSingleCrossLink(List<RunNode> calm, List<RunNode> risk)
+        {
+            var pairs = new List<(RunNode, RunNode)>();
+            if (calm.Count < 2 || risk.Count < 2) return pairs;
+            var calmPos = Math.Min(calm.Count / 2, calm.Count - 2);
+            var riskPos = Math.Min(risk.Count / 2, risk.Count - 2);
+            calm[calmPos].NextNodes.Add(risk[riskPos].Index);
+            risk[riskPos].NextNodes.Add(calm[calmPos].Index);
+            calm[calmPos].IsCrossLink = true;
+            risk[riskPos].IsCrossLink = true;
+            pairs.Add((calm[calmPos], risk[riskPos]));
+            return pairs;
+        }
+
+        // Legacy layout (graph version 0/1, saves from 1.0): bidirectional bridges between lanes; count = floor+1 (clamped);
+        // evenly distributed, no two share a position index; bridge tiles become NodeType.CrossLink.
         /// <summary>
         /// Inserts 1..floorIndex+1 bidirectional bridge edges between calm and risk lanes.
         /// Bridges are evenly distributed across the interior of the shorter lane.

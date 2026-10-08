@@ -33,11 +33,16 @@ namespace SudokuRoguelike.Tests
 
                 var staleChild = new GameObject("StaleGeneratedChild", typeof(RectTransform));
                 staleChild.transform.SetParent(root, false);
+                // The splash fade-in has made the menu visible before any rebuild happens.
+                root.GetComponent<CanvasGroup>().alpha = 1f;
 
                 builder.ForceRebuild();
 
                 var rebuiltRoot = FindMainMenuRoot(host);
                 Assert.AreSame(root, rebuiltRoot);
+                Assert.AreEqual(1, host.GetComponentsInChildren<Canvas>(true).Length, "rebuild must reuse the canvas");
+                Assert.AreEqual(1f, rebuiltRoot.GetComponent<CanvasGroup>().alpha,
+                    "a rebuild (e.g. after a language change) must keep the menu visible");
                 Assert.IsNull(rebuiltRoot.Find("StaleGeneratedChild"));
                 Assert.AreEqual(firstChildCount, rebuiltRoot.childCount);
                 Assert.AreEqual(3, builder.SlotChangedHandlerRegistrationCount);

@@ -241,9 +241,14 @@ namespace SudokuRoguelike.UI
             if (clip == null)
             {
                 MissingAuthored.Add(id);
+                // [REQ: REQ-AUDIO-100] GAP-030: a missing authored clip falls back to procedural audio; say so in the log.
+                if (info.ReleaseRequired)
+                    Debug.LogWarning($"[Audio] Missing release clip {id} (Resources/{info.ResourcePath}); using the procedural fallback.");
                 return false;
             }
 
+            // GAP-030: one line per authored clip, so the player log shows that real audio loaded.
+            Debug.Log($"[Audio] Loaded {id}: {clip.length:F1} s, {clip.frequency} Hz, {clip.channels} ch.");
             AuthoredCache[id] = clip;
             return true;
         }

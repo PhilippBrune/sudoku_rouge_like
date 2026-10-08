@@ -9,8 +9,72 @@ using UnityEngine;
 namespace SudokuRoguelike.Tests
 {
     [TestFixture]
+    [Requirement("REQ-UI-101")]
     public sealed class LocalizationCatalogQualityTests
     {
+        // GAP-019: 60 German strings (and one key in code) were UTF-8 read as cp1252 ("ZurÃ¼ck", "Â·").
+        // Test sources are not scanned because they name the markers.
+        private static readonly string[] MojibakeMarkers =
+        {
+            "Ã¤", "Ã¶", "Ã¼", "ÃŸ", "Ã©", // ä ö ü ß é read as cp1252
+            "Â·", "Â ",                                              // · and no-break space
+            "â€"                                                               // – — “ ” ’ …
+        };
+
+        [Test]
+        public void CatalogsAndSources_ContainNoDoubleEncodedText()
+        {
+            var files = new[] { "en", "de", "fr", "es", "pt" }
+                .Select(lang => Path.Combine(Application.dataPath, "Resources", "Localization", lang + ".json"))
+                .Concat(Directory.GetFiles(Path.Combine(Application.dataPath, "Scripts"), "*.cs", SearchOption.AllDirectories)
+                    .Where(path => !path.Replace('\\', '/').Contains("/Tests/")));
+
+            var hits = new List<string>();
+            foreach (var path in files)
+            {
+                var lines = File.ReadAllLines(path);
+                for (var i = 0; i < lines.Length; i++)
+                    if (MojibakeMarkers.Any(marker => lines[i].Contains(marker)))
+                        hits.Add($"{Path.GetFileName(path)}:{i + 1}: {lines[i].Trim()}");
+            }
+            CollectionAssert.IsEmpty(hits);
+        }
+
+        // 1.1 build smoke (B01): the profile screen showed "Profile.EmptySlot" because the key had German text only.
+        // Every dotted key looked up without an English fallback must resolve in English.
+        private static readonly Regex KeyOnlyLookup = new Regex(
+            @"\b(?:LocalizationService\.)?(?:T|Tf)\(\s*""([A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)+)""\s*(\)|,)");
+
+        [Test]
+        public void KeyOnlyLookups_HaveEnglishText()
+        {
+            var previous = SudokuRoguelike.Core.LocalizationService.Current;
+            SudokuRoguelike.Core.LocalizationService.SetLanguage(SudokuRoguelike.Core.LanguageOption.English);
+            try
+            {
+                var raw = new SortedSet<string>();
+                foreach (var path in Directory.GetFiles(Path.Combine(Application.dataPath, "Scripts"), "*.cs", SearchOption.AllDirectories)
+                             .Where(path => !path.Replace('\\', '/').Contains("/Tests/")))
+                {
+                    var source = File.ReadAllText(path);
+                    foreach (Match match in KeyOnlyLookup.Matches(source))
+                    {
+                        var isTf = source.Substring(match.Index, Math.Min(4, source.Length - match.Index)).StartsWith("Tf(")
+                                   || match.Value.Contains(".Tf(");
+                        if (match.Groups[2].Value == "," && !isTf) continue; // T(key, englishFallback)
+                        var key = match.Groups[1].Value;
+                        if (SudokuRoguelike.Core.LocalizationService.T(key) == key)
+                            raw.Add($"{Path.GetFileName(path)}: {key}");
+                    }
+                }
+                CollectionAssert.IsEmpty(raw, "these keys would be shown raw to English players");
+            }
+            finally
+            {
+                SudokuRoguelike.Core.LocalizationService.SetLanguage(previous);
+            }
+        }
+
         [Test]
         public void Catalogs_DoNotContainDuplicateKeys()
         {

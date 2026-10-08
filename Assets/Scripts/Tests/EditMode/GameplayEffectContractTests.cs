@@ -11,6 +11,7 @@ using SudokuRoguelike.UI;
 namespace SudokuRoguelike.Tests
 {
     [TestFixture]
+    [Requirement("REQ-ITEM-103")]
     public sealed class GameplayEffectContractTests
     {
         [Test]
@@ -60,14 +61,17 @@ namespace SudokuRoguelike.Tests
         public void GinkgoLeaf_RestoresLastMistakeHpComboAndClearsWrongCell()
         {
             var run = StartPuzzleRun(93003);
+            // Starting relics are rolled from the seed; one (e.g. Cracked Teacup) can absorb this mistake.
+            // Isolate the Ginkgo Leaf contract from them (GAP-010 triage).
+            run.State.HeldRelics.Clear();
             var (row, col, wrongValue) = FindInvalidPlacement(run);
             run.State.ComboStreak = 4;
             var hpBeforeMistake = run.State.CurrentHP;
 
+            // PlaceNumber rejects the wrong digit and applies the penalty itself (GAP-035, SPEC-CONF-003).
             Assert.AreEqual(PlaceResult.Invalid, run.PlaceNumber(row, col, wrongValue));
-            run.ApplyMistakePenalty(row, col);
 
-            Assert.AreEqual(wrongValue, run.CurrentBoard.Cells[row, col]);
+            Assert.AreEqual(0, run.CurrentBoard.Cells[row, col], "a wrong digit must not stay on the board");
             Assert.AreEqual(hpBeforeMistake - 1, run.State.CurrentHP);
             Assert.AreEqual(1, run.State.LastMistakeHpLost);
             Assert.AreEqual(4, run.State.LastComboBeforeMistake);
@@ -90,6 +94,7 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
+        [Requirement("CLASS-EXCL-004")]
         public void ClassExclusiveItemAvailability_RequiresMatchingClassAndUnlockLevel()
         {
             Assert.IsTrue(ItemService.IsClassExclusive(ItemType.LoadedCoin));
@@ -129,6 +134,7 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
+        [Requirement("REQ-ITEM-104")]
         public void RelicChoices_DoNotRepeatItemsWithinOnePanel()
         {
             var choices = new RelicService(seed: 44123).RollRelicChoices(floorIndex: 0, count: 40);
@@ -159,6 +165,7 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
+        [Requirement("REQ-CLASS-103")]
         public void GardenMonk_Level1HealsOnFifthCorrectPlacement()
         {
             var run = StartPuzzleRun(93004, ClassId.GardenMonk, classLevel: 1);
@@ -176,6 +183,7 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
+        [Requirement("REQ-CLASS-103")]
         public void GardenMonk_Level24HealsOnFourthCorrectPlacementFromClassLevel()
         {
             var run = StartPuzzleRun(93005, ClassId.GardenMonk, classLevel: 24);
@@ -194,6 +202,7 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
+        [Requirement("REQ-CLASS-103")]
         public void GardenMonk_PassiveHealingCapsAtMaxHp()
         {
             var run = StartPuzzleRun(93006, ClassId.GardenMonk, classLevel: 1);

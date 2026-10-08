@@ -8,26 +8,32 @@ namespace SudokuRoguelike.Tests
     {
         private const string CreditsDocPath = "docs/Credits.md";
         private const string MainMenuBuilderPath = "Assets/Scripts/UI/MainMenuBlueprintBuilder.cs";
+        private const string InGameCreditsSource = "Assets/Resources/Localization/en.json (Credits.Body.*)";
 
         [Test]
         public void CreditsMarkdownAndInGamePanel_SourceIncludeGoogleResolverNotice()
         {
-            AssertGoogleResolverNotice(File.ReadAllText(CreditsDocPath), CreditsDocPath);
-            AssertGoogleResolverNotice(File.ReadAllText(MainMenuBuilderPath), MainMenuBuilderPath);
+            AssertGoogleResolverNotice(DocText.Read(CreditsDocPath), CreditsDocPath);
+            // The in-game credits panel shows the Credits.Body.* catalog entries (moved out of the builder in 9f19bba).
+            AssertGoogleResolverNotice(DocText.EnglishCatalog(), InGameCreditsSource);
         }
 
         [Test]
         public void CreditsMarkdownAndInGamePanel_SourceIncludeFinalAssetAndThanksWording()
         {
-            AssertFinalAssetAndThanksWording(File.ReadAllText(CreditsDocPath), CreditsDocPath);
-            AssertFinalAssetAndThanksWording(File.ReadAllText(MainMenuBuilderPath), MainMenuBuilderPath);
+            AssertFinalAssetAndThanksWording(DocText.Read(CreditsDocPath), CreditsDocPath);
+            AssertFinalAssetAndThanksWording(DocText.EnglishCatalog(), InGameCreditsSource);
         }
 
+        // SPEC-PROC-007 (decided 2026-10-07): Steamworks.NET and the Steam API redistributables ship with the game, so the
+        // credits name them with their licences instead of claiming that no Steamworks binaries are bundled.
         [Test]
-        public void CreditsMarkdownAndInGamePanel_SourceDoNotClaimBundledSteamworksSdk()
+        public void CreditsMarkdownAndInGamePanel_NameSteamworksNetAndValveRedistributables()
         {
-            AssertSteamworksDisclaimer(File.ReadAllText(CreditsDocPath), CreditsDocPath, allowTrademarkNotice: true);
-            AssertSteamworksDisclaimer(File.ReadAllText(MainMenuBuilderPath), MainMenuBuilderPath, allowTrademarkNotice: true);
+            AssertSteamworksNotice(DocText.Read(CreditsDocPath), CreditsDocPath);
+            AssertSteamworksNotice(DocText.EnglishCatalog(), InGameCreditsSource);
+            Assert.IsTrue(File.Exists("docs/legal/third-party/Steamworks.NET-LICENSE.md"), "Steamworks.NET licence copy is missing");
+            StringAssert.Contains("MIT License", File.ReadAllText("docs/legal/third-party/Steamworks.NET-LICENSE.md"));
         }
 
         private static void AssertGoogleResolverNotice(string source, string path)
@@ -56,18 +62,15 @@ namespace SudokuRoguelike.Tests
             Assert.That(source, Does.Contain("No separate third-party stock"), path);
         }
 
-        private static void AssertSteamworksDisclaimer(string source, string path, bool allowTrademarkNotice)
+        private static void AssertSteamworksNotice(string source, string path)
         {
-            Assert.That(source, Does.Contain("Local achievement tracking is implemented"), path);
-            Assert.That(source, Does.Contain("Steamworks-compatible"), path);
-            Assert.That(source, Does.Contain("supported Steamworks SDK assembly is imported"), path);
-            Assert.That(source, Does.Contain("No Steamworks SDK binaries are bundled in this repository"), path);
-            Assert.That(source, Does.Contain("before claiming Steam release support"), path);
-
-            if (!allowTrademarkNotice)
-                Assert.That(source, Does.Not.Contain("Steam\u00ae is a registered trademark"), path);
-
-            Assert.That(source, Does.Not.Contain("Steamworks SDK \u00a9 Valve Corporation"), path);
+            Assert.That(source, Does.Contain("Steamworks.NET by Riley Labrecque"), path);
+            Assert.That(source, Does.Contain("MIT License"), path);
+            Assert.That(source, Does.Contain("docs/legal/third-party/Steamworks.NET-LICENSE.md"), path);
+            Assert.That(source, Does.Contain("Steamworks API redistributables"), path);
+            Assert.That(source, Does.Contain("Valve Corporation"), path);
+            Assert.That(source, Does.Contain("Steamworks SDK Access Agreement"), path);
+            Assert.That(source, Does.Not.Contain("No Steamworks SDK binaries are bundled in this repository"), path);
         }
     }
 }

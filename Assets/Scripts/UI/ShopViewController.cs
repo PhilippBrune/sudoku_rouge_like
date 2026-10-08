@@ -262,12 +262,12 @@ namespace SudokuRoguelike.UI
                     offer.Item,
                     slotToReplace =>
                     {
-                        if (!run.TryPurchaseShopOffer(selectedOfferIdx))
+                        // Pays and swaps in one step; nothing is charged if the swap cannot happen (GAP-036).
+                        if (!run.TryPurchaseShopOffer(selectedOfferIdx, slotToReplace))
                         {
                             OnStatusChanged?.Invoke(T("InRun.Shop.NotEnoughGold"));
                             return;
                         }
-                        run.ReplaceItemInInventory(slotToReplace, offer.Item);
                         new ProfileService(new SaveFileService(SaveProfileService.ActiveSlot)).RecordItemDiscovery(offer.Item.Type);
                         _shopOffers.Clear();
                         _selectedShopOffer = -1;

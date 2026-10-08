@@ -17,7 +17,6 @@ namespace SudokuRoguelike.UI
 
         private RunAutoSaveCoordinator _autoSave;
         private RunDirector _run;
-        private RunDirector _autoSaveBoundRun;
         private bool _rewardsGrantedForCurrentPuzzle;
         private readonly Dictionary<int, LevelConfig> _fixedNodeConfigs = new Dictionary<int, LevelConfig>();
         private RunNavigationSnapshot _pendingGenerationRollback;
@@ -105,11 +104,9 @@ namespace SudokuRoguelike.UI
                 return false;
             }
 
-            // Always rebuild boss config after ChooseBossModifiers so ActiveModifiers includes
-            // the player's chosen modifier. The fixed-config cache was built at floor entry
-            // before the modifier was selected, so it never contains the chosen modifier.
-            nextLevel = _run.BuildLevelConfig(true, false, nodeIndex);
-            nextLevel.BoardSize = Mathf.Max(nextLevel.BoardSize, 8);
+            // The fixed config (built at floor entry, shown on the map) plus the modifiers chosen at the gate.
+            // Bosses follow the floor's size range; only modifiers that need a larger board raise it (SPEC-CONF-028).
+            nextLevel = GetFixedLevelConfig(node) ?? _run.BuildNodeLevelConfig(node, nodeIndex);
 
             CancelPreBakeForInteractiveGeneration();
             _run.StartLevelAsync(nextLevel);
@@ -145,13 +142,7 @@ namespace SudokuRoguelike.UI
                 return true;
             }
 
-            nextLevel = GetFixedLevelConfig(node);
-            if (nextLevel == null)
-            {
-                var isBoss = node.Type == NodeType.Boss;
-                var isElite = node.Type == NodeType.ElitePuzzle;
-                nextLevel = _run.BuildLevelConfig(isBoss, isElite);
-            }
+            nextLevel = GetFixedLevelConfig(node) ?? _run.BuildNodeLevelConfig(node, nodeIndex);
 
             // Use a pre-baked puzzle if the background task finished in time; otherwise generate async.
             if (_run.TryConsumePreBakedNode(nodeIndex, out var preBakedBoard, out var preBakedOverlay))
@@ -233,44 +224,8 @@ namespace SudokuRoguelike.UI
             return _run?.ResolveCurrentEventChoice(optionIndex) ?? string.Empty;
         }
 
-        public RunResult BuildRunResult(bool victory, int bossPhaseReached, int secondsPlayed)
-        {
-            if (_run == null || _run.State == null) return null;
-
-            var result = new RunResult
-            {
-                PlayedClassId = _run.State.ClassId,
-                Mode = _run.State.Mode,
-                Victory = victory,
-                GardenDepthReached = _run.State.Depth,
-                GoldEarned = _run.State.CurrentGold,
-                XpEarned = _run.GetTotalRunXp(),
-                BossPhaseReached = bossPhaseReached,
-                BossesDefeatedThisRun = _run.State.BossesDefeatedThisRun,
-                MistakesMade = _run.GetAnalytics()?.TotalMistakes ?? _run.CurrentLevelState?.Mistakes ?? 0,
-                SecondsPlayed = secondsPlayed > 0 ? secondsPlayed : Mathf.RoundToInt(_run.State.TotalRunSeconds),
-                TutorialMode = _run.State.TutorialMode,
-                DisableProgressionRewards = _run.State.DisableProgressionRewards,
-                PlayedTier = _run.State.SpiritTrialsTier,
-                HarmonyLevel = _run.State.HarmonyLevel
-            };
-
-            for (var i = 0; i < _run.TileXpLog.Count; i++)
-                result.TileXpEntries.Add(_run.TileXpLog[i]);
-
-            var analytics = _run.GetAnalytics();
-            if (analytics != null)
-            {
-                result.Analytics = analytics.Build();
-                result.ItemsUsedThisRun = analytics.TotalItemsUsed;
-                result.RunScore = result.Analytics.RunScore;
-            }
-
-            result.AcquiredRelic = _run.State.HasRelic;
-            result.RelicsCollectedThisRun = _run.State.HeldRelics?.Count ?? 0;
-
-            return result;
-        }
+        public RunResult BuildRunResult(bool victory, int bossPhaseReached, int secondsPlayed) =>
+            RunResultFactory.Build(_run, victory, bossPhaseReached, secondsPlayed);
 
         public void AdvanceToNextFloor()
         {
@@ -365,13 +320,15 @@ namespace SudokuRoguelike.UI
 
         public void SaveNow() => _autoSave?.SaveBound();
 
+        // [REQ: SAVE-AUTO-001] Bind on every BindRun, even for the same RunDirector: GameBootstrap reuses one
+        // director for every launch and BindRun(run, saveFile) has just dropped the old coordinator, so skipping
+        // here left every later run in the session without autosave (GAP-001). The coordinator reloads the save
+        // before each write, so profile data saved in between is never overwritten (GAP-037).
         private void BindAutoSave()
         {
             if (_run == null) return;
-            if (_autoSaveBoundRun == _run) return;
             _autoSave = _autoSave ?? new RunAutoSaveCoordinator(_saveFile, _profile);
             _autoSave.Bind(_run);
-            _autoSaveBoundRun = _run;
         }
 
         private void PrepareFixedNodeConfigs()
@@ -379,31 +336,25 @@ namespace SudokuRoguelike.UI
             _fixedNodeConfigs.Clear();
             if (_run == null || _run.CurrentFloorGraph == null) return;
 
+            // Configs built at floor entry are saved with the run, so a resume shows and plays the same puzzles (GAP-018).
+            var saved = _run.GetSavedNodeConfigs();
+            var built = new List<LevelConfig>(_run.CurrentFloorGraph.Count);
             for (var i = 0; i < _run.CurrentFloorGraph.Count; i++)
             {
                 var node = _run.CurrentFloorGraph[i];
-                if (node == null) continue;
+                if (node == null) { built.Add(new LevelConfig()); continue; }
 
                 var isBoss = node.Type == NodeType.Boss;
-                var isElite = node.Type == NodeType.ElitePuzzle;
-                var config = _run.BuildLevelConfig(isBoss, isElite, i);
+                var config = saved != null ? saved[i].Clone() : _run.BuildNodeLevelConfig(node, i);
+                built.Add(config.Clone());
 
                 if (isBoss)
                 {
-                    // Stars are fixed per floor by RollStars — no override needed here
-                    config.BoardSize = Mathf.Max(config.BoardSize, 8);
                     // Pre-bake the boss board on a background thread so floor entry doesn't stutter.
                     // StartLevelAsync reads volatile _preBakedBossBoard; falls back to sync if not ready.
                     var bakeConfig = config.Clone();
                     var token = _preBakeCancel.Token;
                     QueuePreBake(() => _run.BakeBossBoard(bakeConfig, token), token, $"boss node {i}");
-                }
-                else if (node.Route == RouteType.RiskRoute)
-                {
-                    config.Difficulty = (DifficultyTier)Mathf.Clamp((int)config.Difficulty + 1, (int)DifficultyTier.Diff1, (int)DifficultyTier.Diff5);
-                    config.Stars = Mathf.Clamp(config.Stars + 1, 1, 5);
-                    config.BoardSize = Mathf.Clamp(config.BoardSize + 1, 4, 9);
-                    config.MissingPercent = Mathf.Clamp(config.MissingPercent + 0.06f, 0.08f, 0.85f);
                 }
 
                 _fixedNodeConfigs[i] = config.Clone();
@@ -421,6 +372,9 @@ namespace SudokuRoguelike.UI
                         $"node {capturedIndex}");
                 }
             }
+
+            if (saved == null)
+                _run.SaveNodeConfigs(built);
         }
 
         private void QueuePreBake(Action action, CancellationToken token, string label)
@@ -469,23 +423,7 @@ namespace SudokuRoguelike.UI
 
             if (!_fixedNodeConfigs.TryGetValue(index, out var config) || config == null)
             {
-                var isBoss = node.Type == NodeType.Boss;
-                var isElite = node.Type == NodeType.ElitePuzzle;
-                config = _run.BuildLevelConfig(isBoss, isElite, index);
-
-                if (isBoss)
-                {
-                    // Stars are fixed per floor by RollStars — no override needed here
-                    config.BoardSize = Mathf.Max(config.BoardSize, 8);
-                }
-                else if (node.Route == RouteType.RiskRoute)
-                {
-                    config.Difficulty = (DifficultyTier)Mathf.Clamp((int)config.Difficulty + 1, (int)DifficultyTier.Diff1, (int)DifficultyTier.Diff5);
-                    config.Stars = Mathf.Clamp(config.Stars + 1, 1, 5);
-                    config.BoardSize = Mathf.Clamp(config.BoardSize + 1, 4, 9);
-                    config.MissingPercent = Mathf.Clamp(config.MissingPercent + 0.06f, 0.08f, 0.85f);
-                }
-
+                config = _run.BuildNodeLevelConfig(node, index);
                 _fixedNodeConfigs[index] = config.Clone();
             }
 
@@ -499,6 +437,7 @@ namespace SudokuRoguelike.UI
                     if (!result.ActiveModifiers.Contains(_run.State.ChosenBossModifiers[i]))
                         result.ActiveModifiers.Add(_run.State.ChosenBossModifiers[i]);
                 }
+                _run.NormalizeLevelConfig(result);
             }
 
             return result;

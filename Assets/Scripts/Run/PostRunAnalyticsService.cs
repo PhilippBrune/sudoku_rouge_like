@@ -3,6 +3,8 @@ using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.Run
 {
+    // Serializable: kept in RunState so a resumed run keeps its analytics (GAP-038).
+    [System.Serializable]
     public sealed class PostRunAnalyticsService
     {
         public int TotalPuzzlesSolved;
@@ -15,7 +17,7 @@ namespace SudokuRoguelike.Run
         public int CursedPuzzlesCompleted;
         public bool PencilEverUsed;
         public List<TileXpEntry> TileXpLog = new List<TileXpEntry>();
-        private readonly List<int> _mistakesPerPuzzle = new List<int>();
+        [UnityEngine.SerializeField] private List<int> _mistakesPerPuzzle = new List<int>();
 
         public void RecordPuzzleSolved(int mistakes, int goldEarned)
         {

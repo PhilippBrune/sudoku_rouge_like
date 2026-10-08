@@ -35,7 +35,12 @@ namespace SudokuRoguelike.UI
         public static readonly Color CellJigsawEmptyMain = new(0.11f, 0.17f, 0.12f, 1f);
 
         // Cell number labels
-        public static readonly Color CellNumberGiven  = new(0.04f, 0.04f, 0.04f, 1f);
+        // [REQ: REQ-UI-103] Givens and player digits must be told apart at a glance (GAP-029): givens are bold ivory,
+        // player digits blue ink. Both keep >= 5:1 contrast on the cell and highlight backgrounds.
+        public static readonly Color CellNumberGiven  = new(0.96f, 0.93f, 0.82f, 1f);
+        public static readonly Color CellNumberPlaced = new(0.62f, 0.87f, 1.00f, 1f);
+        // Digits on the selected (amber) cell: dark ink, 5.3:1 against CellSelected.
+        public static readonly Color CellNumberOnSelected = new(0.10f, 0.08f, 0.05f, 1f);
         public static readonly Color PencilMarkColor  = new(0.84f, 0.86f, 0.82f, 0.95f);
 
         // Cell highlight overlays

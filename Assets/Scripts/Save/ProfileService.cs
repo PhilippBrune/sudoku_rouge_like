@@ -62,6 +62,19 @@ namespace SudokuRoguelike.Save
             _saveFile.Save(envelope);
         }
 
+        public bool CanPrestigeClass(ClassId classId) => _garden.CanPrestige(LoadMetaProgress(), classId);
+
+        /// <summary>Prestiges the class when it is eligible and saves the profile (GAP-017).</summary>
+        // [REQ: META-PRESTIGE-004] Called from the Meta Progression panel after the player confirms.
+        public bool TryPrestigeClass(ClassId classId)
+        {
+            var envelope = _saveFile.Load();
+            if (envelope.MetaProgress == null || !_garden.TryPrestige(envelope.MetaProgress, classId))
+                return false;
+            _saveFile.Save(envelope);
+            return true;
+        }
+
         public void UpdateStats(SaveFileEnvelope envelope, ProfileStats stats)
         {
             envelope.Statistics = stats;
@@ -183,21 +196,11 @@ namespace SudokuRoguelike.Save
 
             // 3. Commit XP to class (skip if tutorial)
             // [REQ: XP-COMMIT-001] XP committed to class at run end only; no mid-run leveling
-            // [HARMONY-XP-001] XP is scaled by the harmony multiplier before commit.
-            // [HARMONY-XP-001] XP multiplier applies only on victory; defeats use ×1.0.
-            // [L4-B] On victory add flat HarmonyLevel × 50 bonus XP on top.
+            // [HARMONY-XP-001] XP is scaled by the harmony multiplier before commit, on every run end (victory or
+            // defeat), with no flat bonus (SPEC-CONF-024, decided 2026-10-06; spec §4.7).
             if (!result.TutorialMode)
             {
-                int xpToCommit;
-                if (result.Victory)
-                {
-                    xpToCommit = (int)Math.Round(result.XpEarned * HarmonyDifficultyService.GetXpMultiplier(result.HarmonyLevel));
-                    xpToCommit += result.HarmonyLevel * 50;
-                }
-                else
-                {
-                    xpToCommit = result.XpEarned;
-                }
+                var xpToCommit = (int)Math.Round(result.XpEarned * HarmonyDifficultyService.GetXpMultiplier(result.HarmonyLevel));
                 _garden.AddXp(meta, result.PlayedClassId, xpToCommit);
 
                 // 4. Check class level for completion
@@ -214,6 +217,11 @@ namespace SudokuRoguelike.Save
                     _completion.RecordPuzzleCompletion(completion, tile.BoardSize, tile.Stars);
                 }
             }
+
+            // 6. [REQ: META-COMPLETE-001] Record the modifiers of defeated bosses (GAP-009: this had no caller).
+            if (result.ClearedBossModifiers != null)
+                foreach (var modifier in result.ClearedBossModifiers)
+                    _completion.RecordModifierCleared(completion, modifier);
 
             // 7. Evaluate class unlocks
             meta.ClassUnlocks = progress;

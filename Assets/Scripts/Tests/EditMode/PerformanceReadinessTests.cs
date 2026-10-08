@@ -6,6 +6,7 @@ using NUnit.Framework;
 namespace SudokuRoguelike.Tests
 {
     [TestFixture]
+    [Requirement("REQ-PERF-100")]
     public sealed class PerformanceReadinessTests
     {
         private const string PerformanceBudgetPath = "docs/performance-runtime-budget.md";
@@ -102,8 +103,11 @@ namespace SudokuRoguelike.Tests
 
         private static string ExtractMethodBody(string source, string methodName)
         {
-            var signature = $"private void {methodName}(";
-            var signatureIndex = source.IndexOf(signature, StringComparison.Ordinal);
+            // Any access modifier: SetContext is public, Start/StopAll are private.
+            var signature = $"void {methodName}(";
+            var match = System.Text.RegularExpressions.Regex.Match(
+                source, $@"\b(?:private|public|internal|protected)\s+void\s+{methodName}\(");
+            var signatureIndex = match.Success ? match.Index : -1;
             if (signatureIndex < 0)
                 throw new InvalidOperationException($"Could not find method signature: {signature}");
 

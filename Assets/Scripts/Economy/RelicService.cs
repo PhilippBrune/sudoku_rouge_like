@@ -8,7 +8,11 @@ namespace SudokuRoguelike.Economy
 {
     public sealed class RelicService
     {
-        private readonly Random _random;
+        private Random _random;
+
+        /// <summary>[REQ: REQ-RUN-103] Starts a fresh random stream for one decision. RunDirector seeds it from the
+        /// run seed and the player's position, so a roll is the same before and after Save &amp; Quit (GAP-018).</summary>
+        public void ReseedForDecision(int decisionSeed) => _random = new Random(decisionSeed);
 
         // Tier weights per floor: [floor][T1, T2, T3, T4, Legendary]
         private static readonly float[][] TierWeights =
@@ -497,7 +501,7 @@ namespace SudokuRoguelike.Economy
                         // [REDESIGN] Every 5-combo: +5 gold AND +1 Pencil (was +2 gold only)
                         if (state.ComboStreak > 0 && state.ComboStreak % 5 == 0)
                         {
-                            state.CurrentGold += 5;
+                            state.GainGold(5);
                             state.CurrentPencil = Math.Min(state.MaxPencil, state.CurrentPencil + 1);
                         }
                         break;
@@ -533,7 +537,7 @@ namespace SudokuRoguelike.Economy
                         if (state.GoldSpentThisFloor > 0)
                         {
                             var interest = Math.Max(1, (int)(state.GoldSpentThisFloor * 0.30f));
-                            state.CurrentGold += interest;
+                            state.GainGold(interest);
                         }
                         state.GoldSpentThisFloor = 0;
                         break;
@@ -833,7 +837,7 @@ namespace SudokuRoguelike.Economy
                 RelicId.LoadBearingStone => "Each non-absorbed mistake generates 5 bonus gold at end of puzzle. (StoneGardener exclusive)",
                 RelicId.WardingFlame     => "Once per run, automatically absorb one mistake (no HP loss). (LanternSeer exclusive)",
                 RelicId.DuelingReed      => "Completing a puzzle with zero pencil marks grants +20 bonus gold. (ReedDuelist exclusive)",
-                RelicId.AccurateMap      => "All floor nodes permanently revealed. Guarantees one relic-tier reward node per floor. (QuietCartographer exclusive)",
+                RelicId.AccurateMap      => "Every floor: shows the board size and stars of every tile and guarantees one relic-tier reward node. (QuietCartographer exclusive)",
                 // Harmony-gated relics
                 RelicId.CrackedStone     => "[H2+] Each mistake after the first in a puzzle deals 0 HP (stone absorbs). Passive; unlimited.",
                 RelicId.FrostedMirror    => "[H5+] Once per mistake: spend 3 pencil to absorb 1 HP of damage (auto-triggers if pencil ≥ 3). At H5+ each hit after the first in a puzzle is partially reduced.",

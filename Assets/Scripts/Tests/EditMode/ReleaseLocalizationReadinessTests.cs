@@ -185,7 +185,9 @@ namespace SudokuRoguelike.Tests
             StringAssert.Contains("BuildToggle", source);
             StringAssert.Contains("AddIconEntry", source);
             StringAssert.Contains("DirectVisibleText", source);
-            StringAssert.Contains("\"Run of the Nine\"", source);
+            // The game title is the one approved literal; it is listed (escaped) in ApprovedLiteralUiText.
+            StringAssert.Contains("ApprovedLiteralUiText", source);
+            StringAssert.Contains("\\\"Run of the Nine\\\"", source);
         }
 
         private static IReadOnlyList<string> BuildReleaseFacingContentKeys()

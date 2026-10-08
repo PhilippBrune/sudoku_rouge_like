@@ -7,7 +7,11 @@ namespace SudokuRoguelike.Boss
 {
     public sealed class BossService
     {
-        private readonly Random _random;
+        private Random _random;
+
+        /// <summary>[REQ: REQ-RUN-103] Starts a fresh random stream for one decision. RunDirector seeds it from the
+        /// run seed and the player's position, so a roll is the same before and after Save &amp; Quit (GAP-018).</summary>
+        public void ReseedForDecision(int decisionSeed) => _random = new Random(decisionSeed);
 
         // MinBoardSize: 0=any, 5=short-line/parity ok on 5×5, 6=needs ≥6 cells of geometry,
         //              7=cage-based needs ≥7, 9=entropy requires full digit range 1-9
@@ -32,7 +36,7 @@ namespace SudokuRoguelike.Boss
 
             // Extended pool (IDs 15-29)
             [BossModifierId.Antiking]          = (2, 0.30f, 6),
-            [BossModifierId.AntiBishop]        = (3, 0.45f, 9),
+            [BossModifierId.AntiBishop]        = (3, 0.45f, 6), // diagonal range 2 (SPEC-CONF-038)
             [BossModifierId.NonconsecDiagonal] = (2, 0.28f, 6),
             [BossModifierId.DistanceGe2]       = (2, 0.32f, 6),
             [BossModifierId.EntropyGlobal]     = (4, 0.60f, 9),
@@ -114,10 +118,58 @@ namespace SudokuRoguelike.Boss
         }
 
         /// <summary>
-        /// AntiBishop is offered only through the board-size gate. It is too constrained for
-        /// smaller shipped layouts, but 9x9 generation remains supported.
+        /// True when puzzle generation can deliver the modifier. Excludes enum values with no
+        /// rule or geometry (the "future library" IDs 30–93), which Endless Zen and Spirit Trials
+        /// used to draw as inert modifiers (GAP-007).
+        /// Debuffs and pressure mechanics stay supported: level configs carry them through their
+        /// own delivery paths.
         /// </summary>
-        public static bool IsSupportedForGeneratedRun(BossModifierId modifier) => true;
+        // [REQ: REQ-MODE-101] Modes and runs only receive modifiers that have a rule and generate
+        public static bool IsSupportedForGeneratedRun(BossModifierId modifier)
+        {
+            // Anti-Bishop is supported again since its rule covers two diagonal steps (SPEC-CONF-038).
+            return ModifierData.ContainsKey(modifier);
+        }
+
+        /// <summary>
+        /// Player modifiers (IDs below 94) that generation can deliver on a board of the given size,
+        /// in ascending ID order so seeded draws are deterministic. Same eligibility as the run pools.
+        /// </summary>
+        // [REQ: REQ-MODE-101] Endless Zen / Spirit Trials draw from the playable modifiers only (GAP-007)
+        public static List<BossModifierId> GetGeneratablePlayerModifiers(int boardSize)
+        {
+            var pool = new List<BossModifierId>();
+            foreach (var pair in ModifierData)
+            {
+                if ((int)pair.Key >= 94) continue;
+                // Modular Regions disabled by design decision (same as BuildEligiblePool)
+                if (pair.Key == BossModifierId.ModularRegions) continue;
+                if (!IsSupportedForGeneratedRun(pair.Key)) continue;
+                if (pair.Value.MinBoardSize > boardSize) continue;
+                pool.Add(pair.Key);
+            }
+            pool.Sort();
+            return pool;
+        }
+
+        /// <summary>
+        /// Draws up to <paramref name="count"/> distinct modifiers from <paramref name="pool"/>,
+        /// skipping candidates that cannot be combined with the ones already drawn.
+        /// </summary>
+        public static List<BossModifierId> DrawCombinable(List<BossModifierId> pool, int count, Random random)
+        {
+            var candidates = new List<BossModifierId>(pool);
+            var result = new List<BossModifierId>(count);
+            while (result.Count < count && candidates.Count > 0)
+            {
+                var idx = random.Next(candidates.Count);
+                var pick = candidates[idx];
+                candidates.RemoveAt(idx);
+                result.Add(pick);
+                candidates.RemoveAll(candidate => !CanCombineModifiers(result, candidate));
+            }
+            return result;
+        }
 
         /// <summary>
         /// Returns false for modifier pairs that are individually valid but are not stable
@@ -134,15 +186,29 @@ namespace SudokuRoguelike.Boss
             return true;
         }
 
+        // [REQ: BOSS-MOD-002] Pairs that cannot be generated together (documented in BossMechanicsSystem §Modifier Eligibility).
+        private static readonly (BossModifierId, BossModifierId)[] BlockedPairs =
+        {
+            (BossModifierId.RatioKropki, BossModifierId.DistanceGe2),
+            // Both constrain diagonal adjacency; together they over-constrain the board and the backtracker times out.
+            (BossModifierId.DistanceGe2, BossModifierId.NonconsecDiagonal),
+            // Anti-Bishop (diagonal range 2) benchmark, 2026-10-06, 8 seeds per size: with Anti-Knight no 6×6 board
+            // exists and 8×8/9×9 time out; with Nonconsecutive no 6×6/8×8 board exists; with Entropy no 9×9 board exists.
+            (BossModifierId.AntiBishop, BossModifierId.Antiknight),
+            (BossModifierId.AntiBishop, BossModifierId.Nonconsecutive),
+            (BossModifierId.AntiBishop, BossModifierId.EntropyGlobal),
+        };
+
         private static bool IsBlockedCombination(BossModifierId first, BossModifierId second)
         {
-            return (first == BossModifierId.RatioKropki && second == BossModifierId.DistanceGe2)
-                || (first == BossModifierId.DistanceGe2 && second == BossModifierId.RatioKropki)
-                // DistanceGe2 + NonconsecDiagonal both constrain diagonal adjacency and together
-                // over-constrain the board to the point the backtracker reliably times out.
-                || (first == BossModifierId.DistanceGe2 && second == BossModifierId.NonconsecDiagonal)
-                || (first == BossModifierId.NonconsecDiagonal && second == BossModifierId.DistanceGe2);
+            foreach (var (a, b) in BlockedPairs)
+                if ((first == a && second == b) || (first == b && second == a))
+                    return true;
+            return false;
         }
+
+        /// <summary>The pairs that are never combined, for documentation and tests.</summary>
+        public static IReadOnlyList<(BossModifierId, BossModifierId)> GetBlockedPairs() => BlockedPairs;
 
         [System.Obsolete("Use RollBossChoices(floor, activeFloorModifiers, minBoardSize, harmonyLevel) to ensure board-size filtering.")]
         public List<BossModifierId> RollBossOptions(int count, List<BossModifierId> excludeUsed, int minBoardSize = 0)
@@ -174,11 +240,13 @@ namespace SudokuRoguelike.Boss
 
         /// <summary>
         /// Roll boss modifier choices. Excludes active floor modifiers from the pool.
-        /// Floor N offers N+1 options (min 3), player picks N (min 2).
+        /// Floor N (1-based) shows N+1 options and the player picks N, so exactly one option is excluded
+        /// (REQ-BOSS-100 as decided in SPEC-CONF-002: Floor 1 = 1 of 2 … Floor 5 = 5 of 6).
         /// </summary>
         public List<BossModifierId> RollBossChoices(int floor, List<BossModifierId> activeFloorModifiers, int minBoardSize, int harmonyLevel)
         {
-            var harmonyBonus = HarmonyDifficultyService.GetBonusFloorModifiers(harmonyLevel, floor);
+            // [REQ: HARMONY-BOSS-002] The gate bonus is BossOptionsBonus, not the floor-modifier bonus (GAP-008).
+            var harmonyBonus = HarmonyDifficultyService.GetBossOptionsBonus(harmonyLevel);
             GetBossModifierCounts(floor, out var shown, out _, harmonyBonus);
             var pool = BuildEligiblePool(activeFloorModifiers, minBoardSize);
             return DrawDistinct(pool, shown);
@@ -232,7 +300,8 @@ namespace SudokuRoguelike.Boss
         }
 
         /// <summary>
-        /// Boss choice formula: Floor N offers N+1 options (min 3), player picks N (min 2).
+        /// [REQ: REQ-BOSS-100] Boss choice formula (SPEC-CONF-002): Floor N (1-based) shows N+1 options and the
+        /// player picks N. There is no minimum of 3 shown / 2 picked.
         /// [HARMONY-BOSS-002] <paramref name="harmonyBonus"/> is added to both shown and picked,
         /// keeping the "one exclusion" invariant while requiring more total modifiers.
         /// </summary>
@@ -398,7 +467,8 @@ namespace SudokuRoguelike.Boss
             BossModifierId.RowWipe, BossModifierId.ColWipe, BossModifierId.DoublePenalty,
             BossModifierId.CellLock, BossModifierId.PencilBlind, BossModifierId.RadiusWipe,
             BossModifierId.PencilScramble, BossModifierId.GivenReveal, BossModifierId.RevealCost,
-            BossModifierId.CellBlur
+            BossModifierId.CellBlur, BossModifierId.BoxWipe, BossModifierId.CrossWipe,
+            BossModifierId.PencilDrain, BossModifierId.GoldFine
         };
 
         private static readonly BossModifierId[] LocalizedDescriptionIds =
@@ -414,7 +484,10 @@ namespace SudokuRoguelike.Boss
             BossModifierId.FullKropki, BossModifierId.SumKropki, BossModifierId.GreaterLessThan,
             BossModifierId.XVPairs, BossModifierId.PrimeCells, BossModifierId.FortressCells,
             BossModifierId.RowWipe, BossModifierId.ColWipe, BossModifierId.DoublePenalty,
-            BossModifierId.CellLock, BossModifierId.PencilBlind
+            BossModifierId.CellLock, BossModifierId.PencilBlind, BossModifierId.BoxWipe,
+            BossModifierId.CrossWipe, BossModifierId.RadiusWipe, BossModifierId.PencilDrain,
+            BossModifierId.GoldFine, BossModifierId.PencilScramble, BossModifierId.GivenReveal,
+            BossModifierId.RevealCost, BossModifierId.CellBlur
         };
 
         private static string BossNameKey(BossModifierId id) => $"Boss.Name.{id}";
@@ -468,6 +541,10 @@ namespace SudokuRoguelike.Boss
                 BossModifierId.DoublePenalty       => "Double Penalty",
                 BossModifierId.CellLock            => "Cell Lock",
                 BossModifierId.PencilBlind         => "Pencil Blind",
+                BossModifierId.BoxWipe             => "Box Wipe",
+                BossModifierId.CrossWipe           => "Cross Wipe",
+                BossModifierId.PencilDrain         => "Pencil Drain",
+                BossModifierId.GoldFine            => "Gold Fine",
                 BossModifierId.RadiusWipe          => "Radius Wipe",
                 BossModifierId.PencilScramble      => "Pencil Scramble",
                 BossModifierId.GivenReveal         => "Given Reveal",
@@ -498,7 +575,7 @@ namespace SudokuRoguelike.Boss
                 BossModifierId.Nonconsecutive => "No two orthogonally adjacent cells may be consecutive.",
                 BossModifierId.Antiknight          => "No two cells a chess knight's move apart may hold the same digit.",
                 BossModifierId.Antiking            => "No two cells a chess king's move apart may hold the same digit. Example: 3 cannot be next to or diagonal to another 3.",
-                BossModifierId.AntiBishop          => "No two cells on the same diagonal may hold the same digit. Example: 5 can only appear once per diagonal line.",
+                BossModifierId.AntiBishop          => "A digit may not repeat on a diagonal within two steps. Example: a 5 rules out 5s one and two cells away diagonally.",
                 BossModifierId.NonconsecDiagonal   => "Diagonally adjacent cells cannot contain consecutive digits. Example: 4 cannot be diagonal to 3 or 5.",
                 BossModifierId.DistanceGe2         => "Equal digits must be at least 2 cells apart (Chebyshev distance). No two adjacent or diagonal cells may share a digit.",
                 BossModifierId.EntropyGlobal       => "Every 3 consecutive cells in any row or column must contain one low (1–3), one mid (4–6), and one high (7–9) digit.",
@@ -516,9 +593,18 @@ namespace SudokuRoguelike.Boss
                 // Boss debuffs
                 BossModifierId.RowWipe       => "Wrong placement: all your digits in that row are erased.",
                 BossModifierId.ColWipe       => "Wrong placement: all your digits in that column are erased.",
-                BossModifierId.DoublePenalty => "Wrong placements deal 2 HP damage instead of 1.",
+                BossModifierId.DoublePenalty => "Wrong placements deal double HP damage.",
                 BossModifierId.CellLock      => "Wrong placement: the cell locks for 3 correct placements before you can edit it again.",
                 BossModifierId.PencilBlind   => "Wrong placement: all pencil marks in that row and column are cleared.",
+                BossModifierId.BoxWipe       => "Wrong placement: all your digits in that box are erased.",
+                BossModifierId.CrossWipe     => "Wrong placement: all your digits in that row and column are erased.",
+                BossModifierId.RadiusWipe    => "Wrong placement: all your digits within two cells of it are erased.",
+                BossModifierId.PencilDrain   => "Wrong placements also cost 1 pencil.",
+                BossModifierId.GoldFine      => "Wrong placements also cost 5 gold.",
+                BossModifierId.PencilScramble => "Wrong placement: every pencil mark on the board is scrambled.",
+                BossModifierId.GivenReveal   => "Wrong placement: up to 2 of your correct digits turn into fixed givens.",
+                BossModifierId.RevealCost    => "Wrong placement: items are blocked for your next 2 correct placements.",
+                BossModifierId.CellBlur      => "Wrong placement: the digits around it are hidden for 3 correct placements.",
                 _ => ""
             };
             return string.IsNullOrEmpty(fallback)
@@ -587,5 +673,54 @@ namespace SudokuRoguelike.Boss
             if (runNumber <= 8) return BossModifierIntensity.High;
             return BossModifierIntensity.VeryHigh;
         }
+
+        // [REQ: REQ-BOSS-103] Localized intensity label for the boss gate (GAP-025).
+        public static string GetIntensityName(BossModifierIntensity intensity) => intensity switch
+        {
+            BossModifierIntensity.Low      => LocalizationService.T("Boss.Intensity.Low", "Low"),
+            BossModifierIntensity.Medium   => LocalizationService.T("Boss.Intensity.Medium", "Medium"),
+            BossModifierIntensity.High     => LocalizationService.T("Boss.Intensity.High", "High"),
+            _                              => LocalizationService.T("Boss.Intensity.VeryHigh", "Very High")
+        };
+
+        // ── Boss debuff delivery (REQ-BOSS-108, GAP-026) ──
+
+        /// <summary>First 0-based floor whose boss carries a debuff (Floor 3).</summary>
+        public const int FirstBossDebuffFloor = 2;
+
+        // Given Reveal is not delivered: wrong digits are rejected since 1.1, so it can only turn correct digits into
+        // givens, which protects them from the wipe debuffs instead of punishing the player.
+        private static readonly BossModifierId[] BossDebuffPool =
+        {
+            BossModifierId.RowWipe, BossModifierId.ColWipe, BossModifierId.BoxWipe, BossModifierId.RadiusWipe,
+            BossModifierId.DoublePenalty, BossModifierId.CellLock, BossModifierId.PencilBlind,
+            BossModifierId.PencilDrain, BossModifierId.GoldFine, BossModifierId.RevealCost, BossModifierId.CellBlur
+        };
+
+        // [REQ: DEBUFF-DEF-004] [REQ: DEBUFF-DEF-008] Cross Wipe and Pencil Scramble are reserved for VeryHigh intensity.
+        private static readonly BossModifierId[] VeryHighOnlyBossDebuffs =
+        {
+            BossModifierId.CrossWipe, BossModifierId.PencilScramble
+        };
+
+        /// <summary>The debuffs a boss can carry at the given intensity.</summary>
+        // [REQ: REQ-BOSS-108] One debuff per Garden Run boss from Floor 3, drawn from this pool.
+        public static IReadOnlyList<BossModifierId> GetBossDebuffPool(BossModifierIntensity intensity)
+        {
+            var pool = new List<BossModifierId>(BossDebuffPool);
+            if (intensity == BossModifierIntensity.VeryHigh)
+                pool.AddRange(VeryHighOnlyBossDebuffs);
+            return pool;
+        }
+
+        public static BossModifierId PickBossDebuff(BossModifierIntensity intensity, Random rng)
+        {
+            var pool = GetBossDebuffPool(intensity);
+            return pool[rng.Next(pool.Count)];
+        }
+
+        /// <summary>Debuff IDs 94–102 and 107–111 (103–106 are pressure mechanics).</summary>
+        public static bool IsBossDebuff(BossModifierId id) =>
+            ((int)id >= 94 && (int)id <= 102) || ((int)id >= 107 && (int)id <= 111);
     }
 }

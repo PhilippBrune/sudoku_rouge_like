@@ -16,7 +16,7 @@ namespace SudokuRoguelike.UI
     /// <summary>
     /// Owns the sudoku grid: cell building, board rendering, and modifier overlay rendering.
     /// </summary>
-    public sealed class BoardViewController : MonoBehaviour
+    public sealed partial class BoardViewController : MonoBehaviour
     {
         // ── Injected ──
         private RunMapController _map;
@@ -198,7 +198,7 @@ namespace SudokuRoguelike.UI
                 int[] drs = { -1, -1,  1, 1 };
                 int[] dcs = { -1,  1, -1, 1 };
                 for (var d = 0; d < 4; d++)
-                for (var step = 1; step < size; step++)
+                for (var step = 1; step <= SudokuRoguelike.Sudoku.AntiBishopRule.DiagonalRange; step++)
                 {
                     var nr = row + drs[d] * step; var nc = col + dcs[d] * step;
                     if (nr < 0 || nr >= size || nc < 0 || nc >= size) break;
@@ -328,6 +328,10 @@ namespace SudokuRoguelike.UI
                 _prevForbiddenChecksum = boardChecksum;
             }
 
+            // [REQ: DEBUFF-DEF-011] CellBlur (boss debuff): cells whose labels are hidden until the timer runs out.
+            var digitBlur = _map?.Run?.CurrentLevelState?.CellBlurCells;
+            if (digitBlur != null && digitBlur.Count == 0) digitBlur = null;
+
             for (var i = 0; i < _cells.Count; i++)
             {
                 var cell = _cells[i];
@@ -336,7 +340,9 @@ namespace SudokuRoguelike.UI
 
                 var labelText = val == 0 ? "" : val.ToString();
                 if (labelText != cell.LastLabelText) { cell.Label.text = labelText; cell.LastLabelText = labelText; }
-                cell.Label.color = given ? GamePalette.CellNumberGiven : Color.white;
+                cell.Label.color = given ? GamePalette.CellNumberGiven : GamePalette.CellNumberPlaced;
+                var digitStyle = given ? FontStyle.Bold : FontStyle.Normal;
+                if (cell.Label.fontStyle != digitStyle) cell.Label.fontStyle = digitStyle;
                 var pencilBlurred = (BlurredPencilCells != null && BlurredPencilCells.Contains((cell.Row, cell.Col)))
                                  || (blurredPencilCells != null && blurredPencilCells.Contains((cell.Row, cell.Col)));
                 var pencilText = (val == 0 && !pencilBlurred) ? BuildPencilText(board, cell.Row, cell.Col) : "";
@@ -346,7 +352,10 @@ namespace SudokuRoguelike.UI
                     ? _accessibility.GetCellColor(ComputeCellColor(board, cell.Row, cell.Col, given))
                     : ComputeCellColor(board, cell.Row, cell.Col, given);
                 if (selectedRow == cell.Row && selectedCol == cell.Col)
+                {
                     c = SelectedColor;
+                    if (val != 0) cell.Label.color = GamePalette.CellNumberOnSelected; // GAP-029 contrast on amber
+                }
                 else if (selectedRow == cell.Row || selectedCol == cell.Col)
                     c = RowColHL;
                 if (highlightValue > 0 && val == highlightValue)
@@ -382,6 +391,14 @@ namespace SudokuRoguelike.UI
 
                 if (lockedCells != null && lockedCells.Contains((cell.Row, cell.Col))) // [REQ: DEBUFF-HOOK-012] CellLock: tint locked cells with GamePalette.CellLocked
                     c = Color.Lerp(c, GamePalette.CellLocked, 0.75f);
+
+                // Blurred cells keep their values; only the digit and pencil labels are hidden.
+                if (digitBlur != null && digitBlur.Contains((cell.Row, cell.Col)))
+                {
+                    c = Color.Lerp(c, FogColor, 0.35f);
+                    if (cell.LastLabelText != "") { cell.Label.text = ""; cell.LastLabelText = ""; }
+                    if (cell.LastPencilText != "") { cell.PencilLabel.text = ""; cell.LastPencilText = ""; }
+                }
 
                 if (TutorialHighlightMap != null &&
                     TutorialHighlightMap.TryGetValue((cell.Row, cell.Col), out var tutHL))
@@ -708,12 +725,13 @@ namespace SudokuRoguelike.UI
             var tW = cW * _boardSize + sX * (_boardSize - 1);
             var tH = cH * _boardSize + sY * (_boardSize - 1);
 
-            // Lines
+            // Lines (each modifier draws into its own layer, see BoardViewController.OverlayGroups)
             // [REQ: ACCESS-OVERLAY-001] Overlay rendering applies accessibility multipliers: GetLineWidthMultiplier ×1.5 (wide lines), GetOverlayAlpha ×1.4 (stronger tints)
             var lineWidthMult = accessibility.GetLineWidthMultiplier();
             for (var li = 0; li < overlay.Lines.Count; li++)
             {
                 var line = overlay.Lines[li];
+                UseOverlayGroup(LineKey(line.Type));
                 var color = GetLineColor(line.Type);
                 var spineAlpha = new Color(color.r, color.g, color.b,
                     accessibility.GetOverlayAlpha(color.a * 0.50f));
@@ -762,6 +780,7 @@ namespace SudokuRoguelike.UI
                 var mc = (dot.CellA.Col + dot.CellB.Col) / 2f;
                 var px = mc * (cW + sX) + cW * 0.5f - tW * 0.5f;
                 var py = -(mr * (cH + sY) + cH * 0.5f - tH * 0.5f);
+                UseOverlayGroup(dot.SumValue > 0 ? KropkiSumKey : dot.IsBlack ? KropkiBlackKey : KropkiWhiteKey);
                 if (dot.SumValue > 0)
                 {
                     DrawCircle(px, py, 12f, GamePalette.OverlayKropkiSum);
@@ -794,6 +813,8 @@ namespace SudokuRoguelike.UI
                     string label;
                     Color labelColor;
                     int labelSize;
+                    UseOverlayGroup(pair.Type == PairConstraintType.GreaterThan || pair.Type == PairConstraintType.LessThan
+                        ? GreaterLessKey : XvKey);
                     switch (pair.Type)
                     {
                         case PairConstraintType.GreaterThan:
@@ -814,6 +835,7 @@ namespace SudokuRoguelike.UI
             }
 
             // Killer cages
+            UseOverlayGroup(CagesKey);
             _cageBorderEdges.Clear();
             for (var ci = 0; ci < overlay.KillerCages.Count; ci++)
             {
@@ -858,6 +880,7 @@ namespace SudokuRoguelike.UI
             }
 
             // Arrows
+            UseOverlayGroup(ArrowsKey);
             for (var ai = 0; ai < overlay.Arrows.Count; ai++)
             {
                 var arrow = overlay.Arrows[ai];
@@ -874,12 +897,13 @@ namespace SudokuRoguelike.UI
             for (var mi = 0; mi < overlay.CellMarkers.Count; mi++)
             {
                 var m = overlay.CellMarkers[mi];
+                UseOverlayGroup(m.Type == MarkerType.Prime ? PrimeKey : m.Type == MarkerType.Fortress ? FortressKey : EvenOddKey);
                 var px = m.Cell.Col * (cW + sX) + cW * 0.5f - tW * 0.5f;
                 var py = -(m.Cell.Row * (cH + sY) + cH * 0.5f - tH * 0.5f);
                 if (m.Type == MarkerType.Even)
                 {
                     var sq = new GameObject("Even", typeof(RectTransform), typeof(Image));
-                    sq.transform.SetParent(_gridOverlayRoot, false);
+                    sq.transform.SetParent(OverlayParent, false);
                     var sr = sq.GetComponent<RectTransform>();
                     sr.anchorMin = sr.anchorMax = new Vector2(0.5f, 0.5f);
                     sr.pivot = new Vector2(0.5f, 0.5f);
@@ -905,7 +929,7 @@ namespace SudokuRoguelike.UI
                 else if (m.Type == MarkerType.Fortress)
                 {
                     var sq = new GameObject("Fortress", typeof(RectTransform), typeof(Image));
-                    sq.transform.SetParent(_gridOverlayRoot, false);
+                    sq.transform.SetParent(OverlayParent, false);
                     var sr = sq.GetComponent<RectTransform>();
                     sr.anchorMin = sr.anchorMax = new Vector2(0.5f, 0.5f);
                     sr.pivot = new Vector2(0.5f, 0.5f);
@@ -918,6 +942,7 @@ namespace SudokuRoguelike.UI
                         DrawOverlayText(px, py, "FC", 8, Color.white);
                 }
             }
+            UseOverlayGroup(null);
         }
 
         private static Color GetLineColor(LineType t) => t switch
@@ -946,7 +971,7 @@ namespace SudokuRoguelike.UI
             var len = Mathf.Sqrt(dx * dx + dy * dy);
 
             var go = new GameObject("Line", typeof(RectTransform), typeof(Image));
-            go.transform.SetParent(_gridOverlayRoot, false);
+            go.transform.SetParent(OverlayParent, false);
             var rt = go.GetComponent<RectTransform>();
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.pivot = new Vector2(0, 0.5f);
@@ -977,7 +1002,7 @@ namespace SudokuRoguelike.UI
         private void DrawOverlayText(float x, float y, string text, int fontSize, Color color)
         {
             var go = new GameObject("OvTxt", typeof(RectTransform), typeof(Text));
-            go.transform.SetParent(_gridOverlayRoot, false);
+            go.transform.SetParent(OverlayParent, false);
             var rt = go.GetComponent<RectTransform>();
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.pivot = new Vector2(0.5f, 0.5f);
@@ -1002,7 +1027,7 @@ namespace SudokuRoguelike.UI
         {
             if (_ringSprite == null) _ringSprite = BuildRingSprite();
             var go = new GameObject("Ring", typeof(RectTransform), typeof(Image));
-            go.transform.SetParent(_gridOverlayRoot, false);
+            go.transform.SetParent(OverlayParent, false);
             var rt = go.GetComponent<RectTransform>();
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.pivot = new Vector2(0.5f, 0.5f);
@@ -1019,7 +1044,7 @@ namespace SudokuRoguelike.UI
         {
             if (_circleSprite == null) _circleSprite = BuildCircleSprite();
             var go = new GameObject("Dot", typeof(RectTransform), typeof(Image));
-            go.transform.SetParent(_gridOverlayRoot, false);
+            go.transform.SetParent(OverlayParent, false);
             var rt = go.GetComponent<RectTransform>();
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.pivot = new Vector2(0.5f, 0.5f);
@@ -1070,7 +1095,7 @@ namespace SudokuRoguelike.UI
         private void DrawCageStrip(float left, float bottom, float w, float h)
         {
             var go = new GameObject("CageEdge", typeof(RectTransform), typeof(Image));
-            go.transform.SetParent(_gridOverlayRoot, false);
+            go.transform.SetParent(OverlayParent, false);
             var rt = go.GetComponent<RectTransform>();
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.pivot = new Vector2(0, 0);
@@ -1101,7 +1126,7 @@ namespace SudokuRoguelike.UI
         private void DrawCageSum(float x, float y, int sum, float cW, float cH)
         {
             var bg = new GameObject("CageSumBg", typeof(RectTransform), typeof(Image));
-            bg.transform.SetParent(_gridOverlayRoot, false);
+            bg.transform.SetParent(OverlayParent, false);
             var bgRt = bg.GetComponent<RectTransform>();
             bgRt.anchorMin = bgRt.anchorMax = new Vector2(0.5f, 0.5f);
             bgRt.pivot = new Vector2(0, 1);
@@ -1138,6 +1163,7 @@ namespace SudokuRoguelike.UI
             for (var i = _overlayObjects.Count - 1; i >= 0; i--)
                 if (_overlayObjects[i] != null) Destroy(_overlayObjects[i]);
             _overlayObjects.Clear();
+            ClearOverlayGroups();
         }
 
         // ────────────────────── Pressure mechanic animations ──────────────────────
@@ -1299,7 +1325,7 @@ namespace SudokuRoguelike.UI
                     if (cell == null) continue;
                     var val = board.Cells[r, c];
                     cell.Label.text  = val > 0 ? val.ToString() : "";
-                    cell.Label.color = board.GivenMask[r, c] ? GamePalette.CellNumberGiven : Color.white;
+                    cell.Label.color = board.GivenMask[r, c] ? GamePalette.CellNumberGiven : GamePalette.CellNumberPlaced;
                     StartCoroutine(AnimationHelper.PulseScale(cell.Label.transform,
                         1f, 1.25f, 0.18f));
                 }

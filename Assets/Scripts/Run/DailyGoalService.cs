@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.Run
@@ -105,7 +106,7 @@ namespace SudokuRoguelike.Run
         /// </summary>
         public static void RefreshIfNewDay(DailyGoalState state, DateTime today)
         {
-            var todayStr = today.ToString("yyyy-MM-dd");
+            var todayStr = today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
             if (state.LastGoalDate == todayStr) return;
 
             // Evaluate yesterday's streak before rolling new goals
@@ -125,6 +126,12 @@ namespace SudokuRoguelike.Run
                 {
                     state.CurrentStreak = 0;
                 }
+
+                // [REQ: DAILY-GOAL-003] A day without play completes no goals, so it breaks the streak (GAP-028).
+                if (DateTime.TryParseExact(state.LastGoalDate, "yyyy-MM-dd", CultureInfo.InvariantCulture,
+                        DateTimeStyles.None, out var lastDay)
+                    && lastDay.Date < today.Date.AddDays(-1))
+                    state.CurrentStreak = 0;
             }
 
             // Generate new goals from date seed
@@ -178,7 +185,7 @@ namespace SudokuRoguelike.Run
 
             if (goal.GoldReward > 0)
             {
-                if (run != null) run.CurrentGold += goal.GoldReward;
+                if (run != null) run.GainGold(goal.GoldReward);
                 else state.PendingStartGold += goal.GoldReward;
             }
 

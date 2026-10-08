@@ -314,6 +314,11 @@ namespace SudokuRoguelike.UI
             pencilBarFillImg.fillAmount = 1f;
             pencilBarFillImg.raycastTarget = false;
 
+            // [REQ: REQ-ECON-100] Buy pencil during a puzzle (GAP-016). InRunController sets the label (cost) and state.
+            var buyPencil = BuildButton("BtnBuyPencil", panel.transform as RectTransform,
+                T("InRun.BuyPencil.Label", "+3 Pencil"), 13);
+            SetRect(buyPencil.GetComponent<RectTransform>(), new Vector2(0.09f, 0.741f), new Vector2(0.20f, 0.771f), Vector2.zero, Vector2.zero);
+
             saveQuit = BuildButton("BtnSudokuSaveQuit", panel.transform as RectTransform,
                 T("InRun.Path.SaveAndQuit", "Save & Quit"), 18);
             SetRect(saveQuit.GetComponent<RectTransform>(), new Vector2(0.74f, 0.01f), new Vector2(0.93f, 0.08f), Vector2.zero, Vector2.zero);
@@ -561,6 +566,16 @@ namespace SudokuRoguelike.UI
             altSymbolsTgl.SetIsOnWithoutNotify(opts.Accessibility.AlternativeConstraintSymbols);
             altSymbolsTgl.onValueChanged.AddListener(v => optCtrl.SetAltSymbols(v));
 
+            // ── Run ── [REQ: REQ-RUN-101] seed, View Modifiers, Abandon Run (GAP-020); wired in InRunController.RunMenu.
+            var seedTxt = BuildText("IGRunSeed", pr, "", 15, TextAnchor.MiddleLeft);
+            SetRect(seedTxt.rectTransform, new Vector2(0.05f, 0.215f), new Vector2(0.95f, 0.275f), Vector2.zero, Vector2.zero);
+            var modsBtn = BuildButton("BtnInGameOptionsModifiers", pr, T("View Modifiers", "View Modifiers"), 16);
+            SetRect(modsBtn.GetComponent<RectTransform>(), new Vector2(0.05f, 0.12f), new Vector2(0.46f, 0.20f), Vector2.zero, Vector2.zero);
+            var abandonBtn = BuildButton("BtnInGameOptionsAbandon", pr, T("Abandon Run", "Abandon Run"), 16);
+            SetRect(abandonBtn.GetComponent<RectTransform>(), new Vector2(0.54f, 0.12f), new Vector2(0.90f, 0.20f), Vector2.zero, Vector2.zero);
+            InRunUiFactory.ApplyFocusColors(modsBtn);
+            InRunUiFactory.ApplyFocusColors(abandonBtn);
+
             var runScreen = root.GetComponent<InRunController>() ?? root.GetComponentInParent<InRunController>();
             var saveQuitBtn = BuildButton("BtnInGameOptionsSaveQuit", pr, T("InRun.Options.SaveQuit", "Save & Quit"), 18);
             SetRect(saveQuitBtn.GetComponent<RectTransform>(), new Vector2(0.05f, 0.01f), new Vector2(0.46f, 0.09f), Vector2.zero, Vector2.zero);
@@ -754,8 +769,15 @@ namespace SudokuRoguelike.UI
             var bg = EnsureOrGetImage(row.gameObject, new Color(buttonColor.r, buttonColor.g, buttonColor.b, 0.65f));
             var toggle = EnsureComponent<Toggle>(row.gameObject);
 
-            var check = EnsureRect("Checkmark", row, new Vector2(0.02f, 0.15f), new Vector2(0.10f, 0.85f), Vector2.zero, Vector2.zero);
+            // [REQ: REQ-UI-103] GAP-029: an always-visible box, so "off" reads as an empty box and "on" as a filled one.
+            var box = EnsureRect("Box", row, new Vector2(0.02f, 0.12f), new Vector2(0.10f, 0.88f), Vector2.zero, Vector2.zero);
+            EnsureOrGetImage(box.gameObject, new Color(0.02f, 0.02f, 0.02f, 0.90f)).raycastTarget = false;
+            var boxOutline = box.gameObject.GetComponent<Outline>() ?? box.gameObject.AddComponent<Outline>();
+            boxOutline.effectColor = accentColor;
+            boxOutline.effectDistance = new Vector2(1.5f, -1.5f);
+            var check = EnsureRect("Checkmark", box, new Vector2(0.18f, 0.18f), new Vector2(0.82f, 0.82f), Vector2.zero, Vector2.zero);
             var checkImage = EnsureOrGetImage(check.gameObject, accentColor);
+            checkImage.raycastTarget = false;
 
             var text = BuildText("Label", row, label, 15, TextAnchor.MiddleLeft);
             SetRect(text.rectTransform, new Vector2(0.14f, 0f), new Vector2(0.98f, 1f), Vector2.zero, Vector2.zero);

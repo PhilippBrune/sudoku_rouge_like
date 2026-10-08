@@ -51,14 +51,31 @@ namespace SudokuRoguelike.UI
 
         // ── Public API ───────────────────────────────────────────────────────
 
+        private System.Action _accessibilityChangedHandler;
+
         public void Configure(OptionsController optCtrl)
         {
+            Unsubscribe();
             _optCtrl = optCtrl;
             BuildBoard(GetComponent<RectTransform>());
             Refresh(optCtrl.GetOptions().Accessibility);
             UpdateScale(optCtrl.GetOptions().Accessibility.FontScale);
-            optCtrl.OnAccessibilityChanged += () => Refresh(_optCtrl.GetOptions().Accessibility);
-            optCtrl.OnSlotChanged          += () => Refresh(_optCtrl.GetOptions().Accessibility);
+            // Slot switches are handled by the menu builder's managed OnOptionsChanged handler.
+            // This handler is removed again on reconfigure/destroy so menu rebuilds do not leak it.
+            _accessibilityChangedHandler = () =>
+            {
+                if (this != null && _optCtrl != null) Refresh(_optCtrl.GetOptions().Accessibility);
+            };
+            optCtrl.OnAccessibilityChanged += _accessibilityChangedHandler;
+        }
+
+        private void OnDestroy() => Unsubscribe();
+
+        private void Unsubscribe()
+        {
+            if (_optCtrl != null && _accessibilityChangedHandler != null)
+                _optCtrl.OnAccessibilityChanged -= _accessibilityChangedHandler;
+            _accessibilityChangedHandler = null;
         }
 
         public void UpdateScale(float scale)

@@ -7,14 +7,18 @@ namespace SudokuRoguelike.Economy
 {
     public sealed class ShopService
     {
-        private readonly Random _random;
+        private Random _random;
+
+        /// <summary>[REQ: REQ-RUN-103] Starts a fresh random stream for one decision. RunDirector seeds it from the
+        /// run seed and the player's position, so a roll is the same before and after Save &amp; Quit (GAP-018).</summary>
+        public void ReseedForDecision(int decisionSeed) => _random = new Random(decisionSeed);
 
         public ShopService(int seed)
         {
             _random = new Random(seed);
         }
 
-        // [REQ: ECON-SHOP-001] Shop: 3 items + optional relic per visit
+        // [REQ: ECON-SHOP-001] Shop: 2/3/4 items by floor (GetShopSlotCount), no relic (SPEC-CONF-005)
         // [REQ: SHOP-PRICE-001] [REQ: ECON-SHOP-002] Price: BasePrice × (1 + FloorIndex × 0.5) × priceMultiplier × harmonySurcharge
         // [HARMONY-ECON-002] harmonySurcharge (1.00–1.50) applies the Harmony difficulty shop penalty on top of all other multipliers.
         // [REQ: CLASS-SHOP-001] Class-exclusive items can appear in shops at 25% injection chance when unlocked.

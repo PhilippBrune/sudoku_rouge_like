@@ -24,8 +24,8 @@ namespace SudokuRoguelike.Tests
             Assert.IsTrue(File.Exists(CanonicalSolutionPath), "Canonical static compile solution is missing.");
             Assert.IsFalse(File.Exists(LegacySolutionPath), "Retired legacy root solution must stay absent; use sudoku_rouge_like.slnx for direct dotnet compile smoke checks.");
 
-            var readme = File.ReadAllText(ReadmePath);
-            var development = File.ReadAllText(DevelopmentDocPath);
+            var readme = DocText.Read(ReadmePath);
+            var development = DocText.Read(DevelopmentDocPath);
 
             Assert.That(readme, Does.Contain("Use [Development Workflow](docs/development.md) as the supported local validation guide."));
             Assert.That(readme, Does.Contain("dotnet build sudoku_rouge_like.slnx --verbosity minimal"));
@@ -41,8 +41,8 @@ namespace SudokuRoguelike.Tests
         {
             Assert.IsTrue(File.Exists(UnityTestRunnerScriptPath), "Unity batchmode test runner script is missing.");
 
-            var development = File.ReadAllText(DevelopmentDocPath);
-            var ciValidation = File.ReadAllText(CiValidationDocPath);
+            var development = DocText.Read(DevelopmentDocPath);
+            var ciValidation = DocText.Read(CiValidationDocPath);
             var script = File.ReadAllText(UnityTestRunnerScriptPath);
 
             Assert.That(development, Does.Contain(".\\tools\\run-unity-tests.ps1 -TestPlatform EditMode"));
@@ -80,7 +80,7 @@ namespace SudokuRoguelike.Tests
         [Test]
         public void ReadmeToolTable_ReferencesExistingRepoManagedScripts()
         {
-            var readme = File.ReadAllText(ReadmePath);
+            var readme = DocText.Read(ReadmePath);
 
             Assert.That(readme, Does.Not.Contain("docs/ProductionGDD.md"));
             Assert.That(readme, Does.Not.Contain("docs/CompleteProductionBlueprint.md"));
@@ -145,7 +145,7 @@ namespace SudokuRoguelike.Tests
         {
             Assert.IsTrue(File.Exists(WorkingTreeTriagePath), "Repository working tree triage note is missing.");
 
-            var triage = File.ReadAllText(WorkingTreeTriagePath);
+            var triage = DocText.Read(WorkingTreeTriagePath);
             Assert.That(triage, Does.Contain("REPO-004"));
             Assert.That(triage, Does.Contain("git status --short"));
             Assert.That(triage, Does.Contain("Do not use `git reset --hard`"));

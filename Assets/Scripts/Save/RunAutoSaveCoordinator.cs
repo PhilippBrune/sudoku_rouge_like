@@ -7,8 +7,6 @@ namespace SudokuRoguelike.Save
     {
         private readonly SaveFileService _saveFile;
         private RunDirector _boundRun;
-        // Envelope loaded once at Bind() and updated in memory — avoids disk read on every save.
-        private SaveFileEnvelope _cachedEnvelope;
 
         public RunAutoSaveCoordinator(SaveFileService saveFile)
         {
@@ -23,8 +21,6 @@ namespace SudokuRoguelike.Save
         public void Bind(RunDirector run)
         {
             _boundRun = run;
-            // Load once now to capture PlayerProfile and other fields we don't own.
-            _cachedEnvelope = _saveFile.HasSaveFile() ? _saveFile.Load() : new SaveFileEnvelope();
         }
 
         // [REQ: SAVE-AUTO-001] Atomic write before serializing run state
@@ -39,41 +35,41 @@ namespace SudokuRoguelike.Save
 
             runState.SyncSeenModifiersToList();
 
-            // Ensure envelope is loaded before accumulating — must precede the meta block so that
-            // a missing Bind() call never silently skips DiscoveredBossModifiers updates.
-            if (_cachedEnvelope == null)
-                _cachedEnvelope = _saveFile.HasSaveFile() ? _saveFile.Load() : new SaveFileEnvelope();
+            // [REQ: SAVE-AUTO-001] [REQ: META-CODEX-001] Reload the file before every autosave. Other services write it
+            // during a run (codex discoveries, options, profile); writing a copy loaded earlier erased their changes
+            // (GAP-037). The coordinator only replaces the fields it owns: active run, puzzle and in-run daily goals.
+            var envelope = _saveFile.HasSaveFile() ? _saveFile.Load() : new SaveFileEnvelope();
 
             // Accumulate cross-run modifier discovery into meta progression
-            if (_cachedEnvelope?.MetaProgress != null)
+            if (envelope.MetaProgress != null)
             {
                 foreach (var mod in runState.SeenBossModifiers)
                 {
-                    if (!_cachedEnvelope.MetaProgress.DiscoveredBossModifiers.Contains(mod))
-                        _cachedEnvelope.MetaProgress.DiscoveredBossModifiers.Add(mod);
+                    if (!envelope.MetaProgress.DiscoveredBossModifiers.Contains(mod))
+                        envelope.MetaProgress.DiscoveredBossModifiers.Add(mod);
                 }
             }
 
             if (runState.IsSeasonalChallenge)
             {
-                _cachedEnvelope.ActiveSeasonalRunState = runState;
-                _cachedEnvelope.ActiveSeasonalPuzzle = puzzleState;
+                envelope.ActiveSeasonalRunState = runState;
+                envelope.ActiveSeasonalPuzzle = puzzleState;
             }
             else
             {
-                _cachedEnvelope.ActiveRunState = runState;
-                _cachedEnvelope.ActivePuzzle = puzzleState;
+                envelope.ActiveRunState = runState;
+                envelope.ActivePuzzle = puzzleState;
             }
 
             // Persist daily goal state if it's been updated in-run
             if (_boundRun?.DailyGoals != null)
-                _cachedEnvelope.DailyGoals = _boundRun.DailyGoals;
+                envelope.DailyGoals = _boundRun.DailyGoals;
 
             UnityEngine.Debug.Log(
                 $"[AutoSave] HP={runState.CurrentHP} Pencil={runState.CurrentPencil} " +
                 $"Items={runState.HeldItems?.Count ?? 0} NodeIdx={runState.CurrentNodeIndex} " +
                 $"Floor={runState.CurrentFloor} RunNum={runState.RunNumber}");
-            _saveFile.Save(_cachedEnvelope);
+            _saveFile.Save(envelope);
         }
 
         public void SaveBound()
@@ -82,11 +78,9 @@ namespace SudokuRoguelike.Save
             var puzzle = _boundRun.ExportPuzzleSaveState();
             Save(_boundRun.State, puzzle);
             // [REQ: PRESSURE-SAVE-003] Pressure mechanics (CountdownFill, HauntedCell, CrumblingRegion, PressureWave)
-            // NOTE — are stored as [NonSerialized] ephemeral fields on LevelState and are NOT persisted here.
-            // On resume via RunResumeService, RunDirector.StartLevel is called which re-runs
-            // InitializePressureMechanics with the same config seed, reconstructing all threat state
-            // from scratch. This is intentional: mid-puzzle pressure state cannot be meaningfully
-            // restored, so starting fresh is the correct behaviour after a save-and-quit.
+            // are [NonSerialized] fields on LevelState and are not persisted. On resume,
+            // RunDirector.RestoreLevelRulesAfterResume re-runs InitializePressureMechanics with the level seed,
+            // so the threats start fresh after a Save & Quit (PRESSURE-SAVE-002).
         }
 
         public void ClearActiveRun()

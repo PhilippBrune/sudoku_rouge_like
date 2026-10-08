@@ -78,8 +78,10 @@ agent.ps1
 
 # ============================================================
 # Claude Code session data (personal, not part of project)
+# Project skills under .claude/skills/ are shared and tracked.
 # ============================================================
-.claude/
+.claude/*
+!.claude/skills/
 
 # ============================================================
 # Nested legacy Unity project cache folders
@@ -108,6 +110,8 @@ Assets/Scripts/My project/UserSettings/
 
 # Build output
 bin/
+# macOS player build folder (Unity names it <name>.app)
+build.app/
 
 # Unity batchmode test output
 TestResults/

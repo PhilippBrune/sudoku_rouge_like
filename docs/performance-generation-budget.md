@@ -41,6 +41,12 @@ Synchronous level generation:
 These are guardrails, not final performance targets. Final values must be tuned
 with Unity Profiler captures on target hardware.
 
+## What the Player Sees While Waiting (SPEC-AMB-012)
+
+- Puzzles of a floor, including the boss, are pre-baked on background threads when the floor is entered, so most nodes open at once.
+- When a puzzle is not ready yet, the "Creating Puzzle" overlay with animated dots covers the path until the board is ready; input on the board is blocked meanwhile.
+- Acceptance: a puzzle opens within 2 s at p95 on the reference machine (GAP-003 benchmark after the 1.0.x fix: 15 boss puzzles across all floors with chosen modifiers in 7.8 s, plain irregular 9×9 p50 57 ms). A wait longer than the budget falls back as described under Failure Behavior.
+
 ## Failure Behavior
 
 Async boss generation no longer falls back to synchronous generation on the main

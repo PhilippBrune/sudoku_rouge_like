@@ -1,11 +1,12 @@
 # Sudoku Generation Pipeline
 
-**Version:** 1.5 | **Date:** 2026-04-14 | **Status:** implemented
+**Version:** 1.6 | **Date:** 2026-10-07 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.6 | 2026-10-07 | implemented | 1.1 review decisions (2026-10-07): solution-based validation, rejected wrong digits, 7★ rule-based (SPEC-CONF-003); in-game puzzles are unique (SPEC-AMB-003 correction); structural-modifier region rule (SPEC-AMB-014); Entropy 9×9 and pointer to the eligibility table, Anti-Bishop range 2 (SPEC-CONF-012/013/038); 7★ requires a modifier (SPEC-CONF-015); entered seeds, determinism scope across resume (SPEC-MAC-010, GAP-018/020); generation failure handling (SPEC-AMB-004); SPICE table archived (SPEC-OBS-001). |
 | 1.5 | 2026-04-14 | implemented | Added requirement IDs (GEN-REGION, GEN-SOLVE, GEN-REMOVE, GEN-MOD, GEN-VALID). |
 | 1.4 | 2026-03-28 | implemented | Non-deterministic validation: placement is valid if it satisfies all constraints (no conflict in row/col/region/modifier), NOT compared against the single generated solution. PlaceResult.WrongButValid removed; only Correct/Invalid/IsGiven remain. SudokuBoard.IsComplete() and IsCorrectAt() use constraint satisfaction. Solution property retained for item effects only. |
 | 1.3 | 2026-03-23 | implemented | IsUniqueSolution property added to SudokuBoard |
@@ -97,6 +98,7 @@ Each template is a hardcoded 2D array defining contiguous region shapes. Templat
 - If `RunState.AllowIrregularPuzzles = false` → restricts to variants 0–1
 - If `AllowIrregularPuzzles = true` → variants 0–3 are all eligible
 - Tutorial dropdown maps: index 0 → variant 0, index 1 → variant 1, index 2 → variant 3
+- **Structural rule (SPEC-AMB-014):** a level with a global structural modifier (Nonconsecutive, Anti-Knight, Anti-King, Anti-Bishop, Nonconsecutive Diagonal, Distance ≥ 2, Entropy) uses the rectangular layout of its size, because no irregular template produced a puzzle with these rules within budget (GAP-003 benchmark). `GenerationReliabilityTests` covers the rule.
 
 ---
 
@@ -219,7 +221,7 @@ FogCells       → HashSet<long>            (packed row/col coordinates)
 ### Validation Path
 
 **[GEN-VALID-002]** Validation path:
-1. `RunDirector.PlaceNumber()` checks `Solution[row,col] == value` (correctness against the solved board)
+1. `RunDirector.PlaceNumber()` checks `Solution[row,col] == value`. A different digit is **wrong**: rejected (never written to the board), with the mistake penalty applied inside `RunDirector` (decided 2026-10-07, SPEC-CONF-003; GAP-011, GAP-035). Custom Puzzle 7★ boards are the exception: they have no unique solution, so a digit is wrong only when it breaks a rule. Evidence: `PlacementRulesTests`.
 2. `SudokuValidator.IsMoveValid()` optionally accepts a `SudokuConstraintEngine` for modifier-aware pencil mark validation
 3. `SudokuConstraintEngine.ValidateAll()` iterates all registered `IOrderedConstraintRule` implementations in category order
 
@@ -240,10 +242,15 @@ FogCells       → HashSet<long>            (packed row/col coordinates)
 
 The pipeline targets **unique-solution puzzles** where the combination of base Sudoku rules and active modifiers constrains the board to exactly one valid solution.
 
-**Without modifiers (base Sudoku only):**
+**All in-game puzzles (runs, bosses, modes; corrected 2026-10-07, SPEC-AMB-003):**
+- Every board comes from `CreatePuzzleWithUniquenessCheck`, which removes a clue only while the base-rule solution stays unique (node-bounded check). Modifier geometry is derived from that solution, so adding modifiers keeps exactly one solution.
+- High star levels can therefore keep more givens than the density formula asks for (e.g. a 9×9 6★ board stops removing clues when uniqueness would break).
+- The player solves against the stored solution; puzzles are not required to be solvable without guessing — items and relics compensate.
+- The only non-unique boards are Custom Puzzle 7★ empty grids (rule-based validation).
+
+**Earlier wording (kept for history):**
 - Cell removal is random and does not guarantee a unique solution
 - The player solves against the stored solution — if multiple solutions exist, any placement matching the stored solution is accepted
-- Items and relics compensate for ambiguous states
 
 **With modifiers (boss puzzles, tutorial with modifiers):**
 - Modifiers add constraints that restrict the solution space
@@ -267,8 +274,9 @@ Certain modifiers have minimum board size requirements enforced during modifier 
 |----------|:---:|--------|
 | German Whispers | 7×7 | Requires digit difference ≥ 5; impossible on small digit ranges |
 | Killer Cages | 7×7 | Cage sum constraints need sufficient digit variety |
+| Entropy | 9×9 | The three digit groups need nine digits (SPEC-CONF-012) |
 
-All other modifiers work on all board sizes (5×5 through 9×9).
+The full table, with the 6×6 minimums kept for generation reliability, the blocked pairs and the Modular Regions exclusion, is in BossMechanicsSystem §Modifier Eligibility (source: `BossService.ModifierData`, SPEC-CONF-013). Anti-Bishop was redefined as "no repeat within two diagonal steps" (`SudokuGenerator.AntiBishopDiagonalRange = 2`, minimum 6×6, SPEC-CONF-038).
 
 ---
 
@@ -276,13 +284,17 @@ All other modifiers work on all board sizes (5×5 through 9×9).
 
 The entire pipeline is deterministic given the same seed:
 
-1. Seed is set at run start (random or player-entered)
+1. Seed is set at run start: random, or entered on the start-run screen (implemented 1.1, GAP-020; `RunSeedAndAbandonTests`)
 2. Each puzzle derives its own `Random` instance from the run seed + level index
 3. Region map, solved board, cell removal order, and modifier geometry all use this seeded Random
 4. This enables:
    - **Seed sharing:** Players can share run seeds to replay identical puzzles
    - **Save/resume:** Regenerating a puzzle from seed produces the same board
    - **Debugging:** Reproducible puzzle states for bug reports
+
+**Scope of determinism (SPEC-MAC-010, implemented 1.1, GAP-018):** puzzles and every run decision — starting relics, floor modifiers, boss choices, boss debuff, item rewards and reward curses, shop offers (per reroll), relic rewards and choices, events and event choices, curse rolls — use a seed derived from (run seed, floor, depth, node, purpose). The same run seed therefore gives the same run, and Save & Quit → Resume shows the same choices. The puzzle configs of a floor are saved with the run (`RunState.NodeConfigs`), so the map preview and the resumed puzzle match. Evidence: `DeterminismAcrossResumeTests`, `NodeConfigPreviewTests`.
+
+**Generation failure handling (SPEC-AMB-004, GAP-003):** a level that cannot be generated within budget walks a fallback chain (`RunDirector.CreateBoardWithFallbacks`): rectangular regions → drop floor board-shaping modifiers → drop chosen boss modifiers last. If the level still fails, the player returns to the map with a message and the next attempt uses a salted seed (`RunState.FailedGenerationSeeds`), never the identical seed. The Monthly Walk keeps the player on the menu with a localized message.
 
 ---
 
@@ -305,7 +317,7 @@ The entire pipeline is deterministic given the same seed:
 ## Resolved Design Decisions
 
 ### 7★ Requires Modifiers
-7★ (100% missing) is tutorial-only and **requires at least one modifier** to be active. The UI blocks puzzle start without a modifier toggle enabled. This ensures the player has constraint information to work with on an empty grid.
+7★ (100% missing) is tutorial-only and **requires at least one modifier** to be active (confirmed 2026-10-07, SPEC-CONF-015; TutorialModeSystem aligned). The UI blocks puzzle start without a modifier toggle enabled. This ensures the player has constraint information to work with on an empty grid.
 
 ### Uniqueness via Modifiers
 Modifiers are intended to constrain the solution space toward a single valid solution. A post-removal uniqueness validation step is now required for competitive modifier puzzles and remains recommended for Garden Run.
@@ -351,49 +363,4 @@ Currently each board size has 2 jigsaw templates (A and B, variants 2–3). For 
 
 ## Requirements Traceability
 
-<!-- AUTO-GENERATED by SPICE pipeline. Do not edit manually. -->
-
-| REQ-ID | Title | Linked Systems |
-|--------|-------|----------------|
-| REQ-SUDOKU-076 | TITLE | LINKED_SYSTEMS |
-| REQ-SUDOKU-077 | SudokuGenerationPipeline | RunDirector, SudokuGenerator |
-| REQ-SUDOKU-078 | BuildRegionMap | SudokuGenerator |
-| REQ-SUDOKU-079 | GenerateSolvedBoard | SudokuGenerator |
-| REQ-SUDOKU-080 | RemoveCells | StarDensityService, SudokuGenerator |
-| REQ-SUDOKU-081 | ApplyModifiers | BossMechanicsSystem, ModifierGeometryGenerator |
-| REQ-SUDOKU-082 | SeedFunctionality | SudokuGenerator |
-| REQ-SUDOKU-083 | VariantSelectionLogic | RunDirector, SudokuGenerator |
-| REQ-SUDOKU-084 | RegionMapConstructionDetails | SudokuGenerator |
-| REQ-SUDOKU-085 | CellRemovalDetails | StarDensityService, SudokuGenerator |
-| REQ-SUDOKU-086 | ModifierGeometryGenerationDetails | BossMechanicsSystem, ModifierGeometryGenerator |
-| REQ-SUDOKU-087 | IrregularTemplateExpansion | SudokuGenerator |
-| REQ-SUDOKU-088 | UniquenessChecker | SudokuGenerator |
-| REQ-SUDOKU-089 | JigsawTemplatesDetails | SudokuGenerator |
-| REQ-SUDOKU-090 | SeedFunctionalityExplanation | SudokuGenerator |
-| REQ-SUDOKU-091 | IntensityScalingDetails | BossMechanicsSystem, StarDensityService |
-| REQ-SUDOKU-092 | VariantSelectionExplanation | RunDirector, SudokuGenerator |
-| REQ-SUDOKU-093 | CellRemovalExplanation | SudokuGenerator |
-| REQ-SUDOKU-094 | ModifierGeometryGenerationExplanation | BossMechanicsSystem, ModifierGeometryGenerator |
-| REQ-SUDOKU-095 | IrregularTemplateExpansionExplanation | SudokuGenerator |
-| REQ-SUDOKU-096 | UniquenessCheckerExplanation | SudokuGenerator |
-| REQ-SUDOKU-097 | JigsawTemplatesUsageExplanation | SudokuGenerator |
-| REQ-SUDOKU-098 | PipelineStagesPrioritization | SudokuGenerator |
-| REQ-SUDOKU-099 | VariantRoutingExplanation | RunDirector, SudokuGenerator |
-| REQ-SUDOKU-100 | CellRemovalStarDifficultyClampFixExplanation | SudokuGenerator |
-| REQ-SUDOKU-101 | ModifierGeometryGenerationPerformance | BossMechanicsSystem, ModifierGeometryGenerator |
-| REQ-SUDOKU-102 | SeedFunctionalityComparison | SudokuGenerator |
-| REQ-SUDOKU-103 | UniquenessCheckerPerformance | SudokuGenerator |
-| REQ-SUDOKU-104 | JigsawTemplatesUsageComparison | SudokuGenerator |
-| REQ-SUDOKU-105 | IntensityScalingPerformance | BossMechanicsSystem, StarDensityService |
-| REQ-SUDOKU-106 | VariantSelectionComparison | RunDirector, SudokuGenerator |
-| REQ-SUDOKU-107 | CellRemovalComparison | SudokuGenerator |
-| REQ-SUDOKU-108 | ModifierGeometryGenerationComparison | BossMechanicsSystem, ModifierGeometryGenerator |
-| REQ-SUDOKU-109 | IrregularTemplateExpansionPerformance | SudokuGenerator |
-| REQ-SUDOKU-110 | UniquenessCheckerComparison | SudokuGenerator |
-| REQ-SUDOKU-111 | JigsawTemplatesUsagePerformance | SudokuGenerator |
-| REQ-SUDOKU-112 | PipelineStagesPrioritizationExplanation | SudokuGenerator |
-| REQ-SUDOKU-113 | CellRemovalStarDifficultyClampFixComparison | SudokuGenerator |
-| REQ-SUDOKU-114 | VariantSelectionImpactExplanation | RunDirector, SudokuGenerator |
-| REQ-SUDOKU-115 | ModifierGeometryGenerationImpactExplanation | BossMechanicsSystem, ModifierGeometryGenerator |
-| REQ-SUDOKU-116 | IrregularTemplateExpansionImpactExplanation | SudokuGenerator |
-| REQ-SUDOKU-117 | UniquenessCheckerImpactExplanation | SudokuGenerator |
+The canonical requirement IDs for this document are listed in `docs/REQUIREMENT_MAP.md`. The auto-generated `REQ-*` table from the retired SPICE pipeline was moved to `docs/archive/SPICE_REQUIREMENT_TABLES.md` (2026-10-07, SPEC-OBS-001); its IDs are kept there and are not used by code or tests.

@@ -1,0 +1,13 @@
+76:NullReferenceException: Object reference not set to an instance of an object
+77-  at SudokuRoguelike.Run.RunDirector.PlaceNumber (System.Int32 row, System.Int32 col, System.Int32 value) [0x000c9] in <6d43898cc15e4cecb2cd3ec2292cce0d>:0 
+78-  at SudokuRoguelike.UI.InRunController.EnterNumber (System.Int32 value) [0x0023e] in <6d43898cc15e4cecb2cd3ec2292cce0d>:0 
+79-  at SudokuRoguelike.UI.NumpadViewController+<>c__DisplayClass12_0.<BuildNumpad>b__1 () [0x0000f] in <6d43898cc15e4cecb2cd3ec2292cce0d>:0 
+80-  at UnityEngine.Events.InvokableCall.Invoke () [0x00010] in <1b0782be005649a9b13031e88d0a8b59>:0 
+81-  at UnityEngine.Events.UnityEvent.Invoke () [0x00022] in <1b0782be005649a9b13031e88d0a8b59>:0 
+82-  at UnityEngine.UI.Button.Press () [0x0001c] in <b8364c9b0c0f4d6eb4946700938f9486>:0 
+83-  at UnityEngine.UI.Button.OnPointerClick (UnityEngine.EventSystems.PointerEventData eventData) [0x00009] in <b8364c9b0c0f4d6eb4946700938f9486>:0 
+84-  at UnityEngine.EventSystems.ExecuteEvents.Execute (UnityEngine.EventSystems.IPointerClickHandler handler, UnityEngine.EventSystems.BaseEventData eventData) [0x00007] in <b8364c9b0c0f4d6eb4946700938f9486>:0 
+85-  at UnityEngine.EventSystems.ExecuteEvents.Execute[T] (UnityEngine.GameObject target, UnityEngine.EventSystems.BaseEventData eventData, UnityEngine.EventSystems.ExecuteEvents+EventFunction`1[T1] functor) [0x00067] in <b8364c9b0c0f4d6eb4946700938f9486>:0 
+86-UnityEngine.DebugLogHandler:Internal_LogException_Injected(Exception, IntPtr)
+87-UnityEngine.DebugLogHandler:Internal_LogException(Exception, Object)
+88-UnityEngine.DebugLogHandler:LogException(Exception, Object)

@@ -1,8 +1,14 @@
 # Endless Zen Mode
 
-**Version:** 2.0  
-**Date:** 2026-04-27  
+**Version:** 2.1  
+**Date:** 2026-10-07  
 **Status:** implemented
+
+### Change History
+
+| Version | Date | Status | Changes |
+|---------|------|--------|---------|
+| 2.1 | 2026-10-07 | implemented | Declared the source for Endless Zen rules over GDS §13 (SPEC-CONF-006); unlock metric "runs started" confirmed; modifier pool = generatable player modifiers, not the full enum (SPEC-AMB-009, GAP-007). |
 
 ## Overview
 
@@ -18,7 +24,7 @@ Primary implementation references:
 
 ## Unlock Condition
 
-`MetaProgressionState.EndlessZenUnlocked` is set once `ProfileStats.TotalRunsStarted >= 10`.
+`MetaProgressionState.EndlessZenUnlocked` is set once `ProfileStats.TotalRunsStarted >= 10`. Despite its name, `TotalRunsStarted` is counted when a run's result is recorded (`ProfileService.RecordRunAndGetNewUnlocks`): victories, defeats and, since 1.1, abandoned runs; a run that is saved and never finished does not count yet (documented 2026-10-07, SPEC-CONF-006). This document is the source for Endless Zen; GameDesignSpec §13 links here.
 
 Implementation reference:
 
@@ -80,7 +86,7 @@ Modifier cap is depth-based:
 - Depth `10-19`: 2 modifiers
 - Depth `20+`: 3 modifiers
 
-Modifiers are drawn from the full `BossModifierId` enum pool. Region variant uses:
+Modifiers are drawn from the generatable player modifiers for the board size (`BossService.GetGeneratablePlayerModifiers`) and combined with `DrawCombinable`, so blocked pairs never meet (SPEC-AMB-009, GAP-007; the full-enum wording is retired). Region variant uses:
 
 - `0-1` when irregular boards are off
 - `0-3` when irregular boards are on

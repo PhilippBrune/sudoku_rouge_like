@@ -1,6 +1,12 @@
 # Harmony Difficulty System
 
-**Version:** 1.0 | **Date:** 2026-04-27 | **Status:** Implemented
+**Version:** 1.1 | **Date:** 2026-10-07 | **Status:** implemented
+
+### Change History
+
+| Version | Date | Status | Changes |
+|---------|------|--------|---------|
+| 1.1 | 2026-10-07 | implemented | 1.1 (2026-10-07): all table fields consumed, code aligned to the tables (SPEC-CONF-025, GAP-008); XP multiplier on every run end without flat bonus (SPEC-CONF-024); §4.8 documents how grid and star weights, boss bonuses, flags and reward pressure are applied, incl. the early-floor star cap (REQ-RUN-106). Change history added. |
 
 ---
 
@@ -160,6 +166,20 @@ Floor minimums: HP ≥ 3, Pencil ≥ 3, Item Slots ≥ 1.
 | H8 | +12.0% | ×0.44 | ×1.8 |
 | H9 | +13.5% | ×0.37 | ×1.9 |
 | H10 | +15.0% | ×0.30 | ×2.0 |
+
+---
+
+### 4.8 How the tables are applied (1.1)
+
+Before 1.1 most of these fields were computed but never read (GAP-008). Since 1.1 every field is consumed; the tables above are the source and the code follows them (decided 2026-10-07, SPEC-CONF-025; H10 grid weights {0,0,0,25,75}, H4 boss options bonus 0, H3–H5 floor bonus on floors 2–4). Evidence: `HarmonyEffectsTests`.
+
+- **XP multiplier (§4.7):** applied to the class XP of **every** run end, victory or defeat; there is no flat Harmony bonus (decided 2026-10-07, SPEC-CONF-024). Commit = `round(run XP × multiplier)`, then capped at Level 40.
+- **Grid size weights (§4.5):** the size is drawn with the level's weights **renormalised to the floor's size range** (GDS §10); when every size in the range has weight 0, the largest size of the range is used.
+- **Star weights (§4.6):** a puzzle uses its floor's default stars (Floors 1–5: 1, 2, 3, 4, 5; elite +1; boss 2, 3, 4, 5, 6). In 20 % of puzzles a higher star level is drawn with the level's star weights between default + 1 and the floor cap. Floors 1–2 are capped at one star above their default, later floors at 6★ (REQ-RUN-106, GAP-033).
+- **Boss modifiers (§4.4):** the floor modifier bonus adds to the base counts 0/1/1/1/2; the boss options bonus is added to both options shown and picks, so exactly one option is always left out.
+- **Mechanic flags (§4.3):** hint masking hides seen modifiers at the boss gate; T1-only start relics; mistakes drain 1 pencil; rest heal halved (rounded up); no cursed-tile bonus.
+- **Survivability (§4.2):** mistake HP cost (1 / 2 from H5 / 3 from H9) is the base damage of every wrong digit; combo decay halves the combo at each puzzle start.
+- **Reward pressure (§4.7):** the Nothing chance bonus is added per reward slot (total capped at 40 %); it never turns the last item slot into Nothing.
 
 ---
 

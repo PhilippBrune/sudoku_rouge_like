@@ -79,13 +79,18 @@ Licensed under the Apache License 2.0.
 Full license text: Assets/MobileDependencyResolver/Editor/LICENSE.
 
 **Platform Services**
-Local achievement tracking is implemented. A Steamworks-compatible
-achievement bridge is present and activates only in builds where a
-supported Steamworks SDK assembly is imported.
+This game uses Steamworks.NET by Riley Labrecque (MIT License; full text:
+docs/legal/third-party/Steamworks.NET-LICENSE.md, also shipped in
+Assets/com.rlabrecque.steamworks.net/LICENSE.md) to connect to Steam for
+achievements, statistics, leaderboards and Steam Cloud.
 
-No Steamworks SDK binaries are bundled in this repository. Add the SDK
-package, license notices, and platform validation before claiming Steam
-release support.
+It includes the Steamworks API redistributables (steam_api.dll,
+steam_api64.dll, libsteam_api.so, steam_api.bundle) by Valve Corporation,
+distributed under the Steamworks SDK Access Agreement. Achievements are also
+tracked locally, so the game works without Steam.
+
+(Updated 2026-10-07, SPEC-PROC-007: the earlier note "No Steamworks SDK
+binaries are bundled" stopped being true when Steamworks.NET was added.)
 
 ---
 

@@ -1,11 +1,12 @@
 # Class XP & Level Progression System
 
-**Version:** 1.1 | **Date:** 2026-04-15 | **Status:** implemented
+**Version:** 1.3 | **Date:** 2026-10-07 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.3 | 2026-10-07 | implemented | 1.1 review decisions (2026-10-07): class roster, passives, unlock conditions and level schedules regenerated from ClassCatalog, the decided source (SPEC-CONF-008, GAP-023); "base (+bonus)" display; Number Freak L3 "+1 Pencil" fix (D07); XP above Level 40 discarded (SPEC-CONF-034); prestige button with confirmation in Meta Progression (GAP-017); "Passive tier +1" on prestige marked undecided (new SPEC-CONF-039); header now matches the newest history row (SPEC-CONF-023). |
 | 1.2 | 2026-04-15 | implemented | Added requirement IDs (XP-TILE-*, XP-CURVE-*, XP-LOG-*, XP-COMMIT-*, META-XP-*, META-PRESTIGE-*) |
 | 1.1 | 2026-03-23 | implemented | Prestige boss-gate check added, ProfileService.RecordRunAndGetNewUnlocks orchestration implemented, class unlock thresholds corrected to match spec |
 | 1.0 | 2026-03-21 | implemented | Initial specification |
@@ -33,7 +34,7 @@ There are **8 playable classes**. Each has a distinct gameplay identity and a sp
 | 5 | Stone Gardener | Item Synergy | Defeat 10 bosses (cumulative, any class) |
 | 6 | Lantern Seer | Boss Specialist | Collect 50,000 gold (cumulative, any class) |
 | 7 | Reed Duelist | Tempo | Find every unique item at least once |
-| 8 | Quiet Cartographer | Route Control | Clear an entire stage with zero pencil use and zero HP lost |
+| 8 | Quiet Cartographer | Route Control | Complete a full run (all 5 floors + boss) with zero mistakes (code; SPEC-CONF-008) |
 
 ### Unlock Progression Order
 
@@ -275,28 +276,40 @@ The **XP progress bar** is shown **only** on this screen, as part of the End-of-
 
 ## Class Base Stats & Level Unlock Schedules
 
-Each class has unique base stats and a full unlock schedule from Level 2 to Level 40. Unlocks trigger on level-up at the end of a run (shown on the game over / completion screen). Unlocks apply to the **next run** started after they are earned — they do not apply retroactively to the current run.
+Generated from `Assets/Scripts/Classes/ClassCatalog.cs` (2026-10-07). The code is the source of truth for base stats, passives, unlock conditions and level schedules (decided 2026-10-07, SPEC-CONF-008); GameDesignSpec §6 links here. `ClassRosterTests` pins the base stats and checks that every stat bonus in a schedule is applied at run start.
 
-Unlock types include: base stat boosts (+HP, +Pencil, +Item Slot, +Reroll Token), starting gold, starting items, passive upgrades, and cosmetics.
+Unlocks trigger on level-up at the end of a run and apply to the **next run**. Stat bonuses (`+N HP`, `+N Pencil`, `+N Item Slot`, `+N Reroll Token`, `+N Starting Gold`, `+N Starting Relic`) are summed by `RunArchetypeService.GetLevelBonuses`; the class screen and the start-run confirmation show them as "base (+bonus)" (GAP-023). Classes start with 0 reroll tokens unless a level grants them.
 
----
+Fix in 1.1: Number Freak's L3 entry read "+ 1 Pencil" and was never applied; Number Freak now starts L10 runs with HP 14 / Pencil 13 (review diagnostic D07).
+
+| Class | HP | Pencil | Item slots | Starting relics | Passive | Unlock condition |
+|-------|:--:|:------:|:----------:|:---------------:|---------|------------------|
+| Number Freak | 10 | 10 | 2 | 1 | After completing a puzzle with zero mistakes: +1 Reroll Token. | Default (always unlocked) |
+| Garden Monk | 14 | 5 | 1 | 1 | Every 5 correct placements: +1 HP. Level 15+: every 4. | Defeat 2 bosses |
+| Shrine Archivist | 8 | 15 | 2 | 1 | Each pencil mark placed has a 25% chance to auto-reveal the correct digit for that cell. | Use 15 items |
+| Koi Gambler | 9 | 8 | 2 | 2 | 33% wrong costs 0 HP; 33% correct grants +3 Gold. | Collect 10 relics |
+| Stone Gardener | 11 | 8 | 3 | 1 | First item used each puzzle node is not consumed. | Defeat 10 bosses |
+| Lantern Seer | 7 | 12 | 2 | 1 | Boss modifiers are 30% weaker. Before each boss puzzle, preview all active modifiers and reroll one for free. | Collect 50,000 gold |
+| Reed Duelist | 9 | 9 | 2 | 1 | Perfect no-pencil puzzle: +2 Pencil. Every 5 such puzzles in a run: +1 HP. | Find every unique item |
+| Quiet Cartographer | 12 | 6 | 1 | 1 | Preview next node's star & board size after a perfect tile. If you then choose that node, its difficulty is reduced by ½ star (min 1★). | Complete a full run (all 5 floors + boss) with zero mistakes |
 
 ### 1. Number Freak (Balanced)
 
-**Base Stats:** HP 10 / Pencil 10 / Item Slots 2 / Reroll Tokens 1
+**Base Stats:** HP 10 / Pencil 10 / Item Slots 2 / Starting Relics 1  
+**Passive:** After completing a puzzle with zero mistakes: +1 Reroll Token.
 
 | Level | Unlock |
 |:---:|--------|
-| 3  | +1 Pencil |
-| 5  | +10 Starting Gold |
-| 7  | +2 HP |
-| 10 | +2 Pencil, +2 HP |
+| 3 | +1 Pencil |
+| 5 | +10 Starting Gold |
+| 7 | +2 HP |
+| 10 | +2 Pencil, +2 HP, +1 Starting Relic |
 | 13 | +10 Starting Gold |
 | 15 | +1 Reroll Token |
 | 18 | +1 Pencil |
-| 20 | +1 Item Slot |
+| 20 | +1 Item Slot, +1 Starting Relic |
 | 25 | +2 HP, +2 Pencil |
-| 30 | Start run with 1 Rare Solver |
+| 30 | Start: Rare Solver |
 | 35 | +1 Reroll Token |
 | 40 | Cosmetic: Golden Number frame |
 
@@ -304,22 +317,21 @@ Unlock types include: base stat boosts (+HP, +Pencil, +Item Slot, +Reroll Token)
 
 ### 2. Garden Monk (Sustain)
 
-**Base Stats:** HP 14 / Pencil 5 / Item Slots 1
-**Passive:** Every 5 correct placements, +1 HP
-**Restriction:** Cannot buy Pencil mid-level
+**Base Stats:** HP 14 / Pencil 5 / Item Slots 1 / Starting Relics 1  
+**Passive:** Every 5 correct placements: +1 HP. Level 15+: every 4.
 
 | Level | Unlock |
 |:---:|--------|
-| 3  | +1 Pencil |
-| 5  | +2 HP |
-| 7  | +10 Starting Gold |
+| 3 | +1 Pencil |
+| 5 | +2 HP |
+| 7 | +10 Starting Gold |
 | 10 | +1 Item Slot |
 | 13 | +2 HP |
-| 15 | Passive upgrade: every 4 correct placements → +1 HP (was 5) |
+| 15 | Passive: heal every 4 placements (was 5) |
 | 18 | +1 Pencil |
-| 20 | +2 HP, +1 Reroll Token |
+| 20 | +2 HP, +1 Reroll Token, +1 Starting Relic |
 | 25 | +1 Pencil |
-| 30 | Start run with 1 Meditation Stone |
+| 30 | Start: Meditation Stone |
 | 35 | +2 HP |
 | 40 | Cosmetic: Blooming Monk frame |
 
@@ -327,21 +339,21 @@ Unlock types include: base stat boosts (+HP, +Pencil, +Item Slot, +Reroll Token)
 
 ### 3. Shrine Archivist (Information)
 
-**Base Stats:** HP 8 / Pencil 15 / Item Slots 2
-**Passive:** First pencil use in each cell is free (does not consume a charge)
+**Base Stats:** HP 8 / Pencil 15 / Item Slots 2 / Starting Relics 1  
+**Passive:** Each pencil mark placed has a 25% chance to auto-reveal the correct digit for that cell.
 
 | Level | Unlock |
 |:---:|--------|
-| 3  | +2 Pencil |
-| 5  | +1 HP |
-| 7  | +10 Starting Gold |
-| 10 | +1 Reroll Token |
+| 3 | +2 Pencil |
+| 5 | +1 HP |
+| 7 | +10 Starting Gold |
+| 10 | +1 Reroll Token, +1 Starting Relic |
 | 13 | +2 Pencil |
 | 15 | +1 HP, +1 Item Slot |
 | 18 | +10 Starting Gold |
-| 20 | Passive upgrade: first 2 pencil uses per cell are free (was 1) |
+| 20 | Passive: 2 free pencil uses/cell |
 | 25 | +2 Pencil, +1 HP |
-| 30 | Start run with 1 Pattern Scroll |
+| 30 | Start: Pattern Scroll |
 | 35 | +1 Reroll Token |
 | 40 | Cosmetic: Scroll Archive frame |
 
@@ -349,21 +361,21 @@ Unlock types include: base stat boosts (+HP, +Pencil, +Item Slot, +Reroll Token)
 
 ### 4. Koi Gambler (Volatility)
 
-**Base Stats:** HP 9 / Pencil 8 / Item Slots 2
-**Passive:** 25% chance a wrong placement costs no HP; 25% chance a correct placement grants +1 Gold
+**Base Stats:** HP 9 / Pencil 8 / Item Slots 2 / Starting Relics 2  
+**Passive:** 33% wrong costs 0 HP; 33% correct grants +3 Gold.
 
 | Level | Unlock |
 |:---:|--------|
-| 3  | +1 HP |
-| 5  | +15 Starting Gold |
-| 7  | +1 Pencil |
-| 10 | Passive upgrade: correct placement gold chance → 30% (was 25%) |
+| 3 | +1 HP |
+| 5 | +15 Starting Gold |
+| 7 | +1 Pencil |
+| 10 | Passive: correct gold chance 30%, +1 Starting Relic |
 | 13 | +1 HP |
 | 15 | +1 Item Slot |
 | 18 | +15 Starting Gold |
-| 20 | Passive upgrade: wrong placement no-HP-loss chance → 30% (was 25%) |
+| 20 | Passive: no-HP-loss chance 30% |
 | 25 | +2 Pencil, +1 HP |
-| 30 | Start run with 1 Lucky Charm |
+| 30 | Start: Lucky Charm |
 | 35 | +1 Reroll Token |
 | 40 | Cosmetic: Golden Koi frame |
 
@@ -371,21 +383,21 @@ Unlock types include: base stat boosts (+HP, +Pencil, +Item Slot, +Reroll Token)
 
 ### 5. Stone Gardener (Item Synergy)
 
-**Base Stats:** HP 11 / Pencil 8 / Item Slots 3
-**Passive:** First item used each level is not consumed
+**Base Stats:** HP 11 / Pencil 8 / Item Slots 3 / Starting Relics 1  
+**Passive:** First item used each puzzle node is not consumed.
 
 | Level | Unlock |
 |:---:|--------|
-| 3  | +1 Pencil |
-| 5  | +1 HP |
-| 7  | +1 Item Slot |
-| 10 | +10 Starting Gold |
+| 3 | +1 Pencil |
+| 5 | +1 HP |
+| 7 | +1 Item Slot |
+| 10 | +10 Starting Gold, +1 Starting Relic |
 | 13 | +2 Pencil |
 | 15 | +1 HP, +1 Reroll Token |
 | 18 | +1 Item Slot |
-| 20 | Passive upgrade: first 2 items used each level are not consumed (was 1) |
+| 20 | Passive: 2 free items/level, +1 Starting Relic |
 | 25 | +2 HP |
-| 30 | Start run with 1 Harmony Charm |
+| 30 | Start: Harmony Charm |
 | 35 | +1 Pencil, +1 HP |
 | 40 | Cosmetic: Mossy Stone frame |
 
@@ -393,21 +405,21 @@ Unlock types include: base stat boosts (+HP, +Pencil, +Item Slot, +Reroll Token)
 
 ### 6. Lantern Seer (Boss Specialist)
 
-**Base Stats:** HP 7 / Pencil 12 / Item Slots 2
-**Passive:** Boss modifiers are 20% weaker (intensity reduction)
+**Base Stats:** HP 7 / Pencil 12 / Item Slots 2 / Starting Relics 1  
+**Passive:** Boss modifiers are 30% weaker. Before each boss puzzle, preview all active modifiers and reroll one for free.
 
 | Level | Unlock |
 |:---:|--------|
-| 3  | +1 Pencil |
-| 5  | +1 HP |
-| 7  | +10 Starting Gold |
-| 10 | Passive upgrade: boss modifiers 25% weaker (was 20%) |
+| 3 | +1 Pencil |
+| 5 | +1 HP |
+| 7 | +10 Starting Gold |
+| 10 | Passive: modifiers 25% weaker |
 | 13 | +2 Pencil |
 | 15 | +1 HP, +1 Reroll Token |
 | 18 | +1 Item Slot |
-| 20 | +2 HP |
-| 25 | Passive upgrade: boss modifiers 30% weaker (was 25%) |
-| 30 | Start run with 1 Lantern of Clarity |
+| 20 | +2 HP, +1 Starting Relic |
+| 25 | Passive: modifiers 30% weaker |
+| 30 | Start: Lantern of Clarity |
 | 35 | +2 Pencil, +1 HP |
 | 40 | Cosmetic: Spirit Lantern frame |
 
@@ -415,21 +427,21 @@ Unlock types include: base stat boosts (+HP, +Pencil, +Item Slot, +Reroll Token)
 
 ### 7. Reed Duelist (Tempo)
 
-**Base Stats:** HP 8 / Pencil 7 / Item Slots 2 / Reroll Tokens 1
-**Passive:** Completing a puzzle with no mistakes and no pencil use grants +2 Pencil charges for the run
+**Base Stats:** HP 9 / Pencil 9 / Item Slots 2 / Starting Relics 1  
+**Passive:** Perfect no-pencil puzzle: +2 Pencil. Every 5 such puzzles in a run: +1 HP.
 
 | Level | Unlock |
 |:---:|--------|
-| 3  | +1 Pencil |
-| 5  | +1 HP |
-| 7  | +1 Reroll Token |
+| 3 | +1 Pencil |
+| 5 | +1 HP |
+| 7 | +1 Reroll Token |
 | 10 | +10 Starting Gold |
 | 13 | +2 Pencil |
-| 15 | Passive upgrade: perfect no-pencil bonus → +3 Pencil (was +2) |
+| 15 | Passive: perfect no-pencil → +3 Pencil |
 | 18 | +1 HP |
-| 20 | +1 Item Slot |
+| 20 | +1 Item Slot, +1 Starting Relic |
 | 25 | +2 HP, +1 Pencil |
-| 30 | Start run with 1 Tea of Focus |
+| 30 | Start: Tea of Focus |
 | 35 | +1 Reroll Token |
 | 40 | Cosmetic: Cutting Reed frame |
 
@@ -437,21 +449,21 @@ Unlock types include: base stat boosts (+HP, +Pencil, +Item Slot, +Reroll Token)
 
 ### 8. Quiet Cartographer (Route Control)
 
-**Base Stats:** HP 9 / Pencil 10 / Item Slots 2 / Reroll Tokens 1
-**Passive:** After completing a tile with no mistakes, preview the board size and star rating of unrevealed adjacent tiles
+**Base Stats:** HP 12 / Pencil 6 / Item Slots 1 / Starting Relics 1  
+**Passive:** Preview next node's star & board size after a perfect tile. If you then choose that node, its difficulty is reduced by ½ star (min 1★).
 
 | Level | Unlock |
 |:---:|--------|
-| 3  | +1 Pencil |
-| 5  | +10 Starting Gold |
-| 7  | +1 HP |
-| 10 | +1 Reroll Token |
+| 3 | +1 Pencil |
+| 5 | +10 Starting Gold |
+| 7 | +1 HP |
+| 10 | +1 Reroll Token, +1 Starting Relic |
 | 13 | +1 Pencil, +1 HP |
-| 15 | Passive upgrade: preview is always active (no longer requires perfect tile) |
+| 15 | Passive: preview always active |
 | 18 | +10 Starting Gold |
 | 20 | +1 Item Slot |
 | 25 | +2 Pencil, +1 HP |
-| 30 | Start run with 1 Compass of Order |
+| 30 | Start: Compass of Order |
 | 35 | +2 HP |
 | 40 | Cosmetic: Ink Map frame |
 
@@ -474,7 +486,7 @@ Prestige can trigger only when **all** of the following are true:
 - Prestige tier **+1**
 - Class level reset to **1**
 - Current XP reset to **0**
-- Passive tier **+1** (permanent bonus carried across prestige cycles)
+- Passive tier **+1** (permanent bonus carried across prestige cycles) — **not implemented and undecided**: MetaProgressionSystem META-PRESTIGE-005 describes the prestige reward as cosmetic only (badge). Logged as SPEC-CONF-039 for a decision; 1.1 implements the cosmetic badge only.
 
 ### Prestige Cap
 
@@ -482,7 +494,11 @@ Maximum prestige tier is **9**. After tier 9, no further prestige is possible. T
 
 ### Excess XP
 
-XP earned beyond Level 40 (before prestige is triggered) is **discarded**. Players should be prompted to prestige when eligible rather than accumulating wasted XP.
+XP earned beyond Level 40 (before prestige is triggered) is **discarded**: `ClassGardenProgressionService.AddXp` caps `TotalXp` at the Level 40 threshold (16,860 XP) when a run is committed (implemented 1.1, SPEC-CONF-034; `HarmonyEffectsTests.XpAboveLevel40_IsDiscarded`). Players should be prompted to prestige when eligible rather than accumulating wasted XP.
+
+### Prestige in the UI (as built, 1.1)
+
+The Meta Progression panel shows, for every level-40 class, what prestige still needs ("Prestige needs 6 boss defeats (4/6)") or a **Prestige** button when the class is eligible. The first press changes the label to a confirmation ("Confirm: reset to Level 1?"); the second press prestiges and saves the profile (`ProfileService.TryPrestigeClass`, GAP-017). The tier gate uses the cumulative boss defeats of all classes (`ClassUnlockProgress.BossesDefeated`). The in-run class badge shows the prestige tier. Evidence: `PrestigeTests`.
 
 ### Archive Tracking
 

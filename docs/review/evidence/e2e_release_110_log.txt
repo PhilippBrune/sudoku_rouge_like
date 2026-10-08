@@ -1,0 +1,29 @@
+﻿Release 1.1.0 build smoke, 2026-10-07 - excerpt of Player.log (session B, fresh profile)
+Exceptions in the whole log: 0
+Authored audio clips loaded: 49
+
+[GameBootstrap] Startup step: ProfileSelect (anyProfile=False, profileSelectionAllowed=True, firstRunDone=False).
+[GameBootstrap] Startup step: FirstRunSetup (anyProfile=True, profileSelectionAllowed=False, firstRunDone=False).
+[GameBootstrap] Launched GardenRun as NumberFreak, seed=12345
+[AutoSave] HP=10 Pencil=10 Items=0 NodeIdx=1 Floor=0 RunNum=1
+[AutoSave] HP=9 Pencil=10 Items=0 NodeIdx=1 Floor=0 RunNum=1
+[AutoSave] HP=9 Pencil=10 Items=0 NodeIdx=1 Floor=0 RunNum=1
+[AutoSave] HP=9 Pencil=10 Items=0 NodeIdx=1 Floor=0 RunNum=1
+[ResumeRestore] HP=9 Pencil=10 Items=0 NodeIdx=1 Floor=0 RunNum=1
+[GameBootstrap] Resumed run from save.
+[AutoSave] HP=9 Pencil=10 Items=0 NodeIdx=1 Floor=0 RunNum=1
+[AutoSave] HP=9 Pencil=10 Items=0 NodeIdx=1 Floor=0 RunNum=1
+[AutoSave] HP=9 Pencil=10 Items=0 NodeIdx=1 Floor=0 RunNum=1
+[AutoSave] HP=9 Pencil=10 Items=0 NodeIdx=1 Floor=0 RunNum=1
+[AutoSave] HP=9 Pencil=10 Items=0 NodeIdx=1 Floor=0 RunNum=1
+[AutoSave] HP=9 Pencil=10 Items=0 NodeIdx=1 Floor=0 RunNum=1
+[AutoSave] HP=9 Pencil=10 Items=0 NodeIdx=1 Floor=0 RunNum=1
+[AutoSave] HP=9 Pencil=10 Items=0 NodeIdx=1 Floor=0 RunNum=1
+[AutoSave] HP=9 Pencil=10 Items=0 NodeIdx=1 Floor=0 RunNum=1
+[AutoSave] HP=9 Pencil=10 Items=0 NodeIdx=1 Floor=0 RunNum=1
+[AutoSave] HP=9 Pencil=10 Items=0 NodeIdx=1 Floor=0 RunNum=1
+[AutoSave] HP=9 Pencil=10 Items=0 NodeIdx=1 Floor=0 RunNum=1
+[AutoSave] HP=9 Pencil=10 Items=0 NodeIdx=1 Floor=0 RunNum=1
+[AutoSave] HP=9 Pencil=10 Items=1 NodeIdx=1 Floor=0 RunNum=1
+[GameBootstrap] Abandoned saved run (class NumberFreak, XP 45).
+[GameBootstrap] Launched GardenRun as NumberFreak, seed=73171

@@ -1,0 +1,123 @@
+
+=== D22_EndlessZen_LevelsGenerateWithFunctionalModifiers ===
+  seed 41000: depth0 board=NULL 4018ms HP=10 slots=0 mods=[DistanceGe2] | d5: 2★ v0 [XSudoku:INERT] board=ok 4ms | d12: 4★ v2 [NabnerLine:INERT,SumKropki:rule] board=ok 1447ms | d25: 5★ v2 [DifferenceKropki:rule,PrimeCells:rule,Battlefield:INERT] board=NULL 4001ms
+  seed 41001: depth0 board=9x9 0ms HP=10 slots=0 mods=[CellLock] | d5: 2★ v2 [GivenReveal:debuff] board=ok 628ms | d12: 4★ v3 [XVPairs:rule,MirrorCells:INERT] board=ok 26ms | d25: 5★ v0 [SumLine:INERT,GivenReveal:debuff,DifferenceK:INERT] board=ok 11ms
+  seed 41002: depth0 board=NULL 4001ms HP=10 slots=0 mods=[DistancePair] | d5: 2★ v0 [IndexCell:INERT] board=ok 0ms | d12: 4★ v0 [Nonconsecutive:rule,Antiking:rule] board=NULL 4000ms | d25: 5★ v2 [LoopConstraint:INERT,Quadruples:INERT,KnightKingCombined:INERT] board=ok 3097ms
+  seed 41003: depth0 board=9x9 3ms HP=10 slots=0 mods=[FortressCells] | d5: 2★ v2 [NabnerLine:INERT] board=ok 3195ms | d12: 4★ v1 [RevealCost:debuff,DistancePair:INERT] board=ok 3ms | d25: 5★ v0 [EntropyGlobal:rule,FastThermo:INERT,BetweenLines:rule] board=ok 3ms
+  seed 41004: depth0 board=9x9 371ms HP=10 slots=0 mods=[PencilScramble] | d5: 2★ v1 [RatioKropki:rule] board=ok 1ms | d12: 4★ v2 [DoublePenalty:debuff,GermanWhispers:rule] board=ok 2ms | d25: 5★ v2 [DifferenceK:INERT,ConsecutiveLine:rule,BoxWipe:debuff] board=ok 1309ms
+  seed 41005: depth0 board=9x9 0ms HP=10 slots=0 mods=[MultipleCells] | d5: 2★ v3 [OutsideInequalities:INERT] board=NULL 4001ms | d12: 4★ v3 [Sandwich:INERT,AmbiguousThermo:INERT] board=NULL 4000ms | d25: 5★ v0 [GoldFine:debuff,CountdownFill:pressure,PillArrow:INERT] board=ok 26ms
+  seed 41006: depth0 board=NULL 6711ms HP=10 slots=0 mods=[HighLowAlternating] | d5: 2★ v1 [AmbiguousThermo:INERT] board=ok 3ms | d12: 4★ v3 [MagicSquareRegion:INERT,CountdownFill:pressure] board=NULL 4001ms | d25: 5★ v2 [HyperSudoku:INERT,MultipleCells:INERT,SkyscraperLine:INERT] board=NULL 4422ms
+  seed 41007: depth0 board=9x9 2ms HP=10 slots=0 mods=[KillerCages] | d5: 2★ v3 [DistanceGe2:rule] board=NULL 4001ms | d12: 4★ v0 [RegionSumEquality:INERT,HighLowAlternating:INERT] board=ok 16ms | d25: 5★ v0 [PillArrow:INERT,ZipperLine:INERT,FullKropki:rule] board=ok 28ms
+  modifier draw classes: INERT=27, rule=13, debuff=6, pressure=2
+  FAIL seed 41000: depth 0 board not generated
+  FAIL seed 41000 depth 25: board not generated
+  FAIL seed 41002: depth 0 board not generated
+  FAIL seed 41002 depth 12: board not generated
+  FAIL seed 41005 depth 5: board not generated
+  FAIL seed 41005 depth 12: board not generated
+  FAIL seed 41006: depth 0 board not generated
+  FAIL seed 41006 depth 12: board not generated
+  FAIL seed 41006 depth 25: board not generated
+  FAIL seed 41007 depth 5: board not generated
+  FAIL 27 drawn modifiers have no constraint rule or geometry (extended library IDs)
+  [unity error logs during test: 10]
+    Error: [RunDirector] StartLevel: board generation timed out for seed=74253274, size=9: Puzzle generation exceeded the configured time budget.
+    Error: [RunDirector] StartLevel: board generation timed out for seed=777961878, size=9: Puzzle generation exceeded the configured time budget.
+    Error: [RunDirector] StartLevel: board generation timed out for seed=1334476640, size=9: Puzzle generation exceeded the configured time budget.
+    Error: [RunDirector] StartLevel: board generation timed out for seed=52259051, size=9: Puzzle generation exceeded the configured time budget.
+    Error: [RunDirector] StartLevel: board generation timed out for seed=961513555, size=9: Puzzle generation exceeded the configured time budget.
+    Error: [RunDirector] StartLevel: board generation timed out for seed=813450133, size=9: Puzzle generation exceeded the configured time budget.
+
+=== D23_SpiritTrials_EachTierGeneratesWithFunctionalModifiers ===
+  Apprentice seed 52000: board=9x9 0ms stars=3 v0 HP=5 pencil=15 unique=False/False mods=[]
+  Apprentice seed 52001: board=9x9 140ms stars=3 v2 HP=5 pencil=15 unique=False/False mods=[]
+  Apprentice seed 52002: board=9x9 0ms stars=3 v0 HP=5 pencil=15 unique=False/False mods=[]
+  Apprentice seed 52003: board=9x9 89ms stars=3 v2 HP=5 pencil=15 unique=False/False mods=[]
+  Apprentice seed 52004: board=9x9 0ms stars=3 v0 HP=5 pencil=15 unique=False/False mods=[]
+  Adept seed 52000: board=9x9 3ms stars=3 v0 HP=4 pencil=12 unique=True/True mods=[Sandwich:INERT]
+  Adept seed 52001: board=NULL 779ms stars=3 v2 HP=4 pencil=12 unique=True/False mods=[SumLine:INERT]
+  Adept seed 52002: board=9x9 3ms stars=3 v0 HP=4 pencil=12 unique=True/True mods=[Antiknight:rule]
+  Adept seed 52003: board=9x9 85ms stars=3 v2 HP=4 pencil=12 unique=True/True mods=[ConstraintNegationZone:INERT]
+  Adept seed 52004: board=NULL 4ms stars=3 v0 HP=4 pencil=12 unique=True/False mods=[FullBlackKropki:INERT]
+  Master seed 52000: board=9x9 16ms stars=4 v0 HP=3 pencil=10 unique=True/True mods=[Sandwich:INERT]
+  Master seed 52001: board=NULL 756ms stars=4 v2 HP=3 pencil=10 unique=True/False mods=[SumLine:INERT]
+  Master seed 52002: board=9x9 5ms stars=4 v0 HP=3 pencil=10 unique=True/True mods=[Antiknight:rule]
+  Master seed 52003: board=9x9 99ms stars=4 v2 HP=3 pencil=10 unique=True/True mods=[ConstraintNegationZone:INERT]
+  Master seed 52004: board=NULL 15ms stars=4 v0 HP=3 pencil=10 unique=True/False mods=[FullBlackKropki:INERT]
+  Grandmaster seed 52000: board=9x9 16ms stars=5 v0 HP=2 pencil=8 unique=True/True mods=[Sandwich:INERT,IndexParity:INERT]
+  Grandmaster seed 52001: board=NULL 5035ms stars=5 v2 HP=2 pencil=8 unique=True/False mods=[SumLine:INERT,ConnectedRegions:INERT]
+  Grandmaster seed 52002: board=9x9 548ms stars=5 v0 HP=2 pencil=8 unique=True/True mods=[Antiknight:rule,Skyscrapers:INERT]
+  Grandmaster seed 52003: board=9x9 650ms stars=5 v2 HP=2 pencil=8 unique=True/True mods=[ConstraintNegationZone:INERT,CrumblingRegion:pressure]
+  Grandmaster seed 52004: board=NULL 4001ms stars=5 v0 HP=2 pencil=8 unique=True/ mods=[FullBlackKropki:INERT,AntiBishop:rule]
+  FAIL Adept seed 52000: non-functional modifier drawn Sandwich
+  FAIL Adept seed 52001: no board (779ms)
+  FAIL Adept seed 52001: non-functional modifier drawn SumLine
+  FAIL Adept seed 52003: non-functional modifier drawn ConstraintNegationZone
+  FAIL Adept seed 52004: no board (4ms)
+  FAIL Adept seed 52004: non-functional modifier drawn FullBlackKropki
+  FAIL Master seed 52000: non-functional modifier drawn Sandwich
+  FAIL Master seed 52001: no board (756ms)
+  FAIL Master seed 52001: non-functional modifier drawn SumLine
+  FAIL Master seed 52003: non-functional modifier drawn ConstraintNegationZone
+  FAIL Master seed 52004: no board (15ms)
+  FAIL Master seed 52004: non-functional modifier drawn FullBlackKropki
+  FAIL Grandmaster seed 52000: non-functional modifier drawn Sandwich,IndexParity
+  FAIL Grandmaster seed 52001: no board (5035ms)
+  FAIL Grandmaster seed 52001: non-functional modifier drawn SumLine,ConnectedRegions
+  FAIL Grandmaster seed 52002: non-functional modifier drawn Skyscrapers
+  FAIL Grandmaster seed 52003: non-functional modifier drawn ConstraintNegationZone,CrumblingRegion
+  FAIL Grandmaster seed 52004: no board (4001ms)
+  FAIL Grandmaster seed 52004: non-functional modifier drawn FullBlackKropki
+  [unity error logs during test: 6]
+    Error: [RunDirector] StartLevel: generation failed (UniqueSolutionNotFound). Aborting.
+    Error: [RunDirector] StartLevel: generation failed (BudgetExceeded). Aborting.
+    Error: [RunDirector] StartLevel: board generation timed out for seed=228628526, size=9: Puzzle generation exceeded the configured time budget.
+
+=== D24_MonthlyWalk_TwoYearsOfChallengesGenerate ===
+  2026-01 'Morning Mist': v1 mods=[KillerCages:rule] board=ok 1ms uniqueVerified=True HP=10 pencil=12
+  2026-02 'Autumn Colours': v2 mods=[Antiknight:rule,RatioKropki:rule] board=NULL 4001ms uniqueVerified= HP=10 pencil=12
+  2026-03 'After Rain': v3 mods=[DutchWhispers:rule] board=NULL 4001ms uniqueVerified= HP=10 pencil=12
+  2026-04 'The Stone Bridge': v0 mods=[EvenOdd:rule] board=ok 1ms uniqueVerified=True HP=10 pencil=12
+  2026-05 'The Ice Cream Cart': v1 mods=[RatioKropki:rule,Palindrome:rule] board=ok 7ms uniqueVerified=True HP=10 pencil=12
+  2026-06 'Lantern Festival': v2 mods=[KillerCages:rule] board=ok 79ms uniqueVerified=True HP=10 pencil=12
+  2026-07 'The Iron Gate': v3 mods=[Palindrome:rule] board=NULL 4002ms uniqueVerified= HP=10 pencil=12
+  2026-08 'The Entrance Garden': v0 mods=[EvenOdd:rule,FogOfWar:rule] board=ok 2ms uniqueVerified=True HP=10 pencil=12
+  2026-09 'The Pond Path': v1 mods=[RenbanLines:rule] board=ok 2ms uniqueVerified=True HP=10 pencil=12
+  2026-10 'The Old Tree Grove': v2 mods=[Antiknight:rule] board=NULL 4002ms uniqueVerified= HP=10 pencil=12
+  2026-11 'The Fountain Plaza': v3 mods=[ParityLines:rule,BetweenLines:rule] board=ok 7ms uniqueVerified=True HP=10 pencil=12
+  2026-12 'The Far Bench': v0 mods=[Palindrome:rule] board=ok 4ms uniqueVerified=True HP=10 pencil=12
+  2027-01 'The Ice Cream Cart': v1 mods=[KillerCages:rule,Palindrome:rule] board=ok 3ms uniqueVerified=True HP=10 pencil=12
+  2027-02 'Lantern Festival': v2 mods=[BetweenLines:rule] board=ok 279ms uniqueVerified=True HP=10 pencil=12
+  2027-03 'The Iron Gate': v3 mods=[ParityLines:rule] board=NULL 4001ms uniqueVerified= HP=10 pencil=12
+  2027-04 'The Entrance Garden': v0 mods=[Antiknight:rule,FogOfWar:rule] board=ok 3ms uniqueVerified=True HP=10 pencil=12
+  2027-05 'The Pond Path': v1 mods=[DifferenceKropki:rule] board=ok 0ms uniqueVerified=True HP=10 pencil=12
+  2027-06 'The Old Tree Grove': v2 mods=[ArrowSums:rule] board=ok 6ms uniqueVerified=True HP=10 pencil=12
+  2027-07 'The Fountain Plaza': v3 mods=[FogOfWar:rule,EvenOdd:rule] board=ok 114ms uniqueVerified=True HP=10 pencil=12
+  2027-08 'The Far Bench': v0 mods=[DutchWhispers:rule] board=ok 1ms uniqueVerified=True HP=10 pencil=12
+  2027-09 'Morning Mist': v1 mods=[Palindrome:rule] board=ok 4ms uniqueVerified=True HP=10 pencil=12
+  2027-10 'Autumn Colours': v2 mods=[ArrowSums:rule,Thermo:rule] board=ok 206ms uniqueVerified=True HP=10 pencil=12
+  2027-11 'After Rain': v3 mods=[FogOfWar:rule] board=ok 1465ms uniqueVerified=True HP=10 pencil=12
+  2027-12 'The Stone Bridge': v0 mods=[Antiknight:rule] board=ok 3ms uniqueVerified=True HP=10 pencil=12
+  FAIL 2026-02: monthly puzzle not generated (4001ms)
+  FAIL 2026-03: monthly puzzle not generated (4001ms)
+  FAIL 2026-07: monthly puzzle not generated (4002ms)
+  FAIL 2026-10: monthly puzzle not generated (4002ms)
+  FAIL 2027-03: monthly puzzle not generated (4001ms)
+  [unity error logs during test: 5]
+    Error: [RunDirector] StartLevel: board generation timed out for seed=202602, size=9: Puzzle generation exceeded the configured time budget.
+    Error: [RunDirector] StartLevel: board generation timed out for seed=202603, size=9: Puzzle generation exceeded the configured time budget.
+    Error: [RunDirector] StartLevel: board generation timed out for seed=202607, size=9: Puzzle generation exceeded the configured time budget.
+    Error: [RunDirector] StartLevel: board generation timed out for seed=202610, size=9: Puzzle generation exceeded the configured time budget.
+    Error: [RunDirector] StartLevel: board generation timed out for seed=202703, size=9: Puzzle generation exceeded the configured time budget.
+
+=== D25_ShopRestRelicCursedFlows_ChangeStateAsSpecified ===
+  shop: offers=2 [WindChime/Normal/15,PatternScroll/Normal/15] buy#0 ok=True gold 500->485 (price 15) items 0->1
+  shop with full bag: buy ok=True gold 485->470 items=2/2
+  shop reroll: ok=True gold 470->455 next cost=20
+  rest: heal 2->5 (MaxHP 10, GDS +2); pencil 0->4 (GDS +3)
+  relic choice: offered=3 [MossToken/Tier1,WoodenComb/Tier1,MoonstoneCompass/Tier4] held 1->2
+  cursed: normal mods=[] size=5 | cursed mods=[ParityLines] size=5 goldMult=1,5 xpMult=1,5 floorRange=5-6
+  emergency heal: ok=True HP 1->2 gold 200->175
+  FAIL shop charged gold for an item that could not be stored (bag full)
+  FAIL rest heal gives 3 HP (GDS: +2)
+  FAIL rest pencil gives 4 (GDS: +3)

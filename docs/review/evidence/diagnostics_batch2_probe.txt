@@ -1,0 +1,135 @@
+
+=== D17_ResumeMidPuzzle_CanContinuePlacingAndCompleteLevel ===
+  floor 1: after resume config=NULL engine=NULL overlay=NULL floorMods=[]
+    first placement after resume: EXCEPTION NullReferenceException: Object reference not set to an instance of an object
+    complete level after resume: EXCEPTION NullReferenceException: Object reference not set to an instance of an object
+  floor 2: after resume config=NULL engine=NULL overlay=NULL floorMods=[XVPairs]
+    first placement after resume: EXCEPTION NullReferenceException: Object reference not set to an instance of an object
+    complete level after resume: EXCEPTION NullReferenceException: Object reference not set to an instance of an object
+  FAIL floor 1: placing a digit after resume throws (EXCEPTION NullReferenceException: Object reference not set to an instance of an object)
+  FAIL floor 1: completing level after resume throws (EXCEPTION NullReferenceException: Object reference not set to an instance of an object)
+  FAIL floor 2: placing a digit after resume throws (EXCEPTION NullReferenceException: Object reference not set to an instance of an object)
+  FAIL floor 2: completing level after resume throws (EXCEPTION NullReferenceException: Object reference not set to an instance of an object)
+
+=== D18_BossAsyncPath_AllFloors_GeneratesWithChosenModifiers ===
+  seed 1001 floor 1: ok=True 30ms size=8 stars=2 requested=[SumKropki] dropped=[] overlayMissing=[]
+  seed 1001 floor 2: ok=True 72ms size=8 stars=3 requested=[BetweenLines,RatioKropki,DutchWhispers] dropped=[] overlayMissing=[]
+  seed 1001 floor 3: ok=True 28ms size=8 stars=4 requested=[Thermo,DistanceGe2,SumKropki,KillerCages] dropped=[] overlayMissing=[]
+  seed 1001 floor 4: ok=True 199ms size=9 stars=5 requested=[PrimeCells,UniqueSetLine,Palindrome,NonconsecDiagonal,DutchWhispers,CrumblingRegion] dropped=[] overlayMissing=[]
+  seed 1001 floor 5: ok=True 24855ms size=9 stars=6 requested=[NonconsecDiagonal,UniqueSetLine,XVPairs,FullKropki,ArrowSums,DutchWhispers,ConsecutiveLine,HauntedCell] dropped=[NonconsecDiagonal] overlayMissing=[NonconsecDiagonal]
+  seed 2002 floor 1: ok=True 26ms size=8 stars=2 requested=[UniqueSetLine] dropped=[] overlayMissing=[]
+  seed 2002 floor 2: ok=True 29ms size=8 stars=3 requested=[DutchWhispers,GreaterLessThan,DifferenceKropki] dropped=[] overlayMissing=[]
+  seed 2002 floor 3: ok=True 4040ms size=8 stars=4 requested=[XVPairs,FullKropki,NonconsecDiagonal,Thermo] dropped=[] overlayMissing=[Thermo]
+  seed 2002 floor 4: ok=True 27ms size=8 stars=5 requested=[BetweenLines,XVPairs,ParityLines,EvenOdd,KillerCages,CrumblingRegion] dropped=[] overlayMissing=[]
+  seed 2002 floor 5: ok=True 27ms size=9 stars=6 requested=[Palindrome,GreaterLessThan,GermanWhispers,FullKropki,ParityLines,ArrowSums,BetweenLines,CrumblingRegion] dropped=[] overlayMissing=[]
+  seed 3003 floor 1: ok=True 27ms size=8 stars=2 requested=[UniqueSetLine] dropped=[] overlayMissing=[]
+  seed 3003 floor 2: ok=True 137ms size=8 stars=3 requested=[SumKropki,FogOfWar,ParityLines] dropped=[] overlayMissing=[]
+  seed 3003 floor 3: ok=True 74ms size=8 stars=4 requested=[Thermo,ParityLines,GermanWhispers,ConsecutiveLine] dropped=[] overlayMissing=[]
+  seed 3003 floor 4: ok=True 27ms size=9 stars=5 requested=[PrimeCells,DifferenceKropki,UniqueSetLine,FortressCells,Thermo] dropped=[] overlayMissing=[]
+  seed 3003 floor 5: ok=True 29783ms size=9 stars=6 requested=[SumKropki,FortressCells,Nonconsecutive,UniqueSetLine,Antiking,FogOfWar,DutchWhispers] dropped=[Nonconsecutive,Antiking] overlayMissing=[Nonconsecutive,Antiking]
+  seed 4004 floor 1: ok=True 27ms size=8 stars=2 requested=[FogOfWar] dropped=[] overlayMissing=[]
+  seed 4004 floor 2: ok=True 28ms size=8 stars=3 requested=[FogOfWar,RenbanLines,PrimeCells] dropped=[] overlayMissing=[]
+  seed 4004 floor 3: ok=True 23ms size=8 stars=4 requested=[XVPairs,RenbanLines,KillerCages,UniqueSetLine] dropped=[] overlayMissing=[]
+  seed 4004 floor 4: ok=True 24722ms size=9 stars=5 requested=[BetweenLines,RenbanLines,NonconsecDiagonal,SlowThermo,Antiking,HauntedCell] dropped=[NonconsecDiagonal,Antiking] overlayMissing=[NonconsecDiagonal,Antiking]
+  seed 4004 floor 5: ok=False 12016ms size= stars=6 requested=[FogOfWar,DifferenceKropki,ConsecutiveLine,SumKropki,RatioKropki,EntropyGlobal,FullKropki] dropped=[FogOfWar,DifferenceKropki,ConsecutiveLine,SumKropki,RatioKropki,EntropyGlobal,FullKropki] overlayMissing=[]
+    retry same node: seedEqual=True ok=False 12011ms
+  seed 5005 floor 1: ok=True 57ms size=8 stars=2 requested=[FogOfWar] dropped=[] overlayMissing=[]
+  seed 5005 floor 2: ok=True 28ms size=8 stars=3 requested=[RatioKropki,GreaterLessThan,XVPairs] dropped=[] overlayMissing=[]
+  seed 5005 floor 3: ok=True 28ms size=8 stars=4 requested=[Thermo,KillerCages,RenbanLines,GreaterLessThan] dropped=[] overlayMissing=[]
+  seed 5005 floor 4: ok=True 121ms size=8 stars=5 requested=[PrimeCells,EvenOdd,KillerCages,ArrowSums,UniqueSetLine] dropped=[] overlayMissing=[]
+  seed 5005 floor 5: ok=True 4704ms size=9 stars=6 requested=[Nonconsecutive,RatioKropki,KillerCages,SumKropki,UniqueSetLine,GreaterLessThan,GermanWhispers,HauntedCell] dropped=[] overlayMissing=[]
+  seed 6006 floor 1: ok=True 24ms size=8 stars=2 requested=[EvenOdd] dropped=[] overlayMissing=[]
+  seed 6006 floor 2: ok=True 27ms size=8 stars=3 requested=[XVPairs,BetweenLines,SumKropki] dropped=[] overlayMissing=[]
+  seed 6006 floor 3: ok=True 2545ms size=8 stars=4 requested=[PrimeCells,GermanWhispers,ParityLines,FortressCells] dropped=[] overlayMissing=[]
+  seed 6006 floor 4: ok=True 28ms size=8 stars=5 requested=[Thermo,FogOfWar,DutchWhispers,ParityLines,XVPairs,CrumblingRegion] dropped=[] overlayMissing=[]
+  seed 6006 floor 5: ok=True 1367ms size=9 stars=6 requested=[ConsecutiveLine,Antiknight,GreaterLessThan,FullKropki,KillerCages,ParityLines,RatioKropki] dropped=[] overlayMissing=[]
+  seed 7007 floor 1: ok=True 213ms size=8 stars=2 requested=[RatioKropki] dropped=[] overlayMissing=[]
+  seed 7007 floor 2: ok=True 43ms size=8 stars=3 requested=[NonconsecDiagonal,DutchWhispers,FullKropki] dropped=[] overlayMissing=[]
+  seed 7007 floor 3: ok=True 27ms size=8 stars=4 requested=[Thermo,UniqueSetLine,GreaterLessThan,Nonconsecutive] dropped=[] overlayMissing=[]
+  seed 7007 floor 4: ok=True 24330ms size=8 stars=5 requested=[PrimeCells,Antiking,GreaterLessThan,DistanceGe2,DifferenceKropki] dropped=[Antiking,DistanceGe2] overlayMissing=[Antiking,DistanceGe2]
+  seed 7007 floor 5: ok=True 212ms size=9 stars=6 requested=[KillerCages,Thermo,GermanWhispers,SumKropki,PrimeCells,RatioKropki,GreaterLessThan,HauntedCell] dropped=[] overlayMissing=[]
+  seed 8008 floor 1: ok=True 117ms size=8 stars=2 requested=[RatioKropki] dropped=[] overlayMissing=[]
+  seed 8008 floor 2: ok=True 29ms size=8 stars=3 requested=[Palindrome,SumKropki,SlowThermo] dropped=[] overlayMissing=[]
+  seed 8008 floor 3: ok=True 24022ms size=8 stars=4 requested=[PrimeCells,XVPairs,DistanceGe2,Palindrome] dropped=[DistanceGe2] overlayMissing=[DistanceGe2]
+  seed 8008 floor 4: ok=True 24554ms size=9 stars=5 requested=[Thermo,UniqueSetLine,DistanceGe2,EvenOdd,RenbanLines] dropped=[DistanceGe2] overlayMissing=[DistanceGe2]
+  seed 8008 floor 5: ok=True 25854ms size=9 stars=6 requested=[PrimeCells,BetweenLines,DifferenceKropki,FullKropki,GermanWhispers,ArrowSums,NonconsecDiagonal] dropped=[NonconsecDiagonal] overlayMissing=[NonconsecDiagonal]
+  floor 1 summary: ok=8 fail=0 withDroppedMods=0 withMissingOverlay=0
+  floor 2 summary: ok=8 fail=0 withDroppedMods=0 withMissingOverlay=0
+  floor 3 summary: ok=8 fail=0 withDroppedMods=1 withMissingOverlay=2
+  floor 4 summary: ok=8 fail=0 withDroppedMods=3 withMissingOverlay=3
+  floor 5 summary: ok=7 fail=1 withDroppedMods=4 withMissingOverlay=3
+  FAIL seed 1001 F5: overlay missing for NonconsecDiagonal
+  FAIL seed 2002 F3: overlay missing for Thermo
+  FAIL seed 3003 F5: chosen modifier dropped Nonconsecutive,Antiking
+  FAIL seed 3003 F5: overlay missing for Nonconsecutive,Antiking
+  FAIL seed 4004 F4: chosen modifier dropped NonconsecDiagonal,Antiking
+  FAIL seed 4004 F4: overlay missing for NonconsecDiagonal,Antiking
+  FAIL seed 4004 F5: boss generation failed (12016ms)
+  FAIL seed 4004 F5: retry also fails -> player blocked at boss gate
+  FAIL seed 7007 F4: chosen modifier dropped Antiking,DistanceGe2
+  FAIL seed 7007 F4: overlay missing for Antiking,DistanceGe2
+  FAIL seed 8008 F3: chosen modifier dropped DistanceGe2
+  FAIL seed 8008 F3: overlay missing for DistanceGe2
+  FAIL seed 8008 F4: chosen modifier dropped DistanceGe2
+  FAIL seed 8008 F4: overlay missing for DistanceGe2
+  FAIL seed 8008 F5: chosen modifier dropped NonconsecDiagonal
+  FAIL seed 8008 F5: overlay missing for NonconsecDiagonal
+
+=== D19_Placement_NonSolutionDigitThatFitsRulesIsAccepted ===
+  non-solution digits that fit current rules: tried=30 accepted as Correct=30 (no HP loss, combo+1)
+
+=== D20_LateFloorPuzzles_AsyncGenerationReliability ===
+  F4 8x8 v0: ok=6 fail=0 maxMs=33
+  F4 8x8 v1: ok=7 fail=0 maxMs=123
+  F4 8x8 v2: ok=5 fail=0 maxMs=308
+  F4 8x8 v3: ok=3 fail=0 maxMs=2632
+  F4 9x9 v0: ok=2 fail=0 maxMs=32
+  F4 9x9 v1: ok=4 fail=0 maxMs=30
+  F4 9x9 v2: ok=3 fail=1 maxMs=20015
+  F4 9x9 v3: ok=4 fail=1 maxMs=20006
+  F5 8x8 v3: ok=1 fail=0 maxMs=168
+  F5 9x9 v0: ok=12 fail=0 maxMs=215
+  F5 9x9 v1: ok=7 fail=0 maxMs=61
+  F5 9x9 v2: ok=6 fail=3 maxMs=7523
+  F5 9x9 v3: ok=5 fail=2 maxMs=20015
+  FAIL seed 9100 F4 node 2 F4 9x9 v3 mods=[Antiking] failed after 20006ms
+  FAIL seed 9100 F4 node 4 F4 9x9 v2 mods=[Antiking] failed after 20015ms
+  FAIL seed 9100 F5 node 3 F5 9x9 v3 mods=[GreaterLessThan,ConsecutiveLine] failed after 7513ms
+  FAIL seed 9135 F5 node 4 F5 9x9 v3 mods=[ArrowSums,Antiking] failed after 20015ms
+  FAIL seed 9142 F5 node 1 F5 9x9 v2 mods=[SumKropki,EntropyGlobal] failed after 7523ms
+  FAIL seed 9142 F5 node 2 F5 9x9 v2 mods=[SumKropki,EntropyGlobal] failed after 7509ms
+  FAIL seed 9142 F5 node 4 F5 9x9 v2 mods=[SumKropki,EntropyGlobal] failed after 7523ms
+
+=== D21_ModifierRules_RejectWrongDigitsAtConstrainedCells ===
+  FogOfWar           6x6 rules=1 constrainedCells=0/36 wrongDigitRejections=0 solutionDigitRejected=0
+  ArrowSums          6x6 rules=1 constrainedCells=6/36 wrongDigitRejections=30 solutionDigitRejected=0
+  GermanWhispers     7x7 rules=1 constrainedCells=14/49 wrongDigitRejections=77 solutionDigitRejected=0
+  DutchWhispers      6x6 rules=1 constrainedCells=8/36 wrongDigitRejections=36 solutionDigitRejected=0
+  ParityLines        6x6 rules=1 constrainedCells=8/36 wrongDigitRejections=24 solutionDigitRejected=0
+  RenbanLines        6x6 rules=1 constrainedCells=9/36 wrongDigitRejections=43 solutionDigitRejected=0
+  KillerCages        7x7 rules=1 constrainedCells=11/49 wrongDigitRejections=66 solutionDigitRejected=0
+  DifferenceKropki   6x6 rules=1 constrainedCells=9/36 wrongDigitRejections=39 solutionDigitRejected=0
+  RatioKropki        6x6 rules=1 constrainedCells=6/36 wrongDigitRejections=29 solutionDigitRejected=0
+  Palindrome         6x6 rules=1 constrainedCells=4/36 wrongDigitRejections=20 solutionDigitRejected=0
+  Thermo             6x6 rules=1 constrainedCells=8/36 wrongDigitRejections=34 solutionDigitRejected=0
+  BetweenLines       6x6 rules=1 constrainedCells=4/36 wrongDigitRejections=8 solutionDigitRejected=0
+  EvenOdd            6x6 rules=1 constrainedCells=6/36 wrongDigitRejections=18 solutionDigitRejected=0
+  Nonconsecutive     6x6 rules=1 constrainedCells=36/36 wrongDigitRejections=141 solutionDigitRejected=0
+  Antiknight         6x6 rules=1 constrainedCells=36/36 wrongDigitRejections=92 solutionDigitRejected=0
+  Antiking           6x6 rules=1 constrainedCells=36/36 wrongDigitRejections=160 solutionDigitRejected=0
+  AntiBishop         9x9: NO BOARD
+  NonconsecDiagonal  6x6 rules=1 constrainedCells=36/36 wrongDigitRejections=115 solutionDigitRejected=0
+  DistanceGe2        6x6 rules=1 constrainedCells=36/36 wrongDigitRejections=162 solutionDigitRejected=0
+  EntropyGlobal      9x9 rules=1 constrainedCells=81/81 wrongDigitRejections=486 solutionDigitRejected=0
+  ModularRegions     7x7 rules=1 constrainedCells=7/49 wrongDigitRejections=42 solutionDigitRejected=0
+  ConsecutiveLine    6x6 rules=1 constrainedCells=8/36 wrongDigitRejections=35 solutionDigitRejected=0
+  SlowThermo         6x6 rules=1 constrainedCells=9/36 wrongDigitRejections=28 solutionDigitRejected=0
+  UniqueSetLine      6x6 rules=1 constrainedCells=9/36 wrongDigitRejections=32 solutionDigitRejected=0
+  FullKropki         6x6 rules=3 constrainedCells=36/36 wrongDigitRejections=169 solutionDigitRejected=0
+  SumKropki          6x6 rules=1 constrainedCells=9/36 wrongDigitRejections=45 solutionDigitRejected=0
+  GreaterLessThan    6x6 rules=1 constrainedCells=12/36 wrongDigitRejections=28 solutionDigitRejected=0
+  XVPairs            6x6 rules=1 constrainedCells=8/36 wrongDigitRejections=40 solutionDigitRejected=0
+  PrimeCells         6x6 rules=1 constrainedCells=5/36 wrongDigitRejections=15 solutionDigitRejected=0
+  FortressCells      6x6 rules=1 constrainedCells=14/36 wrongDigitRejections=30 solutionDigitRejected=0
+  [unity error logs during test: 1]
+    Error: [RunDirector] StartLevel: board generation timed out for seed=5016, size=9: Puzzle generation exceeded the configured time budget.

@@ -1,11 +1,12 @@
 # Tutorial Mode System
 
-**Version:** 1.8 | **Date:** 2026-04-16 | **Status:** implemented
+**Version:** 1.9 | **Date:** 2026-10-07 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.9 | 2026-10-07 | implemented | 7★ requires a modifier, as the code enforces (SPEC-CONF-015); dropdown → region variant mapping and why variant 2 is not offered (SPEC-CONF-018); entry named Custom Puzzle, Sudoku Basics separate (SPEC-CONF-033); 7★ uses rule-based validation (SPEC-CONF-003). |
 | 1.8 | 2026-04-16 | implemented | Inline requirement IDs added (SAVE-TUTO-001). Stale REQ-TUTORIAL-173..202 auto-generated table replaced with canonical IDs. |
 | 1.7 | 2026-03-29 | implemented | Tutorial saves hard-blocked: RunAutoSaveCoordinator.Save() returns early when runState.TutorialMode=true; SaveFileService.HasActiveRun() returns false when ActiveRunState.TutorialMode=true. This ensures Resume Game is always greyed out after tutorial sessions and no tutorial state ever writes to the save file ActiveRunState slot. |
 | 1.6 | 2026-03-29 | implemented | Tutorial Save&Quit button renamed "Quit (Q)" when in tutorial mode — WireInGameButtons() in PrototypeRunScreenController changes the button label text at run start when TutorialMode=true (SaveAndQuit already had no-save behavior; this makes it visible). Each "Start Puzzle" press generates a new puzzle via BuildRuntimeSeed() (UtcNow.Ticks component ensures unique seed per call). Resume Game button remains grey for tutorial runs — HasActiveRun() checks ActiveRunState≠null, tutorial never sets it. |
@@ -36,7 +37,7 @@ Tutorial mode is an isolated practice environment using the same Sudoku engine a
 ## Main Menu Integration
 
 The runtime menu flow includes tutorial entry points:
-- Main Menu → Tutorial button
+- Main Menu → **Custom Puzzle** button (named "Tutorial" before; it is a sandbox, so the name was kept as built, SPEC-CONF-033). The Sudoku Basics lesson is a separate tutorial, offered at first launch and in Options (FirstTimePlayTutorial).
 - Tutorial Setup Screen (configure puzzle parameters)
 - Tutorial Progress Screen (view completion grid)
 
@@ -72,7 +73,7 @@ Three grid layout variants selectable via dropdown:
 | 1 | Alt Rectangular (1) | Alternative rectangular region shapes |
 | 2 | Jigsaw (3) | Irregular/jigsaw region templates |
 
-Note: Dropdown index 2 maps to internal variant 3 (jigsaw templates).
+Note: Dropdown index 2 maps to internal variant 3 (jigsaw templates). Variant 2 (the other irregular template set) is not offered: one irregular choice keeps the sandbox simple; runs use all four variants (SPEC-CONF-018). Levels with a global structural modifier use the rectangular layout regardless of the choice (SPEC-AMB-014).
 
 ### Modifier Selection
 
@@ -244,7 +245,7 @@ TutorialProgress (in ProfileService):
 
 ## 7★ — Empty Grid Rules
 
-7★ (100% missing, 0 givens) is allowed on **all board sizes** without restrictions. On small boards (5×5) without modifiers, the puzzle may have multiple solutions — this is acceptable in tutorial mode as a sandbox experience. No modifier requirement is enforced.
+7★ (100% missing, 0 givens) is allowed on **all board sizes**, but **requires at least one modifier**: `TutorialModeService.TryValidateCustomSetup` rejects 7★ without a mode, as GEN-REMOVE-003 and GDS require (decided 2026-10-07, SPEC-CONF-015; the earlier "no modifier requirement" sentence was wrong). The empty grid has many solutions, so 7★ is the one place where a digit is wrong only when it breaks a rule (rule-based validation, SPEC-CONF-003).
 
 ---
 

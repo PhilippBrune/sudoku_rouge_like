@@ -1,11 +1,12 @@
 # Meta Progression System
 
-**Version:** 1.3 | **Date:** 2026-04-14 | **Status:** implemented
+**Version:** 1.4 | **Date:** 2026-10-07 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.4 | 2026-10-07 | implemented | 1.1 review decisions (2026-10-07): Ascension marked deferred, META-ASCEND-001..003 reserved (SPEC-CONF-026/036, GAP-017); Monthly Walk always available, no ascension gate (SPEC-CONF-026); Spirit Trials unlock after the first boss defeat (SPEC-CONF-007); completion counts 29 clearable modifiers (SPEC-CONF-019, GAP-009); prestige button as built (GAP-017); prestige reward contradiction logged as SPEC-CONF-039; SPICE table archived (SPEC-OBS-001). Achievements: only the Harmony achievements are implemented; the named and full lists are marked as proposals (SPEC-MAC-008, FUTURE-016); run-end step 11 names `EvaluateHarmonyAchievements`. |
 | 1.3 | 2026-04-14 | implemented | Added requirement IDs (META-UNLOCK, META-XP, META-PRESTIGE, META-ASCEND, META-COMPLETE, META-MASTERY, META-CODEX, META-ACHIEVE, META-STATS). |
 | 1.2 | 2026-03-24 | implemented | MetaProgressionPanelController shows all 8 classes (not just those with progress): unlocked classes show Level/Prestige/XP + base stats + passive; locked classes show greyed "Locked" text. Uses ClassCatalog.GetDefinition() for display data. |
 | 1.1 | 2026-03-23 | implemented | Post-run orchestration via RecordRunAndGetNewUnlocks, CompletionService 4×25% formula, AscensionService TryPrestigeReset and MaxStarCap, prestige boss-gate, all class unlock thresholds corrected |
@@ -15,7 +16,7 @@
 
 ## Overview
 
-Meta progression encompasses all persistent systems that carry between runs: **class XP and leveling**, **class unlocks**, **ascension**, **prestige**, **codex discovery**, **achievements**, and **global completion tracking**. These systems provide long-term goals beyond individual run success.
+Meta progression encompasses all persistent systems that carry between runs: **class XP and leveling**, **class unlocks**, **ascension** (deferred), **prestige**, **codex discovery**, **achievements**, and **global completion tracking**. These systems provide long-term goals beyond individual run success.
 
 ---
 
@@ -58,7 +59,7 @@ Typical unlock order based on natural play progression:
 
 ## Class XP & Leveling
 
-See [ClassXpProgressionSystem](ClassXpProgressionSystem_implemented.md) for the full XP curve and per-tile formula.
+See [ClassXpProgressionSystem](ClassXpProgressionSystem.md) for the full XP curve and per-tile formula.
 
 ### Summary
 
@@ -84,7 +85,9 @@ Prestige allows players to reset a class's level in exchange for permanent cosme
 **[META-PRESTIGE-002]** Requirement: Class must be Level 40.
 **[META-PRESTIGE-003]** Boss gate: Must have defeated `3 × (PrestigeTier + 1)` bosses cumulatively.
 **[META-PRESTIGE-004]** On prestige: Class `TotalXp` resets to 0, `PrestigeTier` increments by 1.
-**[META-PRESTIGE-005]** Reward: Prestige badge displayed on class select, cosmetic tier indicator.
+**[META-PRESTIGE-005]** Reward: Prestige badge displayed on class select, cosmetic tier indicator. (ClassXpProgressionSystem also lists a "Passive tier +1" reward; that contradiction is open as SPEC-CONF-039 — 1.1 ships the cosmetic reward only.)
+
+As built (1.1, GAP-017): level-40 classes show their prestige status in the Meta Progression panel and a **Prestige** button with a two-step confirmation once the boss gate is met (ClassXpProgressionSystem §Prestige in the UI). The panel summary shows the total prestige tiers instead of the never-built Ascension level.
 
 ### Prestige Tier Boss Requirements
 
@@ -107,27 +110,18 @@ Prestige allows players to reset a class's level in exchange for permanent cosme
 
 ---
 
-## Ascension System
+## Ascension System — deferred
+
+**Status: not built; deferred to future scope (decided 2026-10-07, SPEC-CONF-026, SPEC-CONF-036, GAP-017).** `AscensionService` does not exist. META-ASCEND-001..003 are kept as reserved IDs and marked ❌ in `REQUIREMENT_MAP.md`; the design below is retained for a later version.
 
 **[META-ASCEND-001]** Ascension is a **global** progression layer above class prestige.
 
-### `AscensionService.ApplyAscension(meta)` — [META-ASCEND-002]
+- *(deferred)* `ApplyAscension(meta)` — [META-ASCEND-002]: increments `AscensionLevel`, raises `MaxStarCap` by +1 (capped at 7).
+- *(deferred)* `TryPrestigeReset(meta)` — [META-ASCEND-003]: global prestige reset (requires `AscensionLevel > 0`; increments `PrestigeCount`; resets `AscensionLevel = 0`, `MaxStarCap = 5`; clears `PurchasedPermanentUpgrades`).
 
-- Increments `AscensionLevel`
-- Increases `MaxStarCap` by +1 (capped at 7)
-- Sets `SeasonalChallengeUnlocked = true`
+### Seasonal Challenges (Monthly Walk)
 
-### `AscensionService.TryPrestigeReset(meta)` — [META-ASCEND-003]
-
-Global prestige reset (distinct from per-class prestige):
-- Requires `AscensionLevel > 0`
-- Increments `PrestigeCount`
-- Resets `AscensionLevel = 0`, `MaxStarCap = 5`
-- Clears `PurchasedPermanentUpgrades`
-
-### Seasonal Challenges
-
-**[META-ASCEND-004]** `BuildMonthlySeed(year, month)` generates a deterministic seed: `(year × 100) + month`. Seasonal challenges use this seed for monthly leaderboard puzzles, unlocked after first ascension.
+**[META-ASCEND-004]** `BuildMonthlySeed(year, month)` generates a deterministic seed: `(year × 100) + month`. The Monthly Walk uses this seed. It is **always available** — there is no ascension gate (decided 2026-10-07, SPEC-CONF-026; SEASON-UNLOCK-001 updated) — and since 1.1 it has its own widget on the main menu (SeasonalChallengeSpec).
 
 ---
 
@@ -138,7 +132,7 @@ Global prestige reset (distinct from per-class prestige):
 | Check | Condition | Weight |
 |-------|-----------|:---:|
 | All Sizes × All Stars Cleared | Each board size (5–9) completed at each star (1–6) = 30 combos | 25% |
-| All Modifiers Cleared | All 15 `BossModifierId` values in `BossClearsByModifier` | 25% |
+| All Modifiers Cleared | All 29 clearable player modifiers (IDs 0–29 except Modular Regions, which is never rolled) recorded as cleared; a modifier counts when a boss with it is defeated (GAP-009, SPEC-CONF-019) | 25% |
 | All 8 Classes at Level 30+ | All 8 classes reached Level 30 or higher | 25% |
 | All Relics Discovered | All relics in codex marked Discovered | 25% |
 
@@ -182,6 +176,8 @@ Completion percentage is displayed on the meta progression panel.
 ## Achievement System
 
 `SteamAchievementService` evaluates unlock conditions after each run.
+
+**Implementation status (1.1, SPEC-MAC-008):** only the Harmony achievements are granted (HARMONY-ACHIEVE-001: `SteamAchievementService.EvaluateHarmonyAchievements`, tested by `SteamAchievementServiceTests`). The named and full lists below are design proposals: the game grants none of them yet, so they carry no requirement IDs. Each one needs an ID, a condition hook and a test before it ships, and the matching achievement must exist in the Steamworks portal (FUTURE-016).
 
 ### Named Achievements (9)
 
@@ -308,7 +304,7 @@ Tutorial achievements grant **no gameplay progression** (no XP, no gold, no clas
 | Mode | Unlock Condition |
 |------|-----------------|
 | Endless Zen | `TotalRuns ≥ 10` |
-| Spirit Trials | `SpiritTrialsUnlocked` flag (set via ascension or achievement) |
+| Spirit Trials | `SpiritTrialsUnlocked` flag, set after the first boss defeat (decided 2026-10-07, SPEC-CONF-007; TRIAL-UNLOCK-001) |
 
 ---
 
@@ -329,7 +325,7 @@ Tutorial achievements grant **no gameplay progression** (no XP, no gold, no clas
 8. Record 9×9 5★ clear
 9. Record no-item run
 10. Recalculate completion → CompletionService.Recalculate()
-11. Evaluate achievements → SteamAchievementService.EvaluateUnlocks()
+11. Evaluate Harmony achievements → SteamAchievementService.EvaluateHarmonyAchievements()
 12. Return List<ClassId> of newly unlocked classes
 ```
 
@@ -364,16 +360,4 @@ Tutorial achievements grant **no gameplay progression** (no XP, no gold, no clas
 
 ## Requirements Traceability
 
-<!-- AUTO-GENERATED by SPICE pipeline. Do not edit manually. -->
-
-| REQ-ID | Title | Code File | Verified Classes | Status |
-|--------|-------|-----------|-----------------|--------|
-| REQ-META-010 | TITLE | `—` | — | ✗ missing |
-| REQ-META-011 | ClassUnlockSystem | `Assets\Scripts\Classes\ClassUnlockService.cs` | ClassUnlockService | ✓ verified |
-| REQ-META-012 | ClassXpProgressionSystem | `Assets\Scripts\Run\RunDirector.cs` | RunDirector | ✓ verified |
-| REQ-META-013 | AscensionSystem | `Assets\Scripts\Meta\AscensionService.cs` | AscensionService | ✓ verified |
-| REQ-META-014 | PrestigeSystem | `Assets\Scripts\Save\ProfileService.cs` | — | ✓ verified |
-| REQ-META-015 | CompletionTracker | `Assets\Scripts\Meta\CompletionService.cs` | CompletionService | ✓ verified |
-| REQ-META-016 | MasteryBossRecords | `Assets\Scripts\Boss\BossService.cs` | BossService | ✓ verified |
-| REQ-META-017 | CodexSystem | `Assets\Scripts\Economy\RelicService.cs` | RelicService | ✓ verified |
-| REQ-META-018 | AchievementSystem | `Assets\Scripts\Meta\SteamAchievementService.cs` | SteamAchievementService | ✓ verified |
+The canonical requirement IDs for this document are listed in `docs/REQUIREMENT_MAP.md`. The auto-generated `REQ-*` table from the retired SPICE pipeline was moved to `docs/archive/SPICE_REQUIREMENT_TABLES.md` (2026-10-07, SPEC-OBS-001); its IDs are kept there and are not used by code or tests.

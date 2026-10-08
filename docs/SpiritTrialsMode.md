@@ -1,8 +1,14 @@
 # Spirit Trials Mode
 
-**Version:** 2.0  
-**Date:** 2026-04-27  
+**Version:** 2.1  
+**Date:** 2026-10-07  
 **Status:** implemented
+
+### Change History
+
+| Version | Date | Status | Changes |
+|---------|------|--------|---------|
+| 2.1 | 2026-10-07 | implemented | Unlock rule confirmed as the single source: first boss defeat (SPEC-CONF-007); modifier pool limited to generatable modifiers (GAP-007). |
 
 ## Overview
 
@@ -19,7 +25,7 @@ Primary implementation references:
 
 ## Unlock Condition
 
-`MetaProgressionState.SpiritTrialsUnlocked` is set after the player has defeated at least one boss across runs.
+`MetaProgressionState.SpiritTrialsUnlocked` is set after the player has defeated at least one boss across runs (`ProfileService.RecordRunAndGetNewUnlocks`, `stats.TotalBossesDefeated >= 1`). This is the single unlock rule (decided 2026-10-07, SPEC-CONF-007); TRIAL-UNLOCK-001 and MetaProgressionSystem were aligned, and the Ascension alternative was dropped (Ascension is deferred).
 
 Implementation reference:
 

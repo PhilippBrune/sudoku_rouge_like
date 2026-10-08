@@ -1,0 +1,150 @@
+﻿Baseline Unity test run 2026-10-01 (Unity 6000.3.10f1, batchmode, direct invocation without -quit)
+
+== EditMode : total=307 passed=262 failed=45 skipped=0
+FAIL SudokuRoguelike.Tests.AdvancedFeedbackReadinessTests.CursePanels_ShowLocalizedTextIconsAndCursedNodeRiskState
+      Expected: String containing "CurseService.GetLocalizedName" But was: "using System.Collections.Generic; using System.Text; using SudokuRoguelike.Core; using SudokuRoguelike.Run; using UnityEngine; using UnityEngine.UI; namespace SudokuRoguelike.UI { public se
+FAIL SudokuRoguelike.Tests.AssetProvenanceRegisterTests.RuntimeResourceFiles_AreCoveredByRegisteredRootsAndExtensions
+      Localization/de.json is under an unregistered runtime Resources root. Expected: True But was: False 
+FAIL SudokuRoguelike.Tests.AudioAssetServiceTests.MenuMusicController_InitializeRestoresMissingAudioSource
+      Expected: null But was: <MenuMusicControllerTest (UnityEngine.AudioSource)> 
+FAIL SudokuRoguelike.Tests.AudioAssetServiceTests.ReleaseRequiredClips_HaveAuthoredAssetFilesAndMetas
+      Assets\Resources\audio\music\menu_loop.wav does not start with RIFF. String lengths are both 4. Strings differ at index 0. Expected: "RIFF" But was: "\u0001T\u0013\b" -----------^ 
+FAIL SudokuRoguelike.Tests.BuildWorkflowReadinessTests.CanonicalDotnetValidation_UsesSlnxNotLegacySln
+      Expected: String containing "The stale `sudoku_rouge_like.sln` root solution has been retired" But was: "# Development Workflow ## Authoritative Build and Test Entry Point Unity is the authoritative build and test runner for this repository. Target editor ver
+FAIL SudokuRoguelike.Tests.BuildWorkflowReadinessTests.UnityBatchmodeReleaseGate_IsDocumentedAndScripted
+      Expected: String containing "Release candidates still require local or CI Unity batchmode EditMode and PlayMode results" But was: "# CI Validation The repository has a lightweight CI scaffold in: - `.github/workflows/static-validation.yml` ## What Runs Automa
+FAIL SudokuRoguelike.Tests.ConditionalButtonStateTests.GeneratedMenu_ReflectsLockedDefaultsForResumeClassesAndGameModes
+     System.NullReferenceException : Object reference not set to an instance of an object
+FAIL SudokuRoguelike.Tests.ConditionalButtonStateTests.GeneratedMenu_RefreshesConditionalButtonsAfterMetaUnlocksChange
+     System.NullReferenceException : Object reference not set to an instance of an object
+FAIL SudokuRoguelike.Tests.ControllerSizeBudgetTests.LargeControllers_DoNotGrowBeyondCurrentRatchetedBudget("Assets/Scripts/UI/InRunController.cs",5100)
+      Assets/Scripts/UI/InRunController.cs grew beyond its ratcheted line budget. Extract a focused presenter/service or update docs/controller-extraction-plan.md with a reviewed budget change. Expected: less than or equal to 5100 But was: 5205 
+FAIL SudokuRoguelike.Tests.ControllerSizeBudgetTests.LargeControllers_DoNotGrowBeyondCurrentRatchetedBudget("Assets/Scripts/UI/MainMenuBlueprintBuilder.cs",3340)
+      Assets/Scripts/UI/MainMenuBlueprintBuilder.cs grew beyond its ratcheted line budget. Extract a focused presenter/service or update docs/controller-extraction-plan.md with a reviewed budget change. Expected: less than or equal to 3340 But was: 3358 
+FAIL SudokuRoguelike.Tests.ControllerSizeBudgetTests.LargeControllers_DoNotGrowBeyondCurrentRatchetedBudget("Assets/Scripts/Run/RunDirector.cs",3350)
+      Assets/Scripts/Run/RunDirector.cs grew beyond its ratcheted line budget. Extract a focused presenter/service or update docs/controller-extraction-plan.md with a reviewed budget change. Expected: less than or equal to 3350 But was: 3911 
+FAIL SudokuRoguelike.Tests.CreditsLegalContentTests.CreditsMarkdownAndInGamePanel_SourceDoNotClaimBundledSteamworksSdk
+      docs/Credits.md Expected: String containing "before claiming Steam release support" But was: "# Credits â€” Run of the Nine --- ## Game Design & Concept **Game Design, Direction & Original Concept** Philipp Brune All core ideas, gameplay systems, rules design
+FAIL SudokuRoguelike.Tests.CreditsLegalContentTests.CreditsMarkdownAndInGamePanel_SourceIncludeFinalAssetAndThanksWording
+      Assets/Scripts/UI/MainMenuBlueprintBuilder.cs Expected: String containing "Runtime asset provenance is tracked" But was: "using System; using System.Collections.Generic; using System.Reflection; using UnityEngine; using UnityEngine.EventSystems; using UnityEn
+FAIL SudokuRoguelike.Tests.CreditsLegalContentTests.CreditsMarkdownAndInGamePanel_SourceIncludeGoogleResolverNotice
+      Assets/Scripts/UI/MainMenuBlueprintBuilder.cs Expected: String containing "Google Mobile Dependency Resolver for Unity" But was: "using System; using System.Collections.Generic; using System.Reflection; using UnityEngine; using UnityEngine.EventSystems; using
+FAIL SudokuRoguelike.Tests.DropdownCompatibilityTests.GeneratedOptionsDropdowns_AttachUnityDropdownItemCompatibilityMembers
+     System.NullReferenceException : Object reference not set to an instance of an object
+FAIL SudokuRoguelike.Tests.GameplayEffectContractTests.GinkgoLeaf_RestoresLastMistakeHpComboAndClearsWrongCell
+      Expected: 9 But was: 10 
+FAIL SudokuRoguelike.Tests.GeneratedUiLocalizationCoverageTests.GeneratedUiVisibleText_DoesNotAddUntrackedHardcodedStrings
+      New raw generated UI strings must be localized with T(...)/LocalizationService.Format(...) or added to the known-debt allowlist with a follow-up plan. Expected: <empty> But was: < "Assets/Scripts/UI/MainMenuBlueprintBuilder.cs:199 BuildToggle "Enable All (Deb
+FAIL SudokuRoguelike.Tests.GeneratedUiRebuildTests.ForceRebuild_ReplacesGeneratedRootChildrenAndSlotHandlers
+     System.NullReferenceException : Object reference not set to an instance of an object
+FAIL SudokuRoguelike.Tests.GeneratedUiWiringContractTests.BossClearedRewardScreen_HidesDetailsScrimAndCentersStats
+      Expected: String containing "SetGameOverDetailsScrimActive(false)" But was: "using System; using System.Collections.Generic; using System.Text; using SudokuRoguelike.Core; using SudokuRoguelike.Economy; using SudokuRoguelike.Run; using SudokuRoguelike.Save; u
+FAIL SudokuRoguelike.Tests.GeneratedUiWiringContractTests.CustomPuzzleModes_DisableUnavailableChoicesAndValidateBeforeLaunch
+      Expected: String containing "CustomSelectionSummaryBg" But was: "using System; using System.Collections.Generic; using System.Reflection; using UnityEngine; using UnityEngine.EventSystems; using UnityEngine.UI; using SudokuRoguelike.Bootstrap; using SudokuRog
+FAIL SudokuRoguelike.Tests.GeneratedUiWiringContractTests.PathOverviewSaveQuitButton_UsesInkSaveIcon
+      Expected: String containing "sqLbl.rectTransform.anchorMin = new Vector2(0.25f, 0f)" But was: "using System; using System.Collections; using System.Collections.Generic; using System.Linq; using System.Text; using SudokuRoguelike.Boss; using SudokuRoguelike.Cl
+FAIL SudokuRoguelike.Tests.GeneratedUiWiringContractTests.RequiredGeneratedControls_HaveWiringEvidence
+      Expected: <empty> But was: < "Assets/Scripts/UI/MainMenuBlueprintBuilder.cs: missing wiring token 'mc.StartGame' for MainMenu/BtnStart", "Assets/Scripts/UI/MainMenuBlueprintBuilder.cs: missing wiring token 'mc.ResumeGame' for MainMenu/BtnResume", "Assets/Scri
+FAIL SudokuRoguelike.Tests.GeneratedUiWiringContractTests.TutorialBannerPanel_HidesWholeTopRightBackingOutsideTutorialRuns
+      Expected: String containing "_bannerPanel.SetActive(isTutorial)" But was: "using SudokuRoguelike.Core; using UnityEngine; using UnityEngine.UI; namespace SudokuRoguelike.UI { public sealed class TutorialRunBannerController : MonoBehaviour { private RunMapCont
+FAIL SudokuRoguelike.Tests.GeneratedUiWiringContractTests.VictoryScreen_ClearsBossInterstitialAndCommitsFinalBossRewards
+      Expected: String containing "ClearBossClearedDynamicContent()" But was: "using System; using System.Collections.Generic; using System.Text; using SudokuRoguelike.Core; using SudokuRoguelike.Economy; using SudokuRoguelike.Run; using SudokuRoguelike.Save; using
+FAIL SudokuRoguelike.Tests.LegalReleaseReadinessTests.LegalReleaseGate_DocumentsAnalyticsFreeReleaseBaseline
+     System.IO.DirectoryNotFoundException : Could not find a part of the path "C:\Users\Philipp\Documents\sudoku_rouge_like\docs\release\platform-readiness-checklist.md".
+FAIL SudokuRoguelike.Tests.LocalizationServiceTests.ClassNarrative_HasLocalizedIntroAndBranchingEndings
+      Expected: String containing "ParkNarrativeService.GetRunEndFlavor(victory, classId)" But was: "using System; using System.Collections.Generic; using System.Text; using SudokuRoguelike.Core; using SudokuRoguelike.Economy; using SudokuRoguelike.Run; using Sudok
+FAIL SudokuRoguelike.Tests.PerformanceReadinessTests.RunAudioControllerStart_DoesNotAutoPlayDefaultPathLoop
+     System.InvalidOperationException : Could not find method signature: private void SetContext(
+FAIL SudokuRoguelike.Tests.PlatformReleaseReadinessTests.InternalValidationBaseline_DoesNotClaimPlatformReleaseReadiness
+     System.IO.DirectoryNotFoundException : Could not find a part of the path "C:\Users\Philipp\Documents\sudoku_rouge_like\docs\release\platform-readiness-checklist.md".
+FAIL SudokuRoguelike.Tests.PlatformReleaseReadinessTests.PlatformReleaseGate_DetectsAnalyticsFreeBaselineAndStoreAssetBlockers
+     System.IO.DirectoryNotFoundException : Could not find a part of the path "C:\Users\Philipp\Documents\sudoku_rouge_like\docs\release\platform-readiness-checklist.md".
+FAIL SudokuRoguelike.Tests.PlatformReleaseReadinessTests.PlatformReleaseGate_DetectsDevelopmentPlayerMetadataAndMissingIcons
+     System.IO.DirectoryNotFoundException : Could not find a part of the path "C:\Users\Philipp\Documents\sudoku_rouge_like\docs\release\platform-readiness-checklist.md".
+FAIL SudokuRoguelike.Tests.PlatformReleaseReadinessTests.PlatformReleaseGate_DocumentsCurrentRegistryBlockers
+     System.IO.DirectoryNotFoundException : Could not find a part of the path "C:\Users\Philipp\Documents\sudoku_rouge_like\docs\release\platform-readiness-checklist.md".
+FAIL SudokuRoguelike.Tests.PlatformReleaseReadinessTests.PlatformReleaseManifest_TracksEveryOpenReleaseDecision
+     System.IO.DirectoryNotFoundException : Could not find a part of the path "C:\Users\Philipp\Documents\sudoku_rouge_like\docs\release\platform-release-manifest.md".
+FAIL SudokuRoguelike.Tests.ReleaseLocalizationReadinessTests.GeneratedUiHardcodedStringGate_RemainsStrict
+      Expected: String containing ""Run of the Nine"" But was: "using System; using System.Collections.Generic; using System.IO; using System.Linq; using System.Text; using NUnit.Framework; namespace SudokuRoguelike.Tests { [TestFixture] public class GeneratedUiLoc
+FAIL SudokuRoguelike.Tests.ReleaseReadinessStatusTests.ReleaseStatus_DocumentsCurrentMilestoneAndOpenGates
+     System.IO.DirectoryNotFoundException : Could not find a part of the path "C:\Users\Philipp\Documents\sudoku_rouge_like\docs\release\release-readiness-status.md".
+FAIL SudokuRoguelike.Tests.RunFlowAcceptanceTests.BossFlow_CanApplyChosenModifierSolveAndRecordBossDefeat
+      Expected: True But was: False 
+FAIL SudokuRoguelike.Tests.RunFlowAcceptanceTests.GardenRun_CanAdvanceToPuzzleSolveGrantRewardsAndExportSaveState
+      Expected: 6 But was: 0 
+FAIL SudokuRoguelike.Tests.SaveDurabilityReadinessTests.GameBootstrap_FocusHookHandlesEarlyProfileServiceNull
+      Focus changes can arrive before GameBootstrap services are initialized. Expected: not String containing "_profileService.LoadOptions()" But was: "using System; using UnityEngine; using UnityEngine.EventSystems; using SudokuRoguelike.Core; using SudokuRoguelik
+FAIL SudokuRoguelike.Tests.SaveDurabilityReadinessTests.ResumeService_FlushesPendingAutosaveBeforeReading
+      Expected: True But was: False TearDown : System.IO.IOException : The process cannot access the file 'C:\Users\Philipp\AppData\LocalLow\Kratossos\sudoku_rouge_like\save_profile_2.json.tmp' because it is being used by another process.
+FAIL SudokuRoguelike.Tests.SaveWriteQueueTests.Flush_RecordsFailuresAndContinuesLaterWrites
+     Unhandled log message: '[Error] [SaveWriteQueue] Save write failed: expected test failure'. Use UnityEngine.TestTools.LogAssert.Expect
+FAIL SudokuRoguelike.Tests.SmokeTestReadinessTests.SmokeManifest_TracksRequiredRuntimeAndGeneratedUiScenarios
+      Expected: String containing "not for beta, early-access, or release-candidate approval" But was: "# Smoke Test Readiness ## Purpose This manifest defines the minimum automated smoke coverage required before the project can be treated as beta, early-access, or
+FAIL SudokuRoguelike.Tests.SmokeTestReadinessTests.WorkflowAndDevelopmentDocs_MakeUnityRuntimeGateExplicit
+      Expected: String containing "PlayMode test sources live under `Assets/Scripts/Tests/PlayMode/`" But was: "# Development Workflow ## Authoritative Build and Test Entry Point Unity is the authoritative build and test runner for this repository. Target editor ve
+FAIL SudokuRoguelike.Tests.StartupExperienceReadinessTests.SplashPipeline_KeepsDedicatedSceneAndEditorFallbackDocumented
+      Expected: String containing "LoadScene("Prototype")" But was: "using UnityEngine; using UnityEngine.SceneManagement; namespace SudokuRoguelike.Bootstrap { /// <summary> /// Bootstrap for a dedicated "Splash" scene (build index 0). /// Place this on any GameOb
+FAIL SudokuRoguelike.Tests.StorePlatformAssetReadinessTests.PlatformManifest_LinksStorePlatformAssetChecklist
+     System.IO.DirectoryNotFoundException : Could not find a part of the path "C:\Users\Philipp\Documents\sudoku_rouge_like\docs\release\platform-release-manifest.md".
+FAIL SudokuRoguelike.Tests.StorePlatformAssetReadinessTests.StorePlatformAssetChecklist_TracksRequiredDeliverables
+     System.IO.DirectoryNotFoundException : Could not find a part of the path "C:\Users\Philipp\Documents\sudoku_rouge_like\docs\release\store-platform-asset-checklist.md".
+FAIL SudokuRoguelike.Tests.TechnicalDebtRegisterTests.PlaceholderAndStubMarkers_InProductionScriptsAreRegistered
+      Assets/Scripts/Meta/SteamLeaderboardService.cs has an unregistered debt marker. Expected: String containing "Assets/Scripts/Meta/SteamLeaderboardService.cs" But was: "# Technical Debt Register ## Purpose This register classifies the placeholder and stub marke
+
+== PlayMode : total=8 passed=3 failed=5 skipped=0
+FAIL SudokuRoguelike.Tests.GeneratedUiPlayModeTraversalTests.GermanLargeFont_GeneratedMenusBuildAndNavigateWithoutMissingLocalization
+      Missing German localization keys while building main menu at 150% font scale. Expected: <empty> But was: < "Free (8 HP/Pencil)", "Hover a Sudoku mode for details.", "Start Run" > 
+FAIL SudokuRoguelike.Tests.GeneratedUiPlayModeTraversalTests.InRunOptionsButtons_OpenCloseWithoutBreakingPuzzlePanel
+      Expected active panel/control: InGameOptionsPanel Expected: True But was: False 
+FAIL SudokuRoguelike.Tests.GeneratedUiPlayModeTraversalTests.InRunOptionsControls_CanBeChangedWithoutLeavingOptionsPanel
+      Expected active panel/control: InGameOptionsPanel Expected: True But was: False 
+FAIL SudokuRoguelike.Tests.GeneratedUiPlayModeTraversalTests.NestedMenuButtons_ReturnToOwningPanels
+      Button is not interactable: BtnZenRecords Expected: True But was: False 
+FAIL SudokuRoguelike.Tests.GeneratedUiPlayModeTraversalTests.OptionsPanelTabsAndLanguageConfirmation_AreRuntimeNavigable
+      Missing generated UI component: MuteAll Expected: not null But was: null 
+
+== Diagnostics : total=17 passed=7 failed=10 skipped=0
+FAIL SudokuRoguelike.Tests.ReviewDiagnosticsTests.D03_Modifiers_EachGeneratesSatisfiableAndRestrictiveConstraints
+      Expected: <empty> But was: < "ParityLines@5: modifier rejects no base-legal wrong digit (no effective constraint)", "DifferenceKropki@5: modifier rejects no base-legal wrong digit (no effective constraint)", "DifferenceKropki@9: modifier rejects no base-legal
+FAIL SudokuRoguelike.Tests.ReviewDiagnosticsTests.D04_BossGate_FloorModifierAndChoiceCountsMatchSpecTable
+      Expected: <empty> But was: < "H0 floor 1: shown 2 vs spec 3", "H0 floor 1: picks 1 vs spec 2", "H0 floor 3: floor mods 1 vs spec 2", "H0 floor 4: floor mods 1 vs spec 3", "H0 floor 5: floor mods 2 vs spec 4", "H7 floor 1: shown 3 but UI requires 1 picks (excl
+FAIL SudokuRoguelike.Tests.ReviewDiagnosticsTests.D05_BossGate_ChosenModifiersAreInjectedIntoBossPuzzle
+      Expected: <empty> But was: < "seed 1001 F1: XP entry not flagged IsBoss (BoardSize=0, Stars=0)", "seed 1001 F2: XP entry not flagged IsBoss (BoardSize=0, Stars=0)", "seed 1001 F3: XP entry not flagged IsBoss (BoardSize=0, Stars=0)", "seed 1001 F4: XP entry no
+FAIL SudokuRoguelike.Tests.ReviewDiagnosticsTests.D06_PathGraph_ConnectivityLengthsCrossLinksElite
+      Expected: <empty> But was: < "seed 11 F2: 4 cross-link nodes (spec: exactly one cross-connection)", "seed 11 F3: 6 cross-link nodes (spec: exactly one cross-connection)", "seed 11 F4: 6 cross-link nodes (spec: exactly one cross-connection)", "seed 11 F5: 8 cr
+FAIL SudokuRoguelike.Tests.ReviewDiagnosticsTests.D07_ClassBaseStatsAtRunStart_MatchGameDesignSpecRoster
+      Expected: <empty> But was: < "KoiGambler: run start 10/8/2 vs GDS (9, 8, 2)", "NumberFreak L10: HP 15 Pencil 12 vs spec 14/13" > 
+FAIL SudokuRoguelike.Tests.ReviewDiagnosticsTests.D09_RunEnd_XpCommittedPerClass_UnlocksAndCompletion
+      Completion must record the real board size/stars Expected: not collection containing "0x0_s0" But was: < "0x0_s0" > 
+FAIL SudokuRoguelike.Tests.ReviewDiagnosticsTests.D10_ItemRewardSlots_CountsNothingRatesEpicGate
+      Expected: <empty> But was: < "1â˜… nothing rate 0,216 vs spec 0,25" > 
+FAIL SudokuRoguelike.Tests.ReviewDiagnosticsTests.D12_SaveResume_MidPuzzleAndBossState_RoundTrip
+      Expected: <empty> But was: < "modifier overlay differs after resume (L0 K0 C0 A0 M0 F0 P0 -> null)", "boss choices change after save/quit/resume (re-roll exploit / non-determinism)" > 
+FAIL SudokuRoguelike.Tests.ReviewDiagnosticsTests.D14_Tutorial_SizesStarsModifiersAndNoProgression
+      Expected: <empty> But was: < "tutorial 5x5 7â˜… threw ArgumentException", "tutorial 6x6 7â˜… threw ArgumentException", "tutorial 9x9 1â˜…: no board", "tutorial 9x9 6â˜…: no board", "tutorial 9x9 7â˜…: no board" > 
+FAIL SudokuRoguelike.Tests.ReviewDiagnosticsTests.D15_Mistakes_ReduceHpAndRunEndsAtZero
+      wrong placement must cost HP Expected: less than 10 But was: 10 
+
+== Diagnostics2 : total=5 passed=0 failed=5 skipped=0
+FAIL SudokuRoguelike.Tests.ReviewDiagnostics2Tests.D17_ResumeMidPuzzle_CanContinuePlacingAndCompleteLevel
+      Expected: <empty> But was: < "floor 1: placing a digit after resume throws (EXCEPTION NullReferenceException: Object reference not set to an instance of an object)", "floor 1: completing level after resume throws (EXCEPTION NullReferenceException: Object refe
+FAIL SudokuRoguelike.Tests.ReviewDiagnostics2Tests.D18_BossAsyncPath_AllFloors_GeneratesWithChosenModifiers
+      Expected: <empty> But was: < "seed 1001 F5: overlay missing for NonconsecDiagonal", "seed 2002 F3: overlay missing for Thermo", "seed 3003 F5: chosen modifier dropped Nonconsecutive,Antiking", "seed 3003 F5: overlay missing for Nonconsecutive,Antiking", "seed
+FAIL SudokuRoguelike.Tests.ReviewDiagnostics2Tests.D19_Placement_NonSolutionDigitThatFitsRulesIsAccepted
+      Spec (GDS 5.1, BossMechanics 'PlaceNumber checks Solution') treats any non-solution digit as a wrong placement Expected: 0 But was: 30 
+FAIL SudokuRoguelike.Tests.ReviewDiagnostics2Tests.D20_LateFloorPuzzles_AsyncGenerationReliability
+      Expected: <empty> But was: < "seed 9100 F4 node 2 F4 9x9 v3 mods=[Antiking] failed after 20006ms", "seed 9100 F4 node 4 F4 9x9 v2 mods=[Antiking] failed after 20015ms", "seed 9100 F5 node 3 F5 9x9 v3 mods=[GreaterLessThan,ConsecutiveLine] failed after 7513ms"
+FAIL SudokuRoguelike.Tests.ReviewDiagnostics2Tests.D21_ModifierRules_RejectWrongDigitsAtConstrainedCells
+     Unhandled log message: '[Error] [RunDirector] StartLevel: board generation timed out for seed=5016, size=9: Puzzle generation exceeded the configured time budget.'. Use UnityEngine.TestTools.LogAssert.Expect
+
+== Diagnostics3 : total=4 passed=0 failed=4 skipped=0
+FAIL SudokuRoguelike.Tests.ReviewDiagnostics3Tests.D22_EndlessZen_LevelsGenerateWithFunctionalModifiers
+      Expected: <empty> But was: < "seed 41000: depth 0 board not generated", "seed 41000 depth 25: board not generated", "seed 41002: depth 0 board not generated", "seed 41002 depth 12: board not generated", "seed 41005 depth 5: board not generated", "seed 41005 d
+FAIL SudokuRoguelike.Tests.ReviewDiagnostics3Tests.D23_SpiritTrials_EachTierGeneratesWithFunctionalModifiers
+      Expected: <empty> But was: < "Adept seed 52000: non-functional modifier drawn Sandwich", "Adept seed 52001: no board (779ms)", "Adept seed 52001: non-functional modifier drawn SumLine", "Adept seed 52003: non-functional modifier drawn ConstraintNegationZone",
+FAIL SudokuRoguelike.Tests.ReviewDiagnostics3Tests.D24_MonthlyWalk_TwoYearsOfChallengesGenerate
+      Expected: <empty> But was: < "2026-02: monthly puzzle not generated (4001ms)", "2026-03: monthly puzzle not generated (4001ms)", "2026-07: monthly puzzle not generated (4002ms)", "2026-10: monthly puzzle not generated (4002ms)", "2027-03: monthly puzzle not g
+FAIL SudokuRoguelike.Tests.ReviewDiagnostics3Tests.D25_ShopRestRelicCursedFlows_ChangeStateAsSpecified
+      Expected: <empty> But was: < "shop charged gold for an item that could not be stored (bag full)", "rest heal gives 3 HP (GDS: +2)", "rest pencil gives 4 (GDS: +3)" > 
+

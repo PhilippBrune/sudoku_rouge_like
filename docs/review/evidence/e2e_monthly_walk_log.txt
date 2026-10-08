@@ -1,0 +1,3 @@
+[RunDirector] StartLevel: board generation timed out for seed=202610, size=9: Puzzle generation exceeded the configured time budget.
+[RunDirector] StartLevel: puzzle generation failed reason=BudgetExceeded, size=9, stars=4, region=2, seed=202610, boss=False, elite=False, preBoss=False, cursed=False, mods=[Antiknight], elapsedMs=0, error=Puzzle generation exceeded the configured time budget.
+[GameBootstrap] Launched Seasonal Challenge 2026-10

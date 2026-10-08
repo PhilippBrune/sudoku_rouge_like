@@ -1,0 +1,31 @@
+# Fix verification (2026-10-05): excerpts from Player.log of the fixed Windows build.
+# Kept: [GameBootstrap], [AutoSave], RunDirector region/fallback notes, any Exception/Error line.
+# Runs of [AutoSave] lines are collapsed to a count and the last line. Full logs are archived outside the repo.
+
+## Session G: Garden Run, Save & Quit + Resume 7 times, Floor 1 boss, relic, Floor 2
+[GameBootstrap] Launched GardenRun as NumberFreak, seed=91529
+[AutoSave] x5 (last: HP=10 Pencil=10 Items=0 NodeIdx=1 Floor=0 RunNum=1)
+[GameBootstrap] Resumed run from save.
+[AutoSave] x11 (last: HP=10 Pencil=10 Items=1 NodeIdx=2 Floor=0 RunNum=1)
+[GameBootstrap] Resumed run from save.
+[AutoSave] x15 (last: HP=10 Pencil=10 Items=2 NodeIdx=4 Floor=0 RunNum=1)
+[GameBootstrap] Resumed run from save.
+[AutoSave] x11 (last: HP=10 Pencil=10 Items=2 NodeIdx=6 Floor=0 RunNum=1)
+[GameBootstrap] Resumed run from save.
+[AutoSave] x11 (last: HP=10 Pencil=10 Items=2 NodeIdx=7 Floor=0 RunNum=1)
+[GameBootstrap] Resumed run from save.
+[AutoSave] x15 (last: HP=10 Pencil=10 Items=2 NodeIdx=8 Floor=0 RunNum=1)
+[GameBootstrap] Resumed run from save.
+[AutoSave] x12 (last: HP=10 Pencil=10 Items=2 NodeIdx=16 Floor=0 RunNum=1)
+[GameBootstrap] Resumed run from save.
+[AutoSave] x33 (last: HP=10 Pencil=10 Items=2 NodeIdx=0 Floor=1 RunNum=1)
+Totals: 113 autosaves, 0 Exception/Error lines.
+
+## Session H: Monthly Walk 2026-10: start, Save & Quit, resume, Save & Quit
+[RunDirector] Using rectangular regions (variant 2 -> 0) for global structural modifiers: Antiknight
+[GameBootstrap] Launched Seasonal Challenge 2026-10
+[AutoSave] x1 (last: HP=10 Pencil=12 Items=0 NodeIdx=0 Floor=0 RunNum=-1)
+[GameBootstrap] Resumed Seasonal Challenge 2026-10
+[GameBootstrap] Launched Seasonal Challenge 2026-10
+[AutoSave] x1 (last: HP=10 Pencil=12 Items=0 NodeIdx=0 Floor=0 RunNum=-1)
+Totals: 2 autosaves, 0 Exception/Error lines.

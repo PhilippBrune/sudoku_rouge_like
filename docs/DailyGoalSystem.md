@@ -1,11 +1,12 @@
 # Daily Goal System
 
-**Version:** 0.1 | **Date:** 2026-04-09 | **Status:** new
+**Version:** 0.2 | **Date:** 2026-10-07 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 0.2 | 2026-10-07 | implemented | Status set from evidence (SPEC-CONF-022): streak and goal evaluation covered by DailyStreakTests and GameplayEffectContractTests. Daily Walk widget on the main menu as built (SPEC-CONF-027, GAP-028); skipped days reset the streak (GAP-028). |
 | 0.1 | 2026-04-09 | new | Initial specification |
 
 ---
@@ -37,6 +38,8 @@ A **Daily Walk** widget sits on the main menu, between the Play buttons and the 
 - Checkboxes fill in as goals are completed mid-run or on run end
 - Completed goals show a muted tick and their reward already claimed
 - If all 3 are done: the widget header changes to `"Daily Walk — Complete ✓"` in gold
+
+**As built (1.1, SPEC-CONF-027, GAP-028):** a compact Daily Walk widget sits to the right of the main-menu buttons. It shows today's completed goals and the streak ("1/3 goals today - streak 4") and an **Open** button that leads to the full Daily Walk panel with the goal list, rewards, stamps and reset countdown. Per-goal checkboxes and the streak titles are shown in that panel, not on the widget itself.
 
 ---
 
@@ -117,7 +120,7 @@ Rewards are granted once, immediately when the goal is first completed:
 | Condition | Effect |
 |-----------|--------|
 | All 3 goals completed today | Streak increments by 1 |
-| Any goal not completed by midnight | Streak resets to 0 |
+| Any goal not completed by midnight | Streak resets to 0 — including days on which the game was not started: on the first launch after one or more skipped days the streak is 0 (fixed 1.1, GAP-028; `DailyStreakTests`) |
 | Streak = 7 | Award +3 Ink Stamps bonus, display title `"Dedicated Walker"` in main menu widget |
 | Streak = 30 | Award +10 Ink Stamps bonus, display title `"Park Regular"` in main menu widget |
 | Streak = 100 | Award +25 Ink Stamps bonus, display title `"The One Who Returns"` |

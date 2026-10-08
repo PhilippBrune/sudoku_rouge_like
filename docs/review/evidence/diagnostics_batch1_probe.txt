@@ -1,0 +1,328 @@
+
+=== D01_Determinism_SameSeedReproducesPathPuzzleModifiersRewards ===
+  run A (seed 424200):
+    G0=0:Start:CalmRoute:1,8|1:Puzzle:CalmRoute:2|2:Puzzle:CalmRoute:3|3:Shop:CalmRoute:4,10|4:Puzzle:CalmRoute:5|5:Rest:CalmRoute:6|6:ElitePuzzle:CalmRoute:7|7:PreBoss:CalmRoute:13|8:Puzzle:RiskRoute:9|9:Shop:RiskRoute:10|1…
+    CFG size=6 stars=1 var=0 seed=946620419 mods=[]
+    B=6:020550110441331661030440660021551011112032222063043053052662442113223333044014034055665025664224554335115445
+    R=Nothing,BambooScroll/Rare
+    GOLD=36
+    F1 floorMods=[Antiking] fx=True:Bounty G=995024870
+    F2 floorMods=[FortressCells] fx=True:Bounty G=-349332758
+    F3 floorMods=[BetweenLines] fx=True:Bounty G=1826890622
+    F4 floorMods=[DifferenceKropki,FogOfWar] fx=True:Bounty G=-1610541052
+    BOSS=ParityLines,NonconsecDiagonal,FortressCells,AntiBishop,BetweenLines,ArrowSums
+    SHOP=PatternScroll/Normal/45,WindChime/Rare/90,MeditationStone/Normal/45,Finder/Normal/45
+    
+  same seed identical: True
+  different seed differs: True
+
+=== D02_Generation_AllSizesVariantsStars_ValidRegionsGivensUniqueness ===
+  5x5 v0: 1★ g=15/25 miss=10(spec≈10) sol=1 0ms; 2★ g=13/25 miss=12(spec≈12) sol=1 0ms; 3★ g=10/25 miss=15(spec≈15) sol=1 0ms; 4★ g=8/25 miss=17(spec≈17) sol=1 0ms; 5★ g=5/25 miss=20(spec≈20) sol=≥2 0ms; 6★ g=2/25 miss=23(spec≈23) sol=≥2 0ms; 
+  5x5 v1: 1★ g=15/25 miss=10(spec≈10) sol=1 0ms; 2★ g=13/25 miss=12(spec≈12) sol=1 0ms; 3★ g=10/25 miss=15(spec≈15) sol=1 0ms; 4★ g=8/25 miss=17(spec≈17) sol=≥2 0ms; 5★ g=5/25 miss=20(spec≈20) sol=1 0ms; 6★ g=2/25 miss=23(spec≈23) sol=≥2 0ms; 
+  5x5 v2: 1★ g=15/25 miss=10(spec≈10) sol=1 0ms; 2★ g=13/25 miss=12(spec≈12) sol=1 0ms; 3★ g=10/25 miss=15(spec≈15) sol=1 0ms; 4★ g=8/25 miss=17(spec≈17) sol=≥2 0ms; 5★ g=5/25 miss=20(spec≈20) sol=≥2 0ms; 6★ g=2/25 miss=23(spec≈23) sol=≥2 0ms; 
+  5x5 v3: 1★ g=15/25 miss=10(spec≈10) sol=1 0ms; 2★ g=13/25 miss=12(spec≈12) sol=1 0ms; 3★ g=10/25 miss=15(spec≈15) sol=≥2 0ms; 4★ g=8/25 miss=17(spec≈17) sol=1 0ms; 5★ g=5/25 miss=20(spec≈20) sol=1 0ms; 6★ g=2/25 miss=23(spec≈23) sol=≥2 0ms; 
+  6x6 v0: 1★ g=22/36 miss=14(spec≈14) sol=1 0ms; 2★ g=18/36 miss=18(spec≈18) sol=1 0ms; 3★ g=14/36 miss=22(spec≈22) sol=≥2 0ms; 4★ g=11/36 miss=25(spec≈25) sol=≥2 0ms; 5★ g=7/36 miss=29(spec≈29) sol=≥2 0ms; 6★ g=4/36 miss=32(spec≈32) sol=≥2 0ms; 
+  6x6 v1: 1★ g=22/36 miss=14(spec≈14) sol=1 0ms; 2★ g=18/36 miss=18(spec≈18) sol=1 0ms; 3★ g=14/36 miss=22(spec≈22) sol=≥2 0ms; 4★ g=11/36 miss=25(spec≈25) sol=≥2 0ms; 5★ g=7/36 miss=29(spec≈29) sol=≥2 0ms; 6★ g=4/36 miss=32(spec≈32) sol=≥2 0ms; 
+  6x6 v2: 1★ g=22/36 miss=14(spec≈14) sol=1 0ms; 2★ g=18/36 miss=18(spec≈18) sol=1 0ms; 3★ g=14/36 miss=22(spec≈22) sol=≥2 0ms; 4★ g=11/36 miss=25(spec≈25) sol=≥2 0ms; 5★ g=7/36 miss=29(spec≈29) sol=≥2 0ms; 6★ g=4/36 miss=32(spec≈32) sol=≥2 0ms; 
+  6x6 v3: 1★ g=22/36 miss=14(spec≈14) sol=1 0ms; 2★ g=18/36 miss=18(spec≈18) sol=1 0ms; 3★ g=14/36 miss=22(spec≈22) sol=≥2 0ms; 4★ g=11/36 miss=25(spec≈25) sol=1 0ms; 5★ g=7/36 miss=29(spec≈29) sol=≥2 0ms; 6★ g=4/36 miss=32(spec≈32) sol=≥2 0ms; 
+  7x7 v0: 1★ g=29/49 miss=20(spec≈20) sol=1 54ms; 2★ g=25/49 miss=24(spec≈24) sol=≥2 0ms; 3★ g=20/49 miss=29(spec≈29) sol=1 24ms; 4★ g=15/49 miss=34(spec≈34) sol=≥2 0ms; 5★ g=10/49 miss=39(spec≈39) sol=≥2 24ms; 6★ g=5/49 miss=44(spec≈44) sol=≥2 79ms; 
+  7x7 v1: 1★ g=29/49 miss=20(spec≈20) sol=1 0ms; 2★ g=25/49 miss=24(spec≈24) sol=≥2 0ms; 3★ g=20/49 miss=29(spec≈29) sol=1 0ms; 4★ g=15/49 miss=34(spec≈34) sol=≥2 0ms; 5★ g=10/49 miss=39(spec≈39) sol=≥2 0ms; 6★ g=5/49 miss=44(spec≈44) sol=≥2 0ms; 
+  7x7 v2: 1★ g=29/49 miss=20(spec≈20) sol=1 98ms; 2★ g=25/49 miss=24(spec≈24) sol=1 12ms; 3★ g=20/49 miss=29(spec≈29) sol=1 104ms; 4★ g=15/49 miss=34(spec≈34) sol=1 0ms; 5★ g=10/49 miss=39(spec≈39) sol=≥2 0ms; 6★ g=5/49 miss=44(spec≈44) sol=≥2 22ms; 
+  7x7 v3: 1★ g=29/49 miss=20(spec≈20) sol=1 0ms; 2★ g=25/49 miss=24(spec≈24) sol=1 0ms; 3★ g=20/49 miss=29(spec≈29) sol=1 0ms; 4★ g=15/49 miss=34(spec≈34) sol=1 1ms; 5★ g=10/49 miss=39(spec≈39) sol=≥2 0ms; 6★ g=5/49 miss=44(spec≈44) sol=≥2 0ms; 
+  8x8 v0: 1★ g=38/64 miss=26(spec≈26) sol=1 0ms; 2★ g=32/64 miss=32(spec≈32) sol=1 0ms; 3★ g=26/64 miss=38(spec≈38) sol=≥2 0ms; 4★ g=19/64 miss=45(spec≈45) sol=≥2 0ms; 5★ g=13/64 miss=51(spec≈51) sol=≥2 0ms; 6★ g=6/64 miss=58(spec≈58) sol=≥2 0ms; 
+  8x8 v1: 1★ g=38/64 miss=26(spec≈26) sol=≥2 0ms; 2★ g=32/64 miss=32(spec≈32) sol=1 0ms; 3★ g=26/64 miss=38(spec≈38) sol=≥2 0ms; 4★ g=19/64 miss=45(spec≈45) sol=≥2 0ms; 5★ g=13/64 miss=51(spec≈51) sol=≥2 2ms; 6★ g=6/64 miss=58(spec≈58) sol=≥2 0ms; 
+  8x8 v2: 1★ g=38/64 miss=26(spec≈26) sol=1 0ms; 2★ g=32/64 miss=32(spec≈32) sol=1 0ms; 3★ g=26/64 miss=38(spec≈38) sol=≥2 32ms; 4★ g=19/64 miss=45(spec≈45) sol=≥2 10ms; 5★ g=13/64 miss=51(spec≈51) sol=≥2 4ms; 6★ g=6/64 miss=58(spec≈58) sol=≥2 0ms; 
+  8x8 v3: 1★ g=38/64 miss=26(spec≈26) sol=1 0ms; 2★ g=32/64 miss=32(spec≈32) sol=1 3ms; 3★ g=26/64 miss=38(spec≈38) sol=≥2 165ms; 4★ g=19/64 miss=45(spec≈45) sol=≥2 0ms; 5★ g=13/64 miss=51(spec≈51) sol=≥2 0ms; 6★ g=6/64 miss=58(spec≈58) sol=≥2 0ms; 
+  9x9 v0: 1★ g=49/81 miss=32(spec≈32) sol=≥2 0ms; 2★ g=41/81 miss=40(spec≈40) sol=≥2 0ms; 3★ g=32/81 miss=49(spec≈49) sol=≥2 2ms; 4★ g=24/81 miss=57(spec≈57) sol=≥2 0ms; 5★ g=16/81 miss=65(spec≈65) sol=≥2 0ms; 6★ g=8/81 miss=73(spec≈73) sol=≥2 0ms; 
+  9x9 v1: 1★ g=49/81 miss=32(spec≈32) sol=1 0ms; 2★ g=41/81 miss=40(spec≈40) sol=≥2 0ms; 3★ g=32/81 miss=49(spec≈49) sol=≥2 0ms; 4★ g=24/81 miss=57(spec≈57) sol=≥2 0ms; 5★ g=16/81 miss=65(spec≈65) sol=≥2 0ms; 6★ g=8/81 miss=73(spec≈73) sol=≥2 0ms; 
+  9x9 v2: 1★ g=49/81 miss=32(spec≈32) sol=1 919ms; 2★ g=41/81 miss=40(spec≈40) sol=≥2 35ms; 3★ g=32/81 miss=49(spec≈49) sol=≥2 1575ms; 4★ g=24/81 miss=57(spec≈57) sol=≥2 100ms; 5★ g=16/81 miss=65(spec≈65) sol=≥2 70ms; 6★ g=8/81 miss=73(spec≈73) sol=≥2 6ms; 
+  9x9 v3: 1★ g=49/81 miss=32(spec≈32) sol=1 311ms; 2★ g=41/81 miss=40(spec≈40) sol=1 20275ms; 3★ g=32/81 miss=49(spec≈49) sol=≥2 15014ms; 4★ g=24/81 miss=57(spec≈57) sol=≥2 0ms; 5★ g=16/81 miss=65(spec≈65) sol=≥2 6268ms; 6★ g=8/81 miss=73(spec≈73) sol=? 49ms; 
+
+=== D02b_StarDensity_MatchesSpecFormula ===
+  1★=0,40 2★=0,50 3★=0,60 4★=0,70 5★=0,80 6★=0,90 7★=1,00
+
+=== D03_Modifiers_EachGeneratesSatisfiableAndRestrictiveConstraints ===
+  FogOfWar           5x5 active=[FogOfWar] overlay=L0 K0 C0 A0 M0 F18 P0 missing=[] solConflicts=0 modOnlyRejections=0 solveNonCorrect=0 complete=True 85ms
+  FogOfWar           9x9 active=[FogOfWar] overlay=L0 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=0 solveNonCorrect=0 complete=True 12ms
+  ArrowSums          6x6 active=[ArrowSums] overlay=L0 K0 C0 A2 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=1 solveNonCorrect=0 complete=True 1ms
+  ArrowSums          9x9 active=[ArrowSums] overlay=L0 K0 C0 A3 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=5 solveNonCorrect=0 complete=True 3ms
+  GermanWhispers     7x7 active=[GermanWhispers] overlay=L2 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=5 solveNonCorrect=0 complete=True 76ms
+  GermanWhispers     9x9 active=[GermanWhispers] overlay=L4 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=9 solveNonCorrect=0 complete=True 2ms
+  DutchWhispers      6x6 active=[DutchWhispers] overlay=L2 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=7 solveNonCorrect=0 complete=True 0ms
+  DutchWhispers      9x9 active=[DutchWhispers] overlay=L4 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=13 solveNonCorrect=0 complete=True 3ms
+  ParityLines        5x5 active=[ParityLines] overlay=L2 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=0 solveNonCorrect=0 complete=True 0ms
+  ParityLines        9x9 active=[ParityLines] overlay=L4 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=17 solveNonCorrect=0 complete=True 8ms
+  RenbanLines        5x5 active=[RenbanLines] overlay=L2 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=1 solveNonCorrect=0 complete=True 1ms
+  RenbanLines        9x9 active=[RenbanLines] overlay=L3 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=2 solveNonCorrect=0 complete=True 2ms
+  KillerCages        7x7 active=[KillerCages] overlay=L0 K0 C4 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=2 solveNonCorrect=0 complete=True 79ms
+  KillerCages        9x9 active=[KillerCages] overlay=L0 K0 C5 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=9 solveNonCorrect=0 complete=True 2ms
+  DifferenceKropki   5x5 active=[DifferenceKropki] overlay=L0 K6 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=0 solveNonCorrect=0 complete=True 1ms
+  DifferenceKropki   9x9 active=[DifferenceKropki] overlay=L0 K12 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=0 solveNonCorrect=0 complete=True 2ms
+  RatioKropki        5x5 active=[RatioKropki] overlay=L0 K3 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=0 solveNonCorrect=0 complete=True 0ms
+  RatioKropki        9x9 active=[RatioKropki] overlay=L0 K9 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=0 solveNonCorrect=0 complete=True 4ms
+  Palindrome         6x6 active=[Palindrome] overlay=L1 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=5 solveNonCorrect=0 complete=True 2ms
+  Palindrome         9x9 active=[Palindrome] overlay=L2 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=9 solveNonCorrect=0 complete=True 4ms
+  Thermo             6x6 active=[Thermo] overlay=L2 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=0 solveNonCorrect=0 complete=True 1ms
+  Thermo             9x9 active=[Thermo] overlay=L3 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=7 solveNonCorrect=0 complete=True 2ms
+  BetweenLines       6x6 active=[BetweenLines] overlay=L2 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=0 solveNonCorrect=0 complete=True 3ms
+  BetweenLines       9x9 active=[BetweenLines] overlay=L3 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=0 solveNonCorrect=0 complete=True 2ms
+  EvenOdd            5x5 active=[EvenOdd] overlay=L0 K0 C0 A0 M6 F0 P0 missing=[] solConflicts=0 modOnlyRejections=0 solveNonCorrect=0 complete=True 0ms
+  EvenOdd            9x9 active=[EvenOdd] overlay=L0 K0 C0 A0 M12 F0 P0 missing=[] solConflicts=0 modOnlyRejections=15 solveNonCorrect=0 complete=True 1ms
+  Nonconsecutive     6x6 active=[Nonconsecutive] overlay=L0 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=18 solveNonCorrect=0 complete=True 0ms
+  Nonconsecutive     9x9 active=[Nonconsecutive] overlay=L0 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=49 solveNonCorrect=0 complete=True 496ms
+  Antiknight         6x6 active=[Antiknight] overlay=L0 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=14 solveNonCorrect=0 complete=True 0ms
+  Antiknight         9x9 active=[Antiknight] overlay=L0 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=31 solveNonCorrect=0 complete=True 12ms
+  Antiking           6x6 active=[Antiking] overlay=L0 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=9 solveNonCorrect=0 complete=True 0ms
+  Antiking           9x9 active=[Antiking] overlay=L0 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=16 solveNonCorrect=0 complete=True 187ms
+  AntiBishop         9x9: NO BOARD (4001ms)
+  NonconsecDiagonal  6x6 active=[NonconsecDiagonal] overlay=L0 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=26 solveNonCorrect=0 complete=True 1ms
+  NonconsecDiagonal  9x9 active=[NonconsecDiagonal] overlay=L0 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=47 solveNonCorrect=0 complete=True 156ms
+  DistanceGe2        6x6 active=[DistanceGe2] overlay=L0 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=6 solveNonCorrect=0 complete=True 0ms
+  DistanceGe2        9x9 active=[DistanceGe2] overlay=L0 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=12 solveNonCorrect=0 complete=True 28ms
+  EntropyGlobal      9x9 active=[EntropyGlobal] overlay=L0 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=21 solveNonCorrect=0 complete=True 1ms
+  ModularRegions     7x7 active=[ModularRegions] overlay=L0 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=0 solveNonCorrect=0 complete=True 0ms
+  ModularRegions     9x9 active=[ModularRegions] overlay=L0 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=0 solveNonCorrect=0 complete=True 4ms
+  ConsecutiveLine    6x6 active=[ConsecutiveLine] overlay=L2 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=4 solveNonCorrect=0 complete=True 1ms
+  ConsecutiveLine    9x9 active=[ConsecutiveLine] overlay=L3 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=8 solveNonCorrect=0 complete=True 3ms
+  SlowThermo         6x6 active=[SlowThermo] overlay=L2 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=7 solveNonCorrect=0 complete=True 0ms
+  SlowThermo         9x9 active=[SlowThermo] overlay=L3 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=8 solveNonCorrect=0 complete=True 4ms
+  UniqueSetLine      5x5 active=[UniqueSetLine] overlay=L2 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=1 solveNonCorrect=0 complete=True 1ms
+  UniqueSetLine      9x9 active=[UniqueSetLine] overlay=L3 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=0 solveNonCorrect=0 complete=True 3ms
+  FullKropki         6x6 active=[FullKropki] overlay=L0 K22 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=20 solveNonCorrect=0 complete=True 0ms
+  FullKropki         9x9 active=[FullKropki] overlay=L0 K51 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=78 solveNonCorrect=0 complete=True 5ms
+  SumKropki          5x5 active=[SumKropki] overlay=L0 K5 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=0 solveNonCorrect=0 complete=True 1ms
+  SumKropki          9x9 active=[SumKropki] overlay=L0 K10 C0 A0 M0 F0 P0 missing=[] solConflicts=0 modOnlyRejections=0 solveNonCorrect=0 complete=True 4ms
+  GreaterLessThan    5x5 active=[GreaterLessThan] overlay=L0 K0 C0 A0 M0 F0 P6 missing=[] solConflicts=0 modOnlyRejections=1 solveNonCorrect=0 complete=True 0ms
+  GreaterLessThan    9x9 active=[GreaterLessThan] overlay=L0 K0 C0 A0 M0 F0 P12 missing=[] solConflicts=0 modOnlyRejections=7 solveNonCorrect=0 complete=True 2ms
+  XVPairs            5x5 active=[XVPairs] overlay=L0 K0 C0 A0 M0 F0 P2 missing=[] solConflicts=0 modOnlyRejections=1 solveNonCorrect=0 complete=True 0ms
+  XVPairs            9x9 active=[XVPairs] overlay=L0 K0 C0 A0 M0 F0 P6 missing=[] solConflicts=0 modOnlyRejections=13 solveNonCorrect=0 complete=True 2ms
+  PrimeCells         5x5 active=[PrimeCells] overlay=L0 K0 C0 A0 M5 F0 P0 missing=[] solConflicts=0 modOnlyRejections=2 solveNonCorrect=0 complete=True 0ms
+  PrimeCells         9x9 active=[PrimeCells] overlay=L0 K0 C0 A0 M12 F0 P0 missing=[] solConflicts=0 modOnlyRejections=14 solveNonCorrect=0 complete=True 1ms
+  FortressCells      6x6 active=[FortressCells] overlay=L0 K0 C0 A0 M4 F0 P0 missing=[] solConflicts=0 modOnlyRejections=1 solveNonCorrect=0 complete=True 0ms
+  FortressCells      9x9 active=[FortressCells] overlay=L0 K0 C0 A0 M9 F0 P0 missing=[] solConflicts=0 modOnlyRejections=13 solveNonCorrect=0 complete=True 3ms
+  FAIL ParityLines@5: modifier rejects no base-legal wrong digit (no effective constraint)
+  FAIL DifferenceKropki@5: modifier rejects no base-legal wrong digit (no effective constraint)
+  FAIL DifferenceKropki@9: modifier rejects no base-legal wrong digit (no effective constraint)
+  FAIL RatioKropki@5: modifier rejects no base-legal wrong digit (no effective constraint)
+  FAIL RatioKropki@9: modifier rejects no base-legal wrong digit (no effective constraint)
+  FAIL Thermo@6: modifier rejects no base-legal wrong digit (no effective constraint)
+  FAIL BetweenLines@6: modifier rejects no base-legal wrong digit (no effective constraint)
+  FAIL BetweenLines@9: modifier rejects no base-legal wrong digit (no effective constraint)
+  FAIL EvenOdd@5: modifier rejects no base-legal wrong digit (no effective constraint)
+  FAIL AntiBishop@9: no board generated
+  FAIL ModularRegions@7: modifier rejects no base-legal wrong digit (no effective constraint)
+  FAIL ModularRegions@9: modifier rejects no base-legal wrong digit (no effective constraint)
+  FAIL UniqueSetLine@9: modifier rejects no base-legal wrong digit (no effective constraint)
+  FAIL SumKropki@5: modifier rejects no base-legal wrong digit (no effective constraint)
+  FAIL SumKropki@9: modifier rejects no base-legal wrong digit (no effective constraint)
+  [unity error logs during test: 1]
+    Error: [RunDirector] StartLevel: board generation timed out for seed=31353, size=9: Puzzle generation exceeded the configured time budget.
+
+=== D04_BossGate_FloorModifierAndChoiceCountsMatchSpecTable ===
+  H0 floor 1: floorMods=0 [] choicesShown=2 picksRequired(UI)=1 formulaShown=2
+  H0 floor 2: floorMods=1 [Antiking] choicesShown=3 picksRequired(UI)=2 formulaShown=3
+  H0 floor 3: floorMods=1 [ArrowSums] choicesShown=4 picksRequired(UI)=3 formulaShown=4
+  H0 floor 4: floorMods=1 [DutchWhispers] choicesShown=5 picksRequired(UI)=4 formulaShown=5
+  H0 floor 5: floorMods=2 [FortressCells,Nonconsecutive] choicesShown=6 picksRequired(UI)=5 formulaShown=6
+  H7 floor 1: floorMods=1 [XVPairs] choicesShown=3 picksRequired(UI)=1 formulaShown=2
+  H7 floor 2: floorMods=2 [FogOfWar,RatioKropki] choicesShown=4 picksRequired(UI)=2 formulaShown=3
+  H7 floor 3: floorMods=2 [NonconsecDiagonal,Antiking] choicesShown=5 picksRequired(UI)=3 formulaShown=4
+  H7 floor 4: floorMods=2 [EvenOdd,Antiknight] choicesShown=6 picksRequired(UI)=4 formulaShown=5
+  H7 floor 5: floorMods=3 [BetweenLines,SlowThermo,ParityLines] choicesShown=7 picksRequired(UI)=5 formulaShown=6
+  H10 floor 1: floorMods=2 [EvenOdd,XVPairs] choicesShown=4 picksRequired(UI)=1 formulaShown=2
+  H10 floor 2: floorMods=3 [GreaterLessThan,DutchWhispers,ArrowSums] choicesShown=5 picksRequired(UI)=2 formulaShown=3
+  H10 floor 3: floorMods=3 [SumKropki,GermanWhispers,XVPairs] choicesShown=6 picksRequired(UI)=3 formulaShown=4
+  H10 floor 4: floorMods=3 [DistanceGe2,ArrowSums,KillerCages] choicesShown=7 picksRequired(UI)=4 formulaShown=5
+  H10 floor 5: floorMods=4 [ArrowSums,BetweenLines,Thermo,EvenOdd] choicesShown=8 picksRequired(UI)=5 formulaShown=6
+  FAIL H0 floor 1: shown 2 vs spec 3
+  FAIL H0 floor 1: picks 1 vs spec 2
+  FAIL H0 floor 3: floor mods 1 vs spec 2
+  FAIL H0 floor 4: floor mods 1 vs spec 3
+  FAIL H0 floor 5: floor mods 2 vs spec 4
+  FAIL H7 floor 1: shown 3 but UI requires 1 picks (exclusion invariant broken)
+  FAIL H7 floor 2: shown 4 but UI requires 2 picks (exclusion invariant broken)
+  FAIL H7 floor 3: shown 5 but UI requires 3 picks (exclusion invariant broken)
+  FAIL H7 floor 4: shown 6 but UI requires 4 picks (exclusion invariant broken)
+  FAIL H7 floor 5: shown 7 but UI requires 5 picks (exclusion invariant broken)
+  FAIL H10 floor 1: shown 4 but UI requires 1 picks (exclusion invariant broken)
+  FAIL H10 floor 2: shown 5 but UI requires 2 picks (exclusion invariant broken)
+  FAIL H10 floor 3: shown 6 but UI requires 3 picks (exclusion invariant broken)
+  FAIL H10 floor 4: shown 7 but UI requires 4 picks (exclusion invariant broken)
+  FAIL H10 floor 5: shown 8 but UI requires 5 picks (exclusion invariant broken)
+
+=== D05_BossGate_ChosenModifiersAreInjectedIntoBossPuzzle ===
+  seed 1001 floor 1: chosen=[SumKropki] floor=[] active=[SumKropki] board=5x5 (floor range 5-6) stars=2 intensity=Low overlay=L0 K2 C0 A0 M0 F0 P0 missing=[] solConflicts=0 rules=1 0ms
+  seed 1001 floor 2: chosen=[RatioKropki,DutchWhispers] floor=[BetweenLines] active=[BetweenLines,RatioKropki,DutchWhispers] board=7x7 (floor range 6-7) stars=3 intensity=Low overlay=L4 K2 C0 A0 M0 F0 P0 missing=[] solConflicts=0 rules=3 0ms
+  seed 1001 floor 3: chosen=[DistanceGe2,SumKropki,KillerCages] floor=[Thermo] active=[Thermo,DistanceGe2,SumKropki,KillerCages] board=8x8 (floor range 7-8) stars=4 intensity=Low overlay=L2 K4 C2 A0 M0 F0 P0 missing=[] solConflicts=0 rules=4 1ms
+  seed 1001 floor 4: chosen=[UniqueSetLine,Palindrome,NonconsecDiagonal,DutchWhispers] floor=[PrimeCells] active=[PrimeCells,UniqueSetLine,Palindrome,NonconsecDiagonal,DutchWhispers,CrumblingRegion] board=9x9 (floor range 8-9) stars=5 intensity=Low overlay=L4 K0 C0 A0 M6 F0 P0 missing=[] solConflicts=0 rules=5 178ms
+  seed 1001 floor 5: chosen=[XVPairs,FullKropki,ArrowSums,DutchWhispers,ConsecutiveLine] floor=[NonconsecDiagonal,UniqueSetLine] active=[NonconsecDiagonal,UniqueSetLine,XVPairs,FullKropki,ArrowSums,DutchWhispers,ConsecutiveLine,HauntedCell] board=NULL (floor range 9-9) stars=6 intensity=Low overlay=L0 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=-1 rules=5 4001ms
+  seed 1001: BossesDefeatedThisRun=4, TileXpLog=4, totalXp=1061
+  seed 2002 floor 1: chosen=[UniqueSetLine] floor=[] active=[UniqueSetLine] board=6x6 (floor range 5-6) stars=2 intensity=Low overlay=L1 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 rules=1 0ms
+  seed 2002 floor 2: chosen=[GreaterLessThan,DifferenceKropki] floor=[DutchWhispers] active=[DutchWhispers,GreaterLessThan,DifferenceKropki] board=7x7 (floor range 6-7) stars=3 intensity=Low overlay=L2 K4 C0 A0 M0 F0 P4 missing=[] solConflicts=0 rules=3 22ms
+  seed 2002 floor 3: chosen=[FullKropki,NonconsecDiagonal,Thermo] floor=[XVPairs] active=[XVPairs,FullKropki,NonconsecDiagonal,Thermo] board=8x8 (floor range 7-8) stars=4 intensity=Low overlay=L0 K62 C0 A0 M0 F0 P4 missing=[Thermo] solConflicts=0 rules=5 3274ms
+  seed 2002 floor 4: chosen=[XVPairs,ParityLines,EvenOdd,KillerCages] floor=[BetweenLines] active=[BetweenLines,XVPairs,ParityLines,EvenOdd,KillerCages,CrumblingRegion] board=8x8 (floor range 8-9) stars=5 intensity=Low overlay=L4 K0 C2 A0 M4 F0 P4 missing=[] solConflicts=0 rules=5 1ms
+  seed 2002 floor 5: chosen=[GermanWhispers,FullKropki,ParityLines,ArrowSums,BetweenLines] floor=[Palindrome,GreaterLessThan] active=[Palindrome,GreaterLessThan,GermanWhispers,FullKropki,ParityLines,ArrowSums,BetweenLines,CrumblingRegion] board=9x9 (floor range 9-9) stars=6 intensity=Low overlay=L3 K45 C0 A2 M0 F0 P6 missing=[] solConflicts=0 rules=9 14ms
+  seed 2002: BossesDefeatedThisRun=5, TileXpLog=5, totalXp=1503
+  seed 3003 floor 1: chosen=[UniqueSetLine] floor=[] active=[UniqueSetLine] board=5x5 (floor range 5-6) stars=2 intensity=Low overlay=L1 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 rules=1 0ms
+  seed 3003 floor 2: chosen=[FogOfWar,ParityLines] floor=[SumKropki] active=[SumKropki,FogOfWar,ParityLines] board=6x6 (floor range 6-7) stars=3 intensity=Low overlay=L1 K2 C0 A0 M0 F13 P0 missing=[] solConflicts=0 rules=3 2ms
+  seed 3003 floor 3: chosen=[ParityLines,GermanWhispers,ConsecutiveLine] floor=[Thermo] active=[Thermo,ParityLines,GermanWhispers,ConsecutiveLine] board=8x8 (floor range 7-8) stars=4 intensity=Low overlay=L8 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=0 rules=4 51ms
+  seed 3003 floor 4: chosen=[DifferenceKropki,UniqueSetLine,FortressCells,Thermo] floor=[PrimeCells] active=[PrimeCells,DifferenceKropki,UniqueSetLine,FortressCells,Thermo] board=9x9 (floor range 8-9) stars=5 intensity=Low overlay=L4 K6 C0 A0 M10 F0 P0 missing=[] solConflicts=0 rules=5 5ms
+  seed 3003 floor 5: chosen=[Nonconsecutive,UniqueSetLine,Antiking,FogOfWar,DutchWhispers] floor=[SumKropki,FortressCells] active=[SumKropki,FortressCells,Nonconsecutive,UniqueSetLine,Antiking,FogOfWar,DutchWhispers] board=NULL (floor range 9-9) stars=6 intensity=Low overlay=L0 K0 C0 A0 M0 F0 P0 missing=[] solConflicts=-1 rules=5 4001ms
+  seed 3003: BossesDefeatedThisRun=4, TileXpLog=4, totalXp=1011
+  FAIL seed 1001 F1: XP entry not flagged IsBoss (BoardSize=0, Stars=0)
+  FAIL seed 1001 F2: XP entry not flagged IsBoss (BoardSize=0, Stars=0)
+  FAIL seed 1001 F3: XP entry not flagged IsBoss (BoardSize=0, Stars=0)
+  FAIL seed 1001 F4: XP entry not flagged IsBoss (BoardSize=0, Stars=0)
+  FAIL seed 1001 F5: boss board not generated
+  FAIL seed 2002 F1: XP entry not flagged IsBoss (BoardSize=0, Stars=0)
+  FAIL seed 2002 F2: XP entry not flagged IsBoss (BoardSize=0, Stars=0)
+  FAIL seed 2002 F3: overlay missing Thermo
+  FAIL seed 2002 F3: XP entry not flagged IsBoss (BoardSize=0, Stars=0)
+  FAIL seed 2002 F4: XP entry not flagged IsBoss (BoardSize=0, Stars=0)
+  FAIL seed 2002 F5: XP entry not flagged IsBoss (BoardSize=0, Stars=0)
+  FAIL seed 3003 F1: XP entry not flagged IsBoss (BoardSize=0, Stars=0)
+  FAIL seed 3003 F2: XP entry not flagged IsBoss (BoardSize=0, Stars=0)
+  FAIL seed 3003 F3: XP entry not flagged IsBoss (BoardSize=0, Stars=0)
+  FAIL seed 3003 F4: XP entry not flagged IsBoss (BoardSize=0, Stars=0)
+  FAIL seed 3003 F5: boss board not generated
+  [unity error logs during test: 2]
+    Error: [RunDirector] StartLevel: board generation timed out for seed=352360797, size=9: Puzzle generation exceeded the configured time budget.
+    Error: [RunDirector] StartLevel: board generation timed out for seed=313414183, size=9: Puzzle generation exceeded the configured time budget.
+
+=== D06_PathGraph_ConnectivityLengthsCrossLinksElite ===
+  seed 11 floor 1: nodes=13 calm=6 risk=5 crossLinkNodes=2 crossEdges=2 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:5,Shop:2,Rest:1,PreBoss:2,ElitePuzzle:1,Boss:1
+  seed 11 floor 2: nodes=16 calm=8 risk=6 crossLinkNodes=4 crossEdges=4 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:5,Rest:2,Shop:2,Cursed:1,PreBoss:2,ElitePuzzle:1,CrossLink:1,Boss:1
+  seed 11 floor 3: nodes=19 calm=9 risk=8 crossLinkNodes=6 crossEdges=6 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:8,CrossLink:4,Shop:2,PreBoss:2,Cursed:1,Boss:1
+  seed 11 floor 4: nodes=20 calm=10 risk=8 crossLinkNodes=6 crossEdges=6 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:8,CrossLink:3,Shop:2,Rest:1,PreBoss:2,Relic:1,Cursed:1,Boss:1
+  seed 11 floor 5: nodes=25 calm=12 risk=11 crossLinkNodes=8 crossEdges=8 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:11,CrossLink:3,Shop:2,Cursed:2,PreBoss:2,Rest:2,Relic:1,Boss:1
+  seed 22 floor 1: nodes=11 calm=5 risk=4 crossLinkNodes=2 crossEdges=2 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:5,Shop:2,PreBoss:2,Boss:1
+  seed 22 floor 2: nodes=14 calm=7 risk=5 crossLinkNodes=2 crossEdges=2 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:6,Shop:2,Rest:1,PreBoss:2,ElitePuzzle:1,Boss:1
+  seed 22 floor 3: nodes=17 calm=8 risk=7 crossLinkNodes=4 crossEdges=4 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:7,Shop:2,Rest:1,ElitePuzzle:1,CrossLink:2,PreBoss:2,Boss:1
+  seed 22 floor 4: nodes=19 calm=9 risk=8 crossLinkNodes=6 crossEdges=6 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:9,CrossLink:3,Shop:2,PreBoss:2,Rest:1,Boss:1
+  seed 22 floor 5: nodes=22 calm=11 risk=9 crossLinkNodes=6 crossEdges=6 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:9,CrossLink:3,Shop:2,Rest:1,Cursed:1,PreBoss:2,ElitePuzzle:2,Boss:1
+  seed 33 floor 1: nodes=16 calm=8 risk=6 crossLinkNodes=2 crossEdges=2 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:6,Rest:1,CrossLink:1,Shop:2,Cursed:1,PreBoss:2,ElitePuzzle:1,Boss:1
+  seed 33 floor 2: nodes=13 calm=6 risk=5 crossLinkNodes=2 crossEdges=2 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:5,Shop:2,Rest:2,PreBoss:2,Boss:1
+  seed 33 floor 3: nodes=14 calm=7 risk=5 crossLinkNodes=2 crossEdges=2 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:7,Shop:2,PreBoss:2,Rest:1,Boss:1
+  seed 33 floor 4: nodes=17 calm=8 risk=7 crossLinkNodes=4 crossEdges=4 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:7,Shop:2,ElitePuzzle:2,CrossLink:1,PreBoss:2,Rest:1,Boss:1
+  seed 33 floor 5: nodes=20 calm=10 risk=8 crossLinkNodes=6 crossEdges=6 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:9,Relic:1,Shop:2,CrossLink:3,PreBoss:2,ElitePuzzle:1,Boss:1
+  seed 44 floor 1: nodes=14 calm=7 risk=5 crossLinkNodes=2 crossEdges=2 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:6,Shop:2,Rest:1,PreBoss:2,ElitePuzzle:1,Boss:1
+  seed 44 floor 2: nodes=19 calm=9 risk=8 crossLinkNodes=4 crossEdges=4 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:9,Rest:2,Shop:2,CrossLink:1,PreBoss:2,Relic:1,Boss:1
+  seed 44 floor 3: nodes=20 calm=10 risk=8 crossLinkNodes=6 crossEdges=6 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:9,CrossLink:4,Shop:2,Rest:1,PreBoss:2,Boss:1
+  seed 44 floor 4: nodes=23 calm=11 risk=10 crossLinkNodes=8 crossEdges=8 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:10,CrossLink:6,Shop:2,ElitePuzzle:1,PreBoss:2,Boss:1
+  seed 44 floor 5: nodes=19 calm=9 risk=8 crossLinkNodes=6 crossEdges=6 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:8,Shop:2,CrossLink:4,PreBoss:2,Cursed:1,Boss:1
+  seed 55 floor 1: nodes=12 calm=6 risk=4 crossLinkNodes=2 crossEdges=2 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:5,CrossLink:1,Shop:2,PreBoss:2,Boss:1
+  seed 55 floor 2: nodes=16 calm=8 risk=6 crossLinkNodes=4 crossEdges=4 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:6,CrossLink:2,Shop:2,Relic:1,PreBoss:2,Cursed:1,Boss:1
+  seed 55 floor 3: nodes=19 calm=9 risk=8 crossLinkNodes=6 crossEdges=6 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:8,Rest:2,Shop:2,Relic:1,PreBoss:2,ElitePuzzle:1,CrossLink:1,Boss:1
+  seed 55 floor 4: nodes=20 calm=10 risk=8 crossLinkNodes=6 crossEdges=6 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:8,CrossLink:4,Cursed:2,Shop:2,PreBoss:2,Boss:1
+  seed 55 floor 5: nodes=25 calm=12 risk=11 crossLinkNodes=8 crossEdges=8 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:12,CrossLink:6,Shop:2,PreBoss:2,ElitePuzzle:1,Boss:1
+  seed 66 floor 1: nodes=11 calm=5 risk=4 crossLinkNodes=2 crossEdges=2 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:5,Shop:2,PreBoss:2,Boss:1
+  seed 66 floor 2: nodes=14 calm=7 risk=5 crossLinkNodes=2 crossEdges=2 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:7,CrossLink:1,Shop:2,PreBoss:2,Boss:1
+  seed 66 floor 3: nodes=17 calm=8 risk=7 crossLinkNodes=4 crossEdges=4 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:8,CrossLink:2,Shop:2,PreBoss:2,Cursed:1,Boss:1
+  seed 66 floor 4: nodes=18 calm=9 risk=7 crossLinkNodes=4 crossEdges=4 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:8,Rest:2,Shop:2,CrossLink:1,PreBoss:2,ElitePuzzle:1,Boss:1
+  seed 66 floor 5: nodes=22 calm=11 risk=9 crossLinkNodes=6 crossEdges=6 preBoss=[PreBoss,PreBoss] unreachable=[] deadEnds=[] types=Start:1,Puzzle:10,CrossLink:2,Relic:3,Shop:2,PreBoss:2,ElitePuzzle:1,Boss:1
+  FAIL seed 11 F2: 4 cross-link nodes (spec: exactly one cross-connection)
+  FAIL seed 11 F3: 6 cross-link nodes (spec: exactly one cross-connection)
+  FAIL seed 11 F4: 6 cross-link nodes (spec: exactly one cross-connection)
+  FAIL seed 11 F5: 8 cross-link nodes (spec: exactly one cross-connection)
+  FAIL seed 22 F3: 4 cross-link nodes (spec: exactly one cross-connection)
+  FAIL seed 22 F4: 6 cross-link nodes (spec: exactly one cross-connection)
+  FAIL seed 22 F5: 6 cross-link nodes (spec: exactly one cross-connection)
+  FAIL seed 33 F4: 4 cross-link nodes (spec: exactly one cross-connection)
+  FAIL seed 33 F5: 6 cross-link nodes (spec: exactly one cross-connection)
+  FAIL seed 44 F2: 4 cross-link nodes (spec: exactly one cross-connection)
+  FAIL seed 44 F3: 6 cross-link nodes (spec: exactly one cross-connection)
+  FAIL seed 44 F4: 8 cross-link nodes (spec: exactly one cross-connection)
+  FAIL seed 44 F5: 6 cross-link nodes (spec: exactly one cross-connection)
+  FAIL seed 55 F2: 4 cross-link nodes (spec: exactly one cross-connection)
+  FAIL seed 55 F3: 6 cross-link nodes (spec: exactly one cross-connection)
+  FAIL seed 55 F4: 6 cross-link nodes (spec: exactly one cross-connection)
+  FAIL seed 55 F5: 8 cross-link nodes (spec: exactly one cross-connection)
+  FAIL seed 66 F3: 4 cross-link nodes (spec: exactly one cross-connection)
+  FAIL seed 66 F4: 4 cross-link nodes (spec: exactly one cross-connection)
+  FAIL seed 66 F5: 6 cross-link nodes (spec: exactly one cross-connection)
+
+=== D07_ClassBaseStatsAtRunStart_MatchGameDesignSpecRoster ===
+  NumberFreak        run: HP 10/10 Pencil 10/10 Slots 2 Rerolls 0 Relics 1 Gold 0 | catalog 10/10/2 | GDS (10, 10, 2)
+  GardenMonk         run: HP 14/14 Pencil 5/5 Slots 1 Rerolls 0 Relics 1 Gold 0 | catalog 14/5/1 | GDS (14, 5, 1)
+  ShrineArchivist    run: HP 8/8 Pencil 15/15 Slots 2 Rerolls 0 Relics 1 Gold 0 | catalog 8/15/2 | GDS (8, 15, 2)
+  KoiGambler         run: HP 10/10 Pencil 8/8 Slots 2 Rerolls 0 Relics 2 Gold 0 | catalog 9/8/2 | GDS (9, 8, 2)
+  StoneGardener      run: HP 11/11 Pencil 8/8 Slots 3 Rerolls 0 Relics 1 Gold 0 | catalog 11/8/3 | GDS (11, 8, 3)
+  LanternSeer        run: HP 7/7 Pencil 12/12 Slots 2 Rerolls 0 Relics 1 Gold 0 | catalog 7/12/2 | GDS (7, 12, 2)
+  ReedDuelist        run: HP 9/9 Pencil 9/9 Slots 2 Rerolls 0 Relics 1 Gold 0 | catalog 9/9/2 | GDS (9, 9, 2)
+  QuietCartographer  run: HP 12/12 Pencil 6/6 Slots 1 Rerolls 0 Relics 1 Gold 0 | catalog 12/6/1 | GDS (12, 6, 1)
+  NumberFreak L10 run: HP 15 Pencil 12 Gold 10 (spec: HP 14, Pencil 13, +10 gold at L5)
+  FAIL KoiGambler: run start 10/8/2 vs GDS (9, 8, 2)
+  FAIL NumberFreak L10: HP 15 Pencil 12 vs spec 14/13
+
+=== D08_XpCurve_AndPerClassIsolation ===
+  CumulativeXpForLevel(40)=16860 DeriveLevel(0)=1 DeriveLevel(49)=1 DeriveLevel(50)=2 DeriveLevel(16859)=39 DeriveLevel(16860)=40 DeriveLevel(999999)=40
+  NF total=1000499 lvl=40 | GM total=60 lvl=2 | KG total=0
+  excess XP beyond L40 retained (spec: discarded): True
+  tile 6x6 2★ perfect = 79 (spec 79); boss 9x9 4★ 1 mod = 285 (formula 285, spec example says 210); metadata size=0 stars=0 isBoss=False
+
+=== D09_RunEnd_XpCommittedPerClass_UnlocksAndCompletion ===
+  committed XP: NumberFreak=70 (run xp 70), GardenMonk=0; new unlocks=[GardenMonk]; unlockedClasses=[NumberFreak,GardenMonk]
+  completion ClearedSizeStarCombos=[0x0_s0] (tile: 0x0 0★, config 6x6 1★)
+
+=== D10_ItemRewardSlots_CountsNothingRatesEpicGate ===
+  1★: slots=2,00 nothingRate=0,216 epic@L1=0 epic@L15=94
+  2★: slots=3,00 nothingRate=0,222 epic@L1=0 epic@L15=176
+  3★: slots=3,00 nothingRate=0,177 epic@L1=0 epic@L15=156
+  4★: slots=4,00 nothingRate=0,149 epic@L1=0 epic@L15=208
+  5★: slots=5,00 nothingRate=0,119 epic@L1=0 epic@L15=234
+  6★: slots=5,00 nothingRate=0,119 epic@L1=0 epic@L15=276
+  FAIL 1★ nothing rate 0,216 vs spec 0,25
+
+=== D11_GoldRewardAndPrices_MatchGameDesignSpec ===
+  puzzle gold: 5x5: 1★=24 2★=28 3★=32 4★=36 5★=40 6★=44 | 6x6: 1★=36 2★=42 3★=48 4★=54 5★=60 6★=66 | 7x7: 1★=54 2★=63 3★=72 4★=81 5★=90 6★=99 | 8x8: 1★=78 2★=91 3★=104 4★=117 5★=130 6★=143 | 9x9: 1★=120 2★=140 3★=160 4★=180 5★=200 6★=220
+  pencil buy 0..3: 20,40,60,80; item reroll 0..3: 20,40,60,80
+  shop slots by floor: 2,2,3,3,4; base prices N/R/E: 15/30/60; Normal price by floor: 15,22,30,38,45
+  RunDirector shop reroll cost 0: 15; rest heal amount (MaxHP 10): 3 (GDS: +2 HP)
+
+=== D12_SaveResume_MidPuzzleAndBossState_RoundTrip ===
+  mid-puzzle: placed=3 pencil=True restored=True
+    state before: HP=10 P=9 G=0 F=1 N=1 path=[1] fm=[DistanceGe2]
+    state after : HP=10 P=9 G=0 F=1 N=1 path=[1] fm=[DistanceGe2]
+    board equal=True graph equal=True overlay before=L0 K0 C0 A0 M0 F0 P0 after=null mods before=[DistanceGe2] after=[]
+    pencil marks survive resume: True
+  boss gate choices before save=[NonconsecDiagonal,Antiking,RenbanLines,ParityLines] after resume=[EvenOdd,KillerCages,DistanceGe2,ConsecutiveLine] same=False
+  chosen persisted: before=[EvenOdd,KillerCages,DistanceGe2] after=[EvenOdd,KillerCages,DistanceGe2] seen=5
+  item reward roll vs immediate re-roll on same level: [MeditationStone/Normal,PatternScroll/Normal] vs [GardenLantern/Rare,LanternOfClarity/Normal] (each call re-rolls)
+  FAIL modifier overlay differs after resume (L0 K0 C0 A0 M0 F0 P0 -> null)
+  FAIL boss choices change after save/quit/resume (re-roll exploit / non-determinism)
+
+=== D13_Harmony_StarAndGridWeightsAffectGeneratedLevels ===
+  H0 : stars1-6=[49,51,53,57,63,27] sizes5-9=[34,59,58,64,85]
+  H10: stars1-6=[49,51,53,57,63,27] sizes5-9=[32,86,30,67,85]
+
+=== D14_Tutorial_SizesStarsModifiersAndNoProgression ===
+  tutorial 5x5 1★ mods=[] board=5 givens=13 gold=0 tutorialMode=True noProgress=True
+  tutorial 5x5 6★ mods=[] board=5 givens=4 gold=0 tutorialMode=True noProgress=True
+  tutorial 6x6 1★ mods=[] board=6 givens=20 gold=0 tutorialMode=True noProgress=True
+  tutorial 6x6 6★ mods=[] board=6 givens=6 gold=0 tutorialMode=True noProgress=True
+  tutorial 7x7 1★ mods=[] board=7 givens=25 gold=0 tutorialMode=True noProgress=True
+  tutorial 7x7 6★ mods=[] board=7 givens=9 gold=0 tutorialMode=True noProgress=True
+  tutorial 7x7 7★ mods=[KillerCages] board=7 givens=0 gold=0 tutorialMode=True noProgress=True
+  tutorial 8x8 1★ mods=[] board=8 givens=35 gold=0 tutorialMode=True noProgress=True
+  tutorial 8x8 6★ mods=[] board=8 givens=14 gold=0 tutorialMode=True noProgress=True
+  tutorial 8x8 7★ mods=[KillerCages] board=8 givens=0 gold=0 tutorialMode=True noProgress=True
+  tutorial 9x9 1★ mods=[] board=NULL givens=-1 gold=0 tutorialMode=True noProgress=True
+  tutorial 9x9 6★ mods=[] board=NULL givens=-1 gold=0 tutorialMode=True noProgress=True
+  tutorial 9x9 7★ mods=[KillerCages] board=NULL givens=-1 gold=0 tutorialMode=True noProgress=True
+  FAIL tutorial 5x5 7★ threw ArgumentException
+  FAIL tutorial 6x6 7★ threw ArgumentException
+  FAIL tutorial 9x9 1★: no board
+  FAIL tutorial 9x9 6★: no board
+  FAIL tutorial 9x9 7★: no board
+  [unity error logs during test: 3]
+    Error: [RunDirector] StartLevel: board generation timed out for seed=4049, size=9: Puzzle generation exceeded the configured time budget.
+
+=== D15_Mistakes_ReduceHpAndRunEndsAtZero ===
+  startHP=10 after 13 wrong placements HP=10 combo=0 results=[Invalid,Correct] cellValue=3
+
+=== D16_Pressure_RollFrequencyByFloorAndNodeType ===
+  floor 1: normal=0% elite=0% preboss=0% boss=0% 
+  floor 2: normal=0% elite=0% preboss=0% boss=0% 
+  floor 3: normal=0% elite=12% preboss=12% boss=11% 
+  floor 4: normal=0% elite=30% preboss=30% boss=30% 
+  floor 5: normal=0% elite=55% preboss=56% boss=55% 

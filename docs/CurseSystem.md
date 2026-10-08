@@ -1,11 +1,12 @@
 # Curse System
 
-**Version:** 1.1 | **Date:** 2026-04-14 | **Status:** implemented
+**Version:** 1.2 | **Date:** 2026-10-07 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.2 | 2026-10-07 | implemented | Acceptance tests for the curse effects added (SPEC-MAC-003, CurseEffectTests); stacking rule with Harmony mistake cost stated. |
 | 1.1 | 2026-04-14 | implemented | Added requirement IDs (CURSE-ACQUIRE, CURSE-POOL, CURSE-STACK, CURSE-REMOVE, CURSE-UI, CURSE-DATA, CURSE-INT). |
 | 1.0 | 2026-04-09 | implemented | CurseService fully wired. CursePanelController shows real active curses. Rest node 4th "Cleanse a Curse" button added (active when curses present). BuildItemRewardSlots applies misfortune/bad_luck/double_or_nothing modifiers. sealed_eyes hides ModifierInfoBox during boss. Event flow uses EventChoiceScreenController (proper player choice) instead of auto-pick. |
 | 0.2 | 2026-04-07 | under review | Design decisions resolved: Elite failure removed as source (HP=0 = run over). Stacking is unlimited. Rest node hosts removal. Expanded pool to 15 curses (floor-tiered). 4 new curse-bearing items added. Error-free puzzle gives 25% auto-clear chance. Curse panel visible on both screens (compact HUD style). |
@@ -22,6 +23,10 @@ Curses accumulate across a run and are shown in the **Curse Panel** in the HUD. 
 This system is **separate** from the Cursed Node mechanic — that is an opt-in per-puzzle risk/reward choice with no persistent effect.
 
 ---
+
+## Acceptance Tests (SPEC-MAC-003, 1.1)
+
+`CurseEffectTests` checks the numeric effects: no duplicate curses and cleanse removes the oldest (CURSE-STACK-002, CURSE-REMOVE-001); Crumbling Focus −4 Max Pencil and Weight of Stone −2 Max HP at once, never below 1; Price Gouge ×1.35, Misfortune −1 reward slot, Bad Luck +15 % Nothing chance; Trembling Hand costs 1 HP on the first placement of each puzzle; Fraying Thread −1 Max HP per floor, never below 1; Restless Inventory drains one charge per completed puzzle (an empty item is discarded); Phantom Pain makes a wrong digit cost 2 HP (end-to-end through `RunDirector.PlaceNumber`). Stacking: curses with different effects stack; the same curse cannot be applied twice. Phantom Pain does not stack with Harmony's mistake cost — the higher value applies.
 
 ## How Curses Are Acquired
 

@@ -1,11 +1,12 @@
 # Seasonal Challenge
 
-**Version:** 0.1 | **Date:** 2026-04-09 | **Status:** new
+**Version:** 0.2 | **Date:** 2026-10-07 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 0.2 | 2026-10-07 | implemented | Status set from evidence (SPEC-CONF-022): monthly puzzle generation for all months fixed and verified in 1.0.x (GAP-004, E2E F02). Always available, no ascension gate (SPEC-CONF-026); main-menu widget as built (SPEC-CONF-027, GAP-028); Monthly Walk HUD status/badge fixed (GAP-029). |
 | 0.1 | 2026-04-09 | new | Initial specification |
 
 ---
@@ -44,6 +45,8 @@ The panel shows:
 - Player's personal best score for this month (or `"Not yet attempted"`)
 - Countdown to the next month's reset
 - A single `[Begin Monthly Walk]` button
+
+**As built (1.1, SPEC-CONF-026/027, GAP-028):** a compact Monthly Walk widget below the Daily Walk widget, right of the main-menu buttons, shows this month's theme and the reset countdown, with an **Open** button to the Monthly Walk panel (board, modifiers, personal best, Begin). The Monthly Walk is always available; there is no ascension gate (MetaProgressionSystem). The in-run status line reads "Monthly Walk: solve this month's puzzle." and no class badge is shown, because the Monthly Walk has no class (GAP-029).
 
 ---
 

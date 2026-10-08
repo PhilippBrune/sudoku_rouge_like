@@ -1,11 +1,12 @@
 # Pressure Mechanics System
 
-**Version:** 0.7 | **Date:** 2026-04-15 | **Status:** implemented
+**Version:** 0.8 | **Date:** 2026-10-07 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 0.8 | 2026-10-07 | implemented | Verified PRESSURE-UI-001..011 on the rendered board with InRunUiPlayModeTests (SPEC-CONF-020); statuses ✅ confirmed by evidence; two rendering defects found and fixed (GAP-039: refreshes dropped pressure visuals and consumed one-shot flashes); flash colours/durations recorded as built; pressure rolls one floor earlier fixed in 1.1 (GAP-014). |
 | 0.7 | 2026-04-15 | implemented | PRESSURE-UI-004 implemented: badge shake on expiry (`BoardViewController.ShakeBadgeCells`). All requirements now ✅. |
 | 0.6 | 2026-04-15 | review | Audited implementation against codebase. Corrected 8 requirement statuses from ❌/⚠️ to ✅. One remaining gap: PRESSURE-UI-004 badge shake (flash exists, shake missing). |
 | 0.5 | 2026-04-14 | review | Added unique requirement IDs (PRESSURE-ROLL/INIT/TICK/UI/SAVE/EDGE). Marked implementation status per requirement. AI-readable: every ID references the exact file + method that implements or must implement it. Identified 9 open gaps. |
@@ -319,6 +320,10 @@ All HP penalties from pressure mechanics route through `RunDirector.ApplyMistake
 ---
 
 ## UI / Rendering Requirements
+
+**Verification (2026-10-07, SPEC-CONF-020):** every PRESSURE-UI requirement below was checked on the rendered in-run board by `InRunUiPlayModeTests` (PlayMode, real `InRunController`): badge text and colour ramp (UI-002/003), hidden in the basics tutorial (UI-001), expiry flash with HP loss (UI-004), chain-success flash (UI-005), haunted and crumbling tints (UI-006/007), auto-fill flash and wave ripple (UI-008/009), region strips and chain lines (UI-010/011). The checks found and fixed two defects (GAP-039): a cell click, pencil toggle or item use re-rendered the board without pressure data, so badges, strips and lines vanished until the next placement; and such refreshes consumed the one-shot flashes without playing them. Since 1.1 every refresh renders the pressure state and only the placement path plays one-shot flashes.
+
+Flash values as built (they differ slightly from the original text below, which is kept as design intent): expiry red `(0.95, 0.15, 0.15)` for 0.45 s plus badge and screen shake (skipped with Reduce Motion); chain success gold `(1.00, 0.82, 0.15)` for 0.45 s; auto-fill green `(0.20, 0.80, 0.30)` for 0.45 s.
 
 **[PRESSURE-UI-001]** ✅ Implemented
 No pressure visuals when `RunState.RunNumber == 0` (Sudoku basics tutorial). `InRunController.BuildPressureRenderData` returns `null` when `run.State.RunNumber == 0`.

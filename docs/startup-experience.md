@@ -20,12 +20,19 @@ After splash, `StartupFlowController` gates the menu in this order:
    not completed or skipped the basics prompt.
 4. Main menu.
 
+The chosen step is logged (`[GameBootstrap] Startup step: …`). Fixed in 1.1 (GAP-006): on a fresh install with the
+dedicated splash scene, `MainMenuController.Start()` used to show the main menu after `GameBootstrap` had already
+opened Profile Select, so new players skipped profile selection, first-run setup and the legal notice until their
+second launch. The controller now keeps a screen chosen by the startup flow. `StartupFlowPlayModeTests` boots the
+real `GameBootstrap` with no saves and checks Profile Select → first-run setup → Sudoku basics prompt (the test
+fails without the fix).
+
 ## First-Run Setup
 
 `FirstRunSetupModalController` provides the profile-level setup prompt. It
 captures:
 
-- English or German language selection.
+- Language selection: English, German, French, Spanish or Brazilian Portuguese — every shipped catalog (SPEC-CONF-032, 1.1).
 - Accessibility defaults for colorblind mode, high contrast, reduced motion,
   and screen-reader captions.
 - Acknowledgement of the current legal notice version through
@@ -39,7 +46,7 @@ migrates older saves by creating a missing `FirstRunSetupState` during load.
 | Finding | Current coverage |
 | --- | --- |
 | INTRO-001 | `ProjectSettings/EditorBuildSettings.asset` includes `Splash.unity` before `Prototype.unity`; `StartupExperienceReadinessTests.BuildSettings_UseDedicatedSplashBeforePrototype` prevents regression. |
-| INTRO-002 | `StartupFlowController` routes incomplete profiles to `FirstRunSetup`; `FirstRunSetupPlayModeTests` validates German language, accessibility, legal persistence, and tutorial continuation. |
+| INTRO-002 | `StartupFlowController` routes incomplete profiles to `FirstRunSetup`; `FirstRunSetupPlayModeTests` validates German language, accessibility, legal persistence, and tutorial continuation; `StartupFlowPlayModeTests` validates the full fresh-install order (GAP-006). |
 | INTRO-003 | Dedicated splash is the build path; inline splash remains as a documented editor fallback. |
 | INTRO-004 | First-run setup stores `AcceptedLegalNoticeVersion` and points players to Credits for full notices. |
 | INTRO-005 | Sudoku basics completion behavior is intentional: accepting or skipping the prompt marks the prompt as handled, and the tutorial remains manually launchable from Options. |

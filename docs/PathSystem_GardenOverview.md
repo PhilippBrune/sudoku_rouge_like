@@ -1,11 +1,12 @@
 # Path System & Garden Overview
 
-**Version:** 1.5 | **Date:** 2026-04-14 | **Status:** implemented
+**Version:** 1.6 | **Date:** 2026-10-07 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.6 | 2026-10-07 | implemented | 1.1 review decisions (2026-10-07): floor modifiers 0/1/1/1/2 (SPEC-CONF-001); boss options floor+1 / picks floor, no minimum (SPEC-CONF-002); floor names from FloorThemeData/GDS (SPEC-CONF-009); exactly one cross-connection per floor with tiles keeping their type, anchors and graph version for 1.0 saves (SPEC-CONF-010, GAP-022); generatable modifier pool instead of "15" (SPEC-CONF-019); all tile types visible, details on reachable/visited tiles (SPEC-CONF-030); class player marker as built; node-type roll weight table (SPEC-MAC-004); legend and View Modifiers noted; file references updated (SPEC-CONF-036). |
 | 1.5 | 2026-04-14 | implemented | Added requirement IDs (MAP-STRUCT, MAP-ROUTE, MAP-CROSS, MAP-NODE, MAP-FX, MAP-ICON, MAP-UI). |
 | 1.4 | 2026-04-07 | implemented | Added Cursed node type (opt-in risk/reward encounter) and Positive Floor Effect system (one random floor-wide bonus per floor). Cursed nodes appear at low-medium weight on all routes. Player chooses Accept or Decline; Accept applies ×1.5 gold+XP multipliers and one extra random modifier. Four positive floor effects: Bounty (+40% gold), LuckyItems (+1 reward slot), PencilRefill (+2 pencil per puzzle), HealingPath (+1 HP per mistake-free puzzle). |
 | 1.3 | 2026-03-29 | implemented | Per-route lane boxes (Slay the Spire 2 style): single PathBg replaced with two separate lane background boxes — CalmLane (cool floor-tinted, blue-shifted) and RiskLane (warm, orange-shifted). Each box is sized to tightly fit its route's nodes with 40 px padding. Lane labels "Calm Path" / "Risk Path" shown in top-left corner of each box. Start and Boss nodes remain outside the lane boxes. `DrawRouteLane()` helper added to `PrototypeRunScreenController`. |
@@ -63,6 +64,7 @@ Each floor graph contains:
 - Lower difficulty: smaller board sizes, lower star counts.
 - May include more Rest, Relic, and Shop tiles.
 - **Fully visible to the player from floor entry — no hidden tiles.**
+  As built (1.1, SPEC-CONF-030): every tile shows its type from floor entry; puzzle details (board size, stars) show on reachable and visited tiles, and on every tile once Survey Notes or the Accurate Map relic is used.
 - Visually on the **upper half** of the canvas (Y < 0.5).
 
 ### Risk Route (Lower Lane)
@@ -71,11 +73,13 @@ Each floor graph contains:
 - Higher difficulty: larger board sizes, higher star counts.
 - Fewer safe tiles; more Puzzle and Elite tiles.
 - **Fully visible to the player from floor entry — no hidden tiles.**
+  As built (1.1, SPEC-CONF-030): every tile shows its type from floor entry; puzzle details (board size, stars) show on reachable and visited tiles, and on every tile once Survey Notes or the Accurate Map relic is used.
 - Visually on the **lower half** of the canvas (Y > 0.5).
 
 ### Mid-Path Connection (Cross-Link Tiles)
 **[MAP-CROSS-001]** Each floor has exactly **one cross-connection** linking one tile on the Calm Route to one tile on the Risk Route.
-- **Anchor selection:** Calm anchor = tile at index `floor(CalmLength / 2)`; Risk anchor = tile at index `floor(RiskLength / 2)`. The edge is drawn as a smooth bezier curve between these two positions regardless of any depth-index mismatch.
+- **Anchor selection:** Calm anchor = Calm tile at index `min(floor(CalmLength / 2), CalmLength − 2)`; Risk anchor = Risk tile at index `min(floor(RiskLength / 2), RiskLength − 2)` (never the lane's last tile, so the switch leads somewhere). The edge is drawn as a smooth bezier curve between these two positions regardless of any depth-index mismatch.
+- **As built (1.1, SPEC-CONF-010, GAP-022):** `RunGraphService.InsertSingleCrossLink` adds the two-way edge and sets `IsCrossLink` without changing the tiles' types. `RunState.FloorGraphVersion` records the layout: 2 = this rule; 0 = the 1.0 bridge layout (`floor+1` tiles of type `CrossLink`), kept for a run resumed from a 1.0 save until its next floor. Evidence: `RunGraphTests`.
 - **Cross-link tiles retain their original type.** A cross-link tile is still a Puzzle, Shop, Rest, or Relic tile — the player completes it normally. The `IsCrossLink` flag is set on the `RunNode` without overwriting `NodeType`. This means the tile has dual purpose: it functions as its type (e.g. Puzzle) *and* allows the player to switch lanes afterward.
 - Cross-link tiles display a small **⇄ badge** in the top-left corner (gold/yellow, ~16 px) to indicate the lane-switch opportunity.
 - Traversing the cross-edge moves the player to the other route from that point forward.
@@ -93,6 +97,7 @@ Each floor graph contains:
 
 ## Player Icon
 
+- As built (1.1, GAP-022): a marker above the current tile shows the class icon (`class/icon_<class>`), falling back to a gold "▼" when the icon is missing (`InRunController.PathTiles.AddPlayerMarker`).
 - The player icon represents the active class. **Each class will have its own sprite in a future pass.** Until class icons are implemented, the placeholder is a **clearly visible, high-contrast dot** (~24 px, bright white or gold filled circle). The dot must remain legible on all 5 floor backgrounds.
 - `PlayerIconController` renders the dot procedurally (same technique as overlay circles). Swap for class sprite when class icons are produced.
 - On floor entry the icon **enters from off-screen**, sliding in from the left edge of the canvas, and lands on the Shared Start Tile. This entry animation plays once per floor transition.
@@ -154,11 +159,21 @@ All tiles show:
 
 ### Cursed
 **[MAP-NODE-CURSED-001]** An opt-in risk/reward node. The player is presented with an **Accept / Decline** panel before the puzzle loads.
-- **[MAP-NODE-CURSED-002] Accept**: puzzle runs with `IsCursed = true` — applies **×1.5 gold multiplier** and **×1.5 XP multiplier**, and adds **one extra random modifier** (drawn from the 15-modifier pool, stacked on any existing floor modifiers).
+- **[MAP-NODE-CURSED-002] Accept**: puzzle runs with `IsCursed = true` — applies **×1.5 gold multiplier** and **×1.5 XP multiplier**, and adds **one extra random modifier** (drawn from the generatable modifier pool, stacked on any existing floor modifiers).
 - **[MAP-NODE-CURSED-003] Decline**: a standard puzzle of the same board size/star rating starts with no extra modifiers or multipliers.
 - No board size or star rating is shown on the tile card before the choice is made (tile just shows the "Cursed" label and icon).
 - **[MAP-NODE-CURSED-004]** Accepted cursed puzzles are tracked for the run score breakdown (`CursedPuzzlesAccepted`).
-- **Roll weights** (in `RunGraphService`): early floors weight 2, mid floors 4–6, late floors 6–8, proportionally adjusted within the node-type pool.
+- **Roll weights** (`RunGraphService.RollNodeType`, SPEC-MAC-004): see the table below; the Cursed column is the cursed-node weight.
+
+**Node-type roll weights** (relative weights; `progress` = step / lane length; the first tile after Start is always a Puzzle; `p` = risk pressure = 1 + ⌊floor index / 2⌋, so 1 on Floors 1–2, 2 on Floors 3–4, 3 on Floor 5):
+
+| Segment | Lane | Puzzle | Elite | Shop | Rest | Relic | Cursed |
+|---|---|:-:|:-:|:-:|:-:|:-:|:-:|
+| progress ≤ 0.30 | both | 66 | 0 | 8 | 16 | 8 | 2 |
+| 0.30 < progress ≤ 0.70 | Calm | 50 | 10 | 10 | 16 | 10 | 4 |
+| 0.30 < progress ≤ 0.70 | Risk | max(16, 36 − 4p) | 21 + 4p | 8 | 16 | 13 | 6 |
+| progress > 0.70 | Calm | 44 | 14 | 8 | 16 | 12 | 6 |
+| progress > 0.70 | Risk | max(10, 30 − 4p) | 30 + 4p | 6 | 12 | 14 | 8 |
 
 ---
 
@@ -189,14 +204,13 @@ Starting from Floor 2, modifiers are applied to **all puzzles** on the floor (no
 |:---:|:---:|--------|
 | 1 | 0 | No floor modifiers — gentle introduction |
 | 2 | 1 | One modifier active on all puzzles |
-| 3 | 2 | Two modifiers on all puzzles |
-| 4 | 3 | Three modifiers on all puzzles |
-| 5 | 4 | Four modifiers on all puzzles |
+| 3 | 1 | One modifier |
+| 4 | 1 | One modifier |
+| 5 | 2 | Two modifiers on all puzzles |
 
-Formula: Floor N has **N−1** floor modifiers.
+Base counts 0, 1, 1, 1, 2 (decided 2026-10-07, SPEC-CONF-001; BossMechanicsSystem §Floor Modifier Scaling). Harmony adds floor modifiers (HarmonyDifficultySystem §4.4).
 
-- Rolled from the full pool of 15 with equal probability.
-- Board size restrictions apply (German Whispers and Killer Cages require ≥ 7×7).
+- Rolled with equal probability from the generatable modifiers that fit the floor's smallest board (BossMechanicsSystem §Modifier Eligibility).
 - Floor modifiers from previous floors do not exclude the current floor's pool.
 - Stored in `RunState.ActiveFloorModifiers`; persisted in save data.
 - A **floor modifier banner** is shown on floor entry listing the new modifiers.
@@ -208,7 +222,7 @@ Formula: Floor N has **N−1** floor modifiers.
 When the player reaches the Boss Gate, a **modifier selection screen** appears before the puzzle loads. Boss-chosen modifiers are **stacked on top of** the floor modifiers.
 
 ### Modifier Pool
-- **All 15 modifiers are eligible at every floor** — there is no floor-based restriction.
+- **Every generatable modifier is eligible at every floor** — there is no floor-based tier restriction; the board-size and pairing rules of BossMechanicsSystem §Modifier Eligibility apply.
 - The random draw is uniform across the full pool, **excluding modifiers already active as floor modifiers** (no duplicates within a floor).
 - Option count and required choice count scale with floor (see table below).
 
@@ -216,13 +230,13 @@ When the player reaches the Boss Gate, a **modifier selection screen** appears b
 
 | Floor | Boss Options Shown | Player Picks | Floor Mods + Boss Mods = Total Active |
 |:---:|:---:|:---:|:---:|
-| 1 | 3 | 2 | 0 + 2 = **2** |
+| 1 | 2 | 1 | 0 + 1 = **1** |
 | 2 | 3 | 2 | 1 + 2 = **3** |
-| 3 | 4 | 3 | 2 + 3 = **5** |
-| 4 | 5 | 4 | 3 + 4 = **7** |
-| 5 | 6 | 5 | 4 + 5 = **9** |
+| 3 | 4 | 3 | 1 + 3 = **4** |
+| 4 | 5 | 4 | 1 + 4 = **5** |
+| 5 | 6 | 5 | 2 + 5 = **7** |
 
-Boss choice formula: Floor N offers **N+1** options (min 3), player picks **N** (min 2). All floor modifiers + boss-chosen modifiers are applied simultaneously to the boss puzzle.
+Boss choice formula: Floor N offers **N+1** options and the player picks **N** (no minimum; decided 2026-10-07, SPEC-CONF-002). Harmony adds the same bonus to both. All floor modifiers + boss-chosen modifiers are applied simultaneously to the boss puzzle; from Floor 3 the boss also carries one debuff (BossDebuffEffects §Delivery).
 
 ### Unknown Modifiers
 - If the player has **never encountered** a modifier in a previous run, its option card displays as **"???"** with the description hidden.
@@ -238,7 +252,7 @@ Each modifier option card shows:
 The player must confirm their selection before the boss puzzle loads. **Once confirmed, the selection is locked — there is no review step or take-back.**
 
 ### Modifier Description Box (In-Puzzle)
-- A **description box** is shown directly **under the "Mode" button** on the numpad panel (anchored at `(0.74, 0.08)–(0.97, 0.27)`).
+- A **description box** is shown directly **under the "Mode" button** on the numpad panel (anchored at `(0.74, 0.09)–(0.93, 0.33)`). Since 1.1 a "Legend" button above the numpad lists the modifiers with their colours and isolates one layer on tap (GAP-025), and the in-run Options menu has a View Modifiers list (GAP-020).
 - The box lists the name and short rule description for each active modifier (floor modifiers + boss modifiers if applicable).
 - **Visibility**: the box is hidden (`SetActive(false)`) when no modifiers are active (Floor 1 non-boss puzzles). It is shown (`SetActive(true)`) whenever the current puzzle has one or more active modifiers — including floor-modified puzzles on Floors 2–5.
 - **Update behaviour**: the description text refreshes on every call to `BuildOrRefreshSudokuBoard`, not just when overlays are first built. This ensures it updates correctly when a new puzzle loads with different modifiers.
@@ -254,13 +268,15 @@ The player must confirm their selection before the boss puzzle loads. **Once con
 
 Each of the 5 floors has a unique Japanese garden theme reflected in the background art, ambient music, and visual palette of the path canvas. All background `Sprite` and `AudioClip` assets are defined per theme and referenced by `FloorThemeData` (floor index 0–4).
 
-| Floor | Garden Theme | Visual Palette | Music Mood |
-|-------|-------------|----------------|------------|
-| 1 | Cherry Blossom Garden (Sakura-en) | Soft pinks, pale greens, white petals | Calm, airy; light shakuhachi flute |
-| 2 | Bamboo Forest (Take-no-mori) | Deep greens, gold, cool shadows | Rhythmic; bamboo percussion, breeze |
-| 3 | Zen Rock Garden (Karesansui) | Grey stone, white raked sand, moss | Sparse, meditative; low koto tones |
-| 4 | Koi Pond Garden (Koi-no-niwa) | Teal water, orange fish, lily pads | Flowing, serene; gentle water sounds |
-| 5 | Mountain Temple (Yama-no-shinden) | Dark stone, lantern glow, mist | Tense, sacred; taiko drums, reverb |
+| Floor | Garden (`FloorThemeData.FloorNames`) | Music loop (`Resources/audio/music`) |
+|-------|-------------|----------------|
+| 1 | Bamboo Courtyard | `floor_00_bamboo_courtyard` |
+| 2 | Moss Garden | `floor_01_moss_garden` |
+| 3 | Koi Terrace | `floor_02_koi_terrace` |
+| 4 | Stone Lantern Walk | `floor_03_stone_lantern_walk` |
+| 5 | Shrine Summit | `floor_04_shrine_summit` |
+
+Names follow GameDesignSpec §10, the backgrounds, the narrative and the localization catalogs (decided 2026-10-07, SPEC-CONF-009; the earlier themes Cherry Blossom Garden, Bamboo Forest, Zen Rock Garden, Koi Pond Garden and Mountain Temple are retired).
 
 Tile node cards and path edges use a consistent dark-panel style (as seen in the reference screenshot) so they remain legible across all backgrounds.
 
@@ -273,6 +289,8 @@ On boss defeat the following sequence plays before the next floor loads:
 1. **"Garden Cleared" card** (~2–3 s) — shows the defeated garden name and a short summary line (tiles completed, relics gained).
 2. **Cutscene panel** — a single fullscreen static image previewing the next garden's theme. No animation is required in the first implementation pass.
 3. **Next floor canvas fade-in** — the new garden's path appears; the player icon slides onto the Shared Start Tile from off-screen.
+
+**As built and accepted (SPEC-AMB-008, 1.1):** after a non-final boss the Boss Cleared panel shows a labelled **Continue** button that is selected for keyboard and controller (Enter / A); Continue opens the relic choice; accepting or skipping it loads the next floor, whose path fades in and shows the floor's narrative line. The status line reads "Garden cleared! Next floor...". The static cutscene image and the icon slide-in are not built. Evidence: `BossClearedFlowPlayModeTests` (GAP-002).
 
 ---
 
@@ -384,10 +402,10 @@ Tile node positions are computed once at graph generation time, stored per node,
 | `Assets/Scripts/Run/RunGraphService.cs` | 5-floor graph generation, left-to-right layout (`X=progress, Y=lane`), cross-link sets `IsCrossLink` flag without overwriting `NodeType` |
 | `Assets/Scripts/Run/RunDirector.cs` | Floor progression; `RebuildCurrentFloorGraph()`; boss modifier overlay retry loop (5 boards × 12 seeds); floor-based intensity scaling |
 | `Assets/Scripts/UI/RunMapController.cs` | Render graph, player icon animation, reachability greying, bezier cross-edge; `IsCrossLink` for lane lock release |
-| `Assets/Scripts/UI/PrototypeRunScreenController.cs` | Cross-link badge rendering (⇄); `RefreshBossModifierDescription()` on every board build; removed CrossLink early-return in `ChoosePath` |
+| `Assets/Scripts/UI/InRunController.cs` (+ `.PathTiles.cs`; replaces `PrototypeRunScreenController.cs`, SPEC-CONF-036) | Cross-link badge rendering (⇄); `RefreshBossModifierDescription()` on every board build; removed CrossLink early-return in `ChoosePath` |
 | `Assets/Scripts/UI/InRunUiBlueprintBuilder.cs` | Boss description box repositioned under numpad Mode button `(0.74,0.08)–(0.97,0.27)` |
 | `Assets/Scripts/Core/RuntimeModels.cs` | `IsCrossLink` on `RunNode`; `CurrentFloor`, `TotalFloors`, `ChosenBossModifiers` on `RunState` |
-| `Assets/Scripts/Boss/BossService.cs` | Per-floor option/choice count; uniform pool draw across all 15 modifiers |
+| `Assets/Scripts/Boss/BossService.cs` | Per-floor option/choice count; uniform pool draw across the generatable modifiers |
 | `Assets/Scripts/Save/RunResumeService.cs` | Restore `CurrentFloor`, `TotalFloors`, `ChosenBossModifiers` on resume; `RebuildCurrentFloorGraph()` for floor > 0 |
 | New: `Assets/Scripts/UI/PlayerIconController.cs` | Procedural dot placeholder; off-screen entry animation; edge-following tween |
 | New: `Assets/Scripts/Data/FloorThemeData.cs` | Maps floor index to background `Sprite`, music `AudioClip`, palette |

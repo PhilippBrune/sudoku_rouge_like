@@ -1,11 +1,12 @@
 # Class Progression Unlocks
 
-**Version:** 0.2 | **Date:** 2026-04-18 | **Status:** new
+**Version:** 0.3 | **Date:** 2026-10-07 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 0.3 | 2026-10-07 | implemented | Status set from evidence (SPEC-CONF-022): exclusive unlocks covered by ModifierDiscoveryPersistenceTests/GameplayEffectContractTests. Survey Notes and Accurate Map now reveal tile details because tile types are always visible (SPEC-CONF-030); the Accurate Map redirect design moved to future scope. |
 | 0.2 | 2026-04-18 | new | Added Starting Relics section (relic system rework integration) |
 | 0.1 | 2026-04-09 | new | Initial specification |
 
@@ -164,8 +165,8 @@ On the meta progression panel, unlocked exclusives are listed under each class a
 
 | Level | Type | Name | Effect |
 |-------|------|------|--------|
-| L15 | Item (Unique) | **Survey Notes** | Reveals the node type AND star rating of all unvisited nodes on the current floor's path (both Calm and Risk routes). Hidden nodes become fully visible for the rest of the floor. |
-| L30 | Relic (T3) | **Accurate Map** | Once per floor, after selecting a node to travel to, you may redirect to any adjacent same-route node instead. The redirect must be made before the node begins. |
+| L15 | Item (Unique) | **Survey Notes** | Reveals the board size AND star rating of every tile on the current floor's path (both Calm and Risk routes) for the rest of the floor. (Since 1.1 all tile types are visible from floor entry, SPEC-CONF-030, so the item reveals the puzzle details.) |
+| L30 | Relic (T3) | **Accurate Map** | As built: reveals the board size and star rating of every tile on each floor, like a permanent Survey Notes. The redirect design ("once per floor, redirect to an adjacent same-route node") is not built and is recorded in `future-scope-decision-register.md` (2026-10-07). |
 
 *Design note:* Survey Notes gives full path information — the Cartographer's dream. Accurate Map gives literal path control: the only class in the game that can change their mind about a node mid-floor. Fits the class identity of "previewing and planning" taken to its logical extreme.
 

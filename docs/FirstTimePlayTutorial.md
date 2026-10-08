@@ -1,8 +1,14 @@
 # First-Time Play Tutorial
 
-**Version:** 2.0  
-**Date:** 2026-04-27  
+**Version:** 2.1  
+**Date:** 2026-10-07  
 **Status:** implemented
+
+### Change History
+
+| Version | Date | Status | Changes |
+|---------|------|--------|---------|
+| 2.1 | 2026-10-07 | implemented | 15 shipped steps written down as acceptance criteria (SPEC-CONF-037, SPEC-MAC-002); TUTO-BASICS-STEP-001/002/006 re-specified; evidence SudokuBasicsStepsTests. |
 
 ## Overview
 
@@ -59,15 +65,29 @@ This means:
 - no save/resume state is created
 - class progression is not advanced
 
-## Scripted Teaching Flow
+## Scripted Teaching Flow — acceptance criteria
 
-The board is deterministic so the in-run tutorial controller can point at exact cells and expected actions. The tutorial scripting lives in `InRunController` and its associated basics tutorial logic.
+The board is deterministic so `SudokuBasicsTutorialController` (driven by `InRunController`) can point at exact cells and expected actions. The 15 steps below are the shipped lesson and its acceptance criteria (decided 2026-10-07, SPEC-CONF-037; earlier drafts described 7 or 11 steps). Rows and columns are 0-based. Explanation steps block all board input and advance with **Next**; interaction steps advance only when the expected action is done, and a wrong digit there shows a hint instead of a penalty.
 
-Verified design intent from code/comments:
+| Step | Title | Type | Highlight / target | Expected action |
+|:---:|-------|------|--------------------|-----------------|
+| 0 | Welcome to Sudoku | Explanation | — | Next |
+| 1 | The Row Rule | Explanation | row 0 | Next |
+| 2 | The Column Rule | Explanation | column 1 | Next |
+| 3 | The Box Rule | Explanation | top-left 2×3 box | Next |
+| 4 | Finding the Answer | Explanation | row 3, target (3,1) | Next |
+| 5 | Narrow It Down | Explanation | column 1, target (3,1) | Next |
+| 6 | Only One Answer! | Explanation | row 3 + column 1, target (3,1) | Next |
+| 7 | Your Turn! | Interaction | cell (3,1) | place **6** |
+| 8 | Well Done! | Explanation | row 3, target (3,2) | Next |
+| 9 | One More! | Interaction | cell (3,2) | place **1** |
+| 10 | Pencil Marks | Explanation | cell (0,1) | Next |
+| 11 | Mark Your Candidates | Pencil interaction | row 0, target (0,1) | pencil-mark **2 and 6** |
+| 12 | Eliminate With Logic | Explanation (removes the 6 mark) | column 1, target (0,1) | Next |
+| 13 | Commit the Answer | Interaction | cell (0,1) | place **2** |
+| 14 | You've Got It! | Explanation | — | finish |
 
-- the lesson is step-driven
-- specific cells are referenced directly
-- later steps expect concrete placements on the fixed 6x6 board
+Evidence: `SudokuBasicsStepsTests` (step count, interactive targets and digits match the board's solution). TUTO-BASICS-STEP-006 ("a step blocks input until the correct digit is placed") is step 7.
 
 ## Persistence
 

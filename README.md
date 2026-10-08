@@ -1,4 +1,4 @@
-﻿# Run of the Nine â€” Unity Specification Pack
+﻿# Run of the Nine — Unity Specification Pack
 
 This repository contains a complete design and implementation blueprint for **Run of the Nine**, a Sudoku roguelike set in a pixel-art Japanese garden.
 
@@ -28,7 +28,7 @@ Build a Unity game that combines:
 - Branching garden routes
 - End boss Sudoku modifiers
 
-## Recommended Build Sequence (MVP â†’ Full)
+## Recommended Build Sequence (MVP → Full)
 
 1. Core Sudoku board generation + validation (5x5 to 9x9)
 2. HP, mistakes, pencil unit resource system
@@ -107,7 +107,7 @@ One-off maintenance and pipeline scripts. Run from the repository root with `.\t
 | `run-unity-tests.ps1` | Run Unity Test Runner in batchmode for EditMode, PlayMode, or both |
 | `agent.ps1` | LangGraph AI pipeline shortcut / interactive REPL |
 | `_lint_assets.ps1` | Audit PNG naming, prefix conventions, missing .meta, dangling Resources.Load paths |
-| `_fix_filter_mode.py` | Set filterModeâ†’Point on all texture .meta files |
+| `_fix_filter_mode.py` | Set filterMode→Point on all texture .meta files |
 | `_fix_bg_meta.ps1` | Generate Unity .meta files for background sprites |
 | `_fix_csv.ps1` | Rebuild the GeneratedIcons icon-map CSV |
 | `_fix_paths.ps1` | Patch legacy GeneratedIcons/ string literals in MainMenuBlueprintBuilder |

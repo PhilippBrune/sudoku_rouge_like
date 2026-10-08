@@ -44,6 +44,17 @@ dotnet test GameTests.PlayMode.csproj --verbosity minimal
 6. Split commits by reviewable ownership area if the change set remains too
    broad for one review.
 
+## 1.1.0 Change Set (2026-10-07)
+
+The uncommitted tree holds release 1.1.0: the 2026-10-05 fix pass and the 1.1 pass (`docs/review/GAME_GAPS.md`, both fix logs). Many runtime files carry several gaps (for example `InRunController.cs`), so a split by file cannot follow gap boundaries exactly. A workable grouping, each message citing its GAP and requirement IDs (CLAUDE.md):
+
+1. Runtime code and tests: `Assets/Scripts/**` (new partial classes and test fixtures included, with their `.meta` files), `Game.csproj` and the two test `.csproj` files. Message lists GAP-001..041 by area.
+2. Localization catalogs and their `.meta` files (`es.json.meta` and `pt.json.meta` are new).
+3. Specs and review/release docs: `docs/**`, `CHANGELOG.md`, `README.md`; the moved files (`docs/archive/`, `docs/art-source/ui-mockups/`) and the deleted `docs/*.md.meta` and `docs/ParkStoryDraft.md`.
+4. Project settings (`bundleVersion` 1.1.0) only after the company/product decision (PRG-PLAYER-METADATA in `docs/release/platform-release-manifest.md`), together with `.gitignore`.
+
+The audio WAV files show as modified because their headers were repaired on 2026-10-05 (GAP-030); commit them with group 2 or as their own commit.
+
 ## Do Not
 - Do not use `git reset --hard` to clean the tree.
 - Do not restore the retired root `sudoku_rouge_like.sln`.

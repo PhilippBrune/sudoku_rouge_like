@@ -28,6 +28,7 @@ Observed on 2026-05-11:
 | `Assets/Resources/ui/` | 29 PNG | UI icons/art | Generated/curated visual assets directed by Philipp Brune. | Needs final art review. |
 | `Assets/Resources/audio/` | 49 WAV | Music, SFX, and UI audio | Project-owned procedural synthesis generated as authored candidate source audio. See `docs/audio-asset-pipeline.md`. | Candidate pack present; needs listening, mix, import, and platform compression validation before release. |
 | `Assets/Resources/Fonts/` | 1 TTF | Production UI font | Roboto Regular by Google, licensed under Apache License 2.0. Notice: `docs/legal/third-party/Roboto-NOTICE.md`. See `docs/font-asset-pipeline.md`. | Candidate production font present; needs Unity import, layout, and upstream binary validation before release. |
+| `Assets/Resources/Localization/` | 5 JSON | UI text catalogs (en, de, fr, es, pt) | Project-authored source text and translations. | German catalog has encoding damage to fix before release (GAP-019); FR/ES/PT need native review. |
 | `Assets/Resources/BillingMode.json` | 1 JSON | Runtime config | Project-authored configuration. | Keep if runtime-required. |
 
 Unity `.meta` files are excluded from asset counts but are required for Unity import identity.

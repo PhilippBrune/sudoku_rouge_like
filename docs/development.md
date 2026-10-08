@@ -53,7 +53,14 @@ If Unity is installed outside the default Unity Hub path, pass the editor path:
 .\tools\run-unity-tests.ps1 -UnityExe "C:\Program Files\Unity\Hub\Editor\6000.3.10f1\Editor\Unity.exe"
 ```
 
-The script writes XML results and Unity logs to `TestResults/`.
+The script writes XML results and Unity logs to `TestResults/`. It refuses to run while the Unity Editor has the project open, and a run that writes no results XML counts as "not run".
+
+Other options:
+
+- `-TestFilter <full test name>` / `-TestCategory REQ:<requirement ID>` run a subset. Every `[Requirement("ID")]` attribute on a test adds the NUnit category `REQ:<ID>`; `RequirementTraceabilityTests` rejects IDs that are not documented in `docs/REQUIREMENT_MAP.md` or `docs/review/REQUIREMENT_TRACEABILITY.md`.
+- `-ProjectPath <copy>` runs against a mirror of the repository, which lets the tests run while the Editor has the original open.
+
+The `ReviewDiagnostics*Tests` fixtures are `[Explicit]`: they are the `D##` probes of the 2026-10-01 review (`docs/review/E2E_TEST_REPORT.md`), encode the specs as they were then, and run only when named in `-TestFilter`. They are kept as evidence for the review documents and are not part of the release gate (they make up the 26 skipped tests).
 
 ## Startup Scene Order
 
@@ -76,6 +83,13 @@ Runtime localization catalogs live in:
 
 - `Assets/Resources/Localization/en.json`
 - `Assets/Resources/Localization/de.json`
+- `Assets/Resources/Localization/fr.json`
+- `Assets/Resources/Localization/es.json`
+- `Assets/Resources/Localization/pt.json` (Brazilian Portuguese)
+
+French, Spanish and Portuguese ship since 1.0 but do not yet translate the gameplay content (items, relics, boss
+modifiers, narrative, classes): each lacks 431 keys that German has, so those texts fall back to English (status
+2026-10-07). `LocalizationCatalogQualityTests` rejects double-encoded text in all catalogs and production scripts.
 
 `LocalizationService` loads these JSON files first and then falls back to the
 legacy in-code dictionaries. See `docs/localization-catalog.md` for the current

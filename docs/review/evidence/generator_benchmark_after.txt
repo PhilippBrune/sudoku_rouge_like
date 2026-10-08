@@ -1,0 +1,71 @@
+# SudokuGenerator.CreatePuzzleWithUniquenessCheck, standalone .NET harness (outside Unity), 8 seeds per row (1000 + s*7919), 6000 ms deadline.
+# Columns: wall-clock ms. v = region variant (0 rectangular, 2 irregular, 3 jigsaw), m = missing fraction, rule flags as named.
+# A timeout at 6000 ms means the generator gave up; in the game the level pipeline then falls back (rectangular regions, fewer modifiers, salted seed).
+# The run was stopped early in the jigsaw (v3) block: structural rules time out there as on v2. 6x6-8x8 rows were not run.
+# AFTER the 2026-10-05 generator change.
+
+9x9 v0 m0,4 none                         p50=       1 p95=       4 max=       4 timeouts=0 fails=0
+9x9 v0 m0,4 nonconsec                    p50=     142 p95=     773 max=     773 timeouts=0 fails=0
+9x9 v0 m0,4 antiknight                   p50=      12 p95=      27 max=      27 timeouts=0 fails=0
+9x9 v0 m0,4 nonconsecDiag                p50=      11 p95=      98 max=      98 timeouts=0 fails=0
+9x9 v0 m0,4 antibishop                   p50=    6000 p95=    6001 max=    6001 timeouts=8 fails=0
+9x9 v0 m0,4 antiking                     p50=       2 p95=       3 max=       3 timeouts=0 fails=0
+9x9 v0 m0,4 distGe2                      p50=       2 p95=       3 max=       3 timeouts=0 fails=0
+9x9 v0 m0,4 entropy                      p50=       2 p95=       2 max=       2 timeouts=0 fails=0
+9x9 v0 m0,4 antiking+nonconsec           p50=     649 p95=    1665 max=    1665 timeouts=0 fails=0
+9x9 v0 m0,4 antiknight+nonconsecDiag     p50=     122 p95=     558 max=     558 timeouts=0 fails=0
+9x9 v0 m0,7 none                         p50=       2 p95=       3 max=       3 timeouts=0 fails=0
+9x9 v0 m0,7 nonconsec                    p50=      66 p95=    1046 max=    1046 timeouts=0 fails=0
+9x9 v0 m0,7 antiknight                   p50=       4 p95=       8 max=       8 timeouts=0 fails=0
+9x9 v0 m0,7 nonconsecDiag                p50=      14 p95=      16 max=      16 timeouts=0 fails=0
+9x9 v0 m0,7 antibishop                   p50=    6000 p95=    6000 max=    6000 timeouts=8 fails=0
+9x9 v0 m0,7 antiking                     p50=       4 p95=      10 max=      10 timeouts=0 fails=0
+9x9 v0 m0,7 distGe2                      p50=       3 p95=      14 max=      14 timeouts=0 fails=0
+9x9 v0 m0,7 entropy                      p50=       2 p95=      18 max=      18 timeouts=0 fails=0
+9x9 v0 m0,7 antiking+nonconsec           p50=     533 p95=    2275 max=    2275 timeouts=0 fails=0
+9x9 v0 m0,7 antiknight+nonconsecDiag     p50=      94 p95=     461 max=     461 timeouts=0 fails=0
+9x9 v0 m0,9 none                         p50=       2 p95=       4 max=       4 timeouts=0 fails=0
+9x9 v0 m0,9 nonconsec                    p50=     188 p95=    1037 max=    1037 timeouts=0 fails=0
+9x9 v0 m0,9 antiknight                   p50=     154 p95=     315 max=     315 timeouts=0 fails=0
+9x9 v0 m0,9 nonconsecDiag                p50=     197 p95=     313 max=     313 timeouts=0 fails=0
+9x9 v0 m0,9 antibishop                   p50=    6000 p95=    6000 max=    6000 timeouts=8 fails=0
+9x9 v0 m0,9 antiking                     p50=      48 p95=      91 max=      91 timeouts=0 fails=0
+9x9 v0 m0,9 distGe2                      p50=      54 p95=      75 max=      75 timeouts=0 fails=0
+9x9 v0 m0,9 entropy                      p50=      17 p95=      56 max=      56 timeouts=0 fails=0
+9x9 v0 m0,9 antiking+nonconsec           p50=     597 p95=    1391 max=    1391 timeouts=0 fails=0
+9x9 v0 m0,9 antiknight+nonconsecDiag     p50=     567 p95=     938 max=     938 timeouts=0 fails=0
+9x9 v2 m0,4 none                         p50=       5 p95=      24 max=      24 timeouts=0 fails=0
+9x9 v2 m0,4 nonconsec                    p50=    6000 p95=    6000 max=    6000 timeouts=8 fails=0
+9x9 v2 m0,4 antiknight                   p50=    6000 p95=    6000 max=    6000 timeouts=8 fails=0
+9x9 v2 m0,4 nonconsecDiag                p50=    6000 p95=    6000 max=    6000 timeouts=8 fails=0
+9x9 v2 m0,4 antibishop                   p50=    6000 p95=    6000 max=    6000 timeouts=8 fails=0
+9x9 v2 m0,4 antiking                     p50=    6000 p95=    6000 max=    6000 timeouts=8 fails=0
+9x9 v2 m0,4 distGe2                      p50=    6000 p95=    6000 max=    6000 timeouts=8 fails=0
+9x9 v2 m0,4 entropy                      p50=    6000 p95=    6001 max=    6001 timeouts=8 fails=0
+9x9 v2 m0,4 antiking+nonconsec           p50=    6000 p95=    6035 max=    6035 timeouts=8 fails=0
+9x9 v2 m0,4 antiknight+nonconsecDiag     p50=    6000 p95=    6000 max=    6000 timeouts=8 fails=0
+9x9 v2 m0,7 none                         p50=      33 p95=      50 max=      50 timeouts=0 fails=0
+9x9 v2 m0,7 nonconsec                    p50=    6000 p95=    6013 max=    6013 timeouts=8 fails=0
+9x9 v2 m0,7 antiknight                   p50=    6000 p95=    6000 max=    6000 timeouts=8 fails=0
+9x9 v2 m0,7 nonconsecDiag                p50=    6000 p95=    6000 max=    6000 timeouts=8 fails=0
+9x9 v2 m0,7 antibishop                   p50=    6000 p95=    6000 max=    6000 timeouts=8 fails=0
+9x9 v2 m0,7 antiking                     p50=    6000 p95=    6001 max=    6001 timeouts=8 fails=0
+9x9 v2 m0,7 distGe2                      p50=    6000 p95=    6001 max=    6001 timeouts=8 fails=0
+9x9 v2 m0,7 entropy                      p50=    6000 p95=    6000 max=    6000 timeouts=8 fails=0
+9x9 v2 m0,7 antiking+nonconsec           p50=    6000 p95=    6000 max=    6000 timeouts=8 fails=0
+9x9 v2 m0,7 antiknight+nonconsecDiag     p50=    6000 p95=    6001 max=    6001 timeouts=8 fails=0
+9x9 v2 m0,9 none                         p50=      57 p95=      78 max=      78 timeouts=0 fails=0
+9x9 v2 m0,9 nonconsec                    p50=    6000 p95=    6000 max=    6000 timeouts=8 fails=0
+9x9 v2 m0,9 antiknight                   p50=    6000 p95=    6000 max=    6000 timeouts=8 fails=0
+9x9 v2 m0,9 nonconsecDiag                p50=    6000 p95=    6000 max=    6000 timeouts=8 fails=0
+9x9 v2 m0,9 antibishop                   p50=    6000 p95=    6000 max=    6000 timeouts=8 fails=0
+9x9 v2 m0,9 antiking                     p50=    6000 p95=    6000 max=    6000 timeouts=8 fails=0
+9x9 v2 m0,9 distGe2                      p50=    6000 p95=    6002 max=    6002 timeouts=8 fails=0
+9x9 v2 m0,9 entropy                      p50=    6000 p95=    6000 max=    6000 timeouts=8 fails=0
+9x9 v2 m0,9 antiking+nonconsec           p50=    6000 p95=    6001 max=    6001 timeouts=8 fails=0
+9x9 v2 m0,9 antiknight+nonconsecDiag     p50=    6000 p95=    6000 max=    6000 timeouts=8 fails=0
+9x9 v3 m0,4 none                         p50=       3 p95=      39 max=      39 timeouts=0 fails=0
+9x9 v3 m0,4 nonconsec                    p50=    6000 p95=    6001 max=    6001 timeouts=8 fails=0
+9x9 v3 m0,4 antiknight                   p50=    6000 p95=    6000 max=    6000 timeouts=6 fails=0
+9x9 v3 m0,4 nonconsecDiag                p50=    6000 p95=    6000 max=    6000 timeouts=7 fails=0
+9x9 v3 m0,4 antibishop                   p50=    6000 p95=    6000 max=    6000 timeouts=8 fails=0

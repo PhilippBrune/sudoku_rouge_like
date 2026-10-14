@@ -1,6 +1,6 @@
 # Save & Load Architecture
 
-**Version:** 2.3  
+**Version:** 2.4  
 **Date:** 2026-10-14  
 **Status:** implemented
 
@@ -8,6 +8,7 @@
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.4 | 2026-10-14 | implemented | Active profile slot without a stored pref: the most recently written profile is used and stored (SAVE-SLOT-004, GAP-043, ActiveSlotRecoveryTests). |
 | 2.3 | 2026-10-14 | implemented | Save folder stays LocalLow/Kratossos/sudoku_rouge_like, the folder of the released 1.0 build and the Steam Auto-Cloud root (SAVE-FOLDER-001); the 2.2 move to "Run of the Nine" was withdrawn the same day, before any release. SAVE-MIGRATE-001 copies only from the pre-release folder DefaultCompany/RunOfTheNine. Steam Auto-Cloud recorded as configured (portal check 2026-10-14). |
 | 2.2 | 2026-10-14 | implemented | Save folder follows the Steamworks names: LocalLow/Kratossos/Run of the Nine; one-time copy of earlier save folders (SAVE-MIGRATE-001, LegacySaveMigrationTests); optional Steam Auto-Cloud settings recorded. |
 | 2.1 | 2026-10-07 | implemented | What resumes from which screen (SPEC-AMB-005, GAP-018/021); compatibility rules incl. 1.0 → 1.1 (SPEC-MAC-009); autosave reloads before writing (GAP-037); mistakes saved immediately (GAP-031); XP log and analytics saved with the run (GAP-038); abandoning a saved run (GAP-032, SPEC-AMB-010). |
@@ -47,6 +48,12 @@ Crash-safety support:
 | ID | Requirement |
 |---|---|
 | SAVE-FOLDER-001 | The Player Settings company and product names stay `Kratossos` / `sudoku_rouge_like`, so the save folder is `LocalLow\Kratossos\sudoku_rouge_like`: the folder of the released 1.0 build (Steam build 24153478, whose `app.info` holds these names) and the Steam Auto-Cloud root. Changing either name would hide every player's saves from the game and from Steam Cloud. The store name "Run of the Nine" is shown as the window title instead (GameDesignSpec DISPLAY-MODE-007). Test: `LegacySaveMigrationTests.PlayerSettings_KeepTheSaveFolderOfTheReleasedGame`. |
+
+### Active profile slot (SAVE-SLOT-004)
+
+| ID | Requirement |
+|---|---|
+| SAVE-SLOT-004 | The active slot is stored in PlayerPrefs (`ActiveProfileSlot`, the registry on Windows), the profiles in files. When no slot is stored but profiles exist, the most recently written profile file becomes the active slot and is stored; ties go to the lower slot. Without any profile nothing is stored, so a fresh install still shows profile select. Reason: Steam Cloud restores `save_profile_*.json` on a new PC or after a reinstall, not the registry; before 0.1.5 the game opened an empty slot 0 there (GAP-043). Code: `SaveProfileService.ActiveSlot`, `EnsureActiveSlot`, `NewestExistingSlot`; tests: `ActiveSlotRecoveryTests`. |
 
 ### Earlier save folders (SAVE-MIGRATE-001)
 

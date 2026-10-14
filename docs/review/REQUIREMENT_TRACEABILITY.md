@@ -4,9 +4,9 @@
 
 **Fix pass 2026-10-05:** the 27 rows whose note says *Fixed 2026-10-05* were re-assessed after the fixes in the [GAME_GAPS fix log](GAME_GAPS.md#fix-log-2026-10-05). META-CODEX-001/002, found broken during that verification ([GAP-037](GAME_GAPS.md#gap-037)), were fixed in 1.1.
 
-**Fix pass 1.1 (2026-10-07):** 101 rows marked *Fixed 1.1* or *Spec aligned 1.1* were re-assessed after implementing the recommendations of [GAME_GAPS](GAME_GAPS.md#fix-log-2026-10-07-release-110) and [SPECIFICATION_ISSUES](SPECIFICATION_ISSUES.md). 52 further rows, not reviewed individually, are `IMPLEMENTED` because a passing test carries their ID (`[Requirement]` attribute or `[REQ:]` tag; SPEC-PROC-003). The SPICE pipeline IDs (`REQ-BOSS-001..035`, `REQ-GENERAL-013..029`, `REQ-META-010..018`, `REQ-SUDOKU-076..117`, `REQ-UI-018`, `REQ-UI-027..036`, `REQ-SAVE-018`) were archived with their tables in `docs/archive/SPICE_REQUIREMENT_TABLES.md` (SPEC-OBS-001) and are no longer rows here. Every other row is still the 2026-10-01 review verdict.
+**Fix pass 1.1 (2026-10-07):** 101 rows marked *Fixed 1.1* or *Spec aligned 1.1* were re-assessed after implementing the recommendations of [GAME_GAPS](GAME_GAPS.md#fix-log-2026-10-07-release-110) and [SPECIFICATION_ISSUES](SPECIFICATION_ISSUES.md). 53 further rows, not reviewed individually, are `IMPLEMENTED` because a passing test carries their ID (`[Requirement]` attribute or `[REQ:]` tag; SPEC-PROC-003). The SPICE pipeline IDs (`REQ-BOSS-001..035`, `REQ-GENERAL-013..029`, `REQ-META-010..018`, `REQ-SUDOKU-076..117`, `REQ-UI-018`, `REQ-UI-027..036`, `REQ-SAVE-018`) were archived with their tables in `docs/archive/SPICE_REQUIREMENT_TABLES.md` (SPEC-OBS-001) and are no longer rows here. Every other row is still the 2026-10-01 review verdict.
 
-Requirement → Specification → Code → Runtime test → Automated test → Status, for every requirement ID found in `docs/*.md` (359) plus 64 new IDs this review created for requirements that had none (`REQ-<SYS>-1xx`, numbered from 100 so they cannot collide with the legacy `REQ-*-0xx` IDs).
+Requirement → Specification → Code → Runtime test → Automated test → Status, for every requirement ID found in `docs/*.md` (360) plus 64 new IDs this review created for requirements that had none (`REQ-<SYS>-1xx`, numbered from 100 so they cannot collide with the legacy `REQ-*-0xx` IDs).
 
 ## How to read this
 
@@ -21,33 +21,33 @@ Requirement → Specification → Code → Runtime test → Automated test → S
 
 | Status | Count |
 |---|---:|
-| IMPLEMENTED | 237 |
+| IMPLEMENTED | 238 |
 | PARTIALLY_IMPLEMENTED | 9 |
 | BROKEN | 0 |
 | MISSING | 3 |
 | CONTRADICTED | 0 |
 | OUTDATED | 19 |
 | UNTESTABLE | 155 |
-| **Total** | **423** |
+| **Total** | **424** |
 
 Of the 155 UNTESTABLE items, **147 are coverage gaps** (not exercised, no automated test) and 8 are infrastructure-limited.
 
-Traceability health: 301 of 359 spec IDs carry a code annotation. **136 spec IDs are referenced from tests** (the review found 1). Since the fix pass, tests carry a `[Requirement("ID")]` attribute (NUnit category `REQ:<id>`), and `RequirementTraceabilityTests` rejects IDs that do not exist in `docs/` ([GAP-010](GAME_GAPS.md#gap-010)). Most requirements still have no test.
+Traceability health: 302 of 360 spec IDs carry a code annotation. **137 spec IDs are referenced from tests** (the review found 1). Since the fix pass, tests carry a `[Requirement("ID")]` attribute (NUnit category `REQ:<id>`), and `RequirementTraceabilityTests` rejects IDs that do not exist in `docs/` ([GAP-010](GAME_GAPS.md#gap-010)). Most requirements still have no test.
 
 | Basis | Count |
 |---|---:|
 | Verified in review | 189 |
 | Not verified (coverage gap) | 147 |
-| Tagged automated test | 52 |
+| Tagged automated test | 53 |
 | Spec/registry | 25 |
 | Infrastructure-limited | 8 |
 | Static code analysis | 2 |
 
-Evidence behind the 404 current (non-outdated) requirements:
+Evidence behind the 405 current (non-outdated) requirements:
 
 | Coverage | Count | Share of current |
 |---|---:|---:|
-| Automated test, passing | 199 | 49 % |
+| Automated test, passing | 200 | 49 % |
 | Automated test, currently failing | 0 | 0 % |
 | Review only: runtime (D## / E##) | 41 | 10 % |
 | Review only: static analysis | 6 | 1 % |
@@ -389,7 +389,7 @@ Status mix: IMPLEMENTED 10, UNTESTABLE 38
 
 ## Save / Load
 
-Status mix: IMPLEMENTED 12, OUTDATED 1, UNTESTABLE 2
+Status mix: IMPLEMENTED 13, OUTDATED 1, UNTESTABLE 2
 
 | Req ID | Requirement | Specification | Code | Runtime test | Automated test | Status | Gap / note |
 |---|---|---|---|---|---|---|---|
@@ -407,6 +407,7 @@ Status mix: IMPLEMENTED 12, OUTDATED 1, UNTESTABLE 2
 | **SAVE-SLOT-001** | 3 profile slots: save_profile_0/1/2.json | REQUIREMENT_MAP.md | save_profile_{0..2}.json | E2E slot 0 file + .bak | SaveDurabilityReadinessTests | IMPLEMENTED |  |
 | **SAVE-SLOT-002** | SaveProfileService manages all 3 slots; ActiveSlot in PlayerPrefs | REQUIREMENT_MAP.md | Tagged ×1: SaveProfileService.cs | Not verified | None | UNTESTABLE | Coverage gap: no automated test references this behaviour and it was not exercised in this review |
 | **SAVE-SLOT-003** | GameBootstrap.ApplySlotChange() re-wires save services after slot switch | REQUIREMENT_MAP.md | Tagged ×1: GameBootstrap.cs | Not verified | None | UNTESTABLE | Coverage gap: no automated test references this behaviour and it was not exercised in this review |
+| **SAVE-SLOT-004** | 2.4 2026-10-14 implemented Active profile slot without a stored pref: the most recently written profile is used and stored (, GAP-043, ActiveSlotRecoveryTests). | SaveLoadArchitecture.md › Change History | Tagged ×1: SaveProfileService.cs | Automated (Unity Test Runner 2026-10-07) | ActiveSlotRecoveryTests | IMPLEMENTED | Verified by a tagged automated test (1.1) |
 | **SAVE-TUTO-001** | 1.8 2026-04-16 implemented Inline requirement IDs added (). Stale REQ-TUTORIAL-173..202 auto-generated table replaced with canonical IDs. | TutorialModeSystem.md › Change History | Autosave skips tutorial | — | SaveDurabilityReadinessTests.Autosave_SkipsTutorial… | IMPLEMENTED |  |
 
 ## Onboarding & Tutorial

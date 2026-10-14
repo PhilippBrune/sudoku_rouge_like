@@ -1,11 +1,12 @@
 # Harmony Difficulty System
 
-**Version:** 1.1 | **Date:** 2026-10-07 | **Status:** implemented
+**Version:** 1.2 | **Date:** 2026-10-14 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.2 | 2026-10-14 | implemented | §9 Achievements: display names, descriptions and visibility follow the live Steamworks configuration (App 4858470, published with the first Early Access build); only harmony_10_perfect is hidden (SPEC-CONF-040). |
 | 1.1 | 2026-10-07 | implemented | 1.1 (2026-10-07): all table fields consumed, code aligned to the tables (SPEC-CONF-025, GAP-008); XP multiplier on every run end without flat bonus (SPEC-CONF-024); §4.8 documents how grid and star weights, boss bonuses, flags and reward pressure are applied, incl. the early-floor star cap (REQ-RUN-106). Change history added. |
 
 ---
@@ -237,14 +238,16 @@ Only one perk may be active per run.
 
 | ID | Steam Key | Name | Condition | Tier |
 |---|---|---|---|---|
-| 53 | `harmony_1_win` | First Harmony | Win GardenRun at H1+ | Intermediate |
-| 54 | `harmony_3_win` | Deep Roots | Win GardenRun at H3+ | Intermediate |
-| 55 | `harmony_5_win` | Halfway to Void | Win GardenRun at H5+ | Advanced |
-| 56 | `harmony_7_win` | Beyond the Garden | Win GardenRun at H7+ | Advanced |
-| 57 | `harmony_9_win` | Borderless Garden | Win GardenRun at H9+ | Expert |
-| 58 | `harmony_10_win` | Void Garden | Win GardenRun at H10 | Expert |
-| 59 | `harmony_10_perfect` | Void Perfection | Win H10 with 0 mistakes | Hidden |
-| 60 | `harmony_all_classes` | Master of Harmony | Win H5+ with all 8 classes | Hidden |
+| 53 | `harmony_1_win` | First Awakening | Complete a Garden Run on Harmony Level 1 or higher | Intermediate |
+| 54 | `harmony_3_win` | Moss and Gravel | Complete a Garden Run on Harmony Level 3 or higher | Intermediate |
+| 55 | `harmony_5_win` | Water Reflection | Complete a Garden Run on Harmony Level 5 or higher | Advanced |
+| 56 | `harmony_7_win` | Lantern Glow | Complete a Garden Run on Harmony Level 7 or higher | Advanced |
+| 57 | `harmony_9_win` | Torii Gateway | Complete a Garden Run on Harmony Level 9 or higher | Expert |
+| 58 | `harmony_10_win` | Summit Ascent | Complete a Garden Run on Harmony Level 10 | Expert |
+| 59 | `harmony_10_perfect` | Tranquil Perfection | Complete a Garden Run on Harmony Level 10 with zero mistakes | Hidden |
+| 60 | `harmony_all_classes` | Master of the Garden | Complete a Garden Run on Harmony Level 5 or higher with all 8 classes | Expert |
+
+Names, descriptions and visibility live in Steamworks (App 4858470); the game uses only the keys. Only `harmony_10_perfect` is hidden.
 
 Tracking storage: `MetaProgressionState.HarmonyV5PlusWins` (`List<ClassId>`) records each class
 that has won at H5+. The `harmony_all_classes` check fires when the list reaches 8 entries.

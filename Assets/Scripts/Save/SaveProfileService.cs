@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using UnityEngine;
 using SudokuRoguelike.Core;
 
@@ -18,7 +19,9 @@ namespace SudokuRoguelike.Save
 
         public static int ActiveSlot
         {
-            get => PlayerPrefs.GetInt(ActiveSlotPrefKey, 0);
+            // Without a stored slot the most recently written profile is used and stored (EnsureActiveSlot), so every
+            // reader agrees whichever runs first.
+            get => PlayerPrefs.HasKey(ActiveSlotPrefKey) ? PlayerPrefs.GetInt(ActiveSlotPrefKey, 0) : EnsureActiveSlot();
             set
             {
                 PlayerPrefs.SetInt(ActiveSlotPrefKey, Math.Max(0, Math.Min(value, SaveFileService.MaxSlots - 1)));
@@ -27,6 +30,43 @@ namespace SudokuRoguelike.Save
         }
 
         public SaveFileService GetActiveService() => new SaveFileService(ActiveSlot);
+
+        /// <summary>
+        /// Makes sure an active slot is stored and returns it. The active slot lives in PlayerPrefs (the registry on
+        /// Windows) while the profiles are files, and Steam Cloud restores only the files (new PC, reinstall). Without a
+        /// stored slot, the most recently written profile becomes active, so the player lands in their own profile
+        /// instead of a new, empty slot 0. With no profile at all nothing is stored (a fresh install shows profile
+        /// select).
+        /// </summary>
+        // [REQ: SAVE-SLOT-004] GAP-043: a missing active-slot pref selects the most recently written existing profile
+        public static int EnsureActiveSlot()
+        {
+            if (PlayerPrefs.HasKey(ActiveSlotPrefKey)) return PlayerPrefs.GetInt(ActiveSlotPrefKey, 0);
+
+            var newest = NewestExistingSlot();
+            if (newest < 0) return 0;
+
+            ActiveSlot = newest;
+            Debug.Log($"[SaveProfile] No active slot stored; using slot {newest}, the most recently written profile.");
+            return newest;
+        }
+
+        /// <summary>Slot whose profile file was written last, or -1 when no slot has a profile. Ties go to the lower slot.</summary>
+        public static int NewestExistingSlot()
+        {
+            var newest = -1;
+            var newestTime = DateTime.MinValue;
+            for (var i = 0; i < SaveFileService.MaxSlots; i++)
+            {
+                var path = SaveFileService.GetSlotPath(i);
+                if (!File.Exists(path)) continue;
+                var written = File.GetLastWriteTimeUtc(path);
+                if (newest >= 0 && written <= newestTime) continue;
+                newest = i;
+                newestTime = written;
+            }
+            return newest;
+        }
 
         // ── Slot summaries ───────────────────────────────────────────────────────
 

@@ -1,8 +1,8 @@
 # Changelog
 
-## 1.1.0 (2026-10-07)
+## 0.1.5 — 5th iteration (2026-10-14)
 
-The second Steam release. It fixes the progression blockers players hit in 1.0, finishes several systems that were only half-wired, and makes the rules match what the game tells you.
+The fifth Early Access build. It fixes the progression blockers players hit in the previous builds, finishes several systems that were only half-wired, and makes the rules match what the game tells you.
 
 ### Highlights
 
@@ -45,6 +45,7 @@ The second Steam release. It fixes the progression blockers players hit in 1.0, 
 ### Fixed
 
 - A fresh install now shows profile selection, first-run setup and the Sudoku Basics prompt.
+- On a new PC (or after a reinstall) the game opens the profile you played last instead of an empty one, even when your profile is in slot 2 or 3.
 - Codex discoveries and option changes made during a run are no longer lost at the next autosave.
 - Save & Quit can no longer re-roll boss choices, rewards or relic choices.
 - Accepted boss relics are always added.
@@ -67,9 +68,9 @@ The second Steam release. It fixes the progression blockers players hit in 1.0, 
 - The in-game Options panel keeps its older look.
 - Music tracks are short loops.
 
-### Saves from 1.0
+### Saves from earlier builds
 
-Your 1.0 profiles and runs load, and saves stay where they were (`AppData\LocalLow\Kratossos\sudoku_rouge_like`), so Steam Cloud keeps syncing them. The game window is now titled "Run of the Nine". Profiles from pre-release test builds are copied over automatically on first start. A run saved in 1.0 keeps its old path layout until you reach the next floor. Completion and codex entries that 1.0 failed to record cannot be restored; they fill in as you play.
+Your profiles and runs from earlier builds load, and saves stay where they were (`AppData\LocalLow\Kratossos\sudoku_rouge_like`), so Steam Cloud keeps syncing them. The game window is now titled "Run of the Nine". Profiles from pre-release test builds are copied over automatically on first start. A run saved in an earlier build keeps its old path layout until you reach the next floor. Completion and codex entries that earlier builds failed to record cannot be restored; they fill in as you play.
 
 ---
 
@@ -79,6 +80,6 @@ Your 1.0 profiles and runs load, and saves stay where they were (`AppData\LocalL
 - Specification decisions: every recommendation in `docs/review/SPECIFICATION_ISSUES.md` applied (resolution line per entry); open: SPEC-CONF-039 (prestige reward), owner sign-offs for SPEC-CONF-008 and SPEC-PROC-007.
 - Deferred: Ascension, four boss debuffs, multi-cell selection, Accurate Map redirect, legend polish, fr/es/pt gameplay text, in-game Options restyle, achievement list (`docs/future-scope-decision-register.md`, FUTURE-009..016).
 - Traceability: `docs/REQUIREMENT_MAP.md` has an Evidence column; ✅ only with a passing tagged test or an E2E check. `docs/review/REQUIREMENT_TRACEABILITY.md` regenerated.
-- Tests: EditMode 492 (466 passed, 0 failed, 26 skipped `[Explicit]` review diagnostics); PlayMode 25/25. Build smoke test: `docs/review/E2E_TEST_REPORT.md` §10 (B01–B15, all pass).
+- Tests: EditMode 498 (472 passed, 0 failed, 26 skipped `[Explicit]` review diagnostics); PlayMode 25/25. Build smoke tests: `docs/review/E2E_TEST_REPORT.md` §10 (B01–B19, B23–B27, all pass; B20–B22 belong to a withdrawn build).
 - Clean-up: SPICE requirement tables archived (`docs/archive/`), stray `docs/*.md.meta` removed, mockup images moved to `docs/art-source/ui-mockups/`, unused `InRunInputController` removed, `build.app/` ignored, controller size budgets lowered (InRunController 4920, MainMenuBlueprintBuilder 3010, RunDirector 2960).
-- `bundleVersion` 1.1.0; Steam App ID 4858470 in `SteamManager` (2026-10-14). Company/product stay Kratossos / sudoku_rouge_like (save folder and Auto-Cloud root of the live 1.0 build, SAVE-FOLDER-001); window title "Run of the Nine" set by `WindowFrameService` (DISPLAY-MODE-007); one-time copy of pre-release saves (SAVE-MIGRATE-001); build as `sudoku_rouge_like.exe`, the live launch option.
+- `bundleVersion` 0.1.5 (Steam build "v0.1.5 (5th iteration)"; the review documents call this change set release 1.1); Steam App ID 4858470 in `SteamManager` (2026-10-14). Company/product stay Kratossos / sudoku_rouge_like (save folder and Auto-Cloud root of the live 1.0 build, SAVE-FOLDER-001); window title "Run of the Nine" set by `WindowFrameService` (DISPLAY-MODE-007); one-time copy of pre-release saves (SAVE-MIGRATE-001); build as `sudoku_rouge_like.exe`, the live launch option.

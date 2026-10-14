@@ -53,7 +53,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-039](#gap-039) | Pressure visuals vanished after a board refresh; refreshes ate one-shot flashes | FIXED (1.1, found 2026-10-07) | LOW | P3 |
 | [GAP-041](#gap-041) | Number Freak L3 "+1 Pencil" was never applied (catalog typo) | FIXED (1.1, found 2026-10-07) | LOW | P3 |
 | [GAP-042](#gap-042) | Options dropdown lists hid their last option; no usable window mode | FIXED (1.1, found 2026-10-12) | MEDIUM | P2 |
-| [GAP-043](#gap-043) | Without the `ActiveProfileSlot` pref the game opens an empty slot 0, not the existing profile | OPEN (found 2026-10-14, owner decision) | LOW | P3 |
+| [GAP-043](#gap-043) | Without the `ActiveProfileSlot` pref the game opens an empty slot 0, not the existing profile | FIXED (0.1.5, found 2026-10-14) | LOW | P3 |
 
 ---
 
@@ -763,9 +763,10 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 ## GAP-043
 **Without the `ActiveProfileSlot` pref the game opens an empty slot 0, not the existing profile**
 
-- **Requirement:** SAVE-SLOT-002 (`SaveProfileService`, ActiveSlot in PlayerPrefs); startup flow REQ-UI-100 (profile select only when no profile exists)
-- **Status:** OPEN (found 2026-10-14 in build check B24; same behaviour in 1.0) · **Severity:** LOW · **Priority:** P3
+- **Requirement:** SAVE-SLOT-004 (SaveLoadArchitecture 2.4, new); SAVE-SLOT-002 (`SaveProfileService`, ActiveSlot in PlayerPrefs); startup flow REQ-UI-100 (profile select only when no profile exists)
+- **Status:** FIXED (0.1.5; found 2026-10-14 in build check B24, same behaviour in the earlier builds) · **Severity:** LOW · **Priority:** P3
 - **Problem:** The active slot lives in PlayerPrefs (registry), the profiles in `save_profile_*.json`. When the pref is missing but a profile exists in slot 1 or 2, the game opens slot 0, creates `save_profile_0.json` and shows first-time setup. Realistic case: a player with a slot 1 or 2 profile installs on a new PC; Steam Auto-Cloud restores the JSON files but not the registry. Nothing is lost (Profiles → choose the slot), but the player first sees an empty profile, and the new slot 0 file is synced to the cloud.
 - **Root Cause:** `SaveProfileService.ActiveSlot` returns `PlayerPrefs.GetInt("ActiveProfileSlot", 0)`; `StartupFlowController` shows profile select only when no slot exists.
-- **Proposed fix:** when the pref is missing, use the most recently written existing slot (as `LegacySaveMigration` does), or show profile select when slots exist but the pref is missing. Either way: spec line in SaveLoadArchitecture, EditMode test, build check.
-- **Affected Files:** `Assets/Scripts/Save/SaveProfileService.cs`, `Assets/Scripts/Bootstrap/StartupFlowController.cs`
+- **Fix:** `SaveProfileService.ActiveSlot` resolves a missing pref through `EnsureActiveSlot`: the most recently written profile file becomes the active slot and is stored (ties: lower slot); without any profile it stays 0 and nothing is stored, so a fresh install keeps profile select. The getter does it, so every reader agrees whichever runs first.
+- **Affected Files:** `Assets/Scripts/Save/SaveProfileService.cs`
+- **Tests:** `ActiveSlotRecoveryTests` (3: newest profile chosen and stored; no profile → slot 0, nothing stored; a stored slot wins over a newer profile); build check B26 (E2E report §10.2e).

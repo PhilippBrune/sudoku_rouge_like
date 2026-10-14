@@ -1,6 +1,6 @@
 # Requirement Traceability Map — All Systems
 
-**Updated:** 2026-10-07 (release 1.1.0) (release 1.1.0) (release 1.1.0) (release 1.1.0) (release 1.1.0)
+**Updated:** 2026-10-14 (Steam build v0.1.5; release 1.1 in the review documents)
 
 Legend: ✅ Implemented and verified | ⚠️ Partial / conflicting | ❌ Not implemented | ◻️ Code present, not verified (no tagged test or E2E check yet) | 🗄️ Deprecated / descoped | 🆕 New (spec only, no code yet)
 
@@ -443,7 +443,7 @@ Key requirements (see spec for full list):
 
 ## Save / Load
 
-**Spec:** `docs/SaveLoadArchitecture.md` v2.3 (the SPICE `REQ-SAVE-*` stubs are archived in `docs/archive/SPICE_REQUIREMENT_TABLES.md`, SPEC-OBS-001)
+**Spec:** `docs/SaveLoadArchitecture.md` v2.4 (the SPICE `REQ-SAVE-*` stubs are archived in `docs/archive/SPICE_REQUIREMENT_TABLES.md`, SPEC-OBS-001)
 
 | ID | Description | File | Method | Evidence | Status |
 | ---- | ------------- | ------ | -------- | ---------- | -------- |
@@ -453,6 +453,7 @@ Key requirements (see spec for full list):
 | SAVE-SLOT-001 | 3 profile slots: `save_profile_0/1/2.json` | `Assets/Scripts/Save/SaveFileService.cs` | Constructor | SaveDurabilityReadinessTests | ✅ |
 | SAVE-SLOT-002 | `SaveProfileService` manages all 3 slots; `ActiveSlot` in `PlayerPrefs` | `Assets/Scripts/Save/ProfileService.cs` | `SaveProfileService` | — | ◻️ |
 | SAVE-SLOT-003 | `GameBootstrap.ApplySlotChange()` re-wires save services after slot switch | `Assets/Scripts/Bootstrap/GameBootstrap.cs` | `ApplySlotChange` | — | ◻️ |
+| SAVE-SLOT-004 | No stored active slot → most recently written profile becomes active and is stored; none → slot 0, nothing stored | `Assets/Scripts/Save/SaveProfileService.cs` | `ActiveSlot`, `EnsureActiveSlot`, `NewestExistingSlot` | ActiveSlotRecoveryTests | ✅ |
 | SAVE-AUTO-001 | `RunAutoSaveCoordinator.Save()` — atomic write before serializing | `Assets/Scripts/Save/RunAutoSaveCoordinator.cs` | `Save` | AutosaveMergeTests, ResumeMidPuzzleTests, SaveDurabilityReadinessTests | ✅ |
 | SAVE-RESUME-001 | `RunResumeService.TryResumeFromSave()` restores full run state including boss modifier | `Assets/Scripts/Save/RunResumeService.cs` | `TryResumeFromSave` | ResumeMidPuzzleTests | ✅ |
 | SAVE-SERIAL-001 | All save data uses `JsonUtility` (`[Serializable]` on all data classes) | `Assets/Scripts/Core/SaveModels.cs` | Data models | ModifierDiscoveryPersistenceTests | ✅ |
@@ -547,7 +548,7 @@ Key requirements (see spec for full list):
 
 ## Harmony Difficulty
 
-**Spec:** `docs/HarmonyDifficultySystem.md` v1.1 — IDs written out individually on 2026-10-06 (the spec listed ranges such as `HARMONY-BOSS-001..002`).
+**Spec:** `docs/HarmonyDifficultySystem.md` v1.2 — IDs written out individually on 2026-10-06 (the spec listed ranges such as `HARMONY-BOSS-001..002`).
 
 | ID | Description | File | Method | Evidence | Status |
 | ---- | ------------- | ------ | -------- | ---------- | -------- |

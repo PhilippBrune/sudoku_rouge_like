@@ -17,7 +17,7 @@ Contents: [Contradictions](#1-contradictions) · [Ambiguities](#2-ambiguous-requ
 
 | Group | Entries | Resolved in 1.1 | Open |
 |---|---:|---:|---|
-| Contradictions | 40 | 38 | SPEC-CONF-039 (new, owner decision); SPEC-CONF-040 (achievement names, owner decision). Owner sign-offs requested: SPEC-CONF-008 balance values, SPEC-PROC-007 legal wording. |
+| Contradictions | 40 | 39 | SPEC-CONF-039 (new, owner decision). Owner sign-offs requested: SPEC-CONF-008 balance values, SPEC-PROC-007 legal wording. |
 | Ambiguities | 14 | 14 | Listening check for SPEC-AMB-011 (GAP-030). |
 | Obsolete requirements | 13 rows | 13 | — |
 | Missing acceptance criteria | 11 | 9 | SPEC-MAC-005 (deferred, FUTURE-011), SPEC-MAC-011 (profiler session). |
@@ -416,7 +416,7 @@ Where a recommendation was doc-only but the matching gap asked for code (SPEC-CO
 - **Suggestions:**
   1. **Update HarmonyDifficultySystem §9 to the live display names, and mark only `harmony_10_perfect` hidden.** *(recommended)* No portal or code change; the spec describes what players see.
   2. **Rename the achievements in Steamworks to the §9 names and hide `harmony_all_classes`.** Restores the spec's naming, but renames achievements players already know and needs a publish.
-- **Resolution:** Open, owner decision. Nothing changed; `docs/release/platform-readiness-checklist.md` records the live values.
+- **Resolution (0.1.5, 2026-10-14):** Suggestion 1, on the owner's request. HarmonyDifficultySystem 1.2 §9 lists the live names and descriptions; only `harmony_10_perfect` is hidden (`harmony_all_classes` is Expert tier). No portal or code change.
 
 ---
 

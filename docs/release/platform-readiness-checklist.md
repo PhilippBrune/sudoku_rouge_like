@@ -1,4 +1,4 @@
-# Platform Readiness Checklist — 1.1.0
+# Platform Readiness Checklist — 0.1.5
 
 Status: **release candidate (owner actions open)** · Updated 2026-10-14
 
@@ -9,7 +9,7 @@ Gate states and evidence: `docs/release/platform-release-manifest.md`.
 - [x] Steamworks.NET and the Steam API redistributables are bundled and credited (PRG-STEAM-SDK).
 - [x] Unity Analytics packages are not present. The build treats privacy/analytics as a closed gate with an analytics-free baseline (PRG-PRIVACY).
 - [x] EditMode and PlayMode suites pass in Unity batchmode (`tools/run-unity-tests.ps1`); results in `docs/release/release-readiness-status.md`.
-- [x] Version set to 1.1.0 (`ProjectSettings/ProjectSettings.asset`).
+- [x] Version set to 0.1.5 (`ProjectSettings/ProjectSettings.asset`), matching the Steam build description "v0.1.5 (5th iteration)".
 - [x] Windows x64 player build and smoke test recorded (PRG-PLATFORM-BUILDS): `docs/review/E2E_TEST_REPORT.md` §10.
 - [x] Real App ID 4858470 in `SteamManager`; `steam_appid.txt` (4858470) stays in the repository root for the Editor and local builds and is not in the build output (PRG-STEAM-APPID).
 - [x] Company/product names stay `Kratossos` / `sudoku_rouge_like`, the names of the released 1.0 build, so saves stay in the 1.0 folder that Steam Auto-Cloud syncs (PRG-PLAYER-METADATA, SAVE-FOLDER-001). The window is titled "Run of the Nine" (DISPLAY-MODE-007). Pre-release saves are copied once (SAVE-MIGRATE-001).
@@ -25,7 +25,7 @@ Portal state checked on 2026-10-14 (App Data Admin → Publish: "No uncommitted 
 - [ ] Store/platform art package is missing from the repository by design; review the portal assets for 1.1 (PRG-STORE-ASSETS, `docs/release/store-platform-asset-checklist.md`). The 1.1 trailer is uploaded and saved as "Gameplay Trailer"; publish the store page, decide whether the 1.0 trailer stays visible, and replace outdated screenshots.
 - [ ] Decide how to present French, Spanish and Portuguese (PRG-LOCALIZATION).
 - [ ] Listening checklist (PRG-AUDIO).
-- [ ] Decide the achievement names: the live names differ from HarmonyDifficultySystem §9 (SPEC-CONF-040).
+- [x] Achievement names: the live names are kept; HarmonyDifficultySystem 1.2 §9 now lists them (SPEC-CONF-040).
 - [ ] Upload the build to a beta branch, test it in the Steam client, then set it live.
 
 ## Steamworks settings for App 4858470 (Run of the Nine), as configured

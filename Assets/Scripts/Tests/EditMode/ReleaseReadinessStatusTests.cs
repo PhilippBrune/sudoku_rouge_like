@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 
 namespace SudokuRoguelike.Tests
@@ -12,9 +13,10 @@ namespace SudokuRoguelike.Tests
         public void ReleaseStatus_DocumentsCurrentMilestoneAndOpenGates()
         {
             var status = File.ReadAllText(ReleaseStatusPath);
+            var version = Regex.Match(File.ReadAllText("ProjectSettings/ProjectSettings.asset"), @"bundleVersion: (\S+)").Groups[1].Value;
 
-            // SPEC-PROC-005: the status page describes the 1.1.0 Steam release and points to its evidence.
-            StringAssert.Contains("second Steam release (1.1.0)", status);
+            // SPEC-PROC-005: the status page names the Steam build of the current bundleVersion and points to its evidence.
+            StringAssert.Contains("Steam build v" + version, status);
             StringAssert.Contains("Unity batchmode EditMode and PlayMode XML results", status);
             StringAssert.Contains("Unity Profiler captures on target hardware", status);
             StringAssert.Contains("docs/release/platform-release-manifest.md", status);

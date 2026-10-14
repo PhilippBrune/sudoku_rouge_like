@@ -8,7 +8,7 @@
 |---------|------|--------|---------|
 | 1.0 | 2026-10-14 | new | Owner decision: replace all music and sound effects with an 8-bit (chiptune) set made with an AI tool. Track list, prompts, delivery format (AUDIO-MUSIC-001/002 in `docs/AudioVisualDirection.md`). |
 
-Every sound in the game gets an 8-bit replacement: 22 music tracks and 35 sound effects. Each entry below has the file name the game loads, length, loop rule, tempo, key and a prompt to paste into an AI music or sound tool. Until a file arrives, the current sound keeps playing; nothing breaks if only part of the set is delivered.
+Every sound in the game gets an 8-bit replacement: 21 music tracks and 35 sound effects. Each entry below has the file name the game loads, length, loop rule, tempo, key and a prompt to paste into an AI music or sound tool. Until a file arrives, the current sound keeps playing; nothing breaks if only part of the set is delivered.
 
 ## 1. How to use this sheet
 

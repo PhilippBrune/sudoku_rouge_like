@@ -33,6 +33,12 @@ Observed on 2026-05-11:
 
 Unity `.meta` files are excluded from asset counts but are required for Unity import identity.
 
+## Marketing Assets
+
+| Asset path | Category | Source | Tool/source reference | Author/owner | License | Release status | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `steam_assets/Trailer_1.1.mp4`, `steam_assets/Trailer_1.1_thumbnail.jpg` | marketing | Authored in-house | Gameplay captures of the 1.1 build; logo and hero art from `steam_assets/library/`; original score synthesized for the trailer (no samples); game SFX from `Assets/Resources/audio/sfx/`; Roboto font. Details: `steam_assets/Trailer_1.1.md` | Philipp Brune | Commercial in-house (Roboto: Apache 2.0) | final (upload pending) | Captions English only. |
+
 ## Prompt And Source References
 
 Known prompt/reference files have been moved out of runtime `Resources` and currently live under `docs/art-source/background/`:

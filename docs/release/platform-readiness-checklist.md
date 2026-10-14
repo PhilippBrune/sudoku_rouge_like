@@ -26,7 +26,8 @@ Portal state checked on 2026-10-14 (App Data Admin → Publish: "No uncommitted 
 - [ ] Decide how to present French, Spanish and Portuguese (PRG-LOCALIZATION).
 - [ ] Listening checklist (PRG-AUDIO).
 - [x] Achievement names: the live names are kept; HarmonyDifficultySystem 1.2 §9 now lists them (SPEC-CONF-040).
-- [ ] Upload the build to a beta branch, test it in the Steam client, then set it live.
+- [x] Build uploaded: Steam build 25938214 "v0.1.5 (5th iteration)" (2026-10-14), not live.
+- [ ] Optionally test build 25938214 on a beta branch in the Steam client, then set it live on `default` and post `steam_assets/ReleaseNotes_v0.1.5.md`.
 
 ## Steamworks settings for App 4858470 (Run of the Nine), as configured
 
@@ -66,16 +67,18 @@ Live values read from the Steamworks partner site (`partner.steamgames.com/apps/
 
 Do not rename the Player Settings company or product, or the executable: the launch option, the Auto-Cloud path and every player's save folder depend on them (SAVE-FOLDER-001).
 
-## Upload to Steam (SteamPipe), when the gates above are closed
+## Upload to Steam (SteamPipe)
 
-Nothing has been uploaded. Steps for the owner:
+**Done on 2026-10-14:** the v0.1.5 build (commit afc9bd9, built from the committed tree) was zipped without `steam_appid.txt` (154 files, 141.0 MB, 53.8 MB compressed) and uploaded through SteamPipe → **Upload Depots via HTTP** (`partner.steamgames.com/apps/depotuploads/4858470`), depot 4858471, mode Standard. It was committed as **build 25938214**, notes "v0.1.5 (5th iteration)", live on no branch; `default` still runs 24153478 (E2E report §10.2e, B27).
 
-1. Build Windows x64 from the committed tree with the Editor closed: `Unity.exe -batchmode -quit -projectPath <repo> -buildTarget Win64 -buildWindows64Player <out>\sudoku_rouge_like.exe -logFile <log>`.
-2. Check the output folder: `sudoku_rouge_like.exe`, `UnityPlayer.dll`, `UnityCrashHandler64.exe`, `sudoku_rouge_like_Data/` (with `Plugins/x86_64/steam_api64.dll`), `MonoBleedingEdge/`, `D3D12/`. Do not ship `steam_appid.txt` or any `*_DoNotShip` folder.
-3. Copy the folder into the SteamPipe content root (`sdk/tools/ContentBuilder/content/`), set the build description (for example "1.1.0") in `app_build_4858470.vdf` (depot 4858471), and point `SetLive` at a beta branch, not `default`.
-4. Run `steamcmd +login <builder account> +run_app_build <path to app_build_4858470.vdf> +quit`.
-5. In a Steam client, opt into the beta branch and repeat the smoke test of `E2E_TEST_REPORT.md` §10 (resume, Save & Quit, achievements, stats, leaderboard, Steam Cloud).
-6. Set the build live on `default` in the Steamworks build page, and post `CHANGELOG.md` 1.1.0 (player-facing part only) as the update announcement.
+Remaining steps for the owner:
+
+1. Optional: create a beta branch, set build 25938214 live there, opt in with a Steam client and repeat the smoke test of `E2E_TEST_REPORT.md` §10 (resume, Save & Quit, achievements, stats, leaderboard, Steam Cloud).
+2. SteamPipe → Builds: set build 25938214 live on `default` (Preview Change, then confirm).
+3. App Data Admin → Publish: the upload left "unpublished changes"; check View Diffs and publish if they only concern the build.
+4. Post the announcement in `steam_assets/ReleaseNotes_v0.1.5.md` (Community → Events & Announcements).
+
+For later builds: build Windows x64 from the committed tree (`Unity.exe -batchmode -quit -projectPath <repo> -buildTarget Win64 -buildWindows64Player <out>\sudoku_rouge_like.exe -logFile <log>`), check that the folder holds `sudoku_rouge_like.exe`, `UnityPlayer.dll`, `UnityCrashHandler64.exe`, `sudoku_rouge_like_Data/` (with `Plugins/x86_64/steam_api64.dll`), `MonoBleedingEdge/`, `D3D12/` and no `steam_appid.txt` or `*_DoNotShip` folder, zip the folder contents (files at the zip root) and upload them the same way, or use `steamcmd +run_app_build` with `app_build_4858470.vdf` for builds over 2 GB.
 
 ## Notes
 

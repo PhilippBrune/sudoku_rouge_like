@@ -306,6 +306,17 @@ Live portal facts (Steamworks, read-only): branch `default` runs build 24153478 
 
 Side effects: the first launch was started from another working directory, so `RestartAppIfNecessary` handed the launch to Steam and started the Steam client. With no `ActiveProfileSlot` pref (none existed for this product), the game opened slot 0 and created `save_profile_0.json` with first-time setup instead of the existing slot 2 (GAP-043). The new slot-0 files and the `HKCU\Software\Kratossos\sudoku_rouge_like` key were left in place for the owner.
 
+### 10.2e v0.1.5 build and upload (2026-10-14)
+
+Build from commit afc9bd9 (bundleVersion 0.1.5) as `sudoku_rouge_like.exe`; started from a separate working directory holding `steam_appid.txt`, so the build folder stayed as uploaded; Steam client running.
+
+| ID | Flow / Test | Expected | Actual | Result |
+|---|---|---|---|---|
+| **B26** | No stored active slot (SAVE-SLOT-004, GAP-043); profiles in slots 0 and 2 | The most recently written profile becomes active and is stored; other slots untouched | Log `[SaveProfile] No active slot stored; using slot 0, the most recently written profile.` (slot 0, written 15:11 UTC, is newer than slot 2 from 5 Oct); `ActiveProfileSlot` = 0 stored; `save_profile_2.json` byte-identical. Title "Run of the Nine" from 2.2 s and after Alt+Enter both ways; `[SteamLeaderboard] Ready` | **PASS** |
+| **B27** | Upload through SteamPipe → Upload Depots via HTTP, depot 4858471, Standard | Zip of the build folder without `steam_appid.txt`; build committed with notes, live on no branch | Zip: 154 files, 141.0 MB (53.8 MB compressed), files at the root, `app.info` SHA-1 `22d31b86…46b70`. Portal: "Building depot done (ManifestID 30318984346309421…)", "Build commit successful (BuildID 25938214)" with branch None; the builds page lists 25938214 "v0.1.5 (5th iteration)" and `default` still on 24153478 | **PASS** |
+
+Not checked: the uploaded manifest's file list in the portal (the zip was checked locally instead), and the build in a Steam client (owner step, `docs/release/platform-readiness-checklist.md`).
+
 ### 10.3 Not verified in the build
 
 - Boss gate, boss debuffs from Floor 3, modifier legend, pressure visuals, prestige and the Monthly Walk widget's Open target: covered by PlayMode/EditMode tests (`InRunUiPlayModeTests`, `BossDebuffTests`, `PrestigeTests`, `GeneratedUiPlayModeTraversalTests`), not played to in the build.

@@ -1,0 +1,420 @@
+000|Reliques
+001|Modes
+002|Réassigner
+003|Tout réinitialiser
+004|Reprendre
+005|Choisissez une classe pour le Parcours du jardin.
+006|Reprendre  -  {0}  -  Étage {1}  -  PV {2}/{3}
+007|Le Zen infini se débloque après 10 parties lancées.
+008|Choisissez une classe pour le Zen infini.
+009|Les Épreuves spirituelles se débloquent après votre premier boss vaincu.
+010|Choisissez une classe pour les Épreuves spirituelles ({0}).
+011|Commencer
+012|MAX
+013|Zen infini (verrouillé)
+014|Épreuves spirituelles (verrouillé)
+015|PV : {0}  -  Crayons : {1}  -  Emplacements d'objets : {2}
+016|Mode : Zen infini
+017|Mode : Épreuves spirituelles  -  Niveau : {0}
+018|Mode : Parcours du jardin  -  Harmonie : {0}
+019|Grilles irrégulières : OUI
+020|Grilles irrégulières : non
+021|{0}  ({1})
+022|{0}  ({1})
+023|Débloqué : H0-H{0}  -  XP x{1:0.0}
+024|Avantage : {0}
+025|Avantage : verrouillé jusqu'à H4
+026|Les avantages se débloquent à H4, H6, H8 et H10.
+027|Aucun avantage
+028|Offrande à l'ombre de lune
+029|Fardeau du lettré
+030|Garde du vide
+031|Toile vierge
+032|Règles standard du Parcours du jardin.
+033|+20 or, +2 crayons. Le premier emplacement de récompense devient Rien.
+034|-1 emplacement d'objet, +5 crayons, Encrier offert au départ.
+035|Aucun effet d'étage positif. Commencez avec 1 charge de bouclier.
+036|Aucun objet de départ. Emplacements de récompense garantis Rare ou mieux.
+037|Niv{0}
+038|   XP : {0}/{1}
+039|   XP : MAX
+040|PV:{0}  Crayons:{1}  Emplacements:{2}  |  {3}
+041|- Déblocages de niveau -
+042|- Déblocages de niveau (aperçu) -
+043|- Déblocages exclusifs -
+044|[N15] Se débloque au niveau 15 : ???
+045|[N30] Se débloque au niveau 30 : ???
+046|<b>{0}  -  VERROUILLÉ</b>
+047|Déblocage : {0}
+048|Boss vaincus : {0}/2
+049|Objets utilisés : {0}/15
+050|Reliques collectées : {0}/10
+051|Boss vaincus : {0}/10
+052|Or collecté : {0:N0}/50 000
+053|Après un puzzle terminé sans erreur : +1 jeton de relance.
+054|Tous les 5 placements corrects : +1 PV. Dès le niveau 15 : tous les 4.
+055|Chaque marque de crayon posée a 25 % de chances de révéler le bon chiffre de cette case.
+056|33 % des erreurs ne coûtent aucun PV ; 33 % des placements corrects rapportent +3 or.
+057|Le premier objet utilisé à chaque nœud de puzzle n'est pas consommé.
+058|Les modificateurs de boss sont 30 % plus faibles. Avant chaque puzzle de boss, voyez tous les modificateurs actifs et relancez-en un gratuitement.
+059|Puzzle parfait sans crayon : +2 crayons. Tous les 5 puzzles de ce type dans une partie : +1 PV.
+060|Après un nœud parfait, voyez les étoiles et la taille de grille du nœud suivant. Si vous choisissez ce nœud, sa difficulté baisse d'une demi-étoile (min. 1★).
+061|Standard (toujours débloqué)
+062|Vaincre 2 boss
+063|Utiliser 15 objets
+064|Collecter 10 reliques
+065|Vaincre 10 boss
+066|Collecter 50 000 or
+067|Trouver chaque objet unique
+068|Terminer une partie complète (5 étages + boss) sans erreur
+069|Solveur
+070|Chercheur
+071|Encrier
+072|Pierre de méditation
+073|Carillon à vent
+074|Rouleau des motifs
+075|Reflet de koï
+076|Lanterne de clarté
+077|Râteau de jardin
+078|Bol d'offrande
+079|Sécateur
+080|Tamis de sable zen
+081|Feuille de Ginkgo
+082|Ombrelle en papier de riz
+083|Encens du temple
+084|Écaille de koï-dragon
+085|Jarre de kintsugi dorée
+086|Éventail de soie
+087|Pièce truquée
+088|Chapelet du moine
+089|Folio annoté
+090|Quitte ou double
+091|Ciseau usé
+092|Lanterne voilée
+093|Serment du roseau
+094|Notes d'arpentage
+095|Boussole de bambou
+096|Rouleau de bambou
+097|Lanterne du jardin
+098|Koï doré
+099|Sceau du temple
+100|Remplit une case avec son bon chiffre et met en évidence les candidats restants de son bloc.
+101|Remplit une case avec son bon chiffre et complète automatiquement son bloc.
+102|Cliquez sur une zone (ligne/colonne/bloc) pour la compléter automatiquement.
+103|Met en évidence {0} case(s) contenant le chiffre sélectionné.
+104|Révèle TOUTES les cases non résolues contenant le chiffre sélectionné.
+105|Restaure {0} marques de crayon.
+106|Restaure {0} PV.
+107|Choisissez une ligne, une colonne OU un bloc, puis cliquez sur une case pour le remplir.
+108|Choisissez 2 parmi ligne/colonne/bloc, puis cliquez sur une case pour les remplir.
+109|Cliquez sur une case pour remplir sa ligne + sa colonne + son bloc.
+110|Sélectionnez {0} mécanique(s) à résoudre avec la solution. ÉCHAP annule.
+111|Cliquez sur {0} case(s) vide(s) pour révéler leurs candidats.
+112|Révèle les candidats de chaque case non résolue de la zone la plus ambiguë (ligne/colonne/bloc avec le plus de cases ouvertes).
+113|Désactive le brouillard pendant {0} coups.
+114|Efface toutes les marques de crayon de la ligne et de la colonne sélectionnées.
+115|Sacrifiez 1 PV pour gagner 30 or.
+116|Retire tous les candidats invalides d'une case pour ne garder que les possibilités valides.
+117|Met en évidence toutes les cases ayant exactement deux candidats.
+118|Annule la dernière erreur, rend les PV perdus et restaure votre combo.
+119|Bloque la prochaine pénalité d'erreur (2 charges).
+120|Cliquez sur {0} case(s) vide(s) pour y placer la bonne réponse.
+121|Complète la ligne, la colonne ou le bloc le plus rempli.
+122|Corrige toutes les erreurs actuelles de la grille et révèle les bons chiffres de toutes les cases concernées.
+123|Génère {0} bouclier. Le bouclier absorbe les dégâts avant vos PV. Tant qu'il est actif, les erreurs ne cassent pas votre combo. Réinitialisé à chaque puzzle.
+124|Gagnez 1 jeton de relance. (exclusif au Maniaque des chiffres)
+125|Vos 9 prochains placements ne coûtent aucune marque de crayon. (exclusif au Moine du jardin)
+126|Révèle tous les candidats d'un bloc sélectionné. (exclusif à l'Archiviste du sanctuaire)
+127|Doublez l'or de ce puzzle ou perdez 1 PV. (exclusif au Joueur de koï)
+128|30 % de remise à la prochaine boutique. (exclusif au Jardinier de pierre)
+129|Retire définitivement le brouillard de 3 cases cachées au hasard. (exclusif au Voyant de la lanterne)
+130|Terminez ce puzzle sans aucune marque de crayon pour +2 PV. (exclusif au Duelliste du roseau)
+131|Met en évidence 2 cases où le prochain placement enfreindrait probablement une contrainte active.
+132|Révèle les étoiles de tous les prochains nœuds du chemin.
+133|Lève le brouillard de toute la grille pendant 15 secondes, puis le rétablit.
+134|Rapporte +{0} or par étoile à la fin de ce puzzle.
+135|Protège vos PV pendant ce puzzle : les mauvais placements n'infligent aucun dégât. Consommé à la fin.
+136|Galet lisse
+137|Tasse fêlée
+138|Peigne en bois
+139|Jeton de mousse
+140|Reflet de koï
+141|Amulette du moine
+142|Tortue de cuivre
+143|Épingle de jade
+144|Cadran solaire de pierre
+145|Sceau de sakura
+146|Éventail pourpre
+147|Branche de glycine
+148|Grue de papier
+149|Masque de porcelaine
+150|Sigille transmuté
+151|Plume de phénix
+152|Lanterne spirituelle
+153|Boussole de pierre de lune
+154|Racine dorée
+155|Grille silencieuse
+156|Jardin mouvant
+157|Lotus éternel
+158|Œil du dragon
+159|Registre de la fortune
+160|Vœu du temple
+161|Archive infinie
+162|Écaille de koï dorée
+163|Pierre porteuse
+164|Flamme protectrice
+165|Roseau du duel
+166|Carte précise
+167|Pierre fendue
+168|Miroir givré
+169|Pétale du vide
+170|Lanterne du vide
+171|Commencez chaque puzzle avec +2 marques de crayon.
+172|Absorbe la première erreur de chaque puzzle (aucune perte de PV).
+173|+1 PV max.
+174|Les relances en boutique coûtent 25 % de moins.
+175|Révèle les bons candidats de 5 cases vides au hasard au début du puzzle (sans remplissage automatique).
+176|Chaque combo de 5 : +5 or ET +1 crayon.
+177|Un puzzle terminé parfaitement rapporte +15 or.
+178|+1 emplacement d'objet.
+179|+1 emplacement de récompense après chaque puzzle.
+180|Série de puzzles parfaits : +1 PV dès 2 ; +3 PV (série remise à zéro) dès 5.
+181|Réduit d'un cran l'intensité de tous les modificateurs de boss.
+182|Soigne 2 PV au début de chaque étage.
+183|La première utilisation d'objet de chaque puzzle est gratuite (aucune charge consommée).
+184|La rareté des récompenses d'élite augmente d'un rang.
+185|+25 % d'or pour chaque puzzle terminé.
+186|Empêche la mort une fois par partie (soin à 1 PV).
+187|Prix de la boutique réduits de 20 %.
+188|Le rang des nœuds de relique augmente de +1.
+189|Au début d'un étage, récupérez 30 % de l'or dépensé à l'étage précédent.
+190|Commencez chaque étage avec 3 nouvelles charges de bouclier contre les erreurs (chaque erreur absorbée coûte 0 PV).
+191|Une fois par étage, un chiffre donné au hasard est déplacé vers une autre case valide ; le puzzle garde une solution unique.
+192|Les objets ne sont jamais consommés.
+193|Commencez chaque puzzle avec un bloc entièrement résolu.
+194|Tous les 10 placements corrects : +1 jeton de relance. Chaque combo de 5 : +2 jetons de relance. (exclusif au Maniaque des chiffres)
+195|Quand vos PV tombent à 25 % ou moins, soignez 3 PV, une fois par puzzle. (exclusif au Moine du jardin)
+196|Après chaque placement correct, révèle un candidat dans la même ligne. (exclusif à l'Archiviste du sanctuaire)
+197|Porte les effets du Joueur de koï à 40 % : un coup chanceux rapporte +5 or, une erreur absorbée +1 jeton de relance. (exclusif au Joueur de koï)
+198|Chaque erreur non absorbée rapporte 5 or bonus à la fin du puzzle. (exclusif au Jardinier de pierre)
+199|Une fois par partie, absorbe automatiquement une erreur (aucune perte de PV). (exclusif au Voyant de la lanterne)
+200|Terminer un puzzle sans aucune marque de crayon rapporte +20 or bonus. (exclusif au Duelliste du roseau)
+201|[H2+] Chaque erreur après la première dans un puzzle inflige 0 PV (la pierre absorbe). Passif ; illimité.
+202|[H5+] Une fois par erreur : dépensez 3 crayons pour absorber 1 PV de dégâts (automatique si crayons ≥ 3). Dès H5, chaque coup après le premier dans un puzzle est partiellement réduit.
+203|[H7+] Une fois par partie : survivez à un coup fatal avec 1 PV. Donne 1 Solveur normal gratuit à l'activation.
+204|[H9+] Les noms des modificateurs de boss restent toujours cachés (pas de révélation automatique). Gagnez +1 or par modificateur d'étage actif à la fin d'un puzzle.
+205|Murmures allemands
+206|Murmures néerlandais
+207|Lignes de parité
+208|Lignes Renban
+209|Kropki de différence
+210|Kropki de rapport
+211|Cages Killer
+212|Sommes fléchées
+213|Brouillard de guerre
+214|Palindrome
+215|Thermomètre
+216|Entre les lignes
+217|Pair/Impair
+218|Non consécutif
+219|Anti-cavalier
+220|Anti-roi
+221|Diag. non consécutive
+222|Distance ≥ 2
+223|Entropie
+224|Régions modulaires
+225|Ligne consécutive
+226|Thermo lent
+227|Ligne sans répétition
+228|Kropki complet
+229|Point de somme
+230|Plus grand/Plus petit
+231|Paires XV
+232|Cases premières
+233|Cases forteresses
+234|Les cases voisines sur les lignes vertes diffèrent d'au moins 5. Exemple : 1-7-2-8.
+235|Les cases voisines sur les lignes turquoise diffèrent d'au moins 4. Exemple : 1-6-2-7.
+236|Les cases le long des lignes violettes alternent impair/pair. Exemple : 3-4-7-2.
+237|Les cases sur les lignes orange forment une suite consécutive. Exemple : 3-5-4 (ensemble {3,4,5}).
+238|Points blancs : les cases voisines diffèrent de 1. Exemple : 4-5.
+239|Points noirs : une case vaut le double de l'autre. Exemple : 3-6.
+240|Cages : la somme des cases égale le total affiché, sans répétition. Exemple : 14=[5,9].
+241|Flèche : le chiffre du cercle égale la somme des chiffres de la flèche. Exemple : 9=3+2+4.
+242|Le brouillard cache les cases non résolues. Les placements corrects révèlent leurs voisines.
+243|Les lignes se lisent de la même façon dans les deux sens. Exemple : 3-7-5-7-3.
+244|Les chiffres augmentent le long des thermomètres, du bulbe à l'extrémité. Exemple : 2-4-6-8.
+245|Les cases intérieures sont strictement comprises entre les valeurs des extrémités. Exemple : 2-[4,5]-8.
+246|Les cases marquées doivent correspondre : carré bleu = pair, cercle orange = impair.
+247|Deux cases voisines (orthogonalement) ne peuvent pas être consécutives.
+248|Deux cases séparées d'un saut de cavalier ne peuvent pas contenir le même chiffre.
+249|Deux cases séparées d'un pas de roi ne peuvent pas contenir le même chiffre. Exemple : un 3 ne peut pas être à côté ou en diagonale d'un autre 3.
+250|Des cases voisines en diagonale ne peuvent pas contenir de chiffres consécutifs. Exemple : 4 ne peut pas être en diagonale de 3 ou de 5.
+251|Les chiffres égaux doivent être distants d'au moins 2 cases (distance de Tchebychev). Aucune case voisine ou diagonale ne peut partager un chiffre.
+252|Toute suite de 3 cases d'une ligne ou d'une colonne contient un chiffre bas (1–3), un moyen (4–6) et un haut (7–9).
+253|Chaque région contient au moins un chiffre de {1–3}, un de {4–6} et un de {7–9}.
+254|Les cases voisines sur les lignes orange diffèrent exactement de 1. Exemple : 3-4-5 ou 7-6-5.
+255|Les chiffres augmentent ou restent égaux le long du thermomètre, du bulbe à l'extrémité. Exemple : 2-2-3-5 est valide.
+256|Aucun chiffre ne peut se répéter sur la ligne, indépendamment des règles classiques du sudoku.
+257|Toutes les paires voisines qui diffèrent de 1 ont un point blanc ; toutes les paires de rapport 1:2 ont un point noir. Sans point, les deux relations sont interdites.
+258|Un point numéroté entre deux cases indique que leur somme égale la valeur affichée.
+259|Les chevrons (> ou <) entre deux cases voisines indiquent laquelle contient le plus grand chiffre.
+260|X entre deux cases : leur somme vaut 10. V entre deux cases : leur somme vaut 5.
+261|Les cases marquées (avec un P) contiennent un chiffre premier : 2, 3, 5 ou 7.
+262|Les cases grisées sont strictement supérieures à toutes leurs voisines orthogonales non grisées.
+263|La porte de bambou s'ouvre dans un claquement sec. Le sable ratissé s'incurve devant vous, chaque chemin réclame une main plus sûre.
+264|La mousse adoucit les pierres autour de l'étang aux koïs. La lueur des lanternes se rassemble dans l'eau.
+265|Des ponts de bois enjambent l'eau noire. Des koïs orange tournent dessous, comme des coups de pinceau vivants.
+266|Les lanternes de pierre s'éveillent une à une. L'allée de gravier luit d'ambre sous les feuilles qui dérivent.
+267|Le torii du sommet attend dans la brume. Chaque note de cloche sonne plus près qu'elle ne le devrait.
+268|Vous avancez entre les ombres des bambous. La grille se pose comme du sable ratissé.
+269|Un chemin net s'ouvre. Vous respirez et résolvez.
+270|Les koïs tournent sous le pont. Leurs virages marquent un rythme tranquille.
+271|Les chiffres trouvent leur place comme des pierres dans la mousse.
+272|L'eau reflète la grille en éclats brisés.
+273|Vous suivez le motif jusqu'à ce que la surface s'apaise.
+274|La lueur des lanternes découpe le chemin en carrés chauds.
+275|Chaque bon chiffre est comme une mèche qui prend feu.
+276|La brume s'enroule autour des marches du sanctuaire.
+277|Le dernier jardin demande de la patience, pas de la vitesse.
+278|Un étroit chemin de service se glisse derrière le paravent de bambou.
+279|Les esprits surveillent de près ce raccourci.
+280|Le sentier de mousse se brise en pierres de gué glissantes.
+281|Un seul faux pas résonnera sur tout l'étang.
+282|Un pont de lune s'arque plus haut qu'il ne le devrait.
+283|Vous montez vers un motif plus difficile.
+284|Un sentier latéral éclairé de lanternes brille plus que la voie principale.
+285|La récompense est plus proche, le risque aussi.
+286|Un escalier caché s'élève à côté du torii.
+287|Les esprits du sommet ne balisent pas les routes faciles.
+288|Un gardien au masque de renard attend près d'un plateau de talismans de papier.
+289|« Choisissez avec soin. Le jardin se souvient des dettes. »
+290|Une échoppe laquée repose près de l'étang aux koïs.
+291|« Des outils pour les mains patientes, des prix pour les honnêtes. »
+292|Sous le pont, un marchand esprit déplie une étoffe de soie.
+293|« Les choses rares dérivent ici quand personne ne regarde. »
+294|La fumée des lanternes s'enroule autour d'une boutique de sanctuaire silencieuse.
+295|« Dépensez ce que vous portez. Gardez ce qui vous porte. »
+296|Au dernier torii, le gardien ouvre une ultime boîte.
+297|« Aucun remboursement au-delà de cette porte. »
+298|Une pierre de méditation plate tiédit dans la cour.
+299|Vous vous reposez jusqu'à ce que les bambous cessent d'osciller.
+300|La mousse étouffe chaque pas.
+301|Un instant, même l'étang se tient immobile.
+302|Vous vous agenouillez près du pont et laissez passer les koïs en dessous.
+303|Leur patience vous rend un peu de la vôtre.
+304|Une niche à lanterne offre un abri contre le vent.
+305|Vous comptez vos respirations au rythme de la flamme.
+306|La corde de la cloche du sanctuaire pend à portée de main.
+307|Vous ne la sonnez pas encore. Vous vous reposez.
+308|Un talisman de papier s'élève du sable sans un souffle de vent.
+309|Le jardin vous offre un choix.
+310|Une ride traverse l'étang à contre-courant.
+311|Quelque chose, en dessous, vous a remarqué.
+312|L'ombre du pont s'allonge en forme de porte.
+313|Toutes les traversées ne sont pas visibles.
+314|Une lanterne brûle en bleu parmi les lumières ambrées.
+315|Sa flamme s'incline vers votre main.
+316|Au sommet, une plaque ema scellée se retourne d'elle-même.
+317|Le dernier vœu n'est pas écrit à l'encre.
+318|Un esprit de bambou fait trembler le bosquet devant vous.
+319|La route paisible s'éloigne ; le chemin direct mérite une bénédiction plus vive.
+320|L'étang aux koïs s'assombrit sous un masque qui observe.
+321|Vous pouvez contourner l'eau, ou traverser là où les rides se rassemblent.
+322|Un gardien du pont bloque la terrasse.
+323|Les pierres sûres sont plus lentes. Les pierres brillantes exigent la foi.
+324|Les flammes des lanternes se penchent vers le même souffle invisible.
+325|Chaque chemin à travers la lueur a un prix.
+326|La porte du sanctuaire se scelle derrière vous.
+327|C'est le dernier seuil. Aucun détour possible.
+328|Les tiges de bambou se brisent selon des motifs qu'aucun vent ne saurait faire.
+329|Vous résolvez avant que le bosquet ne change d'avis.
+330|L'esprit de l'étang s'agite sous l'eau noire.
+331|Chaque faux pas envoie des cercles à travers la grille.
+332|Le gardien du pont abaisse son éventail de papier.
+333|Seul un motif complet ouvre le passage.
+334|Les lanternes s'embrasent en un mur d'or et d'ombre.
+335|Vous résolvez sous la chaleur de leur regard.
+336|L'esprit du sommet attend au-delà du torii.
+337|La dernière grille est une offrande, et elle n'acceptera pas la hâte.
+338|Un vieux charme scintille entre les racines de bambou.
+339|Un jeton laqué repose sur la mousse, sec malgré la brume de l'étang.
+340|Quelque chose de brillant tourne sous les planches du pont.
+341|Une niche à lanterne cache une relique enveloppée d'un cordon délavé.
+342|Au seuil du sanctuaire, une petite offrande attend votre main.
+343|La cloche du sommet répond sans qu'on la frappe. Derrière vous, chaque chemin du jardin retrouve le calme.
+344|Vous franchissez le torii, le motif achevé.
+345|Les lanternes faiblissent une à une. Le jardin garde le motif inachevé.
+346|Il vous sera permis d'entrer à nouveau.
+347|Impossible d'aller là.
+348|Mode puzzle  (Tab pour les objets)
+349|Objets  (Tab pour changer, Entrée pour utiliser, Échap ou Tab pour revenir)
+350|[Manette] Mode puzzle  (LB pour changer)
+351|[Manette] Nœud {0}/{1}  —  A pour entrer
+352|Annulé.
+353|Mise en évidence : {0}.
+354|Mise en évidence effacée.
+355|Rouleau des motifs : « {0} » prêt. Cliquez sur Confirmer pour appliquer — ÉCHAP annule.
+356|Rouleau des motifs : « {0} » résolu, {1} case(s) remplie(s). Terminé.
+357|Rouleau des motifs : « {0} » résolu (+{1} cases). Encore {2} sélection(s) — ÉCHAP pour annuler.
+358|Carillon à vent : cliquez sur une case pour remplir sa {0}. ÉCHAP annule.
+359|Carillon à vent : {0} {1} {2}  — choisissez-en encore {3} (1=Ligne 2=Col 3=Bloc). ÉCHAP annule.
+360|Case donnée.
+361|Case verrouillée !
+362|Essayez la case en surbrillance !
+363|Videz d'abord la case.
+364|Plus de charges de crayon.
+365|Crayons : {0}
+366|Utilisez le mode crayon pour cette étape !
+367|{0} placé.
+368|Case verrouillée.
+369|L'ombrelle a bloqué la pénalité ! (encore {0})
+370|{0} conflits ! PV : {1}
+371|Puzzle résolu ! Bravo !
+372|Tutoriel terminé !
+373|Zen infini  ·  Profondeur {0}
+374|Jardin terminé ! Étage suivant...
+375|Le puzzle se charge encore — patientez un instant avant de sauvegarder.
+376|Résolvez les cases restantes par vous-même !
+377|Encrier : {0} marques de crayon restaurées.
+378|Pierre de méditation : {0} PV restaurés.
+379|Pas assez de PV à sacrifier.
+380|Bol d'offrande : -1 PV, +30 or.
+381|Sélectionnez d'abord une case.
+382|Solveur : {0} case(s) remplie(s).
+383|Sélectionnez d'abord un chiffre.
+384|Chercheur : {0} case(s) en surbrillance pour {1}.
+385|Aucune grille active.
+386|Rouleau des motifs : sélectionnez {0} mécanique(s) à résoudre. ÉCHAP pour annuler.
+387|Reflet de koï : cliquez sur {0} case(s) pour révéler les candidats.
+388|Lanterne de clarté : brouillard désactivé pendant {0} coups.
+389|Râteau de jardin : ligne {0} et colonne {1} effacées.
+390|La case est déjà remplie.
+391|Aucun candidat incorrect à retirer.
+392|Sécateur : un candidat incorrect retiré.
+393|Tamis de sable zen : {0} cases ont exactement 2 candidats.
+394|Aucune erreur à annuler.
+395|Feuille de Ginkgo : erreur annulée, +{0} PV, combo restauré.
+396|Ombrelle en papier de riz : les {0} prochaines erreurs ne coûteront pas de PV.
+397|Encens du temple : cliquez sur {0} case(s) vide(s) pour y placer la bonne réponse.
+398|Aucune unité incomplète trouvée.
+399|Écaille de koï-dragon : {0} case(s) remplie(s) dans l'unité la plus complète.
+400|Jarre de kintsugi dorée : {0} erreur(s) trouvée(s).
+401|Éventail de soie : +{0} bouclier. Tant que le bouclier tient, les erreurs ne cassent pas votre combo.
+402|Rouleau de bambou : aucun nœud à venir.
+403|Lanterne du jardin : brouillard levé pendant 15 secondes.
+404|Koï doré : actif — +{0} or quand ce puzzle sera terminé.
+405|Sceau du temple : PV protégés pour ce puzzle — les erreurs n'infligent aucun dégât.
+406|Carillon à vent : cliquez sur une case pour remplir sa ligne + sa colonne + son bloc. ÉCHAP annule.
+407|Carillon à vent : appuyez sur 1=Ligne 2=Col 3=Bloc pour choisir {0} unité(s). ÉCHAP annule.
+408|{0} utilisé.
+409|Reflet de koï : choisissez une case vide (encore {0}).
+410|Reflet de koï : candidats révélés.
+411|Reflet de koï : candidats révélés (encore {0}).
+412|Carillon à vent : {0} case(s) remplie(s).
+413|Encens du temple : choisissez une case vide (encore {0}).
+414|Encens du temple : terminé.
+415|Encens du temple : remplie (encore {0}).
+416|Impossible d'échanger une case donnée. Cliquez sur une autre.
+417|Éventail de soie : première case ({0},{1}) choisie. Cliquez sur la seconde.
+418|Éventail de soie : même case. Choisissez-en une autre.
+419|Éventail de soie : cases échangées.

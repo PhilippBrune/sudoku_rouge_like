@@ -4,9 +4,9 @@
 
 **Fix pass 2026-10-05:** the 27 rows whose note says *Fixed 2026-10-05* were re-assessed after the fixes in the [GAME_GAPS fix log](GAME_GAPS.md#fix-log-2026-10-05). META-CODEX-001/002, found broken during that verification ([GAP-037](GAME_GAPS.md#gap-037)), were fixed in 1.1.
 
-**Fix pass 1.1 (2026-10-07):** 101 rows marked *Fixed 1.1* or *Spec aligned 1.1* were re-assessed after implementing the recommendations of [GAME_GAPS](GAME_GAPS.md#fix-log-2026-10-07-release-110) and [SPECIFICATION_ISSUES](SPECIFICATION_ISSUES.md). 53 further rows, not reviewed individually, are `IMPLEMENTED` because a passing test carries their ID (`[Requirement]` attribute or `[REQ:]` tag; SPEC-PROC-003). The SPICE pipeline IDs (`REQ-BOSS-001..035`, `REQ-GENERAL-013..029`, `REQ-META-010..018`, `REQ-SUDOKU-076..117`, `REQ-UI-018`, `REQ-UI-027..036`, `REQ-SAVE-018`) were archived with their tables in `docs/archive/SPICE_REQUIREMENT_TABLES.md` (SPEC-OBS-001) and are no longer rows here. Every other row is still the 2026-10-01 review verdict.
+**Fix pass 1.1 (2026-10-07):** 101 rows marked *Fixed 1.1* or *Spec aligned 1.1* were re-assessed after implementing the recommendations of [GAME_GAPS](GAME_GAPS.md#fix-log-2026-10-07-release-110) and [SPECIFICATION_ISSUES](SPECIFICATION_ISSUES.md). 57 further rows, not reviewed individually, are `IMPLEMENTED` because a passing test carries their ID (`[Requirement]` attribute or `[REQ:]` tag; SPEC-PROC-003). The SPICE pipeline IDs (`REQ-BOSS-001..035`, `REQ-GENERAL-013..029`, `REQ-META-010..018`, `REQ-SUDOKU-076..117`, `REQ-UI-018`, `REQ-UI-027..036`, `REQ-SAVE-018`) were archived with their tables in `docs/archive/SPICE_REQUIREMENT_TABLES.md` (SPEC-OBS-001) and are no longer rows here. Every other row is still the 2026-10-01 review verdict.
 
-Requirement → Specification → Code → Runtime test → Automated test → Status, for every requirement ID found in `docs/*.md` (360) plus 64 new IDs this review created for requirements that had none (`REQ-<SYS>-1xx`, numbered from 100 so they cannot collide with the legacy `REQ-*-0xx` IDs).
+Requirement → Specification → Code → Runtime test → Automated test → Status, for every requirement ID found in `docs/*.md` (364) plus 64 new IDs this review created for requirements that had none (`REQ-<SYS>-1xx`, numbered from 100 so they cannot collide with the legacy `REQ-*-0xx` IDs).
 
 ## How to read this
 
@@ -21,33 +21,33 @@ Requirement → Specification → Code → Runtime test → Automated test → S
 
 | Status | Count |
 |---|---:|
-| IMPLEMENTED | 238 |
+| IMPLEMENTED | 242 |
 | PARTIALLY_IMPLEMENTED | 9 |
 | BROKEN | 0 |
 | MISSING | 3 |
 | CONTRADICTED | 0 |
 | OUTDATED | 19 |
 | UNTESTABLE | 155 |
-| **Total** | **424** |
+| **Total** | **428** |
 
 Of the 155 UNTESTABLE items, **147 are coverage gaps** (not exercised, no automated test) and 8 are infrastructure-limited.
 
-Traceability health: 302 of 360 spec IDs carry a code annotation. **137 spec IDs are referenced from tests** (the review found 1). Since the fix pass, tests carry a `[Requirement("ID")]` attribute (NUnit category `REQ:<id>`), and `RequirementTraceabilityTests` rejects IDs that do not exist in `docs/` ([GAP-010](GAME_GAPS.md#gap-010)). Most requirements still have no test.
+Traceability health: 303 of 364 spec IDs carry a code annotation. **141 spec IDs are referenced from tests** (the review found 1). Since the fix pass, tests carry a `[Requirement("ID")]` attribute (NUnit category `REQ:<id>`), and `RequirementTraceabilityTests` rejects IDs that do not exist in `docs/` ([GAP-010](GAME_GAPS.md#gap-010)). Most requirements still have no test.
 
 | Basis | Count |
 |---|---:|
 | Verified in review | 189 |
 | Not verified (coverage gap) | 147 |
-| Tagged automated test | 53 |
+| Tagged automated test | 57 |
 | Spec/registry | 25 |
 | Infrastructure-limited | 8 |
 | Static code analysis | 2 |
 
-Evidence behind the 405 current (non-outdated) requirements:
+Evidence behind the 409 current (non-outdated) requirements:
 
 | Coverage | Count | Share of current |
 |---|---:|---:|
-| Automated test, passing | 200 | 49 % |
+| Automated test, passing | 204 | 50 % |
 | Automated test, currently failing | 0 | 0 % |
 | Review only: runtime (D## / E##) | 41 | 10 % |
 | Review only: static analysis | 6 | 1 % |
@@ -56,7 +56,7 @@ Evidence behind the 405 current (non-outdated) requirements:
 
 ## Sudoku Engine & Generation
 
-Status mix: IMPLEMENTED 17, UNTESTABLE 1
+Status mix: IMPLEMENTED 18, UNTESTABLE 1
 
 | Req ID | Requirement | Specification | Code | Runtime test | Automated test | Status | Gap / note |
 |---|---|---|---|---|---|---|---|
@@ -64,6 +64,7 @@ Status mix: IMPLEMENTED 17, UNTESTABLE 1
 | **GEN-REGION-001** | SudokuGenerator.BuildRegionMap(int size, int variant) produces a 2D integer array mapping each cell (row, col) to its region ID. | SudokuGenerationPipeline.md › Stage 1 — Region Map Construction | SudokuGenerator.BuildRegionMap | D02 (5x5-9x9 x v0-3: valid, contiguous) | PuzzleGenerationServiceTests | IMPLEMENTED |  |
 | **GEN-REGION-002** | All templates: each region = size cells, contiguous, count = board size | SudokuGenerationPipeline.md › Jigsaw Templates | SudokuGenerator.BuildRegionMap | D02 (5x5-9x9 x v0-3: valid, contiguous) | PuzzleGenerationServiceTests | IMPLEMENTED |  |
 | **GEN-REGION-003** | RunDirector.BuildLevelConfig selects the variant | SudokuGenerationPipeline.md › Run-Level Variant Selection | Class select TglAllowIrregular ON; RunState/LaunchRequest default true | PlayMode; build B04, B05 | GeneratedUiPlayModeTraversalTests.HomeWidgets_* | IMPLEMENTED | [GAP-029, SPEC-CONF-031](GAME_GAPS.md#gap-029, spec-conf-031) · Fixed 1.1 (2026-10-07) |
+| **GEN-REGION-004** | 1.7 2026-10-14 implemented Region display: the board always shows the regions of the puzzle on screen (, GAP-044). | SudokuGenerationPipeline.md › Change History | Tagged ×1: BoardViewController.cs | Automated (Unity Test Runner 2026-10-07) | InRunUiPlayModeTests | IMPLEMENTED | Verified by a tagged automated test (1.1) |
 | **GEN-REMOVE-001** | After generating the solved board, cells are removed to create the player-facing puzzle. | SudokuGenerationPipeline.md › Stage 3 — Cell Removal (Star Density) | StarDensityService / RemoveCells | D02/D02b missing count = round(N²·(s+3)/10) | None | IMPLEMENTED |  |
 | **GEN-REMOVE-002** | StarDensityService.MissingPercentForStars(int stars) | SudokuGenerationPipeline.md › Density Formula | StarDensityService / RemoveCells | D02/D02b missing count = round(N²·(s+3)/10) | None | IMPLEMENTED |  |
 | **GEN-REMOVE-003** | 7★ removes all cells (0 givens). Only available in tutorial mode; requires at least one modifier to be active. Without modifier constraints, a completely empty grid has no solvi… | SudokuGenerationPipeline.md › 7★ — Tutorial Only | TutorialModeService.TryValidateCustomSetup rejects 7★ without a mode | EditMode | SpecAlignmentTests.CustomPuzzle_SevenStars_NeedsAtLeastOneMode | IMPLEMENTED | [SPEC-CONF-015](SPECIFICATION_ISSUES.md#spec-conf-015) · Spec aligned 1.1 (2026-10-07). TutorialModeSystem 1.9 now states the rule |
@@ -585,7 +586,7 @@ Status mix: OUTDATED 12
 | **FUTURE-011** | Multi-cell selection (GDS §4.1) Not built; single-cell selection only. SPEC-MAC-005 Selection model, input mapping for keyboard/controller, acceptance tests. | future-scope-decision-register.md › 1.1 Review Decisions (2026-10-07) | Out of scope by decision register | — | None | OUTDATED | Deferred/out of scope (1.1 review decision, 2026-10-07) |
 | **FUTURE-012** | Accurate Map path redirect Not built; the relic reveals tile details instead. ClassProgressionUnlocks v0.3 Redirect rule specified, map UI and save support, tests. | future-scope-decision-register.md › 1.1 Review Decisions (2026-10-07) | Out of scope by decision register | — | None | OUTDATED | Deferred/out of scope (1.1 review decision, 2026-10-07) |
 | **FUTURE-013** | Legend polish (isolate pulse, cancel by board tap) Not built; isolation works by tapping the entry. GAP-025; BossMechanicsSystem §Modifier Legend Panel Visual pass with PlayMode… | future-scope-decision-register.md › 1.1 Review Decisions (2026-10-07) | Out of scope by decision register | — | None | OUTDATED | Deferred/out of scope (1.1 review decision, 2026-10-07) |
-| **FUTURE-014** | French, Spanish, Portuguese gameplay content 431 keys per language fall back to English (items, relics, bosses, narrative, classes). GAP-019 follow-up; PRG-LOCALIZATION Keys tra… | future-scope-decision-register.md › 1.1 Review Decisions (2026-10-07) | Out of scope by decision register | — | None | OUTDATED | Deferred/out of scope (1.1 review decision, 2026-10-07) |
+| **FUTURE-014** | French, Spanish, Portuguese gameplay content Done 2026-10-14: 420 keys per language translated (items, relics, bosses, narrative, classes, UI messages), AI-assisted with a gloss… | future-scope-decision-register.md › 1.1 Review Decisions (2026-10-07) | Out of scope by decision register | — | None | OUTDATED | Deferred/out of scope (1.1 review decision, 2026-10-07) |
 | **FUTURE-015** | In-game Options visual style The in-run Options panel keeps its own style; aligning it with the main Options needs a visual design pass. GAP-029 (remaining item) Shared panel/bu… | future-scope-decision-register.md › 1.1 Review Decisions (2026-10-07) | Out of scope by decision register | — | None | OUTDATED | Deferred/out of scope (1.1 review decision, 2026-10-07) |
 | **FUTURE-016** | 1.4 2026-10-07 implemented 1.1 review decisions (2026-10-07): Ascension marked deferred, META-ASCEND-001..003 reserved (SPEC-CONF-026/036, GAP-017); Monthly Walk always availabl… | MetaProgressionSystem.md › Change History | Out of scope by decision register | — | None | OUTDATED | Deferred/out of scope (1.1 review decision, 2026-10-07) |
 
@@ -599,7 +600,7 @@ Status mix: OUTDATED 1
 
 ## Other
 
-Status mix: IMPLEMENTED 7
+Status mix: IMPLEMENTED 10
 
 | Req ID | Requirement | Specification | Code | Runtime test | Automated test | Status | Gap / note |
 |---|---|---|---|---|---|---|---|
@@ -610,3 +611,6 @@ Status mix: IMPLEMENTED 7
 | **DISPLAY-MODE-005** | Saved values: Fullscreen 0, Borderless Fullscreen 1, Windowed 2, Frameless Window 3; unknown values load as Fullscreen, and a save that only carries "not fullscreen" loads as Wi… | GameDesignSpec.md › Display Modes | Tagged ×2: GameEnums.cs, SaveFileService.cs | Automated (Unity Test Runner 2026-10-07) | DisplayModeTests | IMPLEMENTED | Verified by a tagged automated test (1.1) |
 | **DISPLAY-MODE-006** | The Fullscreen toggle (main and in-run Options) switches between a fullscreen mode and a window: turning it off keeps Frameless Window when chosen (else Windowed); turning it on… | GameDesignSpec.md › Display Modes | Tagged ×1: OptionsController.cs | Automated (Unity Test Runner 2026-10-07) | DisplayModeTests | IMPLEMENTED | Verified by a tagged automated test (1.1) |
 | **DISPLAY-MODE-007** | 1.8 2026-10-14 implemented Window title "Run of the Nine" in every display mode (), set by the Windows player because the product name keeps the released save folder (SaveLoadAr… | GameDesignSpec.md › Change History | WindowFrameService.WindowTitle / Win32.SetTitle (startup and every mode switch) | build B23 (E2E report section 10.2d) | None (Win32 path runs only in the Windows player) | IMPLEMENTED | Verified in the 1.1 build: title in fullscreen and after Alt+Enter both ways |
+| **LOC-PARITY-001** | pass, native review pending); LocalizationParityTests keeps them in step (..003, workflow in | development.md › Localization Catalogs | No [REQ] tag found | Automated (Unity Test Runner 2026-10-07) | LocalizationParityTests | IMPLEMENTED | Verified by a tagged automated test (1.1) |
+| **LOC-PARITY-002** | Each translation keeps the German placeholders ({0}, {1:0.0}, ...) and is not empty. Test: LocalizationParityTests.Translations_KeepTheGermanPlaceholders_AndAreNotEmpty. | localization-catalog.md › French, Spanish and Brazilian Portuguese | No [REQ] tag found | Automated (Unity Test Runner 2026-10-07) | LocalizationParityTests | IMPLEMENTED | Verified by a tagged automated test (1.1) |
+| **LOC-PARITY-003** | With French, Spanish or Portuguese active, item, relic, boss modifier and narrative text never falls back to English. Test: LocalizationParityTests.GameplayContent_DoesNotFallBa… | localization-catalog.md › French, Spanish and Brazilian Portuguese | No [REQ] tag found | Automated (Unity Test Runner 2026-10-07) | LocalizationParityTests | IMPLEMENTED | Verified by a tagged automated test (1.1) |

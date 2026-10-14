@@ -1,0 +1,420 @@
+000|Relíquias
+001|Modos
+002|Remapear
+003|Redefinir tudo
+004|Continuar
+005|Escolha uma classe para o Percurso do jardim.
+006|Continuar  -  {0}  -  Andar {1}  -  PV {2}/{3}
+007|O Zen infinito é desbloqueado após iniciar 10 partidas.
+008|Escolha uma classe para o Zen infinito.
+009|As Provas espirituais são desbloqueadas após derrotar seu primeiro chefe.
+010|Escolha uma classe para as Provas espirituais ({0}).
+011|Começar
+012|MÁX
+013|Zen infinito (bloqueado)
+014|Provas espirituais (bloqueado)
+015|PV: {0}  -  Lápis: {1}  -  Espaços de item: {2}
+016|Modo: Zen infinito
+017|Modo: Provas espirituais  -  Nível: {0}
+018|Modo: Percurso do jardim  -  Harmonia: {0}
+019|Tabuleiros irregulares: SIM
+020|Tabuleiros irregulares: não
+021|{0}  ({1})
+022|{0}  ({1})
+023|Desbloqueado: H0-H{0}  -  XP x{1:0.0}
+024|Vantagem: {0}
+025|Vantagem: bloqueada até H4
+026|As vantagens são desbloqueadas em H4, H6, H8 e H10.
+027|Sem vantagem
+028|Oferenda da sombra lunar
+029|Fardo do erudito
+030|Proteção do vazio
+031|Tela em branco
+032|Regras padrão do Percurso do jardim.
+033|+20 de ouro, +2 lápis. O primeiro espaço de recompensa vira Nada.
+034|-1 espaço de item, +5 lápis, começa com um Tinteiro grátis.
+035|Sem efeitos de andar positivos. Começa com 1 carga de escudo.
+036|Sem itens iniciais. Espaços de recompensa garantidos de Raro ou melhor.
+037|Nv{0}
+038|   XP: {0}/{1}
+039|   XP: MÁX
+040|PV:{0}  Lápis:{1}  Espaços:{2}  |  {3}
+041|- Desbloqueios de nível -
+042|- Desbloqueios de nível (prévia) -
+043|- Desbloqueios exclusivos -
+044|[N15] Desbloqueia no nível 15: ???
+045|[N30] Desbloqueia no nível 30: ???
+046|<b>{0}  -  BLOQUEADO</b>
+047|Desbloqueio: {0}
+048|Chefes derrotados: {0}/2
+049|Itens usados: {0}/15
+050|Relíquias coletadas: {0}/10
+051|Chefes derrotados: {0}/10
+052|Ouro coletado: {0:N0}/50.000
+053|Ao completar um quebra-cabeça sem erros: +1 ficha de nova rolagem.
+054|A cada 5 posições corretas: +1 PV. Nível 15+: a cada 4.
+055|Cada marca de lápis colocada tem 25% de chance de revelar o dígito correto daquela célula.
+056|33% dos erros não custam PV; 33% dos acertos dão +3 de ouro.
+057|O primeiro item usado em cada nó de quebra-cabeça não é consumido.
+058|Os modificadores de chefe ficam 30% mais fracos. Antes de cada quebra-cabeça de chefe, veja todos os modificadores ativos e role um de novo de graça.
+059|Quebra-cabeça perfeito sem lápis: +2 lápis. A cada 5 desses em uma partida: +1 PV.
+060|Após um nó perfeito, veja as estrelas e o tamanho do próximo nó. Se você escolher esse nó, a dificuldade cai meia estrela (mín. 1★).
+061|Padrão (sempre desbloqueado)
+062|Derrote 2 chefes
+063|Use 15 itens
+064|Colete 10 relíquias
+065|Derrote 10 chefes
+066|Colete 50.000 de ouro
+067|Encontre todos os itens únicos
+068|Complete uma partida inteira (5 andares + chefe) sem erros
+069|Solucionador
+070|Localizador
+071|Tinteiro
+072|Pedra de meditação
+073|Sino de vento
+074|Pergaminho de padrões
+075|Reflexo do koi
+076|Lanterna da clareza
+077|Ancinho de jardim
+078|Tigela de oferendas
+079|Tesoura de poda
+080|Peneira de areia zen
+081|Folha de Ginkgo
+082|Sombrinha de papel de arroz
+083|Incenso do templo
+084|Escama de koi-dragão
+085|Jarro de kintsugi dourado
+086|Leque de seda
+087|Moeda viciada
+088|Contas do monge
+089|Fólio anotado
+090|Dobro ou nada
+091|Cinzel gasto
+092|Lanterna fraca
+093|Juramento do junco
+094|Notas de levantamento
+095|Bússola de bambu
+096|Pergaminho de bambu
+097|Lanterna do jardim
+098|Koi dourado
+099|Selo do templo
+100|Preenche uma célula com o dígito correto e destaca os candidatos restantes do bloco.
+101|Preenche uma célula com o dígito correto e completa o bloco automaticamente.
+102|Clique em uma zona (linha/coluna/bloco) para completá-la automaticamente.
+103|Destaca {0} célula(s) com o dígito selecionado.
+104|Revela TODAS as células não resolvidas que contêm o dígito selecionado.
+105|Restaura {0} marcas de lápis.
+106|Restaura {0} PV.
+107|Escolha linha, coluna OU bloco e clique em uma célula para preenchê-lo.
+108|Escolha 2 entre linha/coluna/bloco e clique em uma célula para preenchê-los.
+109|Clique em uma célula para preencher a linha + coluna + bloco dela.
+110|Selecione {0} mecânica(s) para resolver com a solução. ESC cancela.
+111|Clique em {0} célula(s) vazia(s) para revelar seus candidatos.
+112|Revela os candidatos de cada célula não resolvida na zona mais ambígua do tabuleiro (linha/coluna/bloco com mais células abertas).
+113|Desativa a névoa por {0} jogadas.
+114|Apaga todas as marcas de lápis da linha e da coluna selecionadas.
+115|Sacrifique 1 PV para ganhar 30 de ouro.
+116|Remove todos os candidatos inválidos de uma célula, deixando só as possibilidades válidas.
+117|Destaca todas as células com exatamente dois candidatos.
+118|Desfaz o último erro, devolve os PV perdidos e recupera seu combo.
+119|Bloqueia a próxima penalidade por erro (2 cargas).
+120|Clique em {0} célula(s) vazia(s) para colocar a resposta correta.
+121|Completa a linha, coluna ou bloco mais preenchido.
+122|Corrige todos os erros atuais do tabuleiro e revela os dígitos corretos de todas as células afetadas.
+123|Gera {0} de escudo. O escudo absorve o dano antes dos seus PV. Com escudo, os erros não quebram seu combo. Zera a cada quebra-cabeça.
+124|Ganhe 1 ficha de nova rolagem. (exclusivo do Maníaco dos números)
+125|Suas próximas 9 posições não gastam marcas de lápis. (exclusivo do Monge do jardim)
+126|Revela todos os candidatos de um bloco selecionado. (exclusivo do Arquivista do santuário)
+127|Dobre o ouro deste quebra-cabeça ou perca 1 PV. (exclusivo do Jogador de koi)
+128|30% de desconto na próxima loja. (exclusivo do Jardineiro de pedra)
+129|Remove para sempre a névoa de 3 células ocultas aleatórias. (exclusivo do Vidente da lanterna)
+130|Complete este quebra-cabeça sem marcas de lápis para ganhar +2 PV. (exclusivo do Duelista do junco)
+131|Destaca 2 células onde a próxima posição provavelmente violaria uma restrição ativa.
+132|Revela as estrelas de todos os próximos nós do caminho.
+133|Remove a névoa de todo o tabuleiro por 15 segundos e depois a traz de volta.
+134|Dá +{0} de ouro por estrela quando este quebra-cabeça termina.
+135|Protege seus PV neste quebra-cabeça: posições erradas não causam dano. Consumido ao concluir.
+136|Seixo liso
+137|Xícara rachada
+138|Pente de madeira
+139|Ficha de musgo
+140|Reflexo do koi
+141|Amuleto do monge
+142|Tartaruga de cobre
+143|Grampo de jade
+144|Relógio de sol de pedra
+145|Selo de sakura
+146|Leque carmesim
+147|Ramo de glicínia
+148|Tsuru de papel
+149|Máscara de porcelana
+150|Sigilo transmutado
+151|Pena de fênix
+152|Lanterna espiritual
+153|Bússola de pedra da lua
+154|Raiz dourada
+155|Grade silenciosa
+156|Jardim mutável
+157|Lótus eterno
+158|Olho do dragão
+159|Livro da fortuna
+160|Voto do templo
+161|Arquivo infinito
+162|Escama de koi dourada
+163|Pedra de sustentação
+164|Chama protetora
+165|Junco de duelo
+166|Mapa preciso
+167|Pedra rachada
+168|Espelho fosco
+169|Pétala do vazio
+170|Lanterna do vazio
+171|Comece cada quebra-cabeça com +2 marcas de lápis.
+172|Absorve o primeiro erro de cada quebra-cabeça (sem perder PV).
+173|+1 PV máximo.
+174|Rolar de novo na loja custa 25% menos.
+175|Revela os candidatos corretos de 5 células vazias aleatórias no início do quebra-cabeça (sem preencher).
+176|A cada combo de 5: +5 de ouro E +1 lápis.
+177|Completar um quebra-cabeça perfeito dá +15 de ouro.
+178|+1 espaço de item.
+179|+1 espaço de recompensa após cada quebra-cabeça.
+180|Sequência de quebra-cabeças perfeitos: +1 PV com sequência ≥2; +3 PV (zera a sequência) com sequência ≥5.
+181|Reduz em um nível a intensidade de todos os modificadores de chefe.
+182|Cura 2 PV no início de cada andar.
+183|O primeiro uso de item em cada quebra-cabeça é grátis (não gasta carga).
+184|A raridade das recompensas de elite sobe um nível.
+185|+25% de ouro ao completar quebra-cabeças.
+186|Evita a morte uma vez por partida (cura até 1 PV).
+187|Preços da loja 20% menores.
+188|O nível dos nós de relíquia sobe +1.
+189|No início de um andar, recupere 30% do ouro gasto no andar anterior.
+190|Comece cada andar com 3 novas cargas de escudo contra erros (cada erro absorvido custa 0 PV).
+191|Uma vez por andar, um dígito dado aleatório é movido para outra célula válida, mantendo a solução única.
+192|Os itens nunca são consumidos.
+193|Comece cada quebra-cabeça com um bloco totalmente resolvido.
+194|A cada 10 posições corretas: +1 ficha de nova rolagem. A cada combo de 5: +2 fichas de nova rolagem. (exclusivo do Maníaco dos números)
+195|Quando seus PV caem para 25% ou menos, cura 3 PV, uma vez por quebra-cabeça. (exclusivo do Monge do jardim)
+196|Após cada posição correta, revela um candidato na mesma linha. (exclusivo do Arquivista do santuário)
+197|Aumenta os efeitos do Jogador de koi para 40%: um golpe de sorte dá +5 de ouro e um erro absorvido dá +1 ficha de nova rolagem. (exclusivo do Jogador de koi)
+198|Cada erro não absorvido gera 5 de ouro extra no fim do quebra-cabeça. (exclusivo do Jardineiro de pedra)
+199|Uma vez por partida, absorve automaticamente um erro (sem perder PV). (exclusivo do Vidente da lanterna)
+200|Completar um quebra-cabeça sem marcas de lápis dá +20 de ouro extra. (exclusivo do Duelista do junco)
+201|[H2+] Cada erro após o primeiro em um quebra-cabeça causa 0 PV de dano (a pedra absorve). Passivo; ilimitado.
+202|[H5+] Uma vez por erro: gaste 3 lápis para absorver 1 PV de dano (automático se lápis ≥ 3). A partir de H5, cada golpe após o primeiro em um quebra-cabeça é parcialmente reduzido.
+203|[H7+] Uma vez por partida: sobreviva a um golpe fatal com 1 PV. Ao ativar, dá 1 Solucionador normal grátis.
+204|[H9+] Os nomes dos modificadores de chefe ficam sempre ocultos (não se revelam ao repetir). Ganhe +1 de ouro por modificador de andar ativo ao completar um quebra-cabeça.
+205|Sussurros alemães
+206|Sussurros holandeses
+207|Linhas de paridade
+208|Linhas Renban
+209|Kropki de diferença
+210|Kropki de proporção
+211|Gaiolas Killer
+212|Somas de setas
+213|Névoa de guerra
+214|Palíndromo
+215|Termômetro
+216|Entre linhas
+217|Par/Ímpar
+218|Não consecutivo
+219|Anticavalo
+220|Antirrei
+221|Diagonal não consec.
+222|Distância ≥ 2
+223|Entropia
+224|Regiões modulares
+225|Linha consecutiva
+226|Termo lento
+227|Linha sem repetição
+228|Kropki completo
+229|Ponto de soma
+230|Maior/Menor que
+231|Pares XV
+232|Células primas
+233|Células fortaleza
+234|Células vizinhas nas linhas verdes diferem em 5 ou mais. Exemplo: 1-7-2-8.
+235|Células vizinhas nas linhas turquesa diferem em 4 ou mais. Exemplo: 1-6-2-7.
+236|As células ao longo das linhas roxas alternam ímpar/par. Exemplo: 3-4-7-2.
+237|As células nas linhas laranja formam um conjunto consecutivo. Exemplo: 3-5-4 (conjunto {3,4,5}).
+238|Pontos brancos: células vizinhas diferem em 1. Exemplo: 4-5.
+239|Pontos pretos: uma célula é o dobro da outra. Exemplo: 3-6.
+240|Gaiolas: as células somam o total indicado, sem repetição. Exemplo: 14=[5,9].
+241|Seta: o dígito do círculo é igual à soma dos dígitos da seta. Exemplo: 9=3+2+4.
+242|A névoa esconde as células não resolvidas. Posições corretas revelam as vizinhas.
+243|As linhas se leem igual de frente para trás e de trás para frente. Exemplo: 3-7-5-7-3.
+244|Os dígitos aumentam ao longo dos termômetros, do bulbo à ponta. Exemplo: 2-4-6-8.
+245|As células internas ficam estritamente entre os valores das pontas. Exemplo: 2-[4,5]-8.
+246|As células marcadas devem corresponder: quadrado azul = par, círculo laranja = ímpar.
+247|Duas células vizinhas na horizontal ou vertical não podem ser consecutivas.
+248|Duas células separadas por um salto de cavalo do xadrez não podem ter o mesmo dígito.
+249|Duas células separadas por um passo de rei do xadrez não podem ter o mesmo dígito. Exemplo: um 3 não pode ficar ao lado nem na diagonal de outro 3.
+250|Células vizinhas na diagonal não podem conter dígitos consecutivos. Exemplo: um 4 não pode ficar na diagonal de um 3 ou de um 5.
+251|Dígitos iguais devem estar a pelo menos 2 células de distância (distância de Chebyshev). Nenhuma célula vizinha ou diagonal pode repetir o dígito.
+252|Cada 3 células seguidas de uma linha ou coluna contêm um dígito baixo (1–3), um médio (4–6) e um alto (7–9).
+253|Cada região contém pelo menos um dígito de {1–3}, um de {4–6} e um de {7–9}.
+254|Células vizinhas nas linhas laranja diferem exatamente em 1. Exemplo: 3-4-5 ou 7-6-5.
+255|Os dígitos aumentam ou se mantêm ao longo do termômetro, do bulbo à ponta. Exemplo: 2-2-3-5 é válido.
+256|Nenhum dígito pode se repetir na linha, independentemente das regras normais do sudoku.
+257|Todos os pares vizinhos que diferem em 1 mostram um ponto branco; todos os pares na proporção 1:2 mostram um ponto preto. Sem ponto, as duas relações são proibidas.
+258|Um ponto com número entre duas células indica que elas somam o valor mostrado.
+259|As setas (> ou <) entre células vizinhas indicam qual deve ter o dígito maior.
+260|X entre duas células: somam 10. V entre duas células: somam 5.
+261|As células marcadas (com um P) devem conter um dígito primo: 2, 3, 5 ou 7.
+262|As células sombreadas em cinza devem ser estritamente maiores que todas as vizinhas ortogonais sem sombra.
+263|O portão de bambu se abre com um estalo seco. A areia rastelada se curva à frente; cada caminho pede uma mão mais firme.
+264|O musgo suaviza as pedras em volta do lago das carpas. A luz das lanternas se acumula na água.
+265|Pontes de madeira cruzam a água negra. Kois laranja giram embaixo como pinceladas vivas.
+266|As lanternas de pedra despertam uma a uma. A trilha de cascalho brilha âmbar sob as folhas que caem.
+267|O torii do cume espera na névoa. Cada nota de sino soa mais perto do que deveria.
+268|Você avança entre as sombras do bambu. O tabuleiro se assenta como areia rastelada.
+269|Um caminho limpo se abre. Você respira e resolve.
+270|Os kois circulam sob a ponte. Suas voltas marcam um ritmo tranquilo.
+271|Os números se encaixam como pedras no musgo.
+272|A água reflete o tabuleiro em fragmentos partidos.
+273|Você segue o padrão até a superfície se acalmar.
+274|A luz das lanternas divide o caminho em quadrados quentes.
+275|Cada dígito correto é como um pavio pegando fogo.
+276|A névoa se enrosca nos degraus do santuário.
+277|O último jardim pede paciência, não pressa.
+278|Uma trilha de serviço estreita passa atrás do biombo de bambu.
+279|Os espíritos vigiam o atalho de perto.
+280|A trilha de musgo se quebra em pedras escorregadias.
+281|Um passo descuidado vai ecoar por todo o lago.
+282|Uma ponte lunar se arqueia mais alto do que deveria.
+283|Você sobe para um padrão mais difícil.
+284|Uma trilha lateral iluminada por lanternas brilha mais que o caminho principal.
+285|A recompensa está mais perto, e o risco também.
+286|Uma escada escondida sobe ao lado do torii.
+287|Os espíritos do cume não marcam rotas fáceis.
+288|Um guardião com máscara de raposa espera ao lado de uma bandeja de amuletos de papel.
+289|“Escolha com cuidado. O jardim se lembra das dívidas.”
+290|Uma barraca laqueada descansa ao lado do lago das carpas.
+291|“Ferramentas para mãos pacientes, preços para mãos honestas.”
+292|Sob a ponte, um mercador espírito desdobra um pano de seda.
+293|“Coisas raras chegam à deriva aqui quando ninguém está olhando.”
+294|A fumaça das lanternas envolve uma loja silenciosa do santuário.
+295|“Gaste o que você carrega. Guarde o que carrega você.”
+296|No último torii, o guardião abre uma última caixa.
+297|“Sem reembolsos depois deste portão.”
+298|Uma pedra de meditação plana se aquece no pátio.
+299|Você descansa até o bambu parar de balançar.
+300|O musgo abafa cada passo.
+301|Por um momento, até o lago fica imóvel.
+302|Você se ajoelha ao lado da ponte e deixa os kois passarem por baixo.
+303|A paciência deles devolve um pouco da sua.
+304|Um nicho de lanterna oferece abrigo do vento.
+305|Você conta a respiração com a chama.
+306|A corda do sino do santuário pende ao seu alcance.
+307|Você ainda não toca o sino. Você descansa.
+308|Um talismã de papel se ergue da areia sem vento.
+309|O jardim oferece uma escolha.
+310|Uma ondulação atravessa o lago contra a corrente.
+311|Algo lá embaixo notou você.
+312|A sombra da ponte se alonga na forma de um portão.
+313|Nem toda travessia é visível.
+314|Uma lanterna arde azul entre as luzes âmbar.
+315|A chama se inclina para a sua mão.
+316|No cume, uma placa ema selada vira sozinha.
+317|O último desejo não está escrito com tinta.
+318|Um espírito do bambu sacode o bosque à frente.
+319|A rota tranquila se afasta; o caminho direto rende uma bênção mais forte.
+320|O lago das carpas escurece sob uma máscara que observa.
+321|Você pode contornar a água ou atravessar onde as ondulações se juntam.
+322|Um guardião da ponte bloqueia o terraço.
+323|As pedras seguras são mais lentas. As pedras brilhantes exigem fé.
+324|As chamas das lanternas se inclinam para o mesmo sopro invisível.
+325|Todo caminho através do brilho tem um preço.
+326|O portão do santuário se fecha atrás de você.
+327|Este é o último limiar. Não há como contornar.
+328|Os caules de bambu se partem em padrões que nenhum vento faria.
+329|Você resolve antes que o bosque mude de ideia.
+330|O espírito do lago se agita sob a água negra.
+331|Cada passo errado espalha círculos pelo tabuleiro.
+332|O guardião da ponte abaixa seu leque de papel.
+333|Só um padrão completo abre a passagem.
+334|As lanternas se inflamam em um muro de ouro e sombra.
+335|Você resolve sob o calor do olhar delas.
+336|O espírito do cume espera além do torii.
+337|O último tabuleiro é uma oferenda, e não aceitará pressa.
+338|Um velho amuleto brilha entre as raízes do bambu.
+339|Uma ficha laqueada repousa no musgo, seca apesar da névoa do lago.
+340|Algo brilhante gira sob as tábuas da ponte.
+341|Um nicho de lanterna esconde uma relíquia envolta em um cordão desbotado.
+342|No limiar do santuário, uma pequena oferenda espera pela sua mão.
+343|O sino do cume responde sem ser tocado. Atrás de você, cada trilha do jardim se aquieta.
+344|Você atravessa o torii com o padrão completo.
+345|As lanternas se apagam uma a uma. O jardim guarda o padrão inacabado.
+346|Você poderá entrar de novo.
+347|Não é possível ir para lá.
+348|Modo quebra-cabeça  (Tab para itens)
+349|Itens  (Tab para alternar, Enter para usar, Esc ou Tab para voltar)
+350|[Controle] Modo quebra-cabeça  (LB para alternar)
+351|[Controle] Nó {0}/{1}  —  A para entrar
+352|Cancelado.
+353|Destacando {0}.
+354|Destaque removido.
+355|Pergaminho de padrões: “{0}” preparado. Clique em Confirmar para aplicar — ESC cancela.
+356|Pergaminho de padrões: “{0}” resolvido, {1} célula(s) preenchida(s). Pronto.
+357|Pergaminho de padrões: “{0}” resolvido (+{1} células). Restam {2} seleção(ões) — pressione ESC para cancelar.
+358|Sino de vento: clique em uma célula para preencher a {0} dela. ESC cancela.
+359|Sino de vento: {0} {1} {2}  — escolha mais {3} (1=Linha 2=Col 3=Bloco). ESC cancela.
+360|Célula dada.
+361|Célula bloqueada!
+362|Tente a célula destacada!
+363|Esvazie a célula primeiro.
+364|Sem cargas de lápis.
+365|Lápis: {0}
+366|Use o modo lápis neste passo!
+367|{0} colocado.
+368|Célula bloqueada.
+369|A sombrinha bloqueou a penalidade! (restam {0})
+370|{0} conflitos! PV: {1}
+371|Quebra-cabeça resolvido! Muito bem!
+372|Tutorial resolvido!
+373|Zen infinito  ·  Profundidade {0}
+374|Jardim concluído! Próximo andar...
+375|O quebra-cabeça ainda está carregando — espere um momento antes de salvar.
+376|Resolva as células restantes por conta própria!
+377|Tinteiro: {0} marcas de lápis restauradas.
+378|Pedra de meditação: {0} PV restaurados.
+379|PV insuficientes para sacrificar.
+380|Tigela de oferendas: -1 PV, +30 de ouro.
+381|Selecione uma célula primeiro.
+382|Solucionador: {0} célula(s) preenchida(s).
+383|Selecione um número primeiro.
+384|Localizador: {0} célula(s) destacada(s) para {1}.
+385|Nenhum tabuleiro ativo.
+386|Pergaminho de padrões: selecione {0} mecânica(s) para resolver. Pressione ESC para cancelar.
+387|Reflexo do koi: clique em {0} célula(s) para revelar candidatos.
+388|Lanterna da clareza: névoa desativada por {0} jogadas.
+389|Ancinho de jardim: linha {0} e coluna {1} limpas.
+390|A célula já está preenchida.
+391|Nenhum candidato incorreto para remover.
+392|Tesoura de poda: um candidato incorreto removido.
+393|Peneira de areia zen: {0} células com exatamente 2 candidatos.
+394|Nenhum erro para desfazer.
+395|Folha de Ginkgo: erro desfeito, +{0} PV, combo restaurado.
+396|Sombrinha de papel de arroz: os próximos {0} erro(s) não custarão PV.
+397|Incenso do templo: clique em {0} célula(s) vazia(s) para colocar a resposta correta.
+398|Nenhuma unidade incompleta encontrada.
+399|Escama de koi-dragão: {0} célula(s) preenchida(s) na unidade mais completa.
+400|Jarro de kintsugi dourado: {0} erro(s) encontrado(s).
+401|Leque de seda: +{0} de escudo. Com escudo, os erros não quebram seu combo.
+402|Pergaminho de bambu: nenhum próximo nó encontrado.
+403|Lanterna do jardim: névoa removida por 15 segundos.
+404|Koi dourado: ativo — +{0} de ouro quando este quebra-cabeça for concluído.
+405|Selo do templo: PV protegidos neste quebra-cabeça — os erros não causam dano.
+406|Sino de vento: clique em qualquer célula para preencher a linha + coluna + bloco dela. ESC cancela.
+407|Sino de vento: pressione 1=Linha 2=Col 3=Bloco para escolher {0} unidade(s). ESC cancela.
+408|{0} usado.
+409|Reflexo do koi: escolha uma célula vazia (restam {0}).
+410|Reflexo do koi: candidatos revelados.
+411|Reflexo do koi: candidatos revelados (restam {0}).
+412|Sino de vento: {0} célula(s) preenchida(s).
+413|Incenso do templo: escolha uma célula vazia (restam {0}).
+414|Incenso do templo: pronto.
+415|Incenso do templo: preenchida (restam {0}).
+416|Não é possível trocar uma célula dada. Clique em outra.
+417|Leque de seda: primeira célula ({0},{1}) selecionada. Clique na segunda.
+418|Leque de seda: mesma célula. Escolha outra.
+419|Leque de seda: células trocadas.

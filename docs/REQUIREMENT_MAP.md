@@ -19,7 +19,7 @@ Legend: ✅ Implemented and verified | ⚠️ Partial / conflicting | ❌ Not im
 | [ZENMODE](#endless-zen-mode) | `docs/EndlessZenMode.md` | ✅ 5 · ◻️ 4 |
 | [TRIAL](#spirit-trials-mode) | `docs/SpiritTrialsMode.md` | ✅ 4 · ◻️ 9 |
 | [TUTO-BASICS](#sudoku-basics-tutorial) | `docs/FirstTimePlayTutorial.md` | ✅ 5 · ⚠️ 1 · ◻️ 4 |
-| [GEN](#sudoku-generation-pipeline) | `docs/SudokuGenerationPipeline.md` | ✅ 11 |
+| [GEN](#sudoku-generation-pipeline) | `docs/SudokuGenerationPipeline.md` | ✅ 12 |
 | [MAP](#path-system--garden-overview) | `docs/PathSystem_GardenOverview.md` | ✅ 10 · ◻️ 4 |
 | [BOSS](#boss-mechanics) | `docs/BossMechanicsSystem.md` | ✅ 8 |
 | [XP](#class-xp-progression) | `docs/ClassXpProgressionSystem.md` | ✅ 8 |
@@ -31,7 +31,8 @@ Legend: ✅ Implemented and verified | ⚠️ Partial / conflicting | ❌ Not im
 | [SEASON](#seasonal-challenge) | `docs/SeasonalChallengeSpec.md` | ✅ 5 · ◻️ 1 |
 | [DAILY](#daily-goal-system) | `docs/DailyGoalSystem.md` | ✅ 2 · ◻️ 3 |
 | [CLASS](#class-progression-unlocks) | `docs/ClassProgressionUnlocks.md` | ✅ 1 · ◻️ 3 |
-| [DISPLAY](#display-modes) | `docs/GameDesignSpec.md` | ✅ 6 |
+| [DISPLAY](#display-modes) | `docs/GameDesignSpec.md` | ✅ 7 |
+| [LOC](#localization) | `docs/localization-catalog.md` | ✅ 3 |
 | [REVIEW](#review-created-requirements) | `docs/review/REQUIREMENT_TRACEABILITY.md` | ✅ 53 · ⚠️ 6 · ◻️ 6 |
 | [HARMONY](#harmony-difficulty) | `docs/HarmonyDifficultySystem.md` | ✅ 14 · ◻️ 18 |
 
@@ -349,13 +350,14 @@ Legend: ✅ Implemented and verified | ⚠️ Partial / conflicting | ❌ Not im
 
 ## Sudoku Generation Pipeline
 
-**Spec:** `docs/SudokuGenerationPipeline.md` v1.6
+**Spec:** `docs/SudokuGenerationPipeline.md` v1.7
 
 | ID | Description | File | Method | Evidence | Status |
 | ---- | ------------- | ------ | -------- | ---------- | -------- |
 | GEN-REGION-001 | `BuildRegionMap(size, variant)` — 4 variants (0=Standard, 1=Alt, 2=Irregular A, 3=Jigsaw) | `Assets/Scripts/Sudoku/SudokuGenerator.cs` | `BuildRegionMap` | PuzzleGenerationServiceTests | ✅ |
 | GEN-REGION-002 | All templates: each region = `size` cells, contiguous, count = board size | `Assets/Scripts/Sudoku/SudokuGenerator.cs` | Template methods | PuzzleGenerationServiceTests | ✅ |
 | GEN-REGION-003 | `AllowIrregularPuzzles=false` restricts to variants 0–1 | `Assets/Scripts/Run/RunDirector.cs` | `BuildLevelConfig` | GeneratedUiPlayModeTraversalTests | ✅ |
+| GEN-REGION-004 | Board shows the current puzzle's region borders; redrawn for every new board or region map | `Assets/Scripts/UI/BoardViewController.cs` | `SyncRegionBorders` | InRunUiPlayModeTests | ✅ |
 | GEN-SOLVE-001 | `GenerateSolvedBoard(size, regionMap, rng)` — backtracking + MRV heuristic + seeded shuffle | `Assets/Scripts/Sudoku/SudokuGenerator.cs` | `GenerateSolvedBoard` / `FillBoard` | SudokuBacktrackingSolverTests | ✅ |
 | GEN-REMOVE-001 | Cell removal to create player-facing puzzle | `Assets/Scripts/Sudoku/SudokuGenerator.cs` | `RemoveCells` | E2E/diagnostic D02 | ✅ |
 | GEN-REMOVE-002 | `StarDensityService.MissingPercentForStars`: `(stars+3)×0.1`, clamped [0.01, 0.95] | `Assets/Scripts/Core/StarDensityService.cs` | `MissingPercentForStars` | E2E/diagnostic D02 | ✅ |
@@ -614,6 +616,18 @@ Key requirements (see spec for full list):
 | DISPLAY-MODE-005 | Saved values 0–3, unknown → Fullscreen, legacy flag → Windowed; Fullscreen flag false for window modes | `Assets/Scripts/Save/SaveFileService.cs` | `SanitizeOptions` | DisplayModeTests | ✅ |
 | DISPLAY-MODE-006 | Fullscreen toggle keeps Frameless Window / Borderless Fullscreen when chosen | `Assets/Scripts/UI/OptionsController.cs` | `SetFullscreen` | DisplayModeTests | ✅ |
 | DISPLAY-MODE-007 | Window title "Run of the Nine" in every mode (Windows player) | `Assets/Scripts/Platform/WindowFrameService.cs` | `WindowTitle`, `Win32.SetTitle`, `Runner.Update` | E2E/diagnostic B23 | ✅ |
+
+---
+
+## Localization
+
+**Spec:** `docs/localization-catalog.md` v1.1 §French, Spanish and Brazilian Portuguese
+
+| ID | Description | File | Method | Evidence | Status |
+| ---- | ------------- | ------ | -------- | ---------- | -------- |
+| LOC-PARITY-001 | fr/es/pt contain every German key | `Assets/Resources/Localization/*.json` | catalogs | LocalizationParityTests | ✅ |
+| LOC-PARITY-002 | Same placeholders as German, no empty text | `Assets/Resources/Localization/*.json` | catalogs | LocalizationParityTests | ✅ |
+| LOC-PARITY-003 | Gameplay content never falls back to English in fr/es/pt | `Assets/Scripts/Core/LocalizationService.cs` | `T` | LocalizationParityTests | ✅ |
 
 ---
 

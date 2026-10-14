@@ -1,11 +1,12 @@
 # Sudoku Generation Pipeline
 
-**Version:** 1.6 | **Date:** 2026-10-07 | **Status:** implemented
+**Version:** 1.7 | **Date:** 2026-10-14 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.7 | 2026-10-14 | implemented | Region display: the board always shows the regions of the puzzle on screen (GEN-REGION-004, GAP-044). |
 | 1.6 | 2026-10-07 | implemented | 1.1 review decisions (2026-10-07): solution-based validation, rejected wrong digits, 7★ rule-based (SPEC-CONF-003); in-game puzzles are unique (SPEC-AMB-003 correction); structural-modifier region rule (SPEC-AMB-014); Entropy 9×9 and pointer to the eligibility table, Anti-Bishop range 2 (SPEC-CONF-012/013/038); 7★ requires a modifier (SPEC-CONF-015); entered seeds, determinism scope across resume (SPEC-MAC-010, GAP-018/020); generation failure handling (SPEC-AMB-004); SPICE table archived (SPEC-OBS-001). |
 | 1.5 | 2026-04-14 | implemented | Added requirement IDs (GEN-REGION, GEN-SOLVE, GEN-REMOVE, GEN-MOD, GEN-VALID). |
 | 1.4 | 2026-03-28 | implemented | Non-deterministic validation: placement is valid if it satisfies all constraints (no conflict in row/col/region/modifier), NOT compared against the single generated solution. PlaceResult.WrongButValid removed; only Correct/Invalid/IsGiven remain. SudokuBoard.IsComplete() and IsCorrectAt() use constraint satisfaction. Solution property retained for item effects only. |
@@ -99,6 +100,10 @@ Each template is a hardcoded 2D array defining contiguous region shapes. Templat
 - If `AllowIrregularPuzzles = true` → variants 0–3 are all eligible
 - Tutorial dropdown maps: index 0 → variant 0, index 1 → variant 1, index 2 → variant 3
 - **Structural rule (SPEC-AMB-014):** a level with a global structural modifier (Nonconsecutive, Anti-Knight, Anti-King, Anti-Bishop, Nonconsecutive Diagonal, Distance ≥ 2, Entropy) uses the rectangular layout of its size, because no irregular template produced a puzzle with these rules within budget (GAP-003 benchmark). `GenerationReliabilityTests` covers the rule.
+
+### Region Display
+
+**[GEN-REGION-004]** The board draws the region borders of the puzzle on screen. They are redrawn whenever a puzzle with another board or region map is shown, including the next puzzle of the same size; a board without a region map shows no region borders. Evidence: `InRunUiPlayModeTests.RegionBorders_FollowTheNextPuzzleOfTheSameSize` (GAP-044).
 
 ---
 

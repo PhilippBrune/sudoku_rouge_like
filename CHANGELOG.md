@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased (after v0.1.5)
+
+### Fixed
+
+- Region borders could show the previous puzzle's regions when two puzzles of the same size followed each other, so an irregular board looked unsolvable. The board now always shows its own regions.
+
+### Changed
+
+- French, Spanish and Brazilian Portuguese: items, relics, boss modifiers, classes, story texts and in-run messages are now translated.
+
 ## 0.1.5 — 5th iteration (2026-10-14)
 
 The fifth Early Access build. It fixes the progression blockers players hit in the previous builds, finishes several systems that were only half-wired, and makes the rules match what the game tells you.

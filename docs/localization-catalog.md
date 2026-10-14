@@ -1,5 +1,14 @@
 # Localization Catalog Workflow
 
+**Version:** 1.1 | **Date:** 2026-10-14 | **Status:** implemented
+
+### Change History
+
+| Version | Date | Status | Changes |
+|---------|------|--------|---------|
+| 1.1 | 2026-10-14 | implemented | French, Spanish and Brazilian Portuguese complete (LOC-PARITY-001..003): every German key, same placeholders; export/import tooling in `tools/localization/`, glossary `docs/localization-glossary.md`; AI-assisted first pass, native review pending (FUTURE-014, GAP-019). |
+| 1.0 | — | implemented | Catalog workflow, English/German source order, validation tests (before version tracking). |
+
 ## Runtime Source Order
 
 `LocalizationService` loads JSON catalogs from:
@@ -23,6 +32,21 @@ The initial catalogs were generated from the current in-code dictionaries:
 Many English strings still use call-site fallbacks such as
 `LocalizationService.T(key, englishFallback)`. Those should be migrated into
 `en.json` in later batches when the copy is stable.
+
+## French, Spanish and Brazilian Portuguese
+
+| ID | Requirement |
+|---|---|
+| LOC-PARITY-001 | `fr.json`, `es.json` and `pt.json` contain every key `de.json` has. Test: `LocalizationParityTests.EveryGermanKey_ExistsInFrenchSpanishAndPortuguese`. |
+| LOC-PARITY-002 | Each translation keeps the German placeholders (`{0}`, `{1:0.0}`, ...) and is not empty. Test: `LocalizationParityTests.Translations_KeepTheGermanPlaceholders_AndAreNotEmpty`. |
+| LOC-PARITY-003 | With French, Spanish or Portuguese active, item, relic, boss modifier and narrative text never falls back to English. Test: `LocalizationParityTests.GameplayContent_DoesNotFallBackToEnglish`. |
+
+Workflow for new or changed German keys:
+
+1. `python tools/localization/export_missing.py` writes `tools/localization/out/missing_<lang>.json` (key, English source, German reference, placeholders). Keys built at runtime get their English from `tools/localization/english_sources.json`, refreshed by the `[Explicit]` EditMode test `TranslationSourceExportDiagnostics`.
+2. Translate with the glossary (`docs/localization-glossary.md`) into `tools/localization/translations/<lang>.txt`, one `NNN|text` line per exported row.
+3. `python tools/localization/import_translations.py fr es pt` validates row coverage and placeholders, then appends the keys to the catalogs.
+4. Native review per language before a release claims full support (PRG-LOCALIZATION).
 
 ## Editing Rules
 

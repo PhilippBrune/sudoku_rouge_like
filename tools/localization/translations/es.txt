@@ -1,0 +1,420 @@
+000|Reliquias
+001|Modos
+002|Reasignar
+003|Restablecer todo
+004|Continuar
+005|Elige una clase para el Recorrido del jardín.
+006|Continuar  -  {0}  -  Piso {1}  -  PV {2}/{3}
+007|Zen infinito se desbloquea tras empezar 10 partidas.
+008|Elige una clase para Zen infinito.
+009|Las Pruebas espirituales se desbloquean tras derrotar a tu primer jefe.
+010|Elige una clase para las Pruebas espirituales ({0}).
+011|Empezar
+012|MÁX
+013|Zen infinito (bloqueado)
+014|Pruebas espirituales (bloqueado)
+015|PV: {0}  -  Lápices: {1}  -  Huecos de objeto: {2}
+016|Modo: Zen infinito
+017|Modo: Pruebas espirituales  -  Nivel: {0}
+018|Modo: Recorrido del jardín  -  Armonía: {0}
+019|Tableros irregulares: SÍ
+020|Tableros irregulares: no
+021|{0}  ({1})
+022|{0}  ({1})
+023|Desbloqueado: H0-H{0}  -  XP x{1:0.0}
+024|Ventaja: {0}
+025|Ventaja: bloqueada hasta H4
+026|Las ventajas se desbloquean en H4, H6, H8 y H10.
+027|Sin ventaja
+028|Ofrenda de sombra lunar
+029|Carga del erudito
+030|Guarda del vacío
+031|Lienzo vacío
+032|Reglas estándar del Recorrido del jardín.
+033|+20 de oro, +2 lápices. El primer hueco de recompensa pasa a ser Nada.
+034|-1 hueco de objeto, +5 lápices, empiezas con un Tintero gratis.
+035|Sin efectos de piso positivos. Empiezas con 1 carga de escudo.
+036|Sin objetos iniciales. Huecos de recompensa garantizados de Raro o mejor.
+037|Nv{0}
+038|   XP: {0}/{1}
+039|   XP: MÁX
+040|PV:{0}  Lápices:{1}  Huecos:{2}  |  {3}
+041|- Desbloqueos de nivel -
+042|- Desbloqueos de nivel (vista previa) -
+043|- Desbloqueos exclusivos -
+044|[N15] Se desbloquea en el nivel 15: ???
+045|[N30] Se desbloquea en el nivel 30: ???
+046|<b>{0}  -  BLOQUEADO</b>
+047|Desbloqueo: {0}
+048|Jefes derrotados: {0}/2
+049|Objetos usados: {0}/15
+050|Reliquias reunidas: {0}/10
+051|Jefes derrotados: {0}/10
+052|Oro reunido: {0:N0}/50.000
+053|Tras completar un puzle sin errores: +1 ficha de retirada.
+054|Cada 5 colocaciones correctas: +1 PV. Nivel 15+: cada 4.
+055|Cada marca de lápiz colocada tiene un 25 % de probabilidad de revelar el dígito correcto de esa casilla.
+056|El 33 % de los errores no cuesta PV; el 33 % de los aciertos da +3 de oro.
+057|El primer objeto usado en cada nodo de puzle no se consume.
+058|Los modificadores de jefe son un 30 % más débiles. Antes de cada puzle de jefe, ves todos los modificadores activos y puedes volver a tirar uno gratis.
+059|Puzle perfecto sin lápiz: +2 lápices. Cada 5 puzles así en una partida: +1 PV.
+060|Tras un nodo perfecto, ves las estrellas y el tamaño del siguiente nodo. Si eliges ese nodo, su dificultad baja media estrella (mín. 1★).
+061|Estándar (siempre desbloqueado)
+062|Derrota a 2 jefes
+063|Usa 15 objetos
+064|Reúne 10 reliquias
+065|Derrota a 10 jefes
+066|Reúne 50.000 de oro
+067|Encuentra todos los objetos únicos
+068|Completa una partida entera (5 pisos + jefe) sin errores
+069|Solucionador
+070|Buscador
+071|Tintero
+072|Piedra de meditación
+073|Campanilla de viento
+074|Pergamino de patrones
+075|Reflejo de koi
+076|Farol de claridad
+077|Rastrillo de jardín
+078|Cuenco de ofrendas
+079|Tijeras de podar
+080|Tamiz de arena zen
+081|Hoja de Ginkgo
+082|Sombrilla de papel de arroz
+083|Incienso del templo
+084|Escama de koi dragón
+085|Jarrón de kintsugi dorado
+086|Abanico de seda
+087|Moneda trucada
+088|Cuentas del monje
+089|Folio anotado
+090|Doble o nada
+091|Cincel gastado
+092|Farol tenue
+093|Promesa de caña
+094|Notas topográficas
+095|Brújula de bambú
+096|Pergamino de bambú
+097|Farol del jardín
+098|Koi dorado
+099|Sello del templo
+100|Rellena una casilla con su dígito correcto y resalta los candidatos restantes de su caja.
+101|Rellena una casilla con su dígito correcto y completa automáticamente su caja.
+102|Haz clic en una zona (fila/columna/caja) para completarla automáticamente.
+103|Resalta {0} casilla(s) con el dígito seleccionado.
+104|Revela TODAS las casillas sin resolver que contienen el dígito seleccionado.
+105|Restaura {0} marcas de lápiz.
+106|Restaura {0} PV.
+107|Elige fila, columna O caja y haz clic en una casilla para rellenarla.
+108|Elige 2 entre fila/columna/caja y haz clic en una casilla para rellenarlas.
+109|Haz clic en una casilla para rellenar su fila + columna + caja.
+110|Selecciona {0} mecánica(s) para resolver con la solución. ESC cancela.
+111|Haz clic en {0} casilla(s) vacía(s) para revelar sus candidatos.
+112|Revela los candidatos de cada casilla sin resolver en la zona más ambigua del tablero (la fila/columna/caja con más casillas abiertas).
+113|Desactiva la niebla durante {0} movimientos.
+114|Borra todas las marcas de lápiz de la fila y la columna seleccionadas.
+115|Sacrifica 1 PV para ganar 30 de oro.
+116|Quita todos los candidatos inválidos de una casilla y deja solo las posibilidades válidas.
+117|Resalta todas las casillas con exactamente dos candidatos.
+118|Deshace el último error, devuelve los PV perdidos y recupera tu combo.
+119|Bloquea la próxima penalización por error (2 cargas).
+120|Haz clic en {0} casilla(s) vacía(s) para colocar su respuesta correcta.
+121|Completa la fila, columna o caja más llena.
+122|Corrige todos los errores actuales del tablero y revela los dígitos correctos de todas las casillas afectadas.
+123|Genera {0} de escudo. El escudo absorbe el daño antes que tus PV. Mientras tengas escudo, los errores no rompen tu combo. Se reinicia en cada puzle.
+124|Gana 1 ficha de retirada. (exclusivo del Maniático de los números)
+125|Tus próximas 9 colocaciones no cuestan marcas de lápiz. (exclusivo del Monje del jardín)
+126|Revela todos los candidatos de una caja seleccionada. (exclusivo del Archivista del santuario)
+127|Duplica el oro de este puzle o pierde 1 PV. (exclusivo del Jugador de koi)
+128|30 % de descuento en la próxima tienda. (exclusivo del Jardinero de piedra)
+129|Quita para siempre la niebla de 3 casillas ocultas al azar. (exclusivo del Vidente del farol)
+130|Completa este puzle sin marcas de lápiz para obtener +2 PV. (exclusivo del Duelista de caña)
+131|Resalta 2 casillas donde la próxima colocación probablemente rompería una restricción activa.
+132|Revela las estrellas de todos los próximos nodos del camino.
+133|Despeja la niebla de todo el tablero durante 15 segundos y luego vuelve a cubrirlo.
+134|Otorga +{0} de oro por estrella al terminar este puzle.
+135|Protege tus PV en este puzle: las colocaciones incorrectas no hacen daño. Se consume al completarlo.
+136|Guijarro liso
+137|Taza agrietada
+138|Peine de madera
+139|Ficha de musgo
+140|Reflejo de koi
+141|Amuleto del monje
+142|Tortuga de cobre
+143|Horquilla de jade
+144|Reloj de sol de piedra
+145|Sello de sakura
+146|Abanico carmesí
+147|Rama de glicinia
+148|Grulla de papel
+149|Máscara de porcelana
+150|Sigilo transmutado
+151|Pluma de fénix
+152|Farol espiritual
+153|Brújula de piedra lunar
+154|Raíz dorada
+155|Cuadrícula silenciosa
+156|Jardín cambiante
+157|Loto eterno
+158|Ojo del dragón
+159|Libro de la fortuna
+160|Voto del templo
+161|Archivo infinito
+162|Escama de koi dorada
+163|Piedra de carga
+164|Llama protectora
+165|Caña de duelo
+166|Mapa preciso
+167|Piedra agrietada
+168|Espejo escarchado
+169|Pétalo del vacío
+170|Farol del vacío
+171|Empieza cada puzle con +2 marcas de lápiz.
+172|Absorbe el primer error de cada puzle (sin perder PV).
+173|+1 PV máximo.
+174|Volver a tirar en la tienda cuesta un 25 % menos.
+175|Revela los candidatos correctos de 5 casillas vacías al azar al empezar el puzle (sin rellenarlas).
+176|Cada combo de 5: +5 de oro Y +1 lápiz.
+177|Completar un puzle perfecto da +15 de oro.
+178|+1 hueco de objeto.
+179|+1 hueco de recompensa tras cada puzle.
+180|Racha de puzles perfectos: +1 PV con racha ≥2; +3 PV (se reinicia) con racha ≥5.
+181|Reduce un nivel la intensidad de todos los modificadores de jefe.
+182|Cura 2 PV al empezar cada piso.
+183|El primer uso de objeto de cada puzle es gratis (no gasta carga).
+184|La rareza de las recompensas de élite sube un nivel.
+185|+25 % de oro al completar puzles.
+186|Evita la muerte una vez por partida (cura hasta 1 PV).
+187|Precios de la tienda un 20 % más bajos.
+188|El nivel de los nodos de reliquia sube +1.
+189|Al empezar un piso, recuperas el 30 % del oro gastado en el piso anterior.
+190|Empieza cada piso con 3 cargas nuevas de escudo contra errores (cada error absorbido cuesta 0 PV).
+191|Una vez por piso, un dígito dado al azar se mueve a otra casilla válida y el puzle sigue teniendo solución única.
+192|Los objetos nunca se consumen.
+193|Empieza cada puzle con una caja totalmente resuelta.
+194|Cada 10 colocaciones correctas: +1 ficha de retirada. Cada combo de 5: +2 fichas de retirada. (exclusivo del Maniático de los números)
+195|Cuando tus PV bajan al 25 % o menos, curas 3 PV, una vez por puzle. (exclusivo del Monje del jardín)
+196|Tras cada colocación correcta, revela un candidato en la misma fila. (exclusivo del Archivista del santuario)
+197|Sube los efectos del Jugador de koi al 40 %: un golpe de suerte da +5 de oro y un error absorbido da +1 ficha de retirada. (exclusivo del Jugador de koi)
+198|Cada error no absorbido genera 5 de oro extra al final del puzle. (exclusivo del Jardinero de piedra)
+199|Una vez por partida, absorbe automáticamente un error (sin perder PV). (exclusivo del Vidente del farol)
+200|Completar un puzle sin marcas de lápiz da +20 de oro extra. (exclusivo del Duelista de caña)
+201|[H2+] Cada error tras el primero en un puzle hace 0 PV de daño (la piedra absorbe). Pasivo; ilimitado.
+202|[H5+] Una vez por error: gasta 3 lápices para absorber 1 PV de daño (automático si lápices ≥ 3). Desde H5, cada golpe tras el primero en un puzle se reduce en parte.
+203|[H7+] Una vez por partida: sobrevive a un golpe mortal con 1 PV. Al activarse, da 1 Solucionador normal gratis.
+204|[H9+] Los nombres de los modificadores de jefe siempre están ocultos (no se revelan al repetirse). Gana +1 de oro por cada modificador de piso activo al completar un puzle.
+205|Susurros alemanes
+206|Susurros neerlandeses
+207|Líneas de paridad
+208|Líneas Renban
+209|Kropki de diferencia
+210|Kropki de proporción
+211|Jaulas Killer
+212|Sumas de flechas
+213|Niebla de guerra
+214|Palíndromo
+215|Termómetro
+216|Entre líneas
+217|Par/Impar
+218|No consecutivo
+219|Anticaballo
+220|Antirrey
+221|Diagonal no consec.
+222|Distancia ≥ 2
+223|Entropía
+224|Regiones modulares
+225|Línea consecutiva
+226|Termo lento
+227|Línea sin repetición
+228|Kropki completo
+229|Punto de suma
+230|Mayor/Menor que
+231|Pares XV
+232|Casillas primas
+233|Casillas fortaleza
+234|Las casillas contiguas en las líneas verdes difieren en 5 o más. Ejemplo: 1-7-2-8.
+235|Las casillas contiguas en las líneas turquesa difieren en 4 o más. Ejemplo: 1-6-2-7.
+236|Las casillas a lo largo de las líneas moradas alternan impar/par. Ejemplo: 3-4-7-2.
+237|Las casillas de las líneas naranjas forman un conjunto consecutivo. Ejemplo: 3-5-4 (conjunto {3,4,5}).
+238|Puntos blancos: las casillas contiguas difieren en 1. Ejemplo: 4-5.
+239|Puntos negros: una casilla es el doble de la otra. Ejemplo: 3-6.
+240|Jaulas: las casillas suman el total indicado, sin repetir. Ejemplo: 14=[5,9].
+241|Flecha: el dígito del círculo es igual a la suma de los dígitos de la flecha. Ejemplo: 9=3+2+4.
+242|La niebla oculta las casillas sin resolver. Las colocaciones correctas revelan las vecinas.
+243|Las líneas se leen igual hacia delante y hacia atrás. Ejemplo: 3-7-5-7-3.
+244|Los dígitos aumentan a lo largo de los termómetros, del bulbo a la punta. Ejemplo: 2-4-6-8.
+245|Las casillas interiores están estrictamente entre los valores de los extremos. Ejemplo: 2-[4,5]-8.
+246|Las casillas marcadas deben coincidir: cuadrado azul = par, círculo naranja = impar.
+247|Dos casillas contiguas en horizontal o vertical no pueden ser consecutivas.
+248|Dos casillas separadas por un salto de caballo de ajedrez no pueden tener el mismo dígito.
+249|Dos casillas separadas por un paso de rey de ajedrez no pueden tener el mismo dígito. Ejemplo: un 3 no puede estar al lado ni en diagonal de otro 3.
+250|Las casillas contiguas en diagonal no pueden contener dígitos consecutivos. Ejemplo: un 4 no puede estar en diagonal de un 3 o un 5.
+251|Los dígitos iguales deben estar al menos a 2 casillas de distancia (distancia de Chebyshov). Ninguna casilla contigua o diagonal puede compartir dígito.
+252|Cada 3 casillas seguidas de una fila o columna contienen un dígito bajo (1–3), uno medio (4–6) y uno alto (7–9).
+253|Cada región contiene al menos un dígito de {1–3}, uno de {4–6} y uno de {7–9}.
+254|Las casillas contiguas en las líneas naranjas difieren exactamente en 1. Ejemplo: 3-4-5 o 7-6-5.
+255|Los dígitos aumentan o se mantienen a lo largo del termómetro, del bulbo a la punta. Ejemplo: 2-2-3-5 es válido.
+256|Ningún dígito puede repetirse en la línea, con independencia de las reglas normales del sudoku.
+257|Todos los pares contiguos que difieren en 1 llevan un punto blanco; todos los pares en proporción 1:2 llevan un punto negro. Sin punto, ambas relaciones están prohibidas.
+258|Un punto con número entre dos casillas indica que esas dos casillas suman el valor mostrado.
+259|Los galones (> o <) entre casillas contiguas indican cuál debe tener el dígito mayor.
+260|X entre dos casillas: suman 10. V entre dos casillas: suman 5.
+261|Las casillas marcadas (con una P) deben contener un dígito primo: 2, 3, 5 o 7.
+262|Las casillas sombreadas en gris deben ser estrictamente mayores que todas sus vecinas ortogonales sin sombrear.
+263|La puerta de bambú se abre con un chasquido seco. La arena rastrillada se curva ante ti; cada sendero pide una mano más firme.
+264|El musgo suaviza las piedras alrededor del estanque de koi. La luz de los faroles se acumula en el agua.
+265|Puentes de madera cruzan el agua negra. Koi anaranjados giran debajo como pinceladas vivas.
+266|Los faroles de piedra despiertan uno a uno. El sendero de grava brilla ámbar bajo las hojas que caen.
+267|El torii de la cumbre espera en la niebla. Cada nota de campana suena más cerca de lo que debería.
+268|Avanzas entre las sombras del bambú. La cuadrícula se asienta como arena rastrillada.
+269|Se abre un camino despejado. Respiras y resuelves.
+270|Los koi giran bajo el puente. Sus vueltas marcan un ritmo sereno.
+271|Los números encajan como piedras en el musgo.
+272|El agua refleja el tablero en fragmentos rotos.
+273|Sigues el patrón hasta que la superficie se calma.
+274|La luz de los faroles divide el camino en cuadrados cálidos.
+275|Cada dígito correcto se siente como una mecha que prende.
+276|La niebla se enrosca en los escalones del santuario.
+277|El último jardín pide paciencia, no velocidad.
+278|Un estrecho camino de servicio se cuela tras la celosía de bambú.
+279|Los espíritus vigilan de cerca el atajo.
+280|El sendero de musgo se rompe en piedras resbaladizas.
+281|Un paso en falso resonará por todo el estanque.
+282|Un puente lunar se arquea más alto de lo que debería.
+283|Subes hacia un patrón más difícil.
+284|Un sendero lateral iluminado por faroles brilla más que el camino principal.
+285|La recompensa está más cerca, y el riesgo también.
+286|Una escalera oculta se alza junto al torii.
+287|Los espíritus de la cumbre no señalan rutas fáciles.
+288|Un guardián con máscara de zorro espera junto a una bandeja de amuletos de papel.
+289|«Elige con cuidado. El jardín recuerda las deudas».
+290|Un puesto lacado descansa junto al estanque de koi.
+291|«Herramientas para manos pacientes, precios para manos honradas».
+292|Bajo el puente, un mercader espíritu despliega un paño de seda.
+293|«Las cosas raras llegan flotando aquí cuando nadie mira».
+294|El humo de los faroles se enrosca en una silenciosa tienda del santuario.
+295|«Gasta lo que llevas. Guarda lo que te lleva».
+296|En el último torii, el guardián abre una última caja.
+297|«No hay devoluciones más allá de esta puerta».
+298|Una piedra de meditación plana se templa en el patio.
+299|Descansas hasta que el bambú deja de mecerse.
+300|El musgo amortigua cada paso.
+301|Por un momento, hasta el estanque se queda quieto.
+302|Te arrodillas junto al puente y dejas pasar a los koi por debajo.
+303|Su paciencia te devuelve un poco de la tuya.
+304|Un nicho de farol ofrece refugio del viento.
+305|Cuentas tus respiraciones con la llama.
+306|La cuerda de la campana del santuario cuelga a tu alcance.
+307|Aún no la tocas. Descansas.
+308|Un talismán de papel se eleva de la arena sin que sople el viento.
+309|El jardín te ofrece una elección.
+310|Una onda cruza el estanque a contracorriente.
+311|Algo ahí abajo se ha fijado en ti.
+312|La sombra del puente se alarga hasta formar una puerta.
+313|No todos los cruces son visibles.
+314|Un farol arde azul entre las luces ámbar.
+315|Su llama se inclina hacia tu mano.
+316|En la cumbre, una tablilla ema sellada se da la vuelta sola.
+317|El último deseo no está escrito con tinta.
+318|Un espíritu del bambú sacude la arboleda que tienes delante.
+319|La ruta tranquila se aleja; el camino directo gana una bendición más intensa.
+320|El estanque de koi se oscurece bajo una máscara que observa.
+321|Puedes rodear el agua o cruzar donde se juntan las ondas.
+322|Un guardián del puente bloquea la terraza.
+323|Las piedras seguras son más lentas. Las piedras brillantes exigen fe.
+324|Las llamas de los faroles se inclinan hacia el mismo aliento invisible.
+325|Cada camino a través del resplandor tiene un precio.
+326|La puerta del santuario se cierra tras de ti.
+327|Este es el último umbral. No hay forma de rodearlo.
+328|Los tallos de bambú se quiebran en patrones que ningún viento podría crear.
+329|Resuelves antes de que la arboleda cambie de opinión.
+330|El espíritu del estanque se agita bajo el agua negra.
+331|Cada paso en falso envía ondas por la cuadrícula.
+332|El guardián del puente baja su abanico de papel.
+333|Solo un patrón completo concede el paso.
+334|Los faroles estallan en un muro de oro y sombra.
+335|Resuelves bajo el calor de su mirada.
+336|El espíritu de la cumbre espera más allá del torii.
+337|El último tablero es una ofrenda, y no aceptará prisas.
+338|Un viejo amuleto brilla entre las raíces del bambú.
+339|Una ficha lacada reposa sobre el musgo, seca pese a la niebla del estanque.
+340|Algo brillante gira bajo las tablas del puente.
+341|Un nicho de farol esconde una reliquia envuelta en un cordón descolorido.
+342|En el umbral del santuario, una pequeña ofrenda espera tu mano.
+343|La campana de la cumbre responde sin que nadie la toque. Tras de ti, cada sendero del jardín se aquieta.
+344|Cruzas el torii con el patrón completo.
+345|Los faroles se apagan uno a uno. El jardín guarda el patrón inacabado.
+346|Se te permitirá entrar de nuevo.
+347|No puedes moverte ahí.
+348|Modo puzle  (Tab para objetos)
+349|Objetos  (Tab para cambiar, Intro para usar, Esc o Tab para volver)
+350|[Mando] Modo puzle  (LB para cambiar)
+351|[Mando] Nodo {0}/{1}  —  A para entrar
+352|Cancelado.
+353|Resaltando {0}.
+354|Resaltado borrado.
+355|Pergamino de patrones: «{0}» preparado. Pulsa Confirmar para aplicar — ESC cancela.
+356|Pergamino de patrones: «{0}» resuelto, {1} casilla(s) rellenada(s). Hecho.
+357|Pergamino de patrones: «{0}» resuelto (+{1} casillas). Quedan {2} selección(es) — pulsa ESC para cancelar.
+358|Campanilla de viento: haz clic en una casilla para rellenar su {0}. ESC cancela.
+359|Campanilla de viento: {0} {1} {2}  — elige {3} más (1=Fila 2=Col 3=Caja). ESC cancela.
+360|Casilla dada.
+361|¡Casilla bloqueada!
+362|¡Prueba la casilla resaltada!
+363|Vacía la casilla primero.
+364|No quedan cargas de lápiz.
+365|Lápices: {0}
+366|¡Usa el modo lápiz en este paso!
+367|{0} colocado.
+368|Casilla bloqueada.
+369|¡La sombrilla bloqueó la penalización! (quedan {0})
+370|¡{0} conflictos! PV: {1}
+371|¡Puzle resuelto! ¡Bien hecho!
+372|¡Tutorial resuelto!
+373|Zen infinito  ·  Profundidad {0}
+374|¡Jardín superado! Siguiente piso...
+375|El puzle aún se está cargando — espera un momento antes de guardar.
+376|¡Resuelve tú las casillas restantes!
+377|Tintero: {0} marcas de lápiz restauradas.
+378|Piedra de meditación: {0} PV restaurados.
+379|No tienes suficientes PV para sacrificar.
+380|Cuenco de ofrendas: -1 PV, +30 de oro.
+381|Selecciona primero una casilla.
+382|Solucionador: {0} casilla(s) rellenada(s).
+383|Selecciona primero un número.
+384|Buscador: {0} casilla(s) resaltada(s) para {1}.
+385|No hay tablero activo.
+386|Pergamino de patrones: selecciona {0} mecánica(s) para resolver. Pulsa ESC para cancelar.
+387|Reflejo de koi: haz clic en {0} casilla(s) para revelar candidatos.
+388|Farol de claridad: niebla desactivada durante {0} movimientos.
+389|Rastrillo de jardín: fila {0} y columna {1} borradas.
+390|La casilla ya está llena.
+391|No hay candidatos incorrectos que quitar.
+392|Tijeras de podar: se quitó un candidato incorrecto.
+393|Tamiz de arena zen: {0} casillas con exactamente 2 candidatos.
+394|No hay ningún error que deshacer.
+395|Hoja de Ginkgo: error deshecho, +{0} PV, combo restaurado.
+396|Sombrilla de papel de arroz: los próximos {0} error(es) no costarán PV.
+397|Incienso del templo: haz clic en {0} casilla(s) vacía(s) para colocar su respuesta correcta.
+398|No se encontró ninguna unidad incompleta.
+399|Escama de koi dragón: {0} casilla(s) rellenada(s) en la unidad más completa.
+400|Jarrón de kintsugi dorado: {0} error(es) encontrado(s).
+401|Abanico de seda: +{0} de escudo. Con escudo, los errores no rompen tu combo.
+402|Pergamino de bambú: no hay próximos nodos.
+403|Farol del jardín: niebla despejada durante 15 segundos.
+404|Koi dorado: activo — +{0} de oro al completar este puzle.
+405|Sello del templo: PV protegidos en este puzle — los errores no hacen daño.
+406|Campanilla de viento: haz clic en una casilla para rellenar su fila + columna + caja. ESC cancela.
+407|Campanilla de viento: pulsa 1=Fila 2=Col 3=Caja para elegir {0} unidad(es). ESC cancela.
+408|{0} usado.
+409|Reflejo de koi: elige una casilla vacía (quedan {0}).
+410|Reflejo de koi: candidatos revelados.
+411|Reflejo de koi: candidatos revelados (quedan {0}).
+412|Campanilla de viento: {0} casilla(s) rellenada(s).
+413|Incienso del templo: elige una casilla vacía (quedan {0}).
+414|Incienso del templo: hecho.
+415|Incienso del templo: rellenada (quedan {0}).
+416|No puedes intercambiar una casilla dada. Haz clic en otra.
+417|Abanico de seda: primera casilla ({0},{1}) seleccionada. Haz clic en la segunda.
+418|Abanico de seda: misma casilla. Elige otra distinta.
+419|Abanico de seda: casillas intercambiadas.

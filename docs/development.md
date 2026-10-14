@@ -89,9 +89,9 @@ Runtime localization catalogs live in:
 - `Assets/Resources/Localization/es.json`
 - `Assets/Resources/Localization/pt.json` (Brazilian Portuguese)
 
-French, Spanish and Portuguese ship since 1.0 but do not yet translate the gameplay content (items, relics, boss
-modifiers, narrative, classes): each lacks 431 keys that German has, so those texts fall back to English (status
-2026-10-07). `LocalizationCatalogQualityTests` rejects double-encoded text in all catalogs and production scripts.
+French, Spanish and Portuguese carry every key German has since 2026-10-14 (1,310 keys each, AI-assisted first
+pass, native review pending); `LocalizationParityTests` keeps them in step (LOC-PARITY-001..003, workflow in
+`docs/localization-catalog.md`). `LocalizationCatalogQualityTests` rejects double-encoded text in all catalogs and production scripts.
 
 `LocalizationService` loads these JSON files first and then falls back to the
 legacy in-code dictionaries. See `docs/localization-catalog.md` for the current

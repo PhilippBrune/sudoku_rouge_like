@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
@@ -1514,6 +1515,13 @@ namespace SudokuRoguelike.Core
             _missingGermanKeys.Clear();
         }
 
+        /// <summary>
+        /// Translation tooling hook: while English is active, receives every looked-up key with the English text shown.
+        /// Many keys are built at runtime (Item.Description.{type}, Narrative.{group}.{floor}.{line}) and their English
+        /// lives in data, so the export for translators collects it here (TranslationSourceExportDiagnostics). Null in the game.
+        /// </summary>
+        public static Action<string, string> EnglishLookupObserver { get; set; }
+
         public static bool HasGermanTranslation(string key)
         {
             EnsureExternalCatalogsLoaded();
@@ -1575,9 +1583,11 @@ namespace SudokuRoguelike.Core
 
             if (_current == LanguageOption.English)
             {
-                if (ExternalEn.TryGetValue(key, out var externalEnglish))
-                    return externalEnglish;
-                return En.TryGetValue(key, out var en) ? en : englishFallback ?? key;
+                var english = ExternalEn.TryGetValue(key, out var externalEnglish) ? externalEnglish
+                    : En.TryGetValue(key, out var en) ? en
+                    : englishFallback ?? key;
+                EnglishLookupObserver?.Invoke(key, english);
+                return english;
             }
 
             var ext = GetExternalCurrent();

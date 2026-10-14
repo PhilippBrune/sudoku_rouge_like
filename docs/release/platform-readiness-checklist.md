@@ -23,7 +23,7 @@ Portal state checked on 2026-10-14 (App Data Admin → Publish: "No uncommitted 
 - [ ] Stats and the "Harmony_RunScore" leaderboard exist and are published; check that a run end updates them in a Steam client build (PRG-STATS-LEADERBOARD).
 - [x] Steam Auto-Cloud is configured for the save files (PRG-CLOUD-SAVE). In-game status: Cloud save is not configured; local saves only.
 - [ ] Store/platform art package is missing from the repository by design; review the portal assets for 1.1 (PRG-STORE-ASSETS, `docs/release/store-platform-asset-checklist.md`). The 1.1 trailer is uploaded and saved as "Gameplay Trailer"; publish the store page, decide whether the 1.0 trailer stays visible, and replace outdated screenshots.
-- [ ] Decide how to present French, Spanish and Portuguese (PRG-LOCALIZATION).
+- [ ] French, Spanish and Portuguese are complete (AI-assisted, LOC-PARITY); get a native review per language, then mark full interface support in Steamworks (PRG-LOCALIZATION).
 - [ ] Listening checklist (PRG-AUDIO).
 - [x] Achievement names: the live names are kept; HarmonyDifficultySystem 1.2 §9 now lists them (SPEC-CONF-040).
 - [x] Build uploaded: Steam build 25938214 "v0.1.5 (5th iteration)" (2026-10-14), not live.

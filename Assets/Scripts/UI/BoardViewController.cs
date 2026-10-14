@@ -257,7 +257,6 @@ namespace SudokuRoguelike.UI
             if (_boardSize != board.Size || _cells.Count == 0)
             {
                 BuildGrid(board.Size);
-                UpdateAllBorders(board); // once per board — RegionMap never changes during a puzzle
                 _overlaysBuilt = false;
             }
 
@@ -281,6 +280,8 @@ namespace SudokuRoguelike.UI
         {
             var overlay = _map?.Run?.CurrentOverlay;
             var engine  = _map?.Run?.ConstraintEngine;
+
+            SyncRegionBorders(board);
 
             // Rebuild per-cell conflict cache only when the board state changed (digit placed/removed).
             // On selection-only renders the checksum matches and the cache is reused as-is.
@@ -490,6 +491,8 @@ namespace SudokuRoguelike.UI
         {
             _boardSize = size;
             _cells.Clear();
+            _bordersBoard = null; // new cells: the next render draws the borders
+            _bordersMap = null;
             InRunUiFactory.ClearChildren(_gridRoot);
 
             var grid = _gridRoot.GetComponent<GridLayoutGroup>() ?? _gridRoot.gameObject.AddComponent<GridLayoutGroup>();
@@ -619,6 +622,24 @@ namespace SudokuRoguelike.UI
             return given ? GivenCellColor : EmptyCellColor;
         }
 
+        /// <summary>Region map the gold region borders were last drawn for (read by tests).</summary>
+        public int[,] RegionMapShownByBorders => _bordersMap;
+
+        private SudokuBoard _bordersBoard;
+        private int[,] _bordersMap;
+
+        // [REQ: GEN-REGION-004] GAP-044: the borders belong to one board. They used to be drawn only when the grid was
+        // rebuilt for a new size, so the next puzzle of the same size showed the previous puzzle's regions while the
+        // digits and the rules used its own (seen as "two 3s in one box" on a 5×5 board).
+        private void SyncRegionBorders(SudokuBoard board)
+        {
+            if (board == null || _cells == null || _cells.Count != board.Size * board.Size) return;
+            if (ReferenceEquals(_bordersBoard, board) && ReferenceEquals(_bordersMap, board.RegionMap)) return;
+            _bordersBoard = board;
+            _bordersMap = board.RegionMap;
+            UpdateAllBorders(board);
+        }
+
         private void UpdateAllBorders(SudokuBoard board)
         {
             for (var i = 0; i < _cells.Count; i++)
@@ -628,10 +649,14 @@ namespace SudokuRoguelike.UI
         private void UpdateBorders(SudokuBoard board, CellView cell)
         {
             var map = board.RegionMap;
-            if (map == null) return;
+            var clear = new Color(RegionBorder.r, RegionBorder.g, RegionBorder.b, 0);
+            if (map == null)
+            {
+                cell.BorderTop.color = cell.BorderBottom.color = cell.BorderLeft.color = cell.BorderRight.color = clear;
+                return;
+            }
             var r = cell.Row; var c = cell.Col; var sz = board.Size;
             var region = map[r, c];
-            var clear = new Color(RegionBorder.r, RegionBorder.g, RegionBorder.b, 0);
 
             cell.BorderTop.color    = (r == 0        || map[r - 1, c] != region) ? RegionBorder : clear;
             cell.BorderBottom.color = (r == sz - 1   || map[r + 1, c] != region) ? RegionBorder : clear;

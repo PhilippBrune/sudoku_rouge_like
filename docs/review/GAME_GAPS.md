@@ -29,7 +29,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-016](#gap-016) | Buying pencil during a level is missing | FIXED (1.1) | MEDIUM | P2 |
 | [GAP-017](#gap-017) | Ascension does not exist; per-class prestige unreachable | PARTIALLY FIXED (1.1: prestige; Ascension deferred) | MEDIUM | P2 |
 | [GAP-018](#gap-018) | Save/resume re-rolls boss choices and rewards (determinism lost) | FIXED (1.1) | MEDIUM | P2 |
-| [GAP-019](#gap-019) | Localization: German mojibake, untranslated UI, language not applied live | PARTIALLY FIXED (1.1: German repaired; fr/es/pt gameplay text open) | MEDIUM | P2 |
+| [GAP-019](#gap-019) | Localization: German mojibake, untranslated UI, language not applied live | FIXED (2026-10-14: fr/es/pt complete, native review pending) | MEDIUM | P2 |
 | [GAP-020](#gap-020) | No seed entry / View Seed / Abandon Run / View Modifiers | FIXED (1.1) | MEDIUM | P2 |
 | [GAP-021](#gap-021) | Accepted boss relic was not added (observed via resume path) | FIXED (1.1) | MEDIUM | P2 |
 | [GAP-023](#gap-023) | Class stats/passives/levels: 3-way spec conflict; no "base (+bonus)" display | FIXED (1.1) | MEDIUM | P2 |
@@ -53,6 +53,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-039](#gap-039) | Pressure visuals vanished after a board refresh; refreshes ate one-shot flashes | FIXED (1.1, found 2026-10-07) | LOW | P3 |
 | [GAP-041](#gap-041) | Number Freak L3 "+1 Pencil" was never applied (catalog typo) | FIXED (1.1, found 2026-10-07) | LOW | P3 |
 | [GAP-042](#gap-042) | Options dropdown lists hid their last option; no usable window mode | FIXED (1.1, found 2026-10-12) | MEDIUM | P2 |
+| [GAP-044](#gap-044) | Region borders showed the previous puzzle's regions on a same-size board | FIXED (found 2026-10-14 by the owner) | HIGH | P1 |
 | [GAP-043](#gap-043) | Without the `ActiveProfileSlot` pref the game opens an empty slot 0, not the existing profile | FIXED (0.1.5, found 2026-10-14) | LOW | P3 |
 
 ---
@@ -460,7 +461,7 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 **Localization: German mojibake, untranslated UI, language not applied live**
 
 - **Requirement:** REQ-UI-101, REQ-UI-102
-- **Status:** PARTIALLY FIXED (menu rebuild 2026-10-05; German catalog, encoding guard and UI strings 1.1, see [1.1 fix log](#fix-log-2026-10-07-release-110)). Open: French, Spanish and Portuguese lack 431 gameplay keys each (FUTURE-014)
+- **Status:** PARTIALLY FIXED (menu rebuild 2026-10-05; German catalog, encoding guard and UI strings 1.1, see [1.1 fix log](#fix-log-2026-10-07-release-110)). French, Spanish and Portuguese completed 2026-10-14 (420 keys each, LOC-PARITY-001..003, `LocalizationParityTests`); native review pending (PRG-LOCALIZATION)
 - **Severity:** MEDIUM · **Priority:** P2
 - **Problem:**
   - `Assets/Resources/Localization/de.json` contains **60 double-encoded strings** visible in the UI ("ZurÃ¼ck", "LautstÃ¤rke", "Klasse wÃ¤hlen", "UnregelmÃ¤ÃŸige RÃ¤tsel erlauben", "RÃ¤tsel wird noch geladen").
@@ -770,3 +771,14 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Fix:** `SaveProfileService.ActiveSlot` resolves a missing pref through `EnsureActiveSlot`: the most recently written profile file becomes the active slot and is stored (ties: lower slot); without any profile it stays 0 and nothing is stored, so a fresh install keeps profile select. The getter does it, so every reader agrees whichever runs first.
 - **Affected Files:** `Assets/Scripts/Save/SaveProfileService.cs`
 - **Tests:** `ActiveSlotRecoveryTests` (3: newest profile chosen and stored; no profile → slot 0, nothing stored; a stored slot wins over a newer profile); build check B26 (E2E report §10.2e).
+
+## GAP-044
+**Region borders showed the previous puzzle's regions on a same-size board**
+
+- **Requirement:** GEN-REGION-004 (SudokuGenerationPipeline 1.7, new); GEN-REGION-001/002
+- **Status:** FIXED (found 2026-10-14 by the owner in a run: 5×5, Floor 1, irregular regions) · **Severity:** HIGH · **Priority:** P1
+- **Problem:** The gold region borders on a 5×5 board contradicted the digits: two 5s and two 3s sat inside one drawn region, and a drawn region could not take a 3, so the puzzle looked unsolvable with sudoku rules. The digits, the cell shading and the rule checks used the puzzle's real regions; only the drawn borders were wrong. The board itself was valid (unique solution).
+- **Root Cause:** `BoardViewController.RebuildBoard` drew the borders only when it rebuilt the grid, which happens when the board size changes. A new puzzle only marked the overlays dirty, so the next puzzle of the same size kept the previous puzzle's region borders. Irregular layouts (every 5×5 board, and 6×6–9×9 with irregular puzzles on) made it visible.
+- **Fix:** `RenderBoard` syncs the borders whenever the board or its region map changes (`SyncRegionBorders`); a board without a region map clears them.
+- **Affected Files:** `Assets/Scripts/UI/BoardViewController.cs`
+- **Tests:** `InRunUiPlayModeTests.RegionBorders_FollowTheNextPuzzleOfTheSameSize` (6×6 rectangular, then 6×6 irregular: the borders follow the second board).

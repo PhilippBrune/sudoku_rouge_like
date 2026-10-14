@@ -91,6 +91,47 @@ namespace SudokuRoguelike.Tests
             Assert.AreEqual(1f, board.GetOverlayGroupAlpha("Line.GermanWhispers"), "isolation ends after 3 s");
         }
 
+        // ── Region borders (GAP-044) ──
+
+        [UnityTest]
+        [Requirement("GEN-REGION-004")]
+        public IEnumerator RegionBorders_FollowTheNextPuzzleOfTheSameSize()
+        {
+            var h = StartPuzzle(8611);
+            yield return null;
+            yield return null;
+
+            var view = h.Host.GetComponentInChildren<BoardViewController>(true);
+            var first = h.Run.CurrentBoard;
+            Assert.AreSame(first.RegionMap, view.RegionMapShownByBorders, "first puzzle: borders drawn for its own regions");
+
+            // Next puzzle with the same size but irregular regions, the way a run moves from node to node.
+            var config = h.Run.BuildLevelConfig(false, false, h.Run.State.CurrentNodeIndex);
+            config.BoardSize = first.Size;
+            config.RegionVariant = 2;
+            config.ActiveModifiers.Clear();
+            h.Run.StartLevel(config);
+            var second = h.Run.CurrentBoard;
+            Assert.NotNull(second, "second puzzle generated");
+            Assert.AreNotSame(first, second);
+            Assert.IsFalse(SameRegions(first.RegionMap, second.RegionMap), "test needs a different region layout");
+
+            view.RenderBoard(second, -1, -1, 0, false, null, 0);
+            yield return null;
+
+            Assert.AreSame(second.RegionMap, view.RegionMapShownByBorders,
+                "a same-size puzzle with other regions must redraw the borders (they showed the previous puzzle's regions)");
+        }
+
+        private static bool SameRegions(int[,] a, int[,] b)
+        {
+            if (a == null || b == null) return a == b;
+            for (var r = 0; r < a.GetLength(0); r++)
+            for (var c = 0; c < a.GetLength(1); c++)
+                if (a[r, c] != b[r, c]) return false;
+            return true;
+        }
+
         // ── Boss gate (GAP-025 / GAP-026) ──
 
         [UnityTest]

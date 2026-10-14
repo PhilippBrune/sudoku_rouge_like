@@ -126,6 +126,8 @@
     <Compile Include="Assets\Scripts\Tests\EditMode\PlacementRulesTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\BalanceBudgetContractTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\ActiveSlotRecoveryTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\TranslationSourceExportDiagnostics.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\LocalizationParityTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Scripts\Tests\EditMode\GameTests.EditMode.asmdef" />

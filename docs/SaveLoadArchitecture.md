@@ -1,6 +1,6 @@
 # Save & Load Architecture
 
-**Version:** 2.2  
+**Version:** 2.3  
 **Date:** 2026-10-14  
 **Status:** implemented
 
@@ -8,6 +8,7 @@
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.3 | 2026-10-14 | implemented | Save folder stays LocalLow/Kratossos/sudoku_rouge_like, the folder of the released 1.0 build and the Steam Auto-Cloud root (SAVE-FOLDER-001); the 2.2 move to "Run of the Nine" was withdrawn the same day, before any release. SAVE-MIGRATE-001 copies only from the pre-release folder DefaultCompany/RunOfTheNine. Steam Auto-Cloud recorded as configured (portal check 2026-10-14). |
 | 2.2 | 2026-10-14 | implemented | Save folder follows the Steamworks names: LocalLow/Kratossos/Run of the Nine; one-time copy of earlier save folders (SAVE-MIGRATE-001, LegacySaveMigrationTests); optional Steam Auto-Cloud settings recorded. |
 | 2.1 | 2026-10-07 | implemented | What resumes from which screen (SPEC-AMB-005, GAP-018/021); compatibility rules incl. 1.0 → 1.1 (SPEC-MAC-009); autosave reloads before writing (GAP-037); mistakes saved immediately (GAP-031); XP log and analytics saved with the run (GAP-038); abandoning a saved run (GAP-032, SPEC-AMB-010). |
 
@@ -34,18 +35,24 @@ Each profile slot writes to:
 {Application.persistentDataPath}/save_profile_2.json
 ```
 
-On Windows `persistentDataPath` is `%USERPROFILE%\AppData\LocalLow\Kratossos\Run of the Nine` (company and product name from the Player Settings, matching the Steamworks developer and store name of App 4858470, set 2026-10-14).
+On Windows `persistentDataPath` is `%USERPROFILE%\AppData\LocalLow\Kratossos\sudoku_rouge_like` (company and product name from the Player Settings, SAVE-FOLDER-001).
 
 Crash-safety support:
 
 - `.tmp` temporary file during write
 - `.bak` backup file used as load fallback
 
+### Save folder (SAVE-FOLDER-001)
+
+| ID | Requirement |
+|---|---|
+| SAVE-FOLDER-001 | The Player Settings company and product names stay `Kratossos` / `sudoku_rouge_like`, so the save folder is `LocalLow\Kratossos\sudoku_rouge_like`: the folder of the released 1.0 build (Steam build 24153478, whose `app.info` holds these names) and the Steam Auto-Cloud root. Changing either name would hide every player's saves from the game and from Steam Cloud. The store name "Run of the Nine" is shown as the window title instead (GameDesignSpec DISPLAY-MODE-007). Test: `LegacySaveMigrationTests.PlayerSettings_KeepTheSaveFolderOfTheReleasedGame`. |
+
 ### Earlier save folders (SAVE-MIGRATE-001)
 
 | ID | Requirement |
 |---|---|
-| SAVE-MIGRATE-001 | Before the first scene loads, the Windows/Linux player copies `save_profile_*.json` and `save_profile_*.json.bak` from the first earlier folder that has a profile — `LocalLow\Kratossos\sudoku_rouge_like` (1.1 development builds), then `LocalLow\DefaultCompany\RunOfTheNine` (the Steam review build) — into the current folder, but only when the current folder has no profile. Originals are never deleted or overwritten; `.tmp` files are not copied. The most recently written copied profile becomes the active slot (the `ActiveProfileSlot` PlayerPref lived under the old name). The Editor and test runs never migrate. Code: `LegacySaveMigration`; tests: `LegacySaveMigrationTests`. |
+| SAVE-MIGRATE-001 | Before the first scene loads, the Windows/Linux player copies `save_profile_*.json` and `save_profile_*.json.bak` from `LocalLow\DefaultCompany\RunOfTheNine` (pre-release Steam builds, June to early July 2026) into the current folder, but only when the current folder has no profile. Originals are never deleted or overwritten; `.tmp` files are not copied. The most recently written copied profile becomes the active slot (the `ActiveProfileSlot` PlayerPref lived under the old names). The Editor and test runs never migrate. Code: `LegacySaveMigration`; tests: `LegacySaveMigrationTests`. |
 
 ## Save Envelope
 
@@ -153,7 +160,7 @@ This implementation is local-slot based only.
 `Assets/Scripts/Platform/PlatformServices.cs` now exposes this explicitly through
 `LocalOnlyCloudSaveProvider`, which reports cloud save as `NotConfigured`.
 
-Steam Auto-Cloud needs no game code and stays an owner decision (PRG-CLOUD-SAVE). If it is enabled, the Steamworks settings are: root `WinAppDataLocalLow`, subdirectory `Kratossos/Run of the Nine`, pattern `save_profile_*.json`, OS Windows, plus a byte quota of at least 5 MB and 10 files. Steam then resolves conflicts with its own dialog; the in-game capability keeps reporting `NotConfigured` until in-game sync is built (FUTURE-006).
+Steam Auto-Cloud needs no game code and is configured in the Steamworks portal (PRG-CLOUD-SAVE; checked 2026-10-14, unchanged since 1.0): root `WinAppDataLocalLow`, subdirectory `Kratossos/sudoku_rouge_like/`, pattern `save_profile_*.json`, OS Windows, quota 100 MB and 100 files. Steam syncs these files around each session and resolves conflicts with its own dialog; the in-game capability keeps reporting `NotConfigured` until in-game sync is built (FUTURE-006).
 Future Steam Cloud or platform-sync work should hang off that capability surface
 only after conflict resolution, offline behavior, and migration tests are
 defined.

@@ -17,7 +17,7 @@ Contents: [Contradictions](#1-contradictions) · [Ambiguities](#2-ambiguous-requ
 
 | Group | Entries | Resolved in 1.1 | Open |
 |---|---:|---:|---|
-| Contradictions | 39 | 38 | SPEC-CONF-039 (new, owner decision). Owner sign-offs requested: SPEC-CONF-008 balance values, SPEC-PROC-007 legal wording. |
+| Contradictions | 40 | 38 | SPEC-CONF-039 (new, owner decision); SPEC-CONF-040 (achievement names, owner decision). Owner sign-offs requested: SPEC-CONF-008 balance values, SPEC-PROC-007 legal wording. |
 | Ambiguities | 14 | 14 | Listening check for SPEC-AMB-011 (GAP-030). |
 | Obsolete requirements | 13 rows | 13 | — |
 | Missing acceptance criteria | 11 | 9 | SPEC-MAC-005 (deferred, FUTURE-011), SPEC-MAC-011 (profiler session). |
@@ -406,6 +406,17 @@ Where a recommendation was doc-only but the matching gap asked for code (SPEC-CO
   1. **Keep the reward cosmetic and remove "Passive tier +1" from ClassXpProgressionSystem.** *(recommended)* Matches the code and keeps balance unchanged; no save change.
   2. **Implement passive tiers: define the per-class effect of each tier (1–9), apply it in `ClassPassiveService`, and test it.** Gives prestige a gameplay reason; needs a design for eight passives × nine tiers.
 - **Resolution (1.1, 2026-10-07):** Open, owner decision. 1.1 ships the cosmetic reward (both specs say so in their 1.1 rows).
+
+### SPEC-CONF-040
+**Steam achievement names and visibility** *(added 2026-10-14)*
+- **CONFLICT:** HarmonyDifficultySystem v1.1 §9 Achievements names the eight achievements First Harmony, Deep Roots, Halfway to Void, Beyond the Garden, Borderless Garden, Void Garden, Void Perfection (hidden) and Master of Harmony (hidden). The live Steamworks configuration of App 4858470 (checked 2026-10-14, published with 1.0) uses the same API names but the display names First Awakening, Moss and Gravel, Water Reflection, Lantern Glow, Torii Gateway, Summit Ascent, Tranquil Perfection and Master of the Garden; only `harmony_10_perfect` is hidden.
+- Code: `SteamAchievementService` uses only the API names, which match. The game never shows the display names; players see them in Steam.
+- Likely current: the portal. It is what players have seen since 1.0, and its descriptions match the conditions in §9.
+- **Recommendation:** Keep the portal and update §9 to the live names and visibility.
+- **Suggestions:**
+  1. **Update HarmonyDifficultySystem §9 to the live display names, and mark only `harmony_10_perfect` hidden.** *(recommended)* No portal or code change; the spec describes what players see.
+  2. **Rename the achievements in Steamworks to the §9 names and hide `harmony_all_classes`.** Restores the spec's naming, but renames achievements players already know and needs a publish.
+- **Resolution:** Open, owner decision. Nothing changed; `docs/release/platform-readiness-checklist.md` records the live values.
 
 ---
 

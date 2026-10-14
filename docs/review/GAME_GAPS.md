@@ -53,6 +53,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-039](#gap-039) | Pressure visuals vanished after a board refresh; refreshes ate one-shot flashes | FIXED (1.1, found 2026-10-07) | LOW | P3 |
 | [GAP-041](#gap-041) | Number Freak L3 "+1 Pencil" was never applied (catalog typo) | FIXED (1.1, found 2026-10-07) | LOW | P3 |
 | [GAP-042](#gap-042) | Options dropdown lists hid their last option; no usable window mode | FIXED (1.1, found 2026-10-12) | MEDIUM | P2 |
+| [GAP-043](#gap-043) | Without the `ActiveProfileSlot` pref the game opens an empty slot 0, not the existing profile | OPEN (found 2026-10-14, owner decision) | LOW | P3 |
 
 ---
 
@@ -139,7 +140,7 @@ Done on request for release 1.1.0: every remaining gap's suggested fix, plus the
 
 **Test-run stability (2026-10-14, GAP-010 follow-up):** PlayMode results depended on whether the Steam client was running. Abandoning a run in `InRunUiPlayModeTests` submits the leaderboard score, which started `SteamManager`, and its `SteamAPI_Init` logs an error without a client. The test-isolation fixtures now set `PlatformServiceRegistry.SteamworksCallsEnabled = false`, so achievements, stats and the leaderboard never call Steamworks in test runs; the game is unchanged (the flag defaults to true). Verified with Steam closed: EditMode 492 (466 passed, 0 failed, 26 skipped), PlayMode 25/25.
 
-**Release blocker PRG-PLAYER-METADATA resolved (2026-10-14):** the Steamworks app (4858470) lists Kratossos as developer and publisher and "Run of the Nine" as the name, so the Player Settings now use Kratossos / Run of the Nine and `SteamManager` restarts through App 4858470. Saves move with the product name; `LegacySaveMigration` copies earlier profiles once (SAVE-MIGRATE-001, `LegacySaveMigrationTests`, build check B20). Tests: EditMode 495 (469 passed, 0 failed, 26 skipped), PlayMode 25/25.
+**Release blocker PRG-PLAYER-METADATA resolved (2026-10-14):** `SteamManager` restarts through App 4858470. A first fix renamed the product to "Run of the Nine" (commit 3bc7a48); the same day the Steamworks portal showed that the live 1.0 build (Steam build 24153478, 10 Jul) is `sudoku_rouge_like.exe` with `app.info` = Kratossos / sudoku_rouge_like, and that the launch option and Steam Auto-Cloud (`WinAppDataLocalLow/Kratossos/sudoku_rouge_like/`) point there. The rename would have moved every player's saves out of the cloud path, so it was withdrawn before any upload: the names stay Kratossos / sudoku_rouge_like (SAVE-FOLDER-001, guarded by `LegacySaveMigrationTests.PlayerSettings_KeepTheSaveFolderOfTheReleasedGame`), the Windows player sets the window title "Run of the Nine" (DISPLAY-MODE-007, build check B23), and `LegacySaveMigration` copies only saves of the pre-release builds (`DefaultCompany/RunOfTheNine`, SAVE-MIGRATE-001). The FULL_GAME_REVIEW note that the Steam-reviewed build used DefaultCompany / RunOfTheNine applies to those pre-release builds, not to the released one.
 
 Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG.md` and `docs/release/release-readiness-status.md`.
 
@@ -758,3 +759,13 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Fix:** Dropdown items are 32 px with no extra spacing, Content starts one item tall, the list background is opaque (`MainMenuBlueprintBuilder.BuildDropdown`). Four display modes: Fullscreen, Borderless Fullscreen, Windowed, Frameless Window; window modes fit the display (DISPLAY-MODE-002) and are centred; Frameless Window sets the Win32 window style (`WindowFrameService`, re-applied after Alt+Enter and when Windows restores the old size).
 - **Affected Files:** `Assets/Scripts/UI/MainMenuBlueprintBuilder.cs`, `Assets/Scripts/UI/OptionsController.cs`, `Assets/Scripts/Platform/WindowFrameService.cs`, `Assets/Scripts/Core/GameEnums.cs`, `Assets/Scripts/Save/SaveFileService.cs`, localization catalogs
 - **Tests:** `DisplayModeTests` (10); `GeneratedUiPlayModeTraversalTests.OptionsPanelTabsAndLanguageConfirmation_AreRuntimeNavigable` checks the four labels and that the open list shows every item (fails on the old dropdown code: "Item 2: Windowed is cut off at the bottom"); build checks B16–B19 (E2E report §10.2b).
+
+## GAP-043
+**Without the `ActiveProfileSlot` pref the game opens an empty slot 0, not the existing profile**
+
+- **Requirement:** SAVE-SLOT-002 (`SaveProfileService`, ActiveSlot in PlayerPrefs); startup flow REQ-UI-100 (profile select only when no profile exists)
+- **Status:** OPEN (found 2026-10-14 in build check B24; same behaviour in 1.0) · **Severity:** LOW · **Priority:** P3
+- **Problem:** The active slot lives in PlayerPrefs (registry), the profiles in `save_profile_*.json`. When the pref is missing but a profile exists in slot 1 or 2, the game opens slot 0, creates `save_profile_0.json` and shows first-time setup. Realistic case: a player with a slot 1 or 2 profile installs on a new PC; Steam Auto-Cloud restores the JSON files but not the registry. Nothing is lost (Profiles → choose the slot), but the player first sees an empty profile, and the new slot 0 file is synced to the cloud.
+- **Root Cause:** `SaveProfileService.ActiveSlot` returns `PlayerPrefs.GetInt("ActiveProfileSlot", 0)`; `StartupFlowController` shows profile select only when no slot exists.
+- **Proposed fix:** when the pref is missing, use the most recently written existing slot (as `LegacySaveMigration` does), or show profile select when slots exist but the pref is missing. Either way: spec line in SaveLoadArchitecture, EditMode test, build check.
+- **Affected Files:** `Assets/Scripts/Save/SaveProfileService.cs`, `Assets/Scripts/Bootstrap/StartupFlowController.cs`

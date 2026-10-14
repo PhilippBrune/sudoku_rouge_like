@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.7 | **Date:** 2026-10-12 | **Status:** implemented
+**Version:** 1.8 | **Date:** 2026-10-14 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.8 | 2026-10-14 | implemented | Window title "Run of the Nine" in every display mode (DISPLAY-MODE-007), set by the Windows player because the product name keeps the released save folder (SaveLoadArchitecture §Save folder). Evidence: build check B23 (E2E report §10.2d). |
 | 1.7 | 2026-10-12 | implemented | Display modes specified and implemented (DISPLAY-MODE-001..006): Fullscreen, Borderless Fullscreen, Windowed and the new Frameless Window; window sizing, centring, save compatibility and the Fullscreen toggle rule. Evidence: DisplayModeTests, GeneratedUiPlayModeTraversalTests, build check B16–B19 (E2E report §10). |
 | 1.6 | 2026-10-07 | implemented | 1.1 review decisions (2026-10-07): wrong digit = differs from the solution, rejected, mistake HP cost by Harmony (SPEC-CONF-003); pencil purchase and item-reward reroll implemented (SPEC-CONF-029); reward slot/Nothing table incl. 6★, guarantee and Nothing gold 5 × floor (SPEC-AMB-001, SPEC-AMB-007); Rest values from code + Cleanse (SPEC-CONF-017); floor modifiers 0/1/1/1/2 and boss choices floor+1/floor (SPEC-CONF-001/002); one cross-edge, tiles keep type (SPEC-CONF-010); boss boards follow floor range (SPEC-CONF-028); 30 modifiers (SPEC-CONF-019); §6 roster reduced to a link to ClassXpProgressionSystem (SPEC-CONF-008); §13 Endless Zen and Spirit Trials point to their mode docs (SPEC-CONF-006/007); multi relics, shop items only (SPEC-CONF-004/005); 5 languages, Custom Puzzle naming, main-menu Daily/Monthly widgets, start-run seed and abandon warning, in-run seed/View Modifiers/Abandon (SPEC-CONF-027/031/032/033, GAP-020/032); multi-cell selection moved to future scope (SPEC-MAC-005); links to renamed docs fixed; SPICE table archived (SPEC-OBS-001). |
 | 1.5 | 2026-04-07 | implemented | Game loop improvements: (1) Combo counter HUD — live streak label in puzzle, resets on mistake. (2) Class passive label shown in puzzle HUD. (3) Rest node replaced with 3-way choice (Heal / +Pencil / +Reroll Token). (4) Relic node replaced with 3-of-3 relic choice panel. (5) Cursed node added (Accept/Decline risk/reward). (6) Positive floor effect per floor (Bounty/LuckyItems/PencilRefill/HealingPath). (7) Boss modifier preview hint on path map nodes. (8) End-of-run score breakdown (base XP × bonuses − mistake penalty). |
@@ -399,6 +400,7 @@ Options → Display → **Display Mode** (saved per profile, applied at startup 
 | DISPLAY-MODE-004 | Frameless Window is a Windows-player feature (the window style is set by `WindowFrameService`); on other platforms and in the Editor it behaves like Windowed. A frameless window cannot be dragged; Alt+Enter switches to fullscreen and back, and the frame is re-applied. |
 | DISPLAY-MODE-005 | Saved values: Fullscreen 0, Borderless Fullscreen 1, Windowed 2, Frameless Window 3; unknown values load as Fullscreen, and a save that only carries "not fullscreen" loads as Windowed. The Fullscreen flag is false exactly for the two window modes. |
 | DISPLAY-MODE-006 | The Fullscreen toggle (main and in-run Options) switches between a fullscreen mode and a window: turning it off keeps Frameless Window when chosen (else Windowed); turning it on keeps Borderless Fullscreen when chosen (else Fullscreen). |
+| DISPLAY-MODE-007 | The game window is titled "Run of the Nine" (the store name) as soon as the game's code runs, in every mode and again after any fullscreen/window switch. For the first one to two seconds after launch the title is the product name, because Unity names the window before any game code runs. The Windows player sets it (`WindowFrameService`), because the Player Settings product name stays `sudoku_rouge_like` for the save folder (SaveLoadArchitecture §Save folder). |
 
 ### In-Run Pause Menu
 

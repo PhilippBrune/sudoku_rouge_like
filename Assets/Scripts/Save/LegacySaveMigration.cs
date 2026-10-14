@@ -5,19 +5,20 @@ using UnityEngine;
 namespace SudokuRoguelike.Save
 {
     /// <summary>
-    /// One-time copy of save files from the folders earlier builds used, after the 1.1 player metadata became
-    /// Kratossos / Run of the Nine (Steam developer, publisher and store name). Unity derives the save folder
-    /// (LocalLow/&lt;company&gt;/&lt;product&gt;) from these names, so without the copy players would start with
-    /// empty profiles. Originals are never deleted or overwritten.
+    /// One-time copy of save files from folders that earlier builds used. Unity derives the save folder
+    /// (LocalLow/&lt;company&gt;/&lt;product&gt;) from the Player Settings names; the released builds use
+    /// Kratossos / sudoku_rouge_like (SAVE-FOLDER-001), while pre-release Steam builds (June/early July 2026) used
+    /// DefaultCompany / RunOfTheNine. Originals are never deleted or overwritten.
     /// </summary>
-    // [REQ: SAVE-MIGRATE-001] saves from LocalLow/Kratossos/sudoku_rouge_like or LocalLow/DefaultCompany/RunOfTheNine
-    // are copied when the current save folder has no profile; the newest copied profile becomes the active slot.
+    // [REQ: SAVE-FOLDER-001] the save folder is LocalLow/Kratossos/sudoku_rouge_like (Player Settings names of the
+    // released game); it is never moved, only earlier folders are copied into it.
+    // [REQ: SAVE-MIGRATE-001] saves from LocalLow/DefaultCompany/RunOfTheNine are copied when the current save folder
+    // has no profile; the newest copied profile becomes the active slot.
     public static class LegacySaveMigration
     {
         /// <summary>Earlier save folders, relative to LocalLow, newest naming first.</summary>
         public static readonly string[] LegacyFolders =
         {
-            Path.Combine("Kratossos", "sudoku_rouge_like"),
             Path.Combine("DefaultCompany", "RunOfTheNine")
         };
 

@@ -14,13 +14,30 @@ namespace SudokuRoguelike.Platform
     /// like Window.
     /// </summary>
     // [REQ: DISPLAY-MODE-003] centred window; [REQ: DISPLAY-MODE-004] frameless window (Windows player only)
+    // [REQ: DISPLAY-MODE-007] window title "Run of the Nine" (Windows player)
     public static class WindowFrameService
     {
+        /// <summary>
+        /// Title of the game window. The Player Settings product name stays <c>sudoku_rouge_like</c>, because Unity
+        /// derives the save folder from it (LocalLow/Kratossos/sudoku_rouge_like: the live 1.0 build and the Steam
+        /// Auto-Cloud root, SAVE-FOLDER-001), so the Windows player sets the store name as the title itself.
+        /// </summary>
+        public const string WindowTitle = "Run of the Nine";
+
         public static bool IsSupported =>
 #if UNITY_STANDALONE_WIN && !UNITY_EDITOR
             true;
 #else
             false;
+#endif
+
+#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSplashScreen)]
+        private static void SetTitleBeforeSplash() => Win32.SetTitle(WindowTitle);
+
+        // The runner re-applies the title once the first frame is up and after every fullscreen/window switch.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void StartRunner() => Runner.Get();
 #endif
 
         /// <summary>Applies the frame for <paramref name="mode"/> once Unity has resized the window (a few frames
@@ -42,6 +59,7 @@ namespace SudokuRoguelike.Platform
             private int _width;
             private int _height;
             private FullScreenMode _lastMode;
+            private bool _titleSet;
 
             public static Runner Get()
             {
@@ -85,10 +103,13 @@ namespace SudokuRoguelike.Platform
 
             private void Update()
             {
+                if (!_titleSet) _titleSet = Win32.SetTitle(WindowTitle);
+
                 // Alt+Enter (or Unity) can switch to fullscreen and back; Unity then restores its framed style.
                 var mode = Screen.fullScreenMode;
                 if (mode == _lastMode) return;
                 _lastMode = mode;
+                _titleSet = false;
                 if (mode == FullScreenMode.Windowed && _width > 0 && _height > 0 && _pending == null)
                     _pending = StartCoroutine(ApplyAfterResize());
             }
@@ -136,6 +157,22 @@ namespace SudokuRoguelike.Platform
             [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern bool GetMonitorInfo(IntPtr monitor, ref MONITORINFO info);
             [DllImport("user32.dll")] private static extern bool SetWindowPos(IntPtr hWnd, IntPtr after, int x, int y, int cx, int cy, uint flags);
             [DllImport("user32.dll")] private static extern bool GetClientRect(IntPtr hWnd, out RECT rect);
+            [DllImport("user32.dll", CharSet = CharSet.Unicode, EntryPoint = "SetWindowTextW")] private static extern bool SetWindowText(IntPtr hWnd, string text);
+
+            /// <summary>Sets the game window's title; false while the window is not up yet.</summary>
+            public static bool SetTitle(string title)
+            {
+                try
+                {
+                    var hWnd = FindGameWindow();
+                    return hWnd != IntPtr.Zero && SetWindowText(hWnd, title);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"[WindowFrame] Could not set the window title: {ex.Message}");
+                    return true; // do not retry every frame
+                }
+            }
 
             /// <summary>True when the window has the wanted frame and client size.</summary>
             public static bool Matches(bool frameless, int clientWidth, int clientHeight)

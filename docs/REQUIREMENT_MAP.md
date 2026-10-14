@@ -443,12 +443,13 @@ Key requirements (see spec for full list):
 
 ## Save / Load
 
-**Spec:** `docs/SaveLoadArchitecture.md` v2.2 (the SPICE `REQ-SAVE-*` stubs are archived in `docs/archive/SPICE_REQUIREMENT_TABLES.md`, SPEC-OBS-001)
+**Spec:** `docs/SaveLoadArchitecture.md` v2.3 (the SPICE `REQ-SAVE-*` stubs are archived in `docs/archive/SPICE_REQUIREMENT_TABLES.md`, SPEC-OBS-001)
 
 | ID | Description | File | Method | Evidence | Status |
 | ---- | ------------- | ------ | -------- | ---------- | -------- |
 | SAVE-DUAL-001 | Dual save files — superseded: one JSON envelope per slot (SaveLoadArchitecture v2.0) | `Assets/Scripts/Save/SaveFileService.cs` | File management | — | 🗄️ Deprecated |
-| SAVE-MIGRATE-001 | One-time copy of profiles from `LocalLow\Kratossos\sudoku_rouge_like` or `LocalLow\DefaultCompany\RunOfTheNine` into `LocalLow\Kratossos\Run of the Nine` | `Assets/Scripts/Save/LegacySaveMigration.cs` | `Run`, `RunOnStartup` | LegacySaveMigrationTests | ✅ |
+| SAVE-FOLDER-001 | Save folder stays `LocalLow\Kratossos\sudoku_rouge_like` (released 1.0 build, Steam Auto-Cloud root): company/product names unchanged | `ProjectSettings/ProjectSettings.asset` | `companyName`, `productName` | LegacySaveMigrationTests | ✅ |
+| SAVE-MIGRATE-001 | One-time copy of profiles from `LocalLow\DefaultCompany\RunOfTheNine` (pre-release builds) into the save folder | `Assets/Scripts/Save/LegacySaveMigration.cs` | `Run`, `RunOnStartup` | LegacySaveMigrationTests | ✅ |
 | SAVE-SLOT-001 | 3 profile slots: `save_profile_0/1/2.json` | `Assets/Scripts/Save/SaveFileService.cs` | Constructor | SaveDurabilityReadinessTests | ✅ |
 | SAVE-SLOT-002 | `SaveProfileService` manages all 3 slots; `ActiveSlot` in `PlayerPrefs` | `Assets/Scripts/Save/ProfileService.cs` | `SaveProfileService` | — | ◻️ |
 | SAVE-SLOT-003 | `GameBootstrap.ApplySlotChange()` re-wires save services after slot switch | `Assets/Scripts/Bootstrap/GameBootstrap.cs` | `ApplySlotChange` | — | ◻️ |
@@ -601,7 +602,7 @@ Key requirements (see spec for full list):
 
 ## Display Modes
 
-**Spec:** `docs/GameDesignSpec.md` v1.7 §Display Modes
+**Spec:** `docs/GameDesignSpec.md` v1.8 §Display Modes
 
 | ID | Description | File | Method | Evidence | Status |
 | ---- | ------------- | ------ | -------- | ---------- | -------- |
@@ -611,6 +612,7 @@ Key requirements (see spec for full list):
 | DISPLAY-MODE-004 | Frameless Window via window style (Windows player); Windowed elsewhere | `Assets/Scripts/Platform/WindowFrameService.cs` | `Apply`, `Runner` | E2E/diagnostic B16, B19 | ✅ |
 | DISPLAY-MODE-005 | Saved values 0–3, unknown → Fullscreen, legacy flag → Windowed; Fullscreen flag false for window modes | `Assets/Scripts/Save/SaveFileService.cs` | `SanitizeOptions` | DisplayModeTests | ✅ |
 | DISPLAY-MODE-006 | Fullscreen toggle keeps Frameless Window / Borderless Fullscreen when chosen | `Assets/Scripts/UI/OptionsController.cs` | `SetFullscreen` | DisplayModeTests | ✅ |
+| DISPLAY-MODE-007 | Window title "Run of the Nine" in every mode (Windows player) | `Assets/Scripts/Platform/WindowFrameService.cs` | `WindowTitle`, `Win32.SetTitle`, `Runner.Update` | E2E/diagnostic B23 | ✅ |
 
 ---
 

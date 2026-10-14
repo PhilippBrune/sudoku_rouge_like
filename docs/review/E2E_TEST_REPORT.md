@@ -282,6 +282,8 @@ Added on request: Windowed and Frameless Window (GameDesignSpec 1.7 §Display Mo
 
 ### 10.2c Steam names and App ID (2026-10-14)
 
+**Superseded the same day by §10.2d.** The rename below was withdrawn before any upload: the live 1.0 build uses Kratossos / sudoku_rouge_like, and Steam Auto-Cloud and the launch option point there. B20–B22 document the withdrawn build only.
+
 Player metadata set to the Steamworks developer/publisher and store name (Kratossos / Run of the Nine, App 4858470). Fresh build as `RunOfTheNine.exe` with `steam_appid.txt` next to it (local launch outside Steam), Steam client closed.
 
 | ID | Flow / Test | Expected | Actual | Result |
@@ -291,6 +293,18 @@ Player metadata set to the Steamworks developer/publisher and store name (Kratos
 | **B22** | Build output | No `steam_appid.txt` in the build folder | Folder holds `RunOfTheNine.exe`, `RunOfTheNine_Data`, `UnityPlayer.dll`, `UnityCrashHandler64.exe`, `MonoBleedingEdge`, `D3D12` only | **PASS** |
 
 The test copy of the profile was removed afterwards; the empty `Kratossos\Run of the Nine` folder and its PlayerPrefs key were left in place at the owner's request.
+
+### 10.2d Released save folder and window title (2026-10-14)
+
+Live portal facts (Steamworks, read-only): branch `default` runs build 24153478 (10 Jul), depot 4858471 holds `sudoku_rouge_like.exe` and `sudoku_rouge_like_Data\app.info` (27 bytes, SHA-1 `22d31b86…46b70` = "Kratossos\nsudoku_rouge_like"); the launch option runs `sudoku_rouge_like.exe`; Auto-Cloud syncs `WinAppDataLocalLow/Kratossos/sudoku_rouge_like/save_profile_*.json`. Fresh build from the committed tree as `sudoku_rouge_like.exe`, started from its folder with `steam_appid.txt` (the Steam API reads it from the working directory), Steam client running; the window was read with the Win32 API.
+
+| ID | Flow / Test | Expected | Actual | Result |
+|---|---|---|---|---|
+| **B23** | Window title from launch, then Alt+Enter twice (DISPLAY-MODE-007) | "Run of the Nine" once the game's code runs, in every mode | Window appears at 1.1 s titled `sudoku_rouge_like` (set by Unity), "Run of the Nine" from 2.8 s; borderless 1920×1080. Alt+Enter → framed window 1920×1080, title "Run of the Nine"; Alt+Enter → borderless 3440×1440, title "Run of the Nine" | **PASS** |
+| **B24** | Save folder of the released game (SAVE-FOLDER-001, SAVE-MIGRATE-001) | Build names identical to the live build; saves read from `LocalLow\Kratossos\sudoku_rouge_like`; no migration when profiles exist | `app.info` SHA-1 `22d31b86…46b70` and `sudoku_rouge_like.exe` SHA-1 `4a942e8e…7d2e7d` equal the live depot's; no `[SaveMigration]` line; the existing `save_profile_2.json` byte-identical afterwards | **PASS** |
+| **B25** | Steam client running, launch outside Steam | Steam API starts as App 4858470; nothing is written to Steam outside a run end | `[SteamLeaderboard] Ready` (lookup of `Harmony_RunScore`); achievements, stats and score are only sent at a run end (`ProfileService`, `EndScreenViewController`), none was played | **PASS** |
+
+Side effects: the first launch was started from another working directory, so `RestartAppIfNecessary` handed the launch to Steam and started the Steam client. With no `ActiveProfileSlot` pref (none existed for this product), the game opened slot 0 and created `save_profile_0.json` with first-time setup instead of the existing slot 2 (GAP-043). The new slot-0 files and the `HKCU\Software\Kratossos\sudoku_rouge_like` key were left in place for the owner.
 
 ### 10.3 Not verified in the build
 

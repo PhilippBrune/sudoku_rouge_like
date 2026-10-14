@@ -69,7 +69,7 @@ The second Steam release. It fixes the progression blockers players hit in 1.0, 
 
 ### Saves from 1.0
 
-Your 1.0 profiles and runs load. The game window is now titled "Run of the Nine", and saves live in `AppData\LocalLow\Kratossos\Run of the Nine`; profiles from earlier builds are copied there automatically on first start. A run saved in 1.0 keeps its old path layout until you reach the next floor. Completion and codex entries that 1.0 failed to record cannot be restored; they fill in as you play.
+Your 1.0 profiles and runs load, and saves stay where they were (`AppData\LocalLow\Kratossos\sudoku_rouge_like`), so Steam Cloud keeps syncing them. The game window is now titled "Run of the Nine". Profiles from pre-release test builds are copied over automatically on first start. A run saved in 1.0 keeps its old path layout until you reach the next floor. Completion and codex entries that 1.0 failed to record cannot be restored; they fill in as you play.
 
 ---
 
@@ -81,4 +81,4 @@ Your 1.0 profiles and runs load. The game window is now titled "Run of the Nine"
 - Traceability: `docs/REQUIREMENT_MAP.md` has an Evidence column; ✅ only with a passing tagged test or an E2E check. `docs/review/REQUIREMENT_TRACEABILITY.md` regenerated.
 - Tests: EditMode 492 (466 passed, 0 failed, 26 skipped `[Explicit]` review diagnostics); PlayMode 25/25. Build smoke test: `docs/review/E2E_TEST_REPORT.md` §10 (B01–B15, all pass).
 - Clean-up: SPICE requirement tables archived (`docs/archive/`), stray `docs/*.md.meta` removed, mockup images moved to `docs/art-source/ui-mockups/`, unused `InRunInputController` removed, `build.app/` ignored, controller size budgets lowered (InRunController 4920, MainMenuBlueprintBuilder 3010, RunDirector 2960).
-- `bundleVersion` 1.1.0; player metadata Kratossos / Run of the Nine and Steam App ID 4858470 in `SteamManager` (2026-10-14); one-time save migration SAVE-MIGRATE-001; build as `RunOfTheNine.exe`.
+- `bundleVersion` 1.1.0; Steam App ID 4858470 in `SteamManager` (2026-10-14). Company/product stay Kratossos / sudoku_rouge_like (save folder and Auto-Cloud root of the live 1.0 build, SAVE-FOLDER-001); window title "Run of the Nine" set by `WindowFrameService` (DISPLAY-MODE-007); one-time copy of pre-release saves (SAVE-MIGRATE-001); build as `sudoku_rouge_like.exe`, the live launch option.

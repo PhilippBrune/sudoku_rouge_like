@@ -14,7 +14,7 @@ namespace SudokuRoguelike.Save
     {
         private const string ActiveSlotPrefKey = "ActiveProfileSlot";
 
-        // â”€â”€ Active slot â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Active slot ──────────────────────────────────────────────────────────
 
         public static int ActiveSlot
         {
@@ -28,7 +28,7 @@ namespace SudokuRoguelike.Save
 
         public SaveFileService GetActiveService() => new SaveFileService(ActiveSlot);
 
-        // â”€â”€ Slot summaries â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Slot summaries ───────────────────────────────────────────────────────
 
         /// <summary>Returns one summary per slot (always MaxSlots entries).</summary>
         public ProfileSlotSummary[] GetAllSlotSummaries()
@@ -69,7 +69,7 @@ namespace SudokuRoguelike.Save
             };
         }
 
-        // â”€â”€ Select / create â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Select / create ──────────────────────────────────────────────────────
 
         /// <summary>Switch the active slot. Creates an empty save file if the slot is new.</summary>
         public void SelectSlot(int slot)
@@ -80,7 +80,7 @@ namespace SudokuRoguelike.Save
                 svc.Save(new SaveFileEnvelope { TimestampUtc = DateTime.UtcNow.ToString("o") });
         }
 
-        // â”€â”€ Delete â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Delete ───────────────────────────────────────────────────────────────
 
         public void DeleteSlot(int slot)
         {
@@ -91,7 +91,7 @@ namespace SudokuRoguelike.Save
                 ActiveSlot = 0;
         }
 
-        // â”€â”€ Any non-empty slot? â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Any non-empty slot? ──────────────────────────────────────────────────
 
         public bool AnySlotExists()
         {

@@ -280,6 +280,18 @@ Added on request: Windowed and Frameless Window (GameDesignSpec 1.7 §Display Mo
 
 **Defect found (GAP-042, fixed):** every dropdown list in the main-menu Options was shorter than its items, so the last option was hidden or cut off. In the 1.1 build the Display Mode list showed "Fullscreen", "Borderless" and half of "Windowed", which is likely why no window mode seemed to exist. After the fix the list shows all four modes on an opaque background.
 
+### 10.2c Steam names and App ID (2026-10-14)
+
+Player metadata set to the Steamworks developer/publisher and store name (Kratossos / Run of the Nine, App 4858470). Fresh build as `RunOfTheNine.exe` with `steam_appid.txt` next to it (local launch outside Steam), Steam client closed.
+
+| ID | Flow / Test | Expected | Actual | Result |
+|---|---|---|---|---|
+| **B20** | First launch after the rename, user's real 1.1 development save in `LocalLow\Kratossos\sudoku_rouge_like` (slot 2) | Window titled "Run of the Nine"; profile copied once into `LocalLow\Kratossos\Run of the Nine`; slot 2 active; original untouched | Title "Run of the Nine"; log `[SaveMigration] Copied profiles … active slot 2`; `ActiveProfileSlot` = 2; the copied profile loaded (it had not completed first-run setup, so that screen showed, as with earlier builds); original byte-identical afterwards | **PASS** |
+| **B21** | Steam client closed | Game keeps running | `SteamAPI_Init() failed` logged once; menu works | **PASS** |
+| **B22** | Build output | No `steam_appid.txt` in the build folder | Folder holds `RunOfTheNine.exe`, `RunOfTheNine_Data`, `UnityPlayer.dll`, `UnityCrashHandler64.exe`, `MonoBleedingEdge`, `D3D12` only | **PASS** |
+
+The test copy of the profile was removed afterwards; the empty `Kratossos\Run of the Nine` folder and its PlayerPrefs key were left in place at the owner's request.
+
 ### 10.3 Not verified in the build
 
 - Boss gate, boss debuffs from Floor 3, modifier legend, pressure visuals, prestige and the Monthly Walk widget's Open target: covered by PlayMode/EditMode tests (`InRunUiPlayModeTests`, `BossDebuffTests`, `PrestigeTests`, `GeneratedUiPlayModeTraversalTests`), not played to in the build.

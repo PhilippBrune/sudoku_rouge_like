@@ -10,8 +10,8 @@ Updated 2026-10-07 · Milestone: **second Steam release (1.1.0)**
 
 | Suite | Total | Passed | Failed | Skipped | Date |
 |-------|------:|-------:|-------:|--------:|------|
-| EditMode | 492 | 466 | 0 | 26 (`[Explicit]` review diagnostics) | 2026-10-13 |
-| PlayMode | 25 | 25 | 0 | 0 | 2026-10-13 |
+| EditMode | 495 | 469 | 0 | 26 (`[Explicit]` review diagnostics) | 2026-10-14 |
+| PlayMode | 25 | 25 | 0 | 0 | 2026-10-14 |
 
 Windows x64 player build of the 1.1 tree: smoke test B01–B15 passed (fresh install, first-run setup, seed entry, path map, wrong-digit rule, Save & Quit and Resume, reward reroll, codex persistence, Abandon & Begin; no exception in the player log). Two defects found there were fixed before these test results.
 

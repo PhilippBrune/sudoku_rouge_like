@@ -4,9 +4,9 @@
 
 **Fix pass 2026-10-05:** the 27 rows whose note says *Fixed 2026-10-05* were re-assessed after the fixes in the [GAME_GAPS fix log](GAME_GAPS.md#fix-log-2026-10-05). META-CODEX-001/002, found broken during that verification ([GAP-037](GAME_GAPS.md#gap-037)), were fixed in 1.1.
 
-**Fix pass 1.1 (2026-10-07):** 101 rows marked *Fixed 1.1* or *Spec aligned 1.1* were re-assessed after implementing the recommendations of [GAME_GAPS](GAME_GAPS.md#fix-log-2026-10-07-release-110) and [SPECIFICATION_ISSUES](SPECIFICATION_ISSUES.md). 50 further rows, not reviewed individually, are `IMPLEMENTED` because a passing test carries their ID (`[Requirement]` attribute or `[REQ:]` tag; SPEC-PROC-003). The SPICE pipeline IDs (`REQ-BOSS-001..035`, `REQ-GENERAL-013..029`, `REQ-META-010..018`, `REQ-SUDOKU-076..117`, `REQ-UI-018`, `REQ-UI-027..036`, `REQ-SAVE-018`) were archived with their tables in `docs/archive/SPICE_REQUIREMENT_TABLES.md` (SPEC-OBS-001) and are no longer rows here. Every other row is still the 2026-10-01 review verdict.
+**Fix pass 1.1 (2026-10-07):** 101 rows marked *Fixed 1.1* or *Spec aligned 1.1* were re-assessed after implementing the recommendations of [GAME_GAPS](GAME_GAPS.md#fix-log-2026-10-07-release-110) and [SPECIFICATION_ISSUES](SPECIFICATION_ISSUES.md). 51 further rows, not reviewed individually, are `IMPLEMENTED` because a passing test carries their ID (`[Requirement]` attribute or `[REQ:]` tag; SPEC-PROC-003). The SPICE pipeline IDs (`REQ-BOSS-001..035`, `REQ-GENERAL-013..029`, `REQ-META-010..018`, `REQ-SUDOKU-076..117`, `REQ-UI-018`, `REQ-UI-027..036`, `REQ-SAVE-018`) were archived with their tables in `docs/archive/SPICE_REQUIREMENT_TABLES.md` (SPEC-OBS-001) and are no longer rows here. Every other row is still the 2026-10-01 review verdict.
 
-Requirement → Specification → Code → Runtime test → Automated test → Status, for every requirement ID found in `docs/*.md` (356) plus 64 new IDs this review created for requirements that had none (`REQ-<SYS>-1xx`, numbered from 100 so they cannot collide with the legacy `REQ-*-0xx` IDs).
+Requirement → Specification → Code → Runtime test → Automated test → Status, for every requirement ID found in `docs/*.md` (357) plus 64 new IDs this review created for requirements that had none (`REQ-<SYS>-1xx`, numbered from 100 so they cannot collide with the legacy `REQ-*-0xx` IDs).
 
 ## How to read this
 
@@ -21,33 +21,33 @@ Requirement → Specification → Code → Runtime test → Automated test → S
 
 | Status | Count |
 |---|---:|
-| IMPLEMENTED | 234 |
+| IMPLEMENTED | 235 |
 | PARTIALLY_IMPLEMENTED | 9 |
 | BROKEN | 0 |
 | MISSING | 3 |
 | CONTRADICTED | 0 |
 | OUTDATED | 19 |
 | UNTESTABLE | 155 |
-| **Total** | **420** |
+| **Total** | **421** |
 
 Of the 155 UNTESTABLE items, **147 are coverage gaps** (not exercised, no automated test) and 8 are infrastructure-limited.
 
-Traceability health: 298 of 356 spec IDs carry a code annotation. **134 spec IDs are referenced from tests** (the review found 1). Since the fix pass, tests carry a `[Requirement("ID")]` attribute (NUnit category `REQ:<id>`), and `RequirementTraceabilityTests` rejects IDs that do not exist in `docs/` ([GAP-010](GAME_GAPS.md#gap-010)). Most requirements still have no test.
+Traceability health: 299 of 357 spec IDs carry a code annotation. **135 spec IDs are referenced from tests** (the review found 1). Since the fix pass, tests carry a `[Requirement("ID")]` attribute (NUnit category `REQ:<id>`), and `RequirementTraceabilityTests` rejects IDs that do not exist in `docs/` ([GAP-010](GAME_GAPS.md#gap-010)). Most requirements still have no test.
 
 | Basis | Count |
 |---|---:|
 | Verified in review | 188 |
 | Not verified (coverage gap) | 147 |
-| Tagged automated test | 50 |
+| Tagged automated test | 51 |
 | Spec/registry | 25 |
 | Infrastructure-limited | 8 |
 | Static code analysis | 2 |
 
-Evidence behind the 401 current (non-outdated) requirements:
+Evidence behind the 402 current (non-outdated) requirements:
 
 | Coverage | Count | Share of current |
 |---|---:|---:|
-| Automated test, passing | 196 | 49 % |
+| Automated test, passing | 197 | 49 % |
 | Automated test, currently failing | 0 | 0 % |
 | Review only: runtime (D## / E##) | 41 | 10 % |
 | Review only: static analysis | 6 | 1 % |
@@ -389,7 +389,7 @@ Status mix: IMPLEMENTED 10, UNTESTABLE 38
 
 ## Save / Load
 
-Status mix: IMPLEMENTED 10, OUTDATED 1, UNTESTABLE 2
+Status mix: IMPLEMENTED 11, OUTDATED 1, UNTESTABLE 2
 
 | Req ID | Requirement | Specification | Code | Runtime test | Automated test | Status | Gap / note |
 |---|---|---|---|---|---|---|---|
@@ -398,6 +398,7 @@ Status mix: IMPLEMENTED 10, OUTDATED 1, UNTESTABLE 2
 | **REQ-SAVE-102** *(new)* | Automated tests never touch real player save slots | unity-testing conventions | SaveFileService.RootDirectoryOverride via [SetUpFixture] | Player save byte-identical after every suite run | TestSaveIsolation (EditMode, PlayMode) | IMPLEMENTED | [GAP-010](GAME_GAPS.md#gap-010) · New ID created by this review. Fixed 2026-10-05 |
 | **SAVE-AUTO-001** | RunAutoSaveCoordinator.Save() — atomic write before serializing | REQUIREMENT_MAP.md | RunAutoSaveCoordinator; RunMapController.BindAutoSave binds on every launch | F01/F02/F06: autosave after each correct placement, also after resume and for later runs in a session | ResumeMidPuzzleTests.SecondRunInSameSession…; SaveDurabilityReadinessTests | IMPLEMENTED | [GAP-001](GAME_GAPS.md#gap-001) · Fixed 2026-10-05. Before: only the first launch of a session autosaved. Open: the cached envelope overwrites profile writes (GAP-037) |
 | **SAVE-DUAL-001** | Dual save files — superseded: one JSON envelope per slot (SaveLoadArchitecture v2.0) | REQUIREMENT_MAP.md | Superseded | — | None | OUTDATED | [SPEC-OBS](SPECIFICATION_ISSUES.md#spec-obs) · Spec aligned 1.1 (2026-10-07). Marked deprecated in REQUIREMENT_MAP 1.1 |
+| **SAVE-MIGRATE-001** | 2.2 2026-10-14 implemented Save folder follows the Steamworks names: LocalLow/Kratossos/Run of the Nine; one-time copy of earlier save folders (, LegacySaveMigrationTests); opti… | SaveLoadArchitecture.md › Change History | Tagged ×1: LegacySaveMigration.cs | Automated (Unity Test Runner 2026-10-07) | LegacySaveMigrationTests | IMPLEMENTED | Verified by a tagged automated test (1.1) |
 | **SAVE-RESUME-001** | RunResumeService.TryResumeFromSave() restores full run state including boss modifier | REQUIREMENT_MAP.md | RunResumeService.ApplyToRunDirector → RunDirector.RestoreLevelRulesAfterResume | F01, F03: 7 resumes in one session, play and level completion continue | ResumeMidPuzzleTests | IMPLEMENTED | [GAP-001](GAME_GAPS.md#gap-001) · Fixed 2026-10-05 |
 | **SAVE-SERIAL-001** | All save data uses JsonUtility ([Serializable] on all data classes) | REQUIREMENT_MAP.md | JsonUtility models | D12 chosen boss mods & seen list persisted | ModifierDiscoveryPersistenceTests | IMPLEMENTED |  |
 | **SAVE-SERIAL-002** | Nullable types use bool+value pattern (HasChosenBossModifier + ChosenBossModifierId) | REQUIREMENT_MAP.md | JsonUtility models | D12 chosen boss mods & seen list persisted | ModifierDiscoveryPersistenceTests | IMPLEMENTED |  |
@@ -574,7 +575,7 @@ Status mix: OUTDATED 12
 | Req ID | Requirement | Specification | Code | Runtime test | Automated test | Status | Gap / note |
 |---|---|---|---|---|---|---|---|
 | **FUTURE-005** | This register resolves the  through FUTURE-008 audit risks by making | future-scope-decision-register.md › Purpose | Out of scope by decision register | — | None | OUTDATED | Deferred/out of scope |
-| **FUTURE-006** | Cloud save/profile sync Out of current scope. Saves remain local profile slots. Cloud save is explicitly reported as NotConfigured. LocalOnlyCloudSaveProvider, docs/platform-ser… | future-scope-decision-register.md › Decisions | Out of scope by decision register | — | None | OUTDATED | Deferred/out of scope |
+| **FUTURE-006** | Steam Auto-Cloud needs no game code and stays an owner decision (PRG-CLOUD-SAVE). If it is enabled, the Steamworks settings are: root WinAppDataLocalLow, subdirectory Kratossos/… | SaveLoadArchitecture.md › Local-Only Scope | Out of scope by decision register | — | None | OUTDATED | Deferred/out of scope |
 | **FUTURE-007** | Onboarding/tutorial progression First-run setup and Sudoku basics are in scope. A deeper roguelike systems tutorial is deferred until core UI/runtime validation is stable. First… | future-scope-decision-register.md › Decisions | Out of scope by decision register | — | None | OUTDATED | Deferred/out of scope |
 | **FUTURE-008** | This register resolves the FUTURE-005 through  audit risks by making | future-scope-decision-register.md › Purpose | Out of scope by decision register | — | None | OUTDATED | Deferred/out of scope |
 | **FUTURE-009** | Approved scope (1.1.0): second Steam release. The FUTURE-005..008 decisions still apply; ..016 record the deferrals of the 1.1 review pass. | future-scope-decision-register.md › Current Milestone | Out of scope by decision register | — | None | OUTDATED | Deferred/out of scope (1.1 review decision, 2026-10-07) |

@@ -50,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\Tests\EditMode\StorePlatformAssetReadinessTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\SpecAlignmentTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\RunSeedAndAbandonTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\AdvancedFeedbackReadinessTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\CancelRouteContractTests.cs" />
@@ -64,17 +65,20 @@
     <Compile Include="Assets\Scripts\Tests\EditMode\BossDebuffTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\ReviewDiagnosticsTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\GeneratedUiRebuildTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\RestNodeValuesTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\PlatformServiceRegistryTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\ReleaseLocalizationReadinessTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\TestSaveIsolation.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\RequirementAttribute.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\PlatformReleaseReadinessTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\BackgroundAssetBudgetTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\LegacySaveMigrationTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\ConstraintRuleTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\ModifierDiscoveryPersistenceTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\DailyStreakTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\GameplayEffectContractTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\AudioAssetServiceTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\DisplayModeTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\PressureRollTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\ControllerSizeBudgetTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\AccessibilityReadinessTests.cs" />
@@ -115,15 +119,12 @@
     <Compile Include="Assets\Scripts\Tests\EditMode\ClassRosterTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\PuzzleGenerationServiceTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\GeneratedUiWiringContractTests.cs" />
-    <Compile Include="Assets\Scripts\Tests\EditMode\SourceText.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\SudokuBasicsStepsTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\SourceText.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\RunGraphTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\CurseEffectTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\PlacementRulesTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\BalanceBudgetContractTests.cs" />
-    <Compile Include="Assets\Scripts\Tests\EditMode\CurseEffectTests.cs" />
-    <Compile Include="Assets\Scripts\Tests\EditMode\RestNodeValuesTests.cs" />
-    <Compile Include="Assets\Scripts\Tests\EditMode\SpecAlignmentTests.cs" />
-    <Compile Include="Assets\Scripts\Tests\EditMode\DisplayModeTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Scripts\Tests\EditMode\GameTests.EditMode.asmdef" />

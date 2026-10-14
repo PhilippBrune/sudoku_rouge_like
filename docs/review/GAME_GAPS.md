@@ -139,6 +139,8 @@ Done on request for release 1.1.0: every remaining gap's suggested fix, plus the
 
 **Test-run stability (2026-10-14, GAP-010 follow-up):** PlayMode results depended on whether the Steam client was running. Abandoning a run in `InRunUiPlayModeTests` submits the leaderboard score, which started `SteamManager`, and its `SteamAPI_Init` logs an error without a client. The test-isolation fixtures now set `PlatformServiceRegistry.SteamworksCallsEnabled = false`, so achievements, stats and the leaderboard never call Steamworks in test runs; the game is unchanged (the flag defaults to true). Verified with Steam closed: EditMode 492 (466 passed, 0 failed, 26 skipped), PlayMode 25/25.
 
+**Release blocker PRG-PLAYER-METADATA resolved (2026-10-14):** the Steamworks app (4858470) lists Kratossos as developer and publisher and "Run of the Nine" as the name, so the Player Settings now use Kratossos / Run of the Nine and `SteamManager` restarts through App 4858470. Saves move with the product name; `LegacySaveMigration` copies earlier profiles once (SAVE-MIGRATE-001, `LegacySaveMigrationTests`, build check B20). Tests: EditMode 495 (469 passed, 0 failed, 26 skipped), PlayMode 25/25.
+
 Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG.md` and `docs/release/release-readiness-status.md`.
 
 ---

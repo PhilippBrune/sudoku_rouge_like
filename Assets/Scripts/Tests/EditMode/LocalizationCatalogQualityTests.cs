@@ -18,7 +18,8 @@ namespace SudokuRoguelike.Tests
         {
             "Ã¤", "Ã¶", "Ã¼", "ÃŸ", "Ã©", // ä ö ü ß é read as cp1252
             "Â·", "Â ",                                              // · and no-break space
-            "â€"                                                               // – — “ ” ’ …
+            "â€",                                                              // – — “ ” ’ …
+            "â”"                                                               // box drawing ─ │
         };
 
         [Test]

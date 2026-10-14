@@ -112,8 +112,8 @@
     <Compile Include="Assets\Scripts\Sudoku\ModifierFactory.cs" />
     <Compile Include="Assets\Scripts\UI\ScreenManager.cs" />
     <Compile Include="Assets\Scripts\Save\SaveWriteQueue.cs" />
-    <Compile Include="Assets\Scripts\UI\CursePanelController.cs" />
     <Compile Include="Assets\Scripts\UI\MainMenuBlueprintBuilder.Widgets.cs" />
+    <Compile Include="Assets\Scripts\UI\CursePanelController.cs" />
     <Compile Include="Assets\Scripts\UI\MainMenuBlueprintBuilder.ChallengePanels.cs" />
     <Compile Include="Assets\Scripts\UI\GeneratedUiRegistry.cs" />
     <Compile Include="Assets\Scripts\UI\ButtonExtensions.cs" />
@@ -129,6 +129,7 @@
     <Compile Include="Assets\Scripts\Sudoku\SudokuBacktrackingSolver.cs" />
     <Compile Include="Assets\Scripts\Save\SaveProfileService.cs" />
     <Compile Include="Assets\Scripts\UI\RewardViewController.cs" />
+    <Compile Include="Assets\Scripts\Platform\WindowFrameService.cs" />
     <Compile Include="Assets\Scripts\Sudoku\IOrderedConstraintRule.cs" />
     <Compile Include="Assets\Scripts\UI\EventChoiceScreenController.cs" />
     <Compile Include="Assets\Scripts\UI\BossGateViewController.cs" />
@@ -151,6 +152,7 @@
     <Compile Include="Assets\Scripts\Meta\ClassGardenProgressionService.cs" />
     <Compile Include="Assets\Scripts\UI\ItemsMenuController.cs" />
     <Compile Include="Assets\Scripts\UI\RunMapController.cs" />
+    <Compile Include="Assets\Scripts\Save\LegacySaveMigration.cs" />
     <Compile Include="Assets\Scripts\UI\ControllerIndicatorPoller.cs" />
     <Compile Include="Assets\Scripts\Core\ControllerGlyphService.cs" />
     <Compile Include="Assets\Scripts\UI\PathAmbientParticles.cs" />
@@ -166,9 +168,9 @@
     <Compile Include="Assets\Scripts\Bootstrap\StartupFlowController.cs" />
     <Compile Include="Assets\Scripts\Run\ParkNarrativeService.cs" />
     <Compile Include="Assets\Scripts\Core\GameEnums.cs" />
+    <Compile Include="Assets\Scripts\UI\BoardViewController.OverlayGroups.cs" />
     <Compile Include="Assets\Scripts\Sudoku\SudokuBoard.cs" />
     <Compile Include="Assets\Scripts\UI\SudokuBasicsTutorialController.cs" />
-    <Compile Include="Assets\Scripts\UI\BoardViewController.OverlayGroups.cs" />
     <Compile Include="Assets\Scripts\Core\InputRemapService.cs" />
     <Compile Include="Assets\Scripts\Meta\SteamStatsService.cs" />
     <Compile Include="Assets\Scripts\Save\RunResumeService.cs" />
@@ -190,7 +192,6 @@
     <Compile Include="Assets\Scripts\UI\ProceduralSfxLibrary.cs" />
     <Compile Include="Assets\Scripts\UI\InRunSaveQuitPolicy.cs" />
     <Compile Include="Assets\Scripts\UI\EndScreenPresenter.cs" />
-    <Compile Include="Assets\Scripts\Platform\WindowFrameService.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Scripts\Game.asmdef" />

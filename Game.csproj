@@ -190,6 +190,7 @@
     <Compile Include="Assets\Scripts\UI\ProceduralSfxLibrary.cs" />
     <Compile Include="Assets\Scripts\UI\InRunSaveQuitPolicy.cs" />
     <Compile Include="Assets\Scripts\UI\EndScreenPresenter.cs" />
+    <Compile Include="Assets\Scripts\Platform\WindowFrameService.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Scripts\Game.asmdef" />

@@ -887,7 +887,8 @@ namespace SudokuRoguelike.UI
             {
                 T("DisplayMode.Fullscreen"),
                 T("DisplayMode.Borderless"),
-                T("DisplayMode.Windowed")
+                T("DisplayMode.Windowed"),
+                T("DisplayMode.FramelessWindow") // [REQ: DISPLAY-MODE-001] order = DisplayModeOption values
             });
             FitDropdownToItems(displayModeDrop);
             displayModeDrop.SetValueWithoutNotify((int)OptionsController.NormalizeDisplayMode(opts.Graphics.DisplayMode));
@@ -2604,6 +2605,8 @@ namespace SudokuRoguelike.UI
             return btn;
         }
 
+        private const float DropdownItemHeight = 32f;
+
         private Dropdown BuildDropdown(string name, RectTransform parent)
         {
             var rect = EnsureRect(name, parent, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
@@ -2630,7 +2633,8 @@ namespace SudokuRoguelike.UI
             template.pivot = new Vector2(0.5f, 1f);
             template.anchoredPosition = new Vector2(0f, -4f);
             template.sizeDelta = new Vector2(0f, 180f);
-            EnsureOrGetImage(template.gameObject, BtnColor);
+            // Opaque: the options underneath showed through the open list (1.1 display-mode check).
+            EnsureOrGetImage(template.gameObject, new Color(BtnColor.r, BtnColor.g, BtnColor.b, 1f));
             template.gameObject.SetActive(false);
 
             var viewport = EnsureRect("Viewport", template,
@@ -2641,21 +2645,28 @@ namespace SudokuRoguelike.UI
             var content = EnsureRect("Content", viewport,
                 new Vector2(0f, 1f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero);
             content.pivot = new Vector2(0.5f, 1f);
+            // One item tall: Unity measures the item's offsets against this rect when it opens the list; at 0 px
+            // it subtracted one item height and the last option was hidden.
+            content.sizeDelta = new Vector2(0f, DropdownItemHeight);
             var cl = EnsureComponent<VerticalLayoutGroup>(content.gameObject);
             cl.childAlignment = TextAnchor.UpperCenter;
             cl.childControlHeight = true;
             cl.childControlWidth = true;
             cl.childForceExpandHeight = false;
             cl.childForceExpandWidth = true;
-            cl.spacing = 2f;
-            cl.padding = new RectOffset(2, 2, 2, 2);
+            // Unity sizes the list as item height x item count, so the layout adds no spacing or padding;
+            // before, the list was shorter than its items and the last option was cut off.
+            cl.spacing = 0f;
+            cl.padding = new RectOffset(0, 0, 0, 0);
             var cf = EnsureComponent<ContentSizeFitter>(content.gameObject);
             cf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             // Item template
             var item = EnsureRect("Item", content,
-                new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -28f), Vector2.zero);
-            EnsureComponent<LayoutElement>(item.gameObject).minHeight = 30f;
+                new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -DropdownItemHeight), Vector2.zero);
+            var itemLayout = EnsureComponent<LayoutElement>(item.gameObject);
+            itemLayout.minHeight = DropdownItemHeight;
+            itemLayout.preferredHeight = DropdownItemHeight;
             var itemBg = EnsureOrGetImage(item.gameObject, GamePalette.ListItemBg);
             var itemTgl = EnsureComponent<Toggle>(item.gameObject);
             itemTgl.targetGraphic = itemBg;
@@ -2728,7 +2739,7 @@ namespace SudokuRoguelike.UI
         private static void FitDropdownToItems(Dropdown dd)
         {
             if (dd == null || dd.template == null || dd.options.Count == 0) return;
-            var h = Mathf.Min(dd.options.Count * 32f + 8f, 300f);
+            var h = Mathf.Min(dd.options.Count * DropdownItemHeight, 300f);
             var sd = dd.template.sizeDelta;
             dd.template.sizeDelta = new Vector2(sd.x, h);
         }

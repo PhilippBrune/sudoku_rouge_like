@@ -52,6 +52,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-040](#gap-040) | Item Block debuff applied the item effect but kept the item | FIXED (1.1, found 2026-10-07) | MEDIUM | P2 |
 | [GAP-039](#gap-039) | Pressure visuals vanished after a board refresh; refreshes ate one-shot flashes | FIXED (1.1, found 2026-10-07) | LOW | P3 |
 | [GAP-041](#gap-041) | Number Freak L3 "+1 Pencil" was never applied (catalog typo) | FIXED (1.1, found 2026-10-07) | LOW | P3 |
+| [GAP-042](#gap-042) | Options dropdown lists hid their last option; no usable window mode | FIXED (1.1, found 2026-10-12) | MEDIUM | P2 |
 
 ---
 
@@ -95,7 +96,7 @@ New spec items raised by the fixes: SPEC-CONF-038 (Anti-Bishop), SPEC-AMB-014 (s
 
 Done on request for release 1.1.0: every remaining gap's suggested fix, plus the recommendations of [SPECIFICATION_ISSUES](SPECIFICATION_ISSUES.md). Where a spec recommendation was doc-only but the gap asked for code, the code was changed and the spec documents it. Verification: Unity batchmode through `tools/run-unity-tests.ps1` on a mirror of the working tree, and the 1.1 player build ([E2E report §10](E2E_TEST_REPORT.md#10-addendum-release-110-2026-10-07)).
 
-**Test gate for 1.1:** EditMode 482 tests: 456 passed, 0 failed, 26 skipped (the `[Explicit]` review diagnostics). PlayMode 25 of 25 passed (was 9 after the 2026-10-05 fix pass). The 9 tests that waited for `docs/release/*` and the Steamworks legal-notice test now run and pass.
+**Test gate for 1.1:** EditMode 492 tests (2026-10-13, with the display-mode work): 466 passed, 0 failed, 26 skipped (the `[Explicit]` review diagnostics). PlayMode 25 of 25 passed (was 9 after the 2026-10-05 fix pass). The 9 tests that waited for `docs/release/*` and the Steamworks legal-notice test now run and pass.
 
 | Gap | Change | Verified by |
 |---|---|---|
@@ -135,6 +136,8 @@ Done on request for release 1.1.0: every remaining gap's suggested fix, plus the
 | GAP-041 | New, see below. | `ClassRosterTests.EveryStatBonusInTheSchedule_IsApplied` |
 
 **Build smoke (E2E report §10, B01–B15):** all checks pass. Two defects found there were fixed and re-tested: the profile screen showed the raw key `Profile.EmptySlot` in English (GAP-019 follow-up; a new test, `KeyOnlyLookups_HaveEnglishText`, found four more such keys), and the View Modifiers list was see-through over the Options labels (GAP-029 follow-up).
+
+**Test-run stability (2026-10-14, GAP-010 follow-up):** PlayMode results depended on whether the Steam client was running. Abandoning a run in `InRunUiPlayModeTests` submits the leaderboard score, which started `SteamManager`, and its `SteamAPI_Init` logs an error without a client. The test-isolation fixtures now set `PlatformServiceRegistry.SteamworksCallsEnabled = false`, so achievements, stats and the leaderboard never call Steamworks in test runs; the game is unchanged (the flag defaults to true). Verified with Steam closed: EditMode 492 (466 passed, 0 failed, 26 skipped), PlayMode 25/25.
 
 Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG.md` and `docs/release/release-readiness-status.md`.
 
@@ -742,3 +745,14 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Fix:** Text corrected in `ClassCatalog`. A test now checks that every stat bonus in every schedule is applied.
 - **Affected Files:** `Assets/Scripts/Classes/ClassCatalog.cs`
 - **Tests:** `ClassRosterTests.EveryStatBonusInTheSchedule_IsApplied`
+
+## GAP-042
+**Options dropdown lists hid their last option; no usable window mode**
+
+- **Requirement:** DISPLAY-MODE-001..006 (GameDesignSpec 1.7 §Display Modes, added 2026-10-12 on request)
+- **Status:** FIXED (1.1, found 2026-10-12 while adding the requested window modes) · **Severity:** MEDIUM · **Priority:** P2
+- **Problem:** The Display Mode list showed "Fullscreen", "Borderless" and half of "Windowed"; every main-menu Options dropdown hid its last option, and the open list was see-through. "Windowed" kept the display-sized resolution, so on a 1080p screen its title bar ended up off-screen, and "Borderless" covered the whole display: there was no usable window mode.
+- **Root Cause:** Unity sizes an open list as item-template height × item count, measured against the template's Content rect. The template used 28 px items while its layout group used 30 px items plus spacing and padding, and Content was 0 px tall, which made Unity subtract one item height. Window sizes were never fitted to the display.
+- **Fix:** Dropdown items are 32 px with no extra spacing, Content starts one item tall, the list background is opaque (`MainMenuBlueprintBuilder.BuildDropdown`). Four display modes: Fullscreen, Borderless Fullscreen, Windowed, Frameless Window; window modes fit the display (DISPLAY-MODE-002) and are centred; Frameless Window sets the Win32 window style (`WindowFrameService`, re-applied after Alt+Enter and when Windows restores the old size).
+- **Affected Files:** `Assets/Scripts/UI/MainMenuBlueprintBuilder.cs`, `Assets/Scripts/UI/OptionsController.cs`, `Assets/Scripts/Platform/WindowFrameService.cs`, `Assets/Scripts/Core/GameEnums.cs`, `Assets/Scripts/Save/SaveFileService.cs`, localization catalogs
+- **Tests:** `DisplayModeTests` (10); `GeneratedUiPlayModeTraversalTests.OptionsPanelTabsAndLanguageConfirmation_AreRuntimeNavigable` checks the four labels and that the open list shows every item (fails on the old dropdown code: "Item 2: Windowed is cut off at the bottom"); build checks B16–B19 (E2E report §10.2b).

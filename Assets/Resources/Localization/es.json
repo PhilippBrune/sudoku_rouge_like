@@ -1,4 +1,5 @@
 {
+    "DisplayMode.FramelessWindow":  "Ventana sin bordes",
     "Profile.SlotInfo":  "Clase: {0}\nPartidas: {1} iniciadas / {2} ganadas\nJefes: {3}\nÚltima partida: {4}{5}",
     "run in progress":  "partida en curso",
     "Never":  "Nunca",
@@ -381,7 +382,7 @@
     "Contrast":  "Contraste",
     "DisplayMode":  "Modo de pantalla",
     "DisplayMode.Fullscreen":  "Pantalla completa",
-    "DisplayMode.Borderless":  "Sin bordes",
+    "DisplayMode.Borderless":  "Pantalla completa sin bordes",
     "DisplayMode.Windowed":  "En ventana",
     "Audio.MenuMusicStyle.Label":  "Música del menú",
     "Audio.MenuMusicStyle.Garden":  "Tema del jardín",

@@ -568,7 +568,7 @@ On request, all remaining suggested fixes in [GAME_GAPS](GAME_GAPS.md#fix-log-20
 
 | Measure | After 2026-10-05 | Release 1.1.0 |
 |---|---|---|
-| EditMode | 351: 315 passed, 0 failed, 36 skipped | 482: 456 passed, 0 failed, 26 skipped |
+| EditMode | 351: 315 passed, 0 failed, 36 skipped | 492: 466 passed, 0 failed, 26 skipped (2026-10-13) |
 | PlayMode | 9/9 | 25/25 |
 | Matrix: BROKEN | 14 | 0 (CONTRADICTED: 0) |
 | Matrix: IMPLEMENTED | 96 of 500 | 228 of 414 (115 SPICE pipeline IDs were archived, SPEC-OBS-001) |

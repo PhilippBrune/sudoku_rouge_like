@@ -1,4 +1,5 @@
 {
+    "DisplayMode.FramelessWindow":  "Fenêtre sans bordure",
     "Profile.SlotInfo":  "Classe : {0}\nRuns : {1} lancés / {2} gagnés\nBoss : {3}\nDernière partie : {4}{5}",
     "run in progress":  "run en cours",
     "Never":  "Jamais",
@@ -381,7 +382,7 @@
     "Contrast":  "Contraste",
     "DisplayMode":  "Mode d'affichage",
     "DisplayMode.Fullscreen":  "Plein écran",
-    "DisplayMode.Borderless":  "Sans bordure",
+    "DisplayMode.Borderless":  "Plein écran sans bordure",
     "DisplayMode.Windowed":  "Fenêtré",
     "Audio.MenuMusicStyle.Label":  "Musique du menu",
     "Audio.MenuMusicStyle.Garden":  "Thème du jardin",

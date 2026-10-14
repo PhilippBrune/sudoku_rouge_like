@@ -223,6 +223,7 @@ namespace SudokuRoguelike.Tests
         }
 
         [UnityTest]
+        [Requirement("DISPLAY-MODE-001")]
         public IEnumerator OptionsPanelTabsAndLanguageConfirmation_AreRuntimeNavigable()
         {
             var host = BuildMainMenuHarness();
@@ -246,6 +247,16 @@ namespace SudokuRoguelike.Tests
             AssertPanelInactive(host, "GameSection");
             AssertDropdownActive(host, "ResolutionDropdown");
             AssertDropdownActive(host, "LanguageDropdown");
+            AssertDisplayModeOptions(host);
+
+            // The open list shows every mode: before 1.1 the list was sized for 28 px items while the layout used
+            // 30 px plus spacing, so the last option was cut off.
+            var displayModeDropdown = FindComponent<Dropdown>(host, "DisplayModeDropdown");
+            displayModeDropdown.Show();
+            yield return null;
+            AssertOpenListShowsAllItems(displayModeDropdown);
+            displayModeDropdown.Hide();
+            yield return new WaitForSecondsRealtime(0.3f);
 
             var languageDropdown = FindComponent<Dropdown>(host, "LanguageDropdown");
             var originalLanguage = languageDropdown.value;
@@ -473,6 +484,32 @@ namespace SudokuRoguelike.Tests
             var toggle = FindComponent<Toggle>(root, name);
             Assert.IsTrue(toggle.gameObject.activeInHierarchy, $"Expected active toggle: {name}");
             Assert.IsTrue(toggle.interactable, $"Expected interactable toggle: {name}");
+        }
+
+        // [REQ: DISPLAY-MODE-001] Options → Display offers the four modes in DisplayModeOption order.
+        private static void AssertDisplayModeOptions(GameObject root)
+        {
+            AssertDropdownActive(root, "DisplayModeDropdown");
+            var labels = FindComponent<Dropdown>(root, "DisplayModeDropdown").options.ConvertAll(option => option.text);
+            CollectionAssert.AreEqual(new[] { "Fullscreen", "Borderless Fullscreen", "Windowed", "Frameless Window" }, labels);
+        }
+
+        private static void AssertOpenListShowsAllItems(Dropdown dropdown)
+        {
+            var list = dropdown.transform.Find("Dropdown List") as RectTransform;
+            Assert.NotNull(list, "dropdown list did not open");
+            Canvas.ForceUpdateCanvases();
+            var viewport = list.Find("Viewport") as RectTransform;
+            var viewportCorners = new Vector3[4];
+            viewport.GetWorldCorners(viewportCorners);
+            var items = list.GetComponentsInChildren<Toggle>(false); // the inactive item template stays in the list
+            Assert.AreEqual(dropdown.options.Count, items.Length, "one item per option");
+            var itemCorners = new Vector3[4];
+            foreach (var item in items)
+            {
+                ((RectTransform)item.transform).GetWorldCorners(itemCorners);
+                Assert.GreaterOrEqual(itemCorners[0].y, viewportCorners[0].y - 0.5f, $"{item.name} is cut off at the bottom");
+            }
         }
 
         private static void AssertDropdownActive(GameObject root, string name)

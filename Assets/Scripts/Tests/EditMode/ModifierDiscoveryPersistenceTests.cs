@@ -789,6 +789,7 @@ namespace SudokuRoguelike.Tests
                 "DisplayMode.Fullscreen",
                 "DisplayMode.Borderless",
                 "DisplayMode.Windowed",
+                "DisplayMode.FramelessWindow",
                 "Screen Reader",
                 "Rebind",
                 "Reset All"

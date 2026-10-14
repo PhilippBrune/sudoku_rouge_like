@@ -240,7 +240,7 @@ For release 1.1.0 every remaining gap and every specification recommendation was
 
 | Suite | After 2026-10-05 | Release 1.1.0 |
 |---|---|---|
-| EditMode | 351 tests: 315 passed, 0 failed, 36 skipped | **482 tests: 456 passed, 0 failed, 26 skipped** (the `[Explicit]` review diagnostics; the 10 tests that waited for `docs/release/*` and SPEC-PROC-007 now run) |
+| EditMode | 351 tests: 315 passed, 0 failed, 36 skipped | **492 tests: 466 passed, 0 failed, 26 skipped** (2026-10-13) (the `[Explicit]` review diagnostics; the 10 tests that waited for `docs/release/*` and SPEC-PROC-007 now run) |
 | PlayMode | 9 of 9 passed | **25 of 25 passed** (new: `InRunUiPlayModeTests` 13, `StartupFlowPlayModeTests`, `AudioClipPlayModeTests`, home widgets in `GeneratedUiPlayModeTraversalTests`) |
 
 `StartupFlowPlayModeTests` was run against the unfixed `MainMenuController` first and failed there. The pressure PlayMode tests found GAP-039; implementing the debuffs found GAP-040; the class roster test found GAP-041; resume determinism found GAP-038.
@@ -266,6 +266,19 @@ Fresh Windows build of the 1.1 tree, 1920×1080, empty save folder and no Player
 | **B13** | Codex persistence (GAP-037) | Claimed item still in the codex after later autosaves | `ItemCodex: InkWell` present after several autosaves and a new run | **PASS** | save file read |
 | **B14** | New run over a saved run (GAP-032) | Warning; abandoned run's XP kept | "Your saved run will end as a defeat. Its XP and progress are kept." with Abandon & Begin; new run started; Number Freak TotalXp 45; log `Abandoned saved run (class NumberFreak, XP 45)` | **PASS** | [B21](evidence/screens/B21_abandon_and_begin.jpg) |
 | **B15** | Stability | No exceptions | 0 exceptions, 0 errors; startup steps logged; 49 clips loaded | **PASS** | log |
+
+### 10.2b Display modes (2026-10-12/13)
+
+Added on request: Windowed and Frameless Window (GameDesignSpec 1.7 §Display Modes, DISPLAY-MODE-001..006). Checked in a fresh 1.1 build on a 3440×1440 display (work area 3440×1392); window rectangles and styles were read with the Win32 API, screenshots show only the game window (the desktop is masked).
+
+| ID | Flow / Test | Expected | Actual | Result | Evidence |
+|---|---|---|---|---|---|
+| **B16** | Options → Display Mode → Windowed (resolution 1280×720) | Framed window, 1280×720 client, centred | Outer 1296×759 at 1072,316 with title bar, client 1280×720; saved mode 2 | **PASS** | [B16](evidence/screens/B16_windowed_mode.jpg) |
+| **B17** | Windowed → Frameless Window | No frame, 1280×720, centred | First pass: frame removed but Windows kept the old outer size (client 1296×759). Fixed: `WindowFrameService` checks client size and frame and re-applies (up to 3 times). After the fix: 1280×720 at 1080,336, no caption | **PASS after fix** | [B17](evidence/screens/B17_frameless_window_mode.jpg) |
+| **B18** | Restart with Frameless Window saved; Alt+Enter twice | Starts frameless; fullscreen and back restores the frameless window | Starts 1280×720 frameless, centred; Alt+Enter → 3440×1440; Alt+Enter → 1280×720 frameless again | **PASS** | [B18](evidence/screens/B18_frameless_at_startup.jpg) |
+| **B19** | Display Mode → Borderless Fullscreen | Borderless window covering the display | 3440×1440 at 0,0, no caption; saved mode 1 | **PASS** | [B19](evidence/screens/B19_borderless_fullscreen.jpg) |
+
+**Defect found (GAP-042, fixed):** every dropdown list in the main-menu Options was shorter than its items, so the last option was hidden or cut off. In the 1.1 build the Display Mode list showed "Fullscreen", "Borderless" and half of "Windowed", which is likely why no window mode seemed to exist. After the fix the list shows all four modes on an opaque background.
 
 ### 10.3 Not verified in the build
 

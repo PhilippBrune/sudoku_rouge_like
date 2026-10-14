@@ -442,11 +442,13 @@ namespace SudokuRoguelike.Core
         BrazilianPortuguese = 4
     }
 
+    // [REQ: DISPLAY-MODE-001] [REQ: DISPLAY-MODE-005] Values are saved; never renumber (1.1 saves use 0–2).
     public enum DisplayModeOption
     {
-        Fullscreen,
-        Borderless,
-        Windowed
+        Fullscreen = 0,       // exclusive fullscreen
+        Borderless = 1,       // borderless fullscreen window covering the display
+        Windowed = 2,         // framed, movable window
+        FramelessWindow = 3   // window without title bar or border, centred
     }
 
     public enum RunSaveTrigger

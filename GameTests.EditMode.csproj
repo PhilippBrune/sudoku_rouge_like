@@ -123,6 +123,7 @@
     <Compile Include="Assets\Scripts\Tests\EditMode\CurseEffectTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\RestNodeValuesTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\SpecAlignmentTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\DisplayModeTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Scripts\Tests\EditMode\GameTests.EditMode.asmdef" />

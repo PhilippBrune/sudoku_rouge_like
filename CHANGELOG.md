@@ -24,6 +24,7 @@ The second Steam release. It fixes the progression blockers players hit in 1.0, 
 - The path map shows every tile from the start, your position, and exactly one bridge (⇄) between the lanes per floor.
 - The class screen shows base stats with your level bonus, for example "HP 10 (+2)".
 - First-run setup offers all five languages.
+- Display modes: **Windowed** and **Frameless Window** join Fullscreen and Borderless Fullscreen. Windows open centred and sized to fit your screen.
 
 ### Changed
 
@@ -57,6 +58,7 @@ The second Steam release. It fixes the progression blockers players hit in 1.0, 
 - Boss modifiers you clear now count towards completion.
 - German text displays correctly everywhere; more of the interface is translated, including the profile screen in all five languages.
 - Monthly Walk generates for every month, and a failed start no longer traps you.
+- Option dropdowns show all their entries (the last one used to be cut off).
 - Endless Zen and Spirit Trials only use modifiers that work.
 
 ### Known issues
@@ -77,6 +79,6 @@ Your 1.0 profiles and runs load. A run saved in 1.0 keeps its old path layout un
 - Specification decisions: every recommendation in `docs/review/SPECIFICATION_ISSUES.md` applied (resolution line per entry); open: SPEC-CONF-039 (prestige reward), owner sign-offs for SPEC-CONF-008 and SPEC-PROC-007.
 - Deferred: Ascension, four boss debuffs, multi-cell selection, Accurate Map redirect, legend polish, fr/es/pt gameplay text, in-game Options restyle, achievement list (`docs/future-scope-decision-register.md`, FUTURE-009..016).
 - Traceability: `docs/REQUIREMENT_MAP.md` has an Evidence column; ✅ only with a passing tagged test or an E2E check. `docs/review/REQUIREMENT_TRACEABILITY.md` regenerated.
-- Tests: EditMode 482 (456 passed, 0 failed, 26 skipped `[Explicit]` review diagnostics); PlayMode 25/25. Build smoke test: `docs/review/E2E_TEST_REPORT.md` §10 (B01–B15, all pass).
+- Tests: EditMode 492 (466 passed, 0 failed, 26 skipped `[Explicit]` review diagnostics); PlayMode 25/25. Build smoke test: `docs/review/E2E_TEST_REPORT.md` §10 (B01–B15, all pass).
 - Clean-up: SPICE requirement tables archived (`docs/archive/`), stray `docs/*.md.meta` removed, mockup images moved to `docs/art-source/ui-mockups/`, unused `InRunInputController` removed, `build.app/` ignored, controller size budgets lowered (InRunController 4920, MainMenuBlueprintBuilder 3010, RunDirector 2960).
 - `bundleVersion` 1.1.0.

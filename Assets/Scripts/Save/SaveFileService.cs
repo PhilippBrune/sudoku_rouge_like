@@ -327,10 +327,13 @@ namespace SudokuRoguelike.Save
             if (!Enum.IsDefined(typeof(DisplayModeOption), options.Graphics.DisplayMode))
                 options.Graphics.DisplayMode = DisplayModeOption.Fullscreen;
 
+            // Saves older than the display-mode field only carry the Fullscreen flag.
             if (!options.Graphics.Fullscreen && options.Graphics.DisplayMode == DisplayModeOption.Fullscreen)
                 options.Graphics.DisplayMode = DisplayModeOption.Windowed;
 
-            options.Graphics.Fullscreen = options.Graphics.DisplayMode != DisplayModeOption.Windowed;
+            // [REQ: DISPLAY-MODE-005] Fullscreen flag follows the mode: false for Window and Frameless Window.
+            options.Graphics.Fullscreen = options.Graphics.DisplayMode != DisplayModeOption.Windowed
+                && options.Graphics.DisplayMode != DisplayModeOption.FramelessWindow;
         }
 
         private static void WriteEnvelope(string savePath, string json)

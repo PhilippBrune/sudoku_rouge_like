@@ -1,6 +1,6 @@
 # Requirement Traceability Map — All Systems
 
-**Updated:** 2026-10-07 (release 1.1.0) (release 1.1.0) (release 1.1.0)
+**Updated:** 2026-10-07 (release 1.1.0) (release 1.1.0) (release 1.1.0) (release 1.1.0)
 
 Legend: ✅ Implemented and verified | ⚠️ Partial / conflicting | ❌ Not implemented | ◻️ Code present, not verified (no tagged test or E2E check yet) | 🗄️ Deprecated / descoped | 🆕 New (spec only, no code yet)
 
@@ -31,6 +31,7 @@ Legend: ✅ Implemented and verified | ⚠️ Partial / conflicting | ❌ Not im
 | [SEASON](#seasonal-challenge) | `docs/SeasonalChallengeSpec.md` | ✅ 5 · ◻️ 1 |
 | [DAILY](#daily-goal-system) | `docs/DailyGoalSystem.md` | ✅ 2 · ◻️ 3 |
 | [CLASS](#class-progression-unlocks) | `docs/ClassProgressionUnlocks.md` | ✅ 1 · ◻️ 3 |
+| [DISPLAY](#display-modes) | `docs/GameDesignSpec.md` | ✅ 6 |
 | [REVIEW](#review-created-requirements) | `docs/review/REQUIREMENT_TRACEABILITY.md` | ✅ 53 · ⚠️ 6 · ◻️ 6 |
 | [HARMONY](#harmony-difficulty) | `docs/HarmonyDifficultySystem.md` | ✅ 14 · ◻️ 18 |
 
@@ -594,6 +595,21 @@ Key requirements (see spec for full list):
 | ---- | ------------- | ------ | -------- | ---------- | -------- |
 | RELIC-SLOT-002 | `RunState.HeldRelics: List<RelicInstance>` — multi-relic list field (future-proof; currently max 1 entry enforced by game logic) | `Assets/Scripts/Core/RuntimeModels.cs` | `RunState.HeldRelics` | — | ◻️ |
 | RELIC-SLOT-003 | Legacy migration on resume: if `HasRelic && HeldRelic != null && HeldRelics empty` → migrate single relic into list | `Assets/Scripts/Save/RunResumeService.cs` | `RestoreTransientState` | — | ◻️ |
+
+---
+
+## Display Modes
+
+**Spec:** `docs/GameDesignSpec.md` v1.7 §Display Modes
+
+| ID | Description | File | Method | Evidence | Status |
+| ---- | ------------- | ------ | -------- | ---------- | -------- |
+| DISPLAY-MODE-001 | Four display modes: Fullscreen, Borderless Fullscreen, Windowed, Frameless Window | `Assets/Scripts/UI/OptionsController.cs` | `ToUnityFullScreenMode`, `DisplayModeDropdown` | DisplayModeTests, GeneratedUiPlayModeTraversalTests | ✅ |
+| DISPLAY-MODE-002 | Window size: chosen resolution if it leaves 10 % free, else largest standard 16:9 size that does | `Assets/Scripts/UI/OptionsController.cs` | `GetWindowSize` | DisplayModeTests | ✅ |
+| DISPLAY-MODE-003 | Window modes open centred on the monitor work area | `Assets/Scripts/Platform/WindowFrameService.cs` | `Win32.ApplyFrame` | E2E/diagnostic B16, B19 | ✅ |
+| DISPLAY-MODE-004 | Frameless Window via window style (Windows player); Windowed elsewhere | `Assets/Scripts/Platform/WindowFrameService.cs` | `Apply`, `Runner` | E2E/diagnostic B16, B19 | ✅ |
+| DISPLAY-MODE-005 | Saved values 0–3, unknown → Fullscreen, legacy flag → Windowed; Fullscreen flag false for window modes | `Assets/Scripts/Save/SaveFileService.cs` | `SanitizeOptions` | DisplayModeTests | ✅ |
+| DISPLAY-MODE-006 | Fullscreen toggle keeps Frameless Window / Borderless Fullscreen when chosen | `Assets/Scripts/UI/OptionsController.cs` | `SetFullscreen` | DisplayModeTests | ✅ |
 
 ---
 

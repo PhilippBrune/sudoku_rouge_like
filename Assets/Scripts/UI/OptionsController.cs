@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Platform;
 using SudokuRoguelike.Save;
 
 namespace SudokuRoguelike.UI
@@ -62,10 +63,7 @@ namespace SudokuRoguelike.UI
             // Apply graphics settings immediately so they take effect on startup/slot switch
             AudioListener.volume = _options.Audio.MasterVolume;
             var gfx = _options.Graphics;
-            ApplyDisplayMode(gfx);
-            if (gfx.ResolutionWidth > 0 && gfx.ResolutionHeight > 0)
-                Screen.SetResolution(gfx.ResolutionWidth, gfx.ResolutionHeight,
-                    ToUnityFullScreenMode(gfx.DisplayMode));
+            ApplyDisplay(gfx);
             QualitySettings.vSyncCount = gfx.VSync ? 1 : 0;
         }
 
@@ -237,12 +235,16 @@ namespace SudokuRoguelike.UI
 
         // ── Graphics ──────────────────────────────────────────────────────────────
 
+        // [REQ: DISPLAY-MODE-006] The Fullscreen toggle switches between a fullscreen mode and a window. Turning it off
+        // keeps Frameless Window when that was chosen; turning it on keeps Borderless Fullscreen.
         public void SetFullscreen(bool on)
         {
             var gfx = GetOptions().Graphics;
-            gfx.Fullscreen = on;
-            gfx.DisplayMode = on ? DisplayModeOption.Fullscreen : DisplayModeOption.Windowed;
-            ApplyDisplayMode(gfx);
+            var current = NormalizeDisplayMode(gfx.DisplayMode);
+            if (on) gfx.DisplayMode = IsWindowMode(current) ? DisplayModeOption.Fullscreen : current;
+            else gfx.DisplayMode = IsWindowMode(current) ? current : DisplayModeOption.Windowed;
+            gfx.Fullscreen = !IsWindowMode(gfx.DisplayMode);
+            ApplyDisplay(gfx);
             SaveOptions();
         }
 
@@ -250,8 +252,8 @@ namespace SudokuRoguelike.UI
         {
             var gfx = GetOptions().Graphics;
             gfx.DisplayMode = NormalizeDisplayMode(mode);
-            gfx.Fullscreen = gfx.DisplayMode != DisplayModeOption.Windowed;
-            ApplyDisplayMode(gfx);
+            gfx.Fullscreen = !IsWindowMode(gfx.DisplayMode);
+            ApplyDisplay(gfx);
             SaveOptions();
         }
 
@@ -293,7 +295,7 @@ namespace SudokuRoguelike.UI
             var safe = ResolveSupportedResolution(width, height, GetSupportedResolutions());
             opt.Graphics.ResolutionWidth = safe.width;
             opt.Graphics.ResolutionHeight = safe.height;
-            Screen.SetResolution(safe.width, safe.height, ToUnityFullScreenMode(opt.Graphics.DisplayMode));
+            ApplyDisplay(opt.Graphics);
             SaveOptions();
         }
 
@@ -372,9 +374,8 @@ namespace SudokuRoguelike.UI
                 GetSupportedResolutions());
             gfx.ResolutionWidth   = safeResolution.width;
             gfx.ResolutionHeight  = safeResolution.height;
-            ApplyDisplayMode(gfx);
+            ApplyDisplay(gfx);
             QualitySettings.vSyncCount = gfx.VSync ? 1 : 0;
-            Screen.SetResolution(gfx.ResolutionWidth, gfx.ResolutionHeight, ToUnityFullScreenMode(gfx.DisplayMode));
             SaveOptions();
         }
 
@@ -450,21 +451,71 @@ namespace SudokuRoguelike.UI
                 : DisplayModeOption.Fullscreen;
         }
 
-        private static FullScreenMode ToUnityFullScreenMode(DisplayModeOption mode)
+        public static bool IsWindowMode(DisplayModeOption mode) =>
+            mode == DisplayModeOption.Windowed || mode == DisplayModeOption.FramelessWindow;
+
+        // [REQ: DISPLAY-MODE-001] Fullscreen is exclusive; Borderless Fullscreen is a borderless window covering the
+        // display; Window and Frameless Window are Unity windows whose frame WindowFrameService sets.
+        public static FullScreenMode ToUnityFullScreenMode(DisplayModeOption mode)
         {
             return NormalizeDisplayMode(mode) switch
             {
                 DisplayModeOption.Borderless => FullScreenMode.FullScreenWindow,
                 DisplayModeOption.Windowed => FullScreenMode.Windowed,
+                DisplayModeOption.FramelessWindow => FullScreenMode.Windowed,
                 _ => FullScreenMode.ExclusiveFullScreen
             };
         }
 
-        private static void ApplyDisplayMode(GraphicsSettingsModel graphics)
+        /// <summary>Standard 16:9 window sizes, largest first.</summary>
+        public static readonly Vector2Int[] StandardWindowSizes =
         {
-            var mode = NormalizeDisplayMode(graphics?.DisplayMode ?? DisplayModeOption.Fullscreen);
-            Screen.fullScreenMode = ToUnityFullScreenMode(mode);
-            Screen.fullScreen = mode != DisplayModeOption.Windowed;
+            new Vector2Int(3840, 2160), new Vector2Int(2560, 1440), new Vector2Int(1920, 1080),
+            new Vector2Int(1600, 900), new Vector2Int(1280, 720), new Vector2Int(960, 540)
+        };
+
+        // [REQ: DISPLAY-MODE-002] A window uses the chosen resolution when it leaves 10 % of the display free in both
+        // directions (room for the frame and the taskbar); otherwise the largest standard 16:9 size that does.
+        public static Vector2Int GetWindowSize(int selectedWidth, int selectedHeight, int displayWidth, int displayHeight)
+        {
+            if (displayWidth <= 0 || displayHeight <= 0)
+                return new Vector2Int(Math.Max(selectedWidth, 960), Math.Max(selectedHeight, 540));
+            var maxWidth = displayWidth * 9 / 10;
+            var maxHeight = displayHeight * 9 / 10;
+            if (selectedWidth > 0 && selectedHeight > 0 && selectedWidth <= maxWidth && selectedHeight <= maxHeight)
+                return new Vector2Int(selectedWidth, selectedHeight);
+            foreach (var size in StandardWindowSizes)
+                if (size.x <= maxWidth && size.y <= maxHeight) return size;
+            return StandardWindowSizes[StandardWindowSizes.Length - 1];
+        }
+
+        private static Vector2Int DisplaySize()
+        {
+            var display = Display.main;
+            if (display != null && display.systemWidth > 0 && display.systemHeight > 0)
+                return new Vector2Int(display.systemWidth, display.systemHeight);
+            var desktop = Screen.currentResolution;
+            return new Vector2Int(desktop.width, desktop.height);
+        }
+
+        // The one place that applies display mode and size: startup, mode, resolution and reset.
+        private static void ApplyDisplay(GraphicsSettingsModel graphics)
+        {
+            if (graphics == null) return;
+            var mode = NormalizeDisplayMode(graphics.DisplayMode);
+            var unityMode = ToUnityFullScreenMode(mode);
+            int width = graphics.ResolutionWidth, height = graphics.ResolutionHeight;
+            if (IsWindowMode(mode))
+            {
+                var display = DisplaySize();
+                var size = GetWindowSize(width, height, display.x, display.y);
+                width = size.x;
+                height = size.y;
+            }
+
+            if (width > 0 && height > 0) Screen.SetResolution(width, height, unityMode);
+            else Screen.fullScreenMode = unityMode;
+            WindowFrameService.Apply(mode, width, height);
         }
     }
 }

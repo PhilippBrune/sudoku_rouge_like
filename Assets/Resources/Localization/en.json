@@ -1,4 +1,5 @@
 ﻿{
+    "DisplayMode.FramelessWindow":  "Frameless Window",
     "Class.UnlockProgress.PerfectRunIncomplete":  "Perfect run (0 mistakes, all 5 floors): not yet",
     "Class.UnlockProgress.PerfectRunComplete":  "Perfect run (0 mistakes, all 5 floors): done!",
     "Class.UnlockProgress.ItemCodexIncomplete":  "Item codex: not complete yet",
@@ -371,7 +372,7 @@
     "Contrast":  "Contrast",
     "DisplayMode":  "Display Mode",
     "DisplayMode.Fullscreen":  "Fullscreen",
-    "DisplayMode.Borderless":  "Borderless",
+    "DisplayMode.Borderless":  "Borderless Fullscreen",
     "DisplayMode.Windowed":  "Windowed",
     "Audio.MenuMusicStyle.Label":  "Menu Music",
     "Audio.MenuMusicStyle.Garden":  "Garden Theme",

@@ -1,19 +1,20 @@
 # 8-bit Soundtrack — Prompts and Delivery Sheet
 
-**Version:** 1.0 | **Date:** 2026-10-14 | **Status:** new
+**Version:** 1.1 | **Date:** 2026-10-14 | **Status:** new
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.1 | 2026-10-14 | new | Prompts rewritten to sound more 8-bit: every prompt names only the NES chip voices (pulse, triangle, noise) and no real instruments; short enough for Mureka. Generation through the Mureka API with `tools/audio/mureka_generate.py` (section 7). Sound effects: Mureka makes songs, not sub-second effects; section 5 says how they are made instead. |
 | 1.0 | 2026-10-14 | new | Owner decision: replace all music and sound effects with an 8-bit (chiptune) set made with an AI tool. Track list, prompts, delivery format (AUDIO-MUSIC-001/002 in `docs/AudioVisualDirection.md`). |
 
 Every sound in the game gets an 8-bit replacement: 21 music tracks and 35 sound effects. Each entry below has the file name the game loads, length, loop rule, tempo, key and a prompt to paste into an AI music or sound tool. Until a file arrives, the current sound keeps playing; nothing breaks if only part of the set is delivered.
 
 ## 1. How to use this sheet
 
-1. Paste the **style block** (2.) in front of every music prompt, so all tracks sound like one soundtrack.
-2. Generate 2–3 takes per track and keep the best. Instrumental only.
+1. Paste the **style block** (2.) in front of every music prompt, so all tracks sound like one soundtrack. The Mureka tool (7.) does this for you.
+2. Generate 2–3 takes per track and keep the best. Instrumental only (in the Mureka app: **Instrumental**, not Song).
 3. Export **WAV, 44.1 kHz, 16-bit**: stereo for music, mono for sound effects.
 4. Name the file exactly as in the tables (for example `floor_00_bamboo_courtyard.wav`) and put it in `steam_assets/audio_8bit/` (music and SFX in one folder is fine). I move the files into `Assets/Resources/audio/`, cut the loop points, convert music to OGG, run the tests and the build.
 5. Listen in the game (agents cannot hear): loop seam, level against the sound effects, boss switch.
@@ -22,7 +23,9 @@ AI tools rarely end a track exactly on a loop point. Generate a little longer th
 
 ## 2. Style block (put in front of every music prompt)
 
-> 8-bit chiptune, NES/Famicom sound chip: two pulse-wave channels, one triangle bass, one noise channel for percussion, no reverb tail, no vocals, instrumental only. Japanese garden mood, pentatonic melodies (yo and in scales), calm and focused like a puzzle game, clean mix, seamless loop.
+> 8-bit chiptune, NES Famicom 2A03 sound chip, retro video game music. Only four chip voices: two square pulse-wave channels (12.5 %, 25 %, 50 % duty), one triangle-wave bass, one white-noise channel for drums; chords as fast arpeggios. Dry and lo-fi, no reverb, no real instruments, no synth pads, no vocals. Japanese pentatonic melody, loopable.
+
+Why it is worded like this: AI music models drift to modern production when a prompt mentions real instruments or places ("flute", "taiko", "bell", "rain"). The prompts below describe only what the four chip channels play; the garden theme comes through in the scales, tempo and mood words.
 
 ## 3. Delivery rules (AUDIO-MUSIC-002)
 
@@ -31,7 +34,7 @@ AI tools rarely end a track exactly on a loop point. Generate a little longer th
 | Format | WAV 44.1 kHz 16-bit stereo | WAV 44.1 kHz 16-bit mono |
 | Loudness | about −16 LUFS integrated, peaks ≤ −1 dBTP | peaks ≤ −3 dBFS, quieter than the music bed for repeated sounds |
 | Loop | seamless: ends where it begins, cut on a bar line, no fade-out | one-shot, no silence before the sound, short tail |
-| Boss tracks | same key and motif as their stage, faster and darker (they replace the stage track during the boss puzzle, AUDIO-MUSIC-003) | — |
+| Boss tracks | same key and instrumentation as their stage, faster and darker (they replace the stage track during the boss puzzle, AUDIO-MUSIC-003). For the same melody, generate the stage track first and use the chosen take as the **reference track** for its boss track in the Mureka app; separate prompts cannot share a melody. | — |
 
 ## 4. Music
 
@@ -65,55 +68,60 @@ Your list (stages, bosses, walks, menu, credits, victory) is M1–M14. M15–M21
 
 ### 4.2 Prompts
 
-Each prompt follows the style block.
+Each prompt follows the style block. The tool in section 7 reads these lines, so keep the format `**M<n> `<file>`** — <prompt>`.
 
-**M1 `menu_loop`** — Main menu, 80 BPM, D yo scale, 90 s seamless loop. A calm title theme for a zen sudoku roguelike: soft 25 % pulse lead with a memorable 8-bar melody, slow triangle bass on root and fifth, gentle 12.5 % pulse arpeggio like wind chimes, very light noise hi-hat on beats 2 and 4. Welcoming, curious, unhurried.
+**M1 `menu_loop`** — Title screen theme, 80 BPM, D yo pentatonic (D E G A B). A 25 % square lead plays a memorable 8-bar melody, a 12.5 % pulse plays slow sparkling high arpeggios, triangle bass on root and fifth, soft noise hi-hat on beats 2 and 4. Calm, curious, welcoming.
 
-**M2 `floor_00_bamboo_courtyard`** — Stage 1 "Bamboo Courtyard", 92 BPM, D yo scale, 90–120 s seamless loop. Morning in a bamboo garden: bright 25 % pulse melody, plucky staccato pulse counter-line imitating a bamboo flute, bouncing triangle bass, noise percussion like soft wooden clacks. Fresh, light, gently motivating for solving puzzles.
+**M2 `floor_00_bamboo_courtyard`** — Level 1 theme, 92 BPM, D yo pentatonic. Bright 25 % square melody, staccato echo notes on the second pulse channel, bouncing eighth-note triangle bass, short clicky noise percussion. Fresh morning energy, light, gently motivating.
 
-**M3 `boss_layer_00`** — Stage 1 boss, 112 BPM, D in scale, 60–90 s seamless loop. Boss version of the bamboo courtyard theme: same motif in a darker mode, driving eighth-note triangle bass, 50 % pulse lead with fast arpeggios, snappy noise drums, rising tension in the B section. Focused, urgent, not chaotic.
+**M3 `boss_layer_00`** — Level 1 boss theme, 112 BPM, D in scale (D Eb G A Bb). Driving eighth-note triangle bass, 50 % square lead with fast arpeggios, snappy noise kick and snare, tension rising in the second half. Urgent and focused, not chaotic.
 
-**M4 `floor_01_moss_garden`** — Stage 2 "Moss Garden", 84 BPM, A in scale, 90–120 s seamless loop. Quiet rain in a moss garden: soft 12.5 % pulse lead with echo-like repeated notes, slow triangle drone bass, noise channel as light rain hiss with an occasional low "temple bell" hit. Contemplative, damp, still.
+**M4 `floor_01_moss_garden`** — Level 2 theme, 84 BPM, A in scale (A Bb D E F). Soft 12.5 % pulse lead, a quieter delayed copy of it on the second pulse channel as an echo, slow triangle bass, a faint noise-channel hiss and a rare deep triangle note. Still, contemplative, damp.
 
-**M5 `boss_layer_01`** — Stage 2 boss, 104 BPM, A in scale, 60–90 s seamless loop. Boss version of the moss garden theme: heavier triangle bass ostinato, tense pulse harmonies in minor seconds, rolling noise drums like a storm building. Ominous but steady.
+**M5 `boss_layer_01`** — Level 2 boss theme, 104 BPM, A in scale. Heavy triangle bass ostinato, the two pulse channels clashing in minor seconds, rolling noise-channel drums building like a storm. Ominous but steady.
 
-**M6 `floor_02_koi_terrace`** — Stage 3 "Koi Terrace", 100 BPM, G major pentatonic, 90–120 s seamless loop. Sunlit water and koi: flowing 16th-note pulse arpeggios like ripples, a smooth 25 % pulse melody that glides, round triangle bass, light noise "splash" accents. Playful, flowing, bright.
+**M6 `floor_02_koi_terrace`** — Level 3 theme, 100 BPM, G major pentatonic. Rippling 16th-note pulse arpeggios, a smooth 25 % square melody with pitch slides, round triangle bass, light noise splashes on the off-beats. Playful, flowing, sunny.
 
-**M7 `boss_layer_02`** — Stage 3 boss, 120 BPM, G minor pentatonic, 60–90 s seamless loop. Boss version of the koi terrace theme: same arpeggio idea turned minor and faster, punchy triangle bass, syncopated noise drums, call-and-response between the two pulse channels. Energetic, slippery, tense.
+**M7 `boss_layer_02`** — Level 3 boss theme, 120 BPM, G minor pentatonic. Fast minor pulse arpeggios, punchy triangle bass, syncopated noise drums, call and response between the two square channels. Energetic, slippery, tense.
 
-**M8 `floor_03_stone_lantern_walk`** — Stage 4 "Stone Lantern Walk", 88 BPM, E in scale, 90–120 s seamless loop. Twilight path lit by stone lanterns: warm 25 % pulse melody with slight vibrato, sustained triangle bass, slow pulse chords, sparse low noise hits like a distant taiko. Warm, quiet resolve, slightly mysterious.
+**M8 `floor_03_stone_lantern_walk`** — Level 4 theme, 88 BPM, E in scale (E F A B C). Warm 25 % square melody with vibrato, sustained triangle bass, slow pulse arpeggios, sparse deep noise hits like distant drums. Twilight, quiet resolve, a little mysterious.
 
-**M9 `boss_layer_03`** — Stage 4 boss, 110 BPM, E in scale, 60–90 s seamless loop. Boss version of the lantern walk theme: marching triangle bass, sharp 50 % pulse stabs, noise taiko pattern growing louder each 8 bars, flickering arpeggios like fire. Determined, heated.
+**M9 `boss_layer_03`** — Level 4 boss theme, 110 BPM, E in scale. Marching triangle bass, sharp 50 % square stabs, a noise drum pattern that grows denser every 8 bars, flickering fast arpeggios. Determined, heated.
 
-**M10 `floor_04_shrine_summit`** — Stage 5 "Shrine Summit", 108 BPM, C minor pentatonic resolving to C major halfway, 120 s seamless loop. Final climb to a mountain shrine in mist: full four-channel arrangement, heroic pulse melody, counter-melody in the second pulse, strong triangle bass, steady noise drums, a bell-like accent at the loop point. Majestic, hopeful, building.
+**M10 `floor_04_shrine_summit`** — Level 5 theme, 108 BPM, C minor pentatonic turning to C major halfway. All four chip channels: heroic 25 % square lead, counter-melody on the second pulse, strong triangle bass, steady noise drums, a high triangle accent at the loop point. Majestic, hopeful, the final climb.
 
-**M11 `boss_layer_04`** — Final boss, 128 BPM, C minor pentatonic, 90 s seamless loop. Final boss theme based on the shrine summit motif: fast driving bass, dramatic pulse lead with octave jumps, intense noise drum fills, a short calm bar before the loop for breath. Epic, decisive, the hardest puzzle of the run.
+**M11 `boss_layer_04`** — Final boss theme, 128 BPM, C minor pentatonic. Fast driving triangle bass, dramatic square lead with octave jumps, intense noise drum fills, one calm bar before the loop. Epic, decisive, the hardest fight.
 
-**M12 `walk_loop`** — Daily Walk and Monthly Walk, 96 BPM, F yo scale, 90 s seamless loop. A daily stroll through the garden: friendly walking-pace triangle bass, cheerful 25 % pulse melody, light noise shuffle, a small "bell" motif every 8 bars. Relaxed routine, a little ritual each day.
+**M12 `walk_loop`** — Daily challenge theme, 96 BPM, F yo pentatonic. Walking-pace triangle bass, cheerful 25 % square melody, light noise shuffle, a short high pulse blip motif every 8 bars. Relaxed, friendly, a small daily ritual.
 
-**M13 `credits_loop`** — Credits, 76 BPM, D yo scale, 120 s seamless loop. Reprise of the main menu melody, slower and more tender: 12.5 % pulse lead, warm sustained triangle, gentle arpeggios, no drums for the first half, soft drums in the second half. Grateful, nostalgic, peaceful.
+**M13 `credits_loop`** — Ending credits theme, 76 BPM, D yo pentatonic. Tender 12.5 % pulse lead, warm sustained triangle, gentle arpeggios; no drums in the first half, soft noise drums in the second. Grateful, nostalgic, peaceful.
 
-**M14 `run_victory`** — Full-run victory end screen, 100 BPM, C major pentatonic, 60 s seamless loop (plays after the short victory fanfare). Triumphant but calm celebration: bright pulse melody quoting the shrine summit theme in major, bouncing triangle bass, festive noise drums, sparkling high arpeggios. Earned, joyful, serene.
+**M14 `run_victory`** — Victory screen theme, 100 BPM, C major pentatonic. Bright square melody, bouncing triangle bass, festive noise drums, sparkling high arpeggios. Earned, joyful, calm.
 
-**M15 `run_defeat`** — Defeat end screen, 72 BPM, A in scale, 45 s seamless loop (plays after the game-over stinger). Gentle melancholy, not punishing: slow 12.5 % pulse melody, soft triangle bass, no drums, a hopeful turn in the last bars that invites another try.
+**M15 `run_defeat`** — Game over screen theme, 72 BPM, A in scale. Slow 12.5 % pulse melody, soft triangle bass, no drums, a hopeful turn in the last bars that invites another try. Gentle melancholy, not punishing.
 
-**M16 `shop_loop`** — Shop, 104 BPM, G yo scale, 60 s seamless loop. A spirit merchant's stall: bouncy triangle bass, cheeky 25 % pulse melody with grace notes, coin-like high pulse blips, light noise shuffle. Playful, inviting.
+**M16 `shop_loop`** — Shop theme, 104 BPM, G yo pentatonic. Bouncy triangle bass, cheeky 25 % square melody with grace notes, coin-like high pulse blips, light noise shuffle. Playful, inviting.
 
-**M17 `rest_loop`** — Rest, 70 BPM, D yo scale, 60 s seamless loop. A meditation stone in a quiet courtyard: very soft pulse melody, long triangle notes, no drums, occasional chime arpeggio. Restful, breathing.
+**M17 `rest_loop`** — Rest area theme, 70 BPM, D yo pentatonic. Very soft pulse melody, long triangle notes, no drums, an occasional sparkling high pulse arpeggio. Restful, slow breathing.
 
-**M18 `endless_zen_loop`** — Endless Zen, 66 BPM, D yo scale, 120 s seamless loop. Minimal focus music: sparse pulse notes with long rests, soft triangle drone, no drums, slowly changing harmony. Deep focus, flow state, unobtrusive.
+**M18 `endless_zen_loop`** — Endless mode focus music, 66 BPM, D yo pentatonic. Sparse pulse notes with long rests, a soft triangle drone, no drums, harmony changing slowly. Deep focus, unobtrusive.
 
-**M19 `spirit_trials_loop`** — Spirit Trials (timed), 132 BPM, E in scale, 90 s seamless loop. Timed challenge: ticking noise percussion like a clock, urgent triangle bass, staccato pulse motif that climbs, tension that lifts every 16 bars. Fast, focused, competitive.
+**M19 `spirit_trials_loop`** — Time attack theme, 132 BPM, E in scale. Ticking noise hi-hat like a clock, urgent triangle bass, a staccato square motif that climbs, tension lifting every 16 bars. Fast, focused, competitive.
 
-**M20 `tutorial_loop`** — Custom puzzles and Sudoku Basics, 88 BPM, C major pentatonic, 90 s seamless loop. Friendly learning music: simple clear pulse melody, steady triangle bass, soft noise beat. Encouraging, patient, light.
+**M20 `tutorial_loop`** — Tutorial theme, 88 BPM, C major pentatonic. Simple clear square melody, steady triangle bass, soft noise beat. Encouraging, patient, light.
 
-**M21 `puzzle_loop`** — Fallback puzzle loop, 92 BPM, D yo scale, 60 s seamless loop. A shorter variation of the Stage 1 theme (same motif and instrumentation).
+**M21 `puzzle_loop`** — Short level theme, 92 BPM, D yo pentatonic. 25 % square melody, staccato second pulse, bouncing triangle bass, clicky noise percussion. Light and steady; may also be a cut of M2.
 
 ## 5. Sound effects (all 35 replaced)
 
-Prompt prefix for every sound effect:
+**Mureka cannot make these.** It generates songs of a minute or more, not 0.1-second effects. Two ways that sound properly 8-bit:
 
-> 8-bit retro game sound effect, NES-style square/triangle/noise synthesis, clean, short, no reverb, mono.
+- **Chip synthesis (recommended):** I generate all 35 in code from square, triangle and noise waves, like the NES did (deterministic, no cost), and you listen and ask for changes; or
+- **sfxr / jsfxr** (free, https://sfxr.me): presets like "Pickup/Coin", "Hit/Hurt", "Powerup", tweak, export WAV.
+
+If you use another AI sound tool, put this prefix in front of each prompt:
+
+> 8-bit NES sound effect made only by a square, triangle or noise channel. One short sound, no music, no reverb, mono.
 
 | File | Plays when | Length | Prompt |
 |---|---|---|---|
@@ -154,6 +162,37 @@ Prompt prefix for every sound effect:
 | `relic_reveal` | A relic is revealed | 0.8 s | mysterious shimmering arpeggio, ends on a bell-like note |
 
 Optional new jingles (not used by the game yet; only if you want them): boss defeated, floor cleared, prestige, daily streak.
+
+## 7. Generating with Mureka (API)
+
+The Mureka desktop app has no interface another program can use, but Mureka offers an API with the same models: `tools/audio/mureka_generate.py` sends the prompts above (style block + track prompt) and downloads every take. Facts used: base URL `https://api.mureka.ai`, `POST /v1/instrumental/generate` with `model` "auto" and `prompt`, then `GET /v1/instrumental/query/{task_id}` until the status is `succeeded`; the takes are the `choices` (sources: platform.mureka.ai docs, Mureka's own MCP server `mureka-mcp` 0.0.13).
+
+**You (once):**
+
+1. Sign in at https://platform.mureka.ai, add credit (the API is billed there; check whether your app subscription includes API credit), open **API Keys** and create a key.
+2. Store it on your PC, not in chat. In PowerShell (it asks for the key and does not show it):
+
+   ```powershell
+   $k = Read-Host "Mureka API key" -AsSecureString
+   New-Item -ItemType Directory -Force "$env:USERPROFILE\.mureka" | Out-Null
+   "MUREKA_API_KEY=$([Net.NetworkCredential]::new('', $k).Password)" | Set-Content -Encoding ascii "$env:USERPROFILE\.mureka\.env"
+   ```
+
+3. Tell me "Mureka key is in".
+
+**Me (or you):**
+
+```powershell
+python tools/audio/mureka_generate.py list                 # tracks, prompt lengths, takes already downloaded
+python tools/audio/mureka_generate.py show M3               # the full prompt, to paste into the app as well
+python tools/audio/mureka_generate.py credit                # account balance
+python tools/audio/mureka_generate.py generate M1 M2        # dry run: what would be sent
+python tools/audio/mureka_generate.py generate M1 M2 --yes  # send, wait, download
+python tools/audio/mureka_generate.py generate --all --yes  # every track without takes yet
+python tools/audio/mureka_generate.py resume                # finish tasks an interrupted run left open
+```
+
+Takes land in `steam_assets/audio_8bit/mureka/<file>/` (`<file>_take1.mp3`, …, plus the task JSON); the folder is not committed. Every request costs credit, so `generate` only sends with `--yes`, skips tracks that already have takes (`--again` to regenerate) and never prints the key. You pick the takes; I then do section 6.
 
 ## 6. After delivery (Claude)
 

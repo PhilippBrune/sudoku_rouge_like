@@ -1,4 +1,6 @@
 {
+    "InRun.Options.RunTab":  "Partida",
+    "Options.LanguageInMainMenu":  "Cambia el idioma en las Opciones del menú principal.",
     "DisplayMode.FramelessWindow":  "Ventana sin bordes",
     "Profile.SlotInfo":  "Clase: {0}\nPartidas: {1} iniciadas / {2} ganadas\nJefes: {3}\nÚltima partida: {4}{5}",
     "run in progress":  "partida en curso",

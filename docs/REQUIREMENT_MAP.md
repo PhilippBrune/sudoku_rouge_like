@@ -32,6 +32,7 @@ Legend: ✅ Implemented and verified | ⚠️ Partial / conflicting | ❌ Not im
 | [DAILY](#daily-goal-system) | `docs/DailyGoalSystem.md` | ✅ 2 · ◻️ 3 |
 | [CLASS](#class-progression-unlocks) | `docs/ClassProgressionUnlocks.md` | ✅ 1 · ◻️ 3 |
 | [DISPLAY](#display-modes) | `docs/GameDesignSpec.md` | ✅ 7 |
+| [UI-OPT](#options-panels) | `docs/GameDesignSpec.md` | ✅ 3 |
 | [LOC](#localization) | `docs/localization-catalog.md` | ✅ 3 |
 | [AUDIO](#audio) | `docs/AudioVisualDirection.md` | ✅ 3 · ◻️ 4 |
 | [REVIEW](#review-created-requirements) | `docs/review/REQUIREMENT_TRACEABILITY.md` | ✅ 53 · ⚠️ 6 · ◻️ 6 |
@@ -617,6 +618,18 @@ Key requirements (see spec for full list):
 | DISPLAY-MODE-005 | Saved values 0–3, unknown → Fullscreen, legacy flag → Windowed; Fullscreen flag false for window modes | `Assets/Scripts/Save/SaveFileService.cs` | `SanitizeOptions` | DisplayModeTests | ✅ |
 | DISPLAY-MODE-006 | Fullscreen toggle keeps Frameless Window / Borderless Fullscreen when chosen | `Assets/Scripts/UI/OptionsController.cs` | `SetFullscreen` | DisplayModeTests | ✅ |
 | DISPLAY-MODE-007 | Window title "Run of the Nine" in every mode (Windows player) | `Assets/Scripts/Platform/WindowFrameService.cs` | `WindowTitle`, `Win32.SetTitle`, `Runner.Update` | E2E/diagnostic B23 | ✅ |
+
+---
+
+## Options Panels
+
+**Spec:** `docs/GameDesignSpec.md` v1.9 §Options Panels
+
+| ID | Description | File | Method | Evidence | Status |
+| ---- | ------------- | ------ | -------- | ---------- | -------- |
+| UI-OPT-001 | In-run Options use the main Options' tabs, controls and look (one factory) | `Assets/Scripts/UI/OptionsUiFactory.cs` | `BuildStandardTabs` (called by `MainMenuBlueprintBuilder.BuildOptionsPanel` and `InRunUiBlueprintBuilder.BuildInGameOptionsPanel`) | GeneratedUiPlayModeTraversalTests (`InRunOptions_OfferEveryMainMenuOptionsControl`, `InRunOptionsControls_CanBeChangedWithoutLeavingOptionsPanel`), GeneratedUiWiringContractTests, screenshots | ✅ |
+| UI-OPT-002 | In-run Accessibility and Run tabs; Back always visible | `Assets/Scripts/UI/InRunUiBlueprintBuilder.cs` | `BuildInGameOptionsPanel`, `OptionsUiFactory.BuildAccessibilitySection` | GeneratedUiPlayModeTraversalTests, InRunUiPlayModeTests (`RunMenu_ShowsSeedAndModifiers_AndAbandonEndsTheRun`) | ✅ |
+| UI-OPT-003 | D-pad reaches every control of every tab, the tab bar and Back | `Assets/Scripts/UI/OptionsTabSet.cs` | `Relink`, `Activate` | GeneratedUiPlayModeTraversalTests (`OptionsPanels_EveryControlIsReachableWithTheDpad`) | ✅ |
 
 ---
 

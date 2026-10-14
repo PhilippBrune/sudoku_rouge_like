@@ -46,7 +46,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-033](#gap-033) | Floor-1 tiles can roll 6★ (early-clarity guardrail) | FIXED (1.1) | LOW | P3 |
 | [GAP-034](#gap-034) | Reed Pledge bonus XP booked to the previous tile / lost on first tile | FIXED (1.1) | LOW | P3 |
 | [GAP-035](#gap-035) | Mistake HP penalty lives in the UI layer, not in `RunDirector` | FIXED (1.1) | LOW | P3 |
-| [GAP-029](#gap-029) | UI readability and polish issues | PARTIALLY FIXED (1.1; in-game Options restyle open) | COSMETIC | P4 |
+| [GAP-029](#gap-029) | UI readability and polish issues | FIXED (in-game Options rebuilt 2026-10-14, UI-OPT-001..003) | COSMETIC | P4 |
 | [GAP-036](#gap-036) | `TryPurchaseShopOffer` charges gold when the item cannot be stored | FIXED (1.1) | LOW | P4 |
 | [GAP-038](#gap-038) | XP log and run analytics were lost on resume | FIXED (1.1, found 2026-10-07) | MEDIUM | P2 |
 | [GAP-040](#gap-040) | Item Block debuff applied the item effect but kept the item | FIXED (1.1, found 2026-10-07) | MEDIUM | P2 |
@@ -124,7 +124,7 @@ Done on request for release 1.1.0: every remaining gap's suggested fix, plus the
 | GAP-026 | One debuff per Garden Run boss from Floor 3, from run seed + floor; CrossWipe and PencilScramble only at VeryHigh; GivenReveal never delivered. CellBlur is now rendered; Item Block blocks the whole item use (GAP-040). PencilPoison, FogPulse, NumberBlind and DigitShift are descoped (FUTURE-010). | `BossDebuffTests` (23), `InRunUiPlayModeTests.BossGate_*` |
 | GAP-027 | `RunState.GoldCollected` counts every gain; the 50,000 gold unlock reads it. | `EconomyActionTests.CollectedGold_*` |
 | GAP-028 | Daily Walk and Monthly Walk widgets on the main menu with an Open button; the streak resets after a missed day. | `GeneratedUiPlayModeTraversalTests.HomeWidgets_*`, `DailyStreakTests` |
-| GAP-029 | Digit styles (bold ivory givens, blue player digits, dark digit on the selected cell), size × stars notation everywhere, gold label synced every frame, Monthly Walk header, toggle boxes (main menu, in-run, first-run), tooltip leak, locked-class contrast, fitted action labels, system button heights, Harmony description strip, "Allow irregular puzzles" ON by default (SPEC-CONF-031). Open: in-game Options restyle (FUTURE-015). | `GeneratedUiPlayModeTraversalTests`, `InRunUpdateHelperTests` |
+| GAP-029 | Digit styles (bold ivory givens, blue player digits, dark digit on the selected cell), size × stars notation everywhere, gold label synced every frame, Monthly Walk header, toggle boxes (main menu, in-run, first-run), tooltip leak, locked-class contrast, fitted action labels, system button heights, Harmony description strip, "Allow irregular puzzles" ON by default (SPEC-CONF-031). In-game Options rebuilt with the main Options' factory 2026-10-14 (UI-OPT-001..003, FUTURE-015 closed). | `GeneratedUiPlayModeTraversalTests`, `InRunUpdateHelperTests` |
 | GAP-030 | `AudioAssetService` logs each authored clip (length, rate, channels) and warns when one is missing. All clips load. Finding: every music loop is 6.0 s mono, an asset question for the owner. | `AudioClipPlayModeTests`, `AudioAssetServiceTests` |
 | GAP-031 | Autosave after every mistake. | `PlacementRulesTests` |
 | GAP-032 | Starting a run while one is saved shows a warning with "Abandon & Begin"; the abandoned run is recorded as a defeat (`RunResumeService.AbandonSavedRun`, `RunResultFactory`). | `RunSeedAndAbandonTests` |
@@ -601,7 +601,7 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 **UI readability and polish issues**
 
 - **Requirement:** REQ-UI-103, META-UNLOCK-004, GEN-REGION-003 (toggle default)
-- **Status:** PARTIALLY FIXED (1.1, see [1.1 fix log](#fix-log-2026-10-07-release-110); the in-game Options restyle needs a visual design pass, FUTURE-015); was BROKEN · **Severity:** COSMETIC · **Priority:** P4
+- **Status:** FIXED (1.1, see [1.1 fix log](#fix-log-2026-10-07-release-110); the in-game Options were rebuilt with the main Options' tabs, controls and look on 2026-10-14, UI-OPT-001..003, FUTURE-015); was BROKEN · **Severity:** COSMETIC · **Priority:** P4
 - **Problem (observed in the build):**
   - Locked class names are nearly invisible (dark on dark), and unlock conditions appear only as hover tooltips that overlap cards.
   - Toggles show no on/off state (class select, first-run accessibility, main Options).

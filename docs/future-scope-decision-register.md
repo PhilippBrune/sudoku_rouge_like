@@ -33,7 +33,7 @@ Recorded while implementing `docs/review/SPECIFICATION_ISSUES.md` and `docs/revi
 | FUTURE-012 | Accurate Map path redirect | Not built; the relic reveals tile details instead. | ClassProgressionUnlocks v0.3 | Redirect rule specified, map UI and save support, tests. |
 | FUTURE-013 | Legend polish (isolate pulse, cancel by board tap) | Not built; isolation works by tapping the entry. | GAP-025; BossMechanicsSystem §Modifier Legend Panel | Visual pass with PlayMode coverage. |
 | FUTURE-014 | French, Spanish, Portuguese gameplay content | Done 2026-10-14: 420 keys per language translated (items, relics, bosses, narrative, classes, UI messages), AI-assisted with a glossary; `LocalizationParityTests` enforces parity. Native review still open. | GAP-019 follow-up; PRG-LOCALIZATION | Native speaker review per language. |
-| FUTURE-015 | In-game Options visual style | The in-run Options panel keeps its own style; aligning it with the main Options needs a visual design pass. | GAP-029 (remaining item) | Shared panel/button style applied and reviewed in screenshots. |
+| FUTURE-015 | In-game Options visual style | Done 2026-10-14: the in-run Options are built by the main Options' factory (same tabs, controls and look, plus Accessibility and Run tabs; UI-OPT-001..003); screenshots in the E2E report §10.2f. | GAP-029 (remaining item) | Shared panel/button style applied and reviewed in screenshots. |
 | FUTURE-016 | Achievement list (MetaProgressionSystem, 52 proposed) | Not built; only the Harmony achievements (HARMONY-ACHIEVE-001) are granted. | SPEC-MAC-008 | Each achievement has an ID, a condition hook, a test and a Steamworks portal entry. |
 
 ## Release Copy Rules

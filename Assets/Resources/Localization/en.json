@@ -1,4 +1,6 @@
 ﻿{
+    "InRun.Options.RunTab":  "Run",
+    "Options.LanguageInMainMenu":  "Change the language in the main menu Options.",
     "DisplayMode.FramelessWindow":  "Frameless Window",
     "Class.UnlockProgress.PerfectRunIncomplete":  "Perfect run (0 mistakes, all 5 floors): not yet",
     "Class.UnlockProgress.PerfectRunComplete":  "Perfect run (0 mistakes, all 5 floors): done!",

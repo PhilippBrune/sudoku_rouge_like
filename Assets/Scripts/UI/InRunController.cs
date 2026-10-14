@@ -432,7 +432,7 @@ namespace SudokuRoguelike.UI
             // Wire the Back/close button inside the options panel
             if (_inGameOptionsPanel != null)
             {
-                var closeBtn = _inGameOptionsPanel.transform.Find("BtnInGameOptionsClose")?.GetComponent<Button>();
+                var closeBtn = FindInPanel<Button>(_inGameOptionsPanel.transform, "BtnInGameOptionsClose");
                 if (closeBtn != null)
                 {
                     closeBtn.onClick.RemoveAllListeners();

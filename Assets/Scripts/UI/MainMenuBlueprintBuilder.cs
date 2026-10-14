@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -16,12 +15,13 @@ namespace SudokuRoguelike.UI
     {
         [SerializeField] private bool autoBuildOnStart = true;
 
-        private static readonly Color BgColor     = new(0.06f, 0.09f, 0.08f, 1f);
-        private static readonly Color PanelColor  = new(0.10f, 0.12f, 0.10f, 0.70f);
-        private static readonly Color BtnColor    = new(0.08f, 0.06f, 0.04f, 0.78f);  // dark charcoal, 78% opaque
-        private static readonly Color BtnTextColor = new(0.98f, 0.83f, 0.26f, 1f);    // gold
-        private static readonly Color AccentColor = new(0.98f, 0.83f, 0.26f, 1f);
-        private static readonly Color TxtColor    = new(0.96f, 0.93f, 0.82f, 1f);
+        // Shared with the in-run Options (OptionsUiStyle, UI-OPT-001).
+        private static readonly Color BgColor      = OptionsUiStyle.Backdrop;
+        private static readonly Color PanelColor   = OptionsUiStyle.Card;
+        private static readonly Color BtnColor     = OptionsUiStyle.Button;
+        private static readonly Color BtnTextColor = OptionsUiStyle.ButtonText;
+        private static readonly Color AccentColor  = OptionsUiStyle.Accent;
+        private static readonly Color TxtColor     = OptionsUiStyle.Text;
         // - Over-background colours (used when a panel has an art background image) -
         private static readonly Color BgPanelOverlay = new(0.06f, 0.08f, 0.06f, 0.88f);
         private static readonly Color BgBtnNormal    = new(0.08f, 0.06f, 0.04f, 0.78f);  // same dark charcoal for art-bg panels
@@ -596,447 +596,15 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.18f, 0.04f), new Vector2(0.82f, 0.96f));
             var pr = GetPanelContent(panel);
 
-            var opts = optCtrl.GetOptions();
-
             // -- Title ----------------------------------------------------------
-            var title = BuildText("Title", pr, T("Options"), 28, TextAnchor.UpperCenter);
+            var title = BuildText("Title", pr, T("Options"), OptionsUiStyle.TitleSize, TextAnchor.UpperCenter);
             SetRect(title.rectTransform,
                 new Vector2(0.08f, 0.94f), new Vector2(0.92f, 0.99f), Vector2.zero, Vector2.zero);
 
-            // -- Tab buttons -----------------------------------------------------
-            var tabAudio   = BuildButton("TabAudio",   pr, T("Audio"),    14);
-            var tabDisplay = BuildButton("TabDisplay", pr, T("Display"),  14);
-            var tabGame    = BuildButton("TabGame",    pr, T("Gameplay"), 14);
-            SetRect(tabAudio.GetComponent<RectTransform>(),
-                new Vector2(0.02f, 0.88f), new Vector2(0.34f, 0.94f), Vector2.zero, Vector2.zero);
-            SetRect(tabDisplay.GetComponent<RectTransform>(),
-                new Vector2(0.35f, 0.88f), new Vector2(0.65f, 0.94f), Vector2.zero, Vector2.zero);
-            SetRect(tabGame.GetComponent<RectTransform>(),
-                new Vector2(0.66f, 0.88f), new Vector2(0.98f, 0.94f), Vector2.zero, Vector2.zero);
-
-            // -- Section containers (same rect, one visible at a time) -----------
-            RectTransform MakeSec(string name)
-            {
-                var go = new GameObject(name, typeof(RectTransform));
-                go.transform.SetParent(pr, false);
-                var rt = go.GetComponent<RectTransform>();
-                rt.anchorMin = new Vector2(0f, 0.10f);
-                rt.anchorMax = new Vector2(1f, 0.88f);
-                rt.offsetMin = Vector2.zero;
-                rt.offsetMax = Vector2.zero;
-                return rt;
-            }
-            var audioSec   = MakeSec("AudioSection");
-            var displaySec = MakeSec("DisplaySection");
-            var gameSec    = MakeSec("GameSection");
-
-            // -- Tab activation ---------------------------------------------------
-            var tabs     = new Button[]         { tabAudio, tabDisplay, tabGame };
-            var sections = new RectTransform[]  { audioSec, displaySec, gameSec };
-
-            void ActivateTab(int idx)
-            {
-                for (var i = 0; i < 3; i++)
-                {
-                    sections[i].gameObject.SetActive(i == idx);
-                    var tabImg = tabs[i].GetComponent<Image>();
-                    var tabLbl = tabs[i].GetComponentInChildren<Text>();
-                    if (tabImg != null) tabImg.color = i == idx
-                        ? GamePalette.WithAlpha(GamePalette.AccentGold, 0.40f)
-                        : GamePalette.WithAlpha(GamePalette.Panel, 0.80f);
-                    if (tabLbl != null) tabLbl.color = i == idx
-                        ? GamePalette.AccentGold
-                        : GamePalette.TextMuted;
-                }
-            }
-            tabAudio.onClick.RemoveAllListeners();
-            tabAudio.onClick.AddListener(() => ActivateTab(0));
-            tabDisplay.onClick.RemoveAllListeners();
-            tabDisplay.onClick.AddListener(() => ActivateTab(1));
-            tabGame.onClick.RemoveAllListeners();
-            tabGame.onClick.AddListener(() => ActivateTab(2));
-
-            // -- Helpers ---------------------------------------------------------
-            Button MakeResetBtn(string id, RectTransform parent, System.Action action)
-            {
-                var btn = BuildButton(id, parent, T("Reset"), 11);
-                btn.onClick.RemoveAllListeners();
-                btn.onClick.AddListener(() => action());
-                return btn;
-            }
-
-            // OPT-1: [<] [value%] [>] button row replacing the old Unity Slider.
-            // Returns the value Text and an update-action for the options-refresh callback.
-            (Text valLabel, System.Action<float> refresh) BuildVolumeArrowRow(string id, string label,
-                RectTransform parent, Vector2 aMin, Vector2 aMax, float initValue,
-                System.Action<float> setter)
-            {
-                var current = initValue;
-
-                string FormatPercent(float value) => Mathf.RoundToInt(Mathf.Clamp01(value) * 100f) + "%";
-                string FormatVolumeLabel(float value) => label + " " + FormatPercent(value);
-
-                var lbl = BuildText(id + "Label", parent, FormatVolumeLabel(initValue), 14, TextAnchor.MiddleLeft);
-                SetRect(lbl.rectTransform,
-                    new Vector2(aMin.x, aMin.y), new Vector2(aMin.x + 0.28f, aMax.y),
-                    Vector2.zero, Vector2.zero);
-
-                var btnDec = BuildButton(id + "Dec", parent, "<", 16);
-                SetRect(btnDec.GetComponent<RectTransform>(),
-                    new Vector2(aMin.x + 0.29f, aMin.y), new Vector2(aMin.x + 0.35f, aMax.y),
-                    Vector2.zero, Vector2.zero);
-
-                var valTxt = BuildText(id + "Val", parent,
-                    FormatPercent(initValue), 13, TextAnchor.MiddleCenter);
-                SetRect(valTxt.rectTransform,
-                    new Vector2(aMin.x + 0.35f, aMin.y), new Vector2(aMax.x - 0.06f, aMax.y),
-                    Vector2.zero, Vector2.zero);
-                valTxt.color = GamePalette.TextMuted;
-
-                var btnInc = BuildButton(id + "Inc", parent, ">", 16);
-                SetRect(btnInc.GetComponent<RectTransform>(),
-                    new Vector2(aMax.x - 0.06f, aMin.y), aMax, Vector2.zero, Vector2.zero);
-
-                btnDec.onClick.RemoveAllListeners();
-                btnDec.onClick.AddListener(() =>
-                {
-                    current = Mathf.Clamp(Mathf.Round((current - 0.05f) * 20f) / 20f, 0f, 1f);
-                    setter(current);
-                    lbl.text = FormatVolumeLabel(current);
-                    valTxt.text = FormatPercent(current);
-                });
-                btnInc.onClick.RemoveAllListeners();
-                btnInc.onClick.AddListener(() =>
-                {
-                    current = Mathf.Clamp(Mathf.Round((current + 0.05f) * 20f) / 20f, 0f, 1f);
-                    setter(current);
-                    lbl.text = FormatVolumeLabel(current);
-                    valTxt.text = FormatPercent(current);
-                });
-
-                LinkHorizontalNav(btnDec, btnInc);
-
-                System.Action<float> refresh = v =>
-                {
-                    current = v;
-                    lbl.text = FormatVolumeLabel(v);
-                    valTxt.text = FormatPercent(v);
-                };
-                return (valTxt, refresh);
-            }
-
-            // --------------------------------------------------------------------
-            // AUDIO SECTION
-            // --------------------------------------------------------------------
-            var audioHdr = BuildText("AudioHdr", audioSec, T("Audio"), 18, TextAnchor.MiddleLeft);
-            SetRect(audioHdr.rectTransform,
-                new Vector2(0.05f, 0.88f), new Vector2(0.75f, 1.00f), Vector2.zero, Vector2.zero);
-            var btnResetAudio = MakeResetBtn("BtnResetAudio", audioSec, () =>
-            {
-                optCtrl.ResetAudioToDefaults();
-                mc.RefreshOptionsPanel();
-            });
-            SetRect(btnResetAudio.GetComponent<RectTransform>(),
-                new Vector2(0.78f, 0.90f), new Vector2(0.96f, 0.99f), Vector2.zero, Vector2.zero);
-
-            var (_, refreshMaster) = BuildVolumeArrowRow("MasterVolume", T("Master Volume"), audioSec,
-                new Vector2(0.05f, 0.70f), new Vector2(0.45f, 0.88f),
-                opts.Audio.MasterVolume, optCtrl.SetMasterVolume);
-
-            var (_, refreshMusic) = BuildVolumeArrowRow("MusicVolume", T("Music Volume"), audioSec,
-                new Vector2(0.52f, 0.70f), new Vector2(0.92f, 0.88f),
-                opts.Audio.MusicVolume, optCtrl.SetMusicVolume);
-
-            var (_, refreshSfx) = BuildVolumeArrowRow("SfxVolume", T("SFX Volume"), audioSec,
-                new Vector2(0.05f, 0.52f), new Vector2(0.45f, 0.70f),
-                opts.Audio.SfxVolume, optCtrl.SetSfxVolume);
-
-            var (_, refreshUi) = BuildVolumeArrowRow("UiVolume", T("UI Volume"), audioSec,
-                new Vector2(0.52f, 0.52f), new Vector2(0.92f, 0.70f),
-                opts.Audio.UiVolume, optCtrl.SetUiVolume);
-
-            var tMute = BuildOptionToggle(audioSec, "MuteUnfocused", T("Mute when unfocused"),
-                new Vector2(0.05f, 0.37f), new Vector2(0.45f, 0.50f),
-                opts.Audio.MuteWhenUnfocused, optCtrl.SetMuteWhenUnfocused);
-
-            var tMuteAll = BuildOptionToggle(audioSec, "MuteAll", T("Mute all"),
-                new Vector2(0.52f, 0.37f), new Vector2(0.92f, 0.50f),
-                opts.Audio.MuteAll, optCtrl.SetMuteAll);
-
-            var musicStyleLabel = BuildText("MenuMusicStyleLabel", audioSec,
-                T("Audio.MenuMusicStyle.Label"), 14, TextAnchor.MiddleLeft);
-            SetRect(musicStyleLabel.rectTransform,
-                new Vector2(0.05f, 0.25f), new Vector2(0.32f, 0.35f), Vector2.zero, Vector2.zero);
-            var musicStyleDrop = BuildDropdown("MenuMusicStyleDropdown", audioSec);
-            SetRect(musicStyleDrop.GetComponent<RectTransform>(),
-                new Vector2(0.33f, 0.23f), new Vector2(0.92f, 0.35f), Vector2.zero, Vector2.zero);
-            musicStyleDrop.ClearOptions();
-            var styleOptions = new System.Collections.Generic.List<string>();
-            foreach (var key in AudioAssetService.MenuMusicStyleLocalizationKeys)
-                styleOptions.Add(T(key));
-            musicStyleDrop.AddOptions(styleOptions);
-            FitDropdownToItems(musicStyleDrop);
-            musicStyleDrop.SetValueWithoutNotify(
-                AudioAssetService.NormalizeMenuMusicStyleIndex(opts.Audio.MenuMusicStyleIndex));
-            musicStyleDrop.onValueChanged.RemoveAllListeners();
-            musicStyleDrop.onValueChanged.AddListener(optCtrl.SetMusicStyleIndex);
-
-            // OPT-1: replaced sliders with arrow rows ? D-pad nav between the Mute toggles
-            LinkSelectableNav(tMute, tMuteAll);
-            LinkSelectableNav(tMute, musicStyleDrop);
-            LinkSelectableNav(tMuteAll, musicStyleDrop);
-
-            // Vertical D-pad nav: Row1(Master/Music) ? Row2(Sfx/Ui) ? Row3(mute toggles)
-            // Buttons are children of audioSec named by their id + "Dec"/"Inc".
-            var masterDec = audioSec.Find("MasterVolumeDec")?.GetComponent<Button>();
-            var masterInc = audioSec.Find("MasterVolumeInc")?.GetComponent<Button>();
-            var musicDec  = audioSec.Find("MusicVolumeDec")?.GetComponent<Button>();
-            var musicInc  = audioSec.Find("MusicVolumeInc")?.GetComponent<Button>();
-            var sfxDec    = audioSec.Find("SfxVolumeDec")?.GetComponent<Button>();
-            var sfxInc    = audioSec.Find("SfxVolumeInc")?.GetComponent<Button>();
-            var uiDec     = audioSec.Find("UiVolumeDec")?.GetComponent<Button>();
-            var uiInc     = audioSec.Find("UiVolumeInc")?.GetComponent<Button>();
-
-            // Left column: MasterVolume ? SfxVolume ? tMute
-            if (masterDec != null && sfxDec != null) LinkSelectableNav(masterDec, sfxDec);
-            if (masterInc != null && sfxInc != null) LinkSelectableNav(masterInc, sfxInc);
-            if (sfxDec    != null) LinkSelectableNav(sfxDec, tMute);
-            if (sfxInc    != null) LinkSelectableNav(sfxInc, tMute);
-
-            // Right column: MusicVolume ? UiVolume ? tMuteAll
-            if (musicDec != null && uiDec != null) LinkSelectableNav(musicDec, uiDec);
-            if (musicInc != null && uiInc != null) LinkSelectableNav(musicInc, uiInc);
-            if (uiDec    != null) LinkSelectableNav(uiDec, tMuteAll);
-            if (uiInc    != null) LinkSelectableNav(uiInc, tMuteAll);
-
-            // --------------------------------------------------------------------
-            // DISPLAY SECTION
-            // --------------------------------------------------------------------
-            var displayHdr = BuildText("DisplayHdr", displaySec, T("Display"), 18, TextAnchor.MiddleLeft);
-            SetRect(displayHdr.rectTransform,
-                new Vector2(0.05f, 0.88f), new Vector2(0.75f, 1.00f), Vector2.zero, Vector2.zero);
-            var btnResetDisplay = MakeResetBtn("BtnResetDisplay", displaySec, () =>
-            {
-                optCtrl.ResetGraphicsToDefaults();
-                mc.RefreshOptionsPanel();
-            });
-            SetRect(btnResetDisplay.GetComponent<RectTransform>(),
-                new Vector2(0.78f, 0.90f), new Vector2(0.96f, 0.99f), Vector2.zero, Vector2.zero);
-
-            var tFullscreen = BuildOptionToggle(displaySec, "Fullscreen", T("Fullscreen"),
-                new Vector2(0.05f, 0.74f), new Vector2(0.45f, 0.87f),
-                opts.Graphics.Fullscreen, optCtrl.SetFullscreen);
-
-            var tVSync = BuildOptionToggle(displaySec, "VSync", T("VSync"),
-                new Vector2(0.52f, 0.74f), new Vector2(0.92f, 0.87f),
-                opts.Graphics.VSync, optCtrl.SetVSync);
-
-            var tScreenShake = BuildOptionToggle(displaySec, "ScreenShake", T("Screen Shake"),
-                new Vector2(0.05f, 0.59f), new Vector2(0.45f, 0.72f),
-                opts.Graphics.ScreenShake, optCtrl.SetScreenShake);
-
-            var (_, refreshParticle) = BuildVolumeArrowRow("ParticleIntensity", T("Particles"), displaySec,
-                new Vector2(0.52f, 0.59f), new Vector2(0.92f, 0.72f),
-                opts.Graphics.ParticleIntensity, optCtrl.SetParticleIntensity);
-
-            var (_, refreshBrightness) = BuildVolumeArrowRow("Brightness", T("Brightness"), displaySec,
-                new Vector2(0.05f, 0.45f), new Vector2(0.45f, 0.58f),
-                opts.Graphics.Brightness, optCtrl.SetBrightness);
-
-            var (_, refreshContrast) = BuildVolumeArrowRow("Contrast", T("Contrast"), displaySec,
-                new Vector2(0.52f, 0.45f), new Vector2(0.92f, 0.58f),
-                opts.Graphics.Contrast, optCtrl.SetContrast);
-
-            // Resolution row
-            var resolutions = OptionsController.GetSupportedResolutions();
-            var resLabel = BuildText("ResLabel", displaySec, T("Resolution"), 14, TextAnchor.MiddleLeft);
-            SetRect(resLabel.rectTransform,
-                new Vector2(0.05f, 0.34f), new Vector2(0.22f, 0.44f), Vector2.zero, Vector2.zero);
-            var resDrop = BuildDropdown("ResolutionDropdown", displaySec);
-            SetRect(resDrop.GetComponent<RectTransform>(),
-                new Vector2(0.23f, 0.32f), new Vector2(0.96f, 0.44f), Vector2.zero, Vector2.zero);
-            resDrop.ClearOptions();
-            var resOpts   = new System.Collections.Generic.List<string>();
-            var curW      = optCtrl.GetOptions().Graphics.ResolutionWidth;
-            var curH      = optCtrl.GetOptions().Graphics.ResolutionHeight;
-            var curResIdx = 0;
-            for (var i = 0; i < resolutions.Length; i++)
-            {
-                var r = resolutions[i];
-                resOpts.Add($"{r.width} x {r.height}");
-                if (r.width == curW && r.height == curH) curResIdx = i;
-            }
-            resDrop.AddOptions(resOpts);
-            resDrop.SetValueWithoutNotify(curResIdx);
-            resDrop.onValueChanged.RemoveAllListeners();
-            resDrop.onValueChanged.AddListener(idx =>
-            {
-                var r = resolutions[idx];
-                optCtrl.SetResolution(r.width, r.height);
-            });
-
-            // Display mode row
-            var displayModeLabel = BuildText("DisplayModeLabel", displaySec, T("DisplayMode"), 14, TextAnchor.MiddleLeft);
-            SetRect(displayModeLabel.rectTransform,
-                new Vector2(0.05f, 0.22f), new Vector2(0.22f, 0.32f), Vector2.zero, Vector2.zero);
-            var displayModeDrop = BuildDropdown("DisplayModeDropdown", displaySec);
-            SetRect(displayModeDrop.GetComponent<RectTransform>(),
-                new Vector2(0.23f, 0.20f), new Vector2(0.96f, 0.32f), Vector2.zero, Vector2.zero);
-            displayModeDrop.ClearOptions();
-            displayModeDrop.AddOptions(new System.Collections.Generic.List<string>
-            {
-                T("DisplayMode.Fullscreen"),
-                T("DisplayMode.Borderless"),
-                T("DisplayMode.Windowed"),
-                T("DisplayMode.FramelessWindow") // [REQ: DISPLAY-MODE-001] order = DisplayModeOption values
-            });
-            FitDropdownToItems(displayModeDrop);
-            displayModeDrop.SetValueWithoutNotify((int)OptionsController.NormalizeDisplayMode(opts.Graphics.DisplayMode));
-            displayModeDrop.onValueChanged.RemoveAllListeners();
-            displayModeDrop.onValueChanged.AddListener(idx => optCtrl.SetDisplayMode((DisplayModeOption)idx));
-
-            // Language row
-            var langLabel = BuildText("LangLabel", displaySec, T("Language"), 14, TextAnchor.MiddleLeft);
-            SetRect(langLabel.rectTransform,
-                new Vector2(0.05f, 0.10f), new Vector2(0.22f, 0.20f), Vector2.zero, Vector2.zero);
-            var langDrop = BuildDropdown("LanguageDropdown", displaySec);
-            SetRect(langDrop.GetComponent<RectTransform>(),
-                new Vector2(0.23f, 0.08f), new Vector2(0.65f, 0.20f), Vector2.zero, Vector2.zero);
-            langDrop.ClearOptions();
-            langDrop.AddOptions(new System.Collections.Generic.List<string> { "English", "Deutsch", "Français", "Español", "Português (BR)" });
-            FitDropdownToItems(langDrop);
-            langDrop.SetValueWithoutNotify((int)opts.Language);
-
-            // Explicit D-pad nav: Fullscreen ? ScreenShake ? resDrop ? langDrop
-            var brightnessDec = displaySec.Find("BrightnessDec")?.GetComponent<Button>();
-            var brightnessInc = displaySec.Find("BrightnessInc")?.GetComponent<Button>();
-            var contrastDec = displaySec.Find("ContrastDec")?.GetComponent<Button>();
-            var contrastInc = displaySec.Find("ContrastInc")?.GetComponent<Button>();
-            LinkSelectableNav(tFullscreen, tScreenShake);
-            if (brightnessDec != null) LinkSelectableNav(tScreenShake, brightnessDec);
-            if (brightnessInc != null) LinkSelectableNav(tScreenShake, brightnessInc);
-            if (contrastDec != null) LinkSelectableNav(tVSync, contrastDec);
-            if (contrastInc != null) LinkSelectableNav(tVSync, contrastInc);
-            if (brightnessDec != null) LinkSelectableNav(brightnessDec, resDrop);
-            if (brightnessInc != null) LinkSelectableNav(brightnessInc, resDrop);
-            if (contrastDec != null) LinkSelectableNav(contrastDec, resDrop);
-            if (contrastInc != null) LinkSelectableNav(contrastInc, resDrop);
-            LinkSelectableNav(resDrop, displayModeDrop);
-            LinkSelectableNav(displayModeDrop, langDrop);
-
-            // Language confirmation row (initially hidden)
-            var langConfirmRow = new GameObject("LangConfirmRow", typeof(RectTransform));
-            langConfirmRow.transform.SetParent(displaySec, false);
-            var langConfirmRt = langConfirmRow.GetComponent<RectTransform>();
-            langConfirmRt.anchorMin = new Vector2(0.05f, 0.00f);
-            langConfirmRt.anchorMax = new Vector2(0.96f, 0.08f);
-            langConfirmRt.offsetMin = Vector2.zero;
-            langConfirmRt.offsetMax = Vector2.zero;
-
-            var langWarnText = BuildText("LangWarnText", langConfirmRt,
-                T("Options.LanguageConfirm.Warning"), 12, TextAnchor.MiddleLeft);
-            SetRect(langWarnText.rectTransform, new Vector2(0f, 0f), new Vector2(0.55f, 1f),
-                Vector2.zero, Vector2.zero);
-            langWarnText.color = GamePalette.AccentGold;
-
-            var btnLangApply = BuildButton("BtnLangApply", langConfirmRt, T("Apply"), 12);
-            SetRect(btnLangApply.GetComponent<RectTransform>(),
-                new Vector2(0.57f, 0.05f), new Vector2(0.75f, 0.95f), Vector2.zero, Vector2.zero);
-            var btnLangCancel = BuildButton("BtnLangCancel", langConfirmRt, T("Cancel"), 12);
-            SetRect(btnLangCancel.GetComponent<RectTransform>(),
-                new Vector2(0.77f, 0.05f), new Vector2(0.96f, 0.95f), Vector2.zero, Vector2.zero);
-
-            langConfirmRow.SetActive(false);
-            var pendingLangIdx = (int)opts.Language;
-
-            langDrop.onValueChanged.RemoveAllListeners();
-            langDrop.onValueChanged.AddListener(idx =>
-            {
-                pendingLangIdx = idx;
-                langConfirmRow.SetActive(idx != (int)optCtrl.GetOptions().Language);
-            });
-            btnLangApply.onClick.RemoveAllListeners();
-            btnLangApply.onClick.AddListener(() =>
-            {
-                optCtrl.SetLanguage((LanguageOption)pendingLangIdx);
-                langConfirmRow.SetActive(false);
-                mc.RefreshLanguage();
-            });
-            btnLangCancel.onClick.RemoveAllListeners();
-            btnLangCancel.onClick.AddListener(() =>
-            {
-                langDrop.SetValueWithoutNotify((int)optCtrl.GetOptions().Language);
-                langConfirmRow.SetActive(false);
-            });
-
-            // --------------------------------------------------------------------
-            // GAMEPLAY SECTION
-            // --------------------------------------------------------------------
-            var gameHdr = BuildText("GameHdr", gameSec, T("Gameplay"), 18, TextAnchor.MiddleLeft);
-            SetRect(gameHdr.rectTransform,
-                new Vector2(0.05f, 0.88f), new Vector2(0.75f, 1.00f), Vector2.zero, Vector2.zero);
-            var btnResetGame = MakeResetBtn("BtnResetGameplay", gameSec, () =>
-            {
-                optCtrl.ResetGameplayToDefaults();
-                mc.RefreshOptionsPanel();
-            });
-            SetRect(btnResetGame.GetComponent<RectTransform>(),
-                new Vector2(0.78f, 0.90f), new Vector2(0.96f, 0.99f), Vector2.zero, Vector2.zero);
-
-            var tHighlight = BuildOptionToggle(gameSec, "HighlightErrors", T("Highlight Errors"),
-                new Vector2(0.05f, 0.74f), new Vector2(0.45f, 0.87f),
-                opts.Gameplay.HighlightConflicts, optCtrl.SetHighlightConflicts);
-
-            var tConfirmWrong = BuildOptionToggle(gameSec, "ConfirmWrong", T("Confirm Wrong Placement"),
-                new Vector2(0.52f, 0.74f), new Vector2(0.96f, 0.87f),
-                opts.Gameplay.ConfirmBeforeWrongPlacement, optCtrl.SetConfirmBeforeWrongPlacement);
-
-            var tAutoPencil = BuildOptionToggle(gameSec, "AutoPencil", T("Auto Pencil Cleanup"),
-                new Vector2(0.05f, 0.58f), new Vector2(0.45f, 0.71f),
-                opts.Gameplay.AutoPencilCleanup, optCtrl.SetAutoPencilCleanup);
-
-            var tCandidates = BuildOptionToggle(gameSec, "CandidateCount", T("Show Candidate Count"),
-                new Vector2(0.52f, 0.58f), new Vector2(0.96f, 0.71f),
-                opts.Gameplay.ShowCandidateCount, optCtrl.SetShowCandidateCount);
-
-            var tCursorSnap = BuildOptionToggle(gameSec, "CursorSnap", T("Cursor Snap"),
-                new Vector2(0.05f, 0.42f), new Vector2(0.45f, 0.55f),
-                opts.Gameplay.CursorSnapOnSelection, optCtrl.SetCursorSnapOnSelection);
-
-            var tDoubleTap = BuildOptionToggle(gameSec, "DoubleTap", T("Double-Tap to Confirm"),
-                new Vector2(0.52f, 0.42f), new Vector2(0.96f, 0.55f),
-                opts.Gameplay.DoubleTapConfirmNumberEntry, optCtrl.SetDoubleTapConfirm);
-
-            var tRumble = BuildOptionToggle(gameSec, "ControllerRumble", T("Controller Rumble"),
-                new Vector2(0.05f, 0.26f), new Vector2(0.45f, 0.39f),
-                opts.Gameplay.ControllerRumbleEnabled, optCtrl.SetControllerRumbleEnabled);
-
-            // Explicit D-pad nav left col: HighlightErrors ? AutoPencil ? CursorSnap ? ControllerRumble
-            // Explicit D-pad nav right col: ConfirmWrong ? CandidateCount ? DoubleTap
-            LinkSelectableNav(tHighlight, tAutoPencil);
-            LinkSelectableNav(tAutoPencil, tCursorSnap);
-            LinkSelectableNav(tCursorSnap, tRumble);
-            LinkSelectableNav(tConfirmWrong, tCandidates);
-            LinkSelectableNav(tCandidates, tDoubleTap);
-
-            // Tab ? section navigation: Down from a tab jumps into the active section;
-            // Up from the first element returns to its tab. Also wire horizontal tab-to-tab nav.
-            void LinkTabDown(Button tab, Selectable first)
-            {
-                var nt = tab.navigation;
-                nt.mode = Navigation.Mode.Explicit;
-                nt.selectOnDown = first;
-                tab.navigation = nt;
-                var nf = first.navigation;
-                nf.mode = Navigation.Mode.Explicit;
-                nf.selectOnUp = tab;
-                first.navigation = nf;
-            }
-            if (masterDec != null)   LinkTabDown(tabAudio,   masterDec);
-            if (tFullscreen != null) LinkTabDown(tabDisplay, tFullscreen);
-            if (tHighlight != null)  LinkTabDown(tabGame,    tHighlight);
-            LinkHorizontalNav(tabAudio,   tabDisplay);
-            LinkHorizontalNav(tabDisplay, tabGame);
+            // -- Tabs, sections and controls: shared with the in-run Options (OptionsUiFactory, UI-OPT-001) --
+            var tabs = OptionsTabSet.On(pr);
+            var refreshControls = OptionsUiFactory.BuildStandardTabs(tabs, optCtrl,
+                new OptionsUiFactory.Setup { OnLanguageApplied = mc.RefreshLanguage });
 
             // -- Bottom row: Back, Tutorial, Controls & Accessibility ------------
             var ctrlHdr = BuildText("CtrlHdr", pr, T("Controls & Accessibility"), 14, TextAnchor.MiddleLeft);
@@ -1069,42 +637,14 @@ namespace SudokuRoguelike.UI
             btnBasicsTut.onClick.RemoveAllListeners();
             btnBasicsTut.onClick.AddListener(mc.LaunchSudokuBasicsTutorial);
 
+            // D-pad: the last row of every tab leads down to these buttons (UI-OPT-003).
+            tabs.SetFooter(new Selectable[] { btnKeybinds, btnAccess }, new Selectable[] { back, btnBasicsTut });
+
             // -- Slot-change refresh ----------------------------------------------
-            ReplaceOptionsChangedHandler(optCtrl, ref _optionsSlotChangedHandler, () =>
-            {
-                var o = optCtrl.GetOptions();
-                refreshMaster(o.Audio.MasterVolume);
-                refreshMusic(o.Audio.MusicVolume);
-                refreshSfx(o.Audio.SfxVolume);
-                refreshUi(o.Audio.UiVolume);
-                tMute.SetIsOnWithoutNotify(o.Audio.MuteWhenUnfocused);
-                tMuteAll.SetIsOnWithoutNotify(o.Audio.MuteAll);
-                musicStyleDrop.SetValueWithoutNotify(
-                    AudioAssetService.NormalizeMenuMusicStyleIndex(o.Audio.MenuMusicStyleIndex));
-                tFullscreen.SetIsOnWithoutNotify(o.Graphics.Fullscreen);
-                tVSync.SetIsOnWithoutNotify(o.Graphics.VSync);
-                tScreenShake.SetIsOnWithoutNotify(o.Graphics.ScreenShake);
-                refreshParticle(o.Graphics.ParticleIntensity);
-                refreshBrightness(o.Graphics.Brightness);
-                refreshContrast(o.Graphics.Contrast);
-                var newResIdx = 0;
-                for (var i = 0; i < resolutions.Length; i++)
-                    if (resolutions[i].width == o.Graphics.ResolutionWidth && resolutions[i].height == o.Graphics.ResolutionHeight) { newResIdx = i; break; }
-                resDrop.SetValueWithoutNotify(newResIdx);
-                displayModeDrop.SetValueWithoutNotify((int)OptionsController.NormalizeDisplayMode(o.Graphics.DisplayMode));
-                langDrop.SetValueWithoutNotify((int)o.Language);
-                langConfirmRow.SetActive(false);
-                tHighlight.SetIsOnWithoutNotify(o.Gameplay.HighlightConflicts);
-                tConfirmWrong.SetIsOnWithoutNotify(o.Gameplay.ConfirmBeforeWrongPlacement);
-                tAutoPencil.SetIsOnWithoutNotify(o.Gameplay.AutoPencilCleanup);
-                tCandidates.SetIsOnWithoutNotify(o.Gameplay.ShowCandidateCount);
-                tCursorSnap.SetIsOnWithoutNotify(o.Gameplay.CursorSnapOnSelection);
-                tDoubleTap.SetIsOnWithoutNotify(o.Gameplay.DoubleTapConfirmNumberEntry);
-                tRumble.SetIsOnWithoutNotify(o.Gameplay.ControllerRumbleEnabled);
-            });
+            ReplaceOptionsChangedHandler(optCtrl, ref _optionsSlotChangedHandler, refreshControls);
 
             // Start on Audio tab
-            ActivateTab(0);
+            tabs.Activate(0);
 
             if (ApplyPanelBackground(panel.GetComponent<Image>(), "background/bg_settings_menu")) // F19: renamed from bg_options
             {
@@ -2325,15 +1865,8 @@ namespace SudokuRoguelike.UI
 
         private Toggle BuildOptionToggle(RectTransform parent, string id, string label,
             Vector2 anchorMin, Vector2 anchorMax, bool value,
-            UnityEngine.Events.UnityAction<bool> onChanged)
-        {
-            var tgl = BuildToggle(id + "Toggle", parent, label);
-            SetRect(tgl.GetComponent<RectTransform>(), anchorMin, anchorMax, Vector2.zero, Vector2.zero);
-            tgl.SetIsOnWithoutNotify(value);
-            tgl.onValueChanged.RemoveAllListeners();
-            tgl.onValueChanged.AddListener(onChanged);
-            return tgl;
-        }
+            UnityEngine.Events.UnityAction<bool> onChanged) =>
+            OptionsUiFactory.BuildOptionToggle(parent, id, label, anchorMin, anchorMax, value, onChanged);
 
         // ------------------------------------------------------------------------
         // Helpers: Menu Button
@@ -2553,154 +2086,13 @@ namespace SudokuRoguelike.UI
         // ------------------------------------------------------------------------
 
         private Text BuildText(string name, RectTransform parent, string value,
-            int size, TextAnchor anchor)
-        {
-            var rect = EnsureRect(name, parent, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
-            var text = EnsureComponent<Text>(rect.gameObject);
-            text.text = value;
-            text.font = GetBuiltInFont();
-            text.fontSize = size;
-            text.alignment = anchor;
-            text.color = TxtColor;
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Overflow;
-            return text;
-        }
+            int size, TextAnchor anchor) => OptionsUiFactory.BuildText(name, parent, value, size, anchor);
 
-        private Button BuildButton(string name, RectTransform parent, string label, int size)
-        {
-            var rect = EnsureRect(name, parent, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
-            var img = EnsureOrGetImage(rect.gameObject, BtnColor);
-            img.raycastTarget = true;
+        private Button BuildButton(string name, RectTransform parent, string label, int size) =>
+            OptionsUiFactory.BuildButton(name, parent, label, size);
 
-            var btn = EnsureComponent<Button>(rect.gameObject);
-            var outline = EnsureComponent<Outline>(rect.gameObject);
-            outline.effectColor = GamePalette.AccentGoldGlow;
-            outline.effectDistance = new Vector2(1.2f, -1.2f);
-
-            var colors = btn.colors;
-            colors.normalColor      = BtnColor;
-            colors.highlightedColor = new Color(BtnColor.r, BtnColor.g, BtnColor.b, 0.30f);
-            colors.pressedColor     = new Color(BtnColor.r - 0.05f, BtnColor.g - 0.05f, BtnColor.b - 0.05f, 0.48f);
-            colors.selectedColor    = new Color(0.98f, 0.83f, 0.26f, 0.70f); // gold tint when controller-focused
-            colors.disabledColor    = GamePalette.DisabledGray;
-            colors.fadeDuration     = 0.08f;
-            colors.colorMultiplier  = 1f;
-            btn.colors = colors;
-
-            // Enable automatic navigation so EventSystem can traverse with stick/d-pad
-            btn.navigation = new Navigation { mode = Navigation.Mode.Automatic };
-
-            var lblRect = EnsureRect("Label", rect, Vector2.zero, Vector2.one,
-                new Vector2(10f, 8f), new Vector2(-10f, -8f));
-            var text = EnsureComponent<Text>(lblRect.gameObject);
-            text.text = label;
-            text.font = GetBuiltInFont();
-            text.fontSize = size;
-            text.alignment = TextAnchor.MiddleCenter;
-            text.color = BtnTextColor;
-
-            lblRect.SetAsLastSibling();
-
-            return btn;
-        }
-
-        private const float DropdownItemHeight = 32f;
-
-        private Dropdown BuildDropdown(string name, RectTransform parent)
-        {
-            var rect = EnsureRect(name, parent, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
-            EnsureOrGetImage(rect.gameObject, BtnColor);
-            var dropdown = EnsureComponent<Dropdown>(rect.gameObject);
-
-            var label = BuildText("Label", rect, T("GeneratedUi.Dropdown.Select"), 16, TextAnchor.MiddleLeft);
-            label.color = BtnTextColor; // dark text on cream/light background
-            SetRect(label.rectTransform,
-                new Vector2(0.04f, 0.1f), new Vector2(0.76f, 0.9f), Vector2.zero, Vector2.zero);
-
-            var arrowRect = EnsureRect("Arrow", rect,
-                new Vector2(0.82f, 0.15f), new Vector2(0.96f, 0.85f), Vector2.zero, Vector2.zero);
-            var arrowText = EnsureComponent<Text>(arrowRect.gameObject);
-            arrowText.font = GetBuiltInFont();
-            arrowText.text = "\u25BC";
-            arrowText.alignment = TextAnchor.MiddleCenter;
-            arrowText.color = BtnTextColor; // dark
-            arrowText.fontSize = 16;
-
-            // Template
-            var template = EnsureRect("Template", rect,
-                Vector2.zero, new Vector2(1f, 0f), Vector2.zero, Vector2.zero);
-            template.pivot = new Vector2(0.5f, 1f);
-            template.anchoredPosition = new Vector2(0f, -4f);
-            template.sizeDelta = new Vector2(0f, 180f);
-            // Opaque: the options underneath showed through the open list (1.1 display-mode check).
-            EnsureOrGetImage(template.gameObject, new Color(BtnColor.r, BtnColor.g, BtnColor.b, 1f));
-            template.gameObject.SetActive(false);
-
-            var viewport = EnsureRect("Viewport", template,
-                Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
-            EnsureOrGetImage(viewport.gameObject, GamePalette.ScrollBgDark);
-            EnsureComponent<Mask>(viewport.gameObject).showMaskGraphic = false;
-
-            var content = EnsureRect("Content", viewport,
-                new Vector2(0f, 1f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero);
-            content.pivot = new Vector2(0.5f, 1f);
-            // One item tall: Unity measures the item's offsets against this rect when it opens the list; at 0 px
-            // it subtracted one item height and the last option was hidden.
-            content.sizeDelta = new Vector2(0f, DropdownItemHeight);
-            var cl = EnsureComponent<VerticalLayoutGroup>(content.gameObject);
-            cl.childAlignment = TextAnchor.UpperCenter;
-            cl.childControlHeight = true;
-            cl.childControlWidth = true;
-            cl.childForceExpandHeight = false;
-            cl.childForceExpandWidth = true;
-            // Unity sizes the list as item height x item count, so the layout adds no spacing or padding;
-            // before, the list was shorter than its items and the last option was cut off.
-            cl.spacing = 0f;
-            cl.padding = new RectOffset(0, 0, 0, 0);
-            var cf = EnsureComponent<ContentSizeFitter>(content.gameObject);
-            cf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-            // Item template
-            var item = EnsureRect("Item", content,
-                new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -DropdownItemHeight), Vector2.zero);
-            var itemLayout = EnsureComponent<LayoutElement>(item.gameObject);
-            itemLayout.minHeight = DropdownItemHeight;
-            itemLayout.preferredHeight = DropdownItemHeight;
-            var itemBg = EnsureOrGetImage(item.gameObject, GamePalette.ListItemBg);
-            var itemTgl = EnsureComponent<Toggle>(item.gameObject);
-            itemTgl.targetGraphic = itemBg;
-
-            var itemCheck = EnsureRect("Item Checkmark", item,
-                new Vector2(0.02f, 0.18f), new Vector2(0.08f, 0.82f), Vector2.zero, Vector2.zero);
-            var itemCheckImg = EnsureOrGetImage(itemCheck.gameObject, AccentColor);
-            itemTgl.graphic = itemCheckImg;
-
-            var itemLabel = BuildText("Item Label", item, T("GeneratedUi.Dropdown.Option"), 16, TextAnchor.MiddleLeft);
-            itemLabel.color = BtnTextColor; // dark text for readability in dropdown list
-            SetRect(itemLabel.rectTransform,
-                new Vector2(0.10f, 0f), new Vector2(0.98f, 1f), Vector2.zero, Vector2.zero);
-
-            AttachDropdownItemCompat(item.gameObject, item, itemLabel, itemBg, itemTgl);
-
-            var scroll = EnsureComponent<ScrollRect>(template.gameObject);
-            scroll.viewport = viewport;
-            scroll.content = content;
-            scroll.horizontal = false;
-            scroll.vertical = true;
-            scroll.movementType = ScrollRect.MovementType.Clamped;
-            scroll.scrollSensitivity = 40f;
-
-            dropdown.captionText = label;
-            dropdown.template = template;
-            dropdown.itemText = itemLabel;
-            dropdown.itemImage = null;
-            dropdown.targetGraphic = EnsureOrGetImage(rect.gameObject, BtnColor);
-            dropdown.captionText.raycastTarget = false;
-            dropdown.navigation = new Navigation { mode = Navigation.Mode.Automatic };
-
-            return dropdown;
-        }
+        private Dropdown BuildDropdown(string name, RectTransform parent) =>
+            OptionsUiFactory.BuildDropdown(name, parent);
 
         /// Links explicit down/up navigation between two Selectable widgets (Toggle, Slider, Dropdown, Button).
         private static void LinkSelectableNav(Selectable from, Selectable to)
@@ -2736,13 +2128,7 @@ namespace SudokuRoguelike.UI
         /// Resizes the dropdown template so all items are visible without scrolling.
         /// Call this after AddOptions(). Capped at 300px to stay on screen.
         /// </summary>
-        private static void FitDropdownToItems(Dropdown dd)
-        {
-            if (dd == null || dd.template == null || dd.options.Count == 0) return;
-            var h = Mathf.Min(dd.options.Count * DropdownItemHeight, 300f);
-            var sd = dd.template.sizeDelta;
-            dd.template.sizeDelta = new Vector2(sd.x, h);
-        }
+        private static void FitDropdownToItems(Dropdown dd) => OptionsUiFactory.FitDropdownToItems(dd);
 
         // ------------------------------------------------------------------------
         // Helpers: Infrastructure
@@ -2840,168 +2226,6 @@ namespace SudokuRoguelike.UI
                     new Vector2(0.5f, 0.5f), 100f);
 
             return null;
-        }
-
-        // ------------------------------------------------------------------------
-        // Helpers: Dropdown Compatibility
-        // ------------------------------------------------------------------------
-
-        private static void AttachDropdownItemCompat(GameObject itemGo, RectTransform itemRect,
-            Text itemLabel, Image itemBg, Toggle itemTgl)
-        {
-            var compat = DropdownItemCompatResolver.Instance;
-            if (!compat.IsAvailable)
-            {
-                Debug.LogWarning($"[MainMenuBlueprintBuilder] DropdownItem compatibility unavailable: {compat.FailureReason}. Dropdowns may not work.");
-                return;
-            }
-
-            var di = itemGo.GetComponent(compat.ItemType) ?? itemGo.AddComponent(compat.ItemType);
-            if (di == null || !compat.Assign(di, itemRect, itemLabel, itemBg, itemTgl))
-            {
-                Debug.LogWarning("[MainMenuBlueprintBuilder] Failed to attach DropdownItem compatibility component. Dropdowns may not work.");
-            }
-        }
-
-        private sealed class DropdownItemCompatResolver
-        {
-            private const BindingFlags MemberFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
-            private static DropdownItemCompatResolver _instance;
-
-            private readonly MemberSetter _text;
-            private readonly MemberSetter _image;
-            private readonly MemberSetter _toggle;
-            private readonly MemberSetter _rectTransform;
-
-            private DropdownItemCompatResolver(
-                Type itemType,
-                MemberSetter text,
-                MemberSetter image,
-                MemberSetter toggle,
-                MemberSetter rectTransform,
-                string failureReason)
-            {
-                ItemType = itemType;
-                _text = text;
-                _image = image;
-                _toggle = toggle;
-                _rectTransform = rectTransform;
-                FailureReason = failureReason;
-            }
-
-            public static DropdownItemCompatResolver Instance
-            {
-                get
-                {
-                    if (_instance == null)
-                        _instance = Create();
-                    return _instance;
-                }
-            }
-
-            public Type ItemType { get; }
-            public string FailureReason { get; }
-            public bool IsAvailable => ItemType != null
-                && _text.IsAvailable
-                && _image.IsAvailable
-                && _toggle.IsAvailable
-                && _rectTransform.IsAvailable;
-
-            public bool Assign(Component target, RectTransform itemRect, Text itemLabel, Image itemBg, Toggle itemTgl)
-            {
-                if (!IsAvailable || target == null)
-                    return false;
-
-                _text.Set(target, itemLabel);
-                _image.Set(target, itemBg);
-                _toggle.Set(target, itemTgl);
-                _rectTransform.Set(target, itemRect);
-                return true;
-            }
-
-            private static DropdownItemCompatResolver Create()
-            {
-                var itemType = typeof(Dropdown).GetNestedType("DropdownItem",
-                    BindingFlags.Public | BindingFlags.NonPublic);
-                if (itemType == null)
-                    return Unavailable("UnityEngine.UI.Dropdown.DropdownItem was not found");
-
-                if (!typeof(Component).IsAssignableFrom(itemType))
-                    return Unavailable("UnityEngine.UI.Dropdown.DropdownItem is not a Component");
-
-                var text = MemberSetter.Resolve(itemType, "text", "m_Text", typeof(Text));
-                var image = MemberSetter.Resolve(itemType, "image", "m_Image", typeof(Image));
-                var toggle = MemberSetter.Resolve(itemType, "toggle", "m_Toggle", typeof(Toggle));
-                var rectTransform = MemberSetter.Resolve(itemType, "rectTransform", "m_RectTransform", typeof(RectTransform));
-
-                var failure = BuildFailureReason(text, image, toggle, rectTransform);
-                return new DropdownItemCompatResolver(itemType, text, image, toggle, rectTransform, failure);
-            }
-
-            private static DropdownItemCompatResolver Unavailable(string reason)
-            {
-                return new DropdownItemCompatResolver(null, default, default, default, default, reason);
-            }
-
-            private static string BuildFailureReason(
-                MemberSetter text,
-                MemberSetter image,
-                MemberSetter toggle,
-                MemberSetter rectTransform)
-            {
-                if (text.IsAvailable && image.IsAvailable && toggle.IsAvailable && rectTransform.IsAvailable)
-                    return null;
-
-                var missing = new List<string>();
-                if (!text.IsAvailable) missing.Add("text/m_Text");
-                if (!image.IsAvailable) missing.Add("image/m_Image");
-                if (!toggle.IsAvailable) missing.Add("toggle/m_Toggle");
-                if (!rectTransform.IsAvailable) missing.Add("rectTransform/m_RectTransform");
-                return "missing writable member(s): " + string.Join(", ", missing);
-            }
-
-            private readonly struct MemberSetter
-            {
-                private readonly PropertyInfo _property;
-                private readonly FieldInfo _field;
-
-                private MemberSetter(PropertyInfo property, FieldInfo field)
-                {
-                    _property = property;
-                    _field = field;
-                }
-
-                public bool IsAvailable => _property != null || _field != null;
-
-                public static MemberSetter Resolve(Type ownerType, string propertyName, string fieldName, Type valueType)
-                {
-                    var property = ownerType.GetProperty(propertyName, MemberFlags);
-                    if (property != null
-                        && property.CanWrite
-                        && property.GetIndexParameters().Length == 0
-                        && property.PropertyType.IsAssignableFrom(valueType))
-                    {
-                        return new MemberSetter(property, null);
-                    }
-
-                    var field = ownerType.GetField(fieldName, MemberFlags);
-                    if (field != null && field.FieldType.IsAssignableFrom(valueType))
-                        return new MemberSetter(null, field);
-
-                    return default;
-                }
-
-                public void Set(Component target, object value)
-                {
-                    if (_property != null)
-                    {
-                        _property.SetValue(target, value, null);
-                        return;
-                    }
-
-                    _field?.SetValue(target, value);
-                }
-            }
         }
     }
 }

@@ -58,6 +58,7 @@
     <Compile Include="Assets\Scripts\Tests\PlayMode\TestSaveIsolation.cs" />
     <Compile Include="Assets\Scripts\Tests\PlayMode\RequirementAttribute.cs" />
     <Compile Include="Assets\Scripts\Tests\PlayMode\AudioClipPlayModeTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\PlayMode\OptionsScreenshotDiagnostics.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Scripts\Tests\PlayMode\GameTests.PlayMode.asmdef" />

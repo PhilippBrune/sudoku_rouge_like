@@ -317,12 +317,26 @@ Build from commit afc9bd9 (bundleVersion 0.1.5) as `sudoku_rouge_like.exe`; star
 
 Not checked: the uploaded manifest's file list in the portal (the zip was checked locally instead), and the build in a Steam client (owner step, `docs/release/platform-readiness-checklist.md`).
 
+### 10.2f In-game Options rebuilt (2026-10-14)
+
+GAP-029 / FUTURE-015, UI-OPT-001..003. Rendered in the Editor (batchmode with graphics, not a built player) by the `[Explicit]` PlayMode diagnostic `OptionsScreenshotDiagnostics`: the generated main menu, then a started 6×6 puzzle (seed 8603) with its Options open, each tab at 1920×1080 and 1280×720. Screens: `evidence/screens/B28`–`B33`.
+
+| ID | Flow / Test | Expected | Actual | Result |
+|---|---|---|---|---|
+| **B28** | Main menu → Options, all three tabs | Unchanged by the shared factory | Same tabs, controls and layout as before; Display keeps the language row; background picture as before | **PASS** |
+| **B29–B30** | In-run Options → Audio, Display, Gameplay | Same controls and look as the main menu (UI-OPT-001) | Same card, tab bar, arrow rows, toggles with on/off boxes, dropdowns and Reset buttons; Display shows "Change the language in the main menu Options." in place of the language row; plain dark backdrop (no pause picture, as the contract test requires) | **PASS** |
+| **B31** | In-run Options → Accessibility at 1280×720 | Five toggles and Reset, readable at 720p (UI-OPT-002) | Colorblind, High Contrast, Reduce Motion, Alt Constraint Symbols, Screen Reader, Reset; labels readable, nothing clipped | **PASS** |
+| **B32** | In-run Options → Run | Seed, View Modifiers, Save & Quit, Abandon Run; Back below (UI-OPT-002) | "Seed: 8603", the three buttons stacked, Back always visible | **PASS** |
+| **B33** | Controller focus on a control | The selected control is visible (UI-OPT-003) | The focused `>` of Master Volume shows the gold-tinted selected state; the tint is faint on the dark buttons (same as the main menu, which uses the same widget) | **PASS** (note) |
+
+The D-pad paths themselves are checked by `GeneratedUiPlayModeTraversalTests.OptionsPanels_EveryControlIsReachableWithTheDpad` (every control of every tab, the tab bar and Back, in both panels). Not checked in a built player.
+
 ### 10.3 Not verified in the build
 
 - Boss gate, boss debuffs from Floor 3, modifier legend, pressure visuals, prestige and the Monthly Walk widget's Open target: covered by PlayMode/EditMode tests (`InRunUiPlayModeTests`, `BossDebuffTests`, `PrestigeTests`, `GeneratedUiPlayModeTraversalTests`), not played to in the build.
 - Listening check of the audio (GAP-030); the music loops are 6.0 s mono.
 - Controller-only navigation of the new 1.1 UI (seed field, home widgets, legend).
-- French, Spanish and Portuguese in-run text (431 gameplay keys fall back to English, FUTURE-014).
+- French, Spanish and Portuguese gameplay text: translated 2026-10-14 (FUTURE-014, `LocalizationParityTests`), not yet seen in a build or reviewed by native speakers.
 
 ### 10.4 Cleanup
 

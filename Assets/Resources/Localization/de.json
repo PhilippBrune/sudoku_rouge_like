@@ -1,4 +1,6 @@
 ﻿{
+    "InRun.Options.RunTab":  "Lauf",
+    "Options.LanguageInMainMenu":  "Die Sprache stellst du im Hauptmenü unter Einstellungen um.",
     "DisplayMode.FramelessWindow":  "Rahmenloses Fenster",
     "InRun.PathStats.Relics":  "  ·  Relikte {0}",
     "InRun.PathStats":  "{0}  ·  LP <color={1}>{2}/{3}</color>  ·  Bleistift {4}/{5}",

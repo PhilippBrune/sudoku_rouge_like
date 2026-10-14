@@ -10,6 +10,9 @@ namespace SudokuRoguelike.UI
 {
     public sealed class InRunUiBlueprintBuilder : MonoBehaviour
     {
+        private OptionsController _optionsRefreshSource;
+        private System.Action _optionsRefresh;
+
         // Unified dark box color used across the Sudoku Puzzle screen.
         private static readonly Color ScrimColor = InRunUiFactory.SudokuPuzzleBoxBg;
 
@@ -411,6 +414,8 @@ namespace SudokuRoguelike.UI
             ApplyButtonIcon(backButton, "back_leaf", "ui"); // F16: back/close uses dedicated back_leaf icon
         }
 
+        // [REQ: UI-OPT-001] [REQ: UI-OPT-002] [REQ: UI-OPT-003] GAP-029 / FUTURE-015: the main-menu Options tabs and
+        // controls (OptionsUiFactory), plus Accessibility and Run tabs. Object names carry the "IG" prefix.
         private GameObject BuildInGameOptionsPanel(RectTransform root)
         {
             var optCtrl = EnsureComponent<OptionsController>(gameObject);
@@ -418,187 +423,59 @@ namespace SudokuRoguelike.UI
             var panel = EnsureRect("InGameOptionsPanel", root, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero).gameObject;
             EnsureOrGetImage(panel, new Color(0.055f, 0.07f, 0.065f, 1f));
             InRunUiFactory.ClearNamedChildren(panel.transform, "PanelBackground");
+            InRunUiFactory.ClearNamedChildren(panel.transform, "Content");
 
-            var pr = panel.transform as RectTransform;
-            var opts = optCtrl.GetOptions();
+            var pr = OptionsUiStyle.MakeCard(panel.transform as RectTransform);
+            var runScreen = root.GetComponent<InRunController>() ?? root.GetComponentInParent<InRunController>();
 
-            var title = BuildText("InGameOptionsTitle", pr, T("Options", "Options"), 28, TextAnchor.UpperCenter);
-            SetRect(title.rectTransform, new Vector2(0.08f, 0.93f), new Vector2(0.92f, 0.99f), Vector2.zero, Vector2.zero);
+            var title = OptionsUiFactory.BuildText("InGameOptionsTitle", pr, T("Options", "Options"),
+                OptionsUiStyle.TitleSize, TextAnchor.UpperCenter);
+            SetRect(title.rectTransform, new Vector2(0.08f, 0.94f), new Vector2(0.92f, 0.99f), Vector2.zero, Vector2.zero);
 
-            // ── Audio ──
-            var audioHdr = BuildText("IGAudioHdr", pr, T("Audio", "Audio"), 17, TextAnchor.MiddleLeft);
-            audioHdr.color = new Color(0.75f, 0.72f, 0.55f, 1f);
-            SetRect(audioHdr.rectTransform, new Vector2(0.05f, 0.88f), new Vector2(0.95f, 0.92f), Vector2.zero, Vector2.zero);
-
-            string FormatPercent(float value) => Mathf.RoundToInt(Mathf.Clamp01(value) * 100f) + "%";
-            string FormatAudioLabel(string label, float value) => label + " " + FormatPercent(value);
-
-            var masterText = T("Master Volume", "Master Volume");
-            var masterLabel = BuildText("IGMasterLabel", pr, FormatAudioLabel(masterText, opts.Audio.MasterVolume), 15, TextAnchor.MiddleLeft);
-            SetRect(masterLabel.rectTransform, new Vector2(0.05f, 0.84f), new Vector2(0.48f, 0.88f), Vector2.zero, Vector2.zero);
-            var masterSlider = BuildSlider("IGMasterSlider", pr);
-            SetRect(masterSlider.GetComponent<RectTransform>(), new Vector2(0.05f, 0.80f), new Vector2(0.48f, 0.84f), Vector2.zero, Vector2.zero);
-            masterSlider.minValue = 0f;
-            masterSlider.maxValue = 1f;
-            masterSlider.SetValueWithoutNotify(opts.Audio.MasterVolume);
-            masterSlider.onValueChanged.AddListener(v => optCtrl.SetMasterVolume(v));
-            var masterPct = BuildText("IGMasterPct", pr, FormatPercent(opts.Audio.MasterVolume), 13, TextAnchor.MiddleRight);
-            SetRect(masterPct.rectTransform, new Vector2(0.38f, 0.84f), new Vector2(0.48f, 0.88f), Vector2.zero, Vector2.zero);
-            masterPct.color = GamePalette.TextMuted;
-            masterPct.raycastTarget = false;
-            masterSlider.onValueChanged.AddListener(v =>
+            var tabs = OptionsTabSet.On(pr);
+            var refreshStandard = OptionsUiFactory.BuildStandardTabs(tabs, optCtrl, new OptionsUiFactory.Setup
             {
-                masterLabel.text = FormatAudioLabel(masterText, v);
-                masterPct.text = FormatPercent(v);
+                Prefix = "IG",
+                OnHighlightConflictsChanged = v => { if (runScreen != null) runScreen.SetHighlightConflictsLive(v); }
             });
 
-            var musicText = T("Music Volume", "Music Volume");
-            var musicLabel = BuildText("IGMusicLabel", pr, FormatAudioLabel(musicText, opts.Audio.MusicVolume), 15, TextAnchor.MiddleLeft);
-            SetRect(musicLabel.rectTransform, new Vector2(0.52f, 0.84f), new Vector2(0.95f, 0.88f), Vector2.zero, Vector2.zero);
-            var musicSlider = BuildSlider("IGMusicSlider", pr);
-            SetRect(musicSlider.GetComponent<RectTransform>(), new Vector2(0.52f, 0.80f), new Vector2(0.95f, 0.84f), Vector2.zero, Vector2.zero);
-            musicSlider.minValue = 0f;
-            musicSlider.maxValue = 1f;
-            musicSlider.SetValueWithoutNotify(opts.Audio.MusicVolume);
-            musicSlider.onValueChanged.AddListener(v => optCtrl.SetMusicVolume(v));
-            var musicPct = BuildText("IGMusicPct", pr, FormatPercent(opts.Audio.MusicVolume), 13, TextAnchor.MiddleRight);
-            SetRect(musicPct.rectTransform, new Vector2(0.85f, 0.84f), new Vector2(0.95f, 0.88f), Vector2.zero, Vector2.zero);
-            musicPct.color = GamePalette.TextMuted;
-            musicPct.raycastTarget = false;
-            musicSlider.onValueChanged.AddListener(v =>
-            {
-                musicLabel.text = FormatAudioLabel(musicText, v);
-                musicPct.text = FormatPercent(v);
-            });
-
-            var sfxText = T("SFX Volume", "SFX Volume");
-            var sfxLabel = BuildText("IGSfxLabel", pr, FormatAudioLabel(sfxText, opts.Audio.SfxVolume), 15, TextAnchor.MiddleLeft);
-            SetRect(sfxLabel.rectTransform, new Vector2(0.05f, 0.75f), new Vector2(0.48f, 0.79f), Vector2.zero, Vector2.zero);
-            var sfxSlider = BuildSlider("IGSfxSlider", pr);
-            SetRect(sfxSlider.GetComponent<RectTransform>(), new Vector2(0.05f, 0.71f), new Vector2(0.48f, 0.75f), Vector2.zero, Vector2.zero);
-            sfxSlider.minValue = 0f;
-            sfxSlider.maxValue = 1f;
-            sfxSlider.SetValueWithoutNotify(opts.Audio.SfxVolume);
-            sfxSlider.onValueChanged.AddListener(v => optCtrl.SetSfxVolume(v));
-            var sfxPct = BuildText("IGSfxPct", pr, FormatPercent(opts.Audio.SfxVolume), 13, TextAnchor.MiddleRight);
-            SetRect(sfxPct.rectTransform, new Vector2(0.38f, 0.75f), new Vector2(0.48f, 0.79f), Vector2.zero, Vector2.zero);
-            sfxPct.color = GamePalette.TextMuted;
-            sfxPct.raycastTarget = false;
-            sfxSlider.onValueChanged.AddListener(v =>
-            {
-                sfxLabel.text = FormatAudioLabel(sfxText, v);
-                sfxPct.text = FormatPercent(v);
-            });
-
-            var uiText = T("UI Volume", "UI Volume");
-            var uiLabel = BuildText("IGUiLabel", pr, FormatAudioLabel(uiText, opts.Audio.UiVolume), 15, TextAnchor.MiddleLeft);
-            SetRect(uiLabel.rectTransform, new Vector2(0.52f, 0.75f), new Vector2(0.95f, 0.79f), Vector2.zero, Vector2.zero);
-            var uiSlider = BuildSlider("IGUiSlider", pr);
-            SetRect(uiSlider.GetComponent<RectTransform>(), new Vector2(0.52f, 0.71f), new Vector2(0.95f, 0.75f), Vector2.zero, Vector2.zero);
-            uiSlider.minValue = 0f;
-            uiSlider.maxValue = 1f;
-            uiSlider.SetValueWithoutNotify(opts.Audio.UiVolume);
-            uiSlider.onValueChanged.AddListener(v => optCtrl.SetUiVolume(v));
-            var uiPct = BuildText("IGUiPct", pr, FormatPercent(opts.Audio.UiVolume), 13, TextAnchor.MiddleRight);
-            SetRect(uiPct.rectTransform, new Vector2(0.85f, 0.75f), new Vector2(0.95f, 0.79f), Vector2.zero, Vector2.zero);
-            uiPct.color = GamePalette.TextMuted;
-            uiPct.raycastTarget = false;
-            uiSlider.onValueChanged.AddListener(v =>
-            {
-                uiLabel.text = FormatAudioLabel(uiText, v);
-                uiPct.text = FormatPercent(v);
-            });
-
-            var muteTgl = BuildToggle("IGMuteWhenUnfocusedToggle", pr,
-                T("InRun.Options.MuteWhenUnfocused", "Mute When Unfocused"));
-            SetRect(muteTgl.GetComponent<RectTransform>(), new Vector2(0.05f, 0.66f), new Vector2(0.50f, 0.70f), Vector2.zero, Vector2.zero);
-            muteTgl.SetIsOnWithoutNotify(opts.Audio.MuteWhenUnfocused);
-            muteTgl.onValueChanged.AddListener(v => optCtrl.SetMuteWhenUnfocused(v));
-
-            // ── Display ──
-            var displayHdr = BuildText("IGDisplayHdr", pr, T("Display", "Display"), 17, TextAnchor.MiddleLeft);
-            displayHdr.color = new Color(0.75f, 0.72f, 0.55f, 1f);
-            SetRect(displayHdr.rectTransform, new Vector2(0.05f, 0.61f), new Vector2(0.95f, 0.65f), Vector2.zero, Vector2.zero);
-
-            var fullscreenTgl = BuildToggle("IGFullscreenToggle", pr, T("Fullscreen", "Fullscreen"));
-            SetRect(fullscreenTgl.GetComponent<RectTransform>(), new Vector2(0.05f, 0.56f), new Vector2(0.50f, 0.60f), Vector2.zero, Vector2.zero);
-            fullscreenTgl.SetIsOnWithoutNotify(opts.Graphics.Fullscreen);
-            fullscreenTgl.onValueChanged.AddListener(v => optCtrl.SetFullscreen(v));
-
-            // ── Gameplay ──
-            var gameHdr = BuildText("IGGameHdr", pr, T("Gameplay", "Gameplay"), 17, TextAnchor.MiddleLeft);
-            gameHdr.color = new Color(0.75f, 0.72f, 0.55f, 1f);
-            SetRect(gameHdr.rectTransform, new Vector2(0.05f, 0.51f), new Vector2(0.95f, 0.55f), Vector2.zero, Vector2.zero);
-
-            var highlightToggle = BuildToggle("IGHighlightToggle", pr, T("Highlight Errors", "Highlight Errors"));
-            SetRect(highlightToggle.GetComponent<RectTransform>(), new Vector2(0.05f, 0.46f), new Vector2(0.50f, 0.50f), Vector2.zero, Vector2.zero);
-            highlightToggle.SetIsOnWithoutNotify(opts.Gameplay.HighlightConflicts);
-            highlightToggle.onValueChanged.AddListener(v =>
-            {
-                optCtrl.SetHighlightConflicts(v);
-                var rs = root.GetComponent<InRunController>();
-                if (rs != null) rs.SetHighlightConflictsLive(v);
-            });
-
-            // ── Accessibility ──
-            var accHdr = BuildText("IGAccHdr", pr, T("Accessibility", "Accessibility"), 17, TextAnchor.MiddleLeft);
-            accHdr.color = new Color(0.75f, 0.72f, 0.55f, 1f);
-            SetRect(accHdr.rectTransform, new Vector2(0.05f, 0.41f), new Vector2(0.95f, 0.45f), Vector2.zero, Vector2.zero);
-
-            var colorblindTgl = BuildToggle("IGColorblindToggle", pr, T("Colorblind Mode", "Colorblind Mode"));
-            SetRect(colorblindTgl.GetComponent<RectTransform>(), new Vector2(0.05f, 0.36f), new Vector2(0.50f, 0.40f), Vector2.zero, Vector2.zero);
-            colorblindTgl.SetIsOnWithoutNotify(opts.Accessibility.ColorblindMode);
-            colorblindTgl.onValueChanged.AddListener(v => optCtrl.SetColorblindMode(v));
-
-            var highContrastTgl = BuildToggle("IGHighContrastToggle", pr, T("High Contrast", "High Contrast"));
-            SetRect(highContrastTgl.GetComponent<RectTransform>(), new Vector2(0.52f, 0.36f), new Vector2(0.97f, 0.40f), Vector2.zero, Vector2.zero);
-            highContrastTgl.SetIsOnWithoutNotify(opts.Accessibility.HighContrastMode);
-            highContrastTgl.onValueChanged.AddListener(v => optCtrl.SetHighContrast(v));
-
-            var reduceMotionTgl = BuildToggle("IGReduceMotionToggle", pr, T("Reduce Motion", "Reduce Motion"));
-            SetRect(reduceMotionTgl.GetComponent<RectTransform>(), new Vector2(0.05f, 0.30f), new Vector2(0.50f, 0.34f), Vector2.zero, Vector2.zero);
-            reduceMotionTgl.SetIsOnWithoutNotify(opts.Accessibility.ReduceMotion);
-            reduceMotionTgl.onValueChanged.AddListener(v => optCtrl.SetReduceMotion(v));
-
-            var altSymbolsTgl = BuildToggle("IGAltSymbolsToggle", pr,
-                T("InRun.Options.AltSymbols", "Alt Symbols"));
-            SetRect(altSymbolsTgl.GetComponent<RectTransform>(), new Vector2(0.52f, 0.30f), new Vector2(0.97f, 0.34f), Vector2.zero, Vector2.zero);
-            altSymbolsTgl.SetIsOnWithoutNotify(opts.Accessibility.AlternativeConstraintSymbols);
-            altSymbolsTgl.onValueChanged.AddListener(v => optCtrl.SetAltSymbols(v));
+            var accIndex = tabs.Count;
+            var accSec = tabs.Add("IGTabAccessibility", "IGAccessibilitySection", T("Accessibility", "Accessibility"));
+            var refreshAccessibility = OptionsUiFactory.BuildAccessibilitySection(tabs, accIndex, accSec, optCtrl, "IG");
 
             // ── Run ── [REQ: REQ-RUN-101] seed, View Modifiers, Abandon Run (GAP-020); wired in InRunController.RunMenu.
-            var seedTxt = BuildText("IGRunSeed", pr, "", 15, TextAnchor.MiddleLeft);
-            SetRect(seedTxt.rectTransform, new Vector2(0.05f, 0.215f), new Vector2(0.95f, 0.275f), Vector2.zero, Vector2.zero);
-            var modsBtn = BuildButton("BtnInGameOptionsModifiers", pr, T("View Modifiers", "View Modifiers"), 16);
-            SetRect(modsBtn.GetComponent<RectTransform>(), new Vector2(0.05f, 0.12f), new Vector2(0.46f, 0.20f), Vector2.zero, Vector2.zero);
-            var abandonBtn = BuildButton("BtnInGameOptionsAbandon", pr, T("Abandon Run", "Abandon Run"), 16);
-            SetRect(abandonBtn.GetComponent<RectTransform>(), new Vector2(0.54f, 0.12f), new Vector2(0.90f, 0.20f), Vector2.zero, Vector2.zero);
-            InRunUiFactory.ApplyFocusColors(modsBtn);
-            InRunUiFactory.ApplyFocusColors(abandonBtn);
-
-            var runScreen = root.GetComponent<InRunController>() ?? root.GetComponentInParent<InRunController>();
-            var saveQuitBtn = BuildButton("BtnInGameOptionsSaveQuit", pr, T("InRun.Options.SaveQuit", "Save & Quit"), 18);
-            SetRect(saveQuitBtn.GetComponent<RectTransform>(), new Vector2(0.05f, 0.01f), new Vector2(0.46f, 0.09f), Vector2.zero, Vector2.zero);
+            var runIndex = tabs.Count;
+            var runSec = tabs.Add("IGTabRun", "IGRunSection", T("InRun.Options.RunTab", "Run"));
+            OptionsUiFactory.SectionHeader("IGRunHdr", runSec, T("InRun.Options.RunTab", "Run"));
+            var seedTxt = OptionsUiFactory.BuildText("IGRunSeed", runSec, "", 15, TextAnchor.MiddleLeft);
+            SetRect(seedTxt.rectTransform, new Vector2(0.05f, 0.74f), new Vector2(0.95f, 0.84f), Vector2.zero, Vector2.zero);
+            var modsBtn = OptionsUiFactory.BuildButton("BtnInGameOptionsModifiers", runSec, T("View Modifiers", "View Modifiers"), 16);
+            SetRect(modsBtn.GetComponent<RectTransform>(), new Vector2(0.20f, 0.56f), new Vector2(0.80f, 0.68f), Vector2.zero, Vector2.zero);
+            var saveQuitBtn = OptionsUiFactory.BuildButton("BtnInGameOptionsSaveQuit", runSec, T("InRun.Options.SaveQuit", "Save & Quit"), 16);
+            SetRect(saveQuitBtn.GetComponent<RectTransform>(), new Vector2(0.20f, 0.40f), new Vector2(0.80f, 0.52f), Vector2.zero, Vector2.zero);
             if (runScreen != null)
                 saveQuitBtn.onClick.AddListener(runScreen.SaveAndQuitPublic);
+            var abandonBtn = OptionsUiFactory.BuildButton("BtnInGameOptionsAbandon", runSec, T("Abandon Run", "Abandon Run"), 16);
+            SetRect(abandonBtn.GetComponent<RectTransform>(), new Vector2(0.20f, 0.18f), new Vector2(0.80f, 0.30f), Vector2.zero, Vector2.zero);
+            tabs.SetRows(runIndex, new Selectable[] { modsBtn }, new Selectable[] { saveQuitBtn }, new Selectable[] { abandonBtn });
 
-            var closeBtn = BuildButton("BtnInGameOptionsClose", pr, T("Back", "Back"), 18);
-            SetRect(closeBtn.GetComponent<RectTransform>(), new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
+            // ── Back, always visible ──
+            var closeBtn = OptionsUiFactory.BuildButton("BtnInGameOptionsClose", pr, T("Back", "Back"), 18);
+            SetRect(closeBtn.GetComponent<RectTransform>(), new Vector2(0.30f, 0.015f), new Vector2(0.70f, 0.085f), Vector2.zero, Vector2.zero);
             ApplyButtonIcon(closeBtn, "back_leaf", "ui"); // F16: back/close uses dedicated back_leaf icon
+            tabs.SetFooter(new Selectable[] { closeBtn });
+            tabs.Activate(0);
 
-            // Apply gold focus highlight to all interactive elements
-            InRunUiFactory.ApplyFocusColors(masterSlider);
-            InRunUiFactory.ApplyFocusColors(musicSlider);
-            InRunUiFactory.ApplyFocusColors(sfxSlider);
-            InRunUiFactory.ApplyFocusColors(uiSlider);
-            InRunUiFactory.ApplyFocusColors(muteTgl);
-            InRunUiFactory.ApplyFocusColors(fullscreenTgl);
-            InRunUiFactory.ApplyFocusColors(highlightToggle);
-            InRunUiFactory.ApplyFocusColors(colorblindTgl);
-            InRunUiFactory.ApplyFocusColors(highContrastTgl);
-            InRunUiFactory.ApplyFocusColors(reduceMotionTgl);
-            InRunUiFactory.ApplyFocusColors(altSymbolsTgl);
-            InRunUiFactory.ApplyFocusColors(saveQuitBtn);
+            // Resets and profile switches raise OnOptionsChanged; replace the handler of an earlier build.
+            if (_optionsRefreshSource != null && _optionsRefresh != null)
+                _optionsRefreshSource.OnOptionsChanged -= _optionsRefresh;
+            _optionsRefresh = () =>
+            {
+                refreshStandard();
+                refreshAccessibility();
+            };
+            _optionsRefreshSource = optCtrl;
+            optCtrl.OnOptionsChanged += _optionsRefresh;
 
             return panel;
         }
@@ -759,57 +636,6 @@ namespace SudokuRoguelike.UI
             text.color = textColor;
 
             return button;
-        }
-
-        private Toggle BuildToggle(string name, RectTransform parent, string label)
-        {
-            var row = EnsureRect(name, parent, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
-            row.sizeDelta = new Vector2(260f, 32f);
-
-            var bg = EnsureOrGetImage(row.gameObject, new Color(buttonColor.r, buttonColor.g, buttonColor.b, 0.65f));
-            var toggle = EnsureComponent<Toggle>(row.gameObject);
-
-            // [REQ: REQ-UI-103] GAP-029: an always-visible box, so "off" reads as an empty box and "on" as a filled one.
-            var box = EnsureRect("Box", row, new Vector2(0.02f, 0.12f), new Vector2(0.10f, 0.88f), Vector2.zero, Vector2.zero);
-            EnsureOrGetImage(box.gameObject, new Color(0.02f, 0.02f, 0.02f, 0.90f)).raycastTarget = false;
-            var boxOutline = box.gameObject.GetComponent<Outline>() ?? box.gameObject.AddComponent<Outline>();
-            boxOutline.effectColor = accentColor;
-            boxOutline.effectDistance = new Vector2(1.5f, -1.5f);
-            var check = EnsureRect("Checkmark", box, new Vector2(0.18f, 0.18f), new Vector2(0.82f, 0.82f), Vector2.zero, Vector2.zero);
-            var checkImage = EnsureOrGetImage(check.gameObject, accentColor);
-            checkImage.raycastTarget = false;
-
-            var text = BuildText("Label", row, label, 15, TextAnchor.MiddleLeft);
-            SetRect(text.rectTransform, new Vector2(0.14f, 0f), new Vector2(0.98f, 1f), Vector2.zero, Vector2.zero);
-
-            toggle.targetGraphic = bg;
-            toggle.graphic = checkImage;
-            return toggle;
-        }
-
-        private Slider BuildSlider(string name, RectTransform parent)
-        {
-            var sliderRect = EnsureRect(name, parent, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
-            var slider = EnsureComponent<Slider>(sliderRect.gameObject);
-
-            var background = EnsureRect("Background", sliderRect, new Vector2(0f, 0.25f), new Vector2(1f, 0.75f), Vector2.zero, Vector2.zero);
-            EnsureOrGetImage(background.gameObject, new Color(0f, 0f, 0f, 0.35f));
-
-            var fillArea = EnsureRect("Fill Area", sliderRect, new Vector2(0f, 0f), new Vector2(1f, 1f), new Vector2(10f, 0f), new Vector2(-10f, 0f));
-            var fill = EnsureRect("Fill", fillArea, new Vector2(0f, 0f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero);
-            var fillImage = EnsureOrGetImage(fill.gameObject, new Color(0.25f, 0.65f, 0.55f, 1f));
-
-            var handleArea = EnsureRect("Handle Slide Area", sliderRect, new Vector2(0f, 0f), new Vector2(1f, 1f), new Vector2(10f, 0f), new Vector2(-10f, 0f));
-            var handle = EnsureRect("Handle", handleArea, new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(-10f, 0f), new Vector2(10f, 0f));
-            var handleImage = EnsureOrGetImage(handle.gameObject, new Color(0.90f, 0.95f, 0.92f, 1f));
-
-            slider.targetGraphic = handleImage;
-            slider.fillRect = fill;
-            slider.handleRect = handle;
-            slider.direction = Slider.Direction.LeftToRight;
-
-            fillImage.raycastTarget = false;
-            return slider;
         }
 
         // V2: delegates to InRunUiFactory.GetFont() so both builders use the same

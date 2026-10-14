@@ -206,6 +206,8 @@ namespace SudokuRoguelike.Tests
             yield return null;
             var options = FindObject(h.Host, "InGameOptionsPanel");
             Assert.IsTrue(options.activeInHierarchy);
+            ClickButton(options, "IGTabRun"); // UI-OPT-002: the run-only actions sit on the Run tab
+            yield return null;
             StringAssert.Contains(h.Run.State.Seed.ToString(), FindObject(options, "IGRunSeed").GetComponent<Text>().text);
 
             ClickButton(options, "BtnInGameOptionsModifiers");

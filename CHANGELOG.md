@@ -6,6 +6,7 @@
 
 - Region borders could show the previous puzzle's regions when two puzzles of the same size followed each other, so an irregular board looked unsolvable. The board now always shows its own regions.
 - Boss puzzles now play their stage's boss music (it never played before).
+- The in-game Options now look and work like the main-menu Options: the same Audio, Display and Gameplay tabs and controls, plus Accessibility and Run tabs (seed, View Modifiers, Save & Quit, Abandon Run). Every control can be reached with a controller.
 
 ### Changed
 

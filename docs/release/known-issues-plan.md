@@ -6,7 +6,7 @@ The v0.1.5 release notes list three known issues. This plan says how each gets f
 
 | # | Known issue | Gap / gate | Kind of work | Blocked on | Rough effort |
 |---|---|---|---|---|---|
-| 1 | The in-game Options panel keeps its older look | GAP-029 (last open item), FUTURE-015 | Code | Nothing | 2–3 days |
+| 1 | The in-game Options panel keeps its older look | GAP-029 (last open item), FUTURE-015 | Code | Nothing | **Done 2026-10-14** (UI-OPT-001..003) |
 | 2 | French, Spanish and Brazilian Portuguese: item, relic, boss, class and story texts in English | GAP-019 follow-up, FUTURE-014, PRG-LOCALIZATION | Tooling + translation + review | Native review (owner decision: community or paid) | 1 day tooling, ~1 day per language, plus review time |
 | 3 | Music tracks are short loops | GAP-030, PRG-AUDIO | Assets + a small code change | Where the music comes from (owner decision) | Code 1 day; assets depend on the source |
 
@@ -15,6 +15,8 @@ Recommended order: 1 now (no dependencies), 2 next (the AI pass can start right 
 ---
 
 # Implementation Plan 1: In-run Options in the main Options style
+
+**Status: implemented 2026-10-14.** `OptionsUiFactory` builds the Audio, Display and Gameplay tabs for both panels; `OptionsTabSet` owns the tab bar and the D-pad links; the in-run panel adds Accessibility and Run tabs. Deviations from this plan: the language row stays in the main menu (changing the language rebuilds the UI; the in-run Display tab says where to change it), and the screenshots were rendered in the Editor (`OptionsScreenshotDiagnostics`, E2E report §10.2f), not taken from a built player.
 
 ## Overview
 The main-menu Options and the in-run Options are built by two different builders, so they look different. Move the main Options' controls into a shared factory and rebuild the in-run panel with it: same tabs, same controls, same look, plus a "Run" tab for the run-only actions.
@@ -68,9 +70,9 @@ The main-menu Options and the in-run Options are built by two different builders
 - **Renamed objects break tests silently** — keep the existing names where possible; grep the tests for each name you change.
 
 ## Success Criteria
-- [ ] Main and in-run Options are visually the same (screenshots in the E2E report).
-- [ ] All Options PlayMode tests green, including the new in-run ones.
-- [ ] GAP-029 FIXED, FUTURE-015 closed, the release notes no longer list the issue.
+- [x] Main and in-run Options are visually the same (screenshots in the E2E report §10.2f, B28–B33).
+- [x] All Options PlayMode tests green, including the new in-run ones (PlayMode 30/30 on 2026-10-14).
+- [x] GAP-029 FIXED, FUTURE-015 closed. The next release notes must drop the known issue (the v0.1.5 notes describe the uploaded build).
 
 ---
 

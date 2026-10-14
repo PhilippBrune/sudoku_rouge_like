@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.8 | **Date:** 2026-10-14 | **Status:** implemented
+**Version:** 1.9 | **Date:** 2026-10-14 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.9 | 2026-10-14 | implemented | Options panels (UI-OPT-001..003): the in-run Options use the main Options' tabs, controls and look (one factory, OptionsUiFactory), plus Accessibility and Run tabs; every control is reachable with the D-pad. Options Structure updated to the built tabs. Closes GAP-029 and FUTURE-015. Evidence: GeneratedUiPlayModeTraversalTests, GeneratedUiWiringContractTests, screenshots (E2E report §10.2f). |
 | 1.8 | 2026-10-14 | implemented | Window title "Run of the Nine" in every display mode (DISPLAY-MODE-007), set by the Windows player because the product name keeps the released save folder (SaveLoadArchitecture §Save folder). Evidence: build check B23 (E2E report §10.2d). |
 | 1.7 | 2026-10-12 | implemented | Display modes specified and implemented (DISPLAY-MODE-001..006): Fullscreen, Borderless Fullscreen, Windowed and the new Frameless Window; window sizing, centring, save compatibility and the Fullscreen toggle rule. Evidence: DisplayModeTests, GeneratedUiPlayModeTraversalTests, build check B16–B19 (E2E report §10). |
 | 1.6 | 2026-10-07 | implemented | 1.1 review decisions (2026-10-07): wrong digit = differs from the solution, rejected, mistake HP cost by Harmony (SPEC-CONF-003); pencil purchase and item-reward reroll implemented (SPEC-CONF-029); reward slot/Nothing table incl. 6★, guarantee and Nothing gold 5 × floor (SPEC-AMB-001, SPEC-AMB-007); Rest values from code + Cleanse (SPEC-CONF-017); floor modifiers 0/1/1/1/2 and boss choices floor+1/floor (SPEC-CONF-001/002); one cross-edge, tiles keep type (SPEC-CONF-010); boss boards follow floor range (SPEC-CONF-028); 30 modifiers (SPEC-CONF-019); §6 roster reduced to a link to ClassXpProgressionSystem (SPEC-CONF-008); §13 Endless Zen and Spirit Trials point to their mode docs (SPEC-CONF-006/007); multi relics, shop items only (SPEC-CONF-004/005); 5 languages, Custom Puzzle naming, main-menu Daily/Monthly widgets, start-run seed and abandon warning, in-run seed/View Modifiers/Abandon (SPEC-CONF-027/031/032/033, GAP-020/032); multi-cell selection moved to future scope (SPEC-MAC-005); links to renamed docs fixed; SPICE table archived (SPEC-OBS-001). |
@@ -382,11 +383,21 @@ Source of truth: [EndlessZenMode](EndlessZenMode.md) (decided 2026-10-07, SPEC-C
 
 ### Options Structure
 
-- Language (English / German / French / Spanish / Brazilian Portuguese; all five are also offered in first-run setup, SPEC-CONF-032)
-- Audio (Master / Music / SFX / UI volumes)
-- Graphics (resolution, display mode — see Display Modes below, VSync, frame limit)
-- Gameplay (confirm wrong placement, auto pencil cleanup, conflict highlights)
-- Accessibility (colorblind, high contrast, font scaling, reduce motion)
+Main menu → Options has three tabs; each has a Reset button for its own settings:
+
+- **Audio:** Master / Music / SFX / UI volume (arrow rows in 5 % steps), Mute when unfocused, Mute all, menu music style
+- **Display:** Fullscreen, VSync, Screen Shake, Particles, Brightness, Contrast, Resolution, Display Mode (see Display Modes below), Language (English / German / French / Spanish / Brazilian Portuguese, applied after a confirmation; all five are also offered in first-run setup, SPEC-CONF-032)
+- **Gameplay:** Highlight Errors, Confirm Wrong Placement, Auto Pencil Cleanup, Show Candidate Count, Cursor Snap, Double-Tap to Confirm, Controller Rumble
+
+Below the tabs: Keybindings…, Accessibility… (colorblind, high contrast, reduce motion, alternative constraint symbols, text size, screen reader, with a preview board), Sudoku Tutorial and Back.
+
+### Options Panels (main menu and in-run)
+
+| ID | Requirement |
+|---|---|
+| UI-OPT-001 | The in-run Options show the main Options' Audio, Display and Gameplay tabs with the same controls, look and reset buttons; both panels are built by one factory (`OptionsUiFactory`), so they cannot drift apart. The language row stays in the main menu (changing it rebuilds the UI); the in-run Display tab says where to change it. |
+| UI-OPT-002 | The in-run Options add two tabs: **Accessibility** (colorblind, high contrast, reduce motion, alternative constraint symbols, screen reader, reset) and **Run** (run seed, View Modifiers, Save & Quit, Abandon Run; Abandon is hidden in tutorials). Back is always visible below the tabs. |
+| UI-OPT-003 | Both Options panels are fully usable with the D-pad: left/right moves within a row and along the tab bar, up/down moves to the nearest control of the next row; the first row leads up to the active tab and the last row down to the buttons below the tabs. Links are rebuilt when a control appears or disappears (language confirmation, Abandon Run). Start opens and B closes the in-run Options (`CancelRouteContract`). |
 
 ### Display Modes
 
@@ -411,7 +422,7 @@ Options → Display → **Display Mode** (saved per profile, applied at startup 
 - Save & Quit (returns to main menu, run resumes later)
 - Abandon Run
 
-As built (1.1, GAP-020): the in-run Options panel shows the run seed and has View Modifiers (floor, puzzle and boss-debuff rules) and Abandon Run (press twice; the run ends as a defeat with its XP recorded).
+As built (1.1, GAP-020; Run tab since 1.9, UI-OPT-002): the in-run Options panel's Run tab shows the run seed and has View Modifiers (floor, puzzle and boss-debuff rules), Save & Quit and Abandon Run (press twice; the run ends as a defeat with its XP recorded).
 
 ### End Screens
 

@@ -19,6 +19,8 @@ namespace SudokuRoguelike.Tests
         private const string InRunControllerPath = "Assets/Scripts/UI/InRunController.cs";
         private const string RunMapControllerPath = "Assets/Scripts/UI/RunMapController.cs";
         private const string InRunUiFactoryPath = "Assets/Scripts/UI/InRunUiFactory.cs";
+        private const string OptionsUiFactoryPath = "Assets/Scripts/UI/OptionsUiFactory.cs";
+        private const string OptionsTabSetPath = "Assets/Scripts/UI/OptionsTabSet.cs";
         private const string GamePalettePath = "Assets/Scripts/UI/GamePalette.cs";
         private const string BossServicePath = "Assets/Scripts/Boss/BossService.cs";
         private const string BoardViewControllerPath = "Assets/Scripts/UI/BoardViewController.cs";
@@ -54,14 +56,38 @@ namespace SudokuRoguelike.Tests
             Button("CustomPuzzle", MainMenuPath, "BtnTutStart", "mc.StartTutorialGame"),
             Button("CustomPuzzle", MainMenuPath, "BtnTutBack", "mc.BackToMainMenu"),
 
-            Button("Options", MainMenuPath, "TabAudio", "ActivateTab(0)"),
-            Button("Options", MainMenuPath, "TabDisplay", "ActivateTab(1)"),
-            Button("Options", MainMenuPath, "TabGame", "ActivateTab(2)"),
-            Dropdown("Options", MainMenuPath, "MenuMusicStyleDropdown", "SetMusicStyleIndex"),
-            Dropdown("Options", MainMenuPath, "ResolutionDropdown", "optCtrl.SetResolution"),
-            Dropdown("Options", MainMenuPath, "LanguageDropdown", "langConfirmRow.SetActive"),
-            Button("Options", MainMenuPath, "BtnLangApply", "optCtrl.SetLanguage"),
-            Button("Options", MainMenuPath, "BtnLangCancel", "SetValueWithoutNotify"),
+            // [REQ: UI-OPT-001] Options tabs and controls: one factory for the main menu and the run.
+            Button("Options", OptionsTabSetPath, "BuildButton(tabName", "Activate(index)"),
+            Slider("Options", OptionsUiFactoryPath, "\"MasterVolume\"", "SetMasterVolume"),
+            Slider("Options", OptionsUiFactoryPath, "\"MusicVolume\"", "SetMusicVolume"),
+            Slider("Options", OptionsUiFactoryPath, "\"SfxVolume\"", "SetSfxVolume"),
+            Slider("Options", OptionsUiFactoryPath, "\"UiVolume\"", "SetUiVolume"),
+            Toggle("Options", OptionsUiFactoryPath, "\"MuteUnfocused\"", "SetMuteWhenUnfocused"),
+            Toggle("Options", OptionsUiFactoryPath, "\"MuteAll\"", "SetMuteAll"),
+            Dropdown("Options", OptionsUiFactoryPath, "MenuMusicStyleDropdown", "SetMusicStyleIndex"),
+            Toggle("Options", OptionsUiFactoryPath, "\"Fullscreen\"", "SetFullscreen"),
+            Toggle("Options", OptionsUiFactoryPath, "\"VSync\"", "SetVSync"),
+            Toggle("Options", OptionsUiFactoryPath, "\"ScreenShake\"", "SetScreenShake"),
+            Slider("Options", OptionsUiFactoryPath, "\"ParticleIntensity\"", "SetParticleIntensity"),
+            Slider("Options", OptionsUiFactoryPath, "\"Brightness\"", "SetBrightness"),
+            Slider("Options", OptionsUiFactoryPath, "\"Contrast\"", "SetContrast"),
+            Dropdown("Options", OptionsUiFactoryPath, "ResolutionDropdown", "optCtrl.SetResolution"),
+            Dropdown("Options", OptionsUiFactoryPath, "DisplayModeDropdown", "optCtrl.SetDisplayMode"),
+            Dropdown("Options", OptionsUiFactoryPath, "LanguageDropdown", "confirmRow.SetActive"),
+            Button("Options", OptionsUiFactoryPath, "BtnLangApply", "optCtrl.SetLanguage"),
+            Button("Options", OptionsUiFactoryPath, "BtnLangCancel", "SetValueWithoutNotify"),
+            Toggle("Options", OptionsUiFactoryPath, "\"HighlightErrors\"", "SetHighlightConflicts"),
+            Toggle("Options", OptionsUiFactoryPath, "\"ConfirmWrong\"", "SetConfirmBeforeWrongPlacement"),
+            Toggle("Options", OptionsUiFactoryPath, "\"AutoPencil\"", "SetAutoPencilCleanup"),
+            Toggle("Options", OptionsUiFactoryPath, "\"CandidateCount\"", "SetShowCandidateCount"),
+            Toggle("Options", OptionsUiFactoryPath, "\"CursorSnap\"", "SetCursorSnapOnSelection"),
+            Toggle("Options", OptionsUiFactoryPath, "\"DoubleTap\"", "SetDoubleTapConfirm"),
+            Toggle("Options", OptionsUiFactoryPath, "\"ControllerRumble\"", "SetControllerRumbleEnabled"),
+            Toggle("Options", OptionsUiFactoryPath, "\"Colorblind\"", "SetColorblindMode"),
+            Toggle("Options", OptionsUiFactoryPath, "\"HighContrast\"", "SetHighContrast"),
+            Toggle("Options", OptionsUiFactoryPath, "\"ReduceMotion\"", "SetReduceMotion"),
+            Toggle("Options", OptionsUiFactoryPath, "\"AltSymbols\"", "SetAltSymbols"),
+            Toggle("Options", OptionsUiFactoryPath, "\"ScreenReader\"", "SetScreenReaderEnabled"),
             Button("Options", MainMenuPath, "BtnKeybindings", "mc.OpenKeybindings"),
             Button("Options", MainMenuPath, "BtnAccessibility", "mc.OpenAccessibility"),
             Button("Options", MainMenuPath, "BtnOptBack", "mc.BackToMainMenu"),
@@ -86,17 +112,9 @@ namespace SudokuRoguelike.Tests
             // [REQ: REQ-ITEM-100] GAP-015 reward reroll (built at runtime by RewardViewController)
             Button("InRunReward", RewardViewControllerPath, "Slot_reroll", "RerollRewardSlots", RewardViewControllerPath),
             Button("InRunOptions", InRunBlueprintPath, "BtnInGameOptionsClose", "ToggleOptionsPanel", InRunControllerPath),
-            Toggle("InRunOptions", InRunBlueprintPath, "IGMuteWhenUnfocusedToggle", "SetMuteWhenUnfocused"),
-            Slider("InRunOptions", InRunBlueprintPath, "IGMasterSlider", "SetMasterVolume"),
-            Slider("InRunOptions", InRunBlueprintPath, "IGMusicSlider", "SetMusicVolume"),
-            Slider("InRunOptions", InRunBlueprintPath, "IGSfxSlider", "SetSfxVolume"),
-            Slider("InRunOptions", InRunBlueprintPath, "IGUiSlider", "SetUiVolume"),
-            Toggle("InRunOptions", InRunBlueprintPath, "IGFullscreenToggle", "SetFullscreen"),
-            Toggle("InRunOptions", InRunBlueprintPath, "IGHighlightToggle", "SetHighlightConflicts"),
-            Toggle("InRunOptions", InRunBlueprintPath, "IGColorblindToggle", "SetColorblind"),
-            Toggle("InRunOptions", InRunBlueprintPath, "IGHighContrastToggle", "SetHighContrast"),
-            Toggle("InRunOptions", InRunBlueprintPath, "IGReduceMotionToggle", "SetReduceMotion"),
-            Toggle("InRunOptions", InRunBlueprintPath, "IGAltSymbolsToggle", "SetAltSymbols")
+            Button("InRunOptions", InRunBlueprintPath, "BtnInGameOptionsSaveQuit", "SaveAndQuitPublic"),
+            Button("InRunOptions", InRunBlueprintPath, "BtnInGameOptionsModifiers", "ShowModifierList", "Assets/Scripts/UI/InRunController.RunMenu.cs"),
+            Button("InRunOptions", InRunBlueprintPath, "BtnInGameOptionsAbandon", "OnAbandonPressed", "Assets/Scripts/UI/InRunController.RunMenu.cs")
         };
 
         [Test]
@@ -166,35 +184,37 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
+        [Requirement("UI-OPT-001")]
         public void OptionsAudioControls_ShowLivePercentageReadoutsForEveryAudioChannel()
+        {
+            var factorySource = ReadSource(OptionsUiFactoryPath);
+
+            foreach (var id in new[] { "MasterVolume", "MusicVolume", "SfxVolume", "UiVolume" })
+            {
+                StringAssert.Contains($"BuildVolumeArrowRow(p + \"{id}\"", factorySource);
+            }
+
+            StringAssert.Contains("string FormatPercent(float value) => Mathf.RoundToInt(Mathf.Clamp01(value) * 100f) + \"%\"", factorySource);
+            StringAssert.Contains("string FormatVolumeLabel(float value) => label + \" \" + FormatPercent(value)", factorySource);
+            StringAssert.Contains("id + \"Val\"", factorySource);
+            StringAssert.Contains("lbl.text = FormatVolumeLabel(current)", factorySource);
+            StringAssert.Contains("lbl.text = FormatVolumeLabel(v)", factorySource);
+        }
+
+        // [REQ: UI-OPT-001] Both Options panels are built by the same factory, so they cannot drift apart (GAP-029).
+        [Test]
+        [Requirement("UI-OPT-001", "UI-OPT-002")]
+        public void OptionsPanels_MainMenuAndInRun_UseTheSharedFactory()
         {
             var mainMenuSource = ReadSource(MainMenuPath);
             var inRunSource = ReadSource(InRunBlueprintPath);
 
-            foreach (var id in new[] { "MasterVolume", "MusicVolume", "SfxVolume", "UiVolume" })
-            {
-                StringAssert.Contains($"BuildVolumeArrowRow(\"{id}\"", mainMenuSource);
-            }
-
-            StringAssert.Contains("string FormatPercent(float value) => Mathf.RoundToInt(Mathf.Clamp01(value) * 100f) + \"%\"", mainMenuSource);
-            StringAssert.Contains("string FormatVolumeLabel(float value) => label + \" \" + FormatPercent(value)", mainMenuSource);
-            StringAssert.Contains("id + \"Val\"", mainMenuSource);
-            StringAssert.Contains("lbl.text = FormatVolumeLabel(current)", mainMenuSource);
-            StringAssert.Contains("lbl.text = FormatVolumeLabel(v)", mainMenuSource);
-
-            foreach (var id in new[] { "IGMasterPct", "IGMusicPct", "IGSfxPct", "IGUiPct" })
-            {
-                StringAssert.Contains(id, inRunSource);
-            }
-
-            StringAssert.Contains("string FormatAudioLabel(string label, float value) => label + \" \" + FormatPercent(value)", inRunSource);
-            StringAssert.Contains("FormatAudioLabel(masterText, opts.Audio.MasterVolume)", inRunSource);
-            StringAssert.Contains("masterLabel.text = FormatAudioLabel(masterText, v)", inRunSource);
-            StringAssert.Contains("musicLabel.text = FormatAudioLabel(musicText, v)", inRunSource);
-            StringAssert.Contains("sfxLabel.text = FormatAudioLabel(sfxText, v)", inRunSource);
-            StringAssert.Contains("uiLabel.text = FormatAudioLabel(uiText, v)", inRunSource);
-            StringAssert.Contains("IGUiSlider", inRunSource);
-            StringAssert.Contains("optCtrl.SetUiVolume", inRunSource);
+            StringAssert.Contains("OptionsUiFactory.BuildStandardTabs(tabs, optCtrl,", mainMenuSource);
+            StringAssert.Contains("OptionsUiFactory.BuildStandardTabs(tabs, optCtrl,", inRunSource);
+            StringAssert.Contains("Prefix = \"IG\"", inRunSource);
+            StringAssert.Contains("OptionsUiFactory.BuildAccessibilitySection(", inRunSource);
+            StringAssert.Contains("tabs.Add(\"IGTabRun\", \"IGRunSection\"", inRunSource);
+            Assert.That(inRunSource, Does.Not.Contain("BuildSlider("), "the in-run Options use the main menu's arrow rows");
         }
 
         [Test]

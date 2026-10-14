@@ -310,6 +310,7 @@ namespace SudokuRoguelike.Tests
         }
 
         [UnityTest]
+        [Requirement("UI-OPT-001", "UI-OPT-002")]
         public IEnumerator InRunOptionsControls_CanBeChangedWithoutLeavingOptionsPanel()
         {
             var host = BuildInRunHarness();
@@ -322,15 +323,70 @@ namespace SudokuRoguelike.Tests
             ClickButton(host, "BtnSudokuOptions");
             yield return null;
             AssertPanelActive(host, "InGameOptionsPanel");
+            var options = host.GetComponent<OptionsController>();
+            Assert.NotNull(options, "the in-run builder owns the OptionsController its controls write to");
 
-            SetSliderValue(host, "IGMasterSlider", 0.35f);
-            SetSliderValue(host, "IGMusicSlider", 0.40f);
-            SetSliderValue(host, "IGSfxSlider", 0.45f);
-            ToggleValue(host, "IGMuteWhenUnfocusedToggle");
-            ToggleValue(host, "IGHighlightToggle");
+            // Audio: the arrow row changes the option and its readout.
+            AssertPanelActive(host, "IGAudioSection");
+            var master = options.GetOptions().Audio.MasterVolume;
+            ClickButton(host, master >= 1f ? "IGMasterVolumeDec" : "IGMasterVolumeInc");
+            var changed = options.GetOptions().Audio.MasterVolume;
+            Assert.AreNotEqual(master, changed, "the master volume arrow changes the option");
+            Assert.AreEqual(Mathf.RoundToInt(changed * 100f) + "%", FindComponent<Text>(host, "IGMasterVolumeVal").text);
+            ClickButton(host, master >= 1f ? "IGMasterVolumeInc" : "IGMasterVolumeDec");
+            Assert.AreEqual(master, options.GetOptions().Audio.MasterVolume, 0.001f);
+            ToggleValue(host, "IGMuteUnfocusedToggle");
+            AssertDropdownActive(host, "IGMenuMusicStyleDropdown");
+
+            // Display: same controls as the main menu; the language is changed there (hint instead of the row).
+            ClickButton(host, "IGTabDisplay");
+            yield return null;
+            AssertPanelInactive(host, "IGAudioSection");
+            AssertPanelActive(host, "IGDisplaySection");
+            var shake = options.GetOptions().Graphics.ScreenShake;
+            ToggleValue(host, "IGScreenShakeToggle");
+            Assert.AreNotEqual(shake, options.GetOptions().Graphics.ScreenShake);
+            ToggleValue(host, "IGScreenShakeToggle");
+            AssertDropdownActive(host, "IGResolutionDropdown");
+            AssertDisplayModeOptions(host, "IGDisplayModeDropdown");
+            var displayModeDropdown = FindComponent<Dropdown>(host, "IGDisplayModeDropdown");
+            displayModeDropdown.Show();
+            yield return null;
+            AssertOpenListShowsAllItems(displayModeDropdown);
+            displayModeDropdown.Hide();
+            yield return new WaitForSecondsRealtime(0.3f);
+            AssertPanelActive(host, "IGLangHint");
+
+            // Gameplay
+            ClickButton(host, "IGTabGame");
+            yield return null;
+            AssertPanelActive(host, "IGGameSection");
+            var autoPencil = options.GetOptions().Gameplay.AutoPencilCleanup;
+            ToggleValue(host, "IGAutoPencilToggle");
+            Assert.AreNotEqual(autoPencil, options.GetOptions().Gameplay.AutoPencilCleanup);
+            ToggleValue(host, "IGHighlightErrorsToggle");
+
+            // Accessibility: the toggles write the option; Reset restores the defaults and refreshes the toggles.
+            ClickButton(host, "IGTabAccessibility");
+            yield return null;
+            AssertPanelActive(host, "IGAccessibilitySection");
+            var colorblind = options.GetOptions().Accessibility.ColorblindMode;
             ToggleValue(host, "IGColorblindToggle");
+            Assert.AreNotEqual(colorblind, options.GetOptions().Accessibility.ColorblindMode);
             ToggleValue(host, "IGReduceMotionToggle");
             ToggleValue(host, "IGAltSymbolsToggle");
+            ClickButton(host, "IGBtnResetAccessibility");
+            yield return null;
+            Assert.AreEqual(options.GetOptions().Accessibility.ColorblindMode, FindComponent<Toggle>(host, "IGColorblindToggle").isOn,
+                "Reset refreshes the toggles");
+
+            // Run: the run-only actions.
+            ClickButton(host, "IGTabRun");
+            yield return null;
+            AssertPanelActive(host, "IGRunSection");
+            AssertPanelActive(host, "IGRunSeed");
+            AssertButtonActive(host, "BtnInGameOptionsModifiers");
+            AssertButtonActive(host, "BtnInGameOptionsSaveQuit");
 
             yield return null;
             AssertPanelActive(host, "InGameOptionsPanel");
@@ -340,6 +396,57 @@ namespace SudokuRoguelike.Tests
             yield return null;
             AssertPanelInactive(host, "InGameOptionsPanel");
             AssertPanelActive(host, "SudokuGameplayPanel");
+        }
+
+        // [REQ: UI-OPT-001] Every control of the main-menu Options tabs and Accessibility panel exists in the run
+        // ("IG" prefix), built by the same factory; only the language row stays in the main menu.
+        [UnityTest]
+        [Requirement("UI-OPT-001", "UI-OPT-002")]
+        public IEnumerator InRunOptions_OfferEveryMainMenuOptionsControl()
+        {
+            var menuHost = BuildMainMenuHarness();
+            var runHost = BuildInRunHarness();
+            yield return null;
+
+            var mainOnly = new HashSet<string> { "LanguageDropdown", "BtnLangApply", "BtnLangCancel", "FontScaleSlider", "BtnResetAcc", "BtnAccBack" };
+            var checkedCount = 0;
+            foreach (var container in new[] { "AudioSection", "DisplaySection", "GameSection", "AccessibilityPanel" })
+            {
+                foreach (var control in OwnSelectables(FindObject(menuHost, container)))
+                {
+                    if (mainOnly.Contains(control.name)) continue;
+                    var twin = runHost.GetComponentsInChildren<Selectable>(true).FirstOrDefault(s => s.name == "IG" + control.name);
+                    Assert.NotNull(twin, $"in-run Options lack {control.name} from {container}");
+                    Assert.AreEqual(control.GetType(), twin.GetType(), control.name);
+                    checkedCount++;
+                }
+            }
+            Assert.Greater(checkedCount, 25, "the comparison found the main Options controls");
+
+            foreach (var tab in new[] { "IGTabAudio", "IGTabDisplay", "IGTabGame", "IGTabAccessibility", "IGTabRun" })
+                FindComponent<Button>(runHost, tab);
+            Assert.NotNull(FindObject(menuHost, "OptionsPanel").GetComponentInChildren<OptionsTabSet>(true));
+            Assert.NotNull(FindObject(runHost, "InGameOptionsPanel").GetComponentInChildren<OptionsTabSet>(true));
+        }
+
+        // [REQ: UI-OPT-003] From each tab, the D-pad reaches every control of its section, the other tabs and Back.
+        [UnityTest]
+        [Requirement("UI-OPT-003")]
+        public IEnumerator OptionsPanels_EveryControlIsReachableWithTheDpad()
+        {
+            var menuHost = BuildMainMenuHarness();
+            yield return null;
+            ClickButton(menuHost, "BtnOptions");
+            yield return null;
+            yield return AssertEveryTabReachable(FindObject(menuHost, "OptionsPanel"), "BtnOptBack");
+
+            var runHost = BuildInRunHarness();
+            yield return null;
+            FindObject(runHost, "SudokuGameplayPanel").SetActive(true);
+            yield return null;
+            ClickButton(runHost, "BtnSudokuOptions");
+            yield return null;
+            yield return AssertEveryTabReachable(FindObject(runHost, "InGameOptionsPanel"), "BtnInGameOptionsClose");
         }
 
         [UnityTest]
@@ -487,10 +594,10 @@ namespace SudokuRoguelike.Tests
         }
 
         // [REQ: DISPLAY-MODE-001] Options → Display offers the four modes in DisplayModeOption order.
-        private static void AssertDisplayModeOptions(GameObject root)
+        private static void AssertDisplayModeOptions(GameObject root, string name = "DisplayModeDropdown")
         {
-            AssertDropdownActive(root, "DisplayModeDropdown");
-            var labels = FindComponent<Dropdown>(root, "DisplayModeDropdown").options.ConvertAll(option => option.text);
+            AssertDropdownActive(root, name);
+            var labels = FindComponent<Dropdown>(root, name).options.ConvertAll(option => option.text);
             CollectionAssert.AreEqual(new[] { "Fullscreen", "Borderless Fullscreen", "Windowed", "Frameless Window" }, labels);
         }
 
@@ -510,6 +617,54 @@ namespace SudokuRoguelike.Tests
                 ((RectTransform)item.transform).GetWorldCorners(itemCorners);
                 Assert.GreaterOrEqual(itemCorners[0].y, viewportCorners[0].y - 0.5f, $"{item.name} is cut off at the bottom");
             }
+        }
+
+        // Controls a player selects: not the items inside a dropdown's list template.
+        private static IEnumerable<Selectable> OwnSelectables(GameObject container, bool includeInactive = true)
+        {
+            return container.GetComponentsInChildren<Selectable>(includeInactive)
+                .Where(s => s.transform.parent.GetComponentInParent<Dropdown>(true) == null);
+        }
+
+        private static IEnumerator AssertEveryTabReachable(GameObject panel, string backName)
+        {
+            var tabs = panel.GetComponentInChildren<OptionsTabSet>(true);
+            Assert.NotNull(tabs, panel.name + " has no OptionsTabSet");
+            var back = FindComponent<Button>(panel, backName);
+            for (var i = 0; i < tabs.Count; i++)
+            {
+                tabs.Tabs[i].onClick.Invoke();
+                yield return null;
+                var reached = Reachable(tabs.Tabs[i]);
+                var expected = OwnSelectables(tabs.Sections[i].gameObject, false).Where(s => s.IsInteractable()).ToList();
+                Assert.IsNotEmpty(expected, $"{panel.name}/{tabs.Sections[i].name} has no controls");
+                expected.Add(back);
+                expected.AddRange(tabs.Tabs);
+                foreach (var control in expected)
+                    Assert.IsTrue(reached.Contains(control),
+                        $"{panel.name}/{tabs.Sections[i].name}: {control.name} cannot be reached with the D-pad from {tabs.Tabs[i].name}");
+            }
+        }
+
+        private static HashSet<Selectable> Reachable(Selectable start)
+        {
+            var seen = new HashSet<Selectable> { start };
+            var queue = new Queue<Selectable>();
+            queue.Enqueue(start);
+            while (queue.Count > 0)
+            {
+                var current = queue.Dequeue();
+                foreach (var next in new[]
+                         {
+                             current.FindSelectableOnUp(), current.FindSelectableOnDown(),
+                             current.FindSelectableOnLeft(), current.FindSelectableOnRight()
+                         })
+                {
+                    if (next != null && next.IsActive() && seen.Add(next))
+                        queue.Enqueue(next);
+                }
+            }
+            return seen;
         }
 
         private static void AssertDropdownActive(GameObject root, string name)

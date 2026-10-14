@@ -38,6 +38,7 @@ namespace SudokuRoguelike.Meta
             get
             {
                 if (SetStatInt == null || StoreStats == null) return false;
+                if (!SudokuRoguelike.Platform.PlatformServiceRegistry.SteamworksCallsEnabled) return false;
                 if (SteamManagerInitialized == null) return true;
                 try { return (bool)SteamManagerInitialized.GetValue(null, null); }
                 catch { return false; }

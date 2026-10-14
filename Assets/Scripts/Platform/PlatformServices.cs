@@ -137,5 +137,12 @@ namespace SudokuRoguelike.Platform
         {
             _current = new DefaultPlatformService();
         }
+
+        /// <summary>
+        /// False while automated tests run (set by the test-isolation fixtures): achievements, stats and the
+        /// leaderboard then never start SteamManager, whose SteamAPI_Init logs an error when no Steam client runs,
+        /// which fails PlayMode tests depending on whether Steam happens to be open.
+        /// </summary>
+        public static bool SteamworksCallsEnabled { get; set; } = true;
     }
 }

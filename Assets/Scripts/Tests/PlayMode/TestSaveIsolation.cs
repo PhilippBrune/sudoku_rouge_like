@@ -17,6 +17,7 @@ public sealed class PlayModeTestSaveIsolation
         _root = Path.Combine(Path.GetTempPath(), "sudoku_rouge_like_tests", "playmode_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_root);
         SaveFileService.RootDirectoryOverride = _root;
+        SudokuRoguelike.Platform.PlatformServiceRegistry.SteamworksCallsEnabled = false; // no Steam client in test runs
     }
 
     [OneTimeTearDown]
@@ -24,6 +25,7 @@ public sealed class PlayModeTestSaveIsolation
     {
         SaveFileService.FlushSharedPendingWrites();
         SaveFileService.RootDirectoryOverride = null;
+        SudokuRoguelike.Platform.PlatformServiceRegistry.SteamworksCallsEnabled = true;
         try
         {
             if (Directory.Exists(_root))

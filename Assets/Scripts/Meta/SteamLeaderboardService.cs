@@ -29,6 +29,7 @@ namespace SudokuRoguelike.Meta
         public static void Initialize()
         {
             if (_state != State.Idle) return;
+            if (!SudokuRoguelike.Platform.PlatformServiceRegistry.SteamworksCallsEnabled) return;
             try
             {
                 if (!SteamManager.Initialized) return;
@@ -69,6 +70,7 @@ namespace SudokuRoguelike.Meta
         public static void SubmitRunScore(int score)
         {
             if (score <= 0) return;
+            if (!SudokuRoguelike.Platform.PlatformServiceRegistry.SteamworksCallsEnabled) return;
             try
             {
                 if (!SteamManager.Initialized) return;

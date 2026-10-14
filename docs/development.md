@@ -62,6 +62,8 @@ Other options:
 
 The `ReviewDiagnostics*Tests` fixtures are `[Explicit]`: they are the `D##` probes of the 2026-10-01 review (`docs/review/E2E_TEST_REPORT.md`), encode the specs as they were then, and run only when named in `-TestFilter`. They are kept as evidence for the review documents and are not part of the release gate (they make up the 26 skipped tests).
 
+The test-isolation `[SetUpFixture]`s redirect saves to a temp folder and set `PlatformServiceRegistry.SteamworksCallsEnabled = false`, so no test starts Steamworks; results do not depend on whether the Steam client is running.
+
 ## Startup Scene Order
 
 Build settings are expected to contain:

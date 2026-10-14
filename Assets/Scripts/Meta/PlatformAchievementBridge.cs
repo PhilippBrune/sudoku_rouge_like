@@ -44,6 +44,9 @@ namespace SudokuRoguelike.Meta
                 if (_setAchievement == null || _storeStats == null)
                     return false;
 
+                if (!SudokuRoguelike.Platform.PlatformServiceRegistry.SteamworksCallsEnabled)
+                    return false;
+
                 if (_initializedProperty == null)
                     return true;
 

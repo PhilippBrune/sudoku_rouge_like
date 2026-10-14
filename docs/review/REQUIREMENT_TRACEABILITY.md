@@ -4,9 +4,9 @@
 
 **Fix pass 2026-10-05:** the 27 rows whose note says *Fixed 2026-10-05* were re-assessed after the fixes in the [GAME_GAPS fix log](GAME_GAPS.md#fix-log-2026-10-05). META-CODEX-001/002, found broken during that verification ([GAP-037](GAME_GAPS.md#gap-037)), were fixed in 1.1.
 
-**Fix pass 1.1 (2026-10-07):** 101 rows marked *Fixed 1.1* or *Spec aligned 1.1* were re-assessed after implementing the recommendations of [GAME_GAPS](GAME_GAPS.md#fix-log-2026-10-07-release-110) and [SPECIFICATION_ISSUES](SPECIFICATION_ISSUES.md). 57 further rows, not reviewed individually, are `IMPLEMENTED` because a passing test carries their ID (`[Requirement]` attribute or `[REQ:]` tag; SPEC-PROC-003). The SPICE pipeline IDs (`REQ-BOSS-001..035`, `REQ-GENERAL-013..029`, `REQ-META-010..018`, `REQ-SUDOKU-076..117`, `REQ-UI-018`, `REQ-UI-027..036`, `REQ-SAVE-018`) were archived with their tables in `docs/archive/SPICE_REQUIREMENT_TABLES.md` (SPEC-OBS-001) and are no longer rows here. Every other row is still the 2026-10-01 review verdict.
+**Fix pass 1.1 (2026-10-07):** 101 rows marked *Fixed 1.1* or *Spec aligned 1.1* were re-assessed after implementing the recommendations of [GAME_GAPS](GAME_GAPS.md#fix-log-2026-10-07-release-110) and [SPECIFICATION_ISSUES](SPECIFICATION_ISSUES.md). 60 further rows, not reviewed individually, are `IMPLEMENTED` because a passing test carries their ID (`[Requirement]` attribute or `[REQ:]` tag; SPEC-PROC-003). The SPICE pipeline IDs (`REQ-BOSS-001..035`, `REQ-GENERAL-013..029`, `REQ-META-010..018`, `REQ-SUDOKU-076..117`, `REQ-UI-018`, `REQ-UI-027..036`, `REQ-SAVE-018`) were archived with their tables in `docs/archive/SPICE_REQUIREMENT_TABLES.md` (SPEC-OBS-001) and are no longer rows here. Every other row is still the 2026-10-01 review verdict.
 
-Requirement → Specification → Code → Runtime test → Automated test → Status, for every requirement ID found in `docs/*.md` (364) plus 64 new IDs this review created for requirements that had none (`REQ-<SYS>-1xx`, numbered from 100 so they cannot collide with the legacy `REQ-*-0xx` IDs).
+Requirement → Specification → Code → Runtime test → Automated test → Status, for every requirement ID found in `docs/*.md` (371) plus 64 new IDs this review created for requirements that had none (`REQ-<SYS>-1xx`, numbered from 100 so they cannot collide with the legacy `REQ-*-0xx` IDs).
 
 ## How to read this
 
@@ -21,37 +21,37 @@ Requirement → Specification → Code → Runtime test → Automated test → S
 
 | Status | Count |
 |---|---:|
-| IMPLEMENTED | 242 |
+| IMPLEMENTED | 245 |
 | PARTIALLY_IMPLEMENTED | 9 |
 | BROKEN | 0 |
 | MISSING | 3 |
 | CONTRADICTED | 0 |
 | OUTDATED | 19 |
-| UNTESTABLE | 155 |
-| **Total** | **428** |
+| UNTESTABLE | 159 |
+| **Total** | **435** |
 
-Of the 155 UNTESTABLE items, **147 are coverage gaps** (not exercised, no automated test) and 8 are infrastructure-limited.
+Of the 159 UNTESTABLE items, **151 are coverage gaps** (not exercised, no automated test) and 8 are infrastructure-limited.
 
-Traceability health: 303 of 364 spec IDs carry a code annotation. **141 spec IDs are referenced from tests** (the review found 1). Since the fix pass, tests carry a `[Requirement("ID")]` attribute (NUnit category `REQ:<id>`), and `RequirementTraceabilityTests` rejects IDs that do not exist in `docs/` ([GAP-010](GAME_GAPS.md#gap-010)). Most requirements still have no test.
+Traceability health: 307 of 371 spec IDs carry a code annotation. **144 spec IDs are referenced from tests** (the review found 1). Since the fix pass, tests carry a `[Requirement("ID")]` attribute (NUnit category `REQ:<id>`), and `RequirementTraceabilityTests` rejects IDs that do not exist in `docs/` ([GAP-010](GAME_GAPS.md#gap-010)). Most requirements still have no test.
 
 | Basis | Count |
 |---|---:|
 | Verified in review | 189 |
-| Not verified (coverage gap) | 147 |
-| Tagged automated test | 57 |
+| Not verified (coverage gap) | 151 |
+| Tagged automated test | 60 |
 | Spec/registry | 25 |
 | Infrastructure-limited | 8 |
 | Static code analysis | 2 |
 
-Evidence behind the 409 current (non-outdated) requirements:
+Evidence behind the 416 current (non-outdated) requirements:
 
 | Coverage | Count | Share of current |
 |---|---:|---:|
-| Automated test, passing | 204 | 50 % |
+| Automated test, passing | 207 | 50 % |
 | Automated test, currently failing | 0 | 0 % |
 | Review only: runtime (D## / E##) | 41 | 10 % |
 | Review only: static analysis | 6 | 1 % |
-| Not tested | 158 | 39 % |
+| Not tested | 162 | 39 % |
 
 
 ## Sudoku Engine & Generation
@@ -600,10 +600,17 @@ Status mix: OUTDATED 1
 
 ## Other
 
-Status mix: IMPLEMENTED 10
+Status mix: IMPLEMENTED 13, UNTESTABLE 4
 
 | Req ID | Requirement | Specification | Code | Runtime test | Automated test | Status | Gap / note |
 |---|---|---|---|---|---|---|---|
+| **AUDIO-MUSIC-001** | 1.6 2026-10-14 implemented Owner decision: all music and sound effects move to an 8-bit (chiptune) set made with an AI tool; prompts and delivery rules in docs/audio-8bit-prompt… | AudioVisualDirection.md › Change History | No [REQ] tag found | Not verified | None | UNTESTABLE | Coverage gap: no automated test references this behaviour and it was not exercised in this review |
+| **AUDIO-MUSIC-002** | Delivery: music WAV 44.1 kHz 16-bit stereo, about −16 LUFS, seamless loop cut on a bar line; sound effects WAV mono, peaks ≤ −3 dBFS; file names as in the prompt sheet. | AudioVisualDirection.md › 8-bit soundtrack (from 0.1.6) | No [REQ] tag found | Not verified | None | UNTESTABLE | Coverage gap: no automated test references this behaviour and it was not exercised in this review |
+| **AUDIO-MUSIC-003** | 1.6 2026-10-14 implemented Owner decision: all music and sound effects move to an 8-bit (chiptune) set made with an AI tool; prompts and delivery rules in docs/audio-8bit-prompt… | AudioVisualDirection.md › Change History | Tagged ×2: InRunController.cs, RunAudioController.cs | Automated (Unity Test Runner 2026-10-07) | AudioClipPlayModeTests | IMPLEMENTED | Verified by a tagged automated test (1.1) |
+| **AUDIO-MUSIC-004** | Delivered music imports as Load Type Streaming, Compression Vorbis; checked when the 8-bit files arrive. | AudioVisualDirection.md › 8-bit soundtrack (from 0.1.6) | No [REQ] tag found | Not verified | None | UNTESTABLE | Coverage gap: no automated test references this behaviour and it was not exercised in this review |
+| **AUDIO-MUSIC-005** | 1.6 2026-10-14 implemented Owner decision: all music and sound effects move to an 8-bit (chiptune) set made with an AI tool; prompts and delivery rules in docs/audio-8bit-prompt… | AudioVisualDirection.md › Change History | Tagged ×2: AudioAssetService.cs, RunAudioController.cs | Automated (Unity Test Runner 2026-10-07) | AudioAssetServiceTests, AudioClipPlayModeTests | IMPLEMENTED | Verified by a tagged automated test (1.1) |
+| **AUDIO-MUSIC-006** | End screen: after the stinger (game over 1.5 s, victory fanfare 4.5 s) the defeat or victory track plays when its file exists. Code: RunAudioController.PlayRunEndMusic. | AudioVisualDirection.md › 8-bit soundtrack (from 0.1.6) | Tagged ×1: RunAudioController.cs | Not verified | None | UNTESTABLE | Coverage gap: no automated test references this behaviour and it was not exercised in this review |
+| **AUDIO-MUSIC-007** | The credits screen plays credits_loop when its file exists and returns to the menu track when it closes. Code: MenuMusicController.SetCreditsActive. Test: AudioClipPlayModeTests… | AudioVisualDirection.md › 8-bit soundtrack (from 0.1.6) | Tagged ×1: MenuMusicController.cs | Automated (Unity Test Runner 2026-10-07) | AudioClipPlayModeTests | IMPLEMENTED | Verified by a tagged automated test (1.1) |
 | **DISPLAY-MODE-001** | 1.7 2026-10-12 implemented Display modes specified and implemented (..006): Fullscreen, Borderless Fullscreen, Windowed and the new Frameless Window; window sizing, centring, sa… | GameDesignSpec.md › Change History | Tagged ×3: GameEnums.cs, MainMenuBlueprintBuilder.cs, OptionsController.cs | Automated (Unity Test Runner 2026-10-07) | DisplayModeTests, GeneratedUiPlayModeTraversalTests | IMPLEMENTED | Verified by a tagged automated test (1.1) |
 | **DISPLAY-MODE-002** | Windowed and Frameless Window use the chosen resolution as the window size when it leaves 10 % of the display free in both directions; otherwise the largest of 3840×2160, 2560×1… | GameDesignSpec.md › Display Modes | Tagged ×1: OptionsController.cs | Automated (Unity Test Runner 2026-10-07) | DisplayModeTests | IMPLEMENTED | Verified by a tagged automated test (1.1) |
 | **DISPLAY-MODE-003** | Windowed and Frameless Window open centred on the work area of their monitor. | GameDesignSpec.md › Display Modes | WindowFrameService (Win32 window style and position) | build B16-B19 (E2E report section 10.2b) | None (Win32 path runs only in the Windows player) | IMPLEMENTED | [GAP-042](GAME_GAPS.md#gap-042) · Verified in the 1.1 build: centred windows |

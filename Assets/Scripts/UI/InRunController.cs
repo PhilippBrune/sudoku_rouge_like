@@ -686,9 +686,15 @@ namespace SudokuRoguelike.UI
             SetActive(_gameOverPanel, false);
             ShowPanelWithFade(_sudokuPanel, _sudokuCg);
             var floor = _map?.Run?.State?.CurrentFloor ?? 0;
+            var state = _map?.Run?.State;
+            _audio?.SetMode(state?.Mode ?? GameMode.GardenRun);
             _audio?.SetFloorIndex(floor);
             _audio?.SetContext(RunAudioController.Context.Puzzle);
-            var state = _map?.Run?.State;
+            // [REQ: AUDIO-MUSIC-003] GAP-045: a boss puzzle plays the floor's boss track.
+            if (_map?.Run?.CurrentLevelConfig?.IsBoss == true)
+                _audio?.StartBossLayer();
+            else
+                _audio?.StopBossLayer();
             if (state?.Mode == GameMode.SpiritTrials)
             {
                 _spiritTrialsTimerStarted = false;

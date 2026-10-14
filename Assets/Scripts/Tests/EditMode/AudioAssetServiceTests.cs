@@ -109,6 +109,30 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
+        [Requirement("AUDIO-MUSIC-005")]
+        public void OptionalSoundtrackSlots_AreOptionalMusic_AndModesMapToThem()
+        {
+            var optional = new[]
+            {
+                AudioClipId.MusicWalk, AudioClipId.MusicCredits, AudioClipId.MusicRunVictory, AudioClipId.MusicRunDefeat,
+                AudioClipId.MusicEndlessZen, AudioClipId.MusicSpiritTrials, AudioClipId.MusicTutorial
+            };
+            foreach (var id in optional)
+            {
+                Assert.IsTrue(AudioAssetService.TryGetInfo(id, out var info), $"{id} is registered");
+                Assert.AreEqual(AudioAssetCategory.Music, info.Category, $"{id} is music");
+                Assert.IsTrue(info.Loop, $"{id} loops");
+                Assert.IsFalse(info.ReleaseRequired, $"{id} stays optional until its file is delivered");
+            }
+
+            Assert.AreEqual(AudioClipId.MusicWalk, AudioAssetService.GetModeLoopId(SudokuRoguelike.Core.GameMode.SeasonalChallenge));
+            Assert.AreEqual(AudioClipId.MusicEndlessZen, AudioAssetService.GetModeLoopId(SudokuRoguelike.Core.GameMode.EndlessZen));
+            Assert.AreEqual(AudioClipId.MusicSpiritTrials, AudioAssetService.GetModeLoopId(SudokuRoguelike.Core.GameMode.SpiritTrials));
+            Assert.AreEqual(AudioClipId.MusicTutorial, AudioAssetService.GetModeLoopId(SudokuRoguelike.Core.GameMode.Tutorial));
+            Assert.IsNull(AudioAssetService.GetModeLoopId(SudokuRoguelike.Core.GameMode.GardenRun), "a Garden Run uses the floor tracks");
+        }
+
+        [Test]
         public void FloorAndBossHelpers_ClampToKnownAudioIds()
         {
             Assert.AreEqual(AudioClipId.MusicFloor0, AudioAssetService.GetFloorLoopId(-1));

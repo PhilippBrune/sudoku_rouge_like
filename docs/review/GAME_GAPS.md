@@ -53,6 +53,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-039](#gap-039) | Pressure visuals vanished after a board refresh; refreshes ate one-shot flashes | FIXED (1.1, found 2026-10-07) | LOW | P3 |
 | [GAP-041](#gap-041) | Number Freak L3 "+1 Pencil" was never applied (catalog typo) | FIXED (1.1, found 2026-10-07) | LOW | P3 |
 | [GAP-042](#gap-042) | Options dropdown lists hid their last option; no usable window mode | FIXED (1.1, found 2026-10-12) | MEDIUM | P2 |
+| [GAP-045](#gap-045) | Boss fights never played boss music (the boss layer was never started) | FIXED (found 2026-10-14) | LOW | P3 |
 | [GAP-044](#gap-044) | Region borders showed the previous puzzle's regions on a same-size board | FIXED (found 2026-10-14 by the owner) | HIGH | P1 |
 | [GAP-043](#gap-043) | Without the `ActiveProfileSlot` pref the game opens an empty slot 0, not the existing profile | FIXED (0.1.5, found 2026-10-14) | LOW | P3 |
 
@@ -782,3 +783,14 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Fix:** `RenderBoard` syncs the borders whenever the board or its region map changes (`SyncRegionBorders`); a board without a region map clears them.
 - **Affected Files:** `Assets/Scripts/UI/BoardViewController.cs`
 - **Tests:** `InRunUiPlayModeTests.RegionBorders_FollowTheNextPuzzleOfTheSameSize` (6×6 rectangular, then 6×6 irregular: the borders follow the second board).
+
+## GAP-045
+**Boss fights never played boss music**
+
+- **Requirement:** AUDIO-MUSIC-003 (AudioVisualDirection 1.6)
+- **Status:** FIXED (found 2026-10-14 while preparing the 8-bit soundtrack) · **Severity:** LOW · **Priority:** P3
+- **Problem:** The spec gives every floor a boss music layer, and the five boss clips ship, but no boss puzzle ever played them.
+- **Root Cause:** `RunAudioController.StartBossLayer` had no caller. Its additive layer design would also not fit AI-made tracks, which cannot be composed against the floor track sample-exactly.
+- **Fix:** `InRunController.ShowSudoku` starts the boss music when `CurrentLevelConfig.IsBoss`; the boss track replaces the floor track with a crossfade on the music source and ends when the puzzle is left.
+- **Affected Files:** `Assets/Scripts/UI/RunAudioController.cs`, `Assets/Scripts/UI/InRunController.cs`
+- **Tests:** `AudioClipPlayModeTests.BossPuzzle_ReplacesTheFloorTrackWithTheBossTrack_AndLeavingEndsIt`.

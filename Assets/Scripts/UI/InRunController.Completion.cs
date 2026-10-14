@@ -182,6 +182,7 @@ namespace SudokuRoguelike.UI
             SetActive(_pathPanel, false);
             _audio?.SetContext(RunAudioController.Context.Path); // stop puzzle loop before stinger
             _audio?.PlayGameOver();
+            _audio?.PlayRunEndMusic(false, 1.5f); // AUDIO-MUSIC-006: defeat track after the stinger
             if (run.State?.Mode == GameMode.SpiritTrials)
                 _endScreenView.ShowSpiritTrialsResult(run, false);
             else if (run.State?.Mode == GameMode.EndlessZen)
@@ -210,6 +211,7 @@ namespace SudokuRoguelike.UI
                         DailyGoalService.EvaluateInRun(run.DailyGoals, s, run.CurrentLevelState, DailyGoalService.TriggerRunWon);
                     _audio?.SetContext(RunAudioController.Context.Path); // stop puzzle loop before stinger
                     _audio?.PlayRunVictoryFanfare();
+                    _audio?.PlayRunEndMusic(true, 4.5f); // AUDIO-MUSIC-006: victory track after the fanfare
                     RumbleService.PulseVictory(this);
                     _boardView?.TriggerDigitRain();
                     StartCoroutine(VictoryScreenFlash());

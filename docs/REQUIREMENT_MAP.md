@@ -33,6 +33,7 @@ Legend: ✅ Implemented and verified | ⚠️ Partial / conflicting | ❌ Not im
 | [CLASS](#class-progression-unlocks) | `docs/ClassProgressionUnlocks.md` | ✅ 1 · ◻️ 3 |
 | [DISPLAY](#display-modes) | `docs/GameDesignSpec.md` | ✅ 7 |
 | [LOC](#localization) | `docs/localization-catalog.md` | ✅ 3 |
+| [AUDIO](#audio) | `docs/AudioVisualDirection.md` | ✅ 3 · ◻️ 4 |
 | [REVIEW](#review-created-requirements) | `docs/review/REQUIREMENT_TRACEABILITY.md` | ✅ 53 · ⚠️ 6 · ◻️ 6 |
 | [HARMONY](#harmony-difficulty) | `docs/HarmonyDifficultySystem.md` | ✅ 14 · ◻️ 18 |
 
@@ -628,6 +629,22 @@ Key requirements (see spec for full list):
 | LOC-PARITY-001 | fr/es/pt contain every German key | `Assets/Resources/Localization/*.json` | catalogs | LocalizationParityTests | ✅ |
 | LOC-PARITY-002 | Same placeholders as German, no empty text | `Assets/Resources/Localization/*.json` | catalogs | LocalizationParityTests | ✅ |
 | LOC-PARITY-003 | Gameplay content never falls back to English in fr/es/pt | `Assets/Scripts/Core/LocalizationService.cs` | `T` | LocalizationParityTests | ✅ |
+
+---
+
+## Audio
+
+**Spec:** `docs/AudioVisualDirection.md` v1.6 §8-bit soundtrack; prompts `docs/audio-8bit-prompts.md`
+
+| ID | Description | File | Method | Evidence | Status |
+| ---- | ------------- | ------ | -------- | ---------- | -------- |
+| AUDIO-MUSIC-001 | 8-bit direction and track list | `docs/audio-8bit-prompts.md` | — | owner listening check | ◻️ |
+| AUDIO-MUSIC-002 | Delivery format, loudness, loop rules | `docs/audio-8bit-prompts.md` | — | on delivery | ◻️ |
+| AUDIO-MUSIC-003 | Boss puzzle plays the stage boss track in place of the stage track | `Assets/Scripts/UI/RunAudioController.cs` | `StartBossLayer`, `StopBossLayer` | AudioClipPlayModeTests | ✅ |
+| AUDIO-MUSIC-004 | Music imports as Streaming + Vorbis | `Assets/Resources/audio/music/*.meta` | import settings | on delivery | ◻️ |
+| AUDIO-MUSIC-005 | Mode tracks (walks, Endless Zen, Spirit Trials, custom puzzles) with stage-track fallback | `Assets/Scripts/UI/RunAudioController.cs` | `SetMode`, `AudioAssetService.GetModeLoopId` | AudioAssetServiceTests, AudioClipPlayModeTests | ✅ |
+| AUDIO-MUSIC-006 | Victory/defeat end-screen tracks after the stinger | `Assets/Scripts/UI/RunAudioController.cs` | `PlayRunEndMusic` | runtime check once the files exist | ◻️ |
+| AUDIO-MUSIC-007 | Credits track with menu-track return | `Assets/Scripts/UI/MenuMusicController.cs` | `SetCreditsActive` | AudioClipPlayModeTests | ✅ |
 
 ---
 

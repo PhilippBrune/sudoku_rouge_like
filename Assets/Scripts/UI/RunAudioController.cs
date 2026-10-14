@@ -1,4 +1,5 @@
 using System.Collections;
+using SudokuRoguelike.Core;
 using UnityEngine;
 
 namespace SudokuRoguelike.UI
@@ -11,13 +12,14 @@ namespace SudokuRoguelike.UI
             Path,
             Puzzle,
             Shop,
-            Rest
+            Rest,
+            Victory,
+            Defeat
         }
 
         private AudioSource _musicSource;
         private AudioSource _sfxSource;
         private AudioSource _uiSource;
-        private AudioSource _bossSource;
 
         private AudioClip _puzzleLoop;
         private AudioClip _shopLoop;
@@ -27,6 +29,12 @@ namespace SudokuRoguelike.UI
         private readonly AudioClip[] _bossLayers = new AudioClip[5];
         private int _currentFloorIndex = -1;
         private bool _bossLayerActive;
+        private AudioClip _modeLoop;       // AUDIO-MUSIC-005: replaces the floor tracks in a mode (null: floor tracks)
+        private GameMode _mode = GameMode.GardenRun;
+        private AudioClip _victoryLoop;
+        private AudioClip _defeatLoop;
+        private AudioClip _targetClip;     // clip playing or being faded in (read by tests)
+        private Coroutine _endMusicCoroutine;
         private bool _isDucking;
         private Coroutine _crossfadeCoroutine;
         private AudioClip _wrongSfx;
@@ -108,13 +116,6 @@ namespace SudokuRoguelike.UI
             _uiSource.playOnAwake = false;
             _uiSource.spatialBlend = 0f;
 
-            var bossGo = new GameObject("RunBossSource", typeof(AudioSource));
-            bossGo.transform.SetParent(transform, false);
-            _bossSource = bossGo.GetComponent<AudioSource>();
-            _bossSource.loop = true;
-            _bossSource.playOnAwake = false;
-            _bossSource.spatialBlend = 0f;
-
             if (FindFirstObjectByType<AudioListener>() == null)
             {
                 var mainCam = Camera.main;
@@ -142,6 +143,11 @@ namespace SudokuRoguelike.UI
                     floorIndex,
                     () => FloorMusicGenerator.BuildBossLayer(floorIndex));
             }
+
+            // Optional 8-bit soundtrack tracks: without a file these stay null and the existing music plays.
+            _victoryLoop = LoadOptional(AudioClipId.MusicRunVictory);
+            _defeatLoop = LoadOptional(AudioClipId.MusicRunDefeat);
+            ApplyMode(_mode);
 
             _wrongSfx = AudioAssetService.GetClip(AudioClipId.SfxWrongPlacement, ProceduralSfxLibrary.BuildWrongPlaceSfx);
             _solvedSfx = AudioAssetService.GetClip(AudioClipId.SfxPuzzleSolved, ProceduralSfxLibrary.BuildLevelCompleteSfx);
@@ -189,15 +195,9 @@ namespace SudokuRoguelike.UI
         private void OnApplicationPause(bool paused)
         {
             if (paused)
-            {
                 _musicSource?.Pause();
-                _bossSource?.Pause();
-            }
             else
-            {
                 _musicSource?.UnPause();
-                if (_bossLayerActive) _bossSource?.UnPause();
-            }
         }
 
         private void Update()
@@ -213,11 +213,9 @@ namespace SudokuRoguelike.UI
             _musicSource.mute = muted;
             _sfxSource.mute = muted;
             _uiSource.mute = muted;
-            _bossSource.mute = muted;
             _musicSource.volume = musicVol * duckMul * pathMul;
             _sfxSource.volume = baseVolume * Mathf.Clamp01(audio.SfxVolume) * 0.55f;
             _uiSource.volume = baseVolume * Mathf.Clamp01(audio.UiVolume) * 0.65f;
-            _bossSource.volume = _bossLayerActive ? musicVol * 0.6f * duckMul : 0f;
 
             if ((_context == Context.Puzzle || _context == Context.Path) && !_musicSource.mute)
             {
@@ -243,8 +241,14 @@ namespace SudokuRoguelike.UI
                 _crossfadeCoroutine = null;
             }
 
-            if (context != Context.Puzzle && _bossLayerActive)
-                StopBossLayer();
+            // Leaving the boss puzzle: the new context's clip takes over directly (no fade back to the floor track).
+            if (context != Context.Puzzle)
+                _bossLayerActive = false;
+            if (_endMusicCoroutine != null && context != Context.Victory && context != Context.Defeat)
+            {
+                StopCoroutine(_endMusicCoroutine);
+                _endMusicCoroutine = null;
+            }
 
             _musicSource.clip = context switch
             {
@@ -252,8 +256,11 @@ namespace SudokuRoguelike.UI
                 Context.Path   => _puzzleLoop,   // floor loop at 60 % volume (see Update)
                 Context.Shop => _shopLoop,
                 Context.Rest => _restLoop,
+                Context.Victory => _victoryLoop,
+                Context.Defeat => _defeatLoop,
                 _ => null
             };
+            _targetClip = _musicSource.clip;
 
             if (_musicSource.clip == null)
             {
@@ -313,32 +320,95 @@ namespace SudokuRoguelike.UI
             if (floorIndex == _currentFloorIndex) return;
             _currentFloorIndex = floorIndex;
 
-            _puzzleLoop = _floorLoops[floorIndex];
+            _puzzleLoop = _modeLoop ?? _floorLoops[floorIndex];
 
-            if (_context == Context.Puzzle)
-            {
-                if (_crossfadeCoroutine != null) StopCoroutine(_crossfadeCoroutine);
-                _crossfadeCoroutine = StartCoroutine(CrossfadeToClip(_floorLoops[floorIndex]));
-            }
+            if (_context == Context.Puzzle && !_bossLayerActive)
+                CrossfadeTo(_puzzleLoop);
         }
 
+        /// <summary>
+        /// Selects the run's music set: Daily/Monthly Walk, Endless Zen, Spirit Trials and custom puzzles have their
+        /// own track when its file exists; otherwise, and in a Garden Run, the floor tracks play.
+        /// </summary>
+        // [REQ: AUDIO-MUSIC-005]
+        public void SetMode(GameMode mode)
+        {
+            if (mode == _mode && _startCompleted) return;
+            _mode = mode;
+            if (!_startCompleted) return;
+            ApplyMode(mode);
+            if (_currentFloorIndex >= 0)
+                _puzzleLoop = _modeLoop ?? _floorLoops[_currentFloorIndex];
+            if (_context == Context.Puzzle && !_bossLayerActive)
+                CrossfadeTo(_puzzleLoop);
+        }
+
+        private void ApplyMode(GameMode mode)
+        {
+            var id = AudioAssetService.GetModeLoopId(mode);
+            _modeLoop = id.HasValue ? LoadOptional(id.Value) : null;
+        }
+
+        private static AudioClip LoadOptional(AudioClipId id) =>
+            AudioAssetService.TryLoadAuthoredClip(id, out var clip) ? clip : null;
+
+        /// <summary>Boss puzzle: the floor's boss track replaces the floor track (crossfade).</summary>
+        // [REQ: AUDIO-MUSIC-003] GAP-045: replaces the additive boss layer, which nothing ever started.
         public void StartBossLayer()
         {
-            if (_bossLayerActive) return;
+            if (_bossLayerActive || !_startCompleted) return;
+            var boss = _bossLayers[Mathf.Clamp(_currentFloorIndex, 0, 4)];
+            if (boss == null) return;
             _bossLayerActive = true;
-            var idx = Mathf.Clamp(_currentFloorIndex, 0, 4);
-            _bossSource.clip = _bossLayers[idx];
-            _bossSource.Play();
+            CrossfadeTo(boss);
         }
 
         public void StopBossLayer()
         {
+            if (!_bossLayerActive) return;
             _bossLayerActive = false;
-            _bossSource.Stop();
+            if (_context == Context.Puzzle)
+                CrossfadeTo(_puzzleLoop);
         }
 
         /// <summary>
-        /// Immediately stops all looping music (puzzle loop + boss layer) and any
+        /// End screen: after the stinger, the victory or defeat track plays when its file exists; without it the
+        /// behaviour stays as before (stinger only).
+        /// </summary>
+        // [REQ: AUDIO-MUSIC-006]
+        public void PlayRunEndMusic(bool victory, float afterSeconds)
+        {
+            var clip = victory ? _victoryLoop : _defeatLoop;
+            if (clip == null || !_startCompleted) return;
+            if (_endMusicCoroutine != null) StopCoroutine(_endMusicCoroutine);
+            _endMusicCoroutine = StartCoroutine(PlayEndMusicAfter(victory ? Context.Victory : Context.Defeat, afterSeconds));
+        }
+
+        private IEnumerator PlayEndMusicAfter(Context context, float seconds)
+        {
+            yield return new WaitForSecondsRealtime(Mathf.Max(0f, seconds));
+            _endMusicCoroutine = null;
+            SetContext(context);
+        }
+
+        /// <summary>Clip the music source plays or is fading to.</summary>
+        public AudioClip CurrentMusicTarget => _targetClip;
+
+        public bool IsBossMusicActive => _bossLayerActive;
+
+        public AudioClip GetBossTrack(int floorIndex) => _bossLayers[Mathf.Clamp(floorIndex, 0, 4)];
+
+        public AudioClip GetFloorTrack(int floorIndex) => _floorLoops[Mathf.Clamp(floorIndex, 0, 4)];
+
+        private void CrossfadeTo(AudioClip clip)
+        {
+            _targetClip = clip;
+            if (_crossfadeCoroutine != null) StopCoroutine(_crossfadeCoroutine);
+            _crossfadeCoroutine = StartCoroutine(CrossfadeToClip(clip));
+        }
+
+        /// <summary>
+        /// Immediately stops all looping music (puzzle, boss or end-screen track) and any
         /// in-progress crossfade. Call this before returning to the main menu so
         /// run music does not overlap with the menu music track.
         /// </summary>
@@ -353,8 +423,14 @@ namespace SudokuRoguelike.UI
             // auto-restart guard cannot replay music on the next frame.
             _context = Context.Path;
             _contextRequested = false;
+            if (_endMusicCoroutine != null)
+            {
+                StopCoroutine(_endMusicCoroutine);
+                _endMusicCoroutine = null;
+            }
+            _bossLayerActive = false;
+            _targetClip = null;
             if (_musicSource != null) { _musicSource.clip = null; _musicSource.Stop(); }
-            if (_bossSource  != null) { _bossLayerActive = false; _bossSource.Stop(); }
         }
 
         public void SetMusicDucking(bool ducking)

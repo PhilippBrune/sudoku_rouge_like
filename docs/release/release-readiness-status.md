@@ -10,8 +10,8 @@ Updated 2026-10-14 · Milestone: **Steam build v0.1.5 (5th iteration)**, the cha
 
 | Suite | Total | Passed | Failed | Skipped | Date |
 |-------|------:|-------:|-------:|--------:|------|
-| EditMode | 507 | 480 | 0 | 27 (`[Explicit]` review diagnostics and the translation export) | 2026-10-14 |
-| PlayMode | 26 | 26 | 0 | 0 | 2026-10-14 |
+| EditMode | 508 | 481 | 0 | 27 (`[Explicit]` review diagnostics and the translation export) | 2026-10-14 |
+| PlayMode | 28 | 28 | 0 | 0 | 2026-10-14 |
 
 Windows x64 player build: smoke test B01–B15 passed (fresh install, first-run setup, seed entry, path map, wrong-digit rule, Save & Quit and Resume, reward reroll, codex persistence, Abandon & Begin; no exception in the player log); display modes B16–B19, Steam names, window title and save folder B23–B25, the uploaded 0.1.5 build B26–B27 (`docs/review/E2E_TEST_REPORT.md` §10.2b–§10.2e).
 

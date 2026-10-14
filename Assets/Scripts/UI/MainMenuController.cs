@@ -111,6 +111,7 @@ namespace SudokuRoguelike.UI
             _inputRemap = new InputRemapService();
             _menu = new MenuFlowService();
             _menu.OnPanelShown += SelectFirstInPanel;
+            _menu.OnPanelShown += _ => FindFirstObjectByType<MenuMusicController>()?.SetCreditsActive(_menu.CurrentScreen == MenuScreen.Credits);
             _profileSlots = new SaveProfileService();
             _save = new SaveFileService(SaveProfileService.ActiveSlot);
             _profile = new ProfileService(_save);

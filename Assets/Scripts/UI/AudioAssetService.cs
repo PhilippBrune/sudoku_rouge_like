@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SudokuRoguelike.Core;
 using UnityEngine;
 
 namespace SudokuRoguelike.UI
@@ -54,7 +55,16 @@ namespace SudokuRoguelike.UI
         UiMenuOpen,
         UiMenuClose,
         UiItemReward,
-        UiRelicReveal
+        UiRelicReveal,
+
+        // AUDIO-MUSIC-005: optional tracks of the 8-bit soundtrack; until a file exists the existing music plays.
+        MusicWalk,
+        MusicCredits,
+        MusicRunVictory,
+        MusicRunDefeat,
+        MusicEndlessZen,
+        MusicSpiritTrials,
+        MusicTutorial
     }
 
     public enum AudioAssetCategory
@@ -103,11 +113,11 @@ namespace SudokuRoguelike.UI
             new AudioAssetInfo(AudioClipId.MusicFloor2, "audio/music/floor_02_koi_terrace", AudioAssetCategory.Music, true, true, "Floor 3 puzzle/path loop."),
             new AudioAssetInfo(AudioClipId.MusicFloor3, "audio/music/floor_03_stone_lantern_walk", AudioAssetCategory.Music, true, true, "Floor 4 puzzle/path loop."),
             new AudioAssetInfo(AudioClipId.MusicFloor4, "audio/music/floor_04_shrine_summit", AudioAssetCategory.Music, true, true, "Floor 5 puzzle/path loop."),
-            new AudioAssetInfo(AudioClipId.MusicBossLayer0, "audio/music/boss_layer_00", AudioAssetCategory.Music, true, true, "Floor 1 boss overlay."),
-            new AudioAssetInfo(AudioClipId.MusicBossLayer1, "audio/music/boss_layer_01", AudioAssetCategory.Music, true, true, "Floor 2 boss overlay."),
-            new AudioAssetInfo(AudioClipId.MusicBossLayer2, "audio/music/boss_layer_02", AudioAssetCategory.Music, true, true, "Floor 3 boss overlay."),
-            new AudioAssetInfo(AudioClipId.MusicBossLayer3, "audio/music/boss_layer_03", AudioAssetCategory.Music, true, true, "Floor 4 boss overlay."),
-            new AudioAssetInfo(AudioClipId.MusicBossLayer4, "audio/music/boss_layer_04", AudioAssetCategory.Music, true, true, "Floor 5 boss overlay."),
+            new AudioAssetInfo(AudioClipId.MusicBossLayer0, "audio/music/boss_layer_00", AudioAssetCategory.Music, true, true, "Floor 1 boss track; replaces the floor track during the boss puzzle."),
+            new AudioAssetInfo(AudioClipId.MusicBossLayer1, "audio/music/boss_layer_01", AudioAssetCategory.Music, true, true, "Floor 2 boss track; replaces the floor track during the boss puzzle."),
+            new AudioAssetInfo(AudioClipId.MusicBossLayer2, "audio/music/boss_layer_02", AudioAssetCategory.Music, true, true, "Floor 3 boss track; replaces the floor track during the boss puzzle."),
+            new AudioAssetInfo(AudioClipId.MusicBossLayer3, "audio/music/boss_layer_03", AudioAssetCategory.Music, true, true, "Floor 4 boss track; replaces the floor track during the boss puzzle."),
+            new AudioAssetInfo(AudioClipId.MusicBossLayer4, "audio/music/boss_layer_04", AudioAssetCategory.Music, true, true, "Floor 5 boss track; replaces the floor track during the boss puzzle."),
             new AudioAssetInfo(AudioClipId.SfxWrongPlacement, "audio/sfx/wrong_placement", AudioAssetCategory.Sfx, false, true, "Invalid number placement."),
             new AudioAssetInfo(AudioClipId.SfxPuzzleSolved, "audio/sfx/puzzle_solved", AudioAssetCategory.Sfx, false, true, "Puzzle completion."),
             new AudioAssetInfo(AudioClipId.SfxShopPurchase, "audio/sfx/shop_purchase", AudioAssetCategory.Sfx, false, true, "Shop purchase confirmation."),
@@ -142,7 +152,14 @@ namespace SudokuRoguelike.UI
             new AudioAssetInfo(AudioClipId.UiMenuOpen, "audio/ui/menu_open", AudioAssetCategory.Ui, false, true, "Menu panel open."),
             new AudioAssetInfo(AudioClipId.UiMenuClose, "audio/ui/menu_close", AudioAssetCategory.Ui, false, true, "Menu panel close."),
             new AudioAssetInfo(AudioClipId.UiItemReward, "audio/ui/item_reward", AudioAssetCategory.Ui, false, true, "Item reward reveal."),
-            new AudioAssetInfo(AudioClipId.UiRelicReveal, "audio/ui/relic_reveal", AudioAssetCategory.Ui, false, true, "Relic reveal.")
+            new AudioAssetInfo(AudioClipId.UiRelicReveal, "audio/ui/relic_reveal", AudioAssetCategory.Ui, false, true, "Relic reveal."),
+            new AudioAssetInfo(AudioClipId.MusicWalk, "audio/music/walk_loop", AudioAssetCategory.Music, true, false, "Daily Walk and Monthly Walk puzzles (optional; falls back to the floor tracks)."),
+            new AudioAssetInfo(AudioClipId.MusicCredits, "audio/music/credits_loop", AudioAssetCategory.Music, true, false, "Credits screen (optional; falls back to the menu track)."),
+            new AudioAssetInfo(AudioClipId.MusicRunVictory, "audio/music/run_victory", AudioAssetCategory.Music, true, false, "End screen after a full-run victory, after the fanfare (optional)."),
+            new AudioAssetInfo(AudioClipId.MusicRunDefeat, "audio/music/run_defeat", AudioAssetCategory.Music, true, false, "End screen after a defeat, after the game-over stinger (optional)."),
+            new AudioAssetInfo(AudioClipId.MusicEndlessZen, "audio/music/endless_zen_loop", AudioAssetCategory.Music, true, false, "Endless Zen puzzles (optional; falls back to the floor tracks)."),
+            new AudioAssetInfo(AudioClipId.MusicSpiritTrials, "audio/music/spirit_trials_loop", AudioAssetCategory.Music, true, false, "Spirit Trials puzzles (optional; falls back to the floor tracks)."),
+            new AudioAssetInfo(AudioClipId.MusicTutorial, "audio/music/tutorial_loop", AudioAssetCategory.Music, true, false, "Custom puzzles and Sudoku Basics (optional; falls back to the floor tracks).")
         };
 
         private static readonly Dictionary<AudioClipId, AudioAssetInfo> InfoById = BuildInfoById();
@@ -183,6 +200,20 @@ namespace SudokuRoguelike.UI
             if (floorIndex == 2) return AudioClipId.MusicFloor2;
             if (floorIndex == 3) return AudioClipId.MusicFloor3;
             return AudioClipId.MusicFloor4;
+        }
+
+        /// <summary>Track that replaces the floor tracks in a game mode, or null when the mode uses the floor tracks.</summary>
+        // [REQ: AUDIO-MUSIC-005]
+        public static AudioClipId? GetModeLoopId(GameMode mode)
+        {
+            switch (mode)
+            {
+                case GameMode.SeasonalChallenge: return AudioClipId.MusicWalk;
+                case GameMode.EndlessZen: return AudioClipId.MusicEndlessZen;
+                case GameMode.SpiritTrials: return AudioClipId.MusicSpiritTrials;
+                case GameMode.Tutorial: return AudioClipId.MusicTutorial;
+                default: return null;
+            }
         }
 
         public static AudioClipId GetBossLayerId(int floorIndex)

@@ -5,6 +5,7 @@
 ### Fixed
 
 - Region borders could show the previous puzzle's regions when two puzzles of the same size followed each other, so an irregular board looked unsolvable. The board now always shows its own regions.
+- Boss puzzles now play their stage's boss music (it never played before).
 
 ### Changed
 

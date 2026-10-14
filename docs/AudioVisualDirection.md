@@ -1,11 +1,12 @@
 # Audio & Visual Direction
 
-**Version:** 1.5 | **Date:** 2026-10-07 | **Status:** implemented
+**Version:** 1.6 | **Date:** 2026-10-14 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.6 | 2026-10-14 | implemented | Owner decision: all music and sound effects move to an 8-bit (chiptune) set made with an AI tool; prompts and delivery rules in docs/audio-8bit-prompts.md (AUDIO-MUSIC-001/002). The boss puzzle now plays the floor's boss track instead of the floor track (AUDIO-MUSIC-003; the additive boss layer was never started, GAP-045). Optional tracks for Daily/Monthly Walk, Endless Zen, Spirit Trials, custom puzzles, credits and the victory/defeat end screens (AUDIO-MUSIC-005..007); until a file exists the current music plays. |
 | 1.5 | 2026-10-07 | implemented | Clip-per-context table generated from AudioAssetService with testable rules (SPEC-AMB-011, SPEC-MAC-007); clip load logging and PlayMode clip test (GAP-030); 6 s mono music loops recorded as an asset limitation; SPICE table archived (SPEC-OBS-001). |
 | 1.4 | 2026-03-24 | implemented | Audio wiring completed: GameBootstrap creates MenuMusicController + RunAudioController. FloorMusicGenerator loop durations reduced from 120-300s to 30-48s for fast startup. Menu music plays on menu, stops on run launch. Color scheme: BtnColor cream (0.82,0.75,0.62), BtnTextColor dark (0.12,0.10,0.08), AccentColor gold (0.98,0.83,0.26). |
 | 1.2 | 2026-03-23 | implemented | Game over and victory one-shot stingers added to FloorMusicGenerator |
@@ -103,7 +104,21 @@ Subtle ambient particles add life without distracting from gameplay:
 
 The audio design follows a **natural materials tonal palette**: wood, wind, water, stone. Sounds should feel like they belong in a physical garden space.
 
-### Music
+### 8-bit soundtrack (from 0.1.6)
+
+Owner decision 2026-10-14: every music track and sound effect is replaced by an 8-bit (chiptune) version that keeps the garden themes. Track list, prompts and delivery rules: `docs/audio-8bit-prompts.md`. Until a file arrives, the current clip plays. The 1.0 acoustic direction below (tables and production guides) describes the current files and is superseded once the 8-bit set is in.
+
+| ID | Requirement |
+|---|---|
+| AUDIO-MUSIC-001 | Direction and track list: 8-bit chiptune (two pulse, triangle, noise), Japanese pentatonic, one track per stage plus one boss track per stage, menu, credits, Daily/Monthly Walk, full-run victory, defeat, shop, rest, Endless Zen, Spirit Trials, custom puzzles, fallback loop (`docs/audio-8bit-prompts.md` §4). |
+| AUDIO-MUSIC-002 | Delivery: music WAV 44.1 kHz 16-bit stereo, about −16 LUFS, seamless loop cut on a bar line; sound effects WAV mono, peaks ≤ −3 dBFS; file names as in the prompt sheet. |
+| AUDIO-MUSIC-003 | A boss puzzle plays its stage's boss track in place of the stage track (crossfade on the music source); leaving the boss puzzle ends it. Code: `RunAudioController.StartBossLayer`, called from `InRunController.ShowSudoku` when `CurrentLevelConfig.IsBoss`. Test: `AudioClipPlayModeTests.BossPuzzle_ReplacesTheFloorTrackWithTheBossTrack_AndLeavingEndsIt`. |
+| AUDIO-MUSIC-004 | Delivered music imports as Load Type Streaming, Compression Vorbis; checked when the 8-bit files arrive. |
+| AUDIO-MUSIC-005 | Daily/Monthly Walk (`walk_loop`), Endless Zen, Spirit Trials and custom puzzles (`tutorial_loop`) play their own track when its file exists, else the stage tracks. Code: `AudioAssetService.GetModeLoopId`, `RunAudioController.SetMode`. Tests: `AudioAssetServiceTests.OptionalSoundtrackSlots_AreOptionalMusic_AndModesMapToThem`, `AudioClipPlayModeTests.OptionalTracks_WithoutFiles_KeepTheExistingMusic`. |
+| AUDIO-MUSIC-006 | End screen: after the stinger (game over 1.5 s, victory fanfare 4.5 s) the defeat or victory track plays when its file exists. Code: `RunAudioController.PlayRunEndMusic`. |
+| AUDIO-MUSIC-007 | The credits screen plays `credits_loop` when its file exists and returns to the menu track when it closes. Code: `MenuMusicController.SetCreditsActive`. Test: `AudioClipPlayModeTests.OptionalTracks_WithoutFiles_KeepTheExistingMusic`. |
+
+### Music (1.0 acoustic direction)
 
 | Context | Style | Duration | Loop |
 |---------|-------|:---:|:---:|
@@ -158,6 +173,13 @@ Generated from `AudioAssetService.RequiredClips` (2026-10-07). Each release-requ
 |------|----------|----------|----------|:-------:|---------|
 | `MusicMenuLoop` | `Resources/audio/music/menu_loop` | Music | loop | yes | Main menu ambience. |
 | `MusicPuzzleLoop` | `Resources/audio/music/puzzle_loop` | Music | loop | yes | Fallback run puzzle loop before floor music is selected. |
+| `MusicWalk` | `Resources/audio/music/walk_loop` | Music | loop | no | Daily Walk and Monthly Walk puzzles (optional). |
+| `MusicCredits` | `Resources/audio/music/credits_loop` | Music | loop | no | Credits screen (optional). |
+| `MusicRunVictory` | `Resources/audio/music/run_victory` | Music | loop | no | End screen after a full-run victory, after the fanfare (optional). |
+| `MusicRunDefeat` | `Resources/audio/music/run_defeat` | Music | loop | no | End screen after a defeat, after the stinger (optional). |
+| `MusicEndlessZen` | `Resources/audio/music/endless_zen_loop` | Music | loop | no | Endless Zen puzzles (optional). |
+| `MusicSpiritTrials` | `Resources/audio/music/spirit_trials_loop` | Music | loop | no | Spirit Trials puzzles (optional). |
+| `MusicTutorial` | `Resources/audio/music/tutorial_loop` | Music | loop | no | Custom puzzles and Sudoku Basics (optional). |
 | `MusicShopLoop` | `Resources/audio/music/shop_loop` | Music | loop | yes | Shop encounter loop. |
 | `MusicRestLoop` | `Resources/audio/music/rest_loop` | Music | loop | yes | Rest encounter loop. |
 | `MusicFloor0` | `Resources/audio/music/floor_00_bamboo_courtyard` | Music | loop | yes | Floor 1 puzzle/path loop. |
@@ -165,11 +187,11 @@ Generated from `AudioAssetService.RequiredClips` (2026-10-07). Each release-requ
 | `MusicFloor2` | `Resources/audio/music/floor_02_koi_terrace` | Music | loop | yes | Floor 3 puzzle/path loop. |
 | `MusicFloor3` | `Resources/audio/music/floor_03_stone_lantern_walk` | Music | loop | yes | Floor 4 puzzle/path loop. |
 | `MusicFloor4` | `Resources/audio/music/floor_04_shrine_summit` | Music | loop | yes | Floor 5 puzzle/path loop. |
-| `MusicBossLayer0` | `Resources/audio/music/boss_layer_00` | Music | loop | yes | Floor 1 boss overlay. |
-| `MusicBossLayer1` | `Resources/audio/music/boss_layer_01` | Music | loop | yes | Floor 2 boss overlay. |
-| `MusicBossLayer2` | `Resources/audio/music/boss_layer_02` | Music | loop | yes | Floor 3 boss overlay. |
-| `MusicBossLayer3` | `Resources/audio/music/boss_layer_03` | Music | loop | yes | Floor 4 boss overlay. |
-| `MusicBossLayer4` | `Resources/audio/music/boss_layer_04` | Music | loop | yes | Floor 5 boss overlay. |
+| `MusicBossLayer0` | `Resources/audio/music/boss_layer_00` | Music | loop | yes | Floor 1 boss track; replaces the floor track during the boss puzzle. |
+| `MusicBossLayer1` | `Resources/audio/music/boss_layer_01` | Music | loop | yes | Floor 2 boss track; replaces the floor track during the boss puzzle. |
+| `MusicBossLayer2` | `Resources/audio/music/boss_layer_02` | Music | loop | yes | Floor 3 boss track; replaces the floor track during the boss puzzle. |
+| `MusicBossLayer3` | `Resources/audio/music/boss_layer_03` | Music | loop | yes | Floor 4 boss track; replaces the floor track during the boss puzzle. |
+| `MusicBossLayer4` | `Resources/audio/music/boss_layer_04` | Music | loop | yes | Floor 5 boss track; replaces the floor track during the boss puzzle. |
 | `SfxWrongPlacement` | `Resources/audio/sfx/wrong_placement` | Sfx | one-shot | yes | Invalid number placement. |
 | `SfxPuzzleSolved` | `Resources/audio/sfx/puzzle_solved` | Sfx | one-shot | yes | Puzzle completion. |
 | `SfxShopPurchase` | `Resources/audio/sfx/shop_purchase` | Sfx | one-shot | yes | Shop purchase confirmation. |
@@ -228,7 +250,7 @@ All volumes stored in `AudioSettingsModel` and clamped to `[0.0, 1.0]` during sa
 
 - **No sudden loud sounds** — all SFX are mixed to stay below the music layer
 - **Correct placement sound** should be more satisfying than wrong placement — positive reinforcement
-- **Boss music** layers tension on top of the floor theme (additive, not replacement)
+- **Boss music** replaces the floor theme during the boss puzzle (AUDIO-MUSIC-003; until 0.1.6 the additive layer was never started)
 - **Endless Zen** uses deliberately minimal audio — the mode is about focus and flow
 - **MuteAll toggle** (`AudioSettingsModel.MuteAll`) silences all audio immediately
 
@@ -304,7 +326,7 @@ Detailed composition briefs for all required music tracks. Target format: **44.1
 | Track | BPM | Style | Duration |
 |-------|:---:|-------|:---:|
 | **Main Menu** | 55 | Ambient koto harmonics over wind pad, no rhythm section, meditative | 100s loop |
-| **Boss Puzzle** | Floor BPM +10 | Tension layer added over floor theme: deeper taiko pattern, dissonant string tremolo, heartbeat low bass pulse. Layered on top of the active floor track. | 120s loop |
+| **Boss Puzzle** | Floor BPM +10 | Boss version of the floor theme: deeper taiko pattern, dissonant string tremolo, heartbeat low bass pulse. Replaces the floor track during the boss puzzle. | 120s loop |
 | **Endless Zen** | None (free tempo) | Ambient drone (sine + filtered noise), no melody, no rhythm. Occasional single koto note (random interval 20–40s). Pure focus soundscape. | 300s loop |
 | **Spirit Trials** | 100 | Rhythmic percussion: wooden blocks, rim clicks, building urgency. Sparse shamisen stabs. Tension increases every 60s (add layer). | 90s loop |
 | **Game Over** | Rubato | Single shakuhachi phrase descending, fading into silence. Final temple bell toll (sustained 5s reverb). | 15s one-shot |
@@ -314,7 +336,7 @@ Detailed composition briefs for all required music tracks. Target format: **44.1
 
 ### Music Layering Rules
 
-- Boss music is **additive** — the floor theme continues playing, boss tension layer mixes on top
+- Boss music **replaces** the floor theme with a crossfade during the boss puzzle (AUDIO-MUSIC-003)
 - When transitioning between floors, current track fades out (800ms), 200ms silence, new track fades in (800ms)
 - Music volume ducks 20% during XP bar animation to let the rising tone SFX be audible
 

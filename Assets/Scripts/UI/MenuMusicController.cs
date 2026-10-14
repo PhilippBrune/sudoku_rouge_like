@@ -60,6 +60,32 @@ namespace SudokuRoguelike.UI
             }
         }
 
+        private AudioClip _menuClip;
+        private bool _creditsActive;
+
+        /// <summary>Credits screen: plays the credits track when its file exists, then returns to the menu track.</summary>
+        // [REQ: AUDIO-MUSIC-007]
+        public void SetCreditsActive(bool active)
+        {
+            if (_audioSource == null || active == _creditsActive) return;
+            if (active)
+            {
+                if (!AudioAssetService.TryLoadAuthoredClip(AudioClipId.MusicCredits, out var credits)) return;
+                _creditsActive = true;
+                _menuClip = _audioSource.clip;
+                _audioSource.clip = credits;
+                _audioSource.Play();
+                return;
+            }
+
+            _creditsActive = false;
+            if (_menuClip == null) return;
+            _audioSource.clip = _menuClip;
+            _audioSource.Play();
+        }
+
+        public bool CreditsTrackActive => _creditsActive;
+
         public void SetVolume(float volume)
         {
             if (_audioSource != null)

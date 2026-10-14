@@ -164,9 +164,15 @@ Optional later: each game's Steam news feed can be mirrored into its news channe
 
 ## 8. Checklist
 
-- [ ] 1.1 2FA on · [ ] 1.2 server created · [ ] 1.3 server ID sent to me
-- [ ] 1.4 bot created, intents on, Public Bot off · [ ] 1.5 bot invited, role placed below yours
-- [ ] 1.6 CLI and Bun installed, `/discord:configure` done · [ ] 1.7 "bot is in" sent
+- [ ] 1.1 2FA on · [x] 1.2 server "Kratossos" created · [x] 1.3 server ID sent to me
+- [x] 1.4 bot created · [x] 1.5 bot invited (with a "Bot-Admin" role that has **Administrator**; see 9.)
+- [x] 1.6 token stored · [x] 1.7 "bot is in" sent
 - [ ] 2 paired, allowlist on, `#claude-ops` allowed
-- [ ] 3 layout dry run approved and applied · Community enabled
-- [ ] 5 safety settings checked · [ ] 7 permanent invite on both store pages
+- [x] 3 layout applied 2026-10-14 (`tools/discord/discord_admin.py apply`): roles, categories, channels, permissions, AutoMod, role order · [ ] Community enabled · [ ] forums created (after Community) · [ ] welcome/rules/faq texts approved (drafts in `#release-drafts`)
+- [x] 5 verification Medium, media filter all members, notifications @mentions only, AutoMod rules · [ ] Require 2FA for moderators (needs 1.1) · [ ] 7 permanent invite on both store pages
+
+## 9. State on 2026-10-14
+
+- Applied: 8 categories, 17 channels, 7 roles ordered Bot-Admin > Moderator > Playtester > Translator > Run of the Nine > Corebound > Patch Notes > Events, @everyone without @everyone-mentions, private threads and events, 4 AutoMod rules alerting to `#mod-log`. `discord_admin.py plan` reports nothing left to change.
+- Waiting for **Community** (you: Server Settings → Enable Community, pick `#rules` and `#mod-log`): the six forum channels (`#rotn-bugs`, `#rotn-feedback`, `#cb-bugs`, `#cb-feedback`, `#playtest-feedback`, `#translation`), the conversion of `#announcements`, `#rotn-news` and `#cb-news` into announcement channels, and Onboarding. Then tell me, and I rerun `apply`.
+- The bot role has **Administrator**. It works; a leaked token would then give full control of the server. After setup, consider replacing it with the permission list in step 1.5, and reset the token (Developer Portal → Bot → Reset Token, then `/discord:configure` in a CLI session).

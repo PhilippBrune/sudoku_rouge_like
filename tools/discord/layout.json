@@ -21,6 +21,7 @@
     {"name": "Patch Notes", "color": null, "hoist": false, "mentionable": true, "permissions": []},
     {"name": "Events", "color": null, "hoist": false, "mentionable": true, "permissions": []}
   ],
+  "role_order": ["@bot", "Moderator", "Playtester", "Translator", "Run of the Nine", "Corebound", "Patch Notes", "Events"],
   "remove": [
     {"type": "text", "name": "allgemein", "parent": "Textkanäle"},
     {"type": "voice", "name": "Allgemein", "parent": "Sprachkanäle"},

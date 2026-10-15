@@ -28,12 +28,12 @@
           box-shadow: inset 0 0 0 7px #b23a2e, inset 0 0 0 10px #f2e7cc, 0 4px 0 rgba(0,0,0,.08);
           display:flex; align-items:center; justify-content:center; transform: rotate(-4deg); }
   .seal img { width:104px; height:104px; filter: grayscale(1) brightness(2.2) contrast(1.1); mix-blend-mode: screen; }
-  .seal .lbl { position:absolute; top:100%; margin-top:12px; font-size:24px; color:#9e2a2b; white-space:nowrap; transform:rotate(4deg); }
+  .seal .lbl { position:absolute; top:100%; margin-top:12px; left:50%; font-size:24px; color:#9e2a2b; white-space:nowrap; transform:translateX(-50%) rotate(4deg); }
   .title { position:absolute; left:120px; top:52px; font-size:44px; color:#231e17; letter-spacing:.02em; }
   .title small { display:block; font-size:19px; color:#5b5244; letter-spacing:.12em; text-transform:uppercase; }
   .floors { position:absolute; right:120px; top:66px; display:flex; gap:12px; align-items:center; font-size:15px; color:#5b5244; }
   .floors i { width:26px; height:26px; border-radius:6px; border:2px solid #9e2a2b; display:inline-block; }
-  .floors i.on { background:#b23a2e; }
+  .floors i.on { background:#b23a2e; } .floors i.done { background:#2a241c; border-color:#2a241c; }
   .route { position:absolute; font-size:20px; color:#2a241c; font-style:italic; }
   .route.risk { color:#9e2a2b; }
   .note { position:absolute; left:120px; bottom:54px; font-size:20px; color:#3a3228; }
@@ -57,10 +57,8 @@
     <div class="brocade" style="top:0"></div><div class="brocade" style="bottom:0"></div>
     <svg class="ink" viewBox="0 0 1620 770"></svg>
     <div class="title"><small>Floor one of five</small>Bamboo Courtyard</div>
-    <div class="floors">floor <i class="on"></i><i></i><i></i><i></i><i></i></div>
-    <div class="route" style="left:300px;top:190px">the Garden Walk — calm</div>
-    <div class="route risk" style="left:160px;top:640px">the Wild Crossing — risk, more gold</div>
-    <div class="note">Pick the next stone with the brush: ink is calm, vermilion is risk.</div>
+    <div class="floors" id="floors">floor </div>
+    <div class="note">Ink: <i>the Garden Walk</i>, calm &nbsp;·&nbsp; <span style="color:#9e2a2b">Vermilion: <i>the Wild Crossing</i>, risk, more gold</span></div>
     <div class="legend">
       <span><img src="../../../../Assets/Resources/node/icon_puzzle_tile.png">Puzzle</span>
       <span><img src="../../../../Assets/Resources/node/icon_elite_mask.png">Elite</span>
@@ -75,14 +73,24 @@
 <div class="tag">Number Freak · Level 3<br>HP <b>11 / 11</b> &nbsp; Pencil <b>10 / 10</b><br>Gold <b>45</b> &nbsp; Relics <b>1</b> &nbsp; ★ Bounty floor</div>
 <div class="roundbtn" style="left:40px;top:40px"><img src="../../../../Assets/Resources/ui/icon_ink_save.png"></div>
 <div class="roundbtn" style="left:116px;top:40px"><img src="../../../../Assets/Resources/ui/icon_stone_gear.png"></div>
-<div class="caption">Garden path · Proposal B · Hand scroll (emaki)</div>
+<div class="caption" id="caption">Garden path · Proposal B · Hand scroll (emaki)</div>
 
 <script src="common.js"></script>
 <script>
-  const d = pathData();
-  const calm = [[120,400],[290,300],[450,265],[610,250],[770,280],[930,245],[1090,280],[1250,250],[1390,330]];
-  const risk = [[120,400],[290,520],[450,575],[610,545],[770,590],[930,550],[1090,590],[1250,555],[1390,480]];
-  const boss = [1520,400];
+  const fi = floorIndex(), F = FLOORS[fi];
+  const d = pathData(fi);
+  document.querySelector('.bg').style.backgroundImage = `url('${R}background/${F.bg}.png')`;
+  document.querySelector('.wash').style.backgroundImage = `url('${R}background/${F.bg}.png')`;
+  document.querySelector('.title').innerHTML = `<small>Floor ${F.count} of five</small>${F.name}`;
+  document.getElementById('floors').innerHTML += FLOORS.map((_, i) => `<i class="${i < fi ? 'done' : i === fi ? 'on' : ''}"></i>`).join('');
+  if (PARAMS.get('floor')) document.getElementById('caption').textContent = `Garden path · Hand scroll · Floor ${fi + 1} · ${F.name}`;
+  let seed = 11 + fi * 7;
+  const jitter = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280 - 0.5) * 46;
+  const calm = [[120,400],[290,300],[450,265],[610,250],[770,280],[930,245],[1090,280],[1250,250],[1390,330]]
+    .map(([x, y], i) => i ? [x, y + jitter()] : [x, y]);
+  const risk = [[120,400],[290,520],[450,575],[610,545],[770,590],[930,550],[1090,590],[1250,555],[1390,480]]
+    .map(([x, y], i) => i ? [x, y + jitter()] : [x, y]);
+  const boss = [1505,400];
   const ink = document.querySelector('svg.ink');
   const line = (pts, color, w) => {
     let s = `M${pts[0][0]},${pts[0][1]}`;
@@ -93,8 +101,10 @@
     return `<path d="${s}" fill="none" stroke="${color}" stroke-width="${w}" stroke-linecap="round" filter="url(#brush)" opacity=".85"/>
             <path d="${s}" fill="none" stroke="${color}" stroke-width="${w/3}" stroke-linecap="round" opacity=".35" transform="translate(2,3)"/>`;
   };
+  const bridge = 3 + (fi % 3);
+  const [bx1, by1] = calm[bridge], [bx2, by2] = risk[bridge];
   ink.innerHTML = line([...calm, boss], '#2a241c', 7) + line([...risk, boss], '#a8322a', 7) +
-    `<path d="M610,250 C640,360 580,440 610,545" fill="none" stroke="#6b5a40" stroke-width="4" stroke-dasharray="10 9" filter="url(#brush)"/>`;
+    `<path d="M${bx1},${by1} C${bx1 + 30},${by1 + 110} ${bx2 - 30},${by2 - 110} ${bx2},${by2}" fill="none" stroke="#6b5a40" stroke-width="4" stroke-dasharray="10 9" filter="url(#brush)"/>`;
   const layer = document.getElementById('layer');
   function enso(color, next) {
     return `<svg viewBox="0 0 104 104"><path d="M86,30 A42,42 0 1 1 64,12" fill="none" stroke="${color}" stroke-width="${next ? 9 : 6}"
@@ -114,7 +124,7 @@
   node(calm[0], 'start', '#9e2a2b', true, 'You are here');
   const s = document.createElement('div'); s.className = 'seal';
   s.style.left = boss[0] + 'px'; s.style.top = boss[1] + 'px';
-  s.innerHTML = `<img src="${NODE_ICON.boss}"><div class="lbl">Grove Spirit</div>`;
+  s.innerHTML = `<img src="${R}boss/icon_${F.boss}.png"><div class="lbl">${F.bossName}</div>`;
   layer.appendChild(s);
 </script>
 </body></html>

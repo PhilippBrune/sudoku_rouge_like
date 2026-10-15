@@ -1,0 +1,49 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<style>
+  .bg { position:absolute; inset:0; background:url('../../../../Assets/Resources/background/bg_boss_cleared.png') center/cover; filter: brightness(.55) saturate(.9); }
+  .shade { position:absolute; inset:0; background: linear-gradient(180deg, rgba(10,8,6,.55), rgba(10,8,6,.1) 40%, rgba(10,8,6,.75) 100%); }
+  .banner { position:absolute; left:50%; top:46px; transform:translateX(-50%); padding:18px 70px 20px; text-align:center; color:#231e17;
+            background: linear-gradient(180deg, #f3e9cf, #e8d8b2); box-shadow:0 16px 30px rgba(0,0,0,.55); }
+  .banner::before, .banner::after { content:''; position:absolute; top:0; bottom:0; width:16px; background:#9e2a2b; }
+  .banner::before { left:0; } .banner::after { right:0; }
+  .banner small { display:block; font-size:18px; letter-spacing:.16em; text-transform:uppercase; color:#6b5f4c; }
+  .banner h1 { margin:4px 0 0; font-weight:normal; font-size:48px; }
+  .tag { position:absolute; left:120px; top:250px; width:300px; padding:18px 22px; background:#efe3c6; color:#2a241c; transform:rotate(-2deg);
+         box-shadow:0 12px 24px rgba(0,0,0,.55); font-size:20px; line-height:1.7; }
+  .tag::before { content:''; position:absolute; top:-30px; left:50%; width:2px; height:32px; background:#c9a24f; }
+  .tag b { font-weight:normal; float:right; color:#9e2a2b; }
+  .tag h3 { margin:0 0 6px; font-weight:normal; font-size:17px; letter-spacing:.14em; text-transform:uppercase; color:#6b5f4c; }
+  .mask { position:absolute; right:150px; top:260px; width:200px; text-align:center; color:#f2e7cc; font-size:18px; }
+  .mask img { width:150px; height:150px; filter: grayscale(1) brightness(.75); transform: rotate(-24deg); opacity:.85; }
+  .pick { position:absolute; left:0; right:0; top:470px; text-align:center; font-size:26px; color:#f2e7cc; text-shadow:0 2px 6px #000; }
+  .offerings { position:absolute; left:260px; right:260px; top:530px; display:flex; justify-content:space-between; }
+  .offer { width:380px; text-align:center; color:#f2e7cc; }
+  .orb { width:180px; height:180px; margin:0 auto; border-radius:50%; display:flex; align-items:center; justify-content:center;
+         background: radial-gradient(circle at 50% 40%, rgba(255,230,170,.35), rgba(255,230,170,0) 65%); }
+  .orb img { width:140px; height:140px; filter: drop-shadow(0 8px 10px rgba(0,0,0,.6)); }
+  .sanbo { width:240px; height:70px; margin:-8px auto 0; background: linear-gradient(180deg, #d9b27a, #a87a45); clip-path: polygon(6% 0, 94% 0, 100% 100%, 0 100%);
+           box-shadow: 0 10px 0 #6b4423; }
+  .offer .n { font-size:28px; margin-top:26px; }
+  .offer .r { font-size:19px; line-height:1.35; color:#e3d6b8; margin-top:8px; min-height:52px; }
+  .take { margin:16px auto 0; width:170px; padding:10px; border:2px solid #e9c46a; border-radius:999px; color:#e9c46a; font-size:20px; }
+  .offer.focus .orb { background: radial-gradient(circle at 50% 40%, rgba(255,214,120,.65), rgba(255,214,120,0) 68%); }
+  .offer.focus .take { background:#e9c46a; color:#2a1a10; }
+  .note { position:absolute; left:0; right:0; bottom:62px; text-align:center; font-size:18px; color:#cbbd9f; }
+</style></head><body>
+<div class="bg"></div><div class="shade"></div>
+<div class="banner"><small>Floor three of five · Koi Terrace</small><h1>The Shrine Oni is defeated</h1></div>
+<div class="tag"><h3>Your gate</h3><div id="stats"></div></div>
+<div class="mask"><img src="../../../../Assets/Resources/boss/icon_shrine_oni.png"><br>Its mask lies still.</div>
+<div class="pick">Take one offering for the road</div>
+<div class="offerings" id="offerings"></div>
+<div class="note">Next: Stone Lantern Walk · the other two offerings stay at the shrine</div>
+<div class="caption">Boss defeated · Proposal B · Offering table (relic choice on the same screen)</div>
+<script src="common.js"></script>
+<script>
+  document.getElementById('stats').innerHTML = DEFEAT.stats.map(([k, v]) => `${k} <b>${v}</b><br>`).join('');
+  document.getElementById('offerings').innerHTML = DEFEAT.relics.map((r, i) =>
+    `<div class="offer ${i === 1 ? 'focus' : ''}"><div class="orb"><img src="${r.icon}"></div><div class="sanbo"></div>
+       <div class="n">${r.name}</div><div class="r">${r.rule}</div><div class="take">Take</div></div>`).join('');
+</script>
+</body></html>

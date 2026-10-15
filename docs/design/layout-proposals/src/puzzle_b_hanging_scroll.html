@@ -25,6 +25,9 @@
   .cell.selected { background: rgba(233,196,106,.45); box-shadow: inset 0 0 0 3px #b8892b; }
   .cell.cage { outline: 3px dashed #a8322a; outline-offset:-8px; }
   .marks { display:grid; grid-template-columns:repeat(3,1fr); width:84%; height:70%; font-size:21px; color:#7a6d58; text-align:center; }
+  body.big .cell { font-size:38px; }
+  body.big .marks { font-size:14px; }
+  body.big .pad .tile.off { opacity:1; }
   .boxframe { position:absolute; border:5px solid #231e17; border-radius:3px; pointer-events:none; }
   .lantern { position:absolute; width:150px; height:200px; border-radius:60px 60px 70px 70px; display:flex; flex-direction:column;
              align-items:center; justify-content:center; color:#2a1a10; font-size:22px; box-shadow:0 0 50px var(--glow); }
@@ -88,15 +91,25 @@
 <div class="caption">Puzzle screen · Proposal B · Hanging scroll</div>
 <script src="common.js"></script>
 <script>
-  const L = { cell: 100, gap: 0, boxGap: 0 };
+  const B = PARAMS.get('size') === '9' ? board9() : BOARD6;
+  const F = FLOORS[floorIndex()];
+  document.querySelector('.bg').style.backgroundImage =
+    `linear-gradient(90deg, rgba(40,26,14,.88), rgba(40,26,14,.55) 30%, rgba(40,26,14,.55) 70%, rgba(40,26,14,.88)), url('${R}background/${F.bg}.png')`;
+  const L = { cell: B.n === 9 ? 68 : 100, gap: 0, boxGap: 0 };
+  if (B.n === 9) {
+    document.body.classList.add('big');
+    document.querySelector('.head').innerHTML = '<small>Floor 5 · Depth 4 · 9×9 · ★★★</small>Shrine Summit';
+    document.querySelector('.caption').textContent = 'Puzzle screen · Hanging scroll · 9×9 check';
+  }
   const board = document.getElementById('board');
-  buildBoard(board, L);
+  buildBoard(board, L, B);
   const ov = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   board.appendChild(ov);
-  boardOverlay(ov, L, { line:'#1f8a4c', width:12, opacity:.7, cageText:'#a8322a' });
-  for (let br = 0; br < 3; br++) for (let bc = 0; bc < 2; bc++) {
+  boardOverlay(ov, L, { line:'#1f8a4c', width:12, opacity:.7, cageText:'#a8322a', cageSize: B.n === 9 ? 15 : 20 }, B);
+  for (let br = 0; br < B.n / B.boxR; br++) for (let bc = 0; bc < B.n / B.boxC; bc++) {
     const f = document.createElement('div'); f.className = 'boxframe';
-    Object.assign(f.style, { left: (bc * 300 - 2) + 'px', top: (br * 200 - 2) + 'px', width: '304px', height: '204px' });
+    const w = B.boxC * L.cell, h = B.boxR * L.cell;
+    Object.assign(f.style, { left: (bc * w - 2) + 'px', top: (br * h - 2) + 'px', width: (w + 4) + 'px', height: (h + 4) + 'px' });
     board.appendChild(f);
   }
 </script>

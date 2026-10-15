@@ -1,0 +1,35 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<style>
+  .bg { position:absolute; inset:0; background:url('../../../../Assets/Resources/background/bg_boss_cleared.png') center/cover; }
+  .shade { position:absolute; inset:0; background: linear-gradient(180deg, rgba(10,8,6,.15), rgba(10,8,6,0) 45%, rgba(10,8,6,.78) 100%); }
+  .seal { position:absolute; left:50%; top:120px; width:330px; height:330px; margin-left:-165px; border-radius:30px; background:rgba(178,58,46,.92);
+          box-shadow: inset 0 0 0 12px rgba(178,58,46,.92), inset 0 0 0 17px #f3e9cf, 0 20px 50px rgba(0,0,0,.5);
+          transform: rotate(-6deg); display:flex; flex-direction:column; align-items:center; justify-content:center; color:#f6ecd3; }
+  .seal img { width:150px; height:150px; filter: grayscale(1) brightness(2.3); mix-blend-mode: screen; }
+  .seal .t { font-size:30px; letter-spacing:.2em; margin-top:8px; }
+  .name { position:absolute; left:0; right:0; top:478px; text-align:center; color:#f6ecd3; font-size:48px; text-shadow:0 3px 10px rgba(0,0,0,.8); }
+  .name small { display:block; font-size:19px; letter-spacing:.16em; text-transform:uppercase; color:#e9c46a; }
+  .medals { position:absolute; left:0; right:0; bottom:200px; display:flex; justify-content:center; gap:40px; }
+  .medal { width:150px; height:150px; border-radius:50%; background: radial-gradient(circle at 40% 35%, #f6ecd3, #e0cfa8 70%, #c4ae80);
+           box-shadow: 0 10px 22px rgba(0,0,0,.55), inset 0 0 0 5px rgba(158,42,43,.65); display:flex; flex-direction:column; align-items:center; justify-content:center; color:#231e17; }
+  .medal b { font-weight:normal; font-size:46px; line-height:1; }
+  .medal span { font-size:16px; margin-top:6px; color:#5b5244; }
+  .stones { position:absolute; left:0; right:0; bottom:120px; display:flex; justify-content:center; gap:16px; align-items:center; color:#e3d6b8; font-size:18px; }
+  .stones i { width:40px; height:28px; border-radius:48% 52% 50% 50%; background:#6d6a62; display:inline-block; }
+  .stones i.done { background:#2f4a33; box-shadow:0 0 0 3px #e9c46a; } .stones i.next { background:#b23a2e; }
+  .claim { position:absolute; left:50%; bottom:40px; transform:translateX(-50%); padding:16px 46px; font-size:26px; color:#2a1a10; background:#e9c46a;
+           border-radius:999px; box-shadow:0 8px 18px rgba(0,0,0,.5); }
+</style></head><body>
+<div class="bg"></div><div class="shade"></div>
+<div class="seal"><img src="../../../../Assets/Resources/boss/icon_shrine_oni.png"><div class="t">DEFEATED</div></div>
+<div class="name"><small>Floor three · Koi Terrace</small>Shrine Oni</div>
+<div class="medals" id="medals"></div>
+<div class="stones"><i class="done"></i><i class="done"></i><i class="done"></i><i class="next"></i><i></i>&nbsp; Next: Stone Lantern Walk</div>
+<div class="claim">Claim your relic ›</div>
+<div class="caption" style="bottom:2px">Boss defeated · Proposal C · Seal on the painting</div>
+<script src="common.js"></script>
+<script>
+  document.getElementById('medals').innerHTML = DEFEAT.stats.map(([k, v]) => `<div class="medal"><b>${v}</b><span>${k}</span></div>`).join('');
+</script>
+</body></html>

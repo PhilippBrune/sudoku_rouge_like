@@ -1,0 +1,54 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<style>
+  .bg { position:absolute; inset:0; background:url('../../../../Assets/Resources/background/bg_boss_gate.png') center/cover; filter: brightness(.5) saturate(.9); }
+  .shade { position:absolute; inset:0; background: linear-gradient(180deg, rgba(10,6,6,.35), rgba(10,6,6,.15) 40%, rgba(10,6,6,.85) 100%); }
+  .mask { position:absolute; left:50%; top:40px; width:200px; height:200px; margin-left:-100px; border-radius:50%;
+          background: radial-gradient(circle at 45% 40%, #4c2120, #1a0c0b); border:4px solid #b23a2e; display:flex; align-items:center; justify-content:center;
+          box-shadow: 0 0 60px rgba(178,58,46,.55); }
+  .mask img { width:150px; height:150px; }
+  .name { position:absolute; left:0; right:0; top:256px; text-align:center; font-size:40px; color:#f2e7cc; text-shadow:0 2px 8px #000; }
+  .name small { display:block; font-size:19px; letter-spacing:.14em; color:#e9c46a; text-transform:uppercase; }
+  .curse { position:absolute; left:50%; top:350px; transform:translateX(-50%); display:flex; gap:12px; align-items:center; padding:8px 18px;
+           border-radius:999px; background:rgba(60,14,12,.85); border:1px solid #b23a2e; color:#ffd2c8; font-size:18px; white-space:nowrap; }
+  .curse img { width:34px; height:34px; }
+  .flames { display:inline-flex; gap:5px; margin-left:8px; }
+  .flames i { width:14px; height:19px; border-radius:50% 50% 45% 45% / 62% 62% 38% 38%; background: radial-gradient(circle at 50% 65%, #ffe2a0, #f4a259 45%, #c8553d 80%); }
+  .tray { position:absolute; left:200px; right:200px; bottom:60px; height:130px; border-radius:24px;
+          background: linear-gradient(180deg, #5a1a18, #2e0c0b); box-shadow: 0 20px 40px rgba(0,0,0,.6), inset 0 2px 0 rgba(255,180,160,.25); }
+  .card { position:absolute; width:236px; height:390px; left:50%; bottom:196px; margin-left:-118px; transform-origin: 50% 400%;
+          border-radius:14px; padding:12px; background:#b23a2e; box-shadow: 0 16px 30px rgba(0,0,0,.6); }
+  .card .face { height:100%; border-radius:8px; background: linear-gradient(180deg, #f6ecd3, #e9dab6); padding:20px 16px; text-align:center; color:#231e17; position:relative; }
+  .card img { width:96px; height:96px; object-fit:contain; display:block; margin:12px auto 12px; }
+  .card .n { font-size:24px; } .card .r { font-size:16px; line-height:1.35; color:#4a4134; margin-top:10px; }
+  .card.chosen { bottom:236px; box-shadow: 0 0 0 4px #e9c46a, 0 0 40px rgba(233,196,106,.55), 0 16px 30px rgba(0,0,0,.6); }
+  .card.chosen .cord { position:absolute; left:-12px; right:-12px; bottom:16px; height:34px; background: linear-gradient(90deg, #b23a2e, #e05a4a, #b23a2e);
+                       color:#fff3e6; font-size:17px; letter-spacing:.14em; display:flex; align-items:center; justify-content:center; }
+  .card.unknown { background:#3a3330; } .card.unknown .face { background: linear-gradient(180deg, #2f2926, #221d1a); color:#e8dcc0; }
+  .card.unknown .r { color:#cbbd9f; } .card.unknown img { filter: grayscale(1) brightness(1.5); opacity:.6; }
+  .hint { position:absolute; left:240px; bottom:108px; font-size:21px; color:#f2e7cc; }
+  .go { position:absolute; right:230px; bottom:94px; padding:14px 30px; border-radius:12px; font-size:24px; color:#f2e7cc; background:#9e2a2b; opacity:.55; }
+</style></head><body>
+<div class="bg"></div><div class="shade"></div>
+<div class="mask"><img src="../../../../Assets/Resources/boss/icon_shrine_oni.png"></div>
+<div class="name"><small>Floor three · the gate</small>Shrine Oni</div>
+<div class="curse"><img src="../../../../Assets/Resources/debuff/icon_row_wipe.png">Row Wipe: a wrong digit erases your digits in its row
+  <span class="flames"><i></i><i></i><i></i><i></i></span> Very High</div>
+<div class="tray"></div>
+<div id="cards"></div>
+<div class="hint">2 of 3 cards drawn · pick one more</div>
+<div class="go">Face the Shrine Oni</div>
+<div class="caption">Boss modifiers · Proposal C · A hand of trial cards</div>
+<script src="common.js"></script>
+<script>
+  const cards = document.getElementById('cards');
+  const angles = [-15, -5, 5, 15];
+  GATE.options.forEach((o, i) => {
+    const el = document.createElement('div');
+    el.className = 'card' + (o.chosen ? ' chosen' : '') + (o.unknown ? ' unknown' : '');
+    el.style.transform = `rotate(${angles[i]}deg)`;
+    el.innerHTML = `<div class="face"><img src="${o.icon}"><div class="n">${o.name}</div><div class="r">${o.rule}</div>${o.chosen ? '<div class="cord">CHOSEN</div>' : ''}</div>`;
+    cards.appendChild(el);
+  });
+</script>
+</body></html>

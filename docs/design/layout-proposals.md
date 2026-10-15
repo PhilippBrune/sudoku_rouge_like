@@ -1,104 +1,142 @@
-# Layout proposals: garden path and puzzle screen
+# Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 1.0 | **Date:** 2026-10-15 | **Status:** new (proposals for the owner's choice; nothing is built yet)
+**Version:** 1.1 | **Date:** 2026-10-15 | **Status:** review (path and puzzle decided; boss screens waiting for the owner's pick; nothing is built yet)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.1 | 2026-10-15 | review | Owner decisions: garden path **B · Hand scroll**, the same on all five floors (UI-STYLE-001); puzzle screen **B · Hanging scroll** (UI-STYLE-002); the background paintings keep their corner mark (UI-STYLE-003). Added: the hand scroll on every floor, a 9×9 check of the hanging scroll, and three proposals each for the boss modifier choice (boss gate) and the "Boss Defeated!" screen. |
 | 1.0 | 2026-10-15 | new | Owner request: the garden path and the puzzle layout should feel more rounded and closer to the game's theme. Three proposals each, as 1920×1080 mockups made from the game's own art and font. |
 
-The mockups are HTML pages in `layout-proposals/src/`, built from `Assets/Resources` (backgrounds, node, class, item and relic icons, `MainFont.ttf`) with the same Floor 1 data: two routes of nine tiles, one bridge, the Grove Spirit, and a valid 6×6 puzzle with givens, player digits, pencil marks, a killer cage and German-whisper lines. `layout-proposals/render.ps1` renders them with headless Chrome. The "before" images come from the game itself (`LayoutScreenshotDiagnostics`, an `[Explicit]` PlayMode test).
+The mockups are HTML pages in `layout-proposals/src/`, built from `Assets/Resources` (backgrounds, node, boss, modifier, debuff, item and relic icons, `MainFont.ttf`) with shared example data (`src/common.js`): the five floors, a valid 6×6 and 9×9 puzzle, a Floor 3 boss gate (pick 3 of 4, one modifier not discovered yet, highest intensity, Row Wipe debuff) and the relics offered after that boss. Modifier and relic texts are the game's own. `layout-proposals/render.ps1` renders them with headless Chrome (variants such as each floor come from `src/<name>.variants.txt`). The "before" images come from the game itself (`LayoutScreenshotDiagnostics`, an `[Explicit]` PlayMode test). Boss names other than the avatar file names are working titles; the game does not name its bosses yet.
 
-## Before
+## Decisions (2026-10-15)
 
-| Garden path | Puzzle |
-|---|---|
-| ![Garden path today](layout-proposals/before_path.jpg) | ![Puzzle screen today](layout-proposals/before_puzzle.jpg) |
-
-What reads as unfinished today: on the path, translucent squares with unreadable labels, two dark header bars and thin lines sit on top of a beautiful scene, and the legend takes a full bottom row. On the puzzle screen, hard-edged grey panels with large empty areas frame the board, the header box is mostly empty, and bag and relics look like placeholders.
+| ID | Requirement | Status |
+|---|---|---|
+| UI-STYLE-001 | The garden path is an ink hand scroll (emaki) between two wooden rollers on **every floor**, with the same frame, ensō nodes, brush routes (ink = calm, vermilion = risk), seal-stamp boss and paper status tag. Per floor only the content changes: the floor's painting as a faint wash on the paper and blurred behind the scroll, the title "Floor N of five · name", the floor marks, the route and the boss seal. | new, to build |
+| UI-STYLE-002 | The puzzle screen is a hanging scroll: the board in ink with thick region borders that follow the region map (every size from 5×5 to 9×9 and irregular regions), HP and Pencil as paper lanterns, items and relics as ema plaques, the number pad as wooden tiles, the modifier rules as pinned paper slips, the floor's painting behind. | new, to build |
+| UI-STYLE-003 | The background paintings keep the bottom-right corner mark (owner decision); new UI does not need to hide it. | decided |
 
 ## Garden path
 
-### A · Stepping stones (recommended)
+### Before
 
-![Proposal A](layout-proposals/path_a_stepping_stones.jpg)
+![Garden path today](layout-proposals/before_path.jpg)
 
-The floor's painting stays the hero. Routes become winding gravel paths (calm in moss green, risk in ember), nodes are round stepping stones with the existing icons and readable labels, the reachable stones glow gold, and the class token stands on the current stone. Route names hang on wooden signs, floors are five lanterns at the top, and the HUD shrinks to floating rounded panels.
+### B · Hand scroll (chosen) — all five floors
 
-- **For:** keeps every background as it is; clearest reading of the two routes; least new art (a stone disc, a ring, a wooden sign).
-- **Against:** busy floor paintings need the shading at top and bottom; very long routes need the curve tuned per floor.
-- **In Unity:** a circular node sprite with a coloured ring, a curved path `Graphic` (Catmull-Rom spline with a dotted gravel texture) instead of straight lines, 9-slice rounded panels for the HUD.
+![The hand scroll on floors 1 to 5](layout-proposals/path_b_all_floors.jpg)
 
-### B · Hand scroll (emaki)
+One scroll design for every floor. Floor 1 [full size](layout-proposals/path_b_hand_scroll_floor1.jpg) · [2](layout-proposals/path_b_hand_scroll_floor2.jpg) · [3](layout-proposals/path_b_hand_scroll_floor3.jpg) · [4](layout-proposals/path_b_hand_scroll_floor4.jpg) · [5](layout-proposals/path_b_hand_scroll_floor5.jpg).
 
-![Proposal B](layout-proposals/path_b_hand_scroll.jpg)
+- Route names moved into the bottom line ("Ink: the Garden Walk, calm · Vermilion: the Wild Crossing, risk, more gold"), so labels never collide on busy floors.
+- **In Unity:** a scroll frame (paper, brocade bands, rollers), an ensō ring sprite per node, brush-stroke texture on the route lines, a seal sprite for the boss, a paper tag for the stats; each floor's painting is shown twice (blurred behind, faint grey wash on the paper).
 
-The floor is painted in ink on a paper hand scroll between two wooden rollers: ink brush lines for the calm route, vermilion for the risk route, an ensō ring around each node, and the boss as a red seal stamp. Stats hang on a paper tag.
-
-- **For:** the strongest identity; floors can feel like chapters of one scroll, and the five floors fit the motif.
-- **Against:** hides most of the floor paintings (they only show as a faint wash); needs scroll, brush-stroke and seal art.
-- **In Unity:** a scroll frame sprite, brush-stroke textures on the path `Graphic`, a seal sprite; the background is darkened and blurred.
-
-### C · Zen garden from above (karesansui)
-
-![Proposal C](layout-proposals/path_c_zen_garden.jpg)
-
-The path is seen from above as raked sand: routes are raked grooves, nodes are rocks with raked rings around them (rust-coloured on the risk route), and the boss waits on a moss island with its gate. HP and Pencil are pip rows on a paper card.
-
-- **For:** calm and very readable; the only light screen in the game, which makes the path feel like a breather between puzzles.
-- **Against:** loses the floor paintings entirely, so the five floors look alike unless each gets its own sand and moss colours; light background needs dark text everywhere.
-- **In Unity:** tiled sand texture, a ring sprite under each node, rock sprites per node type.
+The other proposals stay for reference: [A · Stepping stones](layout-proposals/path_a_stepping_stones.jpg), [C · Zen garden](layout-proposals/path_c_zen_garden.jpg).
 
 ## Puzzle screen
 
-All three keep today's information: class, level, gold, HP, pencil, bag, relics, passive, floor/depth/size/stars, status line, timer, number pad, Solve/Pencil, modifier rules, Options, Save & Quit.
+### Before
 
-**Regions:** proposals A and C separate the boxes with wider gaps. That only works for rectangular boxes; irregular regions (5×5, 7×7 and the jigsaw variants) still need drawn borders that follow the region map (GEN-REGION-004). B draws region borders as thick ink lines, which works for every board.
+![Puzzle screen today](layout-proposals/before_puzzle.jpg)
 
-### A · Tea table (recommended)
+### B · Hanging scroll (chosen)
 
-![Proposal A](layout-proposals/puzzle_a_tea_table.jpg)
+![Hanging scroll, 6×6](layout-proposals/puzzle_b_hanging_scroll.jpg)
 
-The board sits on a wooden tray with paper-coloured, rounded cells, over the current floor's painting (blurred), so every floor keeps its mood during puzzles. HP is a row of lanterns, pencil a row of brushes, items and relics are round slots, the number pad is a 3×3 of round stones, and the modifier rules are short cards.
+**9×9 check:** the concern in 1.0 was room for 9×9 at 1080p. It fits with 68 px cells and space to spare:
 
-- **For:** the closest match to "rounded and garden-like" while staying familiar; large, high-contrast digits; floor atmosphere carries into the puzzle.
-- **Against:** irregular boards need region borders on top of the tile look (see above).
-- **In Unity:** a rounded 9-slice cell sprite, a wooden tray frame, round slot and stone sprites; `BoardViewController` gets the box gap for rectangular regions and keeps borders for irregular ones.
+![Hanging scroll, 9×9 on Shrine Summit](layout-proposals/puzzle_b_hanging_scroll_9x9.jpg)
 
-### B · Hanging scroll
+- **In Unity:** scroll and rod sprites, lantern sprites with a fill mask (HP, Pencil), an ema plaque sprite for bag and relics, wooden tile buttons, paper slip panels; the grid becomes ink lines with thicker region borders (the existing border logic, GEN-REGION-004).
 
-![Proposal B](layout-proposals/puzzle_b_hanging_scroll.jpg)
+Reference: [A · Tea table](layout-proposals/puzzle_a_tea_table.jpg), [C · Night focus](layout-proposals/puzzle_c_night_focus.jpg).
 
-The board is drawn in ink on a hanging scroll; HP and Pencil are two paper lanterns that dim as they empty, items and relics are wooden ema plaques, the number pad is wooden tiles, and the modifier rules are pinned paper slips.
+## Boss modifiers (boss gate)
 
-- **For:** works for every board shape (ink region borders); the lanterns make HP readable at a glance; very distinctive.
-- **Against:** most new art (lanterns with fill states, ema plaques, scroll); the scroll leaves less room for 9×9 at 1080p unless the margins shrink.
-- **In Unity:** scroll and rod sprites, lantern sprites with a fill mask, ema plaque sprite; the grid itself gets simpler (lines instead of tiles).
+### Before
 
-### C · Night focus
+![Boss gate today](layout-proposals/before_boss_gate.jpg)
 
-![Proposal C](layout-proposals/puzzle_c_night_focus.jpg)
+Today the gate is a see-through overlay on the puzzle screen: the modifier choices are small grey panels with tiny text, and the selection state, intensity and debuff are hard to read.
 
-The board is as large as possible on dark moss with a soft glow; everything else lives in one rounded glass column on the right (portrait, HP and pencil bars, number pad, mode, rules, Options and Save & Quit); items and relics are a quick bar under the board with key hints.
+All three proposals show the same content: floor and boss, pick N of N+1, each modifier with icon and rule (an undiscovered one as "???"), the intensity (REQ-BOSS-103), the floor's boss debuff (REQ-BOSS-108), how many are chosen, and a confirm button that unlocks at N.
 
-- **For:** the most focused and the easiest to build; the largest board, which helps 9×9 and controller play.
-- **Against:** the least garden-specific: the theme comes from colour only.
-- **In Unity:** mostly layout and colour changes in `InRunUiBlueprintBuilder`; rounded 9-slice sprites.
+### A · Talismans at the gate
+
+![Boss gate A](layout-proposals/gate_a_ofuda.jpg)
+
+The modifiers hang as paper talismans (ofuda) from the gate's beam over the dark gate painting; chosen ones get a vermilion "Chosen" stamp. The boss stands on a dark side panel with its mask, intensity flames, the debuff and what you bring in (HP, Pencil, bag).
+
+- **For:** very readable; the boss feels present; the darker mood marks the gate as a turning point.
+- **Against:** a third visual family next to the two scrolls.
+
+### B · Trial scroll (recommended)
+
+![Boss gate B](layout-proposals/gate_b_trial_scroll.jpg)
+
+The same hand scroll as the garden path, in the boss's colours: ink-framed trial panels, chosen ones circled with a vermilion ensō and tick, the boss as a seal, the debuff as a vermilion margin note next to the confirm button.
+
+- **For:** one continuous look from the path into the gate, so it reuses the hand-scroll parts (frame, ensō, seal); calm and readable.
+- **Against:** less dramatic than A or C.
+
+### C · A hand of trial cards
+
+![Boss gate C](layout-proposals/gate_c_fan_of_cards.jpg)
+
+The modifiers are cards fanned out over a lacquer tray under the boss's mask; chosen cards rise and get a red "Chosen" band. The undiscovered modifier is a face-down card.
+
+- **For:** the most playful and tactile; a strong "choose your fate" moment, and it works well with a controller (left/right through the hand).
+- **Against:** tilted text is harder to read; a 5-card hand (floor 5: 6 options, pick 5) needs a wider fan.
+
+## Boss defeated
+
+Here "Boss defeat screen" is the screen after you beat a boss ("Boss Defeated!", then the relic choice). If you meant the screen when a boss beats you (game over), say so and I'll do that one too.
+
+### Before
+
+![Boss defeated today](layout-proposals/before_boss_defeated.jpg)
+
+Today it is the boss-cleared painting with a small yellow title, four small stat lines and a plain button; the relic choice follows as a separate screen.
+
+### A · Victory scroll (recommended)
+
+![Boss defeated A](layout-proposals/defeat_a_victory_scroll.jpg)
+
+The hanging scroll of the puzzle screen, unrolled for the win: "The Shrine Oni falls" in large type, the boss mask greyed under a "Defeated" stamp, the four numbers as an ink table, the floor marks and the next floor, and "Choose your relic". The HP and Pencil lanterns stay on the left, bag and relics as ema plaques on the right.
+
+- **For:** the same objects as during the puzzle, so the win reads as the end of that scroll; everything the next choice needs is visible.
+- **Against:** the beautiful boss-cleared painting is only behind the scroll.
+
+### B · Offering table
+
+![Boss defeated B](layout-proposals/defeat_b_offering.jpg)
+
+Keeps the boss-cleared painting, adds a paper banner and a paper stat tag, and puts the three relic offerings on wooden stands right here, so you choose your relic without a second screen.
+
+- **For:** one screen and one click less; the reward is the hero.
+- **Against:** changes the flow (today: boss-cleared screen, then relic choice); small stats.
+
+### C · Seal on the painting
+
+![Boss defeated C](layout-proposals/defeat_c_seal_on_painting.jpg)
+
+The boss-cleared painting stays full-screen; a large vermilion seal with the boss mask stamps "Defeated", the four numbers sit in round paper medallions, the floor stones show the progress.
+
+- **For:** the least UI; the painting and the stamp moment carry it.
+- **Against:** the painting is the same for every boss; less tied to the scrolls.
 
 ## Recommendation and next step
 
-Path **A** with puzzle **A** keep all the existing art, read best, and need the least new sprites; B is the choice if the game should lean into a strong ink-and-paper identity. Pick one per screen (or mix, for example path A with puzzle B), and I write the requirement IDs into `GameDesignSpec.md`, then build it behind the current layout with screenshots and tests.
-
-## Found while making these
-
-Every background in `Assets/Resources/background/` (all 39) has the same four-point sparkle in its bottom-right corner, the visible watermark of Google's Gemini image generator. It shows in the game (both "before" images) and in anything captured from it. Options: regenerate the backgrounds without the visible mark, cover the corner with UI (as the proposals happen to do), or keep it. Whether removing the mark is allowed depends on the generator's terms, so this is the owner's call.
+For one look across the in-run screens: **gate B (trial scroll)** continues the garden path's hand scroll, and **defeated A (victory scroll)** continues the puzzle's hanging scroll. Gate A and defeated B are the strongest alternatives (A for drama, B for one screen less). Pick one per screen; then I build the garden path, the puzzle screen and both boss screens in Unity, starting with the shared parts (scroll frame, ensō, seal, lanterns, ema plaques), each with screenshots and tests, and add the boss-screen IDs here.
 
 ## Rendering
 
 ```powershell
-docs/design/layout-proposals/render.ps1            # all mockups -> <name>.png (1920x1080)
-docs/design/layout-proposals/render.ps1 -Only "path_a*"
+docs/design/layout-proposals/render.ps1                  # all mockups and variants -> PNG (1920x1080)
+docs/design/layout-proposals/render.ps1 -Only "gate_*"
 ```
 
 The committed images are JPG copies; the PNGs are not committed.

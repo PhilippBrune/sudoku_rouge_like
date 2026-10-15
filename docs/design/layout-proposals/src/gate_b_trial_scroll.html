@@ -1,0 +1,75 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<style>
+  .bg { position:absolute; inset:-20px; background:url('../../../../Assets/Resources/background/bg_boss_gate.png') center/cover;
+        filter: blur(7px) brightness(.36) saturate(.7); }
+  .scroll { position:absolute; left:150px; top:120px; width:1620px; height:800px; }
+  .paper { position:absolute; inset:0; overflow:hidden;
+           background: radial-gradient(ellipse at 20% 30%, rgba(255,255,255,.35), transparent 45%), linear-gradient(180deg, #f2e7cc, #e7d7b2);
+           box-shadow: 0 30px 60px rgba(0,0,0,.6); }
+  .wash { position:absolute; inset:0; background:url('../../../../Assets/Resources/background/bg_boss_gate.png') center/cover;
+          filter: grayscale(1) contrast(1.3) brightness(1.15); mix-blend-mode: multiply; opacity:.14; }
+  .brocade { position:absolute; left:0; right:0; height:30px; background: repeating-linear-gradient(90deg, #4a1f1c 0 18px, #5c2522 18px 36px);
+             border-top:2px solid #c9a24f; border-bottom:2px solid #c9a24f; }
+  .roller { position:absolute; top:-34px; bottom:-34px; width:44px; border-radius:22px;
+            background: linear-gradient(90deg, #3a2414, #8a5a32 35%, #c08a52 50%, #8a5a32 65%, #3a2414); box-shadow:0 12px 24px rgba(0,0,0,.6); }
+  .roller::before, .roller::after { content:''; position:absolute; left:-6px; right:-6px; height:22px; border-radius:10px; background:#1f140b; }
+  .roller::before { top:-6px; } .roller::after { bottom:-6px; }
+  .title { position:absolute; left:120px; top:56px; font-size:46px; color:#231e17; }
+  .title small { display:block; font-size:19px; color:#5b5244; letter-spacing:.12em; text-transform:uppercase; }
+  .seal { position:absolute; right:120px; top:48px; width:150px; height:150px; border-radius:18px; background:#b23a2e; transform: rotate(-4deg);
+          box-shadow: inset 0 0 0 7px #b23a2e, inset 0 0 0 10px #f2e7cc; display:flex; align-items:center; justify-content:center; }
+  .seal img { width:100px; height:100px; filter: grayscale(1) brightness(2.2); mix-blend-mode: screen; }
+  .meta { position:absolute; right:300px; top:70px; text-align:right; font-size:20px; color:#3a3228; line-height:1.6; }
+  .dots { display:inline-flex; gap:6px; vertical-align:middle; margin-left:8px; }
+  .dots i { width:14px; height:14px; border-radius:50%; border:2px solid #2a241c; display:inline-block; }
+  .dots i.on { background:#2a241c; }
+  .panels { position:absolute; left:120px; right:120px; top:240px; display:flex; gap:34px; }
+  .panel { flex:1; height:360px; position:relative; padding:24px 22px; text-align:center; color:#2a241c; }
+  .panel svg.frame { position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+  .panel img { width:110px; height:110px; object-fit:contain; margin:14px auto 10px; display:block; filter: sepia(.2); position:relative; }
+  .panel .name { font-size:27px; position:relative; }
+  .panel .rule { font-size:18px; line-height:1.35; margin-top:12px; color:#4a4134; position:relative; }
+  .panel .pick { position:absolute; left:50%; bottom:16px; width:84px; height:84px; margin-left:-42px; }
+  .panel.unknown img { filter: grayscale(1) contrast(.6); opacity:.55; }
+  .margin-note { position:absolute; left:120px; right:120px; bottom:56px; display:flex; gap:22px; align-items:center;
+                 padding:18px 24px; border-top:2px solid #a8322a; color:#7a2a22; font-size:20px; }
+  .margin-note img { width:58px; height:58px; filter: sepia(.6) hue-rotate(-20deg); }
+  .margin-note .count { margin-left:auto; color:#2a241c; }
+  .brush-btn { padding:14px 30px; font-size:24px; flex:none; color:#f2e7cc; background:#9e2a2b;
+               border-radius:6px 22px 6px 22px; box-shadow: 0 6px 0 #5e1717; opacity:.55; }
+</style></head><body>
+<div class="bg"></div>
+<svg width="0" height="0" style="position:absolute">
+  <filter id="brush"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="5"/><feDisplacementMap in="SourceGraphic" scale="5"/></filter>
+</svg>
+<div class="scroll">
+  <div class="paper"><div class="wash"></div>
+    <div class="brocade" style="top:0"></div><div class="brocade" style="bottom:0"></div>
+    <div class="title"><small>Floor three · Koi Terrace · the gate</small>The Shrine Oni's trials</div>
+    <div class="meta">Choose <b>3 of 4</b> trials<br>Intensity: Very High <span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+    <div class="seal"><img src="../../../../Assets/Resources/boss/icon_shrine_oni.png"></div>
+    <div class="panels" id="panels"></div>
+    <div class="margin-note"><img id="dicon"><div id="dtext"></div><div class="count" id="count"></div><div class="brush-btn">Face the Shrine Oni</div></div>
+  </div>
+  <div class="roller" style="left:-30px"></div><div class="roller" style="right:-30px"></div>
+</div>
+<div class="caption">Boss modifiers · Proposal B · Trial scroll (matches the hand scroll)</div>
+<script src="common.js"></script>
+<script>
+  const frame = `<svg class="frame" viewBox="0 0 300 380" preserveAspectRatio="none"><rect x="4" y="4" width="292" height="372" fill="none" stroke="#2a241c" stroke-width="3" filter="url(#brush)"/></svg>`;
+  const enso = (on) => `<svg class="pick" viewBox="0 0 104 104"><path d="M86,30 A42,42 0 1 1 64,12" fill="${on ? 'rgba(178,58,46,.12)' : 'none'}"
+    stroke="${on ? '#b23a2e' : '#8a7d68'}" stroke-width="${on ? 9 : 4}" stroke-linecap="round" filter="url(#brush)"/>
+    ${on ? '<path d="M34,54 L47,67 L72,38" fill="none" stroke="#b23a2e" stroke-width="8" stroke-linecap="round" filter="url(#brush)"/>' : ''}</svg>`;
+  const panels = document.getElementById('panels');
+  GATE.options.forEach(o => {
+    const el = document.createElement('div');
+    el.className = 'panel' + (o.unknown ? ' unknown' : '');
+    el.innerHTML = frame + `<img src="${o.icon}"><div class="name">${o.name}</div><div class="rule">${o.rule}</div>` + enso(o.chosen);
+    panels.appendChild(el);
+  });
+  document.getElementById('dicon').src = GATE.debuff.icon;
+  document.getElementById('dtext').innerHTML = `<b style="font-weight:normal">The Oni's curse · ${GATE.debuff.name}</b> — ${GATE.debuff.rule}`;
+  document.getElementById('count').textContent = `${GATE.chosen} of ${GATE.pick} chosen`;
+</script>
+</body></html>

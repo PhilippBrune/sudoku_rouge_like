@@ -33,6 +33,7 @@ Legend: ✅ Implemented and verified | ⚠️ Partial / conflicting | ❌ Not im
 | [CLASS](#class-progression-unlocks) | `docs/ClassProgressionUnlocks.md` | ✅ 1 · ◻️ 3 |
 | [DISPLAY](#display-modes) | `docs/GameDesignSpec.md` | ✅ 7 |
 | [UI-OPT](#options-panels) | `docs/GameDesignSpec.md` | ✅ 3 |
+| [UI-STYLE](#in-run-visual-style) | `docs/design/layout-proposals.md` | ✅ 1 · ◻️ 2 |
 | [LOC](#localization) | `docs/localization-catalog.md` | ✅ 3 |
 | [AUDIO](#audio) | `docs/AudioVisualDirection.md` | ✅ 3 · ◻️ 4 |
 | [REVIEW](#review-created-requirements) | `docs/review/REQUIREMENT_TRACEABILITY.md` | ✅ 53 · ⚠️ 6 · ◻️ 6 |
@@ -630,6 +631,18 @@ Key requirements (see spec for full list):
 | UI-OPT-001 | In-run Options use the main Options' tabs, controls and look (one factory) | `Assets/Scripts/UI/OptionsUiFactory.cs` | `BuildStandardTabs` (called by `MainMenuBlueprintBuilder.BuildOptionsPanel` and `InRunUiBlueprintBuilder.BuildInGameOptionsPanel`) | GeneratedUiPlayModeTraversalTests (`InRunOptions_OfferEveryMainMenuOptionsControl`, `InRunOptionsControls_CanBeChangedWithoutLeavingOptionsPanel`), GeneratedUiWiringContractTests, screenshots | ✅ |
 | UI-OPT-002 | In-run Accessibility and Run tabs; Back always visible | `Assets/Scripts/UI/InRunUiBlueprintBuilder.cs` | `BuildInGameOptionsPanel`, `OptionsUiFactory.BuildAccessibilitySection` | GeneratedUiPlayModeTraversalTests, InRunUiPlayModeTests (`RunMenu_ShowsSeedAndModifiers_AndAbandonEndsTheRun`) | ✅ |
 | UI-OPT-003 | D-pad reaches every control of every tab, the tab bar and Back | `Assets/Scripts/UI/OptionsTabSet.cs` | `Relink`, `Activate` | GeneratedUiPlayModeTraversalTests (`OptionsPanels_EveryControlIsReachableWithTheDpad`) | ✅ |
+
+---
+
+## In-Run Visual Style
+
+**Spec:** `docs/design/layout-proposals.md` v1.1 §Decisions (owner decisions 2026-10-15)
+
+| ID | Description | File | Method | Evidence | Status |
+| ---- | ------------- | ------ | -------- | ---------- | -------- |
+| UI-STYLE-001 | Garden path as an ink hand scroll, the same on all five floors | — | — | mockups `path_b_hand_scroll_floor1..5` | ◻️ |
+| UI-STYLE-002 | Puzzle screen as a hanging scroll (ink grid, lanterns, ema plaques, wooden tiles, paper slips), 5×5 to 9×9 | — | — | mockups `puzzle_b_hanging_scroll`, `_9x9` | ◻️ |
+| UI-STYLE-003 | Background paintings keep their corner mark | `Assets/Resources/background/` | — | owner decision | ✅ |
 
 ---
 

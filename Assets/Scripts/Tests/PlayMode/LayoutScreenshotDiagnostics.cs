@@ -78,6 +78,37 @@ namespace SudokuRoguelike.Tests
             Assert.NotNull(run.CurrentBoard);
         }
 
+        // Boss gate on Floor 3 (Koi Terrace) at the highest intensity with every modifier revealed, then the
+        // "Boss Defeated!" interstitial (layout-proposals.md, boss screens).
+        [UnityTest]
+        public IEnumerator RenderBossGateAndBossDefeated()
+        {
+            if (Object.FindFirstObjectByType<EventSystem>() == null)
+                _createdRoots.Add(new GameObject("LayoutShotEventSystem", typeof(EventSystem), typeof(StandaloneInputModule)));
+            var camera = new GameObject("LayoutShotCamera").AddComponent<Camera>();
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = Color.black;
+            camera.orthographic = true;
+            _createdRoots.Add(camera.gameObject);
+
+            var (gateHost, gateRun) = StartRun(7303, true);
+            gateRun.State.CurrentFloor = 2;
+            gateRun.State.RunNumber = 9;
+            foreach (BossModifierId id in Enum.GetValues(typeof(BossModifierId)))
+                gateRun.State.SeenBossModifiers.Add(id);
+            yield return DismissIntro();
+            gateHost.GetComponentInChildren<BossGateViewController>(true).ShowBossGateChoice();
+            yield return null;
+            yield return Shoot(gateHost, camera, "before_boss_gate.png");
+            gateHost.SetActive(false);
+
+            var (clearedHost, clearedRun) = StartRun(7304, true);
+            yield return DismissIntro();
+            clearedHost.GetComponentInChildren<EndScreenViewController>(true).ShowBossCleared(clearedRun, () => { });
+            yield return null;
+            yield return Shoot(clearedHost, camera, "before_boss_defeated.png");
+        }
+
         private (GameObject host, RunDirector run) StartRun(int seed, bool startPuzzle, params BossModifierId[] modifiers)
         {
             var host = new GameObject("LayoutShotHost" + seed);

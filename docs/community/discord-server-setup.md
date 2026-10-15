@@ -154,7 +154,7 @@ The game categories are visible to everyone by default. Onboarding pre-selects w
 3. I post it in `#rotn-news` or `#cb-news`, ping the game role together with Patch Notes, and press **Publish**, so servers that follow the channel get it too.
 4. The post goes out when the build is live on the `default` branch and the Steam announcement is published, never before.
 
-Optional later: each game's Steam news feed can be mirrored into its news channel automatically. I'd rather post by hand at first, so nothing goes out early.
+**Automatic mirror (since 2026-10-15).** `tools/discord/steam_news.py` reads each game's public Steam news (community announcements only) and posts every new announcement to `#rotn-news` / `#cb-news` as an embed with a link to the full notes, pinging **Patch Notes**; in an announcement channel it also presses Publish. Only announcements already published on Steam are in that feed, so nothing goes out early; the hand-written Discord version in steps 1–3 is now optional. It runs every 30 minutes through Windows Task Scheduler ("Kratossos Steam News to Discord"), so only while your PC is on and you are logged on; a run after a pause catches up. Corebound is skipped until its Steam news is public (Steam answers 403 before release). Log: `%USERPROFILE%\.claude\channels\discord\steam_news.log`. Commands: `check`, `preview <game>` (to `#release-drafts`), `publish-latest <game>`, `remove-task`.
 
 ## 7. Linking the server
 
@@ -175,4 +175,5 @@ Optional later: each game's Steam news feed can be mirrored into its news channe
 
 - Applied: 8 categories, 17 channels, 7 roles ordered Bot-Admin > Moderator > Playtester > Translator > Run of the Nine > Corebound > Patch Notes > Events, @everyone without @everyone-mentions, private threads and events, 4 AutoMod rules alerting to `#mod-log`. `discord_admin.py plan` reports nothing left to change.
 - Waiting for **Community** (you: Server Settings → Enable Community, pick `#rules` and `#mod-log`): the six forum channels (`#rotn-bugs`, `#rotn-feedback`, `#cb-bugs`, `#cb-feedback`, `#playtest-feedback`, `#translation`), the conversion of `#announcements`, `#rotn-news` and `#cb-news` into announcement channels, and Onboarding. Then tell me, and I rerun `apply`.
+- Steam news mirror installed (section 6). Run of the Nine's v0.1.5 announcement was already published, so it was recorded, not posted; `python tools/discord/steam_news.py publish-latest rotn` posts it. Corebound FAQ draft in `#release-drafts`.
 - The bot role has **Administrator**. It works; a leaked token would then give full control of the server. After setup, consider replacing it with the permission list in step 1.5, and reset the token (Developer Portal → Bot → Reset Token, then `/discord:configure` in a CLI session).

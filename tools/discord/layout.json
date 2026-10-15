@@ -73,6 +73,10 @@
       {"name": "Lounge", "type": "voice"}
     ]}
   ],
+  "steam_news": [
+    {"key": "rotn", "game": "Run of the Nine", "app_id": 4858470, "channel": "rotn-news", "ping_role": "Patch Notes", "color": "#D98C5F"},
+    {"key": "cb", "game": "Corebound", "app_id": 5420920, "channel": "cb-news", "ping_role": "Patch Notes", "color": "#7F8FD9"}
+  ],
   "automod": [
     {"name": "Block slurs and sexual content", "trigger_type": 4, "trigger_metadata": {"presets": [2, 3]}},
     {"name": "Mention spam", "trigger_type": 5, "trigger_metadata": {"mention_total_limit": 5, "mention_raid_protection_enabled": true}},

@@ -1,11 +1,12 @@
 # 8-bit Soundtrack — Prompts and Delivery Sheet
 
-**Version:** 1.1 | **Date:** 2026-10-14 | **Status:** new
+**Version:** 1.2 | **Date:** 2026-10-15 | **Status:** new
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.2 | 2026-10-15 | new | Owner decision: the whole set is also made in code from 2A03 voices (section 8): 21 loops and 35 effects, rendered by tools/audio/make_8bit_audio.py into steam_assets/audio_8bit/synth/ for listening before anything replaces the game's sounds. Mureka (section 7) stays an alternative per track. |
 | 1.1 | 2026-10-14 | new | Prompts rewritten to sound more 8-bit: every prompt names only the NES chip voices (pulse, triangle, noise) and no real instruments; short enough for Mureka. Generation through the Mureka API with `tools/audio/mureka_generate.py` (section 7). Sound effects: Mureka makes songs, not sub-second effects; section 5 says how they are made instead. |
 | 1.0 | 2026-10-14 | new | Owner decision: replace all music and sound effects with an 8-bit (chiptune) set made with an AI tool. Track list, prompts, delivery format (AUDIO-MUSIC-001/002 in `docs/AudioVisualDirection.md`). |
 
@@ -193,6 +194,24 @@ python tools/audio/mureka_generate.py resume                # finish tasks an in
 ```
 
 Takes land in `steam_assets/audio_8bit/mureka/<file>/` (`<file>_take1.mp3`, …, plus the task JSON); the folder is not committed. Every request costs credit, so `generate` only sends with `--yes`, skips tracks that already have takes (`--again` to regenerate) and never prints the key. You pick the takes; I then do section 6.
+
+## 8. Made in code (2A03 synthesis)
+
+Every track and effect can also be made without an AI tool: `tools/audio/make_8bit_audio.py` renders them from the NES sound chip's four voices (two pulse waves with 12.5/25/50 % duty and 16 volume steps, the 32-step triangle, LFSR noise), so they are 8-bit by construction and cost nothing.
+
+- **Music:** `chip_music.py` composes each track from section 4: tempo, scale, form (8-bar sections), bass, second-pulse role (echo, arpeggio, counter-line, call and response) and drums. Melodies come from seeded themes, so each boss track plays its stage's melody in the darker scale, the credits reprise the menu theme and the victory screen quotes the summit. Loops are whole bars and wrap their tails to the start: the seam is seamless by construction.
+- **Effects:** `chip_sfx.py` builds the 35 effects of section 5 from the same voices.
+- **Delivery rules (section 3) are checked:** music about −16 LUFS with peaks at most −1 dBFS, effects at their peak level and without silence at the start (`tools/audio/test_chiptune.py`, also against the game's slot list).
+
+```powershell
+python tools/audio/make_8bit_audio.py              # all 56 files, about 35 s
+python tools/audio/make_8bit_audio.py music M3     # one track
+python tools/audio/make_8bit_audio.py --roll       # plus a piano-roll PNG per track
+```
+
+Output: `steam_assets/audio_8bit/synth/music|sfx|ui/<file>.wav` (the game's folder layout) and `report.json`; not committed (about 300 MB, regenerated from the code). Needs `tools/audio/requirements.txt` (the project `.venv` has it).
+
+**You:** listen and say which files to keep, change or redo (for example "M4 too busy", "gold_gain higher"). Then I import them as in section 6. A track can also come from Mureka instead.
 
 ## 6. After delivery (Claude)
 

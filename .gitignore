@@ -137,3 +137,5 @@ tools/localization/out/
 
 # Mureka takes (tools/audio/mureka_generate.py); the chosen takes are imported into Assets/Resources/audio
 steam_assets/audio_8bit/mureka/
+# Code-made 8-bit set (tools/audio/make_8bit_audio.py, deterministic; ~300 MB of WAV)
+steam_assets/audio_8bit/synth/

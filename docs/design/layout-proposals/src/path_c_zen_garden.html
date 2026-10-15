@@ -1,0 +1,112 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background:#d3c8ac; }
+  .sand { position:absolute; inset:0; background:
+      radial-gradient(ellipse 380px 260px at 4% 96%, #557a46 0 55%, transparent 56%),
+      radial-gradient(ellipse 300px 200px at 98% 6%, #4f7343 0 52%, transparent 53%),
+      radial-gradient(ellipse 240px 160px at 30% -2%, #5c814c 0 50%, transparent 51%),
+      repeating-linear-gradient(0deg, rgba(255,252,240,.32) 0 4px, rgba(140,122,90,.16) 4px 11px),
+      linear-gradient(180deg, #ddd2b6, #cfc3a5); }
+  .moss-dots { position:absolute; inset:0; background:
+      radial-gradient(circle 3px at 20% 90%, #3c5f35 99%, transparent), radial-gradient(circle 4px at 8% 82%, #3c5f35 99%, transparent),
+      radial-gradient(circle 3px at 92% 14%, #3c5f35 99%, transparent); }
+  svg.rake { position:absolute; inset:0; }
+  .rings { position:absolute; border-radius:50%; pointer-events:none;
+           background: repeating-radial-gradient(circle, rgba(255,252,240,.42) 0 4px, rgba(140,122,90,.20) 4px 11px);
+           -webkit-mask: radial-gradient(circle, #000 55%, transparent 70%); }
+  .rock { position:absolute; width:92px; height:84px; margin:-42px 0 0 -46px;
+          border-radius: 48% 52% 44% 56% / 56% 46% 54% 44%;
+          background: radial-gradient(circle at 35% 30%, #8d8b84 0%, #5d5b55 55%, #3b3a36 100%);
+          box-shadow: 6px 12px 0 rgba(90,76,52,.35), inset -6px -8px 14px rgba(0,0,0,.35), inset 4px 5px 8px rgba(255,255,255,.18);
+          display:flex; align-items:center; justify-content:center; }
+  .rock img { width:58px; height:58px; object-fit:contain; filter: drop-shadow(0 2px 2px rgba(0,0,0,.5)); }
+  .rock.risk { background: radial-gradient(circle at 35% 30%, #a77b5c 0%, #7a4f36 55%, #4c2f1f 100%); }
+  .rock.next::after { content:''; position:absolute; inset:-10px; border-radius:50%; border:3px solid #b8892b; box-shadow:0 0 16px rgba(233,196,106,.8); }
+  .rock .lbl { position:absolute; top:100%; margin-top:10px; left:50%; transform:translateX(-50%); white-space:nowrap;
+               font-size:17px; color:#3a3326; }
+  .island { position:absolute; left:1640px; top:540px; width:250px; height:250px; margin:-125px 0 0 -125px; border-radius:50%;
+            background: radial-gradient(circle at 40% 35%, #6f9b5f, #3f6236 70%, #2e4a28);
+            box-shadow: 0 0 0 16px rgba(255,252,240,.35), 0 0 0 30px rgba(140,122,90,.16), 0 0 0 44px rgba(255,252,240,.28), 10px 16px 0 44px rgba(90,76,52,.18); }
+  .island .gate { position:absolute; left:50%; top:16px; width:96px; margin-left:-48px; }
+  .island .boss { position:absolute; left:50%; top:86px; width:120px; height:120px; margin-left:-60px; border-radius:50%;
+                  border:5px solid #9e2a2b; background:#2c1112; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 14px rgba(0,0,0,.45); }
+  .island .boss img { width:92px; height:92px; }
+  .island .lbl { position:absolute; top:100%; margin-top:52px; left:50%; transform:translateX(-50%); font-size:24px; color:#3a1414; white-space:nowrap; }
+  .card { position:absolute; left:30px; top:28px; width:380px; padding:16px 20px; border-radius:20px; background:rgba(245,238,220,.92);
+          color:#2a241c; box-shadow:0 10px 24px rgba(60,48,28,.35); }
+  .card .who { display:flex; gap:14px; align-items:center; font-size:21px; }
+  .card .who div:first-child { width:58px; height:58px; border-radius:50%; border:3px solid #b8892b; background:#2b3a2e center/88% no-repeat; }
+  .pips { display:flex; gap:5px; margin:8px 0 2px; align-items:center; font-size:15px; }
+  .pips i { width:16px; height:16px; border-radius:50%; display:inline-block; }
+  .floors { position:absolute; left:50%; top:34px; transform:translateX(-50%); display:flex; gap:18px; align-items:center; color:#2a241c; font-size:22px; }
+  .floors .st { width:44px; height:34px; border-radius:46% 54% 50% 50%; background:#6d6a62; box-shadow:4px 6px 0 rgba(90,76,52,.3); }
+  .floors .st.on { background:#4f7343; box-shadow:0 0 0 4px #e9c46a, 4px 6px 0 rgba(90,76,52,.3); }
+  .roundbtn { position:absolute; width:62px; height:62px; border-radius:50%; background:#2b3a2e; display:flex; align-items:center; justify-content:center;
+              box-shadow:0 8px 16px rgba(60,48,28,.4); }
+  .roundbtn img { width:38px; height:38px; }
+  .hint { position:absolute; left:50%; bottom:64px; transform:translateX(-50%); font-size:24px; color:#3a3326; letter-spacing:.02em; }
+  .route { position:absolute; font-size:19px; color:#2f4a33; }
+  .route.risk { color:#7a3b2b; }
+</style></head><body>
+<div class="sand"></div><div class="moss-dots"></div>
+<svg class="rake" viewBox="0 0 1920 1080"></svg>
+<div id="layer"></div>
+<div class="island"><img class="gate" src="../../../../Assets/Resources/node/icon_preboss_gate.png">
+  <div class="boss"><img src="../../../../Assets/Resources/boss/icon_grove_spirit.png"></div><div class="lbl">Grove Spirit</div></div>
+
+<div class="card">
+  <div class="who"><div style="background-image:url('../../../../Assets/Resources/class/icon_number_freak.png')"></div>
+    <div>Number Freak<br><span style="font-size:15px;opacity:.7">Level 3 · Gold 45 · Relics 1</span></div></div>
+  <div class="pips">HP&nbsp;<script>document.write('<i style="background:#c8553d"></i>'.repeat(11))</script></div>
+  <div class="pips">Pencil&nbsp;<script>document.write('<i style="background:#2f4b8f"></i>'.repeat(10))</script></div>
+</div>
+<div class="floors"><div class="st on"></div><span>Bamboo Courtyard</span><div class="st"></div><div class="st"></div><div class="st"></div><div class="st"></div></div>
+<div class="roundbtn" style="right:110px;top:32px"><img src="../../../../Assets/Resources/ui/icon_stone_gear.png"></div>
+<div class="roundbtn" style="right:32px;top:32px"><img src="../../../../Assets/Resources/ui/icon_ink_save.png"></div>
+<div class="route" style="left:250px;top:250px">Garden Walk · calm</div>
+<div class="route risk" style="left:250px;top:905px">Wild Crossing · risk · more gold</div>
+<div class="hint">Follow a raked line to your next stone.</div>
+<div class="caption">Garden path · Proposal C · Zen garden from above</div>
+
+<script src="common.js"></script>
+<script>
+  const d = pathData();
+  const calm = [[150,560],[300,380],[460,330],[620,300],[780,330],[940,290],[1100,330],[1260,300],[1420,400]];
+  const risk = [[150,560],[300,740],[460,790],[620,760],[780,800],[940,760],[1100,800],[1260,770],[1420,690]];
+  const boss = [1640,540];
+  const svg = document.querySelector('svg.rake');
+  function smooth(pts) {
+    let s = `M${pts[0][0]},${pts[0][1]}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[Math.max(i-1,0)], p1 = pts[i], p2 = pts[i+1], p3 = pts[Math.min(i+2,pts.length-1)];
+      s += ` C${p1[0]+(p2[0]-p0[0])/6},${p1[1]+(p2[1]-p0[1])/6} ${p2[0]-(p3[0]-p1[0])/6},${p2[1]-(p3[1]-p1[1])/6} ${p2[0]},${p2[1]}`;
+    }
+    return s;
+  }
+  function raked(pts, groove) {
+    const p = smooth(pts);
+    let out = '';
+    [[44, '#d8cdb1'], [36, 'rgba(255,252,240,.65)'], [28, groove], [20, 'rgba(255,252,240,.65)'], [12, groove], [5, 'rgba(255,252,240,.7)']]
+      .forEach(([w, c]) => out += `<path d="${p}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`);
+    return out;
+  }
+  svg.innerHTML = raked([...calm, boss], 'rgba(120,140,100,.45)') + raked([...risk, boss], 'rgba(160,110,80,.45)') +
+    `<path d="M620,300 L620,760" stroke="rgba(120,100,70,.55)" stroke-width="6" stroke-dasharray="4 12" stroke-linecap="round"/>`;
+  const layer = document.getElementById('layer');
+  let pi = 0;
+  const label = t => t === 'puzzle' ? `Puzzle ${d.puzzleInfo[pi++ % d.puzzleInfo.length]}` : d.labels[t];
+  function rock(pt, type, cls, lbl) {
+    const r = document.createElement('div'); r.className = 'rings';
+    r.style.left = (pt[0] - 75) + 'px'; r.style.top = (pt[1] - 75) + 'px'; r.style.width = r.style.height = '150px';
+    layer.appendChild(r);
+    const n = document.createElement('div'); n.className = 'rock ' + cls;
+    n.style.left = pt[0] + 'px'; n.style.top = pt[1] + 'px';
+    n.innerHTML = `<img src="${NODE_ICON[type]}"><div class="lbl">${lbl}</div>`;
+    layer.appendChild(n);
+  }
+  d.calm.forEach((t, i) => { if (i) rock(calm[i], t, i === 1 ? 'next' : '', label(t)); });
+  d.risk.forEach((t, i) => { if (i) rock(risk[i], t, 'risk' + (i === 1 ? ' next' : ''), label(t)); });
+  rock(calm[0], 'start', 'next', 'You');
+</script>
+</body></html>

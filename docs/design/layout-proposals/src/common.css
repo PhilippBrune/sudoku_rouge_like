@@ -1,0 +1,22 @@
+/* Shared look of the layout mockups (docs/design/layout-proposals.md). Palette from GameDesignSpec §1:
+   calm greens, stone neutrals, lantern gold. */
+@font-face { font-family: 'Main'; src: url('../../../../Assets/Resources/Fonts/MainFont.ttf'); }
+:root {
+  --moss: #2f4a33; --moss-d: #1b2a1e; --moss-l: #6f9b67; --jade: #9fd3a8;
+  --stone: #d9d2c0; --stone-d: #8f8a7c; --ink: #1d1a16; --paper: #efe6d2; --paper-d: #d8c9a8;
+  --gold: #e9c46a; --gold-d: #b8892b; --lantern: #f4a259; --ember: #c8553d; --lacquer: #9e2a2b;
+  --water: #5fa8d3; --indigo: #2f4b8f;
+  --R: "../../../../Assets/Resources/";
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #0d120e; }
+body { font-family: 'Main', 'Segoe UI', sans-serif; color: var(--paper); position: relative; }
+.abs { position: absolute; }
+.caption {
+  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 50;
+  padding: 6px 18px; border-radius: 999px; background: rgba(0, 0, 0, .62); color: #fff;
+  font: 600 17px 'Segoe UI', sans-serif; letter-spacing: .04em; white-space: nowrap;
+}
+.pill { border-radius: 999px; }
+.icon { display: block; width: 100%; height: 100%; object-fit: contain; image-rendering: auto; }
+.shadow { box-shadow: 0 10px 30px rgba(0, 0, 0, .45); }

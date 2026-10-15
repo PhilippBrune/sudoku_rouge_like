@@ -1,0 +1,126 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<style>
+  .bg { position:absolute; inset:0; background:url('../../../../Assets/Resources/background/bg_garden_grove.png') center/cover; filter:saturate(.95) brightness(.92); }
+  .shade { position:absolute; inset:0; background:
+      linear-gradient(180deg, rgba(10,16,11,.70) 0%, rgba(10,16,11,0) 22%, rgba(10,16,11,0) 70%, rgba(10,16,11,.75) 100%),
+      radial-gradient(ellipse at 50% 55%, rgba(0,0,0,0) 55%, rgba(0,0,0,.45) 100%); }
+  svg.paths { position:absolute; inset:0; }
+  .node { position:absolute; width:96px; height:96px; margin:-48px 0 0 -48px; border-radius:50%;
+          background: radial-gradient(circle at 38% 32%, #e7e1d2 0%, #b9b2a1 45%, #7d7768 100%);
+          box-shadow: 0 8px 18px rgba(0,0,0,.55), inset 0 -6px 12px rgba(0,0,0,.25), inset 0 4px 8px rgba(255,255,255,.35);
+          border:4px solid var(--ring); display:flex; align-items:center; justify-content:center; }
+  .node img { width:62px; height:62px; object-fit:contain; filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); }
+  .node.calm { --ring:#8fbf7f; } .node.risk { --ring:#d9734f; }
+  .node.next { box-shadow: 0 0 0 7px rgba(233,196,106,.35), 0 0 34px 10px rgba(233,196,106,.55), 0 8px 18px rgba(0,0,0,.5); --ring: var(--gold); }
+  .node.boss { width:150px; height:150px; margin:-75px 0 0 -75px; --ring:#b23a3a; border-width:6px;
+               background: radial-gradient(circle at 40% 35%, #5a2526 0%, #2c1112 100%); }
+  .node.boss img { width:108px; height:108px; }
+  .node .lbl { position:absolute; top:100%; margin-top:10px; left:50%; transform:translateX(-50%); white-space:nowrap;
+               padding:3px 12px; border-radius:999px; background:rgba(16,22,17,.78); border:1px solid rgba(233,196,106,.25);
+               font-size:17px; color:#f3ead6; }
+  .node.boss .lbl { font-size:22px; padding:5px 18px; background:rgba(60,18,18,.85); border-color:rgba(255,160,140,.4); }
+  .token { position:absolute; width:74px; height:74px; margin:-130px 0 0 -37px; border-radius:50%; border:3px solid var(--gold);
+           background:#1d2a20 center/86% no-repeat; box-shadow:0 0 22px rgba(233,196,106,.6); }
+  .sign { position:absolute; padding:8px 18px 8px 16px; border-radius:14px; font-size:19px; color:#f6efdc;
+          background: linear-gradient(180deg, #6b4a2b, #4a321c); border:2px solid #2d1d10; box-shadow:0 6px 14px rgba(0,0,0,.5); }
+  .sign small { display:block; font-size:14px; opacity:.8; }
+  .sign::before { content:''; position:absolute; left:50%; top:100%; width:8px; height:34px; margin-left:-4px; background:#3a2716; }
+  .hud { position:absolute; top:22px; height:76px; border-radius:38px; background:rgba(16,24,18,.78); border:1px solid rgba(233,196,106,.30);
+         box-shadow:0 10px 24px rgba(0,0,0,.45); display:flex; align-items:center; padding:0 22px 0 8px; gap:16px; }
+  .portrait { width:60px; height:60px; border-radius:50%; border:3px solid var(--gold); background:#1d2a20 center/88% no-repeat; }
+  .chip { display:flex; align-items:center; gap:7px; font-size:19px; }
+  .chip i { width:14px; height:14px; border-radius:50%; display:inline-block; }
+  .floors { left:50%; transform:translateX(-50%); padding:0 26px; gap:10px; }
+  .lantern { width:30px; height:38px; border-radius:12px 12px 14px 14px; background:#3b3b30; border:2px solid #6b6b55; position:relative; }
+  .lantern.lit { background: radial-gradient(circle at 50% 45%, #ffe9a8, #f4a259 60%, #b8562b); border-color:#ffd27a; box-shadow:0 0 18px rgba(244,162,89,.8); }
+  .lantern.done { background:#7a6a45; border-color:#b8a46a; }
+  .floorname { font-size:22px; margin:0 6px; color:#f6ecd3; }
+  .roundbtn { position:absolute; width:64px; height:64px; border-radius:50%; background:rgba(16,24,18,.82); border:2px solid rgba(233,196,106,.45);
+              display:flex; align-items:center; justify-content:center; box-shadow:0 8px 18px rgba(0,0,0,.45); }
+  .roundbtn img { width:40px; height:40px; }
+  .hint { position:absolute; left:250px; top:505px; padding:10px 18px; border-radius:16px; background:rgba(16,24,18,.85);
+          border:1px solid rgba(233,196,106,.45); font-size:20px; max-width:330px; line-height:1.25; }
+  .hint b { color: var(--gold); }
+  .legend { position:absolute; left:28px; bottom:28px; display:flex; gap:14px; padding:10px 18px; border-radius:22px;
+            background:rgba(16,24,18,.72); border:1px solid rgba(255,255,255,.12); font-size:15px; align-items:center; }
+  .legend span { display:flex; align-items:center; gap:6px; }
+  .legend img { width:30px; height:30px; object-fit:contain; }
+</style></head><body>
+<div class="bg"></div><div class="shade"></div>
+<svg class="paths" viewBox="0 0 1920 1080"></svg>
+<div id="layer"></div>
+
+<div class="hud" style="left:24px;">
+  <div class="portrait" style="background-image:url('../../../../Assets/Resources/class/icon_number_freak.png')"></div>
+  <div style="font-size:19px;line-height:1.1">Number Freak<br><span style="font-size:15px;opacity:.75">Level 3</span></div>
+  <div class="chip"><i style="background:#d9534f"></i>HP 11/11</div>
+  <div class="chip"><i style="background:#5fa8d3"></i>Pencil 10/10</div>
+  <div class="chip"><i style="background:#e9c46a"></i>45</div>
+</div>
+<div class="hud floors">
+  <div class="lantern lit"></div><span class="floorname">Bamboo Courtyard</span>
+  <div class="lantern"></div><div class="lantern"></div><div class="lantern"></div><div class="lantern"></div>
+  <span style="font-size:15px;opacity:.8;margin-left:8px">★ Bounty floor</span>
+</div>
+<div class="roundbtn" style="right:112px;top:28px"><img src="../../../../Assets/Resources/ui/icon_stone_gear.png"></div>
+<div class="roundbtn" style="right:32px;top:28px"><img src="../../../../Assets/Resources/ui/icon_ink_save.png"></div>
+
+<div class="sign" style="left:300px;top:205px">Garden Walk<small>calm · 9 tiles</small></div>
+<div class="sign" style="left:290px;top:888px;background:linear-gradient(180deg,#7a3b2b,#4f2318)">Wild Crossing<small>risk · 9 tiles · more gold</small></div>
+<div class="hint">Choose your first stone. <b>Calm</b> keeps the pace gentle, <b>Risk</b> pays more.</div>
+
+<div class="legend">
+  <span><img src="../../../../Assets/Resources/node/icon_puzzle_tile.png">Puzzle</span>
+  <span><img src="../../../../Assets/Resources/node/icon_elite_mask.png">Elite</span>
+  <span><img src="../../../../Assets/Resources/node/icon_market_stall.png">Shop</span>
+  <span><img src="../../../../Assets/Resources/node/icon_campfire_stones.png">Rest</span>
+  <span><img src="../../../../Assets/Resources/node/icon_relic_pedestal.png">Relic</span>
+  <span><img src="../../../../Assets/Resources/node/icon_moss_trap.png">Cursed</span>
+</div>
+<div class="caption">Garden path · Proposal A · Stepping stones</div>
+
+<script src="common.js"></script>
+<script>
+  const d = pathData();
+  const calmPts = [[170,560],[330,390],[500,330],[680,300],[860,335],[1040,290],[1220,335],[1400,300],[1570,420]];
+  const riskPts = [[170,560],[330,735],[500,790],[680,760],[860,805],[1040,760],[1220,805],[1400,770],[1570,700]];
+  const boss = [1740,560];
+  const svg = document.querySelector('svg.paths');
+  function smooth(pts) {
+    let s = `M${pts[0][0]},${pts[0][1]}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[Math.max(i-1,0)], p1 = pts[i], p2 = pts[i+1], p3 = pts[Math.min(i+2,pts.length-1)];
+      const c1 = [p1[0]+(p2[0]-p0[0])/6, p1[1]+(p2[1]-p0[1])/6], c2 = [p2[0]-(p3[0]-p1[0])/6, p2[1]-(p3[1]-p1[1])/6];
+      s += ` C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${p2[0]},${p2[1]}`;
+    }
+    return s;
+  }
+  function gravel(pts, tint) {
+    const p = smooth(pts);
+    return `<path d="${p}" fill="none" stroke="rgba(30,24,16,.45)" stroke-width="34" stroke-linecap="round"/>
+            <path d="${p}" fill="none" stroke="${tint}" stroke-width="24" stroke-linecap="round"/>
+            <path d="${p}" fill="none" stroke="rgba(255,250,235,.75)" stroke-width="7" stroke-dasharray="1 15" stroke-linecap="round"/>`;
+  }
+  svg.innerHTML =
+    gravel([...calmPts, boss], 'rgba(205,214,180,.55)') + gravel([...riskPts, boss], 'rgba(214,150,120,.55)') +
+    `<path d="M680,300 L680,760" stroke="#5a3d22" stroke-width="16" stroke-linecap="round" opacity=".85"/>
+     <path d="M680,300 L680,760" stroke="#c9a46a" stroke-width="6" stroke-dasharray="14 10" opacity=".9"/>`;
+  const layer = document.getElementById('layer');
+  function node(x, y, type, cls, label) {
+    const n = document.createElement('div');
+    n.className = `node ${cls}`; n.style.left = x + 'px'; n.style.top = y + 'px';
+    n.innerHTML = `<img src="${NODE_ICON[type]}">` + (label ? `<div class="lbl">${label}</div>` : '');
+    layer.appendChild(n); return n;
+  }
+  let pi = 0;
+  const labelFor = (t) => t === 'puzzle' ? `Puzzle · ${d.puzzleInfo[pi++ % d.puzzleInfo.length]}` : d.labels[t];
+  d.calm.forEach((t, i) => { if (i) node(...calmPts[i], t, 'calm' + (i === 1 ? ' next' : ''), labelFor(t)); });
+  d.risk.forEach((t, i) => { if (i) node(...riskPts[i], t, 'risk' + (i === 1 ? ' next' : ''), labelFor(t)); });
+  node(170, 560, 'rest', 'calm', 'Start');
+  node(...boss, 'boss', 'boss', 'Grove Spirit');
+  const tok = document.createElement('div'); tok.className = 'token';
+  tok.style.left = '170px'; tok.style.top = '560px'; tok.style.backgroundImage = `url('${R}class/icon_number_freak.png')`;
+  layer.appendChild(tok);
+</script>
+</body></html>

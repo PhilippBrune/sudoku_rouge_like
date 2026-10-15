@@ -1,0 +1,120 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<style>
+  .bg { position:absolute; inset:-20px; background:url('../../../../Assets/Resources/background/bg_garden_grove.png') center/cover;
+        filter: blur(7px) brightness(.38) saturate(.7); }
+  .scroll { position:absolute; left:150px; top:150px; width:1620px; height:770px; }
+  .paper { position:absolute; inset:0; border-radius:6px; overflow:hidden;
+           background:
+             radial-gradient(ellipse at 20% 30%, rgba(255,255,255,.35), transparent 45%),
+             radial-gradient(ellipse at 80% 70%, rgba(160,130,80,.18), transparent 50%),
+             linear-gradient(180deg, #f2e7cc, #e7d7b2); box-shadow: 0 30px 60px rgba(0,0,0,.6); }
+  .wash { position:absolute; inset:0; background:url('../../../../Assets/Resources/background/bg_garden_grove.png') center/cover;
+          filter: grayscale(1) contrast(1.35) brightness(1.15); mix-blend-mode: multiply; opacity:.16; }
+  .brocade { position:absolute; left:0; right:0; height:30px; background:
+             repeating-linear-gradient(90deg, #2c4632 0 18px, #33523a 18px 36px); border-top:2px solid #c9a24f; border-bottom:2px solid #c9a24f; }
+  .roller { position:absolute; top:-34px; bottom:-34px; width:44px; border-radius:22px;
+            background: linear-gradient(90deg, #3a2414, #8a5a32 35%, #c08a52 50%, #8a5a32 65%, #3a2414); box-shadow:0 12px 24px rgba(0,0,0,.6); }
+  .roller::before, .roller::after { content:''; position:absolute; left:-6px; right:-6px; height:22px; border-radius:10px; background:#1f140b; }
+  .roller::before { top:-6px; } .roller::after { bottom:-6px; }
+  svg.ink { position:absolute; inset:0; }
+  .node { position:absolute; width:104px; height:104px; margin:-52px 0 0 -52px; display:flex; align-items:center; justify-content:center; }
+  .node svg { position:absolute; inset:0; }
+  .node img { width:64px; height:64px; object-fit:contain; filter: sepia(.25) saturate(.9); position:relative; }
+  .node .lbl { position:absolute; top:100%; margin-top:2px; left:50%; transform:translateX(-50%); white-space:nowrap;
+               font-size:18px; color:#2a241c; }
+  .node.next .lbl { color:#9e2a2b; }
+  .seal { position:absolute; width:156px; height:156px; margin:-78px 0 0 -78px; border-radius:18px; background:#b23a2e;
+          box-shadow: inset 0 0 0 7px #b23a2e, inset 0 0 0 10px #f2e7cc, 0 4px 0 rgba(0,0,0,.08);
+          display:flex; align-items:center; justify-content:center; transform: rotate(-4deg); }
+  .seal img { width:104px; height:104px; filter: grayscale(1) brightness(2.2) contrast(1.1); mix-blend-mode: screen; }
+  .seal .lbl { position:absolute; top:100%; margin-top:12px; font-size:24px; color:#9e2a2b; white-space:nowrap; transform:rotate(4deg); }
+  .title { position:absolute; left:120px; top:52px; font-size:44px; color:#231e17; letter-spacing:.02em; }
+  .title small { display:block; font-size:19px; color:#5b5244; letter-spacing:.12em; text-transform:uppercase; }
+  .floors { position:absolute; right:120px; top:66px; display:flex; gap:12px; align-items:center; font-size:15px; color:#5b5244; }
+  .floors i { width:26px; height:26px; border-radius:6px; border:2px solid #9e2a2b; display:inline-block; }
+  .floors i.on { background:#b23a2e; }
+  .route { position:absolute; font-size:20px; color:#2a241c; font-style:italic; }
+  .route.risk { color:#9e2a2b; }
+  .note { position:absolute; left:120px; bottom:54px; font-size:20px; color:#3a3228; }
+  .legend { position:absolute; right:120px; bottom:44px; display:flex; gap:16px; font-size:15px; color:#3a3228; align-items:center; }
+  .legend span { display:flex; align-items:center; gap:5px; }
+  .legend img { width:28px; height:28px; object-fit:contain; filter: sepia(.3); }
+  .tag { position:absolute; right:60px; top:30px; padding:16px 22px 14px; width:350px; background:#efe3c6; color:#2a241c;
+         border-radius:4px 4px 12px 12px; box-shadow:0 14px 28px rgba(0,0,0,.55); transform: rotate(2deg); font-size:19px; line-height:1.55; z-index:5; }
+  .tag::before { content:''; position:absolute; top:-26px; left:50%; width:2px; height:28px; background:#c9a24f; }
+  .tag b { color:#9e2a2b; font-weight:normal; }
+  .roundbtn { position:absolute; width:62px; height:62px; border-radius:50%; background:rgba(239,227,198,.92); border:2px solid #6b4a2b;
+              display:flex; align-items:center; justify-content:center; box-shadow:0 8px 18px rgba(0,0,0,.45); }
+  .roundbtn img { width:38px; height:38px; }
+</style></head><body>
+<div class="bg"></div>
+<svg width="0" height="0" style="position:absolute">
+  <filter id="brush"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="5"/></filter>
+</svg>
+<div class="scroll">
+  <div class="paper"><div class="wash"></div>
+    <div class="brocade" style="top:0"></div><div class="brocade" style="bottom:0"></div>
+    <svg class="ink" viewBox="0 0 1620 770"></svg>
+    <div class="title"><small>Floor one of five</small>Bamboo Courtyard</div>
+    <div class="floors">floor <i class="on"></i><i></i><i></i><i></i><i></i></div>
+    <div class="route" style="left:300px;top:190px">the Garden Walk — calm</div>
+    <div class="route risk" style="left:160px;top:640px">the Wild Crossing — risk, more gold</div>
+    <div class="note">Pick the next stone with the brush: ink is calm, vermilion is risk.</div>
+    <div class="legend">
+      <span><img src="../../../../Assets/Resources/node/icon_puzzle_tile.png">Puzzle</span>
+      <span><img src="../../../../Assets/Resources/node/icon_elite_mask.png">Elite</span>
+      <span><img src="../../../../Assets/Resources/node/icon_market_stall.png">Shop</span>
+      <span><img src="../../../../Assets/Resources/node/icon_campfire_stones.png">Rest</span>
+      <span><img src="../../../../Assets/Resources/node/icon_relic_pedestal.png">Relic</span>
+    </div>
+    <div id="layer"></div>
+  </div>
+  <div class="roller" style="left:-30px"></div><div class="roller" style="right:-30px"></div>
+</div>
+<div class="tag">Number Freak · Level 3<br>HP <b>11 / 11</b> &nbsp; Pencil <b>10 / 10</b><br>Gold <b>45</b> &nbsp; Relics <b>1</b> &nbsp; ★ Bounty floor</div>
+<div class="roundbtn" style="left:40px;top:40px"><img src="../../../../Assets/Resources/ui/icon_ink_save.png"></div>
+<div class="roundbtn" style="left:116px;top:40px"><img src="../../../../Assets/Resources/ui/icon_stone_gear.png"></div>
+<div class="caption">Garden path · Proposal B · Hand scroll (emaki)</div>
+
+<script src="common.js"></script>
+<script>
+  const d = pathData();
+  const calm = [[120,400],[290,300],[450,265],[610,250],[770,280],[930,245],[1090,280],[1250,250],[1390,330]];
+  const risk = [[120,400],[290,520],[450,575],[610,545],[770,590],[930,550],[1090,590],[1250,555],[1390,480]];
+  const boss = [1520,400];
+  const ink = document.querySelector('svg.ink');
+  const line = (pts, color, w) => {
+    let s = `M${pts[0][0]},${pts[0][1]}`;
+    for (let i = 1; i < pts.length; i++) {
+      const [x0, y0] = pts[i-1], [x1, y1] = pts[i];
+      s += ` Q${(x0+x1)/2},${(y0+y1)/2 + (i % 2 ? -18 : 18)} ${x1},${y1}`;
+    }
+    return `<path d="${s}" fill="none" stroke="${color}" stroke-width="${w}" stroke-linecap="round" filter="url(#brush)" opacity=".85"/>
+            <path d="${s}" fill="none" stroke="${color}" stroke-width="${w/3}" stroke-linecap="round" opacity=".35" transform="translate(2,3)"/>`;
+  };
+  ink.innerHTML = line([...calm, boss], '#2a241c', 7) + line([...risk, boss], '#a8322a', 7) +
+    `<path d="M610,250 C640,360 580,440 610,545" fill="none" stroke="#6b5a40" stroke-width="4" stroke-dasharray="10 9" filter="url(#brush)"/>`;
+  const layer = document.getElementById('layer');
+  function enso(color, next) {
+    return `<svg viewBox="0 0 104 104"><path d="M86,30 A42,42 0 1 1 64,12" fill="none" stroke="${color}" stroke-width="${next ? 9 : 6}"
+            stroke-linecap="round" filter="url(#brush)" opacity="${next ? 1 : .85}"/></svg>`;
+  }
+  let pi = 0;
+  const label = t => t === 'puzzle' ? `Puzzle ${d.puzzleInfo[pi++ % d.puzzleInfo.length]}` : d.labels[t];
+  function node(pt, type, color, next, lbl) {
+    const n = document.createElement('div');
+    n.className = 'node' + (next ? ' next' : '');
+    n.style.left = pt[0] + 'px'; n.style.top = pt[1] + 'px';
+    n.innerHTML = enso(color, next) + `<img src="${NODE_ICON[type]}"><div class="lbl">${lbl}</div>`;
+    layer.appendChild(n);
+  }
+  d.calm.forEach((t, i) => { if (i) node(calm[i], t, i === 1 ? '#9e2a2b' : '#2a241c', i === 1, label(t)); });
+  d.risk.forEach((t, i) => { if (i) node(risk[i], t, i === 1 ? '#9e2a2b' : '#a8322a', i === 1, label(t)); });
+  node(calm[0], 'start', '#9e2a2b', true, 'You are here');
+  const s = document.createElement('div'); s.className = 'seal';
+  s.style.left = boss[0] + 'px'; s.style.top = boss[1] + 'px';
+  s.innerHTML = `<img src="${NODE_ICON.boss}"><div class="lbl">Grove Spirit</div>`;
+  layer.appendChild(s);
+</script>
+</body></html>

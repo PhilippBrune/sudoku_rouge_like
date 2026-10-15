@@ -1,0 +1,116 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<style>
+  .bg { position:absolute; inset:-30px; background:url('../../../../Assets/Resources/background/bg_garden_grove.png') center/cover;
+        filter: blur(10px) brightness(.55) saturate(.85); }
+  .vignette { position:absolute; inset:0; background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 40%, rgba(0,0,0,.55) 100%); }
+  .plaque { position:absolute; left:50%; top:26px; transform:translateX(-50%); padding:10px 34px; border-radius:18px;
+            background: linear-gradient(180deg, #7a5432, #5a3b21); border:2px solid #2d1d10; color:#f6ecd3; font-size:26px;
+            box-shadow:0 10px 22px rgba(0,0,0,.5); white-space:nowrap; }
+  .plaque small { font-size:18px; opacity:.85; margin-left:12px; }
+  .status { position:absolute; left:50%; top:96px; transform:translateX(-50%); font-size:19px; color:#e8dfc8; font-style:italic; opacity:.9; }
+  .tray { position:absolute; left:570px; top:140px; border-radius:34px; padding:34px;
+          background: linear-gradient(135deg, #8a5d36, #5d3c22 60%, #4a2f1a); box-shadow: 0 30px 60px rgba(0,0,0,.6), inset 0 2px 0 rgba(255,220,170,.35); }
+  .board { position:relative; }
+  .cell { position:relative; border-radius:12px; background: linear-gradient(180deg, #f3ead6, #e6d9bb);
+          box-shadow: inset 0 -3px 0 rgba(120,95,60,.25); display:flex; align-items:center; justify-content:center;
+          font-size:56px; color:#2a241c; }
+  .cell.parity { background: linear-gradient(180deg, #e9e1c9, #dccdaa); }
+  .cell.player { color:#2f4b8f; }
+  .cell.same { box-shadow: inset 0 0 0 3px rgba(111,155,103,.9), inset 0 -3px 0 rgba(120,95,60,.25); }
+  .cell.selected { box-shadow: 0 0 0 5px #e9c46a, 0 0 22px rgba(233,196,106,.8); z-index:2; }
+  .cell.cage { outline:3px dashed #a8322a; outline-offset:-9px; }
+  .marks { display:grid; grid-template-columns:repeat(3,1fr); width:84%; height:70%; font-size:22px; color:#6d6352; text-align:center; }
+  svg.overlay { position:absolute; inset:0; pointer-events:none; }
+  .side { position:absolute; top:150px; width:470px; }
+  .panel { border-radius:24px; background:rgba(20,30,22,.82); border:1px solid rgba(233,196,106,.28); box-shadow:0 14px 30px rgba(0,0,0,.45); padding:22px 26px; }
+  .who { display:flex; gap:18px; align-items:center; font-size:24px; }
+  .portrait { width:96px; height:96px; border-radius:50%; border:4px solid var(--gold); background:#1d2a20 center/86% no-repeat; flex:none; }
+  .row { display:flex; align-items:center; gap:8px; margin-top:16px; font-size:18px; }
+  .row b { width:70px; font-weight:normal; opacity:.85; }
+  .lan { width:24px; height:30px; border-radius:9px 9px 11px 11px; background:#3a2c26; border:2px solid #6a4a3a; }
+  .lan.on { background: radial-gradient(circle at 50% 45%, #ffd9a0, #e9733f 60%, #a8322a); border-color:#ffb38a; box-shadow:0 0 10px rgba(233,115,63,.7); }
+  .brush { width:12px; height:30px; border-radius:6px; background:#3a3f4a; }
+  .brush.on { background: linear-gradient(180deg, #e8dfc8 0 30%, #5fa8d3 30%); }
+  .slots { display:flex; gap:16px; margin-top:14px; }
+  .slot { width:96px; height:96px; border-radius:50%; background: radial-gradient(circle at 40% 35%, #3a4a3c, #1c271e);
+          border:3px solid rgba(233,196,106,.55); display:flex; align-items:center; justify-content:center; position:relative; }
+  .slot img { width:70px; height:70px; object-fit:contain; }
+  .slot.small { width:66px; height:66px; } .slot.small img { width:48px; height:48px; }
+  .slot.empty { border-style:dashed; opacity:.55; }
+  h4 { margin:22px 0 0; font-weight:normal; font-size:17px; letter-spacing:.14em; color:var(--gold); text-transform:uppercase; }
+  .pad { display:grid; grid-template-columns:repeat(3, 108px); gap:16px; justify-content:center; margin-top:6px; }
+  .stone { width:108px; height:108px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:46px; color:#1f1b16;
+           background: radial-gradient(circle at 35% 30%, #ffffff, #e9e4d8 45%, #bdb6a5 100%); box-shadow: 0 8px 14px rgba(0,0,0,.5); }
+  .stone.off { opacity:.25; }
+  .stone.done { background: radial-gradient(circle at 35% 30%, #d9e8d4, #a9c3a1 55%, #7d9a76); }
+  .mode { display:flex; margin:22px auto 0; width:340px; border-radius:999px; overflow:hidden; border:2px solid rgba(233,196,106,.6); font-size:20px; }
+  .mode div { flex:1; padding:10px; text-align:center; } .mode .on { background:#e9c46a; color:#2a241c; }
+  .mod { display:flex; gap:14px; align-items:center; margin-top:14px; font-size:16px; line-height:1.3; }
+  .mod .badge { width:46px; height:46px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; font-size:20px; }
+  .roundbtn { position:absolute; width:64px; height:64px; border-radius:50%; background:rgba(20,30,22,.85); border:2px solid rgba(233,196,106,.5);
+              display:flex; align-items:center; justify-content:center; box-shadow:0 8px 18px rgba(0,0,0,.45); }
+  .roundbtn img { width:40px; height:40px; }
+  .timer { position:absolute; right:190px; top:36px; padding:8px 18px; border-radius:999px; background:rgba(20,30,22,.82); font-size:22px; }
+</style></head><body>
+<div class="bg"></div><div class="vignette"></div>
+<div class="plaque">Bamboo Courtyard <small>Floor 1 · Depth 3 · 6×6 · ★★</small></div>
+<div class="status">Placed 4. Two cells left in the top band.</div>
+<div class="timer">02:14</div>
+<div class="roundbtn" style="right:110px;top:28px"><img src="../../../../Assets/Resources/ui/icon_stone_gear.png"></div>
+<div class="roundbtn" style="right:32px;top:28px"><img src="../../../../Assets/Resources/ui/icon_ink_save.png"></div>
+
+<div class="side" style="left:60px">
+  <div class="panel">
+    <div class="who"><div class="portrait" style="background-image:url('../../../../Assets/Resources/class/icon_number_freak.png')"></div>
+      <div>Number Freak<br><span style="font-size:17px;opacity:.75">Level 3 · Gold 45</span></div></div>
+    <div class="row"><b>HP 7/10</b><script>for(let i=0;i<10;i++)document.write(`<div class="lan ${i<7?'on':''}"></div>`)</script></div>
+    <div class="row"><b>Pencil</b><script>for(let i=0;i<10;i++)document.write(`<div class="brush ${i<8?'on':''}"></div>`)</script></div>
+  </div>
+  <div class="panel" style="margin-top:22px">
+    <h4 style="margin-top:0">Bag</h4>
+    <div class="slots">
+      <div class="slot"><img src="../../../../Assets/Resources/items/icon_solver.png"></div>
+      <div class="slot"><img src="../../../../Assets/Resources/items/icon_bamboo_scroll.png"></div>
+      <div class="slot empty"></div>
+    </div>
+    <h4>Relics</h4>
+    <div class="slots">
+      <div class="slot small"><img src="../../../../Assets/Resources/relic/icon_cracked_teacup.png"></div>
+      <div class="slot small"><img src="../../../../Assets/Resources/relic/icon_paper_crane.png"></div>
+    </div>
+  </div>
+  <div style="margin-top:20px;font-size:16px;opacity:.75;padding:0 10px">Passive: a puzzle with no mistakes gives +1 reroll token.</div>
+</div>
+
+<div class="tray"><div class="board" id="board"></div><svg id="ov"></svg></div>
+
+<div class="side" style="right:60px;width:440px">
+  <div class="panel">
+    <div class="pad"><script>
+      const used = {1:false,2:false,3:false,4:false,5:false,6:false};
+      for (let n = 1; n <= 9; n++) document.write(`<div class="stone ${n>6?'off':''}">${n}</div>`);
+    </script></div>
+    <div class="mode"><div class="on">Solve</div><div>Pencil</div></div>
+  </div>
+  <div class="panel" style="margin-top:22px">
+    <h4 style="margin-top:0">This puzzle</h4>
+    <div class="mod"><div class="badge" style="background:#1f5f3a;color:#9fe0b0">~</div><div><b style="color:#9fe0b0;font-weight:normal">German Whispers</b><br>Neighbours on a green line differ by 5 or more.</div></div>
+    <div class="mod"><div class="badge" style="background:#5a1f1a;color:#ffb3a8">Σ</div><div><b style="color:#ffb3a8;font-weight:normal">Killer Cages</b><br>A cage adds up to its number, no repeats.</div></div>
+  </div>
+</div>
+<div class="caption">Puzzle screen · Proposal A · Tea table</div>
+<script src="common.js"></script>
+<script>
+  const board = document.getElementById('board');
+  const L = { cell: 108, gap: 6, boxGap: 16 };
+  buildBoard(board, L);
+  const ov = document.getElementById('ov');
+  boardOverlay(ov, L, { line:'#2f9e5a', width:14, opacity:.6, cageText:'#a8322a' });
+  ov.style.left = ov.style.top = '34px';
+  const [w, h] = boardSize(L);
+  const tray = document.querySelector('.tray');
+  tray.style.width = (w + 68) + 'px'; tray.style.height = (h + 68) + 'px';
+  tray.style.left = (960 - (w + 68) / 2) + 'px';
+</script>
+</body></html>

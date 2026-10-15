@@ -34,6 +34,7 @@ Recordings/
 !tools/discord/*.py
 !tools/audio/*.py
 !tools/localization/*.py
+!docs/design/layout-proposals/*.ps1
 
 # Unity crash reports
 sysinfo.txt
@@ -139,3 +140,6 @@ tools/localization/out/
 steam_assets/audio_8bit/mureka/
 # Code-made 8-bit set (tools/audio/make_8bit_audio.py, deterministic; ~300 MB of WAV)
 steam_assets/audio_8bit/synth/
+
+# Layout mockups: the committed images are the JPGs (render.ps1 writes PNGs)
+docs/design/layout-proposals/*.png

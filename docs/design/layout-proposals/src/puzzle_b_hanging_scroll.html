@@ -1,0 +1,103 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<style>
+  .bg { position:absolute; inset:0; background:
+          linear-gradient(90deg, rgba(40,26,14,.88), rgba(40,26,14,.55) 30%, rgba(40,26,14,.55) 70%, rgba(40,26,14,.88)),
+          url('../../../../Assets/Resources/background/bg_garden_grove.png') center/cover; filter: saturate(.7); }
+  .wall { position:absolute; inset:0; background: repeating-linear-gradient(90deg, rgba(0,0,0,.0) 0 118px, rgba(0,0,0,.22) 118px 122px); }
+  .rod { position:absolute; left:575px; width:770px; height:30px; border-radius:15px;
+         background: linear-gradient(180deg, #c08a52, #6b4423); box-shadow:0 6px 12px rgba(0,0,0,.5); }
+  .cord { position:absolute; left:960px; top:0; width:2px; height:40px; background:#c9a24f; }
+  .scroll { position:absolute; left:600px; top:58px; width:720px; height:960px; padding:46px 50px;
+            background: radial-gradient(ellipse at 30% 20%, rgba(255,255,255,.4), transparent 50%), linear-gradient(180deg, #f3e9cf, #e8d8b2);
+            box-shadow: 0 30px 60px rgba(0,0,0,.6); }
+  .scroll::before, .scroll::after { content:''; position:absolute; left:0; right:0; height:22px;
+            background: repeating-linear-gradient(90deg, #2c4632 0 16px, #33523a 16px 32px); border-top:2px solid #c9a24f; border-bottom:2px solid #c9a24f; }
+  .scroll::before { top:0; } .scroll::after { bottom:0; }
+  .head { text-align:center; color:#231e17; font-size:34px; margin-top:6px; }
+  .head small { display:block; font-size:18px; color:#6b5f4c; letter-spacing:.12em; text-transform:uppercase; margin-bottom:4px; }
+  .status { text-align:center; color:#6b5f4c; font-size:18px; font-style:italic; margin:6px 0 18px; }
+  .board { position:relative; margin:0 auto; }
+  .cell { display:flex; align-items:center; justify-content:center; font-size:54px; color:#1d1a16;
+          border:2px solid rgba(40,32,22,.55); }
+  .cell.player { color:#2f4b8f; }
+  .cell.same { background: rgba(111,155,103,.22); }
+  .cell.selected { background: rgba(233,196,106,.45); box-shadow: inset 0 0 0 3px #b8892b; }
+  .cell.cage { outline: 3px dashed #a8322a; outline-offset:-8px; }
+  .marks { display:grid; grid-template-columns:repeat(3,1fr); width:84%; height:70%; font-size:21px; color:#7a6d58; text-align:center; }
+  .boxframe { position:absolute; border:5px solid #231e17; border-radius:3px; pointer-events:none; }
+  .lantern { position:absolute; width:150px; height:200px; border-radius:60px 60px 70px 70px; display:flex; flex-direction:column;
+             align-items:center; justify-content:center; color:#2a1a10; font-size:22px; box-shadow:0 0 50px var(--glow); }
+  .lantern::before, .lantern::after { content:''; position:absolute; left:30px; right:30px; height:16px; background:#2a1a10; border-radius:4px; }
+  .lantern::before { top:-8px; } .lantern::after { bottom:-8px; }
+  .lantern b { font-size:40px; font-weight:normal; }
+  .lantern .ribs { position:absolute; inset:0; border-radius:inherit; background: repeating-linear-gradient(0deg, transparent 0 22px, rgba(60,30,10,.25) 22px 24px); }
+  .string { position:absolute; width:2px; background:#c9a24f; }
+  .ema { position:absolute; width:150px; height:118px; clip-path: polygon(50% 0, 100% 22%, 100% 100%, 0 100%, 0 22%);
+         background: linear-gradient(180deg, #c99a62, #9c6c3c); display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+         padding-bottom:10px; color:#2a1a10; font-size:15px; }
+  .ema img { width:64px; height:64px; object-fit:contain; margin-bottom:4px; }
+  .who { position:absolute; left:120px; top:56px; display:flex; gap:14px; align-items:center; color:#f3e9cf; font-size:22px; }
+  .who div:first-child { width:72px; height:72px; border-radius:50%; border:3px solid #c9a24f; background:#2b2016 center/86% no-repeat; }
+  .pad { position:absolute; right:110px; top:250px; display:grid; grid-template-columns:repeat(3, 110px); gap:14px; }
+  .tile { height:96px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:44px; color:#2a1a10;
+          background: linear-gradient(180deg, #d8a86c, #a9773f); box-shadow: 0 6px 0 #6b4423, 0 12px 18px rgba(0,0,0,.45); }
+  .tile.off { opacity:.25; }
+  .mode { position:absolute; right:110px; top:610px; width:358px; display:flex; border-radius:14px; overflow:hidden; font-size:20px;
+          border:2px solid #c9a24f; color:#f3e9cf; }
+  .mode div { flex:1; text-align:center; padding:10px; } .mode .on { background:#c9a24f; color:#2a1a10; }
+  .slip { position:absolute; right:110px; width:358px; padding:12px 16px; background:#efe3c6; color:#2a241c; font-size:16px; line-height:1.3;
+          box-shadow:0 8px 16px rgba(0,0,0,.45); }
+  .slip b { font-weight:normal; }
+  .slip::before { content:''; position:absolute; top:-6px; left:50%; width:12px; height:12px; margin-left:-6px; border-radius:50%; background:#a8322a; }
+  .roundbtn { position:absolute; width:62px; height:62px; border-radius:50%; background:#efe3c6; border:2px solid #6b4423;
+              display:flex; align-items:center; justify-content:center; box-shadow:0 8px 18px rgba(0,0,0,.45); }
+  .roundbtn img { width:38px; height:38px; }
+</style></head><body>
+<div class="bg"></div><div class="wall"></div>
+<div class="cord"></div>
+<div class="rod" style="top:36px"></div>
+<div class="scroll">
+  <div class="head"><small>Floor 1 · Depth 3 · 6×6 · ★★</small>Bamboo Courtyard</div>
+  <div class="status">Placed 4. Two cells left in the top band.</div>
+  <div class="board" id="board"></div>
+</div>
+<div class="rod" style="top:1010px"></div>
+
+<div class="who"><div style="background-image:url('../../../../Assets/Resources/class/icon_number_freak.png')"></div>
+  <div>Number Freak<br><span style="font-size:16px;opacity:.75">Level 3 · Gold 45 · 02:14</span></div></div>
+<div class="string" style="left:194px;top:150px;height:70px"></div>
+<div class="lantern" style="left:120px;top:226px;--glow:rgba(233,115,63,.55);background:radial-gradient(circle at 50% 45%, #ffd2a0, #e9733f 55%, #a8322a)">
+  <div class="ribs"></div><span>HP</span><b>7/10</b></div>
+<div class="string" style="left:384px;top:150px;height:70px"></div>
+<div class="lantern" style="left:310px;top:226px;--glow:rgba(95,168,211,.45);background:radial-gradient(circle at 50% 45%, #f3f7ff, #9cc8e6 55%, #4a7fa8)">
+  <div class="ribs"></div><span>Pencil</span><b>8/10</b></div>
+<div class="string" style="left:194px;top:448px;height:40px"></div><div class="string" style="left:384px;top:448px;height:40px"></div>
+<div class="ema" style="left:120px;top:488px"><img src="../../../../Assets/Resources/items/icon_solver.png">Solver</div>
+<div class="ema" style="left:310px;top:488px"><img src="../../../../Assets/Resources/items/icon_bamboo_scroll.png">Bamboo Scroll</div>
+<div class="ema" style="left:120px;top:640px;opacity:.85"><img src="../../../../Assets/Resources/relic/icon_cracked_teacup.png">Cracked Teacup</div>
+<div class="ema" style="left:310px;top:640px;opacity:.85"><img src="../../../../Assets/Resources/relic/icon_paper_crane.png">Paper Crane</div>
+<div style="position:absolute;left:120px;top:800px;width:340px;color:#e8dcc0;font-size:16px;opacity:.8">Passive: a puzzle with no mistakes gives +1 reroll token.</div>
+
+<div class="roundbtn" style="right:110px;top:56px"><img src="../../../../Assets/Resources/ui/icon_stone_gear.png"></div>
+<div class="roundbtn" style="right:190px;top:56px"><img src="../../../../Assets/Resources/ui/icon_ink_save.png"></div>
+<div class="pad"><script>for (let n = 1; n <= 9; n++) document.write(`<div class="tile ${n>6?'off':''}">${n}</div>`)</script></div>
+<div class="mode"><div class="on">Solve</div><div>Pencil</div></div>
+<div class="slip" style="top:700px;transform:rotate(-1.5deg)"><b style="color:#1f6b3a">German Whispers</b><br>Neighbours on a green line differ by 5 or more.</div>
+<div class="slip" style="top:800px;transform:rotate(1deg)"><b style="color:#a8322a">Killer Cages</b><br>A cage adds up to its number, no repeats.</div>
+<div class="caption">Puzzle screen · Proposal B · Hanging scroll</div>
+<script src="common.js"></script>
+<script>
+  const L = { cell: 100, gap: 0, boxGap: 0 };
+  const board = document.getElementById('board');
+  buildBoard(board, L);
+  const ov = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  board.appendChild(ov);
+  boardOverlay(ov, L, { line:'#1f8a4c', width:12, opacity:.7, cageText:'#a8322a' });
+  for (let br = 0; br < 3; br++) for (let bc = 0; bc < 2; bc++) {
+    const f = document.createElement('div'); f.className = 'boxframe';
+    Object.assign(f.style, { left: (bc * 300 - 2) + 'px', top: (br * 200 - 2) + 'px', width: '304px', height: '204px' });
+    board.appendChild(f);
+  }
+</script>
+</body></html>

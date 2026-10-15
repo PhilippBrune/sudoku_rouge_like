@@ -1,3 +1,4 @@
+using SudokuRoguelike.Core;
 using UnityEngine;
 
 namespace SudokuRoguelike.Data
@@ -12,6 +13,19 @@ namespace SudokuRoguelike.Data
             "Stone Lantern Walk",
             "Shrine Summit"
         };
+
+        // The boss of each floor: its avatar (Resources/boss/icon_<key>) and its name (catalog key Floor.Boss.<key>).
+        private static readonly string[] BossKeys = { "grove_spirit", "koi_warden", "shrine_oni", "stone_patriarch", "demon_mask" };
+        private static readonly string[] BossNames = { "Grove Spirit", "Koi Warden", "Shrine Oni", "Stone Patriarch", "Demon Mask" };
+
+        public static string GetBossKey(int floorIndex) =>
+            BossKeys[Mathf.Clamp(floorIndex, 0, BossKeys.Length - 1)];
+
+        public static string GetBossName(int floorIndex)
+        {
+            var i = Mathf.Clamp(floorIndex, 0, BossKeys.Length - 1);
+            return LocalizationService.T("Floor.Boss." + BossKeys[i], BossNames[i]);
+        }
 
         public static readonly int[] MinBoardSize = { 5, 6, 7, 8, 9 };
         public static readonly int[] MaxBoardSize = { 6, 7, 8, 9, 9 };

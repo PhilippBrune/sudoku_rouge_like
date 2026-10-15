@@ -717,10 +717,7 @@ namespace SudokuRoguelike.UI
             acceptBtn.onClick.AddListener(() =>
             {
                 if (stagedIndex < 0 || stagedIndex >= choices.Count) return;
-                var chosen = choices[stagedIndex];
-                run.AcceptRelicChoice(chosen); // the instance shown on the panel (GAP-021)
-                new ProfileService(new SaveFileService(SaveProfileService.ActiveSlot)).RecordRelicDiscovery(chosen.Id);
-                OnStatusChanged?.Invoke(F("InRun.Relic.Status.Accepted", RelicService.GetRelicName(chosen.Id)));
+                AcceptRelic(choices[stagedIndex]);
                 ActivePanel = null;
                 Object.Destroy(panel);
                 onDismissed?.Invoke();
@@ -731,7 +728,7 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.60f, 0.01f), new Vector2(0.96f, 0.08f), T("Leave"), UiAction.Leave);
             skip.onClick.AddListener(() =>
             {
-                OnStatusChanged?.Invoke(T("InRun.Relic.Status.Left"));
+                LeaveRelics();
                 ActivePanel = null;
                 Object.Destroy(panel);
                 onDismissed?.Invoke();
@@ -760,6 +757,21 @@ namespace SudokuRoguelike.UI
             FadeInPanel(panel);
             InRunUiFactory.SelectFirstInteractable(panel);
         }
+
+        /// <summary>
+        /// Adds <paramref name="chosen"/> to the run (the very instance that was offered, GAP-021) and records its
+        /// discovery. Used by the relic node panel and the boss offering table.
+        /// </summary>
+        public void AcceptRelic(RelicInstance chosen)
+        {
+            var run = _map?.Run;
+            if (run == null || chosen == null) return;
+            run.AcceptRelicChoice(chosen);
+            new ProfileService(new SaveFileService(SaveProfileService.ActiveSlot)).RecordRelicDiscovery(chosen.Id);
+            OnStatusChanged?.Invoke(F("InRun.Relic.Status.Accepted", RelicService.GetRelicName(chosen.Id)));
+        }
+
+        public void LeaveRelics() => OnStatusChanged?.Invoke(T("InRun.Relic.Status.Left"));
 
         // ────────────────────── Shared helpers ──────────────────────
 

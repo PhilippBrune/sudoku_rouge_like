@@ -14,7 +14,6 @@
   .cell.player { color:#9fd3a8; }
   .cell.same { box-shadow: inset 0 0 0 3px rgba(159,211,168,.55); }
   .cell.selected { box-shadow: 0 0 0 4px #e9c46a, 0 0 30px rgba(233,196,106,.55); background: linear-gradient(180deg, #3a4a2e, #2b3a24); }
-  .cell.cage { outline: 3px dashed rgba(255,150,130,.8); outline-offset:-10px; }
   .marks { display:grid; grid-template-columns:repeat(3,1fr); width:80%; height:66%; font-size:24px; color:#8fa894; text-align:center; }
   .floor { position:absolute; left:290px; top:32px; display:flex; gap:12px; align-items:center; font-size:22px; color:#e8dfc8; }
   .floor .pill { padding:8px 18px; border-radius:999px; background:rgba(12,20,14,.75); border:1px solid rgba(159,211,168,.25); }
@@ -81,6 +80,6 @@
   buildBoard(board, L);
   const ov = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   board.appendChild(ov);
-  boardOverlay(ov, L, { line:'#4fd18a', width:14, opacity:.55, cageText:'#ffb3a8', cageSize:22 });
+  boardOverlay(ov, L, { line:'#4fd18a', width:14, opacity:.55, cageText:'#ffb3a8', cageLine:'rgba(255,150,130,.8)', cageSize:22 });
 </script>
 </body></html>

@@ -8,6 +8,7 @@ using SudokuRoguelike.Boss;
 using SudokuRoguelike.Core;
 using SudokuRoguelike.Run;
 using SudokuRoguelike.Save;
+using SudokuRoguelike.Sudoku;
 using SudokuRoguelike.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -28,6 +29,7 @@ namespace SudokuRoguelike.Tests
         private readonly List<GameObject> _createdRoots = new List<GameObject>();
         private int _originalActiveSlot;
         private string _outDir;
+        private Action<RunDirector> _beforeBind;
 
         [UnitySetUp]
         public IEnumerator SetUp()
@@ -78,10 +80,81 @@ namespace SudokuRoguelike.Tests
             Assert.NotNull(run.CurrentBoard);
         }
 
-        // Boss gate on Floor 3 (Koi Terrace) at the highest intensity with every modifier revealed, then the
-        // "Boss Defeated!" interstitial (layout-proposals.md, boss screens).
+        // UI-STYLE-004/005: the trial scroll on Floor 3 (Koi Terrace, four trials, highest intensity, two picked) and
+        // on Floor 5 (six trials in two rows, none discovered yet), then the offering table after the Floor 3 boss.
         [UnityTest]
         public IEnumerator RenderBossGateAndBossDefeated()
+        {
+            var camera = CreateCamera();
+
+            var (gateHost, gateRun) = StartRun(7303, true);
+            gateRun.State.CurrentFloor = 2;
+            gateRun.State.RunNumber = 9;
+            foreach (BossModifierId id in Enum.GetValues(typeof(BossModifierId)))
+                gateRun.State.SeenBossModifiers.Add(id);
+            yield return DismissIntro();
+            var gate = gateHost.GetComponentInChildren<BossGateViewController>(true);
+            gate.ShowBossGateChoice();
+            yield return null;
+            Find(gateHost, "Mod_0")?.GetComponent<Button>().onClick.Invoke();
+            Find(gateHost, "Mod_1")?.GetComponent<Button>().onClick.Invoke();
+            yield return new WaitForSecondsRealtime(0.4f);
+            yield return Shoot(gateHost, camera, "after_boss_gate.png");
+            gateHost.SetActive(false);
+
+            var (wideHost, wideRun) = StartRun(7306, true);
+            wideRun.State.CurrentFloor = 4;
+            wideRun.State.RunNumber = 3;
+            yield return DismissIntro();
+            wideHost.GetComponentInChildren<BossGateViewController>(true).ShowBossGateChoice();
+            yield return new WaitForSecondsRealtime(0.4f);
+            yield return Shoot(wideHost, camera, "after_boss_gate_floor5.png");
+            wideHost.SetActive(false);
+
+            var (clearedHost, clearedRun) = StartRun(7304, true);
+            clearedRun.State.CurrentFloor = 2;
+            yield return DismissIntro();
+            clearedHost.GetComponentInChildren<EndScreenViewController>(true)
+                .ShowBossCleared(clearedRun, clearedRun.RollRelicChoices(3), _ => { }, () => { });
+            yield return new WaitForSecondsRealtime(0.4f);
+            yield return Shoot(clearedHost, camera, "after_boss_defeated.png");
+        }
+
+        // UI-STYLE-006: killer cages of five shapes on a 6×6 board; each must read as one dashed outline.
+        [UnityTest]
+        public IEnumerator RenderKillerCageShapes()
+        {
+            var camera = CreateCamera();
+            _beforeBind = run =>
+            {
+                var cages = run.CurrentOverlay.KillerCages;
+                cages.Clear();
+                cages.Add(Cage(run, (0, 0), (0, 1)));
+                cages.Add(Cage(run, (1, 3), (2, 3), (3, 3), (2, 2)));
+                cages.Add(Cage(run, (3, 0), (4, 0), (4, 1)));
+                cages.Add(Cage(run, (0, 4), (0, 5), (1, 4), (1, 5)));
+                cages.Add(Cage(run, (4, 4), (4, 5), (5, 3), (5, 4)));
+            };
+            var (host, _) = StartRun(7305, true, BossModifierId.KillerCages);
+            _beforeBind = null;
+            yield return DismissIntro();
+            for (var frame = 0; frame < 30 && Find(host, "C_0_0") == null; frame++)
+                yield return null;
+            yield return Shoot(host, camera, "cages_6x6.png");
+        }
+
+        private static KillerCage Cage(RunDirector run, params (int r, int c)[] cells)
+        {
+            var cage = new KillerCage();
+            foreach (var (r, c) in cells)
+            {
+                cage.Cells.Add(new CellCoord(r, c));
+                cage.Sum += run.CurrentBoard.Solution[r, c];
+            }
+            return cage;
+        }
+
+        private Camera CreateCamera()
         {
             if (Object.FindFirstObjectByType<EventSystem>() == null)
                 _createdRoots.Add(new GameObject("LayoutShotEventSystem", typeof(EventSystem), typeof(StandaloneInputModule)));
@@ -90,23 +163,7 @@ namespace SudokuRoguelike.Tests
             camera.backgroundColor = Color.black;
             camera.orthographic = true;
             _createdRoots.Add(camera.gameObject);
-
-            var (gateHost, gateRun) = StartRun(7303, true);
-            gateRun.State.CurrentFloor = 2;
-            gateRun.State.RunNumber = 9;
-            foreach (BossModifierId id in Enum.GetValues(typeof(BossModifierId)))
-                gateRun.State.SeenBossModifiers.Add(id);
-            yield return DismissIntro();
-            gateHost.GetComponentInChildren<BossGateViewController>(true).ShowBossGateChoice();
-            yield return null;
-            yield return Shoot(gateHost, camera, "before_boss_gate.png");
-            gateHost.SetActive(false);
-
-            var (clearedHost, clearedRun) = StartRun(7304, true);
-            yield return DismissIntro();
-            clearedHost.GetComponentInChildren<EndScreenViewController>(true).ShowBossCleared(clearedRun, () => { });
-            yield return null;
-            yield return Shoot(clearedHost, camera, "before_boss_defeated.png");
+            return camera;
         }
 
         private (GameObject host, RunDirector run) StartRun(int seed, bool startPuzzle, params BossModifierId[] modifiers)
@@ -132,6 +189,7 @@ namespace SudokuRoguelike.Tests
                 config.ActiveModifiers.Clear();
                 config.ActiveModifiers.AddRange(modifiers);
                 run.StartLevel(config);
+                _beforeBind?.Invoke(run);
             }
             var map = host.GetComponentInChildren<RunMapController>(true);
             map.BindRun(run, new SaveFileService(TestSlot));

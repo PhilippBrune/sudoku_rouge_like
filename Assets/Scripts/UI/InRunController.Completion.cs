@@ -142,20 +142,23 @@ namespace SudokuRoguelike.UI
 
             if (isBoss)
             {
-                // Non-final boss: show boss-cleared screen first, then relic choice on "Claim Reward".
+                // [REQ: REQ-BOSS-107] [REQ: UI-STYLE-005] Non-final boss: the offering table shows the fight's numbers
+                // and the relic choice on one screen; taking or leaving the offerings loads the next floor. The solved
+                // board is hidden first, so its keys and controller shortcuts are off while the screen is open.
                 // Normal item rewards are never shown after a boss.
                 var choices = _map?.Run?.RollRelicChoices(3);
-                // [REQ: REQ-BOSS-107] The relic panel is parented to the path panel, which stays hidden
-                // while the solved boss board is shown, so switch to the path view first (GAP-002).
-                System.Action onClaim = choices != null && choices.Count > 0
-                    ? () =>
+                SetActive(_sudokuPanel, false);
+                _endScreenView.ShowBossCleared(_map.Run, choices,
+                    relic =>
                     {
-                        _endScreenView?.HideBossCleared();
-                        ShowPath();
-                        _rewardView.ShowRelicChoicePanel(choices, OnPostRewardReady);
-                    }
-                    : (System.Action)OnPostRewardReady;
-                _endScreenView.ShowBossCleared(_map.Run, onClaim);
+                        _rewardView.AcceptRelic(relic);
+                        OnPostRewardReady();
+                    },
+                    () =>
+                    {
+                        if (choices != null && choices.Count > 0) _rewardView.LeaveRelics();
+                        OnPostRewardReady();
+                    });
                 yield break;
             }
 

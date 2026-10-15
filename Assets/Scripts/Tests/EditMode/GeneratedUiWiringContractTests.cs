@@ -526,17 +526,17 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
-        [Requirement("REQ-BOSS-107", "REQ-UI-107")]
-        public void BossClearedRewardScreen_HidesDetailsScrimAndCentersStats()
+        [Requirement("REQ-BOSS-107", "REQ-UI-107", "UI-STYLE-005")]
+        public void BossDefeatedScreen_IsItsOwnViewBesideTheGameOverPanel_WithStatsAndOfferings()
         {
             var endSource = ReadSource(EndScreenViewControllerPath);
 
-            StringAssert.Contains("SetGameOverDetailsScrimActive(false)", endSource);
-            StringAssert.Contains("statsRt.anchorMin = new Vector2(0.30f, 0.36f)", endSource);
-            StringAssert.Contains("statsRt.anchorMax = new Vector2(0.70f, 0.58f)", endSource);
-            StringAssert.Contains("statsTxt.fontSize = 22", endSource);
-            StringAssert.Contains("statsGo.AddComponent<Shadow>()", endSource);
-            StringAssert.Contains("SetGameOverDetailsScrimActive(true)", endSource);
+            // A sibling of the game-over panel, never the panel itself: an open game-over panel makes Save & Quit
+            // clear the run (GAP-046).
+            StringAssert.Contains("var root = _gameOverPanel != null ? _gameOverPanel.transform.parent : transform;", endSource);
+            StringAssert.Contains("ScrollUiKit.Fill(screen, \"BossClearedStats\"", endSource);
+            StringAssert.Contains("BuildOffering(screen.transform, i, relic, center)", endSource);
+            StringAssert.Contains("\"BtnLeaveOfferings\"", endSource);
         }
 
         [Test]
@@ -582,8 +582,8 @@ namespace SudokuRoguelike.Tests
             var boardSource = ReadSource(BoardViewControllerPath);
             var paletteSource = ReadSource(GamePalettePath);
 
-            StringAssert.Contains("DrawDashedCageHorizontal", boardSource);
-            StringAssert.Contains("DrawDashedCageVertical", boardSource);
+            StringAssert.Contains("CageOutline.Build(cage.Cells, _boardSize, cW, cH, sX, sY, inset)", boardSource);
+            StringAssert.Contains("CageOutline.Dashes(length, dash, gap)", boardSource);
             StringAssert.Contains("const float dash = 8f", boardSource);
             StringAssert.Contains("txt.fontStyle = FontStyle.Bold", boardSource);
             StringAssert.Contains("KillerBorder = new(0.94f, 0.26f, 0.22f, 1.00f)", paletteSource);
@@ -597,7 +597,7 @@ namespace SudokuRoguelike.Tests
             var runSource = ReadSource(InRunControllerPath);
 
             StringAssert.Contains("ClearBossClearedDynamicContent()", endSource);
-            StringAssert.Contains("RemoveDynamicChild(\"BossClearedContinueBtn\")", endSource);
+            StringAssert.Contains("UnityEngine.Object.Destroy(_bossDefeatedScreen)", endSource);
             StringAssert.Contains("label.text = T(\"Back\")", endSource);
             StringAssert.Contains("_map.TryClaimCurrentPuzzleRewards(out _, out _, buildItemSlots: false)", runSource);
             StringAssert.Contains("run.GetAnalytics()?.RecordRunComplete()", runSource);

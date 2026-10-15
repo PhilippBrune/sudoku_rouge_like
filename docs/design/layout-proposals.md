@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 1.1 | **Date:** 2026-10-15 | **Status:** review (path and puzzle decided; boss screens waiting for the owner's pick; nothing is built yet)
+**Version:** 1.2 | **Date:** 2026-10-15 | **Status:** review (boss gate B and offering table B built; garden path B and puzzle B decided, not built yet)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.2 | 2026-10-15 | review | Owner decisions: boss gate **B · Trial scroll** and boss defeated **B · Offering table**, both built in Unity (UI-STYLE-004, UI-STYLE-005), with screenshots from the game. Owner report: the killer cage in the hanging-scroll mockup was split into one box per cell; a cage is now one outline around all its cells, in the mockups and in the game (UI-STYLE-006). |
 | 1.1 | 2026-10-15 | review | Owner decisions: garden path **B · Hand scroll**, the same on all five floors (UI-STYLE-001); puzzle screen **B · Hanging scroll** (UI-STYLE-002); the background paintings keep their corner mark (UI-STYLE-003). Added: the hand scroll on every floor, a 9×9 check of the hanging scroll, and three proposals each for the boss modifier choice (boss gate) and the "Boss Defeated!" screen. |
 | 1.0 | 2026-10-15 | new | Owner request: the garden path and the puzzle layout should feel more rounded and closer to the game's theme. Three proposals each, as 1920×1080 mockups made from the game's own art and font. |
 
@@ -18,6 +19,9 @@ The mockups are HTML pages in `layout-proposals/src/`, built from `Assets/Resour
 | UI-STYLE-001 | The garden path is an ink hand scroll (emaki) between two wooden rollers on **every floor**, with the same frame, ensō nodes, brush routes (ink = calm, vermilion = risk), seal-stamp boss and paper status tag. Per floor only the content changes: the floor's painting as a faint wash on the paper and blurred behind the scroll, the title "Floor N of five · name", the floor marks, the route and the boss seal. | new, to build |
 | UI-STYLE-002 | The puzzle screen is a hanging scroll: the board in ink with thick region borders that follow the region map (every size from 5×5 to 9×9 and irregular regions), HP and Pencil as paper lanterns, items and relics as ema plaques, the number pad as wooden tiles, the modifier rules as pinned paper slips, the floor's painting behind. | new, to build |
 | UI-STYLE-003 | The background paintings keep the bottom-right corner mark (owner decision); new UI does not need to hide it. | decided |
+| UI-STYLE-004 | The boss gate is a trial scroll: the gate painting darkened behind a hand scroll with brocade bands and wooden rollers; the eyebrow "Floor N · floor name · The Gate", the title "The <boss>'s trials", "Choose N of M trials", the intensity with one dot per level (REQ-BOSS-103) and the boss's seal; one ink-framed panel per trial with icon, name and rule ("???" and "Not discovered yet" when hidden, HARMONY-FLAG-001), ticked with a vermilion ensō when chosen; along the bottom the boss's curse from Floor 3 (REQ-BOSS-108), "n of N chosen" and "Face the <boss>", which unlocks at N. Up to four trials in a row, five to eight in two rows. | built 2026-10-15 |
+| UI-STYLE-005 | After a non-final boss, the offering table: the boss-cleared painting, a paper banner "Floor N of 5 · name" / "The <boss> is defeated", the fight's numbers on a paper tag (mistakes, HP lost, items used, pencil marks), the boss's greyed mask, and the relic offerings on plinths with their own Take button on the same screen, plus "Leave them". Taking or leaving loads the next floor; without offerings one Continue button does. The screen does not use the game-over panel, and it has no Options or Save & Quit (the puzzle shortcuts are off while it is open); the run is saved when the next floor loads. | built 2026-10-15 |
+| UI-STYLE-006 | A killer cage is one dashed outline around all its cells: inset into the cells, joined across them (no line between two cells of the same cage) and closed at every corner. Same rule in the game (`CageOutline`) and in the mockups (`cageRuns` in `src/common.js`). | built 2026-10-15 |
 
 ## Garden path
 
@@ -46,6 +50,10 @@ The other proposals stay for reference: [A · Stepping stones](layout-proposals/
 
 ![Hanging scroll, 6×6](layout-proposals/puzzle_b_hanging_scroll.jpg)
 
+**Killer cages (1.2):** the 1.1 mockups drew a dashed box around every cell of a cage, so a two-cell cage looked like two cages. A cage is one outline around all its cells (UI-STYLE-006); the mockups now show an L-shaped three-cell cage. The game had the same weakness in a smaller form (the cage border was drawn cell by cell with gaps at each joint) and draws one outline too now:
+
+![Killer cages in the game: domino, T, L, square and S shapes](layout-proposals/after_cages.jpg)
+
 **9×9 check:** the concern in 1.0 was room for 9×9 at 1080p. It fits with 68 px cells and space to spare:
 
 ![Hanging scroll, 9×9 on Shrine Summit](layout-proposals/puzzle_b_hanging_scroll_9x9.jpg)
@@ -73,9 +81,15 @@ The modifiers hang as paper talismans (ofuda) from the gate's beam over the dark
 - **For:** very readable; the boss feels present; the darker mood marks the gate as a turning point.
 - **Against:** a third visual family next to the two scrolls.
 
-### B · Trial scroll (recommended)
+### B · Trial scroll (chosen, built)
 
 ![Boss gate B](layout-proposals/gate_b_trial_scroll.jpg)
+
+**As built (UI-STYLE-004):** Floor 3 with two trials picked, and Floor 5 with six trials in two rows:
+
+![Boss gate in the game, Floor 3](layout-proposals/after_boss_gate.jpg)
+
+![Boss gate in the game, Floor 5](layout-proposals/after_boss_gate_floor5.jpg)
 
 The same hand scroll as the garden path, in the boss's colours: ink-framed trial panels, chosen ones circled with a vermilion ensō and tick, the boss as a seal, the debuff as a vermilion margin note next to the confirm button.
 
@@ -101,7 +115,7 @@ Here "Boss defeat screen" is the screen after you beat a boss ("Boss Defeated!",
 
 Today it is the boss-cleared painting with a small yellow title, four small stat lines and a plain button; the relic choice follows as a separate screen.
 
-### A · Victory scroll (recommended)
+### A · Victory scroll
 
 ![Boss defeated A](layout-proposals/defeat_a_victory_scroll.jpg)
 
@@ -110,9 +124,13 @@ The hanging scroll of the puzzle screen, unrolled for the win: "The Shrine Oni f
 - **For:** the same objects as during the puzzle, so the win reads as the end of that scroll; everything the next choice needs is visible.
 - **Against:** the beautiful boss-cleared painting is only behind the scroll.
 
-### B · Offering table
+### B · Offering table (chosen, built)
 
 ![Boss defeated B](layout-proposals/defeat_b_offering.jpg)
+
+**As built (UI-STYLE-005):** the relic choice is on this screen; the separate relic screen after a boss is gone. "Leave them" keeps the old option to take no relic.
+
+![Boss defeated in the game](layout-proposals/after_boss_defeated.jpg)
 
 Keeps the boss-cleared painting, adds a paper banner and a paper stat tag, and puts the three relic offerings on wooden stands right here, so you choose your relic without a second screen.
 
@@ -128,9 +146,9 @@ The boss-cleared painting stays full-screen; a large vermilion seal with the bos
 - **For:** the least UI; the painting and the stamp moment carry it.
 - **Against:** the painting is the same for every boss; less tied to the scrolls.
 
-## Recommendation and next step
+## Decisions and next step
 
-For one look across the in-run screens: **gate B (trial scroll)** continues the garden path's hand scroll, and **defeated A (victory scroll)** continues the puzzle's hanging scroll. Gate A and defeated B are the strongest alternatives (A for drama, B for one screen less). Pick one per screen; then I build the garden path, the puzzle screen and both boss screens in Unity, starting with the shared parts (scroll frame, ensō, seal, lanterns, ema plaques), each with screenshots and tests, and add the boss-screen IDs here.
+Boss gate **B** and boss defeated **B** are built (2026-10-15). Next: the garden path (B, UI-STYLE-001) and the puzzle screen (B, UI-STYLE-002), which reuse the scroll parts made for the gate (`ScrollUiKit`: hand scroll, brocade, rollers, ink frame, ensō, seal).
 
 ## Rendering
 

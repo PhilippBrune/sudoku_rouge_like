@@ -35,7 +35,7 @@ Legend: ✅ Implemented and verified | ⚠️ Partial / conflicting | ❌ Not im
 | [UI-OPT](#options-panels) | `docs/GameDesignSpec.md` | ✅ 3 |
 | [RUN-WEEK](#shared-challenges) | `docs/GameDesignSpec.md` | ✅ 2 |
 | [CREDITS](#credits) | `docs/GameDesignSpec.md` | ✅ 1 |
-| [UI-STYLE](#in-run-visual-style) | `docs/design/layout-proposals.md` | ✅ 1 · ◻️ 2 |
+| [UI-STYLE](#in-run-visual-style) | `docs/design/layout-proposals.md` | ✅ 4 · ◻️ 2 |
 | [LOC](#localization) | `docs/localization-catalog.md` | ✅ 3 |
 | [AUDIO](#audio) | `docs/AudioVisualDirection.md` | ✅ 3 · ◻️ 4 |
 | [REVIEW](#review-created-requirements) | `docs/review/REQUIREMENT_TRACEABILITY.md` | ✅ 53 · ⚠️ 6 · ◻️ 6 |
@@ -659,13 +659,16 @@ Key requirements (see spec for full list):
 
 ## In-Run Visual Style
 
-**Spec:** `docs/design/layout-proposals.md` v1.1 §Decisions (owner decisions 2026-10-15)
+**Spec:** `docs/design/layout-proposals.md` v1.2 §Decisions (owner decisions 2026-10-15)
 
 | ID | Description | File | Method | Evidence | Status |
 | ---- | ------------- | ------ | -------- | ---------- | -------- |
 | UI-STYLE-001 | Garden path as an ink hand scroll, the same on all five floors | — | — | mockups `path_b_hand_scroll_floor1..5` | ◻️ |
 | UI-STYLE-002 | Puzzle screen as a hanging scroll (ink grid, lanterns, ema plaques, wooden tiles, paper slips), 5×5 to 9×9 | — | — | mockups `puzzle_b_hanging_scroll`, `_9x9` | ◻️ |
 | UI-STYLE-003 | Background paintings keep their corner mark | `Assets/Resources/background/` | — | owner decision | ✅ |
+| UI-STYLE-004 | Boss gate as a trial scroll (seal, ink trial panels with ensō ticks, curse margin note, "Face the boss") | `Assets/Scripts/UI/BossGateViewController.cs`, `ScrollUiKit.cs`, `FloorThemeData.cs` | `BuildBossGatePanel`, `BuildTrialCard`, `RefreshTrialMarks` | InRunUiPlayModeTests (`BossGate_PickingTrials_TicksThem_AndConfirmRecordsThem`, intensity/debuff, masking), screenshots `after_boss_gate*` | ✅ |
+| UI-STYLE-005 | Boss defeated as an offering table with the relic choice on the same screen | `Assets/Scripts/UI/EndScreenViewController.cs`, `InRunController.Completion.cs`, `RewardViewController.AcceptRelic` | `ShowBossCleared`, `BuildOffering` | BossClearedFlowPlayModeTests (take, leave, no offerings), screenshot `after_boss_defeated` | ✅ |
+| UI-STYLE-006 | A killer cage is one dashed outline around all its cells | `Assets/Scripts/UI/CageOutline.cs`, `BoardViewController.DrawCageOutline`, mockups `src/common.js` | `Build`, `Dashes` | CageOutlineTests (every shape up to 4 cells is one closed loop), screenshot `after_cages` | ✅ |
 
 ---
 
@@ -712,7 +715,7 @@ Key requirements (see spec for full list):
 | REQ-BOSS-104 | Collapsible modifier legend with tap-to-isolate | BossMechanicsSystem §Modifier Legend Panel | HudViewController.Legend + BoardViewController.OverlayGroups (tap isolates for 3 s) | InRunUiPlayModeTests | ✅ |
 | REQ-BOSS-105 | Boss board size stays within the floor's grid range | GDS §10 Floor Themes | Boss board follows the floor range (no Max(size, 8)) | NodeConfigPreviewTests | ✅ |
 | REQ-BOSS-106 | Modifier minimum board sizes follow the spec | BossMechanicsSystem v2.2 | Modifier minimum sizes documented from BossService.ModifierData | BalanceBudgetContractTests | ✅ |
-| REQ-BOSS-107 | After a non-final boss the player can claim the relic and continue | PathSystem §Floor Transition | EndScreenViewController (restored) + InRunController onClaim → ShowPath → relic choice | BossClearedFlowPlayModeTests, GeneratedUiWiringContractTests | ✅ |
+| REQ-BOSS-107 | After a non-final boss the player can claim the relic and continue | PathSystem §Floor Transition | EndScreenViewController.ShowBossCleared: offering table with the relic choice on one screen (UI-STYLE-005), Take/Leave → next floor | BossClearedFlowPlayModeTests, GeneratedUiWiringContractTests | ✅ |
 | REQ-BOSS-108 | Boss debuffs have a defined delivery path in Garden Run | BossDebuffEffects (undefined) | One debuff per Garden Run boss from Floor 3 (seed + floor) | BossDebuffTests, InRunUiPlayModeTests | ✅ |
 | REQ-CLASS-100 | Class select shows base + progression stats (e.g. HP 10 (+5)) | Review brief §13 Classes | Class info shows base (+level bonus) | ClassRosterTests | ✅ |
 | REQ-CLASS-101 | Class base stats match the roster | GDS §6.1 vs ClassXp §Base Stats | ClassCatalog roster = ClassXpProgressionSystem 1.3 (generated) | ClassRosterTests | ✅ |

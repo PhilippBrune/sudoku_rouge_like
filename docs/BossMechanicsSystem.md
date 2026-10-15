@@ -1,11 +1,12 @@
 ﻿# Boss Mechanics System
 
-**Version:** 2.3 | **Date:** 2026-10-07 | **Status:** implemented
+**Version:** 2.4 | **Date:** 2026-10-15 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.4 | 2026-10-15 | implemented | Killer cage visual: one dashed outline around all cells of a cage, joined across its cells (owner report 2026-10-15, layout-proposals.md UI-STYLE-006). |
 | 2.3 | 2026-10-07 | implemented | 1.1 review decisions (2026-10-07): floor modifiers 0/1/1/1/2 kept from code (SPEC-CONF-001); boss options floor+1 shown / floor picked, no minimum (SPEC-CONF-002); 8-directional lines (SPEC-CONF-011); Entropy 9×9 (SPEC-CONF-012); eligibility table from BossService.ModifierData with blocked pairs, Modular Regions exclusion and structural-modifier region rule (SPEC-CONF-013, SPEC-AMB-014); Floor Progression Arc removed (SPEC-CONF-014); 30 player modifiers instead of 15 (SPEC-CONF-019); boss boards follow the floor range (SPEC-CONF-028); Anti-Bishop redefined to diagonal range 2, min 6×6 (SPEC-CONF-038); solution-based validation (SPEC-CONF-003); Endless Zen pool (SPEC-AMB-009); intensity label + boss debuff on the gate and modifier legend as built (GAP-025, GAP-026); file references updated (SPEC-CONF-036); SPICE table archived (SPEC-OBS-001). |
 | 2.2 | 2026-04-27 | implemented | Grid-size compatibility analysis. New `BuildEligiblePool` restrictions: **Dutch Whispers, Anti-Bishop, Distance ≥ 2, Full Kropki, Fortress Cells** now require `minBoardSize ≥ 6` (5×5 classified INVALID — sparse/infeasible geometry). Ratio Kropki and XV Pairs retain 5×5 eligibility (LIMITED — sparse but functional, no code restriction). |
 | 2.1 | 2026-04-15 | implemented | Added requirement IDs (BOSS-MOD-*, BOSS-INT-*, BOSS-FLOOR-*) inline |
@@ -68,7 +69,7 @@ All 30 modifiers are fully implemented with constraint rules, geometry generatio
 
 | # | Modifier | Visual | Rule |
 |:---:|----------|--------|------|
-| 10 | **Killer Cages** | Dashed border regions + sum label (`CageSumBg` + `CageSumText`) | Digits in each cage must sum to the displayed value; no repeats within a cage. **Restricted to boards ≥ 7×7.** |
+| 10 | **Killer Cages** | One dashed outline around the whole cage (joined across its cells, UI-STYLE-006) + sum label (`CageSumBg` + `CageSumText`) | Digits in each cage must sum to the displayed value; no repeats within a cage. **Restricted to boards ≥ 7×7.** |
 | 11 | **Arrow Sums** | Grey circle (hollow outline) + arrow path lines | Sum of digits along the arrow path must equal the digit in the circle |
 
 ### Cell-Level Constraints
@@ -397,7 +398,7 @@ Overlays are drawn on a `GridOverlay` RectTransform parented above the Sudoku gr
 | Kropki black dots | Black filled (0.10, 0.10, 0.10, 0.90) | Circle at midpoint between cells |
 | Arrow circles | Grey hollow (outer ring + transparent inner) | Large circle on circle cell |
 | Arrow paths | Grey (0.55, 0.55, 0.55, 0.45) | Lines between consecutive path cells + endpoint dot |
-| Killer cage borders | White (0.90, 0.90, 0.90, 0.50) | Tint existing cell borders at cage edges |
+| Killer cage borders | Red dashed (`GamePalette.KillerBorder`) | One outline per cage, inset into its cells and joined across them (`CageOutline`) |
 | Killer cage sums | `CageSumBg` (Image) + `CageSumText` (Text child) | Top-left corner of top-left cage cell |
 | Even markers | Blue squares (0.35, 0.65, 0.90, 0.55) | Square Image on cell |
 | Odd markers | Orange circles (0.90, 0.55, 0.20, 0.55) | Circle Image on cell |

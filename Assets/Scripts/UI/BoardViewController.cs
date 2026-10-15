@@ -40,9 +40,6 @@ namespace SudokuRoguelike.UI
         private List<GameObject> _pressureOverlayObjects;  // dynamic threat overlays cleared each render
         private bool _overlaysBuilt;
 
-        // ── Cage edges ──
-        private HashSet<long> _cageBorderEdges;
-
         // ── Constraint conflict preview cache ──
         // Invalidated whenever the selected cell or highlight value changes.
         private HashSet<(int, int)> _conflictPreviewCells = new HashSet<(int, int)>();
@@ -92,8 +89,6 @@ namespace SudokuRoguelike.UI
         // ── Callbacks ──
         public Action<int, int> OnCellClicked;
 
-        public HashSet<long> CageBorderEdges => _cageBorderEdges;
-
         public void Configure(RunMapController map, RectTransform gridRoot)
         {
             _map = map;
@@ -101,7 +96,6 @@ namespace SudokuRoguelike.UI
             _cells = new List<CellView>();
             _overlayObjects = new List<GameObject>();
             _pressureOverlayObjects = new List<GameObject>();
-            _cageBorderEdges = new HashSet<long>();
         }
 
         public void MarkOverlayDirty()
@@ -730,9 +724,6 @@ namespace SudokuRoguelike.UI
             return false;
         }
 
-        private bool IsCageEdge(int r, int c, int sz, int side)
-            => _cageBorderEdges.Contains((long)r * sz * 4 + c * 4 + side);
-
         // ────────────────────── Modifier overlay rendering ──────────────────────
 
         private void BuildOverlays(AccessibilityService accessibility)
@@ -859,14 +850,13 @@ namespace SudokuRoguelike.UI
                 }
             }
 
-            // Killer cages
+            // Killer cages: one dashed outline per cage, inset into its cells so the thick box borders on the cell
+            // views do not hide it, and joined across the cells so the cage reads as one shape (UI-STYLE-006).
             UseOverlayGroup(CagesKey);
-            _cageBorderEdges.Clear();
             for (var ci = 0; ci < overlay.KillerCages.Count; ci++)
             {
                 var cage = overlay.KillerCages[ci];
-                for (var c = 0; c < cage.Cells.Count; c++)
-                    RecordCageEdges(cage, cage.Cells[c].Row, cage.Cells[c].Col);
+                DrawCageOutline(cage, cW, cH, sX, sY, tW, tH);
 
                 var tl = cage.Cells[0];
                 for (var c = 1; c < cage.Cells.Count; c++)
@@ -877,31 +867,6 @@ namespace SudokuRoguelike.UI
                 var tlX = tl.Col * (cW + sX) - tW * 0.5f;
                 var tlY = tH * 0.5f - tl.Row * (cH + sY);
                 DrawCageSum(tlX, tlY, cage.Sum, cW, cH);
-            }
-
-            // Killer cage borders — drawn as inset strips so they are not
-            // occluded by the 3px thick box-border Images on cell views.
-            // Inset of 4px clears the 3px cell border on all sides.
-            if (_cageBorderEdges.Count > 0)
-            {
-                const float inset = 4f;
-                const float thick = 2f;
-                for (var r = 0; r < _boardSize; r++)
-                for (var c = 0; c < _boardSize; c++)
-                {
-                    var cellLeft   =  c * (cW + sX) - tW * 0.5f;
-                    var cellTop    =  tH * 0.5f - r * (cH + sY);
-                    var cellBottom =  cellTop  - cH;
-                    var cellRight  =  cellLeft + cW;
-                    if (IsCageEdge(r, c, _boardSize, 0)) // TOP
-                        DrawDashedCageHorizontal(cellLeft + inset, cellTop - inset - thick, cW - inset * 2f, thick);
-                    if (IsCageEdge(r, c, _boardSize, 1)) // BOTTOM
-                        DrawDashedCageHorizontal(cellLeft + inset, cellBottom + inset, cW - inset * 2f, thick);
-                    if (IsCageEdge(r, c, _boardSize, 2)) // LEFT
-                        DrawDashedCageVertical(cellLeft + inset, cellBottom + inset, thick, cH - inset * 2f);
-                    if (IsCageEdge(r, c, _boardSize, 3)) // RIGHT
-                        DrawDashedCageVertical(cellRight - inset - thick, cellBottom + inset, thick, cH - inset * 2f);
-                }
             }
 
             // Arrows
@@ -1132,20 +1097,32 @@ namespace SudokuRoguelike.UI
             _overlayObjects.Add(go);
         }
 
-        private void DrawDashedCageHorizontal(float left, float bottom, float width, float thickness)
+        // [REQ: UI-STYLE-006] Runs from CageOutline (board space, y down) mapped onto the overlay (centre origin, y up).
+        // Each run is a centred strip extended by half its thickness, so the corners of the outline close.
+        private void DrawCageOutline(KillerCage cage, float cW, float cH, float sX, float sY, float tW, float tH)
         {
+            const float inset = 5f;
+            const float thick = 2f;
             const float dash = 8f;
             const float gap = 5f;
-            for (var x = 0f; x < width; x += dash + gap)
-                DrawCageStrip(left + x, bottom, Mathf.Min(dash, width - x), thickness);
-        }
-
-        private void DrawDashedCageVertical(float left, float bottom, float thickness, float height)
-        {
-            const float dash = 8f;
-            const float gap = 5f;
-            for (var y = 0f; y < height; y += dash + gap)
-                DrawCageStrip(left, bottom + y, thickness, Mathf.Min(dash, height - y));
+            var runs = CageOutline.Build(cage.Cells, _boardSize, cW, cH, sX, sY, inset);
+            for (var i = 0; i < runs.Count; i++)
+            {
+                var run = runs[i];
+                var from = new Vector2(Mathf.Min(run.From.x, run.To.x), Mathf.Min(run.From.y, run.To.y));
+                var length = run.Length + thick;
+                var dashes = CageOutline.Dashes(length, dash, gap);
+                for (var d = 0; d < dashes.Count; d++)
+                {
+                    var (offset, dashLength) = dashes[d];
+                    if (run.Horizontal)
+                        DrawCageStrip(from.x - thick * 0.5f + offset - tW * 0.5f, tH * 0.5f - from.y - thick * 0.5f,
+                            dashLength, thick);
+                    else
+                        DrawCageStrip(from.x - thick * 0.5f - tW * 0.5f,
+                            tH * 0.5f - (from.y - thick * 0.5f + offset + dashLength), thick, dashLength);
+                }
+            }
         }
 
         private void DrawCageSum(float x, float y, int sum, float cW, float cH)
@@ -1160,27 +1137,13 @@ namespace SudokuRoguelike.UI
             bg.GetComponent<Image>().color = GamePalette.OverlayCageFogBg;
             bg.GetComponent<Image>().raycastTarget = false;
 
-            var txt = InRunUiFactory.CreateText(bg.transform, "Sum", sum.ToString(), 12, TextAnchor.MiddleCenter, KillerBorder);
+            // The sum grows with the cell so it stays readable on 9×9 and on large screens alike.
+            var fontSize = Mathf.Max(12, Mathf.RoundToInt(cH * 0.22f));
+            var txt = InRunUiFactory.CreateText(bg.transform, "Sum", sum.ToString(), fontSize, TextAnchor.MiddleCenter, KillerBorder);
             txt.fontStyle = FontStyle.Bold;
             InRunUiFactory.StretchFill(txt.rectTransform);
             txt.raycastTarget = false;
             _overlayObjects.Add(bg);
-        }
-
-        private void RecordCageEdges(KillerCage cage, int r, int c)
-        {
-            CheckCageEdge(cage, r, c, -1, 0, 0);
-            CheckCageEdge(cage, r, c, 1, 0, 1);
-            CheckCageEdge(cage, r, c, 0, -1, 2);
-            CheckCageEdge(cage, r, c, 0, 1, 3);
-        }
-
-        private void CheckCageEdge(KillerCage cage, int r, int c, int dr, int dc, int side)
-        {
-            var nr = r + dr; var nc = c + dc;
-            for (var i = 0; i < cage.Cells.Count; i++)
-                if (cage.Cells[i].Row == nr && cage.Cells[i].Col == nc) return;
-            _cageBorderEdges.Add((long)r * _boardSize * 4 + c * 4 + side);
         }
 
         private void ClearOverlays()

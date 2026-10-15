@@ -16,11 +16,12 @@ using Object = UnityEngine.Object;
 
 namespace SudokuRoguelike.Tests
 {
-    // [REQ: REQ-BOSS-107] [REQ: REQ-UI-107] [REQ: MAP-STRUCT-001]
-    // GAP-002: after a non-final boss the player must see a labelled Continue button, then the
-    // relic choice, and reach the next floor. Drives the real InRunController completion flow.
+    // [REQ: REQ-BOSS-107] [REQ: REQ-UI-107] [REQ: MAP-STRUCT-001] [REQ: UI-STYLE-005]
+    // GAP-002 and the offering table: after a non-final boss the player sees the fight's numbers and the relic
+    // offerings on one screen, takes one (or leaves them) and reaches the next floor. Drives the real InRunController
+    // completion flow.
     [TestFixture]
-    [Requirement("REQ-BOSS-107", "REQ-UI-107", "MAP-STRUCT-001")]
+    [Requirement("REQ-BOSS-107", "REQ-UI-107", "MAP-STRUCT-001", "UI-STYLE-005")]
     public sealed class BossClearedFlowPlayModeTests
     {
         private const int TestSlot = SaveFileService.MaxSlots - 1;
@@ -52,7 +53,83 @@ namespace SudokuRoguelike.Tests
         }
 
         [UnityTest]
-        public IEnumerator BossCleared_ContinueIsLabelledThenRelicChoiceIsVisibleThenNextFloorLoads()
+        public IEnumerator BossDefeated_ShowsTheOfferingsOnOneScreen_TakingOneLoadsTheNextFloor()
+        {
+            var flow = new Flow();
+            yield return SolveFirstBoss(flow);
+            var host = flow.Host;
+
+            var screen = FindObject(host, "BossDefeatedScreen");
+            Assert.IsTrue(screen.activeInHierarchy, "the offering table must be visible");
+            Assert.IsFalse(FindObject(host, "SudokuGameplayPanel").activeInHierarchy,
+                "the solved board is hidden, so its keys and shortcuts are off");
+            Assert.IsFalse(FindObject(host, "GameOverPanel").activeInHierarchy,
+                "the game-over panel stays closed: its save rules would clear the run");
+            Assert.NotNull(FindObjectOrNull(screen, "BossClearedStats"), "the fight's numbers are on the same screen");
+
+            var take = FindObject(screen, "OfferingTake_0");
+            var label = take.GetComponentInChildren<Text>(true);
+            Assert.NotNull(label.font, "Take label has no font, so it renders blank in a player build");
+            Assert.IsFalse(string.IsNullOrWhiteSpace(label.text), "Take label text is empty");
+            var selected = EventSystem.current.currentSelectedGameObject;
+            Assert.NotNull(selected, "a Take button must be selected for keyboard/controller users");
+            StringAssert.StartsWith("OfferingTake_", selected.name);
+
+            ClickButton(screen, "OfferingTake_0");
+            FindObject(screen, "OfferingTake_1").GetComponent<Button>().onClick.Invoke(); // a second click is ignored
+            yield return null;
+            yield return null;
+
+            Assert.AreEqual(flow.RelicsBefore + 1, flow.Run.State.HeldRelics.Count, "exactly one offering is taken");
+            Assert.AreEqual(1, flow.Run.State.CurrentFloor, "run must advance to floor 2");
+            Assert.IsNull(FindObjectOrNull(host, "BossDefeatedScreen"), "the offering table closes");
+            Assert.IsTrue(FindObject(host, "PathOverviewPanel").activeInHierarchy, "path overview of the new floor");
+        }
+
+        [UnityTest]
+        public IEnumerator BossDefeated_LeavingTheOfferings_LoadsTheNextFloorWithoutARelic()
+        {
+            var flow = new Flow();
+            yield return SolveFirstBoss(flow);
+
+            ClickButton(FindObject(flow.Host, "BossDefeatedScreen"), "BtnLeaveOfferings");
+            yield return null;
+            yield return null;
+
+            Assert.AreEqual(flow.RelicsBefore, flow.Run.State.HeldRelics.Count);
+            Assert.AreEqual(1, flow.Run.State.CurrentFloor);
+            Assert.IsTrue(FindObject(flow.Host, "PathOverviewPanel").activeInHierarchy);
+        }
+
+        [UnityTest]
+        public IEnumerator BossDefeated_WithoutOfferings_HasOneSelectedContinueButton()
+        {
+            var host = BuildInRunHarness();
+            yield return null;
+            var run = new RunDirector();
+            run.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, ClassLevel = 1 }, 8102);
+            var continued = 0;
+            host.GetComponentInChildren<EndScreenViewController>(true)
+                .ShowBossCleared(run, new List<RelicInstance>(), _ => Assert.Fail("nothing to take"), () => continued++);
+            yield return null;
+
+            var continueGo = FindObject(host, "BossClearedContinueBtn");
+            Assert.AreEqual(continueGo, EventSystem.current.currentSelectedGameObject);
+            Assert.IsNull(FindObjectOrNull(host, "OfferingTake_0"));
+            ClickButton(host, "BossClearedContinueBtn");
+            Assert.IsFalse(continueGo.GetComponent<Button>().interactable, "Continue locks after the first click");
+            Assert.AreEqual(1, continued);
+        }
+
+        private sealed class Flow
+        {
+            public GameObject Host;
+            public RunDirector Run;
+            public int RelicsBefore;
+        }
+
+        // Starts a run on the Floor 1 boss, solves it and waits for the offering table.
+        private IEnumerator SolveFirstBoss(Flow flow)
         {
             var host = BuildInRunHarness();
             yield return null;
@@ -82,40 +159,14 @@ namespace SudokuRoguelike.Tests
             yield return null;
             Assert.IsTrue(FindObject(host, "SudokuGameplayPanel").activeInHierarchy, "boss puzzle should be shown");
 
-            var relicsBefore = run.State.HeldRelics.Count;
+            flow.Host = host;
+            flow.Run = run;
+            flow.RelicsBefore = run.State.HeldRelics.Count;
             FillWithSolution(run);
 
             // HandleCompletion runs in Update, then the reward coroutine waits 0.35 s realtime.
-            yield return WaitFor(() => FindObjectOrNull(host, "BossClearedContinueBtn") != null, 3f);
-            var continueGo = FindObjectOrNull(host, "BossClearedContinueBtn");
-            Assert.NotNull(continueGo, "Boss-cleared Continue button was not created");
-            Assert.IsTrue(continueGo.activeInHierarchy, "Continue button must be visible");
-
-            var label = continueGo.GetComponentInChildren<Text>(true);
-            Assert.NotNull(label, "Continue button has no label");
-            Assert.NotNull(label.font, "Continue label has no font, so it renders blank in a player build");
-            Assert.IsFalse(string.IsNullOrWhiteSpace(label.text), "Continue label text is empty");
-            Assert.AreEqual(continueGo, EventSystem.current.currentSelectedGameObject,
-                "Continue must be selected for keyboard/controller users");
-
-            continueGo.GetComponent<Button>().onClick.Invoke();
-            yield return null;
-
-            var relicPanel = FindObjectOrNull(host, "RelicChoicePanel");
-            Assert.NotNull(relicPanel, "Relic choice panel was not created");
-            Assert.IsTrue(relicPanel.activeInHierarchy, "Relic choice panel must be visible after Continue");
-            Assert.IsFalse(FindObject(host, "SudokuGameplayPanel").activeInHierarchy,
-                "The solved boss board must not cover the relic choice");
-
-            ClickButton(relicPanel, "RelicBtn_0");
-            yield return null;
-            ClickButton(relicPanel, "BtnAccept");
-            yield return null;
-            yield return null;
-
-            Assert.AreEqual(relicsBefore + 1, run.State.HeldRelics.Count, "accepted relic must be added");
-            Assert.AreEqual(1, run.State.CurrentFloor, "run must advance to floor 2");
-            Assert.IsTrue(FindObject(host, "PathOverviewPanel").activeInHierarchy, "path overview of the new floor");
+            yield return WaitFor(() => FindObjectOrNull(host, "OfferingTake_0") != null, 3f);
+            Assert.NotNull(FindObjectOrNull(host, "OfferingTake_0"), "the offering table did not open");
         }
 
         // ── helpers ──

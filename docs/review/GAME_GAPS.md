@@ -54,6 +54,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-041](#gap-041) | Number Freak L3 "+1 Pencil" was never applied (catalog typo) | FIXED (1.1, found 2026-10-07) | LOW | P3 |
 | [GAP-042](#gap-042) | Options dropdown lists hid their last option; no usable window mode | FIXED (1.1, found 2026-10-12) | MEDIUM | P2 |
 | [GAP-045](#gap-045) | Boss fights never played boss music (the boss layer was never started) | FIXED (found 2026-10-14) | LOW | P3 |
+| [GAP-046](#gap-046) | Q on the "Boss Defeated!" screen ended the run and deleted its save | FIXED (found 2026-10-15) | HIGH | P1 |
 | [GAP-044](#gap-044) | Region borders showed the previous puzzle's regions on a same-size board | FIXED (found 2026-10-14 by the owner) | HIGH | P1 |
 | [GAP-043](#gap-043) | Without the `ActiveProfileSlot` pref the game opens an empty slot 0, not the existing profile | FIXED (0.1.5, found 2026-10-14) | LOW | P3 |
 
@@ -794,3 +795,14 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Fix:** `InRunController.ShowSudoku` starts the boss music when `CurrentLevelConfig.IsBoss`; the boss track replaces the floor track with a crossfade on the music source and ends when the puzzle is left.
 - **Affected Files:** `Assets/Scripts/UI/RunAudioController.cs`, `Assets/Scripts/UI/InRunController.cs`
 - **Tests:** `AudioClipPlayModeTests.BossPuzzle_ReplacesTheFloorTrackWithTheBossTrack_AndLeavingEndsIt`.
+
+## GAP-046
+**Q on the "Boss Defeated!" screen ended the run and deleted its save**
+
+- **Requirement:** REQ-BOSS-107, SAVE (resume after Save & Quit)
+- **Status:** FIXED (found 2026-10-15 while building the offering table, UI-STYLE-005) · **Severity:** HIGH · **Priority:** P1
+- **Problem:** After a non-final boss, pressing Q (the Save & Quit shortcut) on the boss-cleared screen returned to the menu and deleted the run in progress. A controller's A button could do the same, depending on whether the game or the UI handled the press first.
+- **Root Cause:** The boss-cleared screen reused the game-over panel while the solved board stayed active underneath. With the board active, the puzzle shortcuts kept running (Q, and A in controller puzzle focus call `SaveAndQuit`), and `SaveAndQuit` treats an open game-over panel as the end of the run (`InRunSaveQuitPolicy`: `ClearFinishedGardenRun`).
+- **Fix:** The offering table is its own full-screen view and never opens the game-over panel; the solved board is hidden before it opens, so the puzzle shortcuts (Q, controller A, Start/F1 options) are off while it is shown.
+- **Affected Files:** `Assets/Scripts/UI/EndScreenViewController.cs`, `Assets/Scripts/UI/InRunController.Completion.cs`
+- **Tests:** `BossClearedFlowPlayModeTests.BossDefeated_ShowsTheOfferingsOnOneScreen_TakingOneLoadsTheNextFloor` (board hidden, game-over panel closed while the offerings are shown).

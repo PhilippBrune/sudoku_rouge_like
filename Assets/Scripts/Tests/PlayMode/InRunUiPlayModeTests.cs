@@ -146,11 +146,76 @@ namespace SudokuRoguelike.Tests
             h.Host.GetComponentInChildren<BossGateViewController>(true).ShowBossGateChoice();
             yield return null;
 
-            var info = FindObject(h.Host, "GateInfo").GetComponent<Text>();
-            StringAssert.Contains(BossService.GetIntensityName(BossModifierIntensity.VeryHigh), info.text);
+            var intensity = FindObject(h.Host, "GateIntensity").GetComponent<Text>();
+            StringAssert.Contains(BossService.GetIntensityName(BossModifierIntensity.VeryHigh), intensity.text);
             var debuff = h.Run.GetBossDebuffForCurrentFloor();
             Assert.IsTrue(debuff.HasValue);
-            StringAssert.Contains(BossService.GetModifierName(debuff.Value), info.text);
+            var curse = FindObject(h.Host, "GateDebuff").GetComponent<Text>();
+            StringAssert.Contains(BossService.GetModifierName(debuff.Value), curse.text);
+        }
+
+        // [REQ: UI-STYLE-004] Trial scroll: picked trials are ticked, the count follows, Confirm unlocks at the
+        // required number and records exactly the picked trials.
+        [UnityTest]
+        [Requirement("UI-STYLE-004", "REQ-BOSS-103")]
+        public IEnumerator BossGate_PickingTrials_TicksThem_AndConfirmRecordsThem()
+        {
+            var h = StartPuzzle(8603);
+            h.Run.State.CurrentFloor = 2; // Floor 3: choose 3 of 4
+            yield return null;
+
+            var gate = h.Host.GetComponentInChildren<BossGateViewController>(true);
+            gate.ShowBossGateChoice();
+            yield return null;
+
+            Assert.IsNotNull(FindObjectOrNull(h.Host, "Mod_3"), "four trials on Floor 3");
+            Assert.IsNull(FindObjectOrNull(h.Host, "Mod_4"));
+            var confirm = FindObject(h.Host, "ConfirmBossBtn").GetComponent<Button>();
+            Assert.IsFalse(confirm.interactable, "Confirm waits for the picks");
+            StringAssert.Contains(SudokuRoguelike.Data.FloorThemeData.GetBossName(2),
+                FindObject(h.Host, "Title").GetComponent<Text>().text, "the title names the floor boss");
+            List<BossModifierId> confirmed = null;
+            gate.OnModsConfirmed += mods => confirmed = mods;
+
+            for (var i = 0; i < 4; i++) ClickButton(h.Host, $"Mod_{i}"); // the fourth exceeds the picks and is ignored
+            for (var i = 0; i < 4; i++)
+                Assert.AreEqual(i < 3, FindObject(FindObject(h.Host, $"Mod_{i}"), "PickTick").activeSelf, $"Mod_{i} tick");
+            StringAssert.Contains("3", FindObject(h.Host, "GateChosenCount").GetComponent<Text>().text);
+            Assert.IsTrue(confirm.interactable);
+
+            ClickButton(h.Host, "Mod_0");                                   // untick one again
+            Assert.IsFalse(confirm.interactable);
+            ClickButton(h.Host, "Mod_3");
+            Assert.IsTrue(confirm.interactable);
+
+            ClickButton(h.Host, "ConfirmBossBtn");
+            Assert.IsFalse(FindObject(h.Host, "Mod_0").GetComponent<Button>().interactable,
+                "the picks lock while Confirm flashes");
+            Assert.IsFalse(confirm.interactable, "Confirm fires once");
+            yield return new WaitForSecondsRealtime(0.45f);
+            Assert.NotNull(confirmed, "Confirm reports the picks");
+            Assert.AreEqual(3, confirmed.Count);
+            Assert.IsFalse(gate.IsAwaiting);
+            Assert.IsNull(FindObjectOrNull(h.Host, "BossGatePanel"), "the scroll closes after Confirm");
+        }
+
+        // [REQ: UI-STYLE-004] Floor 1 offers 2 trials and asks for 1: choosing the other trial moves the pick.
+        [UnityTest]
+        [Requirement("UI-STYLE-004")]
+        public IEnumerator BossGate_WithOnePick_ChoosingAnotherTrialMovesThePick()
+        {
+            var h = StartPuzzle(8605);
+            h.Run.State.CurrentFloor = 0;
+            yield return null;
+
+            h.Host.GetComponentInChildren<BossGateViewController>(true).ShowBossGateChoice();
+            yield return null;
+
+            ClickButton(h.Host, "Mod_0");
+            ClickButton(h.Host, "Mod_1");
+            Assert.IsFalse(FindObject(FindObject(h.Host, "Mod_0"), "PickTick").activeSelf);
+            Assert.IsTrue(FindObject(FindObject(h.Host, "Mod_1"), "PickTick").activeSelf);
+            Assert.IsTrue(FindObject(h.Host, "ConfirmBossBtn").GetComponent<Button>().interactable);
         }
 
         [UnityTest]

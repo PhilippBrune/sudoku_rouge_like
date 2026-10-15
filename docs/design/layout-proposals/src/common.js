@@ -3,7 +3,7 @@ const R = '../../../../Assets/Resources/';
 const PARAMS = new URLSearchParams(location.search);
 
 // --- boards -------------------------------------------------------------------------------------------------------
-// 6×6 (2×3 boxes): givens, player digits, pencil marks, a killer cage and two German-whisper lines.
+// 6×6 (2×3 boxes): givens, player digits, pencil marks, an L-shaped killer cage and two German-whisper lines.
 const BOARD6 = {
   n: 6, boxR: 2, boxC: 3,
   sol: [[1, 2, 3, 4, 5, 6], [4, 5, 6, 1, 2, 3], [2, 3, 1, 5, 6, 4], [5, 6, 4, 2, 3, 1], [3, 1, 2, 6, 4, 5], [6, 4, 5, 3, 1, 2]],
@@ -11,7 +11,7 @@ const BOARD6 = {
   player: { '0,3': 4, '1,0': 4, '2,1': 3, '3,3': 2, '4,5': 5 },
   pencil: { '1,2': [3, 6], '2,3': [5, 6], '4,1': [1, 4], '5,2': [2, 5], '0,4': [5] },
   selected: '3,2', same: 4,
-  cage: { cells: ['4,3', '4,4'], sum: 10 },
+  cage: { cells: ['4,3', '4,4', '5,4'], sum: 11 },
   whispers: [['1,2', '2,2'], ['3,1', '4,1']]
 };
 
@@ -27,7 +27,7 @@ function board9() {
     player: { '0,1': sol[0][1], '2,5': sol[2][5], '4,4': sol[4][4], '6,2': sol[6][2], '7,7': sol[7][7] },
     pencil: { '1,3': [2, 5, 8], '5,6': [1, 7], '8,0': [3, 6] },
     selected: '3,4', same: sol[4][4],
-    cage: { cells: ['6,6', '6,7'], sum: sol[6][6] + sol[6][7] },
+    cage: { cells: ['6,6', '6,7', '7,7'], sum: sol[6][6] + sol[6][7] + sol[7][7] },
     whispers: []
   };
 }
@@ -79,7 +79,49 @@ function buildBoard(el, L, B = BOARD6) {
   }
 }
 
-// Whisper lines through cell centres and the cage sum, on an SVG covering the board.
+// One dashed outline around the whole cage, inset by `inset` into its cells (the same runs as the game's CageOutline):
+// a run is a straight stretch of cage border; at a convex corner it stops `inset` inside the cell, at a concave corner
+// it reaches into the neighbouring cage cell, so the runs meet and the cage reads as one shape.
+function cageRuns(cells, L, B, inset) {
+  const inCage = (r, c) => cells.includes(`${r},${c}`);
+  const left = c => cellPos(0, c, L, B)[0], top = r => cellPos(r, 0, L, B)[1];
+  const runs = [];
+  for (const [dr, horizontal] of [[-1, true], [1, true], [0, false]]) {
+    for (const side of horizontal ? [dr] : [-1, 1]) {
+      for (let a = 0; a < B.n; a++) {          // a = row of a horizontal run, column of a vertical one
+        let start = null;
+        for (let b = 0; b <= B.n; b++) {       // b walks along the run
+          const [r, c] = horizontal ? [a, b] : [b, a];
+          const edge = b < B.n && inCage(r, c) && !(horizontal ? inCage(r + side, c) : inCage(r, c + side));
+          if (edge && start === null) start = b;
+          if (edge || start === null) continue;
+          const [b0, b1] = [start, b - 1];
+          start = null;
+          if (horizontal) {
+            const y = side < 0 ? top(a) + inset : top(a) + L.cell - inset;
+            const x0 = inCage(a, b0 - 1) ? left(b0 - 1) + L.cell - inset : left(b0) + inset;
+            const x1 = inCage(a, b1 + 1) ? left(b1 + 1) + inset : left(b1) + L.cell - inset;
+            runs.push([x0, y, x1, y]);
+          } else {
+            const x = side < 0 ? left(a) + inset : left(a) + L.cell - inset;
+            const y0 = inCage(b0 - 1, a) ? top(b0 - 1) + L.cell - inset : top(b0) + inset;
+            const y1 = inCage(b1 + 1, a) ? top(b1 + 1) + inset : top(b1) + L.cell - inset;
+            runs.push([x, y0, x, y1]);
+          }
+        }
+      }
+    }
+  }
+  return runs;
+}
+
+// Dash pattern stretched so a run starts and ends on a dash: the corners of the outline stay closed.
+function fittedDashes(length, dash, gap) {
+  const n = Math.max(1, Math.floor((length + gap) / (dash + gap)));
+  return n === 1 ? `${length} 0` : `${dash} ${(length - n * dash) / (n - 1)}`;
+}
+
+// Whisper lines through cell centres, the cage outline and the cage sum, on an SVG covering the board.
 function boardOverlay(svg, L, style, B = BOARD6) {
   const [w, h] = boardSize(L, B);
   const center = key => {
@@ -92,8 +134,15 @@ function boardOverlay(svg, L, style, B = BOARD6) {
     const [x1, y1] = center(a), [x2, y2] = center(b);
     html += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${style.line}" stroke-width="${style.width}" stroke-linecap="round" opacity="${style.opacity}"/>`;
   }
+  const stroke = 3, inset = Math.round(L.cell * 0.09);
+  for (const [x1, y1, x2, y2] of cageRuns(B.cage.cells, L, B, inset)) {
+    const len = Math.abs(x2 - x1) + Math.abs(y2 - y1) + stroke;   // the square caps add half a stroke at each end
+    const ext = stroke / 2, dx = Math.sign(x2 - x1) * ext, dy = Math.sign(y2 - y1) * ext;
+    html += `<line x1="${x1 - dx}" y1="${y1 - dy}" x2="${x2 + dx}" y2="${y2 + dy}" stroke="${style.cageLine || style.cageText}" ` +
+            `stroke-width="${stroke}" stroke-dasharray="${fittedDashes(len, 9, 6)}"/>`;
+  }
   const [cx, cy] = cellPos(...B.cage.cells[0].split(',').map(Number), L, B);
-  html += `<text x="${cx + 10}" y="${cy + 24}" font-size="${style.cageSize || 20}" font-family="Main" fill="${style.cageText}">${B.cage.sum}</text>`;
+  html += `<text x="${cx + inset + 4}" y="${cy + inset + 18}" font-size="${style.cageSize || 20}" font-family="Main" fill="${style.cageText}">${B.cage.sum}</text>`;
   svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
   Object.assign(svg.style, { position: 'absolute', left: 0, top: 0, width: w + 'px', height: h + 'px', pointerEvents: 'none', zIndex: 3 });
   svg.innerHTML = html;

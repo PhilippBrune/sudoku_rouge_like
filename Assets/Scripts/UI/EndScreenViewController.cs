@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using SudokuRoguelike.Classes;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Data;
 using SudokuRoguelike.Economy;
 using SudokuRoguelike.Run;
 using SudokuRoguelike.Save;
@@ -22,6 +23,8 @@ namespace SudokuRoguelike.UI
         private Text _gameOverDetails;
         private Button _gameOverBackBtn;
         private bool _gameOverShown;
+        private GameObject _bossDefeatedScreen;
+        private bool _offeringTaken;
 
         public Action OnReturnToMenuPressed;
 
@@ -53,96 +56,192 @@ namespace SudokuRoguelike.UI
         }
 
         /// <summary>
-        /// F22: Shows the boss-cleared interstitial panel using bg_boss_cleared.png as the background.
-        /// Call from InRunController immediately after a non-final boss puzzle is solved, before
-        /// advancing to the next floor. The panel uses the same _gameOverPanel structure so it
-        /// auto-hides when the next level loads.
+        /// [REQ: REQ-BOSS-107] [REQ: UI-STYLE-005] After a non-final boss: the offering table (layout-proposals.md, B).
+        /// A banner names the defeated boss, a paper tag shows this fight's numbers, and the relic choice sits on the same
+        /// screen: one offering per relic on a plinth with its own Take button, plus "Leave them". Without offerings a
+        /// single Continue button advances. The screen covers the whole canvas and does not use the game-over panel, so
+        /// the end-screen save rules and shortcuts (which clear a finished run) cannot fire here.
         /// </summary>
-        public void ShowBossCleared(RunDirector run, Action onContinue = null, string continueLabel = null)
+        public void ShowBossCleared(RunDirector run, IReadOnlyList<RelicInstance> offerings,
+            Action<RelicInstance> onTake, Action onContinue)
         {
-            ClearBossClearedDynamicContent();
-            if (_gameOverPanel != null) _gameOverPanel.SetActive(true);
-            if (_gameOverPanel != null)
+            HideBossCleared();
+            var root = _gameOverPanel != null ? _gameOverPanel.transform.parent : transform;
+            var state = run?.State;
+            var floor = state?.CurrentFloor ?? 0;
+            _offeringTaken = false;
+
+            var screen = ScrollUiKit.Fill(root, BossDefeatedScreenName, Vector2.zero, Vector2.one, Color.black);
+            screen.raycastTarget = true; // nothing behind the screen takes clicks
+            _bossDefeatedScreen = screen.gameObject;
+            _bossDefeatedScreen.transform.SetAsLastSibling();
+            ScrollUiKit.Painting(screen.transform, "Backdrop", "bg_boss_cleared", new Color(0.62f, 0.60f, 0.56f, 1f));
+            ScrollUiKit.Fill(screen.transform, "FloorShade", Vector2.zero, new Vector2(1f, 0.45f), new Color(0f, 0f, 0f, 0.35f));
+
+            BuildDefeatBanner(screen.transform, floor, state?.TotalFloors ?? 5);
+            BuildStatsTag(screen.transform, run);
+            ScrollUiKit.Icon(screen.transform, "BossMask", "boss/icon_" + FloorThemeData.GetBossKey(floor),
+                new Vector2(0.839f, 0.634f), new Vector2(0.898f, 0.755f), new Color(0.50f, 0.50f, 0.52f, 1f));
+            ScrollUiKit.Label(screen.transform, "MaskCaption", T("InRun.BossDefeated.MaskStill"), 18,
+                TextAnchor.MiddleCenter, new Color(0.92f, 0.89f, 0.82f, 1f), new Vector2(0.78f, 0.590f), new Vector2(0.96f, 0.624f), 12);
+
+            var hasOfferings = offerings != null && offerings.Count > 0;
+            ScrollUiKit.Label(screen.transform, "OfferingPrompt",
+                T(hasOfferings ? "InRun.BossDefeated.Prompt" : "InRun.BossDefeated.NoOfferings"), 28,
+                TextAnchor.MiddleCenter, new Color(0.96f, 0.93f, 0.85f, 1f), new Vector2(0.22f, 0.533f), new Vector2(0.78f, 0.569f), 18);
+
+            if (!hasOfferings)
             {
-                var bgImg = _gameOverPanel.transform.Find("PanelBackground")?.GetComponent<RawImage>();
-                if (bgImg != null)
-                {
-                    var tex = Resources.Load<Texture2D>("background/bg_boss_cleared");
-                    bgImg.texture = tex;
-                    bgImg.color   = new Color(1f, 1f, 1f, tex != null ? 0.85f : 0f);
-                }
-
-                // 9.1 — hide the Back button; it belongs to game-over context only
-                if (_gameOverBackBtn != null)
-                    _gameOverBackBtn.gameObject.SetActive(false);
-
-                // 9.2 — hide the details info block (class/floor/XP), belongs to game-over context only
-                SetGameOverDetailsScrimActive(false);
-                if (_gameOverDetails != null)
-                {
-                    _gameOverDetails.text = string.Empty;
-                    _gameOverDetails.gameObject.SetActive(false);
-                }
-
-                // Add a "Continue" button so the player controls when to advance, not a timer.
-                var existingContinue = _gameOverPanel.transform.Find("BossClearedContinueBtn");
-                if (existingContinue != null) UnityEngine.Object.Destroy(existingContinue.gameObject);
-
-                // 9.3 — per-floor stats panel
-                var existingStats = _gameOverPanel.transform.Find("BossClearedStats");
-                if (existingStats != null) UnityEngine.Object.Destroy(existingStats.gameObject);
-                if (run != null)
-                {
-                    var statsStr = BuildBossClearedStatsText(run);
-                    var statsGo = new GameObject("BossClearedStats", typeof(RectTransform), typeof(Text));
-                    statsGo.transform.SetParent(_gameOverPanel.transform, false);
-                    var statsRt = statsGo.GetComponent<RectTransform>();
-                    statsRt.anchorMin = new Vector2(0.30f, 0.36f);
-                    statsRt.anchorMax = new Vector2(0.70f, 0.58f);
-                    statsRt.offsetMin = statsRt.offsetMax = Vector2.zero;
-                    var statsTxt = statsGo.GetComponent<Text>();
-                    statsTxt.text = statsStr;
-                    statsTxt.alignment = TextAnchor.MiddleCenter;
-                    statsTxt.fontSize = 22;
-                    statsTxt.color = GamePalette.WinGold;
-                    statsTxt.font = FontAssetService.GetFont();
-                    var statsShadow = statsGo.AddComponent<Shadow>();
-                    statsShadow.effectColor = new Color(0f, 0f, 0f, 0.90f);
-                    statsShadow.effectDistance = new Vector2(2f, -2f);
-                }
-
-                if (onContinue != null)
-                {
-                    var btnGo = new GameObject("BossClearedContinueBtn", typeof(RectTransform), typeof(Image), typeof(Button));
-                    btnGo.transform.SetParent(_gameOverPanel.transform, false);
-                    var rt = btnGo.GetComponent<RectTransform>();
-                    rt.anchorMin = new Vector2(0.35f, 0.08f);
-                    rt.anchorMax = new Vector2(0.65f, 0.18f);
-                    rt.offsetMin = rt.offsetMax = Vector2.zero;
-                    btnGo.GetComponent<Image>().color = new Color(0.20f, 0.16f, 0.10f, 0.90f);
-                    var lbl = new GameObject("Label", typeof(RectTransform), typeof(Text));
-                    lbl.transform.SetParent(btnGo.transform, false);
-                    var lblRt = lbl.GetComponent<RectTransform>();
-                    lblRt.anchorMin = Vector2.zero; lblRt.anchorMax = Vector2.one;
-                    lblRt.offsetMin = lblRt.offsetMax = Vector2.zero;
-                    var lblTxt = lbl.GetComponent<Text>();
-                    lblTxt.text = continueLabel ?? T("InRun.End.BossCleared.Continue");
-                    lblTxt.alignment = TextAnchor.MiddleCenter;
-                    lblTxt.fontSize = 16;
-                    lblTxt.color = GamePalette.WinGold;
-                    lblTxt.font = FontAssetService.GetFont();
-                    var btn = btnGo.GetComponent<Button>();
-                    btn.onClick.AddListener(() => onContinue?.Invoke());
-                    // [REQ: REQ-BOSS-107] Continue is the only control on the interstitial; select it
-                    // so keyboard/controller users can advance (GAP-002).
-                    InRunUiFactory.SelectFirstInteractable(_gameOverPanel);
-                }
+                var continueBtn = ScrollUiKit.RimButton(screen.transform, "BossClearedContinueBtn", new Vector2(0.42f, 0.30f),
+                    new Vector2(0.58f, 0.36f), T("InRun.BossDefeated.Onward"), 24, ScrollUiKit.Gold, OfferingFocus, OfferingText);
+                continueBtn.onClick.AddListener(() => Advance(onContinue));
+                FadeInAndSelect(continueBtn);
+                return;
             }
-            if (_gameOverSummary != null)
+
+            var takes = new List<Button>();
+            for (var i = 0; i < offerings.Count; i++)
             {
-                _gameOverSummary.text = T("InRun.End.BossCleared.Title");
-                _gameOverSummary.color = GamePalette.WinGold;
+                var relic = offerings[i];
+                var center = 0.5f + (i - (offerings.Count - 1) * 0.5f) * 0.266f;
+                var take = BuildOffering(screen.transform, i, relic, center);
+                take.onClick.AddListener(() => Advance(() => onTake?.Invoke(relic)));
+                takes.Add(take);
             }
+
+            ScrollUiKit.Label(screen.transform, "BossDefeatedNext",
+                F("InRun.BossDefeated.Next", FloorThemeData.GetFloorName(floor + 1)), 18, TextAnchor.MiddleCenter,
+                new Color(0.80f, 0.74f, 0.62f, 1f), new Vector2(0.15f, 0.058f), new Vector2(0.85f, 0.086f), 12);
+            var leave = ScrollUiKit.RimButton(screen.transform, "BtnLeaveOfferings", new Vector2(0.45f, 0.010f),
+                new Vector2(0.55f, 0.048f), T("InRun.BossDefeated.Leave"), 16, new Color(0.62f, 0.55f, 0.42f, 1f),
+                OfferingFocus, OfferingText);
+            leave.onClick.AddListener(() => Advance(onContinue));
+
+            for (var i = 0; i < takes.Count; i++)
+                takes[i].navigation = new Navigation
+                {
+                    mode = Navigation.Mode.Explicit,
+                    selectOnLeft = i > 0 ? takes[i - 1] : null,
+                    selectOnRight = i < takes.Count - 1 ? takes[i + 1] : null,
+                    selectOnDown = leave
+                };
+            leave.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnUp = takes[takes.Count / 2] };
+            FadeInAndSelect(takes[takes.Count / 2]);
+        }
+
+        public bool IsBossClearedShown => _bossDefeatedScreen != null && _bossDefeatedScreen.activeSelf;
+
+        private static readonly Color OfferingFocus = new Color(0.74f, 0.54f, 0.18f, 1f);
+        private static readonly Color OfferingText = new Color(0.99f, 0.93f, 0.76f, 1f);
+        private const string BossDefeatedScreenName = "BossDefeatedScreen";
+
+        private void BuildDefeatBanner(Transform screen, int floor, int totalFloors)
+        {
+            var banner = ScrollUiKit.Fill(screen, "BossDefeatedBanner", new Vector2(0.318f, 0.844f), new Vector2(0.682f, 0.958f),
+                ScrollUiKit.Paper);
+            var shadow = banner.gameObject.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0f, 0f, 0f, 0.5f);
+            shadow.effectDistance = new Vector2(0f, -8f);
+            ScrollUiKit.Fill(banner.transform, "SideLeft", Vector2.zero, new Vector2(0.026f, 1f), ScrollUiKit.Vermilion);
+            ScrollUiKit.Fill(banner.transform, "SideRight", new Vector2(0.974f, 0f), Vector2.one, ScrollUiKit.Vermilion);
+            ScrollUiKit.Label(banner.transform, "BossDefeatedEyebrow",
+                F("InRun.BossDefeated.Eyebrow", floor + 1, totalFloors, FloorThemeData.GetFloorName(floor)).ToUpperInvariant(),
+                18, TextAnchor.MiddleCenter, ScrollUiKit.InkSoft, new Vector2(0.06f, 0.62f), new Vector2(0.94f, 0.88f), 12);
+            ScrollUiKit.Label(banner.transform, "BossDefeatedTitle",
+                F("InRun.BossDefeated.Title", FloorThemeData.GetBossName(floor)), 50, TextAnchor.MiddleCenter,
+                ScrollUiKit.Ink, new Vector2(0.05f, 0.08f), new Vector2(0.95f, 0.64f), 26);
+        }
+
+        // The fight's numbers on a paper tag hanging from a string (REQ-BOSS-107 stats, now beside the offerings).
+        private void BuildStatsTag(Transform screen, RunDirector run)
+        {
+            var tag = ScrollUiKit.Fill(screen, "BossClearedStats", new Vector2(0.061f, 0.572f), new Vector2(0.220f, 0.773f),
+                ScrollUiKit.Paper);
+            tag.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 1.5f);
+            var shadow = tag.gameObject.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0f, 0f, 0f, 0.5f);
+            shadow.effectDistance = new Vector2(4f, -6f);
+            var cord = ScrollUiKit.Fill(tag.transform, "Cord", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), ScrollUiKit.Gold);
+            cord.rectTransform.offsetMin = new Vector2(-1f, 0f);
+            cord.rectTransform.offsetMax = new Vector2(1f, 46f);
+
+            ScrollUiKit.Label(tag.transform, "Header", T("InRun.BossDefeated.StatsHeader").ToUpperInvariant(), 16,
+                TextAnchor.MiddleLeft, ScrollUiKit.InkSoft, new Vector2(0.08f, 0.80f), new Vector2(0.92f, 0.95f), 11);
+            var stats = BuildBossClearedStats(run);
+            var rows = new (string key, int value)[]
+            {
+                ("InRun.BossDefeated.Stat.Mistakes", stats.Mistakes),
+                ("InRun.BossDefeated.Stat.HpLost", stats.HpLost),
+                ("InRun.BossDefeated.Stat.ItemsUsed", stats.ItemsUsed),
+                ("InRun.BossDefeated.Stat.PencilMarks", stats.PencilMarks)
+            };
+            for (var k = 0; k < rows.Length; k++)
+            {
+                var top = 0.78f - k * 0.175f;
+                ScrollUiKit.Label(tag.transform, $"Stat_{k}_Label", T(rows[k].key), 20, TextAnchor.MiddleLeft,
+                    ScrollUiKit.Ink, new Vector2(0.08f, top - 0.16f), new Vector2(0.74f, top), 12);
+                ScrollUiKit.Label(tag.transform, $"Stat_{k}_Value", rows[k].value.ToString(), 20, TextAnchor.MiddleRight,
+                    ScrollUiKit.Vermilion, new Vector2(0.74f, top - 0.16f), new Vector2(0.92f, top), 12);
+            }
+        }
+
+        // One offering: a glow, the relic on a plinth, its name and rule, and a Take button. Returns the button.
+        private static Button BuildOffering(Transform screen, int index, RelicInstance relic, float center)
+        {
+            var slot = ScrollUiKit.Area(screen, $"Offering_{index}", new Vector2(center - 0.11f, 0.10f),
+                new Vector2(center + 0.11f, 0.53f));
+            ScrollUiKit.Spot(slot, "Glow", new Vector2(0.5f, 0.77f), new Vector2(200f, 200f),
+                new Color(1f, 0.86f, 0.55f, 0.30f), ScrollUiKit.Glow());
+            ScrollUiKit.Fill(slot, "Plinth", new Vector2(0.216f, 0.43f), new Vector2(0.784f, 0.586f), Color.white,
+                ScrollUiKit.Plinth());
+            var icon = ScrollUiKit.Icon(slot, "Icon",
+                RelicService.GetIconFolder(relic.Id) + "/icon_" + RelicService.GetIconName(relic.Id),
+                new Vector2(0.31f, 0.60f), new Vector2(0.69f, 0.92f), Color.white);
+            InRunUiFactory.AddRelicTierPip(icon.transform, relic.Tier);
+            ScrollUiKit.Label(slot, "Name", RelicService.GetRelicName(relic.Id), 30, TextAnchor.MiddleCenter,
+                new Color(0.98f, 0.95f, 0.88f, 1f), new Vector2(0.02f, 0.295f), new Vector2(0.98f, 0.378f), 18);
+            ScrollUiKit.Label(slot, "Rule", RelicService.GetRelicDescription(relic.Id), 20, TextAnchor.UpperCenter,
+                new Color(0.88f, 0.84f, 0.76f, 1f), new Vector2(0.02f, 0.160f), new Vector2(0.98f, 0.290f), 13);
+            return ScrollUiKit.RimButton(slot, $"OfferingTake_{index}", new Vector2(0.30f, 0.035f), new Vector2(0.70f, 0.138f),
+                T("InRun.BossDefeated.Take"), 22, ScrollUiKit.Gold, OfferingFocus, OfferingText);
+        }
+
+        // One choice only: the first Take, Leave or Continue locks the screen, so a double click cannot advance twice.
+        // If the next step throws, the screen unlocks again instead of trapping the player behind disabled buttons.
+        private void Advance(Action next)
+        {
+            if (_offeringTaken) return;
+            _offeringTaken = true;
+            SetBossDefeatedButtonsInteractable(false);
+            try
+            {
+                next?.Invoke();
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+                _offeringTaken = false;
+                SetBossDefeatedButtonsInteractable(true);
+            }
+        }
+
+        private void SetBossDefeatedButtonsInteractable(bool interactable)
+        {
+            if (_bossDefeatedScreen == null) return;
+            foreach (var button in _bossDefeatedScreen.GetComponentsInChildren<Button>())
+                button.interactable = interactable;
+        }
+
+        private void FadeInAndSelect(Button first)
+        {
+            var group = _bossDefeatedScreen.AddComponent<CanvasGroup>();
+            if (isActiveAndEnabled)
+            {
+                group.alpha = 0f;
+                StartCoroutine(AnimationHelper.FadeIn(group, AnimationHelper.MenuPanelDuration));
+            }
+            var eventSystem = UnityEngine.EventSystems.EventSystem.current;
+            if (eventSystem != null) eventSystem.SetSelectedGameObject(first.gameObject);
         }
 
         public readonly struct BossClearedStatsSnapshot
@@ -171,28 +270,8 @@ namespace SudokuRoguelike.UI
                 level?.PencilMarksUsed ?? 0);
         }
 
-        public static string BuildBossClearedStatsText(RunDirector run)
-        {
-            var stats = BuildBossClearedStats(run);
-            return F(
-                "InRun.End.BossCleared.Stats",
-                stats.Mistakes,
-                stats.HpLost,
-                stats.ItemsUsed,
-                stats.PencilMarks);
-        }
-
-        /// <summary>Hides the boss-cleared interstitial panel. Only call from a player-triggered action.</summary>
-        public void HideBossCleared()
-        {
-            ClearBossClearedDynamicContent();
-            // Restore elements hidden during ShowBossCleared before deactivating the panel
-            if (_gameOverBackBtn != null) _gameOverBackBtn.gameObject.SetActive(true);
-            if (_gameOverDetails != null) _gameOverDetails.gameObject.SetActive(true);
-            SetGameOverDetailsScrimActive(true);
-            if (_gameOverPanel != null && _gameOverPanel.activeSelf)
-                _gameOverPanel.SetActive(false);
-        }
+        /// <summary>Removes the boss-defeated screen. Only call from a player-triggered action or a new end screen.</summary>
+        public void HideBossCleared() => ClearBossClearedDynamicContent();
 
         public void ShowGameOver(RunDirector run, bool victory)
         {
@@ -224,10 +303,6 @@ namespace SudokuRoguelike.UI
                 }
             }
 
-            // Restore elements that may have been hidden by ShowBossCleared
-            if (_gameOverBackBtn != null) _gameOverBackBtn.gameObject.SetActive(true);
-            if (_gameOverDetails != null) _gameOverDetails.gameObject.SetActive(true);
-            SetGameOverDetailsScrimActive(true);
             ConfigureOutcomeButton(victory);
 
             // Dynamic title
@@ -548,25 +623,12 @@ namespace SudokuRoguelike.UI
 
         private static string T(string key) => LocalizationService.T(key);
 
-        private void SetGameOverDetailsScrimActive(bool active)
-        {
-            var scrim = _gameOverPanel != null ? _gameOverPanel.transform.Find("GameOverDetailsScrim") : null;
-            if (scrim != null) scrim.gameObject.SetActive(active);
-        }
-
         private void ClearBossClearedDynamicContent()
         {
-            if (_gameOverPanel == null) return;
-            RemoveDynamicChild("BossClearedContinueBtn");
-            RemoveDynamicChild("BossClearedStats");
-        }
-
-        private void RemoveDynamicChild(string name)
-        {
-            var child = _gameOverPanel.transform.Find(name);
-            if (child == null) return;
-            child.gameObject.SetActive(false);
-            UnityEngine.Object.Destroy(child.gameObject);
+            if (_bossDefeatedScreen == null) return;
+            _bossDefeatedScreen.SetActive(false);
+            UnityEngine.Object.Destroy(_bossDefeatedScreen);
+            _bossDefeatedScreen = null;
         }
 
         private void ConfigureOutcomeButton(bool victory)

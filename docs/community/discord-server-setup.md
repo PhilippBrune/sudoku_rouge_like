@@ -177,3 +177,27 @@ The game categories are visible to everyone by default. Onboarding pre-selects w
 - Waiting for **Community** (you: Server Settings → Enable Community, pick `#rules` and `#mod-log`): the six forum channels (`#rotn-bugs`, `#rotn-feedback`, `#cb-bugs`, `#cb-feedback`, `#playtest-feedback`, `#translation`), the conversion of `#announcements`, `#rotn-news` and `#cb-news` into announcement channels, and Onboarding. Then tell me, and I rerun `apply`.
 - Steam news mirror installed (section 6). Run of the Nine's v0.1.5 announcement was already published, so it was recorded, not posted; `python tools/discord/steam_news.py publish-latest rotn` posts it. Corebound FAQ draft in `#release-drafts`.
 - The bot role has **Administrator**. It works; a leaked token would then give full control of the server. After setup, consider replacing it with the permission list in step 1.5, and reset the token (Developer Portal → Bot → Reset Token, then `/discord:configure` in a CLI session).
+
+## 10. State on 2026-10-15
+
+- **Community** is on (owner). Applied: `#announcements`, `#rotn-news`, `#cb-news` are announcement channels; the six forums exist; server description; welcome screen (rules, both game chats, FAQ, general).
+- **Picking roles with emojis:** Discord's own **Onboarding**, which members also reach any time under **Channels & Roles** at the top of the channel list. No extra bot needs to run, so it works around the clock. Questions (`tools/discord/layout.json`, applied by `community.py`):
+  1. *Which games do you play?* — custom emojis `:run_of_the_nine:` and `:corebound:` (the games' icons); gives the game role and shows its channels.
+  2. *Ping me for…* — 📰 Patch notes, 🎉 Events.
+  3. *Where are you from?* — dropdown with 50 country flags; each gives a role named like "🇩🇪 Germany", so the flag shows on the member's profile. Missing countries: add them to `countries` in the layout and rerun `apply`.
+  4. *Want to help?* — 🧪 Playtesting, 🌐 Translating; gives "Playtest volunteer" / "Translation volunteer", so Moderators see who offered (they still grant Playtester / Translator).
+- Classic reaction roles (react to a message, get a role) would need a bot that is online all the time (hosted, or a third-party bot such as Carl-bot); Onboarding does the same without one.
+- `#faq` has a Run of the Nine and a Corebound part (`texts/faq.md`, split at `---`); `discord_admin.py replace <channel> <file>` republishes a text.
+
+## 11. Ideas for later
+
+| Idea | What it takes |
+|---|---|
+| **Daily Walk of the day**: a post each morning in `#rotn-seeds-and-walks` with today's walk and a thread for times and results | a scheduled script that computes the day's walk like the game does |
+| **Seed of the week** and the Monthly Walk as Discord **Events**, with a "Seed Champion" role for the winner | event posts by the bot; you judge or the game's score decides |
+| **Soundboard and stickers**: the game's 8-bit effects as server sounds (8 free slots), item and relic icons as emojis (50 slots), a few stickers | upload once the 8-bit set is final |
+| **Server Guide** (Community): pinned pages for "How to play", "Known issues", "Roadmap" | text only |
+| **Polls** for feature votes and **dev logs** with work-in-progress screenshots | your posts; polls are built into Discord |
+| **Credits for helpers**: playtesters and translators named in the game's credits | a list in the credits panel |
+| **Links**: the permanent invite on both Steam store pages and in the main menu or credits | invite link + store page edit |
+| **Safety**: "Require 2FA for moderator actions" and a second human Moderator before the server grows | your settings |

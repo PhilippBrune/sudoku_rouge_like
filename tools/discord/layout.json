@@ -7,81 +7,744 @@
     "default_message_notifications": 1
   },
   "everyone_permissions": [
-    "VIEW_CHANNEL", "SEND_MESSAGES", "READ_MESSAGE_HISTORY", "ADD_REACTIONS", "EMBED_LINKS", "ATTACH_FILES",
-    "USE_EXTERNAL_EMOJIS", "CREATE_PUBLIC_THREADS", "SEND_MESSAGES_IN_THREADS", "CONNECT", "SPEAK", "USE_VAD",
-    "STREAM", "CHANGE_NICKNAME", "USE_APPLICATION_COMMANDS", "CREATE_INSTANT_INVITE"
+    "VIEW_CHANNEL",
+    "SEND_MESSAGES",
+    "READ_MESSAGE_HISTORY",
+    "ADD_REACTIONS",
+    "EMBED_LINKS",
+    "ATTACH_FILES",
+    "USE_EXTERNAL_EMOJIS",
+    "CREATE_PUBLIC_THREADS",
+    "SEND_MESSAGES_IN_THREADS",
+    "CONNECT",
+    "SPEAK",
+    "USE_VAD",
+    "STREAM",
+    "CHANGE_NICKNAME",
+    "USE_APPLICATION_COMMANDS",
+    "CREATE_INSTANT_INVITE"
   ],
   "roles": [
-    {"name": "Moderator", "color": "#C9A227", "hoist": true, "mentionable": false,
-     "permissions": ["MANAGE_MESSAGES", "MANAGE_THREADS", "MODERATE_MEMBERS"]},
-    {"name": "Playtester", "color": "#5FA8D3", "hoist": false, "mentionable": false, "permissions": []},
-    {"name": "Translator", "color": "#8FBF7F", "hoist": false, "mentionable": false, "permissions": []},
-    {"name": "Run of the Nine", "color": "#D98C5F", "hoist": false, "mentionable": true, "permissions": []},
-    {"name": "Corebound", "color": "#7F8FD9", "hoist": false, "mentionable": true, "permissions": []},
-    {"name": "Patch Notes", "color": null, "hoist": false, "mentionable": true, "permissions": []},
-    {"name": "Events", "color": null, "hoist": false, "mentionable": true, "permissions": []}
+    {
+      "name": "Moderator",
+      "color": "#C9A227",
+      "hoist": true,
+      "mentionable": false,
+      "permissions": [
+        "MANAGE_MESSAGES",
+        "MANAGE_THREADS",
+        "MODERATE_MEMBERS"
+      ]
+    },
+    {
+      "name": "Playtester",
+      "color": "#5FA8D3",
+      "hoist": false,
+      "mentionable": false,
+      "permissions": []
+    },
+    {
+      "name": "Translator",
+      "color": "#8FBF7F",
+      "hoist": false,
+      "mentionable": false,
+      "permissions": []
+    },
+    {
+      "name": "Run of the Nine",
+      "color": "#D98C5F",
+      "hoist": false,
+      "mentionable": true,
+      "permissions": []
+    },
+    {
+      "name": "Corebound",
+      "color": "#7F8FD9",
+      "hoist": false,
+      "mentionable": true,
+      "permissions": []
+    },
+    {
+      "name": "Patch Notes",
+      "color": null,
+      "hoist": false,
+      "mentionable": true,
+      "permissions": []
+    },
+    {
+      "name": "Events",
+      "color": null,
+      "hoist": false,
+      "mentionable": true,
+      "permissions": []
+    },
+    {
+      "name": "Playtest volunteer",
+      "color": null,
+      "hoist": false,
+      "mentionable": false,
+      "permissions": []
+    },
+    {
+      "name": "Translation volunteer",
+      "color": null,
+      "hoist": false,
+      "mentionable": false,
+      "permissions": []
+    }
   ],
-  "role_order": ["@bot", "Moderator", "Playtester", "Translator", "Run of the Nine", "Corebound", "Patch Notes", "Events"],
+  "role_order": [
+    "@bot",
+    "Moderator",
+    "Playtester",
+    "Translator",
+    "Run of the Nine",
+    "Corebound",
+    "Patch Notes",
+    "Events",
+    "Playtest volunteer",
+    "Translation volunteer"
+  ],
+  "countries": [
+    [
+      "🇩🇪",
+      "Germany"
+    ],
+    [
+      "🇦🇹",
+      "Austria"
+    ],
+    [
+      "🇨🇭",
+      "Switzerland"
+    ],
+    [
+      "🇫🇷",
+      "France"
+    ],
+    [
+      "🇧🇪",
+      "Belgium"
+    ],
+    [
+      "🇳🇱",
+      "Netherlands"
+    ],
+    [
+      "🇱🇺",
+      "Luxembourg"
+    ],
+    [
+      "🇬🇧",
+      "United Kingdom"
+    ],
+    [
+      "🇮🇪",
+      "Ireland"
+    ],
+    [
+      "🇪🇸",
+      "Spain"
+    ],
+    [
+      "🇵🇹",
+      "Portugal"
+    ],
+    [
+      "🇮🇹",
+      "Italy"
+    ],
+    [
+      "🇩🇰",
+      "Denmark"
+    ],
+    [
+      "🇸🇪",
+      "Sweden"
+    ],
+    [
+      "🇳🇴",
+      "Norway"
+    ],
+    [
+      "🇫🇮",
+      "Finland"
+    ],
+    [
+      "🇮🇸",
+      "Iceland"
+    ],
+    [
+      "🇵🇱",
+      "Poland"
+    ],
+    [
+      "🇨🇿",
+      "Czechia"
+    ],
+    [
+      "🇸🇰",
+      "Slovakia"
+    ],
+    [
+      "🇭🇺",
+      "Hungary"
+    ],
+    [
+      "🇷🇴",
+      "Romania"
+    ],
+    [
+      "🇧🇬",
+      "Bulgaria"
+    ],
+    [
+      "🇬🇷",
+      "Greece"
+    ],
+    [
+      "🇭🇷",
+      "Croatia"
+    ],
+    [
+      "🇸🇮",
+      "Slovenia"
+    ],
+    [
+      "🇷🇸",
+      "Serbia"
+    ],
+    [
+      "🇺🇦",
+      "Ukraine"
+    ],
+    [
+      "🇪🇪",
+      "Estonia"
+    ],
+    [
+      "🇱🇻",
+      "Latvia"
+    ],
+    [
+      "🇱🇹",
+      "Lithuania"
+    ],
+    [
+      "🇹🇷",
+      "Türkiye"
+    ],
+    [
+      "🇺🇸",
+      "United States"
+    ],
+    [
+      "🇨🇦",
+      "Canada"
+    ],
+    [
+      "🇲🇽",
+      "Mexico"
+    ],
+    [
+      "🇧🇷",
+      "Brazil"
+    ],
+    [
+      "🇦🇷",
+      "Argentina"
+    ],
+    [
+      "🇨🇱",
+      "Chile"
+    ],
+    [
+      "🇨🇴",
+      "Colombia"
+    ],
+    [
+      "🇵🇪",
+      "Peru"
+    ],
+    [
+      "🇯🇵",
+      "Japan"
+    ],
+    [
+      "🇰🇷",
+      "South Korea"
+    ],
+    [
+      "🇨🇳",
+      "China"
+    ],
+    [
+      "🇹🇼",
+      "Taiwan"
+    ],
+    [
+      "🇮🇳",
+      "India"
+    ],
+    [
+      "🇵🇭",
+      "Philippines"
+    ],
+    [
+      "🇮🇩",
+      "Indonesia"
+    ],
+    [
+      "🇦🇺",
+      "Australia"
+    ],
+    [
+      "🇳🇿",
+      "New Zealand"
+    ],
+    [
+      "🇿🇦",
+      "South Africa"
+    ]
+  ],
+  "emojis": [
+    {
+      "name": "run_of_the_nine",
+      "file": "emoji/rotn.png"
+    },
+    {
+      "name": "corebound",
+      "file": "emoji/corebound.png"
+    }
+  ],
+  "community": {
+    "rules_channel": "rules",
+    "updates_channel": "mod-log",
+    "preferred_locale": "en-US",
+    "description": "Kratossos: Run of the Nine, a Sudoku roguelike through a Japanese garden, and Corebound, an action roguelite about protecting a living Core."
+  },
+  "welcome_screen": {
+    "description": "Home of Run of the Nine and Corebound. Pick your games and your flag in Channels & Roles.",
+    "channels": [
+      {
+        "channel": "rules",
+        "description": "Read the rules first",
+        "emoji": "📜"
+      },
+      {
+        "channel": "rotn-chat",
+        "description": "Run of the Nine: runs, seeds, questions",
+        "custom_emoji": "run_of_the_nine"
+      },
+      {
+        "channel": "cb-chat",
+        "description": "Corebound: runs, builds, questions",
+        "custom_emoji": "corebound"
+      },
+      {
+        "channel": "faq",
+        "description": "Answers to common questions",
+        "emoji": "❓"
+      },
+      {
+        "channel": "general",
+        "description": "Say hello",
+        "emoji": "👋"
+      }
+    ]
+  },
+  "onboarding": {
+    "default_channels": [
+      "welcome",
+      "rules",
+      "announcements",
+      "faq",
+      "general",
+      "screenshots-and-clips",
+      "rotn-chat",
+      "rotn-seeds-and-walks",
+      "cb-chat",
+      "cb-builds"
+    ],
+    "prompts": [
+      {
+        "title": "Which games do you play?",
+        "required": false,
+        "options": [
+          {
+            "title": "Run of the Nine",
+            "description": "Sudoku roguelike through a Japanese garden",
+            "custom_emoji": "run_of_the_nine",
+            "roles": [
+              "Run of the Nine"
+            ],
+            "channels": [
+              "rotn-chat",
+              "rotn-seeds-and-walks",
+              "rotn-news",
+              "rotn-bugs",
+              "rotn-feedback"
+            ]
+          },
+          {
+            "title": "Corebound",
+            "description": "Action roguelite: protect the living Core",
+            "custom_emoji": "corebound",
+            "roles": [
+              "Corebound"
+            ],
+            "channels": [
+              "cb-chat",
+              "cb-builds",
+              "cb-news",
+              "cb-bugs",
+              "cb-feedback"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Ping me for…",
+        "required": false,
+        "options": [
+          {
+            "title": "Patch notes",
+            "description": "New builds and updates",
+            "emoji": "📰",
+            "roles": [
+              "Patch Notes"
+            ]
+          },
+          {
+            "title": "Events",
+            "description": "Challenges, seed races, Next Fest",
+            "emoji": "🎉",
+            "roles": [
+              "Events"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Where are you from?",
+        "dropdown": true,
+        "single_select": true,
+        "required": false,
+        "options_from": "countries"
+      },
+      {
+        "title": "Want to help?",
+        "required": false,
+        "options": [
+          {
+            "title": "Playtesting",
+            "description": "Try beta builds before release",
+            "emoji": "🧪",
+            "roles": [
+              "Playtest volunteer"
+            ]
+          },
+          {
+            "title": "Translating",
+            "description": "French, Spanish, Brazilian Portuguese, German",
+            "emoji": "🌐",
+            "roles": [
+              "Translation volunteer"
+            ]
+          }
+        ]
+      }
+    ]
+  },
   "remove": [
-    {"type": "text", "name": "allgemein", "parent": "Textkanäle"},
-    {"type": "voice", "name": "Allgemein", "parent": "Sprachkanäle"},
-    {"type": "category", "name": "Textkanäle"},
-    {"type": "category", "name": "Sprachkanäle"}
+    {
+      "type": "text",
+      "name": "allgemein",
+      "parent": "Textkanäle"
+    },
+    {
+      "type": "voice",
+      "name": "Allgemein",
+      "parent": "Sprachkanäle"
+    },
+    {
+      "type": "category",
+      "name": "Textkanäle"
+    },
+    {
+      "type": "category",
+      "name": "Sprachkanäle"
+    }
   ],
   "categories": [
-    {"name": "Info", "read_only": true, "channels": [
-      {"name": "welcome", "type": "text", "topic": "Start here: what this server is and where to go."},
-      {"name": "rules", "type": "text", "topic": "Server rules. Read them before posting."},
-      {"name": "announcements", "type": "announcement", "topic": "Studio news for Run of the Nine and Corebound."},
-      {"name": "faq", "type": "text", "topic": "Frequently asked questions."}
-    ]},
-    {"name": "Community", "channels": [
-      {"name": "general", "type": "text", "topic": "Talk about anything game-related."},
-      {"name": "screenshots-and-clips", "type": "text", "topic": "Share screenshots and clips from both games."}
-    ]},
-    {"name": "Run of the Nine", "channels": [
-      {"name": "rotn-news", "type": "announcement", "read_only": true, "topic": "Patch notes and news for Run of the Nine."},
-      {"name": "rotn-chat", "type": "text", "topic": "Run of the Nine: strategies, runs, questions."},
-      {"name": "rotn-seeds-and-walks", "type": "text", "topic": "Share run seeds and talk about the Daily Walk and Monthly Walk."},
-      {"name": "rotn-bugs", "type": "forum", "topic": "One post per bug: what happened, what you expected, build version, steps. Screenshots help.",
-       "tags": ["Bug", "Crash", "Save", "UI", "Translation", "Needs info", "Fixed"]},
-      {"name": "rotn-feedback", "type": "forum", "topic": "Ideas and feedback for Run of the Nine. One topic per post.",
-       "tags": ["Idea", "Balance", "UX", "Planned", "Done"]}
-    ]},
-    {"name": "Corebound", "channels": [
-      {"name": "cb-news", "type": "announcement", "read_only": true, "topic": "Patch notes and news for Corebound."},
-      {"name": "cb-chat", "type": "text", "topic": "Corebound: runs, classes, questions."},
-      {"name": "cb-builds", "type": "text", "topic": "Decks, loadouts and strategies."},
-      {"name": "cb-bugs", "type": "forum", "topic": "One post per bug: what happened, what you expected, build version, steps. Screenshots help.",
-       "tags": ["Bug", "Crash", "Save", "UI", "Translation", "Needs info", "Fixed"]},
-      {"name": "cb-feedback", "type": "forum", "topic": "Ideas and feedback for Corebound. One topic per post.",
-       "tags": ["Idea", "Balance", "UX", "Planned", "Done"]}
-    ]},
-    {"name": "Playtest", "visible_to": ["Playtester", "Moderator"], "channels": [
-      {"name": "playtest-info", "type": "text", "read_only": true, "topic": "Beta branch name and password, what to test."},
-      {"name": "playtest-feedback", "type": "forum", "topic": "Feedback on beta builds.", "tags": ["Run of the Nine", "Corebound", "Bug", "Feedback"]}
-    ]},
-    {"name": "Translation", "visible_to": ["Translator", "Moderator"], "channels": [
-      {"name": "translation", "type": "forum", "topic": "Translation review: one post per language or batch.", "tags": ["fr", "es", "pt-BR", "de", "Done"]}
-    ]},
-    {"name": "Staff", "visible_to": ["Moderator"], "channels": [
-      {"name": "mod-log", "type": "text", "read_only": true, "topic": "AutoMod alerts and moderation notes."},
-      {"name": "release-drafts", "type": "text", "topic": "Drafts of announcements and texts for the owner's OK."},
-      {"name": "claude-ops", "type": "text", "visible_to_only": [], "topic": "Owner and Claude (via the bot)."}
-    ]},
-    {"name": "Voice", "channels": [
-      {"name": "Lounge", "type": "voice"}
-    ]}
+    {
+      "name": "Info",
+      "read_only": true,
+      "channels": [
+        {
+          "name": "welcome",
+          "type": "text",
+          "topic": "Start here: what this server is and where to go."
+        },
+        {
+          "name": "rules",
+          "type": "text",
+          "topic": "Server rules. Read them before posting."
+        },
+        {
+          "name": "announcements",
+          "type": "announcement",
+          "topic": "Studio news for Run of the Nine and Corebound."
+        },
+        {
+          "name": "faq",
+          "type": "text",
+          "topic": "Frequently asked questions."
+        }
+      ]
+    },
+    {
+      "name": "Community",
+      "channels": [
+        {
+          "name": "general",
+          "type": "text",
+          "topic": "Talk about anything game-related."
+        },
+        {
+          "name": "screenshots-and-clips",
+          "type": "text",
+          "topic": "Share screenshots and clips from both games."
+        }
+      ]
+    },
+    {
+      "name": "Run of the Nine",
+      "channels": [
+        {
+          "name": "rotn-news",
+          "type": "announcement",
+          "read_only": true,
+          "topic": "Patch notes and news for Run of the Nine."
+        },
+        {
+          "name": "rotn-chat",
+          "type": "text",
+          "topic": "Run of the Nine: strategies, runs, questions."
+        },
+        {
+          "name": "rotn-seeds-and-walks",
+          "type": "text",
+          "topic": "Share run seeds and talk about the Daily Walk and Monthly Walk."
+        },
+        {
+          "name": "rotn-bugs",
+          "type": "forum",
+          "topic": "One post per bug: what happened, what you expected, build version, steps. Screenshots help.",
+          "tags": [
+            "Bug",
+            "Crash",
+            "Save",
+            "UI",
+            "Translation",
+            "Needs info",
+            "Fixed"
+          ]
+        },
+        {
+          "name": "rotn-feedback",
+          "type": "forum",
+          "topic": "Ideas and feedback for Run of the Nine. One topic per post.",
+          "tags": [
+            "Idea",
+            "Balance",
+            "UX",
+            "Planned",
+            "Done"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Corebound",
+      "channels": [
+        {
+          "name": "cb-news",
+          "type": "announcement",
+          "read_only": true,
+          "topic": "Patch notes and news for Corebound."
+        },
+        {
+          "name": "cb-chat",
+          "type": "text",
+          "topic": "Corebound: runs, classes, questions."
+        },
+        {
+          "name": "cb-builds",
+          "type": "text",
+          "topic": "Decks, loadouts and strategies."
+        },
+        {
+          "name": "cb-bugs",
+          "type": "forum",
+          "topic": "One post per bug: what happened, what you expected, build version, steps. Screenshots help.",
+          "tags": [
+            "Bug",
+            "Crash",
+            "Save",
+            "UI",
+            "Translation",
+            "Needs info",
+            "Fixed"
+          ]
+        },
+        {
+          "name": "cb-feedback",
+          "type": "forum",
+          "topic": "Ideas and feedback for Corebound. One topic per post.",
+          "tags": [
+            "Idea",
+            "Balance",
+            "UX",
+            "Planned",
+            "Done"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Playtest",
+      "visible_to": [
+        "Playtester",
+        "Moderator"
+      ],
+      "channels": [
+        {
+          "name": "playtest-info",
+          "type": "text",
+          "read_only": true,
+          "topic": "Beta branch name and password, what to test."
+        },
+        {
+          "name": "playtest-feedback",
+          "type": "forum",
+          "topic": "Feedback on beta builds.",
+          "tags": [
+            "Run of the Nine",
+            "Corebound",
+            "Bug",
+            "Feedback"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Translation",
+      "visible_to": [
+        "Translator",
+        "Moderator"
+      ],
+      "channels": [
+        {
+          "name": "translation",
+          "type": "forum",
+          "topic": "Translation review: one post per language or batch.",
+          "tags": [
+            "fr",
+            "es",
+            "pt-BR",
+            "de",
+            "Done"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Staff",
+      "visible_to": [
+        "Moderator"
+      ],
+      "channels": [
+        {
+          "name": "mod-log",
+          "type": "text",
+          "read_only": true,
+          "topic": "AutoMod alerts and moderation notes."
+        },
+        {
+          "name": "release-drafts",
+          "type": "text",
+          "topic": "Drafts of announcements and texts for the owner's OK."
+        },
+        {
+          "name": "claude-ops",
+          "type": "text",
+          "visible_to_only": [],
+          "topic": "Owner and Claude (via the bot)."
+        }
+      ]
+    },
+    {
+      "name": "Voice",
+      "channels": [
+        {
+          "name": "Lounge",
+          "type": "voice"
+        }
+      ]
+    }
   ],
   "steam_news": [
-    {"key": "rotn", "game": "Run of the Nine", "app_id": 4858470, "channel": "rotn-news", "ping_role": "Patch Notes", "color": "#D98C5F"},
-    {"key": "cb", "game": "Corebound", "app_id": 5420920, "channel": "cb-news", "ping_role": "Patch Notes", "color": "#7F8FD9"}
+    {
+      "key": "rotn",
+      "game": "Run of the Nine",
+      "app_id": 4858470,
+      "channel": "rotn-news",
+      "ping_role": "Patch Notes",
+      "color": "#D98C5F"
+    },
+    {
+      "key": "cb",
+      "game": "Corebound",
+      "app_id": 5420920,
+      "channel": "cb-news",
+      "ping_role": "Patch Notes",
+      "color": "#7F8FD9"
+    }
   ],
   "automod": [
-    {"name": "Block slurs and sexual content", "trigger_type": 4, "trigger_metadata": {"presets": [2, 3]}},
-    {"name": "Mention spam", "trigger_type": 5, "trigger_metadata": {"mention_total_limit": 5, "mention_raid_protection_enabled": true}},
-    {"name": "Spam content", "trigger_type": 3, "trigger_metadata": {}},
-    {"name": "Invite links to other servers", "trigger_type": 1,
-     "trigger_metadata": {"regex_patterns": ["discord(?:app)?\\.(?:gg|com/invite)/[A-Za-z0-9-]+"], "allow_list": []}}
+    {
+      "name": "Block slurs and sexual content",
+      "trigger_type": 4,
+      "trigger_metadata": {
+        "presets": [
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "name": "Mention spam",
+      "trigger_type": 5,
+      "trigger_metadata": {
+        "mention_total_limit": 5,
+        "mention_raid_protection_enabled": true
+      }
+    },
+    {
+      "name": "Spam content",
+      "trigger_type": 3,
+      "trigger_metadata": {}
+    },
+    {
+      "name": "Invite links to other servers",
+      "trigger_type": 1,
+      "trigger_metadata": {
+        "regex_patterns": [
+          "discord(?:app)?\\.(?:gg|com/invite)/[A-Za-z0-9-]+"
+        ],
+        "allow_list": []
+      }
+    }
   ]
 }

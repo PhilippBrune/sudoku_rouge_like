@@ -7,7 +7,8 @@ logged or written anywhere else. Standard library only.
     python tools/discord/discord_admin.py status
     python tools/discord/discord_admin.py plan  [layout.json]   # dry run: what apply would change
     python tools/discord/discord_admin.py apply [layout.json]   # create/update roles, channels, overwrites, AutoMod
-    python tools/discord/discord_admin.py post  <channel-name> <message.md>  # split at 2,000 characters
+    python tools/discord/discord_admin.py post    <channel-name> <message.md>  # split at '---' lines and 2,000 characters
+    python tools/discord/discord_admin.py replace <channel-name> <message.md>  # delete the bot's posts there, then post
 
 Forum channels need Community (Server Settings -> Enable Community); until then plan/apply list them as waiting.
 """
@@ -159,6 +160,10 @@ class State:
         self.roles = api('GET', f'/guilds/{self.gid}/roles')
         self.channels = api('GET', f'/guilds/{self.gid}/channels')
         self.guild = api('GET', f'/guilds/{self.gid}')
+        self.emojis = api('GET', f'/guilds/{self.gid}/emojis')
+
+    def emoji(self, name):
+        return next((e for e in self.emojis if e['name'] == name), None)
 
     @property
     def community(self):
@@ -253,7 +258,9 @@ def build_plan(state, layout):
         actions.append((f'@everyone permissions: +{added or "-"} -{removed or "-"}',
                         lambda: api('PATCH', f'/guilds/{gid}/roles/{gid}', {'permissions': str(want_everyone)}, 'base permissions')))
 
-    for spec in layout.get('roles', []):
+    import community  # noqa: E402 (Community features: emojis, onboarding, welcome screen, country roles)
+
+    for spec in community.role_specs(layout):
         body = {'name': spec['name'], 'permissions': str(perms(spec.get('permissions', []))), 'color': color_int(spec.get('color')),
                 'hoist': spec.get('hoist', False), 'mentionable': spec.get('mentionable', False)}
         role = state.role(spec['name'])
@@ -266,7 +273,7 @@ def build_plan(state, layout):
 
     # Role hierarchy, top to bottom, directly above @everyone. Discord gives new roles position 1, so without this
     # they tie with the bot's role, and the bot can only manage roles strictly below its own.
-    order = [state.role(n) for n in layout.get('role_order', [])]
+    order = [state.role(n) for n in community.role_order(layout)]
     if order and all(order):
         wanted = {r['id']: len(order) - i for i, r in enumerate(order)}
         if any(r['position'] != wanted[r['id']] for r in order):
@@ -353,6 +360,7 @@ def build_plan(state, layout):
                     'trigger_metadata': s.get('trigger_metadata', {}), 'actions': acts, 'enabled': True}
             return api('POST', f'/guilds/{gid}/auto-moderation/rules', body, 'server layout')
         actions.append((f'Create AutoMod rule "{spec["name"]}" (alerts to #mod-log)', create_rule))
+    actions += community.actions(state, layout)
     return problems, actions
 
 
@@ -376,8 +384,13 @@ def cmd_plan(layout, apply=False):
         sys.exit('Not applied: fix the problems above first.')
     failed = run_actions(state, actions, 'done')
     # Channels created in this pass can need their overwrites resolved against roles created in the same pass.
-    _, follow_up = build_plan(state, layout)
-    failed += run_actions(state, [a for a in follow_up if a[0] not in {d for d, _ in failed}], 'done (second pass)')
+    # Later passes: overwrites for roles created in this run, forums once Community is on, onboarding for new channels.
+    for n in (2, 3):
+        _, follow_up = build_plan(state, layout)
+        follow_up = [a for a in follow_up if a[0] not in {d for d, _ in failed}]
+        if not follow_up:
+            break
+        failed += run_actions(state, follow_up, f'done (pass {n})')
     if failed:
         print(f'{len(failed)} change(s) failed:')
         for desc, err in failed:
@@ -399,15 +412,36 @@ def run_actions(state, actions, label):
 
 
 PARAGRAPH = '\n\n'
+BREAK = '\n---\n'
 
 
-def cmd_post(layout, channel_name, message_path):
-    """Posts a Markdown file to a channel, split at paragraph breaks into messages of at most 2,000 characters."""
+def split_message(text: str) -> list:
+    """Messages of at most 2,000 characters: a line '---' forces a new message, paragraphs are never cut."""
+    chunks = []
+    for part in text.split(BREAK):
+        chunks += _pack(part.strip())
+    return [c for c in chunks if c]
+
+
+def cmd_post(layout, channel_name, message_path, replace=False):
+    """Posts a Markdown file to a channel (see split_message); `replace` first deletes the bot's own posts there."""
     state = State(guild_id(layout))
     channel = state.channel(channel_name)
     if channel is None:
         sys.exit(f'No channel #{channel_name}')
-    text = Path(message_path).read_text(encoding='utf-8').strip()
+    chunks = split_message(Path(message_path).read_text(encoding='utf-8').strip())
+    if replace:
+        old = [m for m in api('GET', f'/channels/{channel["id"]}/messages?limit=50') if m['author']['id'] == state.me['id']]
+        for m in old:
+            api('DELETE', f'/channels/{channel["id"]}/messages/{m["id"]}', None, 'replaced by a new version')
+        print(f'Deleted {len(old)} earlier post(s) in #{channel["name"]}')
+    for chunk in chunks:
+        api('POST', f'/channels/{channel["id"]}/messages',
+            {'content': chunk, 'allowed_mentions': {'parse': []}}, 'post')
+    print(f'Posted {len(chunks)} message(s) to #{channel["name"]}')
+
+
+def _pack(text: str) -> list:
     chunks, current = [], ''
     for para in text.split(PARAGRAPH):
         candidate = (current + PARAGRAPH + para) if current else para
@@ -417,14 +451,11 @@ def cmd_post(layout, channel_name, message_path):
         if current:
             chunks.append(current)
         if len(para) > 2000:
-            sys.exit(f'A paragraph in {message_path} is longer than 2,000 characters')
+            sys.exit(f'A paragraph is longer than 2,000 characters: {para[:60]}...')
         current = para
     if current:
         chunks.append(current)
-    for chunk in chunks:
-        api('POST', f'/channels/{channel["id"]}/messages',
-            {'content': chunk, 'allowed_mentions': {'parse': []}}, 'post')
-    print(f'Posted {len(chunks)} message(s) to #{channel["name"]}')
+    return chunks
 
 
 def main(argv):
@@ -443,6 +474,8 @@ def main(argv):
             cmd_plan(layout, apply=True)
         elif cmd == 'post' and len(rest) == 2:
             cmd_post(layout, rest[0], rest[1])
+        elif cmd == 'replace' and len(rest) == 2:
+            cmd_post(layout, rest[0], rest[1], replace=True)
         else:
             sys.exit('unknown command or arguments: ' + ' '.join(argv))
     except ApiError as e:

@@ -9,6 +9,10 @@ logged or written anywhere else. Standard library only.
     python tools/discord/discord_admin.py apply [layout.json]   # create/update roles, channels, overwrites, AutoMod
     python tools/discord/discord_admin.py post    <channel-name> <message.md>  # split at '---' lines and 2,000 characters
     python tools/discord/discord_admin.py replace <channel-name> <message.md>  # delete the bot's posts there, then post
+    python tools/discord/discord_admin.py set-icon <png>                       # server icon (brand/server_icon.png)
+    python tools/discord/discord_admin.py invite [channel]                     # the permanent invite link
+    python tools/discord/discord_admin.py export-credits                       # Playtester/Translator names -> game credits
+    python tools/discord/discord_admin.py poll <channel> "Question?" "🎵 Answer one" "Answer two" ...  # 72 h poll
 
 Forum channels need Community (Server Settings -> Enable Community); until then plan/apply list them as waiting.
 """
@@ -429,7 +433,11 @@ def cmd_post(layout, channel_name, message_path, replace=False):
     channel = state.channel(channel_name)
     if channel is None:
         sys.exit(f'No channel #{channel_name}')
-    chunks = split_message(Path(message_path).read_text(encoding='utf-8').strip())
+    text = Path(message_path).read_text(encoding='utf-8').strip()
+    # <:name:> -> the server's custom emoji (Discord needs its id)
+    import re
+    text = re.sub(r'<:(\w+):>', lambda m: f'<:{m[1]}:{state.emoji(m[1])["id"]}>' if state.emoji(m[1]) else f':{m[1]}:', text)
+    chunks = split_message(text)
     if replace:
         old = [m for m in api('GET', f'/channels/{channel["id"]}/messages?limit=50') if m['author']['id'] == state.me['id']]
         for m in old:
@@ -439,6 +447,79 @@ def cmd_post(layout, channel_name, message_path, replace=False):
         api('POST', f'/channels/{channel["id"]}/messages',
             {'content': chunk, 'allowed_mentions': {'parse': []}}, 'post')
     print(f'Posted {len(chunks)} message(s) to #{channel["name"]}')
+
+
+def cmd_set_icon(layout, png_path):
+    import community
+    gid = guild_id(layout)
+    api('PATCH', f'/guilds/{gid}', {'icon': community._data_uri(Path(png_path))}, 'server icon')
+    print(f'Server icon set from {png_path}')
+
+
+def cmd_invite(layout, channel_name='welcome'):
+    """The server's permanent invite (never expires, unlimited uses); reuses an existing one."""
+    state = State(guild_id(layout))
+    channel = state.channel(channel_name)
+    for inv in api('GET', f'/channels/{channel["id"]}/invites'):
+        if inv.get('max_age') == 0 and inv.get('max_uses') == 0 and inv.get('inviter', {}).get('id') == state.me['id']:
+            print(f'https://discord.gg/{inv["code"]}')
+            return
+    inv = api('POST', f'/channels/{channel["id"]}/invites', {'max_age': 0, 'max_uses': 0, 'unique': True}, 'permanent invite')
+    print(f'https://discord.gg/{inv["code"]}')
+
+
+def cmd_poll(layout, channel_name, question, answers, hours=72, multi=False):
+    """A native Discord poll (2-10 answers; 'emoji Text' gives the answer an emoji)."""
+    state = State(guild_id(layout))
+    channel = state.channel(channel_name)
+    if channel is None:
+        sys.exit(f'No channel #{channel_name}')
+    media = []
+    for a in answers:
+        first, _, rest = a.partition(' ')
+        media.append({'poll_media': {'text': rest, 'emoji': {'name': first}}} if rest and not first.isascii()
+                     else {'poll_media': {'text': a}})
+    api('POST', f'/channels/{channel["id"]}/messages',
+        {'poll': {'question': {'text': question}, 'answers': media, 'duration': hours, 'allow_multiselect': multi}}, 'poll')
+    print(f'Poll posted in #{channel["name"]} ({hours} h)')
+
+
+def list_members(gid):
+    """All members (needs "Server Members Intent" on the bot: Developer Portal -> Bot -> Privileged Gateway Intents)."""
+    try:
+        return api('GET', f'/guilds/{gid}/members?limit=1000')
+    except ApiError as e:
+        if e.status == 403:
+            sys.exit('Listing members needs the "Server Members Intent": Discord Developer Portal -> your bot -> Bot -> '
+                     'Privileged Gateway Intents -> Server Members Intent on, then Save. Nothing was changed.')
+        raise
+
+
+CREDITS_FILE = HERE.parents[1] / 'Assets' / 'Resources' / 'credits_community.json'
+
+
+def cmd_export_credits(layout):
+    """Writes the game's community credits (CREDITS-COMMUNITY-001) from the Playtester and Translator roles.
+    Names are the members' server display names; review the file before a build. A translator's language comes from
+    an existing entry with the same name (kept when re-exporting)."""
+    state = State(guild_id(layout))
+    roles = {name: state.role(name) for name in ('Playtester', 'Translator')}
+    members = list_members(state.gid)
+    old = json.loads(CREDITS_FILE.read_text(encoding='utf-8-sig')) if CREDITS_FILE.exists() else {}
+    languages = {t.get('name'): t.get('language', '') for t in old.get('translators', [])}
+
+    def display(m):
+        return m.get('nick') or m['user'].get('global_name') or m['user']['username']
+
+    def has(m, role_name):
+        return roles[role_name] is not None and roles[role_name]['id'] in m['roles'] and not m['user'].get('bot')
+
+    data = {'discord': old.get('discord', ''),
+            'playtesters': sorted({display(m) for m in members if has(m, 'Playtester')}, key=str.lower),
+            'translators': [{'name': n, 'language': languages.get(n, '')}
+                            for n in sorted({display(m) for m in members if has(m, 'Translator')}, key=str.lower)]}
+    CREDITS_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    print(f'{len(data["playtesters"])} playtester(s), {len(data["translators"])} translator(s) -> {CREDITS_FILE}')
 
 
 def _pack(text: str) -> list:
@@ -476,6 +557,14 @@ def main(argv):
             cmd_post(layout, rest[0], rest[1])
         elif cmd == 'replace' and len(rest) == 2:
             cmd_post(layout, rest[0], rest[1], replace=True)
+        elif cmd == 'set-icon' and len(rest) == 1:
+            cmd_set_icon(layout, rest[0])
+        elif cmd == 'export-credits':
+            cmd_export_credits(layout)
+        elif cmd == 'invite':
+            cmd_invite(layout, *rest[:1])
+        elif cmd == 'poll' and len(rest) >= 4:
+            cmd_poll(layout, rest[0], rest[1], rest[2:])
         else:
             sys.exit('unknown command or arguments: ' + ' '.join(argv))
     except ApiError as e:

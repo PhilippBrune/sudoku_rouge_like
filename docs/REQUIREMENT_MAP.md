@@ -33,6 +33,8 @@ Legend: ✅ Implemented and verified | ⚠️ Partial / conflicting | ❌ Not im
 | [CLASS](#class-progression-unlocks) | `docs/ClassProgressionUnlocks.md` | ✅ 1 · ◻️ 3 |
 | [DISPLAY](#display-modes) | `docs/GameDesignSpec.md` | ✅ 7 |
 | [UI-OPT](#options-panels) | `docs/GameDesignSpec.md` | ✅ 3 |
+| [RUN-WEEK](#shared-challenges) | `docs/GameDesignSpec.md` | ✅ 2 |
+| [CREDITS](#credits) | `docs/GameDesignSpec.md` | ✅ 1 |
 | [UI-STYLE](#in-run-visual-style) | `docs/design/layout-proposals.md` | ✅ 1 · ◻️ 2 |
 | [LOC](#localization) | `docs/localization-catalog.md` | ✅ 3 |
 | [AUDIO](#audio) | `docs/AudioVisualDirection.md` | ✅ 3 · ◻️ 4 |
@@ -631,6 +633,27 @@ Key requirements (see spec for full list):
 | UI-OPT-001 | In-run Options use the main Options' tabs, controls and look (one factory) | `Assets/Scripts/UI/OptionsUiFactory.cs` | `BuildStandardTabs` (called by `MainMenuBlueprintBuilder.BuildOptionsPanel` and `InRunUiBlueprintBuilder.BuildInGameOptionsPanel`) | GeneratedUiPlayModeTraversalTests (`InRunOptions_OfferEveryMainMenuOptionsControl`, `InRunOptionsControls_CanBeChangedWithoutLeavingOptionsPanel`), GeneratedUiWiringContractTests, screenshots | ✅ |
 | UI-OPT-002 | In-run Accessibility and Run tabs; Back always visible | `Assets/Scripts/UI/InRunUiBlueprintBuilder.cs` | `BuildInGameOptionsPanel`, `OptionsUiFactory.BuildAccessibilitySection` | GeneratedUiPlayModeTraversalTests, InRunUiPlayModeTests (`RunMenu_ShowsSeedAndModifiers_AndAbandonEndsTheRun`) | ✅ |
 | UI-OPT-003 | D-pad reaches every control of every tab, the tab bar and Back | `Assets/Scripts/UI/OptionsTabSet.cs` | `Relink`, `Activate` | GeneratedUiPlayModeTraversalTests (`OptionsPanels_EveryControlIsReachableWithTheDpad`) | ✅ |
+
+---
+
+## Shared Challenges
+
+**Spec:** `docs/GameDesignSpec.md` v1.10 §Shared challenges
+
+| ID | Description | File | Method | Evidence | Status |
+| ---- | ------------- | ------ | -------- | ---------- | -------- |
+| RUN-WEEK-001 | Seed of the week per ISO week, button in the start-run modal | `Assets/Scripts/Run/WeeklySeedService.cs`, `MainMenuController.StartRun.cs` | `SeedFor`, `CreateWeeklySeedButton` | WalkCalendarParityTests | ✅ |
+| RUN-WEEK-002 | Discord posts compute daily goals, weekly seed and monthly board like the game | `tools/discord/walk_calendar.py`, `walk_posts.py` | `daily_goal_ids`, `weekly_seed`, `monthly_walk` | WalkCalendarParityTests, test_walk_calendar.py, live posts 2026-10-15 | ✅ |
+
+---
+
+## Credits
+
+**Spec:** `docs/GameDesignSpec.md` v1.10 §Credits
+
+| ID | Description | File | Method | Evidence | Status |
+| ---- | ------------- | ------ | -------- | ---------- | -------- |
+| CREDITS-COMMUNITY-001 | Community playtesters and translators and the Discord link in the credits | `Assets/Scripts/UI/CommunityCredits.cs`, `MainMenuBlueprintBuilder.BuildCreditsPanel` | `Load`, `PlaytesterLine`, `TranslatorLine` | CommunityCreditsTests | ✅ |
 
 ---
 

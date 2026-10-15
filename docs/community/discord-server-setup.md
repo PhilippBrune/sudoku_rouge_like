@@ -201,3 +201,28 @@ The game categories are visible to everyone by default. Onboarding pre-selects w
 | **Credits for helpers**: playtesters and translators named in the game's credits | a list in the credits panel |
 | **Links**: the permanent invite on both Steam store pages and in the main menu or credits | invite link + store page edit |
 | **Safety**: "Require 2FA for moderator actions" and a second human Moderator before the server grows | your settings |
+
+## 12. Daily, weekly and monthly posts (since 2026-10-15)
+
+`tools/discord/walk_posts.py`, run every 30 minutes by the Windows task "Kratossos Walk Posts" (while your PC is on; a missed day is caught up at the next run):
+
+- **Every day:** the Daily Walk's three goals in `#rotn-seeds-and-walks`, with a results thread.
+- **Every Monday:** the **Seed of the week** (players type it into the start-run seed field; from the next update a "Week N seed" button fills it in), a Discord **Event** for the week, an @Events ping and a results thread.
+- **Every 1st:** the **Monthly Walk** board (theme, size, regions, modifiers), an Event for the month, @Events ping, results thread.
+- The contents come from `walk_calendar.py`, which computes them exactly like the game (GameDesignSpec RUN-WEEK-002).
+- **Seed Champion:** pick the best result from a thread and run `python tools/discord/walk_posts.py champion <name>`; `champion --reset` clears the role (needs the Server Members Intent, see below).
+
+## 13. Server extras (2026-10-15)
+
+- **Server icon** "Kratossos Games": `tools/discord/brand/server_icon.html` (a brush ensō around the Nine with a glowing core), rendered to `server_icon.png` and set with `discord_admin.py set-icon`.
+- **Emojis:** the two game icons, 8 classes, 5 bosses, 10 items and relics (`build_assets.py` makes them from the game's art). **Soundboard:** 8 of the code-made 8-bit effects (puzzle solved, level up, gold, victory, wrong digit, achievement, boss gate, fanfare).
+- **Guide channels:** `#how-to-play`, `#known-issues`, `#roadmap` (texts in `texts/`, drafts in `#release-drafts` until you say "post guide"). To show them in Discord's **Server Guide**: Server Settings → Onboarding → Server Guide → Resource pages → add the three channels (the Server Guide has no public API).
+- **`#dev-log`** (announcement channel, staff posts) and **`#polls`** (members vote, staff ask): `discord_admin.py poll polls "Question?" "🎵 Answer" "Answer"`.
+- **Permanent invite:** https://discord.gg/5YxKpA6f6k (`discord_admin.py invite`). It is in the game's credits; for the Steam store pages: Steamworks → (app) → Store Page Admin → the social-media links (Discord) → paste, Save, then Publish (both apps; your step).
+- **Community credits:** `discord_admin.py export-credits` writes the Playtester and Translator names into the game's credits (CREDITS-COMMUNITY-001). Ask helpers before giving them the role that their server name goes into the credits.
+
+**Your steps:**
+1. **Server Members Intent:** Developer Portal → your bot → Bot → Privileged Gateway Intents → *Server Members Intent* on → Save. Needed for `export-credits` and `champion --reset`.
+2. **Require 2FA for moderator actions:** only the server owner can switch it on (Server Settings → Safety Setup → Permissions → *Require 2FA for moderator actions*), and your own account needs 2FA first.
+3. **A second human Moderator:** pick someone you trust from the community and give them the Moderator role.
+4. The Discord link on both Steam store pages (above).

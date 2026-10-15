@@ -1,0 +1,47 @@
+<!doctype html><html><head><meta charset="utf-8">
+<!-- Kratossos Games server icon (1024×1024): a brush ensō (Run of the Nine's scroll style) around a 3×3 grid (the
+     Nine) whose centre cell is a glowing core (Corebound). Rendered with headless Chrome, see brand/README in the
+     setup guide. -->
+<style>
+  html, body { margin:0; width:1024px; height:1024px; overflow:hidden; background:#0e140f; }
+  svg { display:block; }
+</style></head><body>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="45%" r="70%">
+      <stop offset="0" stop-color="#22301f"/><stop offset=".62" stop-color="#121a12"/><stop offset="1" stop-color="#0a0e0a"/>
+    </radialGradient>
+    <radialGradient id="core" cx="50%" cy="45%" r="60%">
+      <stop offset="0" stop-color="#fff4d0"/><stop offset=".35" stop-color="#ffd27a"/><stop offset=".75" stop-color="#f4a259"/><stop offset="1" stop-color="#c8553d"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ffcf7a" stop-opacity=".75"/><stop offset=".5" stop-color="#f4a259" stop-opacity=".25"/><stop offset="1" stop-color="#f4a259" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="brush" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035 0.6" numOctaves="3" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="22" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="dry"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="9"/><feDisplacementMap in="SourceGraphic" scale="6"/></filter>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <!-- ensō: thick at the start, tapering, open at the top right -->
+  <g filter="url(#brush)">
+    <path d="M676,226 A330,330 0 1 0 806,346" fill="none" stroke="#efe6d2" stroke-width="64" stroke-linecap="round"/>
+  </g>
+  <!-- the Nine: 3×3 grid -->
+  <circle cx="512" cy="530" r="250" fill="url(#glow)"/>
+  <g filter="url(#dry)" stroke="#d4ad55" stroke-width="22" stroke-linecap="round" fill="none">
+    <path d="M428,318 L428,742 M596,318 L596,742 M300,446 L724,446 M300,614 L724,614"/>
+  </g>
+  <!-- the Core: a faceted crystal in the centre cell -->
+  <g transform="translate(512,530)">
+    <path d="M0,-72 L62,0 L0,72 L-62,0 Z" fill="url(#core)"/>
+    <path d="M0,-72 L62,0 L0,0 Z" fill="#fff6dc" opacity=".55"/>
+    <path d="M-62,0 L0,72 L0,0 Z" fill="#a8322a" opacity=".35"/>
+    <path d="M0,-72 L62,0 L0,72 L-62,0 Z" fill="none" stroke="#fff1c9" stroke-width="6" opacity=".8"/>
+  </g>
+  <!-- red seal dot where the ensō opens -->
+  <rect x="732" y="196" width="88" height="88" rx="13" fill="#b23a2e" transform="rotate(-8 776 240)"/>
+  <rect x="745" y="209" width="62" height="62" rx="8" fill="none" stroke="#f2e7cc" stroke-width="6" transform="rotate(-8 776 240)"/>
+</svg>
+</body></html>

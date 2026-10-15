@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.9 | **Date:** 2026-10-14 | **Status:** implemented
+**Version:** 1.10 | **Date:** 2026-10-15 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.10 | 2026-10-15 | implemented | Seed of the week: one Garden Run seed per ISO week for all players, a button in the start-run modal (RUN-WEEK-001); the Discord posts compute the Daily Walk goals, the weekly seed and the Monthly Walk board exactly like the game (RUN-WEEK-002). Credits name community playtesters and translators and link the Discord (CREDITS-COMMUNITY-001). |
 | 1.9 | 2026-10-14 | implemented | Options panels (UI-OPT-001..003): the in-run Options use the main Options' tabs, controls and look (one factory, OptionsUiFactory), plus Accessibility and Run tabs; every control is reachable with the D-pad. Options Structure updated to the built tabs. Closes GAP-029 and FUTURE-015. Evidence: GeneratedUiPlayModeTraversalTests, GeneratedUiWiringContractTests, screenshots (E2E report §10.2f). |
 | 1.8 | 2026-10-14 | implemented | Window title "Run of the Nine" in every display mode (DISPLAY-MODE-007), set by the Windows player because the product name keeps the released save folder (SaveLoadArchitecture §Save folder). Evidence: build check B23 (E2E report §10.2d). |
 | 1.7 | 2026-10-12 | implemented | Display modes specified and implemented (DISPLAY-MODE-001..006): Fullscreen, Borderless Fullscreen, Windowed and the new Frameless Window; window sizing, centring, save compatibility and the Fullscreen toggle rule. Evidence: DisplayModeTests, GeneratedUiPlayModeTraversalTests, build check B16–B19 (E2E report §10). |
@@ -377,7 +378,7 @@ Source of truth: [EndlessZenMode](EndlessZenMode.md) (decided 2026-10-07, SPEC-C
 ### Start Game Flow
 
 1. Class Select (locked classes shown disabled with unlock condition; Allow Irregular Puzzles toggle, default ON; Harmony selector)
-2. Start Run confirmation: class, "base (+bonus)" stats, mode, irregular setting, and an optional seed field (digits; empty = random seed)
+2. Start Run confirmation: class, "base (+bonus)" stats, mode, irregular setting, and an optional seed field (digits; empty = random seed) with a "Week N seed" button that fills in the Seed of the week
 3. If a saved run exists: warning that it ends as a defeat (its XP and progress are kept) and "Abandon & Begin" (GAP-032, SPEC-AMB-010)
 4. Launch run
 
@@ -390,6 +391,23 @@ Main menu → Options has three tabs; each has a Reset button for its own settin
 - **Gameplay:** Highlight Errors, Confirm Wrong Placement, Auto Pencil Cleanup, Show Candidate Count, Cursor Snap, Double-Tap to Confirm, Controller Rumble
 
 Below the tabs: Keybindings…, Accessibility… (colorblind, high contrast, reduce motion, alternative constraint symbols, text size, screen reader, with a preview board), Sudoku Tutorial and Back.
+
+### Shared challenges: Daily, Weekly, Monthly
+
+Every shared challenge comes from the date alone, so all players get the same content without a server.
+
+| ID | Requirement |
+|---|---|
+| RUN-WEEK-001 | **Seed of the week:** one Garden Run seed per ISO week (Monday to Sunday), `100000 + FNV-1a("week:YYYY-Www") mod 900000` (six digits). The start-run modal offers it as a "Week N seed" button that fills the seed field; it is reachable with the controller (Up from Begin). Code: `WeeklySeedService`. |
+| RUN-WEEK-002 | **The Discord posts match the game:** `tools/discord/walk_calendar.py` computes the Daily Walk goals (seed = yyyymmdd, `DailyGoalService`), the Seed of the week and the Monthly Walk board (seed = year×100+month, `SeasonalChallengeService`) with a port of `System.Random`'s seeded sequence. The same values are pinned in `WalkCalendarParityTests` (game) and `test_walk_calendar.py` (tool). `walk_posts.py` posts them daily, weekly and monthly (discord-server-setup.md §12). |
+
+The Daily Walk uses each player's local date, so the goals change at local midnight; the Discord post names the date it is for.
+
+### Credits
+
+| ID | Requirement |
+|---|---|
+| CREDITS-COMMUNITY-001 | The credits have a **Community** section: playtesters and translators by name (translators with their language) from `Resources/credits_community.json`, and the Discord invite. The file is written by `discord_admin.py export-credits` from the Discord roles Playtester and Translator and reviewed by the owner before a build; with no names it says that helpers will be named there. |
 
 ### Options Panels (main menu and in-run)
 

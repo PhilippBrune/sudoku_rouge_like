@@ -1,4 +1,10 @@
 ﻿{
+    "Credits.Section.Community":  "Community",
+    "Credits.Role.Playtesters":  "Playtester",
+    "Credits.Role.Translators":  "Übersetzer",
+    "Credits.Body.CommunityEmpty":  "Playtester und Übersetzer aus unserem Discord werden hier genannt.",
+    "Credits.Body.Discord":  "Komm in unseren Discord: {0}",
+    "RunConfirm.WeeklySeed":  "Seed Woche {0}",
     "InRun.Options.RunTab":  "Lauf",
     "Options.LanguageInMainMenu":  "Die Sprache stellst du im Hauptmenü unter Einstellungen um.",
     "DisplayMode.FramelessWindow":  "Rahmenloses Fenster",

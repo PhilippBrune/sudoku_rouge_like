@@ -195,6 +195,8 @@
     <Compile Include="Assets\Scripts\UI\OptionsUiStyle.cs" />
     <Compile Include="Assets\Scripts\UI\OptionsUiFactory.cs" />
     <Compile Include="Assets\Scripts\UI\OptionsTabSet.cs" />
+    <Compile Include="Assets\Scripts\Run\WeeklySeedService.cs" />
+    <Compile Include="Assets\Scripts\UI\CommunityCredits.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Scripts\Game.asmdef" />

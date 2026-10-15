@@ -784,6 +784,29 @@ namespace SudokuRoguelike.UI
             AddBody(T("Credits.Body.AIAssistance"));
             AddSpacer(10f);
 
+            // -- Community: playtesters and translators (CREDITS-COMMUNITY-001) --
+            var community = CommunityCredits.Load();
+            AddHeader(T("Credits.Section.Community"));
+            AddSeparator();
+            AddSpacer(4f);
+            if (community.playtesters.Count > 0)
+            {
+                AddRole(T("Credits.Role.Playtesters"));
+                AddBody(community.PlaytesterLine());
+                AddSpacer(6f);
+            }
+            if (community.translators.Count > 0)
+            {
+                AddRole(T("Credits.Role.Translators"));
+                AddBody(community.TranslatorLine());
+                AddSpacer(6f);
+            }
+            if (!community.HasNames)
+                AddBody(T("Credits.Body.CommunityEmpty"));
+            if (!string.IsNullOrEmpty(community.discord))
+                AddBody(LocalizationService.Format("Credits.Body.Discord", "Join us on Discord: {0}", community.discord));
+            AddSpacer(10f);
+
             // -- Section 6: Special Thanks -------------------------------------
             AddHeader(T("Credits.Section.SpecialThanks"));
             AddSeparator();

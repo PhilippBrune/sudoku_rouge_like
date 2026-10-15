@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Run;
 
 namespace SudokuRoguelike.UI
 {
@@ -8,6 +10,7 @@ namespace SudokuRoguelike.UI
     public sealed partial class MainMenuController
     {
         private InputField _seedInput;
+        private Button _weeklySeedButton;
         private bool _hasPendingSeed;
         private int _pendingSeed;
 
@@ -16,6 +19,7 @@ namespace SudokuRoguelike.UI
         private void BuildStartRunExtras(Transform modal, bool abandonsSavedRun)
         {
             _seedInput = CreateSeedInput(modal, new Vector2(0.30f, 0.26f), new Vector2(0.70f, 0.34f));
+            _weeklySeedButton = CreateWeeklySeedButton(modal, _seedInput, DateTime.Today);
 
             if (!abandonsSavedRun) return;
             var warning = InRunUiFactory.CreateText(modal, "AbandonWarning",
@@ -53,6 +57,19 @@ namespace SudokuRoguelike.UI
             foreach (var ch in text)
                 if (ch < '0' || ch > '9') return false;
             return int.TryParse(text, out seed);
+        }
+
+        // [REQ: RUN-WEEK-001] Seed of the week: one button fills in this week's seed, the same for every player.
+        private static Button CreateWeeklySeedButton(Transform modal, InputField seedInput, DateTime today)
+        {
+            var (_, week) = WeeklySeedService.IsoWeek(today);
+            var seed = WeeklySeedService.SeedFor(today);
+            var btn = InRunUiFactory.CreatePanelButton(modal, "BtnWeeklySeed",
+                new Vector2(0.72f, 0.26f), new Vector2(0.95f, 0.34f),
+                LocalizationService.Format("RunConfirm.WeeklySeed", "Week {0} seed", week));
+            ConfigureModalActionLabel(btn);
+            btn.onClick.AddListener(() => seedInput.text = seed.ToString());
+            return btn;
         }
 
         private static InputField CreateSeedInput(Transform parent, Vector2 min, Vector2 max)

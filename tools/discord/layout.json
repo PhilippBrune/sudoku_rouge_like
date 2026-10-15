@@ -91,11 +91,19 @@
       "hoist": false,
       "mentionable": false,
       "permissions": []
+    },
+    {
+      "name": "Seed Champion",
+      "color": "#E9C46A",
+      "hoist": true,
+      "mentionable": false,
+      "permissions": []
     }
   ],
   "role_order": [
     "@bot",
     "Moderator",
+    "Seed Champion",
     "Playtester",
     "Translator",
     "Run of the Nine",
@@ -315,6 +323,152 @@
     {
       "name": "corebound",
       "file": "emoji/corebound.png"
+    },
+    {
+      "name": "number_freak",
+      "file": "emoji/number_freak.png"
+    },
+    {
+      "name": "garden_monk",
+      "file": "emoji/garden_monk.png"
+    },
+    {
+      "name": "shrine_archivist",
+      "file": "emoji/shrine_archivist.png"
+    },
+    {
+      "name": "koi_gambler",
+      "file": "emoji/koi_gambler.png"
+    },
+    {
+      "name": "stone_gardener",
+      "file": "emoji/stone_gardener.png"
+    },
+    {
+      "name": "lantern_seer",
+      "file": "emoji/lantern_seer.png"
+    },
+    {
+      "name": "reed_duelist",
+      "file": "emoji/reed_duelist.png"
+    },
+    {
+      "name": "quiet_cartographer",
+      "file": "emoji/quiet_cartographer.png"
+    },
+    {
+      "name": "grove_spirit",
+      "file": "emoji/grove_spirit.png"
+    },
+    {
+      "name": "koi_warden",
+      "file": "emoji/koi_warden.png"
+    },
+    {
+      "name": "shrine_oni",
+      "file": "emoji/shrine_oni.png"
+    },
+    {
+      "name": "stone_patriarch",
+      "file": "emoji/stone_patriarch.png"
+    },
+    {
+      "name": "summit_demon",
+      "file": "emoji/summit_demon.png"
+    },
+    {
+      "name": "solver",
+      "file": "emoji/solver.png"
+    },
+    {
+      "name": "bamboo_scroll",
+      "file": "emoji/bamboo_scroll.png"
+    },
+    {
+      "name": "golden_koi",
+      "file": "emoji/golden_koi.png"
+    },
+    {
+      "name": "garden_lantern",
+      "file": "emoji/garden_lantern.png"
+    },
+    {
+      "name": "wind_chime",
+      "file": "emoji/wind_chime.png"
+    },
+    {
+      "name": "sakura_seal",
+      "file": "emoji/sakura_seal.png"
+    },
+    {
+      "name": "paper_crane",
+      "file": "emoji/paper_crane.png"
+    },
+    {
+      "name": "cracked_teacup",
+      "file": "emoji/cracked_teacup.png"
+    },
+    {
+      "name": "spirit_lantern",
+      "file": "emoji/spirit_lantern.png"
+    },
+    {
+      "name": "phoenix_feather",
+      "file": "emoji/phoenix_feather.png"
+    },
+    {
+      "name": "puzzle_tile",
+      "file": "emoji/puzzle_tile.png"
+    }
+  ],
+  "soundboard": [
+    {
+      "name": "puzzle solved",
+      "file": "sounds/puzzle_solved.ogg",
+      "emoji": "🧩",
+      "volume": 0.8
+    },
+    {
+      "name": "level up",
+      "file": "sounds/level_up.ogg",
+      "emoji": "⬆️",
+      "volume": 0.8
+    },
+    {
+      "name": "gold gain",
+      "file": "sounds/gold_gain.ogg",
+      "emoji": "🪙",
+      "volume": 0.8
+    },
+    {
+      "name": "victory",
+      "file": "sounds/victory.ogg",
+      "emoji": "🎉",
+      "volume": 0.8
+    },
+    {
+      "name": "wrong placement",
+      "file": "sounds/wrong_placement.ogg",
+      "emoji": "❌",
+      "volume": 0.8
+    },
+    {
+      "name": "achievement",
+      "file": "sounds/achievement.ogg",
+      "emoji": "🏆",
+      "volume": 0.8
+    },
+    {
+      "name": "boss gate open",
+      "file": "sounds/boss_gate_open.ogg",
+      "emoji": "⛩️",
+      "volume": 0.8
+    },
+    {
+      "name": "run victory fanfare",
+      "file": "sounds/run_victory_fanfare.ogg",
+      "emoji": "🎺",
+      "volume": 0.8
     }
   ],
   "community": {
@@ -500,6 +654,26 @@
           "name": "faq",
           "type": "text",
           "topic": "Frequently asked questions."
+        },
+        {
+          "name": "how-to-play",
+          "type": "text",
+          "topic": "How to play Run of the Nine and Corebound."
+        },
+        {
+          "name": "known-issues",
+          "type": "text",
+          "topic": "Known issues and what the next update fixes."
+        },
+        {
+          "name": "roadmap",
+          "type": "text",
+          "topic": "What comes next for both games."
+        },
+        {
+          "name": "dev-log",
+          "type": "announcement",
+          "topic": "Work in progress from the studio: screenshots, notes, sounds."
         }
       ]
     },
@@ -515,6 +689,12 @@
           "name": "screenshots-and-clips",
           "type": "text",
           "topic": "Share screenshots and clips from both games."
+        },
+        {
+          "name": "polls",
+          "type": "text",
+          "read_only": true,
+          "topic": "Vote on what comes next. Discussion goes to #general."
         }
       ]
     },
@@ -535,7 +715,7 @@
         {
           "name": "rotn-seeds-and-walks",
           "type": "text",
-          "topic": "Share run seeds and talk about the Daily Walk and Monthly Walk."
+          "topic": "Daily Walk goals, Seed of the week and the Monthly Walk, posted automatically. Results in each post's thread."
         },
         {
           "name": "rotn-bugs",

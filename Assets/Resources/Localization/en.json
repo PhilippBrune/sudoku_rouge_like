@@ -1,4 +1,10 @@
 ﻿{
+    "Credits.Section.Community":  "Community",
+    "Credits.Role.Playtesters":  "Playtesters",
+    "Credits.Role.Translators":  "Translators",
+    "Credits.Body.CommunityEmpty":  "Playtesters and translators from our Discord will be named here.",
+    "Credits.Body.Discord":  "Join us on Discord: {0}",
+    "RunConfirm.WeeklySeed":  "Week {0} seed",
     "InRun.Options.RunTab":  "Run",
     "Options.LanguageInMainMenu":  "Change the language in the main menu Options.",
     "DisplayMode.FramelessWindow":  "Frameless Window",

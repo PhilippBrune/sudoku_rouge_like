@@ -1174,6 +1174,14 @@ namespace SudokuRoguelike.UI
             backNav.selectOnLeft = beginBtn;
             backBtn.navigation = backNav;
 
+            // RUN-WEEK-001: Up from Begin reaches the Seed of the week button (no keyboard needed).
+            if (_weeklySeedButton != null)
+            {
+                beginNav.selectOnUp = _weeklySeedButton;
+                beginBtn.navigation = beginNav;
+                _weeklySeedButton.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnDown = beginBtn };
+            }
+
             UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(beginBtn.gameObject);
         }
 

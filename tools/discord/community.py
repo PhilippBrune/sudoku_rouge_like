@@ -41,8 +41,8 @@ def role_order(layout: dict) -> list:
     return list(layout.get('role_order', [])) + [country_role_name(f, n) for f, n in layout.get('countries', [])]
 
 
-def _data_uri(path) -> str:
-    return 'data:image/png;base64,' + base64.b64encode(path.read_bytes()).decode('ascii')
+def _data_uri(path, mime: str = 'image/png') -> str:
+    return f'data:{mime};base64,' + base64.b64encode(path.read_bytes()).decode('ascii')
 
 
 def actions(state, layout: dict) -> list:
@@ -53,6 +53,16 @@ def actions(state, layout: dict) -> list:
             out.append((f'Upload emoji :{spec["name"]}:',
                         lambda s=spec: da.api('POST', f'/guilds/{gid}/emojis',
                                               {'name': s['name'], 'image': _data_uri(da.HERE / s['file'])}, 'server layout')))
+
+    sounds = layout.get('soundboard', [])
+    if sounds:
+        have = {s['name'] for s in da.api('GET', f'/guilds/{gid}/soundboard-sounds').get('items', [])}
+        for spec in sounds:
+            if spec['name'] not in have:
+                out.append((f'Upload soundboard sound "{spec["name"]}"', lambda s=spec: da.api(
+                    'POST', f'/guilds/{gid}/soundboard-sounds',
+                    {'name': s['name'], 'sound': _data_uri(da.HERE / s['file'], 'audio/ogg'),
+                     'volume': s.get('volume', 1.0), 'emoji_name': s.get('emoji')}, 'server layout')))
 
     community = layout.get('community')
     if community and not state.community:

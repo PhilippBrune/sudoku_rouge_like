@@ -55,6 +55,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-042](#gap-042) | Options dropdown lists hid their last option; no usable window mode | FIXED (1.1, found 2026-10-12) | MEDIUM | P2 |
 | [GAP-045](#gap-045) | Boss fights never played boss music (the boss layer was never started) | FIXED (found 2026-10-14) | LOW | P3 |
 | [GAP-046](#gap-046) | Q on the "Boss Defeated!" screen ended the run and deleted its save | FIXED (found 2026-10-15) | HIGH | P1 |
+| [GAP-047](#gap-047) | A chosen modifier can silently miss its overlay when another modifier of the same family has one | OPEN (found 2026-10-18) | MEDIUM | P2 |
 | [GAP-044](#gap-044) | Region borders showed the previous puzzle's regions on a same-size board | FIXED (found 2026-10-14 by the owner) | HIGH | P1 |
 | [GAP-043](#gap-043) | Without the `ActiveProfileSlot` pref the game opens an empty slot 0, not the existing profile | FIXED (0.1.5, found 2026-10-14) | LOW | P3 |
 
@@ -806,3 +807,14 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Fix:** The offering table is its own full-screen view and never opens the game-over panel; the solved board is hidden before it opens, so the puzzle shortcuts (Q, controller A, Start/F1 options) are off while it is shown.
 - **Affected Files:** `Assets/Scripts/UI/EndScreenViewController.cs`, `Assets/Scripts/UI/InRunController.Completion.cs`
 - **Tests:** `BossClearedFlowPlayModeTests.BossDefeated_ShowsTheOfferingsOnOneScreen_TakingOneLoadsTheNextFloor` (board hidden, game-over panel closed while the offerings are shown).
+
+## GAP-047
+**A chosen modifier can silently miss its overlay when another modifier of the same family has one**
+
+- **Requirement:** REQ-BOSS-101 (chosen modifiers apply), BOSS-MOD-004 (proposed)
+- **Status:** OPEN (found 2026-10-18 while planning the catalog modifiers, `docs/design/modifier-catalog-plan.md`) · **Severity:** MEDIUM · **Priority:** P2
+- **Problem:** After generation the game checks that every active modifier got its geometry, and regenerates or drops it otherwise. The check only asks whether the modifier's family has any entry: any line counts for every line modifier, any dot for every Kropki type, any cage for every cage type. With German Whispers and Thermo chosen together, a failed Thermo is not noticed while the whisper lines exist; the player sees "Thermo" in the rules but gets no thermometers. Unknown IDs always pass.
+- **Root Cause:** `PuzzleGenerationService.IsModifierPresent` (PGS:498–561) switches on the family, not on the line, dot, cage or arrow type; a second copy is in `RunDirector.cs:2713–2786`.
+- **Fix (planned):** one presence check per type (modifier plan, Phase 0, step 1).
+- **Affected Files:** `Assets/Scripts/Sudoku/PuzzleGenerationService.cs`, `Assets/Scripts/Run/RunDirector.cs`, `Assets/Scripts/Run/RunDirector.LevelGeneration.cs`
+- **Tests:** to add: a generation test where one of two line modifiers fails must report it missing.

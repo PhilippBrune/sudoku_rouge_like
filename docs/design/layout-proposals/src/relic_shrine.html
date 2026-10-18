@@ -1,0 +1,54 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<style>
+  /* Relic node: the offering table of the boss reward (UI-STYLE-005) in the relic shrine painting. */
+  .bg { position:absolute; inset:0; background:url('../../../../Assets/Resources/background/bg_relic.png') center/cover; filter: brightness(.5) saturate(.85); }
+  .shade { position:absolute; inset:0; background: radial-gradient(ellipse at 50% 40%, transparent 30%, rgba(0,0,0,.55)); }
+  .banner { position:absolute; left:610px; width:700px; top:46px; height:122px; background:#efe3c6; box-shadow:0 14px 28px rgba(0,0,0,.5);
+            text-align:center; color:#231e17; }
+  .banner::before, .banner::after { content:''; position:absolute; top:0; bottom:0; width:18px; background:#b23a2e; }
+  .banner::before { left:0; } .banner::after { right:0; }
+  .banner small { display:block; padding-top:20px; font-size:18px; letter-spacing:.16em; color:#5b5244; text-transform:uppercase; }
+  .banner h1 { margin:4px 0 0; font-weight:normal; font-size:46px; }
+  .purse { position:absolute; left:118px; top:250px; width:300px; padding:18px 24px; background:#efe3c6; color:#231e17; transform:rotate(-1.5deg);
+           box-shadow:0 12px 26px rgba(0,0,0,.5); font-size:20px; line-height:1.8; }
+  .purse::before { content:''; position:absolute; left:50%; top:-28px; width:2px; height:28px; background:#c9a24f; }
+  .purse small { display:block; font-size:15px; letter-spacing:.14em; color:#6b5f4c; }
+  .purse span { float:right; color:#9e2a2b; }
+  .prompt { position:absolute; left:0; right:0; top:470px; text-align:center; font-size:30px; color:#f3e9cf; text-shadow:0 2px 8px rgba(0,0,0,.6); }
+  .off { position:absolute; top:520px; width:420px; text-align:center; color:#f3e9cf; }
+  .off .glow { position:absolute; left:50%; top:20px; width:210px; height:210px; margin-left:-105px; border-radius:50%;
+               background: radial-gradient(circle, rgba(255,214,140,.45), transparent 70%); }
+  .off img { position:relative; width:130px; height:130px; object-fit:contain; margin-top:30px; }
+  .off .plinth { width:240px; height:60px; margin:6px auto 0; clip-path: polygon(10% 0, 90% 0, 100% 100%, 0 100%);
+                 background: linear-gradient(180deg, #e0bf86, #9a7140); }
+  .off .tier { display:inline-block; margin-top:14px; padding:3px 14px; border-radius:999px; font-size:15px; letter-spacing:.1em; background:#2f4b8f; }
+  .off .tier.t1 { background:#5b5244; }
+  .off h3 { margin:10px 0 4px; font-weight:normal; font-size:32px; }
+  .off p { margin:0 auto; width:380px; min-height:54px; font-size:20px; line-height:1.35; color:#e3d8c2; }
+  .take { display:inline-block; margin-top:12px; padding:10px 54px; border-radius:999px; border:2px solid #c9a24f; font-size:22px; color:#f6e7c6;
+          background:rgba(20,16,10,.7); }
+  .take.sel { background:#c9963c; color:#2a1a10; }
+  .owned { position:absolute; right:110px; top:250px; width:330px; padding:18px 24px; background:rgba(239,227,198,.94); color:#231e17;
+           box-shadow:0 12px 26px rgba(0,0,0,.5); transform:rotate(1.5deg); font-size:19px; }
+  .owned small { display:block; font-size:15px; letter-spacing:.14em; color:#6b5f4c; margin-bottom:10px; }
+  .owned .row { display:flex; gap:12px; }
+  .owned img { width:56px; height:56px; object-fit:contain; }
+  .foot { position:absolute; left:0; right:0; bottom:74px; text-align:center; color:#d8c9a8; font-size:19px; }
+  .foot .leave { display:inline-block; margin-left:18px; padding:6px 24px; border-radius:999px; border:1px solid #9a8a6a; color:#e3d8c2; }
+</style></head><body>
+<div class="bg"></div><div class="shade"></div>
+<div class="banner"><small>Floor 2 of 5 · Moss Garden</small><h1>A relic shrine</h1></div>
+<div class="purse"><small>YOUR RUN</small>HP <span>8 / 11</span><br>Gold <span>64</span><br>Relics <span>2</span></div>
+<div class="owned"><small>RELICS YOU HOLD</small><div class="row">
+  <img src="../../../../Assets/Resources/relic/icon_smooth_pebble.png"><img src="../../../../Assets/Resources/relic/icon_moss_token.png"></div></div>
+<div class="prompt">The shrine offers one relic</div>
+<div class="off" style="left:240px"><div class="glow"></div><img src="../../../../Assets/Resources/relic/icon_stone_sundial.png"><div class="plinth"></div>
+  <span class="tier">TIER 2</span><h3>Stone Sundial</h3><p>+1 reward slot after each puzzle.</p><span class="take">Take</span></div>
+<div class="off" style="left:750px"><div class="glow"></div><img src="../../../../Assets/Resources/relic/icon_jade_hairpin.png"><div class="plinth"></div>
+  <span class="tier">TIER 2</span><h3>Jade Hairpin</h3><p>+1 item slot capacity.</p><span class="take sel">Take</span></div>
+<div class="off" style="left:1260px"><div class="glow"></div><img src="../../../../Assets/Resources/relic/icon_cracked_teacup.png"><div class="plinth"></div>
+  <span class="tier t1">TIER 1</span><h3>Cracked Teacup</h3><p>Absorb the first mistake each puzzle (no HP loss).</p><span class="take">Take</span></div>
+<div class="foot">The other two stay at the shrine<span class="leave">Leave them</span></div>
+<div class="caption">Relic node · Proposal · The offering table of the boss reward, at the shrine</div>
+</body></html>

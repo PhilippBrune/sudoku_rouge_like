@@ -1,17 +1,30 @@
 # Roadmap
 
-Plans, not promises: things move when playtesting says so.
+![Run of the Nine roadmap](../brand/roadmap.png)
+
+Plans, not promises: we change course when playtesting says so.
 
 **Run of the Nine**
-**Next update**
-• The fixes listed in #known-issues
-• French, Spanish and Brazilian Portuguese fully translated
-• New in-game Options with controller support everywhere
+**Now: the next updates**
+• More puzzle rules: new modifiers in batches (diagonals, extra regions, Sandwich, Little Killer, new cages and arrows)
+• More languages, with help from our community translators
+• Seed sharing: share a run as a short code and play the exact same run as your friends
+• A new look for the whole run in ink and paper, and a full 8-bit soundtrack with new sound effects
 
-**After that**
-• A complete 8-bit soundtrack and new 8-bit sound effects
-• A new look for the run: the garden path as an ink hand scroll, puzzles on a hanging scroll, new boss gate and boss reward screens
-• Seed of the week: one Garden Run seed for everyone, with a Seed Champion here on the server
+**Next: mid term**
+• Leaderboards for every Seed of the week and Monthly Walk
+• Steam Deck support
+• Bosses with their own signature rules
+• More relics, items and events
+• Custom puzzle codes and a community puzzle of the week
+• More accessibility options
+
+**Later: long term**
+• The full release
+• A second garden with five new floors
+• Steam Workshop for custom puzzles
+• Race mode on a shared seed
+• More platforms
 
 ---
 

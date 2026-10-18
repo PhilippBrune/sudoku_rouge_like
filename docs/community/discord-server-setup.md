@@ -225,4 +225,21 @@ The game categories are visible to everyone by default. Onboarding pre-selects w
 1. **Server Members Intent:** Developer Portal → your bot → Bot → Privileged Gateway Intents → *Server Members Intent* on → Save. Needed for `export-credits` and `champion --reset`.
 2. **Require 2FA for moderator actions:** only the server owner can switch it on (Server Settings → Safety Setup → Permissions → *Require 2FA for moderator actions*), and your own account needs 2FA first.
 3. **A second human Moderator:** pick someone you trust from the community and give them the Moderator role.
-4. The Discord link on both Steam store pages (above).
+4. ~~The Discord link on both Steam store pages~~ (done by the owner, 2026-10-18).
+
+## 14. Guide pages, roadmap and safety (2026-10-18)
+
+- **Posted:** `#how-to-play` and `#known-issues` (known issues now also list the boss-screen Q bug and the cage border gaps, both fixed for the next update).
+- **Roadmap:** a picture made from `tools/discord/brand/roadmap.html` (render with `render_roadmap.ps1`) plus the text in `texts/roadmap.md`, following `docs/ROADMAP_BACKLOG.md`. The draft is in `#release-drafts`; the mid- and long-term goals are suggestions, so it goes to `#roadmap` only after you say "post roadmap" (`discord_admin.py post roadmap tools/discord/texts/roadmap.md`).
+- **Pictures in posts:** a line `![alt](file.png)` in a text file attaches that image to its message (`discord_admin.py post`).
+
+**Require 2FA for moderator actions (owner only):**
+1. Turn on 2FA for your own account: User Settings → My Account → Password and Authentication → *Enable Authenticator App*, scan the QR code with an authenticator app (Google Authenticator, Authy, Microsoft Authenticator) and **save the backup codes** somewhere safe.
+2. Server Settings → **Safety Setup** → in the Permissions/Moderation part switch on *Require 2FA for moderator actions* (Discord moves this toggle between "Permissions" and "Moderation" now and then).
+3. From then on, everyone with moderation permissions (for example Kick, Ban, Manage Channels, Manage Roles, Manage Messages, Timeout, Manage Server) needs 2FA on their own account. The bot keeps working, because its owner (your account) has 2FA.
+
+**A second human moderator:**
+1. Pick someone active and calm, ideally in a different time zone, and ask them first (in a DM); share the rules in `#rules` and say what you expect (delete spam, timeout, warn; bans only with a note in a staff channel).
+2. They need 2FA on their account (step above) before they can moderate.
+3. Server Settings → Members → find them → **+** → *Moderator* (or right-click their name → Roles → Moderator). The Moderator role can delete messages, manage threads and time members out; kicks and bans stay with you.
+4. Optional: a private `#staff` channel for moderator notes (I can add it to `layout.json` and run `apply`).

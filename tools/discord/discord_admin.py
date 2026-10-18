@@ -7,7 +7,8 @@ logged or written anywhere else. Standard library only.
     python tools/discord/discord_admin.py status
     python tools/discord/discord_admin.py plan  [layout.json]   # dry run: what apply would change
     python tools/discord/discord_admin.py apply [layout.json]   # create/update roles, channels, overwrites, AutoMod
-    python tools/discord/discord_admin.py post    <channel-name> <message.md>  # split at '---' lines and 2,000 characters
+    python tools/discord/discord_admin.py post    <channel-name> <message.md>  # split at '---' lines and 2,000 characters;
+                                                                               # '![](file.png)' lines attach the image
     python tools/discord/discord_admin.py replace <channel-name> <message.md>  # delete the bot's posts there, then post
     python tools/discord/discord_admin.py set-icon <png>                       # server icon (brand/server_icon.png)
     python tools/discord/discord_admin.py invite [channel]                     # the permanent invite link
@@ -16,7 +17,7 @@ logged or written anywhere else. Standard library only.
 
 Forum channels need Community (Server Settings -> Enable Community); until then plan/apply list them as waiting.
 """
-import json, os, sys, time, urllib.error, urllib.request
+import json, os, re, sys, time, urllib.error, urllib.request
 from pathlib import Path
 
 API = 'https://discord.com/api/v10'
@@ -94,6 +95,39 @@ def api(method, path, body=None, reason=None):
                 continue
             raise ApiError(method, path, e.code, payload)
     raise ApiError(method, path, 429, 'rate limited too often')
+
+
+def api_with_files(path, payload, files, reason=None):
+    """POST a message with attachments (multipart/form-data: payload_json + files[n])."""
+    global TOKEN
+    TOKEN = TOKEN or load_token()
+    boundary = 'kratossos' + os.urandom(12).hex()
+    payload = dict(payload, attachments=[{'id': i, 'filename': f.name} for i, f in enumerate(files)])
+    parts = [(f'Content-Disposition: form-data; name="payload_json"\r\nContent-Type: application/json\r\n\r\n'.encode()
+              + json.dumps(payload).encode('utf-8'))]
+    for i, f in enumerate(files):
+        kind = 'image/png' if f.suffix.lower() == '.png' else 'image/jpeg' if f.suffix.lower() in ('.jpg', '.jpeg') \
+            else 'application/octet-stream'
+        parts.append(f'Content-Disposition: form-data; name="files[{i}]"; filename="{f.name}"\r\nContent-Type: {kind}\r\n\r\n'
+                     .encode() + f.read_bytes())
+    body = b''.join(f'--{boundary}\r\n'.encode() + p + b'\r\n' for p in parts) + f'--{boundary}--\r\n'.encode()
+    for _ in range(5):
+        req = urllib.request.Request(API + path, data=body, method='POST')
+        req.add_header('Authorization', 'Bot ' + TOKEN)
+        req.add_header('User-Agent', 'DiscordBot (https://github.com/PhilippBrune, 1.0) kratossos-admin')
+        req.add_header('Content-Type', f'multipart/form-data; boundary={boundary}')
+        if reason:
+            req.add_header('X-Audit-Log-Reason', reason[:500])
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                return json.loads(resp.read() or b'null')
+        except urllib.error.HTTPError as e:
+            text = e.read().decode('utf-8', 'replace')
+            if e.code == 429:
+                time.sleep(float(json.loads(text).get('retry_after', 1.0)) + 0.1)
+                continue
+            raise ApiError('POST', path, e.code, text)
+    raise ApiError('POST', path, 429, 'rate limited too often')
 
 
 def guild_id(layout=None):
@@ -427,25 +461,51 @@ def split_message(text: str) -> list:
     return [c for c in chunks if c]
 
 
+IMAGE_LINE = re.compile(r'^!\[[^\]]*\]\(([^)\s]+)\)\s*$', re.MULTILINE)
+IMAGE_SUFFIXES = ('.png', '.jpg', '.jpeg', '.gif', '.webp')
+MAX_FILES_PER_MESSAGE = 10
+MAX_FILE_BYTES = 10 * 1024 * 1024
+
+
+def take_images(chunk: str, base: Path):
+    """Image lines '![alt](file.png)' in a message become attachments; returns (text without them, files).
+    Only image files can be attached (never, say, the token file), at most 10 per message and 10 MiB each."""
+    files = [(base / m).resolve() for m in IMAGE_LINE.findall(chunk)]
+    problems = [f'{f} (missing)' for f in files if not f.is_file()]
+    problems += [f'{f} (not an image)' for f in files if f.suffix.lower() not in IMAGE_SUFFIXES]
+    problems += [f'{f} (bad file name)' for f in files if any(c in f.name for c in '"\r\n')]
+    problems += [f'{f} (over 10 MiB)' for f in files if f.is_file() and f.stat().st_size > MAX_FILE_BYTES]
+    if len(files) > MAX_FILES_PER_MESSAGE:
+        problems.append(f'{len(files)} images in one message (Discord allows {MAX_FILES_PER_MESSAGE})')
+    if problems:
+        sys.exit('Cannot attach: ' + ', '.join(problems))
+    return IMAGE_LINE.sub('', chunk).strip(), files
+
+
 def cmd_post(layout, channel_name, message_path, replace=False):
-    """Posts a Markdown file to a channel (see split_message); `replace` first deletes the bot's own posts there."""
+    """Posts a Markdown file to a channel (see split_message); `replace` first deletes the bot's own posts there.
+    A line '![alt](file.png)' (path relative to the Markdown file) attaches that image to its message."""
     state = State(guild_id(layout))
     channel = state.channel(channel_name)
     if channel is None:
         sys.exit(f'No channel #{channel_name}')
     text = Path(message_path).read_text(encoding='utf-8').strip()
     # <:name:> -> the server's custom emoji (Discord needs its id)
-    import re
     text = re.sub(r'<:(\w+):>', lambda m: f'<:{m[1]}:{state.emoji(m[1])["id"]}>' if state.emoji(m[1]) else f':{m[1]}:', text)
     chunks = split_message(text)
+    # Check every image before anything is deleted or posted, so a bad file never leaves half a post.
+    prepared = [take_images(chunk, Path(message_path).resolve().parent) for chunk in chunks]
     if replace:
         old = [m for m in api('GET', f'/channels/{channel["id"]}/messages?limit=50') if m['author']['id'] == state.me['id']]
         for m in old:
             api('DELETE', f'/channels/{channel["id"]}/messages/{m["id"]}', None, 'replaced by a new version')
         print(f'Deleted {len(old)} earlier post(s) in #{channel["name"]}')
-    for chunk in chunks:
-        api('POST', f'/channels/{channel["id"]}/messages',
-            {'content': chunk, 'allowed_mentions': {'parse': []}}, 'post')
+    for content, files in prepared:
+        payload = {'content': content, 'allowed_mentions': {'parse': []}}
+        if files:
+            api_with_files(f'/channels/{channel["id"]}/messages', payload, files, 'post')
+        else:
+            api('POST', f'/channels/{channel["id"]}/messages', payload, 'post')
     print(f'Posted {len(chunks)} message(s) to #{channel["name"]}')
 
 

@@ -35,6 +35,7 @@ Recordings/
 !tools/audio/*.py
 !tools/localization/*.py
 !docs/design/layout-proposals/*.ps1
+!tools/discord/brand/*.ps1
 
 # Unity crash reports
 sysinfo.txt

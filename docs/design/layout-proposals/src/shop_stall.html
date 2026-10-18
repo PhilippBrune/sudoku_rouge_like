@@ -1,0 +1,55 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<style>
+  /* Shop: the market stall painting stays the scene; goods sit on the counter with wooden price tags. */
+  .bg { position:absolute; inset:0; background:url('../../../../Assets/Resources/background/bg_shop.png') center/cover; filter: brightness(.6) saturate(.9); }
+  .shade { position:absolute; inset:0; background: linear-gradient(180deg, rgba(0,0,0,.35), transparent 30%, transparent 55%, rgba(0,0,0,.55)); }
+  .sign { position:absolute; left:50%; top:40px; transform:translateX(-50%); padding:14px 56px; background:linear-gradient(180deg, #8a5a32, #5b3a1f);
+           color:#f3e9cf; font-size:40px; border-radius:6px; box-shadow:0 12px 24px rgba(0,0,0,.6), inset 0 0 0 3px rgba(239,227,198,.25); letter-spacing:.08em; }
+  .counter { position:absolute; left:250px; right:250px; top:560px; height:60px; background: linear-gradient(180deg, #a26b3c, #6b4423);
+             border-radius:6px; box-shadow:0 16px 30px rgba(0,0,0,.55); }
+  .good { position:absolute; top:300px; width:300px; text-align:center; color:#f3e9cf; }
+  .good .cloth { width:220px; height:250px; margin:0 auto; border-radius:14px 14px 4px 4px; display:flex; align-items:center; justify-content:center;
+                 background: radial-gradient(circle at 50% 35%, rgba(255,240,210,.35), transparent 60%), #3d2a1a; box-shadow: inset 0 0 0 3px rgba(239,227,198,.25); }
+  .good.sel .cloth { box-shadow: inset 0 0 0 3px #e9c46a, 0 0 30px rgba(233,196,106,.45); }
+  .good img { width:150px; height:150px; object-fit:contain; }
+  .tag { position:absolute; left:50%; top:228px; margin-left:42px; width:96px; padding:10px 0 8px; background:#d8ab72; color:#2a1a10;
+         clip-path: polygon(18% 0, 100% 0, 100% 100%, 18% 100%, 0 50%); font-size:24px; transform: rotate(8deg); }
+  .tag::after { content:'g'; font-size:16px; }
+  .good h3 { margin:16px 0 0; position:relative; font-weight:normal; font-size:28px; text-shadow:0 2px 6px rgba(0,0,0,.6); }
+  .good .rar { position:relative; font-size:15px; letter-spacing:.1em; color:#c9a24f; }
+  .slip { position:absolute; right:90px; top:640px; width:520px; padding:22px 28px; background:#efe3c6; color:#231e17;
+          box-shadow:0 14px 28px rgba(0,0,0,.55); transform: rotate(-1deg); }
+  .slip small { display:block; font-size:15px; letter-spacing:.14em; color:#6b5f4c; }
+  .slip h2 { margin:4px 0 8px; font-weight:normal; font-size:34px; }
+  .slip p { margin:0 0 16px; font-size:20px; line-height:1.4; }
+  .slip .row { display:flex; gap:14px; align-items:center; }
+  .btn { padding:12px 28px; border-radius:999px; font-size:21px; border:2px solid #6b4a2b; color:#2a1a10; background:#e7d6b2; }
+  .btn.main { background:#b23a2e; border-color:#b23a2e; color:#fff; }
+  .purse { position:absolute; left:90px; top:660px; width:330px; padding:18px 24px; background:rgba(239,227,198,.95); color:#231e17;
+           box-shadow:0 12px 26px rgba(0,0,0,.5); font-size:21px; line-height:1.8; transform: rotate(1deg); }
+  .purse small { display:block; font-size:15px; letter-spacing:.14em; color:#6b5f4c; }
+  .purse span { float:right; }
+  .purse .bag { display:flex; gap:8px; margin-top:8px; }
+  .purse .bag i { width:52px; height:52px; border-radius:8px; border:2px dashed #9a8a6a; display:flex; align-items:center; justify-content:center; }
+  .purse .bag img { width:44px; height:44px; object-fit:contain; }
+  .foot { position:absolute; left:0; right:0; bottom:40px; display:flex; justify-content:center; gap:18px; }
+  .foot .btn { background:rgba(20,16,10,.75); color:#f6e7c6; border-color:#c9a24f; }
+</style></head><body>
+<div class="bg"></div><div class="shade"></div>
+<div class="sign">Market</div>
+<div class="counter"></div>
+<div class="good" style="left:380px"><div class="cloth"><img src="../../../../Assets/Resources/items/icon_solver.png"></div><div class="tag">30</div>
+  <h3>Solver</h3><div class="rar">NORMAL</div></div>
+<div class="good sel" style="left:810px"><div class="cloth"><img src="../../../../Assets/Resources/items/icon_ginkgo_leaf.png"></div><div class="tag">60</div>
+  <h3>Ginkgo Leaf</h3><div class="rar">RARE</div></div>
+<div class="good" style="left:1240px"><div class="cloth"><img src="../../../../Assets/Resources/items/icon_temple_incense.png"></div><div class="tag">30</div>
+  <h3>Temple Incense</h3><div class="rar">NORMAL</div></div>
+<div class="purse"><small>YOUR PURSE</small>Gold <span>142</span><br>Reroll tokens <span>1</span>
+  <div class="bag"><i><img src="../../../../Assets/Resources/items/icon_ink_well.png"></i><i><img src="../../../../Assets/Resources/items/icon_meditation_stone.png"></i><i></i><i></i></div></div>
+<div class="slip"><small>FLOOR 3 · KOI TERRACE · THE MARKET</small><h2>Ginkgo Leaf</h2>
+  <p>Undo the last mistake, restore the lost HP, and recover your combo.</p>
+  <div class="row"><span class="btn main">Buy · 60 gold</span><span style="color:#6b5f4c;font-size:18px">142 → 82 gold</span></div></div>
+<div class="foot"><span class="btn">Reroll · 1 token</span><span class="btn">Leave the market</span></div>
+<div class="caption">Shop · Proposal · Goods on the market stall with price tags</div>
+</body></html>

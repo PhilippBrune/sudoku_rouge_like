@@ -1,0 +1,79 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<style>
+  .bg { position:absolute; inset:0; background:url('../../../../Assets/Resources/background/bg_reward.png') center/cover; filter: brightness(.55) saturate(.85); }
+  .shade { position:absolute; inset:0; background: linear-gradient(90deg, rgba(10,14,10,.75), rgba(10,14,10,.15) 45%, rgba(10,14,10,.35)); }
+  /* the tally: a narrow hanging scroll with the puzzle's result */
+  .rod { position:absolute; left:110px; width:470px; height:26px; border-radius:13px; background: linear-gradient(180deg, #c08a52, #6b4423); box-shadow:0 6px 12px rgba(0,0,0,.5); }
+  .cord { position:absolute; left:344px; top:0; width:2px; height:76px; background:#c9a24f; }
+  .tally { position:absolute; left:126px; top:96px; width:438px; height:820px; padding:46px 46px 0;
+           background: radial-gradient(ellipse at 30% 20%, rgba(255,255,255,.4), transparent 50%), linear-gradient(180deg, #f3e9cf, #e8d8b2);
+           box-shadow: 0 30px 60px rgba(0,0,0,.6); color:#231e17; }
+  .tally::before, .tally::after { content:''; position:absolute; left:0; right:0; height:20px;
+           background: repeating-linear-gradient(90deg, #2c4632 0 16px, #33523a 16px 32px); border-top:2px solid #c9a24f; border-bottom:2px solid #c9a24f; }
+  .tally::before { top:0; } .tally::after { bottom:0; }
+  .tally small { display:block; font-size:17px; letter-spacing:.14em; text-transform:uppercase; color:#6b5f4c; margin-top:6px; }
+  .tally h1 { margin:6px 0 0; font-weight:normal; font-size:50px; }
+  .stamp { position:absolute; right:40px; bottom:70px; width:120px; height:120px; border-radius:50%; border:5px solid #b23a2e; color:#b23a2e;
+           display:flex; align-items:center; justify-content:center; font-size:26px; transform: rotate(-12deg); letter-spacing:.06em; opacity:.9; }
+  .gain { margin-top:44px; display:grid; grid-template-columns: 54px 1fr auto; row-gap:18px; align-items:center; font-size:24px; }
+  .gain img { width:44px; height:44px; object-fit:contain; }
+  .gain b { font-weight:normal; color:#9e2a2b; font-size:28px; }
+  .rule { height:2px; background:rgba(158,42,43,.5); margin:30px 0 22px; }
+  .stats { font-size:20px; line-height:1.9; color:#3a3228; }
+  .stats span { float:right; color:#231e17; }
+  /* ema plaques hanging from a red cord */
+  .choose { position:absolute; left:690px; top:120px; font-size:34px; color:#f3e9cf; text-shadow:0 2px 8px rgba(0,0,0,.6); }
+  .choose small { display:block; font-size:18px; color:#d8c9a8; letter-spacing:.06em; }
+  .line { position:absolute; left:640px; right:80px; top:236px; height:4px; border-radius:2px; background:#b23a2e; box-shadow:0 2px 6px rgba(0,0,0,.4); }
+  .ema { position:absolute; top:236px; width:330px; }
+  .ema .knot { position:absolute; left:50%; top:-6px; width:3px; height:52px; background:#b23a2e; }
+  .ema .wood { position:relative; margin-top:44px; height:440px; padding:76px 26px 24px; text-align:center; color:#2a1a10;
+               clip-path: polygon(50% 0, 100% 15%, 100% 100%, 0 100%, 0 15%);
+               background: linear-gradient(180deg, #d8ab72, #a8743f); }
+  .ema.sel .wood { background: linear-gradient(180deg, #f0c98a, #c68e4e); }
+  .ema.sel { transform: translateY(-14px); filter: drop-shadow(0 0 22px rgba(255,214,140,.55)); }
+  .ema .wood img { width:120px; height:120px; object-fit:contain; display:block; margin:0 auto; }
+  .ema h3 { margin:14px 0 6px; font-weight:normal; font-size:30px; }
+  .ema .rar { display:inline-block; padding:3px 14px; border-radius:999px; font-size:16px; letter-spacing:.08em; color:#fff; }
+  .rar.n { background:#6b5f4c; } .rar.r { background:#2f4b8f; } .rar.e { background:#b8892b; }
+  .ema p { font-size:20px; line-height:1.35; margin:16px 0 0; }
+  .keyhint { position:absolute; left:50%; bottom:18px; transform:translateX(-50%); width:34px; height:34px; border-radius:50%;
+             background:rgba(42,26,16,.85); color:#f3e9cf; font-size:18px; display:flex; align-items:center; justify-content:center; }
+  .foot { position:absolute; left:690px; right:80px; bottom:96px; display:flex; gap:22px; align-items:center; }
+  .btn { padding:14px 30px; border-radius:999px; font-size:22px; border:2px solid #c9a24f; color:#f6e7c6; background:rgba(20,16,10,.7); }
+  .btn.main { background:#b23a2e; border-color:#b23a2e; }
+  .foot .note { margin-left:auto; color:#d8c9a8; font-size:18px; }
+</style></head><body>
+<div class="bg"></div><div class="shade"></div>
+<div class="cord"></div><div class="rod" style="top:72px"></div>
+<div class="tally">
+  <small>Bamboo Courtyard · Depth 3</small>
+  <h1>Puzzle solved</h1>
+  <div class="stamp">Perfect</div>
+  <div class="gain">
+    <img src="../../../../Assets/Resources/economy/icon_sakura_coin.png"><span>Gold</span><b>+12</b>
+    <img src="../../../../Assets/Resources/ui/icon_golden_bloom.png"><span>Class XP</span><b>+14</b>
+    <img src="../../../../Assets/Resources/ui/icon_petal_orb.png"><span>HP</span><b style="color:#231e17">9 / 10</b>
+    <img src="../../../../Assets/Resources/ui/icon_ink_save.png"><span>Pencil</span><b style="color:#231e17">7 / 10</b>
+  </div>
+  <div class="rule"></div>
+  <div class="stats">Mistakes <span>0</span><br>Pencil marks <span>6</span><br>Time <span>02:14</span><br>Combo <span>×5</span></div>
+</div>
+
+<div class="choose">Choose one for your bag<small>Your bag: 2 of 4 slots used</small></div>
+<div class="line"></div>
+<div class="ema" style="left:700px"><div class="knot"></div><div class="wood">
+  <img src="../../../../Assets/Resources/items/icon_ink_well.png"><h3>Ink Well</h3><span class="rar n">NORMAL</span>
+  <p>Restore 10 pencil marks.</p><div class="keyhint">1</div></div></div>
+<div class="ema sel" style="left:1060px"><div class="knot"></div><div class="wood">
+  <img src="../../../../Assets/Resources/items/icon_meditation_stone.png"><h3>Meditation Stone</h3><span class="rar r">RARE</span>
+  <p>Restore 4 HP.</p><div class="keyhint">2</div></div></div>
+<div class="ema" style="left:1420px"><div class="knot"></div><div class="wood">
+  <img src="../../../../Assets/Resources/items/icon_wind_chime.png"><h3>Wind Chime</h3><span class="rar e">EPIC</span>
+  <p>Click a cell to fill its row + column + box.</p><div class="keyhint">3</div></div></div>
+
+<div class="foot"><span class="btn main">Take Meditation Stone</span><span class="btn">Reroll · 1 token</span><span class="btn">Take nothing · +5 gold</span>
+  <span class="note">1–3 or the D-pad to choose</span></div>
+<div class="caption">Reward after a puzzle · Proposal · Tally scroll and ema plaques</div>
+</body></html>

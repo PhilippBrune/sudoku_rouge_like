@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 1.2 | **Date:** 2026-10-15 | **Status:** review (boss gate B and offering table B built; garden path B and puzzle B decided, not built yet)
+**Version:** 1.3 | **Date:** 2026-10-18 | **Status:** review (boss gate B and offering table B built; garden path B and puzzle B being built; reward, relic node and shop proposed)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.3 | 2026-10-18 | review | Owner request: mockups for the next three screens in the same family: the reward after a puzzle (tally scroll and ema plaques), the relic node (the offering table at the shrine) and the shop (goods on the market stall). Proposed IDs UI-STYLE-007/008/009 wait for the owner's pick. Garden path B and puzzle B are being built. |
 | 1.2 | 2026-10-15 | review | Owner decisions: boss gate **B · Trial scroll** and boss defeated **B · Offering table**, both built in Unity (UI-STYLE-004, UI-STYLE-005), with screenshots from the game. Owner report: the killer cage in the hanging-scroll mockup was split into one box per cell; a cage is now one outline around all its cells, in the mockups and in the game (UI-STYLE-006). |
 | 1.1 | 2026-10-15 | review | Owner decisions: garden path **B · Hand scroll**, the same on all five floors (UI-STYLE-001); puzzle screen **B · Hanging scroll** (UI-STYLE-002); the background paintings keep their corner mark (UI-STYLE-003). Added: the hand scroll on every floor, a 9×9 check of the hanging scroll, and three proposals each for the boss modifier choice (boss gate) and the "Boss Defeated!" screen. |
 | 1.0 | 2026-10-15 | new | Owner request: the garden path and the puzzle layout should feel more rounded and closer to the game's theme. Three proposals each, as 1920×1080 mockups made from the game's own art and font. |
@@ -21,6 +22,9 @@ The mockups are HTML pages in `layout-proposals/src/`, built from `Assets/Resour
 | UI-STYLE-003 | The background paintings keep the bottom-right corner mark (owner decision); new UI does not need to hide it. | decided |
 | UI-STYLE-004 | The boss gate is a trial scroll: the gate painting darkened behind a hand scroll with brocade bands and wooden rollers; the eyebrow "Floor N · floor name · The Gate", the title "The <boss>'s trials", "Choose N of M trials", the intensity with one dot per level (REQ-BOSS-103) and the boss's seal; one ink-framed panel per trial with icon, name and rule ("???" and "Not discovered yet" when hidden, HARMONY-FLAG-001), ticked with a vermilion ensō when chosen; along the bottom the boss's curse from Floor 3 (REQ-BOSS-108), "n of N chosen" and "Face the <boss>", which unlocks at N. Up to four trials in a row, five to eight in two rows. | built 2026-10-15 |
 | UI-STYLE-005 | After a non-final boss, the offering table: the boss-cleared painting, a paper banner "Floor N of 5 · name" / "The <boss> is defeated", the fight's numbers on a paper tag (mistakes, HP lost, items used, pencil marks), the boss's greyed mask, and the relic offerings on plinths with their own Take button on the same screen, plus "Leave them". Taking or leaving loads the next floor; without offerings one Continue button does. The screen does not use the game-over panel, and it has no Options or Save & Quit (the puzzle shortcuts are off while it is open); the run is saved when the next floor loads. | built 2026-10-15 |
+| UI-STYLE-007 | *Proposed:* the reward after a puzzle as a tally scroll (result, gold, XP, HP, Pencil, the puzzle's numbers, a "Perfect" stamp) beside the item choices as ema plaques on a red cord, with Take, Reroll and Take nothing. | proposal |
+| UI-STYLE-008 | *Proposed:* the relic node as the offering table (UI-STYLE-005) at the shrine painting: three relics on plinths with tier, Take each, "Leave them", the run's HP, gold and held relics on paper tags. | proposal |
+| UI-STYLE-009 | *Proposed:* the shop as the market stall painting with the goods on the counter, wooden price tags, the chosen item on a paper slip with Buy and the gold after buying, the purse (gold, reroll tokens, bag slots), Reroll and Leave. | proposal |
 | UI-STYLE-006 | A killer cage is one dashed outline around all its cells: inset into the cells, joined across them (no line between two cells of the same cage) and closed at every corner. Same rule in the game (`CageOutline`) and in the mockups (`cageRuns` in `src/common.js`). | built 2026-10-15 |
 
 ## Garden path
@@ -146,9 +150,31 @@ The boss-cleared painting stays full-screen; a large vermilion seal with the bos
 - **For:** the least UI; the painting and the stamp moment carry it.
 - **Against:** the painting is the same for every boss; less tied to the scrolls.
 
+## More screens (proposals, 2026-10-18)
+
+The next three screens a player sees most, in the same ink-and-paper family. Each keeps today's content and controls (keys 1–3, D-pad, Reroll with a token or gold, Skip/Leave) and only changes the look.
+
+### Reward after a puzzle (UI-STYLE-007)
+
+![Reward after a puzzle](layout-proposals/reward_ema.jpg)
+
+The puzzle's result hangs as a narrow tally scroll on the left (the hanging scroll of the puzzle screen, rolled up); the item choices hang as ema plaques on a red cord over the reward painting. Rarity is a coloured tag (Normal, Rare in indigo, Epic in gold), not a coloured button. The chosen plaque lifts and glows; the main button names the item.
+
+### Relic node (UI-STYLE-008)
+
+![Relic node](layout-proposals/relic_shrine.jpg)
+
+The offering table from the boss reward, at the shrine painting, so both relic choices look the same. Tags show the run's HP and gold and the relics already held, so a duplicate is easy to spot.
+
+### Shop (UI-STYLE-009)
+
+![Shop](layout-proposals/shop_stall.jpg)
+
+The stall painting is the scene: the goods sit on the counter with wooden price tags; the chosen one opens on a paper slip with its rule and "142 → 82 gold" so the cost is clear before buying. The purse shows gold, reroll tokens and the bag's free slots (a full bag leads to the existing swap panel).
+
 ## Decisions and next step
 
-Boss gate **B** and boss defeated **B** are built (2026-10-15). Next: the garden path (B, UI-STYLE-001) and the puzzle screen (B, UI-STYLE-002), which reuse the scroll parts made for the gate (`ScrollUiKit`: hand scroll, brocade, rollers, ink frame, ensō, seal).
+Boss gate **B** and boss defeated **B** are built (2026-10-15). The garden path (B, UI-STYLE-001) and the puzzle screen (B, UI-STYLE-002) are being built with the scroll parts made for the gate (`ScrollUiKit`). Reward, relic node and shop (UI-STYLE-007/008/009) wait for the owner's pick.
 
 ## Rendering
 

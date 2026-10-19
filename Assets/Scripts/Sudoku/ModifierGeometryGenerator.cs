@@ -4,7 +4,7 @@ using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.Sudoku
 {
-    public static class ModifierGeometryGenerator
+    public static partial class ModifierGeometryGenerator
     {
         private static readonly (int Dr, int Dc)[] Dirs = { (-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (1, 1), (-1, 1), (1, -1) };
         private static readonly (int Dr, int Dc)[] CageDirs = { (-1, 0), (1, 0), (0, -1), (0, 1) };
@@ -137,10 +137,36 @@ namespace SudokuRoguelike.Sudoku
                     case BossModifierId.FortressCells:
                         GenerateFortressCellMarkers(board, overlay, rng, scale);
                         break;
+
+                    // Catalog batches B1 and B2 (ModifierGeometryGenerator.Catalog.cs)
+                    case BossModifierId.NonconsecLine:
+                    case BossModifierId.HighLowAlternating:
+                    case BossModifierId.NabnerLine:
+                    case BossModifierId.EntropicLine:
+                    case BossModifierId.ModularLine:
+                    case BossModifierId.ZipperLine:
+                    case BossModifierId.FastThermo:
+                    case BossModifierId.AmbiguousThermo:
+                        GenerateCatalogLines(board, overlay, rng, scale, modifiers[i]);
+                        break;
+                    case BossModifierId.DifferenceK:
+                        GenerateDifferenceKPairs(board, overlay, rng, scale);
+                        break;
+                    case BossModifierId.MultipleCells:
+                        GenerateMultipleCellMarkers(board, overlay, rng, scale);
+                        break;
+                    case BossModifierId.MirrorCells:
+                        GenerateMirrorCellPairs(board, overlay, rng, scale);
+                        break;
+                    // Full White / Full Black Kropki: the deferred pass below.
                 }
 
                 MarkOverlayCellsUsed(overlay, linesBefore, dotsBefore, cagesBefore, arrowsBefore, markersBefore);
             }
+
+            // Complete dot sets come last and claim no cells, so they never crowd out the other geometry.
+            if (modifiers.Contains(BossModifierId.FullWhiteKropki)) GenerateFullKropkiSet(board, overlay, black: false);
+            if (modifiers.Contains(BossModifierId.FullBlackKropki)) GenerateFullKropkiSet(board, overlay, black: true);
 
             return overlay;
         }
@@ -446,7 +472,7 @@ namespace SudokuRoguelike.Sudoku
                 left.Add(pa);
                 right.Add(pb);
             }
-            if (left.Count < 3) return null;   // at least 5 cells
+            if (left.Count < 2) return null;   // at least 3 cells (a-b-a); 5 or 7 where the board has room
 
             var line = new ModifierLine { Type = LineType.Palindrome };
             for (var i = left.Count - 1; i >= 1; i--) line.Cells.Add(left[i]);

@@ -1,11 +1,12 @@
 # Plan: the 64 catalog modifiers (IDs 30–93)
 
-**Version:** 1.0 | **Date:** 2026-10-18 | **Status:** new (plan for the owner's review; nothing built)
+**Version:** 1.1 | **Date:** 2026-10-19 | **Status:** implemented (Phase 0 steps 1, 2, 7 in part; batches B1 and B2) · B3–B6 open
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.1 | 2026-10-19 | implemented | Owner decisions (2026-10-19): build Phase 0 + B1 + B2 now; new modifiers roll at equal weight; codex and completion grow; the drop list stands; line colours follow the setters' convention. Built: per-type presence (GAP-047, which exposed GAP-049), cage/arrow subtype filters, the 13 B1/B2 modifiers with rules, geometry, overlays, legend layers and five-language texts, blocked pairs, a soundness test per modifier (`CatalogModifierTests`) and a catalog completeness test. Rule details follow the spec (Entropic Line from 7×7, Difference ≥ K with K = 3, High-Low with 5 low on 9×9). Not yet: the catalog refactor of the name and abbreviation switches (step 3), golden geometry tests (step 5), the pair harness (step 7, [Explicit] part), the Custom Puzzle panel for 43 modifiers (needs a mockup), B3–B6. |
 | 1.0 | 2026-10-18 | new | Owner request: a plan for bringing the defined-but-never-generated modifiers (enum IDs 30–93) into the game (roadmap RM-001). Made with ECC's `planner` from the code; facts carry file:line references. |
 
 Short forms: PGS = `Assets/Scripts/Sudoku/PuzzleGenerationService.cs`, MGG = `Sudoku/ModifierGeometryGenerator.cs`, BVC = `UI/BoardViewController.cs`, BS = `Boss/BossService.cs`.

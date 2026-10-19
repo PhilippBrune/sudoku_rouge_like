@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.10 | **Date:** 2026-10-15 | **Status:** implemented
+**Version:** 1.11 | **Date:** 2026-10-19 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.11 | 2026-10-19 | implemented | 43 player modifiers: the catalog batches B1 and B2 (13 modifiers) are live (BossMechanicsSystem 2.8). |
 | 1.10 | 2026-10-15 | implemented | Seed of the week: one Garden Run seed per ISO week for all players, a button in the start-run modal (RUN-WEEK-001); the Discord posts compute the Daily Walk goals, the weekly seed and the Monthly Walk board exactly like the game (RUN-WEEK-002). Credits name community playtesters and translators and link the Discord (CREDITS-COMMUNITY-001). |
 | 1.9 | 2026-10-14 | implemented | Options panels (UI-OPT-001..003): the in-run Options use the main Options' tabs, controls and look (one factory, OptionsUiFactory), plus Accessibility and Run tabs; every control is reachable with the D-pad. Options Structure updated to the built tabs. Closes GAP-029 and FUTURE-015. Evidence: GeneratedUiPlayModeTraversalTests, GeneratedUiWiringContractTests, screenshots (E2E report §10.2f). |
 | 1.8 | 2026-10-14 | implemented | Window title "Run of the Nine" in every display mode (DISPLAY-MODE-007), set by the Windows player because the product name keeps the released save folder (SaveLoadArchitecture §Save folder). Evidence: build check B23 (E2E report §10.2d). |
@@ -313,7 +314,7 @@ See [BossMechanicsSystem](BossMechanicsSystem.md) for the full modifier pool, el
 
 ### Summary
 
-- 30 player modifiers (`BossModifierId` 0–29), 29 of them generatable (Modular Regions is excluded) — SPEC-CONF-019
+- 43 player modifiers (`BossModifierId` 0–29 and the catalog batch 38, 40–44, 51, 52, 58–60, 74, 76), 42 of them generatable (Modular Regions is excluded) — SPEC-CONF-019, BossMechanicsSystem 2.8
 - All eligible at every floor (no tier gating). Board-size and pairing restrictions apply.
 - **Floor modifiers** (persistent per floor, applied to all puzzles including boss):
 
@@ -473,7 +474,7 @@ All of these must be data-driven, not hard-coded:
 - Classes and passives
 - Item definitions and rarity behavior
 - Star levels and missing-cell density mapping
-- Modifier pools (30 player modifiers + future additions from Extended Modifier Library)
+- Modifier pools (43 player modifiers since 0.2.0 + future additions from the Extended Modifier Library)
 - Route node definitions and rewards
 - Relic effects and tier assignments
 

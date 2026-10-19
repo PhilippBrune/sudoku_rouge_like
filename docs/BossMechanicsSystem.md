@@ -1,11 +1,12 @@
 ﻿# Boss Mechanics System
 
-**Version:** 2.7 | **Date:** 2026-10-19 | **Status:** implemented
+**Version:** 2.8 | **Date:** 2026-10-19 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.8 | 2026-10-19 | implemented | Owner decision (2026-10-19): catalog batches B1 and B2 go live: 13 modifiers from the Extended Library (IDs 38, 40–44, 51, 52, 58–60, 74, 76) with rules, geometry, overlays, legend layers and texts in five languages; they roll at equal weight with the others and count toward the codex and completion (43 player modifiers, 42 clearable). The roll pool grew, so a seed from 0.1.5 (also a shared seed or an old Seed of the week) gives a different run in 0.2.0; saved runs keep their stored modifiers. Definitions as in the library below; Difference ≥ K uses K = 3, Fast Thermo N = 2. New blocked pairs keep one thermometer kind per puzzle and never stack a complete dot set with a dot rule of the same colour. The Custom Puzzle panel still lists the first 30 (a new layout waits for a mockup). |
 | 2.7 | 2026-10-19 | implemented | A chosen modifier counts as generated only with its own geometry (per line, dot, pair, cage, arrow, marker and cell-pair type; BOSS-MOD-004, GAP-047). New blocked pair Nonconsecutive + Difference Kropki (no white dot can exist; GAP-049). |
 | 2.6 | 2026-10-19 | implemented | Owner decision (GAP-048): line colours follow the convention puzzle setters use (Logic Masters, GM Puzzles): German Whispers green, Dutch Whispers orange, Renban pink, Palindrome grey, thermometers grey with a bulb; Consecutive Line moves to gold so it does not clash with Dutch Whispers. Lines are drawn as opaque bands a fifth of a cell wide through the cell centres with round joints (as in the chosen puzzle mockup, UI-STYLE-002); the colours below are the band colours on the paper board. Rule texts name the new colours in all five languages, and the Custom Puzzle tooltips use the same texts. |
 | 2.5 | 2026-10-19 | implemented | Line colours on the paper board of the hanging-scroll puzzle screen (UI-STYLE-002): German and Dutch Whispers darker so they read on paper; Parity Lines drawn blue as specified (the game drew them teal, almost the colour of Dutch Whispers, and the rule text said "purple"; GAP-048). Renban and Palindrome still differ from this table (GAP-048, open). |
@@ -29,7 +30,7 @@
 
 ## Overview
 
-Modifiers add visual overlays to the puzzle grid and enforce additional constraints beyond standard Sudoku rules. There are **30 player modifiers** (`BossModifierId` 0–29); 29 of them can be generated (Modular Regions is excluded, see §Modifier Eligibility). Every generatable modifier is eligible from any floor — there is no tier gating, only the board-size and pairing rules below.
+Modifiers add visual overlays to the puzzle grid and enforce additional constraints beyond standard Sudoku rules. There are **43 player modifiers** (`BossModifierId` 0–29 and the catalog batch 38, 40–44, 51, 52, 58–60, 74, 76); 42 of them can be generated (Modular Regions is excluded, see §Modifier Eligibility). Every generatable modifier is eligible from any floor — there is no tier gating, only the board-size and pairing rules below.
 
 Modifiers appear in two ways:
 
@@ -43,7 +44,7 @@ Modifiers the player has never encountered before are displayed as **"???"** unt
 
 ## Active Modifier Pool (30 Implemented) `[BOSS-MOD-001]` `[BOSS-MOD-002]`
 
-All 30 modifiers are fully implemented with constraint rules, geometry generation, overlay rendering, and tutorial descriptions.
+All 43 modifiers are fully implemented with constraint rules, geometry generation, overlay rendering and descriptions; the Custom Puzzle panel lists the first 30.
 
 ### Line Constraints
 
@@ -155,6 +156,26 @@ These 15 modifiers extend the active pool beyond the original 15. All are eligib
 | 28 | Prime Cells | `PrimeCellsRule` | CellLevel |
 | 29 | Fortress Cells | `FortressCellsRule` | CellLevel |
 
+### Catalog batch (B1 and B2, active since 2026-10-19) `[GEN-MOD-002]`
+
+Thirteen modifiers from the Extended Library below, registered with their enum IDs (docs/design/modifier-catalog-plan.md). Geometry is read off the solution; lines run in 8 directions.
+
+| ID | Modifier | Visual | Rule | Min Size | Rule Class |
+|:---:|----------|--------|------|:---:|-----------|
+| 38 | **Nonconsecutive Line** | Lime line with an ink cross on every step | Neighbours on the line are never consecutive | 6×6 | `NonconsecLineRule` |
+| 40 | **High-Low Line** | Mint line with a paper stripe | Digits alternate between the low half (≤ midpoint, 1–5 on 9×9) and the high half | 6×6 | `HighLowLineRule` |
+| 41 | **Nabner Line** | Red line | No two digits on the line repeat or are consecutive | 6×6 | `NabnerLineRule` |
+| 42 | **Entropic Line** | Peach line | Any three neighbours hold one of {1–3}, {4–6}, {7–9} | 7×7 | `TriadLineRule` |
+| 43 | **Modular Line** | Teal line | Any three neighbours hold one digit of each remainder mod 3 | 6×6 | `TriadLineRule` |
+| 44 | **Zipper Line** | Lavender line, ink ring on the middle cell (or ink dot between the two middle cells) | Cells the same distance from the middle sum to the same total; a middle cell holds it | 6×6 | `ZipperLineRule` |
+| 51 | **Fast Thermo** | Grey thermometer with a double bulb | Each digit is at least 2 above the one before (N = 2) | 6×6 | `FastThermoRule` |
+| 52 | **Ambiguous Thermo** | Grey line, ink bar at both ends, no bulb | Strictly increasing in one of the two directions | 6×6 | `AmbiguousThermoRule` |
+| 58 | **Full White Kropki** | White dot on every difference-1 pair | All difference-1 pairs are marked; no dot forbids a difference of 1 | 5×5 | `FullKropkiSetRule` + `DifferenceKropkiRule` |
+| 59 | **Full Black Kropki** | Black dot on every 1:2 pair | All 1:2 pairs are marked; no dot forbids a 1:2 ratio | 6×6 | `FullKropkiSetRule` + `RatioKropkiRule` |
+| 60 | **Difference ≥ 3** | Plum tag "≥3" on the shared edge | The two cells differ by at least K = 3 | 5×5 | `DifferenceKPairRule` |
+| 74 | **Multiples of 3** | Ochre ring with "×3" | A marked cell holds 3, 6 or 9 | 5×5 | `MultipleCellsRule` |
+| 76 | **Mirror Cells** | Indigo letter badge, same letter on both cells | A cell and its reflection through the grid centre hold the same digit | 5×5 | `MirrorCellsRule` |
+
 ---
 
 ## Floor Modifier System `[BOSS-FLOOR-001]` `[BOSS-FLOOR-003]`
@@ -227,8 +248,8 @@ Authoritative table: `BossService.ModifierData` (decided 2026-10-07, SPEC-CONF-0
 | 7×7 | Killer Cages, German Whispers (Modular Regions: 7×7, but excluded) |
 | 9×9 | Entropy |
 
-- **Modular Regions** is excluded from every roll pool and from completion (29 clearable modifiers).
-- **Blocked pairs** (never combined, `BossService.GetBlockedPairs`): Ratio Kropki + Distance ≥ 2, Distance ≥ 2 + Nonconsec. Diagonal, Anti-Bishop + Antiknight, Anti-Bishop + Nonconsecutive, Anti-Bishop + Entropy, Nonconsecutive + Difference Kropki.
+- **Modular Regions** is excluded from every roll pool and from completion (42 clearable modifiers).
+- **Blocked pairs** (never combined, `BossService.GetBlockedPairs`): Ratio Kropki + Distance ≥ 2, Distance ≥ 2 + Nonconsec. Diagonal, Anti-Bishop + Antiknight, Anti-Bishop + Nonconsecutive, Anti-Bishop + Entropy, Nonconsecutive + Difference Kropki; Fast Thermo with Thermo, Slow Thermo or Ambiguous Thermo; Ambiguous Thermo with Thermo, Slow Thermo or Palindrome; Full White Kropki with Full Kropki, Full Black Kropki, Difference Kropki, Ratio Kropki, Sum Dot or Nonconsecutive; Full Black Kropki with Full Kropki, Ratio Kropki, Difference Kropki or Sum Dot (never two dots on one edge).
 - **Global structural modifiers** (Nonconsecutive, Antiknight, Anti-King, Anti-Bishop, Nonconsec. Diagonal, Distance ≥ 2, Entropy) use the rectangular region layout of the board size: no irregular template produced a puzzle with them within budget (SPEC-AMB-014). Two or more of the board-shaping ones need at least 8×8, and a 7×7 board with one is raised to 8×8.
 - Modifiers already active as **floor modifiers** are excluded from the boss choice pool (no duplicates within a floor).
 - Modifiers chosen on a previous floor **can** appear again on later floors (each floor is independent).
@@ -452,7 +473,7 @@ Boss modifier state is serialized for save/resume support:
 
 ## Modifier Descriptions
 
-All 30 player modifiers and the 14 boss debuffs have descriptions via `BossService.GetModifierDescription()` (localized, `Boss.Description.*`). These are shown:
+All 43 player modifiers and the 14 boss debuffs have descriptions via `BossService.GetModifierDescription()` (localized, `Boss.Description.*`). These are shown:
 - In the boss gate choice panel
 - In the tutorial modifier toggle tooltips
 - In the in-run HUD modifier box, the modifier legend and the in-run View Modifiers list
@@ -464,14 +485,14 @@ All 30 player modifiers and the 14 boss debuffs have descriptions via `BossServi
 | File | Purpose |
 |------|---------|
 | `Assets/Scripts/Sudoku/ModifierModels.cs` | Data structures (CellCoord, ModifierLine, ArrowConstraint, KillerCage, KropkiDot, CellMarker, ModifierOverlayData) |
-| `Assets/Scripts/Sudoku/ConstraintRules.cs` | 30 IOrderedConstraintRule implementations |
-| `Assets/Scripts/Sudoku/ModifierGeometryGenerator.cs` | Geometry generation from solved boards (accepts intensity parameter); 30 modifiers |
-| `Assets/Scripts/Sudoku/ModifierFactory.cs` | Maps BossModifierId → constraint rule instances (30 cases) |
+| `Assets/Scripts/Sudoku/ConstraintRules.cs` (+ `.LineVariants.cs`, `.DotsPairsCells.cs`) | IOrderedConstraintRule implementations for all 43 player modifiers |
+| `Assets/Scripts/Sudoku/ModifierGeometryGenerator.cs` (+ `.Catalog.cs`) | Geometry generation from solved boards (accepts intensity parameter); 43 modifiers |
+| `Assets/Scripts/Sudoku/ModifierFactory.cs` | Maps BossModifierId → constraint rule instances (43 cases) |
 | `Assets/Scripts/Sudoku/SudokuConstraintEngine.cs` | Central rule engine with ValidateAll |
 | `Assets/Scripts/Boss/BossService.cs` | Modifier pool construction, choice rolling, ModifierData (min sizes, blocked pairs), debuff pool |
 | `Assets/Scripts/Run/RunDirector.cs` | StartLevel wiring (overlay generation, engine creation, fog reveal, intensity assignment) |
 | `Assets/Scripts/UI/InRunController.cs`, `BoardViewController.cs` (+ `.OverlayGroups.cs`), `HudViewController.cs` (+ `.Legend.cs`), `BossGateViewController.cs` | Overlay rendering per modifier layer, fog masking, input blocking, descriptions, legend, boss gate (`PrototypeRunScreenController` no longer exists, SPEC-CONF-036) |
-| `Assets/Scripts/Core/GameEnums.cs` | BossModifierId (30 player modifiers 0–29, future IDs 30–93, debuffs 94–102/107–111, pressure 103–106), BossModifierIntensity, ConstraintRuleCategory enums |
+| `Assets/Scripts/Core/GameEnums.cs` | BossModifierId (43 player modifiers: 0–29 and 38, 40–44, 51, 52, 58–60, 74, 76; other library IDs 30–93 not generated; debuffs 94–102/107–111, pressure 103–106), BossModifierIntensity, ConstraintRuleCategory enums |
 | `Assets/Scripts/Core/RuntimeModels.cs` | Boss modifier serialization fields in RunState |
 | `Assets/Scripts/Save/RunAutoSaveCoordinator.cs` | SyncSeenModifiersToList before save |
 | `Assets/Scripts/Save/RunResumeService.cs` | Restore boss modifier state on resume |
@@ -481,7 +502,7 @@ All 30 player modifiers and the 14 boss debuffs have descriptions via `BossServi
 
 ## Extended Modifier Library (Future Content)
 
-The following modifiers are cataloged for potential future integration. Entries marked **[IMPLEMENTED]** are now in the active 30-modifier pool. The table format matches the active pool: `# | Modifier | Visual | Rule | Min Size`.
+The following modifiers are cataloged for potential future integration. Entries marked ✅ are in the active pool (43 modifiers since 2.8; the ID in brackets is the enum ID). The table format matches the active pool: `# | Modifier | Visual | Rule | Min Size`.
 
 **Min Size** is the smallest board on which the constraint remains interesting and non-trivial. **Visual** is a proposed rendering approach; all visuals are TBD until implementation.
 
@@ -518,13 +539,13 @@ All extended line modifiers follow the same **8-directional adjacency, no self-c
 |:---:|----------|--------|------|:---:|
 | 27 | **Whisper (Generalized)** | Coloured line (hue configurable) | Adjacent cells on the line differ by ≥ K, where K is set at run time | 6×6 |
 | 28 | **Consecutive Line** ✅ | Orange line | Every pair of adjacent cells on the line differs by exactly 1 | 5×5 |
-| 29 | **Nonconsecutive Line** | Crossed orange line | No pair of adjacent cells on the line are consecutive | 6×6 |
+| 29 | **Nonconsecutive Line** ✅ (ID 38) | Crossed lime line | No pair of adjacent cells on the line are consecutive | 6×6 |
 | 30 | **Alternating Parity Line** | Purple striped line | Digits strictly alternate odd/even along the line | 5×5 |
-| 31 | **High-Low Alternating** | Bicolour line (warm/cool segments) | Digits alternate above/below the board midpoint (e.g. >5 and ≤5 on a 9×9) | 6×6 |
-| 32 | **Nabner Line** | Dark red line | No digit on the line repeats or is consecutive with any other digit on the same line | 6×6 |
-| 33 | **Entropic Line** | Tri-segment gradient line | Any 3 consecutive cells contain one digit from each set: {1–3}, {4–6}, {7–9} | 7×7 |
-| 34 | **Modular Line** | Banded line (3 colours cycling) | Any 3 consecutive cells contain digits from different residue classes mod 3 | 6×6 |
-| 35 | **Zipper Line** | Dashed line with central marker | Pairs of cells equidistant from the centre sum to the same value | 6×6 |
+| 31 | **High-Low Alternating** ✅ (ID 40) | Mint line with a paper stripe | Digits alternate above/below the board midpoint (e.g. >5 and ≤5 on a 9×9) | 6×6 |
+| 32 | **Nabner Line** ✅ (ID 41) | Red line | No digit on the line repeats or is consecutive with any other digit on the same line | 6×6 |
+| 33 | **Entropic Line** ✅ (ID 42) | Peach line | Any 3 consecutive cells contain one digit from each set: {1–3}, {4–6}, {7–9} | 7×7 |
+| 34 | **Modular Line** ✅ (ID 43) | Teal line | Any 3 consecutive cells contain digits from different residue classes mod 3 | 6×6 |
+| 35 | **Zipper Line** ✅ (ID 44) | Lavender line with central marker | Pairs of cells equidistant from the centre sum to the same value | 6×6 |
 | 36 | **Region Sum Line** | Line with box-border tick marks | Each segment of the line divided by box borders sums to the same total | 7×7 |
 | 37 | **N-Line (10-Line)** | Numbered line with segment ticks | Each box-bounded segment of the line sums to exactly N (default N=10) | 7×7 |
 | 38 | **Index Line** | Line with position labels | The digit at position P on the line (1-indexed from one end) equals P | 7×7 |
@@ -533,8 +554,8 @@ All extended line modifiers follow the same **8-directional adjacency, no self-c
 | 41 | **Skyscraper Line** | Line with building silhouette endpoints | Digits from each endpoint encode how many increasing "buildings" are visible from that end | 7×7 |
 | 42 | **Thermo Loop** | Closed loop line with bulb marker | Digits must strictly increase cyclically around the loop — note: unsatisfiable unless relaxed to non-strict (≥) | 8×8 |
 | 43 | **Slow Thermo** ✅ | Thermo line with open bulb | Non-strict increase — each cell must be ≥ the previous | 5×5 |
-| 44 | **Fast Thermo** | Thermo line with double-arrow bulb | Each cell must increase by ≥ N from the previous (N configurable) | 6×6 |
-| 45 | **Ambiguous Thermo** | Plain line, no bulb | Direction is unknown to the player — the line increases in one direction but neither end is marked | 6×6 |
+| 44 | **Fast Thermo** ✅ (ID 51) | Thermo line with a double bulb | Each cell must increase by ≥ N from the previous (N configurable) | 6×6 |
+| 45 | **Ambiguous Thermo** ✅ (ID 52) | Plain grey line, bars at both ends, no bulb | Direction is unknown to the player — the line increases in one direction; both ends carry the same ink bar, so neither shows the direction | 6×6 |
 
 ---
 
@@ -556,10 +577,10 @@ All extended line modifiers follow the same **8-directional adjacency, no self-c
 | # | Modifier | Visual | Rule | Min Size |
 |:---:|----------|--------|------|:---:|
 | 52 | **Full Kropki** ✅ | White dots (diff=1) and black dots (ratio=1:2) on all valid pairs | All valid Kropki pairs between orthogonally adjacent cells are shown. Absence of a dot means the pair does **not** satisfy either relation | 6×6 |
-| 53 | **Full White Kropki** | White dot on every diff=1 adjacent pair | All difference=1 pairs are marked; absence of a dot forbids diff=1 | 5×5 |
-| 54 | **Full Black Kropki** | Black dot on every ratio=1:2 adjacent pair | All ratio=1:2 pairs are marked; absence of a dot forbids ratio=1:2 | 6×6 |
+| 53 | **Full White Kropki** ✅ (ID 58) | White dot on every diff=1 adjacent pair | All difference=1 pairs are marked; absence of a dot forbids diff=1 | 5×5 |
+| 54 | **Full Black Kropki** ✅ (ID 59) | Black dot on every ratio=1:2 adjacent pair | All ratio=1:2 pairs are marked; absence of a dot forbids ratio=1:2 | 6×6 |
 | 55 | **Sum Kropki** ✅ | Labelled dot between cells showing sum K | A dot indicates the two adjacent cells sum to K | 5×5 |
-| 56 | **Difference ≥ K** | Coloured bar between cells | Adjacent orthogonal cells must differ by at least K | 5×5 |
+| 56 | **Difference ≥ K** ✅ (ID 60, K = 3) | Plum tag "≥3" on the edge | Adjacent orthogonal cells must differ by at least K | 5×5 |
 | 57 | **Ratio (Generalized)** | Labelled black dot showing ratio N | One cell is exactly N times the other (not limited to 1:2) | 6×6 |
 | 58 | **Inequality Chains** | Chevron symbols (> or <) between cells | Consecutive cells in a row or column are connected by > or < indicators | 5×5 |
 | 59 | **Distance Pair** | Labelled connector between paired cells | The absolute difference \|A − B\| equals the taxicab distance between the two cells | 6×6 |
@@ -592,9 +613,9 @@ All extended line modifiers follow the same **8-directional adjacency, no self-c
 | # | Modifier | Visual | Rule | Min Size |
 |:---:|----------|--------|------|:---:|
 | 72 | **Prime Cells** ✅ | P-labelled cell markers | Marked cells must contain prime digits: 2, 3, 5, or 7 | 5×5 |
-| 73 | **Multiples Cells** | ×N-labelled cell markers | Marked cells must contain a multiple of N | 5×5 |
+| 73 | **Multiples Cells** ✅ (ID 74, N = 3) | ×N-labelled cell markers | Marked cells must contain a multiple of N | 5×5 |
 | 74 | **Index Cell** | Self-referential circle marker | A cell's digit encodes the count of some defined feature in its row or column | 7×7 |
-| 75 | **Mirror Cells** | Paired cell markers (matching colour) | Paired cells must contain the same digit | 5×5 |
+| 75 | **Mirror Cells** ✅ (ID 76) | Paired letter badges (same letter) | Paired cells must contain the same digit | 5×5 |
 | 76 | **Opposite Cells Sum** | Paired cell markers with sum label | Cells symmetric about the grid centre must sum to a fixed constant | 5×5 |
 | 77 | **Counting Circles** | Small circle markers on cells | A circled cell's digit equals the count of circles whose value matches that digit | 6×6 |
 | 78 | **Fortress** ✅ | Grey shading on fortress cells | Grey-shaded cells must be strictly greater than all orthogonally adjacent non-shaded cells | 6×6 |

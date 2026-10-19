@@ -51,6 +51,21 @@ namespace SudokuRoguelike.Boss
             [BossModifierId.PrimeCells]        = (1, 0.20f, 0),
             [BossModifierId.FortressCells]     = (2, 0.35f, 6),
 
+            // [REQ: GEN-MOD-002] Catalog batches B1 and B2 (modifier-catalog-plan.md; min sizes from BossMechanicsSystem.md)
+            [BossModifierId.NonconsecLine] = (1, 0.20f, 6),
+            [BossModifierId.HighLowAlternating] = (2, 0.25f, 6),
+            [BossModifierId.NabnerLine] = (2, 0.30f, 6),
+            [BossModifierId.EntropicLine] = (3, 0.40f, 7),
+            [BossModifierId.ModularLine] = (2, 0.30f, 6),
+            [BossModifierId.ZipperLine] = (2, 0.35f, 6),
+            [BossModifierId.FastThermo] = (2, 0.30f, 6),
+            [BossModifierId.AmbiguousThermo] = (3, 0.40f, 6),
+            [BossModifierId.FullWhiteKropki] = (3, 0.45f, 5),
+            [BossModifierId.FullBlackKropki] = (2, 0.35f, 6),
+            [BossModifierId.DifferenceK] = (1, 0.20f, 5),
+            [BossModifierId.MultipleCells] = (1, 0.15f, 5),
+            [BossModifierId.MirrorCells] = (1, 0.20f, 5),
+
             // Boss debuffs (IDs 94–102) — reactive penalties on wrong placement
             // [REQ: DEBUFF-HOOK-011] All debuff entries registered here; IDs ≥94 excluded from BuildEligiblePool
             [BossModifierId.RowWipe]       = (3, 0.55f, 0), // [REQ: DEBUFF-DEF-001]
@@ -200,6 +215,27 @@ namespace SudokuRoguelike.Boss
             // Nonconsecutive forbids exactly the neighbours a white dot marks: Difference Kropki could never place a
             // dot, and the player saw the rule without any dots (GAP-049).
             (BossModifierId.Nonconsecutive, BossModifierId.DifferenceKropki),
+            // Catalog B1/B2: one thermometer kind per puzzle; complete dot sets never stack with another dot rule of
+            // the same colour (redundant) or with Nonconsecutive (no white dot can exist); two plain grey lines without
+            // a bulb (Palindrome, Ambiguous Thermo) would look alike.
+            (BossModifierId.FastThermo, BossModifierId.Thermo),
+            (BossModifierId.FastThermo, BossModifierId.SlowThermo),
+            (BossModifierId.FastThermo, BossModifierId.AmbiguousThermo),
+            (BossModifierId.AmbiguousThermo, BossModifierId.Thermo),
+            (BossModifierId.AmbiguousThermo, BossModifierId.SlowThermo),
+            (BossModifierId.AmbiguousThermo, BossModifierId.Palindrome),
+            (BossModifierId.FullWhiteKropki, BossModifierId.FullKropki),
+            (BossModifierId.FullWhiteKropki, BossModifierId.FullBlackKropki),
+            (BossModifierId.FullWhiteKropki, BossModifierId.DifferenceKropki),
+            (BossModifierId.FullWhiteKropki, BossModifierId.Nonconsecutive),
+            (BossModifierId.FullBlackKropki, BossModifierId.FullKropki),
+            (BossModifierId.FullBlackKropki, BossModifierId.RatioKropki),
+            // A complete set and another dot kind could put two dots on one edge (1-2 is both a difference of 1 and a
+            // 1:2 ratio; sum dots sit on any edge).
+            (BossModifierId.FullWhiteKropki, BossModifierId.RatioKropki),
+            (BossModifierId.FullWhiteKropki, BossModifierId.SumKropki),
+            (BossModifierId.FullBlackKropki, BossModifierId.DifferenceKropki),
+            (BossModifierId.FullBlackKropki, BossModifierId.SumKropki),
         };
 
         private static bool IsBlockedCombination(BossModifierId first, BossModifierId second)
@@ -467,6 +503,7 @@ namespace SudokuRoguelike.Boss
             BossModifierId.ConsecutiveLine, BossModifierId.SlowThermo, BossModifierId.UniqueSetLine,
             BossModifierId.FullKropki, BossModifierId.SumKropki, BossModifierId.GreaterLessThan,
             BossModifierId.XVPairs, BossModifierId.PrimeCells, BossModifierId.FortressCells,
+            BossModifierId.NonconsecLine, BossModifierId.HighLowAlternating, BossModifierId.NabnerLine, BossModifierId.EntropicLine, BossModifierId.ModularLine, BossModifierId.ZipperLine, BossModifierId.FastThermo, BossModifierId.AmbiguousThermo, BossModifierId.FullWhiteKropki, BossModifierId.FullBlackKropki, BossModifierId.DifferenceK, BossModifierId.MultipleCells, BossModifierId.MirrorCells,
             BossModifierId.RowWipe, BossModifierId.ColWipe, BossModifierId.DoublePenalty,
             BossModifierId.CellLock, BossModifierId.PencilBlind, BossModifierId.RadiusWipe,
             BossModifierId.PencilScramble, BossModifierId.GivenReveal, BossModifierId.RevealCost,
@@ -486,6 +523,7 @@ namespace SudokuRoguelike.Boss
             BossModifierId.ConsecutiveLine, BossModifierId.SlowThermo, BossModifierId.UniqueSetLine,
             BossModifierId.FullKropki, BossModifierId.SumKropki, BossModifierId.GreaterLessThan,
             BossModifierId.XVPairs, BossModifierId.PrimeCells, BossModifierId.FortressCells,
+            BossModifierId.NonconsecLine, BossModifierId.HighLowAlternating, BossModifierId.NabnerLine, BossModifierId.EntropicLine, BossModifierId.ModularLine, BossModifierId.ZipperLine, BossModifierId.FastThermo, BossModifierId.AmbiguousThermo, BossModifierId.FullWhiteKropki, BossModifierId.FullBlackKropki, BossModifierId.DifferenceK, BossModifierId.MultipleCells, BossModifierId.MirrorCells,
             BossModifierId.RowWipe, BossModifierId.ColWipe, BossModifierId.DoublePenalty,
             BossModifierId.CellLock, BossModifierId.PencilBlind, BossModifierId.BoxWipe,
             BossModifierId.CrossWipe, BossModifierId.RadiusWipe, BossModifierId.PencilDrain,
@@ -539,6 +577,19 @@ namespace SudokuRoguelike.Boss
                 BossModifierId.XVPairs             => "XV Pairs",
                 BossModifierId.PrimeCells          => "Prime Cells",
                 BossModifierId.FortressCells       => "Fortress Cells",
+                BossModifierId.NonconsecLine       => "Nonconsecutive Line",
+                BossModifierId.HighLowAlternating  => "High-Low Line",
+                BossModifierId.NabnerLine          => "Nabner Line",
+                BossModifierId.EntropicLine        => "Entropic Line",
+                BossModifierId.ModularLine         => "Modular Line",
+                BossModifierId.ZipperLine          => "Zipper Line",
+                BossModifierId.FastThermo          => "Fast Thermo",
+                BossModifierId.AmbiguousThermo     => "Ambiguous Thermo",
+                BossModifierId.FullWhiteKropki     => "Full White Kropki",
+                BossModifierId.FullBlackKropki     => "Full Black Kropki",
+                BossModifierId.DifferenceK         => "Difference ≥ 3",
+                BossModifierId.MultipleCells       => "Multiples of 3",
+                BossModifierId.MirrorCells         => "Mirror Cells",
                 BossModifierId.RowWipe             => "Row Wipe",
                 BossModifierId.ColWipe             => "Column Wipe",
                 BossModifierId.DoublePenalty       => "Double Penalty",
@@ -592,6 +643,19 @@ namespace SudokuRoguelike.Boss
                 BossModifierId.XVPairs             => "X between two cells: they sum to 10. V between two cells: they sum to 5.",
                 BossModifierId.PrimeCells          => "Marked cells (shown with a P) must contain a prime digit: 2, 3, 5, or 7.",
                 BossModifierId.FortressCells       => "Grey-shaded cells must be strictly greater than every orthogonally adjacent non-shaded cell.",
+                BossModifierId.NonconsecLine       => "Neighbours on lime lines with crosses are never consecutive. Example: 2-5-3-7.",
+                BossModifierId.HighLowAlternating  => "Digits on mint lines alternate between the low half and the high half (on 9×9: 1–5 and 6–9). Example: 2-7-4-9.",
+                BossModifierId.NabnerLine          => "No two digits on red lines repeat or are consecutive. Example: 1-4-6-9.",
+                BossModifierId.EntropicLine        => "Any three neighbours on peach lines hold one low (1–3), one middle (4–6) and one high (7–9) digit. Example: 2-5-8-1.",
+                BossModifierId.ModularLine         => "Any three neighbours on teal lines hold one digit from each of 1-4-7, 2-5-8 and 3-6-9. Example: 1-5-9-4.",
+                BossModifierId.ZipperLine          => "On lavender lines, cells the same distance from the middle add up to the same total; a middle cell holds that total. Example: 3-1-7-6-4.",
+                BossModifierId.FastThermo          => "Along thermometers with a double bulb, each digit is at least 2 higher than the one before. Example: 1-3-6-8.",
+                BossModifierId.AmbiguousThermo     => "Grey lines with a bar at each end strictly increase in one direction; find out which. Example: 7-5-4-1.",
+                BossModifierId.FullWhiteKropki     => "Every pair of neighbours that differs by 1 has a white dot; no white dot means no difference of 1.",
+                BossModifierId.FullBlackKropki     => "Every pair of neighbours where one is double the other has a black dot; no black dot means no such pair.",
+                BossModifierId.DifferenceK         => "Cells joined by a plum bar differ by at least 3. Example: 2-6.",
+                BossModifierId.MultipleCells       => "Cells marked ×3 hold a multiple of 3: 3, 6 or 9.",
+                BossModifierId.MirrorCells         => "Cells with the same letter mirror each other through the centre of the grid and hold the same digit.",
 
                 // Boss debuffs
                 BossModifierId.RowWipe       => "Wrong placement: all your digits in that row are erased.",
@@ -627,6 +691,14 @@ namespace SudokuRoguelike.Boss
             LineType.ConsecutiveLine => "CL",
             LineType.SlowThermo      => "ST",
             LineType.UniqueSetLine   => "UL",
+            LineType.NonconsecLine     => "NL",
+            LineType.HighLowAlternating=> "HL",
+            LineType.NabnerLine        => "NB",
+            LineType.EntropicLine      => "EL",
+            LineType.ModularLine       => "ML",
+            LineType.ZipperLine        => "ZL",
+            LineType.FastThermo        => "FT",
+            LineType.AmbiguousThermo   => "AT",
             _                        => "??"
         };
 
@@ -664,6 +736,19 @@ namespace SudokuRoguelike.Boss
                 BossModifierId.XVPairs          => "XV",
                 BossModifierId.PrimeCells       => "PM",
                 BossModifierId.FortressCells    => "FC",
+                BossModifierId.NonconsecLine      => "NL",
+                BossModifierId.HighLowAlternating => "HL",
+                BossModifierId.NabnerLine         => "NB",
+                BossModifierId.EntropicLine       => "EL",
+                BossModifierId.ModularLine        => "ML",
+                BossModifierId.ZipperLine         => "ZL",
+                BossModifierId.FastThermo         => "FT",
+                BossModifierId.AmbiguousThermo    => "AT",
+                BossModifierId.FullWhiteKropki    => "FW",
+                BossModifierId.FullBlackKropki    => "FB",
+                BossModifierId.DifferenceK        => "D3",
+                BossModifierId.MultipleCells      => "M3",
+                BossModifierId.MirrorCells        => "MI",
                 _                              => "??"
             };
         }

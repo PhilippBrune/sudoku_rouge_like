@@ -44,6 +44,19 @@ namespace SudokuRoguelike.UI
             BossModifierId.EvenOdd          => new[] { EvenOddKey },
             BossModifierId.PrimeCells       => new[] { PrimeKey },
             BossModifierId.FortressCells    => new[] { FortressKey },
+            BossModifierId.NonconsecLine      => new[] { LineKey(LineType.NonconsecLine) },
+            BossModifierId.HighLowAlternating => new[] { LineKey(LineType.HighLowAlternating) },
+            BossModifierId.NabnerLine         => new[] { LineKey(LineType.NabnerLine) },
+            BossModifierId.EntropicLine       => new[] { LineKey(LineType.EntropicLine) },
+            BossModifierId.ModularLine        => new[] { LineKey(LineType.ModularLine) },
+            BossModifierId.ZipperLine         => new[] { LineKey(LineType.ZipperLine) },
+            BossModifierId.FastThermo         => new[] { LineKey(LineType.FastThermo) },
+            BossModifierId.AmbiguousThermo    => new[] { LineKey(LineType.AmbiguousThermo) },
+            BossModifierId.FullWhiteKropki    => new[] { KropkiWhiteKey },
+            BossModifierId.FullBlackKropki    => new[] { KropkiBlackKey },
+            BossModifierId.DifferenceK        => new[] { DifferenceKKey },
+            BossModifierId.MultipleCells      => new[] { MultipleKey },
+            BossModifierId.MirrorCells        => new[] { MirrorKey },
             _                               => Array.Empty<string>()
         };
 
@@ -73,6 +86,19 @@ namespace SudokuRoguelike.UI
                 BossModifierId.EvenOdd          => GamePalette.OverlayEvenMarker,
                 BossModifierId.PrimeCells       => GamePalette.OverlayPrimeCircle,
                 BossModifierId.FortressCells    => GamePalette.OverlayFortress,
+                BossModifierId.NonconsecLine      => GetLineColor(LineType.NonconsecLine),
+                BossModifierId.HighLowAlternating => GetLineColor(LineType.HighLowAlternating),
+                BossModifierId.NabnerLine         => GetLineColor(LineType.NabnerLine),
+                BossModifierId.EntropicLine       => GetLineColor(LineType.EntropicLine),
+                BossModifierId.ModularLine        => GetLineColor(LineType.ModularLine),
+                BossModifierId.ZipperLine         => GetLineColor(LineType.ZipperLine),
+                BossModifierId.FastThermo         => GetLineColor(LineType.FastThermo),
+                BossModifierId.AmbiguousThermo    => GetLineColor(LineType.AmbiguousThermo),
+                BossModifierId.FullWhiteKropki    => GamePalette.OverlayKropkiWhite,
+                BossModifierId.FullBlackKropki    => GamePalette.OverlayKropkiBlack,
+                BossModifierId.DifferenceK        => GamePalette.OverlayDifferenceK,
+                BossModifierId.MultipleCells      => GamePalette.OverlayMultiple,
+                BossModifierId.MirrorCells        => GamePalette.OverlayMirror,
                 _                               => Color.clear
             };
             if (color.a <= 0f) return false;

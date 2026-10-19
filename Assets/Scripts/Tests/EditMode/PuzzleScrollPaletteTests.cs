@@ -54,7 +54,11 @@ namespace SudokuRoguelike.Tests
             ("Parity", GamePalette.LineParityLine), ("Renban", GamePalette.LineRenbanLine),
             ("Palindrome", GamePalette.LinePalindrome), ("Thermo", GamePalette.LineThermo),
             ("Between", GamePalette.LineBetweenLine), ("Consecutive", GamePalette.LineConsecutiveLine),
-            ("Slow Thermo", GamePalette.LineSlowThermo), ("Unique Set", GamePalette.LineUniqueSetLine)
+            ("Slow Thermo", GamePalette.LineSlowThermo), ("Unique Set", GamePalette.LineUniqueSetLine),
+            // Catalog batch B1 (Fast and Ambiguous Thermo use the thermometer grey and never share a board with it)
+            ("Nonconsecutive Line", GamePalette.LineNonconsecLine), ("High-Low", GamePalette.LineHighLow),
+            ("Nabner", GamePalette.LineNabner), ("Entropic", GamePalette.LineEntropic),
+            ("Modular", GamePalette.LineModular), ("Zipper", GamePalette.LineZipper)
         };
 
         // GAP-048: the colours puzzle setters use. Hue in degrees from Color.RGBToHSV.
@@ -80,6 +84,15 @@ namespace SudokuRoguelike.Tests
                 for (var j = i + 1; j < LineColours.Length; j++)
                     Assert.Greater(Distance(color, LineColours[j].color), 0.2f, $"{name} vs {LineColours[j].name}");
             }
+        }
+
+        // Catalog batch B2 marks: white text on the plum tag and the indigo badge, the ochre ring against the paper.
+        [Test]
+        public void CatalogMarks_AreReadable()
+        {
+            Assert.GreaterOrEqual(Contrast(Color.white, GamePalette.OverlayDifferenceK), MinTextContrast, "≥3 tag");
+            Assert.GreaterOrEqual(Contrast(Color.white, GamePalette.OverlayMirror), MinTextContrast, "mirror letter");
+            Assert.GreaterOrEqual(Contrast(GamePalette.OverlayMultiple, GamePalette.CellEmpty), 3.0, "×3 ring on paper");
         }
 
         private static float Hue(Color c)

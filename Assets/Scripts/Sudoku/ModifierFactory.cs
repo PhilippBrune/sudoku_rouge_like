@@ -107,6 +107,51 @@ namespace SudokuRoguelike.Sudoku
                     case BossModifierId.FortressCells:
                         rules.Add(new FortressCellsRule());
                         break;
+
+                    // Catalog batch B1: line variants (ConstraintRules.LineVariants.cs)
+                    case BossModifierId.NonconsecLine:
+                        rules.Add(new NonconsecLineRule());
+                        break;
+                    case BossModifierId.HighLowAlternating:
+                        rules.Add(new HighLowLineRule());
+                        break;
+                    case BossModifierId.NabnerLine:
+                        rules.Add(new NabnerLineRule());
+                        break;
+                    case BossModifierId.EntropicLine:
+                        rules.Add(new TriadLineRule(LineType.EntropicLine));
+                        break;
+                    case BossModifierId.ModularLine:
+                        rules.Add(new TriadLineRule(LineType.ModularLine));
+                        break;
+                    case BossModifierId.ZipperLine:
+                        rules.Add(new ZipperLineRule());
+                        break;
+                    case BossModifierId.FastThermo:
+                        rules.Add(new FastThermoRule());
+                        break;
+                    case BossModifierId.AmbiguousThermo:
+                        rules.Add(new AmbiguousThermoRule());
+                        break;
+
+                    // Catalog batch B2: dots, pairs, cells (ConstraintRules.DotsPairsCells.cs)
+                    case BossModifierId.FullWhiteKropki:
+                        rules.Add(new FullKropkiSetRule(black: false));
+                        rules.Add(new DifferenceKropkiRule());
+                        break;
+                    case BossModifierId.FullBlackKropki:
+                        rules.Add(new FullKropkiSetRule(black: true));
+                        rules.Add(new RatioKropkiRule());
+                        break;
+                    case BossModifierId.DifferenceK:
+                        rules.Add(new DifferenceKPairRule());
+                        break;
+                    case BossModifierId.MultipleCells:
+                        rules.Add(new MultipleCellsRule());
+                        break;
+                    case BossModifierId.MirrorCells:
+                        rules.Add(new MirrorCellsRule());
+                        break;
                 }
             }
 

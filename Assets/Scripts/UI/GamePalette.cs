@@ -72,9 +72,20 @@ namespace SudokuRoguelike.UI
         public static readonly Color LineConsecutiveLine = new(0.86f, 0.70f, 0.10f, 1f); // gold
         public static readonly Color LineSlowThermo      = new(0.70f, 0.50f, 0.92f, 1f); // violet, with an open bulb
         public static readonly Color LineUniqueSetLine   = new(0.34f, 0.78f, 0.90f, 1f); // sky blue, with rings at the ends
+        // Catalog batch B1 (modifier-catalog-plan.md): zipper lavender, entropic peach and modular teal as setters use them.
+        public static readonly Color LineNonconsecLine   = new(0.62f, 0.80f, 0.22f, 1f); // lime, ink crosses on each step
+        public static readonly Color LineHighLow         = new(0.52f, 0.82f, 0.64f, 1f); // mint, paper stripe in the middle
+        public static readonly Color LineNabner          = new(0.90f, 0.36f, 0.42f, 1f); // red
+        public static readonly Color LineEntropic        = new(0.99f, 0.72f, 0.55f, 1f); // peach
+        public static readonly Color LineModular         = new(0.20f, 0.62f, 0.56f, 1f); // teal
+        public static readonly Color LineZipper          = new(0.80f, 0.72f, 0.98f, 1f); // lavender, ink mark in the middle
 
         // ── Modifier overlay markers ─────────────────────────────────────────────
         public static readonly Color OverlayKropkiSum    = new(0.45f, 0.45f, 0.50f, 0.90f);
+        // Catalog batch B2: Difference ≥ 3 bar, ×3 ring, mirror-pair badge.
+        public static readonly Color OverlayDifferenceK  = new(0.45f, 0.25f, 0.55f, 1.00f); // plum
+        public static readonly Color OverlayMultiple     = new(0.60f, 0.42f, 0.12f, 1.00f); // ochre
+        public static readonly Color OverlayMirror       = new(0.30f, 0.30f, 0.65f, 1.00f); // indigo
         public static readonly Color OverlayKropkiBlack  = new(0.10f, 0.10f, 0.10f, 0.90f);
         public static readonly Color OverlayKropkiWhite  = new(1.00f, 1.00f, 1.00f, 1.00f);
         public static readonly Color OverlayKropkiWhiteRim = new(0.13f, 0.11f, 0.09f, 1.00f); // ink rim: a white dot on paper

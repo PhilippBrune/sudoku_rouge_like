@@ -784,6 +784,7 @@ namespace SudokuRoguelike.UI
                     DrawOpenRing(line.Cells[0], color, bulbR, cW, cH, sX, sY, tW, tH);
                 if (openEnd)
                     DrawOpenRing(line.Cells[line.Cells.Count - 1], color, bulbR, cW, cH, sX, sY, tW, tH);
+                DrawCatalogLineMarks(line, color, bandW, bulbR, cW, cH, sX, sY, tW, tH);
 
                 if (accessibility != null && accessibility.UseAltSymbols && line.Cells.Count > 0)
                 {
@@ -829,6 +830,11 @@ namespace SudokuRoguelike.UI
                 for (var pi = 0; pi < overlay.PairConstraints.Count; pi++)
                 {
                     var pair = overlay.PairConstraints[pi];
+                    if (pair.Type == PairConstraintType.DifferenceK)
+                    {
+                        DrawDifferenceKPair(pair, overlay, cW, cH, sX, sY, tW, tH);
+                        continue;
+                    }
                     var mr = (pair.CellA.Row + pair.CellB.Row) / 2f;
                     var mc = (pair.CellA.Col + pair.CellB.Col) / 2f;
                     var px = mc * (cW + sX) + cW * 0.5f - tW * 0.5f;
@@ -895,6 +901,11 @@ namespace SudokuRoguelike.UI
             for (var mi = 0; mi < overlay.CellMarkers.Count; mi++)
             {
                 var m = overlay.CellMarkers[mi];
+                if (m.Type == MarkerType.Multiple)
+                {
+                    DrawMultipleMarker(m, cW, cH, sX, sY, tW, tH);
+                    continue;
+                }
                 UseOverlayGroup(m.Type == MarkerType.Prime ? PrimeKey : m.Type == MarkerType.Fortress ? FortressKey : EvenOddKey);
                 var px = m.Cell.Col * (cW + sX) + cW * 0.5f - tW * 0.5f;
                 var py = -(m.Cell.Row * (cH + sY) + cH * 0.5f - tH * 0.5f);
@@ -940,6 +951,7 @@ namespace SudokuRoguelike.UI
                         DrawOverlayText(px, py, "FC", 8, Color.white);
                 }
             }
+            DrawMirrorPairs(overlay, cW, cH, sX, sY, tW, tH);
             UseOverlayGroup(null);
         }
 
@@ -955,6 +967,14 @@ namespace SudokuRoguelike.UI
             LineType.ConsecutiveLine => GamePalette.LineConsecutiveLine,
             LineType.SlowThermo      => GamePalette.LineSlowThermo,
             LineType.UniqueSetLine   => GamePalette.LineUniqueSetLine,
+            LineType.NonconsecLine      => GamePalette.LineNonconsecLine,
+            LineType.HighLowAlternating => GamePalette.LineHighLow,
+            LineType.NabnerLine         => GamePalette.LineNabner,
+            LineType.EntropicLine       => GamePalette.LineEntropic,
+            LineType.ModularLine        => GamePalette.LineModular,
+            LineType.ZipperLine         => GamePalette.LineZipper,
+            LineType.FastThermo         => GamePalette.LineThermo,
+            LineType.AmbiguousThermo    => GamePalette.LineThermo,
             _                        => GamePalette.LineGermanWhispers
         };
 

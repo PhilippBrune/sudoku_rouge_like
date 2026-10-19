@@ -309,6 +309,34 @@ namespace SudokuRoguelike.Tests
             yield return Shoot(host, camera, "after_lines_all.png");
         }
 
+        // GEN-MOD-002: the catalog batch B1/B2 modifiers on generated 9×9 boards: six line variants, then the thermometer
+        // without a bulb, Difference ≥ 3, Multiples of 3, Mirror Cells and the complete white-dot set.
+        [UnityTest]
+        public IEnumerator RenderCatalogModifiers()
+        {
+            var camera = CreateCamera();
+            var shots = new (string file, BossModifierId[] mods)[]
+            {
+                ("after_catalog_lines.png", new[] { BossModifierId.NonconsecLine, BossModifierId.HighLowAlternating, BossModifierId.NabnerLine,
+                    BossModifierId.EntropicLine, BossModifierId.ModularLine, BossModifierId.ZipperLine }),
+                ("after_catalog_marks.png", new[] { BossModifierId.AmbiguousThermo, BossModifierId.FastThermo, BossModifierId.DifferenceK,
+                    BossModifierId.MultipleCells, BossModifierId.MirrorCells, BossModifierId.FullWhiteKropki }),
+            };
+            _puzzleSize = 9;
+            var seed = 7330;
+            foreach (var (file, mods) in shots)
+            {
+                var (host, _) = StartRun(seed++, true, mods);
+                yield return DismissIntro();
+                for (var frame = 0; frame < 30 && Find(host, "C_0_0") == null; frame++)
+                    yield return null;
+                yield return new WaitForSecondsRealtime(0.4f);
+                yield return Shoot(host, camera, file);
+                host.SetActive(false);
+            }
+            _puzzleSize = 6;
+        }
+
         private static ModifierLine Line(LineType type, params (int r, int c)[] cells)
         {
             var line = new ModifierLine { Type = type };

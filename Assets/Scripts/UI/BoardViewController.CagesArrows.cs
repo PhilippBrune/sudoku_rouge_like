@@ -68,7 +68,7 @@ namespace SudokuRoguelike.UI
             for (var ci = 0; ci < overlay.KillerCages.Count; ci++)
             {
                 var cage = overlay.KillerCages[ci];
-                if (cage.Cells.Count == 0) continue;
+                if (cage.Cells.Count == 0 || cage.CageType == KillerCageType.MagicSquare) continue;   // drawn with the houses
                 UseOverlayGroup(CageGroupKey(cage.CageType));
                 var color = CageColor(cage.CageType);
                 DrawCageOutline(cage, color, cW, cH, sX, sY, tW, tH);

@@ -50,6 +50,7 @@ namespace SudokuRoguelike.Sudoku
             [BossModifierId.CageDifference] = KillerCageType.Difference,
             [BossModifierId.CageRatio] = KillerCageType.Ratio,
             [BossModifierId.RenbanCage] = KillerCageType.RenbanSet,
+            [BossModifierId.MagicSquareRegion] = KillerCageType.MagicSquare,
         };
 
         private static readonly Dictionary<BossModifierId, ArrowType> ArrowTypes = new Dictionary<BossModifierId, ArrowType>
@@ -136,6 +137,14 @@ namespace SudokuRoguelike.Sudoku
                     return overlay.OutsideClues.Exists(c => c.Type == OutsideClueType.LittleKiller);
                 case BossModifierId.Quadruples:
                     return overlay.Quadruples.Count > 0;
+                case BossModifierId.XSudoku:
+                    return overlay.IsXSudoku;
+                case BossModifierId.HyperSudoku:
+                    return overlay.IsHyperSudoku;
+                case BossModifierId.DisjointGroups:
+                    return overlay.IsDisjointGroups;
+                case BossModifierId.ExtraRegion:
+                    return overlay.ExtraRegions.Count > 0;
                 default:
                     return false;
             }

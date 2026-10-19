@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace SudokuRoguelike.Sudoku
 {
-    public static class SudokuGenerator
+    public static partial class SudokuGenerator
     {
         public static SudokuBoard CreatePuzzle(int size, float missingPercent, int seed,
             int regionVariant = 0, bool nonconsecutive = false, bool antiknight = false,
@@ -49,13 +49,13 @@ namespace SudokuRoguelike.Sudoku
             int regionVariant = 0, bool nonconsecutive = false, bool antiknight = false,
             bool nonconsecDiagonal = false, bool antibishop = false,
             bool antiking = false, bool distanceGe2 = false, bool entropy = false,
-            GenerationDeadline deadline = default)
+            GenerationDeadline deadline = default, SolutionShape shape = null)
         {
             deadline.ThrowIfExceeded();
             var random = new Random(seed);
             var regionMap = BuildRegionMap(size, regionVariant);
             var solution = GenerateSolvedBoard(size, regionMap, random, nonconsecutive, antiknight,
-                nonconsecDiagonal, antibishop, antiking, distanceGe2, entropy, deadline);
+                nonconsecDiagonal, antibishop, antiking, distanceGe2, entropy, deadline, shape);
 
             var totalCells = size * size;
 
@@ -132,7 +132,7 @@ namespace SudokuRoguelike.Sudoku
             bool nonconsecutive = false, bool antiknight = false, bool nonconsecDiagonal = false,
             bool antibishop = false, bool antiking = false, bool distanceGe2 = false,
             bool entropy = false,
-            GenerationDeadline deadline = default)
+            GenerationDeadline deadline = default, SolutionShape shape = null)
         {
             const int maxAttempts = 160;
             var budget = new SearchBudget();
@@ -148,13 +148,17 @@ namespace SudokuRoguelike.Sudoku
 
                 var doublings = Math.Min(attempt / FillBudgetDoublingInterval, 12);
                 budget.Reset((int)Math.Min(int.MaxValue, (long)baseLimit << doublings));
+                var houses = shape != null ? new SolutionShape.State(shape, size) : null;
+                if (shape != null && shape.MagicSquareBox)
+                    PrefillMagicSquare(board, regionMap, size, rowMask, colMask, regionMask, houses, random);
                 if (FillBoard(board, regionMap, size, rowMask, colMask, regionMask, random,
                         nonconsecutive, antiknight, nonconsecDiagonal, antibishop, antiking, distanceGe2,
-                        entropy, deadline, budget))
+                        entropy, deadline, budget, houses))
                     return board;
 
-                // The whole search space was explored without a solution: no ordering can succeed.
-                if (!budget.Exhausted)
+                // The whole search space was explored without a solution: no ordering can succeed. With a magic-square box
+                // that only rules out this box and turn; the next attempt places another.
+                if (!budget.Exhausted && (shape == null || !shape.MagicSquareBox))
                     break;
 
                 // Reseed with a deterministic but different value so retries are reproducible
@@ -175,13 +179,14 @@ namespace SudokuRoguelike.Sudoku
             bool antibishop = false, bool antiking = false, bool distanceGe2 = false,
             bool entropy = false,
             GenerationDeadline deadline = default,
-            SearchBudget budget = null)
+            SearchBudget budget = null,
+            SolutionShape.State houses = null)
         {
             deadline.ThrowIfExceeded();
             if (budget != null && !budget.Spend()) return false;
             if (!FindNextCell(board, regionMap, size, rowMask, colMask, regionMask,
                     nonconsecutive, antiknight, nonconsecDiagonal, antibishop, antiking, distanceGe2,
-                    entropy, out var row, out var col, out var candidates))
+                    entropy, out var row, out var col, out var candidates, houses))
                 return true;
 
             Shuffle(candidates, random);
@@ -205,16 +210,18 @@ namespace SudokuRoguelike.Sudoku
                 rowMask[row] |= bit;
                 colMask[col] |= bit;
                 regionMask[region] |= bit;
+                houses?.Set(row * size + col, bit, true);
 
                 if (FillBoard(board, regionMap, size, rowMask, colMask, regionMask, random,
                         nonconsecutive, antiknight, nonconsecDiagonal, antibishop, antiking, distanceGe2,
-                        entropy, deadline, budget))
+                        entropy, deadline, budget, houses))
                     return true;
 
                 board[row, col] = 0;
                 rowMask[row] &= ~bit;
                 colMask[col] &= ~bit;
                 regionMask[region] &= ~bit;
+                houses?.Set(row * size + col, bit, false);
                 if (budget != null && budget.Exhausted) return false;
             }
 
@@ -298,7 +305,8 @@ namespace SudokuRoguelike.Sudoku
             int[] rowMask, int[] colMask, int[] regionMask,
             bool nonconsecutive, bool antiknight, bool nonconsecDiagonal,
             bool antibishop, bool antiking, bool distanceGe2, bool entropy,
-            out int bestRow, out int bestCol, out List<int> bestCandidates)
+            out int bestRow, out int bestCol, out List<int> bestCandidates,
+            SolutionShape.State houses = null)
         {
             bestRow = -1;
             bestCol = -1;
@@ -312,6 +320,7 @@ namespace SudokuRoguelike.Sudoku
 
                 var region = regionMap[row, col];
                 var usedMask = rowMask[row] | colMask[col] | regionMask[region];
+                if (houses != null) usedMask |= houses.Used(row * size + col);
                 var candidates = new List<int>(size);
                 for (var value = 1; value <= size; value++)
                 {

@@ -243,6 +243,23 @@ namespace SudokuRoguelike.Sudoku
                     case BossModifierId.Quadruples:
                         GenerateQuadruples(board, overlay, rng, scale);
                         break;
+
+                    // Batch B5 (ModifierGeometryGenerator.ExtraHouses.cs); the solution is shaped by SolutionShape
+                    case BossModifierId.XSudoku:
+                        GenerateXSudoku(board, overlay);
+                        break;
+                    case BossModifierId.HyperSudoku:
+                        GenerateHyperSudoku(board, overlay);
+                        break;
+                    case BossModifierId.DisjointGroups:
+                        GenerateDisjointGroups(board, overlay);
+                        break;
+                    case BossModifierId.MagicSquareRegion:
+                        GenerateMagicSquare(board, overlay);
+                        break;
+                    case BossModifierId.ExtraRegion:
+                        GenerateExtraRegions(board, overlay, rng, scale);
+                        break;
                 }
 
                 MarkOverlayCellsUsed(overlay, linesBefore, dotsBefore, cagesBefore, arrowsBefore, markersBefore);

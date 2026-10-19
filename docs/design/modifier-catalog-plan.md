@@ -1,11 +1,12 @@
 # Plan: the 64 catalog modifiers (IDs 30–93)
 
-**Version:** 1.4 | **Date:** 2026-10-19 | **Status:** implemented (Phase 0 steps 1, 2, 7 in part; batches B1, B2, B3, B4, B6) · B5 in progress
+**Version:** 1.5 | **Date:** 2026-10-19 | **Status:** implemented (all batches B1–B6; Phase 0 steps 1, 2, 4 and 7; steps 3 and 5 open)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.5 | 2026-10-19 | implemented | Built: B5 (30, 31, 32, 53, 68). Phase 0 step 4 as `SolutionShape` (extra houses and the prefilled magic box in the fill; the old seven flags stay), step 7 as `SolutionShapePairBenchmark` ([Explicit]); its results set eight new blocked pairs. GAP-051 found and fixed (pre-baked boss board and Entropy). Every modifier of the plan is built: 71 player modifiers. Still open: step 3 (one catalog entry per ID instead of the switches) and step 5 (golden geometry snapshots). |
 | 1.4 | 2026-10-19 | implemented | Built: B4 (79, 81, 82, 83, 84) with the clue ring (UI-STYLE-010: the grid shrinks to 88 % only on boards with outside clues) and corner circles (UI-STYLE-011). Quadruples follow the library minimum (9×9). One kind of outside clue per board. |
 | 1.3 | 2026-10-19 | implemented | Built: B6 (37, 46, 48, 61, 63, 67, 72, 77, 78, 80) and the rework of 93 as the inverted whisper zone; 33 dropped. K-Whispers use one K per puzzle (2 or 3 up to 7×7, 3 or 6 above); Ratio N uses N = 3; distance pairs are a diagonal step or a knight move apart; the inverted zone is generated first, so the lines, cages, arrows and marks of other modifiers keep out of it (complete Kropki dot sets still cover the whole board). A new check in the catalog test found lines that cross themselves (GAP-050, fixed). |
 | 1.2 | 2026-10-19 | implemented | Owner request: build B3–B6. Owner decisions (2026-10-19): outside clues shrink the board (only on boards with outside clues); Index Parity (33) is dropped; the Constraint Negation Zone (93) becomes an inverted whisper zone (a shaded 3×3 area where neighbours on a green line inside it differ by less than 5; 9×9 only); givens stay as today. Built: B3 (45, 64, 65, 66, 69, 70, 73) with the min sizes of BossMechanicsSystem.md (45, 64 and 70 at 7×7). |

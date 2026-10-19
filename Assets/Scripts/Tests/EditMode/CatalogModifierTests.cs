@@ -35,7 +35,10 @@ namespace SudokuRoguelike.Tests
             BossModifierId.CountingCircles, BossModifierId.DistanceCell, BossModifierId.ConstraintNegationZone,
             // B4: outside clues and quadruples
             BossModifierId.Quadruples, BossModifierId.Skyscrapers, BossModifierId.Sandwich, BossModifierId.XSums,
-            BossModifierId.LittleKiller
+            BossModifierId.LittleKiller,
+            // B5: extra houses and the magic square
+            BossModifierId.XSudoku, BossModifierId.HyperSudoku, BossModifierId.DisjointGroups, BossModifierId.ExtraRegion,
+            BossModifierId.MagicSquareRegion
         };
 
         // ── rules on hand-made boards (one row of a 9×9) ──
@@ -369,6 +372,26 @@ namespace SudokuRoguelike.Tests
                         }
                     }
                     break;
+                case BossModifierId.XSudoku:
+                    foreach (var anti in new[] { false, true })
+                        foreach (var i in SolutionShape.Diagonal(size, anti)) yield return new CellCoord(i / size, i % size);
+                    break;
+                case BossModifierId.HyperSudoku:
+                    foreach (var top in new[] { 1, 5 })
+                    foreach (var left in new[] { 1, 5 })
+                        foreach (var i in SolutionShape.Window(size, top, left)) yield return new CellCoord(i / size, i % size);
+                    break;
+                case BossModifierId.DisjointGroups:
+                    for (var i = 0; i < size * size; i++) yield return new CellCoord(i / size, i % size);
+                    break;
+                case BossModifierId.ExtraRegion:
+                    foreach (var region in overlay.ExtraRegions)
+                        foreach (var c in region.Cells) yield return c;
+                    break;
+                case BossModifierId.MagicSquareRegion:
+                    foreach (var cage in overlay.KillerCages.Where(c => c.CageType == KillerCageType.MagicSquare))
+                        foreach (var c in cage.Cells) yield return c;
+                    break;
                 case BossModifierId.DistanceCell:
                     // The ring cell itself is free; only the dotted cells are bound.
                     foreach (var m in overlay.CellMarkers.Where(m => m.Type == MarkerType.DistanceCellSource)) yield return m.Cell;
@@ -511,7 +534,9 @@ namespace SudokuRoguelike.Tests
                 (BossModifierId.CageRatio, 67), (BossModifierId.PillArrow, 72), (BossModifierId.OppositeCellsSum, 77),
                 (BossModifierId.CountingCircles, 78), (BossModifierId.DistanceCell, 80), (BossModifierId.ConstraintNegationZone, 93),
                 (BossModifierId.Quadruples, 79), (BossModifierId.Skyscrapers, 81), (BossModifierId.Sandwich, 82),
-                (BossModifierId.XSums, 83), (BossModifierId.LittleKiller, 84)
+                (BossModifierId.XSums, 83), (BossModifierId.LittleKiller, 84), (BossModifierId.XSudoku, 30),
+                (BossModifierId.HyperSudoku, 31), (BossModifierId.DisjointGroups, 32), (BossModifierId.ExtraRegion, 53),
+                (BossModifierId.MagicSquareRegion, 68)
             };
             foreach (var (id, value) in expected) Assert.AreEqual(value, (int)id, id.ToString());
             Assert.AreEqual(11, (int)LineType.NonconsecLine);
@@ -552,7 +577,14 @@ namespace SudokuRoguelike.Tests
                 (BossModifierId.CountingCircles, BossModifierId.PrimeCells), (BossModifierId.CountingCircles, BossModifierId.MultipleCells),
                 (BossModifierId.Skyscrapers, BossModifierId.Sandwich), (BossModifierId.Skyscrapers, BossModifierId.XSums),
                 (BossModifierId.Skyscrapers, BossModifierId.LittleKiller), (BossModifierId.Sandwich, BossModifierId.XSums),
-                (BossModifierId.Sandwich, BossModifierId.LittleKiller), (BossModifierId.XSums, BossModifierId.LittleKiller)
+                (BossModifierId.Sandwich, BossModifierId.LittleKiller), (BossModifierId.XSums, BossModifierId.LittleKiller),
+                (BossModifierId.MagicSquareRegion, BossModifierId.Nonconsecutive),
+                (BossModifierId.MagicSquareRegion, BossModifierId.NonconsecDiagonal),
+                // B5 pair benchmark (SolutionShapePairBenchmark)
+                (BossModifierId.XSudoku, BossModifierId.Nonconsecutive), (BossModifierId.XSudoku, BossModifierId.Antiknight),
+                (BossModifierId.XSudoku, BossModifierId.NonconsecDiagonal), (BossModifierId.XSudoku, BossModifierId.EntropyGlobal),
+                (BossModifierId.HyperSudoku, BossModifierId.Nonconsecutive), (BossModifierId.HyperSudoku, BossModifierId.NonconsecDiagonal),
+                (BossModifierId.HyperSudoku, BossModifierId.EntropyGlobal), (BossModifierId.DisjointGroups, BossModifierId.EntropyGlobal)
             };
             foreach (var (a, b) in blocked)
             {

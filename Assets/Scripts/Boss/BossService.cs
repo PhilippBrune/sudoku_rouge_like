@@ -95,6 +95,14 @@ namespace SudokuRoguelike.Boss
             [BossModifierId.XSums] = (3, 0.50f, 5),
             [BossModifierId.LittleKiller] = (3, 0.45f, 6),
 
+            // Catalog batch B5: extra houses and the magic square (board-shaping; Hyper, Disjoint and the magic square
+            // need the 3×3 boxes of a 9×9, the extra region reads off the solution)
+            [BossModifierId.XSudoku] = (2, 0.35f, 5),
+            [BossModifierId.HyperSudoku] = (3, 0.45f, 9),
+            [BossModifierId.DisjointGroups] = (3, 0.45f, 9),
+            [BossModifierId.ExtraRegion] = (2, 0.30f, 5),
+            [BossModifierId.MagicSquareRegion] = (3, 0.45f, 9),
+
             // Boss debuffs (IDs 94–102) — reactive penalties on wrong placement
             // [REQ: DEBUFF-HOOK-011] All debuff entries registered here; IDs ≥94 excluded from BuildEligiblePool
             [BossModifierId.RowWipe]       = (3, 0.55f, 0), // [REQ: DEBUFF-DEF-001]
@@ -158,8 +166,20 @@ namespace SudokuRoguelike.Boss
                 || modifier == BossModifierId.NonconsecDiagonal
                 || modifier == BossModifierId.AntiBishop
                 || modifier == BossModifierId.Antiking
-                || modifier == BossModifierId.DistanceGe2;
+                || modifier == BossModifierId.DistanceGe2
+                // Catalog batch B5: extra houses and the magic square shape the solution too (rectangular regions).
+                || modifier == BossModifierId.XSudoku
+                || modifier == BossModifierId.HyperSudoku
+                || modifier == BossModifierId.DisjointGroups
+                || modifier == BossModifierId.MagicSquareRegion;
         }
+
+        /// <summary>
+        /// [REQ: GEN-SOLVE-002] True for every rule the generator builds the solution with: the board-shaping rules and
+        /// Entropy. A board made without one of them does not satisfy it (GAP-051).
+        /// </summary>
+        public static bool ShapesSolution(BossModifierId modifier) =>
+            IsBoardShapingModifier(modifier) || modifier == BossModifierId.EntropyGlobal;
 
         /// <summary>
         /// True when puzzle generation can deliver the modifier. Excludes enum values with no
@@ -279,6 +299,20 @@ namespace SudokuRoguelike.Boss
             (BossModifierId.Sandwich, BossModifierId.XSums),
             (BossModifierId.Sandwich, BossModifierId.LittleKiller),
             (BossModifierId.XSums, BossModifierId.LittleKiller),
+            // B5: a magic square always has consecutive digits side by side (7 next to 6) and diagonally (4 and 6 next
+            // to the 5 in its middle).
+            (BossModifierId.MagicSquareRegion, BossModifierId.Nonconsecutive),
+            (BossModifierId.MagicSquareRegion, BossModifierId.NonconsecDiagonal),
+            // B5 pair benchmark (SolutionShapePairBenchmark, 9×9, 4 seeds, 6 s each, 2026-10-19): these time out or have no
+            // solution at all (Disjoint Groups + Entropy); every older rule alone fills in under 0.3 s.
+            (BossModifierId.XSudoku, BossModifierId.Nonconsecutive),
+            (BossModifierId.XSudoku, BossModifierId.Antiknight),
+            (BossModifierId.XSudoku, BossModifierId.NonconsecDiagonal),
+            (BossModifierId.XSudoku, BossModifierId.EntropyGlobal),
+            (BossModifierId.HyperSudoku, BossModifierId.Nonconsecutive),
+            (BossModifierId.HyperSudoku, BossModifierId.NonconsecDiagonal),
+            (BossModifierId.HyperSudoku, BossModifierId.EntropyGlobal),
+            (BossModifierId.DisjointGroups, BossModifierId.EntropyGlobal),
         };
 
         private static bool IsBlockedCombination(BossModifierId first, BossModifierId second)
@@ -550,6 +584,7 @@ namespace SudokuRoguelike.Boss
             BossModifierId.RegionSumLine, BossModifierId.KillerHiddenSum, BossModifierId.CageProduct, BossModifierId.CageDifference, BossModifierId.RenbanCage, BossModifierId.ArrowAverage, BossModifierId.DoubleArrow,
             BossModifierId.WhisperGeneralized, BossModifierId.NLine, BossModifierId.SumLine, BossModifierId.RatioN, BossModifierId.DistancePair, BossModifierId.CageRatio, BossModifierId.PillArrow, BossModifierId.OppositeCellsSum, BossModifierId.CountingCircles, BossModifierId.DistanceCell, BossModifierId.ConstraintNegationZone,
             BossModifierId.Quadruples, BossModifierId.Skyscrapers, BossModifierId.Sandwich, BossModifierId.XSums, BossModifierId.LittleKiller,
+            BossModifierId.XSudoku, BossModifierId.HyperSudoku, BossModifierId.DisjointGroups, BossModifierId.ExtraRegion, BossModifierId.MagicSquareRegion,
             BossModifierId.RowWipe, BossModifierId.ColWipe, BossModifierId.DoublePenalty,
             BossModifierId.CellLock, BossModifierId.PencilBlind, BossModifierId.RadiusWipe,
             BossModifierId.PencilScramble, BossModifierId.GivenReveal, BossModifierId.RevealCost,
@@ -573,6 +608,7 @@ namespace SudokuRoguelike.Boss
             BossModifierId.RegionSumLine, BossModifierId.KillerHiddenSum, BossModifierId.CageProduct, BossModifierId.CageDifference, BossModifierId.RenbanCage, BossModifierId.ArrowAverage, BossModifierId.DoubleArrow,
             BossModifierId.WhisperGeneralized, BossModifierId.NLine, BossModifierId.SumLine, BossModifierId.RatioN, BossModifierId.DistancePair, BossModifierId.CageRatio, BossModifierId.PillArrow, BossModifierId.OppositeCellsSum, BossModifierId.CountingCircles, BossModifierId.DistanceCell, BossModifierId.ConstraintNegationZone,
             BossModifierId.Quadruples, BossModifierId.Skyscrapers, BossModifierId.Sandwich, BossModifierId.XSums, BossModifierId.LittleKiller,
+            BossModifierId.XSudoku, BossModifierId.HyperSudoku, BossModifierId.DisjointGroups, BossModifierId.ExtraRegion, BossModifierId.MagicSquareRegion,
             BossModifierId.RowWipe, BossModifierId.ColWipe, BossModifierId.DoublePenalty,
             BossModifierId.CellLock, BossModifierId.PencilBlind, BossModifierId.BoxWipe,
             BossModifierId.CrossWipe, BossModifierId.RadiusWipe, BossModifierId.PencilDrain,
@@ -662,6 +698,11 @@ namespace SudokuRoguelike.Boss
                 BossModifierId.Sandwich            => "Sandwich",
                 BossModifierId.XSums               => "X-Sums",
                 BossModifierId.LittleKiller        => "Little Killer",
+                BossModifierId.XSudoku             => "X-Sudoku",
+                BossModifierId.HyperSudoku         => "Hyper Sudoku",
+                BossModifierId.DisjointGroups      => "Disjoint Groups",
+                BossModifierId.ExtraRegion         => "Extra Region",
+                BossModifierId.MagicSquareRegion   => "Magic Square",
                 BossModifierId.RowWipe             => "Row Wipe",
                 BossModifierId.ColWipe             => "Column Wipe",
                 BossModifierId.DoublePenalty       => "Double Penalty",
@@ -751,6 +792,11 @@ namespace SudokuRoguelike.Boss
                 BossModifierId.Sandwich            => "A number outside the grid is the sum of the digits between the 1 and the highest digit of that row or column. Example: 1-4-2-9 gives 6.",
                 BossModifierId.XSums               => "The first digit from a number outside the grid says how many digits to add; the number is their sum. Example: 3-1-5 gives 9.",
                 BossModifierId.LittleKiller        => "A number with an arrow outside the grid is the sum of the digits along that diagonal; digits may repeat on it.",
+                BossModifierId.XSudoku             => "No digit repeats on either of the two long diagonals.",
+                BossModifierId.HyperSudoku         => "The four teal squares are extra boxes: no digit repeats inside each of them.",
+                BossModifierId.DisjointGroups      => "Each cell has a small grey dot at its place in its box. Cells whose dot sits in the same place (for example every top-left cell of a box) hold different digits.",
+                BossModifierId.ExtraRegion         => "The violet region is an extra box: no digit repeats inside it.",
+                BossModifierId.MagicSquareRegion   => "In the gold box every row, column and diagonal adds up to 15.",
 
                 // Boss debuffs
                 BossModifierId.RowWipe       => "Wrong placement: all your digits in that row are erased.",
@@ -872,6 +918,11 @@ namespace SudokuRoguelike.Boss
                 BossModifierId.Sandwich           => "SW",
                 BossModifierId.XSums              => "XS",
                 BossModifierId.LittleKiller       => "LK",
+                BossModifierId.XSudoku            => "XD",
+                BossModifierId.HyperSudoku        => "HY",
+                BossModifierId.DisjointGroups     => "DG",
+                BossModifierId.ExtraRegion        => "ER",
+                BossModifierId.MagicSquareRegion  => "MS",
                 _                              => "??"
             };
         }

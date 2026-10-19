@@ -1,11 +1,12 @@
 ﻿# Boss Mechanics System
 
-**Version:** 2.11 | **Date:** 2026-10-19 | **Status:** implemented
+**Version:** 2.12 | **Date:** 2026-10-19 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.12 | 2026-10-19 | implemented | Owner request: catalog batch B5 goes live: X-Sudoku (30), Hyper Sudoku (31), Disjoint Groups (32), Extra Region (53) and Magic Square (68). X-Sudoku, Hyper, Disjoint Groups and the magic square shape the solution (the generator fills the grid with them; givens stay chosen under the base rules, owner decision) and count as board-shaping rules (rectangular regions, 7×7 raised to 8×8). Hyper, Disjoint Groups and the magic square need the 3×3 boxes of a 9×9; a magic 3×3 square needs the digits 1–9, so Magic Square is 9×9 only (the library said 7×7). Blocked pairs from the pair benchmark (`SolutionShapePairBenchmark`): X-Sudoku with Nonconsecutive, Anti-Knight, Nonconsec. Diagonal or Entropy; Hyper with Nonconsecutive, Nonconsec. Diagonal or Entropy; Disjoint Groups + Entropy (no such grid); Magic Square with Nonconsecutive or Nonconsec. Diagonal (its digits break them). A pre-baked boss board is reused only when every solution-shaping rule matches, Entropy included (GAP-051). With this batch every modifier of the catalog plan is built: 71 player modifiers, 70 clearable. |
 | 2.11 | 2026-10-19 | implemented | Owner request: catalog batch B4 goes live: Quadruples (79, 9×9 as the library says), Skyscrapers (81), Sandwich (82), X-Sums (83) and Little Killer (84). Owner decision (2026-10-19): a board with outside clues is drawn about 12 % smaller and the clues stand in a ring round it (UI-STYLE-010); boards without them keep their size. One kind of outside clue per board (the four are blocked pairs among each other), so every number in the ring means the same thing. 66 player modifiers, 65 clearable. |
 | 2.10 | 2026-10-19 | implemented | Owner request: catalog batch B6 goes live: K-Whispers (37), 10-Line (46), Sum Line (48), Ratio 1:3 (61), Distance Pairs (63), Ratio Cage (67), Pill Arrow (72), Opposite Sums (77), Counting Circles (78), Distance Cells (80) and the Inverted Zone (93). Owner decisions (2026-10-19): the Constraint Negation Zone becomes an inverted whisper zone (green whisper lines that flip to "less than 5" for a step between two cells of a shaded 3×3 area; 9×9 only); Index Parity (33) is dropped. Catalog lines never cross themselves (GAP-050). New blocked pairs: Inverted Zone + German Whispers, Counting Circles + Prime Cells, Counting Circles + Multiples of 3. 61 player modifiers, 60 clearable. |
 | 2.9 | 2026-10-19 | implemented | Owner request: catalog batch B3 goes live: Region Sum Line (45), Hidden Killer (64), Product Cage (65), Difference Cage (66), Renban Cage (69), Arrow Average (70) and Double Arrow (73), with the min sizes of the library below. Each cage kind has its own outline colour and corner label (sum, "?", "×N", "−N", "R"); arrows keep the grey ring ("Ø" marks an average arrow, a double arrow has a ring at both ends); each kind is its own legend layer. A hidden sum is never checked, drawn or listed (the Pattern Scroll names cages by their label). New blocked pair: Hidden Killer + Killer Cages. 50 player modifiers, 49 clearable. |
@@ -33,7 +34,7 @@
 
 ## Overview
 
-Modifiers add visual overlays to the puzzle grid and enforce additional constraints beyond standard Sudoku rules. There are **66 player modifiers** (`BossModifierId` 0–29 and the catalog batches 37, 38, 40–46, 48, 51, 52, 58–61, 63–67, 69, 70, 72–74, 76–84, 93); 65 of them can be generated (Modular Regions is excluded, see §Modifier Eligibility). Every generatable modifier is eligible from any floor — there is no tier gating, only the board-size and pairing rules below.
+Modifiers add visual overlays to the puzzle grid and enforce additional constraints beyond standard Sudoku rules. There are **71 player modifiers** (`BossModifierId` 0–29 and the catalog batches 30–32, 37, 38, 40–46, 48, 51–53, 58–61, 63–70, 72–74, 76–84, 93); 70 of them can be generated (Modular Regions is excluded, see §Modifier Eligibility). Every generatable modifier is eligible from any floor — there is no tier gating, only the board-size and pairing rules below.
 
 Modifiers appear in two ways:
 
@@ -47,7 +48,7 @@ Modifiers the player has never encountered before are displayed as **"???"** unt
 
 ## Active Modifier Pool (30 Implemented) `[BOSS-MOD-001]` `[BOSS-MOD-002]`
 
-All 66 modifiers are fully implemented with constraint rules, geometry generation, overlay rendering and descriptions; the Custom Puzzle panel lists the first 30.
+All 71 modifiers are fully implemented with constraint rules, geometry generation, overlay rendering and descriptions; the Custom Puzzle panel lists the first 30.
 
 ### Line Constraints
 
@@ -159,9 +160,9 @@ These 15 modifiers extend the active pool beyond the original 15. All are eligib
 | 28 | Prime Cells | `PrimeCellsRule` | CellLevel |
 | 29 | Fortress Cells | `FortressCellsRule` | CellLevel |
 
-### Catalog batches (B1 to B4 and B6, active since 2026-10-19) `[GEN-MOD-002]`
+### Catalog batches (B1 to B6, active since 2026-10-19) `[GEN-MOD-002]`
 
-Thirty-six modifiers from the Extended Library below, registered with their enum IDs (docs/design/modifier-catalog-plan.md). Geometry is read off the solution; lines run in 8 directions.
+Forty-one modifiers from the Extended Library below, registered with their enum IDs (docs/design/modifier-catalog-plan.md). Geometry is read off the solution; lines run in 8 directions.
 
 | ID | Modifier | Visual | Rule | Min Size | Rule Class |
 |:---:|----------|--------|------|:---:|-----------|
@@ -200,6 +201,11 @@ Thirty-six modifiers from the Extended Library below, registered with their enum
 | 82 | **Sandwich** | Ink numbers in the ring | The sum of the digits between the 1 and the highest digit of the row or column | 6×6 | `OutsideClueRule(Sandwich)` |
 | 83 | **X-Sums** | Ink numbers in the ring | The first digit from that side says how many digits to add; the number is their sum | 5×5 | `OutsideClueRule(XSums)` |
 | 84 | **Little Killer** | Ink number with an arrow outside the corner of a diagonal (one clue per outside spot) | The digits along the diagonal (3 cells or more) add up to the number (repeats allowed) | 6×6 | `OutsideClueRule(LittleKiller)` |
+| 30 | **X-Sudoku** | Two thin indigo diagonals | No digit repeats on either long diagonal | 5×5 | `ExtraHouseRule(XSudoku)` |
+| 31 | **Hyper Sudoku** | Four teal-washed windows with dashed outlines | No digit repeats in each window | 9×9 | `ExtraHouseRule(HyperSudoku)` |
+| 32 | **Disjoint Groups** | A slate pip in every cell at its place in the box | Cells in the same place of their box hold different digits | 9×9 | `ExtraHouseRule(DisjointGroups)` |
+| 53 | **Extra Region** | Violet wash with a dashed outline | No digit repeats in the region (board-size cells, read off the solution) | 5×5 | `ExtraHouseRule(ExtraRegion)` |
+| 68 | **Magic Square** | Gold-washed box with "15" in its corner | Every row, column and diagonal of the box adds up to 15 | 9×9 | `MagicSquareRule` |
 | 93 | **Inverted Zone** | Green whisper lines and a shaded 3×3 area with a dashed green outline | Neighbours on the line differ by 5 or more, but by less than 5 for a step between two cells inside the area | 9×9 | `ZoneWhisperRule` |
 
 ---
@@ -274,9 +280,9 @@ Authoritative table: `BossService.ModifierData` (decided 2026-10-07, SPEC-CONF-0
 | 7×7 | Killer Cages, German Whispers (Modular Regions: 7×7, but excluded) |
 | 9×9 | Entropy |
 
-- **Modular Regions** is excluded from every roll pool and from completion (65 clearable modifiers).
-- **Blocked pairs** (never combined, `BossService.GetBlockedPairs`): Ratio Kropki + Distance ≥ 2, Distance ≥ 2 + Nonconsec. Diagonal, Anti-Bishop + Antiknight, Anti-Bishop + Nonconsecutive, Anti-Bishop + Entropy, Nonconsecutive + Difference Kropki; Fast Thermo with Thermo, Slow Thermo or Ambiguous Thermo; Ambiguous Thermo with Thermo, Slow Thermo or Palindrome; Full White Kropki with Full Kropki, Full Black Kropki, Difference Kropki, Ratio Kropki, Sum Dot or Nonconsecutive; Full Black Kropki with Full Kropki, Ratio Kropki, Difference Kropki or Sum Dot (never two dots on one edge); Hidden Killer + Killer Cages; Inverted Zone + German Whispers (both draw green whisper lines); Counting Circles + Prime Cells or Multiples of 3 (circled cells look alike); any two of Skyscrapers, Sandwich, X-Sums and Little Killer (one kind of outside clue per board).
-- **Global structural modifiers** (Nonconsecutive, Antiknight, Anti-King, Anti-Bishop, Nonconsec. Diagonal, Distance ≥ 2, Entropy) use the rectangular region layout of the board size: no irregular template produced a puzzle with them within budget (SPEC-AMB-014). Two or more of the board-shaping ones need at least 8×8, and a 7×7 board with one is raised to 8×8.
+- **Modular Regions** is excluded from every roll pool and from completion (70 clearable modifiers).
+- **Blocked pairs** (never combined, `BossService.GetBlockedPairs`): Ratio Kropki + Distance ≥ 2, Distance ≥ 2 + Nonconsec. Diagonal, Anti-Bishop + Antiknight, Anti-Bishop + Nonconsecutive, Anti-Bishop + Entropy, Nonconsecutive + Difference Kropki; Fast Thermo with Thermo, Slow Thermo or Ambiguous Thermo; Ambiguous Thermo with Thermo, Slow Thermo or Palindrome; Full White Kropki with Full Kropki, Full Black Kropki, Difference Kropki, Ratio Kropki, Sum Dot or Nonconsecutive; Full Black Kropki with Full Kropki, Ratio Kropki, Difference Kropki or Sum Dot (never two dots on one edge); Hidden Killer + Killer Cages; Inverted Zone + German Whispers (both draw green whisper lines); Counting Circles + Prime Cells or Multiples of 3 (circled cells look alike); any two of Skyscrapers, Sandwich, X-Sums and Little Killer (one kind of outside clue per board); X-Sudoku with Nonconsecutive, Anti-Knight, Nonconsec. Diagonal or Entropy; Hyper Sudoku with Nonconsecutive, Nonconsec. Diagonal or Entropy; Disjoint Groups + Entropy; Magic Square with Nonconsecutive or Nonconsec. Diagonal (B5 pair benchmark).
+- **Global structural modifiers** (Nonconsecutive, Antiknight, Anti-King, Anti-Bishop, Nonconsec. Diagonal, Distance ≥ 2, Entropy, and since 2.12 X-Sudoku, Hyper Sudoku, Disjoint Groups and Magic Square) use the rectangular region layout of the board size: no irregular template produced a puzzle with them within budget (SPEC-AMB-014). Two or more of the board-shaping ones need at least 8×8, and a 7×7 board with one is raised to 8×8.
 - Modifiers already active as **floor modifiers** are excluded from the boss choice pool (no duplicates within a floor).
 - Modifiers chosen on a previous floor **can** appear again on later floors (each floor is independent).
 - **Boss board size** follows the floor's size range like any other puzzle (decided 2026-10-07, SPEC-CONF-028); the old "at least 8×8" boss clamp was removed. The only raises are the structural-modifier rules above. The map preview shows the size the boss is generated with.
@@ -499,7 +505,7 @@ Boss modifier state is serialized for save/resume support:
 
 ## Modifier Descriptions
 
-All 66 player modifiers and the 14 boss debuffs have descriptions via `BossService.GetModifierDescription()` (localized, `Boss.Description.*`). These are shown:
+All 71 player modifiers and the 14 boss debuffs have descriptions via `BossService.GetModifierDescription()` (localized, `Boss.Description.*`). These are shown:
 - In the boss gate choice panel
 - In the tutorial modifier toggle tooltips
 - In the in-run HUD modifier box, the modifier legend and the in-run View Modifiers list
@@ -511,14 +517,14 @@ All 66 player modifiers and the 14 boss debuffs have descriptions via `BossServi
 | File | Purpose |
 |------|---------|
 | `Assets/Scripts/Sudoku/ModifierModels.cs` | Data structures (CellCoord, ModifierLine, ArrowConstraint, KillerCage, KropkiDot, CellMarker, ModifierOverlayData) |
-| `Assets/Scripts/Sudoku/ConstraintRules.cs` (+ `.LineVariants.cs`, `.DotsPairsCells.cs`, `.Cages.cs`, `.ArrowsSums.cs`, `.CatalogB6.cs`, `.OutsideClues.cs`) | IOrderedConstraintRule implementations for all 66 player modifiers |
-| `Assets/Scripts/Sudoku/ModifierGeometryGenerator.cs` (+ `.Catalog.cs`, `.CagesArrows.cs`, `.CatalogB6.cs`, `.OutsideClues.cs`) | Geometry generation from solved boards (accepts intensity parameter); 66 modifiers |
-| `Assets/Scripts/Sudoku/ModifierFactory.cs` | Maps BossModifierId → constraint rule instances (66 cases) |
+| `Assets/Scripts/Sudoku/ConstraintRules.cs` (+ `.LineVariants.cs`, `.DotsPairsCells.cs`, `.Cages.cs`, `.ArrowsSums.cs`, `.CatalogB6.cs`, `.OutsideClues.cs`, `.ExtraHouses.cs`) | IOrderedConstraintRule implementations for all 71 player modifiers |
+| `Assets/Scripts/Sudoku/ModifierGeometryGenerator.cs` (+ `.Catalog.cs`, `.CagesArrows.cs`, `.CatalogB6.cs`, `.OutsideClues.cs`, `.ExtraHouses.cs`) | Geometry generation from solved boards (accepts intensity parameter); 71 modifiers |
+| `Assets/Scripts/Sudoku/ModifierFactory.cs` | Maps BossModifierId → constraint rule instances (71 cases) |
 | `Assets/Scripts/Sudoku/SudokuConstraintEngine.cs` | Central rule engine with ValidateAll |
 | `Assets/Scripts/Boss/BossService.cs` | Modifier pool construction, choice rolling, ModifierData (min sizes, blocked pairs), debuff pool |
 | `Assets/Scripts/Run/RunDirector.cs` | StartLevel wiring (overlay generation, engine creation, fog reveal, intensity assignment) |
 | `Assets/Scripts/UI/InRunController.cs`, `BoardViewController.cs` (+ `.OverlayGroups.cs`), `HudViewController.cs` (+ `.Legend.cs`), `BossGateViewController.cs` | Overlay rendering per modifier layer, fog masking, input blocking, descriptions, legend, boss gate (`PrototypeRunScreenController` no longer exists, SPEC-CONF-036) |
-| `Assets/Scripts/Core/GameEnums.cs` | BossModifierId (66 player modifiers: 0–29 and 37, 38, 40–46, 48, 51, 52, 58–61, 63–67, 69, 70, 72–74, 76–84, 93; other library IDs 30–93 not generated; debuffs 94–102/107–111, pressure 103–106), BossModifierIntensity, ConstraintRuleCategory enums |
+| `Assets/Scripts/Core/GameEnums.cs` | BossModifierId (71 player modifiers: 0–29 and 30–32, 37, 38, 40–46, 48, 51–53, 58–61, 63–70, 72–74, 76–84, 93; other library IDs 30–93 not generated; debuffs 94–102/107–111, pressure 103–106), BossModifierIntensity, ConstraintRuleCategory enums |
 | `Assets/Scripts/Core/RuntimeModels.cs` | Boss modifier serialization fields in RunState |
 | `Assets/Scripts/Save/RunAutoSaveCoordinator.cs` | SyncSeenModifiersToList before save |
 | `Assets/Scripts/Save/RunResumeService.cs` | Restore boss modifier state on resume |
@@ -528,7 +534,7 @@ All 66 player modifiers and the 14 boss debuffs have descriptions via `BossServi
 
 ## Extended Modifier Library (Future Content)
 
-The following modifiers are cataloged for potential future integration. Entries marked ✅ are in the active pool (66 modifiers since 2.11; the ID in brackets is the enum ID). The table format matches the active pool: `# | Modifier | Visual | Rule | Min Size`.
+The following modifiers are cataloged for potential future integration. Entries marked ✅ are in the active pool (71 modifiers since 2.12; the ID in brackets is the enum ID). The table format matches the active pool: `# | Modifier | Visual | Rule | Min Size`.
 
 **Min Size** is the smallest board on which the constraint remains interesting and non-trivial. **Visual** is a proposed rendering approach; all visuals are TBD until implementation.
 
@@ -538,9 +544,9 @@ The following modifiers are cataloged for potential future integration. Entries 
 
 | # | Modifier | Visual | Rule | Min Size |
 |:---:|----------|--------|------|:---:|
-| 16 | **X Sudoku** | No geometry (extra region highlight on diagonals) | Both main diagonals are extra regions — no digit may repeat on either diagonal | 5×5 |
-| 17 | **Hyper Sudoku** | Dashed borders on 4 extra 3×3 regions | Four additional 3×3 regions overlapping the standard grid; no digit repeats within them | 9×9 |
-| 18 | **Disjoint Groups** | Subtle shading per relative box position | Cells in the same relative position across all boxes cannot share a digit | 9×9 |
+| 16 | **X Sudoku** ✅ (ID 30) | No geometry (extra region highlight on diagonals) | Both main diagonals are extra regions — no digit may repeat on either diagonal | 5×5 |
+| 17 | **Hyper Sudoku** ✅ (ID 31) | Dashed borders on 4 extra 3×3 regions | Four additional 3×3 regions overlapping the standard grid; no digit repeats within them | 9×9 |
+| 18 | **Disjoint Groups** ✅ (ID 32) | A pip per cell at its relative box position | Cells in the same relative position across all boxes cannot share a digit | 9×9 |
 | 19 | **Antiking** ✅ | No geometry (global rule) | No two cells a chess king's move apart may contain the same digit | 5×5 |
 | 20 | **Anti-Bishop** ✅ | No geometry (global rule) | No two cells on the same diagonal (any length) may contain the same digit | 6×6 |
 | 21 | **Nonconsecutive (Diagonal)** ✅ | No geometry (global rule) | Diagonally adjacent cells cannot contain consecutive digits | 5×5 |
@@ -590,7 +596,7 @@ All extended line modifiers follow the same **8-directional adjacency, no self-c
 | # | Modifier | Visual | Rule | Min Size |
 |:---:|----------|--------|------|:---:|
 | 46 | **Irregular Regions (Jigsaw)** | Thick borders on irregular region shapes | Non-rectangular region shapes replace standard boxes (partially supported via region variants) | 5×5 |
-| 47 | **Extra Region Overlay** | Dashed coloured border on extra regions | Additional arbitrary regions with no digit repeats, independent of standard boxes | 5×5 |
+| 47 | **Extra Region Overlay** ✅ (ID 53) | Dashed coloured border on extra regions | Additional arbitrary regions with no digit repeats, independent of standard boxes | 5×5 |
 | 48 | **Region Sum Equality** | Region total labels; equality indicator | All regions (standard or extra) sum to the same total | 6×6 |
 | 49 | **Region Parity Balance** | Parity shading overlay per region | Each region must contain equal counts of odd and even digits | 6×6 |
 | 50 | **Region Index Rule** | Small index label per region cell | The digit at a cell equals the count of a defined feature in its region | 7×7 |
@@ -625,7 +631,7 @@ All extended line modifiers follow the same **8-directional adjacency, no self-c
 | 63 | **Cage Product** ✅ (ID 65) | Dashed cage + product label (×) | Cells in a cage multiply to the displayed product; no repeats | 6×6 |
 | 64 | **Cage Difference** ✅ (ID 66) | Two-cell cage + difference label (−) | Two-cell cage: the absolute difference of its two digits equals the label | 5×5 |
 | 65 | **Cage Ratio** ✅ (ID 67) | Two-cell cage + ratio label (:) | Two-cell cage: the ratio of its two digits equals the label | 5×5 |
-| 66 | **Magic Square Region** | Highlighted 3×3 sub-region | A 3×3 sub-region sums to 15 in every row, column, and diagonal | 7×7 |
+| 66 | **Magic Square Region** ✅ (ID 68, 9×9 only: a magic 3×3 square needs the digits 1–9) | Highlighted 3×3 sub-region | A 3×3 sub-region sums to 15 in every row, column, and diagonal | 7×7 |
 | 67 | **Renban Cage** ✅ (ID 69) | Dashed cage with consecutive-set indicator | Cage digits form a consecutive set in any order | 5×5 |
 | 68 | **Arrow Average** ✅ (ID 70) | Circle + arrow path | The digit in the circle equals the average of the digits along the arrow path | 7×7 |
 | 69 | **Arrow Product** | Circle + arrow path (× symbol) | The digit in the circle equals the product of the digits along the arrow path | 6×6 |

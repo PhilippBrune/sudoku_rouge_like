@@ -59,6 +59,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-048](#gap-048) | Line colours differ between the spec, the board and the rule text (Parity Lines looked like Dutch Whispers) | FIXED (2026-10-19) | LOW | P3 |
 | [GAP-049](#gap-049) | Chosen modifiers silently missing on busy boards (white dots under Nonconsecutive, Even/Odd after Prime markers, Palindrome on 9×9) | FIXED (found and fixed 2026-10-19) | HIGH | P1 |
 | [GAP-050](#gap-050) | Catalog lines (Zipper and the other batch lines) could cross themselves in an X | FIXED (found and fixed 2026-10-19) | MEDIUM | P3 |
+| [GAP-051](#gap-051) | A pre-baked boss board could be reused after the player picked Entropy at the gate | FIXED (found and fixed 2026-10-19) | HIGH | P2 |
 | [GAP-044](#gap-044) | Region borders showed the previous puzzle's regions on a same-size board | FIXED (found 2026-10-14 by the owner) | HIGH | P1 |
 | [GAP-043](#gap-043) | Without the `ActiveProfileSlot` pref the game opens an empty slot 0, not the existing profile | FIXED (0.1.5, found 2026-10-14) | LOW | P3 |
 
@@ -854,3 +855,14 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Fix:** Every catalog line, arrow path and region-sum piece skips a diagonal step that would cross the path (`CrossesPath`); a finished Zipper line that crosses itself is thrown away (`CrossesItself`).
 - **Affected Files:** `Assets/Scripts/Sudoku/ModifierGeometryGenerator.Catalog.cs`, `ModifierGeometryGenerator.CagesArrows.cs`, `ModifierGeometryGenerator.CatalogB6.cs`
 - **Tests:** `CatalogModifierTests.EveryNewModifier_GeneratesItsGeometry_AndTheSolutionNeverTripsItsRule` (`CheckNoLineCrossesItself`, fails without the fix).
+
+## GAP-051
+**A pre-baked boss board could be reused after the player picked Entropy at the gate**
+
+- **Requirement:** REQ-BOSS-101 (chosen modifiers apply), GEN-SOLVE-002
+- **Status:** FIXED (found by reading the code while building catalog batch B5, 2026-10-19) · **Severity:** HIGH · **Priority:** P2
+- **Problem:** The boss board is baked at floor entry with the floor modifiers. When the player picks modifiers at the gate, the bake is reused if the "structural" modifiers match. That list held the six board-shaping rules but not Entropy, although the generator builds the solution with Entropy too. A boss with Entropy picked at the gate could get a board whose solution breaks Entropy, so correct digits would show as conflicts. Not reproduced in a player build; found in the code.
+- **Root Cause:** `RunDirector.StructuralModsMatch` kept its own list of structural modifiers, separate from the generator flags.
+- **Fix:** One predicate, `BossService.ShapesSolution` (board-shaping rules and Entropy), decides both; the B5 rules (X-Sudoku, Hyper, Disjoint Groups, Magic Square) are board-shaping and join it.
+- **Affected Files:** `Assets/Scripts/Run/RunDirector.LevelGeneration.cs`, `Assets/Scripts/Boss/BossService.cs`
+- **Tests:** `CatalogExtraHouseTests.PreBakedBoard_MatchesOnEverySolutionShapingRule` (fails without the fix).

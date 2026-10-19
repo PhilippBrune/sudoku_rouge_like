@@ -314,7 +314,8 @@ namespace SudokuRoguelike.Run
                 config.ActiveModifiers.Contains(BossModifierId.Antiking),
                 config.ActiveModifiers.Contains(BossModifierId.DistanceGe2),
                 config.ActiveModifiers.Contains(BossModifierId.EntropyGlobal),
-                deadline);
+                deadline,
+                SolutionShape.For(config.ActiveModifiers, config.BoardSize));
         }
 
         private static void IncludeInitialBoardMetrics(
@@ -837,15 +838,14 @@ namespace SudokuRoguelike.Run
 
         // Returns true when the structural modifier subset of both lists is identical.
         // The pre-bake is valid whenever the player's boss choices leave the structural set unchanged.
+        // [REQ: GEN-SOLVE-002] A pre-baked board fits only when the same solution-shaping rules are active: every rule
+        // the generator builds the solution with (BossService.ShapesSolution), Entropy included (GAP-051).
+        private static readonly BossModifierId[] SolutionShapingModifiers =
+            ((BossModifierId[])Enum.GetValues(typeof(BossModifierId))).Where(BossService.ShapesSolution).ToArray();
+
         private static bool StructuralModsMatch(IList<BossModifierId> a, IList<BossModifierId> b)
         {
-            BossModifierId[] structural =
-            {
-                BossModifierId.Nonconsecutive, BossModifierId.Antiknight,
-                BossModifierId.NonconsecDiagonal, BossModifierId.AntiBishop,
-                BossModifierId.Antiking, BossModifierId.DistanceGe2
-            };
-            foreach (var mod in structural)
+            foreach (var mod in SolutionShapingModifiers)
             {
                 var inA = a != null && a.Contains(mod);
                 var inB = b != null && b.Contains(mod);

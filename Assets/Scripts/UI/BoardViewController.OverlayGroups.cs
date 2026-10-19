@@ -80,6 +80,11 @@ namespace SudokuRoguelike.UI
             BossModifierId.Sandwich           => new[] { OutsideClueKey(OutsideClueType.Sandwich) },
             BossModifierId.XSums              => new[] { OutsideClueKey(OutsideClueType.XSums) },
             BossModifierId.LittleKiller       => new[] { OutsideClueKey(OutsideClueType.LittleKiller) },
+            BossModifierId.XSudoku            => new[] { XSudokuKey },
+            BossModifierId.HyperSudoku        => new[] { HyperKey },
+            BossModifierId.DisjointGroups     => new[] { DisjointKey },
+            BossModifierId.ExtraRegion        => new[] { ExtraRegionKey },
+            BossModifierId.MagicSquareRegion  => new[] { MagicSquareKey },
             _                               => Array.Empty<string>()
         };
 
@@ -145,6 +150,11 @@ namespace SudokuRoguelike.UI
                 BossModifierId.Sandwich           => GamePalette.OverlayOutsideClue,
                 BossModifierId.XSums              => GamePalette.OverlayOutsideClue,
                 BossModifierId.LittleKiller       => GamePalette.OverlayOutsideClue,
+                BossModifierId.XSudoku            => GamePalette.OverlayXDiagonal,
+                BossModifierId.HyperSudoku        => GamePalette.OverlayHyper,
+                BossModifierId.DisjointGroups     => GamePalette.OverlayDisjointPip,
+                BossModifierId.ExtraRegion        => GamePalette.OverlayExtraRegion,
+                BossModifierId.MagicSquareRegion  => GamePalette.OverlayMagic,
                 _                               => Color.clear
             };
             if (color.a <= 0f) return false;

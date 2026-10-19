@@ -6,11 +6,13 @@
 
 - **Cages and arrows (7).** Region Sum Line, Hidden Killer, Product Cage, Difference Cage, Renban Cage, Arrow Average and Double Arrow. Each cage kind has its own colour and corner label; the Pattern Scroll never reveals a hidden cage sum.
 - **Outside clues (B4).** Skyscrapers, Sandwich, X-Sums and Little Killer: clues stand in a ring round the grid, which is drawn a little smaller on those boards. Quadruples put digits in circles on the corners between four cells.
+- **Extra regions (B5).** X-Sudoku, Hyper Sudoku, Disjoint Groups, Extra Region and Magic Square. Every modifier of the catalog plan is now in the game: 71 in all.
 - **Eleven more (B6).** K-Whispers, 10-Line, Sum Line, Ratio 1:3, Distance Pairs, Ratio Cage, Pill Arrow, Opposite Sums, Counting Circles, Distance Cells and the Inverted Zone (a shaded box where green whisper lines flip).
 
 ### Fixed
 
 - Catalog lines (for example Zipper lines) could cross themselves in an X; they no longer do.
+- A boss puzzle could reuse a board prepared before the boss choice even when Entropy was picked at the gate, so correct digits could show as conflicts.
 
 ### Changed
 

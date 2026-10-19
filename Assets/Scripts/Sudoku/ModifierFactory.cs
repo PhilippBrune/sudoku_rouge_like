@@ -227,6 +227,17 @@ namespace SudokuRoguelike.Sudoku
                     case BossModifierId.Quadruples:
                         rules.Add(new QuadrupleRule());
                         break;
+
+                    // Batch B5 (ConstraintRules.ExtraHouses.cs)
+                    case BossModifierId.XSudoku:
+                    case BossModifierId.HyperSudoku:
+                    case BossModifierId.DisjointGroups:
+                    case BossModifierId.ExtraRegion:
+                        rules.Add(new ExtraHouseRule(modifiers[i]));
+                        break;
+                    case BossModifierId.MagicSquareRegion:
+                        rules.Add(new MagicSquareRule());
+                        break;
                 }
             }
 

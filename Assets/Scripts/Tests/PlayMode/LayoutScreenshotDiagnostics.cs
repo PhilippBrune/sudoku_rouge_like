@@ -333,6 +333,9 @@ namespace SudokuRoguelike.Tests
                 ("after_catalog_sandwich.png", new[] { BossModifierId.Sandwich }),
                 ("after_catalog_xsums.png", new[] { BossModifierId.XSums }),
                 ("after_catalog_little_killer.png", new[] { BossModifierId.LittleKiller }),
+                ("after_catalog_x_hyper_magic.png", new[] { BossModifierId.XSudoku, BossModifierId.HyperSudoku,
+                    BossModifierId.MagicSquareRegion }),
+                ("after_catalog_disjoint_extra.png", new[] { BossModifierId.DisjointGroups, BossModifierId.ExtraRegion }),
             };
             _puzzleSize = 9;
             var seed = 7330;

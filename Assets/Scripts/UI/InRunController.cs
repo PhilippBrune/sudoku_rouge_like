@@ -2393,6 +2393,7 @@ namespace SudokuRoguelike.UI
             KillerCageType.Difference => BossModifierId.CageDifference,
             KillerCageType.Ratio => BossModifierId.CageRatio,
             KillerCageType.RenbanSet => BossModifierId.RenbanCage,
+            KillerCageType.MagicSquare => BossModifierId.MagicSquareRegion,
             _ => BossModifierId.KillerCages
         };
 

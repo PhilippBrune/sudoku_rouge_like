@@ -102,6 +102,15 @@ namespace SudokuRoguelike.UI
         public static readonly Color OverlayDistanceCell   = new(0.16f, 0.24f, 0.56f, 1.00f); // navy ring and dots
         public static readonly Color OverlayNegationZone   = new(0.42f, 0.72f, 0.38f, 0.20f); // green wash under the zone
         public static readonly Color OverlayOutsideClue    = new(0.16f, 0.13f, 0.10f, 1.00f); // ink: clue ring, quadruple rims
+        // Batch B5 houses
+        public static readonly Color OverlayXDiagonal       = new(0.28f, 0.34f, 0.70f, 0.60f); // indigo diagonals
+        public static readonly Color OverlayHyper           = new(0.10f, 0.52f, 0.56f, 1.00f); // teal outline
+        public static readonly Color OverlayHyperWash       = new(0.10f, 0.52f, 0.56f, 0.13f);
+        public static readonly Color OverlayDisjointPip     = new(0.36f, 0.40f, 0.50f, 0.75f); // slate pips
+        public static readonly Color OverlayExtraRegion     = new(0.54f, 0.30f, 0.74f, 1.00f); // violet outline
+        public static readonly Color OverlayExtraRegionWash = new(0.54f, 0.30f, 0.74f, 0.13f);
+        public static readonly Color OverlayMagic           = new(0.72f, 0.52f, 0.08f, 1.00f); // gold outline and "15"
+        public static readonly Color OverlayMagicWash       = new(0.86f, 0.70f, 0.20f, 0.16f);
         public static readonly Color OverlayKropkiBlack  = new(0.10f, 0.10f, 0.10f, 0.90f);
         public static readonly Color OverlayKropkiWhite  = new(1.00f, 1.00f, 1.00f, 1.00f);
         public static readonly Color OverlayKropkiWhiteRim = new(0.13f, 0.11f, 0.09f, 1.00f); // ink rim: a white dot on paper

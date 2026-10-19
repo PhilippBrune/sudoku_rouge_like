@@ -770,6 +770,7 @@ namespace SudokuRoguelike.UI
             var bandW = Mathf.Min(cW, cH) * 0.20f * lineWidthMult;
             var bulbR = Mathf.Min(cW, cH) * 0.34f;
             DrawNegationZone(overlay, cW, cH, sX, sY, tW, tH);   // under the lines that cross it
+            DrawExtraHouses(overlay, cW, cH, sX, sY, tW, tH);    // B5 houses, also under the lines
             for (var li = 0; li < overlay.Lines.Count; li++)
             {
                 var line = overlay.Lines[li];

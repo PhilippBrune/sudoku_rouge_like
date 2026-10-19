@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 1.5 | **Date:** 2026-10-19 | **Status:** implemented (garden path, puzzle screen, boss gate, offering table, reward, relic node and shop built)
+**Version:** 1.6 | **Date:** 2026-10-19 | **Status:** review (built: garden path, puzzle screen, boss gate, offering table, reward, relic node, shop; proposed: Custom Puzzle, rest, event, cursed tile, run end)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.6 | 2026-10-19 | review | Owner request: mockups for the Custom Puzzle screen with room for every modifier of the catalog plan (three proposals: A rule book, B list with live preview, C shrine wall), and one proposal each for the rest, event, cursed-tile and run-end screens (victory and defeat share a layout). Proposed IDs UI-STYLE-012 (Custom Puzzle) and UI-STYLE-013 to 016 wait for the owner's pick. |
 | 1.5 | 2026-10-19 | implemented | Owner decision: build the three proposals for reward, relic node and shop as shown (UI-STYLE-007/008/009). All three are full-screen scenes beside the path panel (the path's buttons never draw over them, Options stays on top), built from the shared scroll parts (`ScrollUiKit.Scenes.cs`); the boss offering table and the relic shrine share one offering piece with a tier tag. Reward: choosing a plaque lifts it and names it on the Take button, choosing it again (click, key 1–3 or A) takes it. Line colours follow the convention puzzle setters use (GAP-048, `BossMechanicsSystem.md` 2.6). |
 | 1.4 | 2026-10-19 | review | Garden path **B** (UI-STYLE-001) and puzzle screen **B** (UI-STYLE-002) built in Unity, with screenshots from the game. Puzzle screen: Parity Lines are blue as the spec says (they were teal, like Dutch Whispers; GAP-048), pencil marks move under the cage sum in a cage's corner cell, and the board text renders on whole pixels. |
 | 1.3 | 2026-10-18 | review | Owner request: mockups for the next three screens in the same family: the reward after a puzzle (tally scroll and ema plaques), the relic node (the offering table at the shrine) and the shop (goods on the market stall). Proposed IDs UI-STYLE-007/008/009 wait for the owner's pick. Garden path B and puzzle B are being built. |
@@ -196,15 +197,73 @@ The stall painting is the scene: the goods sit on the counter with wooden price 
 
 ![Market in the game](layout-proposals/after_shop.jpg)
 
+## Custom Puzzle and the last old-style screens (proposals, 1.6)
+
+The Custom Puzzle panel lists 30 hand-written toggles; the catalog plan ends at 71 player modifiers in six families (lines, dots and pairs, cages and arrows, cells, whole board, outside clues), so the screen needs a layout that grows. All three proposals keep today's settings (board size, difficulty, regions, resource mode, class), the limit of five rules, the rule text on hover or focus, and the start button. Families and icons come from `src/modifiers.js`.
+
+### Custom Puzzle · A · Rule book (proposed UI-STYLE-012)
+
+![Custom Puzzle A](layout-proposals/custom_a_rule_book.jpg)
+
+The settings on a paper slip; the rules in a book with one tab per family (LB/RB switch tabs); the largest family (Lines, 22) fits one spread of six columns. Chosen rules get the vermilion ensō and sit as chips in the tray under the book.
+
+- **For:** one family at a time stays calm; the tray shows the whole choice at once; controller-friendly (tabs plus a grid).
+- **Against:** a rule in another family is one tab away; no search.
+
+### Custom Puzzle · B · List with a live preview
+
+![Custom Puzzle B](layout-proposals/custom_b_scroll_list.jpg)
+
+One scrolling list with family headers, a search field and filter chips (family, "New"); the hanging scroll on the right draws a 6×6 sample with the chosen rules' marks and their rule texts.
+
+- **For:** fastest for a player who knows the rule's name; the preview shows how rules look together before the puzzle starts.
+- **Against:** a long list is the least "game-like"; the preview needs a small board renderer outside the puzzle screen.
+
+### Custom Puzzle · C · Shrine wall
+
+![Custom Puzzle C](layout-proposals/custom_c_ema_wall.jpg)
+
+Every rule is a small ema plaque on a wooden wall, one shelf per family; the chosen rules hang on the red cord at the top; the settings sit on the offering box below. Long shelves end in "+N ›" and scroll sideways.
+
+- **For:** all six families visible at once; the strongest look.
+- **Against:** small plaques make long names tight; sideways scrolling per shelf.
+
+### Rest (proposed UI-STYLE-013)
+
+![Rest](layout-proposals/rest_tea_table.jpg)
+
+Four tea bowls on a low table in the rest painting, each under a paper slip that says what it gives and the value after it ("HP 6 → 9"). Cleanse appears only while a curse is active (CURSE-ACQUIRE-004/005) and names the oldest curse. Keys 1–4 choose, the same key again drinks (as on the reward).
+
+### Event (proposed UI-STYLE-014)
+
+![Event](layout-proposals/event_story_scroll.jpg)
+
+The event as a short hand scroll: title and story left, the choices as paper strips right. Each strip shows its cost and gain; a choice the player cannot pay is greyed with the reason ("You need 25 gold (you have 18)"). HP, gold and pencil sit above the scroll.
+
+### Cursed tile (proposed UI-STYLE-015)
+
+![Cursed tile](layout-proposals/cursed_ofuda.jpg)
+
+A sealed talisman in the curse painting carries the extra modifier with its icon and rule, and the puzzle's size and stars. The reward (+50% gold and XP, +10% run score) and the risk (normal penalties) sit on two tags; the curses already on the player on a third. Accept the curse, or Decline to play the same tile as a normal puzzle (MAP-NODE-CURSED-003).
+
+### Run end: victory and defeat (proposed UI-STYLE-016)
+
+![Victory](layout-proposals/end_run_scroll.jpg)
+
+![Defeat](layout-proposals/end_run_scroll_defeat.jpg)
+
+One layout for both: the painting, a banner, five floor seals (stamped with each boss's mask up to the floor reached, the lost floor crossed out), the run on a tally scroll with the class's closing line, the class XP as a brush stroke with a level-up stamp, the run score as a short ledger (today's `BuildRunScoreBreakdown`), and new unlocks as ema plaques ("Nothing new this time" with the next goal on a defeat).
+
 ## Decisions and next step
 
-Boss gate **B** and boss defeated **B** are built (2026-10-15); the garden path **B** (UI-STYLE-001), the puzzle screen **B** (UI-STYLE-002), the reward, the relic node and the shop (UI-STYLE-007/008/009) on 2026-10-19, all from the same scroll parts (`ScrollUiKit`). Still in the old style: rest, events, cursed node, defeat and victory screens.
+Boss gate **B** and boss defeated **B** are built (2026-10-15); the garden path **B** (UI-STYLE-001), the puzzle screen **B** (UI-STYLE-002), the reward, the relic node and the shop (UI-STYLE-007/008/009) on 2026-10-19, all from the same scroll parts (`ScrollUiKit`). Still in the old style: rest, events, cursed node, defeat and victory screens, and the Custom Puzzle panel; their proposals (1.6) wait for the owner's pick.
 
 ## Rendering
 
 ```powershell
 docs/design/layout-proposals/render.ps1                  # all mockups and variants -> PNG (1920x1080)
 docs/design/layout-proposals/render.ps1 -Only "gate_*"
+docs/design/layout-proposals/render.ps1 -Only "custom_*"
 ```
 
 The committed images are JPG copies; the PNGs are not committed.

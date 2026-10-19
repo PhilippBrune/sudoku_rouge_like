@@ -1,0 +1,95 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<script src="common.js"></script><script src="modifiers.js"></script>
+<style>
+  /* Custom Puzzle · B · Scroll list with a live board: every rule in one scrolling list with family headers and a search
+     field; the hanging scroll on the right shows a sample board with the chosen rules' marks and their rule texts. */
+  .bg { position:absolute; inset:0; background:url('../../../../Assets/Resources/background/bg_tutorial_setup.png') center/cover; filter:brightness(.42) saturate(.8); }
+  .panel { position:absolute; left:80px; top:70px; width:860px; height:930px; border-radius:16px; background:rgba(239,227,198,.96);
+           box-shadow:0 24px 50px rgba(0,0,0,.55); color:#231e17; }
+  .head { position:absolute; left:36px; top:26px; font-size:40px; }
+  .settings { position:absolute; left:36px; top:92px; right:36px; display:flex; gap:12px; flex-wrap:wrap; }
+  .pillset { display:flex; align-items:center; gap:8px; padding:6px 14px; border-radius:999px; background:#e2d2ad; font-size:18px; }
+  .pillset b { font-weight:normal; color:#9e2a2b; }
+  .search { position:absolute; left:36px; right:36px; top:162px; height:52px; border-radius:999px; border:2px solid #b98d4c; background:#fbf5e6;
+            padding:12px 24px; font-size:19px; color:#8f8a7c; }
+  .filters { position:absolute; left:36px; right:36px; top:230px; display:flex; gap:6px; font-size:15px; white-space:nowrap; }
+  .filters span { padding:5px 10px; border-radius:999px; border:1px solid #b98d4c; }
+  .filters .on { background:#c9963c; color:#2a1a10; border-color:#c9963c; }
+  .list { position:absolute; left:36px; right:22px; top:286px; bottom:30px; overflow:hidden; }
+  .fam { font-size:15px; letter-spacing:.14em; color:#6b5f4c; text-transform:uppercase; margin:14px 0 6px; }
+  .row { display:grid; grid-template-columns:34px 46px 1fr auto; align-items:center; gap:12px; height:52px; padding:0 14px; border-radius:10px; font-size:19px; }
+  .row:nth-child(odd) { background:rgba(255,255,255,.35); }
+  .row img { width:40px; height:40px; object-fit:contain; }
+  .box { width:26px; height:26px; border-radius:6px; border:2px solid #8a6a40; }
+  .row.chosen .box { background:#b23a2e; border-color:#b23a2e; box-shadow:inset 0 0 0 4px #fbf5e6; }
+  .row.chosen { background:#f6e3c0 !important; }
+  .row .tag { font-size:13px; padding:2px 8px; border-radius:999px; background:#2f4b8f; color:#fff; }
+  .row .min { font-size:14px; color:#8f8a7c; }
+  .bar { position:absolute; right:10px; top:300px; width:6px; height:180px; border-radius:3px; background:#b98d4c; }
+  /* the preview scroll */
+  .rod { position:absolute; left:1030px; width:780px; height:24px; border-radius:12px; background:linear-gradient(180deg,#c08a52,#6b4423); }
+  .scroll { position:absolute; left:1046px; top:96px; width:748px; height:860px; background:linear-gradient(180deg,#f3e9cf,#e8d8b2);
+            box-shadow:0 30px 60px rgba(0,0,0,.6); color:#231e17; }
+  .scroll small { position:absolute; left:0; right:0; top:34px; text-align:center; font-size:16px; letter-spacing:.14em; color:#6b5f4c; }
+  .scroll h2 { position:absolute; left:0; right:0; top:58px; margin:0; text-align:center; font-weight:normal; font-size:34px; }
+  #board { position:absolute; left:134px; top:120px; }
+  .rules { position:absolute; left:48px; right:48px; top:610px; font-size:18px; line-height:1.35; }
+  .rules b { font-weight:normal; color:#9e2a2b; display:block; margin-top:8px; }
+  .start { position:absolute; left:1250px; top:972px; padding:14px 60px; border-radius:999px; background:#b23a2e; color:#fff; font-size:26px; }
+  .back { position:absolute; left:1086px; top:978px; padding:9px 30px; border-radius:999px; border:2px solid #c9a24f; color:#f3e9cf; font-size:20px; }
+</style></head><body>
+<div class="bg"></div>
+<div class="panel">
+  <div class="head">Custom Puzzle</div>
+  <div class="settings"><span class="pillset">Size <b>9×9</b></span><span class="pillset">Difficulty <b>★★★</b></span>
+    <span class="pillset">Regions <b>Boxes</b></span><span class="pillset">Resources <b>Free</b></span><span class="pillset">Rules <b>3 / 5</b></span></div>
+  <div class="search">Search rules…</div>
+  <div class="filters" id="filters"></div>
+  <div class="list" id="list"></div>
+  <div class="bar"></div>
+</div>
+<div class="rod" style="top:76px"></div><div class="rod" style="top:944px"></div>
+<div class="scroll"><small>PREVIEW · 6×6 SAMPLE</small><h2>Your rules on a board</h2><div id="board"></div>
+  <div class="rules"><b>Dutch Whispers</b>Neighbours on orange lines differ by 4 or more.
+    <b>Killer Cages</b>Cages add up to their number, no repeats.
+    <b>Skyscrapers</b>A clue counts the digits you can see from that side; taller ones hide shorter ones.</div></div>
+<span class="back">Back</span><span class="start">Start puzzle</span>
+<div class="caption">Custom Puzzle · Proposal B · One list with search and a live preview (71 rules)</div>
+<script>
+  const filters = document.getElementById('filters');
+  ['All 71', ...MOD_FAMILIES.map(f => f.name), 'New'].forEach((n, i) =>
+    filters.insertAdjacentHTML('beforeend', `<span class="${i === 0 ? 'on' : ''}">${n}</span>`));
+  const list = document.getElementById('list');
+  MOD_FAMILIES.slice(0, 2).forEach(f => {
+    list.insertAdjacentHTML('beforeend', `<div class="fam">${f.name} · ${f.mods.length}</div>`);
+    f.mods.forEach(([name, icon, isNew]) => list.insertAdjacentHTML('beforeend',
+      `<div class="row ${MOD_CHOSEN.includes(name) ? 'chosen' : ''}"><span class="box"></span><img src="${modIcon(icon)}"><span>${name}</span>` +
+      `<span>${isNew ? '<span class="tag">NEW</span>' : '<span class="min">5×5+</span>'}</span></div>`));
+  });
+  // a 6×6 sample: an orange Dutch whisper line, one killer cage and skyscraper clues around the grid
+  const b = document.getElementById('board');
+  const cell = 66, gap = 2, n = 6, size = n * cell + (n - 1) * gap + 4;
+  let html = `<svg width="${size + 80}" height="${size + 80}" viewBox="-40 -40 ${size + 80} ${size + 80}" style="font-family:Main">`;
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+    const x = c * (cell + gap) + (c >= 3 ? 4 : 0), y = r * (cell + gap) + (r >= 2 ? 2 : 0) + (r >= 4 ? 2 : 0);
+    html += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" fill="${(r + c) % 5 === 0 ? '#e8dcbf' : '#f6eedb'}" stroke="#2b2620" stroke-width="1"/>`;
+    const v = BOARD6.given[r][c] ? BOARD6.sol[r][c] : '';
+    if (v) html += `<text x="${x + cell / 2}" y="${y + cell / 2 + 12}" font-size="34" text-anchor="middle" fill="#1d1a16">${v}</text>`;
+  }
+  const ctr = (r, c) => [c * (cell + gap) + (c >= 3 ? 4 : 0) + cell / 2, r * (cell + gap) + (r >= 2 ? 2 : 0) + (r >= 4 ? 2 : 0) + cell / 2];
+  const line = [[0, 1], [1, 2], [2, 2], [2, 3]].map(([r, c]) => ctr(r, c).join(',')).join(' ');
+  html += `<polyline points="${line}" fill="none" stroke="#f58c40" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const [x0, y0] = ctr(4, 0), [x1, y1] = ctr(5, 1);
+  html += `<rect x="${x0 - 28}" y="${y0 - 28}" width="${x1 - x0 + 56}" height="${y1 - y0 + 56}" fill="none" stroke="#c43a2e" stroke-width="3" stroke-dasharray="9 6"/>`;
+  const S = BOARD6.sol, cageSum = S[4][0] + S[4][1] + S[5][0] + S[5][1];
+  html += `<text x="${x0 - 22}" y="${y0 - 10}" font-size="18" fill="#c43a2e">${cageSum}</text>`;
+  const seen = digits => digits.reduce((acc, d) => d > acc.top ? { top: d, n: acc.n + 1 } : acc, { top: 0, n: 0 }).n;
+  for (let i = 0; i < n; i++) {
+    const [x] = ctr(0, i), [, y] = ctr(i, 0);
+    html += `<text x="${x}" y="-12" font-size="24" text-anchor="middle" fill="#1d1a16">${seen(S.map(row => row[i]))}</text>`;
+    html += `<text x="-22" y="${y + 8}" font-size="24" text-anchor="middle" fill="#1d1a16">${seen(S[i])}</text>`;
+  }
+  b.innerHTML = html + '</svg>';
+</script>
+</body></html>

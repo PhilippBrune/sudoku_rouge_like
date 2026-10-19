@@ -1,0 +1,59 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css"><link rel="stylesheet" href="scenes.css">
+<style>
+  /* Event node: the event as a short hand scroll (the path's emaki, unrolled for one scene): title and story on the left
+     half, the choices as stamped paper strips on the right half. Each strip names what it costs and what it gives, so the
+     result line is no surprise; a choice the player cannot pay is greyed with the reason. */
+  .rod { position:absolute; top:150px; width:30px; height:760px; border-radius:15px; background: linear-gradient(90deg, #c08a52, #6b4423);
+         box-shadow:0 10px 20px rgba(0,0,0,.6); }
+  .paper { position:absolute; left:150px; right:150px; top:170px; height:720px; color:#231e17;
+           background: radial-gradient(ellipse at 25% 30%, rgba(255,255,255,.35), transparent 55%), linear-gradient(180deg, #f3e9cf, #e6d5ae);
+           box-shadow:0 30px 60px rgba(0,0,0,.6); }
+  .paper::before, .paper::after { content:''; position:absolute; top:0; bottom:0; width:22px;
+           background: repeating-linear-gradient(180deg, #2c4632 0 16px, #33523a 16px 32px); border-left:2px solid #c9a24f; border-right:2px solid #c9a24f; }
+  .paper::before { left:0; } .paper::after { right:0; }
+  .story { position:absolute; left:80px; top:60px; width:640px; }
+  .story small { font-size:17px; letter-spacing:.16em; color:#6b5f4c; }
+  .story h1 { margin:6px 0 20px; font-weight:normal; font-size:58px; }
+  .story p { font-size:25px; line-height:1.5; color:#3a3228; margin:0; }
+  .story img { position:absolute; left:0; top:360px; width:250px; height:250px; object-fit:contain; opacity:.85; }
+  .seal { position:absolute; left:470px; top:440px; width:130px; height:130px; border-radius:12px; border:5px solid #b23a2e; color:#b23a2e;
+          display:flex; align-items:center; justify-content:center; text-align:center; font-size:24px; line-height:1.1; transform:rotate(-8deg); opacity:.85; }
+  .divider { position:absolute; left:790px; top:60px; bottom:60px; width:2px; background:rgba(158,42,43,.35); }
+  .opts { position:absolute; left:840px; right:70px; top:70px; }
+  .opts h4 { margin:0 0 18px; font-weight:normal; font-size:20px; letter-spacing:.14em; color:#6b5f4c; }
+  .opt { position:relative; display:grid; grid-template-columns: 46px 1fr auto; gap:18px; align-items:center; padding:20px 26px; margin-bottom:22px;
+         background:#fbf4e2; border:2px solid #d2b98a; box-shadow:0 6px 12px rgba(80,50,20,.18); }
+  .opt b { font-weight:normal; font-size:28px; display:block; }
+  .opt .eff { font-size:20px; color:#3a3228; }
+  .opt .cost { font-size:19px; padding:4px 14px; border-radius:999px; background:#efe3c6; border:1px solid #b98d4c; white-space:nowrap; }
+  .opt .gain { color:#2f6b3a; } .opt .loss { color:#9e2a2b; }
+  .opt.sel { border-color:#b23a2e; background:#fff7e6; transform:translateX(-10px); box-shadow:0 10px 22px rgba(80,50,20,.3); }
+  .opt.sel::after { content:''; position:absolute; right:-16px; top:50%; width:24px; height:24px; margin-top:-12px; border-radius:50%; background:#b23a2e; }
+  .opt.off { opacity:.45; }
+  .opt.off .why { font-size:17px; color:#9e2a2b; }
+  .purse { position:absolute; left:150px; top:62px; font-size:22px; color:#f3e9cf; text-shadow:0 2px 6px rgba(0,0,0,.6); }
+  .purse img { width:34px; height:34px; vertical-align:middle; margin:0 6px 0 22px; }
+  .foot { position:absolute; left:990px; top:930px; }
+</style></head><body>
+<div class="bg" style="background-image:url('../../../../Assets/Resources/background/bg_event.png')"></div><div class="shade"></div>
+<div class="purse">Floor 1 of 5 · Bamboo Courtyard
+  <img src="../../../../Assets/Resources/ui/icon_petal_orb.png">7 / 10 HP
+  <img src="../../../../Assets/Resources/economy/icon_sakura_coin.png">18 gold
+  <img src="../../../../Assets/Resources/ui/icon_ink_save.png">5 pencil</div>
+<div class="rod" style="left:126px"></div><div class="rod" style="right:126px"></div>
+<div class="paper">
+  <div class="story"><small>AN ENCOUNTER ON THE PATH</small><h1>Street Musician</h1>
+    <p>A busker plays a calm tune under the bamboo. A small crowd has gathered, and the case at their feet holds a few coins.</p>
+    <img src="../../../../Assets/Resources/node/icon_event_scroll.png"><div class="seal">Garden<br>tale</div></div>
+  <div class="divider"></div>
+  <div class="opts"><h4>WHAT DO YOU DO?</h4>
+    <div class="opt off"><span class="key">1</span><span><b>Tip generously</b><span class="eff"><span class="gain">+3 HP</span> · renewed energy</span><br>
+      <span class="why">You need 25 gold (you have 18)</span></span><span class="cost loss">−25 gold</span></div>
+    <div class="opt sel"><span class="key">2</span><span><b>Listen for free</b><span class="eff"><span class="gain">+1 HP</span></span></span><span class="cost">free</span></div>
+    <div class="opt"><span class="key">3</span><span><b>Walk past</b><span class="eff">Nothing happens</span></span><span class="cost">free</span></div>
+  </div>
+</div>
+<div class="foot"><span class="btn main">Listen for free</span></div>
+<div class="caption">Event · Proposal · A short hand scroll: the story left, the choices as paper strips right</div>
+</body></html>

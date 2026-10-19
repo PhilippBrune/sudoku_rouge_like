@@ -1,0 +1,76 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<script src="common.js"></script><script src="modifiers.js"></script>
+<style>
+  /* Custom Puzzle · A · Rule book: the settings on a paper slip, the rules in a book with one tab per family, the chosen
+     rules in a tray under the book. Sized for 71 modifiers: the largest family (Lines, 22) fits one page spread. */
+  .bg { position:absolute; inset:0; background:url('../../../../Assets/Resources/background/bg_tutorial_setup.png') center/cover; filter:brightness(.45) saturate(.8); }
+  .title { position:absolute; left:90px; top:54px; font-size:46px; color:#f3e9cf; text-shadow:0 3px 10px rgba(0,0,0,.6); }
+  .title small { display:block; font-size:18px; letter-spacing:.16em; color:#cbbd9c; text-transform:uppercase; }
+  .slip { position:absolute; left:90px; top:200px; width:360px; padding:26px 28px; background:#efe3c6; color:#231e17;
+          box-shadow:0 14px 30px rgba(0,0,0,.55); transform:rotate(-1deg); font-size:20px; }
+  .slip h4 { margin:0 0 6px; font-weight:normal; font-size:15px; letter-spacing:.14em; color:#6b5f4c; }
+  .step { display:flex; align-items:center; justify-content:space-between; margin:0 0 22px; }
+  .step .ctl { display:flex; align-items:center; gap:12px; }
+  .step .b { width:34px; height:34px; border-radius:50%; background:#c49a62; color:#2a1a10; display:flex; align-items:center; justify-content:center; }
+  .step .v { min-width:70px; text-align:center; font-size:24px; }
+  .seg { display:flex; border:2px solid #b98d4c; border-radius:999px; overflow:hidden; margin-bottom:22px; }
+  .seg span { flex:1; text-align:center; padding:6px 0; font-size:18px; }
+  .seg .on { background:#c9963c; color:#2a1a10; }
+  .book { position:absolute; left:520px; top:96px; width:1300px; height:700px; border-radius:10px;
+          background: linear-gradient(90deg, #ece0c2 0 49.6%, #b7a77f 49.6% 50.4%, #ece0c2 50.4%);
+          box-shadow: 0 30px 60px rgba(0,0,0,.6), inset 0 0 0 14px #5b3a22; }
+  .tabs { position:absolute; left:520px; top:52px; display:flex; gap:6px; }
+  .tab { padding:10px 22px 14px; border-radius:10px 10px 0 0; background:#8a6640; color:#f2e3c4; font-size:19px; }
+  .tab.on { background:#ece0c2; color:#231e17; }
+  .tab b { font-weight:normal; opacity:.7; font-size:15px; margin-left:6px; }
+  .grid { position:absolute; left:560px; top:150px; width:1220px; display:grid; grid-template-columns:repeat(6, 1fr); gap:14px 16px; }
+  .tile { position:relative; height:132px; border-radius:12px; background:rgba(255,255,255,.35); border:1px solid rgba(90,70,40,.25);
+          display:flex; flex-direction:column; align-items:center; justify-content:center; color:#231e17; font-size:17px; text-align:center; }
+  .tile img { width:62px; height:62px; object-fit:contain; margin-bottom:8px; }
+  .tile.chosen { background:#f6e8c4; border:2px solid #b23a2e; }
+  .tile.chosen::after { content:''; position:absolute; inset:-8px; border-radius:50%; border:4px solid rgba(178,58,46,.85);
+                        clip-path: polygon(0 0, 88% 0, 88% 18%, 100% 18%, 100% 100%, 0 100%); }
+  .tile .new { position:absolute; top:8px; right:8px; font-size:12px; letter-spacing:.08em; padding:2px 8px; border-radius:999px; background:#2f4b8f; color:#fff; }
+  .tray { position:absolute; left:520px; top:830px; width:1300px; height:150px; border-radius:14px; background:rgba(20,15,10,.72);
+          border:1px solid rgba(201,162,79,.5); }
+  .tray h4 { position:absolute; left:28px; top:18px; margin:0; font-weight:normal; font-size:22px; color:#f3e9cf; }
+  .tray h4 small { font-size:16px; color:#cbbd9c; margin-left:12px; }
+  .tray .chips { position:absolute; left:28px; top:62px; display:flex; gap:14px; }
+  .chip { display:flex; align-items:center; gap:10px; padding:8px 16px 8px 10px; border-radius:999px; background:#efe3c6; color:#231e17; font-size:18px; }
+  .chip img { width:40px; height:40px; object-fit:contain; }
+  .chip.empty { background:transparent; border:2px dashed rgba(239,227,198,.4); color:#a99b7d; width:150px; justify-content:center; }
+  .start { position:absolute; right:30px; top:44px; padding:16px 54px; border-radius:999px; background:#b23a2e; color:#fff; font-size:26px;
+           box-shadow:0 6px 16px rgba(0,0,0,.4); }
+  .hint { position:absolute; left:560px; top:742px; font-size:17px; color:#5b5244; }
+  .back { position:absolute; left:90px; top:960px; padding:10px 36px; border-radius:999px; border:2px solid #c9a24f; color:#f3e9cf; font-size:20px; }
+</style></head><body>
+<div class="bg"></div>
+<div class="title"><small>Practice</small>Custom Puzzle</div>
+<div class="slip">
+  <h4>BOARD</h4><div class="step"><span>Size</span><span class="ctl"><span class="b">−</span><span class="v">9×9</span><span class="b">+</span></span></div>
+  <div class="step"><span>Difficulty</span><span class="ctl"><span class="b">−</span><span class="v">★★★</span><span class="b">+</span></span></div>
+  <h4>REGIONS</h4><div class="seg"><span class="on">Boxes</span><span>Irregular</span></div>
+  <h4>RESOURCES</h4><div class="seg"><span class="on">Free</span><span>Class-based</span></div>
+  <div class="step" style="opacity:.45"><span>Class</span><span class="ctl"><span class="b">‹</span><span class="v" style="font-size:18px">Number Freak</span><span class="b">›</span></span></div>
+</div>
+<div class="tabs" id="tabs"></div>
+<div class="book"></div>
+<div class="grid" id="grid"></div>
+<div class="hint">Hover or focus a rule to read it · LB / RB switch the family · up to 5 rules</div>
+<div class="tray"><h4>Your rules<small>3 of 5</small></h4><div class="chips" id="chips"></div><span class="start">Start puzzle</span></div>
+<div class="back">Back</div>
+<div class="caption">Custom Puzzle · Proposal A · Rule book with a tab per family (71 rules)</div>
+<script>
+  const tabs = document.getElementById('tabs');
+  MOD_FAMILIES.forEach((f, i) => tabs.insertAdjacentHTML('beforeend',
+    `<span class="tab ${i === 0 ? 'on' : ''}">${f.name}<b>${f.mods.length}</b></span>`));
+  const grid = document.getElementById('grid');
+  MOD_FAMILIES[0].mods.forEach(([name, icon, isNew]) => grid.insertAdjacentHTML('beforeend',
+    `<div class="tile ${MOD_CHOSEN.includes(name) ? 'chosen' : ''}"><img src="${modIcon(icon)}">${name}${isNew ? '<span class="new">NEW</span>' : ''}</div>`));
+  const all = MOD_FAMILIES.flatMap(f => f.mods);
+  const chips = document.getElementById('chips');
+  MOD_CHOSEN.forEach(n => { const m = all.find(x => x[0] === n); chips.insertAdjacentHTML('beforeend', `<span class="chip"><img src="${modIcon(m[1])}">${n}</span>`); });
+  for (let i = MOD_CHOSEN.length; i < 5; i++) chips.insertAdjacentHTML('beforeend', '<span class="chip empty">empty</span>');
+</script>
+</body></html>

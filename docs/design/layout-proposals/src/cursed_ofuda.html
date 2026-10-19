@@ -1,0 +1,43 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css"><link rel="stylesheet" href="scenes.css">
+<style>
+  /* Cursed tile: a sealed talisman (ofuda) nailed to a post in the curse painting. The extra modifier is written on it
+     with its icon and rule; the reward and the risk sit on two paper tags. Accept tears the seal; Decline plays the same tile as a normal puzzle (MAP-NODE-CURSED-003). */
+  .bg { filter: brightness(.42) saturate(.9) hue-rotate(-8deg); }
+  .glow { position:absolute; left:50%; top:520px; width:900px; height:900px; margin:-450px 0 0 -450px; border-radius:50%;
+          background: radial-gradient(circle, rgba(178,58,46,.32), transparent 65%); }
+  .ofuda { position:absolute; left:760px; top:120px; width:400px; height:760px; padding:40px 36px; text-align:center; color:#231e17;
+           background: linear-gradient(180deg, #f3e9cf, #e2cfa6); box-shadow:0 30px 60px rgba(0,0,0,.65); }
+  .ofuda::before { content:''; position:absolute; left:20px; right:20px; top:20px; bottom:20px; border:3px solid #b23a2e; pointer-events:none; }
+  .nail { position:absolute; left:50%; top:-14px; width:22px; height:22px; margin-left:-11px; border-radius:50%; background:#3a2a1c; box-shadow:0 2px 4px rgba(0,0,0,.6); }
+  .ofuda small { display:block; font-size:16px; letter-spacing:.2em; color:#9e2a2b; margin-top:12px; }
+  .ofuda h1 { margin:6px 0 18px; font-weight:normal; font-size:52px; color:#9e2a2b; }
+  .ofuda .mod { margin:0 auto; width:150px; height:150px; padding:18px; border-radius:50%; background:rgba(178,58,46,.12); border:2px solid rgba(178,58,46,.5); }
+  .ofuda .mod img { width:100%; height:100%; object-fit:contain; }
+  .ofuda h2 { margin:20px 0 8px; font-weight:normal; font-size:34px; }
+  .ofuda p { margin:0; font-size:21px; line-height:1.4; color:#3a3228; }
+  .ofuda .puzzle { margin-top:26px; font-size:19px; color:#6b5f4c; }
+  .stamp { position:absolute; left:50%; bottom:46px; width:120px; height:120px; margin-left:-60px; border-radius:12px; background:#b23a2e; color:#fff;
+           display:flex; align-items:center; justify-content:center; font-size:30px; transform:rotate(6deg); box-shadow:0 4px 10px rgba(0,0,0,.35); }
+  .gain { left:290px; top:300px; width:340px; transform:rotate(-2deg); }
+  .risk { right:290px; top:300px; width:340px; transform:rotate(2deg); }
+  .gain b { color:#2f6b3a; font-weight:normal; font-size:34px; display:block; line-height:1.3; }
+  .risk b { color:#9e2a2b; font-weight:normal; font-size:26px; display:block; line-height:1.3; }
+  .curses { left:110px; top:640px; width:330px; transform:rotate(-1deg); font-size:18px; }
+  .curses img { width:40px; height:40px; vertical-align:middle; margin-right:8px; }
+  .foot { position:absolute; left:0; right:0; top:930px; text-align:center; }
+  .foot .btn { margin:0 14px; }
+</style></head><body>
+<div class="bg" style="background-image:url('../../../../Assets/Resources/background/bg_curse.png')"></div><div class="shade"></div><div class="glow"></div>
+<div class="ofuda"><div class="nail"></div><small>FLOOR 3 · A CURSED TILE</small><h1>Cursed!</h1>
+  <div class="mod"><img src="../../../../Assets/Resources/modifier/icon_antiknight.png"></div>
+  <h2>Anti-Knight</h2><p>Cells a chess knight's move apart never hold the same digit.</p>
+  <div class="puzzle">The puzzle: 7×7 · ★★★ · plus this rule</div>
+  <div class="stamp">呪</div></div>
+<div class="tag gain"><small>IF YOU CLEAR IT</small><b>+50% gold</b><b>+50% XP</b>Counts toward the run score (+10%).</div>
+<div class="tag risk"><small>IF YOU FAIL</small><b>Normal penalties</b>HP loss per mistake as usual. The extra rule only lasts for this puzzle.</div>
+<div class="tag curses"><small>CURSES ALREADY ON YOU</small><img src="../../../../Assets/Resources/cursed/icon_fog_of_memory.png">Fog of Memory</div>
+<div class="foot"><span class="btn main">Accept the curse</span><span class="btn">Decline · play it normally</span></div>
+<div class="hint" style="bottom:50px">A to accept · B to decline</div>
+<div class="caption">Cursed tile · Proposal · A sealed talisman with the extra rule; reward and risk on tags</div>
+</body></html>

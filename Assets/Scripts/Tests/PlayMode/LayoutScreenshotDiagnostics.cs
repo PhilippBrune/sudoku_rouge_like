@@ -145,6 +145,61 @@ namespace SudokuRoguelike.Tests
         }
 
         private Action<RunDirector> _beforeBindAlways;
+        private int _puzzleSize = 6;
+        private int _regionVariant;
+
+        // UI-STYLE-002: the puzzle on the hanging scroll: 6×6 on floor 1 with Dutch whispers and parity lines, a 7×7 with
+        // German whispers and cages (both need 7×7), a few digits placed (own, pencil marks); 9×9 on floor 5; an irregular
+        // 7×7 on floor 3.
+        [UnityTest]
+        public IEnumerator RenderPuzzleScroll()
+        {
+            var camera = CreateCamera();
+            var shots = new (int size, int region, int floor, string file, BossModifierId[] mods)[]
+            {
+                (6, 0, 0, "after_puzzle_6x6.png", new[] { BossModifierId.DutchWhispers, BossModifierId.ParityLines }),
+                (7, 0, 1, "after_puzzle_7x7_cages.png", new[] { BossModifierId.GermanWhispers, BossModifierId.KillerCages }),
+                (9, 0, 4, "after_puzzle_9x9.png", new[] { BossModifierId.KillerCages, BossModifierId.DifferenceKropki }),
+                (7, 1, 2, "after_puzzle_7x7_irregular.png", new[] { BossModifierId.Thermo }),
+            };
+            foreach (var shot in shots)
+            {
+                _puzzleSize = shot.size;
+                _regionVariant = shot.region;
+                var floor = shot.floor;
+                _beforeBindAlways = run => { for (var f = 0; f < floor; f++) run.AdvanceToNextFloor(); };
+                _beforeBind = run =>
+                {
+                    var board = run.CurrentBoard;
+                    var placed = 0;
+                    for (var r = 0; r < board.Size && placed < 4; r++)
+                    for (var c = 0; c < board.Size && placed < 4; c++)
+                        if (!board.GivenMask[r, c] && board.Cells[r, c] == 0 && (r + c) % 3 == 1)
+                        {
+                            board.PlaceValue(r, c, board.Solution[r, c]);
+                            placed++;
+                        }
+                    for (var r = board.Size - 1; r >= 0; r--)
+                    for (var c = 0; c < board.Size; c++)
+                        if (board.Cells[r, c] == 0 && (r * 7 + c) % 5 == 0)
+                        {
+                            board.TogglePencilMark(r, c, board.Solution[r, c]);
+                            board.TogglePencilMark(r, c, board.Solution[r, c] % board.Size + 1);
+                        }
+                };
+                var (host, run) = StartRun(7320 + shot.size, true, shot.mods);
+                _beforeBind = null;
+                _beforeBindAlways = null;
+                yield return DismissIntro();
+                for (var frame = 0; frame < 30 && Find(host, "C_0_0") == null; frame++)
+                    yield return null;
+                yield return new WaitForSecondsRealtime(0.6f);
+                yield return Shoot(host, camera, shot.file);
+                host.SetActive(false);
+            }
+            _puzzleSize = 6;
+            _regionVariant = 0;
+        }
 
         // UI-STYLE-006: killer cages of five shapes on a 6×6 board; each must read as one dashed outline.
         [UnityTest]
@@ -211,8 +266,8 @@ namespace SudokuRoguelike.Tests
                 var node = run.GetReachableNodes().Select(i => run.CurrentFloorGraph[i]).First(n => n.Type == NodeType.Puzzle);
                 run.TryAdvanceToNode(node.Index);
                 var config = run.BuildLevelConfig(false, false, node.Index);
-                config.BoardSize = 6;
-                config.RegionVariant = 0;
+                config.BoardSize = _puzzleSize;
+                config.RegionVariant = _regionVariant;
                 config.ActiveModifiers.Clear();
                 config.ActiveModifiers.AddRange(modifiers);
                 run.StartLevel(config);

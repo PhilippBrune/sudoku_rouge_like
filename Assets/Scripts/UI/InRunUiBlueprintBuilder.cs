@@ -13,9 +13,6 @@ namespace SudokuRoguelike.UI
         private OptionsController _optionsRefreshSource;
         private System.Action _optionsRefresh;
 
-        // Unified dark box color used across the Sudoku Puzzle screen.
-        private static readonly Color ScrimColor = InRunUiFactory.SudokuPuzzleBoxBg;
-
         private RunMapController runMapController;
 
         private Color panelColor;
@@ -233,146 +230,146 @@ namespace SudokuRoguelike.UI
             // Save & Quit button is built dynamically inside PathLegend by InRunController.RebuildPathCanvas
         }
 
+        // [REQ: UI-STYLE-002] The puzzle screen as a hanging scroll (layout-proposals.md, B): the floor's painting behind,
+        // the board in ink on a hanging scroll in the middle, HP and Pencil as paper lanterns on the left with the bag
+        // and relics below, the number pad as wooden tiles and the rules as paper slips on the right, Save & Quit and
+        // Options as round buttons. Names stay as before; InRunController and the HUD find the parts by name.
+        // Panel anchors from the 1920×1080 mockup: a = (px / 1920 − 0.03) / 0.94 (the panel spans 3–97 %).
         private void BuildSudokuGameplayPanel(RectTransform root)
         {
             RectTransform gridRoot, numpadRoot;
             Button saveQuit, optionsButton;
             Text statusText, hpText, pencilText;
             var panel = EnsureRect("SudokuGameplayPanel", root, new Vector2(0.03f, 0.03f), new Vector2(0.97f, 0.97f), Vector2.zero, Vector2.zero).gameObject;
-            EnsureOrGetImage(panel, new Color(panelColor.r, panelColor.g, panelColor.b, 0.40f)); // scrim: bg_puzzle_board.png shows through
-            InRunUiFactory.AddPanelBackground(panel.transform, "bg_puzzle_board");
+            EnsureOrGetImage(panel, new Color(0f, 0f, 0f, 0f)); // invisible, still keeps clicks from the path below
+            var painting = InRunUiFactory.AddPanelBackground(panel.transform, "bg_puzzle_board", 1f);
+            painting.rectTransform.anchorMin = new Vector2(-0.035f, -0.035f);
+            painting.rectTransform.anchorMax = new Vector2(1.035f, 1.035f);
+            var shade = ScrollUiKit.Bleed(panel.transform, "PuzzleShade").gameObject.AddComponent<Image>();
+            shade.color = new Color(0.10f, 0.06f, 0.03f, 0.55f);
+            shade.raycastTarget = false;
+            shade.transform.SetSiblingIndex(1);
 
-            // Dark scrim behind the center-top info band — created before the title so it renders beneath it.
+            ScrollUiKit.HangingScroll(panel.transform, "PuzzleScroll", new Vector2(0.3005f, 0.0291f), new Vector2(0.6995f, 0.9748f));
+
+            // Header on the scroll: eyebrow (floor, depth, size, stars), the floor name, the status line in italics.
             var infoScrim = EnsureRect("InfoScrimBg", panel.transform as RectTransform,
-                new Vector2(0.22f, 0.79f), new Vector2(0.70f, 1.00f), Vector2.zero, Vector2.zero);
-            var infoScrimImg = EnsureOrGetImage(infoScrim.gameObject, ScrimColor);
-            infoScrimImg.raycastTarget = false;
-
-            // Title is a child of InfoScrimBg so it always renders above the scrim and can't drift out of it.
-            // Anchors within the scrim: top 67–100% maps to panel y=0.93–1.00 within scrim y=0.79–1.00.
+                new Vector2(0.3005f, 0.853f), new Vector2(0.6995f, 0.897f), Vector2.zero, Vector2.zero);
+            EnsureOrGetImage(infoScrim.gameObject, new Color(0f, 0f, 0f, 0f)).raycastTarget = false;
             var title = BuildText("SudokuGameplayTitle", infoScrim,
-                T("InRun.Blueprint.SudokuGameplayTitle", "Sudoku Puzzle"), 34, TextAnchor.UpperCenter);
-            SetRect(title.rectTransform, new Vector2(0.03f, 0.66f), new Vector2(0.97f, 1.00f), Vector2.zero, Vector2.zero);
+                T("InRun.Blueprint.SudokuGameplayTitle", "Sudoku Puzzle"), 34, TextAnchor.MiddleCenter);
+            SetRect(title.rectTransform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            title.color = ScrollUiKit.Ink;
 
             var levelInfo = BuildText("SudokuGameplayLevelInfo", panel.transform as RectTransform,
                 T("InRun.Blueprint.LevelDepthPlaceholder", "Level: -  Depth: -"), 18, TextAnchor.MiddleCenter);
-            SetRect(levelInfo.rectTransform, new Vector2(0.22f, 0.83f), new Vector2(0.70f, 0.875f), Vector2.zero, Vector2.zero);
+            SetRect(levelInfo.rectTransform, new Vector2(0.3005f, 0.899f), new Vector2(0.6995f, 0.925f), Vector2.zero, Vector2.zero);
+            levelInfo.color = ScrollUiKit.InkSoft;
 
             statusText = BuildText("SudokuGameplayStatus", panel.transform as RectTransform,
-                T("InRun.Blueprint.SelectPathStatus", "Select a path and start solving."), 19, TextAnchor.MiddleLeft);
-            SetRect(statusText.rectTransform, new Vector2(0.22f, 0.79f), new Vector2(0.70f, 0.83f), Vector2.zero, Vector2.zero);
+                T("InRun.Blueprint.SelectPathStatus", "Select a path and start solving."), 18, TextAnchor.MiddleCenter);
+            SetRect(statusText.rectTransform, new Vector2(0.3005f, 0.826f), new Vector2(0.6995f, 0.852f), Vector2.zero, Vector2.zero);
+            statusText.color = ScrollUiKit.InkSoft;
+            statusText.fontStyle = FontStyle.Italic;
 
-            // Unified scrim covering class badge + HP + Pencil, all within BAG column width
+            // Left column: HP and Pencil as paper lanterns (the bars keep their names; the HUD sets the fill).
             var hpPencilScrim = EnsureRect("HpPencilScrim", panel.transform as RectTransform,
-                new Vector2(0.01f, 0.75f), new Vector2(0.21f, 1.00f), Vector2.zero, Vector2.zero);
-            var hpPencilScrimImg = EnsureOrGetImage(hpPencilScrim.gameObject, ScrimColor);
-            hpPencilScrimImg.raycastTarget = false;
-            // Remove any stray Outline component that produces a double-border effect
-            var scrimOutline = hpPencilScrim.GetComponent<UnityEngine.UI.Outline>();
-            if (scrimOutline != null) UnityEngine.Object.Destroy(scrimOutline);
-
-            hpText = BuildText("SudokuGameplayHp", panel.transform as RectTransform,
-                T("InRun.Blueprint.HpPlaceholder", "HP: -"), 18, TextAnchor.MiddleLeft);
-            SetRect(hpText.rectTransform, new Vector2(0.02f, 0.85f), new Vector2(0.09f, 0.89f), Vector2.zero, Vector2.zero);
-
-            var hpBarBgRect = EnsureRect("HpBarBg", panel.transform as RectTransform, new Vector2(0.09f, 0.847f), new Vector2(0.20f, 0.878f), Vector2.zero, Vector2.zero);
-            var hpBarBgImg = EnsureOrGetImage(hpBarBgRect.gameObject, new Color(0.08f, 0.06f, 0.06f, 0.85f));
-            hpBarBgImg.raycastTarget = false;
-            var hpBarFillGo = new GameObject("HpBarFill", typeof(RectTransform), typeof(Image));
-            hpBarFillGo.transform.SetParent(hpBarBgRect, false);
-            var hpBarFillRect = hpBarFillGo.GetComponent<RectTransform>();
-            hpBarFillRect.anchorMin = Vector2.zero;
-            hpBarFillRect.anchorMax = Vector2.one;
-            hpBarFillRect.offsetMin = Vector2.zero;
-            hpBarFillRect.offsetMax = Vector2.zero;
-            var hpBarFillImg = hpBarFillGo.GetComponent<Image>();
-            hpBarFillImg.sprite = BuildWhiteSprite();
-            hpBarFillImg.color = new Color(0.75f, 0.22f, 0.22f, 0.90f);
-            hpBarFillImg.type = Image.Type.Filled;
-            hpBarFillImg.fillMethod = Image.FillMethod.Horizontal;
-            hpBarFillImg.fillOrigin = 0;
-            hpBarFillImg.fillAmount = 1f;
-            hpBarFillImg.raycastTarget = false;
-
-            pencilText = BuildText("SudokuGameplayPencil", panel.transform as RectTransform,
-                T("InRun.Blueprint.PencilPlaceholder", "Pencil: -"), 18, TextAnchor.MiddleLeft);
-            SetRect(pencilText.rectTransform, new Vector2(0.02f, 0.79f), new Vector2(0.09f, 0.83f), Vector2.zero, Vector2.zero);
-
-            var pencilBarBgRect = EnsureRect("PencilBarBg", panel.transform as RectTransform, new Vector2(0.09f, 0.777f), new Vector2(0.20f, 0.808f), Vector2.zero, Vector2.zero);
-            var pencilBarBgImg = EnsureOrGetImage(pencilBarBgRect.gameObject, new Color(0.06f, 0.06f, 0.08f, 0.85f));
-            pencilBarBgImg.raycastTarget = false;
-            var pencilBarFillGo = new GameObject("PencilBarFill", typeof(RectTransform), typeof(Image));
-            pencilBarFillGo.transform.SetParent(pencilBarBgRect, false);
-            var pencilBarFillRect = pencilBarFillGo.GetComponent<RectTransform>();
-            pencilBarFillRect.anchorMin = Vector2.zero;
-            pencilBarFillRect.anchorMax = Vector2.one;
-            pencilBarFillRect.offsetMin = Vector2.zero;
-            pencilBarFillRect.offsetMax = Vector2.zero;
-            var pencilBarFillImg = pencilBarFillGo.GetComponent<Image>();
-            pencilBarFillImg.sprite = BuildWhiteSprite();
-            pencilBarFillImg.color = new Color(0.22f, 0.55f, 0.80f, 0.90f);
-            pencilBarFillImg.type = Image.Type.Filled;
-            pencilBarFillImg.fillMethod = Image.FillMethod.Horizontal;
-            pencilBarFillImg.fillOrigin = 0;
-            pencilBarFillImg.fillAmount = 1f;
-            pencilBarFillImg.raycastTarget = false;
+                new Vector2(0.0346f, 0.60f), new Vector2(0.2230f, 0.83f), Vector2.zero, Vector2.zero);
+            EnsureOrGetImage(hpPencilScrim.gameObject, new Color(0f, 0f, 0f, 0f)).raycastTarget = false;
+            hpText = BuildLantern(panel.transform as RectTransform, "Hp", new Vector2(0.0346f, 0.6182f), new Vector2(0.1177f, 0.8152f),
+                new Color(0.42f, 0.14f, 0.07f, 1f), new Color(0.96f, 0.45f, 0.22f, 1f),
+                T("InRun.Blueprint.HpPlaceholder", "HP: -"));
+            pencilText = BuildLantern(panel.transform as RectTransform, "Pencil", new Vector2(0.1398f, 0.6182f), new Vector2(0.2230f, 0.8152f),
+                new Color(0.12f, 0.24f, 0.36f, 1f), new Color(0.62f, 0.82f, 0.95f, 1f),
+                T("InRun.Blueprint.PencilPlaceholder", "Pencil: -"));
 
             // [REQ: REQ-ECON-100] Buy pencil during a puzzle (GAP-016). InRunController sets the label (cost) and state.
+            // A small wooden tile under the Pencil lantern.
             var buyPencil = BuildButton("BtnBuyPencil", panel.transform as RectTransform,
-                T("InRun.BuyPencil.Label", "+3 Pencil"), 13);
-            SetRect(buyPencil.GetComponent<RectTransform>(), new Vector2(0.09f, 0.741f), new Vector2(0.20f, 0.771f), Vector2.zero, Vector2.zero);
+                T("InRun.BuyPencil.Label", "+3 Pencil"), 15);
+            SetRect(buyPencil.GetComponent<RectTransform>(), new Vector2(0.1398f, 0.563f), new Vector2(0.2230f, 0.603f), Vector2.zero, Vector2.zero);
+            ScrollUiKit.MakeWoodTile(buyPencil, buyPencil.GetComponent<Image>());
+            var buyLabel = buyPencil.GetComponentInChildren<Text>(true);
+            SetRect(buyLabel.rectTransform, Vector2.zero, Vector2.one, new Vector2(4f, 1f), new Vector2(-4f, -1f));
+            buyLabel.alignment = TextAnchor.MiddleCenter;
+            buyLabel.color = ScrollUiKit.WoodTileText;
+            buyLabel.resizeTextForBestFit = true;
+            buyLabel.resizeTextMinSize = 10;
+            buyLabel.resizeTextMaxSize = 15;
 
-            saveQuit = BuildButton("BtnSudokuSaveQuit", panel.transform as RectTransform,
-                T("InRun.Path.SaveAndQuit", "Save & Quit"), 18);
-            SetRect(saveQuit.GetComponent<RectTransform>(), new Vector2(0.74f, 0.01f), new Vector2(0.93f, 0.08f), Vector2.zero, Vector2.zero);
-            ApplyButtonIcon(saveQuit, "ink_save", "ui");
-            var sqShortcut = BuildText("ShortcutLabel", saveQuit.GetComponent<RectTransform>(), "(Q)", 10, TextAnchor.LowerRight);
-            SetRect(sqShortcut.rectTransform, new Vector2(0.60f, 0.05f), new Vector2(0.98f, 0.48f), Vector2.zero, Vector2.zero);
-            sqShortcut.color = GamePalette.TextMuted;
+            // Right column: round Save & Quit and Options at the top, the wooden number pad, the hint at the bottom.
+            saveQuit = ScrollUiKit.RoundButton(panel.transform, "BtnSudokuSaveQuit", new Vector2(0.8960f, 0.9462f), 60f, "ui/icon_ink_save");
+            BuildRoundButtonCaption(saveQuit, T("InRun.Path.SaveAndQuit"), "Q");
+            optionsButton = ScrollUiKit.RoundButton(panel.transform, "BtnSudokuOptions", new Vector2(0.9532f, 0.9462f), 60f, "ui/icon_stone_gear");
+            BuildRoundButtonCaption(optionsButton, T("Options", "Options"), "O");
+            // Keyboard nav: Save & Quit ↔ Options (horizontal pair)
+            saveQuit.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnRight = optionsButton };
+            optionsButton.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnLeft = saveQuit };
 
-            optionsButton = BuildButton("BtnSudokuOptions", panel.transform as RectTransform, T("Options", "Options"), 18);
-            SetRect(optionsButton.GetComponent<RectTransform>(), new Vector2(0.74f, 0.34f), new Vector2(0.93f, 0.41f), Vector2.zero, Vector2.zero);
-            ApplyButtonIcon(optionsButton, "stone_gear", "ui");
-            var optShortcut = BuildText("ShortcutLabel", optionsButton.GetComponent<RectTransform>(), "(O)", 10, TextAnchor.LowerRight);
-            SetRect(optShortcut.rectTransform, new Vector2(0.60f, 0.05f), new Vector2(0.98f, 0.48f), Vector2.zero, Vector2.zero);
-            optShortcut.color = GamePalette.TextMuted;
+            gridRoot = EnsureRect("SudokuGameplayGridRoot", panel.transform as RectTransform, new Vector2(0.3327f, 0.217f), new Vector2(0.6673f, 0.812f), Vector2.zero, Vector2.zero);
+            EnsureOrGetImage(gridRoot.gameObject, ScrollUiKit.Ink); // the 2 px spacing between cells shows as ink lines
 
-            // Keyboard nav: Save&Quit ↔ Options (vertical pair)
-            InRunUiFactory.ApplyFocusColors(saveQuit);
-            InRunUiFactory.ApplyFocusColors(optionsButton);
-            var sqNav = saveQuit.navigation;
-            sqNav.mode = Navigation.Mode.Explicit;
-            sqNav.selectOnUp = optionsButton;
-            saveQuit.navigation = sqNav;
-            var optNav = optionsButton.navigation;
-            optNav.mode = Navigation.Mode.Explicit;
-            optNav.selectOnDown = saveQuit;
-            optionsButton.navigation = optNav;
-
-            gridRoot = EnsureRect("SudokuGameplayGridRoot", panel.transform as RectTransform, new Vector2(0.22f, 0.16f), new Vector2(0.70f, 0.76f), Vector2.zero, Vector2.zero);
-            EnsureOrGetImage(gridRoot.gameObject, InRunUiFactory.SudokuPuzzleBoxBg);
-
-            numpadRoot = EnsureRect("SudokuGameplayNumpadRoot", panel.transform as RectTransform, new Vector2(0.74f, 0.42f), new Vector2(0.93f, 0.72f), Vector2.zero, Vector2.zero);
-            EnsureOrGetImage(numpadRoot.gameObject, InRunUiFactory.SudokuPuzzleBoxBg);
+            numpadRoot = EnsureRect("SudokuGameplayNumpadRoot", panel.transform as RectTransform, new Vector2(0.7716f, 0.4704f), new Vector2(0.9710f, 0.7857f), Vector2.zero, Vector2.zero);
+            EnsureOrGetImage(numpadRoot.gameObject, new Color(0f, 0f, 0f, 0f));
 
             var hintBg = EnsureRect("SudokuGameplayHintBg", panel.transform as RectTransform,
-                new Vector2(0.74f, 0.725f), new Vector2(0.93f, 0.845f), Vector2.zero, Vector2.zero);
-            var hintBgImg = EnsureOrGetImage(hintBg.gameObject, InRunUiFactory.SudokuPuzzleBoxBg);
-            hintBgImg.raycastTarget = false;
+                new Vector2(0.7716f, 0.02f), new Vector2(0.9710f, 0.105f), Vector2.zero, Vector2.zero);
+            EnsureOrGetImage(hintBg.gameObject, new Color(0f, 0f, 0f, 0f)).raycastTarget = false;
 
             var hint = BuildText("SudokuGameplayHint", panel.transform as RectTransform,
                 T("InRun.Blueprint.PuzzleHint", "Use numpad buttons or keyboard 1-9.\nSingle click: select cell\nDouble click filled cell: highlight same numbers"),
-                18, TextAnchor.UpperLeft);
-            SetRect(hint.rectTransform, new Vector2(0.745f, 0.73f), new Vector2(0.925f, 0.84f), Vector2.zero, Vector2.zero);
-            hint.color = GamePalette.TextPrimary;
+                14, TextAnchor.UpperLeft);
+            SetRect(hint.rectTransform, new Vector2(0.7716f, 0.02f), new Vector2(0.9710f, 0.105f), Vector2.zero, Vector2.zero);
+            hint.color = new Color(0.90f, 0.86f, 0.76f, 0.95f);
             var hintShadow = hint.gameObject.AddComponent<Shadow>();
             hintShadow.effectColor = new Color(0f, 0f, 0f, 0.65f);
             hintShadow.effectDistance = new Vector2(1f, -1f);
 
-            var bossDesc = BuildText("SudokuGameplayBossDesc", panel.transform as RectTransform, string.Empty, 20, TextAnchor.UpperLeft);
-            SetRect(bossDesc.rectTransform, new Vector2(0.74f, 0.09f), new Vector2(0.93f, 0.33f), Vector2.zero, Vector2.zero);
-            bossDesc.color = new Color(1f, 0.65f, 0.30f, 1f);
+            // The boss's rule note sits on the scroll under the board, in vermilion ink.
+            var bossDesc = BuildText("SudokuGameplayBossDesc", panel.transform as RectTransform, string.Empty, 18, TextAnchor.UpperCenter);
+            SetRect(bossDesc.rectTransform, new Vector2(0.3105f, 0.050f), new Vector2(0.6895f, 0.128f), Vector2.zero, Vector2.zero);
+            bossDesc.color = ScrollUiKit.Vermilion;
             bossDesc.gameObject.SetActive(false);
+        }
+
+        // The caption under a round button: name, then the key. 100 px wide, the gap to the neighbouring button, so
+        // two captions never overlap; long translations wrap onto another line.
+        private static void BuildRoundButtonCaption(Button button, string name, string key)
+        {
+            var caption = ScrollUiKit.Label(button.transform, "ShortcutLabel", name + "\n(" + key + ")", 15, TextAnchor.UpperCenter,
+                new Color(0.95f, 0.91f, 0.82f, 1f), new Vector2(-0.33f, -1.1f), new Vector2(1.33f, -0.06f));
+            caption.lineSpacing = 0.95f;
+            ScrollUiKit.SnapToPixels(caption.gameObject);
+            var shadow = caption.gameObject.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0f, 0f, 0f, 0.75f);
+            shadow.effectDistance = new Vector2(1f, -1f);
+        }
+
+        // A bar turned into a paper lantern: "<id>BarBg" with its "<id>BarFill" child (the HUD sets the fill amount and
+        // colour) and the "SudokuGameplay<id>" label inside. Returns the label.
+        private Text BuildLantern(RectTransform panel, string id, Vector2 min, Vector2 max, Color shade, Color glow, string initialText)
+        {
+            var bg = EnsureRect(id + "BarBg", panel, min, max, Vector2.zero, Vector2.zero);
+            var bgImg = EnsureOrGetImage(bg.gameObject, shade);
+            bgImg.raycastTarget = false;
+            var fillGo = new GameObject(id + "BarFill", typeof(RectTransform), typeof(Image));
+            fillGo.transform.SetParent(bg, false);
+            var fillImg = fillGo.GetComponent<Image>();
+            fillImg.color = glow;
+            fillImg.raycastTarget = false;
+            fillImg.fillAmount = 1f;
+            ScrollUiKit.MakeLantern(bgImg, fillImg, shade);
+
+            var label = BuildText("SudokuGameplay" + id, panel, initialText, 24, TextAnchor.MiddleCenter);
+            SetRect(label.rectTransform, new Vector2(min.x, Mathf.Lerp(min.y, max.y, 0.30f)), new Vector2(max.x, Mathf.Lerp(min.y, max.y, 0.70f)),
+                Vector2.zero, Vector2.zero);
+            label.color = new Color(0.18f, 0.08f, 0.03f, 1f);
+            label.fontSize = 32;               // the value; the HUD writes the name above it in a smaller size
+            label.supportRichText = true;
+            label.horizontalOverflow = HorizontalWrapMode.Overflow;
+            label.verticalOverflow = VerticalWrapMode.Overflow;
+            label.lineSpacing = 0.9f;
+            return label;
         }
 
         private void BuildGameOverPanel(RectTransform root)

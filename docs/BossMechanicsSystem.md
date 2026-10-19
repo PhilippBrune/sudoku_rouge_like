@@ -1,11 +1,12 @@
 ﻿# Boss Mechanics System
 
-**Version:** 2.4 | **Date:** 2026-10-15 | **Status:** implemented
+**Version:** 2.5 | **Date:** 2026-10-19 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.5 | 2026-10-19 | implemented | Line colours on the paper board of the hanging-scroll puzzle screen (UI-STYLE-002): German and Dutch Whispers darker so they read on paper; Parity Lines drawn blue as specified (the game drew them teal, almost the colour of Dutch Whispers, and the rule text said "purple"; GAP-048). Renban and Palindrome still differ from this table (GAP-048, open). |
 | 2.4 | 2026-10-15 | implemented | Killer cage visual: one dashed outline around all cells of a cage, joined across its cells (owner report 2026-10-15, layout-proposals.md UI-STYLE-006). |
 | 2.3 | 2026-10-07 | implemented | 1.1 review decisions (2026-10-07): floor modifiers 0/1/1/1/2 kept from code (SPEC-CONF-001); boss options floor+1 shown / floor picked, no minimum (SPEC-CONF-002); 8-directional lines (SPEC-CONF-011); Entropy 9×9 (SPEC-CONF-012); eligibility table from BossService.ModifierData with blocked pairs, Modular Regions exclusion and structural-modifier region rule (SPEC-CONF-013, SPEC-AMB-014); Floor Progression Arc removed (SPEC-CONF-014); 30 player modifiers instead of 15 (SPEC-CONF-019); boss boards follow the floor range (SPEC-CONF-028); Anti-Bishop redefined to diagonal range 2, min 6×6 (SPEC-CONF-038); solution-based validation (SPEC-CONF-003); Endless Zen pool (SPEC-AMB-009); intensity label + boss debuff on the gate and modifier legend as built (GAP-025, GAP-026); file references updated (SPEC-CONF-036); SPICE table archived (SPEC-OBS-001). |
 | 2.2 | 2026-04-27 | implemented | Grid-size compatibility analysis. New `BuildEligiblePool` restrictions: **Dutch Whispers, Anti-Bishop, Distance ≥ 2, Full Kropki, Fortress Cells** now require `minBoardSize ≥ 6` (5×5 classified INVALID — sparse/infeasible geometry). Ratio Kropki and XV Pairs retain 5×5 eligibility (LIMITED — sparse but functional, no code restriction). |
@@ -50,9 +51,9 @@ All 30 modifiers are fully implemented with constraint rules, geometry generatio
 
 | # | Modifier | Visual | Rule |
 |:---:|----------|--------|------|
-| 1 | **German Whispers** | Green lines (0.20, 0.72, 0.30, 0.55) | Adjacent cells on each line must differ by ≥5. **Restricted to boards ≥ 7×7.** |
-| 2 | **Dutch Whispers** | Bright teal lines (0.10, 0.95, 0.78, 0.75) | Adjacent cells on each line must differ by ≥4. **Restricted to boards ≥ 6×6.** |
-| 3 | **Parity Lines** | Blue lines (0.30, 0.40, 0.85, 0.55) | Adjacent cells on each line must alternate odd/even parity |
+| 1 | **German Whispers** | Green lines (0.12, 0.55, 0.25, 0.75) | Adjacent cells on each line must differ by ≥5. **Restricted to boards ≥ 7×7.** |
+| 2 | **Dutch Whispers** | Teal lines (0.04, 0.58, 0.54, 0.80) | Adjacent cells on each line must differ by ≥4. **Restricted to boards ≥ 6×6.** |
+| 3 | **Parity Lines** | Blue lines (0.20, 0.33, 0.80, 0.80) | Adjacent cells on each line must alternate odd/even parity |
 | 4 | **Renban Lines** | Pink lines (0.80, 0.35, 0.65, 0.55) | Cells on each line form a consecutive set in any order (no repeats) |
 | 5 | **Palindrome** | Grey lines | Digits along the line read the same forward and backward |
 | 6 | **Thermo** | Lines with bulb | Digits strictly increase from bulb to tip (each cell > previous) |
@@ -387,9 +388,9 @@ Overlays are drawn on a `GridOverlay` RectTransform parented above the Sudoku gr
 
 | Overlay Element | Colour | Technique |
 |----------------|--------|-----------|
-| German Whispers lines | Green (0.20, 0.72, 0.30, 0.55) | Rotated Image rectangles between cell centers + dots on cells |
-| Dutch Whispers lines | Teal (0.10, 0.95, 0.78, 0.75) | Same as above |
-| Parity lines | Blue (0.30, 0.40, 0.85, 0.55) | Same as above |
+| German Whispers lines | Green (0.12, 0.55, 0.25, 0.75) | Rotated Image rectangles between cell centers + dots on cells |
+| Dutch Whispers lines | Teal (0.04, 0.58, 0.54, 0.80) | Same as above |
+| Parity lines | Blue (0.20, 0.33, 0.80, 0.80) | Same as above |
 | Renban lines | Pink (0.80, 0.35, 0.65, 0.55) | Same as above |
 | Palindrome lines | Grey (0.60, 0.60, 0.60, 0.55) | Same as above |
 | Thermo lines | Warm gradient (bulb → tip) | Circle at bulb + line segments |

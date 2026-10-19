@@ -40,25 +40,18 @@ namespace SudokuRoguelike.UI
         internal static readonly Color BtnColor          = new Color(0.15f, 0.22f, 0.29f, 0.94f);
         internal static readonly Color AccentGold        = GamePalette.AccentGold;
         internal static readonly Color TextColor         = GamePalette.TextPrimary;
-        internal static readonly Color SudokuPuzzleBoxBg = new Color(0.04f, 0.05f, 0.08f, 0.50f);
 
         // Cursed / boss gate panels
         internal static readonly Color CursedPanelBg    = new Color(0.18f, 0.06f, 0.06f, 0.96f);
         internal static readonly Color CursedTitleRed   = new Color(0.90f, 0.30f, 0.20f, 1f);
         internal static readonly Color WarmIvory        = new Color(0.95f, 0.85f, 0.75f, 1f);
 
-        // HUD modifier panels
-        internal static readonly Color ModBannerBg      = SudokuPuzzleBoxBg;
-        internal static readonly Color ModInfoBoxBg     = SudokuPuzzleBoxBg;
-
         // Bag panel
-        internal static readonly Color BagPanelBg          = SudokuPuzzleBoxBg;
-        internal static readonly Color BagSlotBg            = SudokuPuzzleBoxBg;
-        internal static readonly Color BagSlotHighlight     = new Color(0.17f, 0.26f, 0.33f, 0.90f);
-        internal static readonly Color BagSlotPressed       = new Color(0.07f, 0.11f, 0.14f, 0.90f);
-        internal static readonly Color BagSlotDisabled      = new Color(0.06f, 0.09f, 0.11f, 0.45f);
-        internal static readonly Color BagHighlightSelected = new Color(
-            GamePalette.AccentGold.r * 0.5f, GamePalette.AccentGold.g * 0.5f, 0.10f, 0.90f);
+        // UI-STYLE-002: bag and relic slots are wooden plaques on the puzzle screen.
+        internal static readonly Color BagSlotBg            = new Color(0.80f, 0.60f, 0.38f, 0.96f);
+        internal static readonly Color BagHighlightSelected = new Color(0.98f, 0.82f, 0.45f, 1.00f); // lit wood
+        internal static readonly Color BagSlotEmptyBg       = new Color(0.08f, 0.06f, 0.04f, 0.55f); // dark socket
+        internal static readonly Color BagHeaderText        = new Color(0.95f, 0.91f, 0.82f, 0.95f);
         internal static readonly Color PassiveLabelColor    = new Color(0.78f, 0.85f, 0.75f, 0.80f);
 
         // Reward / rest / relic / swap panels
@@ -73,17 +66,11 @@ namespace SudokuRoguelike.UI
         /// This color (near-transparent white) tints it down so it doesn't compete with filled slots.
         /// </summary>
         internal static readonly Color IconEmpty     = new Color(1f, 1f, 1f, 0.08f);
-        internal static readonly Color SlotEmptyText = new Color(0.45f, 0.45f, 0.45f, 0.55f);
+        internal static readonly Color SlotEmptyText = new Color(0.93f, 0.88f, 0.78f, 0.70f); // paper on the dark socket
 
         // Unknown boss-mod icon placeholder
         internal static readonly Color PlaceholderIconBg  = new Color(0.30f, 0.30f, 0.30f, 0.40f);
         internal static readonly Color UnknownIconText    = new Color(0.70f, 0.70f, 0.70f, 0.90f);
-
-        // Numpad button states
-        internal static readonly Color NumpadDisabled    = new Color(0.13f, 0.13f, 0.13f, 0.80f);
-        internal static readonly Color NumpadCompleted   = new Color(0.10f, 0.10f, 0.10f, 0.50f);
-        internal static readonly Color NumpadActive      = new Color(0.19f, 0.30f, 0.20f, 1.00f);
-        internal static readonly Color NumpadPencilActive = new Color(0.31f, 0.43f, 0.28f, 1.00f);
 
         // Scroll lane backgrounds (used in InRunUiBlueprintBuilder)
         internal static readonly Color LaneScrollBg   = new Color(0f, 0f, 0f, 0.12f);
@@ -659,14 +646,17 @@ namespace SudokuRoguelike.UI
             rt.offsetMax = Vector2.zero;
 
             var img = go.GetComponent<Image>();
+            img.sprite = ScrollUiKit.Rounded(8f);
+            img.type = Image.Type.Sliced;
             img.color = BagSlotBg;
 
             var btn = go.GetComponent<Button>();
             var cols = btn.colors;
-            cols.normalColor    = BagSlotBg;
-            cols.highlightedColor = BagSlotHighlight;
-            cols.pressedColor   = BagSlotPressed;
-            cols.disabledColor  = BagSlotDisabled;
+            // The Image carries the wood (or the lit selection); the states only tint it, so they multiply with it.
+            cols.normalColor      = Color.white;
+            cols.highlightedColor = new Color(1f, 0.93f, 0.80f, 1f);
+            cols.pressedColor     = new Color(0.82f, 0.76f, 0.68f, 1f);
+            cols.disabledColor    = Color.white; // an empty slot already reads as a dark socket (HUD sets the colour)
             btn.colors = cols;
 
             // Icon (left ~30%)
@@ -682,7 +672,10 @@ namespace SudokuRoguelike.UI
             iconBtnImg.preserveAspect = true;  // L8: ensures empty-slot icon is never cut off
 
             // Name text (right of icon)
-            var nameText = CreateText(go.transform, "NameText", "", 10, TextAnchor.MiddleLeft, TextColor);
+            var nameText = CreateText(go.transform, "NameText", "", 15, TextAnchor.MiddleLeft, ScrollUiKit.WoodTileText);
+            nameText.resizeTextForBestFit = true;
+            nameText.resizeTextMinSize = 10;
+            nameText.resizeTextMaxSize = 15;
             nameText.rectTransform.anchorMin = new Vector2(0.38f, 0.04f);
             nameText.rectTransform.anchorMax = new Vector2(0.98f, 0.96f);
             nameText.rectTransform.offsetMin = new Vector2(2f, 1f);

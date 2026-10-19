@@ -715,7 +715,7 @@ namespace SudokuRoguelike.UI
         // #12 — Full-screen intro card shown once at the start of a new run
         private void ShowRunIntroCard(RunDirector run)
         {
-            var canvas = FindFirstObjectByType<Canvas>();
+            var canvas = GetComponentInParent<Canvas>()?.rootCanvas ?? FindFirstObjectByType<Canvas>()?.rootCanvas;
             if (canvas == null) { RefreshPathOverview(); return; }
 
             var card = new GameObject("RunIntroCard", typeof(RectTransform), typeof(Image));
@@ -937,6 +937,8 @@ namespace SudokuRoguelike.UI
                         "Floor {0}  Depth {1}  {2}×{2}  {3}★",
                         run.State.CurrentFloor + 1, run.State.Depth, board.Size, cfg?.Stars ?? 0);
                 }
+
+                ApplyPuzzleScrollFloor(panelRt, run.State);
 
                 var hintText = panelRt?.Find("SudokuGameplayHint")?.GetComponent<Text>();
                 if (hintText != null)
@@ -2246,7 +2248,7 @@ namespace SudokuRoguelike.UI
             if (_pathQuitModalActive) return;
             _pathQuitModalActive = true;
 
-            var canvas = GetComponentInParent<Canvas>() ?? FindFirstObjectByType<Canvas>();
+            var canvas = GetComponentInParent<Canvas>()?.rootCanvas ?? FindFirstObjectByType<Canvas>()?.rootCanvas;
             if (canvas == null)
             {
                 _pathQuitModalActive = false;

@@ -37,6 +37,9 @@ namespace SudokuRoguelike.UI
                 _buyPencilShownState = shown;
                 _buyPencilButton.gameObject.SetActive(shown != 0);
                 _buyPencilButton.interactable = shown == 2;
+                // UI-STYLE-002: dark ink on the wooden tile; light text on the faded tile when a purchase isn't possible.
+                if (_buyPencilLabel != null)
+                    _buyPencilLabel.color = shown == 2 ? ScrollUiKit.WoodTileText : new Color(0.95f, 0.91f, 0.82f, 0.85f);
             }
             if (shown == 0) return;
             var cost = run.GetPencilBuyCost();

@@ -402,7 +402,7 @@ namespace SudokuRoguelike.UI
                 onAbort?.Invoke();
             };
 
-            var parent = _pathPanel?.transform ?? Object.FindFirstObjectByType<Canvas>()?.transform;
+            var parent = _pathPanel?.transform ?? Object.FindFirstObjectByType<Canvas>()?.rootCanvas.transform;
             if (parent == null) return;
 
             if (_bagSwapPanel != null) Object.Destroy(_bagSwapPanel);

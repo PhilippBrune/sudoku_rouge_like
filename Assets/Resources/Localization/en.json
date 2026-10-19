@@ -1,4 +1,8 @@
 ﻿{
+    "InRun.Hud.LanternPencil":  "Pencil",
+    "InRun.Hud.LanternHp":  "HP",
+    "InRun.Numpad.Pencil":  "Pencil",
+    "InRun.Numpad.Solve":  "Solve",
     "InRun.Path.Tag.Relics":  "Relics {0}",
     "InRun.Path.Tag.Vitals":  "HP <color={0}>{1} / {2}</color>   Pencil <color=#7d1f1f>{3} / {4}</color>",
     "InRun.Path.Tag.Class":  "{0} · Level {1}",
@@ -49,8 +53,6 @@
     "Profile.EmptySlot":  "Empty\n\nClick Load\nto create a new profile.",
     "InRun.PathStats.Relics":  "  ·  Relics {0}",
     "InRun.PathStats":  "{0}  ·  HP <color={1}>{2}/{3}</color>  ·  Pencil {4}/{5}",
-    "InRun.Numpad.ModeSolve":  "Mode: SOLVE",
-    "InRun.Numpad.ModePencil":  "Mode: PENCIL",
     "Harmony.Description.10":  "Gold −4%. Shop +5%. Rest heals only 50%. Starting pencil −1. Mostly 9×9 grids.",
     "Harmony.Name.10":  "Void Garden",
     "Harmony.Description.9":  "Gold −4%. Shop +5%. Starting HP −1. Mistakes cost 3 HP. +2 floor modifiers per floor; boss gate +1 more option. Cursed puzzle bonus suppressed.",

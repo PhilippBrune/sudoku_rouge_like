@@ -31,7 +31,7 @@ namespace SudokuRoguelike.UI
         // Shield badge: overlaid on the HP bar fill when ShieldPoints > 0
         private Text _shieldBadgeText;
         // Cached normal HP bar colour to restore when shield expires
-        private static readonly Color HpBarNormal = new Color(0.80f, 0.22f, 0.22f, 1f);
+        private static readonly Color HpBarNormal = new Color(0.96f, 0.45f, 0.22f, 1f); // the HP lantern's glow
         private static readonly Color HpBarShielded = new Color(0.28f, 0.58f, 0.90f, 1f);
 
         // ── Floor modifier display ──
@@ -69,6 +69,7 @@ namespace SudokuRoguelike.UI
 
         // ── Dirty-flag cache: avoid per-frame string allocations when values haven't changed ──
         private int _cachedHp = -1, _cachedMaxHp = -1, _cachedShield = -1;
+        private LanguageOption _cachedLanternLanguage; // the lantern names follow a language change in Options
         private int _cachedPencil = -1, _cachedMaxPencil = -1;
         private int _cachedHpBarHp = -1, _cachedHpBarMax = -1;
         private int _cachedPencilBarPencil = -1, _cachedPencilBarMax = -1;
@@ -251,17 +252,20 @@ namespace SudokuRoguelike.UI
         {
             if (state == null) return;
 
-            if (_hpText != null && (state.CurrentHP != _cachedHp || state.MaxHP != _cachedMaxHp))
+            var languageChanged = LocalizationService.Current != _cachedLanternLanguage;
+            _cachedLanternLanguage = LocalizationService.Current;
+            if (_hpText != null && (languageChanged || state.CurrentHP != _cachedHp || state.MaxHP != _cachedMaxHp))
             {
                 _cachedHp    = state.CurrentHP;
                 _cachedMaxHp = state.MaxHP;
-                _hpText.text = F("InRun.Hud.Hp", state.CurrentHP, state.MaxHP);
+                _hpText.text = LanternText(LocalizationService.T("InRun.Hud.LanternHp", "HP"), state.CurrentHP, state.MaxHP);
             }
-            if (_pencilText != null && (state.CurrentPencil != _cachedPencil || state.MaxPencil != _cachedMaxPencil))
+            if (_pencilText != null && (languageChanged || state.CurrentPencil != _cachedPencil || state.MaxPencil != _cachedMaxPencil))
             {
                 _cachedPencil    = state.CurrentPencil;
                 _cachedMaxPencil = state.MaxPencil;
-                _pencilText.text = F("InRun.Hud.Pencil", state.CurrentPencil, state.MaxPencil);
+                _pencilText.text = LanternText(LocalizationService.T("InRun.Hud.LanternPencil", "Pencil"),
+                    state.CurrentPencil, state.MaxPencil);
             }
 
             if (_hpBarFill == null && _sudokuPanel != null)
@@ -279,10 +283,10 @@ namespace SudokuRoguelike.UI
             if (_timerText == null && _sudokuPanel != null)
             {
                 _timerText = InRunUiFactory.CreateText(_sudokuPanel.transform, "PuzzleTimer",
-                    "", 15, TextAnchor.MiddleRight, new Color(1.00f, 0.96f, 0.74f, 1.00f));
+                    "", 18, TextAnchor.MiddleLeft, new Color(1.00f, 0.96f, 0.74f, 1.00f));
                 var rt = _timerText.rectTransform;
-                rt.anchorMin = new Vector2(0.74f, 0.94f);
-                rt.anchorMax = new Vector2(0.93f, 1.00f);
+                rt.anchorMin = new Vector2(0.035f, 0.858f);
+                rt.anchorMax = new Vector2(0.115f, 0.893f);
                 rt.offsetMin = Vector2.zero;
                 rt.offsetMax = Vector2.zero;
                 _timerText.fontStyle = FontStyle.Bold;
@@ -299,10 +303,10 @@ namespace SudokuRoguelike.UI
             if (_runTimerText == null && _sudokuPanel != null)
             {
                 _runTimerText = InRunUiFactory.CreateText(_sudokuPanel.transform, "RunTimer",
-                    "", 12, TextAnchor.MiddleRight, new Color(0.96f, 0.91f, 0.68f, 0.98f));
+                    "", 15, TextAnchor.MiddleLeft, new Color(0.96f, 0.91f, 0.68f, 0.98f));
                 var rt = _runTimerText.rectTransform;
-                rt.anchorMin = new Vector2(0.74f, 0.88f);
-                rt.anchorMax = new Vector2(0.93f, 0.94f);
+                rt.anchorMin = new Vector2(0.115f, 0.858f);
+                rt.anchorMax = new Vector2(0.25f, 0.893f);
                 rt.offsetMin = Vector2.zero;
                 rt.offsetMax = Vector2.zero;
                 _runTimerText.fontStyle = FontStyle.Bold;
@@ -378,6 +382,7 @@ namespace SudokuRoguelike.UI
                 InRunUiFactory.EnsureBarSprite(_hpBarFill);
                 _hpBarFill.fillAmount = state.MaxHP > 0 ? Mathf.Clamp01(state.CurrentHP / (float)state.MaxHP) : 0;
                 _hpBarFill.color = state.ShieldPoints > 0 ? HpBarShielded : HpBarNormal;
+                ScrollUiKit.SetLanternGlow(_hpBarFill); // the lantern glows blue while shielded
                 // Lazy-create shield badge text overlaid on the HP bar
                 if (_shieldBadgeText == null)
                 {
@@ -444,15 +449,15 @@ namespace SudokuRoguelike.UI
                 _floorModBanner = new GameObject("FloorModBanner", typeof(RectTransform), typeof(Image));
                 _floorModBanner.transform.SetParent(_sudokuPanel.transform, false);
                 var rt = _floorModBanner.GetComponent<RectTransform>();
-                // Dedicated lane between title (0.93-1.00) and level info (0.83-0.875).
-                rt.anchorMin = new Vector2(0.24f, 0.885f);
-                rt.anchorMax = new Vector2(0.68f, 0.920f);
+                // UI-STYLE-002: a line of ink on the scroll, under the board.
+                rt.anchorMin = new Vector2(0.3105f, 0.135f);
+                rt.anchorMax = new Vector2(0.6895f, 0.175f);
                 rt.offsetMin = Vector2.zero;
                 rt.offsetMax = Vector2.zero;
-                _floorModBanner.GetComponent<Image>().color = InRunUiFactory.ModBannerBg;
+                _floorModBanner.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0f);
 
                 _floorModText = InRunUiFactory.CreateText(_floorModBanner.transform, "FloorModText", "",
-                    12, TextAnchor.MiddleCenter, InRunUiFactory.AccentGold);
+                    16, TextAnchor.MiddleCenter, ScrollUiKit.InkSoft);
                 _floorModText.rectTransform.anchorMin = Vector2.zero;
                 _floorModText.rectTransform.anchorMax = Vector2.one;
                 _floorModText.rectTransform.offsetMin = new Vector2(4, 0);
@@ -500,18 +505,23 @@ namespace SudokuRoguelike.UI
                 _modifierInfoBox = new GameObject("ModInfoBox", typeof(RectTransform), typeof(Image));
                 _modifierInfoBox.transform.SetParent(_sudokuPanel.transform, false);
                 var rt = _modifierInfoBox.GetComponent<RectTransform>();
-                rt.anchorMin = new Vector2(0.74f, 0.09f);
-                rt.anchorMax = new Vector2(0.93f, 0.33f);
+                // UI-STYLE-002: the rules as a paper slip pinned beside the puzzle.
+                rt.anchorMin = new Vector2(0.7716f, 0.115f);
+                rt.anchorMax = new Vector2(0.9710f, 0.355f);
                 rt.offsetMin = Vector2.zero;
                 rt.offsetMax = Vector2.zero;
-                _modifierInfoBox.GetComponent<Image>().color = InRunUiFactory.ModInfoBoxBg;
+                ScrollUiKit.MakeSlip(_modifierInfoBox.GetComponent<Image>(), 1.2f);
 
                 _modifierInfoText = InRunUiFactory.CreateText(_modifierInfoBox.transform, "ModInfoText", "",
-                    10, TextAnchor.UpperLeft, InRunUiFactory.TextColor);
+                    16, TextAnchor.UpperLeft, ScrollUiKit.Ink);
                 _modifierInfoText.rectTransform.anchorMin = Vector2.zero;
                 _modifierInfoText.rectTransform.anchorMax = Vector2.one;
-                _modifierInfoText.rectTransform.offsetMin = new Vector2(4, 4);
-                _modifierInfoText.rectTransform.offsetMax = new Vector2(-4, -4);
+                _modifierInfoText.rectTransform.offsetMin = new Vector2(14, 10);
+                _modifierInfoText.rectTransform.offsetMax = new Vector2(-12, -18);
+                _modifierInfoText.resizeTextForBestFit = true;
+                _modifierInfoText.resizeTextMinSize = 10;
+                _modifierInfoText.resizeTextMaxSize = 16;
+                _modifierInfoText.supportRichText = true;
             }
 
             if (_modifierInfoBox != null) _modifierInfoBox.SetActive(true);
@@ -526,8 +536,7 @@ namespace SudokuRoguelike.UI
                     for (var i = 0; i < activeMods.Count; i++)
                     {
                         if (i > 0) sb.Append('\n');
-                        sb.Append(BossService.GetModifierName(activeMods[i]));
-                        sb.Append(": ");
+                        sb.Append("<color=#9e2a2b>").Append(BossService.GetModifierName(activeMods[i])).Append("</color>\n");
                         sb.Append(BossService.GetModifierDescription(activeMods[i]));
                     }
                     _cachedModInfoText = sb.ToString();
@@ -568,14 +577,14 @@ namespace SudokuRoguelike.UI
                 _comboBox = go;
                 go.transform.SetParent(_sudokuPanel.transform, false);
                 var rt = go.GetComponent<RectTransform>();
-                rt.anchorMin = new Vector2(0.24f, 0.885f);
-                rt.anchorMax = new Vector2(0.68f, 0.920f);
+                rt.anchorMin = new Vector2(0.3105f, 0.135f);
+                rt.anchorMax = new Vector2(0.6895f, 0.175f);
                 rt.offsetMin = Vector2.zero;
                 rt.offsetMax = Vector2.zero;
-                go.GetComponent<Image>().color = InRunUiFactory.SudokuPuzzleBoxBg;
+                go.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0f);
                 go.GetComponent<Image>().raycastTarget = false;
-                _comboText = InRunUiFactory.CreateText(go.transform, "ComboText", "", 18, TextAnchor.MiddleCenter,
-                    GamePalette.AccentGold);
+                _comboText = InRunUiFactory.CreateText(go.transform, "ComboText", "", 22, TextAnchor.MiddleCenter,
+                    ScrollUiKit.Vermilion);
             }
 
             var streak = run.State.ComboStreak;
@@ -608,19 +617,20 @@ namespace SudokuRoguelike.UI
                 go.transform.SetParent(_sudokuPanel.transform, false);
                 var rt = go.GetComponent<RectTransform>();
                 // Compact lane below the bag panel; text size adapts instead of widening across the board.
-                rt.anchorMin = new Vector2(0.01f, 0.01f);
-                rt.anchorMax = new Vector2(0.21f, 0.09f);
+                rt.anchorMin = new Vector2(0.035f, 0.015f);
+                rt.anchorMax = new Vector2(0.25f, 0.095f);
                 rt.offsetMin = Vector2.zero;
                 rt.offsetMax = Vector2.zero;
-                go.GetComponent<Image>().color = InRunUiFactory.SudokuPuzzleBoxBg;
+                go.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0f);
                 go.GetComponent<Image>().raycastTarget = false;
-                _passiveText = InRunUiFactory.CreateText(go.transform, "PassiveText", "", 11, TextAnchor.MiddleLeft,
-                    InRunUiFactory.PassiveLabelColor);
+                _passiveText = InRunUiFactory.CreateText(go.transform, "PassiveText", "", 15, TextAnchor.MiddleLeft,
+                    new Color(0.93f, 0.89f, 0.80f, 1f));
+                _passiveText.gameObject.AddComponent<Shadow>().effectColor = new Color(0f, 0f, 0f, 0.7f);
                 _passiveText.horizontalOverflow = HorizontalWrapMode.Wrap;
                 _passiveText.verticalOverflow = VerticalWrapMode.Truncate;
                 _passiveText.resizeTextForBestFit = true;
-                _passiveText.resizeTextMinSize = 8;
-                _passiveText.resizeTextMaxSize = 11;
+                _passiveText.resizeTextMinSize = 10;
+                _passiveText.resizeTextMaxSize = 15;
                 _passiveText.lineSpacing = 0.90f;
                 _passiveText.rectTransform.anchorMin = Vector2.zero;
                 _passiveText.rectTransform.anchorMax = Vector2.one;
@@ -647,9 +657,13 @@ namespace SudokuRoguelike.UI
                 var badgeGo = new GameObject("ClassBadge", typeof(RectTransform));
                 badgeGo.transform.SetParent(_sudokuPanel.transform, false);
                 var rt = badgeGo.GetComponent<RectTransform>();
-                rt.anchorMin = new Vector2(0.01f, 0.89f);
-                rt.anchorMax = new Vector2(0.21f, 1.00f);
+                rt.anchorMin = new Vector2(0.035f, 0.895f);
+                rt.anchorMax = new Vector2(0.25f, 0.985f);
                 rt.offsetMin = rt.offsetMax = Vector2.zero;
+                ScrollUiKit.Spot(badgeGo.transform, "PortraitRing", new Vector2(0.18f, 0.5f), new Vector2(84f, 84f),
+                    ScrollUiKit.Gold, ScrollUiKit.Disc());
+                ScrollUiKit.Spot(badgeGo.transform, "PortraitFace", new Vector2(0.18f, 0.5f), new Vector2(76f, 76f),
+                    new Color(0.10f, 0.12f, 0.10f, 1f), ScrollUiKit.Disc());
 
                 var iconGo = new GameObject("ClassIcon", typeof(RectTransform), typeof(Image));
                 iconGo.transform.SetParent(badgeGo.transform, false);
@@ -662,7 +676,8 @@ namespace SudokuRoguelike.UI
                 _classBadgeIcon.raycastTarget  = false;
 
                 _classBadgeText = InRunUiFactory.CreateText(badgeGo.transform, "ClassBadgeText",
-                    "", 9, TextAnchor.MiddleLeft, InRunUiFactory.TextColor);
+                    "", 20, TextAnchor.MiddleLeft, InRunUiFactory.TextColor);
+                _classBadgeText.gameObject.AddComponent<Shadow>().effectColor = new Color(0f, 0f, 0f, 0.7f);
                 _classBadgeText.rectTransform.anchorMin = new Vector2(0.38f, 0.04f);
                 _classBadgeText.rectTransform.anchorMax = new Vector2(0.98f, 0.96f);
                 _classBadgeText.rectTransform.offsetMin = _classBadgeText.rectTransform.offsetMax = Vector2.zero;
@@ -752,15 +767,17 @@ namespace SudokuRoguelike.UI
                 bagGo.transform.SetParent(pr, false);
                 var bagRt = bagGo.GetComponent<RectTransform>();
                 // L5: bag bottom raised to y=0.10 so its lower edge aligns with the right-column description bottom
-                bagRt.anchorMin = new Vector2(0.01f, 0.10f);
-                bagRt.anchorMax = new Vector2(0.21f, 0.74f);
+                // UI-STYLE-002: no box; the item and relic plaques hang on the painting under the lanterns.
+                bagRt.anchorMin = new Vector2(0.035f, 0.105f);
+                bagRt.anchorMax = new Vector2(0.25f, 0.555f);
                 bagRt.offsetMin = Vector2.zero;
                 bagRt.offsetMax = Vector2.zero;
-                bagGo.GetComponent<Image>().color = InRunUiFactory.BagPanelBg;
+                bagGo.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0f);
                 _bagPanel = bagGo;
 
-                var title = InRunUiFactory.CreateText(bagGo.transform, "BagTitle", T("InRun.Hud.BagTitle"), 13,
-                    TextAnchor.MiddleCenter, InRunUiFactory.AccentGold);
+                var title = InRunUiFactory.CreateText(bagGo.transform, "BagTitle", T("InRun.Hud.BagTitle"), 16,
+                    TextAnchor.MiddleCenter, InRunUiFactory.BagHeaderText);
+                AddHeaderShadow(title);
                 title.rectTransform.anchorMin = new Vector2(0.02f, 0.93f);
                 title.rectTransform.anchorMax = new Vector2(0.98f, 1.00f);
                 title.rectTransform.offsetMin = Vector2.zero;
@@ -770,16 +787,19 @@ namespace SudokuRoguelike.UI
                 var divGo = new GameObject("BagDivider", typeof(RectTransform), typeof(Image));
                 divGo.transform.SetParent(bagGo.transform, false);
                 var divRt = divGo.GetComponent<RectTransform>();
-                divRt.anchorMin = new Vector2(0.05f, 0.47f);
-                divRt.anchorMax = new Vector2(0.95f, 0.49f);
-                divRt.offsetMin = Vector2.zero;
-                divRt.offsetMax = Vector2.zero;
-                divGo.GetComponent<Image>().color = GamePalette.AccentGoldSubtle;
+                // UI-STYLE-002: a thin paper line between items and relics.
+                divRt.anchorMin = new Vector2(0.05f, 0.48f);
+                divRt.anchorMax = new Vector2(0.95f, 0.48f);
+                divRt.offsetMin = new Vector2(0f, -1f);
+                divRt.offsetMax = new Vector2(0f, 1f);
+                divGo.GetComponent<Image>().color = new Color(0.95f, 0.91f, 0.82f, 0.40f);
+                divGo.GetComponent<Image>().raycastTarget = false;
 
                 // Relics section label
-                var relicTitle = InRunUiFactory.CreateText(bagGo.transform, "RelicTitle", T("InRun.Hud.RelicsTitle"), 13,
-                    TextAnchor.MiddleCenter, InRunUiFactory.AccentGold);
-                relicTitle.rectTransform.anchorMin = new Vector2(0.02f, 0.43f);
+                var relicTitle = InRunUiFactory.CreateText(bagGo.transform, "RelicTitle", T("InRun.Hud.RelicsTitle"), 16,
+                    TextAnchor.MiddleCenter, InRunUiFactory.BagHeaderText);
+                AddHeaderShadow(relicTitle);
+                relicTitle.rectTransform.anchorMin = new Vector2(0.02f, 0.41f);
                 relicTitle.rectTransform.anchorMax = new Vector2(0.98f, 0.47f);
                 relicTitle.rectTransform.offsetMin = Vector2.zero;
                 relicTitle.rectTransform.offsetMax = Vector2.zero;
@@ -792,6 +812,13 @@ namespace SudokuRoguelike.UI
 
             if (relicCount != _builtForRelicCount)
                 RebuildRelicSlots(relicCount);
+        }
+
+        private static void AddHeaderShadow(Text header)
+        {
+            var shadow = header.gameObject.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0f, 0f, 0f, 0.8f);
+            shadow.effectDistance = new Vector2(1f, -1f);
         }
 
         private void RebuildBagSlots(int slotCount)
@@ -865,7 +892,10 @@ namespace SudokuRoguelike.UI
                 var aspect = go.AddComponent<AspectRatioFitter>();
                 aspect.aspectMode = AspectRatioFitter.AspectMode.WidthControlsHeight;
                 aspect.aspectRatio = 1f;
-                go.GetComponent<Image>().color = InRunUiFactory.BagSlotBg;
+                var relicImg = go.GetComponent<Image>();
+                relicImg.sprite = ScrollUiKit.Rounded(8f);
+                relicImg.type = Image.Type.Sliced;
+                relicImg.color = InRunUiFactory.BagSlotBg;
 
                 // Icon fills the slot (no text — compact 25% size)
                 var iconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
@@ -1000,6 +1030,8 @@ namespace SudokuRoguelike.UI
                 var nameText = btn.transform.Find("NameText")?.GetComponent<Text>();
                 var item = (state != null && i < state.HeldItems.Count) ? state.HeldItems[i] : null;
 
+                var slotImg = btn.GetComponent<Image>();
+                if (slotImg != null) slotImg.color = BagSlotColor(i, item != null);
                 if (item != null)
                 {
                     btn.interactable = true;
@@ -1047,7 +1079,7 @@ namespace SudokuRoguelike.UI
                     {
                         var chargeTxt = item.Charges > 1 ? $" \u00d7{item.Charges}" : "";
                         nameText.text = F("InRun.Hud.ItemSlot", ItemService.GetItemName(item.Type), chargeTxt, RarityLabel(item.Rarity));
-                        nameText.color = InRunUiFactory.TextColor;
+                        nameText.color = ScrollUiKit.WoodTileText;
                     }
                 }
                 else
@@ -1180,11 +1212,16 @@ namespace SudokuRoguelike.UI
                 if (btn == null) continue;
                 var img = btn.GetComponent<Image>();
                 if (img == null) continue;
-                img.color = (i == _selectedBagSlot)
-                    ? InRunUiFactory.BagHighlightSelected
-                    : InRunUiFactory.BagSlotBg;
+                var state = _map?.Run?.State;
+                img.color = BagSlotColor(i, state != null && i < state.HeldItems.Count && state.HeldItems[i] != null);
             }
         }
+
+        // An item hangs on a wooden plaque (lit when selected); an empty slot is a dark socket.
+        private Color BagSlotColor(int slot, bool hasItem) =>
+            !hasItem ? InRunUiFactory.BagSlotEmptyBg
+            : slot == _selectedBagSlot ? InRunUiFactory.BagHighlightSelected
+            : InRunUiFactory.BagSlotBg;
 
         private void OnBagRelicClicked(int idx = 0)
         {
@@ -1195,6 +1232,10 @@ namespace SudokuRoguelike.UI
         }
 
         private static string T(string key) => LocalizationService.T(key);
+
+        // UI-STYLE-002: a lantern shows its name small above the value ("HP" over "7/10").
+        private static string LanternText(string name, int current, int max) =>
+            $"<size=18>{name}</size>\n{current}/{max}";
 
         private static string F(string key, params object[] args) =>
             LocalizationService.Format(key, key, args);

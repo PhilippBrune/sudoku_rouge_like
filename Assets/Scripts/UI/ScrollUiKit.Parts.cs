@@ -100,11 +100,12 @@ namespace SudokuRoguelike.UI
             shadow.effectDistance = new Vector2(0f, -18f);
             var rt = paper.rectTransform;
             Fill(rt, "PaperLight", new Vector2(0f, 0.45f), new Vector2(0.7f, 1f), new Color(1f, 1f, 1f, 0.22f), Glow());
-            BrocadeBand(rt, "BrocadeTop", new Vector2(0f, 0.977f), Vector2.one, true);
-            BrocadeBand(rt, "BrocadeBottom", Vector2.zero, new Vector2(1f, 0.023f), true);
-            Rod(rt, "RodTop", 0.984f, 1.016f);
-            Rod(rt, "RodBottom", -0.023f, 0.009f);
-            var cord = Fill(rt, "Cord", new Vector2(0.5f, 1.016f), new Vector2(0.5f, 1.08f), Gold);
+            // The rods sit on the paper's edges and the moss bands just inside them, so both bands stay visible.
+            BrocadeBand(rt, "BrocadeTop", new Vector2(0f, 0.974f), new Vector2(1f, 0.996f), true);
+            BrocadeBand(rt, "BrocadeBottom", new Vector2(0f, 0.004f), new Vector2(1f, 0.026f), true);
+            Rod(rt, "RodTop", 0.996f, 1.028f);
+            Rod(rt, "RodBottom", -0.028f, 0.004f);
+            var cord = Fill(rt, "Cord", new Vector2(0.5f, 1.028f), new Vector2(0.5f, 1.09f), Gold);
             cord.rectTransform.offsetMin = new Vector2(-1f, 0f);
             cord.rectTransform.offsetMax = new Vector2(1f, 0f);
             return rt;
@@ -138,8 +139,9 @@ namespace SudokuRoguelike.UI
             fill.rectTransform.anchorMax = Vector2.one;
             fill.rectTransform.offsetMin = fill.rectTransform.offsetMax = Vector2.zero;
             var glow = Fill(body.transform, "LanternGlow", new Vector2(-0.25f, -0.2f), new Vector2(1.25f, 1.2f),
-                new Color(fill.color.r, fill.color.g, fill.color.b, 0.28f), Glow());
+                Color.clear, Glow());
             glow.transform.SetAsFirstSibling();
+            SetLanternGlow(fill);
             for (var i = 1; i < 9; i++)
                 Line(body.transform, $"Rib_{i}", new Vector2(0.06f, i / 9f), new Vector2(0.94f, i / 9f),
                     new Color(0.24f, 0.12f, 0.05f, 0.22f), 2f);
@@ -148,6 +150,28 @@ namespace SudokuRoguelike.UI
             var cord = Fill(body.transform, "String", new Vector2(0.5f, 1.045f), new Vector2(0.5f, 1.40f), Gold);
             cord.rectTransform.offsetMin = new Vector2(-1f, 0f);
             cord.rectTransform.offsetMax = new Vector2(1f, 0f);
+        }
+
+        /// <summary>Tints a lantern's halo with the colour of its fill (call after recolouring the fill).</summary>
+        internal static void SetLanternGlow(Image fill)
+        {
+            var glow = fill != null && fill.transform.parent != null ? fill.transform.parent.Find("LanternGlow") : null;
+            if (glow != null && glow.TryGetComponent<Image>(out var image))
+                image.color = new Color(fill.color.r, fill.color.g, fill.color.b, 0.28f);
+        }
+
+        /// <summary>
+        /// Gives <paramref name="go"/> a pixel-perfect sub-canvas. In-run panels start at 3 % of the screen (57.6 px at
+        /// 1920), so small text lands between pixels and smears; the sub-canvas snaps it to whole pixels. Graphics under
+        /// a sub-canvas only take clicks through its own raycaster, so pass <paramref name="takesClicks"/> for
+        /// interactive content.
+        /// </summary>
+        internal static void SnapToPixels(GameObject go, bool takesClicks = false)
+        {
+            if (!go.TryGetComponent<Canvas>(out var canvas)) canvas = go.AddComponent<Canvas>();
+            canvas.overridePixelPerfect = true;
+            canvas.pixelPerfect = true;
+            if (takesClicks && !go.TryGetComponent<GraphicRaycaster>(out _)) go.AddComponent<GraphicRaycaster>();
         }
 
         /// <summary>Wooden tile colours for a Button (number pad): warm wood, lighter when focused, faded when disabled.</summary>

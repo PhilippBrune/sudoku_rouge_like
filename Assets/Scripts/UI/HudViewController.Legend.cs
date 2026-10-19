@@ -38,8 +38,11 @@ namespace SudokuRoguelike.UI
 
             if (_legendButton == null)
             {
-                _legendButton = InRunUiFactory.CreateActionButton(_sudokuPanel.transform, "BtnModifierLegend",
-                    new Vector2(0.74f, 0.848f), new Vector2(0.93f, 0.878f), T("Legend"), UiAction.Confirm);
+                // UI-STYLE-002: a small paper tag above the rule slip.
+                _legendButton = ScrollUiKit.PillButton(_sudokuPanel.transform, "BtnModifierLegend",
+                    new Vector2(0.7716f, 0.362f), new Vector2(0.9710f, 0.398f), T("Legend"), 17,
+                    new Color(0.95f, 0.91f, 0.81f, 0.96f), ScrollUiKit.Ink, 14f);
+                _legendButton.navigation = new Navigation { mode = Navigation.Mode.Automatic };
                 _legendButton.onClick.AddListener(ToggleLegend);
             }
             _legendButton.gameObject.SetActive(true);

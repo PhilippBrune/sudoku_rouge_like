@@ -241,6 +241,56 @@ namespace SudokuRoguelike.Tests
             Assert.AreEqual(hidden, texts.Any(t => t == "???"), $"H{harmony}: {string.Join(" | ", texts)}");
         }
 
+        // ── Puzzle screen as a hanging scroll (UI-STYLE-002) ──
+
+        // [REQ: UI-STYLE-002] The HP lantern shows its name above the value; an empty bag slot is a dark socket and an
+        // item hangs on a wooden plaque; pencil marks in a cage's label cell sit under the cage sum; the board's text
+        // layers snap to whole pixels and take no clicks.
+        [UnityTest]
+        [Requirement("UI-STYLE-002")]
+        public IEnumerator PuzzleScroll_LanternsBagSlotsAndCageCells_ReadAsDesigned()
+        {
+            var h = StartPuzzle(8605, BossModifierId.KillerCages);
+            for (var frame = 0; frame < 30 && FindObjectOrNull(h.Host, "C_0_0") == null; frame++)
+                yield return null;
+            yield return null;
+            yield return null;
+
+            var hp = FindObject(h.Host, "SudokuGameplayHp").GetComponent<Text>();
+            StringAssert.StartsWith("<size=", hp.text, "the lantern's name is written smaller");
+            StringAssert.EndsWith("\n20/20", hp.text, "the value sits on its own line under the name");
+
+            var slot = FindObject(h.Host, "BagSlot_0").GetComponent<Image>();
+            Assert.Less(Brightness(slot.color), 0.2f, "an empty bag slot is a dark socket");
+            h.Run.State.HeldItems.Add(new ItemInstance { Id = "ui-style-002", Type = ItemType.InkWell, Charges = 1 });
+            h.Host.GetComponentInChildren<HudViewController>(true).Refresh(h.Run.State, h.Run.CurrentLevelConfig);
+            Assert.Greater(Brightness(slot.color), 0.4f, "an item hangs on a wooden plaque");
+
+            var cages = h.Run.CurrentOverlay.KillerCages;
+            Assert.IsNotEmpty(cages, "the test puzzle has killer cages");
+            var labelCells = cages.Select(cage => cage.Cells.OrderBy(c => c.Row).ThenBy(c => c.Col).First())
+                .Select(c => (c.Row, c.Col)).ToList();
+            var (row, col) = labelCells[0];
+            Assert.AreEqual(TextAnchor.LowerLeft, PencilLabel(h, row, col).alignment, "pencil marks move under the cage sum");
+            var plain = Enumerable.Range(0, h.Run.CurrentBoard.Size * h.Run.CurrentBoard.Size)
+                .Select(i => (i / h.Run.CurrentBoard.Size, i % h.Run.CurrentBoard.Size))
+                .First(cell => !labelCells.Contains(cell));
+            Assert.AreEqual(TextAnchor.UpperLeft, PencilLabel(h, plain.Item1, plain.Item2).alignment);
+
+            foreach (var layer in new[] { "GridNumbers", "GridOverlay" })
+            {
+                var canvas = FindObject(h.Host, layer).GetComponent<Canvas>();
+                Assert.NotNull(canvas, $"{layer} has its own canvas");
+                Assert.IsTrue(canvas.overridePixelPerfect && canvas.pixelPerfect, $"{layer} snaps to whole pixels");
+                Assert.IsNull(canvas.GetComponent<GraphicRaycaster>(), $"{layer} takes no clicks; the cells below do");
+            }
+        }
+
+        private static Text PencilLabel(Harness h, int row, int col) =>
+            FindObject(FindObject(h.Host, $"N_{row}_{col}"), "Pencil").GetComponent<Text>();
+
+        private static float Brightness(Color c) => (0.299f * c.r + 0.587f * c.g + 0.114f * c.b) * c.a;
+
         // ── Path map (GAP-022) ──
 
         [UnityTest]

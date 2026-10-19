@@ -48,7 +48,7 @@ namespace SudokuRoguelike.UI
         {
             if (_instance != null) return _instance;
 
-            var canvas = FindFirstObjectByType<Canvas>();
+            var canvas = FindFirstObjectByType<Canvas>()?.rootCanvas;
             if (canvas == null) return null;
 
             var root = new GameObject("AccessibilityAnnouncementOverlay", typeof(RectTransform));

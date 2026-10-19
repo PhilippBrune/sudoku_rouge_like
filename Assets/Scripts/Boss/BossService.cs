@@ -561,7 +561,7 @@ namespace SudokuRoguelike.Boss
             {
                 BossModifierId.GermanWhispers => "Adjacent cells on green lines must differ by 5 or more. Example: 1-7-2-8.",
                 BossModifierId.DutchWhispers => "Adjacent cells on teal lines must differ by 4 or more. Example: 1-6-2-7.",
-                BossModifierId.ParityLines => "Cells along purple lines alternate odd/even. Example: 3-4-7-2.",
+                BossModifierId.ParityLines => "Cells along blue lines alternate odd/even. Example: 3-4-7-2.",
                 BossModifierId.RenbanLines => "Cells on orange lines form a consecutive set. Example: 3-5-4 (set {3,4,5}).",
                 BossModifierId.DifferenceKropki => "White dots: adjacent cells differ by 1. Example: 4-5.",
                 BossModifierId.RatioKropki => "Black dots: one cell is double the other. Example: 3-6.",

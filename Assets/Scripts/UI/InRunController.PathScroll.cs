@@ -105,12 +105,7 @@ namespace SudokuRoguelike.UI
             _pathScrollRect.content = _pathOverlayRoot;
             contentGo.AddComponent<CanvasGroup>(); // used for the floor transition fade-in
             contentGo.AddComponent<Image>().color = Color.clear; // a drag on empty route space scrolls the route
-            // The panel starts at 3 % of the screen (57.6 px), so the route lands between pixels and the thin node
-            // labels smear. A pixel-perfect sub-canvas snaps the route to whole pixels; it needs its own raycaster.
-            var pixelCanvas = contentGo.AddComponent<Canvas>();
-            pixelCanvas.overridePixelPerfect = true;
-            pixelCanvas.pixelPerfect = true;
-            contentGo.AddComponent<GraphicRaycaster>();
+            ScrollUiKit.SnapToPixels(contentGo, takesClicks: true); // crisp node labels; the nodes take clicks
 
             EnsureNodeTooltip();
         }

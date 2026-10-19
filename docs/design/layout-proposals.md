@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 1.3 | **Date:** 2026-10-18 | **Status:** review (boss gate B and offering table B built; garden path B and puzzle B being built; reward, relic node and shop proposed)
+**Version:** 1.4 | **Date:** 2026-10-19 | **Status:** review (garden path B, puzzle B, boss gate B and offering table B built; reward, relic node and shop proposed)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.4 | 2026-10-19 | review | Garden path **B** (UI-STYLE-001) and puzzle screen **B** (UI-STYLE-002) built in Unity, with screenshots from the game. Puzzle screen: Parity Lines are blue as the spec says (they were teal, like Dutch Whispers; GAP-048), pencil marks move under the cage sum in a cage's corner cell, and the board text renders on whole pixels. |
 | 1.3 | 2026-10-18 | review | Owner request: mockups for the next three screens in the same family: the reward after a puzzle (tally scroll and ema plaques), the relic node (the offering table at the shrine) and the shop (goods on the market stall). Proposed IDs UI-STYLE-007/008/009 wait for the owner's pick. Garden path B and puzzle B are being built. |
 | 1.2 | 2026-10-15 | review | Owner decisions: boss gate **B · Trial scroll** and boss defeated **B · Offering table**, both built in Unity (UI-STYLE-004, UI-STYLE-005), with screenshots from the game. Owner report: the killer cage in the hanging-scroll mockup was split into one box per cell; a cage is now one outline around all its cells, in the mockups and in the game (UI-STYLE-006). |
 | 1.1 | 2026-10-15 | review | Owner decisions: garden path **B · Hand scroll**, the same on all five floors (UI-STYLE-001); puzzle screen **B · Hanging scroll** (UI-STYLE-002); the background paintings keep their corner mark (UI-STYLE-003). Added: the hand scroll on every floor, a 9×9 check of the hanging scroll, and three proposals each for the boss modifier choice (boss gate) and the "Boss Defeated!" screen. |
@@ -18,7 +19,7 @@ The mockups are HTML pages in `layout-proposals/src/`, built from `Assets/Resour
 | ID | Requirement | Status |
 |---|---|---|
 | UI-STYLE-001 | The garden path is an ink hand scroll (emaki) between two wooden rollers on **every floor**, with the same frame, ensō nodes, brush routes (ink = calm, vermilion = risk), seal-stamp boss and paper status tag. Per floor only the content changes: the floor's painting as a faint wash on the paper and blurred behind the scroll, the title "Floor N of five · name", the floor marks, the route and the boss seal. | built 2026-10-19 |
-| UI-STYLE-002 | The puzzle screen is a hanging scroll: the board in ink with thick region borders that follow the region map (every size from 5×5 to 9×9 and irregular regions), HP and Pencil as paper lanterns, items and relics as ema plaques, the number pad as wooden tiles, the modifier rules as pinned paper slips, the floor's painting behind. | new, to build |
+| UI-STYLE-002 | The puzzle screen is a hanging scroll: the board in ink with thick region borders that follow the region map (every size from 5×5 to 9×9 and irregular regions), HP and Pencil as paper lanterns, items and relics as ema plaques, the number pad as wooden tiles, the modifier rules as pinned paper slips, the floor's painting behind. | built 2026-10-19 |
 | UI-STYLE-003 | The background paintings keep the bottom-right corner mark (owner decision); new UI does not need to hide it. | decided |
 | UI-STYLE-004 | The boss gate is a trial scroll: the gate painting darkened behind a hand scroll with brocade bands and wooden rollers; the eyebrow "Floor N · floor name · The Gate", the title "The <boss>'s trials", "Choose N of M trials", the intensity with one dot per level (REQ-BOSS-103) and the boss's seal; one ink-framed panel per trial with icon, name and rule ("???" and "Not discovered yet" when hidden, HARMONY-FLAG-001), ticked with a vermilion ensō when chosen; along the bottom the boss's curse from Floor 3 (REQ-BOSS-108), "n of N chosen" and "Face the <boss>", which unlocks at N. Up to four trials in a row, five to eight in two rows. | built 2026-10-15 |
 | UI-STYLE-005 | After a non-final boss, the offering table: the boss-cleared painting, a paper banner "Floor N of 5 · name" / "The <boss> is defeated", the fight's numbers on a paper tag (mistakes, HP lost, items used, pencil marks), the boss's greyed mask, and the relic offerings on plinths with their own Take button on the same screen, plus "Leave them". Taking or leaving loads the next floor; without offerings one Continue button does. The screen does not use the game-over panel, and it has no Options or Save & Quit (the puzzle shortcuts are off while it is open); the run is saved when the next floor loads. | built 2026-10-15 |
@@ -67,6 +68,12 @@ The other proposals stay for reference: [A · Stepping stones](layout-proposals/
 ![Hanging scroll, 9×9 on Shrine Summit](layout-proposals/puzzle_b_hanging_scroll_9x9.jpg)
 
 - **In Unity:** scroll and rod sprites, lantern sprites with a fill mask (HP, Pencil), an ema plaque sprite for bag and relics, wooden tile buttons, paper slip panels; the grid becomes ink lines with thicker region borders (the existing border logic, GEN-REGION-004).
+
+**As built (UI-STYLE-002, 2026-10-19):** 6×6 on Floor 1 (Dutch Whispers and Parity Lines), 7×7 on Floor 2 (German Whispers and Killer Cages), an irregular 7×7 on Floor 3 (Thermo) and 9×9 on Floor 5 (Killer Cages and Kropki dots). The scroll names the floor and hangs in front of its painting. HP and Pencil are paper lanterns that glow from the bottom with the value (blue while a shield is up); Buy Pencil is a small wooden tile under the Pencil lantern. Items hang on wooden plaques and empty slots are dark sockets; relics sit below. The number pad is wooden tiles: a digit fades when it is used up or larger than the board. Solve | Pencil is a two-part switch. The rules are a pinned paper slip, with the Legend tag above it. Save & Quit and Options are round buttons with their key under them. The digits keep at least 4.5:1 contrast on every plain cell state (`PuzzleScrollPaletteTests`). Parity Lines are blue as specified, so they no longer look like Dutch Whispers (GAP-048). Pencil marks in a cage's corner cell sit under the cage sum. The board text renders on whole pixels.
+
+![The hanging scroll in the game: 6×6, 7×7 with cages, irregular 7×7, 9×9](layout-proposals/after_puzzle_all.jpg)
+
+The screenshot test sets each puzzle's modifiers itself, so the floor-modifier line under the board names the run's own floor modifiers, not the ones drawn. Full size: [6×6](layout-proposals/after_puzzle_6x6.jpg) · [7×7 with cages](layout-proposals/after_puzzle_7x7_cages.jpg) · [irregular 7×7](layout-proposals/after_puzzle_7x7_irregular.jpg) · [9×9](layout-proposals/after_puzzle_9x9.jpg).
 
 Reference: [A · Tea table](layout-proposals/puzzle_a_tea_table.jpg), [C · Night focus](layout-proposals/puzzle_c_night_focus.jpg).
 
@@ -178,7 +185,7 @@ The stall painting is the scene: the goods sit on the counter with wooden price 
 
 ## Decisions and next step
 
-Boss gate **B** and boss defeated **B** are built (2026-10-15). The garden path (B, UI-STYLE-001) and the puzzle screen (B, UI-STYLE-002) are being built with the scroll parts made for the gate (`ScrollUiKit`). Reward, relic node and shop (UI-STYLE-007/008/009) wait for the owner's pick.
+Boss gate **B** and boss defeated **B** are built (2026-10-15), the garden path **B** (UI-STYLE-001) and the puzzle screen **B** (UI-STYLE-002) too (2026-10-19), all from the same scroll parts (`ScrollUiKit`). Reward, relic node and shop (UI-STYLE-007/008/009) wait for the owner's pick.
 
 ## Rendering
 

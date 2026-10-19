@@ -304,11 +304,10 @@ namespace SudokuRoguelike.Tests
         {
             var hudSource = ReadSource(HudViewControllerPath);
 
-            StringAssert.Contains("\"BagTitle\", T(\"InRun.Hud.BagTitle\"), 13", hudSource);
-            StringAssert.Contains("\"RelicTitle\", T(\"InRun.Hud.RelicsTitle\"), 13", hudSource);
-            Assert.That(hudSource, Does.Match("(?s)\"BagTitle\", T\\(\"InRun\\.Hud\\.BagTitle\"\\), 13,\\s*TextAnchor\\.MiddleCenter, InRunUiFactory\\.AccentGold\\);"));
-            Assert.That(hudSource, Does.Match("(?s)\"RelicTitle\", T\\(\"InRun\\.Hud\\.RelicsTitle\"\\), 13,\\s*TextAnchor\\.MiddleCenter, InRunUiFactory\\.AccentGold\\);"));
-            StringAssert.Contains("relicTitle.rectTransform.anchorMin = new Vector2(0.02f, 0.43f)", hudSource);
+            // UI-STYLE-002: both headers are paper-coloured text with a shadow on the painting, in the same size.
+            Assert.That(hudSource, Does.Match("(?s)\"BagTitle\", T\\(\"InRun\\.Hud\\.BagTitle\"\\), 16,\\s*TextAnchor\\.MiddleCenter, InRunUiFactory\\.BagHeaderText\\);\\s*AddHeaderShadow\\(title\\);"));
+            Assert.That(hudSource, Does.Match("(?s)\"RelicTitle\", T\\(\"InRun\\.Hud\\.RelicsTitle\"\\), 16,\\s*TextAnchor\\.MiddleCenter, InRunUiFactory\\.BagHeaderText\\);\\s*AddHeaderShadow\\(relicTitle\\);"));
+            StringAssert.Contains("relicTitle.rectTransform.anchorMin = new Vector2(0.02f, 0.41f)", hudSource);
         }
 
         [Test]
@@ -355,37 +354,38 @@ namespace SudokuRoguelike.Tests
         {
             var inRunSource = ReadSource(InRunBlueprintPath);
 
+            // UI-STYLE-002: the hint is light text with a dark shadow at the foot of the right column.
             StringAssert.Contains("SudokuGameplayHintBg", inRunSource);
-            StringAssert.Contains("new Vector2(0.74f, 0.725f), new Vector2(0.93f, 0.845f)", inRunSource);
-            StringAssert.Contains("SetRect(hint.rectTransform, new Vector2(0.745f, 0.73f), new Vector2(0.925f, 0.84f)", inRunSource);
-            StringAssert.Contains("EnsureOrGetImage(hintBg.gameObject, InRunUiFactory.SudokuPuzzleBoxBg)", inRunSource);
-            StringAssert.Contains("hint.color = GamePalette.TextPrimary", inRunSource);
+            StringAssert.Contains("new Vector2(0.7716f, 0.02f), new Vector2(0.9710f, 0.105f)", inRunSource);
+            StringAssert.Contains("SetRect(hint.rectTransform, new Vector2(0.7716f, 0.02f), new Vector2(0.9710f, 0.105f)", inRunSource);
+            StringAssert.Contains("hint.color = new Color(0.90f, 0.86f, 0.76f, 0.95f)", inRunSource);
             StringAssert.Contains("hint.gameObject.AddComponent<Shadow>()", inRunSource);
             StringAssert.Contains("hintShadow.effectColor = new Color(0f, 0f, 0f, 0.65f)", inRunSource);
         }
 
         [Test]
-        public void SudokuPuzzleBoxes_UseSharedColorAndTransparency()
+        public void SudokuPuzzleScreen_SitsOnAHangingScroll_WithoutDarkBoxes()
         {
             var factorySource = ReadSource(InRunUiFactoryPath);
             var inRunSource = ReadSource(InRunBlueprintPath);
             var hudSource = ReadSource(HudViewControllerPath);
 
-            StringAssert.Contains("internal static readonly Color SudokuPuzzleBoxBg = new Color(0.04f, 0.05f, 0.08f, 0.50f)", factorySource);
-            StringAssert.Contains("internal static readonly Color ModBannerBg      = SudokuPuzzleBoxBg", factorySource);
-            StringAssert.Contains("internal static readonly Color ModInfoBoxBg     = SudokuPuzzleBoxBg", factorySource);
-            StringAssert.Contains("internal static readonly Color BagPanelBg          = SudokuPuzzleBoxBg", factorySource);
-            StringAssert.Contains("internal static readonly Color BagSlotBg            = SudokuPuzzleBoxBg", factorySource);
+            // UI-STYLE-002: the board hangs on a scroll, the rules are paper slips, the bag holds wooden plaques;
+            // the dark translucent boxes of the old layout are gone.
+            StringAssert.Contains("ScrollUiKit.HangingScroll(panel.transform, \"PuzzleScroll\"", inRunSource);
+            StringAssert.Contains("EnsureOrGetImage(gridRoot.gameObject, ScrollUiKit.Ink)", inRunSource);
+            StringAssert.Contains("EnsureOrGetImage(numpadRoot.gameObject, new Color(0f, 0f, 0f, 0f))", inRunSource);
+            StringAssert.Contains("EnsureOrGetImage(hintBg.gameObject, new Color(0f, 0f, 0f, 0f))", inRunSource);
+            StringAssert.Contains("ScrollUiKit.MakeLantern(bgImg, fillImg, shade)", inRunSource);
 
-            StringAssert.Contains("private static readonly Color ScrimColor = InRunUiFactory.SudokuPuzzleBoxBg", inRunSource);
-            StringAssert.Contains("EnsureOrGetImage(gridRoot.gameObject, InRunUiFactory.SudokuPuzzleBoxBg)", inRunSource);
-            StringAssert.Contains("EnsureOrGetImage(numpadRoot.gameObject, InRunUiFactory.SudokuPuzzleBoxBg)", inRunSource);
-            StringAssert.Contains("EnsureOrGetImage(hintBg.gameObject, InRunUiFactory.SudokuPuzzleBoxBg)", inRunSource);
+            StringAssert.Contains("internal static readonly Color BagSlotBg            = new Color(0.80f, 0.60f, 0.38f, 0.96f)", factorySource);
+            StringAssert.Contains("internal static readonly Color BagSlotEmptyBg", factorySource);
+            Assert.That(factorySource, Does.Not.Contain("SudokuPuzzleBoxBg"), "the shared dark box colour is retired");
 
-            StringAssert.Contains("_floorModBanner.GetComponent<Image>().color = InRunUiFactory.ModBannerBg", hudSource);
-            StringAssert.Contains("_modifierInfoBox.GetComponent<Image>().color = InRunUiFactory.ModInfoBoxBg", hudSource);
-            StringAssert.Contains("bagGo.GetComponent<Image>().color = InRunUiFactory.BagPanelBg", hudSource);
-            StringAssert.Contains("go.GetComponent<Image>().color = InRunUiFactory.SudokuPuzzleBoxBg", hudSource);
+            StringAssert.Contains("ScrollUiKit.MakeSlip(_modifierInfoBox.GetComponent<Image>()", hudSource);
+            StringAssert.Contains("_floorModBanner.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0f)", hudSource);
+            StringAssert.Contains("bagGo.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0f)", hudSource);
+            StringAssert.Contains("!hasItem ? InRunUiFactory.BagSlotEmptyBg", hudSource);
         }
 
         [Test]
@@ -394,25 +394,24 @@ namespace SudokuRoguelike.Tests
             var hudSource = ReadSource(HudViewControllerPath);
 
             StringAssert.Contains("new GameObject(\"PassiveLabel\", typeof(RectTransform), typeof(Image))", hudSource);
-            StringAssert.Contains("rt.anchorMax = new Vector2(0.21f, 0.09f)", hudSource);
-            StringAssert.Contains("go.GetComponent<Image>().color = InRunUiFactory.SudokuPuzzleBoxBg", hudSource);
-            StringAssert.Contains("\"PassiveText\", \"\", 11", hudSource);
+            StringAssert.Contains("rt.anchorMax = new Vector2(0.25f, 0.095f)", hudSource);
+            StringAssert.Contains("\"PassiveText\", \"\", 15", hudSource);
             StringAssert.Contains("_passiveText.resizeTextForBestFit = true", hudSource);
-            StringAssert.Contains("_passiveText.resizeTextMinSize = 8", hudSource);
-            StringAssert.Contains("_passiveText.resizeTextMaxSize = 11", hudSource);
+            StringAssert.Contains("_passiveText.resizeTextMinSize = 10", hudSource);
+            StringAssert.Contains("_passiveText.resizeTextMaxSize = 15", hudSource);
             StringAssert.Contains("_passiveText.rectTransform.offsetMin = new Vector2(6f, 2f)", hudSource);
             StringAssert.Contains("_passiveText.verticalOverflow = VerticalWrapMode.Truncate", hudSource);
         }
 
         [Test]
-        public void SudokuTimers_UseTextOnlyTopRightLabelsWithoutLargeBackgroundBox()
+        public void SudokuTimers_AreShadowedTextUnderThePortrait_WithoutBackgroundBox()
         {
             var hudSource = ReadSource(HudViewControllerPath);
 
             StringAssert.Contains("\"PuzzleTimer\"", hudSource);
             StringAssert.Contains("\"RunTimer\"", hudSource);
-            StringAssert.Contains("\"\", 15, TextAnchor.MiddleRight", hudSource);
-            StringAssert.Contains("\"\", 12, TextAnchor.MiddleRight", hudSource);
+            StringAssert.Contains("\"\", 18, TextAnchor.MiddleLeft", hudSource);
+            StringAssert.Contains("\"\", 15, TextAnchor.MiddleLeft", hudSource);
             StringAssert.Contains("_timerText.fontStyle = FontStyle.Bold", hudSource);
             StringAssert.Contains("_runTimerText.fontStyle = FontStyle.Bold", hudSource);
             StringAssert.Contains("gameObject.AddComponent<Shadow>()", hudSource);
@@ -426,7 +425,7 @@ namespace SudokuRoguelike.Tests
             Assert.That(
                 hudSource,
                 Does.Not.Contain("new GameObject(\"TimerBg\""),
-                "Timers should remain visible as shadowed text without the large top-right grey background box.");
+                "Timers should remain visible as shadowed text without a grey background box.");
         }
 
         [Test]
@@ -658,10 +657,13 @@ namespace SudokuRoguelike.Tests
             var hudSource = ReadSource(HudViewControllerPath);
             var inRunSource = ReadSource(InRunBlueprintPath);
 
-            StringAssert.Contains("SetRect(levelInfo.rectTransform, new Vector2(0.22f, 0.83f), new Vector2(0.70f, 0.875f)", inRunSource);
-            StringAssert.Contains("SetRect(statusText.rectTransform, new Vector2(0.22f, 0.79f), new Vector2(0.70f, 0.83f)", inRunSource);
-            StringAssert.Contains("rt.anchorMin = new Vector2(0.24f, 0.885f)", hudSource);
-            StringAssert.Contains("rt.anchorMax = new Vector2(0.68f, 0.920f)", hudSource);
+            // UI-STYLE-002 scroll header, top to bottom: eyebrow 0.899–0.925, floor name 0.853–0.897, status 0.826–0.852.
+            StringAssert.Contains("SetRect(levelInfo.rectTransform, new Vector2(0.3005f, 0.899f), new Vector2(0.6995f, 0.925f)", inRunSource);
+            StringAssert.Contains("new Vector2(0.3005f, 0.853f), new Vector2(0.6995f, 0.897f)", inRunSource);
+            StringAssert.Contains("SetRect(statusText.rectTransform, new Vector2(0.3005f, 0.826f), new Vector2(0.6995f, 0.852f)", inRunSource);
+            // Floor modifiers and the combo share one lane under the board; a combo hides the floor line.
+            StringAssert.Contains("rt.anchorMin = new Vector2(0.3105f, 0.135f)", hudSource);
+            StringAssert.Contains("rt.anchorMax = new Vector2(0.6895f, 0.175f)", hudSource);
             StringAssert.Contains("private GameObject _comboBox", hudSource);
             StringAssert.Contains("var go = new GameObject(\"ComboCounter\", typeof(RectTransform), typeof(Image))", hudSource);
             StringAssert.Contains("_comboBox = go", hudSource);
@@ -780,7 +782,7 @@ namespace SudokuRoguelike.Tests
             {
                 case GeneratedUiControlType.Button:
                     // Runtime panels create their buttons through InRunUiFactory.
-                    return new[] { "BuildButton", "BuildMenuButton", "CreateActionButton", "CreatePanelButton" };
+                    return new[] { "BuildButton", "BuildMenuButton", "CreateActionButton", "CreatePanelButton", "RoundButton" };
                 case GeneratedUiControlType.Toggle:
                     return new[] { "BuildToggle", "BuildOptionToggle" };
                 case GeneratedUiControlType.Dropdown:

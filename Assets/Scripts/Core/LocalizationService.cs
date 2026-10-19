@@ -1283,7 +1283,7 @@ namespace SudokuRoguelike.Core
             { "Boss.Name.CellBlur", "Zellunsch\u00e4rfe" },
             { "Boss.Description.GermanWhispers", "Benachbarte Zellen auf gr\u00fcnen Linien m\u00fcssen sich um 5 oder mehr unterscheiden. Beispiel: 1-7-2-8." },
             { "Boss.Description.DutchWhispers", "Benachbarte Zellen auf t\u00fcrkisen Linien m\u00fcssen sich um 4 oder mehr unterscheiden. Beispiel: 1-6-2-7." },
-            { "Boss.Description.ParityLines", "Zellen entlang violetter Linien wechseln zwischen ungerade/gerade. Beispiel: 3-4-7-2." },
+            { "Boss.Description.ParityLines", "Zellen entlang blauer Linien wechseln zwischen ungerade/gerade. Beispiel: 3-4-7-2." },
             { "Boss.Description.RenbanLines", "Zellen auf orangefarbenen Linien bilden eine fortlaufende Menge. Beispiel: 3-5-4 (Menge {3,4,5})." },
             { "Boss.Description.DifferenceKropki", "Wei\u00dfe Punkte: benachbarte Zellen unterscheiden sich um 1. Beispiel: 4-5." },
             { "Boss.Description.RatioKropki", "Schwarze Punkte: eine Zelle ist doppelt so gro\u00df wie die andere. Beispiel: 3-6." },

@@ -898,7 +898,7 @@ namespace SudokuRoguelike.UI
             // Lazy-create the tooltip panel on first use
             if (_classLockTooltipPanel == null)
             {
-                var canvas = FindFirstObjectByType<Canvas>();
+                var canvas = FindFirstObjectByType<Canvas>()?.rootCanvas;
                 if (canvas == null) return;
                 _classLockTooltipPanel = new GameObject("ClassLockTooltip",
                     typeof(RectTransform), typeof(UnityEngine.UI.Image));
@@ -1047,7 +1047,7 @@ namespace SudokuRoguelike.UI
             if (_startRunConfirmOverlay != null) Destroy(_startRunConfirmOverlay);
 
             // F — use stored canvas ref to avoid slow scene-wide search
-            var canvas = _menuCanvas != null ? _menuCanvas : FindFirstObjectByType<Canvas>();
+            var canvas = _menuCanvas != null ? _menuCanvas : FindFirstObjectByType<Canvas>()?.rootCanvas;
             if (canvas == null) { ConfirmClassAndStart(); return; }
 
             var shell = InRunUiFactory.CreateThemedModalShell(canvas.transform, "StartRunModal",
@@ -1385,7 +1385,7 @@ namespace SudokuRoguelike.UI
             if (_firstRunSetupOverlay != null)
                 Destroy(_firstRunSetupOverlay);
 
-            var canvas = _menuCanvas != null ? _menuCanvas : FindFirstObjectByType<Canvas>();
+            var canvas = _menuCanvas != null ? _menuCanvas : FindFirstObjectByType<Canvas>()?.rootCanvas;
             if (canvas == null)
             {
                 Debug.LogWarning("[MainMenuController] Cannot show first-run setup: menu canvas not found.");
@@ -1416,7 +1416,7 @@ namespace SudokuRoguelike.UI
         {
             if (HasCompletedSudokuBasics()) return;
 
-            var canvas = FindFirstObjectByType<Canvas>();
+            var canvas = FindFirstObjectByType<Canvas>()?.rootCanvas;
             if (canvas == null) return;
 
             var shell = InRunUiFactory.CreateThemedModalShell(canvas.transform, "SudokuBasicsPrompt",

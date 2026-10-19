@@ -56,6 +56,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-045](#gap-045) | Boss fights never played boss music (the boss layer was never started) | FIXED (found 2026-10-14) | LOW | P3 |
 | [GAP-046](#gap-046) | Q on the "Boss Defeated!" screen ended the run and deleted its save | FIXED (found 2026-10-15) | HIGH | P1 |
 | [GAP-047](#gap-047) | A chosen modifier can silently miss its overlay when another modifier of the same family has one | OPEN (found 2026-10-18) | MEDIUM | P2 |
+| [GAP-048](#gap-048) | Line colours differ between the spec, the board and the rule text (Parity Lines looked like Dutch Whispers) | PARTIALLY FIXED (found 2026-10-19: parity fixed; Renban, Palindrome open) | LOW | P3 |
 | [GAP-044](#gap-044) | Region borders showed the previous puzzle's regions on a same-size board | FIXED (found 2026-10-14 by the owner) | HIGH | P1 |
 | [GAP-043](#gap-043) | Without the `ActiveProfileSlot` pref the game opens an empty slot 0, not the existing profile | FIXED (0.1.5, found 2026-10-14) | LOW | P3 |
 
@@ -818,3 +819,14 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Fix (planned):** one presence check per type (modifier plan, Phase 0, step 1).
 - **Affected Files:** `Assets/Scripts/Sudoku/PuzzleGenerationService.cs`, `Assets/Scripts/Run/RunDirector.cs`, `Assets/Scripts/Run/RunDirector.LevelGeneration.cs`
 - **Tests:** to add: a generation test where one of two line modifiers fails must report it missing.
+
+## GAP-048
+**Line colours differ between the spec, the board and the rule text (Parity Lines looked like Dutch Whispers)**
+
+- **Requirement:** BOSS-MOD-002 (modifier visuals, `BossMechanicsSystem.md` §Visuals), UI-STYLE-002
+- **Status:** PARTIALLY FIXED (found 2026-10-19 while building the hanging-scroll puzzle screen) · **Severity:** LOW · **Priority:** P3
+- **Problem:** The spec gives each line modifier its own colour, but the board and the rule texts did not all follow it. Parity Lines: the spec says blue, the game drew teal (almost the colour of Dutch Whispers, so a board with both showed one kind of line), and the rule text said "purple lines". Still open: Renban is pink in the spec but orange on the board and in the rule text ("orange lines"), the same orange family as Consecutive Line; Palindrome is grey in the spec but purple on the board, close to Slow Thermo.
+- **Root Cause:** `GamePalette` line colours and the `Boss.Description.*` texts were changed over time without the spec table; nothing checks that they match.
+- **Fix:** Parity Lines are blue as specified (`GamePalette.LineParityLine`), and the rule text says "blue lines" in all five languages. Renban and Palindrome need the owner's choice (follow the spec, or update the spec to the game; the Renban text would change with the colour).
+- **Affected Files:** `Assets/Scripts/UI/GamePalette.cs`, `Assets/Scripts/Boss/BossService.cs`, `Assets/Scripts/Core/LocalizationService.cs`, `Assets/Resources/Localization/*.json`, `docs/BossMechanicsSystem.md`
+- **Tests:** screenshot `after_puzzle_6x6` (Dutch Whispers teal and Parity Lines blue on one board); a colour-vs-spec test is still to add.

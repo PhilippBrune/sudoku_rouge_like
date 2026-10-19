@@ -20,28 +20,34 @@ namespace SudokuRoguelike.UI
         public static readonly Color WinGold      = new(0.85f, 0.75f, 0.20f, 1f);
 
         // ── Board cells ──────────────────────────────────────────────────────────
-        public static readonly Color CellEmpty    = new(0.12f, 0.18f, 0.14f, 1f);
-        public static readonly Color CellGiven    = new(0.20f, 0.29f, 0.20f, 1f);
-        public static readonly Color CellSelected = new(0.73f, 0.49f, 0.18f, 1f);
-        public static readonly Color CellRowCol   = new(0.18f, 0.34f, 0.56f, 1f);
-        public static readonly Color CellMatch    = new(0.36f, 0.24f, 0.58f, 1f);
-        public static readonly Color CellConflict = new(0.72f, 0.18f, 0.18f, 1f);
-        public static readonly Color CellFog      = new(0.06f, 0.06f, 0.08f, 1f);
+        // [REQ: UI-STYLE-002] The board is ink on paper (hanging scroll). Digits reach >= 4.5:1 on the plain cell states
+        // (empty, given, selected, row/column, match, jigsaw): givens ink 11-15:1, placed blue ink 5.8-7.8:1; on a
+        // conflict cell the digit turns ink (5.5:1), on a fog blot it turns paper. Blended tints (bag highlight, locks,
+        // tutorial focus) are not measured.
+        public static readonly Color CellEmpty    = new(0.96f, 0.93f, 0.85f, 1f);
+        public static readonly Color CellGiven    = new(0.91f, 0.87f, 0.77f, 1f);
+        public static readonly Color CellSelected = new(0.95f, 0.79f, 0.42f, 1f);
+        public static readonly Color CellRowCol   = new(0.86f, 0.82f, 0.68f, 1f);
+        public static readonly Color CellMatch    = new(0.76f, 0.85f, 0.68f, 1f);
+        public static readonly Color CellConflict = new(0.90f, 0.42f, 0.36f, 1f); // still "strong red" for high contrast
+        public static readonly Color CellFog      = new(0.24f, 0.21f, 0.17f, 1f); // an ink blot
 
-        // Jigsaw checker pattern (alternating region tints)
-        public static readonly Color CellJigsawGivenAlt  = new(0.25f, 0.36f, 0.25f, 1f);
-        public static readonly Color CellJigsawGivenMain = new(0.19f, 0.30f, 0.20f, 1f);
-        public static readonly Color CellJigsawEmptyAlt  = new(0.15f, 0.22f, 0.16f, 1f);
-        public static readonly Color CellJigsawEmptyMain = new(0.11f, 0.17f, 0.12f, 1f);
+        // Jigsaw checker pattern (alternating region tints, two paper tones)
+        public static readonly Color CellJigsawGivenAlt  = new(0.87f, 0.83f, 0.72f, 1f);
+        public static readonly Color CellJigsawGivenMain = new(0.91f, 0.87f, 0.77f, 1f);
+        public static readonly Color CellJigsawEmptyAlt  = new(0.92f, 0.88f, 0.79f, 1f);
+        public static readonly Color CellJigsawEmptyMain = new(0.96f, 0.93f, 0.85f, 1f);
 
         // Cell number labels
         // [REQ: REQ-UI-103] Givens and player digits must be told apart at a glance (GAP-029): givens are bold ivory,
         // player digits blue ink. Both keep >= 5:1 contrast on the cell and highlight backgrounds.
-        public static readonly Color CellNumberGiven  = new(0.96f, 0.93f, 0.82f, 1f);
-        public static readonly Color CellNumberPlaced = new(0.62f, 0.87f, 1.00f, 1f);
+        public static readonly Color CellNumberGiven  = new(0.11f, 0.10f, 0.08f, 1f);
+        public static readonly Color CellNumberPlaced = new(0.16f, 0.27f, 0.55f, 1f);
         // Digits on the selected (amber) cell: dark ink, 5.3:1 against CellSelected.
         public static readonly Color CellNumberOnSelected = new(0.10f, 0.08f, 0.05f, 1f);
-        public static readonly Color PencilMarkColor  = new(0.84f, 0.86f, 0.82f, 0.95f);
+        // A given digit under fog (the dark ink blot) is written in paper colour, ~10:1 against CellFog.
+        public static readonly Color CellNumberOnFog = new(0.95f, 0.91f, 0.82f, 1f);
+        public static readonly Color PencilMarkColor  = new(0.36f, 0.31f, 0.24f, 0.95f);
 
         // Cell highlight overlays
         public static readonly Color AntiknightForbid    = new(0.55f, 0.20f, 0.60f, 0.55f);
@@ -49,17 +55,17 @@ namespace SudokuRoguelike.UI
         public static readonly Color CellLocked          = new(0.65f, 0.15f, 0.60f, 0.70f); // deep magenta lock tint
 
         // ── Board borders ────────────────────────────────────────────────────────
-        public static readonly Color RegionBorder = new(1f,    0.78f, 0.24f, 0.72f);
+        public static readonly Color RegionBorder = new(0.13f, 0.11f, 0.09f, 0.95f); // ink region borders
         public static readonly Color KillerBorder = new(0.94f, 0.26f, 0.22f, 1.00f);
 
         // ── Modifier line colors ─────────────────────────────────────────────────
-        public static readonly Color LineGermanWhispers  = new(0.20f, 0.72f, 0.30f, 0.55f);
-        public static readonly Color LineDutchWhispers   = new(0.10f, 0.95f, 0.78f, 0.75f);
-        public static readonly Color LineParityLine      = new(0.10f, 0.88f, 0.80f, 0.70f);
+        public static readonly Color LineGermanWhispers  = new(0.12f, 0.55f, 0.25f, 0.75f);
+        public static readonly Color LineDutchWhispers   = new(0.04f, 0.58f, 0.54f, 0.80f);
+        public static readonly Color LineParityLine      = new(0.20f, 0.33f, 0.80f, 0.80f); // blue (BossMechanicsSystem.md), apart from teal Dutch whispers
         public static readonly Color LineRenbanLine      = new(0.95f, 0.52f, 0.12f, 0.75f);
         public static readonly Color LinePalindrome      = new(0.55f, 0.30f, 0.85f, 1.0f);
         public static readonly Color LineThermo          = new(0.85f, 0.45f, 0.10f, 0.70f);
-        public static readonly Color LineBetweenLine     = new(0.90f, 0.90f, 0.90f, 0.60f);
+        public static readonly Color LineBetweenLine     = new(0.42f, 0.40f, 0.36f, 0.70f);
         public static readonly Color LineConsecutiveLine = new(0.95f, 0.65f, 0.15f, 0.70f);
         public static readonly Color LineSlowThermo      = new(0.70f, 0.30f, 0.80f, 0.70f);
         public static readonly Color LineUniqueSetLine   = new(0.20f, 0.70f, 0.95f, 0.65f);
@@ -67,17 +73,18 @@ namespace SudokuRoguelike.UI
         // ── Modifier overlay markers ─────────────────────────────────────────────
         public static readonly Color OverlayKropkiSum    = new(0.45f, 0.45f, 0.50f, 0.90f);
         public static readonly Color OverlayKropkiBlack  = new(0.10f, 0.10f, 0.10f, 0.90f);
-        public static readonly Color OverlayKropkiWhite  = new(0.95f, 0.95f, 0.95f, 0.85f);
-        public static readonly Color OverlayArrow        = new(0.75f, 0.75f, 0.75f, 0.90f);
-        public static readonly Color OverlayArrowPath    = new(0.55f, 0.55f, 0.55f, 0.45f);
-        public static readonly Color OverlayGreaterLess  = new(0.95f, 0.70f, 0.20f, 0.90f);
-        public static readonly Color OverlayXVPair       = new(0.20f, 0.80f, 0.90f, 0.90f);
+        public static readonly Color OverlayKropkiWhite  = new(1.00f, 1.00f, 1.00f, 1.00f);
+        public static readonly Color OverlayKropkiWhiteRim = new(0.13f, 0.11f, 0.09f, 1.00f); // ink rim: a white dot on paper
+        public static readonly Color OverlayArrow        = new(0.38f, 0.36f, 0.33f, 0.90f);
+        public static readonly Color OverlayArrowPath    = new(0.40f, 0.38f, 0.34f, 0.55f);
+        public static readonly Color OverlayGreaterLess  = new(0.78f, 0.42f, 0.04f, 0.95f);
+        public static readonly Color OverlayXVPair       = new(0.04f, 0.46f, 0.58f, 0.95f);
         public static readonly Color OverlayEvenMarker   = new(0.35f, 0.65f, 0.90f, 0.55f);
         public static readonly Color OverlayOddMarker    = new(0.90f, 0.55f, 0.20f, 0.55f);
         public static readonly Color OverlayPrimeCircle  = new(0.85f, 0.75f, 0.15f, 0.50f);
-        public static readonly Color OverlayPrimeLabel   = new(1.00f, 0.95f, 0.40f, 0.95f);
+        public static readonly Color OverlayPrimeLabel   = new(0.52f, 0.38f, 0.02f, 0.95f);
         public static readonly Color OverlayFortress     = new(0.45f, 0.45f, 0.50f, 0.45f);
-        public static readonly Color OverlayCageFogBg    = new(0.00f, 0.00f, 0.00f, 0.65f);
+        public static readonly Color OverlayCageFogBg    = new(0.96f, 0.93f, 0.85f, 0.92f); // paper behind the cage sum
 
         // ── Run-map path overlay ──────────────────────────────────────────────────
         public static readonly Color RiskRouteOutline = new(0.88f, 0.40f, 0.18f, 0.75f);
@@ -141,7 +148,7 @@ namespace SudokuRoguelike.UI
         // Applied as a thin border tint when rendering modifier icons so similar
         // icons are distinguishable at small sizes (24-32 px).
         public static readonly Color ModGroupAntiMove  = new(0.88f, 0.25f, 0.25f, 0.55f); // red  — antiknight/antiking/antibishop
-        public static readonly Color ModGroupLine      = new(0.25f, 0.80f, 0.55f, 0.55f); // teal — whisper/parity/renban/palindrome/consecutive/thermo variants
+        public static readonly Color ModGroupLine      = new(0.25f, 0.80f, 0.55f, 0.55f); // legend group colour for all line modifiers (whispers, parity, renban, palindrome, consecutive, thermo)
         public static readonly Color ModGroupDot       = new(0.85f, 0.85f, 0.85f, 0.55f); // white — kropki/white_dot/black_dot/sum_dot
         public static readonly Color ModGroupCage      = new(0.85f, 0.20f, 0.15f, 0.45f); // crimson — killer/arrow
         public static readonly Color ModGroupCell      = new(0.35f, 0.65f, 0.92f, 0.55f); // blue  — even_odd/prime/fortress/fog

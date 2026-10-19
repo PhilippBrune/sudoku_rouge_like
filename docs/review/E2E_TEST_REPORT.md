@@ -341,3 +341,11 @@ The D-pad paths themselves are checked by `GeneratedUiPlayModeTraversalTests.Opt
 ### 10.4 Cleanup
 
 The user's save folder was backed up before the session and restored afterwards (`save_profile_2.json`, byte-compared after each of the two sessions); `HKCU\Software\Kratossos\sudoku_rouge_like`, created by the player, was deleted, leaving the parent key as before.
+
+## 11. Addendum: 0.2.0 beta build (2026-10-19)
+
+- **Automated:** EditMode 552 (525 passed, 0 failed, 27 `[Explicit]` skipped), PlayMode 47 (38 passed, 0 failed, 9 `[Explicit]` screenshot diagnostics skipped), on the mirror with `tools/run-unity-tests.ps1`. The new screens and modifiers are covered by PlayMode tests on the real in-run UI (`InRunUiPlayModeTests`: puzzle scroll, modal bag swap) and screenshot diagnostics (`after_puzzle_*`, `after_lines_all`, `after_reward`, `after_relic_shrine`, `after_shop`, `after_catalog_*`).
+- **B28 build:** Windows x64 player from the mirror, `Builds/RunOfTheNine_0.2.0-beta/` (135 MB, zip 51.7 MB); `app.info` = `Kratossos` / `sudoku_rouge_like` (save folder and Steam Cloud unchanged); `steam_api64.dll` in `Plugins/x86_64`; no `steam_appid.txt`.
+- **B29 smoke test:** started windowed from its own folder (with a temporary `steam_appid.txt`, removed afterwards), still running after 30 s, main menu built (`[MainMenuBlueprintBuilder] Menu built`, `Startup step: MainMenu`); no exception or error in the player log. `SteamAPI_Init() failed` is expected outside the Steam client; the game continues without Steam.
+- **Saves:** the owner's save folder and `HKCU\Software\Kratossos\sudoku_rouge_like` were backed up first. The launch rewrote the leftover test profile `save_profile_0.json` (+ `.bak`) and the PlayerPrefs; both were restored from the backup. `save_profile_2.json` was not touched.
+- **Not verified in the build:** a full run through the new screens by hand, and the Steam client (achievements, stats, cloud) — the beta branch with testers covers both.

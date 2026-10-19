@@ -1,6 +1,6 @@
-# Platform Release Manifest — 0.1.5
+# Platform Release Manifest — 0.2.0 beta
 
-**Release:** 0.1.5 (Steam build "v0.1.5 (5th iteration)"; release 1.1 in the review documents) · **Updated:** 2026-10-14 · **Owner:** Philipp Brune
+**Release:** 0.2.0 (Steam build "v0.2.0 beta (6th iteration)", for a password beta branch; built 2026-10-19, not uploaded) · **Updated:** 2026-10-19 · **Owner:** Philipp Brune
 
 This manifest lists every release gate with its state, exit criteria and the repository evidence. States:
 
@@ -10,7 +10,7 @@ This manifest lists every release gate with its state, exit criteria and the rep
 - `MILESTONE_DEFERRED` — intentionally out of scope for this release.
 
 Public release state: blocked until every `RELEASE_BLOCKER` and `OWNER_ACTION` gate below is closed.
-Store submission state: pending owner actions (set build 25938214 live, publish the store page and the announcement, store art review).
+Store submission state: pending owner actions (upload the 0.2.0 beta build to depot 4858471 and set it live on a password beta branch for testers, see `steam_assets/ReleaseNotes_v0.2.0-beta.md`; `default` stays on the live build. The 0.1.5 build 25938214 is uploaded but not live; store page and announcement still to publish).
 Steam runtime validation state: pending (manual check in a Steam client build).
 
 | ID | Decision / evidence statement | State | Exit Criteria | Owner Area | Repository Evidence |

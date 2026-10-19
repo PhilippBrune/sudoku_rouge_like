@@ -1,16 +1,40 @@
 # Changelog
 
-## Unreleased (after v0.1.5)
+## 0.2.0 beta — 6th iteration (2026-10-19)
+
+A beta for testers before the next Early Access update: the whole run in a new ink-and-paper look, 13 new puzzle rules, and fixes for rules that silently went missing.
+
+### Highlights
+
+- **A new look for the whole run.** The garden path is an ink hand scroll on every floor; the puzzle hangs as a scroll in front of the floor's painting, with HP and Pencil as paper lanterns and the number pad as wooden tiles. The boss gate is a trial scroll, a beaten boss leaves an offering table, rewards hang as ema plaques, the relic node is a shrine and the shop is a market stall.
+- **13 new modifiers.** Nonconsecutive Line, High-Low Line, Nabner Line, Entropic Line, Modular Line, Zipper Line, Fast Thermo, Ambiguous Thermo, Full White Kropki, Full Black Kropki, Difference ≥ 3, Multiples of 3 and Mirror Cells. They appear in runs, at boss gates and in Endless Zen and Spirit Trials, and count toward the codex and completion.
+- **Lines in the colours puzzlers know.** German Whispers green, Dutch Whispers orange, Renban pink, Palindrome grey, thermometers grey with a bulb, Parity blue; lines are drawn as bands through the cells, the way puzzle setters draw them.
+- **Seed of the week.** One Garden Run seed per week for everyone, from the start-run screen.
 
 ### Fixed
 
-- Region borders could show the previous puzzle's regions when two puzzles of the same size followed each other, so an irregular board looked unsolvable. The board now always shows its own regions.
-- Boss puzzles now play their stage's boss music (it never played before).
-- The in-game Options now look and work like the main-menu Options: the same Audio, Display and Gameplay tabs and controls, plus Accessibility and Run tabs (seed, View Modifiers, Save & Quit, Abandon Run). Every control can be reached with a controller.
+- A chosen modifier could be missing from the board while its rule was listed (for example white dots under Nonconsecutive, Even/Odd next to Prime Cells, Palindrome on busy 9×9 boards). Every chosen modifier now gets its own marks; Nonconsecutive and Difference Kropki no longer appear together.
+- Region borders could show the previous puzzle's regions when two puzzles of the same size followed each other, so an irregular board looked unsolvable.
+- Boss puzzles now play their stage's boss music.
+- Q (or controller A) on the screen after a boss no longer ends the run.
+- A killer cage is one dashed outline around all its cells (before, it could look like several cages).
+- With a full bag, the swap choice now blocks the screen behind it; keeping your bag returns you to the rewards instead of losing them.
+- Pencil marks in a cage's corner cell no longer hide under the cage sum.
 
 ### Changed
 
-- French, Spanish and Brazilian Portuguese: items, relics, boss modifiers, classes, story texts and in-run messages are now translated.
+- The in-game Options look and work like the main-menu Options, with Accessibility and Run tabs. Every control can be reached with a controller.
+- Rewards: choose a plaque, then take it (click it again, press its key again or use Take). "Take nothing" shows the gold it gives.
+- Relic node: one Take button per relic, as after a boss.
+- Shop: the slip shows the gold you will have after buying; Buy stays off when you cannot afford it.
+- Custom Puzzle tooltips use the same translated rule texts as the game.
+- French, Spanish and Brazilian Portuguese: items, relics, boss modifiers, classes, story texts and in-run messages are translated.
+- Seeds from earlier versions (also shared seeds and past Seeds of the week) play differently in 0.2.0, because the pool of modifiers grew. Saved runs keep their modifiers.
+- Completion % counts the 13 new modifiers, so it drops a little until you clear them.
+
+### Known
+
+- The Custom Puzzle screen still offers the first 30 modifiers; the 13 new ones come to it with a new layout.
 
 ## 0.1.5 — 5th iteration (2026-10-14)
 

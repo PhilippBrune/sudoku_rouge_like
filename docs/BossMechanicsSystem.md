@@ -1,11 +1,12 @@
 ﻿# Boss Mechanics System
 
-**Version:** 2.5 | **Date:** 2026-10-19 | **Status:** implemented
+**Version:** 2.6 | **Date:** 2026-10-19 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.6 | 2026-10-19 | implemented | Owner decision (GAP-048): line colours follow the convention puzzle setters use (Logic Masters, GM Puzzles): German Whispers green, Dutch Whispers orange, Renban pink, Palindrome grey, thermometers grey with a bulb; Consecutive Line moves to gold so it does not clash with Dutch Whispers. Lines are drawn as opaque bands a fifth of a cell wide through the cell centres with round joints (as in the chosen puzzle mockup, UI-STYLE-002); the colours below are the band colours on the paper board. Rule texts name the new colours in all five languages, and the Custom Puzzle tooltips use the same texts. |
 | 2.5 | 2026-10-19 | implemented | Line colours on the paper board of the hanging-scroll puzzle screen (UI-STYLE-002): German and Dutch Whispers darker so they read on paper; Parity Lines drawn blue as specified (the game drew them teal, almost the colour of Dutch Whispers, and the rule text said "purple"; GAP-048). Renban and Palindrome still differ from this table (GAP-048, open). |
 | 2.4 | 2026-10-15 | implemented | Killer cage visual: one dashed outline around all cells of a cage, joined across its cells (owner report 2026-10-15, layout-proposals.md UI-STYLE-006). |
 | 2.3 | 2026-10-07 | implemented | 1.1 review decisions (2026-10-07): floor modifiers 0/1/1/1/2 kept from code (SPEC-CONF-001); boss options floor+1 shown / floor picked, no minimum (SPEC-CONF-002); 8-directional lines (SPEC-CONF-011); Entropy 9×9 (SPEC-CONF-012); eligibility table from BossService.ModifierData with blocked pairs, Modular Regions exclusion and structural-modifier region rule (SPEC-CONF-013, SPEC-AMB-014); Floor Progression Arc removed (SPEC-CONF-014); 30 player modifiers instead of 15 (SPEC-CONF-019); boss boards follow the floor range (SPEC-CONF-028); Anti-Bishop redefined to diagonal range 2, min 6×6 (SPEC-CONF-038); solution-based validation (SPEC-CONF-003); Endless Zen pool (SPEC-AMB-009); intensity label + boss debuff on the gate and modifier legend as built (GAP-025, GAP-026); file references updated (SPEC-CONF-036); SPICE table archived (SPEC-OBS-001). |
@@ -51,13 +52,13 @@ All 30 modifiers are fully implemented with constraint rules, geometry generatio
 
 | # | Modifier | Visual | Rule |
 |:---:|----------|--------|------|
-| 1 | **German Whispers** | Green lines (0.12, 0.55, 0.25, 0.75) | Adjacent cells on each line must differ by ≥5. **Restricted to boards ≥ 7×7.** |
-| 2 | **Dutch Whispers** | Teal lines (0.04, 0.58, 0.54, 0.80) | Adjacent cells on each line must differ by ≥4. **Restricted to boards ≥ 6×6.** |
-| 3 | **Parity Lines** | Blue lines (0.20, 0.33, 0.80, 0.80) | Adjacent cells on each line must alternate odd/even parity |
-| 4 | **Renban Lines** | Pink lines (0.80, 0.35, 0.65, 0.55) | Cells on each line form a consecutive set in any order (no repeats) |
-| 5 | **Palindrome** | Grey lines | Digits along the line read the same forward and backward |
-| 6 | **Thermo** | Lines with bulb | Digits strictly increase from bulb to tip (each cell > previous) |
-| 7 | **Between Lines** | White gradient line with circles at ends | Every digit on the line must be strictly between the digits in the two endpoint circles |
+| 1 | **German Whispers** | Green lines (0.42, 0.72, 0.38) | Adjacent cells on each line must differ by ≥5. **Restricted to boards ≥ 7×7.** |
+| 2 | **Dutch Whispers** | Orange lines (0.96, 0.55, 0.25) | Adjacent cells on each line must differ by ≥4. **Restricted to boards ≥ 6×6.** |
+| 3 | **Parity Lines** | Blue lines (0.45, 0.58, 0.96) | Adjacent cells on each line must alternate odd/even parity |
+| 4 | **Renban Lines** | Pink lines (0.93, 0.50, 0.76) | Cells on each line form a consecutive set in any order (no repeats) |
+| 5 | **Palindrome** | Grey lines (0.56, 0.56, 0.58) | Digits along the line read the same forward and backward |
+| 6 | **Thermo** | Light grey line with a filled bulb (0.72, 0.72, 0.72) | Digits strictly increase from bulb to tip (each cell > previous) |
+| 7 | **Between Lines** | Taupe line (0.76, 0.60, 0.42) with a hollow circle at each end | Every digit on the line must be strictly between the digits in the two endpoint circles |
 
 ### Dot Constraints
 
@@ -113,9 +114,9 @@ These 15 modifiers extend the active pool beyond the original 15. All are eligib
 
 | ID | Modifier | Visual | Rule | Min Size |
 |:---:|----------|--------|------|:---:|
-| 21 | **Consecutive Line** | Orange line (0.95, 0.65, 0.15, 0.70) | Adjacent cells on line must differ by exactly 1. Example: 3-4-5 or 7-6-5. | 5×5 |
-| 22 | **Slow Thermo** | Purple line with open-ring bulb (0.70, 0.30, 0.80, 0.70) | Non-strict increase from bulb — each cell must be ≥ the previous. Example: 2-2-3-5. | 5×5 |
-| 23 | **Unique Set Line** | Sky-blue line with ring endpoints (0.20, 0.70, 0.95, 0.65) | No digit may repeat anywhere on the line. | 5×5 |
+| 21 | **Consecutive Line** | Gold line (0.86, 0.70, 0.10) | Adjacent cells on line must differ by exactly 1. Example: 3-4-5 or 7-6-5. | 5×5 |
+| 22 | **Slow Thermo** | Violet line with an open bulb (0.70, 0.50, 0.92) | Non-strict increase from bulb — each cell must be ≥ the previous. Example: 2-2-3-5. | 5×5 |
+| 23 | **Unique Set Line** | Sky-blue line with ring endpoints (0.34, 0.78, 0.90) | No digit may repeat anywhere on the line. | 5×5 |
 
 ### Adjacency / Pair Constraints
 
@@ -388,13 +389,13 @@ Overlays are drawn on a `GridOverlay` RectTransform parented above the Sudoku gr
 
 | Overlay Element | Colour | Technique |
 |----------------|--------|-----------|
-| German Whispers lines | Green (0.12, 0.55, 0.25, 0.75) | Rotated Image rectangles between cell centers + dots on cells |
-| Dutch Whispers lines | Teal (0.04, 0.58, 0.54, 0.80) | Same as above |
-| Parity lines | Blue (0.20, 0.33, 0.80, 0.80) | Same as above |
-| Renban lines | Pink (0.80, 0.35, 0.65, 0.55) | Same as above |
-| Palindrome lines | Grey (0.60, 0.60, 0.60, 0.55) | Same as above |
-| Thermo lines | Warm gradient (bulb → tip) | Circle at bulb + line segments |
-| Between Lines | White gradient (0.90, 0.90, 0.90, 0.55) | Circles at endpoints + line between |
+| German Whispers lines | Green (0.42, 0.72, 0.38) | Opaque band, 0.2 × cell wide: rotated Image rectangles between cell centres + a round joint (dot of the band width) on every cell |
+| Dutch Whispers lines | Orange (0.96, 0.55, 0.25) | Same as above |
+| Parity lines | Blue (0.45, 0.58, 0.96) | Same as above |
+| Renban lines | Pink (0.93, 0.50, 0.76) | Same as above |
+| Palindrome lines | Grey (0.56, 0.56, 0.58) | Same as above |
+| Thermo lines | Light grey (0.72, 0.72, 0.72) | Band + filled bulb (0.34 × cell radius) on the first cell |
+| Between Lines | Taupe (0.76, 0.60, 0.42) | Band + hollow circle (paper inside) at both ends |
 | Kropki white dots | White hollow (outer ring + transparent inner) | Circle at midpoint between cells |
 | Kropki black dots | Black filled (0.10, 0.10, 0.10, 0.90) | Circle at midpoint between cells |
 | Arrow circles | Grey hollow (outer ring + transparent inner) | Large circle on circle cell |
@@ -404,9 +405,9 @@ Overlays are drawn on a `GridOverlay` RectTransform parented above the Sudoku gr
 | Even markers | Blue squares (0.35, 0.65, 0.90, 0.55) | Square Image on cell |
 | Odd markers | Orange circles (0.90, 0.55, 0.20, 0.55) | Circle Image on cell |
 | Fog cells | Near-black (0.06, 0.06, 0.08, 1.00) | Cell background color override; hides digit and pencil text |
-| Consecutive Line | Orange (0.95, 0.65, 0.15, 0.70) | Same line rendering as other line types |
-| Slow Thermo | Purple (0.70, 0.30, 0.80, 0.70) | Line + open ring bulb at start (ring, not filled dot) |
-| Unique Set Line | Sky blue (0.20, 0.70, 0.95, 0.65) | Line + ring at both endpoints |
+| Consecutive Line | Gold (0.86, 0.70, 0.10) | Same line rendering as other line types |
+| Slow Thermo | Violet (0.70, 0.50, 0.92) | Band + open bulb (hollow circle) on the first cell |
+| Unique Set Line | Sky blue (0.34, 0.78, 0.90) | Band + ring at both endpoints |
 | Sum Dot | Grey circle with white sum label | Circle + `DrawOverlayText` for sum value |
 | Greater/Less Than | Orange chevron label (0.95, 0.70, 0.20, 0.90) | `DrawOverlayText` ">" or "<" at midpoint between cells |
 | XV Pairs | Cyan label (0.20, 0.80, 0.90, 0.90) | `DrawOverlayText` "X" or "V" at midpoint between cells |

@@ -59,16 +59,19 @@ namespace SudokuRoguelike.UI
         public static readonly Color KillerBorder = new(0.94f, 0.26f, 0.22f, 1.00f);
 
         // ── Modifier line colors ─────────────────────────────────────────────────
-        public static readonly Color LineGermanWhispers  = new(0.12f, 0.55f, 0.25f, 0.75f);
-        public static readonly Color LineDutchWhispers   = new(0.04f, 0.58f, 0.54f, 0.80f);
-        public static readonly Color LineParityLine      = new(0.20f, 0.33f, 0.80f, 0.80f); // blue (BossMechanicsSystem.md), apart from teal Dutch whispers
-        public static readonly Color LineRenbanLine      = new(0.95f, 0.52f, 0.12f, 0.75f);
-        public static readonly Color LinePalindrome      = new(0.55f, 0.30f, 0.85f, 1.0f);
-        public static readonly Color LineThermo          = new(0.85f, 0.45f, 0.10f, 0.70f);
-        public static readonly Color LineBetweenLine     = new(0.42f, 0.40f, 0.36f, 0.70f);
-        public static readonly Color LineConsecutiveLine = new(0.95f, 0.65f, 0.15f, 0.70f);
-        public static readonly Color LineSlowThermo      = new(0.70f, 0.30f, 0.80f, 0.70f);
-        public static readonly Color LineUniqueSetLine   = new(0.20f, 0.70f, 0.95f, 0.65f);
+        // [REQ: BOSS-MOD-002] The colours puzzle setters use (Logic Masters, GM Puzzles, Cracking the Cryptic): green German
+        // Whispers, orange Dutch Whispers, pink Renban, grey Palindrome, grey thermometers (GAP-048). Lines are opaque
+        // bands through the cell centres, so overlaps never darken; ink digits keep >= 5:1 on every band.
+        public static readonly Color LineGermanWhispers  = new(0.42f, 0.72f, 0.38f, 1f); // green
+        public static readonly Color LineDutchWhispers   = new(0.96f, 0.55f, 0.25f, 1f); // orange
+        public static readonly Color LineParityLine      = new(0.45f, 0.58f, 0.96f, 1f); // blue
+        public static readonly Color LineRenbanLine      = new(0.93f, 0.50f, 0.76f, 1f); // pink
+        public static readonly Color LinePalindrome      = new(0.56f, 0.56f, 0.58f, 1f); // grey
+        public static readonly Color LineThermo          = new(0.72f, 0.72f, 0.72f, 1f); // light grey, with a bulb
+        public static readonly Color LineBetweenLine     = new(0.76f, 0.60f, 0.42f, 1f); // taupe, with a circle at each end
+        public static readonly Color LineConsecutiveLine = new(0.86f, 0.70f, 0.10f, 1f); // gold
+        public static readonly Color LineSlowThermo      = new(0.70f, 0.50f, 0.92f, 1f); // violet, with an open bulb
+        public static readonly Color LineUniqueSetLine   = new(0.34f, 0.78f, 0.90f, 1f); // sky blue, with rings at the ends
 
         // ── Modifier overlay markers ─────────────────────────────────────────────
         public static readonly Color OverlayKropkiSum    = new(0.45f, 0.45f, 0.50f, 0.90f);

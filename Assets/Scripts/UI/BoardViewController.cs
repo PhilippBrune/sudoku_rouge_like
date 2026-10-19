@@ -757,49 +757,40 @@ namespace SudokuRoguelike.UI
             var tH = cH * _boardSize + sY * (_boardSize - 1);
 
             // Lines (each modifier draws into its own layer, see BoardViewController.OverlayGroups)
-            // [REQ: ACCESS-OVERLAY-001] Overlay rendering applies accessibility multipliers: GetLineWidthMultiplier ×1.5 (wide lines), GetOverlayAlpha ×1.4 (stronger tints)
+            // [REQ: ACCESS-OVERLAY-001] High contrast widens the line bands (GetLineWidthMultiplier ×1.5); the bands are
+            // opaque, so GetOverlayAlpha only applies to the translucent overlays below. Alt symbols add a text cue per line.
             var lineWidthMult = accessibility.GetLineWidthMultiplier();
+            // [REQ: BOSS-MOD-002] A line is a band a fifth of a cell wide through the cell centres, with round joints;
+            // thermometers get a bulb (filled; open for Slow Thermo), Between lines a circle at both ends (GAP-048).
+            var bandW = Mathf.Min(cW, cH) * 0.20f * lineWidthMult;
+            var bulbR = Mathf.Min(cW, cH) * 0.34f;
             for (var li = 0; li < overlay.Lines.Count; li++)
             {
                 var line = overlay.Lines[li];
                 UseOverlayGroup(LineKey(line.Type));
                 var color = GetLineColor(line.Type);
-                var spineAlpha = new Color(color.r, color.g, color.b,
-                    accessibility.GetOverlayAlpha(color.a * 0.50f));
-                var spineW = 3f * lineWidthMult;
-
-                for (var ci = 0; ci < line.Cells.Count - 1; ci++)
-                    DrawOverlayLine(line.Cells[ci], line.Cells[ci + 1], spineAlpha, spineW, cW, cH, sX, sY, tW, tH);
-
-                var ringOuter = Mathf.Min(cW, cH) * 0.44f;
-                for (var ci = 0; ci < line.Cells.Count; ci++)
-                    DrawRingDot(line.Cells[ci], color, ringOuter, cW, cH, sX, sY, tW, tH);
+                // Hollow ends (Slow Thermo bulb, Between and Unique Set ends) are rings; the band stops at the ring,
+                // so the cell shows through the hole whatever its colour.
+                var openStart = line.Type == LineType.SlowThermo || line.Type == LineType.BetweenLine
+                                || line.Type == LineType.UniqueSetLine;
+                var openEnd = line.Cells.Count >= 2
+                              && (line.Type == LineType.BetweenLine || line.Type == LineType.UniqueSetLine);
+                var trim = bulbR * OpenRingInner;
+                DrawLineBand(line.Cells, color, bandW, openStart ? trim : 0f, openEnd ? trim : 0f, cW, cH, sX, sY, tW, tH);
 
                 if (line.Type == LineType.Thermo && line.Cells.Count > 0)
-                    DrawDot(line.Cells[0], color, ringOuter + 4f, cW, cH, sX, sY, tW, tH);
-
-                if (line.Type == LineType.SlowThermo && line.Cells.Count > 0)
-                    DrawRingDot(line.Cells[0], color, ringOuter + 5f, cW, cH, sX, sY, tW, tH);
-
-                if (line.Type == LineType.BetweenLine && line.Cells.Count >= 2)
-                {
-                    var last = line.Cells[line.Cells.Count - 1];
-                    DrawRingDot(line.Cells[0], color, ringOuter + 4f, cW, cH, sX, sY, tW, tH);
-                    DrawRingDot(last, color, ringOuter + 4f, cW, cH, sX, sY, tW, tH);
-                }
-
-                if (line.Type == LineType.UniqueSetLine && line.Cells.Count >= 2)
-                {
-                    DrawRingDot(line.Cells[0], color, ringOuter + 3f, cW, cH, sX, sY, tW, tH);
-                    DrawRingDot(line.Cells[line.Cells.Count - 1], color, ringOuter + 3f, cW, cH, sX, sY, tW, tH);
-                }
+                    DrawDot(line.Cells[0], color, bulbR, cW, cH, sX, sY, tW, tH);
+                if (openStart && line.Cells.Count > 0)
+                    DrawOpenRing(line.Cells[0], color, bulbR, cW, cH, sX, sY, tW, tH);
+                if (openEnd)
+                    DrawOpenRing(line.Cells[line.Cells.Count - 1], color, bulbR, cW, cH, sX, sY, tW, tH);
 
                 if (accessibility != null && accessibility.UseAltSymbols && line.Cells.Count > 0)
                 {
                     var fc = line.Cells[0];
                     var abbrX = fc.Col * (cW + sX) + cW * 0.5f - tW * 0.5f;
                     var abbrY = -(fc.Row * (cH + sY) + cH * 0.5f - tH * 0.5f);
-                    DrawOverlayText(abbrX, abbrY, BossService.GetLineTypeAbbreviation(line.Type), 8, Color.white);
+                    DrawOverlayText(abbrX, abbrY, BossService.GetLineTypeAbbreviation(line.Type), 8, GamePalette.CellNumberGiven);
                 }
             }
 
@@ -970,11 +961,13 @@ namespace SudokuRoguelike.UI
         private void DrawOverlayLine(CellCoord a, CellCoord b, Color color, float width,
             float cW, float cH, float sX, float sY, float tW, float tH)
         {
-            var ax = a.Col * (cW + sX) + cW * 0.5f - tW * 0.5f;
-            var ay = -(a.Row * (cH + sY) + cH * 0.5f - tH * 0.5f);
-            var bx = b.Col * (cW + sX) + cW * 0.5f - tW * 0.5f;
-            var by = -(b.Row * (cH + sY) + cH * 0.5f - tH * 0.5f);
-            var dx = bx - ax; var dy = by - ay;
+            DrawOverlaySegment(CellCenter(a, cW, cH, sX, sY, tW, tH), CellCenter(b, cW, cH, sX, sY, tW, tH), color, width);
+        }
+
+        private void DrawOverlaySegment(Vector2 from, Vector2 to, Color color, float width)
+        {
+            var ax = from.x; var ay = from.y;
+            var dx = to.x - ax; var dy = to.y - ay;
             var len = Mathf.Sqrt(dx * dx + dy * dy);
 
             var go = new GameObject("Line", typeof(RectTransform), typeof(Image));
@@ -996,6 +989,53 @@ namespace SudokuRoguelike.UI
             var px = c.Col * (cW + sX) + cW * 0.5f - tW * 0.5f;
             var py = -(c.Row * (cH + sY) + cH * 0.5f - tH * 0.5f);
             DrawCircle(px, py, radius, color);
+        }
+
+        // Inner radius of the ring drawn at hollow line ends, as a share of its outer radius.
+        private const float OpenRingInner = 0.66f;
+        private static Sprite _openRingSprite;
+
+        // One line as an opaque band: a segment between each pair of cells and a round joint on every cell. A trim
+        // shortens the first or last segment (it then starts at a ring instead of a round end).
+        private void DrawLineBand(IReadOnlyList<CellCoord> cells, Color color, float width, float trimStart, float trimEnd,
+            float cW, float cH, float sX, float sY, float tW, float tH)
+        {
+            for (var ci = 0; ci < cells.Count - 1; ci++)
+            {
+                var a = CellCenter(cells[ci], cW, cH, sX, sY, tW, tH);
+                var b = CellCenter(cells[ci + 1], cW, cH, sX, sY, tW, tH);
+                var dir = (b - a).normalized;
+                if (ci == 0 && trimStart > 0f) a += dir * trimStart;
+                if (ci == cells.Count - 2 && trimEnd > 0f) b -= dir * trimEnd;
+                DrawOverlaySegment(a, b, color, width);
+            }
+            for (var ci = 0; ci < cells.Count; ci++)
+            {
+                if ((ci == 0 && trimStart > 0f) || (ci == cells.Count - 1 && trimEnd > 0f)) continue;
+                DrawDot(cells[ci], color, width * 0.5f, cW, cH, sX, sY, tW, tH);
+            }
+        }
+
+        private static Vector2 CellCenter(CellCoord c, float cW, float cH, float sX, float sY, float tW, float tH) =>
+            new Vector2(c.Col * (cW + sX) + cW * 0.5f - tW * 0.5f, -(c.Row * (cH + sY) + cH * 0.5f - tH * 0.5f));
+
+        // A thick ring in the line colour; the cell shows through its hole (Slow Thermo bulb, Between and Unique Set ends).
+        private void DrawOpenRing(CellCoord c, Color color, float radius,
+            float cW, float cH, float sX, float sY, float tW, float tH)
+        {
+            if (_openRingSprite == null) _openRingSprite = BuildRingSprite(OpenRingInner);
+            var p = CellCenter(c, cW, cH, sX, sY, tW, tH);
+            var go = new GameObject("OpenRing", typeof(RectTransform), typeof(Image));
+            go.transform.SetParent(OverlayParent, false);
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = p;
+            rt.sizeDelta = new Vector2(radius * 2f, radius * 2f);
+            var img = go.GetComponent<Image>();
+            img.sprite = _openRingSprite;
+            img.color = color;
+            img.raycastTarget = false;
+            _overlayObjects.Add(go);
         }
 
         private void DrawRingDot(CellCoord c, Color color, float radius,
@@ -1080,14 +1120,14 @@ namespace SudokuRoguelike.UI
             return Sprite.Create(tex, new Rect(0, 0, sz, sz), new Vector2(0.5f, 0.5f));
         }
 
-        private static Sprite BuildRingSprite()
+        private static Sprite BuildRingSprite(float innerRatio = 0.82f)
         {
             const int sz = 64;
             var tex = new Texture2D(sz, sz, TextureFormat.RGBA32, false);
             tex.filterMode = FilterMode.Bilinear;
             var c = sz * 0.5f - 0.5f;
             var outerR = c;
-            var innerR = c * 0.82f;
+            var innerR = c * innerRatio;
             for (var py = 0; py < sz; py++)
             for (var px = 0; px < sz; px++)
             {

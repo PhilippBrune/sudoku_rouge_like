@@ -625,18 +625,17 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
-        public void RenbanLines_RenderOrangeToMatchRuleText()
+        public void RenbanLines_RenderPinkToMatchRuleText()
         {
             var paletteSource = ReadSource(GamePalettePath);
-            // The in-run rule text comes from BossService (InRunUiFactory's unused copy was removed in 1.1).
+            // The rule text comes from BossService; the Custom Puzzle tooltip shows the same text (GAP-048).
             var bossSource = ReadSource(BossServicePath);
-            var mainMenuSource = ReadSource(MainMenuPath);
+            var customSource = ReadSource("Assets/Scripts/UI/MainMenuBlueprintBuilder.CustomPuzzlePanel.cs");
 
-            StringAssert.Contains("LineRenbanLine      = new(0.95f, 0.52f, 0.12f, 0.75f)", paletteSource);
-            StringAssert.Contains("Cells on orange lines form a consecutive set", bossSource);
-            StringAssert.Contains("Orange line: all digits on the line form a consecutive set", mainMenuSource);
-            Assert.That(bossSource, Does.Not.Contain("Pink line"));
-            Assert.That(mainMenuSource, Does.Not.Contain("Pink line: all digits on the line form a consecutive set"));
+            StringAssert.Contains("LineRenbanLine      = new(0.93f, 0.50f, 0.76f, 1f); // pink", paletteSource);
+            StringAssert.Contains("Cells on pink lines form a consecutive set", bossSource);
+            StringAssert.Contains("WireTip(renban, BossModifierId.RenbanLines)", customSource);
+            Assert.That(customSource, Does.Not.Contain("Orange line: all digits on the line form a consecutive set"));
         }
 
         [Test]

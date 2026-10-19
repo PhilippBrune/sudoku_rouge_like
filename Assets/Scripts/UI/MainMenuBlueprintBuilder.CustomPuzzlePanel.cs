@@ -4,6 +4,7 @@ using System.Reflection;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using SudokuRoguelike.Boss;
 using SudokuRoguelike.Bootstrap;
 using SudokuRoguelike.Classes;
 using SudokuRoguelike.Core;
@@ -288,8 +289,10 @@ namespace SudokuRoguelike.UI
             ttText.text = defaultTooltip;
             ttBg.gameObject.SetActive(true);
 
-            void WireTip(Toggle tgl, string desc)
+            // The tooltip is the modifier's rule text, the same (localized) text as on the boss gate and in the legend.
+            void WireTip(Toggle tgl, BossModifierId id)
             {
+                var desc = BossService.GetModifierDescription(id);
                 var et = EnsureComponent<EventTrigger>(tgl.gameObject);
                 var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
                 enter.callback.AddListener(_ => ttText.text = desc);
@@ -299,36 +302,36 @@ namespace SudokuRoguelike.UI
                 et.triggers.Add(exit);
             }
 
-            WireTip(german,        "Green line: neighbours on the line must differ by 5 or more.");
-            WireTip(dutch,         "Teal line: neighbours on the line must differ by 4 or more.");
-            WireTip(parity,        "Cyan line: adjacent cells must strictly alternate between odd and even.");
-            WireTip(renban,        "Orange line: all digits on the line form a consecutive set (any order).");
-            WireTip(diff,          "White dot between cells: those two digits differ by exactly 1.");
-            WireTip(ratio,         "Black dot between cells: one digit is exactly double the other.");
-            WireTip(killer,        "Dashed cage: digits sum to the cage label; no repeats inside the cage.");
-            WireTip(arrow,         "Arrow circles: digits on the arrow sum to the number in the circle.");
-            WireTip(fog,           "Correct placements reveal hidden cells.");
-            WireTip(palindrome,    "Purple line: digits read the same from either end of the line.");
-            WireTip(thermo,        "Orange line with bulb: digits must strictly increase from bulb to tip.");
-            WireTip(between,       "White line: every digit on the line must fall strictly between the two endpoint values.");
-            WireTip(evenOdd,       "Blue square = even digit. Orange circle = odd digit.");
-            WireTip(noncons,       "Global: no two orthogonally adjacent cells may contain consecutive digits.");
-            WireTip(antiknight,    "Global: no two cells a chess knight's move apart may share the same digit.");
-            WireTip(antiking,      "Global: no two cells a king's move apart (including diagonal) may share a digit.");
-            WireTip(antibishop,    "Global: a digit may not repeat within two diagonal steps.");
-            WireTip(nonconsecDiag, "Global: diagonally adjacent cells cannot be consecutive (e.g. 4 cannot touch 3 or 5 diagonally).");
-            WireTip(distGe2,       "Global: equal digits must be at least 2 cells apart (no king-adjacent equal digits).");
-            WireTip(entropy,       "Every 3 consecutive row/col cells must contain one low (1-3), one mid (4-6), and one high (7-9) digit.");
-            WireTip(modular,       "Every box region must contain at least one digit from {1-3}, {4-6}, and {7-9}.");
-            WireTip(consecLine,    "Orange line: adjacent cells on the line must differ by exactly 1 (e.g. 3-4-5).");
-            WireTip(slowThermo,    "Purple line with open bulb: digits must increase or stay equal from bulb to tip (e.g. 2-2-3-5).");
-            WireTip(uniqueSet,     "Sky-blue line: no digit may repeat anywhere on the line.");
-            WireTip(fullKropki,    "All diff-by-1 pairs show a white dot; all 1:2 ratio pairs show a black dot. No dot = neither.");
-            WireTip(sumKropki,     "Labelled dot between two cells: those cells must sum to that value.");
-            WireTip(greaterLess,   "Orange chevrons (> / <) between cells indicate which digit must be larger.");
-            WireTip(xvPairs,       "X between two cells: they sum to 10. V between two cells: they sum to 5.");
-            WireTip(primeCells,    "Gold 'P' cells must contain a prime digit: 2, 3, 5, or 7.");
-            WireTip(fortressCells, "Grey shaded cells must be strictly greater than every orthogonally adjacent unshaded cell.");
+            WireTip(german, BossModifierId.GermanWhispers);
+            WireTip(dutch, BossModifierId.DutchWhispers);
+            WireTip(parity, BossModifierId.ParityLines);
+            WireTip(renban, BossModifierId.RenbanLines);
+            WireTip(diff, BossModifierId.DifferenceKropki);
+            WireTip(ratio, BossModifierId.RatioKropki);
+            WireTip(killer, BossModifierId.KillerCages);
+            WireTip(arrow, BossModifierId.ArrowSums);
+            WireTip(fog, BossModifierId.FogOfWar);
+            WireTip(palindrome, BossModifierId.Palindrome);
+            WireTip(thermo, BossModifierId.Thermo);
+            WireTip(between, BossModifierId.BetweenLines);
+            WireTip(evenOdd, BossModifierId.EvenOdd);
+            WireTip(noncons, BossModifierId.Nonconsecutive);
+            WireTip(antiknight, BossModifierId.Antiknight);
+            WireTip(antiking, BossModifierId.Antiking);
+            WireTip(antibishop, BossModifierId.AntiBishop);
+            WireTip(nonconsecDiag, BossModifierId.NonconsecDiagonal);
+            WireTip(distGe2, BossModifierId.DistanceGe2);
+            WireTip(entropy, BossModifierId.EntropyGlobal);
+            WireTip(modular, BossModifierId.ModularRegions);
+            WireTip(consecLine, BossModifierId.ConsecutiveLine);
+            WireTip(slowThermo, BossModifierId.SlowThermo);
+            WireTip(uniqueSet, BossModifierId.UniqueSetLine);
+            WireTip(fullKropki, BossModifierId.FullKropki);
+            WireTip(sumKropki, BossModifierId.SumKropki);
+            WireTip(greaterLess, BossModifierId.GreaterLessThan);
+            WireTip(xvPairs, BossModifierId.XVPairs);
+            WireTip(primeCells, BossModifierId.PrimeCells);
+            WireTip(fortressCells, BossModifierId.FortressCells);
 
             // Wire tutorial controller ? order matches TutorialMenuController.GetConfig() allModifiers (30 total)
             // MM-3: Pass null for the 3 dropdown params; size/stars/region are wired via SetXxxIndex above

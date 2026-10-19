@@ -48,6 +48,52 @@ namespace SudokuRoguelike.Tests
                 "parity and Dutch whisper lines must look different on one board");
         }
 
+        private static readonly (string name, Color color)[] LineColours =
+        {
+            ("German Whispers", GamePalette.LineGermanWhispers), ("Dutch Whispers", GamePalette.LineDutchWhispers),
+            ("Parity", GamePalette.LineParityLine), ("Renban", GamePalette.LineRenbanLine),
+            ("Palindrome", GamePalette.LinePalindrome), ("Thermo", GamePalette.LineThermo),
+            ("Between", GamePalette.LineBetweenLine), ("Consecutive", GamePalette.LineConsecutiveLine),
+            ("Slow Thermo", GamePalette.LineSlowThermo), ("Unique Set", GamePalette.LineUniqueSetLine)
+        };
+
+        // GAP-048: the colours puzzle setters use. Hue in degrees from Color.RGBToHSV.
+        [Test]
+        public void LineColours_FollowTheCommonConvention()
+        {
+            Assert.That(Hue(GamePalette.LineGermanWhispers), Is.InRange(90f, 150f), "German Whispers are green");
+            Assert.That(Hue(GamePalette.LineDutchWhispers), Is.InRange(15f, 35f), "Dutch Whispers are orange");
+            Assert.That(Hue(GamePalette.LineRenbanLine), Is.InRange(300f, 340f), "Renban lines are pink");
+            Assert.That(Saturation(GamePalette.LinePalindrome), Is.LessThan(0.08f), "Palindromes are grey");
+            Assert.That(Saturation(GamePalette.LineThermo), Is.LessThan(0.08f), "thermometers are grey");
+            Assert.That(Hue(GamePalette.LineConsecutiveLine), Is.InRange(40f, 60f), "Consecutive lines are gold");
+        }
+
+        [Test]
+        public void LineColours_AreOpaque_TellApart_AndKeepInkDigitsReadable()
+        {
+            for (var i = 0; i < LineColours.Length; i++)
+            {
+                var (name, color) = LineColours[i];
+                Assert.AreEqual(1f, color.a, $"{name}: opaque, so overlapping segments never darken");
+                Assert.GreaterOrEqual(Contrast(GamePalette.CellNumberGiven, color), MinTextContrast, $"ink digit on {name}");
+                for (var j = i + 1; j < LineColours.Length; j++)
+                    Assert.Greater(Distance(color, LineColours[j].color), 0.2f, $"{name} vs {LineColours[j].name}");
+            }
+        }
+
+        private static float Hue(Color c)
+        {
+            Color.RGBToHSV(c, out var h, out _, out _);
+            return h * 360f;
+        }
+
+        private static float Saturation(Color c)
+        {
+            Color.RGBToHSV(c, out _, out var s, out _);
+            return s;
+        }
+
         // WCAG 2.x relative luminance and contrast ratio; alpha is ignored (board colours are opaque).
         private static double Contrast(Color a, Color b)
         {

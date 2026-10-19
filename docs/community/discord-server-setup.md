@@ -243,3 +243,10 @@ The game categories are visible to everyone by default. Onboarding pre-selects w
 2. They need 2FA on their account (step above) before they can moderate.
 3. Server Settings → Members → find them → **+** → *Moderator* (or right-click their name → Roles → Moderator). The Moderator role can delete messages, manage threads and time members out; kicks and bans stay with you.
 4. Optional: a private `#staff` channel for moderator notes (I can add it to `layout.json` and run `apply`).
+
+## 15. Safety done, roadmap posted, Admin role (2026-10-19)
+
+- **Done by you:** *Require 2FA for moderator actions* is on (the server reports MFA level 1) and a second human moderator has the Moderator role.
+- **Roadmap:** posted to `#roadmap` (picture and text) after your "post roadmap".
+- **Admin role:** `layout.json` has an **Admin** role (Administrator, shown separately in the member list) directly under the bot's role; Kratossos (101708598840692736, the server owner) has it. As the owner you already had every permission; the role makes it visible.
+- **Giving roles from the command line:** `python tools/discord/discord_admin.py give-role <role> <user-id>`, for example `give-role Playtester <id>` for a beta tester. The user id comes from Developer Mode (User Settings → Advanced → Developer Mode, then right-click the member → Copy User ID). A role with Administrator needs `--yes` as a last argument, so it is never handed out by accident.

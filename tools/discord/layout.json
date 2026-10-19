@@ -26,6 +26,15 @@
   ],
   "roles": [
     {
+      "name": "Admin",
+      "color": "#B5523B",
+      "hoist": true,
+      "mentionable": false,
+      "permissions": [
+        "ADMINISTRATOR"
+      ]
+    },
+    {
       "name": "Moderator",
       "color": "#C9A227",
       "hoist": true,
@@ -102,6 +111,7 @@
   ],
   "role_order": [
     "@bot",
+    "Admin",
     "Moderator",
     "Seed Champion",
     "Playtester",

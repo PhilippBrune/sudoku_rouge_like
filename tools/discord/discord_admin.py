@@ -13,6 +13,8 @@ logged or written anywhere else. Standard library only.
     python tools/discord/discord_admin.py set-icon <png>                       # server icon (brand/server_icon.png)
     python tools/discord/discord_admin.py invite [channel]                     # the permanent invite link
     python tools/discord/discord_admin.py export-credits                       # Playtester/Translator names -> game credits
+    python tools/discord/discord_admin.py give-role <role> <user-id> [--yes]   # e.g. Playtester for a beta tester;
+                                                                               # a role with Administrator needs --yes
     python tools/discord/discord_admin.py poll <channel> "Question?" "🎵 Answer one" "Answer two" ...  # 72 h poll
 
 Forum channels need Community (Server Settings -> Enable Community); until then plan/apply list them as waiting.
@@ -544,6 +546,47 @@ def cmd_poll(layout, channel_name, question, answers, hours=72, multi=False):
     print(f'Poll posted in #{channel["name"]} ({hours} h)')
 
 
+def parse_user_id(text):
+    """A Discord user id (snowflake): digits only, as copied with Developer Mode (right-click -> Copy User ID)."""
+    value = text.strip()
+    if not re.fullmatch(r'\d{17,20}', value, re.ASCII):
+        sys.exit(f'Not a Discord user id: {text!r} (right-click the member with Developer Mode on -> Copy User ID)')
+    return value
+
+
+def printable(text):
+    """A member's name as typed by them, without control characters, for the terminal."""
+    return ''.join(ch for ch in str(text) if ch.isprintable())
+
+
+def cmd_give_role(layout, role_name, user_text, confirmed=False):
+    """Gives a server member one role. The role must sit below the bot's own role; Administrator needs --yes."""
+    user_id = parse_user_id(user_text)
+    state = State(guild_id(layout))
+    role = state.role(role_name)
+    if role is None or role_name in ('@everyone', '@bot'):
+        sys.exit(f'No role "{role_name}" (roles come from layout.json via apply)')
+    if not state.bot_perms() & (P['MANAGE_ROLES'] | P['ADMINISTRATOR']):
+        sys.exit('The bot lacks "Manage Roles". Nothing was changed.')
+    if int(role['permissions']) & P['ADMINISTRATOR'] and not confirmed:
+        sys.exit(f'"{role_name}" has Administrator (full control of the server). Repeat with --yes to give it.')
+    bot_top = state.role('@bot')
+    if bot_top is None or role['position'] >= bot_top['position']:
+        sys.exit(f'"{role_name}" is not below the bot\'s role; move it down in Server Settings -> Roles first.')
+    try:
+        member = api('GET', f'/guilds/{state.gid}/members/{user_id}')
+    except ApiError as e:
+        if e.status == 404:
+            sys.exit(f'User {user_id} is not a member of the server. Nothing was changed.')
+        raise
+    name = printable(member.get('nick') or member['user'].get('global_name') or member['user']['username'])
+    if role['id'] in member['roles']:
+        print(f'{name} already has "{role_name}".')
+        return
+    api('PUT', f'/guilds/{state.gid}/members/{user_id}/roles/{role["id"]}', None, f'give {role_name}')
+    print(f'Gave "{role_name}" to {name}.')
+
+
 def list_members(gid):
     """All members (needs "Server Members Intent" on the bot: Developer Portal -> Bot -> Privileged Gateway Intents)."""
     try:
@@ -623,6 +666,8 @@ def main(argv):
             cmd_export_credits(layout)
         elif cmd == 'invite':
             cmd_invite(layout, *rest[:1])
+        elif cmd == 'give-role' and len(rest) in (2, 3) and rest[2:] in ([], ['--yes']):
+            cmd_give_role(layout, rest[0], rest[1], confirmed=rest[2:] == ['--yes'])
         elif cmd == 'poll' and len(rest) >= 4:
             cmd_poll(layout, rest[0], rest[1], rest[2:])
         else:

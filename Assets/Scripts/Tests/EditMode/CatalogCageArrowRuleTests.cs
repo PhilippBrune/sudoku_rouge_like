@@ -131,6 +131,53 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
+        [Requirement("BOSS-LIB-067")]
+        public void RatioCage_LargerIsTheLabelTimesTheSmaller()
+        {
+            var o = Cage(KillerCageType.Ratio, 3, (0, 0), (0, 1));
+            var rule = new TypedCageRule(KillerCageType.Ratio);
+            Assert.IsTrue(rule.IsValid(With(2), 0, 1, 6, o));
+            Assert.IsFalse(rule.IsValid(With(2), 0, 1, 5, o));
+            Assert.IsFalse(rule.IsValid(Empty(), 0, 1, 4, o), "12 is too big and 4 is not a multiple of 3");
+            Assert.IsTrue(rule.IsValid(Empty(), 0, 1, 9, o));
+        }
+
+        [Test]
+        [Requirement("BOSS-LIB-072")]
+        public void PillArrow_PathAddsUpToTheTwoDigitNumber()
+        {
+            var o = Arrow(ArrowType.Pill, (0, 0), (0, 1), (0, 2), (0, 3));
+            var rule = new TypedArrowRule(ArrowType.Pill);
+            Assert.IsTrue(rule.IsValid(With(1, 4, 9), 0, 3, 5, o), "9 + 5 = 14");
+            Assert.IsFalse(rule.IsValid(With(1, 4, 9), 0, 3, 6, o));
+            Assert.IsFalse(rule.IsValid(With(0, 0, 9, 9), 0, 0, 3, o), "a 3 in front makes at least 31, the path is 18");
+            Assert.IsTrue(rule.IsValid(With(0, 0, 9, 9), 0, 0, 1, o), "1 and 8 make 18");
+        }
+
+        [Test]
+        [Requirement("BOSS-LIB-046")]
+        public void NLine_EveryPieceMakesTen()
+        {
+            var o = FirstRowLine(LineType.NLine, 1, 4, 10);
+            var rule = new RegionSumLineRule(LineType.NLine);
+            Assert.IsTrue(rule.IsValid(With(0, 4), 0, 2, 6, o));
+            Assert.IsFalse(rule.IsValid(With(0, 4), 0, 2, 5, o), "4 + 5 = 9");
+            Assert.IsFalse(rule.IsValid(With(0, 0, 0, 9), 0, 4, 2, o), "9 + 2 = 11");
+        }
+
+        [Test]
+        [Requirement("BOSS-LIB-048")]
+        public void SumLine_AddsUpToTheNumberAtItsEnd()
+        {
+            var o = FirstRowLine(LineType.SumLine, 0, 2, 14);
+            var rule = new SumLineRule();
+            Assert.IsTrue(rule.IsValid(With(2, 5), 0, 2, 7, o));
+            Assert.IsFalse(rule.IsValid(With(2, 5), 0, 2, 8, o));
+            Assert.IsTrue(rule.IsValid(Empty(), 0, 0, 9, o), "9 + 1 + 4 can still make 14");
+            Assert.IsFalse(rule.IsValid(With(9, 9), 0, 2, 1, o), "already 19");
+        }
+
+        [Test]
         [Requirement("BOSS-LIB-073")]
         public void DoubleArrow_PathEqualsBothCircles()
         {

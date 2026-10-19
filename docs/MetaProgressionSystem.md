@@ -1,11 +1,12 @@
 # Meta Progression System
 
-**Version:** 1.6 | **Date:** 2026-10-19 | **Status:** implemented
+**Version:** 1.7 | **Date:** 2026-10-19 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.7 | 2026-10-19 | implemented | Catalog batch B6 (BossMechanicsSystem 2.10) adds 11 modifiers to the codex and completion: 60 clearable modifiers. |
 | 1.6 | 2026-10-19 | implemented | Catalog batch B3 (BossMechanicsSystem 2.9) adds 7 modifiers to the codex and completion: 49 clearable modifiers. |
 | 1.5 | 2026-10-19 | implemented | Owner decision: the 13 catalog modifiers (BossMechanicsSystem 2.8) count toward the codex and completion: 42 clearable modifiers (completion drops a little for existing players). |
 | 1.4 | 2026-10-07 | implemented | 1.1 review decisions (2026-10-07): Ascension marked deferred, META-ASCEND-001..003 reserved (SPEC-CONF-026/036, GAP-017); Monthly Walk always available, no ascension gate (SPEC-CONF-026); Spirit Trials unlock after the first boss defeat (SPEC-CONF-007); completion counts 29 clearable modifiers (SPEC-CONF-019, GAP-009); prestige button as built (GAP-017); prestige reward contradiction logged as SPEC-CONF-039; SPICE table archived (SPEC-OBS-001). Achievements: only the Harmony achievements are implemented; the named and full lists are marked as proposals (SPEC-MAC-008, FUTURE-016); run-end step 11 names `EvaluateHarmonyAchievements`. |
@@ -134,7 +135,7 @@ As built (1.1, GAP-017): level-40 classes show their prestige status in the Meta
 | Check | Condition | Weight |
 |-------|-----------|:---:|
 | All Sizes × All Stars Cleared | Each board size (5–9) completed at each star (1–6) = 30 combos | 25% |
-| All Modifiers Cleared | All 49 clearable player modifiers (IDs 0–29 except Modular Regions, which is never rolled, plus the catalog batches 38, 40–45, 51, 52, 58–60, 64–66, 69, 70, 73, 74, 76) recorded as cleared; a modifier counts when a boss with it is defeated (GAP-009, SPEC-CONF-019) | 25% |
+| All Modifiers Cleared | All 60 clearable player modifiers (IDs 0–29 except Modular Regions, which is never rolled, plus the catalog batches 37, 38, 40–46, 48, 51, 52, 58–61, 63–67, 69, 70, 72–74, 76–78, 80, 93) recorded as cleared; a modifier counts when a boss with it is defeated (GAP-009, SPEC-CONF-019) | 25% |
 | All 8 Classes at Level 30+ | All 8 classes reached Level 30 or higher | 25% |
 | All Relics Discovered | All relics in codex marked Discovered | 25% |
 

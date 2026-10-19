@@ -58,6 +58,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-047](#gap-047) | A chosen modifier can silently miss its overlay when another modifier of the same family has one | FIXED (2026-10-19) | MEDIUM | P2 |
 | [GAP-048](#gap-048) | Line colours differ between the spec, the board and the rule text (Parity Lines looked like Dutch Whispers) | FIXED (2026-10-19) | LOW | P3 |
 | [GAP-049](#gap-049) | Chosen modifiers silently missing on busy boards (white dots under Nonconsecutive, Even/Odd after Prime markers, Palindrome on 9×9) | FIXED (found and fixed 2026-10-19) | HIGH | P1 |
+| [GAP-050](#gap-050) | Catalog lines (Zipper and the other batch lines) could cross themselves in an X | FIXED (found and fixed 2026-10-19) | MEDIUM | P3 |
 | [GAP-044](#gap-044) | Region borders showed the previous puzzle's regions on a same-size board | FIXED (found 2026-10-14 by the owner) | HIGH | P1 |
 | [GAP-043](#gap-043) | Without the `ActiveProfileSlot` pref the game opens an empty slot 0, not the existing profile | FIXED (0.1.5, found 2026-10-14) | LOW | P3 |
 
@@ -842,3 +843,14 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Fix:** Nonconsecutive + Difference Kropki is a blocked pair; Even/Odd counts only its own markers and skips marked cells; palindromes grow outward from a centre cell in pairs of equal solution digits (5 or 7 cells).
 - **Affected Files:** `Assets/Scripts/Boss/BossService.cs`, `Assets/Scripts/Sudoku/ModifierGeometryGenerator.cs`
 - **Tests:** `GenerationReliabilityTests.BossPuzzles_AllFloors_GenerateWithChosenModifiers` (fails without the fix), `ModifierPresenceTests`.
+
+## GAP-050
+**Catalog lines could cross themselves in an X (Zipper lines and the other catalog lines)**
+
+- **Requirement:** BossMechanicsSystem "Line Constraints (Extended)": 8-directional adjacency, no self-crossing; GEN-MOD-002
+- **Status:** FIXED (found and fixed 2026-10-19 by a new check in the catalog test) · **Severity:** MEDIUM · **Priority:** P3
+- **Problem:** A line could take two diagonal steps through the same 2×2 square, so it drew an X and the order of its cells could not be read off the board. Seen on Zipper lines (6×6 seed 22, 9×9 seed 11) and possible on every catalog line. The 0.2.0 beta has it.
+- **Root Cause:** The line growers checked only that a cell was free and not already on the line, not whether the diagonal step crossed an earlier diagonal step; Zipper lines grow two arms from the middle that could cross each other.
+- **Fix:** Every catalog line, arrow path and region-sum piece skips a diagonal step that would cross the path (`CrossesPath`); a finished Zipper line that crosses itself is thrown away (`CrossesItself`).
+- **Affected Files:** `Assets/Scripts/Sudoku/ModifierGeometryGenerator.Catalog.cs`, `ModifierGeometryGenerator.CagesArrows.cs`, `ModifierGeometryGenerator.CatalogB6.cs`
+- **Tests:** `CatalogModifierTests.EveryNewModifier_GeneratesItsGeometry_AndTheSolutionNeverTripsItsRule` (`CheckNoLineCrossesItself`, fails without the fix).

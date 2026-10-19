@@ -63,6 +63,28 @@ namespace SudokuRoguelike.Sudoku
 
         private static int S(SudokuBoard board, CellCoord c) => board.Solution[c.Row, c.Col];
 
+        /// <summary>
+        /// True when the diagonal step from <paramref name="a"/> to <paramref name="b"/> would cross a diagonal step the
+        /// path already takes between the other two cells of their 2×2 square (the line would form an X).
+        /// </summary>
+        private static bool CrossesPath(List<CellCoord> path, CellCoord a, CellCoord b)
+        {
+            if (a.Row == b.Row || a.Col == b.Col) return false;
+            var corner = new CellCoord(a.Row, b.Col);
+            var other = new CellCoord(b.Row, a.Col);
+            var i = path.IndexOf(corner);
+            if (i < 0) return false;
+            return (i > 0 && path[i - 1].Equals(other)) || (i < path.Count - 1 && path[i + 1].Equals(other));
+        }
+
+        /// <summary>True when two diagonal steps of the line cross in one 2×2 square.</summary>
+        private static bool CrossesItself(List<CellCoord> cells)
+        {
+            for (var i = 0; i < cells.Count - 1; i++)
+                if (CrossesPath(cells, cells[i], cells[i + 1])) return true;
+            return false;
+        }
+
         // Grows up to the scaled count of lines of one type from random free start cells; canExtend decides whether a
         // free neighbour of the path's end may join. A line needs at least two cells the player fills in.
         private static void GrowLineSet(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale, LineType type,
@@ -89,7 +111,7 @@ namespace SudokuRoguelike.Sudoku
                     {
                         var next = new CellCoord(end.Row + Dirs[d].Dr, end.Col + Dirs[d].Dc);
                         if (next.Row < 0 || next.Row >= size || next.Col < 0 || next.Col >= size) continue;
-                        if (!IsCellFree(next.Row, next.Col, used) || path.Contains(next)) continue;
+                        if (!IsCellFree(next.Row, next.Col, used) || path.Contains(next) || CrossesPath(path, end, next)) continue;
                         if (canExtend(path, next)) candidates.Add(next);
                     }
                     if (candidates.Count == 0) break;
@@ -187,7 +209,8 @@ namespace SudokuRoguelike.Sudoku
             var line = new ModifierLine { Type = LineType.ZipperLine };
             for (var i = left.Count - 1; i >= 0; i--) line.Cells.Add(left[i]);
             for (var i = oddLength ? 1 : 0; i < right.Count; i++) line.Cells.Add(right[i]);
-            return line;
+            // The two arms grow apart from the middle and can still cross each other.
+            return CrossesItself(line.Cells) ? null : line;
         }
 
         // ── B2: complete Kropki sets, Difference ≥ K, Multiples, Mirror cells ──
@@ -280,6 +303,10 @@ namespace SudokuRoguelike.Sudoku
 
         // Mirror pairs: a cell and its reflection through the centre of the grid hold the same digit; at least one of
         // the two is open.
+        private static bool HasCornerBadge(ModifierOverlayData overlay, CellCoord cell) =>
+            overlay.CellPairs.Exists(p => p.CellA.Equals(cell) || p.CellB.Equals(cell))
+            || overlay.CellMarkers.Exists(m => m.Type == MarkerType.DistanceCellSource && m.Cell.Equals(cell));
+
         private static void GenerateMirrorCellPairs(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale)
         {
             var size = board.Size;
@@ -292,7 +319,9 @@ namespace SudokuRoguelike.Sudoku
                 if (r * size + c >= b.Row * size + b.Col) continue;   // each pair once, never the centre cell
                 if (S(board, a) != S(board, b)) continue;
                 if (board.GivenMask[a.Row, a.Col] && board.GivenMask[b.Row, b.Col]) continue;
-                // The letter badge sits in a corner, so a mirror cell may also carry a line or a marker.
+                // The letter badge sits in the upper-right corner, so a mirror cell may also carry a line or a marker,
+                // but not another corner badge (opposite sums, distance pairs, distance cells).
+                if (HasCornerBadge(overlay, a) || HasCornerBadge(overlay, b)) continue;
                 pairs.Add((a, b));
             }
             Shuffle(pairs, rng);

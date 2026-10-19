@@ -199,7 +199,8 @@ namespace SudokuRoguelike.Core
         SkyscraperLine,      // endpoint encodes visible count
         ThermoLoop,          // closed-loop non-strict increase
         FastThermo,          // each cell ≥ prev + LineValue
-        AmbiguousThermo      // direction hidden; enforce from first cell
+        AmbiguousThermo,     // direction hidden; enforce from first cell
+        ZoneWhisper          // whisper (≥5) outside the negation zone, < 5 for steps inside it
     }
 
     public enum MarkerType

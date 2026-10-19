@@ -35,6 +35,8 @@ namespace SudokuRoguelike.Sudoku
         public bool FullWhiteKropkiNeg; // FullWhiteKropki: absence forbids diff=1
         public bool FullBlackKropkiNeg; // FullBlackKropki: absence forbids ratio=1:2
         public bool IsIndexParity;      // IndexParity: (row+col)%2 parity groups
+        // ConstraintNegationZone: the shaded area where whisper lines (LineType.ZoneWhisper) flip to "differ by less than 5"
+        public List<CellCoord> NegationZone = new List<CellCoord>();
     }
 
     [Serializable]
@@ -125,7 +127,8 @@ namespace SudokuRoguelike.Sudoku
     public enum CellPairType
     {
         Mirror,       // CellA and CellB must contain the same digit
-        OppositeSum   // CellA + CellB = Value
+        OppositeSum,  // CellA + CellB = Value
+        Distance      // |CellA − CellB| = Value, the steps between the two cells
     }
 
     [Serializable]

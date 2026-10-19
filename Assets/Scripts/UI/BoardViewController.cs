@@ -764,6 +764,7 @@ namespace SudokuRoguelike.UI
             // thermometers get a bulb (filled; open for Slow Thermo), Between lines a circle at both ends (GAP-048).
             var bandW = Mathf.Min(cW, cH) * 0.20f * lineWidthMult;
             var bulbR = Mathf.Min(cW, cH) * 0.34f;
+            DrawNegationZone(overlay, cW, cH, sX, sY, tW, tH);   // under the lines that cross it
             for (var li = 0; li < overlay.Lines.Count; li++)
             {
                 var line = overlay.Lines[li];
@@ -835,6 +836,11 @@ namespace SudokuRoguelike.UI
                         DrawDifferenceKPair(pair, overlay, cW, cH, sX, sY, tW, tH);
                         continue;
                     }
+                    if (pair.Type == PairConstraintType.RatioN)
+                    {
+                        DrawRatioNPair(pair, cW, cH, sX, sY, tW, tH);
+                        continue;
+                    }
                     var mr = (pair.CellA.Row + pair.CellB.Row) / 2f;
                     var mc = (pair.CellA.Col + pair.CellB.Col) / 2f;
                     var px = mc * (cW + sX) + cW * 0.5f - tW * 0.5f;
@@ -876,6 +882,7 @@ namespace SudokuRoguelike.UI
                     DrawMultipleMarker(m, cW, cH, sX, sY, tW, tH);
                     continue;
                 }
+                if (DrawCatalogMarker(m, cW, cH, sX, sY, tW, tH)) continue;
                 UseOverlayGroup(m.Type == MarkerType.Prime ? PrimeKey : m.Type == MarkerType.Fortress ? FortressKey : EvenOddKey);
                 var px = m.Cell.Col * (cW + sX) + cW * 0.5f - tW * 0.5f;
                 var py = -(m.Cell.Row * (cH + sY) + cH * 0.5f - tH * 0.5f);
@@ -922,6 +929,7 @@ namespace SudokuRoguelike.UI
                 }
             }
             DrawMirrorPairs(overlay, cW, cH, sX, sY, tW, tH);
+            DrawValuePairs(overlay, cW, cH, sX, sY, tW, tH);
             UseOverlayGroup(null);
         }
 
@@ -949,6 +957,7 @@ namespace SudokuRoguelike.UI
             LineType.NLine              => GamePalette.LineNLine,
             LineType.SumLine            => GamePalette.LineSumLine,
             LineType.WhisperGeneralized => GamePalette.LineWhisperK,
+            LineType.ZoneWhisper        => GamePalette.LineGermanWhispers,
             _                        => GamePalette.LineGermanWhispers
         };
 

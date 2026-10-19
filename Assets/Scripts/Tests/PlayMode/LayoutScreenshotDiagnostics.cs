@@ -323,6 +323,12 @@ namespace SudokuRoguelike.Tests
                     BossModifierId.CageDifference, BossModifierId.RenbanCage }),
                 ("after_catalog_arrows_region_sum.png", new[] { BossModifierId.ArrowAverage, BossModifierId.DoubleArrow,
                     BossModifierId.RegionSumLine }),
+                ("after_catalog_b6_lines.png", new[] { BossModifierId.WhisperGeneralized, BossModifierId.NLine,
+                    BossModifierId.SumLine, BossModifierId.ConstraintNegationZone }),
+                ("after_catalog_b6_pairs.png", new[] { BossModifierId.RatioN, BossModifierId.DistancePair,
+                    BossModifierId.CageRatio, BossModifierId.PillArrow }),
+                ("after_catalog_b6_cells.png", new[] { BossModifierId.OppositeCellsSum, BossModifierId.CountingCircles,
+                    BossModifierId.DistanceCell }),
             };
             _puzzleSize = 9;
             var seed = 7330;

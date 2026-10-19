@@ -50,6 +50,15 @@ namespace SudokuRoguelike.Sudoku
             var scale = IntensityScale(intensity);
             UsedCells.Clear();
 
+            // The inverted zone goes first and claims its 3×3 area: lines, cages, arrows and marks of the other modifiers
+            // keep out of it (complete Kropki dot sets still cover the whole board).
+            if (modifiers.Contains(BossModifierId.ConstraintNegationZone))
+            {
+                modifiers = new List<BossModifierId>(modifiers);
+                modifiers.Remove(BossModifierId.ConstraintNegationZone);
+                modifiers.Insert(0, BossModifierId.ConstraintNegationZone);
+            }
+
             for (var i = 0; i < modifiers.Count; i++)
             {
                 var linesBefore = overlay.Lines.Count;
@@ -181,6 +190,41 @@ namespace SudokuRoguelike.Sudoku
                         break;
                     case BossModifierId.RegionSumLine:
                         GenerateRegionSumLines(board, overlay, rng, scale, LineType.RegionSumLine);
+                        break;
+
+                    // Batch B6 (ModifierGeometryGenerator.CatalogB6.cs and .CagesArrows.cs)
+                    case BossModifierId.WhisperGeneralized:
+                        GenerateWhisperKLines(board, overlay, rng, scale);
+                        break;
+                    case BossModifierId.NLine:
+                        GenerateRegionSumLines(board, overlay, rng, scale, LineType.NLine);
+                        break;
+                    case BossModifierId.SumLine:
+                        GenerateSumLines(board, overlay, rng, scale);
+                        break;
+                    case BossModifierId.RatioN:
+                        GenerateRatioNPairs(board, overlay, rng, scale);
+                        break;
+                    case BossModifierId.DistancePair:
+                        GenerateDistancePairs(board, overlay, rng, scale);
+                        break;
+                    case BossModifierId.CageRatio:
+                        GenerateTypedCages(board, overlay, rng, scale, KillerCageType.Ratio);
+                        break;
+                    case BossModifierId.PillArrow:
+                        GenerateTypedArrows(board, overlay, rng, scale, ArrowType.Pill);
+                        break;
+                    case BossModifierId.OppositeCellsSum:
+                        GenerateOppositeSums(board, overlay, rng, scale);
+                        break;
+                    case BossModifierId.CountingCircles:
+                        GenerateCountingCircles(board, overlay, rng, scale);
+                        break;
+                    case BossModifierId.DistanceCell:
+                        GenerateDistanceCells(board, overlay, rng, scale);
+                        break;
+                    case BossModifierId.ConstraintNegationZone:
+                        GenerateNegationZone(board, overlay, rng, scale);
                         break;
                 }
 

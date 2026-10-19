@@ -64,6 +64,17 @@ namespace SudokuRoguelike.UI
             BossModifierId.RenbanCage         => new[] { RenbanCagesKey },
             BossModifierId.ArrowAverage       => new[] { AverageArrowsKey },
             BossModifierId.DoubleArrow        => new[] { DoubleArrowsKey },
+            BossModifierId.WhisperGeneralized => new[] { LineKey(LineType.WhisperGeneralized) },
+            BossModifierId.NLine              => new[] { LineKey(LineType.NLine) },
+            BossModifierId.SumLine            => new[] { LineKey(LineType.SumLine) },
+            BossModifierId.RatioN             => new[] { RatioNKey },
+            BossModifierId.DistancePair       => new[] { DistancePairKey },
+            BossModifierId.CageRatio          => new[] { RatioCagesKey },
+            BossModifierId.PillArrow          => new[] { PillArrowsKey },
+            BossModifierId.OppositeCellsSum   => new[] { OppositeSumKey },
+            BossModifierId.CountingCircles    => new[] { CountingKey },
+            BossModifierId.DistanceCell       => new[] { DistanceCellKey },
+            BossModifierId.ConstraintNegationZone => new[] { LineKey(LineType.ZoneWhisper) },
             _                               => Array.Empty<string>()
         };
 
@@ -113,6 +124,17 @@ namespace SudokuRoguelike.UI
                 BossModifierId.RenbanCage         => CageColor(KillerCageType.RenbanSet),
                 BossModifierId.ArrowAverage       => GamePalette.OverlayArrow,
                 BossModifierId.DoubleArrow        => GamePalette.OverlayArrow,
+                BossModifierId.WhisperGeneralized => GetLineColor(LineType.WhisperGeneralized),
+                BossModifierId.NLine              => GetLineColor(LineType.NLine),
+                BossModifierId.SumLine            => GetLineColor(LineType.SumLine),
+                BossModifierId.RatioN             => GamePalette.OverlayKropkiBlack,
+                BossModifierId.DistancePair       => GamePalette.OverlayDistancePair,
+                BossModifierId.CageRatio          => CageColor(KillerCageType.Ratio),
+                BossModifierId.PillArrow          => GamePalette.OverlayArrow,
+                BossModifierId.OppositeCellsSum   => GamePalette.OverlayOppositeSum,
+                BossModifierId.CountingCircles    => GamePalette.OverlayCountingCircle,
+                BossModifierId.DistanceCell       => GamePalette.OverlayDistanceCell,
+                BossModifierId.ConstraintNegationZone => GetLineColor(LineType.ZoneWhisper),
                 _                               => Color.clear
             };
             if (color.a <= 0f) return false;

@@ -145,6 +145,7 @@ namespace SudokuRoguelike.Sudoku
         private static List<CellCoord> RandomWalk(Random rng, bool[,] used, int size, List<CellCoord> taken, CellCoord from, int steps)
         {
             var path = new List<CellCoord>();
+            var sequence = new List<CellCoord>(taken);
             var end = from;
             var options = new List<CellCoord>(8);
             for (var s = 0; s < steps; s++)
@@ -154,12 +155,13 @@ namespace SudokuRoguelike.Sudoku
                 {
                     var n = new CellCoord(end.Row + dr, end.Col + dc);
                     if (n.Row < 0 || n.Row >= size || n.Col < 0 || n.Col >= size) continue;
-                    if (!IsCellFree(n.Row, n.Col, used) || taken.Contains(n) || path.Contains(n)) continue;
+                    if (!IsCellFree(n.Row, n.Col, used) || sequence.Contains(n) || CrossesPath(sequence, end, n)) continue;
                     options.Add(n);
                 }
                 if (options.Count == 0) return null;
                 end = options[rng.Next(options.Count)];
                 path.Add(end);
+                sequence.Add(end);
             }
             return path;
         }
@@ -286,8 +288,9 @@ namespace SudokuRoguelike.Sudoku
             var pieces = rng.Next(2, 4);
             for (var p = 1; p < pieces; p++)
             {
-                var entries = RandomWalkOptions(used, size, path, path[path.Count - 1])
-                    .FindAll(c => !visited.Contains(board.RegionMap[c.Row, c.Col]));
+                var last = path[path.Count - 1];
+                var entries = RandomWalkOptions(used, size, path, last)
+                    .FindAll(c => !visited.Contains(board.RegionMap[c.Row, c.Col]) && !CrossesPath(path, last, c));
                 Shuffle(entries, rng);
                 var placed = false;
                 foreach (var entry in entries)
@@ -320,8 +323,11 @@ namespace SudokuRoguelike.Sudoku
         {
             if (sum == total) return true;
             if (sum > total || piece.Count >= 4) return false;
-            var options = RandomWalkOptions(used, size, path, piece[piece.Count - 1])
-                .FindAll(c => board.RegionMap[c.Row, c.Col] == region && !piece.Contains(c));
+            var end = piece[piece.Count - 1];
+            var sequence = new List<CellCoord>(path);
+            sequence.AddRange(piece);
+            var options = RandomWalkOptions(used, size, path, end)
+                .FindAll(c => board.RegionMap[c.Row, c.Col] == region && !piece.Contains(c) && !CrossesPath(sequence, end, c));
             Shuffle(options, rng);
             foreach (var next in options)
             {
@@ -342,7 +348,8 @@ namespace SudokuRoguelike.Sudoku
             {
                 var all = new List<CellCoord>(taken);
                 all.AddRange(walk);
-                var options = RandomWalkOptions(used, size, all, end).FindAll(c => board.RegionMap[c.Row, c.Col] == region);
+                var options = RandomWalkOptions(used, size, all, end)
+                    .FindAll(c => board.RegionMap[c.Row, c.Col] == region && !CrossesPath(all, end, c));
                 if (options.Count == 0) break;
                 end = options[rng.Next(options.Count)];
                 walk.Add(end);

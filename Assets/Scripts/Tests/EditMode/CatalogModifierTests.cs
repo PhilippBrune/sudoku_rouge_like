@@ -28,7 +28,11 @@ namespace SudokuRoguelike.Tests
             BossModifierId.DifferenceK, BossModifierId.MultipleCells, BossModifierId.MirrorCells,
             // B3: cages, arrows, region sum line
             BossModifierId.RegionSumLine, BossModifierId.KillerHiddenSum, BossModifierId.CageProduct,
-            BossModifierId.CageDifference, BossModifierId.RenbanCage, BossModifierId.ArrowAverage, BossModifierId.DoubleArrow
+            BossModifierId.CageDifference, BossModifierId.RenbanCage, BossModifierId.ArrowAverage, BossModifierId.DoubleArrow,
+            // B6
+            BossModifierId.WhisperGeneralized, BossModifierId.NLine, BossModifierId.SumLine, BossModifierId.RatioN,
+            BossModifierId.DistancePair, BossModifierId.CageRatio, BossModifierId.PillArrow, BossModifierId.OppositeCellsSum,
+            BossModifierId.CountingCircles, BossModifierId.DistanceCell, BossModifierId.ConstraintNegationZone
         };
 
         // ── rules on hand-made boards (one row of a 9×9) ──
@@ -224,14 +228,17 @@ namespace SudokuRoguelike.Tests
                     var rules = ModifierFactory.BuildRules(new List<BossModifierId> { mod });
                     var problem = FillCheckingRules(board, run.CurrentOverlay, rules, new System.Random(seed))
                                   ?? CheckEveryMarkedCellCatchesAWrongDigit(mod, board, run.CurrentOverlay, rules)
-                                  ?? CheckCompleteDotSet(mod, board, run.CurrentOverlay);
+                                  ?? CheckCompleteDotSet(mod, board, run.CurrentOverlay)
+                                  ?? CheckNoLineCrossesItself(run.CurrentOverlay);
                     if (problem != null) failures.Add($"{mod} {size}×{size} seed {seed}: {problem}");
                 }
             }
             Assert.IsEmpty(failures);
         }
 
-        private static RunDirector StartLevel(BossModifierId mod, int size, int seed)
+        private static RunDirector StartLevel(BossModifierId mod, int size, int seed) => StartLevel(new[] { mod }, size, seed);
+
+        private static RunDirector StartLevel(BossModifierId[] mods, int size, int seed)
         {
             var run = new RunDirector();
             run.StartRun(new LaunchRequest
@@ -242,7 +249,7 @@ namespace SudokuRoguelike.Tests
             config.BoardSize = size;
             config.RegionVariant = 0;
             config.ActiveModifiers.Clear();
-            config.ActiveModifiers.Add(mod);
+            config.ActiveModifiers.AddRange(mods);
             run.StartLevel(config);
             return run;
         }
@@ -308,7 +315,20 @@ namespace SudokuRoguelike.Tests
                     foreach (var m in overlay.CellMarkers.Where(m => m.Type == MarkerType.Multiple)) yield return m.Cell;
                     break;
                 case BossModifierId.MirrorCells:
+                case BossModifierId.DistancePair:
+                case BossModifierId.OppositeCellsSum:
                     foreach (var p in overlay.CellPairs) { yield return p.CellA; yield return p.CellB; }
+                    break;
+                case BossModifierId.RatioN:
+                    foreach (var p in overlay.PairConstraints.Where(p => p.Type == PairConstraintType.RatioN))
+                    { yield return p.CellA; yield return p.CellB; }
+                    break;
+                case BossModifierId.CountingCircles:
+                    foreach (var m in overlay.CellMarkers.Where(m => m.Type == MarkerType.CountingCircle)) yield return m.Cell;
+                    break;
+                case BossModifierId.DistanceCell:
+                    // The ring cell itself is free; only the dotted cells are bound.
+                    foreach (var m in overlay.CellMarkers.Where(m => m.Type == MarkerType.DistanceCellSource)) yield return m.Cell;
                     break;
                 case BossModifierId.FullWhiteKropki:
                 case BossModifierId.FullBlackKropki:
@@ -336,6 +356,73 @@ namespace SudokuRoguelike.Tests
                     foreach (var line in overlay.Lines)
                         foreach (var c in line.Cells) yield return c;
                     break;
+            }
+        }
+
+        // A line or an arrow path never forms an X with itself: two diagonal steps through the same 2×2 square (GAP-050).
+        private static string CheckNoLineCrossesItself(ModifierOverlayData overlay)
+        {
+            foreach (var line in overlay.Lines)
+                if (Crosses(line.Cells, out var square)) return $"{line.Type} line crosses itself in the square at {square}";
+            foreach (var arrow in overlay.Arrows)
+            {
+                var path = new List<CellCoord> { arrow.ArrowType == ArrowType.Pill ? arrow.SecondCircle : arrow.CircleCell };
+                path.AddRange(arrow.ArrowCells);
+                if (arrow.ArrowType == ArrowType.DoubleEndpoint) path.Add(arrow.SecondCircle);
+                if (Crosses(path, out var square)) return $"{arrow.ArrowType} arrow crosses itself in the square at {square}";
+            }
+            return null;
+        }
+
+        private static bool Crosses(List<CellCoord> cells, out string square)
+        {
+            var steps = new HashSet<(int, int, bool)>();
+            for (var i = 0; i < cells.Count - 1; i++)
+            {
+                CellCoord a = cells[i], b = cells[i + 1];
+                square = null;
+                if (a.Row == b.Row || a.Col == b.Col) continue;
+                var top = Math.Min(a.Row, b.Row);
+                var left = Math.Min(a.Col, b.Col);
+                var falling = (a.Row < b.Row) == (a.Col < b.Col);
+                steps.Add((top, left, falling));
+                if (!steps.Contains((top, left, !falling))) continue;
+                square = $"({top},{left})";
+                return true;
+            }
+            square = null;
+            return false;
+        }
+
+        // [REQ: BOSS-LIB-093] The inverted zone is a 3×3 square; every green line steps both inside and outside it, and the
+        // lines of a modifier generated with it keep out of the square.
+        [Test]
+        [Requirement("BOSS-LIB-093")]
+        public void InvertedZone_IsA3x3Square_LinesCrossItsBorder_OtherLinesKeepOut()
+        {
+            foreach (var seed in new[] { 5, 17, 29 })
+            {
+                var run = StartLevel(new[] { BossModifierId.NonconsecLine, BossModifierId.ConstraintNegationZone }, 9, seed);
+                var overlay = run.CurrentOverlay;
+                Assert.AreEqual(9, overlay.NegationZone.Count, $"seed {seed}: zone size");
+                var zone = new HashSet<(int, int)>(overlay.NegationZone.Select(c => (c.Row, c.Col)));
+                Assert.AreEqual(3, overlay.NegationZone.Select(c => c.Row).Distinct().Count(), $"seed {seed}: three rows");
+                Assert.AreEqual(3, overlay.NegationZone.Select(c => c.Col).Distinct().Count(), $"seed {seed}: three columns");
+                foreach (var line in overlay.Lines)
+                {
+                    if (line.Type == LineType.ZoneWhisper)
+                    {
+                        var inside = 0;
+                        for (var i = 0; i < line.Cells.Count - 1; i++)
+                            if (zone.Contains((line.Cells[i].Row, line.Cells[i].Col)) && zone.Contains((line.Cells[i + 1].Row, line.Cells[i + 1].Col)))
+                                inside++;
+                        Assert.That(inside, Is.InRange(1, line.Cells.Count - 2), $"seed {seed}: a zone line needs steps inside and outside");
+                    }
+                    else
+                    {
+                        Assert.IsFalse(line.Cells.Exists(c => zone.Contains((c.Row, c.Col))), $"seed {seed}: {line.Type} line inside the zone");
+                    }
+                }
             }
         }
 
@@ -376,7 +463,10 @@ namespace SudokuRoguelike.Tests
                 (BossModifierId.FullBlackKropki, 59), (BossModifierId.DifferenceK, 60), (BossModifierId.MultipleCells, 74),
                 (BossModifierId.MirrorCells, 76), (BossModifierId.RegionSumLine, 45), (BossModifierId.KillerHiddenSum, 64),
                 (BossModifierId.CageProduct, 65), (BossModifierId.CageDifference, 66), (BossModifierId.RenbanCage, 69),
-                (BossModifierId.ArrowAverage, 70), (BossModifierId.DoubleArrow, 73)
+                (BossModifierId.ArrowAverage, 70), (BossModifierId.DoubleArrow, 73), (BossModifierId.WhisperGeneralized, 37),
+                (BossModifierId.NLine, 46), (BossModifierId.SumLine, 48), (BossModifierId.RatioN, 61), (BossModifierId.DistancePair, 63),
+                (BossModifierId.CageRatio, 67), (BossModifierId.PillArrow, 72), (BossModifierId.OppositeCellsSum, 77),
+                (BossModifierId.CountingCircles, 78), (BossModifierId.DistanceCell, 80), (BossModifierId.ConstraintNegationZone, 93)
             };
             foreach (var (id, value) in expected) Assert.AreEqual(value, (int)id, id.ToString());
             Assert.AreEqual(11, (int)LineType.NonconsecLine);
@@ -389,6 +479,10 @@ namespace SudokuRoguelike.Tests
             Assert.AreEqual(1, (int)KillerCageType.HiddenSum);
             Assert.AreEqual(5, (int)KillerCageType.RenbanSet);
             Assert.AreEqual(4, (int)ArrowType.DoubleEndpoint);
+            Assert.AreEqual(26, (int)LineType.ZoneWhisper);
+            Assert.AreEqual(2, (int)CellPairType.Distance);
+            Assert.AreEqual(6, (int)PairConstraintType.RatioN);
+            Assert.AreEqual(9, (int)MarkerType.CountingCircle);
         }
 
         // One thermometer kind per puzzle, never two dots on one edge, no plain grey line next to an Ambiguous Thermo.
@@ -406,7 +500,9 @@ namespace SudokuRoguelike.Tests
                 (BossModifierId.FullBlackKropki, BossModifierId.FullKropki), (BossModifierId.FullBlackKropki, BossModifierId.RatioKropki),
                 (BossModifierId.FullBlackKropki, BossModifierId.DifferenceKropki), (BossModifierId.FullBlackKropki, BossModifierId.SumKropki),
                 (BossModifierId.Nonconsecutive, BossModifierId.DifferenceKropki),
-                (BossModifierId.KillerHiddenSum, BossModifierId.KillerCages)
+                (BossModifierId.KillerHiddenSum, BossModifierId.KillerCages),
+                (BossModifierId.ConstraintNegationZone, BossModifierId.GermanWhispers),
+                (BossModifierId.CountingCircles, BossModifierId.PrimeCells), (BossModifierId.CountingCircles, BossModifierId.MultipleCells)
             };
             foreach (var (a, b) in blocked)
             {

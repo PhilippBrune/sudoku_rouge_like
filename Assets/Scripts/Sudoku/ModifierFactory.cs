@@ -175,6 +175,41 @@ namespace SudokuRoguelike.Sudoku
                     case BossModifierId.RegionSumLine:
                         rules.Add(new RegionSumLineRule(LineType.RegionSumLine));
                         break;
+
+                    // Batch B6 (ConstraintRules.CatalogB6.cs and the cage, arrow and sum-line files)
+                    case BossModifierId.WhisperGeneralized:
+                        rules.Add(new WhisperKLineRule());
+                        break;
+                    case BossModifierId.NLine:
+                        rules.Add(new RegionSumLineRule(LineType.NLine));
+                        break;
+                    case BossModifierId.SumLine:
+                        rules.Add(new SumLineRule());
+                        break;
+                    case BossModifierId.RatioN:
+                        rules.Add(new RatioNPairRule());
+                        break;
+                    case BossModifierId.DistancePair:
+                        rules.Add(new CellPairValueRule(CellPairType.Distance));
+                        break;
+                    case BossModifierId.CageRatio:
+                        rules.Add(new TypedCageRule(KillerCageType.Ratio));
+                        break;
+                    case BossModifierId.PillArrow:
+                        rules.Add(new TypedArrowRule(ArrowType.Pill));
+                        break;
+                    case BossModifierId.OppositeCellsSum:
+                        rules.Add(new CellPairValueRule(CellPairType.OppositeSum));
+                        break;
+                    case BossModifierId.CountingCircles:
+                        rules.Add(new CountingCirclesRule());
+                        break;
+                    case BossModifierId.DistanceCell:
+                        rules.Add(new DistanceCellRule());
+                        break;
+                    case BossModifierId.ConstraintNegationZone:
+                        rules.Add(new ZoneWhisperRule());
+                        break;
                 }
             }
 

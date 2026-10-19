@@ -39,6 +39,7 @@ namespace SudokuRoguelike.Sudoku
             [BossModifierId.ThermoLoop] = LineType.ThermoLoop,
             [BossModifierId.FastThermo] = LineType.FastThermo,
             [BossModifierId.AmbiguousThermo] = LineType.AmbiguousThermo,
+            [BossModifierId.ConstraintNegationZone] = LineType.ZoneWhisper,
         };
 
         private static readonly Dictionary<BossModifierId, KillerCageType> CageTypes = new Dictionary<BossModifierId, KillerCageType>
@@ -115,6 +116,16 @@ namespace SudokuRoguelike.Sudoku
                     return overlay.CellMarkers.Exists(m => m.Type == MarkerType.Multiple);
                 case BossModifierId.MirrorCells:
                     return overlay.CellPairs.Exists(p => p.PairType == CellPairType.Mirror);
+                case BossModifierId.RatioN:
+                    return overlay.PairConstraints.Exists(p => p.Type == PairConstraintType.RatioN);
+                case BossModifierId.DistancePair:
+                    return overlay.CellPairs.Exists(p => p.PairType == CellPairType.Distance);
+                case BossModifierId.OppositeCellsSum:
+                    return overlay.CellPairs.Exists(p => p.PairType == CellPairType.OppositeSum);
+                case BossModifierId.CountingCircles:
+                    return overlay.CellMarkers.Exists(m => m.Type == MarkerType.CountingCircle);
+                case BossModifierId.DistanceCell:
+                    return overlay.CellMarkers.Exists(m => m.Type == MarkerType.DistanceCellSource);
                 default:
                     return false;
             }

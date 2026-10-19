@@ -56,7 +56,7 @@ namespace SudokuRoguelike.Tests
         [Test]
         public void ModifierCompletion_CountsEveryModifierABossCanCarry()
         {
-            Assert.AreEqual(49, CompletionService.ClearableModifierCount, "50 player modifiers (30 + catalog batches B1, B2 and B3) minus the disabled Modular Regions");
+            Assert.AreEqual(60, CompletionService.ClearableModifierCount, "61 player modifiers (30 + catalog batches B1, B2, B3 and B6) minus the disabled Modular Regions");
             var state = new CompletionTrackerState();
             var service = new CompletionService();
             foreach (var mod in SudokuRoguelike.Boss.BossService.GetGeneratablePlayerModifiers(9))

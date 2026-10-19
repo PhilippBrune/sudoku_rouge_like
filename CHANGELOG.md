@@ -5,6 +5,15 @@
 ### New modifiers
 
 - **Cages and arrows (7).** Region Sum Line, Hidden Killer, Product Cage, Difference Cage, Renban Cage, Arrow Average and Double Arrow. Each cage kind has its own colour and corner label; the Pattern Scroll never reveals a hidden cage sum.
+- **Eleven more (B6).** K-Whispers, 10-Line, Sum Line, Ratio 1:3, Distance Pairs, Ratio Cage, Pill Arrow, Opposite Sums, Counting Circles, Distance Cells and the Inverted Zone (a shaded box where green whisper lines flip).
+
+### Fixed
+
+- Catalog lines (for example Zipper lines) could cross themselves in an X; they no longer do.
+
+### Changed
+
+- The roll pool grew again and line, arrow and cage shapes are built differently, so a seed from 0.2.0 (a shared seed or the Seed of the week) gives a different run; saved runs keep their boards.
 
 ## 0.2.0 beta — 6th iteration (2026-10-19)
 

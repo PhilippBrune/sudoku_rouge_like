@@ -75,6 +75,19 @@ namespace SudokuRoguelike.Boss
             [BossModifierId.ArrowAverage] = (3, 0.45f, 7),
             [BossModifierId.DoubleArrow] = (3, 0.45f, 6),
 
+            // Catalog batch B6 (min sizes from BossMechanicsSystem.md; the inverted zone is 9×9 only, owner decision)
+            [BossModifierId.WhisperGeneralized] = (2, 0.30f, 6),
+            [BossModifierId.NLine] = (3, 0.40f, 7),
+            [BossModifierId.SumLine] = (2, 0.30f, 6),
+            [BossModifierId.RatioN] = (2, 0.25f, 6),
+            [BossModifierId.DistancePair] = (2, 0.25f, 6),
+            [BossModifierId.CageRatio] = (2, 0.25f, 5),
+            [BossModifierId.PillArrow] = (3, 0.45f, 8),
+            [BossModifierId.OppositeCellsSum] = (1, 0.20f, 5),
+            [BossModifierId.CountingCircles] = (2, 0.30f, 6),
+            [BossModifierId.DistanceCell] = (1, 0.15f, 7),
+            [BossModifierId.ConstraintNegationZone] = (3, 0.45f, 9),
+
             // Boss debuffs (IDs 94–102) — reactive penalties on wrong placement
             // [REQ: DEBUFF-HOOK-011] All debuff entries registered here; IDs ≥94 excluded from BuildEligiblePool
             [BossModifierId.RowWipe]       = (3, 0.55f, 0), // [REQ: DEBUFF-DEF-001]
@@ -247,6 +260,11 @@ namespace SudokuRoguelike.Boss
             (BossModifierId.FullBlackKropki, BossModifierId.SumKropki),
             // B3: a cage with a hidden sum next to cages with sums would look like a missing number.
             (BossModifierId.KillerHiddenSum, BossModifierId.KillerCages),
+            // B6: the inverted zone draws German-green whisper lines; counting circles would read like the other
+            // circled cells (prime and multiple markers).
+            (BossModifierId.ConstraintNegationZone, BossModifierId.GermanWhispers),
+            (BossModifierId.CountingCircles, BossModifierId.PrimeCells),
+            (BossModifierId.CountingCircles, BossModifierId.MultipleCells),
         };
 
         private static bool IsBlockedCombination(BossModifierId first, BossModifierId second)
@@ -516,6 +534,7 @@ namespace SudokuRoguelike.Boss
             BossModifierId.XVPairs, BossModifierId.PrimeCells, BossModifierId.FortressCells,
             BossModifierId.NonconsecLine, BossModifierId.HighLowAlternating, BossModifierId.NabnerLine, BossModifierId.EntropicLine, BossModifierId.ModularLine, BossModifierId.ZipperLine, BossModifierId.FastThermo, BossModifierId.AmbiguousThermo, BossModifierId.FullWhiteKropki, BossModifierId.FullBlackKropki, BossModifierId.DifferenceK, BossModifierId.MultipleCells, BossModifierId.MirrorCells,
             BossModifierId.RegionSumLine, BossModifierId.KillerHiddenSum, BossModifierId.CageProduct, BossModifierId.CageDifference, BossModifierId.RenbanCage, BossModifierId.ArrowAverage, BossModifierId.DoubleArrow,
+            BossModifierId.WhisperGeneralized, BossModifierId.NLine, BossModifierId.SumLine, BossModifierId.RatioN, BossModifierId.DistancePair, BossModifierId.CageRatio, BossModifierId.PillArrow, BossModifierId.OppositeCellsSum, BossModifierId.CountingCircles, BossModifierId.DistanceCell, BossModifierId.ConstraintNegationZone,
             BossModifierId.RowWipe, BossModifierId.ColWipe, BossModifierId.DoublePenalty,
             BossModifierId.CellLock, BossModifierId.PencilBlind, BossModifierId.RadiusWipe,
             BossModifierId.PencilScramble, BossModifierId.GivenReveal, BossModifierId.RevealCost,
@@ -537,6 +556,7 @@ namespace SudokuRoguelike.Boss
             BossModifierId.XVPairs, BossModifierId.PrimeCells, BossModifierId.FortressCells,
             BossModifierId.NonconsecLine, BossModifierId.HighLowAlternating, BossModifierId.NabnerLine, BossModifierId.EntropicLine, BossModifierId.ModularLine, BossModifierId.ZipperLine, BossModifierId.FastThermo, BossModifierId.AmbiguousThermo, BossModifierId.FullWhiteKropki, BossModifierId.FullBlackKropki, BossModifierId.DifferenceK, BossModifierId.MultipleCells, BossModifierId.MirrorCells,
             BossModifierId.RegionSumLine, BossModifierId.KillerHiddenSum, BossModifierId.CageProduct, BossModifierId.CageDifference, BossModifierId.RenbanCage, BossModifierId.ArrowAverage, BossModifierId.DoubleArrow,
+            BossModifierId.WhisperGeneralized, BossModifierId.NLine, BossModifierId.SumLine, BossModifierId.RatioN, BossModifierId.DistancePair, BossModifierId.CageRatio, BossModifierId.PillArrow, BossModifierId.OppositeCellsSum, BossModifierId.CountingCircles, BossModifierId.DistanceCell, BossModifierId.ConstraintNegationZone,
             BossModifierId.RowWipe, BossModifierId.ColWipe, BossModifierId.DoublePenalty,
             BossModifierId.CellLock, BossModifierId.PencilBlind, BossModifierId.BoxWipe,
             BossModifierId.CrossWipe, BossModifierId.RadiusWipe, BossModifierId.PencilDrain,
@@ -610,6 +630,17 @@ namespace SudokuRoguelike.Boss
                 BossModifierId.RenbanCage          => "Renban Cage",
                 BossModifierId.ArrowAverage        => "Arrow Average",
                 BossModifierId.DoubleArrow         => "Double Arrow",
+                BossModifierId.WhisperGeneralized  => "K-Whispers",
+                BossModifierId.NLine               => "10-Line",
+                BossModifierId.SumLine             => "Sum Line",
+                BossModifierId.RatioN              => "Ratio 1:3",
+                BossModifierId.DistancePair        => "Distance Pairs",
+                BossModifierId.CageRatio           => "Ratio Cage",
+                BossModifierId.PillArrow           => "Pill Arrow",
+                BossModifierId.OppositeCellsSum    => "Opposite Sums",
+                BossModifierId.CountingCircles     => "Counting Circles",
+                BossModifierId.DistanceCell        => "Distance Cells",
+                BossModifierId.ConstraintNegationZone => "Inverted Zone",
                 BossModifierId.RowWipe             => "Row Wipe",
                 BossModifierId.ColWipe             => "Column Wipe",
                 BossModifierId.DoublePenalty       => "Double Penalty",
@@ -683,6 +714,17 @@ namespace SudokuRoguelike.Boss
                 BossModifierId.RenbanCage          => "Pink cages marked R hold a run of consecutive digits in any order. Example: 4-2-3.",
                 BossModifierId.ArrowAverage        => "A circle marked Ø holds the average of the digits on its arrow. Example: 4 = (3+5) ÷ 2.",
                 BossModifierId.DoubleArrow         => "An arrow between two circles adds up to the two circle digits together. Example: 2+7 = 4+5.",
+                BossModifierId.WhisperGeneralized  => "Neighbours on magenta lines differ by at least the number on the line's tag. Example: ≥3: 1-4-8-2.",
+                BossModifierId.NLine               => "Sienna lines break at every region border (the ticks); each piece adds up to 10. Example: 4-6 | 1-9.",
+                BossModifierId.SumLine             => "All digits on an olive line add up to the number at its end. Example: 2+5+7 = 14.",
+                BossModifierId.RatioN              => "Across a black dot marked 3, one digit is three times the other. Example: 2 and 6.",
+                BossModifierId.DistancePair        => "Two cells joined by a brown link differ by the number on it: the steps between them. Example: 2 = 3 and 5.",
+                BossModifierId.CageRatio           => "In a two-cell ink cage marked 1:N, the larger digit is N times the smaller. Example: 1:3 = 2 and 6.",
+                BossModifierId.PillArrow           => "The two cells of a pill read as one number (top or left first); its arrow adds up to it. Example: 1|4 = 14 = 9+5.",
+                BossModifierId.OppositeCellsSum    => "A cell with a crimson number and its mirror cell through the centre add up to that number. Example: 10 = 3+7.",
+                BossModifierId.CountingCircles     => "Each digit in an orange circle says how many circles hold it: a circled 3 means exactly three circles hold 3.",
+                BossModifierId.DistanceCell        => "A cell with a small navy dot holds its distance in steps (up, down, left, right) to the cell in the navy ring.",
+                BossModifierId.ConstraintNegationZone => "Green lines are whispers (neighbours differ by 5 or more), but between two cells inside the shaded box they differ by less than 5.",
 
                 // Boss debuffs
                 BossModifierId.RowWipe       => "Wrong placement: all your digits in that row are erased.",
@@ -727,6 +769,10 @@ namespace SudokuRoguelike.Boss
             LineType.FastThermo        => "FT",
             LineType.AmbiguousThermo   => "AT",
             LineType.RegionSumLine     => "RS",
+            LineType.WhisperGeneralized=> "WK",
+            LineType.NLine             => "TN",
+            LineType.SumLine           => "SL",
+            LineType.ZoneWhisper       => "IZ",
             _                        => "??"
         };
 
@@ -784,6 +830,17 @@ namespace SudokuRoguelike.Boss
                 BossModifierId.RenbanCage         => "RC",
                 BossModifierId.ArrowAverage       => "AA",
                 BossModifierId.DoubleArrow        => "DA",
+                BossModifierId.WhisperGeneralized => "WK",
+                BossModifierId.NLine              => "TN",
+                BossModifierId.SumLine            => "SL",
+                BossModifierId.RatioN             => "R3",
+                BossModifierId.DistancePair       => "DP",
+                BossModifierId.CageRatio          => "CR",
+                BossModifierId.PillArrow          => "PI",
+                BossModifierId.OppositeCellsSum   => "OS",
+                BossModifierId.CountingCircles    => "CC",
+                BossModifierId.DistanceCell       => "DT",
+                BossModifierId.ConstraintNegationZone => "IZ",
                 _                              => "??"
             };
         }

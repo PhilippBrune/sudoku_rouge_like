@@ -495,69 +495,8 @@ namespace SudokuRoguelike.Sudoku
             }
         }
 
-        private static bool IsModifierPresent(BossModifierId modifier, ModifierOverlayData overlay)
-        {
-            switch (modifier)
-            {
-                case BossModifierId.GermanWhispers:
-                case BossModifierId.DutchWhispers:
-                case BossModifierId.ParityLines:
-                case BossModifierId.RenbanLines:
-                case BossModifierId.Palindrome:
-                case BossModifierId.Thermo:
-                case BossModifierId.BetweenLines:
-                case BossModifierId.ConsecutiveLine:
-                case BossModifierId.SlowThermo:
-                case BossModifierId.UniqueSetLine:
-                case BossModifierId.WhisperGeneralized:
-                case BossModifierId.NonconsecLine:
-                case BossModifierId.AlternatingParityLine:
-                case BossModifierId.HighLowAlternating:
-                case BossModifierId.NabnerLine:
-                case BossModifierId.EntropicLine:
-                case BossModifierId.ModularLine:
-                case BossModifierId.ZipperLine:
-                case BossModifierId.RegionSumLine:
-                case BossModifierId.NLine:
-                case BossModifierId.IndexLine:
-                case BossModifierId.SumLine:
-                case BossModifierId.SkyscraperLine:
-                case BossModifierId.ThermoLoop:
-                case BossModifierId.FastThermo:
-                case BossModifierId.AmbiguousThermo:
-                    return overlay.Lines.Count > 0;
-                case BossModifierId.DifferenceKropki:
-                case BossModifierId.RatioKropki:
-                case BossModifierId.FullKropki:
-                case BossModifierId.SumKropki:
-                case BossModifierId.FullWhiteKropki:
-                case BossModifierId.FullBlackKropki:
-                    return overlay.KropkiDots.Count > 0;
-                case BossModifierId.GreaterLessThan:
-                case BossModifierId.XVPairs:
-                    return overlay.PairConstraints.Count > 0;
-                case BossModifierId.KillerCages:
-                case BossModifierId.KillerHiddenSum:
-                case BossModifierId.CageProduct:
-                case BossModifierId.CageDifference:
-                case BossModifierId.CageRatio:
-                case BossModifierId.RenbanCage:
-                    return overlay.KillerCages.Count > 0;
-                case BossModifierId.ArrowSums:
-                case BossModifierId.ArrowAverage:
-                case BossModifierId.ArrowProduct:
-                case BossModifierId.PillArrow:
-                case BossModifierId.DoubleArrow:
-                    return overlay.Arrows.Count > 0;
-                case BossModifierId.FogOfWar:
-                    return overlay.FogCells.Count > 0;
-                case BossModifierId.EvenOdd:
-                case BossModifierId.PrimeCells:
-                case BossModifierId.FortressCells:
-                    return overlay.CellMarkers.Count > 0;
-                default:
-                    return true;
-            }
-        }
+        // [REQ: BOSS-MOD-004] Per type, not per family (GAP-047): see ModifierPresence.
+        private static bool IsModifierPresent(BossModifierId modifier, ModifierOverlayData overlay) =>
+            ModifierPresence.IsPresent(modifier, overlay);
     }
 }

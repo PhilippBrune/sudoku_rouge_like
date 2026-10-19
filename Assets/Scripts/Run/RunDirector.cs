@@ -2710,80 +2710,9 @@ namespace SudokuRoguelike.Run
             return false;
         }
 
-        private static bool HasAllModifiersPresent(List<BossModifierId> modifiers, ModifierOverlayData overlay)
-        {
-            if (overlay == null) return false;
-            for (var i = 0; i < modifiers.Count; i++)
-            {
-                switch (modifiers[i])
-                {
-                    case BossModifierId.GermanWhispers:
-                    case BossModifierId.DutchWhispers:
-                    case BossModifierId.ParityLines:
-                    case BossModifierId.RenbanLines:
-                    case BossModifierId.Palindrome:
-                    case BossModifierId.Thermo:
-                    case BossModifierId.BetweenLines:
-                    case BossModifierId.ConsecutiveLine:
-                    case BossModifierId.SlowThermo:
-                    case BossModifierId.UniqueSetLine:
-                    case BossModifierId.WhisperGeneralized:
-                    case BossModifierId.NonconsecLine:
-                    case BossModifierId.AlternatingParityLine:
-                    case BossModifierId.HighLowAlternating:
-                    case BossModifierId.NabnerLine:
-                    case BossModifierId.EntropicLine:
-                    case BossModifierId.ModularLine:
-                    case BossModifierId.ZipperLine:
-                    case BossModifierId.RegionSumLine:
-                    case BossModifierId.NLine:
-                    case BossModifierId.IndexLine:
-                    case BossModifierId.SumLine:
-                    case BossModifierId.SkyscraperLine:
-                    case BossModifierId.ThermoLoop:
-                    case BossModifierId.FastThermo:
-                    case BossModifierId.AmbiguousThermo:
-                        if (overlay.Lines.Count == 0) return false;
-                        break;
-                    case BossModifierId.DifferenceKropki:
-                    case BossModifierId.RatioKropki:
-                    case BossModifierId.FullKropki:
-                    case BossModifierId.SumKropki:
-                    case BossModifierId.FullWhiteKropki:
-                    case BossModifierId.FullBlackKropki:
-                        if (overlay.KropkiDots.Count == 0) return false;
-                        break;
-                    case BossModifierId.GreaterLessThan:
-                    case BossModifierId.XVPairs:
-                        if (overlay.PairConstraints.Count == 0) return false;
-                        break;
-                    case BossModifierId.KillerCages:
-                    case BossModifierId.KillerHiddenSum:
-                    case BossModifierId.CageProduct:
-                    case BossModifierId.CageDifference:
-                    case BossModifierId.CageRatio:
-                    case BossModifierId.RenbanCage:
-                        if (overlay.KillerCages.Count == 0) return false;
-                        break;
-                    case BossModifierId.ArrowSums:
-                    case BossModifierId.ArrowAverage:
-                    case BossModifierId.ArrowProduct:
-                    case BossModifierId.PillArrow:
-                    case BossModifierId.DoubleArrow:
-                        if (overlay.Arrows.Count == 0) return false;
-                        break;
-                    case BossModifierId.FogOfWar:
-                        if (overlay.FogCells.Count == 0) return false;
-                        break;
-                    case BossModifierId.EvenOdd:
-                    case BossModifierId.PrimeCells:
-                    case BossModifierId.FortressCells:
-                        if (overlay.CellMarkers.Count == 0) return false;
-                        break;
-                }
-            }
-            return true;
-        }
+        // [REQ: BOSS-MOD-004] One presence check for generation and resume (GAP-047: this used to be a second copy).
+        private static bool HasAllModifiersPresent(List<BossModifierId> modifiers, ModifierOverlayData overlay) =>
+            PuzzleGenerationService.HasAllModifiersPresent(modifiers, overlay);
 
         private void ClearOverlayCellsFromGivenMask()
         {

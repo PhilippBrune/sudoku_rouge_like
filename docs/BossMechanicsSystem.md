@@ -1,11 +1,12 @@
 ﻿# Boss Mechanics System
 
-**Version:** 2.6 | **Date:** 2026-10-19 | **Status:** implemented
+**Version:** 2.7 | **Date:** 2026-10-19 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.7 | 2026-10-19 | implemented | A chosen modifier counts as generated only with its own geometry (per line, dot, pair, cage, arrow, marker and cell-pair type; BOSS-MOD-004, GAP-047). New blocked pair Nonconsecutive + Difference Kropki (no white dot can exist; GAP-049). |
 | 2.6 | 2026-10-19 | implemented | Owner decision (GAP-048): line colours follow the convention puzzle setters use (Logic Masters, GM Puzzles): German Whispers green, Dutch Whispers orange, Renban pink, Palindrome grey, thermometers grey with a bulb; Consecutive Line moves to gold so it does not clash with Dutch Whispers. Lines are drawn as opaque bands a fifth of a cell wide through the cell centres with round joints (as in the chosen puzzle mockup, UI-STYLE-002); the colours below are the band colours on the paper board. Rule texts name the new colours in all five languages, and the Custom Puzzle tooltips use the same texts. |
 | 2.5 | 2026-10-19 | implemented | Line colours on the paper board of the hanging-scroll puzzle screen (UI-STYLE-002): German and Dutch Whispers darker so they read on paper; Parity Lines drawn blue as specified (the game drew them teal, almost the colour of Dutch Whispers, and the rule text said "purple"; GAP-048). Renban and Palindrome still differ from this table (GAP-048, open). |
 | 2.4 | 2026-10-15 | implemented | Killer cage visual: one dashed outline around all cells of a cage, joined across its cells (owner report 2026-10-15, layout-proposals.md UI-STYLE-006). |
@@ -227,7 +228,7 @@ Authoritative table: `BossService.ModifierData` (decided 2026-10-07, SPEC-CONF-0
 | 9×9 | Entropy |
 
 - **Modular Regions** is excluded from every roll pool and from completion (29 clearable modifiers).
-- **Blocked pairs** (never combined, `BossService.GetBlockedPairs`): Ratio Kropki + Distance ≥ 2, Distance ≥ 2 + Nonconsec. Diagonal, Anti-Bishop + Antiknight, Anti-Bishop + Nonconsecutive, Anti-Bishop + Entropy.
+- **Blocked pairs** (never combined, `BossService.GetBlockedPairs`): Ratio Kropki + Distance ≥ 2, Distance ≥ 2 + Nonconsec. Diagonal, Anti-Bishop + Antiknight, Anti-Bishop + Nonconsecutive, Anti-Bishop + Entropy, Nonconsecutive + Difference Kropki.
 - **Global structural modifiers** (Nonconsecutive, Antiknight, Anti-King, Anti-Bishop, Nonconsec. Diagonal, Distance ≥ 2, Entropy) use the rectangular region layout of the board size: no irregular template produced a puzzle with them within budget (SPEC-AMB-014). Two or more of the board-shaping ones need at least 8×8, and a 7×7 board with one is raised to 8×8.
 - Modifiers already active as **floor modifiers** are excluded from the boss choice pool (no duplicates within a floor).
 - Modifiers chosen on a previous floor **can** appear again on later floors (each floor is independent).

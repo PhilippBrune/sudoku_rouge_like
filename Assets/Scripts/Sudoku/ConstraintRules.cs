@@ -296,6 +296,7 @@ namespace SudokuRoguelike.Sudoku
             for (var i = 0; i < overlay.KillerCages.Count; i++)
             {
                 var cage = overlay.KillerCages[i];
+                if (cage.CageType != KillerCageType.Sum) continue; // other cage types have their own rules
                 if (!InCage(cage, row, col)) continue;
 
                 var sum = value;
@@ -336,6 +337,7 @@ namespace SudokuRoguelike.Sudoku
             for (var i = 0; i < overlay.Arrows.Count; i++)
             {
                 var arrow = overlay.Arrows[i];
+                if (arrow.ArrowType != ArrowType.Sum) continue; // other arrow types have their own rules
                 var isCircle = arrow.CircleCell.Row == row && arrow.CircleCell.Col == col;
                 var isArrow = false;
                 for (var j = 0; j < arrow.ArrowCells.Count; j++)

@@ -35,7 +35,7 @@ Legend: ✅ Implemented and verified | ⚠️ Partial / conflicting | ❌ Not im
 | [UI-OPT](#options-panels) | `docs/GameDesignSpec.md` | ✅ 3 |
 | [RUN-WEEK](#shared-challenges) | `docs/GameDesignSpec.md` | ✅ 2 |
 | [CREDITS](#credits) | `docs/GameDesignSpec.md` | ✅ 1 |
-| [UI-STYLE](#in-run-visual-style) | `docs/design/layout-proposals.md` | ✅ 6 |
+| [UI-STYLE](#in-run-visual-style) | `docs/design/layout-proposals.md` | ✅ 9 |
 | [LOC](#localization) | `docs/localization-catalog.md` | ✅ 3 |
 | [AUDIO](#audio) | `docs/AudioVisualDirection.md` | ✅ 3 · ◻️ 4 |
 | [REVIEW](#review-created-requirements) | `docs/review/REQUIREMENT_TRACEABILITY.md` | ✅ 53 · ⚠️ 6 · ◻️ 6 |
@@ -408,6 +408,7 @@ Key requirements (see spec for full list):
 | BOSS-MOD-001 | 30 player modifiers (`BossModifierId` 0–29); IDs ≥ 94 are boss debuffs (SPEC-CONF-019) | `Assets/Scripts/Core/GameEnums.cs` | `BossModifierId` | GenerationReliabilityTests | ✅ |
 | BOSS-MOD-002 | `BossService.ModifierData` — tier/impact/name/description per modifier | `Assets/Scripts/Boss/BossService.cs` | `ModifierData` | BalanceBudgetContractTests, GenerationReliabilityTests | ✅ |
 | BOSS-MOD-003 | `ModifierGeometryGenerator.Generate` produces overlay for each modifier | `Assets/Scripts/Sudoku/ModifierGeometryGenerator.cs` | `Generate` | BalanceBudgetContractTests.AntiBishop_IsEligibleFromSixBySix; GenerationReliabilityTests | ✅ |
+| BOSS-MOD-004 | A chosen modifier counts as present only with its own geometry (per line, dot, pair, cage, arrow, marker and cell-pair type); the plain Killer and Arrow rules ignore other subtypes (GAP-047) | `Assets/Scripts/Sudoku/ModifierPresence.cs`, `PuzzleGenerationService.cs`, `RunDirector.cs`, `ConstraintRules.cs` | `ModifierPresence.IsPresent`, `FindMissingModifiers`, `KillerCagesRule`, `ArrowSumsRule` | ModifierPresenceTests | ✅ |
 | BOSS-INT-001 | `BossModifierIntensity` enum (Low/Medium/High/VeryHigh) scales geometry | `Assets/Scripts/Core/GameEnums.cs` | `BossModifierIntensity` | E2E/diagnostic D05, D18, E17 | ✅ |
 | BOSS-INT-002 | Intensity set by `RunNumber` in `BuildLevelConfig` (1-2=Low, 3-5=Med, 6-8=High, 9+=VH) | `Assets/Scripts/Run/RunDirector.cs` | `BuildLevelConfig` | InRunUiPlayModeTests.BossGate_ShowsIntensity_AndTheDebuffFromFloorThree | ✅ |
 | BOSS-FLOOR-001 | Floor modifier system: floors 2–5 add persistent modifiers to all puzzles | `Assets/Scripts/Run/RunDirector.cs` | `RollFloorModifiers` | HarmonyEffectsTests.BossOptionsAndFloorBonus_MatchSpecTable; BalanceBudgetContractTests | ✅ |
@@ -668,6 +669,9 @@ Key requirements (see spec for full list):
 | UI-STYLE-003 | Background paintings keep their corner mark | `Assets/Resources/background/` | — | owner decision | ✅ |
 | UI-STYLE-004 | Boss gate as a trial scroll (seal, ink trial panels with ensō ticks, curse margin note, "Face the boss") | `Assets/Scripts/UI/BossGateViewController.cs`, `ScrollUiKit.cs`, `FloorThemeData.cs` | `BuildBossGatePanel`, `BuildTrialCard`, `RefreshTrialMarks` | InRunUiPlayModeTests (`BossGate_PickingTrials_TicksThem_AndConfirmRecordsThem`, intensity/debuff, masking), screenshots `after_boss_gate*` | ✅ |
 | UI-STYLE-005 | Boss defeated as an offering table with the relic choice on the same screen | `Assets/Scripts/UI/EndScreenViewController.cs`, `InRunController.Completion.cs`, `RewardViewController.AcceptRelic` | `ShowBossCleared`, `BuildOffering` | BossClearedFlowPlayModeTests (take, leave, no offerings), screenshot `after_boss_defeated` | ✅ |
+| UI-STYLE-007 | Reward after a puzzle: tally scroll and ema plaques on a red cord; choose, then take | `Assets/Scripts/UI/RewardViewController.Tally.cs`, `ScrollUiKit.Scenes.cs` | `ShowRewardScreen`, `BuildTally`, `BuildPlaque`, `OnPlaqueClicked` | GeneratedUiWiringContractTests (`RewardScreen_IsATallyScrollWithEmaPlaques`), screenshot `after_reward` (diagnostic `RenderRewardShrineAndShop`: choose, take, item lands in the bag) | ✅ |
+| UI-STYLE-008 | Relic node as the offering table at the shrine, with run and held-relic tags | `Assets/Scripts/UI/RewardViewController.Shrine.cs`, `ScrollUiKit.Offering` | `ShowRelicChoicePanel`, `ChooseShrineRelic` | GeneratedUiWiringContractTests (`RelicShrine_UsesTheOfferingTable_AndLegendaryArtLoadsCompletely`), screenshot `after_relic_shrine` | ✅ |
+| UI-STYLE-009 | Shop as the market stall: goods with price tags, purse tag, paper slip with Buy and the gold after buying | `Assets/Scripts/UI/ShopViewController.cs` | `BuildStall`, `BuildGood`, `RefreshSlip`, `RefreshPurse` | GeneratedUiWiringContractTests (`ShopScreen_IsTheMarketStall_WithPriceTagsPurseAndSlip`), screenshot `after_shop` | ✅ |
 | UI-STYLE-006 | A killer cage is one dashed outline around all its cells | `Assets/Scripts/UI/CageOutline.cs`, `BoardViewController.DrawCageOutline`, mockups `src/common.js` | `Build`, `Dashes` | CageOutlineTests (every shape up to 4 cells is one closed loop), screenshot `after_cages` | ✅ |
 
 ---

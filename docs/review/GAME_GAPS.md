@@ -55,8 +55,9 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-042](#gap-042) | Options dropdown lists hid their last option; no usable window mode | FIXED (1.1, found 2026-10-12) | MEDIUM | P2 |
 | [GAP-045](#gap-045) | Boss fights never played boss music (the boss layer was never started) | FIXED (found 2026-10-14) | LOW | P3 |
 | [GAP-046](#gap-046) | Q on the "Boss Defeated!" screen ended the run and deleted its save | FIXED (found 2026-10-15) | HIGH | P1 |
-| [GAP-047](#gap-047) | A chosen modifier can silently miss its overlay when another modifier of the same family has one | OPEN (found 2026-10-18) | MEDIUM | P2 |
+| [GAP-047](#gap-047) | A chosen modifier can silently miss its overlay when another modifier of the same family has one | FIXED (2026-10-19) | MEDIUM | P2 |
 | [GAP-048](#gap-048) | Line colours differ between the spec, the board and the rule text (Parity Lines looked like Dutch Whispers) | FIXED (2026-10-19) | LOW | P3 |
+| [GAP-049](#gap-049) | Chosen modifiers silently missing on busy boards (white dots under Nonconsecutive, Even/Odd after Prime markers, Palindrome on 9×9) | FIXED (found and fixed 2026-10-19) | HIGH | P1 |
 | [GAP-044](#gap-044) | Region borders showed the previous puzzle's regions on a same-size board | FIXED (found 2026-10-14 by the owner) | HIGH | P1 |
 | [GAP-043](#gap-043) | Without the `ActiveProfileSlot` pref the game opens an empty slot 0, not the existing profile | FIXED (0.1.5, found 2026-10-14) | LOW | P3 |
 
@@ -813,12 +814,12 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 **A chosen modifier can silently miss its overlay when another modifier of the same family has one**
 
 - **Requirement:** REQ-BOSS-101 (chosen modifiers apply), BOSS-MOD-004 (proposed)
-- **Status:** OPEN (found 2026-10-18 while planning the catalog modifiers, `docs/design/modifier-catalog-plan.md`) · **Severity:** MEDIUM · **Priority:** P2
+- **Status:** FIXED (found 2026-10-18 while planning the catalog modifiers, fixed 2026-10-19) · **Severity:** MEDIUM · **Priority:** P2
 - **Problem:** After generation the game checks that every active modifier got its geometry, and regenerates or drops it otherwise. The check only asks whether the modifier's family has any entry: any line counts for every line modifier, any dot for every Kropki type, any cage for every cage type. With German Whispers and Thermo chosen together, a failed Thermo is not noticed while the whisper lines exist; the player sees "Thermo" in the rules but gets no thermometers. Unknown IDs always pass.
 - **Root Cause:** `PuzzleGenerationService.IsModifierPresent` (PGS:498–561) switches on the family, not on the line, dot, cage or arrow type; a second copy is in `RunDirector.cs:2713–2786`.
-- **Fix (planned):** one presence check per type (modifier plan, Phase 0, step 1).
+- **Fix:** one presence check per type, `ModifierPresence.IsPresent` (line, cage, arrow, dot kind, pair, marker and cell-pair type; global rules, boss debuffs and pressure mechanics need no geometry; catalog IDs without a generator report missing). The copy in `RunDirector.cs` now calls the generator's check. The plain Killer and Arrow rules skip other cage and arrow subtypes, which get their own rules (modifier plan, Phase 0, steps 1–2).
 - **Affected Files:** `Assets/Scripts/Sudoku/PuzzleGenerationService.cs`, `Assets/Scripts/Run/RunDirector.cs`, `Assets/Scripts/Run/RunDirector.LevelGeneration.cs`
-- **Tests:** to add: a generation test where one of two line modifiers fails must report it missing.
+- **Tests:** `ModifierPresenceTests` (Thermo missing beside whisper lines, every line modifier counts only its own type, Kropki kinds, global rules and debuffs, subtype filters).
 
 ## GAP-048
 **Line colours differ between the spec, the board and the rule text (Parity Lines looked like Dutch Whispers)**
@@ -830,3 +831,14 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Fix:** Parity Lines are blue as specified (`GamePalette.LineParityLine`), and the rule text says "blue lines" in all five languages. Owner decision (2026-10-19): follow the convention puzzle setters use; Renban pink and Palindrome grey as in the spec, Dutch Whispers orange, thermometers grey, Consecutive Line gold (`BossMechanicsSystem.md` 2.6). Lines are opaque bands through the cell centres. The rule texts and the Custom Puzzle tooltips (now localized) name the colours.
 - **Affected Files:** `Assets/Scripts/UI/GamePalette.cs`, `Assets/Scripts/Boss/BossService.cs`, `Assets/Scripts/Core/LocalizationService.cs`, `Assets/Resources/Localization/*.json`, `docs/BossMechanicsSystem.md`
 - **Tests:** `PuzzleScrollPaletteTests` (convention hues, every pair of line colours tells apart, ink digits readable on every band); screenshot `after_lines_all` (every line type on one board).
+
+## GAP-049
+**Chosen modifiers silently missing on busy boards (white dots under Nonconsecutive, Even/Odd after Prime markers, Palindrome on 9×9)**
+
+- **Requirement:** REQ-BOSS-101 (chosen modifiers apply), BOSS-MOD-004
+- **Status:** FIXED (found and fixed 2026-10-19 by the per-type presence check of GAP-047) · **Severity:** HIGH · **Priority:** P1
+- **Problem:** With the presence check per type, `GenerationReliabilityTests` showed three cases where the player saw a rule in the legend but the board had none of it: Difference Kropki chosen with Nonconsecutive had no white dot (seed 1001, Floor 4); Even/Odd chosen after Prime Cells had no marker, and Palindrome on a busy 9×9 had no palindrome line (seed 1001, Floor 5). The old family check passed them because other dots, markers or lines existed.
+- **Root Cause:** Nonconsecutive forbids exactly the neighbours a white dot marks, so the pair can never produce a dot. `GenerateEvenOddMarkers` stopped at its quota counting every marker on the board, including Prime and Fortress markers. `TryBuildPalindromeLine` walked randomly and then checked whether the ends matched, which rarely succeeds on a 9×9 that other lines already crowd.
+- **Fix:** Nonconsecutive + Difference Kropki is a blocked pair; Even/Odd counts only its own markers and skips marked cells; palindromes grow outward from a centre cell in pairs of equal solution digits (5 or 7 cells).
+- **Affected Files:** `Assets/Scripts/Boss/BossService.cs`, `Assets/Scripts/Sudoku/ModifierGeometryGenerator.cs`
+- **Tests:** `GenerationReliabilityTests.BossPuzzles_AllFloors_GenerateWithChosenModifiers` (fails without the fix), `ModifierPresenceTests`.

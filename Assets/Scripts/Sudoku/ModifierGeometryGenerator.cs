@@ -418,49 +418,46 @@ namespace SudokuRoguelike.Sudoku
 
         private static ModifierLine TryBuildPalindromeLine(SudokuBoard board, Random rng, bool[,] used, int size)
         {
-            var startRow = rng.Next(size);
-            var startCol = rng.Next(size);
-            if (!IsCellFree(startRow, startCol, used)) return null;
+            var centre = new CellCoord(rng.Next(size), rng.Next(size));
+            if (!IsCellFree(centre.Row, centre.Col, used)) return null;
 
-            var cells = new List<CellCoord> { new CellCoord(startRow, startCol) };
-            var rawLen = rng.Next(4, 7);
-            var targetLen = rawLen % 2 == 0 ? rawLen + 1 : rawLen;
-
-            for (var step = 1; step < targetLen; step++)
+            var left = new List<CellCoord> { centre };
+            var right = new List<CellCoord> { centre };
+            var maxHalf = rng.Next(2, 4);      // 5 or 7 cells
+            var pairs = new List<(CellCoord A, CellCoord B)>();
+            for (var half = 0; half < maxHalf; half++)
             {
-                var last = cells[cells.Count - 1];
-                var candidates = new List<CellCoord>();
-
+                pairs.Clear();
+                var leftEnd = left[left.Count - 1];
+                var rightEnd = right[right.Count - 1];
                 for (var d = 0; d < Dirs.Length; d++)
                 {
-                    var nr = last.Row + Dirs[d].Dr;
-                    var nc = last.Col + Dirs[d].Dc;
-                    if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
-                    if (!IsCellFree(nr, nc, used)) continue;
-                    var alreadyIn = false;
-                    for (var ci = 0; ci < cells.Count; ci++)
-                        if (cells[ci].Row == nr && cells[ci].Col == nc) { alreadyIn = true; break; }
-                    if (!alreadyIn) candidates.Add(new CellCoord(nr, nc));
+                    var a = new CellCoord(leftEnd.Row + Dirs[d].Dr, leftEnd.Col + Dirs[d].Dc);
+                    if (!IsFreeLineCell(a, size, used, left, right)) continue;
+                    for (var e = 0; e < Dirs.Length; e++)
+                    {
+                        var b = new CellCoord(rightEnd.Row + Dirs[e].Dr, rightEnd.Col + Dirs[e].Dc);
+                        if (b.Equals(a) || !IsFreeLineCell(b, size, used, left, right)) continue;
+                        if (board.Solution[a.Row, a.Col] == board.Solution[b.Row, b.Col]) pairs.Add((a, b));
+                    }
                 }
-
-                if (candidates.Count == 0) break;
-                cells.Add(candidates[rng.Next(candidates.Count)]);
+                if (pairs.Count == 0) break;
+                var (pa, pb) = pairs[rng.Next(pairs.Count)];
+                left.Add(pa);
+                right.Add(pb);
             }
-
-            if (cells.Count < 4) return null;
-
-            var n = cells.Count;
-            for (var j = 0; j < n / 2; j++)
-            {
-                var a = cells[j];
-                var b = cells[n - 1 - j];
-                if (board.Solution[a.Row, a.Col] != board.Solution[b.Row, b.Col]) return null;
-            }
+            if (left.Count < 3) return null;   // at least 5 cells
 
             var line = new ModifierLine { Type = LineType.Palindrome };
-            line.Cells.AddRange(cells);
+            for (var i = left.Count - 1; i >= 1; i--) line.Cells.Add(left[i]);
+            line.Cells.Add(centre);
+            for (var i = 1; i < right.Count; i++) line.Cells.Add(right[i]);
             return line;
         }
+
+        private static bool IsFreeLineCell(CellCoord cell, int size, bool[,] used, List<CellCoord> left, List<CellCoord> right) =>
+            cell.Row >= 0 && cell.Row < size && cell.Col >= 0 && cell.Col < size
+            && IsCellFree(cell.Row, cell.Col, used) && !left.Contains(cell) && !right.Contains(cell);
 
         // ── Thermo Lines ──
 
@@ -793,6 +790,9 @@ namespace SudokuRoguelike.Sudoku
 
         // ── EvenOdd Markers ──
 
+        private static bool HasMarker(ModifierOverlayData overlay, CellCoord cell) =>
+            overlay.CellMarkers.Exists(m => m.Cell.Row == cell.Row && m.Cell.Col == cell.Col);
+
         private static void GenerateEvenOddMarkers(SudokuBoard board, ModifierOverlayData overlay, Random rng, float scale)
         {
             var size = board.Size;
@@ -806,15 +806,19 @@ namespace SudokuRoguelike.Sudoku
 
             Shuffle(allCells, rng);
 
-            for (var i = 0; i < allCells.Count && overlay.CellMarkers.Count < count; i++)
+            // Counts only its own markers: Prime or Fortress markers placed earlier used to fill the quota (GAP-049).
+            var added = 0;
+            for (var i = 0; i < allCells.Count && added < count; i++)
             {
                 var cell = allCells[i];
+                if (HasMarker(overlay, cell)) continue;
                 var v = board.Solution[cell.Row, cell.Col];
                 overlay.CellMarkers.Add(new CellMarker
                 {
                     Cell = cell,
                     Type = v % 2 == 0 ? MarkerType.Even : MarkerType.Odd
                 });
+                added++;
             }
         }
 

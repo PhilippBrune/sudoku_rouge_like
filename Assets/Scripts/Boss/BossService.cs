@@ -197,6 +197,9 @@ namespace SudokuRoguelike.Boss
             (BossModifierId.AntiBishop, BossModifierId.Antiknight),
             (BossModifierId.AntiBishop, BossModifierId.Nonconsecutive),
             (BossModifierId.AntiBishop, BossModifierId.EntropyGlobal),
+            // Nonconsecutive forbids exactly the neighbours a white dot marks: Difference Kropki could never place a
+            // dot, and the player saw the rule without any dots (GAP-049).
+            (BossModifierId.Nonconsecutive, BossModifierId.DifferenceKropki),
         };
 
         private static bool IsBlockedCombination(BossModifierId first, BossModifierId second)

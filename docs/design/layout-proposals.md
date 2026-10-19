@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 1.6 | **Date:** 2026-10-19 | **Status:** review (built: garden path, puzzle screen, boss gate, offering table, reward, relic node, shop; proposed: Custom Puzzle, rest, event, cursed tile, run end)
+**Version:** 1.7 | **Date:** 2026-10-19 | **Status:** review (built: garden path, puzzle screen, boss gate, offering table, reward, relic node, shop; proposed: Custom Puzzle, rest, event, cursed tile, run end)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.7 | 2026-10-19 | review | Built from the owner's decision for outside clues: UI-STYLE-010 (the grid shrinks to 88 % on a board with outside clues and the clues stand in a ring round it) and UI-STYLE-011 (quadruple circles on inner corners); screenshots below. |
 | 1.6 | 2026-10-19 | review | Owner request: mockups for the Custom Puzzle screen with room for every modifier of the catalog plan (three proposals: A rule book, B list with live preview, C shrine wall), and one proposal each for the rest, event, cursed-tile and run-end screens (victory and defeat share a layout). Proposed IDs UI-STYLE-012 (Custom Puzzle) and UI-STYLE-013 to 016 wait for the owner's pick. |
 | 1.5 | 2026-10-19 | implemented | Owner decision: build the three proposals for reward, relic node and shop as shown (UI-STYLE-007/008/009). All three are full-screen scenes beside the path panel (the path's buttons never draw over them, Options stays on top), built from the shared scroll parts (`ScrollUiKit.Scenes.cs`); the boss offering table and the relic shrine share one offering piece with a tier tag. Reward: choosing a plaque lifts it and names it on the Take button, choosing it again (click, key 1–3 or A) takes it. Line colours follow the convention puzzle setters use (GAP-048, `BossMechanicsSystem.md` 2.6). |
 | 1.4 | 2026-10-19 | review | Garden path **B** (UI-STYLE-001) and puzzle screen **B** (UI-STYLE-002) built in Unity, with screenshots from the game. Puzzle screen: Parity Lines are blue as the spec says (they were teal, like Dutch Whispers; GAP-048), pencil marks move under the cage sum in a cage's corner cell, and the board text renders on whole pixels. |
@@ -253,6 +254,14 @@ A sealed talisman in the curse painting carries the extra modifier with its icon
 ![Defeat](layout-proposals/end_run_scroll_defeat.jpg)
 
 One layout for both: the painting, a banner, five floor seals (stamped with each boss's mask up to the floor reached, the lost floor crossed out), the run on a tally scroll with the class's closing line, the class XP as a brush stroke with a level-up stamp, the run score as a short ledger (today's `BuildRunScoreBreakdown`), and new unlocks as ema plaques ("Nothing new this time" with the next goal on a defeat).
+
+## Clue ring and corner clues (UI-STYLE-010, UI-STYLE-011, built 2026-10-19)
+
+Owner decision: a board with outside clues shrinks (about 12 %) so the clues fit round it; other boards keep their size. Skyscrapers and quadruples, and a Little Killer board:
+
+![Skyscrapers and quadruples](layout-proposals/after_catalog_skyscrapers_quadruples.jpg)
+
+![Little Killer](layout-proposals/after_catalog_little_killer.jpg)
 
 ## Decisions and next step
 

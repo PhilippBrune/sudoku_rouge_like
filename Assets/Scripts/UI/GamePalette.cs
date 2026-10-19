@@ -101,6 +101,7 @@ namespace SudokuRoguelike.UI
         public static readonly Color OverlayCountingCircle = new(0.92f, 0.48f, 0.08f, 1.00f); // orange ring
         public static readonly Color OverlayDistanceCell   = new(0.16f, 0.24f, 0.56f, 1.00f); // navy ring and dots
         public static readonly Color OverlayNegationZone   = new(0.42f, 0.72f, 0.38f, 0.20f); // green wash under the zone
+        public static readonly Color OverlayOutsideClue    = new(0.16f, 0.13f, 0.10f, 1.00f); // ink: clue ring, quadruple rims
         public static readonly Color OverlayKropkiBlack  = new(0.10f, 0.10f, 0.10f, 0.90f);
         public static readonly Color OverlayKropkiWhite  = new(1.00f, 1.00f, 1.00f, 1.00f);
         public static readonly Color OverlayKropkiWhiteRim = new(0.13f, 0.11f, 0.09f, 1.00f); // ink rim: a white dot on paper

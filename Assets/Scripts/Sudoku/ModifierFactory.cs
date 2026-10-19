@@ -210,6 +210,23 @@ namespace SudokuRoguelike.Sudoku
                     case BossModifierId.ConstraintNegationZone:
                         rules.Add(new ZoneWhisperRule());
                         break;
+
+                    // Batch B4 (ConstraintRules.OutsideClues.cs)
+                    case BossModifierId.Skyscrapers:
+                        rules.Add(new OutsideClueRule(OutsideClueType.Skyscrapers));
+                        break;
+                    case BossModifierId.Sandwich:
+                        rules.Add(new OutsideClueRule(OutsideClueType.Sandwich));
+                        break;
+                    case BossModifierId.XSums:
+                        rules.Add(new OutsideClueRule(OutsideClueType.XSums));
+                        break;
+                    case BossModifierId.LittleKiller:
+                        rules.Add(new OutsideClueRule(OutsideClueType.LittleKiller));
+                        break;
+                    case BossModifierId.Quadruples:
+                        rules.Add(new QuadrupleRule());
+                        break;
                 }
             }
 

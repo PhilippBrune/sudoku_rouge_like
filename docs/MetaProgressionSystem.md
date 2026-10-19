@@ -1,11 +1,12 @@
 # Meta Progression System
 
-**Version:** 1.7 | **Date:** 2026-10-19 | **Status:** implemented
+**Version:** 1.8 | **Date:** 2026-10-19 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.8 | 2026-10-19 | implemented | Catalog batch B4 (BossMechanicsSystem 2.11) adds 5 modifiers to the codex and completion: 65 clearable modifiers. |
 | 1.7 | 2026-10-19 | implemented | Catalog batch B6 (BossMechanicsSystem 2.10) adds 11 modifiers to the codex and completion: 60 clearable modifiers. |
 | 1.6 | 2026-10-19 | implemented | Catalog batch B3 (BossMechanicsSystem 2.9) adds 7 modifiers to the codex and completion: 49 clearable modifiers. |
 | 1.5 | 2026-10-19 | implemented | Owner decision: the 13 catalog modifiers (BossMechanicsSystem 2.8) count toward the codex and completion: 42 clearable modifiers (completion drops a little for existing players). |
@@ -135,7 +136,7 @@ As built (1.1, GAP-017): level-40 classes show their prestige status in the Meta
 | Check | Condition | Weight |
 |-------|-----------|:---:|
 | All Sizes × All Stars Cleared | Each board size (5–9) completed at each star (1–6) = 30 combos | 25% |
-| All Modifiers Cleared | All 60 clearable player modifiers (IDs 0–29 except Modular Regions, which is never rolled, plus the catalog batches 37, 38, 40–46, 48, 51, 52, 58–61, 63–67, 69, 70, 72–74, 76–78, 80, 93) recorded as cleared; a modifier counts when a boss with it is defeated (GAP-009, SPEC-CONF-019) | 25% |
+| All Modifiers Cleared | All 65 clearable player modifiers (IDs 0–29 except Modular Regions, which is never rolled, plus the catalog batches 37, 38, 40–46, 48, 51, 52, 58–61, 63–67, 69, 70, 72–74, 76–84, 93) recorded as cleared; a modifier counts when a boss with it is defeated (GAP-009, SPEC-CONF-019) | 25% |
 | All 8 Classes at Level 30+ | All 8 classes reached Level 30 or higher | 25% |
 | All Relics Discovered | All relics in codex marked Discovered | 25% |
 

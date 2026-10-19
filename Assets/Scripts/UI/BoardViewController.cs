@@ -251,9 +251,11 @@ namespace SudokuRoguelike.UI
             var board = run?.CurrentBoard;
             if (board == null || _gridRoot == null) return;
 
-            if (_boardSize != board.Size || _cells.Count == 0)
+            // [REQ: UI-STYLE-010] A board with outside clues is drawn smaller, so the clue ring fits round it.
+            var clueRing = HasClueRing(run.CurrentOverlay);
+            if (_boardSize != board.Size || _cells.Count == 0 || clueRing != _gridHasClueRing)
             {
-                BuildGrid(board.Size);
+                BuildGrid(board.Size, clueRing);
                 _overlaysBuilt = false;
             }
 
@@ -490,9 +492,12 @@ namespace SudokuRoguelike.UI
 
         // ────────────────────── Grid building ──────────────────────
 
-        private void BuildGrid(int size)
+        private bool _gridHasClueRing;
+
+        private void BuildGrid(int size, bool clueRing = false)
         {
             _boardSize = size;
+            _gridHasClueRing = clueRing;
             _cells.Clear();
             _bordersBoard = null; // new cells: the next render draws the borders
             _bordersMap = null;
@@ -501,10 +506,10 @@ namespace SudokuRoguelike.UI
             var grid = _gridRoot.GetComponent<GridLayoutGroup>() ?? _gridRoot.gameObject.AddComponent<GridLayoutGroup>();
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             grid.constraintCount = size;
-            const float TargetBoardPx = 620f;
+            var targetBoardPx = clueRing ? 620f * ClueRingBoardScale : 620f;
             const float SpacingPx    = 2f;
             var cellPx = Mathf.Clamp(
-                Mathf.Floor((TargetBoardPx - SpacingPx * (size - 1)) / size),
+                Mathf.Floor((targetBoardPx - SpacingPx * (size - 1)) / size),
                 48f, 128f);
             grid.spacing  = new Vector2(SpacingPx, SpacingPx);
             grid.cellSize = new Vector2(cellPx, cellPx);
@@ -872,6 +877,10 @@ namespace SudokuRoguelike.UI
             // Cages and arrows of every kind (BoardViewController.CagesArrows.cs)
             DrawCages(overlay, cW, cH, sX, sY, tW, tH);
             DrawArrows(overlay, cW, cH, sX, sY, tW, tH);
+
+            // Outside clues and corner circles (BoardViewController.OutsideClues.cs)
+            DrawOutsideClues(overlay, cW, cH, sX, sY, tW, tH);
+            DrawQuadruples(overlay, cW, cH, sX, sY, tW, tH);
 
             // Cell markers
             for (var mi = 0; mi < overlay.CellMarkers.Count; mi++)

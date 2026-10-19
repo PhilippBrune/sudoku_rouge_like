@@ -88,6 +88,13 @@ namespace SudokuRoguelike.Boss
             [BossModifierId.DistanceCell] = (1, 0.15f, 7),
             [BossModifierId.ConstraintNegationZone] = (3, 0.45f, 9),
 
+            // Catalog batch B4: clues outside the grid and on corners (min sizes from BossMechanicsSystem.md)
+            [BossModifierId.Quadruples] = (2, 0.30f, 9),
+            [BossModifierId.Skyscrapers] = (3, 0.45f, 5),
+            [BossModifierId.Sandwich] = (3, 0.50f, 6),
+            [BossModifierId.XSums] = (3, 0.50f, 5),
+            [BossModifierId.LittleKiller] = (3, 0.45f, 6),
+
             // Boss debuffs (IDs 94–102) — reactive penalties on wrong placement
             // [REQ: DEBUFF-HOOK-011] All debuff entries registered here; IDs ≥94 excluded from BuildEligiblePool
             [BossModifierId.RowWipe]       = (3, 0.55f, 0), // [REQ: DEBUFF-DEF-001]
@@ -265,6 +272,13 @@ namespace SudokuRoguelike.Boss
             (BossModifierId.ConstraintNegationZone, BossModifierId.GermanWhispers),
             (BossModifierId.CountingCircles, BossModifierId.PrimeCells),
             (BossModifierId.CountingCircles, BossModifierId.MultipleCells),
+            // B4: one kind of outside clue per board, so every number in the ring means the same thing.
+            (BossModifierId.Skyscrapers, BossModifierId.Sandwich),
+            (BossModifierId.Skyscrapers, BossModifierId.XSums),
+            (BossModifierId.Skyscrapers, BossModifierId.LittleKiller),
+            (BossModifierId.Sandwich, BossModifierId.XSums),
+            (BossModifierId.Sandwich, BossModifierId.LittleKiller),
+            (BossModifierId.XSums, BossModifierId.LittleKiller),
         };
 
         private static bool IsBlockedCombination(BossModifierId first, BossModifierId second)
@@ -535,6 +549,7 @@ namespace SudokuRoguelike.Boss
             BossModifierId.NonconsecLine, BossModifierId.HighLowAlternating, BossModifierId.NabnerLine, BossModifierId.EntropicLine, BossModifierId.ModularLine, BossModifierId.ZipperLine, BossModifierId.FastThermo, BossModifierId.AmbiguousThermo, BossModifierId.FullWhiteKropki, BossModifierId.FullBlackKropki, BossModifierId.DifferenceK, BossModifierId.MultipleCells, BossModifierId.MirrorCells,
             BossModifierId.RegionSumLine, BossModifierId.KillerHiddenSum, BossModifierId.CageProduct, BossModifierId.CageDifference, BossModifierId.RenbanCage, BossModifierId.ArrowAverage, BossModifierId.DoubleArrow,
             BossModifierId.WhisperGeneralized, BossModifierId.NLine, BossModifierId.SumLine, BossModifierId.RatioN, BossModifierId.DistancePair, BossModifierId.CageRatio, BossModifierId.PillArrow, BossModifierId.OppositeCellsSum, BossModifierId.CountingCircles, BossModifierId.DistanceCell, BossModifierId.ConstraintNegationZone,
+            BossModifierId.Quadruples, BossModifierId.Skyscrapers, BossModifierId.Sandwich, BossModifierId.XSums, BossModifierId.LittleKiller,
             BossModifierId.RowWipe, BossModifierId.ColWipe, BossModifierId.DoublePenalty,
             BossModifierId.CellLock, BossModifierId.PencilBlind, BossModifierId.RadiusWipe,
             BossModifierId.PencilScramble, BossModifierId.GivenReveal, BossModifierId.RevealCost,
@@ -557,6 +572,7 @@ namespace SudokuRoguelike.Boss
             BossModifierId.NonconsecLine, BossModifierId.HighLowAlternating, BossModifierId.NabnerLine, BossModifierId.EntropicLine, BossModifierId.ModularLine, BossModifierId.ZipperLine, BossModifierId.FastThermo, BossModifierId.AmbiguousThermo, BossModifierId.FullWhiteKropki, BossModifierId.FullBlackKropki, BossModifierId.DifferenceK, BossModifierId.MultipleCells, BossModifierId.MirrorCells,
             BossModifierId.RegionSumLine, BossModifierId.KillerHiddenSum, BossModifierId.CageProduct, BossModifierId.CageDifference, BossModifierId.RenbanCage, BossModifierId.ArrowAverage, BossModifierId.DoubleArrow,
             BossModifierId.WhisperGeneralized, BossModifierId.NLine, BossModifierId.SumLine, BossModifierId.RatioN, BossModifierId.DistancePair, BossModifierId.CageRatio, BossModifierId.PillArrow, BossModifierId.OppositeCellsSum, BossModifierId.CountingCircles, BossModifierId.DistanceCell, BossModifierId.ConstraintNegationZone,
+            BossModifierId.Quadruples, BossModifierId.Skyscrapers, BossModifierId.Sandwich, BossModifierId.XSums, BossModifierId.LittleKiller,
             BossModifierId.RowWipe, BossModifierId.ColWipe, BossModifierId.DoublePenalty,
             BossModifierId.CellLock, BossModifierId.PencilBlind, BossModifierId.BoxWipe,
             BossModifierId.CrossWipe, BossModifierId.RadiusWipe, BossModifierId.PencilDrain,
@@ -641,6 +657,11 @@ namespace SudokuRoguelike.Boss
                 BossModifierId.CountingCircles     => "Counting Circles",
                 BossModifierId.DistanceCell        => "Distance Cells",
                 BossModifierId.ConstraintNegationZone => "Inverted Zone",
+                BossModifierId.Quadruples          => "Quadruples",
+                BossModifierId.Skyscrapers         => "Skyscrapers",
+                BossModifierId.Sandwich            => "Sandwich",
+                BossModifierId.XSums               => "X-Sums",
+                BossModifierId.LittleKiller        => "Little Killer",
                 BossModifierId.RowWipe             => "Row Wipe",
                 BossModifierId.ColWipe             => "Column Wipe",
                 BossModifierId.DoublePenalty       => "Double Penalty",
@@ -725,6 +746,11 @@ namespace SudokuRoguelike.Boss
                 BossModifierId.CountingCircles     => "Each digit in an orange circle says how many circles hold it: a circled 3 means exactly three circles hold 3.",
                 BossModifierId.DistanceCell        => "A cell with a small navy dot holds its distance in steps (up, down, left, right) to the cell in the navy ring.",
                 BossModifierId.ConstraintNegationZone => "Green lines are whispers (neighbours differ by 5 or more), but between two cells inside the shaded box they differ by less than 5.",
+                BossModifierId.Quadruples          => "Every digit in a white corner circle appears in at least one of the four cells around it.",
+                BossModifierId.Skyscrapers         => "Digits are buildings of that height. A number outside the grid counts the buildings seen from there; taller ones hide shorter ones behind them. Example: 2-5-3-9 shows 3.",
+                BossModifierId.Sandwich            => "A number outside the grid is the sum of the digits between the 1 and the highest digit of that row or column. Example: 1-4-2-9 gives 6.",
+                BossModifierId.XSums               => "The first digit from a number outside the grid says how many digits to add; the number is their sum. Example: 3-1-5 gives 9.",
+                BossModifierId.LittleKiller        => "A number with an arrow outside the grid is the sum of the digits along that diagonal; digits may repeat on it.",
 
                 // Boss debuffs
                 BossModifierId.RowWipe       => "Wrong placement: all your digits in that row are erased.",
@@ -841,6 +867,11 @@ namespace SudokuRoguelike.Boss
                 BossModifierId.CountingCircles    => "CC",
                 BossModifierId.DistanceCell       => "DT",
                 BossModifierId.ConstraintNegationZone => "IZ",
+                BossModifierId.Quadruples         => "QD",
+                BossModifierId.Skyscrapers        => "SY",
+                BossModifierId.Sandwich           => "SW",
+                BossModifierId.XSums              => "XS",
+                BossModifierId.LittleKiller       => "LK",
                 _                              => "??"
             };
         }

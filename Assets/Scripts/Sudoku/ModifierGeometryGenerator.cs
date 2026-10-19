@@ -226,6 +226,23 @@ namespace SudokuRoguelike.Sudoku
                     case BossModifierId.ConstraintNegationZone:
                         GenerateNegationZone(board, overlay, rng, scale);
                         break;
+
+                    // Batch B4 (ModifierGeometryGenerator.OutsideClues.cs)
+                    case BossModifierId.Skyscrapers:
+                        GenerateRingClues(board, overlay, rng, scale, OutsideClueType.Skyscrapers);
+                        break;
+                    case BossModifierId.Sandwich:
+                        GenerateRingClues(board, overlay, rng, scale, OutsideClueType.Sandwich);
+                        break;
+                    case BossModifierId.XSums:
+                        GenerateRingClues(board, overlay, rng, scale, OutsideClueType.XSums);
+                        break;
+                    case BossModifierId.LittleKiller:
+                        GenerateLittleKillers(board, overlay, rng, scale);
+                        break;
+                    case BossModifierId.Quadruples:
+                        GenerateQuadruples(board, overlay, rng, scale);
+                        break;
                 }
 
                 MarkOverlayCellsUsed(overlay, linesBefore, dotsBefore, cagesBefore, arrowsBefore, markersBefore);

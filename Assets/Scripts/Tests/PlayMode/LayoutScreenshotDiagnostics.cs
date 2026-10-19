@@ -329,6 +329,10 @@ namespace SudokuRoguelike.Tests
                     BossModifierId.CageRatio, BossModifierId.PillArrow }),
                 ("after_catalog_b6_cells.png", new[] { BossModifierId.OppositeCellsSum, BossModifierId.CountingCircles,
                     BossModifierId.DistanceCell }),
+                ("after_catalog_skyscrapers_quadruples.png", new[] { BossModifierId.Skyscrapers, BossModifierId.Quadruples }),
+                ("after_catalog_sandwich.png", new[] { BossModifierId.Sandwich }),
+                ("after_catalog_xsums.png", new[] { BossModifierId.XSums }),
+                ("after_catalog_little_killer.png", new[] { BossModifierId.LittleKiller }),
             };
             _puzzleSize = 9;
             var seed = 7330;

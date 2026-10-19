@@ -75,6 +75,11 @@ namespace SudokuRoguelike.UI
             BossModifierId.CountingCircles    => new[] { CountingKey },
             BossModifierId.DistanceCell       => new[] { DistanceCellKey },
             BossModifierId.ConstraintNegationZone => new[] { LineKey(LineType.ZoneWhisper) },
+            BossModifierId.Quadruples         => new[] { QuadruplesKey },
+            BossModifierId.Skyscrapers        => new[] { OutsideClueKey(OutsideClueType.Skyscrapers) },
+            BossModifierId.Sandwich           => new[] { OutsideClueKey(OutsideClueType.Sandwich) },
+            BossModifierId.XSums              => new[] { OutsideClueKey(OutsideClueType.XSums) },
+            BossModifierId.LittleKiller       => new[] { OutsideClueKey(OutsideClueType.LittleKiller) },
             _                               => Array.Empty<string>()
         };
 
@@ -135,6 +140,11 @@ namespace SudokuRoguelike.UI
                 BossModifierId.CountingCircles    => GamePalette.OverlayCountingCircle,
                 BossModifierId.DistanceCell       => GamePalette.OverlayDistanceCell,
                 BossModifierId.ConstraintNegationZone => GetLineColor(LineType.ZoneWhisper),
+                BossModifierId.Quadruples         => GamePalette.OverlayOutsideClue,
+                BossModifierId.Skyscrapers        => GamePalette.OverlayOutsideClue,
+                BossModifierId.Sandwich           => GamePalette.OverlayOutsideClue,
+                BossModifierId.XSums              => GamePalette.OverlayOutsideClue,
+                BossModifierId.LittleKiller       => GamePalette.OverlayOutsideClue,
                 _                               => Color.clear
             };
             if (color.a <= 0f) return false;

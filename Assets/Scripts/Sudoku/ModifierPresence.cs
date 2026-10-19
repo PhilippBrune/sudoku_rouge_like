@@ -126,6 +126,16 @@ namespace SudokuRoguelike.Sudoku
                     return overlay.CellMarkers.Exists(m => m.Type == MarkerType.CountingCircle);
                 case BossModifierId.DistanceCell:
                     return overlay.CellMarkers.Exists(m => m.Type == MarkerType.DistanceCellSource);
+                case BossModifierId.Skyscrapers:
+                    return overlay.OutsideClues.Exists(c => c.Type == OutsideClueType.Skyscrapers);
+                case BossModifierId.Sandwich:
+                    return overlay.OutsideClues.Exists(c => c.Type == OutsideClueType.Sandwich);
+                case BossModifierId.XSums:
+                    return overlay.OutsideClues.Exists(c => c.Type == OutsideClueType.XSums);
+                case BossModifierId.LittleKiller:
+                    return overlay.OutsideClues.Exists(c => c.Type == OutsideClueType.LittleKiller);
+                case BossModifierId.Quadruples:
+                    return overlay.Quadruples.Count > 0;
                 default:
                     return false;
             }

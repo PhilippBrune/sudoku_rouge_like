@@ -5,6 +5,7 @@
 ### New modifiers
 
 - **Cages and arrows (7).** Region Sum Line, Hidden Killer, Product Cage, Difference Cage, Renban Cage, Arrow Average and Double Arrow. Each cage kind has its own colour and corner label; the Pattern Scroll never reveals a hidden cage sum.
+- **Outside clues (B4).** Skyscrapers, Sandwich, X-Sums and Little Killer: clues stand in a ring round the grid, which is drawn a little smaller on those boards. Quadruples put digits in circles on the corners between four cells.
 - **Eleven more (B6).** K-Whispers, 10-Line, Sum Line, Ratio 1:3, Distance Pairs, Ratio Cage, Pill Arrow, Opposite Sums, Counting Circles, Distance Cells and the Inverted Zone (a shaded box where green whisper lines flip).
 
 ### Fixed

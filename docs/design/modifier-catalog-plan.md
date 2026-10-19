@@ -1,11 +1,12 @@
 # Plan: the 64 catalog modifiers (IDs 30–93)
 
-**Version:** 1.3 | **Date:** 2026-10-19 | **Status:** implemented (Phase 0 steps 1, 2, 7 in part; batches B1, B2, B3, B6) · B4, B5 in progress
+**Version:** 1.4 | **Date:** 2026-10-19 | **Status:** implemented (Phase 0 steps 1, 2, 7 in part; batches B1, B2, B3, B4, B6) · B5 in progress
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.4 | 2026-10-19 | implemented | Built: B4 (79, 81, 82, 83, 84) with the clue ring (UI-STYLE-010: the grid shrinks to 88 % only on boards with outside clues) and corner circles (UI-STYLE-011). Quadruples follow the library minimum (9×9). One kind of outside clue per board. |
 | 1.3 | 2026-10-19 | implemented | Built: B6 (37, 46, 48, 61, 63, 67, 72, 77, 78, 80) and the rework of 93 as the inverted whisper zone; 33 dropped. K-Whispers use one K per puzzle (2 or 3 up to 7×7, 3 or 6 above); Ratio N uses N = 3; distance pairs are a diagonal step or a knight move apart; the inverted zone is generated first, so the lines, cages, arrows and marks of other modifiers keep out of it (complete Kropki dot sets still cover the whole board). A new check in the catalog test found lines that cross themselves (GAP-050, fixed). |
 | 1.2 | 2026-10-19 | implemented | Owner request: build B3–B6. Owner decisions (2026-10-19): outside clues shrink the board (only on boards with outside clues); Index Parity (33) is dropped; the Constraint Negation Zone (93) becomes an inverted whisper zone (a shaded 3×3 area where neighbours on a green line inside it differ by less than 5; 9×9 only); givens stay as today. Built: B3 (45, 64, 65, 66, 69, 70, 73) with the min sizes of BossMechanicsSystem.md (45, 64 and 70 at 7×7). |
 | 1.1 | 2026-10-19 | implemented | Owner decisions (2026-10-19): build Phase 0 + B1 + B2 now; new modifiers roll at equal weight; codex and completion grow; the drop list stands; line colours follow the setters' convention. Built: per-type presence (GAP-047, which exposed GAP-049), cage/arrow subtype filters, the 13 B1/B2 modifiers with rules, geometry, overlays, legend layers and five-language texts, blocked pairs, a soundness test per modifier (`CatalogModifierTests`) and a catalog completeness test. Rule details follow the spec (Entropic Line from 7×7, Difference ≥ K with K = 3, High-Low with 5 low on 9×9). Not yet: the catalog refactor of the name and abbreviation switches (step 3), golden geometry tests (step 5), the pair harness (step 7, [Explicit] part), the Custom Puzzle panel for 43 modifiers (needs a mockup), B3–B6. |

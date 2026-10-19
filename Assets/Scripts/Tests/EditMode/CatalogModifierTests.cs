@@ -32,7 +32,10 @@ namespace SudokuRoguelike.Tests
             // B6
             BossModifierId.WhisperGeneralized, BossModifierId.NLine, BossModifierId.SumLine, BossModifierId.RatioN,
             BossModifierId.DistancePair, BossModifierId.CageRatio, BossModifierId.PillArrow, BossModifierId.OppositeCellsSum,
-            BossModifierId.CountingCircles, BossModifierId.DistanceCell, BossModifierId.ConstraintNegationZone
+            BossModifierId.CountingCircles, BossModifierId.DistanceCell, BossModifierId.ConstraintNegationZone,
+            // B4: outside clues and quadruples
+            BossModifierId.Quadruples, BossModifierId.Skyscrapers, BossModifierId.Sandwich, BossModifierId.XSums,
+            BossModifierId.LittleKiller
         };
 
         // ── rules on hand-made boards (one row of a 9×9) ──
@@ -289,7 +292,7 @@ namespace SudokuRoguelike.Tests
         {
             var size = board.Size;
             var solved = new SudokuBoard(size, board.Solution, (int[,])board.Solution.Clone(), board.RegionMap);
-            foreach (var cell in MarkedCells(mod, overlay))
+            foreach (var cell in MarkedCells(mod, overlay, board.Solution))
             {
                 var caught = false;
                 for (var wrong = 1; wrong <= size && !caught; wrong++)
@@ -303,8 +306,9 @@ namespace SudokuRoguelike.Tests
             return null;
         }
 
-        private static IEnumerable<CellCoord> MarkedCells(BossModifierId mod, ModifierOverlayData overlay)
+        private static IEnumerable<CellCoord> MarkedCells(BossModifierId mod, ModifierOverlayData overlay, int[,] solution)
         {
+            var size = solution.GetLength(0);
             switch (mod)
             {
                 case BossModifierId.DifferenceK:
@@ -325,6 +329,45 @@ namespace SudokuRoguelike.Tests
                     break;
                 case BossModifierId.CountingCircles:
                     foreach (var m in overlay.CellMarkers.Where(m => m.Type == MarkerType.CountingCircle)) yield return m.Cell;
+                    break;
+                case BossModifierId.Skyscrapers:
+                    // The cell next to the clue decides the count; a building hidden behind a higher one may change freely.
+                    foreach (var clue in overlay.OutsideClues) yield return OutsideClueGeometry.Cells(clue, size)[0];
+                    break;
+                case BossModifierId.XSums:
+                    // The first digit says how many cells are added; each of those cells changes the sum.
+                    foreach (var clue in overlay.OutsideClues)
+                    {
+                        var cells = OutsideClueGeometry.Cells(clue, size);
+                        var x = solution[cells[0].Row, cells[0].Col];
+                        for (var i = 0; i < x; i++) yield return cells[i];
+                    }
+                    break;
+                case BossModifierId.Sandwich:
+                    foreach (var clue in overlay.OutsideClues)
+                    {
+                        var cells = OutsideClueGeometry.Cells(clue, size);
+                        var digits = cells.Select(c => solution[c.Row, c.Col]).ToList();
+                        int one = digits.IndexOf(1), top = digits.IndexOf(size);
+                        for (var i = Math.Min(one, top) + 1; i < Math.Max(one, top); i++) yield return cells[i];
+                    }
+                    break;
+                case BossModifierId.LittleKiller:
+                    foreach (var clue in overlay.OutsideClues)
+                        foreach (var c in OutsideClueGeometry.Cells(clue, size)) yield return c;
+                    break;
+                case BossModifierId.Quadruples:
+                    // A listed digit held by just one of the four cells is bound to that cell.
+                    foreach (var quad in overlay.Quadruples)
+                    {
+                        var cells = new[] { quad.TopLeft, new CellCoord(quad.TopLeft.Row, quad.TopLeft.Col + 1),
+                            new CellCoord(quad.TopLeft.Row + 1, quad.TopLeft.Col), new CellCoord(quad.TopLeft.Row + 1, quad.TopLeft.Col + 1) };
+                        foreach (var c in cells)
+                        {
+                            var d = solution[c.Row, c.Col];
+                            if (quad.Digits.Contains(d) && cells.Count(o => solution[o.Row, o.Col] == d) == 1) yield return c;
+                        }
+                    }
                     break;
                 case BossModifierId.DistanceCell:
                     // The ring cell itself is free; only the dotted cells are bound.
@@ -466,7 +509,9 @@ namespace SudokuRoguelike.Tests
                 (BossModifierId.ArrowAverage, 70), (BossModifierId.DoubleArrow, 73), (BossModifierId.WhisperGeneralized, 37),
                 (BossModifierId.NLine, 46), (BossModifierId.SumLine, 48), (BossModifierId.RatioN, 61), (BossModifierId.DistancePair, 63),
                 (BossModifierId.CageRatio, 67), (BossModifierId.PillArrow, 72), (BossModifierId.OppositeCellsSum, 77),
-                (BossModifierId.CountingCircles, 78), (BossModifierId.DistanceCell, 80), (BossModifierId.ConstraintNegationZone, 93)
+                (BossModifierId.CountingCircles, 78), (BossModifierId.DistanceCell, 80), (BossModifierId.ConstraintNegationZone, 93),
+                (BossModifierId.Quadruples, 79), (BossModifierId.Skyscrapers, 81), (BossModifierId.Sandwich, 82),
+                (BossModifierId.XSums, 83), (BossModifierId.LittleKiller, 84)
             };
             foreach (var (id, value) in expected) Assert.AreEqual(value, (int)id, id.ToString());
             Assert.AreEqual(11, (int)LineType.NonconsecLine);
@@ -483,6 +528,8 @@ namespace SudokuRoguelike.Tests
             Assert.AreEqual(2, (int)CellPairType.Distance);
             Assert.AreEqual(6, (int)PairConstraintType.RatioN);
             Assert.AreEqual(9, (int)MarkerType.CountingCircle);
+            Assert.AreEqual(3, (int)OutsideClueType.LittleKiller);
+            Assert.AreEqual(4, (int)OutsideClueEdge.DiagonalDownRight);
         }
 
         // One thermometer kind per puzzle, never two dots on one edge, no plain grey line next to an Ambiguous Thermo.
@@ -502,7 +549,10 @@ namespace SudokuRoguelike.Tests
                 (BossModifierId.Nonconsecutive, BossModifierId.DifferenceKropki),
                 (BossModifierId.KillerHiddenSum, BossModifierId.KillerCages),
                 (BossModifierId.ConstraintNegationZone, BossModifierId.GermanWhispers),
-                (BossModifierId.CountingCircles, BossModifierId.PrimeCells), (BossModifierId.CountingCircles, BossModifierId.MultipleCells)
+                (BossModifierId.CountingCircles, BossModifierId.PrimeCells), (BossModifierId.CountingCircles, BossModifierId.MultipleCells),
+                (BossModifierId.Skyscrapers, BossModifierId.Sandwich), (BossModifierId.Skyscrapers, BossModifierId.XSums),
+                (BossModifierId.Skyscrapers, BossModifierId.LittleKiller), (BossModifierId.Sandwich, BossModifierId.XSums),
+                (BossModifierId.Sandwich, BossModifierId.LittleKiller), (BossModifierId.XSums, BossModifierId.LittleKiller)
             };
             foreach (var (a, b) in blocked)
             {

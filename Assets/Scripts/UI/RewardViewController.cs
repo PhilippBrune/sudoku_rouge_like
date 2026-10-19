@@ -13,25 +13,20 @@ using Object = UnityEngine.Object;
 namespace SudokuRoguelike.UI
 {
     /// <summary>
-    /// Owns reward screen, bag-swap panel, rest choice panel, relic choice panel, and event handling.
+    /// Owns the reward screen (RewardViewController.Tally.cs), the relic shrine (RewardViewController.Shrine.cs), the
+    /// bag-swap panel, the rest choice panel and event handling.
     /// </summary>
-    public sealed class RewardViewController : MonoBehaviour
+    public sealed partial class RewardViewController : MonoBehaviour
     {
         private RunMapController _map;
         private GameObject _pathPanel;
 
-        private GameObject _rewardPanel;
-        private Text _rewardSummary;
-        private bool _awaitingReward;
-        private List<ItemInstance> _rewardSlots;
-
         // Bag-swap
         private GameObject _bagSwapPanel;
         private ItemInstance _pendingSwapItem;
+        private GameObject _panelBeforeSwap;
         private Action<int> _onSwapSlotChosen;
         private Action _onSwapAborted;
-
-        public bool IsAwaitingReward => _awaitingReward;
 
         public Action<string> OnStatusChanged;
         public Action OnPostRewardReady;
@@ -46,336 +41,6 @@ namespace SudokuRoguelike.UI
             _rewardSlots = new List<ItemInstance>();
         }
 
-        // ────────────────────── Reward screen ──────────────────────
-
-        public void ShowRewardScreen()
-        {
-            BuildRewardPanel();
-
-            if (!_map.TryClaimCurrentPuzzleRewards(out var gold, out var slots))
-            {
-                _awaitingReward = false;
-                OnStatusChanged?.Invoke(T("InRun.Reward.NoRewards"));
-                InRunUiFactory.HidePanel(_rewardPanel);
-                OnPostRewardReady?.Invoke();
-                return;
-            }
-
-            _awaitingReward = true;
-            _rewardSlots.Clear();
-            _rewardSlots.AddRange(slots);
-
-            if (_rewardSummary != null)
-            {
-                var run   = _map?.Run;
-                var s     = run?.State;
-                var level = run?.CurrentLevelState;
-
-                var hp     = s != null ? $"{s.CurrentHP}/{s.MaxHP}" : "—";
-                var pencil = s != null ? $"{s.CurrentPencil}/{s.MaxPencil}" : "—";
-
-                var mistakes = level?.Mistakes ?? 0;
-                var perfect  = level?.PerfectSoFar ?? false;
-                var noPencil = level?.NoPencilUsed ?? false;
-
-                var xp = 0;
-                if (run?.TileXpLog != null && run.TileXpLog.Count > 0)
-                    xp = run.TileXpLog[run.TileXpLog.Count - 1].TotalXp;
-
-                /*
-                _rewardSummary.text =
-                    $"Rewards:  +{gold}g  ·  HP {hp}  ·  Pencil {pencil}\n" +
-                    $"Unlocks:  +{xp} XP\n" +
-                    $"Stats:    {mistakes} mistake{(mistakes == 1 ? "" : "s")}  ·  {(perfect ? "Perfect" : "Not perfect")}  ·  {(noPencil ? "No pencil" : "Pencil used")}\n" +
-                    $"Choose a reward  ({slots.Count} item{(slots.Count == 1 ? "" : "s")}):";
-                */
-
-                _rewardSummary.text = F(
-                    "InRun.Reward.Summary",
-                    gold,
-                    hp,
-                    pencil,
-                    xp,
-                    mistakes,
-                    LocalizationService.Plural(
-                        mistakes,
-                        "InRun.Reward.Mistake.One",
-                        "InRun.Reward.Mistake.Many",
-                        "mistake",
-                        "mistakes"),
-                    T(perfect ? "InRun.Reward.Perfect" : "InRun.Reward.NotPerfect"),
-                    T(noPencil ? "InRun.Reward.NoPencil" : "InRun.Reward.PencilUsed"),
-                    slots.Count,
-                    LocalizationService.Plural(
-                        slots.Count,
-                        "InRun.Reward.Item.One",
-                        "InRun.Reward.Item.Many",
-                        "item",
-                        "items"));
-            }
-
-            if (_rewardPanel != null)
-            {
-                _rewardPanel.SetActive(true);
-                ActivePanel = _rewardPanel;
-                FadeInPanel(_rewardPanel);
-            }
-            StartCoroutine(RebuildRewardButtonsStaggered());
-        }
-
-        // RW-1: keyboard 1-3 shortcut claims the given reward slot directly
-        public void SelectRewardByIndex(int i)
-        {
-            if (_rewardPanel == null || !_rewardPanel.activeSelf) return;
-            var slotGo = _rewardPanel.transform.Find($"Slot_{i}");
-            var btn = slotGo?.GetComponent<UnityEngine.UI.Button>();
-            if (btn != null && btn.IsInteractable())
-                btn.onClick.Invoke();
-        }
-
-        private void BuildRewardPanel()
-        {
-            if (_rewardPanel != null || _pathPanel == null) return;
-            _rewardPanel = InRunUiFactory.CreateOverlayPanel(_pathPanel.transform, "RewardPanel", T("InRun.Reward.Title"));
-            var panelRt = _rewardPanel.GetComponent<RectTransform>();
-            panelRt.anchorMin = new Vector2(0.06f, 0.12f);
-            panelRt.anchorMax = new Vector2(0.94f, 0.84f);
-            panelRt.offsetMin = Vector2.zero;
-            panelRt.offsetMax = Vector2.zero;
-
-            var rewardBase = InRunUiFactory.PanelBg;
-            _rewardPanel.GetComponent<Image>().color = new Color(rewardBase.r, rewardBase.g, rewardBase.b, 0.72f);
-            InRunUiFactory.AddPanelBackground(_rewardPanel.transform, "bg_reward");
-
-            var title = _rewardPanel.transform.Find("Title")?.GetComponent<Text>();
-            if (title != null)
-            {
-                title.color = new Color(0.08f, 0.11f, 0.07f, 1f);
-                title.fontStyle = FontStyle.Bold;
-                var titleOutline = title.gameObject.AddComponent<Outline>();
-                titleOutline.effectColor = new Color(GamePalette.TextPrimary.r, GamePalette.TextPrimary.g, GamePalette.TextPrimary.b, 0.80f);
-                titleOutline.effectDistance = new Vector2(1.5f, -1.5f);
-            }
-
-            _rewardSummary = _rewardPanel.transform.Find("Summary")?.GetComponent<Text>();
-            if (_rewardSummary != null)
-            {
-                _rewardSummary.fontSize = 12;
-                _rewardSummary.alignment = TextAnchor.UpperLeft;
-                _rewardSummary.horizontalOverflow = HorizontalWrapMode.Wrap;
-                _rewardSummary.verticalOverflow = VerticalWrapMode.Overflow;
-
-                _rewardSummary.rectTransform.anchorMin = new Vector2(0.08f, 0.62f);
-                _rewardSummary.rectTransform.anchorMax = new Vector2(0.92f, 0.86f);
-                _rewardSummary.rectTransform.offsetMin = Vector2.zero;
-                _rewardSummary.rectTransform.offsetMax = Vector2.zero;
-            }
-            _rewardPanel.SetActive(false);
-        }
-
-        private IEnumerator RebuildRewardButtonsStaggered()
-        {
-            if (_rewardPanel == null) yield break;
-            InRunUiFactory.ClearNamedChildren(_rewardPanel.transform, "Slot_");
-
-            var cols = Mathf.Clamp(_rewardSlots.Count, 1, 4);
-            var totalRows = Mathf.CeilToInt(_rewardSlots.Count / (float)cols);
-
-            const float left = 0.04f;
-            const float right = 0.96f;
-            const float colGap = 0.025f;
-            var btnW = (right - left - colGap * (cols - 1)) / cols;
-
-            const float top = 0.60f;
-            const float btnH = 0.18f;
-            const float rowGap = 0.04f;
-
-            var slotBtns = new Button[_rewardSlots.Count];
-            for (var i = 0; i < _rewardSlots.Count; i++)
-            {
-                var item = _rewardSlots[i];
-                var col = i % cols;
-                var row = i / cols;
-
-                var itemsInRow = row == totalRows - 1 ? _rewardSlots.Count - row * cols : cols;
-                var rowOffset = (cols - itemsInRow) * 0.5f * (btnW + colGap);
-
-                var xMin = left + rowOffset + col * (btnW + colGap);
-                var xMax = xMin + btnW;
-                var yMax = top - row * (btnH + rowGap);
-                var yMin = yMax - btnH;
-
-                var itemLabel = item != null
-                    ? F("InRun.Reward.ItemChoice", ItemService.GetItemName(item.Type), RarityLabel(item.Rarity), ItemService.GetItemDescription(item.Type, item.Rarity))
-                    : T("InRun.Reward.Nothing");
-
-                var btn = InRunUiFactory.CreatePanelButton(_rewardPanel.transform, $"Slot_{i}",
-                    new Vector2(xMin, yMin), new Vector2(xMax, yMax), itemLabel);
-                // Tint button by rarity so items are immediately distinguishable at a glance
-                if (item != null)
-                {
-                    var img = btn.GetComponent<Image>();
-                    if (img != null)
-                        img.color = item.Rarity switch
-                        {
-                            ItemRarity.Epic => new Color(0.80f, 0.58f, 0.08f, 0.92f),  // gold
-                            ItemRarity.Rare => new Color(0.22f, 0.38f, 0.78f, 0.92f),  // blue
-                            _              => img.color                                 // Normal: keep default
-                        };
-                    // RW1: also tint the label text colour to match rarity
-                    var lbl = btn.transform.Find("Label")?.GetComponent<Text>();
-                    if (lbl != null)
-                        lbl.color = item.Rarity switch
-                        {
-                            ItemRarity.Epic => new Color(1.00f, 0.85f, 0.35f, 1f),   // warm gold
-                            ItemRarity.Rare => new Color(0.55f, 0.80f, 1.00f, 1f),   // light blue
-                            _              => lbl.color                              // Normal: keep default
-                        };
-                }
-                if (item != null)
-                    InRunUiFactory.SetButtonIcon(btn, ItemService.GetIconName(item.Type), false, "items");
-                var idx = i;
-                btn.onClick.AddListener(() => ClaimReward(idx));
-                slotBtns[i] = btn;
-
-                // Staggered reveal: snap to full size then punch-scale for feedback
-                btn.transform.localScale = Vector3.one;
-                StartCoroutine(AnimationHelper.PulseScale(
-                    btn.transform, 1f, 1.15f, AnimationHelper.RewardSlotDuration));
-                yield return new WaitForSecondsRealtime(AnimationHelper.RewardSlotDuration * 0.6f);
-            }
-
-            // Skip button — F-QA: skip_stone unifies all skip actions (flow_ribbon kept for CrossLink map node)
-            var skip = InRunUiFactory.CreateActionButton(_rewardPanel.transform, "Slot_skip",
-                new Vector2(0.35f, 0.06f), new Vector2(0.65f, 0.16f), T("Skip"), UiAction.Skip);
-            skip.onClick.AddListener(() =>
-            {
-                GrantNothingReward();
-                _awaitingReward = false;
-                ActivePanel = null;
-                InRunUiFactory.HidePanel(_rewardPanel);
-                OnPostRewardReady?.Invoke();
-            });
-
-            // [REQ: REQ-ITEM-100] Reroll the item slots (GAP-015): a reroll token first, otherwise gold.
-            var reroll = BuildRewardRerollButton();
-            var rerollNav = reroll.navigation;
-            rerollNav.mode = Navigation.Mode.Explicit;
-            rerollNav.selectOnRight = skip;
-            reroll.navigation = rerollNav;
-
-            // Explicit D-pad navigation: grid left/right, row up/down, last row → skip
-            for (var i = 0; i < slotBtns.Length; i++)
-            {
-                var nav = new Navigation { mode = Navigation.Mode.Explicit };
-                var col = i % cols;
-                var row = i / cols;
-                if (col > 0)            nav.selectOnLeft  = slotBtns[i - 1];
-                if (col < cols - 1 && i + 1 < slotBtns.Length) nav.selectOnRight = slotBtns[i + 1];
-                if (i + cols < slotBtns.Length) nav.selectOnDown = slotBtns[i + cols];
-                else                            nav.selectOnDown = skip;
-                if (i - cols >= 0)      nav.selectOnUp    = slotBtns[i - cols];
-                slotBtns[i].navigation = nav;
-            }
-            // Skip: up goes to first slot in the last row
-            var lastRowFirst = ((slotBtns.Length - 1) / cols) * cols;
-            var skipNav = skip.navigation;
-            skipNav.mode = Navigation.Mode.Explicit;
-            skipNav.selectOnUp = slotBtns.Length > 0 ? slotBtns[lastRowFirst] : null;
-            skipNav.selectOnLeft = reroll;
-            skip.navigation = skipNav;
-            rerollNav.selectOnUp = skipNav.selectOnUp;
-            reroll.navigation = rerollNav;
-
-            // All buttons now exist — set controller focus to first reward button
-            InRunUiFactory.SelectFirstInteractable(_rewardPanel);
-        }
-
-        private void ClaimReward(int index)
-        {
-            var run = _map?.Run;
-            if (run == null) return;
-
-            if (index >= 0 && index < _rewardSlots.Count && _rewardSlots[index] != null)
-            {
-                var claimed = _rewardSlots[index];
-
-                if (run.IsBagFull())
-                {
-                    ShowBagSwapPanel(
-                        claimed,
-                        slotToReplace =>
-                        {
-                            run.ReplaceItemInInventory(slotToReplace, claimed);
-                            new ProfileService(new SaveFileService(SaveProfileService.ActiveSlot)).RecordItemDiscovery(claimed.Type);
-                            _awaitingReward = false;
-                            _rewardSlots.Clear();
-                            InRunUiFactory.HidePanel(_rewardPanel);
-                            InRunUiFactory.HidePanel(_bagSwapPanel);
-                            OnPostRewardReady?.Invoke();
-                        },
-                        () =>
-                        {
-                            _awaitingReward = false;
-                            _rewardSlots.Clear();
-                            InRunUiFactory.HidePanel(_rewardPanel);
-                            InRunUiFactory.HidePanel(_bagSwapPanel);
-                            OnPostRewardReady?.Invoke();
-                        });
-                    return;
-                }
-
-                run.PickRewardItem(index);
-                new ProfileService(new SaveFileService(SaveProfileService.ActiveSlot)).RecordItemDiscovery(claimed.Type);
-            }
-            else
-                GrantNothingReward();   // a Nothing slot was chosen
-
-            _awaitingReward = false;
-            _rewardSlots.Clear();
-            ActivePanel = null;
-            InRunUiFactory.HidePanel(_rewardPanel);
-            OnPostRewardReady?.Invoke();
-        }
-
-        private Button BuildRewardRerollButton()
-        {
-            var run = _map?.Run;
-            var label = run != null && run.State.RerollTokens > 0
-                ? T("InRun.Reward.RerollToken")
-                : F("InRun.Reward.RerollGold", run?.GetRewardRerollCost() ?? 0);
-            var reroll = InRunUiFactory.CreateActionButton(_rewardPanel.transform, "Slot_reroll",
-                new Vector2(0.06f, 0.06f), new Vector2(0.32f, 0.16f), label, UiAction.Reroll);
-            reroll.interactable = run != null && run.CanRerollReward();
-            reroll.onClick.AddListener(() =>
-            {
-                var rerolled = _map?.Run?.RerollRewardSlots();
-                if (rerolled == null)
-                {
-                    OnStatusChanged?.Invoke(T("InRun.Reward.RerollUnavailable"));
-                    return;
-                }
-                OnStatusChanged?.Invoke(T("InRun.Reward.Rerolled"));
-                RerollRewardSlots(new List<ItemInstance>(rerolled));
-            });
-            return reroll;
-        }
-
-        // [REQ: REQ-ITEM-100] Choosing Nothing (a Nothing slot or Skip) grants 5 gold × floor number (SPEC-AMB-007).
-        private void GrantNothingReward()
-        {
-            var gold = _map?.Run?.TakeNothingReward() ?? 0;
-            if (gold > 0) OnStatusChanged?.Invoke(F("InRun.Reward.NothingGold", gold));
-        }
-
-        public void RerollRewardSlots(List<ItemInstance> newSlots)
-        {
-            if (newSlots == null || !_awaitingReward) return;
-            _rewardSlots.Clear();
-            _rewardSlots.AddRange(newSlots);
-            StartCoroutine(RebuildRewardButtonsStaggered());
-        }
-
         // ────────────────────── Bag-full swap panel ──────────────────────
 
         public void ShowBagSwapPanel(ItemInstance newItem, Action<int> onReplace, Action onAbort)
@@ -385,41 +50,57 @@ namespace SudokuRoguelike.UI
             // Wrap callbacks so the swap panel is always dismissed before the
             // caller's logic runs, and neither callback can fire twice even on
             // rapid double-taps.
+            // The panel that was open before the swap (the reward or the shop) gets the focus back afterwards.
+            _panelBeforeSwap = ActivePanel;
             _onSwapSlotChosen = slotIdx =>
             {
                 _onSwapSlotChosen = null;
                 _onSwapAborted    = null;
-                ActivePanel = null;
-                InRunUiFactory.HidePanel(_bagSwapPanel);
+                CloseSwapLayer();
                 onReplace?.Invoke(slotIdx);
             };
             _onSwapAborted = () =>
             {
                 _onSwapSlotChosen = null;
                 _onSwapAborted    = null;
-                ActivePanel = null;
-                InRunUiFactory.HidePanel(_bagSwapPanel);
+                CloseSwapLayer();
                 onAbort?.Invoke();
             };
 
-            var parent = _pathPanel?.transform ?? Object.FindFirstObjectByType<Canvas>()?.rootCanvas.transform;
+            // A full-screen dimmed layer above the reward and shop scenes (UI-STYLE-007/009): it is modal, so nothing
+            // behind it (Reroll, Take nothing, Leave, other offers) can be clicked while the bag is being sorted.
+            Transform parent = _pathPanel != null ? _pathPanel.transform.parent : null;
+            if (parent == null)
+            {
+                var canvas = Object.FindFirstObjectByType<Canvas>();
+                if (canvas != null) parent = canvas.rootCanvas.transform;
+            }
             if (parent == null) return;
 
             if (_bagSwapPanel != null) Object.Destroy(_bagSwapPanel);
             _bagSwapPanel = new GameObject("BagSwapPanel", typeof(RectTransform), typeof(Image));
             _bagSwapPanel.transform.SetParent(parent, false);
-            var rt = _bagSwapPanel.GetComponent<RectTransform>();
+            _bagSwapPanel.transform.SetAsLastSibling();
+            var layerRt = _bagSwapPanel.GetComponent<RectTransform>();
+            layerRt.anchorMin = Vector2.zero;
+            layerRt.anchorMax = Vector2.one;
+            layerRt.offsetMin = layerRt.offsetMax = Vector2.zero;
+            _bagSwapPanel.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.55f);
+
+            var card = new GameObject("SwapCard", typeof(RectTransform), typeof(Image));
+            card.transform.SetParent(_bagSwapPanel.transform, false);
+            var rt = card.GetComponent<RectTransform>();
             rt.anchorMin = new Vector2(0.25f, 0.25f);
             rt.anchorMax = new Vector2(0.75f, 0.75f);
             rt.offsetMin = rt.offsetMax = Vector2.zero;
-            _bagSwapPanel.GetComponent<Image>().color = InRunUiFactory.SwapPanelBg;
-            InRunUiFactory.AddPanelBackground(_bagSwapPanel.transform, "bg_swap");
+            card.GetComponent<Image>().color = InRunUiFactory.SwapPanelBg;
+            InRunUiFactory.AddPanelBackground(card.transform, "bg_swap");
 
-            var outline = _bagSwapPanel.AddComponent<Outline>();
+            var outline = card.AddComponent<Outline>();
             outline.effectColor = GamePalette.AccentGoldMid;
             outline.effectDistance = new Vector2(2f, -2f);
 
-            var title = InRunUiFactory.CreateText(_bagSwapPanel.transform, "SwapTitle",
+            var title = InRunUiFactory.CreateText(card.transform, "SwapTitle",
                 F("InRun.BagSwap.Title", ItemService.GetItemName(newItem.Type), RarityLabel(newItem.Rarity), ItemService.GetItemDescription(newItem.Type, newItem.Rarity)),
                 13, TextAnchor.UpperCenter, InRunUiFactory.AccentGold);
             title.rectTransform.anchorMin = new Vector2(0.04f, 0.72f);
@@ -441,7 +122,7 @@ namespace SudokuRoguelike.UI
                 var label = item != null
                     ? F("InRun.BagSwap.Slot", ItemService.GetItemName(item.Type), RarityLabel(item.Rarity))
                     : T("InRun.Common.Empty");
-                var slotBtn = InRunUiFactory.CreatePanelButton(_bagSwapPanel.transform, $"SwapSlot_{i}",
+                var slotBtn = InRunUiFactory.CreatePanelButton(card.transform, $"SwapSlot_{i}",
                     new Vector2(xMin, yMax - 0.20f), new Vector2(xMin + 0.29f, yMax), label);
                 if (item != null)
                     InRunUiFactory.SetButtonIcon(slotBtn, ItemService.GetIconName(item.Type), false, "items");
@@ -450,7 +131,7 @@ namespace SudokuRoguelike.UI
                 swapBtns[i] = slotBtn;
             }
 
-            var abortBtn = InRunUiFactory.CreatePanelButton(_bagSwapPanel.transform, "SwapAbort",
+            var abortBtn = InRunUiFactory.CreatePanelButton(card.transform, "SwapAbort",
                 new Vector2(0.20f, 0.02f), new Vector2(0.80f, 0.17f), T("InRun.BagSwap.KeepBag"));  // B1: taller for icon visibility
             InRunUiFactory.SetButtonIcon(abortBtn, "swap_arrows", false, "economy");
             abortBtn.onClick.AddListener(() => _onSwapAborted?.Invoke());
@@ -475,6 +156,34 @@ namespace SudokuRoguelike.UI
             ActivePanel = _bagSwapPanel;
             FadeInPanel(_bagSwapPanel);
             InRunUiFactory.SelectFirstInteractable(_bagSwapPanel);
+        }
+
+        /// <summary>True while the bag-full swap layer is open; the scenes behind it ignore keys then.</summary>
+        public bool IsSwapOpen => _bagSwapPanel != null && _bagSwapPanel.activeSelf;
+
+        private void CloseSwapLayer()
+        {
+            ActivePanel = _panelBeforeSwap != null && _panelBeforeSwap.activeSelf ? _panelBeforeSwap : null;
+            _panelBeforeSwap = null;
+            InRunUiFactory.HidePanel(_bagSwapPanel);
+        }
+
+        /// <summary>
+        /// Closes every scene this view owns (reward, relic shrine, bag swap) without granting anything; used when the
+        /// run ends while one is open (defeat, abandon, victory).
+        /// </summary>
+        public void CloseScenes()
+        {
+            _onSwapSlotChosen = null;
+            _onSwapAborted = null;
+            _panelBeforeSwap = null;
+            if (_bagSwapPanel != null) DestroyNow(_bagSwapPanel);
+            _bagSwapPanel = null;
+            _awaitingReward = false;
+            _rewardSlots?.Clear();
+            CloseRewardScene();
+            CloseRelicShrine();
+            ActivePanel = null;
         }
 
         // ────────────────────── Rest choice panel ──────────────────────
@@ -603,161 +312,6 @@ namespace SudokuRoguelike.UI
             InRunUiFactory.SelectFirstInteractable(panel);
         }
 
-        private static void ConfigureRelicChoiceButtonLayout(Button button)
-        {
-            if (button == null) return;
-
-            var label = button.transform.Find("Label")?.GetComponent<Text>();
-            if (label != null)
-            {
-                label.rectTransform.anchorMin = new Vector2(0.08f, 0.10f);
-                label.rectTransform.anchorMax = new Vector2(0.92f, 0.35f);
-                label.rectTransform.offsetMin = Vector2.zero;
-                label.rectTransform.offsetMax = Vector2.zero;
-                label.alignment = TextAnchor.UpperCenter;
-                label.fontSize = 12;
-                label.resizeTextForBestFit = true;
-                label.resizeTextMinSize = 9;
-                label.resizeTextMaxSize = 12;
-                label.horizontalOverflow = HorizontalWrapMode.Wrap;
-                label.verticalOverflow = VerticalWrapMode.Truncate;
-            }
-
-            var iconRt = button.transform.Find("Icon") as RectTransform;
-            if (iconRt == null) return;
-
-            iconRt.anchorMin = new Vector2(0.16f, 0.43f);
-            iconRt.anchorMax = new Vector2(0.84f, 0.86f);
-            iconRt.offsetMin = Vector2.zero;
-            iconRt.offsetMax = Vector2.zero;
-            iconRt.sizeDelta = Vector2.zero;
-
-            var icon = iconRt.GetComponent<Image>();
-            if (icon != null)
-            {
-                icon.preserveAspect = true;
-                icon.raycastTarget = false;
-            }
-        }
-
-        // ────────────────────── Relic choice panel ──────────────────────
-
-        public void ShowRelicChoicePanel(List<RelicInstance> choices, System.Action onDismissed = null)
-        {
-            var run = _map?.Run;
-            if (run == null || _pathPanel == null) return;
-
-            var panel = new GameObject("RelicChoicePanel", typeof(RectTransform));
-            panel.transform.SetParent(_pathPanel.transform, false);
-            var rt = panel.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0.05f, 0.15f);
-            rt.anchorMax = new Vector2(0.95f, 0.85f);
-            rt.offsetMin = Vector2.zero;
-            rt.offsetMax = Vector2.zero;
-            panel.AddComponent<Image>().color = InRunUiFactory.RestRelicPanelBg;
-            InRunUiFactory.AddPanelBackground(panel.transform, "bg_relic");
-
-            var relicTitle = InRunUiFactory.CreateText(panel.transform, "Title", T("InRun.Relic.Title"), 16, TextAnchor.UpperCenter,
-                GamePalette.AccentGold);
-            relicTitle.rectTransform.anchorMin = new Vector2(0.05f, 0.88f);
-            relicTitle.rectTransform.anchorMax = new Vector2(0.95f, 0.98f);
-            relicTitle.rectTransform.offsetMin = Vector2.zero;
-            relicTitle.rectTransform.offsetMax = Vector2.zero;
-
-            // Tracks which relic index is currently staged for confirmation (-1 = none)
-            var stagedIndex = -1;
-            Button acceptBtn = null;
-
-            var colW = 1f / choices.Count;
-            var relicBtns = new Button[choices.Count];
-
-            for (var i = 0; i < choices.Count; i++)
-            {
-                var relic = choices[i];
-                var xMin = 0.04f + i * colW;
-                var xMax = xMin + colW - 0.04f;
-
-                var relicDesc = F(
-                    "InRun.Relic.Choice",
-                    RelicService.GetRelicName(relic.Id),
-                    TierLabel(relic.Tier),
-                    RelicService.GetRelicDescription(relic.Id));
-
-                var btn = InRunUiFactory.CreatePanelButton(panel.transform, $"RelicBtn_{i}",
-                    new Vector2(xMin, 0.10f), new Vector2(xMax, 0.82f), relicDesc);
-                InRunUiFactory.SetButtonIcon(btn, RelicService.GetIconName(relic.Id), false, RelicService.GetIconFolder(relic.Id));
-                var iconChild = btn.transform.Find("Icon");
-                if (iconChild != null)
-                    InRunUiFactory.AddRelicTierPip(iconChild, relic.Tier);
-                ConfigureRelicChoiceButtonLayout(btn);
-                relicBtns[i] = btn;
-                var idx = i;
-                btn.onClick.AddListener(() =>
-                {
-                    // First click: stage the relic and show the Accept button
-                    stagedIndex = idx;
-                    // Tint all buttons: highlight selected, dim others
-                    for (var b = 0; b < relicBtns.Length; b++)
-                    {
-                        var img = relicBtns[b].GetComponent<Image>();
-                        if (img != null)
-                            img.color = b == idx
-                                ? new Color(0.95f, 0.80f, 0.25f, 0.95f)   // gold highlight
-                                : new Color(0.25f, 0.25f, 0.22f, 0.70f);  // dimmed
-                    }
-                    if (acceptBtn != null) acceptBtn.gameObject.SetActive(true);
-                });
-            }
-
-            // Accept button — hidden until a relic is staged
-            acceptBtn = InRunUiFactory.CreateActionButton(panel.transform, "BtnAccept",
-                new Vector2(0.25f, 0.01f), new Vector2(0.55f, 0.08f), T("Accept"), UiAction.Accept);
-            acceptBtn.gameObject.SetActive(false);
-            acceptBtn.GetComponent<Image>().color = new Color(0.30f, 0.65f, 0.30f, 0.92f);
-            acceptBtn.onClick.AddListener(() =>
-            {
-                if (stagedIndex < 0 || stagedIndex >= choices.Count) return;
-                AcceptRelic(choices[stagedIndex]);
-                ActivePanel = null;
-                Object.Destroy(panel);
-                onDismissed?.Invoke();
-            });
-
-            // Skip / Leave button
-            var skip = InRunUiFactory.CreateActionButton(panel.transform, "BtnSkip",
-                new Vector2(0.60f, 0.01f), new Vector2(0.96f, 0.08f), T("Leave"), UiAction.Leave);
-            skip.onClick.AddListener(() =>
-            {
-                LeaveRelics();
-                ActivePanel = null;
-                Object.Destroy(panel);
-                onDismissed?.Invoke();
-            });
-
-            // Explicit D-pad nav: left/right between relics, down to skip; accept/skip up to middle relic
-            for (var i = 0; i < relicBtns.Length; i++)
-            {
-                var nav = new Navigation { mode = Navigation.Mode.Explicit };
-                if (i > 0)                     nav.selectOnLeft  = relicBtns[i - 1];
-                if (i < relicBtns.Length - 1)  nav.selectOnRight = relicBtns[i + 1];
-                nav.selectOnDown = skip;
-                relicBtns[i].navigation = nav;
-            }
-            var midRelic = relicBtns[relicBtns.Length / 2];
-            var skipNav = skip.navigation;
-            skipNav.mode = Navigation.Mode.Explicit;
-            skipNav.selectOnUp = midRelic;
-            skip.navigation = skipNav;
-            var acceptNav = acceptBtn.navigation;
-            acceptNav.mode = Navigation.Mode.Explicit;
-            acceptNav.selectOnUp = midRelic;
-            acceptBtn.navigation = acceptNav;
-
-            ActivePanel = panel;
-            FadeInPanel(panel);
-            InRunUiFactory.SelectFirstInteractable(panel);
-        }
-
         /// <summary>
         /// Adds <paramref name="chosen"/> to the run (the very instance that was offered, GAP-021) and records its
         /// discovery. Used by the relic node panel and the boss offering table.
@@ -779,6 +333,7 @@ namespace SudokuRoguelike.UI
         {
             var cg = panel.GetComponent<CanvasGroup>();
             if (cg == null) cg = panel.AddComponent<CanvasGroup>();
+            if (!isActiveAndEnabled) { cg.alpha = 1f; return; }   // no coroutine on an inactive view
             cg.alpha = 0f;
             StartCoroutine(AnimationHelper.FadeIn(cg, AnimationHelper.MenuPanelDuration));
         }
@@ -804,8 +359,5 @@ namespace SudokuRoguelike.UI
 
         private static string RarityLabel(ItemRarity rarity) =>
             LocalizationService.T($"Item.Rarity.{rarity}", rarity.ToString());
-
-        private static string TierLabel(RelicTier tier) =>
-            LocalizationService.T($"Relic.Tier.{tier}", tier.ToString());
     }
 }

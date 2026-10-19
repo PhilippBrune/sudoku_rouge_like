@@ -63,6 +63,7 @@ namespace SudokuRoguelike.UI
 
                 SetActive(_sudokuPanel, false);
                 SetActive(_pathPanel, false);
+                CloseRunScenes();
                 _audio?.SetContext(RunAudioController.Context.Path);
                 _audio?.PlayPuzzleSolved();
                 RumbleService.PulsePuzzleSolved(this);
@@ -98,6 +99,7 @@ namespace SudokuRoguelike.UI
 
                 SetActive(_sudokuPanel, false);
                 SetActive(_pathPanel, false);
+                CloseRunScenes();
                 _audio?.SetContext(RunAudioController.Context.Path);
                 _audio?.PlayPuzzleSolved();
                 RumbleService.PulsePuzzleSolved(this);
@@ -183,6 +185,7 @@ namespace SudokuRoguelike.UI
 
             SetActive(_sudokuPanel, false);
             SetActive(_pathPanel, false);
+            CloseRunScenes();
             _audio?.SetContext(RunAudioController.Context.Path); // stop puzzle loop before stinger
             _audio?.PlayGameOver();
             _audio?.PlayRunEndMusic(false, 1.5f); // AUDIO-MUSIC-006: defeat track after the stinger
@@ -192,6 +195,14 @@ namespace SudokuRoguelike.UI
                 _endScreenView.ShowEndlessZenResult(run);
             else
                 _endScreenView.ShowGameOver(run, false);
+        }
+
+        // The reward, relic shrine and shop are scenes beside the path panel (UI-STYLE-007/008/009); hiding the path
+        // does not hide them, so a run that ends closes them.
+        private void CloseRunScenes()
+        {
+            _rewardView?.CloseScenes();
+            _shopView?.CloseScenes();
         }
 
         // ─────────────────────────── Post-reward callback ───────────────────────────
@@ -206,6 +217,7 @@ namespace SudokuRoguelike.UI
                 {
                     SetActive(_sudokuPanel, false);
                     SetActive(_pathPanel, false);
+                    CloseRunScenes();
                     // Fire run-won hooks
                     RelicService.OnRunVictory(s);
                     var run = _map.Run;

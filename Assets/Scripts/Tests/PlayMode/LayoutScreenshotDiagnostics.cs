@@ -224,6 +224,61 @@ namespace SudokuRoguelike.Tests
             yield return Shoot(host, camera, "cages_6x6.png");
         }
 
+        // UI-STYLE-007/008/009: the reward tally with ema plaques, the relic shrine and the market stall, one after the
+        // other in the same run on Floor 2 (two items in a four-slot bag, two relics held, 142 gold, one reroll token).
+        [UnityTest]
+        public IEnumerator RenderRewardShrineAndShop()
+        {
+            var camera = CreateCamera();
+            _beforeBindAlways = run =>
+            {
+                run.AdvanceToNextFloor();
+                var state = run.State;
+                state.ItemSlots = 4;
+                state.HeldItems.Clear();
+                state.HeldItems.Add(new ItemInstance { Id = "shot-a", Type = ItemType.InkWell, Charges = 1 });
+                state.HeldItems.Add(new ItemInstance { Id = "shot-b", Type = ItemType.MeditationStone, Charges = 1 });
+                foreach (var relic in run.RollRelicChoices(2)) run.AcceptRelicChoice(relic);
+            };
+            var (host, run) = StartRun(7311, true);
+            _beforeBindAlways = null;
+            yield return DismissIntro();
+
+            // Solve the puzzle behind the game's back (no placement events), so only this test claims the reward.
+            var board = run.CurrentBoard;
+            for (var r = 0; r < board.Size; r++)
+            for (var c = 0; c < board.Size; c++)
+                if (board.Cells[r, c] == 0) board.PlaceValue(r, c, board.Solution[r, c]);
+            run.State.ComboStreak = 5;
+            run.State.CurrentGold = 130;
+            run.State.RerollTokens = 1;
+            var reward = host.GetComponentInChildren<RewardViewController>(true);
+            // The game notices the solved board and opens the reward itself; open it here if it has not after 3 s.
+            for (var waited = 0f; waited < 3f && !reward.IsAwaitingReward; waited += Time.unscaledDeltaTime)
+                yield return null;
+            if (!reward.IsAwaitingReward) reward.ShowRewardScreen();
+            yield return new WaitForSecondsRealtime(1.2f);
+            reward.SelectRewardByIndex(1);
+            yield return new WaitForSecondsRealtime(0.3f);
+            yield return Shoot(host, camera, "after_reward.png");
+            reward.SelectRewardByIndex(1);   // the same key again takes it
+            yield return null;
+
+            reward.ShowRelicChoicePanel(run.RollRelicChoices(3));
+            yield return new WaitForSecondsRealtime(0.6f);
+            yield return Shoot(host, camera, "after_relic_shrine.png");
+            Find(Find(host, "RelicChoicePanel"), "BtnSkip").GetComponent<Button>().onClick.Invoke();
+            yield return null;
+
+            run.State.CurrentGold = 142;
+            var shop = host.GetComponentInChildren<ShopViewController>(true);
+            shop.ShowShop();
+            yield return new WaitForSecondsRealtime(0.6f);
+            shop.SelectSlotByIndex(1);
+            yield return new WaitForSecondsRealtime(0.2f);
+            yield return Shoot(host, camera, "after_shop.png");
+        }
+
         // BOSS-MOD-002 / GAP-048: every line type on one 9×9 board, in the colours puzzle setters use.
         [UnityTest]
         public IEnumerator RenderLineTypes()

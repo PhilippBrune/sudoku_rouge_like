@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 1.4 | **Date:** 2026-10-19 | **Status:** review (garden path B, puzzle B, boss gate B and offering table B built; reward, relic node and shop proposed)
+**Version:** 1.5 | **Date:** 2026-10-19 | **Status:** implemented (garden path, puzzle screen, boss gate, offering table, reward, relic node and shop built)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.5 | 2026-10-19 | implemented | Owner decision: build the three proposals for reward, relic node and shop as shown (UI-STYLE-007/008/009). All three are full-screen scenes beside the path panel (the path's buttons never draw over them, Options stays on top), built from the shared scroll parts (`ScrollUiKit.Scenes.cs`); the boss offering table and the relic shrine share one offering piece with a tier tag. Reward: choosing a plaque lifts it and names it on the Take button, choosing it again (click, key 1–3 or A) takes it. Line colours follow the convention puzzle setters use (GAP-048, `BossMechanicsSystem.md` 2.6). |
 | 1.4 | 2026-10-19 | review | Garden path **B** (UI-STYLE-001) and puzzle screen **B** (UI-STYLE-002) built in Unity, with screenshots from the game. Puzzle screen: Parity Lines are blue as the spec says (they were teal, like Dutch Whispers; GAP-048), pencil marks move under the cage sum in a cage's corner cell, and the board text renders on whole pixels. |
 | 1.3 | 2026-10-18 | review | Owner request: mockups for the next three screens in the same family: the reward after a puzzle (tally scroll and ema plaques), the relic node (the offering table at the shrine) and the shop (goods on the market stall). Proposed IDs UI-STYLE-007/008/009 wait for the owner's pick. Garden path B and puzzle B are being built. |
 | 1.2 | 2026-10-15 | review | Owner decisions: boss gate **B · Trial scroll** and boss defeated **B · Offering table**, both built in Unity (UI-STYLE-004, UI-STYLE-005), with screenshots from the game. Owner report: the killer cage in the hanging-scroll mockup was split into one box per cell; a cage is now one outline around all its cells, in the mockups and in the game (UI-STYLE-006). |
@@ -23,9 +24,9 @@ The mockups are HTML pages in `layout-proposals/src/`, built from `Assets/Resour
 | UI-STYLE-003 | The background paintings keep the bottom-right corner mark (owner decision); new UI does not need to hide it. | decided |
 | UI-STYLE-004 | The boss gate is a trial scroll: the gate painting darkened behind a hand scroll with brocade bands and wooden rollers; the eyebrow "Floor N · floor name · The Gate", the title "The <boss>'s trials", "Choose N of M trials", the intensity with one dot per level (REQ-BOSS-103) and the boss's seal; one ink-framed panel per trial with icon, name and rule ("???" and "Not discovered yet" when hidden, HARMONY-FLAG-001), ticked with a vermilion ensō when chosen; along the bottom the boss's curse from Floor 3 (REQ-BOSS-108), "n of N chosen" and "Face the <boss>", which unlocks at N. Up to four trials in a row, five to eight in two rows. | built 2026-10-15 |
 | UI-STYLE-005 | After a non-final boss, the offering table: the boss-cleared painting, a paper banner "Floor N of 5 · name" / "The <boss> is defeated", the fight's numbers on a paper tag (mistakes, HP lost, items used, pencil marks), the boss's greyed mask, and the relic offerings on plinths with their own Take button on the same screen, plus "Leave them". Taking or leaving loads the next floor; without offerings one Continue button does. The screen does not use the game-over panel, and it has no Options or Save & Quit (the puzzle shortcuts are off while it is open); the run is saved when the next floor loads. | built 2026-10-15 |
-| UI-STYLE-007 | *Proposed:* the reward after a puzzle as a tally scroll (result, gold, XP, HP, Pencil, the puzzle's numbers, a "Perfect" stamp) beside the item choices as ema plaques on a red cord, with Take, Reroll and Take nothing. | proposal |
-| UI-STYLE-008 | *Proposed:* the relic node as the offering table (UI-STYLE-005) at the shrine painting: three relics on plinths with tier, Take each, "Leave them", the run's HP, gold and held relics on paper tags. | proposal |
-| UI-STYLE-009 | *Proposed:* the shop as the market stall painting with the goods on the counter, wooden price tags, the chosen item on a paper slip with Buy and the gold after buying, the purse (gold, reroll tokens, bag slots), Reroll and Leave. | proposal |
+| UI-STYLE-007 | The reward after a puzzle as a tally scroll (result, gold, XP, HP, Pencil, the puzzle's numbers, a "Perfect" stamp) beside the item choices as ema plaques on a red cord, with Take, Reroll and Take nothing. | built 2026-10-19 |
+| UI-STYLE-008 | The relic node as the offering table (UI-STYLE-005) at the shrine painting: three relics on plinths with tier, Take each, "Leave them", the run's HP, gold and held relics on paper tags. | built 2026-10-19 |
+| UI-STYLE-009 | The shop as the market stall painting with the goods on the counter, wooden price tags, the chosen item on a paper slip with Buy and the gold after buying, the purse (gold, reroll tokens, bag slots), Reroll and Leave. | built 2026-10-19 |
 | UI-STYLE-006 | A killer cage is one dashed outline around all its cells: inset into the cells, joined across them (no line between two cells of the same cage) and closed at every corner. Same rule in the game (`CageOutline`) and in the mockups (`cageRuns` in `src/common.js`). | built 2026-10-15 |
 
 ## Garden path
@@ -171,11 +172,19 @@ The next three screens a player sees most, in the same ink-and-paper family. Eac
 
 The puzzle's result hangs as a narrow tally scroll on the left (the hanging scroll of the puzzle screen, rolled up); the item choices hang as ema plaques on a red cord over the reward painting. Rarity is a coloured tag (Normal, Rare in indigo, Epic in gold), not a coloured button. The chosen plaque lifts and glows; the main button names the item.
 
+**As built (2026-10-19):** "Nothing" slots are blank plaques; Take nothing names its gold; keys 1–3 choose, the same key again takes.
+
+![Reward in the game](layout-proposals/after_reward.jpg)
+
 ### Relic node (UI-STYLE-008)
 
 ![Relic node](layout-proposals/relic_shrine.jpg)
 
 The offering table from the boss reward, at the shrine painting, so both relic choices look the same. Tags show the run's HP and gold and the relics already held, so a duplicate is easy to spot.
+
+**As built (2026-10-19):** one Take per relic (as after a boss; the old two-step "pick, then Accept" is gone).
+
+![Relic shrine in the game](layout-proposals/after_relic_shrine.jpg)
 
 ### Shop (UI-STYLE-009)
 
@@ -183,9 +192,13 @@ The offering table from the boss reward, at the shrine painting, so both relic c
 
 The stall painting is the scene: the goods sit on the counter with wooden price tags; the chosen one opens on a paper slip with its rule and "142 → 82 gold" so the cost is clear before buying. The purse shows gold, reroll tokens and the bag's free slots (a full bag leads to the existing swap panel).
 
+**As built (2026-10-19):** Buy is off and the slip says "Not enough gold" when the gold is short.
+
+![Market in the game](layout-proposals/after_shop.jpg)
+
 ## Decisions and next step
 
-Boss gate **B** and boss defeated **B** are built (2026-10-15), the garden path **B** (UI-STYLE-001) and the puzzle screen **B** (UI-STYLE-002) too (2026-10-19), all from the same scroll parts (`ScrollUiKit`). Reward, relic node and shop (UI-STYLE-007/008/009) wait for the owner's pick.
+Boss gate **B** and boss defeated **B** are built (2026-10-15); the garden path **B** (UI-STYLE-001), the puzzle screen **B** (UI-STYLE-002), the reward, the relic node and the shop (UI-STYLE-007/008/009) on 2026-10-19, all from the same scroll parts (`ScrollUiKit`). Still in the old style: rest, events, cursed node, defeat and victory screens.
 
 ## Rendering
 

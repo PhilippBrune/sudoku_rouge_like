@@ -337,6 +337,7 @@ namespace SudokuRoguelike.UI
 
             _rewardView.OnStatusChanged   = msg => SetStatus(msg);
             _rewardView.OnPostRewardReady = OnPostRewardReady;
+            _rewardView.PuzzleSeconds     = () => _hudView?.GetPuzzleElapsed() ?? 0f; // the reward tally's time
             _shopView.OnStatusChanged     = msg => SetStatus(msg);
             _shopView.OnShopClosed        = ShowPath;
             _bossGateView.OnModsConfirmed = OnBossModsConfirmed;
@@ -1886,6 +1887,7 @@ namespace SudokuRoguelike.UI
         private bool TryGetActiveOverlay(out GameObject panel)
         {
             panel = null;
+            if (_rewardView != null && _rewardView.IsSwapOpen) { panel = _rewardView.ActivePanel; return panel != null; }
             var sp = _shopView?.ActivePanel;
             if (sp != null && sp.activeSelf) { panel = sp; return true; }
             var rp = _rewardView?.ActivePanel;

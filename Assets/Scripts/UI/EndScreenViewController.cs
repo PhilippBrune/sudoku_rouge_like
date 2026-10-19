@@ -104,7 +104,7 @@ namespace SudokuRoguelike.UI
             {
                 var relic = offerings[i];
                 var center = 0.5f + (i - (offerings.Count - 1) * 0.5f) * 0.266f;
-                var take = BuildOffering(screen.transform, i, relic, center);
+                var take = ScrollUiKit.Offering(screen.transform, i, relic, center, T("InRun.BossDefeated.Take"));
                 take.onClick.AddListener(() => Advance(() => onTake?.Invoke(relic)));
                 takes.Add(take);
             }
@@ -131,39 +131,22 @@ namespace SudokuRoguelike.UI
 
         public bool IsBossClearedShown => _bossDefeatedScreen != null && _bossDefeatedScreen.activeSelf;
 
-        private static readonly Color OfferingFocus = new Color(0.74f, 0.54f, 0.18f, 1f);
-        private static readonly Color OfferingText = new Color(0.99f, 0.93f, 0.76f, 1f);
+        private static readonly Color OfferingFocus = ScrollUiKit.OfferingFocus;
+        private static readonly Color OfferingText = ScrollUiKit.OfferingText;
         private const string BossDefeatedScreenName = "BossDefeatedScreen";
 
         private void BuildDefeatBanner(Transform screen, int floor, int totalFloors)
         {
-            var banner = ScrollUiKit.Fill(screen, "BossDefeatedBanner", new Vector2(0.318f, 0.844f), new Vector2(0.682f, 0.958f),
-                ScrollUiKit.Paper);
-            var shadow = banner.gameObject.AddComponent<Shadow>();
-            shadow.effectColor = new Color(0f, 0f, 0f, 0.5f);
-            shadow.effectDistance = new Vector2(0f, -8f);
-            ScrollUiKit.Fill(banner.transform, "SideLeft", Vector2.zero, new Vector2(0.026f, 1f), ScrollUiKit.Vermilion);
-            ScrollUiKit.Fill(banner.transform, "SideRight", new Vector2(0.974f, 0f), Vector2.one, ScrollUiKit.Vermilion);
-            ScrollUiKit.Label(banner.transform, "BossDefeatedEyebrow",
-                F("InRun.BossDefeated.Eyebrow", floor + 1, totalFloors, FloorThemeData.GetFloorName(floor)).ToUpperInvariant(),
-                18, TextAnchor.MiddleCenter, ScrollUiKit.InkSoft, new Vector2(0.06f, 0.62f), new Vector2(0.94f, 0.88f), 12);
-            ScrollUiKit.Label(banner.transform, "BossDefeatedTitle",
-                F("InRun.BossDefeated.Title", FloorThemeData.GetBossName(floor)), 50, TextAnchor.MiddleCenter,
-                ScrollUiKit.Ink, new Vector2(0.05f, 0.08f), new Vector2(0.95f, 0.64f), 26);
+            ScrollUiKit.Banner(screen, "BossDefeatedBanner", new Vector2(0.318f, 0.844f), new Vector2(0.682f, 0.958f),
+                "BossDefeatedEyebrow", F("InRun.BossDefeated.Eyebrow", floor + 1, totalFloors, FloorThemeData.GetFloorName(floor)),
+                "BossDefeatedTitle", F("InRun.BossDefeated.Title", FloorThemeData.GetBossName(floor)));
         }
 
         // The fight's numbers on a paper tag hanging from a string (REQ-BOSS-107 stats, now beside the offerings).
         private void BuildStatsTag(Transform screen, RunDirector run)
         {
-            var tag = ScrollUiKit.Fill(screen, "BossClearedStats", new Vector2(0.061f, 0.572f), new Vector2(0.220f, 0.773f),
-                ScrollUiKit.Paper);
-            tag.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 1.5f);
-            var shadow = tag.gameObject.AddComponent<Shadow>();
-            shadow.effectColor = new Color(0f, 0f, 0f, 0.5f);
-            shadow.effectDistance = new Vector2(4f, -6f);
-            var cord = ScrollUiKit.Fill(tag.transform, "Cord", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), ScrollUiKit.Gold);
-            cord.rectTransform.offsetMin = new Vector2(-1f, 0f);
-            cord.rectTransform.offsetMax = new Vector2(1f, 46f);
+            var tag = ScrollUiKit.PaperTag(screen, "BossClearedStats", new Vector2(0.061f, 0.572f), new Vector2(0.220f, 0.773f),
+                1.5f, 46f);
 
             ScrollUiKit.Label(tag.transform, "Header", T("InRun.BossDefeated.StatsHeader").ToUpperInvariant(), 16,
                 TextAnchor.MiddleLeft, ScrollUiKit.InkSoft, new Vector2(0.08f, 0.80f), new Vector2(0.92f, 0.95f), 11);
@@ -183,27 +166,6 @@ namespace SudokuRoguelike.UI
                 ScrollUiKit.Label(tag.transform, $"Stat_{k}_Value", rows[k].value.ToString(), 20, TextAnchor.MiddleRight,
                     ScrollUiKit.Vermilion, new Vector2(0.74f, top - 0.16f), new Vector2(0.92f, top), 12);
             }
-        }
-
-        // One offering: a glow, the relic on a plinth, its name and rule, and a Take button. Returns the button.
-        private static Button BuildOffering(Transform screen, int index, RelicInstance relic, float center)
-        {
-            var slot = ScrollUiKit.Area(screen, $"Offering_{index}", new Vector2(center - 0.11f, 0.10f),
-                new Vector2(center + 0.11f, 0.53f));
-            ScrollUiKit.Spot(slot, "Glow", new Vector2(0.5f, 0.77f), new Vector2(200f, 200f),
-                new Color(1f, 0.86f, 0.55f, 0.30f), ScrollUiKit.Glow());
-            ScrollUiKit.Fill(slot, "Plinth", new Vector2(0.216f, 0.43f), new Vector2(0.784f, 0.586f), Color.white,
-                ScrollUiKit.Plinth());
-            var icon = ScrollUiKit.Icon(slot, "Icon",
-                RelicService.GetIconFolder(relic.Id) + "/icon_" + RelicService.GetIconName(relic.Id),
-                new Vector2(0.31f, 0.60f), new Vector2(0.69f, 0.92f), Color.white);
-            InRunUiFactory.AddRelicTierPip(icon.transform, relic.Tier);
-            ScrollUiKit.Label(slot, "Name", RelicService.GetRelicName(relic.Id), 30, TextAnchor.MiddleCenter,
-                new Color(0.98f, 0.95f, 0.88f, 1f), new Vector2(0.02f, 0.295f), new Vector2(0.98f, 0.378f), 18);
-            ScrollUiKit.Label(slot, "Rule", RelicService.GetRelicDescription(relic.Id), 20, TextAnchor.UpperCenter,
-                new Color(0.88f, 0.84f, 0.76f, 1f), new Vector2(0.02f, 0.160f), new Vector2(0.98f, 0.290f), 13);
-            return ScrollUiKit.RimButton(slot, $"OfferingTake_{index}", new Vector2(0.30f, 0.035f), new Vector2(0.70f, 0.138f),
-                T("InRun.BossDefeated.Take"), 22, ScrollUiKit.Gold, OfferingFocus, OfferingText);
         }
 
         // One choice only: the first Take, Leave or Continue locks the screen, so a double click cannot advance twice.

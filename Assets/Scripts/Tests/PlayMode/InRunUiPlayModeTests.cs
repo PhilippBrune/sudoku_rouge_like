@@ -286,6 +286,59 @@ namespace SudokuRoguelike.Tests
             }
         }
 
+        // [REQ: UI-STYLE-007] With a full bag, taking a plaque opens the swap layer, which is modal: keys and the scene
+        // behind it do nothing. Keeping the bag returns to the plaques (the reward is not lost). A run that ends while
+        // the reward is open closes the scene.
+        [UnityTest]
+        [Requirement("UI-STYLE-007")]
+        public IEnumerator Reward_FullBag_SwapIsModal_KeepingTheBagReturnsToThePlaques()
+        {
+            var h = StartPuzzle(8606);
+            yield return null;
+            yield return null;
+            var state = h.Run.State;
+            state.HeldItems.Clear();
+            for (var i = 0; i < state.ItemSlots; i++)
+                state.HeldItems.Add(new ItemInstance { Id = "full-" + i, Type = ItemType.InkWell, Charges = 1 });
+            var board = h.Run.CurrentBoard;
+            for (var r = 0; r < board.Size; r++)
+            for (var c = 0; c < board.Size; c++)
+                if (board.Cells[r, c] == 0) board.PlaceValue(r, c, board.Solution[r, c]);
+
+            var reward = h.Host.GetComponentInChildren<RewardViewController>(true);
+            for (var waited = 0f; waited < 3f && !reward.IsAwaitingReward; waited += Time.unscaledDeltaTime)
+                yield return null;
+            if (!reward.IsAwaitingReward) reward.ShowRewardScreen();
+            Assert.IsTrue(reward.IsAwaitingReward, "the reward screen is open");
+            var itemSlot = h.Run.RolledItemSlots?.FindIndex(slot => slot != null) ?? -1;
+            if (itemSlot < 0 || itemSlot > 2) Assert.Inconclusive("this seed rolled no item in the first three plaques");
+
+            reward.SelectRewardByIndex(itemSlot);   // choose
+            reward.SelectRewardByIndex(itemSlot);   // take: the bag is full, so the swap layer opens
+            yield return null;
+            Assert.IsTrue(reward.IsSwapOpen, "a full bag asks which item to give up");
+            var swap = FindObject(h.Host, "BagSwapPanel");
+            var layer = swap.GetComponent<RectTransform>();
+            Assert.AreEqual(Vector2.zero, layer.anchorMin, "the swap layer covers the whole screen");
+            Assert.AreEqual(Vector2.one, layer.anchorMax);
+            Assert.IsTrue(swap.GetComponent<Image>().raycastTarget, "and takes the clicks meant for the scene behind it");
+
+            reward.SelectRewardByIndex(itemSlot);   // keys are ignored while the swap is open
+            Assert.IsTrue(reward.IsSwapOpen);
+            ClickButton(swap, "SwapAbort");
+            yield return null;
+            Assert.IsFalse(reward.IsSwapOpen);
+            Assert.IsTrue(reward.IsAwaitingReward, "keeping the bag returns to the plaques");
+            Assert.AreEqual(FindObject(h.Host, "RewardPanel"), reward.ActivePanel, "the reward has the focus again");
+            Assert.AreEqual(state.ItemSlots, state.HeldItems.Count, "nothing was swapped");
+
+            reward.CloseScenes();
+            yield return null;
+            Assert.IsFalse(reward.IsAwaitingReward);
+            Assert.IsNull(reward.ActivePanel);
+            Assert.IsNull(FindObjectOrNull(h.Host, "RewardPanel"), "a run that ends closes the reward scene");
+        }
+
         private static Text PencilLabel(Harness h, int row, int col) =>
             FindObject(FindObject(h.Host, $"N_{row}_{col}"), "Pencil").GetComponent<Text>();
 

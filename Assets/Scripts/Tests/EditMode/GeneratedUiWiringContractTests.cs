@@ -218,14 +218,11 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
-        public void ShopAndRestActionButtons_UseFullTextureIconsAndWideCompactFit()
+        public void RestActionButtons_UseFullTextureIconsAndWideCompactFit()
         {
-            var shopSource = ReadSource(ShopViewControllerPath);
             var rewardSource = ReadSource(RewardViewControllerPath);
             var factorySource = ReadSource(InRunUiFactoryPath);
 
-            StringAssert.Contains("UiAction.Buy, compact: true", shopSource);
-            StringAssert.Contains("UiAction.Reroll, compact: true", shopSource);
             StringAssert.Contains("BtnReroll", rewardSource);
             StringAssert.Contains("UiAction.Reroll, compact: true", rewardSource);
             StringAssert.Contains("LoadResourceSprite(spritePath)", factorySource);
@@ -264,21 +261,45 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
-        public void RewardScreen_UsesExpandedFourColumnLayoutAndReadableTitle()
+        [Requirement("UI-STYLE-007", "REQ-ITEM-100")]
+        public void RewardScreen_IsATallyScrollWithEmaPlaques()
         {
             var rewardSource = ReadSource(RewardViewControllerPath);
 
-            StringAssert.Contains("panelRt.anchorMin = new Vector2(0.06f, 0.12f)", rewardSource);
-            StringAssert.Contains("panelRt.anchorMax = new Vector2(0.94f, 0.84f)", rewardSource);
-            StringAssert.Contains("title.color = new Color(0.08f, 0.11f, 0.07f, 1f)", rewardSource);
-            StringAssert.Contains("title.fontStyle = FontStyle.Bold", rewardSource);
-            StringAssert.Contains("title.gameObject.AddComponent<Outline>()", rewardSource);
-            StringAssert.Contains("titleOutline.effectColor = new Color(GamePalette.TextPrimary.r", rewardSource);
-            StringAssert.Contains("Mathf.Clamp(_rewardSlots.Count, 1, 4)", rewardSource);
-            StringAssert.Contains("const float left = 0.04f", rewardSource);
-            StringAssert.Contains("const float right = 0.96f", rewardSource);
-            StringAssert.Contains("new Vector2(0.35f, 0.06f), new Vector2(0.65f, 0.16f)", rewardSource);
-            Assert.That(rewardSource, Does.Not.Contain("Mathf.Clamp(_rewardSlots.Count, 1, 3)"));
+            // A scene beside the path panel (not inside it), so the path's buttons never draw over it.
+            StringAssert.Contains("ScrollUiKit.Scene(_pathPanel, \"RewardPanel\", \"bg_reward\"", rewardSource);
+            StringAssert.Contains("ScrollUiKit.HangingScroll(screen, \"RewardTally\"", rewardSource);
+            StringAssert.Contains("ScrollUiKit.Ema()", rewardSource);
+            StringAssert.Contains("$\"Slot_{index}\"", rewardSource);
+            StringAssert.Contains("\"Slot_take\"", rewardSource);
+            StringAssert.Contains("\"Slot_skip\"", rewardSource);
+            // Choosing a plaque lifts it; choosing it again takes it.
+            StringAssert.Contains("if (_selectedReward == index)", rewardSource);
+            StringAssert.Contains("ClaimReward(index);", rewardSource);
+            StringAssert.Contains("F(\"InRun.Reward.TakeNothing\", nothingGold)", rewardSource);
+            // The bag-swap panel opens above the scene.
+            StringAssert.Contains("_bagSwapPanel.transform.SetAsLastSibling();", rewardSource);
+        }
+
+        [Test]
+        [Requirement("UI-STYLE-009")]
+        public void ShopScreen_IsTheMarketStall_WithPriceTagsPurseAndSlip()
+        {
+            var shopSource = ReadSource(ShopViewControllerPath);
+
+            StringAssert.Contains("ScrollUiKit.Scene(_pathPanel, \"ShopPanel\", \"bg_shop\"", shopSource);
+            StringAssert.Contains("$\"Offer_{index}\"", shopSource);
+            StringAssert.Contains("ScrollUiKit.PriceTag()", shopSource);
+            StringAssert.Contains("\"ShopSlip\"", shopSource);
+            StringAssert.Contains("\"ShopPurse\"", shopSource);
+            StringAssert.Contains("\"ShopBuyBtn\"", shopSource);
+            StringAssert.Contains("\"ShopRerollBtn\"", shopSource);
+            StringAssert.Contains("\"Offer_skip\"", shopSource);
+            // The cost is clear before buying; Buy stays off when the gold is short.
+            StringAssert.Contains("F(\"InRun.Shop.GoldAfter\", state.CurrentGold, state.CurrentGold - offer.Price)", shopSource);
+            StringAssert.Contains("_shopBuyButton.interactable = item != null && canAfford;", shopSource);
+            // Pays and swaps in one step when the bag is full (GAP-036).
+            StringAssert.Contains("run.TryPurchaseShopOffer(selectedOfferIdx, slotToReplace)", shopSource);
         }
 
         [Test]
@@ -525,8 +546,8 @@ namespace SudokuRoguelike.Tests
             // A sibling of the game-over panel, never the panel itself: an open game-over panel makes Save & Quit
             // clear the run (GAP-046).
             StringAssert.Contains("var root = _gameOverPanel != null ? _gameOverPanel.transform.parent : transform;", endSource);
-            StringAssert.Contains("ScrollUiKit.Fill(screen, \"BossClearedStats\"", endSource);
-            StringAssert.Contains("BuildOffering(screen.transform, i, relic, center)", endSource);
+            StringAssert.Contains("ScrollUiKit.PaperTag(screen, \"BossClearedStats\"", endSource);
+            StringAssert.Contains("ScrollUiKit.Offering(screen.transform, i, relic, center, T(\"InRun.BossDefeated.Take\"))", endSource);
             StringAssert.Contains("\"BtnLeaveOfferings\"", endSource);
         }
 
@@ -545,16 +566,19 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
-        public void RelicChoiceCards_RenderCompleteLegendaryTexturesAndKeepIconSpacing()
+        [Requirement("UI-STYLE-008")]
+        public void RelicShrine_UsesTheOfferingTable_AndLegendaryArtLoadsCompletely()
         {
             var rewardSource = ReadSource(RewardViewControllerPath);
+            var kitSource = ReadSource("Assets/Scripts/UI/ScrollUiKit.cs");
             var factorySource = ReadSource(InRunUiFactoryPath);
 
-            StringAssert.Contains("ConfigureRelicChoiceButtonLayout(btn)", rewardSource);
-            StringAssert.Contains("label.rectTransform.anchorMin = new Vector2(0.08f, 0.10f)", rewardSource);
-            StringAssert.Contains("label.rectTransform.anchorMax = new Vector2(0.92f, 0.35f)", rewardSource);
-            StringAssert.Contains("iconRt.anchorMin = new Vector2(0.16f, 0.43f)", rewardSource);
-            StringAssert.Contains("iconRt.anchorMax = new Vector2(0.84f, 0.86f)", rewardSource);
+            StringAssert.Contains("ScrollUiKit.Scene(_pathPanel, \"RelicChoicePanel\", \"bg_relic\"", rewardSource);
+            StringAssert.Contains("ScrollUiKit.Offering(screen.transform, i, relic, centre, T(\"InRun.BossDefeated.Take\"))", rewardSource);
+            StringAssert.Contains("\"RelicShrineRun\"", rewardSource);
+            StringAssert.Contains("\"RelicShrineHeld\"", rewardSource);
+            StringAssert.Contains("if (_relicChosen) return;", rewardSource);
+            StringAssert.Contains("internal static Button Offering(Transform screen, int index, RelicInstance relic, float center, string takeLabel)", kitSource);
             StringAssert.Contains("ShouldUseFullTextureComposition(spritePath, sprites.Length)", factorySource);
             StringAssert.Contains("spriteCount > 1", factorySource);
             StringAssert.Contains("spritePath.StartsWith(\"legendary/\", System.StringComparison.OrdinalIgnoreCase)", factorySource);
@@ -781,7 +805,7 @@ namespace SudokuRoguelike.Tests
             {
                 case GeneratedUiControlType.Button:
                     // Runtime panels create their buttons through InRunUiFactory.
-                    return new[] { "BuildButton", "BuildMenuButton", "CreateActionButton", "CreatePanelButton", "RoundButton" };
+                    return new[] { "BuildButton", "BuildMenuButton", "CreateActionButton", "CreatePanelButton", "RoundButton", "RimButton", "PillButton" };
                 case GeneratedUiControlType.Toggle:
                     return new[] { "BuildToggle", "BuildOptionToggle" };
                 case GeneratedUiControlType.Dropdown:

@@ -1,4 +1,12 @@
 ﻿{
+    "InRun.Path.Tag.Relics":  "Relics {0}",
+    "InRun.Path.Tag.Vitals":  "HP <color={0}>{1} / {2}</color>   Pencil <color=#7d1f1f>{3} / {4}</color>",
+    "InRun.Path.Tag.Class":  "{0} · Level {1}",
+    "InRun.Path.ConfirmQuit":  "Confirm?",
+    "InRun.Path.FloorMarks":  "floor",
+    "InRun.Path.YouAreHere":  "You are here",
+    "InRun.Path.RouteLine":  "Ink: <i>{0}</i>, calm  ·  <color=#9e2a2b>Vermilion: <i>{1}</i>, risk, more gold</color>",
+    "InRun.Path.Eyebrow":  "Floor {0} of {1}",
     "InRun.BossDefeated.NoOfferings":  "The shrine has nothing left to offer.",
     "InRun.BossDefeated.Onward":  "Onward",
     "InRun.BossDefeated.Leave":  "Leave them",

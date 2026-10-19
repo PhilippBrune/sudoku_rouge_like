@@ -1,4 +1,12 @@
 {
+    "InRun.Path.Tag.Relics":  "Relíquias {0}",
+    "InRun.Path.Tag.Vitals":  "PV <color={0}>{1} / {2}</color>   Lápis <color=#7d1f1f>{3} / {4}</color>",
+    "InRun.Path.Tag.Class":  "{0} · Nível {1}",
+    "InRun.Path.ConfirmQuit":  "Confirmar?",
+    "InRun.Path.FloorMarks":  "andar",
+    "InRun.Path.YouAreHere":  "Você está aqui",
+    "InRun.Path.RouteLine":  "Tinta: <i>{0}</i>, calmo  ·  <color=#9e2a2b>Vermelhão: <i>{1}</i>, risco, mais ouro</color>",
+    "InRun.Path.Eyebrow":  "Andar {0} de {1}",
     "InRun.BossDefeated.NoOfferings":  "O santuário não tem mais nada a oferecer.",
     "InRun.BossDefeated.Onward":  "Seguir",
     "InRun.BossDefeated.Leave":  "Deixá-las",

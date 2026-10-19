@@ -217,8 +217,6 @@ namespace SudokuRoguelike.UI
         private Action<Vector2>                       _showBlockedTooltipAction;
 
         // ── RebuildPathCanvas reusable allocations ──
-        private readonly List<RunNode> _calmLane  = new List<RunNode>();
-        private readonly List<RunNode> _riskLane  = new List<RunNode>();
         private readonly Dictionary<int, int> _visitOrder = new Dictionary<int, int>();
         private readonly HashSet<(int, int)> _walkedEdges = new HashSet<(int, int)>();
 
@@ -1016,72 +1014,6 @@ namespace SudokuRoguelike.UI
 
         // ─────────────────────────── Path overview ───────────────────────────
 
-        private void RefreshPathOverview()
-        {
-            var run = _map?.Run;
-            if (run?.State == null || run.CurrentFloorGraph == null) return;
-
-            var s         = run.State;
-            var floorName = FloorThemeData.GetFloorName(s.CurrentFloor);
-            var floorTint = FloorThemeData.GetFloorTint(s.CurrentFloor);
-
-            if (_pathStatsBar != null)
-            {
-                var sb = new StringBuilder();
-                var hpFrac = s.MaxHP > 0 ? (float)s.CurrentHP / s.MaxHP : 1f;
-                var hpColor = hpFrac > 0.50f ? "#F5EDD1" : hpFrac > 0.25f ? "#FBD441" : "#BF3838";
-                sb.Append(LocalizationService.Format("InRun.PathStats", "{0}  ·  HP <color={1}>{2}/{3}</color>  ·  Pencil {4}/{5}",
-                    floorName, hpColor, s.CurrentHP, s.MaxHP, s.CurrentPencil, s.MaxPencil)); // GAP-019
-                if (s.HasRelic && (s.HeldRelics?.Count ?? 0) > 0)
-                    sb.Append(LocalizationService.Format("InRun.PathStats.Relics", "  ·  Relics {0}", s.HeldRelics.Count));
-                var floorEffect = _map?.GetPositiveFloorEffectLabel();
-                if (!string.IsNullOrEmpty(floorEffect))
-                {
-                    // Strip parenthetical detail " (+...)" so the bar stays single-line on narrow screens
-                    var parenIdx = floorEffect.IndexOf(" (", System.StringComparison.Ordinal);
-                    var shortEffect = parenIdx > 0 ? floorEffect.Substring(0, parenIdx) : floorEffect;
-                    sb.Append($"  ·  {shortEffect}");
-                }
-                _pathStatsBar.text = sb.ToString();
-            }
-
-            if (_goldLabel != null) _goldLabel.text = s.CurrentGold.ToString();
-
-            // P-1 — First-pick callout band: shown when no node has been chosen yet
-            var isFirstPick = s.NodePath == null || s.NodePath.Count == 0;
-            if (_pathPanel != null)
-            {
-                var existing = _pathPanel.transform.Find("FirstPickBand");
-                if (existing != null) Destroy(existing.gameObject);
-                _firstPickBand = null;
-
-                if (isFirstPick)
-                {
-                    var bandGo = new GameObject("FirstPickBand", typeof(RectTransform), typeof(Image));
-                    bandGo.transform.SetParent(_pathPanel.transform, false);
-                    var bandRt = bandGo.GetComponent<RectTransform>();
-                    // Fix D: use pixel offsets above legend strip so the band never overlaps it
-                    bandRt.anchorMin = new Vector2(0.01f, 0f);
-                    bandRt.anchorMax = new Vector2(0.99f, 0f);
-                    bandRt.offsetMin = new Vector2(0f, LegendH);
-                    bandRt.offsetMax = new Vector2(0f, LegendH + 36f);
-                    bandGo.GetComponent<Image>().color = new Color(
-                        GamePalette.AccentGold.r, GamePalette.AccentGold.g, GamePalette.AccentGold.b, 0.22f);
-                    var bandTxt = InRunUiFactory.CreateText(bandGo.transform, "Msg",
-                        T("InRun.Path.FirstPickHint"), 13,
-                        TextAnchor.MiddleCenter, GamePalette.TextPrimary);
-                    bandTxt.rectTransform.anchorMin = Vector2.zero;
-                    bandTxt.rectTransform.anchorMax = Vector2.one;
-                    bandTxt.rectTransform.offsetMin = bandTxt.rectTransform.offsetMax = Vector2.zero;
-                    bandTxt.fontStyle = FontStyle.Bold;
-                    bandTxt.raycastTarget = false;
-                    _firstPickBand = bandGo;
-                }
-            }
-
-            RebuildPathCanvas(run, floorTint);
-        }
-
         private void RebuildPathCanvas(RunDirector run, Color floorTint)
         {
             EnsurePathOverlayRoot();
@@ -1096,6 +1028,7 @@ namespace SudokuRoguelike.UI
             var graph = run.CurrentFloorGraph;
             if (graph == null || graph.Count == 0) return;
 
+            if (_pathViewport != null && _pathViewport.rect.width <= 10f) Canvas.ForceUpdateCanvases();
             var panelRect = _pathPanel?.GetComponent<RectTransform>()?.rect ?? Rect.zero;
             var viewW = (_pathViewport != null && _pathViewport.rect.width > 10f)
                 ? _pathViewport.rect.width
@@ -1113,88 +1046,12 @@ namespace SudokuRoguelike.UI
                 _pathOverlayRoot.sizeDelta = new Vector2(w, 0f);
             var reachable = run.GetReachableNodes();
 
-            // Separate route nodes — Start and Boss sit outside the lane boxes
-            _calmLane.Clear();
-            _riskLane.Clear();
-            var calmLane = _calmLane;
-            var riskLane = _riskLane;
-            for (var i = 0; i < graph.Count; i++)
-            {
-                var n = graph[i];
-                if (n.Type == NodeType.Start || n.Type == NodeType.Boss) continue;
-                if (n.Route == RouteType.CalmRoute) calmLane.Add(n);
-                else riskLane.Add(n);
-            }
 
-            // Per-route lane background boxes — low-alpha fog bands, not hard containers
-            // Calm: stone-green — garden path feeling, subtly brightened by floor green tint
-            var calmBg      = new Color(0.13f + floorTint.g * 0.07f, 0.21f + floorTint.g * 0.06f, 0.13f, 0.14f);
-            var calmOutline = new Color(0.28f, 0.60f + floorTint.g * 0.14f, 0.28f, 0.30f);
-            // Risk: ember-amber — scorched earth, subtly brightened by floor red tint
-            var riskBg      = new Color(0.25f + floorTint.r * 0.06f, 0.11f, 0.04f, 0.14f);
-            var riskOutline = new Color(0.70f + floorTint.r * 0.10f, 0.32f, 0.08f, 0.30f);
-
-            var calmRemaining = 0;
-            for (var i = 0; i < calmLane.Count; i++) if (!calmLane[i].Visited) calmRemaining++;
-            var riskRemaining = 0;
-            for (var i = 0; i < riskLane.Count; i++) if (!riskLane[i].Visited) riskRemaining++;
-
-            // Load the floor background PNG — cross-fade on floor advance
             var isFloorAdvance = _lastBuiltFloor >= 0 && run.State.CurrentFloor != _lastBuiltFloor;
             _lastBuiltFloor = run.State.CurrentFloor;
-            if (_floorBgRaw != null)
-            {
-                var bgName = run.State.CurrentFloor switch
-                {
-                    0 => "background/bg_garden_grove",
-                    1 => "background/bg_koi_garden",
-                    2 => "background/bg_koi_terrace",
-                    3 => "background/bg_shrine_garden",
-                    4 => "background/bg_demon_summit",
-                    _ => "background/bg_garden_grove",
-                };
-                var bgTex = Resources.Load<Texture2D>(bgName);
-                if (isFloorAdvance && _floorBgPrev != null && _floorBgRaw.texture != null)
-                {
-                    _floorBgPrev.texture = _floorBgRaw.texture;
-                    _floorBgPrev.uvRect  = new Rect(0f, 0f, 1f, 1f);
-                    _floorBgPrev.color   = new Color(1f, 1f, 1f, 0.92f);
-                    _floorBgRaw.texture  = bgTex;
-                    _floorBgRaw.uvRect   = new Rect(0f, 0f, 1f, 1f);
-                    _floorBgRaw.color    = new Color(1f, 1f, 1f, 0f);
-                    StartCoroutine(CrossFadeFloorBackground(0.6f));
-                }
-                else
-                {
-                    _floorBgRaw.texture = bgTex;
-                    _floorBgRaw.color   = new Color(1f, 1f, 1f, bgTex != null ? 0.92f : 0f);
-                    _floorBgRaw.uvRect  = new Rect(0f, 0f, 1f, 1f);
-                }
-            }
-
-            // Per-floor scrim alpha — ensures text/nodes are readable on each background art
-            // Floor 3 Shrine Garden uses highest alpha: amber art risks low contrast with AccentGold text
-            if (_bgScrimImg != null)
-            {
-                var scrimAlpha = run.State.CurrentFloor switch
-                {
-                    0 => 0.40f, // Garden Grove — bright green, moderate darkening
-                    1 => 0.35f, // Koi Garden — darker tones, less needed
-                    2 => 0.38f, // Koi Terrace — blue/teal, moderate
-                    3 => 0.50f, // Shrine Garden — amber, highest to protect gold text contrast
-                    4 => 0.30f, // Demon Summit — already dark volcanic art
-                    _ => 0.40f,
-                };
-                _bgScrimImg.color = new Color(0f, 0f, 0f, scrimAlpha);
-            }
-
-            // Panel base image: nearly opaque dark base (scrim child handles the visible darkening)
-            if (_pathPanel != null)
-            {
-                var panelImg = _pathPanel.GetComponent<Image>();
-                if (panelImg != null)
-                    panelImg.color = new Color(0.04f, 0.06f, 0.05f, 0.90f);
-            }
+            ApplyPathFloorArt(run.State.CurrentFloor, isFloorAdvance);
+            if (_pathPanel != null && _pathPanel.GetComponent<Image>() is { } panelImg)
+                panelImg.color = new Color(0.04f, 0.06f, 0.05f, 0.90f);
 
             // Seasonal ambient particles — (re)initialize when floor changes.
             // Reinitialize() reuses the existing component to avoid DestroyImmediate mid-frame.
@@ -1210,9 +1067,6 @@ namespace SudokuRoguelike.UI
                 }
             }
 
-            // Thematic 4: floor progress indicator dots at top of path panel
-            RebuildFloorProgressStrip(run);
-
             // Suggestion 1: floor-themed lane names — situates the player inside the world
             var (calmLaneNameKey, riskLaneNameKey) = run.State.CurrentFloor switch
             {
@@ -1224,28 +1078,10 @@ namespace SudokuRoguelike.UI
                 _ => ("InRun.Path.Lane.CalmPath",    "InRun.Path.Lane.RiskPath"),
             };
 
-            // Bridge pairs: crossing a bridge gives access to the partner tile on the other lane,
-            // so each lane's reachable tile count includes +1 per bridge pair.
-            var bridgePairs = 0;
-            for (var i = 0; i < calmLane.Count; i++) if (calmLane[i].IsCrossLink) bridgePairs++;
-            var calmDisplayCount = calmRemaining + bridgePairs;
-            var riskDisplayCount = riskRemaining + bridgePairs;
-
-            if (calmLane.Count > 0)
-                DrawRouteLane(_pathOverlayRoot, calmLane, w, h, calmBg, calmOutline, "CalmLane",
-                    BuildLaneLabel(calmLaneNameKey, calmDisplayCount));
-            if (riskLane.Count > 0)
-                DrawRouteLane(_pathOverlayRoot, riskLane, w, h, riskBg, riskOutline, "RiskLane",
-                    BuildLaneLabel(riskLaneNameKey, riskDisplayCount));
+            RebuildPathChrome(run, T(calmLaneNameKey), T(riskLaneNameKey));
 
             var accentColor   = InRunUiFactory.AccentGold;
             var bossGateColor = GamePalette.BossGateNode;
-
-            // Route-differentiated edge colors (Thematic 2)
-            var calmEdgeColor     = new Color(floorTint.r * 0.55f, floorTint.g * 0.72f, floorTint.b * 0.90f, 0.60f);
-            var riskEdgeColor     = new Color(Mathf.Min(floorTint.r * 0.90f + 0.15f, 1f), floorTint.g * 0.50f, floorTint.b * 0.40f, 0.70f);
-            var crossLinkEdgeCol  = new Color(accentColor.r, accentColor.g, accentColor.b, 0.55f);
-            var goldTrailColor    = new Color(accentColor.r, accentColor.g, accentColor.b, 0.45f);
 
             // Build set of actually-walked edges from NodePath sequence (A: adjacency fix)
             _walkedEdges.Clear();
@@ -1254,26 +1090,6 @@ namespace SudokuRoguelike.UI
             if (npList != null)
                 for (var k = 0; k + 1 < npList.Count; k++)
                     walkedEdges.Add((npList[k], npList[k + 1]));
-
-            // Thematic 2: walked-route ground trail — thick, very-low-alpha strip beneath edges
-            // Drawn before lane boxes to appear behind the fog bands but above the garden background.
-            // Because DrawRouteLane calls SetAsFirstSibling, these trails end up between the background
-            // and the lane bands in the sibling order, giving a natural "worn groove in the earth" look.
-            foreach (var edge in walkedEdges)
-            {
-                var src = edge.Item1; var dst = edge.Item2;
-                if (src < 0 || src >= graph.Count || dst < 0 || dst >= graph.Count) continue;
-                var nA = graph[src]; var nB = graph[dst];
-                var isCrossTrail = nA.IsCrossLink && nB.IsCrossLink;
-                var trailCol = isCrossTrail
-                    ? new Color(accentColor.r, accentColor.g, accentColor.b, 0.055f)
-                    : new Color(
-                        floorTint.r * 0.60f + 0.10f,
-                        floorTint.g * 0.60f + 0.10f,
-                        floorTint.b * 0.35f + 0.05f,
-                        0.06f);
-                DrawGroundTrail(_pathOverlayRoot, w, h, nA, nB, trailCol);
-            }
 
             // All edges/dots/chevrons go into a shared container so we only need one
             // SetAsFirstSibling() call to place the whole group behind lane boxes and nodes.
@@ -1297,33 +1113,15 @@ namespace SudokuRoguelike.UI
 
                     if (isCrossLinkEdge)
                     {
-                        // Walked bridge: brighter gold dots; unwalked: accent dots + glow aura
-                        var dotColor = isWalked
-                            ? new Color(goldTrailColor.r, goldTrailColor.g, goldTrailColor.b, 0.85f)
-                            : crossLinkEdgeCol;
-                        DrawDottedEdge(edgesRoot, w, h, nodeI, nodeN, dotColor);
-                        DrawEdge(edgesRoot, w, h, nodeI, nodeN,
-                            new Color(dotColor.r, dotColor.g, dotColor.b, 0.07f), 10f);
+                        DrawDottedEdge(edgesRoot, w, h, nodeI, nodeN,
+                            new Color(PathInk.r, PathInk.g, PathInk.b, isWalked ? 0.95f : 0.70f));
+                        continue;
                     }
-                    else
-                    {
-                        // Calm = thinner blue-tinted, Risk = thicker red-tinted (Thematic 2)
-                        var isCalm  = nodeI.Route == RouteType.CalmRoute && nodeN.Route == RouteType.CalmRoute;
-                        if (isWalked)
-                        {
-                            // Thematic 8: visited edges thinner than unwalked (worn-groove look)
-                            DrawEdge(edgesRoot, w, h, nodeI, nodeN, goldTrailColor, isCalm ? 1.2f : 2.5f);
-                        }
-                        else
-                        {
-                            DrawEdge(edgesRoot, w, h, nodeI, nodeN,
-                                isCalm ? calmEdgeColor : riskEdgeColor,
-                                isCalm ? 2f : 4f);
-                            // Directional chevron at 65% of each unwalked lane edge
-                            DrawEdgeChevron(edgesRoot, w, h, nodeI, nodeN,
-                                isCalm ? calmEdgeColor : riskEdgeColor);
-                        }
-                    }
+                    // The colour follows the route; the Start's edges take the colour of the route they open.
+                    var routeNode = nodeI.Type == NodeType.Start ? nodeN : nodeI;
+                    var isCalm = routeNode.Route == RouteType.CalmRoute;
+                    DrawEdge(edgesRoot, w, h, nodeI, nodeN, PathEdgeColor(isCalm, isWalked),
+                        isCalm ? (isWalked ? 6f : 5f) : (isWalked ? 8f : 7f));
                 }
             }
             // One reorder places the entire edge group behind lane boxes and node buttons.
@@ -1347,7 +1145,7 @@ namespace SudokuRoguelike.UI
             for (var i = 0; i < graph.Count; i++)
             {
                 var node      = graph[i];
-                var pos       = new Vector2(node.CanvasX * w, (1f - node.CanvasY) * h);
+                var pos       = PathNodePos(node, w, h);
                 var isCurrent = i == run.State.CurrentNodeIndex;
                 var canReach  = reachable != null && reachable.Contains(i);
 
@@ -1491,380 +1289,9 @@ namespace SudokuRoguelike.UI
             // Scroll to center the current node in the viewport
             ScrollToNode(run.State.CurrentNodeIndex, w, viewW);
 
-            // Legend strip: fixed to _pathPanel (not scrollable root), rebuilt each refresh
-            if (_pathPanel != null)
-            {
-                var existingLegend = _pathPanel.transform.Find("PathLegend");
-                if (existingLegend != null)
-                {
-                    Destroy(existingLegend.gameObject);
-                    if (_saveQuitResetCo != null) { StopCoroutine(_saveQuitResetCo); _saveQuitResetCo = null; }
-                    _saveQuitPending = false;
-                    _saveQuitImg = null;
-                    _saveQuitLbl = null;
-                }
-
-                // Container spans the bottom strip — pixel-exact to match scroll area offset
-                var legendGo = new GameObject("PathLegend", typeof(RectTransform), typeof(Image));
-                legendGo.transform.SetParent(_pathPanel.transform, false);
-                var legendRt = legendGo.GetComponent<RectTransform>();
-                legendRt.anchorMin = new Vector2(0f, 0f);
-                legendRt.anchorMax = new Vector2(1f, 0f);
-                legendRt.offsetMin = Vector2.zero;
-                legendRt.offsetMax = new Vector2(0f, LegendH);
-
-                // Legend background bar (keeps icons readable over the garden background)
-                var legendBg = legendGo.GetComponent<Image>();
-                legendBg.color = new Color(0.06f, 0.07f, 0.10f, 0.92f);
-                legendBg.raycastTarget = false;
-
-                // Top separator line
-                var sep = new GameObject("Separator", typeof(RectTransform), typeof(Image));
-                sep.transform.SetParent(legendRt, false);
-                var sepRt = sep.GetComponent<RectTransform>();
-                sepRt.anchorMin = new Vector2(0f, 1f);
-                sepRt.anchorMax = new Vector2(1f, 1f);
-                sepRt.offsetMin = Vector2.zero;
-                sepRt.offsetMax = new Vector2(0f, 1f);
-                var sepImg = sep.GetComponent<Image>();
-                sepImg.color = new Color(1f, 1f, 1f, 0.12f);
-                sepImg.raycastTarget = false;
-
-                // "Legend" title label (before icon list)
-                const float legendTitleW = 0.10f;
-                var title = InRunUiFactory.CreateText(legendRt, "LegendTitle", T("InRun.Path.LegendTitle"),
-                    9, TextAnchor.MiddleLeft, new Color(0.82f, 0.80f, 0.70f, 0.90f));
-                title.fontStyle = FontStyle.Bold;
-                title.rectTransform.anchorMin = new Vector2(0f, 0f);
-                title.rectTransform.anchorMax = new Vector2(legendTitleW, 1f);
-                title.rectTransform.offsetMin = new Vector2(8f, 0f);
-                title.rectTransform.offsetMax = new Vector2(-2f, 0f);
-                title.raycastTarget = false;
-
-                // Legend entries reflect what players actually encounter on the path.
-                // Event nodes were removed in R36 so they are excluded here.
-                var legendEntries = new (string Path, string LabelKey, string ObjectName)[]
-                {
-                    ("node/icon_puzzle_tile",     "InRun.Path.Node.Puzzle",  "Puzzle"),
-                    ("node/icon_elite_mask",      "InRun.Path.Node.Elite",   "Elite"),
-                    ("node/icon_preboss_gate",    "InRun.Path.Node.PreBoss", "PreBoss"),
-                    ("node/icon_demon_mask",      "InRun.Path.Node.Boss",    "Boss"),
-                    ("node/icon_market_stall",    "InRun.Path.Node.Shop",    "Shop"),
-                    ("node/icon_campfire_stones", "InRun.Path.Node.Rest",    "Rest"),
-                    ("node/icon_relic_pedestal",  "InRun.Path.Node.Relic",   "Relic"),
-                    ("node/icon_moss_trap",       "InRun.Path.Node.Cursed",  "Cursed"),
-                };
-
-                var entryCount = legendEntries.Length;
-                const float legendEntriesEnd = 0.80f; // right 20% reserved for Save & Quit button
-                var legendColor = new Color(0.78f, 0.75f, 0.62f, 0.75f);
-                for (var ei = 0; ei < entryCount; ei++)
-                {
-                    var (iconPath, labelKey, objectName) = legendEntries[ei];
-                    var label = T(labelKey);
-                    var xMin = legendTitleW + (float)ei / entryCount * (legendEntriesEnd - legendTitleW);
-                    var xMax = legendTitleW + (float)(ei + 1) / entryCount * (legendEntriesEnd - legendTitleW);
-
-                    var entryGo = new GameObject($"LegendEntry_{objectName}", typeof(RectTransform));
-                    entryGo.transform.SetParent(legendRt, false);
-                    var entryRt = entryGo.GetComponent<RectTransform>();
-                    entryRt.anchorMin = new Vector2(xMin, 0f);
-                    entryRt.anchorMax = new Vector2(xMax, 1f);
-                    entryRt.offsetMin = Vector2.zero;
-                    entryRt.offsetMax = Vector2.zero;
-
-                    _nodeIconCache.TryGetValue(iconPath, out var sprite);
-                    if (sprite != null)
-                    {
-                        var iconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
-                        iconGo.transform.SetParent(entryRt, false);
-                        var iconRt = iconGo.GetComponent<RectTransform>();
-                        iconRt.anchorMin = new Vector2(0.04f, 0.12f);
-                        iconRt.anchorMax = new Vector2(0.36f, 0.88f);
-                        iconRt.offsetMin = Vector2.zero;
-                        iconRt.offsetMax = Vector2.zero;
-                        var iconImg = iconGo.GetComponent<Image>();
-                        iconImg.sprite = sprite;
-                        iconImg.preserveAspect = true;
-                        iconImg.raycastTarget  = false;
-
-                        var lbl = InRunUiFactory.CreateText(entryRt, "Label", label,
-                            9, TextAnchor.MiddleLeft, legendColor);
-                        lbl.rectTransform.anchorMin = new Vector2(0.38f, 0f);
-                        lbl.rectTransform.anchorMax = new Vector2(0.98f, 1f);
-                        lbl.rectTransform.offsetMin = Vector2.zero;
-                        lbl.rectTransform.offsetMax = Vector2.zero;
-                        lbl.resizeTextForBestFit = true;
-                        lbl.resizeTextMinSize   = 7;
-                        lbl.resizeTextMaxSize   = 9;
-                        lbl.raycastTarget = false;
-                    }
-                    else
-                    {
-                        var lbl = InRunUiFactory.CreateText(entryRt, "Label", label,
-                            9, TextAnchor.MiddleCenter, legendColor);
-                        InRunUiFactory.StretchFill(lbl.rectTransform);
-                        lbl.resizeTextForBestFit = true;
-                        lbl.resizeTextMinSize   = 7;
-                        lbl.resizeTextMaxSize   = 9;
-                        lbl.raycastTarget = false;
-                    }
-                }
-
-                // Thin vertical divider between legend entries and Save & Quit button
-                var divGo = new GameObject("LegendDivider", typeof(RectTransform), typeof(Image));
-                divGo.transform.SetParent(legendRt, false);
-                var divRt = divGo.GetComponent<RectTransform>();
-                divRt.anchorMin = new Vector2(legendEntriesEnd, 0.08f);
-                divRt.anchorMax = new Vector2(legendEntriesEnd, 0.92f);
-                divRt.offsetMin = Vector2.zero;
-                divRt.offsetMax = new Vector2(1f, 0f); // 1 px wide
-                var divImg = divGo.GetComponent<Image>();
-                divImg.color         = new Color(1f, 1f, 1f, 0.18f);
-                divImg.raycastTarget = false;
-
-                // Save & Quit button — right end of legend bar, always above map content
-                var sqGo = new GameObject("BtnSaveQuit", typeof(RectTransform), typeof(Image), typeof(Button));
-                sqGo.transform.SetParent(legendRt, false);
-                var sqRt = sqGo.GetComponent<RectTransform>();
-                sqRt.anchorMin = new Vector2(legendEntriesEnd + 0.01f, 0.08f);
-                sqRt.anchorMax = new Vector2(0.99f, 0.92f);
-                sqRt.offsetMin = sqRt.offsetMax = Vector2.zero;
-                var sqImg = sqGo.GetComponent<Image>();
-                sqImg.color = new Color(0.22f, 0.18f, 0.14f, 0.90f);
-                var sqBtn = sqGo.GetComponent<Button>();
-                var sqCb = new ColorBlock();
-                sqCb.normalColor      = new Color(0.22f, 0.18f, 0.14f, 0.90f);
-                sqCb.highlightedColor = new Color(0.38f, 0.30f, 0.22f, 1.00f);
-                sqCb.pressedColor     = new Color(0.12f, 0.10f, 0.08f, 1.00f);
-                sqCb.selectedColor    = InRunUiFactory.BtnHighlighted;
-                sqCb.disabledColor    = new Color(0.5f, 0.5f, 0.5f, 0.5f);
-                sqCb.colorMultiplier  = 1f;
-                sqCb.fadeDuration     = 0.1f;
-                sqBtn.colors          = sqCb;
-                sqBtn.targetGraphic   = sqImg;
-                _saveQuitImg = sqImg;
-
-                var isTutorialQuit = run?.State?.TutorialMode ?? false;
-                if (isTutorialQuit)
-                {
-                    // Custom Puzzle: plain single-click Quit, no icon, no confirm step
-                    sqBtn.onClick.AddListener(SaveAndQuit);
-                }
-                else
-                {
-                    sqBtn.onClick.AddListener(() =>
-                    {
-                        if (!_saveQuitPending)
-                        {
-                            _saveQuitPending = true;
-                            if (_saveQuitLbl != null) _saveQuitLbl.text = "Confirm?";
-                            if (_saveQuitImg != null) _saveQuitImg.color = new Color(0.55f, 0.18f, 0.10f, 0.95f);
-                            if (_saveQuitResetCo != null) StopCoroutine(_saveQuitResetCo);
-                            _saveQuitResetCo = StartCoroutine(ResetSaveQuitConfirm(3f));
-                        }
-                        else
-                        {
-                            if (_saveQuitResetCo != null) { StopCoroutine(_saveQuitResetCo); _saveQuitResetCo = null; }
-                            _saveQuitPending = false;
-                            SaveAndQuit();
-                        }
-                    });
-                    var sqIconSprite = InRunUiFactory.LoadResourceSprite("ui/icon_ink_save");
-                    if (sqIconSprite != null)
-                    {
-                        var sqIconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
-                        sqIconGo.transform.SetParent(sqRt, false);
-                        var sqIconRt = sqIconGo.GetComponent<RectTransform>();
-                        sqIconRt.anchorMin = new Vector2(0.04f, 0.10f);
-                        sqIconRt.anchorMax = new Vector2(0.22f, 0.90f);
-                        sqIconRt.offsetMin = sqIconRt.offsetMax = Vector2.zero;
-                        var sqIconImg = sqIconGo.GetComponent<Image>();
-                        sqIconImg.sprite       = sqIconSprite;
-                        sqIconImg.preserveAspect = true;
-                        sqIconImg.raycastTarget  = false;
-                    }
-                }
-                var sqLblText = isTutorialQuit ? T("InRun.Path.Quit") : T("InRun.Path.SaveAndQuit");
-                var sqLbl = InRunUiFactory.CreateText(sqRt, "Label", sqLblText,
-                    11, TextAnchor.MiddleCenter, new Color(0.92f, 0.88f, 0.78f, 1f));
-                sqLbl.rectTransform.anchorMin = isTutorialQuit ? new Vector2(0.02f, 0f) : new Vector2(0.25f, 0f);
-                sqLbl.rectTransform.anchorMax = new Vector2(0.98f, 1f);
-                sqLbl.rectTransform.offsetMin = sqLbl.rectTransform.offsetMax = Vector2.zero;
-                sqLbl.resizeTextForBestFit = true;
-                sqLbl.resizeTextMinSize   = 9;
-                sqLbl.resizeTextMaxSize   = 11;
-                sqLbl.raycastTarget = false;
-                if (!isTutorialQuit) _saveQuitLbl = sqLbl;
-            }
-
             // Floor transition: fade the path canvas in each rebuild
             var pathCg = _pathOverlayRoot.GetComponent<CanvasGroup>();
             if (pathCg != null) StartCoroutine(AnimationHelper.FadeIn(pathCg, 0.22f));
-        }
-
-        /// <summary>Small V-chevron at 65% of an edge, indicating travel direction.</summary>
-        private void DrawEdgeChevron(RectTransform parent, float w, float h, RunNode a, RunNode b, Color color)
-        {
-            var pa = new Vector2(a.CanvasX * w, (1f - a.CanvasY) * h);
-            var pb = new Vector2(b.CanvasX * w, (1f - b.CanvasY) * h);
-            var d = pb - pa;
-            var dist = d.magnitude;
-            if (dist < 24f) return;
-            var angle = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg;
-            var tip = pa + d * 0.65f;
-            var chevronColor = new Color(color.r, color.g, color.b, color.a * 0.55f);
-            for (var side = -1; side <= 1; side += 2)
-            {
-                var seg = new GameObject("Chevron", typeof(RectTransform), typeof(Image));
-                seg.transform.SetParent(parent, false);
-                var segImg = seg.GetComponent<Image>();
-                segImg.color = chevronColor;
-                segImg.raycastTarget = false;
-                var segRt = seg.GetComponent<RectTransform>();
-                segRt.anchorMin = Vector2.zero;
-                segRt.anchorMax = Vector2.zero;
-                segRt.pivot = new Vector2(0f, 0.5f);
-                segRt.sizeDelta = new Vector2(7f, 1.5f);
-                segRt.anchoredPosition = tip;
-                segRt.localEulerAngles = new Vector3(0f, 0f, angle + 180f + side * 32f);
-            }
-        }
-
-        private static string BuildLaneLabel(string laneNameKey, int tileCount)
-        {
-            var labelKey = tileCount == 1 ? "InRun.Path.LaneLabel.One" : "InRun.Path.LaneLabel.Many";
-            var fallback = tileCount == 1 ? "{0}  \u00b7  {1} tile" : "{0}  \u00b7  {1} tiles";
-            return LocalizationService.Format(labelKey, fallback, T(laneNameKey), tileCount);
-        }
-
-        private void DrawRouteLane(RectTransform parent, List<RunNode> laneNodes, float w, float h,
-            Color boxColor, Color outlineColor, string goName, string label)
-        {
-            const float padPx = 40f;
-
-            var minPx = float.MaxValue; var maxPx = float.MinValue;
-            var minPy = float.MaxValue; var maxPy = float.MinValue;
-            for (var i = 0; i < laneNodes.Count; i++)
-            {
-                var px = laneNodes[i].CanvasX * w;
-                var py = (1f - laneNodes[i].CanvasY) * h;
-                if (px < minPx) minPx = px;
-                if (px > maxPx) maxPx = px;
-                if (py < minPy) minPy = py;
-                if (py > maxPy) maxPy = py;
-            }
-
-            var boxW    = (maxPx - minPx) + padPx * 2f;
-            var boxH    = (maxPy - minPy) + padPx * 2f;
-            var centerX = (minPx + maxPx) * 0.5f;
-            var centerY = (minPy + maxPy) * 0.5f;
-
-            var go = new GameObject(goName, typeof(RectTransform));
-            go.transform.SetParent(parent, false);
-            go.transform.SetAsFirstSibling();
-            var rt = go.GetComponent<RectTransform>();
-            rt.anchorMin = Vector2.zero;
-            rt.anchorMax = Vector2.zero;
-            rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.anchoredPosition = new Vector2(centerX, centerY);
-            rt.sizeDelta = new Vector2(boxW, boxH);
-
-            // Fog-band: subtle top-edge separator line instead of hard outline
-            var sep = new GameObject("LaneSep", typeof(RectTransform), typeof(Image));
-            sep.transform.SetParent(go.transform, false);
-            var sepRt = sep.GetComponent<RectTransform>();
-            sepRt.anchorMin = new Vector2(0f, 0.965f);
-            sepRt.anchorMax = Vector2.one;
-            sepRt.offsetMin = sepRt.offsetMax = Vector2.zero;
-            var sepImg = sep.GetComponent<Image>();
-            sepImg.color = new Color(outlineColor.r, outlineColor.g, outlineColor.b, 0.40f);
-            sepImg.raycastTarget = false;
-
-            // Lane label: dark pill above the lane box ensures readability over all floor background art
-            var lblPill = new GameObject("LaneLabelBg", typeof(RectTransform), typeof(Image));
-            lblPill.transform.SetParent(go.transform, false);
-            var lblPillRt = lblPill.GetComponent<RectTransform>();
-            lblPillRt.anchorMin = new Vector2(0f, 1f);
-            lblPillRt.anchorMax = new Vector2(0.85f, 1f);
-            lblPillRt.offsetMin = new Vector2(4f, 2f);
-            lblPillRt.offsetMax = new Vector2(-4f, 38f);  // P3: increased clearance above lane box
-            lblPill.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.55f);
-            var lbl = InRunUiFactory.CreateText(go.transform, "LaneLabel", label, 14,  // P3: font 12→14
-                TextAnchor.UpperLeft, new Color(GamePalette.TextPrimary.r, GamePalette.TextPrimary.g, GamePalette.TextPrimary.b, 0.90f));
-            lbl.rectTransform.anchorMin = new Vector2(0f, 1f);
-            lbl.rectTransform.anchorMax = new Vector2(0.85f, 1f);
-            lbl.rectTransform.offsetMin = new Vector2(6f, 4f);
-            lbl.rectTransform.offsetMax = new Vector2(0f, 36f);  // P3: taller offset to match pill
-            lbl.raycastTarget = false;
-
-            // #4 — Lane crossing rule tooltip: (?) button in top-right of lane box
-            // tipPanel is reparented to _pathPanel so it uses canvas-space clamped positioning.
-            var tipPanel = new GameObject("LaneTip", typeof(RectTransform), typeof(Image));
-            tipPanel.transform.SetParent(_pathPanel.transform, false);
-            var tipPanelRt2 = tipPanel.GetComponent<RectTransform>();
-            tipPanelRt2.anchorMin = new Vector2(0.5f, 0.5f);
-            tipPanelRt2.anchorMax = new Vector2(0.5f, 0.5f);
-            tipPanelRt2.pivot     = new Vector2(0f, 1f);
-            tipPanelRt2.sizeDelta = new Vector2(240f, 56f);
-            tipPanel.GetComponent<Image>().color = new Color(0.06f, 0.07f, 0.12f, 0.95f);
-            var tipCanvas = tipPanel.AddComponent<Canvas>();
-            tipCanvas.overrideSorting = true;
-            tipCanvas.sortingOrder = 50;
-            tipPanel.AddComponent<UnityEngine.UI.GraphicRaycaster>();
-            var tipTxt = InRunUiFactory.CreateText(tipPanel.transform, "TipTxt",
-                T("InRun.Path.CrossLaneTip"),
-                9, TextAnchor.MiddleLeft, new Color(0.90f, 0.87f, 0.72f, 1f));
-            tipTxt.rectTransform.anchorMin = Vector2.zero;
-            tipTxt.rectTransform.anchorMax = Vector2.one;
-            tipTxt.rectTransform.offsetMin = new Vector2(4f, 2f);
-            tipTxt.rectTransform.offsetMax = new Vector2(-4f, -2f);
-            tipTxt.horizontalOverflow = HorizontalWrapMode.Wrap;
-            tipTxt.verticalOverflow   = VerticalWrapMode.Overflow;
-            tipTxt.raycastTarget = false;
-            tipPanel.SetActive(false);
-
-            var helpBtn = new GameObject("LaneHelpBtn", typeof(RectTransform), typeof(Image));
-            helpBtn.transform.SetParent(go.transform, false);
-            var helpRt = helpBtn.GetComponent<RectTransform>();
-            helpRt.anchorMin = new Vector2(0.76f, 0.80f);
-            helpRt.anchorMax = new Vector2(1.00f, 1.00f);
-            helpRt.offsetMin = helpRt.offsetMax = Vector2.zero;
-            helpBtn.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0f);
-            var helpTxt = InRunUiFactory.CreateText(helpBtn.transform, "HelpLbl", "(?)", 9,
-                TextAnchor.MiddleCenter,
-                new Color(outlineColor.r, outlineColor.g, outlineColor.b, 0.70f));
-            helpTxt.rectTransform.anchorMin = Vector2.zero;
-            helpTxt.rectTransform.anchorMax = Vector2.one;
-            helpTxt.rectTransform.offsetMin = helpTxt.rectTransform.offsetMax = Vector2.zero;
-            helpTxt.raycastTarget = false;
-            var helpBtnComp = helpBtn.AddComponent<Button>();
-            helpBtnComp.transition = Selectable.Transition.None;
-            var etHelp = helpBtn.AddComponent<UnityEngine.EventSystems.EventTrigger>();
-            var panelRtCaptured = _pathPanel.GetComponent<RectTransform>();
-            var hoverIn = new UnityEngine.EventSystems.EventTrigger.Entry
-                { eventID = UnityEngine.EventSystems.EventTriggerType.PointerEnter };
-            hoverIn.callback.AddListener(evtData =>
-            {
-                var screenPos = ((UnityEngine.EventSystems.PointerEventData)evtData).position;
-                RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                    panelRtCaptured, screenPos, null, out var local);
-                tipPanelRt2.anchoredPosition = ClampedTooltipPosition(local, panelRtCaptured,
-                    240f, 56f, 12f);
-                tipPanel.SetActive(true);
-            });
-            etHelp.triggers.Add(hoverIn);
-            var hoverOut = new UnityEngine.EventSystems.EventTrigger.Entry
-                { eventID = UnityEngine.EventSystems.EventTriggerType.PointerExit };
-            hoverOut.callback.AddListener(_ => tipPanel.SetActive(false));
-            etHelp.triggers.Add(hoverOut);
-            // P-6 — Also toggle on click so controller/keyboard can open the tip
-            var tipVisible = new bool[1];
-            helpBtnComp.onClick.AddListener(() =>
-            {
-                tipVisible[0] = !tipVisible[0];
-                tipPanel.SetActive(tipVisible[0]);
-            });
         }
 
         private void OnNodeClicked(int nodeIndex)
@@ -2092,114 +1519,6 @@ namespace SudokuRoguelike.UI
             RebuildBoard();
         }
 
-        // ─────────────────────────── Garden path background ───────────────────────────
-        // Texture creation moved to GardenTextureFactory — see GardenTextureFactory.cs
-
-        /// <summary>
-        /// Draws a thick, very-low-alpha rectangle connecting two node positions.
-        /// Used for the walked-route ground trail beneath edge lines (Thematic 2).
-        /// </summary>
-        private static void DrawGroundTrail(RectTransform parent, float w, float h,
-            RunNode a, RunNode b, Color color)
-        {
-            var pa  = new Vector2(a.CanvasX * w, (1f - a.CanvasY) * h);
-            var pb  = new Vector2(b.CanvasX * w, (1f - b.CanvasY) * h);
-            var dir = pb - pa;
-            var len = dir.magnitude;
-            if (len < 1f) return;
-
-            var go = new GameObject("GroundTrail", typeof(RectTransform), typeof(Image));
-            go.transform.SetParent(parent, false);
-            var rt = go.GetComponent<RectTransform>();
-            rt.anchorMin        = Vector2.zero;
-            rt.anchorMax        = Vector2.zero;
-            rt.pivot            = new Vector2(0.5f, 0.5f);
-            rt.sizeDelta        = new Vector2(len, 10f);
-            rt.anchoredPosition = (pa + pb) * 0.5f;
-            rt.localRotation    = Quaternion.Euler(0f, 0f,
-                Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg);
-            var img = go.GetComponent<Image>();
-            img.color         = color;
-            img.raycastTarget = false;
-        }
-
-        /// <summary>
-        /// Destroys and recreates the floor progress dot strip at the top of <c>_pathPanel</c>.
-        /// Shows one dot per floor: filled/gold for completed, pulsing for current, dim for upcoming.
-        /// </summary>
-        private void RebuildFloorProgressStrip(RunDirector run)
-        {
-            if (_pathPanel == null) return;
-            var state = run.State;
-            if (state == null) return;
-            var currentFloor = state.CurrentFloor;
-            if (currentFloor == _lastBuiltFloorForStrip) return; // already up-to-date
-
-            if (_floorProgressStrip != null) Destroy(_floorProgressStrip.gameObject);
-            _floorProgressStrip = null;
-
-            var totalFloors = state.TotalFloors;
-
-            var stripGo = new GameObject("FloorProgressBar", typeof(RectTransform), typeof(Image));
-            stripGo.transform.SetParent(_pathPanel.transform, false);
-            var stripRt = stripGo.GetComponent<RectTransform>();
-            // Anchored to top of path panel, 22 px tall
-            stripRt.anchorMin = new Vector2(0f, 1f);
-            stripRt.anchorMax = new Vector2(1f, 1f);
-            stripRt.pivot     = new Vector2(0.5f, 1f);
-            stripRt.offsetMin = new Vector2(0f, -22f);
-            stripRt.offsetMax = Vector2.zero;
-            var stripImg = stripGo.GetComponent<Image>();
-            stripImg.color         = new Color(0f, 0f, 0f, 0.35f);
-            stripImg.raycastTarget = false;
-
-            for (var fi = 0; fi < totalFloors; fi++)
-            {
-                var dotGo = new GameObject($"FloorDot_{fi}", typeof(RectTransform), typeof(Image));
-                dotGo.transform.SetParent(stripRt, false);
-                var dotRt = dotGo.GetComponent<RectTransform>();
-                var xMin  = (float)fi / totalFloors;
-                var xMax  = (float)(fi + 1) / totalFloors;
-                dotRt.anchorMin = new Vector2(xMin + 0.01f, 0.12f);
-                dotRt.anchorMax = new Vector2(xMax - 0.01f, 0.88f);
-                dotRt.offsetMin = dotRt.offsetMax = Vector2.zero;
-
-                var dotImg = dotGo.GetComponent<Image>();
-                dotImg.raycastTarget = false;
-
-                if (fi < currentFloor)
-                {
-                    // Completed floor: solid gold
-                    dotImg.color = new Color(
-                        GamePalette.AccentGold.r, GamePalette.AccentGold.g,
-                        GamePalette.AccentGold.b, 0.80f);
-                }
-                else if (fi == currentFloor)
-                {
-                    // Active floor: bright gold + single pulse
-                    dotImg.color = GamePalette.AccentGold;
-                    StartCoroutine(AnimationHelper.PulseScale(dotGo.transform, 1f, 1.22f, 0.55f));
-                }
-                else
-                {
-                    // Future floor: muted but visible
-                    dotImg.color = new Color(0.50f, 0.48f, 0.38f, 0.50f);
-                }
-
-                // Floor number label
-                var lbl = InRunUiFactory.CreateText(dotGo.transform, "FloorNum",
-                    (fi + 1).ToString(), 8, TextAnchor.MiddleCenter,
-                    fi == currentFloor
-                        ? new Color(0.06f, 0.04f, 0.02f, 1f)
-                        : new Color(GamePalette.TextPrimary.r, GamePalette.TextPrimary.g, GamePalette.TextPrimary.b, 0.70f));
-                InRunUiFactory.StretchFill(lbl.rectTransform);
-                lbl.raycastTarget = false;
-            }
-
-            _floorProgressStrip     = stripRt;
-            _lastBuiltFloorForStrip = currentFloor;
-        }
-
         /// <summary>Slowly pulses the boss node transform until it is destroyed or goes inactive.</summary>
         private IEnumerator BossNodePulseLoop(Transform bossT)
         {
@@ -2209,137 +1528,6 @@ namespace SudokuRoguelike.UI
                 yield return StartCoroutine(AnimationHelper.PulseScale(bossT, 1f, 1.12f, 0.80f));
                 yield return _bossPulseWait;
             }
-        }
-
-        private void EnsurePathOverlayRoot()
-        {
-            if (_pathPanel == null) return;
-            var panelRt = _pathPanel.GetComponent<RectTransform>();
-            if (_pathOverlayRoot != null) return;
-
-            // Previous-floor background — sits behind current, used for cross-fade on floor advance
-            var bgPrevGo = new GameObject("FloorBackgroundPrev", typeof(RectTransform), typeof(RawImage));
-            bgPrevGo.transform.SetParent(panelRt, false);
-            bgPrevGo.transform.SetAsFirstSibling();
-            var bgPrevRt = bgPrevGo.GetComponent<RectTransform>();
-            bgPrevRt.anchorMin = Vector2.zero; bgPrevRt.anchorMax = Vector2.one;
-            bgPrevRt.offsetMin = Vector2.zero; bgPrevRt.offsetMax = Vector2.zero;
-            _floorBgPrev = bgPrevGo.GetComponent<RawImage>();
-            _floorBgPrev.color         = new Color(1f, 1f, 1f, 0f); // starts transparent
-            _floorBgPrev.raycastTarget = false;
-
-            // Current floor background image — loads bg_Garden_Grove.png etc. in RebuildPathCanvas
-            var bgGo = new GameObject("FloorBackground", typeof(RectTransform), typeof(RawImage));
-            bgGo.transform.SetParent(panelRt, false);
-            var bgRt = bgGo.GetComponent<RectTransform>();
-            bgRt.anchorMin = Vector2.zero; bgRt.anchorMax = Vector2.one;
-            bgRt.offsetMin = Vector2.zero; bgRt.offsetMax = Vector2.zero;
-            _floorBgRaw = bgGo.GetComponent<RawImage>();
-            _floorBgRaw.color         = new Color(1f, 1f, 1f, 0.92f); // near-full opacity
-            _floorBgRaw.raycastTarget = false;
-
-            // Dark scrim between the background art and all UI content — alpha tuned per floor in RebuildPathCanvas
-            var scrimGo = new GameObject("BackgroundScrim", typeof(RectTransform), typeof(Image));
-            scrimGo.transform.SetParent(panelRt, false);
-            scrimGo.transform.SetSiblingIndex(1); // above FloorBackground (0), below scroll area
-            var scrimRt = scrimGo.GetComponent<RectTransform>();
-            scrimRt.anchorMin = Vector2.zero; scrimRt.anchorMax = Vector2.one;
-            scrimRt.offsetMin = scrimRt.offsetMax = Vector2.zero;
-            _bgScrimImg = scrimGo.GetComponent<Image>();
-            _bgScrimImg.color         = new Color(0f, 0f, 0f, 0.40f); // overridden per floor
-            _bgScrimImg.raycastTarget = false;
-
-            // Stats row — 30 px tall, sits between FloorProgressBar (22 px + 4 gap = -26) and the map scroll area.
-            var statsBarGo = new GameObject("PathStatsBar", typeof(RectTransform), typeof(Image));
-            statsBarGo.transform.SetParent(panelRt, false);
-            var statsBarRt    = statsBarGo.GetComponent<RectTransform>();
-            statsBarRt.anchorMin  = new Vector2(0f, 1f);
-            statsBarRt.anchorMax  = new Vector2(1f, 1f);
-            statsBarRt.pivot      = new Vector2(0.5f, 1f);
-            statsBarRt.offsetMin  = new Vector2(2f,  -56f); // top of bar = 26px below panel top (below FloorProgressBar)
-            statsBarRt.offsetMax  = new Vector2(-2f, -26f); // 30 px tall
-            var statsBarImg = statsBarGo.GetComponent<Image>();
-            statsBarImg.color = new Color(0.04f, 0.05f, 0.08f, 0.50f);
-            statsBarImg.raycastTarget = false;
-
-            var statsText = InRunUiFactory.CreateText(statsBarGo.transform, "PathStatsText",
-                "", 13, TextAnchor.MiddleLeft, new Color(0.88f, 0.86f, 0.76f, 0.92f));
-            statsText.rectTransform.anchorMin = Vector2.zero;
-            statsText.rectTransform.anchorMax = new Vector2(0.62f, 1f);
-            statsText.rectTransform.offsetMin = new Vector2(10f, 0f);
-            statsText.rectTransform.offsetMax = new Vector2(-10f, 0f);
-            statsText.resizeTextForBestFit = true;
-            statsText.resizeTextMinSize   = 10;
-            statsText.resizeTextMaxSize   = 13;
-            statsText.raycastTarget = false;
-            var statsShadow = statsText.gameObject.AddComponent<Shadow>();
-            statsShadow.effectColor    = new Color(0f, 0f, 0f, 0.78f);
-            statsShadow.effectDistance = new Vector2(1f, -1f);
-            _pathStatsBar = statsText;
-
-            // Gold coin icon — rightmost 26px of the stats bar
-            var goldIconGo = new GameObject("GoldIcon", typeof(RectTransform), typeof(Image));
-            goldIconGo.transform.SetParent(statsBarGo.transform, false);
-            var goldIconRt = goldIconGo.GetComponent<RectTransform>();
-            goldIconRt.anchorMin = new Vector2(1f, 0f); goldIconRt.anchorMax = new Vector2(1f, 1f);
-            goldIconRt.pivot     = new Vector2(1f, 0.5f);
-            goldIconRt.offsetMin = new Vector2(-84f, 3f);
-            goldIconRt.offsetMax = new Vector2(-58f, -3f);
-            _goldIcon = goldIconGo.GetComponent<Image>();
-            _goldIcon.sprite        = Resources.Load<Sprite>("economy/icon_sakura_coin");
-            _goldIcon.preserveAspect = true;
-            _goldIcon.raycastTarget  = false;
-            if (_goldIcon.sprite == null) _goldIcon.color = Color.clear;
-
-            // Gold value label — to the right of icon
-            var goldLabelText = InRunUiFactory.CreateText(statsBarGo.transform, "GoldLabel",
-                "0", 12, TextAnchor.MiddleLeft, new Color(0.95f, 0.85f, 0.40f, 1f));
-            goldLabelText.rectTransform.anchorMin = new Vector2(1f, 0f);
-            goldLabelText.rectTransform.anchorMax = new Vector2(1f, 1f);
-            goldLabelText.rectTransform.pivot     = new Vector2(1f, 0.5f);
-            goldLabelText.rectTransform.offsetMin = new Vector2(-56f, 1f);
-            goldLabelText.rectTransform.offsetMax = new Vector2(-4f,  -1f);
-            goldLabelText.raycastTarget = false;
-            _goldLabel = goldLabelText;
-
-            // ScrollRect container — stops 56 px below the top (22 px strip + 4 gap + 30 px stats bar)
-            var scrollGo = new GameObject("PathScrollArea", typeof(RectTransform));
-            scrollGo.transform.SetParent(panelRt, false);
-            var scrollRt        = scrollGo.GetComponent<RectTransform>();
-            scrollRt.anchorMin  = Vector2.zero;
-            scrollRt.anchorMax  = Vector2.one;
-            scrollRt.offsetMin  = new Vector2(0f, LegendH);
-            scrollRt.offsetMax  = new Vector2(0f, -56f); // 22 px FloorProgressBar + 4 px gap + 30 px stats bar
-            _pathScrollRect                   = scrollGo.AddComponent<ScrollRect>();
-            _pathScrollRect.horizontal        = true;
-            _pathScrollRect.vertical          = false;
-            _pathScrollRect.movementType      = ScrollRect.MovementType.Clamped;
-            _pathScrollRect.scrollSensitivity = 20f;
-
-            // Viewport — child of scroll area, clips the scrolling content
-            var viewportGo = new GameObject("PathViewport", typeof(RectTransform), typeof(RectMask2D));
-            viewportGo.transform.SetParent(scrollGo.transform, false);
-            _pathViewport           = viewportGo.GetComponent<RectTransform>();
-            _pathViewport.anchorMin = Vector2.zero;
-            _pathViewport.anchorMax = Vector2.one;
-            _pathViewport.offsetMin = _pathViewport.offsetMax = Vector2.zero;
-            _pathScrollRect.viewport = _pathViewport;
-
-            // Content — left-anchored inside viewport; width set each rebuild
-            var contentGo = new GameObject("PathOverlay", typeof(RectTransform));
-            contentGo.transform.SetParent(viewportGo.transform, false);
-            _pathOverlayRoot            = contentGo.GetComponent<RectTransform>();
-            _pathOverlayRoot.anchorMin  = new Vector2(0f, 0f);
-            _pathOverlayRoot.anchorMax  = new Vector2(0f, 1f);
-            _pathOverlayRoot.pivot      = new Vector2(0f, 0f);
-            _pathOverlayRoot.offsetMin  = Vector2.zero;
-            _pathOverlayRoot.offsetMax  = Vector2.zero;
-            _pathScrollRect.content     = _pathOverlayRoot;
-            contentGo.AddComponent<CanvasGroup>(); // used for floor transition fade-in
-
-            // Fix C: BuildPathLegend removed — legend is rebuilt each RebuildPathCanvas call instead
-            // Tooltip panel (floats above all path content, hidden by default)
-            EnsureNodeTooltip();
         }
 
         private void EnsureNodeTooltip()
@@ -2453,92 +1641,6 @@ namespace SudokuRoguelike.UI
             _nodeTooltipPanel.transform.SetAsLastSibling();
         }
 
-        private void BuildPathLegend(RectTransform parent, float legendH)
-        {
-            var legendTypes = new[]
-            {
-                (NodeType.Puzzle,      "Puzzle"),
-                (NodeType.ElitePuzzle, "Elite"),
-                (NodeType.PreBoss,     "Pre-Boss"),
-                (NodeType.Boss,        "Boss Gate"),
-                (NodeType.Shop,        "Shop"),
-                (NodeType.Rest,        "Rest"),
-                (NodeType.Relic,       "Relic"),
-                (NodeType.Event,       "Event"),
-                (NodeType.Cursed,      "Cursed"),
-            };
-
-            var go = new GameObject("PathLegend", typeof(RectTransform), typeof(Image));
-            go.transform.SetParent(parent, false);
-            var rt = go.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0f, 0f);
-            rt.anchorMax = new Vector2(1f, 0f);
-            rt.pivot     = new Vector2(0.5f, 0f);
-            rt.offsetMin = Vector2.zero;
-            rt.offsetMax = new Vector2(0f, legendH);
-            go.GetComponent<Image>().color = new Color(0.06f, 0.07f, 0.10f, 0.94f);
-
-            // Top separator line
-            var sep = new GameObject("Separator", typeof(RectTransform), typeof(Image));
-            sep.transform.SetParent(rt, false);
-            var sepRt = sep.GetComponent<RectTransform>();
-            sepRt.anchorMin = new Vector2(0f, 1f);
-            sepRt.anchorMax = new Vector2(1f, 1f);
-            sepRt.offsetMin = Vector2.zero;
-            sepRt.offsetMax = new Vector2(0f, 1f);
-            sep.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.12f);
-            sep.GetComponent<Image>().raycastTarget = false;
-
-            const float entryW = 86f;
-            var totalW  = legendTypes.Length * entryW;
-            var startX  = -totalW * 0.5f + entryW * 0.5f;
-
-            for (var i = 0; i < legendTypes.Length; i++)
-            {
-                var type     = legendTypes[i].Item1;
-                var label    = legendTypes[i].Item2;
-                var iconPath = GetNodeIconPath(type);
-                var sprite   = string.IsNullOrEmpty(iconPath) ? null
-                    : Resources.Load<Sprite>(iconPath);
-
-                var entry = new GameObject($"Legend_{type}", typeof(RectTransform));
-                entry.transform.SetParent(rt, false);
-                var entryRt = entry.GetComponent<RectTransform>();
-                entryRt.anchorMin = entryRt.anchorMax = new Vector2(0.5f, 0.5f);
-                entryRt.pivot     = new Vector2(0.5f, 0.5f);
-                entryRt.sizeDelta = new Vector2(entryW - 6f, legendH - 10f);
-                entryRt.anchoredPosition = new Vector2(startX + i * entryW, 0f);
-
-                if (sprite != null)
-                {
-                    var iconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
-                    iconGo.transform.SetParent(entry.transform, false);
-                    var iconRt = iconGo.GetComponent<RectTransform>();
-                    iconRt.anchorMin = new Vector2(0.02f, 0.15f);
-                    iconRt.anchorMax = new Vector2(0.40f, 0.90f);
-                    iconRt.offsetMin = iconRt.offsetMax = Vector2.zero;
-                    var iconImg = iconGo.GetComponent<Image>();
-                    iconImg.sprite = sprite;
-                    iconImg.preserveAspect = true;
-                    iconImg.raycastTarget  = false;
-
-                    var lbl = InRunUiFactory.CreateText(entry.transform, "LblLegend", label,
-                        8, TextAnchor.MiddleLeft, new Color(0.80f, 0.80f, 0.80f, 0.90f));
-                    lbl.rectTransform.anchorMin = new Vector2(0.42f, 0f);
-                    lbl.rectTransform.anchorMax = new Vector2(1f, 1f);
-                    lbl.rectTransform.offsetMin = lbl.rectTransform.offsetMax = Vector2.zero;
-                    lbl.raycastTarget = false;
-                }
-                else
-                {
-                    var lbl = InRunUiFactory.CreateText(entry.transform, "LblLegend", label,
-                        8, TextAnchor.MiddleCenter, new Color(0.80f, 0.80f, 0.80f, 0.90f));
-                    InRunUiFactory.StretchFill(lbl.rectTransform);
-                    lbl.raycastTarget = false;
-                }
-            }
-        }
-
         private Coroutine _smoothScrollCo;
 
         /// <summary>Smoothly scrolls the path viewport to center the given node index horizontally.</summary>
@@ -2549,7 +1651,7 @@ namespace SudokuRoguelike.UI
             if (graph == null || nodeIndex < 0 || nodeIndex >= graph.Count) return;
             var scrollRange = contentW - viewW;
             var target = scrollRange <= 0f ? 0f
-                : Mathf.Clamp01((graph[nodeIndex].CanvasX * contentW - viewW * 0.5f) / scrollRange);
+                : Mathf.Clamp01((PathNodePos(graph[nodeIndex], contentW, 1f).x - viewW * 0.5f) / scrollRange);
             if (_smoothScrollCo != null) StopCoroutine(_smoothScrollCo);
             _smoothScrollCo = StartCoroutine(SmoothScrollToTarget(target, 0.25f));
         }
@@ -2573,261 +1675,18 @@ namespace SudokuRoguelike.UI
             _smoothScrollCo = null;
         }
 
+        // UI-STYLE-001: a visited tile keeps its faded icon and gets a vermilion tick, plus the step number of the walk.
         private void AddVisitedMark(RectTransform parent, RunNode node, int visitStep = 0)
         {
-            // Ghost icon overlay — faint silhouette of what happened here
-            // Bridge nodes use flow_ribbon to distinguish from Start (which also uses engraved_stone)
-            var iconPath = node.Type == NodeType.CrossLink
-                ? "ui/icon_flow_ribbon"
-                : GetNodeIconPath(node.Type);
-            if (!string.IsNullOrEmpty(iconPath))
-            {
-                _nodeIconCache.TryGetValue(iconPath, out var sprite);
-                if (sprite == null) sprite = Resources.Load<Sprite>(iconPath);
-                if (sprite != null)
-                {
-                    var ghostGo = new GameObject("VisitedGhost", typeof(RectTransform), typeof(Image));
-                    ghostGo.transform.SetParent(parent, false);
-                    var ghostRt = ghostGo.GetComponent<RectTransform>();
-                    ghostRt.anchorMin = Vector2.zero;
-                    ghostRt.anchorMax = Vector2.one;
-                    ghostRt.offsetMin = ghostRt.offsetMax = Vector2.zero;
-                    var ghostImg = ghostGo.GetComponent<Image>();
-                    ghostImg.sprite = sprite;
-                    ghostImg.preserveAspect = true;
-                    ghostImg.color = new Color(1f, 1f, 1f, 0.12f);
-                    ghostImg.raycastTarget = false;
-                }
-            }
-            // D: checkmark in bottom-left — dark circle bg ensures visibility on all floor tints
-            var chkBg = new GameObject("CheckBg", typeof(RectTransform), typeof(Image));
-            chkBg.transform.SetParent(parent, false);
-            var chkBgRt = chkBg.GetComponent<RectTransform>();
-            chkBgRt.anchorMin = Vector2.zero;
-            chkBgRt.anchorMax = new Vector2(0.36f, 0.36f);
-            chkBgRt.offsetMin = new Vector2(2f, 2f);
-            chkBgRt.offsetMax = Vector2.zero;
-            chkBg.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.55f);
-            var lbl = InRunUiFactory.CreateText(parent, "VisitedMark", "✓",
-                11, TextAnchor.LowerLeft, new Color(0.50f, 0.90f, 0.50f, 0.80f));
-            lbl.rectTransform.anchorMin = Vector2.zero;
-            lbl.rectTransform.anchorMax = new Vector2(0.42f, 0.42f);
-            lbl.rectTransform.offsetMin = new Vector2(2f, 2f);
-            lbl.rectTransform.offsetMax = Vector2.zero;
-            lbl.raycastTarget = false;
-
-            // Suggestion 6: visit sequence number in bottom-right — lets the player retrace their route
-            // Omit for step 1 (Start is step 1 but it's never drawn as visited) and step 0 (unknown).
+            ScrollUiKit.Fill(parent, "VisitedMark", new Vector2(0.58f, -0.08f), new Vector2(1.08f, 0.42f),
+                PathVermilion, ScrollUiKit.Tick());
             if (visitStep >= 2)
-            {
-                var seqLbl = InRunUiFactory.CreateText(parent, "VisitSeq", visitStep.ToString(),
-                    8, TextAnchor.LowerRight,
-                    new Color(InRunUiFactory.AccentGold.r, InRunUiFactory.AccentGold.g,
-                              InRunUiFactory.AccentGold.b, 0.60f));
-                seqLbl.rectTransform.anchorMin = new Vector2(0.55f, 0f);
-                seqLbl.rectTransform.anchorMax = new Vector2(1f, 0.38f);
-                seqLbl.rectTransform.offsetMin = Vector2.zero;
-                seqLbl.rectTransform.offsetMax = new Vector2(-3f, 0f);
-                seqLbl.raycastTarget = false;
-            }
-        }
-
-        private void DrawEdge(RectTransform parent, float w, float h, RunNode a, RunNode b, Color color, float thickness = 3f)
-        {
-            var pa = new Vector2(a.CanvasX * w, (1f - a.CanvasY) * h);
-            var pb = new Vector2(b.CanvasX * w, (1f - b.CanvasY) * h);
-            var d  = pb - pa;
-            var dist = d.magnitude;
-            if (dist < 1f) return;
-
-            var go = new GameObject("Edge", typeof(RectTransform), typeof(Image));
-            go.transform.SetParent(parent, false);
-            var img = go.GetComponent<Image>();
-            img.color = color;
-            img.raycastTarget = false;
-            var r = go.GetComponent<RectTransform>();
-            r.anchorMin = Vector2.zero;
-            r.anchorMax = Vector2.zero;
-            r.pivot     = new Vector2(0.5f, 0.5f);
-            r.sizeDelta = new Vector2(dist, thickness);
-            r.anchoredPosition = pa + d * 0.5f;
-            r.localEulerAngles = new Vector3(0, 0, Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg);
-        }
-
-        // Thematic 5: dotted edge for cross-lane connections
-        private void DrawDottedEdge(RectTransform parent, float w, float h, RunNode a, RunNode b, Color color)
-        {
-            var pa   = new Vector2(a.CanvasX * w, (1f - a.CanvasY) * h);
-            var pb   = new Vector2(b.CanvasX * w, (1f - b.CanvasY) * h);
-            var d    = pb - pa;
-            var dist = d.magnitude;
-            if (dist < 1f) return;
-            var dir  = d / dist;
-            var angle = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg;
-
-            const float SegLen = 6f;
-            const float Gap    = 5f;
-            const float Step   = SegLen + Gap;
-            var count = Mathf.FloorToInt((dist - Gap) / Step);
-            for (var k = 0; k < count; k++)
-            {
-                var center = pa + dir * (Gap * 0.5f + k * Step + SegLen * 0.5f);
-                var seg = new GameObject("EdgeDot", typeof(RectTransform), typeof(Image));
-                seg.transform.SetParent(parent, false);
-                var segImg = seg.GetComponent<Image>();
-                segImg.color = color;
-                segImg.raycastTarget = false;
-                var segRt = seg.GetComponent<RectTransform>();
-                segRt.anchorMin = Vector2.zero;
-                segRt.anchorMax = Vector2.zero;
-                segRt.pivot     = new Vector2(0.5f, 0.5f);
-                segRt.sizeDelta = new Vector2(SegLen, 2.5f);
-                segRt.anchoredPosition  = center;
-                segRt.localEulerAngles  = new Vector3(0, 0, angle);
-            }
+                ScrollUiKit.Label(parent, "VisitSeq", visitStep.ToString(), 14, TextAnchor.UpperRight,
+                    new Color(PathInk.r, PathInk.g, PathInk.b, 0.70f), new Vector2(0.60f, 0.70f), new Vector2(1.05f, 1.05f));
         }
 
         private static bool IsPuzzleNodeType(NodeType t) =>
             t == NodeType.Puzzle || t == NodeType.ElitePuzzle || t == NodeType.PreBoss || t == NodeType.Boss;
-
-        private Button CreateNodeButton(RectTransform parent, RunNode node, Vector2 pos, Color color, LevelConfig config = null, Color floorTint = default, bool bridgeWasUsed = false, bool hidden = false)
-        {
-            var isBoss = node.Type == NodeType.Boss;
-            // Thematic 1: per-type sizing — Boss gets a banner gate shape; Elite is visibly larger than standard
-            var size = node.Type switch
-            {
-                NodeType.Boss        => new Vector2(116, 60),   // prominent banner gate (1.6× standard width)
-                NodeType.ElitePuzzle => new Vector2(84, 84),    // ~1.17× standard — clearly distinct
-                NodeType.PreBoss     => new Vector2(82, 82),
-                NodeType.Relic       => new Vector2(68, 80),
-                NodeType.Shop        => new Vector2(74, 60),
-                NodeType.Rest        => new Vector2(72, 60),
-                _                    => new Vector2(72, 72),
-            };
-            var go = new GameObject($"Node_{node.Type}_{node.Index}", typeof(RectTransform), typeof(Image), typeof(Button));
-            go.transform.SetParent(parent, false);
-            var rt = go.GetComponent<RectTransform>();
-            rt.anchorMin = Vector2.zero;
-            rt.anchorMax = Vector2.zero;
-            rt.pivot     = new Vector2(0.5f, 0.5f);
-            rt.sizeDelta = size;
-            rt.anchoredPosition = pos;
-            go.GetComponent<Image>().color = color;
-
-            // Try to load icon — hidden (undiscovered) nodes show only a "?" label, no icon
-            var iconPath = hidden ? null : GetNodeIconPath(node.Type);
-            var sprite   = string.IsNullOrEmpty(iconPath) ? null
-                : _nodeIconCache.TryGetValue(iconPath, out var cached) ? cached
-                : Resources.Load<Sprite>(iconPath);
-            if (sprite != null)
-            {
-                // Icon left-center, label right
-                var iconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
-                iconGo.transform.SetParent(go.transform, false);
-                var iconRt = iconGo.GetComponent<RectTransform>();
-                iconRt.anchorMin = new Vector2(0.04f, 0.15f);
-                iconRt.anchorMax = new Vector2(0.42f, 0.85f);
-                iconRt.offsetMin = Vector2.zero;
-                iconRt.offsetMax = Vector2.zero;
-                var iconImg = iconGo.GetComponent<Image>();
-                iconImg.sprite = sprite;
-                iconImg.preserveAspect = true;
-                iconImg.raycastTarget  = false;
-                // Thematic 3: seasonal icon tint — floor-theme color blends into the icon
-                if (floorTint.a > 0.01f)
-                    iconImg.color = Color.Lerp(Color.white, floorTint, 0.30f);
-
-                var lbl = InRunUiFactory.CreateText(go.transform, "Label", GetNodeLabelShort(node),
-                    isBoss ? 11 : 10, TextAnchor.MiddleCenter, InRunUiFactory.TextColor);
-                lbl.rectTransform.anchorMin = new Vector2(0.40f, 0f);
-                lbl.rectTransform.anchorMax = new Vector2(0.98f, 1f);
-                lbl.rectTransform.offsetMin = Vector2.zero;
-                lbl.rectTransform.offsetMax = Vector2.zero;
-                lbl.verticalOverflow = VerticalWrapMode.Overflow;
-                lbl.resizeTextForBestFit = true;
-                lbl.resizeTextMinSize    = 7;
-                lbl.resizeTextMaxSize    = isBoss ? 11 : 10;
-                var lblShadow = lbl.gameObject.AddComponent<Shadow>();
-                lblShadow.effectColor    = new Color(0f, 0f, 0f, 0.65f);
-                lblShadow.effectDistance = new Vector2(1.5f, -1.5f);
-            }
-            else
-            {
-                var nodeLabel = hidden ? "?" : GetNodeLabelShort(node);
-                var lbl = InRunUiFactory.CreateText(go.transform, "Label", nodeLabel,
-                    isBoss ? 13 : 11, TextAnchor.MiddleCenter, InRunUiFactory.TextColor);
-                InRunUiFactory.StretchFill(lbl.rectTransform);
-                lbl.resizeTextForBestFit = true;
-                lbl.resizeTextMinSize    = 8;
-                lbl.resizeTextMaxSize    = isBoss ? 13 : 11;
-                var lblShadow = lbl.gameObject.AddComponent<Shadow>();
-                lblShadow.effectColor    = new Color(0f, 0f, 0f, 0.65f);
-                lblShadow.effectDistance = new Vector2(1.5f, -1.5f);
-            }
-
-            // Cursed nodes get a danger-red outline to signal risk
-            if (node.Type == NodeType.Cursed)
-            {
-                var cursedOutline = go.AddComponent<Outline>();
-                cursedOutline.effectColor    = GamePalette.DangerRed;
-                cursedOutline.effectDistance = new Vector2(2.5f, -2.5f);
-            }
-
-            // Cross-link badge: ⇄ when available, ↳ when already used to cross
-            if (node.IsCrossLink)
-            {
-                var badgeChar  = bridgeWasUsed ? "↳" : "⇄";
-                var badgeColor = bridgeWasUsed
-                    ? new Color(InRunUiFactory.AccentGold.r, InRunUiFactory.AccentGold.g,
-                        InRunUiFactory.AccentGold.b, 0.70f)
-                    : new Color(InRunUiFactory.AccentGold.r, InRunUiFactory.AccentGold.g,
-                        InRunUiFactory.AccentGold.b, 0.90f);
-                var badge = InRunUiFactory.CreateText(go.transform, "CrossBadge", badgeChar, 9,
-                    TextAnchor.UpperRight, badgeColor);
-                badge.rectTransform.anchorMin = new Vector2(0.60f, 0.72f);
-                badge.rectTransform.anchorMax = Vector2.one;
-                badge.rectTransform.offsetMin = Vector2.zero;
-                badge.rectTransform.offsetMax = new Vector2(-3f, -2f);
-                badge.raycastTarget = false;
-            }
-
-            // Puzzle-type nodes: top-left size, bottom-right stars (stars hidden on visited nodes — visit-seq occupies same corner)
-            if (config != null && IsPuzzleNodeType(node.Type))
-            {
-                var sizeLabel = InRunUiFactory.CreateText(go.transform, "SizeLabel",
-                    Tf("InRun.Path.SizeLabel", config.BoardSize), 9, TextAnchor.UpperLeft,
-                    new Color(InRunUiFactory.TextColor.r, InRunUiFactory.TextColor.g, InRunUiFactory.TextColor.b, 0.85f));
-                // Anchored right of icon (icon ends at 0.42) to avoid overlap
-                sizeLabel.rectTransform.anchorMin = new Vector2(0.44f, 0.72f);
-                sizeLabel.rectTransform.anchorMax = new Vector2(0.98f, 1f);
-                sizeLabel.rectTransform.offsetMin = new Vector2(2f, 0f);
-                sizeLabel.rectTransform.offsetMax = new Vector2(0f, -2f);
-                sizeLabel.raycastTarget = false;
-                var szShadow = sizeLabel.gameObject.AddComponent<Shadow>();
-                szShadow.effectColor    = new Color(0f, 0f, 0f, 0.65f);
-                szShadow.effectDistance = new Vector2(1f, -1f);
-
-                if (!node.Visited)
-                {
-                    var stars    = Mathf.Clamp(config.Stars, 1, 6);
-                    var starStr  = new string('★', stars);
-                    var starLabel = InRunUiFactory.CreateText(go.transform, "StarLabel",
-                        starStr, 9, TextAnchor.LowerRight, InRunUiFactory.AccentGold);
-                    starLabel.rectTransform.anchorMin = new Vector2(0.44f, 0f);
-                    starLabel.rectTransform.anchorMax = new Vector2(1f, 0.28f);
-                    starLabel.rectTransform.offsetMin = new Vector2(0f, 2f);
-                    starLabel.rectTransform.offsetMax = new Vector2(-3f, 0f);
-                    starLabel.resizeTextForBestFit = true;
-                    starLabel.resizeTextMinSize   = 7;
-                    starLabel.resizeTextMaxSize   = 9;
-                    starLabel.raycastTarget = false;
-                }
-            }
-
-            var btn = go.GetComponent<Button>();
-            InRunUiFactory.ApplyFocusColors(btn);
-            return btn;
-        }
 
         private static string GetNodeIconPath(NodeType t) => t switch
         {
@@ -4206,7 +3065,7 @@ namespace SudokuRoguelike.UI
             _saveQuitPending  = false;
             _saveQuitResetCo  = null;
             if (_saveQuitLbl != null) _saveQuitLbl.text  = T("InRun.Path.SaveAndQuit");
-            if (_saveQuitImg != null) _saveQuitImg.color = new Color(0.22f, 0.18f, 0.14f, 0.90f);
+            if (_saveQuitImg != null) _saveQuitImg.color = Color.white;
         }
 
         private System.Collections.IEnumerator FadeOutCompletedRing(RectTransform nodeRt)

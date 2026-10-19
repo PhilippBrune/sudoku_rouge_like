@@ -10,7 +10,7 @@ namespace SudokuRoguelike.UI
     /// sprites are drawn in code once and cached; positions are anchors relative to the parent, like the rest of the
     /// procedural UI.
     /// </summary>
-    internal static class ScrollUiKit
+    internal static partial class ScrollUiKit
     {
         internal static readonly Color Paper      = new Color(0.92f, 0.88f, 0.79f, 1f);
         internal static readonly Color PaperDeep  = new Color(0.83f, 0.77f, 0.65f, 1f);
@@ -19,6 +19,8 @@ namespace SudokuRoguelike.UI
         internal static readonly Color Vermilion  = new Color(0.70f, 0.20f, 0.15f, 1f);
         internal static readonly Color Brocade    = new Color(0.38f, 0.11f, 0.11f, 1f);
         internal static readonly Color BrocadeAlt = new Color(0.29f, 0.08f, 0.09f, 1f);
+        internal static readonly Color Moss       = new Color(0.17f, 0.27f, 0.20f, 1f);
+        internal static readonly Color MossAlt    = new Color(0.20f, 0.32f, 0.23f, 1f);
         internal static readonly Color Gold       = new Color(0.86f, 0.71f, 0.38f, 1f);
         internal static readonly Color Wood       = new Color(0.70f, 0.46f, 0.24f, 1f);
         internal static readonly Color WoodDark   = new Color(0.20f, 0.12f, 0.06f, 1f);
@@ -105,7 +107,7 @@ namespace SudokuRoguelike.UI
         /// wooden roller on each side (outside the rect). Returns the paper rect; children added later sit on the paper.
         /// </summary>
         internal static RectTransform HandScroll(Transform parent, string name, Vector2 min, Vector2 max,
-            string watermark)
+            string watermark, bool mossBrocade = false)
         {
             var paper = Fill(parent, name, min, max, Paper);
             var shadow = paper.gameObject.AddComponent<Shadow>();
@@ -120,18 +122,19 @@ namespace SudokuRoguelike.UI
             }
             Fill(rt, "PaperLight", new Vector2(0f, 0.35f), new Vector2(0.6f, 1f), new Color(1f, 1f, 1f, 0.18f), Glow());
 
-            BrocadeBand(rt, "BrocadeTop", new Vector2(0f, 0.965f), Vector2.one);
-            BrocadeBand(rt, "BrocadeBottom", Vector2.zero, new Vector2(1f, 0.035f));
+            BrocadeBand(rt, "BrocadeTop", new Vector2(0f, 0.965f), Vector2.one, mossBrocade);
+            BrocadeBand(rt, "BrocadeBottom", Vector2.zero, new Vector2(1f, 0.035f), mossBrocade);
 
             Roller(rt, "RollerLeft", -0.029f, 0f);
             Roller(rt, "RollerRight", 1f, 1.029f);
             return rt;
         }
 
-        private static void BrocadeBand(RectTransform paper, string name, Vector2 min, Vector2 max)
+        // Maroon bands frame the boss screens; moss-green bands frame the garden path and the puzzle scroll.
+        internal static void BrocadeBand(RectTransform paper, string name, Vector2 min, Vector2 max, bool moss = false)
         {
             var band = Area(paper, name, min, max).gameObject.AddComponent<RawImage>();
-            band.texture = StripeTexture();
+            band.texture = StripeTexture(moss);
             band.uvRect = new Rect(0f, 0f, 90f, 1f);
             band.raycastTarget = false;
             Line(band.transform, "GoldTop", new Vector2(0f, 1f), new Vector2(1f, 1f), Gold, 2f);
@@ -238,6 +241,7 @@ namespace SudokuRoguelike.UI
 
         private static readonly Dictionary<string, Sprite> Sprites = new Dictionary<string, Sprite>();
         private static Texture2D _stripes;
+        private static Texture2D _mossStripes;
 
         internal static Sprite Disc() => Cached("disc", 64, (x, y, s) => Coverage(s * 0.5f - Dist(x, y, s)));
 
@@ -311,15 +315,17 @@ namespace SudokuRoguelike.UI
             return sprite;
         }
 
-        private static Texture2D StripeTexture()
+        private static Texture2D StripeTexture(bool moss)
         {
-            if (_stripes != null) return _stripes;
-            _stripes = NewTexture(8, 1);
-            _stripes.filterMode = FilterMode.Point;
-            _stripes.wrapMode = TextureWrapMode.Repeat;
-            for (var x = 0; x < 8; x++) _stripes.SetPixel(x, 0, x < 4 ? Brocade : BrocadeAlt);
-            _stripes.Apply();
-            return _stripes;
+            var cached = moss ? _mossStripes : _stripes;
+            if (cached != null) return cached;
+            var tex = NewTexture(8, 1);
+            tex.filterMode = FilterMode.Point;
+            tex.wrapMode = TextureWrapMode.Repeat;
+            for (var x = 0; x < 8; x++) tex.SetPixel(x, 0, x < 4 ? (moss ? Moss : Brocade) : (moss ? MossAlt : BrocadeAlt));
+            tex.Apply();
+            if (moss) _mossStripes = tex; else _stripes = tex;
+            return tex;
         }
 
         private static Sprite Cached(string key, int size, System.Func<float, float, float, float> alpha,

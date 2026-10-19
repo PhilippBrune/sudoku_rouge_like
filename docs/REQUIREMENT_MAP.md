@@ -35,7 +35,7 @@ Legend: ✅ Implemented and verified | ⚠️ Partial / conflicting | ❌ Not im
 | [UI-OPT](#options-panels) | `docs/GameDesignSpec.md` | ✅ 3 |
 | [RUN-WEEK](#shared-challenges) | `docs/GameDesignSpec.md` | ✅ 2 |
 | [CREDITS](#credits) | `docs/GameDesignSpec.md` | ✅ 1 |
-| [UI-STYLE](#in-run-visual-style) | `docs/design/layout-proposals.md` | ✅ 4 · ◻️ 2 |
+| [UI-STYLE](#in-run-visual-style) | `docs/design/layout-proposals.md` | ✅ 5 · ◻️ 1 |
 | [LOC](#localization) | `docs/localization-catalog.md` | ✅ 3 |
 | [AUDIO](#audio) | `docs/AudioVisualDirection.md` | ✅ 3 · ◻️ 4 |
 | [REVIEW](#review-created-requirements) | `docs/review/REQUIREMENT_TRACEABILITY.md` | ✅ 53 · ⚠️ 6 · ◻️ 6 |
@@ -663,7 +663,7 @@ Key requirements (see spec for full list):
 
 | ID | Description | File | Method | Evidence | Status |
 | ---- | ------------- | ------ | -------- | ---------- | -------- |
-| UI-STYLE-001 | Garden path as an ink hand scroll, the same on all five floors | — | — | mockups `path_b_hand_scroll_floor1..5` | ◻️ |
+| UI-STYLE-001 | Garden path as an ink hand scroll, the same on all five floors | `Assets/Scripts/UI/InRunController.PathScroll.cs`, `InRunController.PathTiles.cs`, `ScrollUiKit.Parts.cs` | `EnsurePathOverlayRoot`, `RebuildPathChrome`, `CreateNodeButton` | InRunUiPlayModeTests (`PathScroll_TwoRefreshesInOneFrame…`, `PathScroll_EmptyRouteSpace_TakesTheDrag`, path map), GeneratedUiWiringContractTests, screenshots `after_path_floor1..5` | ✅ |
 | UI-STYLE-002 | Puzzle screen as a hanging scroll (ink grid, lanterns, ema plaques, wooden tiles, paper slips), 5×5 to 9×9 | — | — | mockups `puzzle_b_hanging_scroll`, `_9x9` | ◻️ |
 | UI-STYLE-003 | Background paintings keep their corner mark | `Assets/Resources/background/` | — | owner decision | ✅ |
 | UI-STYLE-004 | Boss gate as a trial scroll (seal, ink trial panels with ensō ticks, curse margin note, "Face the boss") | `Assets/Scripts/UI/BossGateViewController.cs`, `ScrollUiKit.cs`, `FloorThemeData.cs` | `BuildBossGatePanel`, `BuildTrialCard`, `RefreshTrialMarks` | InRunUiPlayModeTests (`BossGate_PickingTrials_TicksThem_AndConfirmRecordsThem`, intensity/debuff, masking), screenshots `after_boss_gate*` | ✅ |

@@ -17,7 +17,7 @@ The mockups are HTML pages in `layout-proposals/src/`, built from `Assets/Resour
 
 | ID | Requirement | Status |
 |---|---|---|
-| UI-STYLE-001 | The garden path is an ink hand scroll (emaki) between two wooden rollers on **every floor**, with the same frame, ensō nodes, brush routes (ink = calm, vermilion = risk), seal-stamp boss and paper status tag. Per floor only the content changes: the floor's painting as a faint wash on the paper and blurred behind the scroll, the title "Floor N of five · name", the floor marks, the route and the boss seal. | new, to build |
+| UI-STYLE-001 | The garden path is an ink hand scroll (emaki) between two wooden rollers on **every floor**, with the same frame, ensō nodes, brush routes (ink = calm, vermilion = risk), seal-stamp boss and paper status tag. Per floor only the content changes: the floor's painting as a faint wash on the paper and blurred behind the scroll, the title "Floor N of five · name", the floor marks, the route and the boss seal. | built 2026-10-19 |
 | UI-STYLE-002 | The puzzle screen is a hanging scroll: the board in ink with thick region borders that follow the region map (every size from 5×5 to 9×9 and irregular regions), HP and Pencil as paper lanterns, items and relics as ema plaques, the number pad as wooden tiles, the modifier rules as pinned paper slips, the floor's painting behind. | new, to build |
 | UI-STYLE-003 | The background paintings keep the bottom-right corner mark (owner decision); new UI does not need to hide it. | decided |
 | UI-STYLE-004 | The boss gate is a trial scroll: the gate painting darkened behind a hand scroll with brocade bands and wooden rollers; the eyebrow "Floor N · floor name · The Gate", the title "The <boss>'s trials", "Choose N of M trials", the intensity with one dot per level (REQ-BOSS-103) and the boss's seal; one ink-framed panel per trial with icon, name and rule ("???" and "Not discovered yet" when hidden, HARMONY-FLAG-001), ticked with a vermilion ensō when chosen; along the bottom the boss's curse from Floor 3 (REQ-BOSS-108), "n of N chosen" and "Face the <boss>", which unlocks at N. Up to four trials in a row, five to eight in two rows. | built 2026-10-15 |
@@ -33,9 +33,13 @@ The mockups are HTML pages in `layout-proposals/src/`, built from `Assets/Resour
 
 ![Garden path today](layout-proposals/before_path.jpg)
 
-### B · Hand scroll (chosen) — all five floors
+### B · Hand scroll (chosen, built) — all five floors
 
 ![The hand scroll on floors 1 to 5](layout-proposals/path_b_all_floors.jpg)
+
+**As built (UI-STYLE-001, 2026-10-19):** the five floors in the game. Puzzle tiles show the board size with the stars on a second line, so busy floors stay readable; the boss seal sits at the end of the scroll; bridge tiles on the calm route carry their label above. The route content is a pixel-perfect sub-canvas, so the node labels render sharp.
+
+![The hand scroll in the game, floors 1 to 5](layout-proposals/after_path_all_floors.jpg)
 
 One scroll design for every floor. Floor 1 [full size](layout-proposals/path_b_hand_scroll_floor1.jpg) · [2](layout-proposals/path_b_hand_scroll_floor2.jpg) · [3](layout-proposals/path_b_hand_scroll_floor3.jpg) · [4](layout-proposals/path_b_hand_scroll_floor4.jpg) · [5](layout-proposals/path_b_hand_scroll_floor5.jpg).
 

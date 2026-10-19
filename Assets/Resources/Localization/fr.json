@@ -1,4 +1,12 @@
 {
+    "InRun.Path.Tag.Relics":  "Reliques {0}",
+    "InRun.Path.Tag.Vitals":  "PV <color={0}>{1} / {2}</color>   Crayon <color=#7d1f1f>{3} / {4}</color>",
+    "InRun.Path.Tag.Class":  "{0} · Niveau {1}",
+    "InRun.Path.ConfirmQuit":  "Confirmer ?",
+    "InRun.Path.FloorMarks":  "étage",
+    "InRun.Path.YouAreHere":  "Vous êtes ici",
+    "InRun.Path.RouteLine":  "Encre : <i>{0}</i>, calme  ·  <color=#9e2a2b>Vermillon : <i>{1}</i>, risqué, plus d'or</color>",
+    "InRun.Path.Eyebrow":  "Étage {0} sur {1}",
     "InRun.BossDefeated.NoOfferings":  "Le sanctuaire n'a plus rien à offrir.",
     "InRun.BossDefeated.Onward":  "En route",
     "InRun.BossDefeated.Leave":  "Les laisser",

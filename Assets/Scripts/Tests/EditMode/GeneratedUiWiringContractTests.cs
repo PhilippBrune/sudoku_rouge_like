@@ -445,16 +445,16 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
-        public void PathOverviewSaveQuitButton_UsesInkSaveIcon()
+        [Requirement("UI-STYLE-001")]
+        public void PathOverviewSaveQuitButton_IsARoundInkSaveButton_WithTwoStepConfirm()
         {
             var inRunSource = ReadSource(InRunControllerPath);
 
-            StringAssert.Contains("new GameObject(\"BtnSaveQuit\"", inRunSource);
-            StringAssert.Contains("InRunUiFactory.LoadResourceSprite(\"ui/icon_ink_save\")", inRunSource);
-            StringAssert.Contains("new GameObject(\"Icon\", typeof(RectTransform), typeof(Image))", inRunSource);
-            StringAssert.Contains("sqIconImg.preserveAspect = true", inRunSource);
-            // The label starts at 25 % (after the ink icon); tutorial runs show a text-only "Quit".
-            StringAssert.Contains("sqLbl.rectTransform.anchorMin = isTutorialQuit ? new Vector2(0.02f, 0f) : new Vector2(0.25f, 0f)", inRunSource);
+            StringAssert.Contains("ScrollUiKit.RoundButton(panelRt, \"BtnSaveQuit\"", inRunSource);
+            StringAssert.Contains("\"ui/icon_ink_save\"", inRunSource);
+            StringAssert.Contains("T(\"InRun.Path.ConfirmQuit\")", inRunSource);
+            StringAssert.Contains("saveQuit.onClick.AddListener(SaveAndQuit); // Custom Puzzle: one click, no confirm step", inRunSource);
+            StringAssert.Contains("ScrollUiKit.RoundButton(panelRt, \"BtnPathOptions\"", inRunSource);
         }
 
         [Test]
@@ -505,24 +505,16 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
-        public void PathStatsBarKeepsBacking_AndRouteLanesDoNotDrawLargeFilledBoxes()
+        [Requirement("UI-STYLE-001")]
+        public void PathStats_AreAPaperTag_AndRouteLanesAreGone()
         {
             var inRunSource = ReadSource(InRunControllerPath);
 
-            StringAssert.Contains("new GameObject(\"PathStatsBar\", typeof(RectTransform), typeof(Image))", inRunSource);
-            StringAssert.Contains("statsBarImg.color = new Color(0.04f, 0.05f, 0.08f, 0.50f)", inRunSource);
-            StringAssert.Contains("statsBarImg.raycastTarget = false", inRunSource);
-            StringAssert.Contains("statsText.rectTransform.anchorMax = new Vector2(0.62f, 1f)", inRunSource);
-            StringAssert.Contains("statsText.gameObject.AddComponent<Shadow>()", inRunSource);
-            StringAssert.Contains("new GameObject(goName, typeof(RectTransform))", inRunSource);
-            Assert.That(
-                inRunSource,
-                Does.Not.Contain("RemoveLegacyPathStatsBacking"),
-                "Path stats backing should not be stripped from the HUD row.");
-            Assert.That(
-                inRunSource,
-                Does.Not.Contain("new GameObject(goName, typeof(RectTransform), typeof(Image))"),
-                "Route lane containers should not draw large filled grey rectangles into the empty top-right path area.");
+            StringAssert.Contains("ScrollUiKit.Fill(panelRt, \"PathStatsBar\"", inRunSource);
+            StringAssert.Contains("\"PathStatsText\"", inRunSource);
+            StringAssert.Contains("ScrollUiKit.HandScroll(panelRt, \"PathScroll\"", inRunSource);
+            Assert.That(inRunSource, Does.Not.Contain("DrawRouteLane("), "The scroll has no lane boxes; the route names are in the bottom line.");
+            Assert.That(inRunSource, Does.Not.Contain("\"LaneTip\""), "Lane tips were parented to the panel and piled up on every rebuild.");
         }
 
         [Test]

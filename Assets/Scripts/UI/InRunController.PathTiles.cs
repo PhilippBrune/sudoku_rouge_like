@@ -9,59 +9,30 @@ namespace SudokuRoguelike.UI
     // Split out of InRunController.cs to keep it within its size budget (docs/controller-extraction-plan.md).
     public sealed partial class InRunController
     {
-        /// <summary>Gold double-ring for reachable bridge nodes — more prominent than the standard ring.</summary>
-        private static void AddBridgeRing(RectTransform parent)
+        // UI-STYLE-001: decorators for the ink-and-paper path. Reachable tiles get a warm halo and a second brush ring,
+        // so they stand out by shape as well as colour (colour-blind players).
+        private static void AddReachableHalo(RectTransform parent, string name, Color ink)
         {
-            // Outer gold ring
-            var outer = new GameObject("BridgeRingOuter", typeof(RectTransform), typeof(Image));
-            outer.transform.SetParent(parent, false);
-            outer.transform.SetAsFirstSibling();
-            var outerRt = outer.GetComponent<RectTransform>();
-            outerRt.anchorMin = new Vector2(-0.22f, -0.22f);
-            outerRt.anchorMax = new Vector2(1.22f,  1.22f);
-            outerRt.offsetMin = outerRt.offsetMax = Vector2.zero;
-            var outerImg = outer.GetComponent<Image>();
-            outerImg.color = new Color(InRunUiFactory.AccentGold.r, InRunUiFactory.AccentGold.g, InRunUiFactory.AccentGold.b, 0.05f);
-            outerImg.raycastTarget = false;
-            var outerOl = outer.AddComponent<Outline>();
-            outerOl.effectColor = new Color(InRunUiFactory.AccentGold.r, InRunUiFactory.AccentGold.g, InRunUiFactory.AccentGold.b, 0.70f);
-            outerOl.effectDistance = new Vector2(4f, -4f);
-            // Inner ring (tighter)
-            var inner = new GameObject("BridgeRingInner", typeof(RectTransform), typeof(Image));
-            inner.transform.SetParent(parent, false);
-            inner.transform.SetAsFirstSibling();
-            var innerRt = inner.GetComponent<RectTransform>();
-            innerRt.anchorMin = new Vector2(-0.11f, -0.11f);
-            innerRt.anchorMax = new Vector2(1.11f,  1.11f);
-            innerRt.offsetMin = innerRt.offsetMax = Vector2.zero;
-            var innerImg = inner.GetComponent<Image>();
-            innerImg.color = new Color(1f, 0.85f, 0.20f, 0.04f);
-            innerImg.raycastTarget = false;
-            var innerOl = inner.AddComponent<Outline>();
-            innerOl.effectColor = new Color(1f, 0.85f, 0.20f, 0.55f);
-            innerOl.effectDistance = new Vector2(2f, -2f);
+            var halo = ScrollUiKit.Fill(parent, name, new Vector2(-0.22f, -0.22f), new Vector2(1.22f, 1.22f),
+                new Color(1f, 0.74f, 0.36f, 0.42f), ScrollUiKit.Glow());
+            halo.transform.SetAsFirstSibling();
+            var second = ScrollUiKit.Fill(halo.transform, "SecondStroke", new Vector2(0.16f, 0.16f), new Vector2(0.84f, 0.84f),
+                new Color(ink.r, ink.g, ink.b, 0.65f), ScrollUiKit.Enso());
+            second.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 150f);
         }
 
-        /// <summary>Always-visible green halo for the Start node — marks the entry point.</summary>
-        /// <summary>[REQ: MAP-CROSS-001] Small gold "⇄" badge in the top-left corner of a cross-link tile.</summary>
+        /// <summary>Reachable bridge tile: the reachable halo in ink (the bridge route is dotted ink).</summary>
+        private static void AddBridgeRing(RectTransform parent) =>
+            AddReachableHalo(parent, "BridgeRing", new Color(0.16f, 0.13f, 0.10f, 1f));
+
+        /// <summary>[REQ: MAP-CROSS-001] A small vermilion "⇄" seal on a cross-link tile.</summary>
         private static void AddCrossLinkBadge(RectTransform parent)
         {
-            var go = new GameObject("CrossLinkBadge", typeof(RectTransform), typeof(Image));
-            go.transform.SetParent(parent, false);
-            var rt = go.GetComponent<RectTransform>();
-            rt.anchorMin = rt.anchorMax = new Vector2(0f, 1f);
-            rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.sizeDelta = new Vector2(20f, 20f);
-            rt.anchoredPosition = new Vector2(4f, -4f);
-            var img = go.GetComponent<Image>();
-            img.color = new Color(0.95f, 0.78f, 0.20f, 0.95f);
-            img.raycastTarget = false;
-            var txt = InRunUiFactory.CreateText(go.transform, "Arrows", "\u21C4", 14, TextAnchor.MiddleCenter,
-                new Color(0.12f, 0.10f, 0.05f, 1f));
-            txt.rectTransform.anchorMin = Vector2.zero;
-            txt.rectTransform.anchorMax = Vector2.one;
-            txt.rectTransform.offsetMin = txt.rectTransform.offsetMax = Vector2.zero;
-            txt.raycastTarget = false;
+            var badge = ScrollUiKit.Spot(parent, "CrossLinkBadge", new Vector2(0.12f, 0.88f), new Vector2(26f, 26f),
+                new Color(0.62f, 0.16f, 0.17f, 1f), ScrollUiKit.Disc());
+            // Drawn, not a glyph: the game font has no ⇄.
+            ScrollUiKit.Fill(badge.transform, "Arrows", new Vector2(0.12f, 0.12f), new Vector2(0.88f, 0.88f),
+                new Color(0.98f, 0.94f, 0.86f, 1f), ScrollUiKit.SwapArrows());
         }
 
         /// <summary>[REQ: REQ-PATH-100] Player marker: the class portrait above the tile the player stands on (GAP-022).</summary>
@@ -97,57 +68,23 @@ namespace SudokuRoguelike.UI
             outline.effectDistance = new Vector2(1.5f, -1.5f);
         }
 
+        /// <summary>The Start tile: a faint vermilion glow (the route begins in vermilion ink).</summary>
         private static void AddStartHalo(RectTransform parent)
         {
-            var go = new GameObject("StartHalo", typeof(RectTransform), typeof(Image));
-            go.transform.SetParent(parent, false);
-            go.transform.SetAsFirstSibling();
-            var rt = go.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(-0.20f, -0.20f);
-            rt.anchorMax = new Vector2(1.20f,  1.20f);
-            rt.offsetMin = rt.offsetMax = Vector2.zero;
-            var img = go.GetComponent<Image>();
-            img.color = new Color(0.22f, 0.85f, 0.30f, 0.05f);
-            img.raycastTarget = false;
-            var ol = go.AddComponent<Outline>();
-            ol.effectColor = new Color(0.28f, 0.82f, 0.28f, 0.68f);
-            ol.effectDistance = new Vector2(3f, -3f);
+            var halo = ScrollUiKit.Fill(parent, "StartHalo", new Vector2(-0.15f, -0.15f), new Vector2(1.15f, 1.15f),
+                new Color(0.62f, 0.16f, 0.17f, 0.18f), ScrollUiKit.Glow());
+            halo.transform.SetAsFirstSibling();
         }
 
-        /// <summary>Always-visible red ring for the Boss gate node — marks the destination.</summary>
+        /// <summary>The boss seal sits on a soft vermilion glow.</summary>
         private static void AddBossRing(RectTransform parent)
         {
-            var go = new GameObject("BossRing", typeof(RectTransform), typeof(Image));
-            go.transform.SetParent(parent, false);
-            go.transform.SetAsFirstSibling();
-            var rt = go.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(-0.10f, -0.10f);
-            rt.anchorMax = new Vector2(1.10f,  1.10f);
-            rt.offsetMin = rt.offsetMax = Vector2.zero;
-            var img = go.GetComponent<Image>();
-            img.color = new Color(GamePalette.DangerRed.r, GamePalette.DangerRed.g, GamePalette.DangerRed.b, 0.06f);
-            img.raycastTarget = false;
-            var ol = go.AddComponent<Outline>();
-            ol.effectColor = new Color(GamePalette.DangerRed.r, GamePalette.DangerRed.g, GamePalette.DangerRed.b, 0.72f);
-            ol.effectDistance = new Vector2(4f, -4f);
+            var glow = ScrollUiKit.Fill(parent, "BossRing", new Vector2(-0.18f, -0.18f), new Vector2(1.18f, 1.18f),
+                new Color(0.62f, 0.16f, 0.17f, 0.22f), ScrollUiKit.Glow());
+            glow.transform.SetAsFirstSibling();
         }
 
-        private static void AddAvailableRing(RectTransform parent)
-        {
-            var go = new GameObject("AvailableRing", typeof(RectTransform), typeof(Image));
-            go.transform.SetParent(parent, false);
-            go.transform.SetAsFirstSibling();
-            var rt = go.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(-0.13f, -0.13f);
-            rt.anchorMax = new Vector2(1.13f,  1.13f);
-            rt.offsetMin = rt.offsetMax = Vector2.zero;
-            var img = go.GetComponent<Image>();
-            img.color         = new Color(1.0f, 0.85f, 0.20f, 0.05f); // near-transparent fill
-            img.raycastTarget = false;
-            // C: outline-only ring — bright gold border, minimal interior fill
-            var ol = go.AddComponent<Outline>();
-            ol.effectColor    = new Color(1.0f, 0.85f, 0.20f, 0.88f);
-            ol.effectDistance = new Vector2(3f, -3f);
-        }
+        private static void AddAvailableRing(RectTransform parent) =>
+            AddReachableHalo(parent, "AvailableRing", new Color(0.62f, 0.16f, 0.17f, 1f));
     }
 }

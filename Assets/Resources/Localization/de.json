@@ -1,4 +1,12 @@
 ﻿{
+    "InRun.Path.Tag.Relics":  "Relikte {0}",
+    "InRun.Path.Tag.Vitals":  "LP <color={0}>{1} / {2}</color>   Bleistift <color=#7d1f1f>{3} / {4}</color>",
+    "InRun.Path.Tag.Class":  "{0} · Stufe {1}",
+    "InRun.Path.ConfirmQuit":  "Bestätigen?",
+    "InRun.Path.FloorMarks":  "Etage",
+    "InRun.Path.YouAreHere":  "Du bist hier",
+    "InRun.Path.RouteLine":  "Tusche: <i>{0}</i>, ruhig  ·  <color=#9e2a2b>Zinnober: <i>{1}</i>, riskant, mehr Gold</color>",
+    "InRun.Path.Eyebrow":  "Etage {0} von {1}",
     "InRun.BossDefeated.NoOfferings":  "Der Schrein hat nichts mehr zu bieten.",
     "InRun.BossDefeated.Onward":  "Weiter",
     "InRun.BossDefeated.Leave":  "Liegen lassen",

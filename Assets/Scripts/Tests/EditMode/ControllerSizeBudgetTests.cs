@@ -8,7 +8,7 @@ namespace SudokuRoguelike.Tests
     {
         private const string ExtractionPlanPath = "docs/controller-extraction-plan.md";
 
-        [TestCase("Assets/Scripts/UI/InRunController.cs", 4920)]
+        [TestCase("Assets/Scripts/UI/InRunController.cs", 3799)]
         [TestCase("Assets/Scripts/UI/MainMenuBlueprintBuilder.cs", 3010)]
         [TestCase("Assets/Scripts/Run/RunDirector.cs", 2960)]
         public void LargeControllers_DoNotGrowBeyondCurrentRatchetedBudget(string path, int maxLines)

@@ -259,6 +259,57 @@ namespace SudokuRoguelike.Tests
             Assert.AreEqual(crossLinks, FindAll(h.Host, "CrossLinkBadge").Count, "one badge per cross-link tile");
         }
 
+        // [REQ: UI-STYLE-001] The path is refreshed from many places, sometimes twice in one frame: the scroll keeps
+        // exactly one legend, one Save & Quit and one Options button, and the floor title follows the run.
+        [UnityTest]
+        [Requirement("UI-STYLE-001")]
+        public IEnumerator PathScroll_TwoRefreshesInOneFrame_KeepOneLegendAndOneSetOfButtons()
+        {
+            var h = StartPathMap(8606);
+            yield return null;
+            var controller = h.Host.GetComponentInChildren<InRunController>(true);
+            var refresh = typeof(InRunController).GetMethod("RefreshPathOverview",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            Assert.NotNull(refresh, "RefreshPathOverview");
+            refresh.Invoke(controller, null);
+            refresh.Invoke(controller, null);
+            yield return null;
+            yield return null;
+
+            Assert.AreEqual(1, FindAll(h.Host, "PathLegend").Count, "one legend");
+            Assert.AreEqual(1, FindAll(h.Host, "BtnSaveQuit").Count, "one Save & Quit");
+            Assert.AreEqual(1, FindAll(h.Host, "BtnPathOptions").Count, "one Options button");
+            Assert.AreEqual(1, FindAll(h.Host, "FirstPickBand").Count, "one first-pick note");
+            StringAssert.AreEqualIgnoringCase(SudokuRoguelike.Data.FloorThemeData.GetFloorName(0),
+                FindObject(h.Host, "PathTitle").GetComponent<Text>().text);
+        }
+
+        // [REQ: UI-STYLE-001] A drag that starts on empty route space reaches the route's ScrollRect.
+        [UnityTest]
+        [Requirement("UI-STYLE-001")]
+        public IEnumerator PathScroll_EmptyRouteSpace_TakesTheDrag()
+        {
+            var h = StartPathMap(8607);
+            yield return null;
+            yield return null;
+            // The run's intro card covers the screen until it is dismissed, as it does for the player.
+            var intro = Object.FindObjectsByType<Button>(FindObjectsInactive.Exclude, FindObjectsSortMode.None)
+                .FirstOrDefault(b => b.name == "RunIntroCard");
+            if (intro != null) intro.onClick.Invoke();
+            yield return null;
+            yield return null;
+            var viewport = FindObject(h.Host, "PathViewport").GetComponent<RectTransform>();
+            var corners = new Vector3[4];
+            viewport.GetWorldCorners(corners); // bottom-left, top-left, top-right, bottom-right
+            var point = Vector3.Lerp(corners[0], corners[2], 0.02f);
+            var screen = RectTransformUtility.WorldToScreenPoint(null, point);
+            var hits = new List<RaycastResult>();
+            EventSystem.current.RaycastAll(new PointerEventData(EventSystem.current) { position = screen }, hits);
+            Assert.IsNotEmpty(hits, "nothing takes a pointer at the bottom-left of the route");
+            Assert.AreEqual("PathOverlay", hits[0].gameObject.name, "the route content takes the drag");
+            Assert.NotNull(hits[0].gameObject.GetComponentInParent<ScrollRect>());
+        }
+
         // ── In-run menu (GAP-020) ──
 
         [UnityTest]

@@ -120,6 +120,32 @@ namespace SudokuRoguelike.Tests
             yield return Shoot(clearedHost, camera, "after_boss_defeated.png");
         }
 
+        // UI-STYLE-001: the garden path as a hand scroll on each of the five floors (one run advanced floor by floor).
+        [UnityTest]
+        public IEnumerator RenderPathScrollOnEveryFloor()
+        {
+            var camera = CreateCamera();
+            for (var floor = 0; floor < 5; floor++)
+            {
+                var target = floor;
+                _beforeBindAlways = run =>
+                {
+                    for (var f = 0; f < target; f++) run.AdvanceToNextFloor();
+                    run.State.HeldRelics.Clear();
+                };
+                var (host, _) = StartRun(7310 + floor, false);
+                _beforeBindAlways = null;
+                yield return DismissIntro();
+                yield return new WaitForSecondsRealtime(2.0f); // node pop-in and first-pick pulses settle
+                var label = host.GetComponentsInChildren<Text>().FirstOrDefault(t => t.name == "Label" && t.transform.parent.name.StartsWith("Node_"));
+                if (label != null) Debug.Log($"[LayoutShot] node label scale {label.transform.lossyScale}, color {label.color}, size {label.fontSize}/{label.cachedTextGenerator.fontSizeUsedForBestFit}");
+                yield return Shoot(host, camera, $"after_path_floor{floor + 1}.png");
+                host.SetActive(false);
+            }
+        }
+
+        private Action<RunDirector> _beforeBindAlways;
+
         // UI-STYLE-006: killer cages of five shapes on a 6×6 board; each must read as one dashed outline.
         [UnityTest]
         public IEnumerator RenderKillerCageShapes()
@@ -179,6 +205,7 @@ namespace SudokuRoguelike.Tests
                 AllowIrregularPuzzles = false,
                 ClassLevel = 1
             }, seed);
+            _beforeBindAlways?.Invoke(run);
             if (startPuzzle)
             {
                 var node = run.GetReachableNodes().Select(i => run.CurrentFloorGraph[i]).First(n => n.Type == NodeType.Puzzle);

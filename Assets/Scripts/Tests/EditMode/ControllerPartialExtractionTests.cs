@@ -27,6 +27,11 @@ namespace SudokuRoguelike.Tests
         [TestCase("Assets/Scripts/UI/InRunController.cs", "Assets/Scripts/UI/InRunController.PathTiles.cs",
             "public sealed partial class InRunController",
             new[] { "private static void AddPlayerMarker(", "private static void AddCrossLinkBadge(" })]
+        // 2026-10-19: the garden path as a hand scroll (UI-STYLE-001).
+        [TestCase("Assets/Scripts/UI/InRunController.cs", "Assets/Scripts/UI/InRunController.PathScroll.cs",
+            "public sealed partial class InRunController",
+            new[] { "private void EnsurePathOverlayRoot()", "private void RefreshPathOverview()", "private Button CreateNodeButton(",
+                    "private void RebuildPathLegend(", "private void RebuildFloorProgressStrip(" })]
         [TestCase("Assets/Scripts/UI/InRunController.cs", "Assets/Scripts/UI/InRunController.RunMenu.cs",
             "public sealed partial class InRunController",
             new[] { "private void OnAbandonPressed(", "private void ShowModifierList(" })]

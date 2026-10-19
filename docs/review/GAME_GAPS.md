@@ -830,7 +830,7 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Root Cause:** `GamePalette` line colours and the `Boss.Description.*` texts were changed over time without the spec table; nothing checks that they match.
 - **Fix:** Parity Lines are blue as specified (`GamePalette.LineParityLine`), and the rule text says "blue lines" in all five languages. Owner decision (2026-10-19): follow the convention puzzle setters use; Renban pink and Palindrome grey as in the spec, Dutch Whispers orange, thermometers grey, Consecutive Line gold (`BossMechanicsSystem.md` 2.6). Lines are opaque bands through the cell centres. The rule texts and the Custom Puzzle tooltips (now localized) name the colours.
 - **Affected Files:** `Assets/Scripts/UI/GamePalette.cs`, `Assets/Scripts/Boss/BossService.cs`, `Assets/Scripts/Core/LocalizationService.cs`, `Assets/Resources/Localization/*.json`, `docs/BossMechanicsSystem.md`
-- **Tests:** `PuzzleScrollPaletteTests` (convention hues, every pair of line colours tells apart, ink digits readable on every band); screenshot `after_lines_all` (every line type on one board).
+- **Tests:** `PuzzleScrollPaletteTests` (convention hues, every pair of line colours tells apart, ink digits readable on every band); screenshots `after_lines_dutch_thermo_consecutive`, `after_lines_german_renban_palindrome`, `after_lines_parity_between_slow_unique` (real generated puzzles; every line on a board belongs to a rule on its slip).
 
 ## GAP-049
 **Chosen modifiers silently missing on busy boards (white dots under Nonconsecutive, Even/Odd after Prime markers, Palindrome on 9×9)**

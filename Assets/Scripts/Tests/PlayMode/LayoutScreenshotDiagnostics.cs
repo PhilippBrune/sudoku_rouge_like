@@ -279,34 +279,32 @@ namespace SudokuRoguelike.Tests
             yield return Shoot(host, camera, "after_shop.png");
         }
 
-        // BOSS-MOD-002 / GAP-048: every line type on one 9×9 board, in the colours puzzle setters use.
+        // BOSS-MOD-002 / GAP-048: the line colours on real generated 9×9 puzzles. Every line on a board belongs to a rule
+        // on its slip: Dutch Whispers (orange), Thermo (grey with a bulb) and Consecutive Line (gold); German Whispers,
+        // Renban and Palindrome; Parity, Between, Slow Thermo and Unique Set.
         [UnityTest]
         public IEnumerator RenderLineTypes()
         {
             var camera = CreateCamera();
-            _puzzleSize = 9;
-            _beforeBind = run =>
+            var shots = new (string file, BossModifierId[] mods)[]
             {
-                var lines = run.CurrentOverlay.Lines;
-                lines.Clear();
-                lines.Add(Line(LineType.GermanWhispers, (0, 0), (1, 0), (2, 0), (2, 1)));
-                lines.Add(Line(LineType.DutchWhispers, (0, 2), (0, 3), (0, 4)));
-                lines.Add(Line(LineType.ParityLine, (1, 2), (2, 3), (3, 4)));
-                lines.Add(Line(LineType.RenbanLine, (0, 6), (0, 7), (1, 7)));
-                lines.Add(Line(LineType.Palindrome, (4, 0), (4, 1), (4, 2), (5, 2)));
-                lines.Add(Line(LineType.Thermo, (6, 0), (7, 0), (8, 0), (8, 1)));
-                lines.Add(Line(LineType.BetweenLine, (6, 2), (6, 3), (6, 4), (6, 5)));
-                lines.Add(Line(LineType.ConsecutiveLine, (2, 6), (3, 6), (4, 6)));
-                lines.Add(Line(LineType.SlowThermo, (8, 3), (8, 4), (8, 5)));
-                lines.Add(Line(LineType.UniqueSetLine, (4, 8), (5, 8), (6, 8), (7, 7)));
+                ("after_lines_dutch_thermo_consecutive.png", new[] { BossModifierId.DutchWhispers, BossModifierId.Thermo, BossModifierId.ConsecutiveLine }),
+                ("after_lines_german_renban_palindrome.png", new[] { BossModifierId.GermanWhispers, BossModifierId.RenbanLines, BossModifierId.Palindrome }),
+                ("after_lines_parity_between_slow_unique.png", new[] { BossModifierId.ParityLines, BossModifierId.BetweenLines, BossModifierId.SlowThermo, BossModifierId.UniqueSetLine }),
             };
-            var (host, _) = StartRun(7309, true, BossModifierId.GermanWhispers);
-            _beforeBind = null;
+            _puzzleSize = 9;
+            var seed = 7340;
+            foreach (var (file, mods) in shots)
+            {
+                var (host, _) = StartRun(seed++, true, mods);
+                yield return DismissIntro();
+                for (var frame = 0; frame < 30 && Find(host, "C_0_0") == null; frame++)
+                    yield return null;
+                yield return new WaitForSecondsRealtime(0.4f);
+                yield return Shoot(host, camera, file);
+                host.SetActive(false);
+            }
             _puzzleSize = 6;
-            yield return DismissIntro();
-            for (var frame = 0; frame < 30 && Find(host, "C_0_0") == null; frame++)
-                yield return null;
-            yield return Shoot(host, camera, "after_lines_all.png");
         }
 
         // GEN-MOD-002: the catalog batch B1/B2 modifiers on generated 9×9 boards: six line variants, then the thermometer
@@ -335,14 +333,6 @@ namespace SudokuRoguelike.Tests
                 host.SetActive(false);
             }
             _puzzleSize = 6;
-        }
-
-        private static ModifierLine Line(LineType type, params (int r, int c)[] cells)
-        {
-            var line = new ModifierLine { Type = type };
-            foreach (var (r, c) in cells)
-                line.Cells.Add(new CellCoord(r, c));
-            return line;
         }
 
         private static KillerCage Cage(RunDirector run, params (int r, int c)[] cells)

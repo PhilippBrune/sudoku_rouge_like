@@ -25,7 +25,10 @@ namespace SudokuRoguelike.Tests
             BossModifierId.NonconsecLine, BossModifierId.HighLowAlternating, BossModifierId.NabnerLine,
             BossModifierId.EntropicLine, BossModifierId.ModularLine, BossModifierId.ZipperLine, BossModifierId.FastThermo,
             BossModifierId.AmbiguousThermo, BossModifierId.FullWhiteKropki, BossModifierId.FullBlackKropki,
-            BossModifierId.DifferenceK, BossModifierId.MultipleCells, BossModifierId.MirrorCells
+            BossModifierId.DifferenceK, BossModifierId.MultipleCells, BossModifierId.MirrorCells,
+            // B3: cages, arrows, region sum line
+            BossModifierId.RegionSumLine, BossModifierId.KillerHiddenSum, BossModifierId.CageProduct,
+            BossModifierId.CageDifference, BossModifierId.RenbanCage, BossModifierId.ArrowAverage, BossModifierId.DoubleArrow
         };
 
         // ── rules on hand-made boards (one row of a 9×9) ──
@@ -311,6 +314,24 @@ namespace SudokuRoguelike.Tests
                 case BossModifierId.FullBlackKropki:
                     foreach (var d in overlay.KropkiDots) { yield return d.CellA; yield return d.CellB; }
                     break;
+                case BossModifierId.KillerHiddenSum:
+                case BossModifierId.CageProduct:
+                case BossModifierId.CageDifference:
+                case BossModifierId.CageRatio:
+                case BossModifierId.RenbanCage:
+                    foreach (var cage in overlay.KillerCages)
+                        foreach (var c in cage.Cells) yield return c;
+                    break;
+                case BossModifierId.ArrowAverage:
+                case BossModifierId.DoubleArrow:
+                case BossModifierId.PillArrow:
+                    foreach (var a in overlay.Arrows)
+                    {
+                        yield return a.CircleCell;
+                        if (a.ArrowType != ArrowType.Average) yield return a.SecondCircle;
+                        foreach (var c in a.ArrowCells) yield return c;
+                    }
+                    break;
                 default:
                     foreach (var line in overlay.Lines)
                         foreach (var c in line.Cells) yield return c;
@@ -353,7 +374,9 @@ namespace SudokuRoguelike.Tests
                 (BossModifierId.EntropicLine, 42), (BossModifierId.ModularLine, 43), (BossModifierId.ZipperLine, 44),
                 (BossModifierId.FastThermo, 51), (BossModifierId.AmbiguousThermo, 52), (BossModifierId.FullWhiteKropki, 58),
                 (BossModifierId.FullBlackKropki, 59), (BossModifierId.DifferenceK, 60), (BossModifierId.MultipleCells, 74),
-                (BossModifierId.MirrorCells, 76)
+                (BossModifierId.MirrorCells, 76), (BossModifierId.RegionSumLine, 45), (BossModifierId.KillerHiddenSum, 64),
+                (BossModifierId.CageProduct, 65), (BossModifierId.CageDifference, 66), (BossModifierId.RenbanCage, 69),
+                (BossModifierId.ArrowAverage, 70), (BossModifierId.DoubleArrow, 73)
             };
             foreach (var (id, value) in expected) Assert.AreEqual(value, (int)id, id.ToString());
             Assert.AreEqual(11, (int)LineType.NonconsecLine);
@@ -362,6 +385,10 @@ namespace SudokuRoguelike.Tests
             Assert.AreEqual(25, (int)LineType.AmbiguousThermo);
             Assert.AreEqual(4, (int)MarkerType.Multiple);
             Assert.AreEqual(5, (int)PairConstraintType.DifferenceK);
+            Assert.AreEqual(18, (int)LineType.RegionSumLine);
+            Assert.AreEqual(1, (int)KillerCageType.HiddenSum);
+            Assert.AreEqual(5, (int)KillerCageType.RenbanSet);
+            Assert.AreEqual(4, (int)ArrowType.DoubleEndpoint);
         }
 
         // One thermometer kind per puzzle, never two dots on one edge, no plain grey line next to an Ambiguous Thermo.
@@ -378,7 +405,8 @@ namespace SudokuRoguelike.Tests
                 (BossModifierId.FullWhiteKropki, BossModifierId.SumKropki), (BossModifierId.FullWhiteKropki, BossModifierId.Nonconsecutive),
                 (BossModifierId.FullBlackKropki, BossModifierId.FullKropki), (BossModifierId.FullBlackKropki, BossModifierId.RatioKropki),
                 (BossModifierId.FullBlackKropki, BossModifierId.DifferenceKropki), (BossModifierId.FullBlackKropki, BossModifierId.SumKropki),
-                (BossModifierId.Nonconsecutive, BossModifierId.DifferenceKropki)
+                (BossModifierId.Nonconsecutive, BossModifierId.DifferenceKropki),
+                (BossModifierId.KillerHiddenSum, BossModifierId.KillerCages)
             };
             foreach (var (a, b) in blocked)
             {

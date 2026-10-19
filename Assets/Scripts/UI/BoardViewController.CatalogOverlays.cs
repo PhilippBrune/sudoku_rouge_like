@@ -55,6 +55,19 @@ namespace SudokuRoguelike.UI
                     DrawDot(cells[0], color, bulbR, cW, cH, sX, sY, tW, tH);
                     DrawRingDot(cells[0], color, bulbR + 6f, cW, cH, sX, sY, tW, tH);
                     break;
+                case LineType.RegionSumLine:
+                    DrawRegionTicks(line, bandW, cW, cH, sX, sY, tW, tH);
+                    break;
+                case LineType.NLine:
+                    DrawRegionTicks(line, bandW, cW, cH, sX, sY, tW, tH);
+                    DrawLineTag(cells[0], line.LineValue.ToString(), color, cW, cH, sX, sY, tW, tH);
+                    break;
+                case LineType.SumLine:
+                    DrawLineTag(cells[cells.Count - 1], line.LineValue.ToString(), color, cW, cH, sX, sY, tW, tH);
+                    break;
+                case LineType.WhisperGeneralized:
+                    DrawLineTag(cells[0], "≥" + line.LineValue, color, cW, cH, sX, sY, tW, tH);
+                    break;
                 case LineType.AmbiguousThermo:
                     // No bulb; an ink bar across each end says "a thermometer, direction unknown".
                     DrawEndBar(cells, 0, 1, bandW, ink, cW, cH, sX, sY, tW, tH);

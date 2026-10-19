@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### New modifiers
+
+- **Cages and arrows (7).** Region Sum Line, Hidden Killer, Product Cage, Difference Cage, Renban Cage, Arrow Average and Double Arrow. Each cage kind has its own colour and corner label; the Pattern Scroll never reveals a hidden cage sum.
+
 ## 0.2.0 beta — 6th iteration (2026-10-19)
 
 A beta for testers before the next Early Access update: the whole run in a new ink-and-paper look, 13 new puzzle rules, and fixes for rules that silently went missing.

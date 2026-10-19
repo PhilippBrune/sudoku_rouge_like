@@ -66,6 +66,15 @@ namespace SudokuRoguelike.Boss
             [BossModifierId.MultipleCells] = (1, 0.15f, 5),
             [BossModifierId.MirrorCells] = (1, 0.20f, 5),
 
+            // Catalog batch B3: cages, arrows, region sum line (min sizes from BossMechanicsSystem.md)
+            [BossModifierId.RegionSumLine] = (3, 0.45f, 7),
+            [BossModifierId.KillerHiddenSum] = (3, 0.50f, 7),
+            [BossModifierId.CageProduct] = (3, 0.45f, 6),
+            [BossModifierId.CageDifference] = (1, 0.20f, 5),
+            [BossModifierId.RenbanCage] = (2, 0.35f, 5),
+            [BossModifierId.ArrowAverage] = (3, 0.45f, 7),
+            [BossModifierId.DoubleArrow] = (3, 0.45f, 6),
+
             // Boss debuffs (IDs 94–102) — reactive penalties on wrong placement
             // [REQ: DEBUFF-HOOK-011] All debuff entries registered here; IDs ≥94 excluded from BuildEligiblePool
             [BossModifierId.RowWipe]       = (3, 0.55f, 0), // [REQ: DEBUFF-DEF-001]
@@ -236,6 +245,8 @@ namespace SudokuRoguelike.Boss
             (BossModifierId.FullWhiteKropki, BossModifierId.SumKropki),
             (BossModifierId.FullBlackKropki, BossModifierId.DifferenceKropki),
             (BossModifierId.FullBlackKropki, BossModifierId.SumKropki),
+            // B3: a cage with a hidden sum next to cages with sums would look like a missing number.
+            (BossModifierId.KillerHiddenSum, BossModifierId.KillerCages),
         };
 
         private static bool IsBlockedCombination(BossModifierId first, BossModifierId second)
@@ -504,6 +515,7 @@ namespace SudokuRoguelike.Boss
             BossModifierId.FullKropki, BossModifierId.SumKropki, BossModifierId.GreaterLessThan,
             BossModifierId.XVPairs, BossModifierId.PrimeCells, BossModifierId.FortressCells,
             BossModifierId.NonconsecLine, BossModifierId.HighLowAlternating, BossModifierId.NabnerLine, BossModifierId.EntropicLine, BossModifierId.ModularLine, BossModifierId.ZipperLine, BossModifierId.FastThermo, BossModifierId.AmbiguousThermo, BossModifierId.FullWhiteKropki, BossModifierId.FullBlackKropki, BossModifierId.DifferenceK, BossModifierId.MultipleCells, BossModifierId.MirrorCells,
+            BossModifierId.RegionSumLine, BossModifierId.KillerHiddenSum, BossModifierId.CageProduct, BossModifierId.CageDifference, BossModifierId.RenbanCage, BossModifierId.ArrowAverage, BossModifierId.DoubleArrow,
             BossModifierId.RowWipe, BossModifierId.ColWipe, BossModifierId.DoublePenalty,
             BossModifierId.CellLock, BossModifierId.PencilBlind, BossModifierId.RadiusWipe,
             BossModifierId.PencilScramble, BossModifierId.GivenReveal, BossModifierId.RevealCost,
@@ -524,6 +536,7 @@ namespace SudokuRoguelike.Boss
             BossModifierId.FullKropki, BossModifierId.SumKropki, BossModifierId.GreaterLessThan,
             BossModifierId.XVPairs, BossModifierId.PrimeCells, BossModifierId.FortressCells,
             BossModifierId.NonconsecLine, BossModifierId.HighLowAlternating, BossModifierId.NabnerLine, BossModifierId.EntropicLine, BossModifierId.ModularLine, BossModifierId.ZipperLine, BossModifierId.FastThermo, BossModifierId.AmbiguousThermo, BossModifierId.FullWhiteKropki, BossModifierId.FullBlackKropki, BossModifierId.DifferenceK, BossModifierId.MultipleCells, BossModifierId.MirrorCells,
+            BossModifierId.RegionSumLine, BossModifierId.KillerHiddenSum, BossModifierId.CageProduct, BossModifierId.CageDifference, BossModifierId.RenbanCage, BossModifierId.ArrowAverage, BossModifierId.DoubleArrow,
             BossModifierId.RowWipe, BossModifierId.ColWipe, BossModifierId.DoublePenalty,
             BossModifierId.CellLock, BossModifierId.PencilBlind, BossModifierId.BoxWipe,
             BossModifierId.CrossWipe, BossModifierId.RadiusWipe, BossModifierId.PencilDrain,
@@ -590,6 +603,13 @@ namespace SudokuRoguelike.Boss
                 BossModifierId.DifferenceK         => "Difference ≥ 3",
                 BossModifierId.MultipleCells       => "Multiples of 3",
                 BossModifierId.MirrorCells         => "Mirror Cells",
+                BossModifierId.RegionSumLine       => "Region Sum Line",
+                BossModifierId.KillerHiddenSum     => "Hidden Killer",
+                BossModifierId.CageProduct         => "Product Cage",
+                BossModifierId.CageDifference      => "Difference Cage",
+                BossModifierId.RenbanCage          => "Renban Cage",
+                BossModifierId.ArrowAverage        => "Arrow Average",
+                BossModifierId.DoubleArrow         => "Double Arrow",
                 BossModifierId.RowWipe             => "Row Wipe",
                 BossModifierId.ColWipe             => "Column Wipe",
                 BossModifierId.DoublePenalty       => "Double Penalty",
@@ -656,6 +676,13 @@ namespace SudokuRoguelike.Boss
                 BossModifierId.DifferenceK         => "Cells joined by a plum bar differ by at least 3. Example: 2-6.",
                 BossModifierId.MultipleCells       => "Cells marked ×3 hold a multiple of 3: 3, 6 or 9.",
                 BossModifierId.MirrorCells         => "Cells with the same letter mirror each other through the centre of the grid and hold the same digit.",
+                BossModifierId.RegionSumLine       => "Navy lines break at every region border (the ticks); each piece adds up to the same total. Example: 9 | 4-5 | 6-3.",
+                BossModifierId.KillerHiddenSum     => "Cages marked ? keep their sum secret: no digit repeats inside a cage.",
+                BossModifierId.CageProduct         => "In teal cages the digits multiply to the number in the corner, without repeats. Example: ×24 = 2·3·4.",
+                BossModifierId.CageDifference      => "The two digits of a blue cage differ by the number in the corner. Example: −3 = 2 and 5.",
+                BossModifierId.RenbanCage          => "Pink cages marked R hold a run of consecutive digits in any order. Example: 4-2-3.",
+                BossModifierId.ArrowAverage        => "A circle marked Ø holds the average of the digits on its arrow. Example: 4 = (3+5) ÷ 2.",
+                BossModifierId.DoubleArrow         => "An arrow between two circles adds up to the two circle digits together. Example: 2+7 = 4+5.",
 
                 // Boss debuffs
                 BossModifierId.RowWipe       => "Wrong placement: all your digits in that row are erased.",
@@ -699,6 +726,7 @@ namespace SudokuRoguelike.Boss
             LineType.ZipperLine        => "ZL",
             LineType.FastThermo        => "FT",
             LineType.AmbiguousThermo   => "AT",
+            LineType.RegionSumLine     => "RS",
             _                        => "??"
         };
 
@@ -749,6 +777,13 @@ namespace SudokuRoguelike.Boss
                 BossModifierId.DifferenceK        => "D3",
                 BossModifierId.MultipleCells      => "M3",
                 BossModifierId.MirrorCells        => "MI",
+                BossModifierId.RegionSumLine      => "RS",
+                BossModifierId.KillerHiddenSum    => "HK",
+                BossModifierId.CageProduct        => "PC",
+                BossModifierId.CageDifference     => "DC",
+                BossModifierId.RenbanCage         => "RC",
+                BossModifierId.ArrowAverage       => "AA",
+                BossModifierId.DoubleArrow        => "DA",
                 _                              => "??"
             };
         }

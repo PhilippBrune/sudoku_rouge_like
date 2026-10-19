@@ -57,6 +57,13 @@ namespace SudokuRoguelike.UI
             BossModifierId.DifferenceK        => new[] { DifferenceKKey },
             BossModifierId.MultipleCells      => new[] { MultipleKey },
             BossModifierId.MirrorCells        => new[] { MirrorKey },
+            BossModifierId.RegionSumLine      => new[] { LineKey(LineType.RegionSumLine) },
+            BossModifierId.KillerHiddenSum    => new[] { HiddenCagesKey },
+            BossModifierId.CageProduct        => new[] { ProductCagesKey },
+            BossModifierId.CageDifference     => new[] { DifferenceCagesKey },
+            BossModifierId.RenbanCage         => new[] { RenbanCagesKey },
+            BossModifierId.ArrowAverage       => new[] { AverageArrowsKey },
+            BossModifierId.DoubleArrow        => new[] { DoubleArrowsKey },
             _                               => Array.Empty<string>()
         };
 
@@ -99,6 +106,13 @@ namespace SudokuRoguelike.UI
                 BossModifierId.DifferenceK        => GamePalette.OverlayDifferenceK,
                 BossModifierId.MultipleCells      => GamePalette.OverlayMultiple,
                 BossModifierId.MirrorCells        => GamePalette.OverlayMirror,
+                BossModifierId.RegionSumLine      => GetLineColor(LineType.RegionSumLine),
+                BossModifierId.KillerHiddenSum    => CageColor(KillerCageType.HiddenSum),
+                BossModifierId.CageProduct        => CageColor(KillerCageType.Product),
+                BossModifierId.CageDifference     => CageColor(KillerCageType.Difference),
+                BossModifierId.RenbanCage         => CageColor(KillerCageType.RenbanSet),
+                BossModifierId.ArrowAverage       => GamePalette.OverlayArrow,
+                BossModifierId.DoubleArrow        => GamePalette.OverlayArrow,
                 _                               => Color.clear
             };
             if (color.a <= 0f) return false;

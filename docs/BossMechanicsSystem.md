@@ -1,11 +1,12 @@
 ﻿# Boss Mechanics System
 
-**Version:** 2.8 | **Date:** 2026-10-19 | **Status:** implemented
+**Version:** 2.9 | **Date:** 2026-10-19 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.9 | 2026-10-19 | implemented | Owner request: catalog batch B3 goes live: Region Sum Line (45), Hidden Killer (64), Product Cage (65), Difference Cage (66), Renban Cage (69), Arrow Average (70) and Double Arrow (73), with the min sizes of the library below. Each cage kind has its own outline colour and corner label (sum, "?", "×N", "−N", "R"); arrows keep the grey ring ("Ø" marks an average arrow, a double arrow has a ring at both ends); each kind is its own legend layer. A hidden sum is never checked, drawn or listed (the Pattern Scroll names cages by their label). New blocked pair: Hidden Killer + Killer Cages. 50 player modifiers, 49 clearable. |
 | 2.8 | 2026-10-19 | implemented | Owner decision (2026-10-19): catalog batches B1 and B2 go live: 13 modifiers from the Extended Library (IDs 38, 40–44, 51, 52, 58–60, 74, 76) with rules, geometry, overlays, legend layers and texts in five languages; they roll at equal weight with the others and count toward the codex and completion (43 player modifiers, 42 clearable). The roll pool grew, so a seed from 0.1.5 (also a shared seed or an old Seed of the week) gives a different run in 0.2.0; saved runs keep their stored modifiers. Definitions as in the library below; Difference ≥ K uses K = 3, Fast Thermo N = 2. New blocked pairs keep one thermometer kind per puzzle and never stack a complete dot set with a dot rule of the same colour. The Custom Puzzle panel still lists the first 30 (a new layout waits for a mockup). |
 | 2.7 | 2026-10-19 | implemented | A chosen modifier counts as generated only with its own geometry (per line, dot, pair, cage, arrow, marker and cell-pair type; BOSS-MOD-004, GAP-047). New blocked pair Nonconsecutive + Difference Kropki (no white dot can exist; GAP-049). |
 | 2.6 | 2026-10-19 | implemented | Owner decision (GAP-048): line colours follow the convention puzzle setters use (Logic Masters, GM Puzzles): German Whispers green, Dutch Whispers orange, Renban pink, Palindrome grey, thermometers grey with a bulb; Consecutive Line moves to gold so it does not clash with Dutch Whispers. Lines are drawn as opaque bands a fifth of a cell wide through the cell centres with round joints (as in the chosen puzzle mockup, UI-STYLE-002); the colours below are the band colours on the paper board. Rule texts name the new colours in all five languages, and the Custom Puzzle tooltips use the same texts. |
@@ -30,7 +31,7 @@
 
 ## Overview
 
-Modifiers add visual overlays to the puzzle grid and enforce additional constraints beyond standard Sudoku rules. There are **43 player modifiers** (`BossModifierId` 0–29 and the catalog batch 38, 40–44, 51, 52, 58–60, 74, 76); 42 of them can be generated (Modular Regions is excluded, see §Modifier Eligibility). Every generatable modifier is eligible from any floor — there is no tier gating, only the board-size and pairing rules below.
+Modifiers add visual overlays to the puzzle grid and enforce additional constraints beyond standard Sudoku rules. There are **50 player modifiers** (`BossModifierId` 0–29 and the catalog batches 38, 40–45, 51, 52, 58–60, 64–66, 69, 70, 73, 74, 76); 49 of them can be generated (Modular Regions is excluded, see §Modifier Eligibility). Every generatable modifier is eligible from any floor — there is no tier gating, only the board-size and pairing rules below.
 
 Modifiers appear in two ways:
 
@@ -44,7 +45,7 @@ Modifiers the player has never encountered before are displayed as **"???"** unt
 
 ## Active Modifier Pool (30 Implemented) `[BOSS-MOD-001]` `[BOSS-MOD-002]`
 
-All 43 modifiers are fully implemented with constraint rules, geometry generation, overlay rendering and descriptions; the Custom Puzzle panel lists the first 30.
+All 50 modifiers are fully implemented with constraint rules, geometry generation, overlay rendering and descriptions; the Custom Puzzle panel lists the first 30.
 
 ### Line Constraints
 
@@ -156,9 +157,9 @@ These 15 modifiers extend the active pool beyond the original 15. All are eligib
 | 28 | Prime Cells | `PrimeCellsRule` | CellLevel |
 | 29 | Fortress Cells | `FortressCellsRule` | CellLevel |
 
-### Catalog batch (B1 and B2, active since 2026-10-19) `[GEN-MOD-002]`
+### Catalog batches (B1 to B3, active since 2026-10-19) `[GEN-MOD-002]`
 
-Thirteen modifiers from the Extended Library below, registered with their enum IDs (docs/design/modifier-catalog-plan.md). Geometry is read off the solution; lines run in 8 directions.
+Twenty modifiers from the Extended Library below, registered with their enum IDs (docs/design/modifier-catalog-plan.md). Geometry is read off the solution; lines run in 8 directions.
 
 | ID | Modifier | Visual | Rule | Min Size | Rule Class |
 |:---:|----------|--------|------|:---:|-----------|
@@ -175,6 +176,13 @@ Thirteen modifiers from the Extended Library below, registered with their enum I
 | 60 | **Difference ≥ 3** | Plum tag "≥3" on the shared edge | The two cells differ by at least K = 3 | 5×5 | `DifferenceKPairRule` |
 | 74 | **Multiples of 3** | Ochre ring with "×3" | A marked cell holds 3, 6 or 9 | 5×5 | `MultipleCellsRule` |
 | 76 | **Mirror Cells** | Indigo letter badge, same letter on both cells | A cell and its reflection through the grid centre hold the same digit | 5×5 | `MirrorCellsRule` |
+| 45 | **Region Sum Line** | Navy line, ink tick where it crosses a region border | Every piece between region borders adds up to the same total | 7×7 | `RegionSumLineRule` |
+| 64 | **Hidden Killer** | Red dashed cage, "?" in the corner | No digit repeats in the cage; the sum stays hidden | 7×7 | `TypedCageRule(HiddenSum)` |
+| 65 | **Product Cage** | Teal dashed cage, "×N" | The digits multiply to N, no repeats | 6×6 | `TypedCageRule(Product)` |
+| 66 | **Difference Cage** | Blue dashed two-cell cage, "−N" | The two digits differ by N | 5×5 | `TypedCageRule(Difference)` |
+| 69 | **Renban Cage** | Pink dashed cage, "R" | The digits form a run of consecutive numbers | 5×5 | `TypedCageRule(RenbanSet)` |
+| 70 | **Arrow Average** | Grey ring marked "Ø" with its path | The circle holds the average of the path | 7×7 | `TypedArrowRule(Average)` |
+| 73 | **Double Arrow** | Grey ring at both ends of the path | The path adds up to both circle digits | 6×6 | `TypedArrowRule(DoubleEndpoint)` |
 
 ---
 
@@ -248,8 +256,8 @@ Authoritative table: `BossService.ModifierData` (decided 2026-10-07, SPEC-CONF-0
 | 7×7 | Killer Cages, German Whispers (Modular Regions: 7×7, but excluded) |
 | 9×9 | Entropy |
 
-- **Modular Regions** is excluded from every roll pool and from completion (42 clearable modifiers).
-- **Blocked pairs** (never combined, `BossService.GetBlockedPairs`): Ratio Kropki + Distance ≥ 2, Distance ≥ 2 + Nonconsec. Diagonal, Anti-Bishop + Antiknight, Anti-Bishop + Nonconsecutive, Anti-Bishop + Entropy, Nonconsecutive + Difference Kropki; Fast Thermo with Thermo, Slow Thermo or Ambiguous Thermo; Ambiguous Thermo with Thermo, Slow Thermo or Palindrome; Full White Kropki with Full Kropki, Full Black Kropki, Difference Kropki, Ratio Kropki, Sum Dot or Nonconsecutive; Full Black Kropki with Full Kropki, Ratio Kropki, Difference Kropki or Sum Dot (never two dots on one edge).
+- **Modular Regions** is excluded from every roll pool and from completion (49 clearable modifiers).
+- **Blocked pairs** (never combined, `BossService.GetBlockedPairs`): Ratio Kropki + Distance ≥ 2, Distance ≥ 2 + Nonconsec. Diagonal, Anti-Bishop + Antiknight, Anti-Bishop + Nonconsecutive, Anti-Bishop + Entropy, Nonconsecutive + Difference Kropki; Fast Thermo with Thermo, Slow Thermo or Ambiguous Thermo; Ambiguous Thermo with Thermo, Slow Thermo or Palindrome; Full White Kropki with Full Kropki, Full Black Kropki, Difference Kropki, Ratio Kropki, Sum Dot or Nonconsecutive; Full Black Kropki with Full Kropki, Ratio Kropki, Difference Kropki or Sum Dot (never two dots on one edge); Hidden Killer + Killer Cages.
 - **Global structural modifiers** (Nonconsecutive, Antiknight, Anti-King, Anti-Bishop, Nonconsec. Diagonal, Distance ≥ 2, Entropy) use the rectangular region layout of the board size: no irregular template produced a puzzle with them within budget (SPEC-AMB-014). Two or more of the board-shaping ones need at least 8×8, and a 7×7 board with one is raised to 8×8.
 - Modifiers already active as **floor modifiers** are excluded from the boss choice pool (no duplicates within a floor).
 - Modifiers chosen on a previous floor **can** appear again on later floors (each floor is independent).
@@ -473,7 +481,7 @@ Boss modifier state is serialized for save/resume support:
 
 ## Modifier Descriptions
 
-All 43 player modifiers and the 14 boss debuffs have descriptions via `BossService.GetModifierDescription()` (localized, `Boss.Description.*`). These are shown:
+All 50 player modifiers and the 14 boss debuffs have descriptions via `BossService.GetModifierDescription()` (localized, `Boss.Description.*`). These are shown:
 - In the boss gate choice panel
 - In the tutorial modifier toggle tooltips
 - In the in-run HUD modifier box, the modifier legend and the in-run View Modifiers list
@@ -485,14 +493,14 @@ All 43 player modifiers and the 14 boss debuffs have descriptions via `BossServi
 | File | Purpose |
 |------|---------|
 | `Assets/Scripts/Sudoku/ModifierModels.cs` | Data structures (CellCoord, ModifierLine, ArrowConstraint, KillerCage, KropkiDot, CellMarker, ModifierOverlayData) |
-| `Assets/Scripts/Sudoku/ConstraintRules.cs` (+ `.LineVariants.cs`, `.DotsPairsCells.cs`) | IOrderedConstraintRule implementations for all 43 player modifiers |
-| `Assets/Scripts/Sudoku/ModifierGeometryGenerator.cs` (+ `.Catalog.cs`) | Geometry generation from solved boards (accepts intensity parameter); 43 modifiers |
-| `Assets/Scripts/Sudoku/ModifierFactory.cs` | Maps BossModifierId → constraint rule instances (43 cases) |
+| `Assets/Scripts/Sudoku/ConstraintRules.cs` (+ `.LineVariants.cs`, `.DotsPairsCells.cs`, `.Cages.cs`, `.ArrowsSums.cs`) | IOrderedConstraintRule implementations for all 50 player modifiers |
+| `Assets/Scripts/Sudoku/ModifierGeometryGenerator.cs` (+ `.Catalog.cs`, `.CagesArrows.cs`) | Geometry generation from solved boards (accepts intensity parameter); 50 modifiers |
+| `Assets/Scripts/Sudoku/ModifierFactory.cs` | Maps BossModifierId → constraint rule instances (50 cases) |
 | `Assets/Scripts/Sudoku/SudokuConstraintEngine.cs` | Central rule engine with ValidateAll |
 | `Assets/Scripts/Boss/BossService.cs` | Modifier pool construction, choice rolling, ModifierData (min sizes, blocked pairs), debuff pool |
 | `Assets/Scripts/Run/RunDirector.cs` | StartLevel wiring (overlay generation, engine creation, fog reveal, intensity assignment) |
 | `Assets/Scripts/UI/InRunController.cs`, `BoardViewController.cs` (+ `.OverlayGroups.cs`), `HudViewController.cs` (+ `.Legend.cs`), `BossGateViewController.cs` | Overlay rendering per modifier layer, fog masking, input blocking, descriptions, legend, boss gate (`PrototypeRunScreenController` no longer exists, SPEC-CONF-036) |
-| `Assets/Scripts/Core/GameEnums.cs` | BossModifierId (43 player modifiers: 0–29 and 38, 40–44, 51, 52, 58–60, 74, 76; other library IDs 30–93 not generated; debuffs 94–102/107–111, pressure 103–106), BossModifierIntensity, ConstraintRuleCategory enums |
+| `Assets/Scripts/Core/GameEnums.cs` | BossModifierId (50 player modifiers: 0–29 and 38, 40–45, 51, 52, 58–60, 64–66, 69, 70, 73, 74, 76; other library IDs 30–93 not generated; debuffs 94–102/107–111, pressure 103–106), BossModifierIntensity, ConstraintRuleCategory enums |
 | `Assets/Scripts/Core/RuntimeModels.cs` | Boss modifier serialization fields in RunState |
 | `Assets/Scripts/Save/RunAutoSaveCoordinator.cs` | SyncSeenModifiersToList before save |
 | `Assets/Scripts/Save/RunResumeService.cs` | Restore boss modifier state on resume |
@@ -502,7 +510,7 @@ All 43 player modifiers and the 14 boss debuffs have descriptions via `BossServi
 
 ## Extended Modifier Library (Future Content)
 
-The following modifiers are cataloged for potential future integration. Entries marked ✅ are in the active pool (43 modifiers since 2.8; the ID in brackets is the enum ID). The table format matches the active pool: `# | Modifier | Visual | Rule | Min Size`.
+The following modifiers are cataloged for potential future integration. Entries marked ✅ are in the active pool (50 modifiers since 2.9; the ID in brackets is the enum ID). The table format matches the active pool: `# | Modifier | Visual | Rule | Min Size`.
 
 **Min Size** is the smallest board on which the constraint remains interesting and non-trivial. **Visual** is a proposed rendering approach; all visuals are TBD until implementation.
 
@@ -546,7 +554,7 @@ All extended line modifiers follow the same **8-directional adjacency, no self-c
 | 33 | **Entropic Line** ✅ (ID 42) | Peach line | Any 3 consecutive cells contain one digit from each set: {1–3}, {4–6}, {7–9} | 7×7 |
 | 34 | **Modular Line** ✅ (ID 43) | Teal line | Any 3 consecutive cells contain digits from different residue classes mod 3 | 6×6 |
 | 35 | **Zipper Line** ✅ (ID 44) | Lavender line with central marker | Pairs of cells equidistant from the centre sum to the same value | 6×6 |
-| 36 | **Region Sum Line** | Line with box-border tick marks | Each segment of the line divided by box borders sums to the same total | 7×7 |
+| 36 | **Region Sum Line** ✅ (ID 45) | Line with box-border tick marks | Each segment of the line divided by box borders sums to the same total | 7×7 |
 | 37 | **N-Line (10-Line)** | Numbered line with segment ticks | Each box-bounded segment of the line sums to exactly N (default N=10) | 7×7 |
 | 38 | **Index Line** | Line with position labels | The digit at position P on the line (1-indexed from one end) equals P | 7×7 |
 | 39 | **Sum Line** | Line with total label at endpoint | The entire line sums to a fixed displayed value | 6×6 |
@@ -595,16 +603,16 @@ All extended line modifiers follow the same **8-directional adjacency, no self-c
 
 | # | Modifier | Visual | Rule | Min Size |
 |:---:|----------|--------|------|:---:|
-| 62 | **Killer (Hidden Sum)** | Dashed cage, no sum label | Cage with no repeats; sum is hidden from the player | 7×7 |
-| 63 | **Cage Product** | Dashed cage + product label (×) | Cells in a cage multiply to the displayed product; no repeats | 6×6 |
-| 64 | **Cage Difference** | Two-cell cage + difference label (−) | Two-cell cage: the absolute difference of its two digits equals the label | 5×5 |
+| 62 | **Killer (Hidden Sum)** ✅ (ID 64) | Dashed cage, no sum label | Cage with no repeats; sum is hidden from the player | 7×7 |
+| 63 | **Cage Product** ✅ (ID 65) | Dashed cage + product label (×) | Cells in a cage multiply to the displayed product; no repeats | 6×6 |
+| 64 | **Cage Difference** ✅ (ID 66) | Two-cell cage + difference label (−) | Two-cell cage: the absolute difference of its two digits equals the label | 5×5 |
 | 65 | **Cage Ratio** | Two-cell cage + ratio label (:) | Two-cell cage: the ratio of its two digits equals the label | 5×5 |
 | 66 | **Magic Square Region** | Highlighted 3×3 sub-region | A 3×3 sub-region sums to 15 in every row, column, and diagonal | 7×7 |
-| 67 | **Renban Cage** | Dashed cage with consecutive-set indicator | Cage digits form a consecutive set in any order | 5×5 |
-| 68 | **Arrow Average** | Circle + arrow path | The digit in the circle equals the average of the digits along the arrow path | 7×7 |
+| 67 | **Renban Cage** ✅ (ID 69) | Dashed cage with consecutive-set indicator | Cage digits form a consecutive set in any order | 5×5 |
+| 68 | **Arrow Average** ✅ (ID 70) | Circle + arrow path | The digit in the circle equals the average of the digits along the arrow path | 7×7 |
 | 69 | **Arrow Product** | Circle + arrow path (× symbol) | The digit in the circle equals the product of the digits along the arrow path | 6×6 |
 | 70 | **Pill Arrow** | Two-cell pill bulb + arrow path | The two-cell bulb forms a two-digit number; the path sum equals that number | 8×8 |
-| 71 | **Double Arrow** | Two circles connected by arrow path | Path sum equals the sum of both circle endpoint digits | 6×6 |
+| 71 | **Double Arrow** ✅ (ID 73) | Two circles connected by arrow path | Path sum equals the sum of both circle endpoint digits | 6×6 |
 
 ---
 

@@ -152,6 +152,29 @@ namespace SudokuRoguelike.Sudoku
                     case BossModifierId.MirrorCells:
                         rules.Add(new MirrorCellsRule());
                         break;
+
+                    // Cages, arrows and sum lines (ConstraintRules.Cages.cs, ConstraintRules.ArrowsSums.cs)
+                    case BossModifierId.KillerHiddenSum:
+                        rules.Add(new TypedCageRule(KillerCageType.HiddenSum));
+                        break;
+                    case BossModifierId.CageProduct:
+                        rules.Add(new TypedCageRule(KillerCageType.Product));
+                        break;
+                    case BossModifierId.CageDifference:
+                        rules.Add(new TypedCageRule(KillerCageType.Difference));
+                        break;
+                    case BossModifierId.RenbanCage:
+                        rules.Add(new TypedCageRule(KillerCageType.RenbanSet));
+                        break;
+                    case BossModifierId.ArrowAverage:
+                        rules.Add(new TypedArrowRule(ArrowType.Average));
+                        break;
+                    case BossModifierId.DoubleArrow:
+                        rules.Add(new TypedArrowRule(ArrowType.DoubleEndpoint));
+                        break;
+                    case BossModifierId.RegionSumLine:
+                        rules.Add(new RegionSumLineRule(LineType.RegionSumLine));
+                        break;
                 }
             }
 

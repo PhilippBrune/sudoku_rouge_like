@@ -863,39 +863,9 @@ namespace SudokuRoguelike.UI
                 }
             }
 
-            // Killer cages: one dashed outline per cage, inset into its cells so the thick box borders on the cell
-            // views do not hide it, and joined across the cells so the cage reads as one shape (UI-STYLE-006).
-            UseOverlayGroup(CagesKey);
-            for (var ci = 0; ci < overlay.KillerCages.Count; ci++)
-            {
-                var cage = overlay.KillerCages[ci];
-                DrawCageOutline(cage, cW, cH, sX, sY, tW, tH);
-
-                var tl = cage.Cells[0];
-                for (var c = 1; c < cage.Cells.Count; c++)
-                {
-                    var cc = cage.Cells[c];
-                    if (cc.Row < tl.Row || (cc.Row == tl.Row && cc.Col < tl.Col)) tl = cc;
-                }
-                var tlX = tl.Col * (cW + sX) - tW * 0.5f;
-                var tlY = tH * 0.5f - tl.Row * (cH + sY);
-                DrawCageSum(tlX, tlY, cage.Sum, cW, cH);
-                _cageLabelCells.Add((tl.Row, tl.Col));
-            }
-
-            // Arrows
-            UseOverlayGroup(ArrowsKey);
-            for (var ai = 0; ai < overlay.Arrows.Count; ai++)
-            {
-                var arrow = overlay.Arrows[ai];
-                var arrowColor = GamePalette.OverlayArrow;
-                DrawRingDot(arrow.CircleCell, arrowColor, 18f, cW, cH, sX, sY, tW, tH);
-                var pathColor = GamePalette.OverlayArrowPath;
-                if (arrow.ArrowCells.Count > 0)
-                    DrawOverlayLine(arrow.CircleCell, arrow.ArrowCells[0], pathColor, 3f, cW, cH, sX, sY, tW, tH);
-                for (var pi = 0; pi < arrow.ArrowCells.Count - 1; pi++)
-                    DrawOverlayLine(arrow.ArrowCells[pi], arrow.ArrowCells[pi + 1], pathColor, 3f, cW, cH, sX, sY, tW, tH);
-            }
+            // Cages and arrows of every kind (BoardViewController.CagesArrows.cs)
+            DrawCages(overlay, cW, cH, sX, sY, tW, tH);
+            DrawArrows(overlay, cW, cH, sX, sY, tW, tH);
 
             // Cell markers
             for (var mi = 0; mi < overlay.CellMarkers.Count; mi++)
@@ -975,6 +945,10 @@ namespace SudokuRoguelike.UI
             LineType.ZipperLine         => GamePalette.LineZipper,
             LineType.FastThermo         => GamePalette.LineThermo,
             LineType.AmbiguousThermo    => GamePalette.LineThermo,
+            LineType.RegionSumLine      => GamePalette.LineRegionSum,
+            LineType.NLine              => GamePalette.LineNLine,
+            LineType.SumLine            => GamePalette.LineSumLine,
+            LineType.WhisperGeneralized => GamePalette.LineWhisperK,
             _                        => GamePalette.LineGermanWhispers
         };
 
@@ -1159,7 +1133,7 @@ namespace SudokuRoguelike.UI
             return Sprite.Create(tex, new Rect(0, 0, sz, sz), new Vector2(0.5f, 0.5f));
         }
 
-        private void DrawCageStrip(float left, float bottom, float w, float h)
+        private void DrawCageStrip(float left, float bottom, float w, float h, Color color)
         {
             var go = new GameObject("CageEdge", typeof(RectTransform), typeof(Image));
             go.transform.SetParent(OverlayParent, false);
@@ -1169,14 +1143,14 @@ namespace SudokuRoguelike.UI
             rt.anchoredPosition = new Vector2(left, bottom);
             rt.sizeDelta = new Vector2(w, h);
             var img = go.GetComponent<Image>();
-            img.color = KillerBorder;
+            img.color = color;
             img.raycastTarget = false;
             _overlayObjects.Add(go);
         }
 
         // [REQ: UI-STYLE-006] Runs from CageOutline (board space, y down) mapped onto the overlay (centre origin, y up).
         // Each run is a centred strip extended by half its thickness, so the corners of the outline close.
-        private void DrawCageOutline(KillerCage cage, float cW, float cH, float sX, float sY, float tW, float tH)
+        private void DrawCageOutline(KillerCage cage, Color color, float cW, float cH, float sX, float sY, float tW, float tH)
         {
             const float inset = 5f;
             const float thick = 2f;
@@ -1194,15 +1168,15 @@ namespace SudokuRoguelike.UI
                     var (offset, dashLength) = dashes[d];
                     if (run.Horizontal)
                         DrawCageStrip(from.x - thick * 0.5f + offset - tW * 0.5f, tH * 0.5f - from.y - thick * 0.5f,
-                            dashLength, thick);
+                            dashLength, thick, color);
                     else
                         DrawCageStrip(from.x - thick * 0.5f - tW * 0.5f,
-                            tH * 0.5f - (from.y - thick * 0.5f + offset + dashLength), thick, dashLength);
+                            tH * 0.5f - (from.y - thick * 0.5f + offset + dashLength), thick, dashLength, color);
                 }
             }
         }
 
-        private void DrawCageSum(float x, float y, int sum, float cW, float cH)
+        private void DrawCageSum(float x, float y, string label, Color color, float cW, float cH)
         {
             var bg = new GameObject("CageSumBg", typeof(RectTransform), typeof(Image));
             bg.transform.SetParent(OverlayParent, false);
@@ -1216,7 +1190,7 @@ namespace SudokuRoguelike.UI
 
             // The sum grows with the cell so it stays readable on 9×9 and on large screens alike.
             var fontSize = Mathf.Max(12, Mathf.RoundToInt(cH * 0.22f));
-            var txt = InRunUiFactory.CreateText(bg.transform, "Sum", sum.ToString(), fontSize, TextAnchor.MiddleCenter, KillerBorder);
+            var txt = InRunUiFactory.CreateText(bg.transform, "Sum", label, fontSize, TextAnchor.MiddleCenter, color);
             txt.fontStyle = FontStyle.Bold;
             InRunUiFactory.StretchFill(txt.rectTransform);
             txt.raycastTarget = false;

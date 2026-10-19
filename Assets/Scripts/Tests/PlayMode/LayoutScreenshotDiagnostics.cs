@@ -319,6 +319,10 @@ namespace SudokuRoguelike.Tests
                     BossModifierId.EntropicLine, BossModifierId.ModularLine, BossModifierId.ZipperLine }),
                 ("after_catalog_marks.png", new[] { BossModifierId.AmbiguousThermo, BossModifierId.FastThermo, BossModifierId.DifferenceK,
                     BossModifierId.MultipleCells, BossModifierId.MirrorCells, BossModifierId.FullWhiteKropki }),
+                ("after_catalog_cages.png", new[] { BossModifierId.KillerHiddenSum, BossModifierId.CageProduct,
+                    BossModifierId.CageDifference, BossModifierId.RenbanCage }),
+                ("after_catalog_arrows_region_sum.png", new[] { BossModifierId.ArrowAverage, BossModifierId.DoubleArrow,
+                    BossModifierId.RegionSumLine }),
             };
             _puzzleSize = 9;
             var seed = 7330;

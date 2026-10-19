@@ -79,6 +79,10 @@ namespace SudokuRoguelike.UI
         public static readonly Color LineEntropic        = new(0.99f, 0.72f, 0.55f, 1f); // peach
         public static readonly Color LineModular         = new(0.20f, 0.62f, 0.56f, 1f); // teal
         public static readonly Color LineZipper          = new(0.80f, 0.72f, 0.98f, 1f); // lavender, ink mark in the middle
+        public static readonly Color LineRegionSum       = new(0.24f, 0.32f, 0.66f, 1f); // navy, ink ticks at region borders
+        public static readonly Color LineNLine           = new(0.70f, 0.38f, 0.20f, 1f); // sienna, number tag at the start
+        public static readonly Color LineSumLine         = new(0.58f, 0.60f, 0.16f, 1f); // olive, total tag at the end
+        public static readonly Color LineWhisperK        = new(0.66f, 0.28f, 0.62f, 1f); // magenta, "≥K" tag at the start
 
         // ── Modifier overlay markers ─────────────────────────────────────────────
         public static readonly Color OverlayKropkiSum    = new(0.45f, 0.45f, 0.50f, 0.90f);
@@ -86,6 +90,11 @@ namespace SudokuRoguelike.UI
         public static readonly Color OverlayDifferenceK  = new(0.45f, 0.25f, 0.55f, 1.00f); // plum
         public static readonly Color OverlayMultiple     = new(0.60f, 0.42f, 0.12f, 1.00f); // ochre
         public static readonly Color OverlayMirror       = new(0.30f, 0.30f, 0.65f, 1.00f); // indigo
+        // Cage outlines and labels by kind (a plain killer cage keeps KillerBorder).
+        public static readonly Color OverlayCageProduct    = new(0.08f, 0.50f, 0.48f, 1.00f); // teal
+        public static readonly Color OverlayCageDifference = new(0.18f, 0.40f, 0.80f, 1.00f); // blue
+        public static readonly Color OverlayCageRatio      = new(0.22f, 0.18f, 0.15f, 1.00f); // ink
+        public static readonly Color OverlayCageRenban     = new(0.84f, 0.32f, 0.64f, 1.00f); // pink, like Renban lines
         public static readonly Color OverlayKropkiBlack  = new(0.10f, 0.10f, 0.10f, 0.90f);
         public static readonly Color OverlayKropkiWhite  = new(1.00f, 1.00f, 1.00f, 1.00f);
         public static readonly Color OverlayKropkiWhiteRim = new(0.13f, 0.11f, 0.09f, 1.00f); // ink rim: a white dot on paper

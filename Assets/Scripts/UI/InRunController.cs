@@ -2369,18 +2369,32 @@ namespace SudokuRoguelike.UI
             for (var i = 0; i < ov.KillerCages.Count; i++)
             {
                 var c = ov.KillerCages[i];
-                list.Add(($"Killer Cage #{i + 1} (sum={c.Sum}, {c.Cells.Count} cells)",
-                    new List<CellCoord>(c.Cells)));
+                // Other cage kinds show the label drawn on the board, so a hidden sum stays hidden.
+                var title = c.CageType == KillerCageType.Sum
+                    ? $"Killer Cage #{i + 1} (sum={c.Sum}, {c.Cells.Count} cells)"
+                    : $"{BossService.GetModifierName(CageModifier(c.CageType))} #{i + 1} ({BoardViewController.CageLabel(c)}, {c.Cells.Count} cells)";
+                list.Add((title, new List<CellCoord>(c.Cells)));
             }
             for (var i = 0; i < ov.Arrows.Count; i++)
             {
                 var a = ov.Arrows[i];
                 var cells = new List<CellCoord> { a.CircleCell };
+                if (a.ArrowType == ArrowType.DoubleEndpoint || a.ArrowType == ArrowType.Pill) cells.Add(a.SecondCircle);
                 cells.AddRange(a.ArrowCells);
                 list.Add(($"Arrow #{i + 1} ({cells.Count} cells)", cells));
             }
             return list;
         }
+
+        private static BossModifierId CageModifier(KillerCageType type) => type switch
+        {
+            KillerCageType.HiddenSum => BossModifierId.KillerHiddenSum,
+            KillerCageType.Product => BossModifierId.CageProduct,
+            KillerCageType.Difference => BossModifierId.CageDifference,
+            KillerCageType.Ratio => BossModifierId.CageRatio,
+            KillerCageType.RenbanSet => BossModifierId.RenbanCage,
+            _ => BossModifierId.KillerCages
+        };
 
         private void ShowPatternScrollOverlay()
         {

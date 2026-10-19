@@ -159,6 +159,29 @@ namespace SudokuRoguelike.Sudoku
                         GenerateMirrorCellPairs(board, overlay, rng, scale);
                         break;
                     // Full White / Full Black Kropki: the deferred pass below.
+
+                    // Cages, arrows and sum lines (ModifierGeometryGenerator.CagesArrows.cs)
+                    case BossModifierId.KillerHiddenSum:
+                        GenerateTypedCages(board, overlay, rng, scale, KillerCageType.HiddenSum);
+                        break;
+                    case BossModifierId.CageProduct:
+                        GenerateTypedCages(board, overlay, rng, scale, KillerCageType.Product);
+                        break;
+                    case BossModifierId.CageDifference:
+                        GenerateTypedCages(board, overlay, rng, scale, KillerCageType.Difference);
+                        break;
+                    case BossModifierId.RenbanCage:
+                        GenerateTypedCages(board, overlay, rng, scale, KillerCageType.RenbanSet);
+                        break;
+                    case BossModifierId.ArrowAverage:
+                        GenerateTypedArrows(board, overlay, rng, scale, ArrowType.Average);
+                        break;
+                    case BossModifierId.DoubleArrow:
+                        GenerateTypedArrows(board, overlay, rng, scale, ArrowType.DoubleEndpoint);
+                        break;
+                    case BossModifierId.RegionSumLine:
+                        GenerateRegionSumLines(board, overlay, rng, scale, LineType.RegionSumLine);
+                        break;
                 }
 
                 MarkOverlayCellsUsed(overlay, linesBefore, dotsBefore, cagesBefore, arrowsBefore, markersBefore);
@@ -1245,8 +1268,8 @@ namespace SudokuRoguelike.Sudoku
 
             for (var i = arrowsBefore; i < overlay.Arrows.Count; i++)
             {
-                UsedCells.Add(CellKey(overlay.Arrows[i].CircleCell.Row, overlay.Arrows[i].CircleCell.Col));
-                MarkCellsUsed(overlay.Arrows[i].ArrowCells);
+                foreach (var c in ArrowCellsOf(overlay.Arrows[i]))
+                    UsedCells.Add(CellKey(c.Row, c.Col));
             }
 
             for (var i = markersBefore; i < overlay.CellMarkers.Count; i++)

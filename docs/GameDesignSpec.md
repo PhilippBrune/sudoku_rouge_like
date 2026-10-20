@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.13 | **Date:** 2026-10-20 | **Status:** implemented
+**Version:** 1.14 | **Date:** 2026-10-21 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.14 | 2026-10-21 | implemented | Owner picks after the 0.2.0 playtest: Pencil mode shows in indigo ink on the number pad and in the pencil marks (4.3, UI-STYLE-020). Run score (9c): every puzzle gets a grade from its own mistakes (Perfect, Clean, Rough, Messy; proposal C of `design/mistake-scoring-proposals.md`), which replaces the flat mistake penalty and the perfect bonus; the puzzle that ends a run is Messy; the end screen shows one stamp per puzzle (SCORE-GRADE-001..004). Unspent gold adds a point per 5 gold, at most 15 % (SCORE-GOLD-001, lever L5 of `design/gold-and-items-concept.md`). Economy levers L1 and L6 (GoldEconomySystem 2.2): from Floor 4 a mistake costs at least 2 HP (5.1, ECON-BAL-003) and the rest heals a quarter (ECON-BAL-004). Garden flow D: entering a floor shows its painting (UI-STYLE-021). |
 | 1.13 | 2026-10-20 | implemented | Owner's 0.2.0 playtest: a placed digit highlights every cell with that digit (4.1); digits are taken 0.25 s after a cell is chosen, half of before (4.2); the main menu shows the version (UI-MENU-VERSION-001); every mistake counts toward the run score when it happens (9c, GAP-059). |
 | 1.12 | 2026-10-20 | implemented | Post-run score (9c): rounding stated — each row is its share of the base rounded to whole points, and the final score is the base plus the rows, so the breakdown adds up. The code now adds the bonuses as the formula says; it had multiplied them one after another (GAP-053), and cleared cursed puzzles now count (GAP-054). The 71 player modifiers are chosen in the Custom Puzzle rule book (UI-STYLE-012). |
 | 1.11 | 2026-10-19 | implemented | 43 player modifiers: the catalog batches B1 and B2 (13 modifiers) are live (BossMechanicsSystem 2.8). |
@@ -118,6 +119,8 @@ Irregular puzzles are controlled by `RunState.AllowIrregularPuzzles` toggle (def
 - Toggle by hotkey (default `P`)
 - UI toggle button mirrored with keyboard state
 - Each pencilmark consumes 1 Pencil Unit
+- In Pencil mode the number pad turns indigo ink with paper-white digits, and the pencil marks on the board are written in
+  the same indigo, so the mode is visible at a glance (UI-STYLE-020, owner pick A after the 0.2.0 playtest)
 
 ---
 
@@ -126,6 +129,9 @@ Irregular puzzles are controlled by `RunState.AllowIrregularPuzzles` toggle (def
 ### 5.1 HP
 
 - Wrong number placement: a digit that differs from the stored solution is **wrong**, even without a visible conflict. It is rejected (never written to the board) and costs the mistake HP cost: 1, 2 from Harmony H5, 3 from H9 (unless modified by class passive, relic, item or debuff). Re-entering the digit a cell already holds changes nothing. Custom Puzzle 7★ boards have no unique solution and stay rule-based. (Decided 2026-10-07, SPEC-CONF-003; every in-game puzzle has exactly one solution.)
+- **From Floor 4 of a Garden Run a mistake costs at least 2 HP** at every Harmony level (ECON-BAL-003, lever L6 of
+  `design/gold-and-items-concept.md`); Double Penalty doubles that. The floor's entry painting says so ("Here a mistake
+  costs 2 HP").
 - A mistake is saved immediately, so quitting cannot undo it (GAP-031).
 - **Perfect puzzle** (SPEC-AMB-013): no wrong digit was entered in the puzzle. A mistake whose HP loss was absorbed (relic, Rice Paper Umbrella, shield, Koi Gambler) still breaks "perfect". The XP Perfect bonus, the Healing Path floor effect and the curse auto-cleanse all use this one definition (`LevelState.Mistakes == 0`).
 - HP = 0: run ends (unless Phoenix Feather relic triggers)
@@ -234,7 +240,7 @@ Rest tiles present the player with these options instead of automatically healin
 
 | Option | Effect |
 |--------|--------|
-| **Heal** | Restore `max(1, MaxHP / 3)` HP (capped at max HP; halved, rounded up, at Harmony H10). The heal scales with the class's HP pool, so Rest stays useful on later floors. |
+| **Heal** | Restore `max(1, MaxHP / 4)` HP (capped at max HP; halved, rounded up, at Harmony H10). The heal scales with the class's HP pool, so Rest stays useful on later floors. A quarter since 2026-10-21 (ECON-BAL-004, lever L6); it was a third. |
 | **+Pencil** | Restore `+4 Pencil` (capped at max Pencil) |
 | **+Reroll Token** | Grant `+1 Reroll Token` (used by shop and item-reward rerolls) |
 | **Cleanse** | Remove the oldest active curse (shown only while a curse is active, CurseSystem) |
@@ -253,16 +259,43 @@ Only one option may be chosen. The panel dismisses after selection.
 
 A **run score** is calculated at the end of every run (victory or defeat) and shown on the end screen.
 
+### Puzzle grades (SCORE-GRADE-001..004)
+
+Every puzzle of the run gets a grade from its own mistakes (owner pick C, 2026-10-20):
+
+| Grade | Mistakes on that puzzle | Run-score effect |
+|---|---|---|
+| Perfect | 0 | +5 % |
+| Clean | 1 | 0 |
+| Rough | 2–3 | −2 % |
+| Messy | 4 or more | −5 % |
+
+- **SCORE-GRADE-001** The grade is set when the puzzle is solved, from that puzzle's mistakes (a mistake taken back by the
+  Ginkgo Leaf does not count). It replaces the old flat penalty (−2 % per mistake) and the perfect bonus.
+- **SCORE-GRADE-002** The puzzle that ends a Garden Run unsolved (HP lost, or the run abandoned inside it, also from the
+  main menu's "abandon the saved run") counts as Messy. Endless Zen, Spirit Trials and the Monthly Walk end their sessions
+  inside a puzzle by design, so their last board is not graded.
+- **SCORE-GRADE-003** The end screen shows one stamp per puzzle in the order played, floors apart, each in its grade's
+  colour with its letter, and a legend; the text breakdown lists the letters ("P C P | R P M").
+- **SCORE-GRADE-004** Rough and Messy together cost at most 50 % of BaseScore.
+
+### Gold kept (SCORE-GOLD-001)
+
+Gold still held when the run ends adds one point per 5 gold, at most 15 % of BaseScore (lever L5 of
+`design/gold-and-items-concept.md`). It is its own ledger row, so spending now and scoring later are a visible choice.
+
 ### Score Formula
 
 ```
-BaseScore  = Total XP earned across all tiles
-PerfectBonus = +5% per puzzle completed without any mistakes
+BaseScore    = Total XP earned across all tiles
+PerfectBonus = +5% per Perfect puzzle
+RoughPenalty = −2% per Rough puzzle  ┐ together at most −50%
+MessyPenalty = −5% per Messy puzzle  ┘
 CursedBonus  = +10% per Cursed puzzle accepted and completed
 VictoryBonus = +25% if the run was completed (Floor 5 boss defeated)
-MistakePenalty = −2% per mistake, capped at −50%
+GoldKept     = +1 point per 5 gold held at the end, at most 15% of BaseScore
 
-FinalScore = BaseScore × (1 + PerfectBonus + CursedBonus + VictoryBonus + MistakePenalty)
+FinalScore = BaseScore × (1 + PerfectBonus + RoughPenalty + MessyPenalty + CursedBonus + VictoryBonus) + GoldKept
 ```
 
 Each row of the breakdown is its percentage of BaseScore, rounded to whole points (halves away from zero); FinalScore is
@@ -271,19 +304,25 @@ BaseScore plus the rows, so the shown breakdown always adds up and may differ fr
 
 ### Breakdown Display
 
-The end screen shows an itemized breakdown:
+The end screen shows an itemized breakdown (base 1 200; seven puzzles with 0, 0, 0, 1, 2, 3 and 5 mistakes; two cursed
+clears; victory; 212 gold kept):
 ```
 Run Score Breakdown
   Base (XP earned):    1 200
   Perfect puzzles ×3:  +180   (15%)
-  Cursed accepted ×2:  +240   (20%)
+  Rough puzzles ×2:     −48   (−4%)
+  Messy puzzles ×1:     −60   (−5%)
+  Cursed clears ×2:    +240   (20%)
   Victory bonus:       +300   (25%)
-  Mistakes ×8:         −192   (−16%)
+  Gold kept (212):      +42
   ──────────────────────────
-  Final Score:         1 728
+  Final Score:         1 854
+  Puzzles: P P P C R R M
 ```
 
-- Tracked in `PostRunAnalyticsService`: `PerfectPuzzleCount`, `CursedPuzzlesCompleted`, `RunScore`. Each mistake is counted when it happens, also in the puzzle that ends the run (GAP-059).
+- Tracked in `PostRunAnalyticsService`: each solved puzzle's mistakes and floor, `CursedPuzzlesCompleted`, `RunScore`;
+  `PostRunAnalytics.PuzzleGrades` and `GoldLeft` carry the grades and the gold to the end screen. Each mistake is counted
+  when it happens, also in the puzzle that ends the run (GAP-059).
 - Stored in `RunResult`: `PerfectPuzzleCount`, `CursedPuzzlesAccepted`, `RunScore`.
 - Score of 0 (e.g. immediate game over) suppresses the breakdown section.
 

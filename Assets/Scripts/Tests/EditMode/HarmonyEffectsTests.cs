@@ -93,8 +93,8 @@ namespace SudokuRoguelike.Tests
         {
             var h9 = StartRun(7803, 9);
             var h10 = StartRun(7803, 10);
-            var full = Math.Max(1, h10.State.MaxHP / 3);
-            Assert.AreEqual(Math.Max(1, h9.State.MaxHP / 3), h9.GetRestHealAmount());
+            var full = Math.Max(1, h10.State.MaxHP / 4);   // ECON-BAL-004: a quarter
+            Assert.AreEqual(Math.Max(1, h9.State.MaxHP / 4), h9.GetRestHealAmount());
             Assert.AreEqual((full + 1) / 2, h10.GetRestHealAmount());
         }
 

@@ -315,21 +315,10 @@ namespace SudokuRoguelike.Items
 
         // ── Pricing ──
 
-        public static int GetBasePrice(ItemRarity rarity)
-        {
-            return rarity switch
-            {
-                ItemRarity.Normal => 15,
-                ItemRarity.Rare => 30,
-                ItemRarity.Epic => 60,
-                _ => 15
-            };
-        }
+        public static int GetBasePrice(ItemRarity rarity) => Economy.GoldTable.BaseItemPrice(rarity);
 
-        public static int GetShopPrice(ItemRarity rarity, int floorIndex)
-        {
-            return (int)Math.Round(GetBasePrice(rarity) * (1f + floorIndex * 0.5f));
-        }
+        public static int GetShopPrice(ItemRarity rarity, int floorIndex) =>
+            Economy.GoldTable.ShopItemPrice(GetBasePrice(rarity), floorIndex);
 
         // ── Name & Description ──
 

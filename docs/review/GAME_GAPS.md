@@ -68,6 +68,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-057](#gap-057) | Changing a volume in a puzzle started the menu music | OPEN (not reproduced, 0.2.0 playtest) | LOW | P3 |
 | [GAP-058](#gap-058) | From the second board of a run on, lines were drawn over the digits | FIXED (0.2.0 playtest, 2026-10-20) | MEDIUM | P2 |
 | [GAP-059](#gap-059) | Mistakes counted toward the run only when a puzzle was solved | FIXED (0.2.0 playtest, 2026-10-20) | MEDIUM | P3 |
+| [GAP-060](#gap-060) | The trial the Warding Flame removed came back after Save & Quit at the boss gate | FIXED (found in review, 2026-10-21) | LOW | P3 |
 | [GAP-044](#gap-044) | Region borders showed the previous puzzle's regions on a same-size board | FIXED (found 2026-10-14 by the owner) | HIGH | P1 |
 | [GAP-043](#gap-043) | Without the `ActiveProfileSlot` pref the game opens an empty slot 0, not the existing profile | FIXED (0.1.5, found 2026-10-14) | LOW | P3 |
 
@@ -956,3 +957,13 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Root Cause:** `PostRunAnalyticsService.TotalMistakes` grew only in `RecordPuzzleSolved`.
 - **Fix:** `RecordMistake` counts each mistake when it happens (both places that add a mistake to the board); solving a puzzle only records its per-puzzle count. Weighting mistakes by when they happen is a separate owner decision (`docs/design/mistake-scoring-proposals.md`, RM-109). A run saved mid-puzzle before this build keeps the earlier mistakes of that one puzzle uncounted (they were never in the total); everything after the update counts.
 - **Tests:** `RunMistakeCountTests.EveryPuzzlesMistakes_CountAtTheEnd_AlsoThePuzzleThatEndedTheRun` (2 + 1 solved, 3 in the lost puzzle = 6; failed with 3 before the fix).
+
+## GAP-060
+**The trial the Warding Flame removed came back after Save & Quit at the boss gate**
+
+- **Requirement:** ItemsAndRelicsSystem (Warding Flame: remove the lowest offered trial, once per run), REQ-RUN-103 (a decision stays the same across Save & Quit)
+- **Status:** FIXED (found in the review of the boss-gate gold, 2026-10-21) · **Severity:** LOW · **Priority:** P3
+- **Problem:** Using the Warding Flame at the gate, then Save & Quit and Continue, showed the removed trial again, while the relic was used up.
+- **Root Cause:** only `RunState.WardingFlameUsed` was saved, not which trial it removed; the gate rolls the same offer again after a resume.
+- **Fix:** `RunDirector.TryUseWardingFlame(trial)` records the floor and the trial (`RunState.WardingFlameOnFloor`, `WardingFlameTrial`), the gate saves at once, and `ApplyGateRemovals` drops it (and a trial struck with gold, ECON-GATE-001) from every later offer of that gate.
+- **Tests:** `BossGateGoldTests.GateRemovals_DropTheStruckAndTheWardedTrial_AfterResume`.

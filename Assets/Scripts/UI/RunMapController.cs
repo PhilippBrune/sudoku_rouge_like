@@ -264,7 +264,7 @@ namespace SudokuRoguelike.UI
                     sb.Append(FormatModName(floorMods[i]));
                 }
             }
-            var intensity = BossService.IntensityForRunNumber(_run.State.RunNumber);
+            var intensity = _run.GetBossIntensity();
             sb.Append($" | Intensity: {intensity}");
             // DimLantern: reveal the modifier pool that will appear at the boss gate
             if (_run.State.DimLanternUsed)
@@ -428,6 +428,10 @@ namespace SudokuRoguelike.UI
             }
 
             var result = config.Clone();
+
+            // [REQ: ECON-GATE-002] The config was built at floor entry; the intensity the gate left the boss with applies.
+            if (node.Type == NodeType.Boss && _run.State != null)
+                result.Intensity = _run.GetBossIntensity();
 
             // Apply chosen boss modifiers (plural) at call time (after boss gate panel)
             if (node.Type == NodeType.Boss && _run.State != null && _run.State.ChosenBossModifiers != null)

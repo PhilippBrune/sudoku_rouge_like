@@ -24,9 +24,10 @@ namespace SudokuRoguelike.Save
         // [REQ: REQ-RUN-101] Abandoning a run records its result like any other defeat.
         public RunResult AbandonSavedRun(ProfileService profile)
         {
-            if (profile == null || !TryResumeFromSave(out var runState, out _)) return null;
+            if (profile == null || !TryResumeFromSave(out var runState, out var puzzleState)) return null;
             var abandoned = new RunDirector();
-            ApplyToRunDirector(abandoned, runState, null);
+            // The open puzzle is restored too, so a run left inside it grades that puzzle Messy (SCORE-GRADE-002).
+            ApplyToRunDirector(abandoned, runState, puzzleState);
             var result = RunResultFactory.Build(abandoned, victory: false, bossPhaseReached: 0, secondsPlayed: 0);
             profile.RecordRunAndGetNewUnlocks(result, abandoned.State);
             return result;

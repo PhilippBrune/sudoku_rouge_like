@@ -1,13 +1,14 @@
 # Items & Relics System
 
-**Version:** 2.1  
-**Date:** 2026-10-07  
+**Version:** 2.2  
+**Date:** 2026-10-21  
 **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.2 | 2026-10-21 | implemented | Item base prices ×2.5: Normal 40, Rare 75, Epic 150 (ECON-BAL-001, lever L1 of `design/gold-and-items-concept.md`, owner pick after the 0.2.0 playtest). The Warding Flame's removed trial is kept in the save (`RunState.WardingFlameOnFloor`/`WardingFlameTrial`): it used to come back after Save & Quit at the gate. |
 | 2.1 | 2026-10-07 | implemented | Item and relic reference tables regenerated from code (SPEC-MAC-001); standalone items documented as rolled (SPEC-CONF-035); multi-relic without cap, RELIC-SLOT-001 deprecated (SPEC-CONF-004); shop offer counts 2/2/3/3/4 (SPEC-CONF-005); reward reroll and Nothing gold (GAP-015, SPEC-AMB-007); full-bag purchase rule (GAP-036). |
 
 ## Overview
@@ -117,7 +118,7 @@ SPEC-MAC-001: the item and relic tables removed in the v2.0 rewrite, regenerated
 
 ### Items
 
-Base shop price by rarity: Normal 15 gold, Rare 30 gold, Epic 60 gold; shop price = base × (1 + 0.5 × floor index) × relic/class modifiers × Harmony surcharge (GoldEconomySystem).
+Base shop price by rarity: Normal 40 gold, Rare 75 gold, Epic 150 gold (×2.5 since 2026-10-21, ECON-BAL-001; they were 15 / 30 / 60); shop price = base × (1 + 0.5 × floor index) × relic/class modifiers × Harmony surcharge (GoldEconomySystem).
 
 | Item | Id | Rarity | Charges | Effect (by rarity where tiered: Epic / Rare / Normal) |
 |------|----|--------|:------:|--------|

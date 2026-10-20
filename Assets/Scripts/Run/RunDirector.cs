@@ -636,6 +636,14 @@ namespace SudokuRoguelike.Run
             RelicService.OnHpChanged(State);
         }
 
+        public const int LateFloorIndex = 3;   // Floor 4
+        public const int LateFloorMistakeHp = 2;
+
+        /// <summary>[REQ: ECON-BAL-003] The least a mistake costs on this floor: 2 HP from Floor 4 of a Garden Run, else 1.</summary>
+        public static int LateFloorMistakeHpCost(RunState state) =>
+            state != null && state.Mode == GameMode.GardenRun && !state.TutorialMode && !state.IsSeasonalChallenge
+                && state.CurrentFloor >= LateFloorIndex ? LateFloorMistakeHp : 1;
+
         /// <summary>
         /// Debuff-aware mistake penalty. Triggers RowWipe, ColWipe, PencilBlind, CellLock, DoublePenalty
         /// based on active modifiers in the current level config.
@@ -647,6 +655,9 @@ namespace SudokuRoguelike.Run
             // [REQ: DEBUFF-HOOK-002] DoublePenalty doubles it.
             // [REQ: CURSE-INT-002] phantom_pain curse raises base damage to 2
             var damage = Math.Max(1, State.MistakeHpCost);
+            // [REQ: ECON-BAL-003] From Floor 4 of a Garden Run a mistake costs at least 2 HP, at every Harmony level
+            // (gold-and-items concept L6): healing and shield items become survival tools late in a run.
+            damage = Math.Max(damage, LateFloorMistakeHpCost(State));
             if (IsDebuffActive(BossModifierId.DoublePenalty)) damage *= 2;
             damage = Math.Max(damage, CurseService.GetMistakeDamage(State)); // phantom_pain
             ApplyMistakePenalty(damage);
@@ -1663,7 +1674,7 @@ namespace SudokuRoguelike.Run
             _curseService.OnPuzzleComplete(State, level.PerfectSoFar && level.Mistakes == 0);
 
             TileXpLog.Add(xpEntry);
-            _analytics?.RecordPuzzleSolved(level.Mistakes, goldBase);
+            _analytics?.RecordPuzzleSolved(level.Mistakes, goldBase, State.CurrentFloor);
             _analytics?.RecordTileXp(xpEntry);
 
             if (config.IsBoss && !State.IsSeasonalChallenge)
@@ -2626,7 +2637,7 @@ namespace SudokuRoguelike.Run
                 MissingPercent = StarDensityService.MissingPercentForStars(stars),
                 IsBoss = save.IsBoss,
                 Seed = State.Seed + State.CurrentFloor * 997 + State.CurrentNodeIndex * 13,
-                Intensity = BossService.IntensityForRunNumber(State.RunNumber),
+                Intensity = save.IsBoss ? GetBossIntensity() : BossService.IntensityForRunNumber(State.RunNumber),
                 Difficulty = MapDifficulty(State.CurrentFloor, stars)
             };
 

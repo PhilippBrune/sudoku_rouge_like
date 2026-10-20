@@ -1,11 +1,12 @@
 # Proposals: how mistakes count toward the run score
 
-**Version:** 1.0 | **Date:** 2026-10-20 | **Status:** new (proposal for the owner; the run score stays as GameDesignSpec §9c says until one is picked)
+**Version:** 1.1 | **Date:** 2026-10-21 | **Status:** implemented (owner pick C, built as GameDesignSpec 1.14 §9c, SCORE-GRADE-001..004)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.1 | 2026-10-21 | implemented | Owner pick: **C · Per-puzzle grades**. Built as GameDesignSpec 1.14 §9c (SCORE-GRADE-001..004), together with the gold-kept row (SCORE-GOLD-001); screenshot below. |
 | 1.0 | 2026-10-20 | new | Owner's 0.2.0 playtest: "only the mistakes of the last puzzle count; every mistake should count, with a fitting weight for when it happens". The counting bug is fixed (GAP-059); this document proposes the weighting. Roadmap item RM-109. |
 
 ## Where it stands
@@ -64,6 +65,12 @@ Base XP 400; six puzzles with 0, 1, 0, 3, 0, 2 mistakes, the 3 on a 3★ Floor 2
 | C · Grades | Perfect ×3 +15 %, Clean 0, Rough −2 %, Rough −2 % | 400 × 1.11 = 444 |
 | D · Moment | −(1 + 1 + 3 + 3 + 1 + 3) % = −12 % | 412 |
 
-## Decision for the owner
+## Decision (owner, 2026-10-20; built 2026-10-21)
 
-Pick A, B, C, D or a mix (C with A's star weights, for example). The chosen rule goes into GameDesignSpec §9c with requirement IDs and replaces `RunScoreBreakdown`'s mistake row; the end-screen ledger and its tests follow.
+The owner picked **C**. It is built as GameDesignSpec 1.14 §9c: the grades replace the flat mistake row and the perfect bonus in `RunScoreBreakdown`, the puzzle that ends a run is Messy, Rough and Messy together stop at −50 %, and the run-end scroll shows one stamp per puzzle, floors apart, with a legend (`RunGradeStamps`). The text breakdown of the other modes lists the letters. The example above gives 444 in the game (`RunScoreBreakdownTests.SpecExample_Base400_Gives444`).
+
+Before (one mistake row) and after (a stamp per puzzle, Rough and Messy rows, and the gold kept):
+
+![Run end before](layout-proposals/after_run_end_victory.jpg)
+
+![Run end with grades](layout-proposals/after_run_end_grades.jpg)

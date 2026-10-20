@@ -68,7 +68,8 @@ namespace SudokuRoguelike.Run
                 IsElite = isElite,
                 IsPreBoss = isPreBoss,
                 Seed = rng.Next(),
-                Intensity = BossService.IntensityForRunNumber(State.RunNumber),
+                // [REQ: ECON-GATE-002] The boss puzzle uses the intensity the gate left it with.
+                Intensity = isBoss ? GetBossIntensity() : BossService.IntensityForRunNumber(State.RunNumber),
                 Difficulty = MapDifficulty(floor, stars)
             };
 

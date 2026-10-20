@@ -47,7 +47,8 @@ namespace SudokuRoguelike.UI
         public static readonly Color CellNumberOnSelected = new(0.10f, 0.08f, 0.05f, 1f);
         // A given digit under fog (the dark ink blot) is written in paper colour, ~10:1 against CellFog.
         public static readonly Color CellNumberOnFog = new(0.95f, 0.91f, 0.82f, 1f);
-        public static readonly Color PencilMarkColor  = new(0.36f, 0.31f, 0.24f, 0.95f);
+        // [REQ: UI-STYLE-020] Pencil marks in the Pencil mode's indigo ink, so the pad and the marks belong together.
+        public static readonly Color PencilMarkColor  = new(0.204f, 0.318f, 0.541f, 0.95f);
 
         // Cell highlight overlays
         public static readonly Color AntiknightForbid    = new(0.55f, 0.20f, 0.60f, 0.55f);

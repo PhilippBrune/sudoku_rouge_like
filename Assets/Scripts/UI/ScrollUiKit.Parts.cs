@@ -87,6 +87,9 @@ namespace SudokuRoguelike.UI
 
         internal static readonly Color WoodLight = new Color(0.84f, 0.62f, 0.38f, 1f);
         internal static readonly Color WoodTileText = new Color(0.20f, 0.11f, 0.05f, 1f);
+        // [REQ: UI-STYLE-020] Pencil mode: the number pad turns indigo ink with paper-white digits (owner pick A, 0.2.0 playtest).
+        internal static readonly Color IndigoInk = new Color(0.204f, 0.318f, 0.541f, 1f);
+        internal static readonly Color IndigoTileText = new Color(0.953f, 0.918f, 0.839f, 1f);
 
         /// <summary>
         /// A hanging scroll: paper with moss brocade bands, a wooden rod across the top and the bottom (wider than the
@@ -180,13 +183,19 @@ namespace SudokuRoguelike.UI
             image.sprite = Rounded(10f);
             image.type = Image.Type.Sliced;
             image.color = Color.white;
-            var colors = StateColors(WoodLight);
-            colors.disabledColor = new Color(0.48f, 0.36f, 0.24f, 0.45f);
-            colors.selectedColor = new Color(0.98f, 0.82f, 0.50f, 1f);
-            button.colors = colors;
+            SetTileInk(button, false);
             var shadow = image.gameObject.GetComponent<Shadow>() ?? image.gameObject.AddComponent<Shadow>();
             shadow.effectColor = new Color(0.25f, 0.14f, 0.06f, 0.75f);
             shadow.effectDistance = new Vector2(0f, -5f);
+        }
+
+        /// <summary>The number pad tile's state colours: warm wood for Solve, indigo ink for Pencil (UI-STYLE-020).</summary>
+        internal static void SetTileInk(Button button, bool pencil)
+        {
+            var colors = StateColors(pencil ? IndigoInk : WoodLight);
+            colors.disabledColor = pencil ? new Color(0.20f, 0.24f, 0.34f, 0.45f) : new Color(0.48f, 0.36f, 0.24f, 0.45f);
+            colors.selectedColor = pencil ? new Color(0.36f, 0.50f, 0.78f, 1f) : new Color(0.98f, 0.82f, 0.50f, 1f);
+            button.colors = colors;
         }
 
         /// <summary>A paper slip pinned with a vermilion pin: the look of the rule notes beside the puzzle.</summary>

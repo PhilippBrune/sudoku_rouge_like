@@ -798,7 +798,8 @@ namespace SudokuRoguelike.Tests
             Probe($"  RunDirector shop reroll cost 0: {run.GetShopRerollCost()}; rest heal amount (MaxHP {run.State.MaxHP}): {run.GetRestHealAmount()} (GDS: +2 HP)");
             for (var size = 5; size <= 9; size++)
             for (var s = 1; s <= 6; s++)
-                Assert.AreEqual(Mathf.RoundToInt(baseGold[size - 5] * (1 + s * 0.2f)), GoldTable.CalculatePuzzleGold(size, s));
+                Assert.AreEqual(Mathf.RoundToInt(baseGold[size - 5] * (1 + s * 0.2f) * 0.8f), GoldTable.CalculatePuzzleGold(size, s),
+                    "ECON-BAL-002: four fifths of the table");
             Assert.AreEqual(20, GoldTable.PencilBuyCost(0));
             Assert.AreEqual(40, GoldTable.PencilBuyCost(1));
         }

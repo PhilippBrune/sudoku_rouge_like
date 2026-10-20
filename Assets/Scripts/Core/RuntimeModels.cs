@@ -180,6 +180,16 @@ namespace SudokuRoguelike.Core
         // [REDESIGN] AccurateMap: guarantee one relic-tier node this floor (read by RunDirector).
         public bool BonusRelicNodeThisFloor;
         public bool WardingFlameUsed;      // LanternSeer L30: once-per-run auto-remove used
+        // [REQ: ECON-GATE-001] Gold at the boss gate: the floor NUMBER (1-based; 0 = none, so a save without the key reads
+        // as "nothing struck") whose gate had a trial struck, and which trial.
+        public int BossTrialStruckOnFloor;
+        public BossModifierId BossTrialStruck;
+        // [REQ: ECON-GATE-002] The floor number (1-based; 0 = none) whose boss had its intensity lowered one step.
+        public int BossIntensityLoweredOnFloor;
+        // The trial the Warding Flame removed and the floor number of that gate (0 = none), so it stays removed after
+        // Save & Quit at the gate.
+        public int WardingFlameOnFloor;
+        public BossModifierId WardingFlameTrial;
 
         // [HARMONY-001] Harmony difficulty level for this run (0-10). Set by RunArchetypeService.
         public int HarmonyLevel;
@@ -629,5 +639,29 @@ namespace SudokuRoguelike.Core
         public int BaseXp;
         /// <summary>The Floor 5 boss was defeated (the run score's victory bonus).</summary>
         public bool RunCompleted;
+        /// <summary>[REQ: SCORE-GRADE-001] One grade per puzzle in the order played; the puzzle that ended the run last.</summary>
+        public List<PuzzleGradeEntry> PuzzleGrades = new List<PuzzleGradeEntry>();
+        /// <summary>[REQ: SCORE-GOLD-001] Gold still held when the run ended.</summary>
+        public int GoldLeft;
+    }
+
+    /// <summary>[REQ: SCORE-GRADE-001] A puzzle's grade from its own mistakes (GameDesignSpec §9c).</summary>
+    public enum PuzzleGrade
+    {
+        Perfect,
+        Clean,
+        Rough,
+        Messy
+    }
+
+    [Serializable]
+    public sealed class PuzzleGradeEntry
+    {
+        /// <summary>Floor index (0-based); -1 when unknown (a run saved before grades were recorded).</summary>
+        public int Floor = -1;
+        public int Mistakes;
+        /// <summary>The run ended in this puzzle; it counts as Messy (SCORE-GRADE-002).</summary>
+        public bool EndedRun;
+        public PuzzleGrade Grade;
     }
 }

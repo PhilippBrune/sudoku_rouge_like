@@ -11,6 +11,7 @@ namespace SudokuRoguelike.UI
     /// Owns the numpad and pencil-mode toggle button.
     /// [REQ: UI-STYLE-002] The digits are wooden tiles; the controller cursor is a gold ring around a tile (it no longer
     /// recolours the tile, which used to hide the disabled and completed states); Solve | Pencil is a two-part switch.
+    /// [REQ: UI-STYLE-020] In Pencil mode the tiles and the switch's Pencil half turn indigo ink with paper-white digits.
     /// </summary>
     public sealed class NumpadViewController : MonoBehaviour
     {
@@ -64,9 +65,18 @@ namespace SudokuRoguelike.UI
                 var img = btn.GetComponent<Image>();
                 if (img != null)
                     img.color = completed ? new Color(0.70f, 0.66f, 0.60f, 1f) : Color.white;
-                var label = btn.transform.Find("L")?.GetComponent<Text>();
-                if (label != null)
-                    label.color = inRange && !completed ? ScrollUiKit.WoodTileText : new Color(0.20f, 0.11f, 0.05f, 0.35f);
+            }
+            RefreshDigitInk();
+        }
+
+        // Digits in the mode's ink (dark on wood, paper-white on indigo); a tile that takes no input fades.
+        private void RefreshDigitInk()
+        {
+            var ink = _pencilMode ? ScrollUiKit.IndigoTileText : ScrollUiKit.WoodTileText;
+            foreach (var btn in _numpadButtons)
+            {
+                var label = btn != null ? btn.transform.Find("L")?.GetComponent<Text>() : null;
+                if (label != null) label.color = btn.interactable ? ink : new Color(ink.r, ink.g, ink.b, 0.35f);
             }
         }
 
@@ -87,9 +97,13 @@ namespace SudokuRoguelike.UI
         {
             _pencilMode = on;
             if (_solveHalf != null) _solveHalf.color = on ? SegmentOff : SegmentOn;
-            if (_pencilHalf != null) _pencilHalf.color = on ? SegmentOn : SegmentOff;
+            if (_pencilHalf != null) _pencilHalf.color = on ? ScrollUiKit.IndigoInk : SegmentOff;
             if (_solveLabel != null) _solveLabel.color = on ? SegmentTextOff : SegmentTextOn;
-            if (_pencilLabel != null) _pencilLabel.color = on ? SegmentTextOn : SegmentTextOff;
+            if (_pencilLabel != null) _pencilLabel.color = on ? ScrollUiKit.IndigoTileText : SegmentTextOff;
+            if (_numpadButtons == null) return;
+            foreach (var button in _numpadButtons)
+                if (button != null) ScrollUiKit.SetTileInk(button, on);
+            RefreshDigitInk();
         }
 
         private void BuildNumpad()
@@ -98,7 +112,9 @@ namespace SudokuRoguelike.UI
             _numpadButtons.Clear();
             InRunUiFactory.ClearChildren(_numpadRoot);
 
-            var grid = _numpadRoot.GetComponent<GridLayoutGroup>() ?? _numpadRoot.gameObject.AddComponent<GridLayoutGroup>();
+            // Explicit null check: Unity's missing-component "null" is not null to ?? (fake null).
+            var grid = _numpadRoot.GetComponent<GridLayoutGroup>();
+            if (grid == null) grid = _numpadRoot.gameObject.AddComponent<GridLayoutGroup>();
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             grid.constraintCount = 3;
             grid.cellSize = new Vector2(110, 96);

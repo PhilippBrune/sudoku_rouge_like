@@ -6,6 +6,7 @@ using System.Linq;
 using NUnit.Framework;
 using SudokuRoguelike.Boss;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Data;
 using SudokuRoguelike.Run;
 using SudokuRoguelike.Save;
 using SudokuRoguelike.UI;
@@ -178,6 +179,56 @@ namespace SudokuRoguelike.Tests
             Assert.IsTrue(debuff.HasValue);
             var curse = FindObject(h.Host, "GateDebuff").GetComponent<Text>();
             StringAssert.Contains(BossService.GetModifierName(debuff.Value), curse.text);
+        }
+
+        // [REQ: ECON-GATE-001] [REQ: ECON-GATE-002] Gold at the gate (gold-and-items concept L2): on Floor 3 with 500 gold,
+        // "Strike a trial" and a click on a trial removes it for 180 gold, and the boss takes 2 of 3; "Lower intensity"
+        // takes High to Medium for 120 gold. Both buttons then name what they did and cannot be used again.
+        [UnityTest]
+        [Requirement("ECON-GATE-001", "ECON-GATE-002")]
+        public IEnumerator BossGate_GoldStrikesATrial_AndLowersTheIntensity()
+        {
+            var h = StartPuzzle(8616);
+            h.Run.State.CurrentFloor = 2;
+            h.Run.State.RunNumber = 6;
+            h.Run.State.CurrentGold = 500;
+            yield return null;
+            var gate = h.Host.GetComponentInChildren<BossGateViewController>(true);
+            gate.ShowBossGateChoice();
+            yield return null;
+            StringAssert.Contains("500", FindObject(h.Host, "GatePurse").GetComponent<Text>().text);
+            var struck = h.Run.RollBossModifierChoices()[0];
+
+            ClickButton(h.Host, "BtnStrikeTrial");
+            yield return null;
+            ClickButton(h.Host, "Mod_0");
+            yield return null;
+
+            Assert.AreEqual(320, h.Run.State.CurrentGold, "180 gold on Floor 3");
+            Assert.AreEqual(struck, h.Run.StruckBossTrial);
+            Assert.IsNotNull(FindObjectOrNull(h.Host, "Mod_2"));
+            Assert.IsNull(FindObjectOrNull(h.Host, "Mod_3"), "three trials left");
+            Assert.AreEqual(LocalizationService.FormatPlural(2, "InRun.BossGate.Choose.One", "InRun.BossGate.Choose",
+                    "Choose {0} of {1} trials", "Choose {0} of {1} trials", 3),
+                FindObject(h.Host, "GateChoose").GetComponent<Text>().text, "the boss takes 2 of 3");
+            Assert.IsFalse(FindObject(h.Host, "BtnStrikeTrial").GetComponent<Button>().interactable, "once per gate");
+
+            ClickButton(h.Host, "BtnLowerIntensity");
+            yield return null;
+
+            Assert.AreEqual(200, h.Run.State.CurrentGold, "120 gold on Floor 3");
+            StringAssert.Contains(BossService.GetIntensityName(BossModifierIntensity.Medium),
+                FindObject(h.Host, "GateIntensity").GetComponent<Text>().text);
+            Assert.IsFalse(FindObject(h.Host, "BtnLowerIntensity").GetComponent<Button>().interactable);
+
+            List<BossModifierId> confirmed = null;
+            gate.OnModsConfirmed += mods => confirmed = mods;
+            ClickButton(h.Host, "Mod_0");
+            ClickButton(h.Host, "Mod_1");
+            ClickButton(h.Host, "ConfirmBossBtn");
+            yield return new WaitForSecondsRealtime(0.5f);
+            Assert.AreEqual(2, confirmed?.Count, "two trials for the boss");
+            CollectionAssert.DoesNotContain(confirmed, struck);
         }
 
         // [REQ: UI-STYLE-004] Trial scroll: picked trials are ticked, the count follows, Confirm unlocks at the
@@ -383,6 +434,43 @@ namespace SudokuRoguelike.Tests
                 "the placed digit is highlighted");
         }
 
+        // [REQ: UI-STYLE-020] Pencil mode (owner pick A, 0.2.0 playtest): the number pad tiles and the switch's Pencil half
+        // turn indigo ink with paper-white digits, and the marks on the board are written in the same indigo. Solve mode
+        // brings the warm wood back.
+        [UnityTest]
+        [Requirement("UI-STYLE-020")]
+        public IEnumerator PencilMode_TurnsTheNumberPadIndigo_AndSolveBringsTheWoodBack()
+        {
+            var h = StartPuzzle(8613);
+            for (var frame = 0; frame < 30 && FindObjectOrNull(h.Host, "C_0_0") == null; frame++)
+                yield return null;
+            var tile = FindObject(h.Host, "Num_1").GetComponent<Button>();
+            var digit = FindObject(tile.gameObject, "L").GetComponent<Text>();
+            var pencilHalf = FindObject(h.Host, "PencilHalf").GetComponent<Image>();
+            Assert.Greater(tile.colors.normalColor.r, tile.colors.normalColor.b, "Solve mode: a warm wooden tile");
+
+            ClickButton(h.Host, "PencilBtn");
+            yield return null;
+            Assert.IsTrue(h.Host.GetComponentInChildren<NumpadViewController>(true).PencilMode);
+            AssertIndigo(tile.colors.normalColor, "the tile");
+            AssertIndigo(pencilHalf.color, "the switch's Pencil half");
+            Assert.Greater(Brightness(digit.color), 0.8f, "paper-white digits on the indigo tile");
+            AssertIndigo(GamePalette.PencilMarkColor, "the pencil marks on the board");
+            var cell = EmptyCells(h.Run)[0];
+            Assert.AreEqual(GamePalette.PencilMarkColor, PencilLabel(h, cell.row, cell.col).color, "marks use the pencil ink");
+
+            ClickButton(h.Host, "PencilBtn");
+            yield return null;
+            Assert.Greater(tile.colors.normalColor.r, tile.colors.normalColor.b, "Solve mode brings the wood back");
+            Assert.Less(Brightness(digit.color), 0.3f, "dark digits on the wood");
+        }
+
+        private static void AssertIndigo(Color c, string what)
+        {
+            Assert.Greater(c.b, c.r + 0.2f, $"{what} is indigo (blue over red)");
+            Assert.Greater(c.b, c.g + 0.1f, $"{what} is indigo (blue over green)");
+        }
+
         private static Text PencilLabel(Harness h, int row, int col) =>
             FindObject(FindObject(h.Host, $"N_{row}_{col}"), "Pencil").GetComponent<Text>();
 
@@ -439,10 +527,9 @@ namespace SudokuRoguelike.Tests
             var h = StartPathMap(8607);
             yield return null;
             yield return null;
-            // The run's intro card covers the screen until it is dismissed, as it does for the player.
-            var intro = Object.FindObjectsByType<Button>(FindObjectsInactive.Exclude, FindObjectsSortMode.None)
-                .FirstOrDefault(b => b.name == "RunIntroCard");
-            if (intro != null) intro.onClick.Invoke();
+            // The run's intro card and the floor's painting cover the screen until they are dismissed, as for the player.
+            ClickRunIntroCard();
+            h.Host.GetComponentInChildren<InRunController>(true).DismissFloorEntry(false);
             yield return null;
             yield return null;
             var viewport = FindObject(h.Host, "PathViewport").GetComponent<RectTransform>();
@@ -455,6 +542,82 @@ namespace SudokuRoguelike.Tests
             Assert.IsNotEmpty(hits, "nothing takes a pointer at the bottom-left of the route");
             Assert.AreEqual("PathOverlay", hits[0].gameObject.name, "the route content takes the drag");
             Assert.NotNull(hits[0].gameObject.GetComponentInParent<ScrollRect>());
+        }
+
+        // [REQ: UI-STYLE-021] Garden flow D: after the class card the first floor is entered with its painting and its name
+        // on a hanging banner; the painting takes every click meanwhile. After two seconds it fades and the path scroll
+        // is open at full width. The next floor is entered the same way, and each floor only once.
+        [UnityTest]
+        [Requirement("UI-STYLE-021")]
+        public IEnumerator FloorEntry_ShowsThePaintingAndName_ThenThePathUnrolls_OncePerFloor()
+        {
+            var h = StartPathMap(8614);
+            yield return null;
+            yield return null;
+            var controller = h.Host.GetComponentInChildren<InRunController>(true);
+            Assert.IsFalse(controller.IsFloorEntryShowing, "the class card comes first");
+            ClickRunIntroCard();
+            yield return null;
+
+            Assert.IsTrue(controller.IsFloorEntryShowing, "the first floor is entered after the class card");
+            var entry = FindObject(h.Host, "FloorEntry");
+            Assert.AreEqual(FloorThemeData.GetFloorName(0), FindObject(entry, "FloorEntryName").GetComponent<Text>().text);
+            StringAssert.Contains("1", FindObject(entry, "FloorEntryEyebrow").GetComponent<Text>().text);
+            Assert.NotNull(FindObject(entry, "Backdrop").GetComponent<RawImage>().texture, "the floor's painting");
+            Assert.IsTrue(entry.GetComponent<Image>().raycastTarget, "the path behind the painting takes no clicks");
+
+            yield return new WaitForSecondsRealtime(InRunController.FloorEntrySeconds + 0.8f);
+            Assert.IsFalse(controller.IsFloorEntryShowing);
+            Assert.IsNull(FindObjectOrNull(h.Host, "FloorEntry"), "the painting is gone");
+            Assert.AreEqual(Vector3.one, FindObject(h.Host, "PathScroll").transform.localScale, "the scroll is fully open");
+
+            var showPath = typeof(InRunController).GetMethod("ShowPath",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            showPath.Invoke(controller, null);
+            Assert.IsFalse(controller.IsFloorEntryShowing, "returning to the same floor's path shows no entry");
+
+            h.Run.AdvanceToNextFloor();
+            showPath.Invoke(controller, null);
+            Assert.IsTrue(controller.IsFloorEntryShowing, "the next floor is entered");
+            Assert.AreEqual(FloorThemeData.GetFloorName(1),
+                FindObject(FindObject(h.Host, "FloorEntry"), "FloorEntryName").GetComponent<Text>().text);
+            FindObject(h.Host, "FloorEntry").GetComponent<Button>().onClick.Invoke();
+            Assert.IsFalse(controller.IsFloorEntryShowing, "a click skips it");
+            yield return null;
+
+            // A puzzle opened while the scroll unrolls ends the unroll at once: no painting is left over the board and the
+            // scroll is at full width.
+            controller.DismissFloorEntry(false);
+            yield return null;
+            Assert.IsNull(FindObjectOrNull(h.Host, "FloorEntry"), "the fading painting is gone");
+            Assert.AreEqual(Vector3.one, FindObject(h.Host, "PathScroll").transform.localScale);
+        }
+
+        // [REQ: UI-STYLE-021] A run resumed inside a puzzle has entered its floor: solving the puzzle and returning to the
+        // path shows no floor entry (review finding: the painting covered the reward flow).
+        [UnityTest]
+        [Requirement("UI-STYLE-021")]
+        public IEnumerator FloorEntry_RunResumedInsideAPuzzle_ReturnsToThePathWithoutIt()
+        {
+            var h = StartPuzzle(8615);
+            yield return null;
+            yield return null;
+            ClickRunIntroCard();
+            yield return null;
+            var controller = h.Host.GetComponentInChildren<InRunController>(true);
+            Assert.IsFalse(controller.IsFloorEntryShowing, "the puzzle is on screen");
+
+            typeof(InRunController).GetMethod("ShowPath",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).Invoke(controller, null);
+
+            Assert.IsFalse(controller.IsFloorEntryShowing, "the floor of the open puzzle was entered already");
+        }
+
+        private static void ClickRunIntroCard()
+        {
+            var intro = Object.FindObjectsByType<Button>(FindObjectsInactive.Exclude, FindObjectsSortMode.None)
+                .FirstOrDefault(b => b.name == "RunIntroCard");
+            if (intro != null) intro.onClick.Invoke();
         }
 
         // ── In-run menu (GAP-020) ──

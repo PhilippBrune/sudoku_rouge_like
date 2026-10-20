@@ -8,6 +8,15 @@
 - Number keys work on the reward, shop, rest and event screens (they did nothing), and with more than three rewards the plaques shrink to fit instead of running off the screen; the key hint names every plaque.
 - Lines, dots and cage marks stay under the digits on every board (from the second puzzle of a run on they covered them).
 - Every mistake counts toward the run score when it happens, also in the puzzle that ends the run.
+- The trial the Warding Flame removed at a boss gate stays removed after Save & Quit.
+
+### New
+
+- **Entering a floor** shows the floor's painting for two seconds with its name on a hanging banner, then the path scroll unrolls (a click or any key skips it).
+- **Pencil mode in indigo:** the number pad turns indigo with paper-white digits, and the pencil marks are indigo too.
+- **A grade for every puzzle:** Perfect (no mistake) +5 %, Clean (one) ±0, Rough (two or three) −2 %, Messy (four or more, or the puzzle that ends the run) −5 %. The end of a run shows one stamp per puzzle, floor by floor. This replaces the flat −2 % per mistake.
+- **Gold at the boss gate:** strike one of the offered trials (the boss then takes one trial fewer) or lower the boss's intensity one step, each once per gate.
+- **Gold kept counts:** every 5 gold left at the end of a run adds a point to the run score (up to 15 %).
 
 ### Changed
 
@@ -15,6 +24,8 @@
 - After a boss, the numbers show the boss fight and the whole floor side by side.
 - The main menu shows the game's version.
 - Custom Puzzle: a Random button fills the tray with as many random rules as you choose (1–5).
+- Gold matters more: items cost 2.5 times as much (Normal 40, Rare 75, Epic 150 before the floor's markup) and puzzles pay a fifth less gold.
+- From Floor 4 a mistake costs at least 2 HP, and the rest heals a quarter of your HP instead of a third.
 
 ## 0.2.0 — 6th iteration (2026-10-20)
 

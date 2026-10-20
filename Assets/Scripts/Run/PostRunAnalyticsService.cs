@@ -18,12 +18,17 @@ namespace SudokuRoguelike.Run
         public bool PencilEverUsed;
         public List<TileXpEntry> TileXpLog = new List<TileXpEntry>();
         [UnityEngine.SerializeField] private List<int> _mistakesPerPuzzle = new List<int>();
+        // Floor of each solved puzzle, parallel to _mistakesPerPuzzle (SCORE-GRADE-003); shorter in older saves.
+        [UnityEngine.SerializeField] private List<int> _floorPerPuzzle = new List<int>();
 
-        public void RecordPuzzleSolved(int mistakes, int goldEarned)
+        public void RecordPuzzleSolved(int mistakes, int goldEarned, int floor = -1)
         {
             TotalPuzzlesSolved++;
             TotalGoldEarned += goldEarned;
+            // A save from before floors were recorded has fewer floors than puzzles; pad so the two lists stay parallel.
+            while (_floorPerPuzzle.Count < _mistakesPerPuzzle.Count) _floorPerPuzzle.Add(-1);
             _mistakesPerPuzzle.Add(mistakes);
+            _floorPerPuzzle.Add(floor);
         }
 
         /// <summary>
@@ -84,7 +89,11 @@ namespace SudokuRoguelike.Run
             return total;
         }
 
-        public PostRunAnalytics Build()
+        /// <summary>
+        /// The run's analytics and score. <paramref name="goldLeft"/> is the gold still held (SCORE-GOLD-001);
+        /// <paramref name="lostPuzzleFloor"/> is the floor of the unsolved puzzle that ended the run, or -1 (SCORE-GRADE-002).
+        /// </summary>
+        public PostRunAnalytics Build(int goldLeft = 0, int lostPuzzleFloor = -1, int lostPuzzleMistakes = 0)
         {
             var result = new PostRunAnalytics
             {
@@ -112,8 +121,10 @@ namespace SudokuRoguelike.Run
             result.CursedPuzzlesCompleted = CursedPuzzlesCompleted;
             result.BaseXp = GetTotalXp();
             result.RunCompleted = RunCompleted;
-            result.RunScore = CalculateRunScore(TileXpLog, PerfectPuzzleCount, CursedPuzzlesCompleted,
-                TotalMistakes, RunCompleted);
+            result.GoldLeft = System.Math.Max(0, goldLeft);
+            result.PuzzleGrades = BuildPuzzleGrades(lostPuzzleFloor, lostPuzzleMistakes);
+            result.RunScore = RunScoreBreakdown.Calculate(result.BaseXp, RunScoreBreakdown.GradesOf(result.PuzzleGrades),
+                CursedPuzzlesCompleted, RunCompleted, result.GoldLeft).Total;
 
             if (TotalMistakes > 5)
                 result.ImprovementSuggestions.Add("Try using pencil marks to reduce mistakes.");
@@ -123,13 +134,27 @@ namespace SudokuRoguelike.Run
             return result;
         }
 
-        /// <summary>Run score (GameDesignSpec §9c): the base XP plus each bonus and the penalty as a share of it (GAP-053).</summary>
-        public static int CalculateRunScore(List<TileXpEntry> tiles, int perfectPuzzles,
-            int cursedCompleted, int totalMistakes, bool victory)
+        // [REQ: SCORE-GRADE-001] [REQ: SCORE-GRADE-002] One grade per solved puzzle in the order played, then the puzzle
+        // that ended the run as Messy.
+        private List<PuzzleGradeEntry> BuildPuzzleGrades(int lostPuzzleFloor, int lostPuzzleMistakes)
         {
-            var totalXp = 0;
-            for (var i = 0; i < tiles.Count; i++) totalXp += tiles[i].TotalXp;
-            return RunScoreBreakdown.Calculate(totalXp, perfectPuzzles, cursedCompleted, totalMistakes, victory).Total;
+            var grades = new List<PuzzleGradeEntry>(_mistakesPerPuzzle.Count + 1);
+            for (var i = 0; i < _mistakesPerPuzzle.Count; i++)
+                grades.Add(new PuzzleGradeEntry
+                {
+                    Floor = i < _floorPerPuzzle.Count ? _floorPerPuzzle[i] : -1,
+                    Mistakes = _mistakesPerPuzzle[i],
+                    Grade = RunScoreBreakdown.GradeFor(_mistakesPerPuzzle[i])
+                });
+            if (lostPuzzleFloor >= 0)
+                grades.Add(new PuzzleGradeEntry
+                {
+                    Floor = lostPuzzleFloor,
+                    Mistakes = lostPuzzleMistakes,
+                    EndedRun = true,
+                    Grade = PuzzleGrade.Messy
+                });
+            return grades;
         }
     }
 }

@@ -364,6 +364,8 @@ namespace SudokuRoguelike.UI
             _completionHandled = false;
             _spiritTrialsTimerStarted = false;
             _introCardShown    = false;   // #12
+            _floorEntryShownFor = -1;     // UI-STYLE-021
+            DismissFloorEntry(false);
             _prevReachableIndices.Clear(); // #3
             _endScreenView.ResetShown();
             RefreshAccessibility();
@@ -560,6 +562,14 @@ namespace SudokuRoguelike.UI
 
             if (!_resumeApplied) { ApplyResumeState(); return; }
 
+            // UI-STYLE-021: a click or any key skips the floor's painting; nothing behind it reacts meanwhile.
+            if (IsFloorEntryShowing)
+            {
+                if (FloorEntrySkipPressed()) DismissFloorEntry(true);
+                _inputRemap.Tick();
+                return;
+            }
+
             // Poll async puzzle generation completion; finalize state and show puzzle once ready.
             if (_pendingAsyncLevel != null && run.TryCompleteAsyncLevel())
             {
@@ -685,14 +695,17 @@ namespace SudokuRoguelike.UI
             {
                 _introCardShown = true;
                 ShowRunIntroCard(run);
-                return; // intro card calls ShowPath() again on dismiss
+                return; // the intro card refreshes the path and enters the floor on dismiss
             }
 
             RefreshPathOverview();
+            ShowFloorEntryIfNew(run?.State);
         }
 
         private void ShowSudoku()
         {
+            DismissFloorEntry(false);
+            MarkFloorEntered(_map?.Run?.State);   // UI-STYLE-021
             SetActive(_pathPanel, false);
             SetActive(_gameOverPanel, false);
             ShowPanelWithFade(_sudokuPanel, _sudokuCg);
@@ -798,20 +811,15 @@ namespace SudokuRoguelike.UI
             // Tap-to-dismiss button (invisible, covers entire card)
             var tapBtn = card.AddComponent<Button>();
             tapBtn.transition = Selectable.Transition.None;
-            tapBtn.onClick.AddListener(() =>
-            {
-                Destroy(card);
-                RefreshPathOverview();
-            });
-
-            // Also auto-dismiss after 3 seconds
-            _introCardDismissed = false;  // G-1
+            // Tap, or the auto-dismiss after 3 seconds, closes the card once (G-1).
+            _introCardDismissed = false;
             tapBtn.onClick.AddListener(() =>
             {
                 if (_introCardDismissed) return;  // G-1 guard
                 _introCardDismissed = true;
                 Destroy(card);
                 RefreshPathOverview();
+                ShowFloorEntryIfNew(_map?.Run?.State);
             });
             StartCoroutine(AutoDismissIntroCard(card, 3f));
         }
@@ -825,6 +833,7 @@ namespace SudokuRoguelike.UI
             {
                 Destroy(card);
                 RefreshPathOverview();
+                ShowFloorEntryIfNew(_map?.Run?.State);
             }
         }
 
@@ -2975,6 +2984,7 @@ namespace SudokuRoguelike.UI
 
             var s = run.State;
             var floorName = FloorThemeData.GetFloorName(s.CurrentFloor);
+            _floorEntryShownFor = s.CurrentFloor;   // UI-STYLE-021: a resumed floor was entered before
             _pathMessage = $"Resumed — Floor {s.CurrentFloor + 1}: {floorName}";
             ShowPath();
         }

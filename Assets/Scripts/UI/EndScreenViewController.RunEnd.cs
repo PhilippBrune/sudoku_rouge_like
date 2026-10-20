@@ -11,8 +11,9 @@ namespace SudokuRoguelike.UI
 {
     // [REQ: UI-STYLE-016] The end of a Garden Run, victory and defeat in one layout (layout-proposals.md, "Run end"):
     // the painting, a banner, one seal per floor (the boss's mask up to the floor reached, the lost floor crossed out),
-    // the run on a tally scroll with the class's closing line, the class XP as a bar with a level-up stamp, the run score
-    // as a short ledger and new unlocks as ema plaques ("Nothing new this time" and the next goal otherwise).
+    // the run on a tally scroll with the class's closing line and one grade stamp per puzzle (SCORE-GRADE-003), the class
+    // XP as a bar with a level-up stamp, the run score as a short ledger and new unlocks as ema plaques ("Nothing new this
+    // time" and the next goal otherwise).
     // The scroll is built inside GameOverPanel, so the end-screen save rules and shortcuts keep working.
     public sealed partial class EndScreenViewController
     {
@@ -161,8 +162,7 @@ namespace SudokuRoguelike.UI
                 (T("InRun.End.Scroll.FloorReached"), F("InRun.End.Scroll.FloorOf", floorReached, state.TotalFloors)),
                 (T("InRun.Reward.Row.Hp"), $"{state.CurrentHP} / {state.MaxHP}"),
                 (T("InRun.End.Scroll.Gold"), state.CurrentGold.ToString()),
-                (T("InRun.End.Scroll.PuzzlesSolved"), (run.Result?.TileXpEntries?.Count ?? 0).ToString()),
-                (T("InRun.End.Scroll.PerfectPuzzles"), (run.Result?.PerfectPuzzleCount ?? 0).ToString())
+                (T("InRun.End.Scroll.PuzzlesSolved"), (run.Result?.TileXpEntries?.Count ?? 0).ToString())
             };
             for (var i = 0; i < rows.Length; i++)
             {
@@ -170,9 +170,63 @@ namespace SudokuRoguelike.UI
                 ScrollUiKit.ValueRow(t, $"Tally_{i}", new Vector2(0.10f, centre - 0.03f), new Vector2(0.90f, centre + 0.03f),
                     rows[i].label, rows[i].value, 22, ScrollUiKit.Ink);
             }
-            var closing = ScrollUiKit.Label(t, "ClosingLine", ParkNarrativeService.GetClassRunEndLine(run.Victory, state.ClassId), 19,
-                TextAnchor.UpperLeft, ScrollUiKit.InkSoft, new Vector2(0.10f, 0.12f), new Vector2(0.90f, 0.40f), 13);
+            BuildGradeStamps(t, run.Result);
+            var closing = ScrollUiKit.Label(t, "ClosingLine", ParkNarrativeService.GetClassRunEndLine(run.Victory, state.ClassId), 18,
+                TextAnchor.UpperLeft, ScrollUiKit.InkSoft, new Vector2(0.10f, 0.06f), new Vector2(0.90f, 0.205f), 12);
             closing.fontStyle = FontStyle.Italic;
+        }
+
+        // Stamp row geometry on the tally paper (440 × 620 px): 20 px stamps, a wider gap between floors, three lines; a
+        // very long run (Ascension, many side tiles) gets smaller stamps so they still fit.
+        private const float TallyWidthPx = 440f, TallyHeightPx = 620f;
+        private const float StampLeftPx = 0.10f * TallyWidthPx, StampRightPx = 0.90f * TallyWidthPx;
+        private const int MaxStampLines = 3;
+        private static readonly float[] StampSizes = { 20f, 16f, 12f, 9f };
+
+        // How many lines the stamps take at one size (gap and floor gap scale with it).
+        private static int StampLines(List<(PuzzleGrade Grade, int Floor)> entries, float size)
+        {
+            float gap = size * 0.2f, floorGap = size * 0.6f, x = StampLeftPx;
+            var lines = 1;
+            for (var i = 0; i < entries.Count; i++)
+            {
+                if (RunGradeStamps.NewFloor(entries, i)) x += floorGap - gap;
+                if (x + size > StampRightPx) { x = StampLeftPx; lines++; }
+                x += size + gap;
+            }
+            return lines;
+        }
+
+        // [REQ: SCORE-GRADE-003] One stamp per puzzle in the order played (Perfect, Clean, Rough, Messy; the puzzle that
+        // ended the run is Messy), floors apart, with a legend; so the player sees when the run went well or wrong.
+        private static void BuildGradeStamps(RectTransform tally, RunResult result)
+        {
+            var entries = RunGradeStamps.EntriesOf(result);
+            if (entries.Count == 0) return;
+            ScrollUiKit.Label(tally, "GradesHeader", T("InRun.End.Scroll.Grades").ToUpperInvariant(), 15, TextAnchor.MiddleLeft,
+                ScrollUiKit.InkSoft, new Vector2(0.10f, 0.455f), new Vector2(0.90f, 0.49f), 10);
+            var size = StampSizes[StampSizes.Length - 1];
+            foreach (var candidate in StampSizes)
+                if (StampLines(entries, candidate) <= MaxStampLines) { size = candidate; break; }
+            float gap = size * 0.2f, floorGap = size * 0.6f, lineStep = size * 1.3f, top = 0.445f * TallyHeightPx;
+            float x = StampLeftPx, line = 0;
+            for (var i = 0; i < entries.Count; i++)
+            {
+                if (RunGradeStamps.NewFloor(entries, i)) x += floorGap - gap;
+                if (x + size > StampRightPx) { x = StampLeftPx; line++; }
+                var centre = new Vector2((x + size * 0.5f) / TallyWidthPx, (top - line * lineStep - size * 0.5f) / TallyHeightPx);
+                var grade = entries[i].Grade;
+                var stamp = ScrollUiKit.Spot(tally, $"GradeStamp_{i}", centre, new Vector2(size, size),
+                    RunGradeStamps.ColorOf(grade), ScrollUiKit.Rounded(4f));
+                stamp.rectTransform.localRotation = Quaternion.Euler(0f, 0f, i % 3 == 0 ? -4f : i % 3 == 1 ? 3f : 0f);
+                ScrollUiKit.Label(stamp.transform, "Mark", RunGradeStamps.MarkOf(grade), Mathf.RoundToInt(size * 0.65f),
+                    TextAnchor.MiddleCenter, ScrollUiKit.PaperText, Vector2.zero, Vector2.one, 6, FontStyle.Bold);
+                x += size + gap;
+            }
+            var legendTop = (top - (line + 1) * lineStep - 2f) / TallyHeightPx;
+            var legend = ScrollUiKit.Label(tally, "GradeLegend", RunGradeStamps.Legend(), 14, TextAnchor.UpperLeft,
+                ScrollUiKit.InkSoft, new Vector2(0.10f, legendTop - 0.045f), new Vector2(0.90f, legendTop), 9);
+            legend.supportRichText = true;
         }
 
         // The class XP of this run: the gain, a bar to the next level and a stamp when the class levelled up.
@@ -222,18 +276,21 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.0625f, 0.86f), new Vector2(0.94f, 0.907f), 11);
             var score = RunScoreBreakdown.For(result);
             var rows = LedgerRows(score);
+            // Up to seven rows (base, three grades, cursed, victory, gold) share the paper above the score line.
+            var step = rows.Count > 1 ? Mathf.Min(0.13f, 0.52f / (rows.Count - 1)) : 0.13f;
+            var size = step < 0.11f ? 18 : 21;
             var centre = 0.79f;
-            for (var i = 0; i < rows.Count; i++, centre -= 0.13f)
-                ScrollUiKit.ValueRow(t, $"Ledger_{i}", new Vector2(0.0625f, centre - 0.055f), new Vector2(0.934f, centre + 0.055f),
-                    rows[i].label, rows[i].value, 21, rows[i].color);
-            var lineY = centre + 0.13f - 0.095f;
+            for (var i = 0; i < rows.Count; i++, centre -= step)
+                ScrollUiKit.ValueRow(t, $"Ledger_{i}", new Vector2(0.0625f, centre - step * 0.42f), new Vector2(0.934f, centre + step * 0.42f),
+                    rows[i].label, rows[i].value, size, rows[i].color);
+            var lineY = centre + step - 0.095f;
             ScrollUiKit.Line(t, "Rule", new Vector2(0.0625f, lineY), new Vector2(0.934f, lineY), new Color(0.70f, 0.20f, 0.15f, 0.6f), 2f);
             ScrollUiKit.ValueRow(t, "LedgerScore", new Vector2(0.0625f, lineY - 0.16f), new Vector2(0.934f, lineY - 0.04f),
                 T("InRun.End.Scroll.Score"), score.Total.ToString(), 28, ScrollUiKit.Ink);
         }
 
-        // GameDesignSpec §9c (GAP-053): the base XP, then each bonus and the penalty with its share of the base in the label
-        // and its points as the value, so the rows add up to the score below them.
+        // GameDesignSpec §9c (GAP-053): the base XP, then each grade, bonus and the kept gold with its share of the base in
+        // the label and its points as the value, so the rows add up to the score below them.
         private static List<(string label, string value, Color color)> LedgerRows(RunScoreBreakdown score)
         {
             var rows = new List<(string, string, Color)> { (T("InRun.End.Scroll.BaseXp"), score.BaseXp.ToString(), ScrollUiKit.Ink) };
@@ -243,9 +300,11 @@ namespace SudokuRoguelike.UI
                 var label = line.Kind switch
                 {
                     RunScoreLineKind.Perfect => F("InRun.End.Scroll.Perfect", line.Count, percent),
+                    RunScoreLineKind.Rough => F("InRun.End.Scroll.Rough", line.Count, percent),
+                    RunScoreLineKind.Messy => F("InRun.End.Scroll.Messy", line.Count, percent),
                     RunScoreLineKind.Cursed => F("InRun.End.Scroll.Cursed", line.Count, percent),
                     RunScoreLineKind.Victory => F("InRun.End.Scroll.VictoryBonus", percent),
-                    _ => F("InRun.End.Scroll.Mistakes", line.Count, percent)
+                    _ => F("InRun.End.Scroll.GoldKept", line.Count, percent)
                 };
                 rows.Add((label, Points(line.Points), line.Points < 0 ? ScrollUiKit.Vermilion : Green));
             }

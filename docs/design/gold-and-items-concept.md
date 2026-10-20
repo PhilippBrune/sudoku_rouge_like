@@ -1,18 +1,19 @@
 # Concept: make gold and items matter
 
-**Version:** 1.0 | **Date:** 2026-10-20 | **Status:** new (proposal for the owner; nothing here is built or specified yet)
+**Version:** 1.1 | **Date:** 2026-10-21 | **Status:** review (L1, L2, L5, L6 built; L3 counter items in progress)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.1 | 2026-10-21 | review | Owner picks: L1 + L2 + L5 first, L3 as the content follow-up, and L6. Built as GoldEconomySystem 2.2 and GameDesignSpec 1.14: ECON-BAL-001..004, ECON-GATE-001/002, SCORE-GOLD-001. One change to L2: a struck trial also lowers the boss's picks by one (the gate always offers one trial more than the boss takes, so removing an offer alone would buy nothing). Screenshots below. |
 | 1.0 | 2026-10-20 | new | Owner's 0.2.0 playtest: "it feels like gold and items are not needed". Diagnosis from the current numbers, six levers, a recommended package and how to check it. Roadmap item RM-108. |
 
 ## What the playtest showed
 
 Gold piles up and items are optional. In the 0.2.0 playtest the run reached the Floor 2 boss with 212 gold and an item bag that was rarely touched.
 
-## Why, in numbers (GoldEconomySystem 2.1, ItemsAndRelicsSystem)
+## Why, in numbers (the baseline before GoldEconomySystem 2.2)
 
 | | Floor 1 | Floor 3 | Floor 5 |
 |---|---:|---:|---:|
@@ -51,10 +52,26 @@ Example, Floor 3 with the package: ≈ 400 gold from puzzles (500 − 20 %); a R
 - Items used per run: target at least 4.
 - A balance test in EditMode (seeded runs, scripted shopping) reports these numbers before and after; the owner's playtests confirm the feel.
 
-## Decisions for the owner
+## Decisions (2026-10-20) and what is built
 
-1. Which levers, and is L6 (harder late floors) acceptable?
-2. Does leftover gold belong in the run score (L5), or should it stay score-neutral?
-3. L3: which families get counter items first (fog and lines are the most common complaints)?
+The owner picked **L1 + L2 + L5 first, L3 as the content follow-up, and L6**.
 
-Once picked, the levers become requirements in GoldEconomySystem and ItemsAndRelicsSystem (with IDs) and are built and tested like any feature.
+| Lever | Built as | Requirement |
+|---|---|---|
+| L1 | Item base prices 40 / 75 / 150 (× floor as before); puzzle gold × 0.8 | ECON-BAL-001, ECON-BAL-002 |
+| L2 | At the boss gate: "Strike a trial" (60 × floor number, then click the trial; the boss takes one trial fewer) and "Lower intensity" (40 × floor number, one step), each once per gate, kept in the save | ECON-GATE-001, ECON-GATE-002 |
+| L5 | "Gold kept" row on the run-end ledger: a point per 5 gold, at most 15 % | SCORE-GOLD-001 |
+| L6 | From Floor 4 a mistake costs at least 2 HP (the floor's entry painting says so); the rest heals a quarter | ECON-BAL-003, ECON-BAL-004 |
+| L3 | Counter items per modifier family; shops lean toward the floor's and the boss's rules | in progress |
+
+The gate with its purse and gold actions, after a strike, the Floor 4 entry and the market with the new prices:
+
+![Boss gate with gold](layout-proposals/after_boss_gate.jpg)
+
+![A trial struck](layout-proposals/after_boss_gate_struck.jpg)
+
+![Floor 4 entry](layout-proposals/after_floor_entry_floor4.jpg)
+
+![Market](layout-proposals/after_shop.jpg)
+
+The balance check (average gold left, purchases per shop visit, items used per run) waits for the next playtest.

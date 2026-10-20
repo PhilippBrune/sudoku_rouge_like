@@ -93,11 +93,16 @@ namespace SudokuRoguelike.UI
                 sb.AppendLine(line.Kind switch
                 {
                     RunScoreLineKind.Perfect => F("EndPresenter.RunScore.Perfect", "  Perfect puzzles x{0}:   +{1} ({2}%)", line.Count, points, percent),
+                    RunScoreLineKind.Rough => F("EndPresenter.RunScore.Rough", "  Rough puzzles x{0}:     -{1} (-{2}%)", line.Count, points, percent),
+                    RunScoreLineKind.Messy => F("EndPresenter.RunScore.Messy", "  Messy puzzles x{0}:     -{1} (-{2}%)", line.Count, points, percent),
                     RunScoreLineKind.Cursed => F("EndPresenter.RunScore.Cursed", "  Cursed clears x{0}:     +{1} ({2}%)", line.Count, points, percent),
                     RunScoreLineKind.Victory => F("EndPresenter.RunScore.Victory", "  Victory bonus:         +{0} ({1}%)", points, percent),
-                    _ => F("EndPresenter.RunScore.MistakePenalty", "  Mistake penalty x{0}:   -{1} (-{2}%)", line.Count, points, percent)
+                    _ => F("EndPresenter.RunScore.Gold", "  Gold kept ({0}):         +{1}", line.Count, points)
                 });
             }
+            // [REQ: SCORE-GRADE-003] The grades in the order played, floors apart.
+            if (score.Grades.Count > 0)
+                sb.AppendLine(F("EndPresenter.RunScore.Grades", "  Puzzles: {0}", RunGradeStamps.Line(result)));
             sb.Append(F("EndPresenter.RunScore.Final", "  Final Score: {0}", score.Total));
             return sb.ToString();
         }

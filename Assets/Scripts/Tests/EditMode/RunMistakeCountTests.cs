@@ -7,7 +7,7 @@ namespace SudokuRoguelike.Tests
     // GAP-059 (0.2.0 playtest): "only the mistakes of the last puzzle count" on the end screen. Every mistake of the run
     // counts toward the run score, including those in the puzzle that ended the run.
     [TestFixture]
-    [Requirement("UI-STYLE-016")]
+    [Requirement("UI-STYLE-016", "SCORE-GRADE-002")]
     public sealed class RunMistakeCountTests
     {
         [Test]
@@ -29,8 +29,13 @@ namespace SudokuRoguelike.Tests
 
             Assert.AreEqual(6, result.MistakesMade, "2 + 1 solved, 3 in the lost puzzle");
             Assert.AreEqual(6, result.Analytics.TotalMistakes);
-            var row = RunScoreBreakdown.For(result).Lines;
-            Assert.IsTrue(System.Linq.Enumerable.Any(row, l => l.Kind == RunScoreLineKind.Mistakes && l.Count == 6));
+            // [REQ: SCORE-GRADE-002] Every puzzle is graded in the order played; the one that ended the run is Messy.
+            CollectionAssert.AreEqual(new[] { PuzzleGrade.Rough, PuzzleGrade.Clean, PuzzleGrade.Messy },
+                RunScoreBreakdown.For(result).Grades);
+            var lost = result.Analytics.PuzzleGrades[2];
+            Assert.IsTrue(lost.EndedRun);
+            Assert.AreEqual(3, lost.Mistakes, "the lost puzzle keeps its own mistakes");
+            Assert.AreEqual(0, lost.Floor);
         }
 
         // [REQ: REQ-BOSS-107] The boss-defeated screen shows the whole floor: every solved puzzle's mistakes, HP lost, items

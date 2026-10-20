@@ -26,7 +26,7 @@ namespace SudokuRoguelike.Tests
         [Test]
         public void BossModifierDiscovery_HasHiddenAndRevealedFeedbackPaths()
         {
-            var source = File.ReadAllText(BossGatePath);
+            var source = SourceText.ReadClass(BossGatePath);   // the gate's gold row lives in BossGateViewController.Gold.cs
 
             StringAssert.Contains("SeenBossModifiers", source);
             StringAssert.Contains("???", source);

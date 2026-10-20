@@ -17,10 +17,11 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
-        public void Heal_RestoresAThirdOfMaxHp_AtLeastOne_CappedAtMax()
+        public void Heal_RestoresAQuarterOfMaxHp_AtLeastOne_CappedAtMax()
         {
+            // ECON-BAL-004 (gold-and-items concept L6): a quarter of max HP, it was a third.
             var run = StartRun();
-            run.State.MaxHP = 9;
+            run.State.MaxHP = 12;
             run.State.CurrentHP = 2;
             Assert.AreEqual(3, run.GetRestHealAmount());
             run.AcceptRestHeal();

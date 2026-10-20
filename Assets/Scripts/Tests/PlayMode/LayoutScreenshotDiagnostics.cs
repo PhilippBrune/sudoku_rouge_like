@@ -90,6 +90,7 @@ namespace SudokuRoguelike.Tests
             var (gateHost, gateRun) = StartRun(7303, true);
             gateRun.State.CurrentFloor = 2;
             gateRun.State.RunNumber = 9;
+            gateRun.State.CurrentGold = 212;   // ECON-GATE-001/002: the purse and the gate's gold actions
             foreach (BossModifierId id in Enum.GetValues(typeof(BossModifierId)))
                 gateRun.State.SeenBossModifiers.Add(id);
             yield return DismissIntro();
@@ -100,6 +101,11 @@ namespace SudokuRoguelike.Tests
             Find(gateHost, "Mod_1")?.GetComponent<Button>().onClick.Invoke();
             yield return new WaitForSecondsRealtime(0.4f);
             yield return Shoot(gateHost, camera, "after_boss_gate.png");
+            Find(gateHost, "BtnStrikeTrial").GetComponent<Button>().onClick.Invoke();
+            yield return null;
+            Find(gateHost, "Mod_3").GetComponent<Button>().onClick.Invoke();
+            yield return new WaitForSecondsRealtime(0.4f);
+            yield return Shoot(gateHost, camera, "after_boss_gate_struck.png");
             gateHost.SetActive(false);
 
             var (wideHost, wideRun) = StartRun(7306, true);
@@ -174,6 +180,39 @@ namespace SudokuRoguelike.Tests
             }
         }
 
+        // UI-STYLE-021: entering a floor (garden flow D) on floors 1, 2 and 4 (with ECON-BAL-003's mistake cost), and the
+        // path half unrolled.
+        [UnityTest]
+        public IEnumerator RenderFloorEntry()
+        {
+            var camera = CreateCamera();
+            foreach (var floor in new[] { 0, 1, 3 })
+            {
+                var target = floor;
+                _beforeBindAlways = run =>
+                {
+                    for (var f = 0; f < target; f++) run.AdvanceToNextFloor();
+                    run.State.HeldRelics.Clear();
+                };
+                var (host, _) = StartRun(7340 + floor, false);
+                _beforeBindAlways = null;
+                yield return null;
+                yield return null;
+                var intro = Object.FindObjectsByType<Button>(FindObjectsInactive.Exclude, FindObjectsSortMode.None)
+                    .FirstOrDefault(b => b.name == "RunIntroCard");
+                if (intro != null) intro.onClick.Invoke();
+                yield return new WaitForSecondsRealtime(0.3f);
+                yield return Shoot(host, camera, $"after_floor_entry_floor{floor + 1}.png");
+                if (floor == 1)
+                {
+                    host.GetComponentInChildren<InRunController>(true).DismissFloorEntry(true);
+                    yield return new WaitForSecondsRealtime(0.12f);
+                    yield return Shoot(host, camera, "after_floor_entry_unroll.png");
+                }
+                host.SetActive(false);
+            }
+        }
+
         private Action<RunDirector> _beforeBindAlways;
         private int _puzzleSize = 6;
         private int _regionVariant;
@@ -229,6 +268,35 @@ namespace SudokuRoguelike.Tests
             }
             _puzzleSize = 6;
             _regionVariant = 0;
+        }
+
+        // UI-STYLE-020: Pencil mode on a 6×6 puzzle with a few marks on the board. File names start with SR_SHOT_PREFIX
+        // ("after_" by default).
+        [UnityTest]
+        public IEnumerator RenderPencilMode()
+        {
+            var prefix = Environment.GetEnvironmentVariable("SR_SHOT_PREFIX");
+            if (string.IsNullOrEmpty(prefix)) prefix = "after_";
+            var camera = CreateCamera();
+            _beforeBind = run =>
+            {
+                var board = run.CurrentBoard;
+                for (var r = 0; r < board.Size; r++)
+                for (var c = 0; c < board.Size; c++)
+                    if (board.Cells[r, c] == 0 && (r + c) % 2 == 0)
+                    {
+                        board.TogglePencilMark(r, c, board.Solution[r, c]);
+                        board.TogglePencilMark(r, c, board.Solution[r, c] % board.Size + 1);
+                    }
+            };
+            var (host, _) = StartRun(7331, true, BossModifierId.DutchWhispers);
+            _beforeBind = null;
+            yield return DismissIntro();
+            for (var frame = 0; frame < 30 && Find(host, "C_0_0") == null; frame++)
+                yield return null;
+            Find(host, "PencilBtn").GetComponent<Button>().onClick.Invoke();
+            yield return new WaitForSecondsRealtime(0.6f);
+            yield return Shoot(host, camera, prefix + "pencil_mode.png");
         }
 
         // UI-STYLE-006: killer cages of five shapes on a 6×6 board; each must read as one dashed outline.
@@ -364,12 +432,17 @@ namespace SudokuRoguelike.Tests
 
             var end = host.GetComponentInChildren<EndScreenViewController>(true);
             run.State.CurrentGold = 212;
-            var tile = new TileXpEntry { BoardSize = 9, Stars = 3, TotalXp = 388 };   // a ledger with every kind of row
-            run.TileXpLog.Add(tile);
-            run.GetAnalytics().RecordTileXp(tile);
-            for (var m = 0; m < 3; m++) run.GetAnalytics().RecordMistake();
-            run.GetAnalytics().RecordPuzzleSolved(3, 0);
-            for (var i = 0; i < 4; i++) run.GetAnalytics().RecordPerfectPuzzle();
+            // A ledger with every kind of row and a grade stamp per puzzle (SCORE-GRADE-003): five floors of puzzles.
+            var mistakesPerFloor = new[] { new[] { 0, 1, 0, 2, 0 }, new[] { 0, 0, 3, 1, 0 }, new[] { 0, 4, 0, 0, 2 },
+                new[] { 1, 0, 0, 0, 0 }, new[] { 0, 2, 0, 0 } };
+            for (var f = 0; f < mistakesPerFloor.Length; f++)
+                foreach (var mistakes in mistakesPerFloor[f])
+                {
+                    var tile = new TileXpEntry { BoardSize = 9, Stars = 3, TotalXp = 16 };
+                    run.TileXpLog.Add(tile);
+                    run.GetAnalytics().RecordTileXp(tile);
+                    run.GetAnalytics().RecordPuzzleSolved(mistakes, 0, f);
+                }
             run.GetAnalytics().RecordCursedPuzzleCompleted();
             run.GetAnalytics().RecordRunComplete();
             end.ShowGameOver(run, true);
@@ -572,6 +645,8 @@ namespace SudokuRoguelike.Tests
             var intro = Object.FindObjectsByType<Button>(FindObjectsInactive.Exclude, FindObjectsSortMode.None)
                 .FirstOrDefault(b => b.name == "RunIntroCard");
             if (intro != null) intro.onClick.Invoke();
+            foreach (var controller in Object.FindObjectsByType<InRunController>(FindObjectsSortMode.None))
+                controller.DismissFloorEntry(false);   // UI-STYLE-021: the floor's painting comes after the class card
             yield return null;
             yield return null;
         }

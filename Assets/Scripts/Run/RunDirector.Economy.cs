@@ -96,10 +96,12 @@ namespace SudokuRoguelike.Run
 
         // ── Rest Node Options ──
 
-        // [REQ: REQ-RUN-104] Rest heals MaxHP/3 (SPEC-CONF-017). [REQ: HARMONY-FLAG-004] H10 halves it, rounded up.
+        // [REQ: REQ-RUN-104] Rest heals MaxHP/4 (ECON-BAL-004; MaxHP/3 before, SPEC-CONF-017). [REQ: HARMONY-FLAG-004] H10
+        // halves it, rounded up.
         public int GetRestHealAmount()
         {
-            var heal = Math.Max(1, State.MaxHP / 3);
+            // [REQ: ECON-BAL-004] A quarter of max HP (it was a third; gold-and-items concept L6), at least 1.
+            var heal = Math.Max(1, State.MaxHP / 4);
             return Harmony.RestHealHalved ? (heal + 1) / 2 : heal;
         }
 

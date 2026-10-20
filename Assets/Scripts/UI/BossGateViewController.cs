@@ -73,11 +73,14 @@ namespace SudokuRoguelike.UI
                     if (!_bossGateOptions.Contains(choices[i]))
                         _bossGateOptions.Add(choices[i]);
             }
+            // [REQ: ECON-GATE-001] A trial struck (or removed by the Warding Flame) before Save & Quit stays removed.
+            run.ApplyGateRemovals(_bossGateOptions);
             if (_bossGateOptions.Count == 0) return;
 
-            run.GetBossModifierCounts(out _, out _bossPicksRequired);
+            _bossPicksRequired = run.GetBossPicksRequired();
             _awaitingBossGate = true;
             _confirming = false;
+            _striking = false;
             BuildBossGatePanel(fadeIn: true);
         }
 
@@ -126,11 +129,12 @@ namespace SudokuRoguelike.UI
                     "Choose {0} of {1} trials", "Choose {0} of {1} trials", _bossGateOptions.Count),
                 20, TextAnchor.MiddleRight, ScrollUiKit.Ink, new Vector2(0.50f, 0.872f), new Vector2(0.821f, 0.912f), 14);
 
-            // [REQ: REQ-BOSS-103] Intensity under the count, with one dot per level (GAP-025).
+            // [REQ: REQ-BOSS-103] Intensity under the count, with one dot per level (GAP-025); [REQ: ECON-GATE-002] after
+            // paying, the lowered one.
             var state = run?.State;
             if (state != null)
             {
-                var intensity = BossService.IntensityForRunNumber(state.RunNumber);
+                var intensity = run.GetBossIntensity();
                 ScrollUiKit.Label(scroll, "GateIntensity",
                     F("InRun.BossGate.Intensity", BossService.GetIntensityName(intensity)),
                     20, TextAnchor.MiddleRight, ScrollUiKit.Ink, new Vector2(0.50f, 0.832f), new Vector2(0.771f, 0.870f), 14);
@@ -151,24 +155,8 @@ namespace SudokuRoguelike.UI
             ScrollUiKit.Icon(seal.transform, "BossAvatar", "boss/icon_" + FloorThemeData.GetBossKey(floor),
                 new Vector2(0.14f, 0.14f), new Vector2(0.86f, 0.86f), Color.white);
 
-            // WardingFlame relic: remove the first (lowest-tier) offered trial, once per run.
-            _wardingBtn = null;
-            if (run == null || !RelicService.HasRelicOfType(run.State, RelicId.WardingFlame) || run.State.WardingFlameUsed)
-                return;
-            _wardingBtn = ScrollUiKit.PillButton(scroll, "BtnWardingFlame", new Vector2(0.066f, 0.728f),
-                new Vector2(0.31f, 0.790f), T("InRun.BossGate.WardingFlame"), 18, ScrollUiKit.PaperDeep, ScrollUiKit.Ink);
-            ScrollUiKit.Icon(_wardingBtn.transform, "Icon", "relic/icon_warding_flame",
-                new Vector2(0.02f, 0.08f), new Vector2(0.17f, 0.92f), Color.white);
-            ((RectTransform)_wardingBtn.transform.Find("Label")).anchorMin = new Vector2(0.18f, 0.05f);
-            _wardingBtn.onClick.AddListener(() =>
-            {
-                if (_confirming || _bossGateOptions.Count == 0 || !RelicService.TryWardingFlame(run.State)) return;
-                _bossGateOptions.RemoveAt(0);
-                _selectedBossMods.RemoveAll(m => !_bossGateOptions.Contains(m));
-                Object.Destroy(_bossGatePanel);
-                _bossGatePanel = null;
-                BuildBossGatePanel(fadeIn: false); // same screen, one trial fewer: no second fade
-            });
+            // The purse, the Warding Flame and the gate's gold actions (BossGateViewController.Gold.cs).
+            BuildGateGoldRow(scroll, run);
         }
 
         private void BuildTrialCards(RectTransform scroll, RunDirector run)
@@ -312,15 +300,14 @@ namespace SudokuRoguelike.UI
                     mode = Navigation.Mode.Explicit,
                     selectOnLeft = CardAt(card.Row, card.Column - 1),
                     selectOnRight = CardAt(card.Row, card.Column + 1),
-                    selectOnUp = card.Row > 0 ? CardAt(card.Row - 1, card.Column) : _wardingBtn,
+                    selectOnUp = card.Row > 0 ? CardAt(card.Row - 1, card.Column) : FirstHeaderButton,
                     selectOnDown = (Selectable)CardAt(card.Row + 1, card.Column) ?? _confirmBtn
                 };
             }
             var lastRow = _trialCards.Count > 0 ? _trialCards[_trialCards.Count - 1].Row : 0;
             var lastInRow = _trialCards.FindLast(c => c.Row == lastRow);
             _confirmBtn.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnUp = lastInRow?.Button };
-            if (_wardingBtn != null)
-                _wardingBtn.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnDown = CardAt(0, 0) };
+            WireHeaderNavigation();
         }
 
         private Button CardAt(int row, int column)
@@ -333,6 +320,7 @@ namespace SudokuRoguelike.UI
         private void ToggleBossModSelection(BossModifierId mod)
         {
             if (_confirming) return; // the picks are fixed once Confirm is pressed
+            if (TryStrikeTrial(mod)) return; // strike mode: this click strikes the trial (ECON-GATE-001)
             if (_selectedBossMods.Contains(mod))
                 _selectedBossMods.Remove(mod);
             else if (_selectedBossMods.Count < PicksRequired)
@@ -362,7 +350,7 @@ namespace SudokuRoguelike.UI
             if (_chosenLabel != null)
                 _chosenLabel.text = F("InRun.BossGate.Chosen", _selectedBossMods.Count, PicksRequired);
             if (_confirmBtn != null)
-                _confirmBtn.interactable = _selectedBossMods.Count >= PicksRequired;
+                _confirmBtn.interactable = !_striking && _selectedBossMods.Count >= PicksRequired;
         }
 
         // One confirm only: the cards, the Warding Flame and Confirm lock for the short flash, so a double click or a
@@ -372,7 +360,7 @@ namespace SudokuRoguelike.UI
             if (_confirming || !_awaitingBossGate) return;
             _confirming = true;
             for (var i = 0; i < _trialCards.Count; i++) _trialCards[i].Button.interactable = false;
-            if (_wardingBtn != null) _wardingBtn.interactable = false;
+            foreach (var button in _headerButtons) button.interactable = false;
             if (_confirmBtn != null && isActiveAndEnabled)
                 StartCoroutine(FlashAndAdvance(_confirmBtn));
             else
@@ -415,7 +403,8 @@ namespace SudokuRoguelike.UI
             StartCoroutine(AnimationHelper.FadeIn(cg, AnimationHelper.MenuPanelDuration));
         }
 
-        // Never more picks than offered trials (the Warding Flame removes one), so Confirm can always unlock.
+        // Never more picks than offered trials (the Warding Flame removes one; a struck trial lowers the picks too), so
+        // Confirm can always unlock.
         private int PicksRequired => Mathf.Min(_bossPicksRequired, _bossGateOptions.Count);
 
         private static string T(string key) => LocalizationService.T(key);

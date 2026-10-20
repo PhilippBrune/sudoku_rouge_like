@@ -210,7 +210,7 @@ namespace SudokuRoguelike.Tests
         // A Garden Run defeat on Floor 2: the scroll covers the screen, Floor 1 is sealed, Floor 2 crossed out, the back
         // button returns to the menu; another mode's end restores the text layout.
         [UnityTest]
-        [Requirement("UI-STYLE-016")]
+        [Requirement("UI-STYLE-016", "SCORE-GRADE-003")]
         public IEnumerator RunEnd_GardenRunDefeat_SealsAndCrossesTheFloors_OtherModesKeepTheTextLayout()
         {
             var (host, run) = StartRun(5153);
@@ -237,6 +237,11 @@ namespace SudokuRoguelike.Tests
             ClickButton(scroll, "BtnRunEndBack");
             Assert.IsTrue(returned, "the back button returns to the menu");
 
+            // [REQ: SCORE-GRADE-003] One stamp per puzzle in the order played: a perfect and a rough puzzle on Floor 1, a
+            // messy one on Floor 2, each with its grade's letter; the ledger names the grades.
+            run.GetAnalytics().RecordPuzzleSolved(0, 0, 0);
+            run.GetAnalytics().RecordPuzzleSolved(2, 0, 0);
+            run.GetAnalytics().RecordPuzzleSolved(5, 0, 1);
             run.GetAnalytics().RecordRunComplete();   // as the game does when the Floor 5 boss falls
             end.ShowGameOver(run, true);   // a victory seals every floor and adds the victory row to the ledger
             yield return null;
@@ -247,6 +252,19 @@ namespace SudokuRoguelike.Tests
             Assert.IsTrue(scroll.GetComponentsInChildren<Text>(true).Any(t => t.name.EndsWith("_Label")
                 && t.text == LocalizationService.Format("InRun.End.Scroll.VictoryBonus", "Victory bonus (+{0}%)",
                     RunScoreBreakdown.VictoryPercent)), "the ledger has the victory row");
+            var marks = Enumerable.Range(0, 3).Select(i => FindObject(FindObject(scroll, $"GradeStamp_{i}"), "Mark")
+                .GetComponent<Text>().text).ToArray();
+            CollectionAssert.AreEqual(new[] { "PerfectMark", "RoughMark", "MessyMark" }.Select(k => LocalizationService.T("InRun.End.Grade." + k)),
+                marks, "Perfect, Rough, Messy in the order played");
+            Assert.IsNull(FindObjectOrNull(scroll, "GradeStamp_3"));
+            Assert.Greater(FindObject(scroll, "GradeStamp_2").GetComponent<RectTransform>().anchorMin.x
+                    - FindObject(scroll, "GradeStamp_1").GetComponent<RectTransform>().anchorMin.x,
+                FindObject(scroll, "GradeStamp_1").GetComponent<RectTransform>().anchorMin.x
+                    - FindObject(scroll, "GradeStamp_0").GetComponent<RectTransform>().anchorMin.x, "a new floor starts after a gap");
+            Assert.NotNull(FindObjectOrNull(scroll, "GradeLegend"));
+            Assert.IsTrue(scroll.GetComponentsInChildren<Text>(true).Any(t => t.name.EndsWith("_Label")
+                && t.text == LocalizationService.Format("InRun.End.Scroll.Messy", "Messy puzzles ×{0} (−{1}%)", 1,
+                    RunScoreBreakdown.MessyPercent)), "the ledger has the messy row");
 
             run.State.Mode = GameMode.EndlessZen;
             end.ShowGameOver(run, false);

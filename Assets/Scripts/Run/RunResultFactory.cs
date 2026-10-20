@@ -41,7 +41,13 @@ namespace SudokuRoguelike.Run
             var analytics = run.GetAnalytics();
             if (analytics != null)
             {
-                result.Analytics = analytics.Build();
+                // [REQ: SCORE-GRADE-002] A Garden Run lost (or left) inside an unsolved puzzle grades that puzzle Messy; the
+                // other modes end their sessions inside a puzzle by design. [REQ: SCORE-GOLD-001] The gold still held scores.
+                var gardenRun = state.Mode == GameMode.GardenRun && !state.TutorialMode && !state.IsSeasonalChallenge;
+                var lostInPuzzle = gardenRun && !victory && run.CurrentBoard != null && run.CurrentLevelState != null
+                    && !run.IsLevelComplete;
+                result.Analytics = analytics.Build(state.CurrentGold, lostInPuzzle ? state.CurrentFloor : -1,
+                    lostInPuzzle ? run.CurrentLevelState.Mistakes : 0);
                 result.ItemsUsedThisRun = analytics.TotalItemsUsed;
                 // [REQ: MAP-NODE-CURSED-004] Cursed puzzles accepted and completed (GameDesignSpec §9c); perfect puzzles (GAP-054).
                 result.CursedPuzzlesAccepted = analytics.CursedPuzzlesCompleted;

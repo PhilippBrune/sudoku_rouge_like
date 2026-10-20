@@ -32,8 +32,8 @@ namespace SudokuRoguelike.Economy
             {
                 var rarity = RollShopItemRarity(floorIndex, classLevel);
                 var type = RollShopItemType(rarity, classId, classLevel);
-                var basePrice = ItemService.GetBasePrice(rarity);
-                var scaledPrice = (int)Math.Round(basePrice * (1f + floorIndex * 0.5f) * priceMultiplier * harmonySurcharge);
+                var basePrice = GoldTable.BaseItemPrice(rarity);
+                var scaledPrice = (int)Math.Round(basePrice * GoldTable.FloorPriceFactor(floorIndex) * priceMultiplier * harmonySurcharge);
 
                 offers.Add(new ShopOffer
                 {

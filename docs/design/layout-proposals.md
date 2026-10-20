@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 1.9 | **Date:** 2026-10-20 | **Status:** review (built: every Garden Run screen and Custom Puzzle; proposed: Options, Codex, Meta Progression, garden flow on the path, Pencil colours)
+**Version:** 2.0 | **Date:** 2026-10-21 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and Pencil mode in indigo; picked and being built: Options, Codex, Meta Progression)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.0 | 2026-10-21 | review | Owner picks: Options, Codex and Meta Progression as proposed (UI-STYLE-017 to 019, being built), garden flow **D · Entering a floor** (UI-STYLE-021) and Pencil mode **A · Indigo ink** (UI-STYLE-020). D and A are built, with screenshots from the game below. |
 | 1.9 | 2026-10-20 | review | Owner's 0.2.0 playtest: fixes built with screenshots (reward plaques fit and keys work, lines under the digits, the boss screen shows the floor, the version on the main menu, Custom Puzzle Random). New proposals waiting for the owner's pick: Options, Codex and Meta Progression (proposed UI-STYLE-017 to 019), four ways to bring the garden painting back to the path, and Pencil-mode colours for the number pad. |
 | 1.8 | 2026-10-20 | implemented | Owner decision: build Custom Puzzle **A · Rule book** (UI-STYLE-012) and the rest, event, cursed-tile and run-end proposals as shown (UI-STYLE-013 to 016); built, with before/after screenshots below. The rule book keeps a third region choice ("Turned", the rotated boxes of 6×6 and 8×8) that the mockup left out, so no setting is lost. Rebuilding the event found GAP-052: the old event panel opened under the full-screen path. The run-end scroll is used for the Garden Run; the Monthly Walk, Spirit Trials and Endless Zen keep their text results. |
 | 1.7 | 2026-10-19 | review | Built from the owner's decision for outside clues: UI-STYLE-010 (the grid shrinks to 88 % on a board with outside clues and the clues stand in a ring round it) and UI-STYLE-011 (quadruple circles on inner corners); screenshots below. |
@@ -31,6 +32,8 @@ The mockups are HTML pages in `layout-proposals/src/`, built from `Assets/Resour
 | UI-STYLE-007 | The reward after a puzzle as a tally scroll (result, gold, XP, HP, Pencil, the puzzle's numbers, a "Perfect" stamp) beside the item choices as ema plaques on a red cord, with Take, Reroll and Take nothing. | built 2026-10-19 |
 | UI-STYLE-008 | The relic node as the offering table (UI-STYLE-005) at the shrine painting: three relics on plinths with tier, Take each, "Leave them", the run's HP, gold and held relics on paper tags. | built 2026-10-19 |
 | UI-STYLE-009 | The shop as the market stall painting with the goods on the counter, wooden price tags, the chosen item on a paper slip with Buy and the gold after buying, the purse (gold, reroll tokens, bag slots), Reroll and Leave. | built 2026-10-19 |
+| UI-STYLE-020 | Pencil mode in indigo ink: the number pad tiles and the switch's Pencil half turn indigo with paper-white digits, and the pencil marks on the board are indigo too. | built 2026-10-21 |
+| UI-STYLE-021 | Entering a floor of a Garden Run: two seconds of the floor's painting with its name on a hanging banner and the path rolled up below, then the path scroll unrolls. A click or any key skips it; once per floor, not on a resumed floor; Reduce Motion skips the unroll. | built 2026-10-21 |
 | UI-STYLE-006 | A killer cage is one dashed outline around all its cells: inset into the cells, joined across them (no line between two cells of the same cage) and closed at every corner. Same rule in the game (`CageOutline`) and in the mockups (`cageRuns` in `src/common.js`). | built 2026-10-15 |
 
 ## Garden path
@@ -347,9 +350,17 @@ Today's screens (from the game):
 
 ![Meta Progression](layout-proposals/meta_class_garden.jpg)
 
-### Proposed: the garden's flow on the path
+### The garden's flow on the path: D chosen (UI-STYLE-021)
 
-The old path crossed the bright floor painting; the hand scroll covers it with paper and darkens the rest. Four ways to bring the garden back (they can be combined, D with any of A–C):
+The old path crossed the bright floor painting; the hand scroll covers it with paper and darkens the rest. Four ways to bring the garden back were proposed (they can be combined, D with any of A–C); the owner picked **D**.
+
+**As built (2026-10-21):** after the class card the first floor is entered, and every later floor after its boss. The painting stays for two seconds (a click or any key skips it), then it fades while the path scroll opens from its middle. A resumed floor is not entered again.
+
+![Entering Floor 1](layout-proposals/after_floor_entry_floor1.jpg)
+
+![Entering Floor 2](layout-proposals/after_floor_entry_floor2.jpg)
+
+The four proposals:
 
 - **A · Washi window:** the painting stays bright around the scroll and shows through thin paper.
 - **B · Garden below:** a shorter scroll at the top; the lower third shows the painting, with stepping stones leading into it.
@@ -364,11 +375,17 @@ The old path crossed the bright floor painting; the hand scroll covers it with p
 
 ![Flow D](layout-proposals/path_flow_d.jpg)
 
-### Proposed: Pencil mode in colour
+### Pencil mode in colour: A · Indigo ink chosen (UI-STYLE-020)
 
-The number pad changes colour in Pencil mode, and the pencil marks take the same colour. Four candidates next to today's wooden tiles; **A · Indigo ink** is suggested (it matches the blue Pencil lantern and reads well against both the wood and the paper).
+The number pad changes colour in Pencil mode, and the pencil marks take the same colour. Four candidates were proposed next to today's wooden tiles; the owner picked **A · Indigo ink** (it matches the blue Pencil lantern and reads well against both the wood and the paper).
 
 ![Pencil colours](layout-proposals/pencil_numpad_colours.jpg)
+
+**As built (2026-10-21):** before (the wooden tiles stayed the same in both modes) and after. Used-up digits and digits larger than the board fade in indigo too.
+
+![Pencil mode before](layout-proposals/before_pencil_mode.jpg)
+
+![Pencil mode after](layout-proposals/after_pencil_mode.jpg)
 
 ## Decisions and next step
 

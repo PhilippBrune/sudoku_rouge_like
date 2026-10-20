@@ -1,22 +1,50 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 — 6th iteration (2026-10-20)
 
-### New modifiers
+The sixth Early Access build. Every screen of a run is redrawn in ink and paper, the puzzle rules grow from 30 to 71, and the Custom Puzzle screen offers all of them. It follows 0.1.5; testers of the 0.2.0 beta find the changes since then at the end of this section.
 
-- **Cages and arrows (7).** Region Sum Line, Hidden Killer, Product Cage, Difference Cage, Renban Cage, Arrow Average and Double Arrow. Each cage kind has its own colour and corner label; the Pattern Scroll never reveals a hidden cage sum.
-- **Outside clues (B4).** Skyscrapers, Sandwich, X-Sums and Little Killer: clues stand in a ring round the grid, which is drawn a little smaller on those boards. Quadruples put digits in circles on the corners between four cells.
-- **Extra regions (B5).** X-Sudoku, Hyper Sudoku, Disjoint Groups, Extra Region and Magic Square. Every modifier of the catalog plan is now in the game: 71 in all.
-- **Eleven more (B6).** K-Whispers, 10-Line, Sum Line, Ratio 1:3, Distance Pairs, Ratio Cage, Pill Arrow, Opposite Sums, Counting Circles, Distance Cells and the Inverted Zone (a shaded box where green whisper lines flip).
+### Highlights
+
+- **The whole run in ink and paper.** The garden path is a hand scroll on every floor; the puzzle hangs as a scroll in front of the floor's painting, with HP and Pencil as paper lanterns and the number pad as wooden tiles. The boss gate is a trial scroll, a beaten boss leaves an offering table, rewards hang as ema plaques, the relic node is a shrine, the shop a market stall, the rest a low table with tea bowls, an event a short hand scroll, a cursed tile a sealed talisman, and the end of a run a scroll with a seal for every floor.
+- **41 new puzzle rules, 71 in all.** Lines (Nonconsecutive, High-Low, Nabner, Entropic, Modular, Zipper, Fast and Ambiguous Thermo, Region Sum Line, K-Whispers, 10-Line, Sum Line), dots and pairs (Full White and Full Black Kropki, Difference ≥ 3, Ratio 1:3, Distance Pairs), cages and arrows (Hidden Killer, Product, Difference, Ratio and Renban Cages, Arrow Average, Double Arrow, Pill Arrow), cells (Multiples of 3, Mirror Cells, Opposite Sums, Counting Circles, Distance Cells), the whole board (X-Sudoku, Hyper Sudoku, Disjoint Groups, Extra Region, Magic Square, Inverted Zone) and clues outside the grid (Skyscrapers, Sandwich, X-Sums, Little Killer, Quadruples). They appear in runs, at boss gates, in Endless Zen and Spirit Trials, and count toward the codex and completion.
+- **Custom Puzzle as a rule book.** One tab per family (LB/RB switch tabs), every rule as a tile with its icon, up to five rules in the tray under the book. A rule that does not fit the board size or the rules you chose says why.
+- **Lines in the colours puzzlers know.** German Whispers green, Dutch Whispers orange, Renban pink, Palindrome grey, thermometers grey with a bulb, Parity blue, drawn as bands through the cells.
+- **Seed of the week.** One Garden Run seed per week for everyone, from the start-run screen.
 
 ### Fixed
 
-- Catalog lines (for example Zipper lines) could cross themselves in an X; they no longer do.
+- A chosen modifier could be missing from the board while its rule was listed (for example white dots under Nonconsecutive, Even/Odd next to Prime Cells, Palindrome on busy 9×9 boards). Every chosen modifier now gets its own marks; Nonconsecutive and Difference Kropki no longer appear together.
+- Lines and arrows could cross themselves in an X (Whispers on 9×9, Parity Lines on 5×5, Double Arrows), so their order could not be read. No line or arrow crosses itself now.
 - A boss puzzle could reuse a board prepared before the boss choice even when Entropy was picked at the gate, so correct digits could show as conflicts.
+- A cleared cursed puzzle never added its +10 % to the run score. It does now, and the end screen shows it.
+- The run score's breakdown did not add up to the score: the bonuses were multiplied one after another. They are added as the rules say, and every row shows its points.
+- Region borders could show the previous puzzle's regions when two puzzles of the same size followed each other.
+- Boss puzzles play their stage's boss music.
+- Q (or controller A) on the screen after a boss no longer ends the run.
+- A killer cage is one dashed outline around all its cells.
+- With a full bag, keeping your bag returns you to the rewards instead of losing them.
+- Pencil marks in a cage's corner cell no longer hide under the cage sum.
 
 ### Changed
 
-- The roll pool grew again and line, arrow and cage shapes are built differently, so a seed from 0.2.0 (a shared seed or the Seed of the week) gives a different run; saved runs keep their boards.
+- **Prestige** now also gives +1 starting gold per prestige tier for runs with that class (at most +9), next to the badge.
+- **Rest:** choose a bowl, then drink (click it again or press its key 1–4 again). Each slip shows the value after it, for example "HP 8 → 11". Cleanse appears only while a curse is on you.
+- **Events:** a choice you cannot pay for is greyed with the reason ("You need 25 gold (you have 18)"); after a choice the result is shown and Continue closes the event.
+- **Cursed tiles** show the extra rule with its icon and text, the puzzle's size and stars, what you gain, what you risk and the curses already on you. B declines.
+- **Rewards, relic node and shop:** choose, then take; one Take button per relic; the shop shows the gold you will have after buying.
+- The in-game Options look and work like the main-menu Options, with Accessibility and Run tabs; every control can be reached with a controller.
+- French, Spanish and Brazilian Portuguese cover items, relics, boss modifiers, classes, story texts and in-run messages.
+- Seeds from earlier versions (also shared seeds and past Seeds of the week) play differently in 0.2.0, because the pool of rules grew and lines are drawn differently. Saved runs keep their boards.
+- Completion % counts the new rules, so it drops until you clear them.
+- Run scores come out slightly different from 0.1.5 for the same run (bonuses added instead of multiplied). The Steam leaderboard is unchanged: it ranks the run's XP.
+
+### Since the 0.2.0 beta (for testers)
+
+- 28 more rules: cages and arrows, outside clues, extra regions and the B6 set, so all 71 are in.
+- The rest, event, cursed-tile and run-end screens and the Custom Puzzle rule book are new.
+- Events in the beta opened behind the garden path, so you could not see them; they open on top now.
+- Fixes for crossing lines, the Entropy boss board, the cursed bonus and the run score (see Fixed), and Prestige's starting gold.
 
 ## 0.2.0 beta — 6th iteration (2026-10-19)
 

@@ -279,6 +279,90 @@ namespace SudokuRoguelike.Tests
             yield return Shoot(host, camera, "after_shop.png");
         }
 
+        // UI-STYLE-013..016: the rest, event, cursed-tile and run-end screens on Floor 2 (a curse active, so the rest shows
+        // its fourth choice). File names start with SR_SHOT_PREFIX ("after_" by default; "before_" for the old screens).
+        [UnityTest]
+        public IEnumerator RenderRestEventCursedAndRunEnd()
+        {
+            var prefix = Environment.GetEnvironmentVariable("SR_SHOT_PREFIX");
+            if (string.IsNullOrEmpty(prefix)) prefix = "after_";
+            var camera = CreateCamera();
+            _beforeBindAlways = run =>
+            {
+                run.AdvanceToNextFloor();
+                run.State.CurrentHP = Math.Max(1, run.State.MaxHP - 3);
+                run.State.CurrentPencil = 3;
+                run.State.CurrentGold = 18;
+                run.ApplyCurse("hollow_pencil");
+            };
+            var (host, run) = StartRun(7321, false);
+            _beforeBindAlways = null;
+            yield return DismissIntro();
+
+            var reward = host.GetComponentInChildren<RewardViewController>(true);
+            reward.ShowRestChoicePanel();
+            yield return new WaitForSecondsRealtime(0.6f);
+            yield return Shoot(host, camera, prefix + "rest.png");
+            reward.CloseScenes();
+            yield return null;
+
+            // The real path: the flow controller binds the run map and opens the event.
+            var flow = host.GetComponentInChildren<InRunUiFlowController>(true);
+            flow.OnNodeEntered(NodeType.Event);
+            flow.EventChoiceScreen.SelectChoiceByIndex(1);
+            yield return new WaitForSecondsRealtime(0.6f);
+            yield return Shoot(host, camera, prefix + "event.png");
+            flow.OnEventClosed();
+            yield return null;
+
+            var gate = host.GetComponentInChildren<BossGateViewController>(true);
+            var node = run.GetReachableNodes().Select(i => run.CurrentFloorGraph[i]).First();
+            gate.ShowCursedNodePanel(Find(host, "PathOverviewPanel"), node, cfg => { }, cfg => { });
+            yield return new WaitForSecondsRealtime(0.6f);
+            yield return Shoot(host, camera, prefix + "cursed.png");
+            gate.CloseCursedNodePanel();
+            yield return null;
+
+            var end = host.GetComponentInChildren<EndScreenViewController>(true);
+            run.State.CurrentGold = 212;
+            end.ShowGameOver(run, true);
+            yield return new WaitForSecondsRealtime(0.8f);
+            yield return Shoot(host, camera, prefix + "run_end_victory.png");
+            run.State.CurrentHP = 0;
+            end.ShowGameOver(run, false);
+            yield return new WaitForSecondsRealtime(0.8f);
+            yield return Shoot(host, camera, prefix + "run_end_defeat.png");
+        }
+
+        // UI-STYLE-012: the Custom Puzzle screen at 9×9, 3 stars, with Dutch Whispers, Killer Cages and Skyscrapers chosen
+        // (the mockup's example). ToggleModifier is looked up by name, so the same test also shoots the old panel.
+        [UnityTest]
+        public IEnumerator RenderCustomPuzzle()
+        {
+            var prefix = Environment.GetEnvironmentVariable("SR_SHOT_PREFIX");
+            if (string.IsNullOrEmpty(prefix)) prefix = "after_";
+            var camera = CreateCamera();
+            var host = new GameObject("LayoutShotMainMenu");
+            _createdRoots.Add(host);
+            host.AddComponent<MainMenuBlueprintBuilder>().Build();
+            var rootGroup = Find(host, "MainMenuRoot").GetComponent<CanvasGroup>();
+            if (rootGroup != null) rootGroup.alpha = 1f;
+            host.GetComponent<MainMenuController>().ShowMainMenu();
+            yield return null;
+            Find(host, "BtnTutorial").GetComponent<Button>().onClick.Invoke();
+            yield return null;
+            var setup = host.GetComponentInChildren<TutorialMenuController>(true);
+            setup.SetBoardSizeIndex(4);
+            setup.SetStarsIndex(2);
+            var toggle = typeof(TutorialMenuController).GetMethod("ToggleModifier");
+            if (toggle != null)
+                foreach (var id in new[] { BossModifierId.DutchWhispers, BossModifierId.KillerCages, BossModifierId.Skyscrapers })
+                    toggle.Invoke(setup, new object[] { id });
+            EventSystem.current?.SetSelectedGameObject(null);
+            yield return new WaitForSecondsRealtime(0.5f);
+            yield return Shoot(host, camera, prefix + "custom_puzzle.png");
+        }
+
         // BOSS-MOD-002 / GAP-048: the line colours on real generated 9×9 puzzles. Every line on a board belongs to a rule
         // on its slip: Dutch Whispers (orange), Thermo (grey with a bulb) and Consecutive Line (gold); German Whispers,
         // Renban and Palindrome; Parity, Between, Slow Thermo and Unique Set.

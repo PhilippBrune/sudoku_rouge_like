@@ -153,6 +153,20 @@ namespace SudokuRoguelike.UI
             return Coverage((top - v) * s) * Coverage((1f - u) * s * 0.5f);
         }, (x, y, s) => Color.Lerp(new Color(0.72f, 0.51f, 0.31f), new Color(0.93f, 0.77f, 0.53f), y / (s - 1f)));
 
+        /// <summary>A tea bowl seen from the side: the lower half of an ellipse, porcelain with a band of green tea at the
+        /// rim (the rest node, UI-STYLE-013).</summary>
+        internal static Sprite TeaBowl() => Cached("teabowl", 128, (x, y, s) =>
+        {
+            var u = (x + 0.5f) / s * 2f - 1f;              // −1 … 1 across
+            var v = (y + 0.5f) / s;                        // 0 at the bottom, 1 at the top
+            const float rim = 0.86f;                       // the rim line, near the top of the square
+            var depth = (rim - v) / rim;                   // 0 at the rim, 1 at the foot
+            if (v > rim) return 0f;
+            return Coverage((1f - Mathf.Sqrt(u * u + depth * depth)) * s * 0.5f);
+        }, (x, y, s) => (y + 0.5f) / s > 0.76f
+            ? new Color(0.37f, 0.48f, 0.27f)               // the tea
+            : Color.Lerp(new Color(0.72f, 0.68f, 0.59f), new Color(0.93f, 0.90f, 0.82f), (y + 0.5f) / s));
+
         /// <summary>A price tag: a card with a cut-off point on the left.</summary>
         internal static Sprite PriceTag() => Cached("pricetag", 64, (x, y, s) =>
         {

@@ -40,7 +40,7 @@ namespace SudokuRoguelike.Tests
         public void CursePanels_ShowLocalizedTextIconsAndCursedNodeRiskState()
         {
             var cursePanel = File.ReadAllText(CursePanelPath);
-            var bossGate = File.ReadAllText(BossGatePath);
+            var bossGate = SourceText.ReadClass(BossGatePath);
 
             StringAssert.Contains("RefreshPanel", cursePanel);
             StringAssert.Contains("CurseService.GetLocalizedName", cursePanel);
@@ -49,8 +49,9 @@ namespace SudokuRoguelike.Tests
             StringAssert.Contains("Missing curse icon", cursePanel);
 
             StringAssert.Contains("ShowCursedNodePanel", bossGate);
-            StringAssert.Contains("InRun.Cursed.Title", bossGate);
-            StringAssert.Contains("InRun.Cursed.Description", bossGate);
+            StringAssert.Contains("InRun.Cursed.SceneTitle", bossGate);
+            StringAssert.Contains("InRun.Cursed.Puzzle", bossGate);
+            StringAssert.Contains("CurseService.GetLocalizedName", bossGate);
             StringAssert.Contains("bg_curse", bossGate);
         }
 

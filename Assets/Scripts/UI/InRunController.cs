@@ -312,6 +312,7 @@ namespace SudokuRoguelike.UI
             _endScreenView.Configure(map, _gameOverPanel, goSummary, goDetails, goBack);
             _uiFlowCtrl = GetComponent<InRunUiFlowController>();
             _eventChoiceView = _uiFlowCtrl?.EventChoiceScreen;
+            _eventChoiceView?.SetSceneHost(_pathPanel);   // UI-STYLE-014: the event scene covers the path (GAP-052)
 
             // ── Wire callbacks ──
             _boardView.OnCellClicked        = OnCellClicked;
@@ -1776,6 +1777,13 @@ namespace SudokuRoguelike.UI
                 if (Input.GetKeyDown(KeyCode.Alpha3)) { _shopView.SelectSlotByIndex(2); _inputRemap.Tick(); return; }
             }
 
+            // UI-STYLE-013: keys 1-4 choose a tea bowl at the rest; the same key again drinks it
+            if (_rewardView != null && _rewardView.IsRestOpen)
+            {
+                for (var k = 0; k < 4; k++)
+                    if (Input.GetKeyDown(KeyCode.Alpha1 + k)) { _rewardView.SelectRestByIndex(k); _inputRemap.Tick(); return; }
+            }
+
             // RW-1: keyboard number shortcuts when reward overlay is open
             if (_rewardView?.ActivePanel != null && _rewardView.ActivePanel.activeSelf)
             {
@@ -2309,17 +2317,7 @@ namespace SudokuRoguelike.UI
         }
 
         // RW-3: invoke an event choice button by index
-        private void InvokeEventChoice(int idx)
-        {
-            var panel = _eventChoiceView?.ActivePanel;
-            if (panel == null) return;
-            var allBtns = panel.GetComponentsInChildren<UnityEngine.UI.Button>(false);
-            var interactable = new System.Collections.Generic.List<UnityEngine.UI.Button>();
-            foreach (var b in allBtns)
-                if (b.IsInteractable()) interactable.Add(b);
-            if (idx >= 0 && idx < interactable.Count)
-                interactable[idx].SafeInvoke("EventChoice");
-        }
+        private void InvokeEventChoice(int idx) => _eventChoiceView?.SelectChoiceByIndex(idx);
 
         private void CancelPendingItemInteraction(bool showStatus = true)
         {

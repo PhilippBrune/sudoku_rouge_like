@@ -270,11 +270,15 @@ namespace SudokuRoguelike.Run
             return T(ClassKey("ClassIntro", classId), GetClassLine(ClassIntroLines, classId));
         }
 
-        public static string GetRunEndFlavor(bool victory, ClassId classId)
+        public static string GetRunEndFlavor(bool victory, ClassId classId) =>
+            $"{GetRunEndFlavor(victory)}\n\n{GetClassRunEndLine(victory, classId)}";
+
+        /// <summary>The class's own closing line at the end of a run (the run-end scroll, UI-STYLE-016).</summary>
+        public static string GetClassRunEndLine(bool victory, ClassId classId)
         {
             var group = victory ? "ClassRunEnd.Victory" : "ClassRunEnd.Defeat";
             var lines = victory ? ClassVictoryLines : ClassDefeatLines;
-            return $"{GetRunEndFlavor(victory)}\n\n{T(ClassKey(group, classId), GetClassLine(lines, classId))}";
+            return T(ClassKey(group, classId), GetClassLine(lines, classId));
         }
     }
 }

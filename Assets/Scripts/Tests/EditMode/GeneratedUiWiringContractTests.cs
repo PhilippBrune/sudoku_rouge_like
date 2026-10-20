@@ -29,6 +29,8 @@ namespace SudokuRoguelike.Tests
         private const string ShopViewControllerPath = "Assets/Scripts/UI/ShopViewController.cs";
         private const string RewardViewControllerPath = "Assets/Scripts/UI/RewardViewController.cs";
         private const string EndScreenViewControllerPath = "Assets/Scripts/UI/EndScreenViewController.cs";
+        private const string EventChoiceScreenControllerPath = "Assets/Scripts/UI/EventChoiceScreenController.cs";
+        private const string CustomPuzzleScreenPath = "Assets/Scripts/UI/CustomPuzzleScreen.cs";
         private const string ItemsMenuControllerPath = "Assets/Scripts/UI/ItemsMenuController.cs";
         private const string TutorialRunBannerControllerPath = "Assets/Scripts/UI/TutorialRunBannerController.cs";
 
@@ -141,21 +143,22 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
+        [Requirement("UI-STYLE-012")]
         public void CustomPuzzleModes_DisableUnavailableChoicesAndValidateBeforeLaunch()
         {
             var blueprintSource = ReadSource(MainMenuPath);
             var menuSource = ReadSource(MainMenuControllerPath);
             var customSource = ReadSource(TutorialMenuControllerPath);
+            var screenSource = ReadSource(CustomPuzzleScreenPath);
             var serviceSource = ReadSource(TutorialModeServicePath);
 
-            StringAssert.Contains("T(\"Sudoku Modes (max 5)\")", blueprintSource);
-            StringAssert.Contains("new[] { \"5x5\", \"6x6\", \"7x7\", \"8x8\", \"9x9\" }", blueprintSource);
-            StringAssert.Contains("CustomSelectionSummaryBg", blueprintSource);
-            StringAssert.Contains("ModTooltipBg", blueprintSource);
-            StringAssert.Contains("tutCtrl.SetSelectionSummaryText(selectionSummary)", blueprintSource);
-            StringAssert.Contains("SetSelectionSummaryText(Text text)", customSource);
-            StringAssert.Contains("RefreshModifierAvailability()", customSource);
-            StringAssert.Contains("toggle.interactable = canSelect", customSource);
+            // The rule book lists every family's rules; the controller decides what can be chosen.
+            StringAssert.Contains("EnsureComponent<CustomPuzzleScreen>(panel).Build(screen, tutCtrl, startBtn)", blueprintSource);
+            StringAssert.Contains("foreach (var family in ModifierFamilies.Order)", screenSource);
+            StringAssert.Contains("var available = _setup.CanSelect(tile.Id, out _);", screenSource);
+            StringAssert.Contains("_rulesMessage.text = _setup.ValidationMessage ?? string.Empty;", screenSource);
+            StringAssert.Contains("TutorialModeService.CanAddCustomModifier(_config.BoardSize, _config.SelectedModifiers, id, out reason)", customSource);
+            StringAssert.Contains("DropRulesThatNoLongerFit();", customSource);
             StringAssert.Contains("CustomModifierLimit = 5", serviceSource);
             StringAssert.Contains("TryValidateCustomSetup(setup", menuSource);
         }
@@ -218,13 +221,10 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
-        public void RestActionButtons_UseFullTextureIconsAndWideCompactFit()
+        public void CompactActionButtons_UseFullTextureIconsAndWideFit()
         {
-            var rewardSource = ReadSource(RewardViewControllerPath);
             var factorySource = ReadSource(InRunUiFactoryPath);
 
-            StringAssert.Contains("BtnReroll", rewardSource);
-            StringAssert.Contains("UiAction.Reroll, compact: true", rewardSource);
             StringAssert.Contains("LoadResourceSprite(spritePath)", factorySource);
             StringAssert.Contains("Resources.Load<Texture2D>(spritePath)", factorySource);
             StringAssert.Contains("Sprite.Create(", factorySource);
@@ -238,26 +238,45 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
-        public void RestPanel_UsesLocalLargerActionLabelText()
+        [Requirement("UI-STYLE-013", "CURSE-ACQUIRE-004", "CURSE-ACQUIRE-005")]
+        public void RestScreen_IsATeaTable_WithOneSlipPerBowl()
         {
             var rewardSource = ReadSource(RewardViewControllerPath);
-            var factorySource = ReadSource(InRunUiFactoryPath);
 
-            StringAssert.Contains("CreateText(panel.transform, \"Title\", T(\"InRun.Rest.Title\"), 22", rewardSource);
-            StringAssert.Contains("ConfigureRestActionLabel(btnHeal)", rewardSource);
-            StringAssert.Contains("ConfigureRestActionLabel(btnPencil)", rewardSource);
-            StringAssert.Contains("ConfigureRestActionLabel(btnReroll)", rewardSource);
-            StringAssert.Contains("ConfigureRestActionLabel(btnCleanse)", rewardSource);
-            StringAssert.Contains("private static void ConfigureRestActionLabel(Button button)", rewardSource);
-            StringAssert.Contains("label.fontSize = 18", rewardSource);
-            StringAssert.Contains("label.resizeTextForBestFit = true", rewardSource);
-            StringAssert.Contains("label.resizeTextMinSize = 14", rewardSource);
-            StringAssert.Contains("label.resizeTextMaxSize = 18", rewardSource);
-            StringAssert.Contains("label.horizontalOverflow = HorizontalWrapMode.Overflow", rewardSource);
-            Assert.That(
-                factorySource,
-                Does.Not.Contain("resizeTextMaxSize = 18"),
-                "Rest readability must be applied locally in RewardViewController, not by changing shared compact action buttons.");
+            StringAssert.Contains("ScrollUiKit.Scene(_pathPanel, \"RestChoicePanel\", \"bg_rest\"", rewardSource);
+            StringAssert.Contains("ScrollUiKit.TeaBowl()", rewardSource);
+            StringAssert.Contains("$\"RestSlip_{index}\"", rewardSource);
+            StringAssert.Contains("\"BtnRestDrink\"", rewardSource);
+            // Cleanse only while a curse is active; each slip shows the value after the choice.
+            StringAssert.Contains("if (curses.Count > 0)", rewardSource);
+            StringAssert.Contains("F(\"InRun.Rest.After.Hp\"", rewardSource);
+            // Choosing a bowl lifts its slip; choosing it again drinks it, once.
+            StringAssert.Contains("if (_selectedRest == index)", rewardSource);
+            StringAssert.Contains("if (_restTaken || index < 0 || index >= _restChoices.Count) return;", rewardSource);
+            // Keys 1-4 reach the bowls in a run (the reward's keys 1-3 come after and must not swallow them).
+            var inRunSource = ReadSource(InRunControllerPath);
+            StringAssert.Contains("_rewardView.SelectRestByIndex(k)", inRunSource);
+            Assert.Less(inRunSource.IndexOf("_rewardView.SelectRestByIndex(k)", StringComparison.Ordinal),
+                inRunSource.IndexOf("_rewardView.SelectRewardByIndex(0)", StringComparison.Ordinal));
+        }
+
+        [Test]
+        [Requirement("UI-STYLE-014", "UI-STYLE-015", "UI-STYLE-016")]
+        public void EventCursedAndRunEnd_AreScenesInTheInkAndPaperStyle()
+        {
+            var eventSource = ReadSource(EventChoiceScreenControllerPath);
+            var gateSource = ReadSource(BossGateViewControllerPath);
+            var endSource = ReadSource(EndScreenViewControllerPath);
+
+            // GAP-052: the event is a scene drawn over the path, not the blueprint panel under it.
+            StringAssert.Contains("ScrollUiKit.Scene(_pathPanel, \"EventScene\", \"bg_event\"", eventSource);
+            StringAssert.Contains("ScrollUiKit.HandScroll(screen.transform, \"EventScroll\"", eventSource);
+            StringAssert.Contains("F(\"InRun.Event.NeedGold\", option.GoldCost, state.CurrentGold)", eventSource);
+            StringAssert.Contains("ScrollUiKit.Scene(pathPanel, \"CursedChoicePanel\", \"bg_curse\"", gateSource);
+            StringAssert.Contains("\"BtnDeclineSkip\"", gateSource);
+            StringAssert.Contains("ShowRunEndScroll(new RunEndSummary", endSource);
+            StringAssert.Contains("run.State.Mode == GameMode.GardenRun && !run.State.TutorialMode", endSource);
+            StringAssert.Contains("UseRunEndScroll(false);", endSource);
         }
 
         [Test]
@@ -654,11 +673,11 @@ namespace SudokuRoguelike.Tests
             var paletteSource = ReadSource(GamePalettePath);
             // The rule text comes from BossService; the Custom Puzzle tooltip shows the same text (GAP-048).
             var bossSource = ReadSource(BossServicePath);
-            var customSource = ReadSource("Assets/Scripts/UI/MainMenuBlueprintBuilder.CustomPuzzlePanel.cs");
+            var customSource = ReadSource(CustomPuzzleScreenPath);
 
             StringAssert.Contains("LineRenbanLine      = new(0.93f, 0.50f, 0.76f, 1f); // pink", paletteSource);
             StringAssert.Contains("Cells on pink lines form a consecutive set", bossSource);
-            StringAssert.Contains("WireTip(renban, BossModifierId.RenbanLines)", customSource);
+            StringAssert.Contains("BossService.GetModifierDescription(id)", customSource);
             Assert.That(customSource, Does.Not.Contain("Orange line: all digits on the line form a consecutive set"));
         }
 

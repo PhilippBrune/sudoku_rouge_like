@@ -15,7 +15,7 @@ namespace SudokuRoguelike.UI
     /// <summary>
     /// Owns the game-over / victory screen.
     /// </summary>
-    public sealed class EndScreenViewController : MonoBehaviour
+    public sealed partial class EndScreenViewController : MonoBehaviour
     {
         private RunMapController _map;
         private GameObject _gameOverPanel;
@@ -245,6 +245,7 @@ namespace SudokuRoguelike.UI
             }
 
             ClearBossClearedDynamicContent();
+            UseRunEndScroll(false);
 
             // Panels hidden by InRunController before calling ShowGameOver
             if (_gameOverPanel != null)
@@ -291,11 +292,24 @@ namespace SudokuRoguelike.UI
 
             // Load updated XP after persist; fallback to in-memory calculation
             var postSave = new SaveFileService(SaveProfileService.ActiveSlot);
-            var postXp = postSave.HasSaveFile()
-                ? GetClassTotalXpFromSave(postSave.Load(), classId) : preXp + (result?.XpEarned ?? 0);
+            var postEnvelope = postSave.HasSaveFile() ? postSave.Load() : null;
+            var postXp = postEnvelope != null
+                ? GetClassTotalXpFromSave(postEnvelope, classId) : preXp + (result?.XpEarned ?? 0);
             var postLevel = XpTable.DeriveLevel(postXp);
             var postXpInto = postXp - XpTable.CumulativeXpForLevel(postLevel);
             var postXpToNext = postLevel < 40 ? XpTable.XpToNextLevel(postLevel) : 0;
+
+            // [REQ: UI-STYLE-016] A Garden Run ends on the run-end scroll; the other modes keep the text layout.
+            if (run.State.Mode == GameMode.GardenRun && !run.State.TutorialMode)
+            {
+                ShowRunEndScroll(new RunEndSummary
+                {
+                    Victory = victory, State = run.State, Result = result, PreLevel = preLevel, PostLevel = postLevel,
+                    XpInto = postXpInto, XpToNext = postXpToNext, NewUnlocks = newUnlocks,
+                    Unlocked = postEnvelope?.MetaProgress?.UnlockedClasses
+                });
+                return;
+            }
 
             if (_gameOverDetails != null)
             {
@@ -357,6 +371,7 @@ namespace SudokuRoguelike.UI
 
         private void ShowSeasonalResult(RunDirector run, bool completed)
         {
+            UseRunEndScroll(false);
             if (_gameOverPanel != null) _gameOverPanel.SetActive(true);
 
             var now = DateTime.Today;
@@ -433,6 +448,7 @@ namespace SudokuRoguelike.UI
 
         public void ShowSpiritTrialsResult(RunDirector run, bool completed)
         {
+            UseRunEndScroll(false);
             if (_gameOverPanel != null) _gameOverPanel.SetActive(true);
 
             var bgImg = _gameOverPanel?.transform.Find("PanelBackground")?.GetComponent<RawImage>();
@@ -528,6 +544,7 @@ namespace SudokuRoguelike.UI
 
         public void ShowEndlessZenResult(RunDirector run)
         {
+            UseRunEndScroll(false);
             if (_gameOverPanel != null) _gameOverPanel.SetActive(true);
 
             var bgImg = _gameOverPanel?.transform.Find("PanelBackground")?.GetComponent<RawImage>();

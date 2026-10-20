@@ -38,6 +38,16 @@ namespace SudokuRoguelike.UI
             return rt;
         }
 
+        /// <summary>Destroy is deferred to the end of the frame; hide and rename first so a rebuild in the same frame
+        /// never finds the old object by name.</summary>
+        internal static void DestroyNow(GameObject go)
+        {
+            if (go == null) return;
+            go.SetActive(false);
+            go.name += "_old";
+            Object.Destroy(go);
+        }
+
         internal static Image Fill(Transform parent, string name, Vector2 min, Vector2 max, Color color,
             Sprite sprite = null)
         {

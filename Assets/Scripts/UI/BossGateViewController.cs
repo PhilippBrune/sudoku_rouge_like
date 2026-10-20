@@ -15,7 +15,7 @@ namespace SudokuRoguelike.UI
     /// <summary>
     /// Owns the boss gate modifier-choice panel and the cursed-node choice panel.
     /// </summary>
-    public sealed class BossGateViewController : MonoBehaviour
+    public sealed partial class BossGateViewController : MonoBehaviour
     {
         private RunMapController _map;
         private RectTransform _uiRoot;
@@ -81,79 +81,7 @@ namespace SudokuRoguelike.UI
             BuildBossGatePanel(fadeIn: true);
         }
 
-        public void ShowCursedNodePanel(GameObject pathPanel, RunNode node,
-            Action<LevelConfig> onAccept, Action<LevelConfig> onDecline)
-        {
-            var run = _map?.Run;
-            if (run == null) return;
-
-            // Build a preview of what the cursed level would look like
-            var cursedConfig = run.BuildCursedLevelConfig(node.Index);
-            var extraMod = cursedConfig.ActiveModifiers.Count > 0
-                ? BossService.GetModifierName(cursedConfig.ActiveModifiers[cursedConfig.ActiveModifiers.Count - 1])
-                : "?";
-
-            if (pathPanel == null) return;
-            var panel = new GameObject("CursedChoicePanel", typeof(RectTransform));
-            panel.transform.SetParent(pathPanel.transform, false);
-            var rt = panel.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0.15f, 0.25f);
-            rt.anchorMax = new Vector2(0.85f, 0.75f);
-            rt.offsetMin = Vector2.zero;
-            rt.offsetMax = Vector2.zero;
-            var cursedPanelBase = InRunUiFactory.CursedPanelBg;
-            panel.AddComponent<Image>().color = new Color(cursedPanelBase.r, cursedPanelBase.g, cursedPanelBase.b, 0.80f);
-            // F23: bg_curse is a full-screen dark overlay behind this panel, not a board replacement.
-            // It visually signals the cursed state while the board remains playable beneath.
-            InRunUiFactory.AddPanelBackground(panel.transform, "bg_curse");
-
-            var titleTxt = InRunUiFactory.CreateText(panel.transform, "Title", T("InRun.Cursed.Title"), 18, TextAnchor.UpperCenter,
-                InRunUiFactory.CursedTitleRed);
-            titleTxt.rectTransform.anchorMin = new Vector2(0.05f, 0.80f);
-            titleTxt.rectTransform.anchorMax = new Vector2(0.95f, 0.97f);
-            titleTxt.rectTransform.offsetMin = Vector2.zero;
-            titleTxt.rectTransform.offsetMax = Vector2.zero;
-
-            var descTxt = InRunUiFactory.CreateText(panel.transform, "Desc",
-                F("InRun.Cursed.Description", extraMod),
-                12, TextAnchor.MiddleCenter, InRunUiFactory.WarmIvory);
-            descTxt.rectTransform.anchorMin = new Vector2(0.05f, 0.45f);
-            descTxt.rectTransform.anchorMax = new Vector2(0.95f, 0.78f);
-            descTxt.rectTransform.offsetMin = Vector2.zero;
-            descTxt.rectTransform.offsetMax = Vector2.zero;
-
-            var btnAccept = InRunUiFactory.CreateActionButton(panel.transform, "BtnAccept",
-                new Vector2(0.05f, 0.20f), new Vector2(0.45f, 0.40f), T("InRun.Cursed.Accept"), UiAction.Accept);
-            btnAccept.onClick.AddListener(() =>
-            {
-                ActivePanel = null;
-                Object.Destroy(panel);
-                onAccept?.Invoke(cursedConfig);
-            });
-
-            var btnDecline = InRunUiFactory.CreateActionButton(panel.transform, "BtnDecline",
-                new Vector2(0.55f, 0.20f), new Vector2(0.95f, 0.40f), T("Decline"), UiAction.Decline);
-            btnDecline.onClick.AddListener(() =>
-            {
-                // [REQ: MAP-NODE-CURSED-003] Decline: standard puzzle built with no cursed multipliers or extra modifier
-                var normalConfig = run.BuildNodeLevelConfig(node, node.Index);
-                ActivePanel = null;
-                Object.Destroy(panel);
-                onDecline?.Invoke(normalConfig);
-            });
-
-            // Explicit horizontal D-pad nav between the two choice buttons
-            var aNav = btnAccept.navigation;
-            aNav.mode = Navigation.Mode.Explicit; aNav.selectOnRight = btnDecline;
-            btnAccept.navigation = aNav;
-            var dNav = btnDecline.navigation;
-            dNav.mode = Navigation.Mode.Explicit; dNav.selectOnLeft = btnAccept;
-            btnDecline.navigation = dNav;
-
-            ActivePanel = panel;
-            FadeInPanel(panel);
-            InRunUiFactory.SelectFirstInteractable(panel);
-        }
+        // The cursed-tile scene (UI-STYLE-015) is in BossGateViewController.Cursed.cs.
 
         // [REQ: UI-STYLE-004] The boss gate as a trial scroll (layout-proposals.md, B): the gate painting darkened behind
         // a hand scroll with the boss's seal, one ink-framed panel per offered trial with an ensō that is ticked when

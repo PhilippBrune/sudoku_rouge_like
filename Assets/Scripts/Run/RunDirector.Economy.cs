@@ -108,9 +108,12 @@ namespace SudokuRoguelike.Run
             State.CurrentHP = Math.Min(State.MaxHP, State.CurrentHP + GetRestHealAmount());
         }
 
+        /// <summary>Pencil marks the rest's "fresh ink" gives.</summary>
+        public const int RestPencilBoost = 4;
+
         public void AcceptRestPencilBoost()
         {
-            State.CurrentPencil = Math.Min(State.MaxPencil, State.CurrentPencil + 4);
+            State.CurrentPencil = Math.Min(State.MaxPencil, State.CurrentPencil + RestPencilBoost);
         }
 
         /// <summary>Removes the oldest active curse at the rest node. Returns false if no curses are active.</summary>

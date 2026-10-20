@@ -60,6 +60,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-049](#gap-049) | Chosen modifiers silently missing on busy boards (white dots under Nonconsecutive, Even/Odd after Prime markers, Palindrome on 9×9) | FIXED (found and fixed 2026-10-19) | HIGH | P1 |
 | [GAP-050](#gap-050) | Lines and arrows (catalog and original ones) could cross themselves in an X | FIXED (2026-10-19 catalog lines; 2026-10-20 every line and arrow) | MEDIUM | P3 |
 | [GAP-051](#gap-051) | A pre-baked boss board could be reused after the player picked Entropy at the gate | FIXED (found and fixed 2026-10-19) | HIGH | P2 |
+| [GAP-052](#gap-052) | Event nodes opened behind the garden path; their close button did nothing | FIXED (found and fixed 2026-10-20) | HIGH | P2 |
 | [GAP-044](#gap-044) | Region borders showed the previous puzzle's regions on a same-size board | FIXED (found 2026-10-14 by the owner) | HIGH | P1 |
 | [GAP-043](#gap-043) | Without the `ActiveProfileSlot` pref the game opens an empty slot 0, not the existing profile | FIXED (0.1.5, found 2026-10-14) | LOW | P3 |
 
@@ -868,3 +869,14 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Affected Files:** `Assets/Scripts/Run/RunDirector.LevelGeneration.cs`, `Assets/Scripts/Boss/BossService.cs`
 - **Tests:** `CatalogExtraHouseTests.PreBakedBoard_MatchesOnEverySolutionShapingRule` (fails without the fix).
 - **Runtime check (2026-10-20):** `PreBakedBossBoardTests` runs the real flow: bake the boss board at floor entry, then start the boss with Entropy (or X-Sudoku) picked at the gate. With the old match the Entropy case fails ("seed 41: the boss board's solution breaks Entropy at (0,0)"), so the bug was real in play; with the fix it passes. X-Sudoku was already safe, because the overlay switches it on only when the solution keeps the diagonals and the level is regenerated otherwise.
+
+## GAP-052
+**Event nodes opened behind the garden path; their close button did nothing**
+
+- **Requirement:** UI-STYLE-014 (event as a hand scroll over the path); the event node (MAP-NODE types, RunEventService)
+- **Status:** FIXED (found while rebuilding the event screen, 2026-10-20) · **Severity:** HIGH · **Priority:** P2
+- **Problem:** Stepping on an event tile opened the event panel, but the panel was drawn under the full-screen garden path, so the player saw nothing and could only pick a choice blind with keys 1–3. The panel's Back button had no listener. The 0.2.0 beta has this bug.
+- **Root Cause:** `InRunUiBlueprintBuilder` builds the event panel before the path panel, so it is an earlier sibling and the path covers it; the garden path became a full-screen scroll in UI-STYLE-001.
+- **Fix:** The event is now a scene built after the path panel (`ScrollUiKit.Scene`), like the reward, shop and rest; a choice shows its result and the button becomes Continue, which closes the scene (`EventChoiceScreenController`).
+- **Affected Files:** `Assets/Scripts/UI/EventChoiceScreenController.cs`, `Assets/Scripts/UI/InRunController.cs`
+- **Tests:** `RunNodeScenesPlayModeTests.Event_OpensAboveThePath_UnaffordableChoicesAreGreyed_ContinueCloses` (fails on the old controller: "the event opens its scene"). Screenshot `before_event` (old controller, opened through the real flow: only the path is visible) and `after_event`.

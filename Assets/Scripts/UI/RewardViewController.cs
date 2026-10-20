@@ -183,128 +183,22 @@ namespace SudokuRoguelike.UI
             _rewardSlots?.Clear();
             CloseRewardScene();
             CloseRelicShrine();
+            CloseRestScene();
             ActivePanel = null;
         }
 
-        // ────────────────────── Rest choice panel ──────────────────────
-        // [REQ: CURSE-ACQUIRE-005] Rest node shows 3 options (Heal / +Pencil / +Reroll) when no curses are active
-        // [REQ: CURSE-ACQUIRE-004] Rest node adds a 4th "Cleanse" option when at least one curse is active
-        public void ShowRestChoicePanel()
+        private GameObject _restPanel;
+
+        /// <summary>Removes the rest scene (a run that ends while it is open, or a test).</summary>
+        public void CloseRestScene()
         {
-            var run = _map?.Run;
-            if (run?.State == null || _pathPanel == null) return;
-
-            var panel = new GameObject("RestChoicePanel", typeof(RectTransform));
-            panel.transform.SetParent(_pathPanel.transform, false);
-            var rt = panel.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0.20f, 0.25f);
-            rt.anchorMax = new Vector2(0.80f, 0.75f);
-            rt.offsetMin = Vector2.zero;
-            rt.offsetMax = Vector2.zero;
-            var bg = panel.AddComponent<Image>();
-            bg.color = InRunUiFactory.RestRelicPanelBg;
-            InRunUiFactory.AddPanelBackground(panel.transform, "bg_rest");
-
-            var restTitle = InRunUiFactory.CreateText(panel.transform, "Title", T("InRun.Rest.Title"), 22, TextAnchor.UpperCenter,
-                GamePalette.AccentGold);
-            restTitle.rectTransform.anchorMin = new Vector2(0.05f, 0.75f);
-            restTitle.rectTransform.anchorMax = new Vector2(0.95f, 0.95f);
-            restTitle.rectTransform.offsetMin = Vector2.zero;
-            restTitle.rectTransform.offsetMax = Vector2.zero;
-
-            var healAmt = run.GetRestHealAmount();
-            var btnHeal = InRunUiFactory.CreateActionButton(panel.transform, "BtnHeal",
-                new Vector2(0.05f, 0.52f), new Vector2(0.95f, 0.70f),
-                F("InRun.Rest.Heal", healAmt), UiAction.Heal, compact: true);
-            ConfigureRestActionLabel(btnHeal);
-            btnHeal.onClick.AddListener(() =>
-            {
-                run.AcceptRestHeal();
-                OnStatusChanged?.Invoke(F("InRun.Rest.Status.Healed", healAmt));
-                ActivePanel = null;
-                Object.Destroy(panel);
-            });
-
-            var btnPencil = InRunUiFactory.CreateActionButton(panel.transform, "BtnPencil",
-                new Vector2(0.05f, 0.30f), new Vector2(0.95f, 0.48f),
-                T("InRun.Rest.Pencil"), UiAction.Pencil, compact: true);
-            ConfigureRestActionLabel(btnPencil);
-            btnPencil.onClick.AddListener(() =>
-            {
-                run.AcceptRestPencilBoost();
-                OnStatusChanged?.Invoke(T("InRun.Rest.Status.Pencil"));
-                ActivePanel = null;
-                Object.Destroy(panel);
-            });
-
-            var btnReroll = InRunUiFactory.CreateActionButton(panel.transform, "BtnReroll",
-                new Vector2(0.05f, 0.08f), new Vector2(0.95f, 0.26f),
-                T("InRun.Rest.Reroll"), UiAction.Reroll, compact: true);
-            ConfigureRestActionLabel(btnReroll);
-            btnReroll.onClick.AddListener(() =>
-            {
-                run.AcceptRestRerollShop();
-                OnStatusChanged?.Invoke(T("InRun.Rest.Status.Reroll"));
-                ActivePanel = null;
-                Object.Destroy(panel);
-            });
-
-            // 4th option: cleanse oldest curse — only shown when at least one curse is active
-            Button btnCleanse = null;
-            if (run.HasAnyCurse())
-            {
-                // Shift existing buttons up to make room
-                var shift = 0.18f;
-                btnHeal.GetComponent<RectTransform>().anchorMin    += new Vector2(0, shift);
-                btnHeal.GetComponent<RectTransform>().anchorMax    += new Vector2(0, shift);
-                btnPencil.GetComponent<RectTransform>().anchorMin  += new Vector2(0, shift);
-                btnPencil.GetComponent<RectTransform>().anchorMax  += new Vector2(0, shift);
-                btnReroll.GetComponent<RectTransform>().anchorMin  += new Vector2(0, shift);
-                btnReroll.GetComponent<RectTransform>().anchorMax  += new Vector2(0, shift);
-
-                var activeCurses = run.GetActiveCurses();
-                var oldestName = activeCurses.Count > 0 ? activeCurses[0].Name : T("InRun.Curse.Generic");
-                btnCleanse = InRunUiFactory.CreateActionButton(panel.transform, "BtnCleanse",
-                    new Vector2(0.05f, 0.08f), new Vector2(0.95f, 0.26f),
-                    F("InRun.Rest.Cleanse", oldestName), UiAction.Cleanse, compact: true);
-                ConfigureRestActionLabel(btnCleanse);
-                btnCleanse.onClick.AddListener(() =>
-                {
-                    run.AcceptRestCurseRemoval();
-                    OnStatusChanged?.Invoke(F("InRun.Rest.Status.Cleansed", oldestName));
-                    ActivePanel = null;
-                    Object.Destroy(panel);
-                });
-            }
-
-            // Explicit vertical D-pad nav for controller
-            var restBtns = new List<Button> { btnHeal, btnPencil, btnReroll };
-            if (btnCleanse != null) restBtns.Add(btnCleanse);
-            for (var i = 0; i < restBtns.Count; i++)
-            {
-                var nav = new Navigation { mode = Navigation.Mode.Explicit };
-                nav.selectOnUp   = restBtns[(i - 1 + restBtns.Count) % restBtns.Count];
-                nav.selectOnDown = restBtns[(i + 1) % restBtns.Count];
-                restBtns[i].navigation = nav;
-            }
-
-            ActivePanel = panel;
-            FadeInPanel(panel);
-            StartCoroutine(FocusNextFrame(panel));
+            if (_restPanel == null) return;
+            if (ActivePanel == _restPanel) ActivePanel = null;
+            DestroyNow(_restPanel);
+            _restPanel = null;
         }
 
-        private static void ConfigureRestActionLabel(Button button)
-        {
-            var label = button?.transform.Find("Label")?.GetComponent<Text>();
-            if (label == null) return;
-
-            label.fontSize = 18;
-            label.resizeTextForBestFit = true;
-            label.resizeTextMinSize = 14;
-            label.resizeTextMaxSize = 18;
-            label.horizontalOverflow = HorizontalWrapMode.Overflow;
-            label.verticalOverflow = VerticalWrapMode.Truncate;
-        }
+        // The rest scene is in RewardViewController.Rest.cs (UI-STYLE-013).
 
         private IEnumerator FocusNextFrame(GameObject panel)
         {

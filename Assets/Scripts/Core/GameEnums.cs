@@ -286,7 +286,14 @@ namespace SudokuRoguelike.Core
         BambooScroll,      // Normal: reveal star ratings of your next available path nodes
         GardenLantern,     // Normal: illuminate all fogged cells for 15 seconds, then re-fog
         GoldenKoi,         // Rare: grant +10g per star rating when this puzzle is completed
-        TempleStamp        // Rare: all wrong placements this puzzle cost 0 HP; consumed on completion
+        TempleStamp,       // Rare: all wrong placements this puzzle cost 0 HP; consumed on completion
+        // ── Counter items, one per modifier family (gold-and-items concept L3, ITEM-COUNTER-001..006) ──
+        WaterBasin,        // Rare, lines: up to 3 cells of one line
+        TwinPebbles,       // Normal, dots and pairs: both cells of one mark
+        RiceBowl,          // Rare, cages and arrows: up to 3 cells of one cage or arrow
+        MossStone,         // Normal, cells: 2 marked, paired or fogged cells
+        CompassOfOrder,    // Rare, whole board: the 2 most constrained cells of the extra houses
+        SunMedallion       // Rare, outside clues: the first 2 cells one clue reads
     }
 
     public enum RelicId

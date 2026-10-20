@@ -17,6 +17,7 @@
 - **A grade for every puzzle:** Perfect (no mistake) +5 %, Clean (one) ±0, Rough (two or three) −2 %, Messy (four or more, or the puzzle that ends the run) −5 %. The end of a run shows one stamp per puzzle, floor by floor. This replaces the flat −2 % per mistake.
 - **Gold at the boss gate:** strike one of the offered trials (the boss then takes one trial fewer) or lower the boss's intensity one step, each once per gate.
 - **Gold kept counts:** every 5 gold left at the end of a run adds a point to the run score (up to 15 %).
+- **Six counter items**, one for each family of rules: Water Basin (lines), Twin Pebbles (dots and pairs), Rice Bowl (cages and arrows), Moss Stone (marked cells), Compass of Order (whole-board rules) and Sun Medallion (clues outside the grid). Each writes correct digits into the cells its rules use, and shops lean toward the ones that answer the floor's and the boss's rules.
 
 ### Changed
 

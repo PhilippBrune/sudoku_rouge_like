@@ -22,16 +22,29 @@ namespace SudokuRoguelike.Economy
         // [REQ: SHOP-PRICE-001] [REQ: ECON-SHOP-002] Price: BasePrice × (1 + FloorIndex × 0.5) × priceMultiplier × harmonySurcharge
         // [HARMONY-ECON-002] harmonySurcharge (1.00–1.50) applies the Harmony difficulty shop penalty on top of all other multipliers.
         // [REQ: CLASS-SHOP-001] Class-exclusive items can appear in shops at 25% injection chance when unlocked.
+        // [REQ: ITEM-COUNTER-007] With counter items for the board's rules, each slot offers one of them (each once) at
+        // CounterItemChance; their rarity is fixed.
+        public const double CounterItemChance = 0.5;
+
         public List<ShopOffer> BuildOffers(int floorIndex, int classLevel, float priceMultiplier, float harmonySurcharge,
-            ClassId classId = (ClassId)0)
+            ClassId classId = (ClassId)0, IReadOnlyList<ItemType> counterItems = null)
         {
             var offers = new List<ShopOffer>();
             var slotCount = GetShopSlotCount(floorIndex);
+            var counters = counterItems != null ? new List<ItemType>(counterItems) : new List<ItemType>();
 
             for (var i = 0; i < slotCount; i++)
             {
                 var rarity = RollShopItemRarity(floorIndex, classLevel);
-                var type = RollShopItemType(rarity, classId, classLevel);
+                ItemType type;
+                if (counters.Count > 0 && _random.NextDouble() < CounterItemChance)
+                {
+                    type = counters[_random.Next(counters.Count)];
+                    counters.Remove(type);
+                    rarity = ItemService.GetFixedRarity(type);
+                }
+                else
+                    type = RollShopItemType(rarity, classId, classLevel);
                 var basePrice = GoldTable.BaseItemPrice(rarity);
                 var scaledPrice = (int)Math.Round(basePrice * GoldTable.FloorPriceFactor(floorIndex) * priceMultiplier * harmonySurcharge);
 

@@ -1,6 +1,6 @@
 # Items & Relics System
 
-**Version:** 2.2  
+**Version:** 2.3  
 **Date:** 2026-10-21  
 **Status:** implemented
 
@@ -8,6 +8,7 @@
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.3 | 2026-10-21 | implemented | Counter items, one per modifier family (ITEM-COUNTER-001..006), and shops that lean toward the counters of the board's rules (ITEM-COUNTER-007); lever L3 of `design/gold-and-items-concept.md`. |
 | 2.2 | 2026-10-21 | implemented | Item base prices ×2.5: Normal 40, Rare 75, Epic 150 (ECON-BAL-001, lever L1 of `design/gold-and-items-concept.md`, owner pick after the 0.2.0 playtest). The Warding Flame's removed trial is kept in the save (`RunState.WardingFlameOnFloor`/`WardingFlameTrial`): it used to come back after Save & Quit at the gate. |
 | 2.1 | 2026-10-07 | implemented | Item and relic reference tables regenerated from code (SPEC-MAC-001); standalone items documented as rolled (SPEC-CONF-035); multi-relic without cap, RELIC-SLOT-001 deprecated (SPEC-CONF-004); shop offer counts 2/2/3/3/4 (SPEC-CONF-005); reward reroll and Nothing gold (GAP-015, SPEC-AMB-007); full-bag purchase rule (GAP-036). |
 
@@ -57,6 +58,30 @@ Shops currently sell **items only**.
 - harmony and relic price modifiers
 
 Offers per shop: 2 on Floors 1–2, 3 on Floors 3–4, 4 on Floor 5 (`ShopService.GetShopSlotCount`; ECON-SHOP-001 updated, SPEC-CONF-005). Buying with a full bag requires choosing an item to replace; without a slot nothing is bought or charged (GAP-036).
+
+**ITEM-COUNTER-007 (2.3):** the shop leans toward the counter items of the board's rules: the floor's modifiers and, once
+chosen, the boss's trials. Each slot offers one of those counters with a chance of 50 % (`ShopService.CounterItemChance`),
+each counter at most once per shop, at its fixed rarity and that rarity's price. Floor 1 has no floor modifiers, so its
+shops roll as before.
+
+### Counter Items (2.3, ITEM-COUNTER-001..006)
+
+One item per modifier family answers the rules that are hard on this board (lever L3 of
+`design/gold-and-items-concept.md`). Each writes the solution's digits into cells its family's rules use, starting at the
+selected cell when it belongs to them, else at the group closest to done. The digits are placed like a hand placement
+(combo, pressure and fog react); an item that finds nothing to fill on the board is not used up. They are sold in shops
+only (ITEM-COUNTER-007); rewards keep their pools. Filled cells count as hand placements (combo, relic counters);
+a cell under Cell Lock is skipped. Because only shops sell them, and only for the floor's rules, the counter items do not
+count toward the "every item discovered" codex unlock (`ProfileService`).
+
+| ID | Item | Family | Rarity | Effect | Icon |
+|---|---|---|---|---|---|
+| ITEM-COUNTER-001 | Water Basin | Lines | Rare | Up to 3 empty cells of one line | `items/icon_water_basin` |
+| ITEM-COUNTER-002 | Twin Pebbles | Dots and pairs | Normal | Both cells of one dot or pair mark (a half-done one first) | `items/icon_pebble` |
+| ITEM-COUNTER-003 | Rice Bowl | Cages and arrows | Rare | Up to 3 empty cells of one cage or arrow (circle and path) | `items/icon_rice_bowl` |
+| ITEM-COUNTER-004 | Moss Stone | Cells | Normal | 2 marked, paired or fogged cells | `items/icon_moss_stone` |
+| ITEM-COUNTER-005 | Compass of Order | Whole board | Rare | The 2 empty cells with the fewest possible digits (row, column, region) on the diagonals, windows, extra regions and the inverted zone; under a whole-board rule without houses (Anti-Knight, Nonconsecutive ...) anywhere; nothing on a board without a whole-board rule | `items/icon_compass_of_order` |
+| ITEM-COUNTER-006 | Sun Medallion | Outside clues | Rare | The first 2 empty cells one outside clue reads, or one quadruple's four cells | `items/icon_sun_medallion` |
 
 ### No-Progression Modes
 

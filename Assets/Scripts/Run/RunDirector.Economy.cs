@@ -20,7 +20,12 @@ namespace SudokuRoguelike.Run
             var classLevel = GetCurrentClassLevel();
             var shopClassId = State.IsSeasonalChallenge ? (ClassId)0 : State.ClassId;
             _shopService.ReseedForDecision(DecisionSeed(DecisionPurpose.ShopOffers, State.ShopRerollCount));
-            CurrentShopOffers = _shopService.BuildOffers(State.CurrentFloor, classLevel, priceMultiplier, State.HarmonyConfig.ShopSurcharge, shopClassId);
+            // [REQ: ITEM-COUNTER-007] The shop leans toward items that counter the floor's rules and the chosen boss trials.
+            var rules = new List<BossModifierId>();
+            if (State.ActiveFloorModifiers != null) rules.AddRange(State.ActiveFloorModifiers);
+            if (State.ChosenBossModifiers != null) rules.AddRange(State.ChosenBossModifiers);
+            CurrentShopOffers = _shopService.BuildOffers(State.CurrentFloor, classLevel, priceMultiplier, State.HarmonyConfig.ShopSurcharge,
+                shopClassId, Items.CounterItems.ForRules(rules));
             return CurrentShopOffers;
         }
 

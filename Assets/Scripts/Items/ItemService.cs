@@ -194,13 +194,10 @@ namespace SudokuRoguelike.Items
 
         private ItemType RollItemType(ItemRarity rarity, int classLevel, ClassId classId = (ClassId)0)
         {
-            // F9: The following items have CSV manifest entries and PNG art previews in
-            // Assets/Resources/GeneratedIcons/ but are intentionally ABSENT from every roll pool below.
-            // They are reserved for future mechanics and must not be added to tiered / rare / epic arrays:
-            //   Tea Cup, Moss Stone, Rice Bowl, Pebble, Jade Amulet, Wind Bell,
-            //   Water Basin, Sacred Bell, Sun Medallion, Compass of Order.
-            // Their PNG files exist only as approved art; adding them to any pool requires a
-            // separate design pass that defines their mechanical effects.
+            // F9: Tea Cup, Jade Amulet, Wind Bell and Sacred Bell have art in Resources/items but no mechanics yet; they are
+            // ABSENT from every pool and need a design pass first. Moss Stone, Rice Bowl, Pebble (Twin Pebbles), Water
+            // Basin, Sun Medallion and Compass of Order are the counter items (ITEM-COUNTER-001..006): sold in shops only
+            // (ShopService, ITEM-COUNTER-007), never rolled as rewards here.
 
             // Class-exclusive item: 25% chance to inject the exclusive if unlocked
             if (classId != (ClassId)0 && _random.NextDouble() < 0.25)
@@ -265,6 +262,9 @@ namespace SudokuRoguelike.Items
                 // General-pool items: BambooScroll + GardenLantern are Normal; GoldenKoi + TempleStamp are Rare
                 ItemType.BambooScroll or ItemType.GardenLantern => ItemRarity.Normal,
                 ItemType.GoldenKoi or ItemType.TempleStamp => ItemRarity.Rare,
+                // [REQ: ITEM-COUNTER-001..006] Counter items: the two smaller ones Normal, the rest Rare.
+                ItemType.TwinPebbles or ItemType.MossStone => ItemRarity.Normal,
+                ItemType.WaterBasin or ItemType.RiceBowl or ItemType.CompassOfOrder or ItemType.SunMedallion => ItemRarity.Rare,
                 _ => ItemRarity.Normal
             };
         }
@@ -395,6 +395,13 @@ namespace SudokuRoguelike.Items
                 ItemType.GoldenKoi       => "Golden Koi",
                 ItemType.TempleStamp     => "Temple Stamp",
                 ItemType.BambooCompass  => "Bamboo Compass",
+                // Counter items (ITEM-COUNTER-001..006)
+                ItemType.WaterBasin     => "Water Basin",
+                ItemType.TwinPebbles    => "Twin Pebbles",
+                ItemType.RiceBowl       => "Rice Bowl",
+                ItemType.MossStone      => "Moss Stone",
+                ItemType.CompassOfOrder => "Compass of Order",
+                ItemType.SunMedallion   => "Sun Medallion",
                 _ => type.ToString()
             };
             return LocalizationService.T(ItemNameKey(type), fallback);
@@ -438,6 +445,13 @@ namespace SudokuRoguelike.Items
                 ItemType.GardenLantern     => "garden_lantern",
                 ItemType.GoldenKoi         => "golden_koi",
                 ItemType.TempleStamp       => "temple_seal",
+                // Counter items
+                ItemType.WaterBasin        => "water_basin",
+                ItemType.TwinPebbles       => "pebble",
+                ItemType.RiceBowl          => "rice_bowl",
+                ItemType.MossStone         => "moss_stone",
+                ItemType.CompassOfOrder    => "compass_of_order",
+                ItemType.SunMedallion      => "sun_medallion",
                 _ => ""
             };
         }
@@ -504,6 +518,13 @@ namespace SudokuRoguelike.Items
                 ItemType.GardenLantern  => LocalizationService.T(ItemDescriptionKey(type, rarity), "Lift fog from the entire board for 15 seconds, then re-fog."),
                 ItemType.GoldenKoi      => LocalizationService.Format(ItemDescriptionKey(type, rarity), "Grant +{0}g per star rating when this puzzle ends.", 10 * 1),
                 ItemType.TempleStamp    => LocalizationService.T(ItemDescriptionKey(type, rarity), "Protect your HP this puzzle - all wrong placements deal 0 damage. Consumed on completion."),
+                // Counter items (gold-and-items concept L3)
+                ItemType.WaterBasin     => LocalizationService.T(ItemDescriptionKey(type, rarity), "Lines: writes the correct digit in up to 3 empty cells of one line - the selected cell's line, else the line closest to done."),
+                ItemType.TwinPebbles    => LocalizationService.T(ItemDescriptionKey(type, rarity), "Dots and pairs: writes the correct digits in both cells of one dot or pair mark - the selected cell's, else one that is half done."),
+                ItemType.RiceBowl       => LocalizationService.T(ItemDescriptionKey(type, rarity), "Cages and arrows: writes the correct digit in up to 3 empty cells of one cage or arrow - the selected cell's, else the one closest to done."),
+                ItemType.MossStone      => LocalizationService.T(ItemDescriptionKey(type, rarity), "Cells: writes the correct digit in 2 marked, paired or fogged cells, the selected one first."),
+                ItemType.CompassOfOrder => LocalizationService.T(ItemDescriptionKey(type, rarity), "Whole board: writes the correct digit in the 2 empty cells with the fewest possible digits - on the diagonals, windows and extra regions; under rules like Anti-Knight anywhere."),
+                ItemType.SunMedallion   => LocalizationService.T(ItemDescriptionKey(type, rarity), "Outside clues: writes the correct digit in the first 2 empty cells one clue reads - the selected cell's clue first."),
                 _ => ""
             };
         }

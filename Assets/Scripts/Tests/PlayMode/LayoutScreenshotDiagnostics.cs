@@ -384,6 +384,23 @@ namespace SudokuRoguelike.Tests
             shop.SelectSlotByIndex(1);
             yield return new WaitForSecondsRealtime(0.2f);
             yield return Shoot(host, camera, "after_shop.png");
+
+            // ITEM-COUNTER-007: with lines and cages on the floor the market leans toward their counter items (the first
+            // reroll count whose offers hold one).
+            run.State.ActiveFloorModifiers = new List<BossModifierId> { BossModifierId.DutchWhispers, BossModifierId.KillerCages };
+            for (var reroll = 0; reroll < 12; reroll++)
+            {
+                run.State.ShopRerollCount = reroll;
+                if (run.BuildShopOffers().Any(o => SudokuRoguelike.Items.CounterItems.IsCounterItem(o.Item.Type))) break;
+            }
+            shop.CloseScenes();
+            yield return null;
+            shop.ShowShop();
+            yield return new WaitForSecondsRealtime(0.6f);
+            for (var i = 0; i < run.CurrentShopOffers.Count; i++)
+                if (SudokuRoguelike.Items.CounterItems.IsCounterItem(run.CurrentShopOffers[i].Item.Type)) { shop.SelectSlotByIndex(i); break; }
+            yield return new WaitForSecondsRealtime(0.2f);
+            yield return Shoot(host, camera, "after_shop_counters.png");
         }
 
         // UI-STYLE-013..016: the rest, event, cursed-tile and run-end screens on Floor 2 (a curse active, so the rest shows

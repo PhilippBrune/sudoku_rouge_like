@@ -3576,6 +3576,10 @@ namespace SudokuRoguelike.UI
                     break;
                 }
 
+                case var _ when CounterItems.IsCounterItem(item.Type):   // ITEM-COUNTER-001..006 (InRunController.CounterItems.cs)
+                    UseCounterItem(slotIndex, item);
+                    break;
+
                 default:
                     SetStatus(Tf("Used {0}.", ItemService.GetItemName(item.Type)));
                     run.TryUseItem(slotIndex);

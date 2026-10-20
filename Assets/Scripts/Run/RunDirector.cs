@@ -2121,6 +2121,15 @@ namespace SudokuRoguelike.Run
                     return ItemEffectResult.Message(LocalizationService.T("Item.Effect.SurveyNotes", "Board size and stars shown for every tile on this floor."));
                 }
 
+                // [REQ: ITEM-COUNTER-001..006] Counter items (RunDirector.CounterItems.cs)
+                case ItemType.WaterBasin:
+                case ItemType.TwinPebbles:
+                case ItemType.RiceBowl:
+                case ItemType.MossStone:
+                case ItemType.CompassOfOrder:
+                case ItemType.SunMedallion:
+                    return ApplyCounterItem(item, row, col);
+
                 default:
                     return ItemEffectResult.None;
             }

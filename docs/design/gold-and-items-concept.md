@@ -1,11 +1,12 @@
 # Concept: make gold and items matter
 
-**Version:** 1.1 | **Date:** 2026-10-21 | **Status:** review (L1, L2, L5, L6 built; L3 counter items in progress)
+**Version:** 1.2 | **Date:** 2026-10-21 | **Status:** implemented (L1, L2, L3, L5, L6 built; the balance check waits for the next playtest)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.2 | 2026-10-21 | implemented | L3 built: six counter items, one per modifier family, and shops that lean toward the board's counters (ItemsAndRelicsSystem 2.3, ITEM-COUNTER-001..007). |
 | 1.1 | 2026-10-21 | review | Owner picks: L1 + L2 + L5 first, L3 as the content follow-up, and L6. Built as GoldEconomySystem 2.2 and GameDesignSpec 1.14: ECON-BAL-001..004, ECON-GATE-001/002, SCORE-GOLD-001. One change to L2: a struck trial also lowers the boss's picks by one (the gate always offers one trial more than the boss takes, so removing an offer alone would buy nothing). Screenshots below. |
 | 1.0 | 2026-10-20 | new | Owner's 0.2.0 playtest: "it feels like gold and items are not needed". Diagnosis from the current numbers, six levers, a recommended package and how to check it. Roadmap item RM-108. |
 
@@ -62,7 +63,7 @@ The owner picked **L1 + L2 + L5 first, L3 as the content follow-up, and L6**.
 | L2 | At the boss gate: "Strike a trial" (60 × floor number, then click the trial; the boss takes one trial fewer) and "Lower intensity" (40 × floor number, one step), each once per gate, kept in the save | ECON-GATE-001, ECON-GATE-002 |
 | L5 | "Gold kept" row on the run-end ledger: a point per 5 gold, at most 15 % | SCORE-GOLD-001 |
 | L6 | From Floor 4 a mistake costs at least 2 HP (the floor's entry painting says so); the rest heals a quarter | ECON-BAL-003, ECON-BAL-004 |
-| L3 | Counter items per modifier family; shops lean toward the floor's and the boss's rules | in progress |
+| L3 | Six counter items, one per family (Water Basin: lines, Twin Pebbles: dots and pairs, Rice Bowl: cages and arrows, Moss Stone: cells, Compass of Order: the whole board, Sun Medallion: outside clues), each writing correct digits into its family's cells; shops offer the board's counters at 50 % per slot | ITEM-COUNTER-001..007 |
 
 The gate with its purse and gold actions, after a strike, the Floor 4 entry and the market with the new prices:
 
@@ -73,5 +74,9 @@ The gate with its purse and gold actions, after a strike, the Floor 4 entry and 
 ![Floor 4 entry](layout-proposals/after_floor_entry_floor4.jpg)
 
 ![Market](layout-proposals/after_shop.jpg)
+
+L3: on a floor with lines and cages the market offers their counters (here the Water Basin):
+
+![Market with a counter item](layout-proposals/after_shop_counters.jpg)
 
 The balance check (average gold left, purchases per shop visit, items used per run) waits for the next playtest.

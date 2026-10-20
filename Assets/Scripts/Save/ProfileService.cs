@@ -183,14 +183,20 @@ namespace SudokuRoguelike.Save
             // [BUG-FIX] Perfect full run: victory with zero mistakes across all 5 floors.
             if (result.Victory && result.MistakesMade == 0) progress.PerfectFullRunAllFloors = true;
 
-            // Check if item codex is now complete (all 26 item types discovered)
+            // Check if item codex is now complete: every item type discovered, except the counter items (ITEM-COUNTER-007),
+            // which only shops sell and only for the floor's rules, so they would make the unlock depend on luck.
             if (!progress.ItemCodexComplete && meta.ItemCodex?.Entries != null)
             {
-                var allItems = System.Enum.GetValues(typeof(Core.ItemType));
+                var required = 0;
+                foreach (Core.ItemType type in System.Enum.GetValues(typeof(Core.ItemType)))
+                    if (!Items.CounterItems.IsCounterItem(type)) required++;
                 var discovered = 0;
                 for (var ci = 0; ci < meta.ItemCodex.Entries.Count; ci++)
-                    if (meta.ItemCodex.Entries[ci].Discovered) discovered++;
-                if (discovered >= allItems.Length)
+                    if (meta.ItemCodex.Entries[ci].Discovered
+                        && !(System.Enum.TryParse<Core.ItemType>(meta.ItemCodex.Entries[ci].ItemId, out var found)
+                             && Items.CounterItems.IsCounterItem(found)))
+                        discovered++;
+                if (discovered >= required)
                     progress.ItemCodexComplete = true;
             }
 

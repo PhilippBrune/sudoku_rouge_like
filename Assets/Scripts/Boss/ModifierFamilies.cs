@@ -74,11 +74,22 @@ namespace SudokuRoguelike.Boss
 
         public static IReadOnlyList<BossModifierId> Get(ModifierFamily family) => Members[family];
 
-        public static ModifierFamily FamilyOf(BossModifierId id)
+        public static ModifierFamily FamilyOf(BossModifierId id) =>
+            TryGetFamily(id, out var family)
+                ? family
+                : throw new ArgumentOutOfRangeException(nameof(id), id, "not a player modifier");
+
+        /// <summary>The family of a player modifier; false for debuffs and other non-player modifiers.</summary>
+        public static bool TryGetFamily(BossModifierId id, out ModifierFamily family)
         {
             foreach (var pair in Members)
-                if (Array.IndexOf(pair.Value, id) >= 0) return pair.Key;
-            throw new ArgumentOutOfRangeException(nameof(id), id, "not a player modifier");
+                if (Array.IndexOf(pair.Value, id) >= 0)
+                {
+                    family = pair.Key;
+                    return true;
+                }
+            family = default;
+            return false;
         }
 
         /// <summary>All player modifiers, family by family.</summary>

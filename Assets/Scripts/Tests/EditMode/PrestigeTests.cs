@@ -89,6 +89,15 @@ namespace SudokuRoguelike.Tests
             var director = new SudokuRoguelike.Run.RunDirector();
             director.StartRun(new LaunchRequest { ClassId = ClassId.GardenMonk, Mode = GameMode.GardenRun, ClassPrestigeTier = 3 }, 7);
             Assert.AreEqual(Gold(3), director.State.CurrentGold, "a Garden Run starts with the class's prestige gold");
+
+            foreach (var mode in new[] { GameMode.EndlessZen, GameMode.SpiritTrials })
+            {
+                var plain = new SudokuRoguelike.Run.RunDirector();
+                plain.StartRun(new LaunchRequest { ClassId = ClassId.GardenMonk, Mode = mode }, 7);
+                var prestiged = new SudokuRoguelike.Run.RunDirector();
+                prestiged.StartRun(new LaunchRequest { ClassId = ClassId.GardenMonk, Mode = mode, ClassPrestigeTier = 5 }, 7);
+                Assert.AreEqual(plain.State.CurrentGold, prestiged.State.CurrentGold, $"{mode} has no prestige gold");
+            }
         }
 
         private static MetaProgressionState Meta(int xp, int bosses)

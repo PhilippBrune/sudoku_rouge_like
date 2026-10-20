@@ -378,6 +378,7 @@ namespace SudokuRoguelike.Sudoku
                     var nc = last.Col + Dirs[d].Dc;
                     if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
                     if (!IsCellFree(nr, nc, used) || IsInLine(line, nr, nc)) continue;
+                    if (CrossesPath(line.Cells, last, new CellCoord(nr, nc))) continue;   // GAP-050: no X with itself
 
                     var lastVal = board.Solution[last.Row, last.Col];
                     var nextVal = board.Solution[nr, nc];
@@ -434,6 +435,7 @@ namespace SudokuRoguelike.Sudoku
                     var nc = last.Col + Dirs[d].Dc;
                     if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
                     if (!IsCellFree(nr, nc, used) || IsInLine(line, nr, nc)) continue;
+                    if (CrossesPath(line.Cells, last, new CellCoord(nr, nc))) continue;   // GAP-050: no X with itself
 
                     var lastVal = board.Solution[last.Row, last.Col];
                     var nextVal = board.Solution[nr, nc];
@@ -491,6 +493,7 @@ namespace SudokuRoguelike.Sudoku
                     var nc = last.Col + Dirs[d].Dc;
                     if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
                     if (!IsCellFree(nr, nc, used) || IsInLine(line, nr, nc)) continue;
+                    if (CrossesPath(line.Cells, last, new CellCoord(nr, nc))) continue;   // GAP-050: no X with itself
 
                     var nextVal = board.Solution[nr, nc];
                     if (values.Contains(nextVal)) continue;
@@ -579,7 +582,8 @@ namespace SudokuRoguelike.Sudoku
             for (var i = left.Count - 1; i >= 1; i--) line.Cells.Add(left[i]);
             line.Cells.Add(centre);
             for (var i = 1; i < right.Count; i++) line.Cells.Add(right[i]);
-            return line;
+            // GAP-050: the two arms grow apart from the centre and can still cross each other.
+            return CrossesItself(line.Cells) ? null : line;
         }
 
         private static bool IsFreeLineCell(CellCoord cell, int size, bool[,] used, List<CellCoord> left, List<CellCoord> right) =>
@@ -631,6 +635,7 @@ namespace SudokuRoguelike.Sudoku
                     var nc = last.Col + Dirs[d].Dc;
                     if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
                     if (!IsCellFree(nr, nc, used) || IsInLine(line, nr, nc)) continue;
+                    if (CrossesPath(line.Cells, last, new CellCoord(nr, nc))) continue;   // GAP-050: no X with itself
                     if (board.Solution[nr, nc] > lastVal)
                         candidates.Add(new CellCoord(nr, nc));
                 }
@@ -684,6 +689,7 @@ namespace SudokuRoguelike.Sudoku
                     var nc = last.Col + Dirs[d].Dc;
                     if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
                     if (!IsCellFree(nr, nc, used)) continue;
+                    if (CrossesPath(cells, last, new CellCoord(nr, nc))) continue;   // GAP-050: no X with itself
                     var alreadyIn = false;
                     for (var ci = 0; ci < cells.Count; ci++)
                         if (cells[ci].Row == nr && cells[ci].Col == nc) { alreadyIn = true; break; }
@@ -896,6 +902,7 @@ namespace SudokuRoguelike.Sudoku
                     if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
                     if (used[nr, nc] || (nr == circleRow && nc == circleCol)) continue;
                     if (IsOnArrowPath(arrow, nr, nc)) continue;
+                    if (CrossesArrowPath(arrow, new CellCoord(lastRow, lastCol), new CellCoord(nr, nc))) continue;   // GAP-050
 
                     var nextVal = board.Solution[nr, nc];
                     if (runningSum + nextVal <= circleVal)
@@ -992,6 +999,7 @@ namespace SudokuRoguelike.Sudoku
                     var nc = last.Col + Dirs[d].Dc;
                     if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
                     if (!IsCellFree(nr, nc, used) || IsInLine(line, nr, nc)) continue;
+                    if (CrossesPath(line.Cells, last, new CellCoord(nr, nc))) continue;   // GAP-050: no X with itself
                     if (Math.Abs(board.Solution[nr, nc] - lastVal) == 1)
                         candidates.Add(new CellCoord(nr, nc));
                 }
@@ -1046,6 +1054,7 @@ namespace SudokuRoguelike.Sudoku
                     var nc = last.Col + Dirs[d].Dc;
                     if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
                     if (!IsCellFree(nr, nc, used) || IsInLine(line, nr, nc)) continue;
+                    if (CrossesPath(line.Cells, last, new CellCoord(nr, nc))) continue;   // GAP-050: no X with itself
                     if (board.Solution[nr, nc] >= lastVal)
                         candidates.Add(new CellCoord(nr, nc));
                 }
@@ -1100,6 +1109,7 @@ namespace SudokuRoguelike.Sudoku
                     var nc = last.Col + Dirs[d].Dc;
                     if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
                     if (!IsCellFree(nr, nc, used) || IsInLine(line, nr, nc)) continue;
+                    if (CrossesPath(line.Cells, last, new CellCoord(nr, nc))) continue;   // GAP-050: no X with itself
                     var v = board.Solution[nr, nc];
                     if (!seenVals.Contains(v))
                         candidates.Add(new CellCoord(nr, nc));
@@ -1311,6 +1321,13 @@ namespace SudokuRoguelike.Sudoku
             for (var i = 0; i < cage.Cells.Count; i++)
                 if (cage.Cells[i].Row == row && cage.Cells[i].Col == col) return true;
             return false;
+        }
+
+        private static bool CrossesArrowPath(ArrowConstraint arrow, CellCoord from, CellCoord next)
+        {
+            var path = new List<CellCoord>(arrow.ArrowCells.Count + 1) { arrow.CircleCell };
+            path.AddRange(arrow.ArrowCells);
+            return CrossesPath(path, from, next);
         }
 
         private static bool IsOnArrowPath(ArrowConstraint arrow, int row, int col)

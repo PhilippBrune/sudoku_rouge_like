@@ -194,7 +194,9 @@ namespace SudokuRoguelike.Sudoku
             if (path == null) return null;
             taken.AddRange(path);
             var want = SumOf(board, path) - S(board, first);
-            var ends = RandomWalkOptions(used, size, taken, path[path.Count - 1]).FindAll(c => S(board, c) == want);
+            var last = path[path.Count - 1];
+            var ends = RandomWalkOptions(used, size, taken, last)
+                .FindAll(c => S(board, c) == want && !CrossesPath(taken, last, c));   // GAP-050: the last step too
             if (ends.Count == 0) return null;
             var second = ends[rng.Next(ends.Count)];
             if (CountOpen(board, path) < 2) return null;

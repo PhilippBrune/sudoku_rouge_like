@@ -58,7 +58,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-047](#gap-047) | A chosen modifier can silently miss its overlay when another modifier of the same family has one | FIXED (2026-10-19) | MEDIUM | P2 |
 | [GAP-048](#gap-048) | Line colours differ between the spec, the board and the rule text (Parity Lines looked like Dutch Whispers) | FIXED (2026-10-19) | LOW | P3 |
 | [GAP-049](#gap-049) | Chosen modifiers silently missing on busy boards (white dots under Nonconsecutive, Even/Odd after Prime markers, Palindrome on 9×9) | FIXED (found and fixed 2026-10-19) | HIGH | P1 |
-| [GAP-050](#gap-050) | Catalog lines (Zipper and the other batch lines) could cross themselves in an X | FIXED (found and fixed 2026-10-19) | MEDIUM | P3 |
+| [GAP-050](#gap-050) | Lines and arrows (catalog and original ones) could cross themselves in an X | FIXED (2026-10-19 catalog lines; 2026-10-20 every line and arrow) | MEDIUM | P3 |
 | [GAP-051](#gap-051) | A pre-baked boss board could be reused after the player picked Entropy at the gate | FIXED (found and fixed 2026-10-19) | HIGH | P2 |
 | [GAP-044](#gap-044) | Region borders showed the previous puzzle's regions on a same-size board | FIXED (found 2026-10-14 by the owner) | HIGH | P1 |
 | [GAP-043](#gap-043) | Without the `ActiveProfileSlot` pref the game opens an empty slot 0, not the existing profile | FIXED (0.1.5, found 2026-10-14) | LOW | P3 |
@@ -846,15 +846,16 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Tests:** `GenerationReliabilityTests.BossPuzzles_AllFloors_GenerateWithChosenModifiers` (fails without the fix), `ModifierPresenceTests`.
 
 ## GAP-050
-**Catalog lines could cross themselves in an X (Zipper lines and the other catalog lines)**
+**Lines and arrows could cross themselves in an X (catalog lines, then also the original line and arrow modifiers)**
 
 - **Requirement:** BossMechanicsSystem "Line Constraints (Extended)": 8-directional adjacency, no self-crossing; GEN-MOD-002
-- **Status:** FIXED (found and fixed 2026-10-19 by a new check in the catalog test) · **Severity:** MEDIUM · **Priority:** P3
+- **Status:** FIXED (catalog lines 2026-10-19; every line and arrow 2026-10-20) · **Severity:** MEDIUM · **Priority:** P3
 - **Problem:** A line could take two diagonal steps through the same 2×2 square, so it drew an X and the order of its cells could not be read off the board. Seen on Zipper lines (6×6 seed 22, 9×9 seed 11) and possible on every catalog line. The 0.2.0 beta has it.
 - **Root Cause:** The line growers checked only that a cell was free and not already on the line, not whether the diagonal step crossed an earlier diagonal step; Zipper lines grow two arms from the middle that could cross each other.
 - **Fix:** Every catalog line, arrow path and region-sum piece skips a diagonal step that would cross the path (`CrossesPath`); a finished Zipper line that crosses itself is thrown away (`CrossesItself`).
 - **Affected Files:** `Assets/Scripts/Sudoku/ModifierGeometryGenerator.Catalog.cs`, `ModifierGeometryGenerator.CagesArrows.cs`, `ModifierGeometryGenerator.CatalogB6.cs`
 - **Tests:** `CatalogModifierTests.EveryNewModifier_GeneratesItsGeometry_AndTheSolutionNeverTripsItsRule` (`CheckNoLineCrossesItself`, fails without the fix).
+- **Follow-up (2026-10-20):** the original generators had the same flaw. `LineCrossingTests.NoLineOrArrowCrossesItself` checks all 27 line and arrow modifiers (German and Dutch Whispers, Parity, Renban, Palindrome, Thermo, Between, Consecutive, Slow Thermo, Unique Set, Arrow Sums and every catalog line and arrow) at their minimum size and 9×9, 12 seeds each, at the highest intensity. Before the fix it found crossings in Whispers (9×9), Parity Lines (5×5) and the last step of Double Arrows; now none. The seven original line growers, Between Lines and Arrow Sums skip a crossing step; a palindrome that crosses itself is thrown away like a zipper; a double arrow's second circle may not cross the path.
 
 ## GAP-051
 **A pre-baked boss board could be reused after the player picked Entropy at the gate**
@@ -866,3 +867,4 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Fix:** One predicate, `BossService.ShapesSolution` (board-shaping rules and Entropy), decides both; the B5 rules (X-Sudoku, Hyper, Disjoint Groups, Magic Square) are board-shaping and join it.
 - **Affected Files:** `Assets/Scripts/Run/RunDirector.LevelGeneration.cs`, `Assets/Scripts/Boss/BossService.cs`
 - **Tests:** `CatalogExtraHouseTests.PreBakedBoard_MatchesOnEverySolutionShapingRule` (fails without the fix).
+- **Runtime check (2026-10-20):** `PreBakedBossBoardTests` runs the real flow: bake the boss board at floor entry, then start the boss with Entropy (or X-Sudoku) picked at the gate. With the old match the Entropy case fails ("seed 41: the boss board's solution breaks Entropy at (0,0)"), so the bug was real in play; with the fix it passes. X-Sudoku was already safe, because the overlay switches it on only when the solution keeps the diagonals and the level is regenerated otherwise.

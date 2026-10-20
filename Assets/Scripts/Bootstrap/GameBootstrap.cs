@@ -238,7 +238,8 @@ namespace SudokuRoguelike.Bootstrap
             var meta = _profileService.LoadMetaProgress();
             var garden = new ClassGardenProgressionService();
             request.ClassLevel = garden.GetLevel(meta, request.ClassId);
-            request.ClassPrestigeTier = garden.GetPrestigeTier(meta, request.ClassId);
+            // [REQ: META-PRESTIGE-005] The prestige gold belongs to Garden Runs only.
+            request.ClassPrestigeTier = request.Mode == GameMode.GardenRun ? garden.GetPrestigeTier(meta, request.ClassId) : 0;
 
             _autoSave.ClearActiveRun();
             _run.StartRun(request, runtimeSeed);

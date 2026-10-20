@@ -325,6 +325,13 @@ namespace SudokuRoguelike.Tests
 
             var end = host.GetComponentInChildren<EndScreenViewController>(true);
             run.State.CurrentGold = 212;
+            var tile = new TileXpEntry { BoardSize = 9, Stars = 3, TotalXp = 388 };   // a ledger with every kind of row
+            run.TileXpLog.Add(tile);
+            run.GetAnalytics().RecordTileXp(tile);
+            run.GetAnalytics().RecordPuzzleSolved(3, 0);
+            for (var i = 0; i < 4; i++) run.GetAnalytics().RecordPerfectPuzzle();
+            run.GetAnalytics().RecordCursedPuzzleCompleted();
+            run.GetAnalytics().RecordRunComplete();
             end.ShowGameOver(run, true);
             yield return new WaitForSecondsRealtime(0.8f);
             yield return Shoot(host, camera, prefix + "run_end_victory.png");

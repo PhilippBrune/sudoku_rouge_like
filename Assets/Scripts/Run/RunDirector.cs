@@ -1634,6 +1634,8 @@ namespace SudokuRoguelike.Run
                 xpEntry.TotalXp = (int)(xpEntry.TotalXp * config.CursedXpMult);
 
             if (level.PerfectSoFar) _analytics?.RecordPerfectPuzzle();
+            // [REQ: MAP-NODE-CURSED-004] A cursed puzzle accepted and completed earns its run-score bonus (GAP-054).
+            if (config.IsCursed) _analytics?.RecordCursedPuzzleCompleted();
 
             // ReedPledge: success = +4 Pencil, +30 Gold, +25 bonus XP
             // [REQ: XP-LOG-001] The bonus belongs to this tile's entry, which is added below (GAP-034).

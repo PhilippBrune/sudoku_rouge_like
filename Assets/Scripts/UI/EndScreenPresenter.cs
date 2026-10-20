@@ -1,5 +1,6 @@
 using System.Text;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Run;
 
 namespace SudokuRoguelike.UI
 {
@@ -81,17 +82,23 @@ namespace SudokuRoguelike.UI
         public string BuildRunScoreBreakdown(RunResult result)
         {
             var sb = new StringBuilder();
+            // GameDesignSpec §9c: each row's points and its share of the base; the rows add up to the final score (GAP-053).
+            var score = RunScoreBreakdown.For(result);
             sb.AppendLine(T("EndPresenter.RunScore.Header", "== Run Score =="));
-            sb.AppendLine(F("EndPresenter.RunScore.BaseXp", "  Base XP total:         {0}", result.XpEarned));
-            if (result.PerfectPuzzleCount > 0)
-                sb.AppendLine(F("EndPresenter.RunScore.Perfect", "  Perfect puzzles x{0}:   +{1}%", result.PerfectPuzzleCount, result.PerfectPuzzleCount * 5));
-            if (result.CursedPuzzlesAccepted > 0)
-                sb.AppendLine(F("EndPresenter.RunScore.Cursed", "  Cursed clears x{0}:     +{1}%", result.CursedPuzzlesAccepted, result.CursedPuzzlesAccepted * 10));
-            if (result.Victory)
-                sb.AppendLine(T("EndPresenter.RunScore.Victory", "  Victory bonus:         +25%"));
-            if (result.MistakesMade > 0)
-                sb.AppendLine(F("EndPresenter.RunScore.MistakePenalty", "  Mistake penalty x{0}:   -{1}%", result.MistakesMade, System.Math.Min(50, result.MistakesMade * 2)));
-            sb.Append(F("EndPresenter.RunScore.Final", "  Final Score: {0}", result.RunScore));
+            sb.AppendLine(F("EndPresenter.RunScore.BaseXp", "  Base XP total:         {0}", score.BaseXp));
+            foreach (var line in score.Lines)
+            {
+                var points = System.Math.Abs(line.Points);
+                var percent = System.Math.Abs(line.Percent);
+                sb.AppendLine(line.Kind switch
+                {
+                    RunScoreLineKind.Perfect => F("EndPresenter.RunScore.Perfect", "  Perfect puzzles x{0}:   +{1} ({2}%)", line.Count, points, percent),
+                    RunScoreLineKind.Cursed => F("EndPresenter.RunScore.Cursed", "  Cursed clears x{0}:     +{1} ({2}%)", line.Count, points, percent),
+                    RunScoreLineKind.Victory => F("EndPresenter.RunScore.Victory", "  Victory bonus:         +{0} ({1}%)", points, percent),
+                    _ => F("EndPresenter.RunScore.MistakePenalty", "  Mistake penalty x{0}:   -{1} (-{2}%)", line.Count, points, percent)
+                });
+            }
+            sb.Append(F("EndPresenter.RunScore.Final", "  Final Score: {0}", score.Total));
             return sb.ToString();
         }
 

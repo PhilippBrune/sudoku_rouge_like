@@ -220,7 +220,8 @@ namespace SudokuRoguelike.UI
             var t = paper.transform;
             ScrollUiKit.Label(t, "Header", T("InRun.End.Scroll.ScoreHeader").ToUpperInvariant(), 16, TextAnchor.MiddleLeft, ScrollUiKit.InkSoft,
                 new Vector2(0.0625f, 0.86f), new Vector2(0.94f, 0.907f), 11);
-            var rows = LedgerRows(result);
+            var score = RunScoreBreakdown.For(result);
+            var rows = LedgerRows(score);
             var centre = 0.79f;
             for (var i = 0; i < rows.Count; i++, centre -= 0.13f)
                 ScrollUiKit.ValueRow(t, $"Ledger_{i}", new Vector2(0.0625f, centre - 0.055f), new Vector2(0.934f, centre + 0.055f),
@@ -228,38 +229,30 @@ namespace SudokuRoguelike.UI
             var lineY = centre + 0.13f - 0.095f;
             ScrollUiKit.Line(t, "Rule", new Vector2(0.0625f, lineY), new Vector2(0.934f, lineY), new Color(0.70f, 0.20f, 0.15f, 0.6f), 2f);
             ScrollUiKit.ValueRow(t, "LedgerScore", new Vector2(0.0625f, lineY - 0.16f), new Vector2(0.934f, lineY - 0.04f),
-                T("InRun.End.Scroll.Score"), (result?.RunScore ?? 0).ToString(), 28, ScrollUiKit.Ink);
+                T("InRun.End.Scroll.Score"), score.Total.ToString(), 28, ScrollUiKit.Ink);
         }
 
-        // The same counts and rates as PostRunAnalyticsService.CalculateRunScore.
-        private static List<(string label, string value, Color color)> LedgerRows(RunResult result)
+        // GameDesignSpec §9c (GAP-053): the base XP, then each bonus and the penalty with its share of the base in the label
+        // and its points as the value, so the rows add up to the score below them.
+        private static List<(string label, string value, Color color)> LedgerRows(RunScoreBreakdown score)
         {
-            var rows = new List<(string, string, Color)>();
-            if (result == null) return rows;
-            var baseXp = 0;
-            foreach (var tile in result.TileXpEntries) baseXp += tile.TotalXp;
-            rows.Add((T("InRun.End.Scroll.BaseXp"), baseXp.ToString(), ScrollUiKit.Ink));
-            var perfect = result.Analytics?.PerfectPuzzleCount ?? result.PerfectPuzzleCount;
-            if (perfect > 0)
-                rows.Add((F("InRun.End.Scroll.Perfect", perfect), Percent(perfect * PostRunAnalyticsService.PerfectPuzzleBonus), Green));
-            var cursed = result.Analytics?.CursedPuzzlesCompleted ?? result.CursedPuzzlesAccepted;
-            if (cursed > 0)
-                rows.Add((F("InRun.End.Scroll.Cursed", cursed), Percent(cursed * PostRunAnalyticsService.CursedPuzzleBonus), Green));
-            if (result.Victory)
-                rows.Add((T("InRun.End.Scroll.VictoryBonus"), Percent(PostRunAnalyticsService.VictoryBonus), Green));
-            var mistakes = result.Analytics?.TotalMistakes ?? result.MistakesMade;
-            if (mistakes > 0)
-                rows.Add((F("InRun.End.Scroll.Mistakes", mistakes),
-                    Percent(-Math.Min(PostRunAnalyticsService.MaxMistakePenalty, mistakes * PostRunAnalyticsService.MistakePenalty)),
-                    ScrollUiKit.Vermilion));
+            var rows = new List<(string, string, Color)> { (T("InRun.End.Scroll.BaseXp"), score.BaseXp.ToString(), ScrollUiKit.Ink) };
+            foreach (var line in score.Lines)
+            {
+                var percent = Math.Abs(line.Percent);
+                var label = line.Kind switch
+                {
+                    RunScoreLineKind.Perfect => F("InRun.End.Scroll.Perfect", line.Count, percent),
+                    RunScoreLineKind.Cursed => F("InRun.End.Scroll.Cursed", line.Count, percent),
+                    RunScoreLineKind.Victory => F("InRun.End.Scroll.VictoryBonus", percent),
+                    _ => F("InRun.End.Scroll.Mistakes", line.Count, percent)
+                };
+                rows.Add((label, Points(line.Points), line.Points < 0 ? ScrollUiKit.Vermilion : Green));
+            }
             return rows;
         }
 
-        private static string Percent(float rate)
-        {
-            var points = Mathf.RoundToInt(rate * 100f);
-            return points < 0 ? $"−{-points}%" : $"+{points}%";
-        }
+        private static string Points(int points) => points < 0 ? $"\u2212{-points}" : $"+{points}";
 
         // New classes as ema plaques; without one, "Nothing new this time" and the next class to unlock.
         private static void BuildUnlocks(Transform screen, RunEndSummary run)

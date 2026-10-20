@@ -602,5 +602,9 @@ namespace SudokuRoguelike.Core
         public int RunScore;
         public int PerfectPuzzleCount;
         public int CursedPuzzlesCompleted;
+        /// <summary>XP of all tiles: the base of the run score.</summary>
+        public int BaseXp;
+        /// <summary>The Floor 5 boss was defeated (the run score's victory bonus).</summary>
+        public bool RunCompleted;
     }
 }

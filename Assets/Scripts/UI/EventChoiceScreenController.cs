@@ -36,12 +36,6 @@ namespace SudokuRoguelike.UI
             _runMap = runMap;
         }
 
-        /// <summary>Kept for the blueprint; the scene is built above the path (see <see cref="SetSceneHost"/>).</summary>
-        public void Configure(GameObject panel, Text prompt, Text result, Transform optionsContainer)
-        {
-            if (panel != null) panel.SetActive(false);
-        }
-
         /// <summary>The garden path panel: the event scene sits right after it, so it covers the path.</summary>
         public void SetSceneHost(GameObject pathPanel)
         {

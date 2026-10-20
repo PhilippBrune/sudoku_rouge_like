@@ -61,7 +61,7 @@ namespace SudokuRoguelike.UI
             var flow = EnsureComponent<InRunUiFlowController>(root.gameObject);
             var runScreen = EnsureComponent<InRunController>(root.gameObject);
 
-            var eventPanel = BuildEventPanel(root);
+            var eventScreen = BuildEventScreenHost(root);
             var cursePanel = BuildCursePanel(root);
             var debugPanel = BuildDebugPanel(root);
             var sudokuPanel = BuildSudokuBoardPanel(root);
@@ -73,11 +73,10 @@ namespace SudokuRoguelike.UI
 
             flow.Configure(
                 runMapController,
-                eventPanel.GetComponent<EventChoiceScreenController>(),
+                eventScreen,
                 cursePanel.GetComponent<CursePanelController>());
 
             // Keep legacy prototype helper panels out of the main redesign flow.
-            eventPanel.SetActive(false);
             cursePanel.SetActive(false);
             debugPanel.SetActive(false);
             sudokuPanel.SetActive(false);
@@ -110,40 +109,12 @@ namespace SudokuRoguelike.UI
 #endif
         }
 
-        private GameObject BuildEventPanel(RectTransform root)
+        // [REQ: UI-STYLE-014] The event screen is a scene built over the path when an event opens
+        // (EventChoiceScreenController); here only its empty host, no hidden panel (GAP-052).
+        private EventChoiceScreenController BuildEventScreenHost(RectTransform root)
         {
-            var panel = EnsureRect("EventPanel", root, new Vector2(0.12f, 0.12f), new Vector2(0.88f, 0.78f), Vector2.zero, Vector2.zero).gameObject;
-            EnsureOrGetImage(panel, new Color(panelColor.r, panelColor.g, panelColor.b, 0.40f)); // scrim: bg_event.png shows through
-            InRunUiFactory.AddPanelBackground(panel.transform, "bg_event");
-
-            var controller = EnsureComponent<EventChoiceScreenController>(panel);
-
-            var title = BuildText("PromptText", panel.transform as RectTransform,
-                T("InRun.Blueprint.EventTitle", "Event"), titleFontSize, TextAnchor.UpperLeft);
-            SetRect(title.rectTransform, new Vector2(0.04f, 0.72f), new Vector2(0.96f, 0.95f), Vector2.zero, Vector2.zero);
-
-            var optionsArea = EnsureRect("OptionsRoot", panel.transform as RectTransform, new Vector2(0.04f, 0.22f), new Vector2(0.96f, 0.70f), Vector2.zero, Vector2.zero);
-            var layout = EnsureComponent<VerticalLayoutGroup>(optionsArea.gameObject);
-            layout.spacing = 8;
-            layout.childControlHeight = true;
-            layout.childControlWidth = true;
-            layout.childForceExpandHeight = false;
-            layout.childForceExpandWidth = true;
-            layout.padding = new RectOffset(8, 8, 8, 8);
-            EnsureComponent<ContentSizeFitter>(optionsArea.gameObject).verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            EnsureComponent<RectMask2D>(optionsArea.gameObject); // clips options that exceed the anchored region
-
-            var result = BuildText("ResultText", panel.transform as RectTransform, string.Empty, smallFontSize, TextAnchor.LowerLeft);
-            SetRect(result.rectTransform, new Vector2(0.04f, 0.06f), new Vector2(0.75f, 0.18f), Vector2.zero, Vector2.zero);
-
-            var closeButton = BuildButton("CloseButton", panel.transform as RectTransform, T("Back", "Back"), bodyFontSize);
-            SetRect(closeButton.GetComponent<RectTransform>(), new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
-            ApplyButtonIcon(closeButton, "back_leaf", "ui"); // F16: back/close uses dedicated back_leaf icon
-
-            controller.Configure(panel, title, result, optionsArea);
-
-            panel.SetActive(false);
-            return panel;
+            var host = EnsureRect("EventScreen", root, Vector2.zero, Vector2.zero, Vector2.zero, Vector2.zero).gameObject;
+            return EnsureComponent<EventChoiceScreenController>(host);
         }
 
         private GameObject BuildCursePanel(RectTransform root)

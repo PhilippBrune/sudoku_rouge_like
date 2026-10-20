@@ -237,6 +237,7 @@ namespace SudokuRoguelike.Tests
             ClickButton(scroll, "BtnRunEndBack");
             Assert.IsTrue(returned, "the back button returns to the menu");
 
+            run.GetAnalytics().RecordRunComplete();   // as the game does when the Floor 5 boss falls
             end.ShowGameOver(run, true);   // a victory seals every floor and adds the victory row to the ledger
             yield return null;
             scroll = FindObject(panel, "RunEndScroll");
@@ -244,7 +245,8 @@ namespace SudokuRoguelike.Tests
                 Assert.NotNull(FindObjectOrNull(FindObject(scroll, $"FloorSeal_{f}"), "Mask"), $"floor {f + 1} is sealed");
             Assert.IsNull(FindObjectOrNull(scroll, "CrossA"));
             Assert.IsTrue(scroll.GetComponentsInChildren<Text>(true).Any(t => t.name.EndsWith("_Label")
-                && t.text == LocalizationService.T("InRun.End.Scroll.VictoryBonus", "Victory bonus")), "the ledger has the victory row");
+                && t.text == LocalizationService.Format("InRun.End.Scroll.VictoryBonus", "Victory bonus (+{0}%)",
+                    RunScoreBreakdown.VictoryPercent)), "the ledger has the victory row");
 
             run.State.Mode = GameMode.EndlessZen;
             end.ShowGameOver(run, false);

@@ -43,6 +43,9 @@ namespace SudokuRoguelike.Run
             {
                 result.Analytics = analytics.Build();
                 result.ItemsUsedThisRun = analytics.TotalItemsUsed;
+                // [REQ: MAP-NODE-CURSED-004] Cursed puzzles accepted and completed (GameDesignSpec §9c); perfect puzzles (GAP-054).
+                result.CursedPuzzlesAccepted = analytics.CursedPuzzlesCompleted;
+                result.PerfectPuzzleCount = analytics.PerfectPuzzleCount;
                 result.RunScore = result.Analytics.RunScore;
             }
 

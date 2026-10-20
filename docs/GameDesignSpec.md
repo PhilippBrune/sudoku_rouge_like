@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.11 | **Date:** 2026-10-19 | **Status:** implemented
+**Version:** 1.12 | **Date:** 2026-10-20 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.12 | 2026-10-20 | implemented | Post-run score (9c): rounding stated — each row is its share of the base rounded to whole points, and the final score is the base plus the rows, so the breakdown adds up. The code now adds the bonuses as the formula says; it had multiplied them one after another (GAP-053), and cleared cursed puzzles now count (GAP-054). The 71 player modifiers are chosen in the Custom Puzzle rule book (UI-STYLE-012). |
 | 1.11 | 2026-10-19 | implemented | 43 player modifiers: the catalog batches B1 and B2 (13 modifiers) are live (BossMechanicsSystem 2.8). |
 | 1.10 | 2026-10-15 | implemented | Seed of the week: one Garden Run seed per ISO week for all players, a button in the start-run modal (RUN-WEEK-001); the Discord posts compute the Daily Walk goals, the weekly seed and the Monthly Walk board exactly like the game (RUN-WEEK-002). Credits name community playtesters and translators and link the Discord (CREDITS-COMMUNITY-001). |
 | 1.9 | 2026-10-14 | implemented | Options panels (UI-OPT-001..003): the in-run Options use the main Options' tabs, controls and look (one factory, OptionsUiFactory), plus Accessibility and Run tabs; every control is reachable with the D-pad. Options Structure updated to the built tabs. Closes GAP-029 and FUTURE-015. Evidence: GeneratedUiPlayModeTraversalTests, GeneratedUiWiringContractTests, screenshots (E2E report §10.2f). |
@@ -260,6 +261,10 @@ MistakePenalty = −2% per mistake, capped at −50%
 
 FinalScore = BaseScore × (1 + PerfectBonus + CursedBonus + VictoryBonus + MistakePenalty)
 ```
+
+Each row of the breakdown is its percentage of BaseScore, rounded to whole points (halves away from zero); FinalScore is
+BaseScore plus the rows, so the shown breakdown always adds up and may differ from the exact product by a point or two
+(`RunScoreBreakdown`, GAP-053). "Cursed" counts cursed puzzles accepted and completed (GAP-054).
 
 ### Breakdown Display
 

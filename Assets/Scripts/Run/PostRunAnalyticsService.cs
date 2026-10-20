@@ -96,6 +96,8 @@ namespace SudokuRoguelike.Run
             result.HighestSinglePuzzleMistakes = highestMistakes;
             result.PerfectPuzzleCount = PerfectPuzzleCount;
             result.CursedPuzzlesCompleted = CursedPuzzlesCompleted;
+            result.BaseXp = GetTotalXp();
+            result.RunCompleted = RunCompleted;
             result.RunScore = CalculateRunScore(TileXpLog, PerfectPuzzleCount, CursedPuzzlesCompleted,
                 TotalMistakes, RunCompleted);
 
@@ -107,36 +109,13 @@ namespace SudokuRoguelike.Run
             return result;
         }
 
-        // Run score rules, shared with the run-end ledger (UI-STYLE-016).
-        public const float PerfectPuzzleBonus = 0.05f;
-        public const float CursedPuzzleBonus = 0.10f;
-        public const float VictoryBonus = 0.25f;
-        public const float MistakePenalty = 0.02f;
-        public const float MaxMistakePenalty = 0.50f;
-
-        /// <summary>Run score: base XP × completion bonus × perfect bonus × cursed bonus, minus mistake penalty.</summary>
+        /// <summary>Run score (GameDesignSpec §9c): the base XP plus each bonus and the penalty as a share of it (GAP-053).</summary>
         public static int CalculateRunScore(List<TileXpEntry> tiles, int perfectPuzzles,
             int cursedCompleted, int totalMistakes, bool victory)
         {
             var totalXp = 0;
             for (var i = 0; i < tiles.Count; i++) totalXp += tiles[i].TotalXp;
-
-            var score = totalXp;
-
-            // Perfect puzzle bonus: +5% per perfect puzzle (additive)
-            score = (int)(score * (1f + perfectPuzzles * PerfectPuzzleBonus));
-
-            // Cursed completion bonus: +10% per cursed puzzle accepted and cleared
-            score = (int)(score * (1f + cursedCompleted * CursedPuzzleBonus));
-
-            // Victory bonus: +25%
-            if (victory) score = (int)(score * (1f + VictoryBonus));
-
-            // Mistake penalty: -2% per mistake, floor at 50% of base
-            var misPenalty = System.Math.Min(MaxMistakePenalty, totalMistakes * MistakePenalty);
-            score = (int)(score * (1f - misPenalty));
-
-            return System.Math.Max(0, score);
+            return RunScoreBreakdown.Calculate(totalXp, perfectPuzzles, cursedCompleted, totalMistakes, victory).Total;
         }
     }
 }

@@ -61,6 +61,8 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-050](#gap-050) | Lines and arrows (catalog and original ones) could cross themselves in an X | FIXED (2026-10-19 catalog lines; 2026-10-20 every line and arrow) | MEDIUM | P3 |
 | [GAP-051](#gap-051) | A pre-baked boss board could be reused after the player picked Entropy at the gate | FIXED (found and fixed 2026-10-19) | HIGH | P2 |
 | [GAP-052](#gap-052) | Event nodes opened behind the garden path; their close button did nothing | FIXED (found and fixed 2026-10-20) | HIGH | P2 |
+| [GAP-053](#gap-053) | The run score multiplied its bonuses instead of adding them, so the shown breakdown did not add up | FIXED (2026-10-20) | LOW | P3 |
+| [GAP-054](#gap-054) | Cleared cursed puzzles never earned their run-score bonus | FIXED (found and fixed 2026-10-20) | MEDIUM | P3 |
 | [GAP-044](#gap-044) | Region borders showed the previous puzzle's regions on a same-size board | FIXED (found 2026-10-14 by the owner) | HIGH | P1 |
 | [GAP-043](#gap-043) | Without the `ActiveProfileSlot` pref the game opens an empty slot 0, not the existing profile | FIXED (0.1.5, found 2026-10-14) | LOW | P3 |
 
@@ -880,3 +882,23 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Fix:** The event is now a scene built after the path panel (`ScrollUiKit.Scene`), like the reward, shop and rest; a choice shows its result and the button becomes Continue, which closes the scene (`EventChoiceScreenController`).
 - **Affected Files:** `Assets/Scripts/UI/EventChoiceScreenController.cs`, `Assets/Scripts/UI/InRunController.cs`
 - **Tests:** `RunNodeScenesPlayModeTests.Event_OpensAboveThePath_UnaffordableChoicesAreGreyed_ContinueCloses` (fails on the old controller: "the event opens its scene"). Screenshot `before_event` (old controller, opened through the real flow: only the path is visible) and `after_event`.
+
+## GAP-053
+**The run score multiplied its bonuses instead of adding them, so the shown breakdown did not add up**
+
+- **Requirement:** GameDesignSpec §9c (Post-Run Score); UI-STYLE-016 (run-end ledger); MAP-NODE-CURSED-004
+- **Status:** FIXED (2026-10-20) · **Severity:** LOW · **Priority:** P3
+- **Problem:** The spec adds the shares: `FinalScore = BaseScore × (1 + Perfect + Cursed + Victory + Mistakes)`. The code applied them one after another (×1.15, ×1.2, ×1.25, ×0.84, truncating each time), so the spec's example (base 1 200) scored 1 738 instead of 1 728, and the end screen's rows (+20 %, +10 %, +25 %, −6 %) never added up to the score under them. The rows also read their counts from different fields than the score (accepted instead of completed cursed puzzles, the result's victory flag instead of the run's completion).
+- **Fix:** One `RunScoreBreakdown` computes each row as its share of the base in whole points and the score as the base plus the rows; the stored score, the run-end ledger and the text breakdown use it, with the counts the score was built from (`PostRunAnalytics.BaseXp`, `RunCompleted`). Rows now show points and the share ("Perfect puzzles ×4 (+20 %)  +78").
+- **Affected Files:** `Assets/Scripts/Run/RunScoreBreakdown.cs`, `PostRunAnalyticsService.cs`, `Assets/Scripts/Core/RuntimeModels.cs`, `Assets/Scripts/UI/EndScreenPresenter.cs`, `EndScreenViewController.RunEnd.cs`
+- **Tests:** `RunScoreBreakdownTests` (the spec example gives 1 728, fails on the old code with 1 738; rows add up over a grid of inputs; a finished run's shown breakdown equals its stored score). The run score is only shown on the end screen; the Steam leaderboard receives the run's XP, so no stored or submitted value changes.
+
+## GAP-054
+**Cleared cursed puzzles never earned their run-score bonus**
+
+- **Requirement:** MAP-NODE-CURSED-004; GameDesignSpec §9c (+10 % per cursed puzzle accepted and completed)
+- **Status:** FIXED (found in review of GAP-053, 2026-10-20) · **Severity:** MEDIUM · **Priority:** P3
+- **Problem:** Accepting and clearing a cursed tile gave its +50 % gold and XP, but the run score's +10 % per cursed puzzle never applied, and the end screen never showed a cursed row: nothing in the game counted a cleared cursed puzzle (`RecordCursedPuzzleCompleted` had no caller, `RunResult.CursedPuzzlesAccepted` was never set). The 0.2.0 beta and 0.1.5 have this; the new cursed-tile screen states the bonus.
+- **Fix:** `CompleteLevelAndGrantRewards` counts a completed cursed puzzle; the run result takes the cursed and perfect counts from the run's analytics.
+- **Affected Files:** `Assets/Scripts/Run/RunDirector.cs`, `Assets/Scripts/Run/RunResultFactory.cs`
+- **Tests:** `RunScoreBreakdownTests.ClearedCursedPuzzle_CountsForTheRunScore` (plays a cursed 5×5 through the real completion; fails without the fix).

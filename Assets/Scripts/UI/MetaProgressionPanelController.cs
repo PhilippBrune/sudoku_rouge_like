@@ -125,7 +125,7 @@ namespace SudokuRoguelike.UI
             var required = ClassGardenProgressionService.RequiredBossesForPrestige(entry.PrestigeTier);
             var defeated = meta.ClassUnlocks?.BossesDefeated ?? 0;
             return defeated >= required
-                ? T("MetaProgression.Prestige.Ready", "    Prestige ready: the level resets to 1 and the prestige tier rises.")
+                ? T("MetaProgression.Prestige.Ready", "    Prestige ready: the level resets to 1, the prestige tier rises and runs with this class start with +1 gold per tier.")
                 : F("MetaProgression.Prestige.NeedsBosses", "    Prestige needs {0} boss defeats ({1}/{0}).", required, defeated);
         }
 

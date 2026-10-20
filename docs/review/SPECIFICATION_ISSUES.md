@@ -17,7 +17,7 @@ Contents: [Contradictions](#1-contradictions) · [Ambiguities](#2-ambiguous-requ
 
 | Group | Entries | Resolved in 1.1 | Open |
 |---|---:|---:|---|
-| Contradictions | 40 | 39 | SPEC-CONF-039 (new, owner decision). Owner sign-offs requested: SPEC-CONF-008 balance values, SPEC-PROC-007 legal wording. |
+| Contradictions | 40 | 40 | SPEC-CONF-039 decided 2026-10-20. Owner sign-offs requested: SPEC-CONF-008 balance values, SPEC-PROC-007 legal wording. |
 | Ambiguities | 14 | 14 | Listening check for SPEC-AMB-011 (GAP-030). |
 | Obsolete requirements | 13 rows | 13 | — |
 | Missing acceptance criteria | 11 | 9 | SPEC-MAC-005 (deferred, FUTURE-011), SPEC-MAC-011 (profiler session). |
@@ -406,6 +406,7 @@ Where a recommendation was doc-only but the matching gap asked for code (SPEC-CO
   1. **Keep the reward cosmetic and remove "Passive tier +1" from ClassXpProgressionSystem.** *(recommended)* Matches the code and keeps balance unchanged; no save change.
   2. **Implement passive tiers: define the per-class effect of each tier (1–9), apply it in `ClassPassiveService`, and test it.** Gives prestige a gameplay reason; needs a design for eight passives × nine tiers.
 - **Resolution (1.1, 2026-10-07):** Open, owner decision. 1.1 ships the cosmetic reward (both specs say so in their 1.1 rows).
+- **Resolution (2026-10-20):** Owner decision, a third option: the badge plus **+1 starting gold per prestige tier** for runs with that class (at most +9). "Passive tier +1" is dropped. ClassXpProgressionSystem 1.4, MetaProgressionSystem 1.10 (META-PRESTIGE-005); code `ClassGardenProgressionService.PrestigeStartingGold`, applied in `RunArchetypeService.CreateRunState`. Evidence: `PrestigeTests.PrestigeTier_AddsOneStartingGoldPerTier`.
 
 ### SPEC-CONF-040
 **Steam achievement names and visibility** *(added 2026-10-14)*

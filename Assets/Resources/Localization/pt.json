@@ -219,7 +219,7 @@
     "FirstRun.GamepadHint":  "[{0}] Confirmar  ·  Direcional",
     "MetaProgression.Prestige.Max":  "    Prestígio máximo alcançado.",
     "MetaProgression.Prestige.NeedsBosses":  "    O prestígio exige {0} chefes derrotados ({1}/{0}).",
-    "MetaProgression.Prestige.Ready":  "    Prestígio disponível: o nível volta a 1 e o grau de prestígio sobe.",
+    "MetaProgression.Prestige.Ready":  "    Prestígio disponível: o nível volta a 1, o grau de prestígio sobe e as partidas com esta classe começam com +1 de ouro por grau.",
     "MetaProgression.Prestige.Confirm":  "Confirmar: voltar ao nível 1?",
     "MetaProgression.Prestige.Button":  "Prestígio",
     "Items are blocked for {0} more correct placement(s).":  "Itens bloqueados por mais {0} posição(ões) correta(s).",

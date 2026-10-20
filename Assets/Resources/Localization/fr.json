@@ -219,7 +219,7 @@
     "FirstRun.GamepadHint":  "[{0}] Confirmer  ·  Croix directionnelle",
     "MetaProgression.Prestige.Max":  "    Prestige maximal atteint.",
     "MetaProgression.Prestige.NeedsBosses":  "    Le prestige demande {0} boss vaincus ({1}/{0}).",
-    "MetaProgression.Prestige.Ready":  "    Prestige disponible : le niveau revient à 1 et le rang de prestige augmente.",
+    "MetaProgression.Prestige.Ready":  "    Prestige disponible : le niveau revient à 1, le rang de prestige augmente et les parties avec cette classe commencent avec +1 or par rang.",
     "MetaProgression.Prestige.Confirm":  "Confirmer : retour au niveau 1 ?",
     "MetaProgression.Prestige.Button":  "Prestige",
     "Items are blocked for {0} more correct placement(s).":  "Objets bloqués encore {0} placement(s) correct(s).",

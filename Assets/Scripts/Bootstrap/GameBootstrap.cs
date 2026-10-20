@@ -236,7 +236,9 @@ namespace SudokuRoguelike.Bootstrap
 
             // Populate class level from meta progression so stat bonuses are applied correctly
             var meta = _profileService.LoadMetaProgress();
-            request.ClassLevel = new ClassGardenProgressionService().GetLevel(meta, request.ClassId);
+            var garden = new ClassGardenProgressionService();
+            request.ClassLevel = garden.GetLevel(meta, request.ClassId);
+            request.ClassPrestigeTier = garden.GetPrestigeTier(meta, request.ClassId);
 
             _autoSave.ClearActiveRun();
             _run.StartRun(request, runtimeSeed);

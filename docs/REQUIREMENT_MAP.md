@@ -284,9 +284,10 @@ Legend: ✅ Implemented and verified | ⚠️ Partial / conflicting | ❌ Not im
 | META-PRESTIGE-002 | Prestige requires Level 40 | `Assets/Scripts/Save/ProfileService.cs` | Prestige gate check | PrestigeTests | ✅ |
 | META-PRESTIGE-003 | Boss gate: `3 × (PrestigeTier + 1)` boss defeats | `Assets/Scripts/Save/ProfileService.cs` | Prestige gate check | PrestigeTests | ✅ |
 | META-PRESTIGE-004 | On prestige: TotalXp=0, PrestigeTier++ | `Assets/Scripts/Save/ProfileService.cs` | `TryPrestige` | PrestigeTests | ✅ |
-| META-ASCEND-001 | Ascension is a global layer above per-class prestige | `Assets/Scripts/Core/SaveModels.cs` | `MetaProgressionState.AscensionLevel` | — | ❌ Deferred (FUTURE-009) |
-| META-ASCEND-002 | `ApplyAscension`: increments AscensionLevel, +1 MaxStarCap — not built; Ascension deferred to FUTURE-009 (SPEC-CONF-026/036) | — | — | — | ❌ Deferred (FUTURE-009) |
-| META-ASCEND-003 | `TryPrestigeReset`: resets AscensionLevel — not built; deferred to FUTURE-009 | — | — | — | ❌ Deferred (FUTURE-009) |
+| META-PRESTIGE-005 | Prestige reward: the badge plus +1 starting gold per tier for runs with that class, at most +9 (SPEC-CONF-039, owner 2026-10-20) | `Assets/Scripts/Meta/ClassGardenProgressionService.cs`, `Run/RunArchetypeService.cs`, `Bootstrap/GameBootstrap.cs` | `PrestigeStartingGold`, `CreateRunState`, `LaunchRequest.ClassPrestigeTier` | PrestigeTests.PrestigeTier_AddsOneStartingGoldPerTier | ✅ |
+| META-ASCEND-001 | Ascension is a global layer above per-class prestige — retired (owner 2026-10-20, GAP-017): Harmony and prestige cover it; the save fields stay unused | `Assets/Scripts/Core/SaveModels.cs` | `MetaProgressionState.AscensionLevel` (unused) | — | 🗄️ Descoped |
+| META-ASCEND-002 | `ApplyAscension`: +1 AscensionLevel, +1 MaxStarCap — retired with Ascension (GAP-017) | — | — | — | 🗄️ Descoped |
+| META-ASCEND-003 | `TryPrestigeReset`: global prestige reset — retired with Ascension (GAP-017) | — | — | — | 🗄️ Descoped |
 | META-ASCEND-004 | Monthly seed: `(year × 100) + month` | `Assets/Scripts/Run/SeasonalChallengeService.cs` | `BuildSeed` (seed only; no ascension) | SpecAlignmentTests | ✅ |
 | META-COMPLETE-001 | `CompletionService.Recalculate()` — 4 checks × 25% | `Assets/Scripts/Meta/CompletionService.cs` | `Recalculate` | CompletionTrackingTests | ✅ |
 | META-CODEX-001 | Item & Relic Codex tracks discovery | `Assets/Scripts/Save/ProfileService.cs` | `RecordItemDiscovery`, `RecordRelicDiscovery` | AutosaveMergeTests | ✅ |

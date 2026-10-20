@@ -109,7 +109,7 @@ namespace SudokuRoguelike.Core
         public GardenProgressionData GardenProgression = new GardenProgressionData();
         public ClassUnlockProgress ClassUnlocks = new ClassUnlockProgress();
         public ItemCodexData ItemCodex = new ItemCodexData();
-        // META-ASCEND-001..003: Ascension is not built (deferred, FUTURE-009). AscensionLevel, PrestigeCount and MaxStarCap
+        // META-ASCEND-001..003: Ascension is retired (owner decision 2026-10-20, GAP-017). AscensionLevel, PrestigeCount and MaxStarCap
         // stay for save compatibility. [REQ: SEASON-UNLOCK-001] The Monthly Walk is always available (SPEC-CONF-026).
         public int AscensionLevel;
         public int PrestigeCount;

@@ -27,7 +27,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-014](#gap-014) | Pressure mechanics roll one floor late (F2 never, F5 55 % instead of 80 %) | FIXED (1.1) | MEDIUM | P2 |
 | [GAP-015](#gap-015) | Item-reward reroll is missing | FIXED (1.1) | MEDIUM | P2 |
 | [GAP-016](#gap-016) | Buying pencil during a level is missing | FIXED (1.1) | MEDIUM | P2 |
-| [GAP-017](#gap-017) | Ascension does not exist; per-class prestige unreachable | PARTIALLY FIXED (1.1: prestige; Ascension deferred) | MEDIUM | P2 |
+| [GAP-017](#gap-017) | Ascension does not exist; per-class prestige unreachable | FIXED (1.1: prestige; 2026-10-20: prestige reward decided, Ascension retired) | MEDIUM | P2 |
 | [GAP-018](#gap-018) | Save/resume re-rolls boss choices and rewards (determinism lost) | FIXED (1.1) | MEDIUM | P2 |
 | [GAP-019](#gap-019) | Localization: German mojibake, untranslated UI, language not applied live | FIXED (2026-10-14: fr/es/pt complete, native review pending) | MEDIUM | P2 |
 | [GAP-020](#gap-020) | No seed entry / View Seed / Abandon Run / View Modifiers | FIXED (1.1) | MEDIUM | P2 |
@@ -441,7 +441,7 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 **Ascension does not exist; per-class prestige unreachable**
 
 - **Requirement:** META-ASCEND-001..004, META-PRESTIGE-001..005, SEASON-UNLOCK-001
-- **Status:** PARTIALLY FIXED (1.1: prestige reachable from the Meta Progression panel; Ascension deferred to FUTURE-009, see [1.1 fix log](#fix-log-2026-10-07-release-110)); was MISSING / PARTIALLY_IMPLEMENTED
+- **Status:** FIXED (2026-10-20). 1.1 made prestige reachable from the Meta Progression panel ([1.1 fix log](#fix-log-2026-10-07-release-110)). Owner decisions 2026-10-20: the prestige reward is the badge plus +1 starting gold per tier (SPEC-CONF-039, META-PRESTIGE-005, `PrestigeTests.PrestigeTier_AddsOneStartingGoldPerTier`); Ascension is retired, because Harmony is the post-win difficulty ladder (META-ASCEND-001..003 descoped, MetaProgressionSystem 1.10, FUTURE-009). Was MISSING / PARTIALLY_IMPLEMENTED
 - **Severity:** MEDIUM · **Priority:** P2
 - **Problem:**
   - `Assets/Scripts/Meta/AscensionService.cs` does not exist, yet `REQUIREMENT_MAP.md` marks META-ASCEND-002..004 ✅. `SeasonalChallengeUnlocked` exists only in a comment. `MaxStarCap` is never read.

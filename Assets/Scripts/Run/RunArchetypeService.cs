@@ -72,7 +72,7 @@ namespace SudokuRoguelike.Run
 
         public static RunState CreateRunState(ClassId classId, int seed,
             bool allowIrregular = true, int classLevel = 1,
-            int harmonyLevel = 0, HarmonyPerkId harmonyPerk = HarmonyPerkId.None)
+            int harmonyLevel = 0, HarmonyPerkId harmonyPerk = HarmonyPerkId.None, int prestigeTier = 0)
         {
             var def = ClassCatalog.GetDefinition(classId);
 
@@ -107,7 +107,7 @@ namespace SudokuRoguelike.Run
                 MaxHP        = finalHp,
                 CurrentPencil = finalPencil,
                 MaxPencil     = finalPencil,
-                CurrentGold  = bonusGold,
+                CurrentGold  = bonusGold + SudokuRoguelike.Meta.ClassGardenProgressionService.PrestigeStartingGold(prestigeTier),
                 ItemSlots    = finalSlots,
                 RerollTokens = finalRerolls,
                 AllowIrregularPuzzles = allowIrregular,

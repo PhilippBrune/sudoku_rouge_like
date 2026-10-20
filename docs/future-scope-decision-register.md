@@ -27,7 +27,7 @@ Recorded while implementing `docs/review/SPECIFICATION_ISSUES.md` and `docs/revi
 
 | ID | Area | Decision | Source | Exit Criteria |
 | --- | --- | --- | --- | --- |
-| FUTURE-009 | Ascension (META-ASCEND-001..003) | Not built; deferred. Monthly Walk has no ascension gate. | SPEC-CONF-026, SPEC-CONF-036, GAP-017; MetaProgressionSystem §Ascension | Design approved, `AscensionService` implemented with tests, map rows ✅ from evidence. |
+| FUTURE-009 | Ascension (META-ASCEND-001..003) | Retired (owner decision 2026-10-20, GAP-017): Harmony is the post-win ladder and prestige the per-class goal; Monthly Walk has no ascension gate. | SPEC-CONF-026, SPEC-CONF-036, GAP-017; MetaProgressionSystem §Ascension | Design approved, `AscensionService` implemented with tests, map rows ✅ from evidence. |
 | FUTURE-010 | Boss debuffs PencilPoison, FogPulse, NumberBlind, DigitShift (DEBUFF-DEF-006/009/010/016) | Descoped. DigitShift conflicts with solution-based validation. | GAP-026, SPEC-CONF-021; BossDebuffEffects §Descoped | Each needs a design that keeps puzzles unique, plus hook and delivery tests. |
 | FUTURE-011 | Multi-cell selection (GDS §4.1) | Not built; single-cell selection only. | SPEC-MAC-005 | Selection model, input mapping for keyboard/controller, acceptance tests. |
 | FUTURE-012 | Accurate Map path redirect | Not built; the relic reveals tile details instead. | ClassProgressionUnlocks v0.3 | Redirect rule specified, map UI and save support, tests. |

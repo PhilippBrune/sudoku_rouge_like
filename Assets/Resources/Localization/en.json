@@ -214,7 +214,7 @@
     "FirstRun.GamepadHint":  "[{0}] Confirm  ·  D-Pad",
     "MetaProgression.Prestige.Max":  "    Highest prestige reached.",
     "MetaProgression.Prestige.NeedsBosses":  "    Prestige needs {0} boss defeats ({1}/{0}).",
-    "MetaProgression.Prestige.Ready":  "    Prestige ready: the level resets to 1 and the prestige tier rises.",
+    "MetaProgression.Prestige.Ready":  "    Prestige ready: the level resets to 1, the prestige tier rises and runs with this class start with +1 gold per tier.",
     "MetaProgression.Prestige.Confirm":  "Confirm: reset to Level 1?",
     "MetaProgression.Prestige.Button":  "Prestige",
     "Items are blocked for {0} more correct placement(s).":  "Items are blocked for {0} more correct placement(s).",

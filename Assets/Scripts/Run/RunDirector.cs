@@ -134,7 +134,7 @@ namespace SudokuRoguelike.Run
             }
 
             State = RunArchetypeService.CreateRunState(request.ClassId, seed, request.AllowIrregularPuzzles, request.ClassLevel,
-                request.HarmonyLevel, request.HarmonyPerk);
+                request.HarmonyLevel, request.HarmonyPerk, request.ClassPrestigeTier);
             State.Mode = request.Mode;
 
             // Roll floor modifiers for the initial floor (Floor 1 = 0 modifiers)

@@ -505,6 +505,8 @@ namespace SudokuRoguelike.Core
         public ClassId ClassId;
         public GameMode Mode;
         public bool AllowIrregularPuzzles = true;
+        // [REQ: META-PRESTIGE-005] The class's prestige tier (0–9): +1 starting gold per tier (SPEC-CONF-039).
+        public int ClassPrestigeTier;
         /// <summary>Player's current class level; set by GameBootstrap before calling StartRun.</summary>
         public int ClassLevel = 1;
         /// <summary>Tier for a Spirit Trials run. Null means default (Apprentice).</summary>

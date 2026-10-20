@@ -76,6 +76,21 @@ namespace SudokuRoguelike.Tests
             Assert.IsFalse(profile.TryPrestigeClass(ClassId.GardenMonk), "level 1 again: not eligible");
         }
 
+        // [REQ: META-PRESTIGE-005] SPEC-CONF-039 (owner decision 2026-10-20): +1 starting gold per prestige tier, at most +9.
+        [Test]
+        [Requirement("META-PRESTIGE-005")]
+        public void PrestigeTier_AddsOneStartingGoldPerTier()
+        {
+            int Gold(int tier) => SudokuRoguelike.Run.RunArchetypeService.CreateRunState(ClassId.GardenMonk, 7, classLevel: 1, prestigeTier: tier).CurrentGold;
+            Assert.AreEqual(Gold(0) + 4, Gold(4));
+            Assert.AreEqual(Gold(0) + 9, Gold(9));
+            Assert.AreEqual(Gold(0) + 9, Gold(15), "capped at the highest tier");
+
+            var director = new SudokuRoguelike.Run.RunDirector();
+            director.StartRun(new LaunchRequest { ClassId = ClassId.GardenMonk, Mode = GameMode.GardenRun, ClassPrestigeTier = 3 }, 7);
+            Assert.AreEqual(Gold(3), director.State.CurrentGold, "a Garden Run starts with the class's prestige gold");
+        }
+
         private static MetaProgressionState Meta(int xp, int bosses)
         {
             var meta = new MetaProgressionState();

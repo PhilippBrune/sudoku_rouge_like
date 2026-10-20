@@ -1,11 +1,12 @@
 # Class XP & Level Progression System
 
-**Version:** 1.3 | **Date:** 2026-10-07 | **Status:** implemented
+**Version:** 1.4 | **Date:** 2026-10-20 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.4 | 2026-10-20 | implemented | Owner decision (SPEC-CONF-039): the prestige reward is the badge plus **+1 starting gold per prestige tier** for runs with that class (at most +9); "Passive tier +1" is dropped. |
 | 1.3 | 2026-10-07 | implemented | 1.1 review decisions (2026-10-07): class roster, passives, unlock conditions and level schedules regenerated from ClassCatalog, the decided source (SPEC-CONF-008, GAP-023); "base (+bonus)" display; Number Freak L3 "+1 Pencil" fix (D07); XP above Level 40 discarded (SPEC-CONF-034); prestige button with confirmation in Meta Progression (GAP-017); "Passive tier +1" on prestige marked undecided (new SPEC-CONF-039); header now matches the newest history row (SPEC-CONF-023). |
 | 1.2 | 2026-04-15 | implemented | Added requirement IDs (XP-TILE-*, XP-CURVE-*, XP-LOG-*, XP-COMMIT-*, META-XP-*, META-PRESTIGE-*) |
 | 1.1 | 2026-03-23 | implemented | Prestige boss-gate check added, ProfileService.RecordRunAndGetNewUnlocks orchestration implemented, class unlock thresholds corrected to match spec |
@@ -486,7 +487,7 @@ Prestige can trigger only when **all** of the following are true:
 - Prestige tier **+1**
 - Class level reset to **1**
 - Current XP reset to **0**
-- Passive tier **+1** (permanent bonus carried across prestige cycles) — **not implemented and undecided**: MetaProgressionSystem META-PRESTIGE-005 describes the prestige reward as cosmetic only (badge). Logged as SPEC-CONF-039 for a decision; 1.1 implements the cosmetic badge only.
+- Prestige badge (tier shown in the Meta Progression panel and on the HUD) and **+1 starting gold per prestige tier** for every run with that class, at most +9 at tier 9 (owner decision 2026-10-20, SPEC-CONF-039; `ClassGardenProgressionService.PrestigeStartingGold`). The class passive does not change.
 
 ### Prestige Cap
 

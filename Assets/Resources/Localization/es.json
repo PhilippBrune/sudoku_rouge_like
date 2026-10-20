@@ -219,7 +219,7 @@
     "FirstRun.GamepadHint":  "[{0}] Confirmar  ·  Cruceta",
     "MetaProgression.Prestige.Max":  "    Prestigio máximo alcanzado.",
     "MetaProgression.Prestige.NeedsBosses":  "    El prestigio requiere {0} jefes derrotados ({1}/{0}).",
-    "MetaProgression.Prestige.Ready":  "    Prestigio disponible: el nivel vuelve a 1 y el rango de prestigio sube.",
+    "MetaProgression.Prestige.Ready":  "    Prestigio disponible: el nivel vuelve a 1, el rango de prestigio sube y las partidas con esta clase empiezan con +1 de oro por rango.",
     "MetaProgression.Prestige.Confirm":  "Confirmar: ¿volver al nivel 1?",
     "MetaProgression.Prestige.Button":  "Prestigio",
     "Items are blocked for {0} more correct placement(s).":  "Objetos bloqueados durante {0} colocación(es) correcta(s) más.",

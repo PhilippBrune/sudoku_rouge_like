@@ -198,7 +198,7 @@
     "FirstRun.GamepadHint":  "[{0}] Bestätigen  ·  Steuerkreuz",
     "MetaProgression.Prestige.Max":  "    Höchste Prestige-Stufe erreicht.",
     "MetaProgression.Prestige.NeedsBosses":  "    Prestige braucht {0} besiegte Bosse ({1}/{0}).",
-    "MetaProgression.Prestige.Ready":  "    Prestige bereit: Die Stufe wird auf 1 gesetzt und die Prestige-Stufe steigt.",
+    "MetaProgression.Prestige.Ready":  "    Prestige bereit: Die Stufe wird auf 1 gesetzt, die Prestige-Stufe steigt, und Läufe mit dieser Klasse starten mit +1 Gold pro Stufe.",
     "MetaProgression.Prestige.Confirm":  "Bestätigen: zurück auf Stufe 1?",
     "MetaProgression.Prestige.Button":  "Prestige",
     "Items are blocked for {0} more correct placement(s).":  "Gegenstände sind noch für {0} richtige Platzierung(en) gesperrt.",

@@ -39,6 +39,13 @@ namespace SudokuRoguelike.Meta
 
         public const int MaxPrestigeTier = 9;
 
+        // [REQ: META-PRESTIGE-005] Prestige reward (owner decision 2026-10-20, SPEC-CONF-039): the badge plus one starting
+        // gold per tier for runs with that class, so at most +9.
+        public const int StartingGoldPerPrestigeTier = 1;
+
+        public static int PrestigeStartingGold(int prestigeTier) =>
+            Math.Clamp(prestigeTier, 0, MaxPrestigeTier) * StartingGoldPerPrestigeTier;
+
         // [REQ: META-PRESTIGE-003] Boss gate: cumulative boss defeats >= (PrestigeTier + 1) × 3
         public static int RequiredBossesForPrestige(int prestigeTier) => (prestigeTier + 1) * 3;
 

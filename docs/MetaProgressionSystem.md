@@ -1,11 +1,12 @@
 # Meta Progression System
 
-**Version:** 1.9 | **Date:** 2026-10-19 | **Status:** implemented
+**Version:** 1.10 | **Date:** 2026-10-20 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.10 | 2026-10-20 | implemented | Owner decisions: the prestige reward is the badge plus +1 starting gold per tier (SPEC-CONF-039, META-PRESTIGE-005); Ascension is retired, because Harmony already is the post-win difficulty ladder and prestige the per-class goal (GAP-017, FUTURE-009): META-ASCEND-001..003 descoped, the unused save fields stay for old saves, OPEN-A closed. |
 | 1.9 | 2026-10-19 | implemented | Catalog batch B5 (BossMechanicsSystem 2.12) adds 5 modifiers to the codex and completion: 70 clearable modifiers. |
 | 1.8 | 2026-10-19 | implemented | Catalog batch B4 (BossMechanicsSystem 2.11) adds 5 modifiers to the codex and completion: 65 clearable modifiers. |
 | 1.7 | 2026-10-19 | implemented | Catalog batch B6 (BossMechanicsSystem 2.10) adds 11 modifiers to the codex and completion: 60 clearable modifiers. |
@@ -21,7 +22,7 @@
 
 ## Overview
 
-Meta progression encompasses all persistent systems that carry between runs: **class XP and leveling**, **class unlocks**, **ascension** (deferred), **prestige**, **codex discovery**, **achievements**, and **global completion tracking**. These systems provide long-term goals beyond individual run success.
+Meta progression encompasses all persistent systems that carry between runs: **class XP and leveling**, **class unlocks**, **prestige**, **codex discovery**, **achievements**, and **global completion tracking**. These systems provide long-term goals beyond individual run success.
 
 ---
 
@@ -90,7 +91,7 @@ Prestige allows players to reset a class's level in exchange for permanent cosme
 **[META-PRESTIGE-002]** Requirement: Class must be Level 40.
 **[META-PRESTIGE-003]** Boss gate: Must have defeated `3 × (PrestigeTier + 1)` bosses cumulatively.
 **[META-PRESTIGE-004]** On prestige: Class `TotalXp` resets to 0, `PrestigeTier` increments by 1.
-**[META-PRESTIGE-005]** Reward: Prestige badge displayed on class select, cosmetic tier indicator. (ClassXpProgressionSystem also lists a "Passive tier +1" reward; that contradiction is open as SPEC-CONF-039 — 1.1 ships the cosmetic reward only.)
+**[META-PRESTIGE-005]** Reward: the prestige badge (tier indicator) and **+1 starting gold per tier** for runs with that class, at most +9 (owner decision 2026-10-20, SPEC-CONF-039). The class passive does not change.
 
 As built (1.1, GAP-017): level-40 classes show their prestige status in the Meta Progression panel and a **Prestige** button with a two-step confirmation once the boss gate is met (ClassXpProgressionSystem §Prestige in the UI). The panel summary shows the total prestige tiers instead of the never-built Ascension level.
 
@@ -115,14 +116,13 @@ As built (1.1, GAP-017): level-40 classes show their prestige status in the Meta
 
 ---
 
-## Ascension System — deferred
+## Ascension System — retired
 
-**Status: not built; deferred to future scope (decided 2026-10-07, SPEC-CONF-026, SPEC-CONF-036, GAP-017).** `AscensionService` does not exist. META-ASCEND-001..003 are kept as reserved IDs and marked ❌ in `REQUIREMENT_MAP.md`; the design below is retained for a later version.
+**Status: retired (owner decision 2026-10-20, GAP-017, FUTURE-009).** Harmony (HarmonyDifficultySystem) is the post-win difficulty ladder and prestige is the per-class long-term goal, so a separate global Ascension layer is not built. META-ASCEND-001..003 are descoped (🗄️ in `REQUIREMENT_MAP.md`); `MetaProgressionState.AscensionLevel`, `PrestigeCount` and `MaxStarCap` stay unused in the save model so older saves load unchanged.
 
-**[META-ASCEND-001]** Ascension is a **global** progression layer above class prestige.
-
-- *(deferred)* `ApplyAscension(meta)` — [META-ASCEND-002]: increments `AscensionLevel`, raises `MaxStarCap` by +1 (capped at 7).
-- *(deferred)* `TryPrestigeReset(meta)` — [META-ASCEND-003]: global prestige reset (requires `AscensionLevel > 0`; increments `PrestigeCount`; resets `AscensionLevel = 0`, `MaxStarCap = 5`; clears `PurchasedPermanentUpgrades`).
+- 🗄️ [META-ASCEND-001] Ascension as a global layer above class prestige.
+- 🗄️ [META-ASCEND-002] `ApplyAscension`: +1 AscensionLevel, +1 MaxStarCap.
+- 🗄️ [META-ASCEND-003] `TryPrestigeReset`: global prestige reset.
 
 ### Seasonal Challenges (Monthly Walk)
 
@@ -354,8 +354,7 @@ Tutorial achievements grant **no gameplay progression** (no XP, no gold, no clas
 ## Open Issues
 
 ### OPEN-A — Ascension Reward Design
-**Status:** Deferred
-**Description:** Ascension currently only raises MaxStarCap and unlocks seasonal challenges. Additional ascension rewards (cosmetics, difficulty modifiers) are deferred to post-launch.
+**Status:** Closed (2026-10-20): Ascension is retired (§Ascension System).
 
 
 

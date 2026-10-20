@@ -90,6 +90,7 @@ namespace SudokuRoguelike.Tests
             director.StartRun(new LaunchRequest { ClassId = ClassId.GardenMonk, Mode = GameMode.GardenRun, ClassPrestigeTier = 3 }, 7);
             Assert.AreEqual(Gold(3), director.State.CurrentGold, "a Garden Run starts with the class's prestige gold");
 
+            // RunDirector side: these modes build their own run state and ignore the tier (GameBootstrap also passes 0 for them).
             foreach (var mode in new[] { GameMode.EndlessZen, GameMode.SpiritTrials })
             {
                 var plain = new SudokuRoguelike.Run.RunDirector();

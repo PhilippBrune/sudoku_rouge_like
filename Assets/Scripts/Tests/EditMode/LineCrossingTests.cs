@@ -34,15 +34,22 @@ namespace SudokuRoguelike.Tests
             {
                 var minimum = BossService.GetMinimumBoardSize(mod);
                 foreach (var size in new[] { minimum, 9 }.Distinct())
+                {
+                var drawn = 0;
                 for (var seed = 1; seed <= 12; seed++)
                 {
-                    var board = SudokuGenerator.CreatePuzzleWithUniquenessCheck(size, 0.5f, seed * 37 + size,
-                        regionVariant: size == 6 || size == 8 || size == 9 ? 0 : 0);
+                    var board = SudokuGenerator.CreatePuzzleWithUniquenessCheck(size, 0.5f, seed * 37 + size, regionVariant: 0);
                     var overlay = ModifierGeometryGenerator.Generate(board, new List<BossModifierId> { mod }, seed,
                         BossModifierIntensity.VeryHigh);
                     foreach (var path in Paths(overlay))
+                    {
+                        drawn++;
                         if (Crosses(path.Cells, out var square))
                             failures.Add($"{mod} {size}×{size} seed {seed}: {path.Name} crosses itself at {square}");
+                    }
+                }
+                // A generator that drew nothing would pass the crossing check; it must still draw its lines.
+                if (drawn == 0) failures.Add($"{mod} {size}×{size}: no line or arrow on any seed");
                 }
             }
             Assert.IsEmpty(failures);

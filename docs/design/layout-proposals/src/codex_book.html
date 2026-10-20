@@ -1,0 +1,67 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="scenes.css">
+<style>
+  /* The Codex as a collector's book, in the family of the Custom Puzzle rule book: one tab per collection, the entries
+     on the left page (found ones in colour, the rest as ink silhouettes), the chosen entry on the right page. */
+  .bg { background-image:url('../../../../Assets/Resources/background/bg_items_menu.png'); filter:brightness(.45) saturate(.85); }
+  .tabs { position:absolute; left:150px; top:132px; display:flex; gap:6px; }
+  .tabs div { padding:10px 26px; border-radius:8px 8px 0 0; background:#7a4f2c; color:#f3e9cf; font-size:22px; }
+  .tabs div small { font-size:16px; opacity:.8; margin-left:6px; }
+  .tabs div.on { background:#efe3c6; color:#231e17; }
+  .book { position:absolute; left:130px; top:178px; width:1660px; height:740px; background:#5a3a22; border-radius:10px;
+          box-shadow:0 30px 60px rgba(0,0,0,.6); }
+  .pages { position:absolute; inset:14px; background:linear-gradient(90deg,#efe3c6 0,#f2e7cc 49.6%,#cdbb95 50%,#f2e7cc 50.4%,#efe3c6 100%); color:#231e17; }
+  .grid { position:absolute; left:40px; top:84px; display:grid; grid-template-columns:repeat(5, 140px); gap:14px; }
+  .e { height:140px; border-radius:10px; background:#f8f0dc; border:1.5px solid #d4c4a2; position:relative; text-align:center; font-size:16px; }
+  .e img { width:72px; height:72px; margin-top:14px; object-fit:contain; }
+  .e .n { position:absolute; left:4px; right:4px; bottom:10px; line-height:1.15; }
+  .e.unknown img { filter: brightness(0) opacity(.28); } .e.unknown .n { color:#8b806c; }
+  .e.sel { border:3px solid #b23a2e; background:#fbeed2; }
+  .e.new::after { content:'NEW'; position:absolute; right:6px; top:6px; padding:1px 7px; border-radius:7px; background:#283f85; color:#fff; font-size:12px; }
+  .filters { position:absolute; left:40px; top:30px; font-size:19px; color:#5b5244; }
+  .filters span { margin-right:22px; } .filters b { color:#9e2a2b; font-weight:normal; border-bottom:2px solid #9e2a2b; }
+  .right { position:absolute; left:860px; top:40px; width:740px; height:660px; }
+  .right .big { width:200px; height:200px; float:left; margin:0 30px 10px 0; border-radius:50%; background:radial-gradient(circle,#fff6e0,#e8d6ae 70%);
+                display:flex; align-items:center; justify-content:center; }
+  .right .big img { width:150px; height:150px; object-fit:contain; }
+  .right h2 { margin:20px 0 8px; font-weight:normal; font-size:44px; }
+  .rar { display:inline-block; padding:3px 12px; border-radius:999px; font-size:15px; margin-right:6px; color:#fff; }
+  .right p { clear:both; font-size:23px; line-height:1.5; margin:18px 0; }
+  .facts { font-size:20px; line-height:2; color:#3a3228; }
+  .facts span { color:#9e2a2b; float:right; }
+  .seal { position:absolute; right:0; top:500px; width:150px; height:150px; border-radius:16px; background:#b23a2e; color:#fff;
+          transform:rotate(-5deg); text-align:center; padding-top:28px; font-size:44px; box-shadow:0 6px 0 rgba(0,0,0,.1); }
+  .seal small { display:block; font-size:15px; letter-spacing:.12em; }
+  .goal { position:absolute; left:0; top:540px; width:540px; font-size:19px; color:#5b5244; line-height:1.5; }
+</style></head><body>
+<div class="bg"></div><div class="shade"></div>
+<div class="banner" style="top:18px;height:100px;left:660px;width:600px"><small>Your collection</small><h1>Codex</h1></div>
+<div class="tabs"><div class="on">Items<small>18/31</small></div><div>Relics<small>9/35</small></div><div>Rules<small>41/71</small></div><div>Curses<small>4/12</small></div></div>
+<div class="book"><div class="pages">
+  <div class="filters"><b>All</b><span>Found</span><span>Not yet found</span><span>Normal · Rare · Epic</span></div>
+  <div class="grid" id="grid"></div>
+  <div class="right">
+    <div class="big"><img src="../../../../Assets/Resources/items/icon_meditation_stone.png"></div>
+    <h2>Meditation Stone</h2>
+    <span class="rar" style="background:#7b7b7b">Normal</span><span class="rar" style="background:#3a6fb0">Rare</span><span class="rar" style="background:#7a3fa0;opacity:.35">Epic</span>
+    <p>Restore 3 HP (Rare: 5 HP, Epic: full HP). Use it from the bag at any time in a puzzle.</p>
+    <div class="facts">Found <span>6 times</span><br>Used <span>4 times</span><br>Comes from <span>rewards, shop, events</span><br>
+      Best paired with <span>Garden Monk</span></div>
+    <div class="goal">Find every item to unlock the <b style="color:#9e2a2b;font-weight:normal">Reed Duelist</b>.<br>13 still unknown.</div>
+    <div class="seal"><small>FOUND</small>58%</div>
+  </div>
+</div></div>
+<div class="hint" style="top:944px">LB / RB change the collection · D-pad chooses · Y filters · B back</div>
+<div class="caption">Codex · Proposal · Collector's book (items, relics, rules, curses)</div>
+<script>
+  const R = '../../../../Assets/Resources/';
+  const items = [['meditation_stone','Meditation Stone',1,'sel'],['ink_well','Ink Well',1],['bamboo_scroll','Bamboo Scroll',1,'new'],['finder','Finder',1],
+    ['garden_lantern','Garden Lantern',1],['tea_cup','Tea Cup',1],['silk_fan','Silk Fan',0],['wind_chime','Wind Chime',1],['temple_seal','Temple Seal',0],
+    ['golden_koi','Golden Koi',1],['monks_beads','Monk\'s Beads',1],['pattern_scroll','Pattern Scroll',0],['koi_reflection','Koi Reflection',1],
+    ['rice_paper_umbrella','Paper Umbrella',1],['temple_incense','Temple Incense',0],['worn_chisel','Worn Chisel',1],['sacred_bell','Sacred Bell',0],
+    ['jade_amulet','Jade Amulet',1],['pebble','Pebble',1],['reed_pledge','Reed Pledge',0]];
+  document.getElementById('grid').innerHTML = items.map(([icon, name, found, extra]) =>
+    `<div class="e${found ? '' : ' unknown'}${extra ? ' ' + extra : ''}"><img src="${R}items/icon_${icon}.png"><div class="n">${found ? name : '???'}</div></div>`).join('');
+</script>
+</body></html>

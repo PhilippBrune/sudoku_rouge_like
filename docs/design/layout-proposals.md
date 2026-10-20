@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 1.8 | **Date:** 2026-10-20 | **Status:** implemented (built: garden path, puzzle screen, boss gate, offering table, reward, relic node, shop, rest, event, cursed tile, run end, Custom Puzzle)
+**Version:** 1.9 | **Date:** 2026-10-20 | **Status:** review (built: every Garden Run screen and Custom Puzzle; proposed: Options, Codex, Meta Progression, garden flow on the path, Pencil colours)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.9 | 2026-10-20 | review | Owner's 0.2.0 playtest: fixes built with screenshots (reward plaques fit and keys work, lines under the digits, the boss screen shows the floor, the version on the main menu, Custom Puzzle Random). New proposals waiting for the owner's pick: Options, Codex and Meta Progression (proposed UI-STYLE-017 to 019), four ways to bring the garden painting back to the path, and Pencil-mode colours for the number pad. |
 | 1.8 | 2026-10-20 | implemented | Owner decision: build Custom Puzzle **A · Rule book** (UI-STYLE-012) and the rest, event, cursed-tile and run-end proposals as shown (UI-STYLE-013 to 016); built, with before/after screenshots below. The rule book keeps a third region choice ("Turned", the rotated boxes of 6×6 and 8×8) that the mockup left out, so no setting is lost. Rebuilding the event found GAP-052: the old event panel opened under the full-screen path. The run-end scroll is used for the Garden Run; the Monthly Walk, Spirit Trials and Endless Zen keep their text results. |
 | 1.7 | 2026-10-19 | review | Built from the owner's decision for outside clues: UI-STYLE-010 (the grid shrinks to 88 % on a board with outside clues and the clues stand in a ring round it) and UI-STYLE-011 (quadruple circles on inner corners); screenshots below. |
 | 1.6 | 2026-10-19 | review | Owner request: mockups for the Custom Puzzle screen with room for every modifier of the catalog plan (three proposals: A rule book, B list with live preview, C shrine wall), and one proposal each for the rest, event, cursed-tile and run-end screens (victory and defeat share a layout). Proposed IDs UI-STYLE-012 (Custom Puzzle) and UI-STYLE-013 to 016 wait for the owner's pick. |
@@ -295,6 +296,79 @@ Owner decision: a board with outside clues shrinks (about 12 %) so the clues fit
 ![Skyscrapers and quadruples](layout-proposals/after_catalog_skyscrapers_quadruples.jpg)
 
 ![Little Killer](layout-proposals/after_catalog_little_killer.jpg)
+
+## 0.2.0 playtest: fixes and new proposals (1.9, 2026-10-20)
+
+### Built (fixes and small wishes)
+
+**Reward with many plaques (GAP-056):** more than three plaques shrink to fit the cord right of the tally; the key hint names every plaque ("1–5"), the keys 1–9 work on every scene over the path, and the tally shows the puzzle's time (GAP-055). Before (playtest) and after:
+
+![Reward before](layout-proposals/before_reward_five.jpg)
+
+![Reward after](layout-proposals/after_reward_five.jpg)
+
+**Lines under the digits (GAP-058):** from the second board of a run on, lines were drawn over the digits. Before (playtest) and after (a second 8×8 board with Dutch Whispers):
+
+![Lines before](layout-proposals/before_lines_over_digits.jpg)
+
+![Lines after](layout-proposals/after_lines_second_board.jpg)
+
+**Boss fight and floor (REQ-BOSS-107):** the offering table's tag shows the boss fight and the whole floor side by side:
+
+![Boss defeated](layout-proposals/after_boss_defeated.jpg)
+
+**Main menu version (UI-MENU-VERSION-001)** in the bottom-left corner, and the **Custom Puzzle Random** button ("Random: 3", − and + set how many rules) in the tray:
+
+![Main menu](layout-proposals/after_main_menu.jpg)
+
+![Custom Puzzle](layout-proposals/after_custom_puzzle.jpg)
+
+### Proposed: Options, Codex, Meta Progression (proposed UI-STYLE-017 to 019)
+
+Today's screens (from the game):
+
+![Options before](layout-proposals/before_options.jpg)
+
+![Codex before](layout-proposals/before_codex.jpg)
+
+![Meta Progression before](layout-proposals/before_meta_progression.jpg)
+
+**Options as a hand scroll with bookmarks (UI-STYLE-017):** one cloth bookmark per page (Audio, Display, Gameplay, Accessibility, Controls, Language; LB/RB turn the page), volumes as brush strokes with a stone, switches as hanko stamps, a slip on the right that explains or previews the page. The Accessibility page previews the board with the chosen settings.
+
+![Options audio](layout-proposals/options_scroll_audio.jpg)
+
+![Options accessibility](layout-proposals/options_scroll_a11y.jpg)
+
+**Codex as a collector's book (UI-STYLE-018):** in the family of the Custom Puzzle rule book: tabs Items, Relics, Rules, Curses with their counts; found entries in colour, the rest as ink silhouettes; the chosen entry on the right page with its rarities, effect, how often it was found and used, and the "find all" goal with its class unlock.
+
+![Codex](layout-proposals/codex_book.jpg)
+
+**Meta Progression as the garden of classes (UI-STYLE-019):** the eight classes as ema plaques (locked ones dark, with their unlock goal and progress); the chosen class on a hanging scroll with its level stroke, passive, unlock path and prestige; the collection totals along the bottom.
+
+![Meta Progression](layout-proposals/meta_class_garden.jpg)
+
+### Proposed: the garden's flow on the path
+
+The old path crossed the bright floor painting; the hand scroll covers it with paper and darkens the rest. Four ways to bring the garden back (they can be combined, D with any of A–C):
+
+- **A · Washi window:** the painting stays bright around the scroll and shows through thin paper.
+- **B · Garden below:** a shorter scroll at the top; the lower third shows the painting, with stepping stones leading into it.
+- **C · Painted scroll:** the floor's painting is printed on the paper in ink and wash; the room around it stays dim.
+- **D · Entering a floor:** two seconds of the full painting with the floor's name on a hanging banner, then the scroll unrolls.
+
+![Flow A](layout-proposals/path_flow_a.jpg)
+
+![Flow B](layout-proposals/path_flow_b.jpg)
+
+![Flow C](layout-proposals/path_flow_c.jpg)
+
+![Flow D](layout-proposals/path_flow_d.jpg)
+
+### Proposed: Pencil mode in colour
+
+The number pad changes colour in Pencil mode, and the pencil marks take the same colour. Four candidates next to today's wooden tiles; **A · Indigo ink** is suggested (it matches the blue Pencil lantern and reads well against both the wood and the paper).
+
+![Pencil colours](layout-proposals/pencil_numpad_colours.jpg)
 
 ## Decisions and next step
 

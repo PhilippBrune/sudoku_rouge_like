@@ -1,0 +1,78 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="scenes.css">
+<style>
+  /* Meta Progression as the garden of classes: eight ema plaques on two cords (locked ones dark, with their unlock goal
+     and progress), the chosen class on a hanging scroll with its level stroke, prestige and the unlock path, and the
+     whole collection along the bottom. */
+  .bg { background-image:url('../../../../Assets/Resources/background/bg_class_select.png'); filter:brightness(.5) saturate(.85); }
+  .cord { position:absolute; left:90px; width:940px; height:3px; background:#b23a2e; }
+  .ema { position:absolute; width:200px; height:250px; clip-path: polygon(50% 0, 100% 18%, 100% 100%, 0 100%, 0 18%);
+         background:linear-gradient(180deg,#e9b878,#c88a4c); color:#2a1a10; text-align:center; }
+  .ema::before { content:''; position:absolute; left:50%; top:-36px; width:2px; height:36px; background:#b23a2e; }
+  .ema img { width:96px; height:96px; margin-top:44px; object-fit:contain; }
+  .ema .n { font-size:21px; margin-top:4px; padding:0 8px; line-height:1.1; }
+  .ema .lv { font-size:17px; color:#6b3a14; margin-top:4px; }
+  .ema .stars { position:absolute; left:0; right:0; bottom:12px; color:#b23a2e; letter-spacing:4px; font-size:18px; }
+  .ema.locked { background:linear-gradient(180deg,#5a4a3a,#3e3226); color:#cdbf9f; }
+  .ema.locked img { filter:brightness(0) opacity(.45); }
+  .ema.locked .lv { color:#e0a24a; font-size:15px; padding:0 10px; }
+  .ema.sel { outline:4px solid #f4e3b5; box-shadow:0 0 40px rgba(244,200,120,.6); }
+  .strings { position:absolute; inset:0; pointer-events:none; }
+  .scroll { position:absolute; left:1110px; top:120px; width:690px; height:800px; background:linear-gradient(180deg,#f2e7cc,#e7d7b2);
+            box-shadow:0 30px 60px rgba(0,0,0,.6); color:#231e17; padding:40px 48px; }
+  .scroll::before, .scroll::after { content:''; position:absolute; left:-22px; right:-22px; height:26px; border-radius:13px;
+            background:linear-gradient(180deg,#3a2414,#c08a52 50%,#3a2414); }
+  .scroll::before { top:-14px; } .scroll::after { bottom:-14px; }
+  .scroll h2 { margin:0; font-weight:normal; font-size:44px; } .scroll .sub { color:#5b5244; font-size:19px; }
+  .xp { position:relative; height:26px; margin:22px 0 8px; border-radius:13px; background:rgba(60,45,30,.16); }
+  .xp div { position:absolute; inset:0 38% 0 0; border-radius:13px; background:linear-gradient(90deg,#b8892b,#e9c46a); }
+  .xpline { display:flex; justify-content:space-between; font-size:19px; color:#3a3228; }
+  .passive { margin:20px 0; padding:14px 18px; background:#efe3c6; font-size:20px; line-height:1.45; }
+  .passive small { display:block; font-size:14px; letter-spacing:.14em; color:#6b5f4c; }
+  .path { position:relative; margin-left:14px; padding-left:34px; border-left:3px solid #2a241c; }
+  .step { position:relative; font-size:20px; line-height:1.4; padding-bottom:18px; }
+  .step::before { content:''; position:absolute; left:-46px; top:2px; width:20px; height:20px; border-radius:50%; background:#f2e7cc; border:3px solid #2a241c; }
+  .step.done::before { background:#b23a2e; border-color:#b23a2e; }
+  .step b { color:#9e2a2b; font-weight:normal; }
+  .prestige { position:absolute; left:48px; right:48px; bottom:40px; display:flex; align-items:center; justify-content:space-between; font-size:20px; }
+  .prestige .stars { color:#b23a2e; font-size:28px; letter-spacing:6px; }
+  .totals { position:absolute; left:90px; top:870px; width:940px; display:flex; gap:14px; }
+  .totals div { flex:1; background:rgba(20,16,10,.7); border:1.5px solid #c9a24f; border-radius:12px; padding:12px 14px; color:#f3e9cf; text-align:center; font-size:17px; }
+  .totals b { display:block; font-size:30px; font-weight:normal; color:#e9c46a; }
+</style></head><body>
+<div class="bg"></div><div class="shade"></div>
+<div class="banner" style="top:18px;left:300px;width:560px;height:100px"><small>Your garden</small><h1>Meta Progression</h1></div>
+<div class="cord" style="top:178px"></div><div class="cord" style="top:500px"></div>
+<div id="emas"></div>
+<div class="scroll">
+  <h2>Number Freak</h2><div class="sub">Level 23 of 40 · 41 runs · best floor 5</div>
+  <div class="xp"><div></div></div>
+  <div class="xpline"><span>3 120 / 5 000 XP</span><span>to Level 24</span></div>
+  <div class="passive"><small>PASSIVE</small>After a puzzle with zero mistakes: +1 reroll token.</div>
+  <div class="path">
+    <div class="step done">Lv 5 · <b>+1 HP</b></div>
+    <div class="step done">Lv 15 · exclusive item <b>Annotated Folio</b></div>
+    <div class="step">Lv 25 · <b>+1 bag slot</b></div>
+    <div class="step">Lv 30 · exclusive relic <b>???</b></div>
+    <div class="step">Lv 40 · <b>Prestige</b>: back to Lv 1, +1 starting gold per tier</div>
+  </div>
+  <div class="prestige"><span>Prestige</span><span class="stars">★★☆☆☆☆☆☆☆</span><span>+2 gold at start</span></div>
+</div>
+<div class="totals"><div><b>3 / 8</b>classes</div><div><b>9 / 35</b>relics</div><div><b>41 %</b>codex</div><div><b>H4</b>highest Harmony</div><div><b>23 %</b>completion</div></div>
+<div class="hint" style="top:1000px;left:90px;width:940px">D-pad chooses a class · A shows it · X prestige when ready · B back</div>
+<div class="caption">Meta Progression · Proposal · The garden of classes</div>
+<script>
+  const R = '../../../../Assets/Resources/';
+  const classes = [
+    ['number_freak','Number Freak','Lv 23','★★', 'sel'], ['garden_monk','Garden Monk','Lv 9','',''], ['shrine_archivist','Shrine Archivist','Lv 4','',''],
+    ['koi_gambler','Koi Gambler','Collect 10 relics · 9/10','', 'locked'], ['stone_gardener','Stone Gardener','Defeat 10 bosses · 6/10','', 'locked'],
+    ['lantern_seer','Lantern Seer','Collect 50 000 gold · 12 400','', 'locked'], ['reed_duelist','Reed Duelist','Find every item · 18/31','', 'locked'],
+    ['quiet_cartographer','Quiet Cartographer','A run with no mistakes','', 'locked']];
+  document.getElementById('emas').innerHTML = classes.map(([icon, name, lv, stars, cls], i) => {
+    const x = 100 + (i % 4) * 235, y = (i < 4 ? 214 : 536);
+    return `<div class="ema ${cls}" style="left:${x}px;top:${y}px"><img src="${R}class/icon_${icon}.png"><div class="n">${name}</div>
+      <div class="lv">${lv}</div><div class="stars">${stars}</div></div>`;
+  }).join('');
+</script>
+</body></html>

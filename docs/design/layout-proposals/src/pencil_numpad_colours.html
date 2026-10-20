@@ -1,0 +1,56 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="scenes.css">
+<style>
+  /* Pencil mode: the number pad changes colour so the mode is visible at a glance (0.2.0 playtest). Today's wooden
+     tiles for Solve, four candidates for Pencil. Tile size and layout as NumpadViewController (wooden tiles). */
+  .bg { background-image:url('../../../../Assets/Resources/background/bg_puzzle_board.png'); filter:brightness(.42) saturate(.8); }
+  .col { position:absolute; top:150px; width:330px; text-align:center; }
+  .col h2 { margin:0 0 6px; font-weight:normal; font-size:26px; color:#f3e9cf; }
+  .col p { margin:0 0 16px; font-size:17px; color:#cdbf9f; height:44px; }
+  .pad { display:grid; grid-template-columns:repeat(3, 96px); gap:12px; justify-content:center; padding:18px; border-radius:16px; }
+  .t { height:96px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:44px;
+       box-shadow: inset 0 -6px 0 rgba(0,0,0,.18), 0 6px 12px rgba(0,0,0,.35); }
+  .t.off { opacity:.35; }
+  .seg { margin:16px auto 0; width:300px; height:52px; border-radius:26px; display:flex; overflow:hidden; border:2px solid #c9a24f; }
+  .seg div { flex:1; display:flex; align-items:center; justify-content:center; font-size:22px; }
+  .cell { margin:18px auto 0; width:120px; height:120px; background:#f2e7cc; border:2px solid #2a241c; display:grid;
+          grid-template-columns:repeat(3,1fr); padding:8px; font-size:22px; }
+  .cell span { display:flex; align-items:center; justify-content:center; }
+  .rec { position:absolute; top:112px; padding:5px 14px; border-radius:999px; background:#b23a2e; color:#fff; font-size:16px; }
+  .note { position:absolute; left:120px; right:120px; top:920px; text-align:center; color:#e8dcc0; font-size:21px; line-height:1.5; }
+</style></head><body>
+<div class="bg"></div><div class="shade"></div>
+<div class="banner" style="top:24px;height:110px"><small>Puzzle screen · number pad</small><h1>Pencil mode in colour</h1></div>
+<div id="cols"></div>
+<div class="note">The tiles turn the moment Pencil is chosen (P, X or the switch) and turn back on Solve.<br>
+  Pencil marks on the board take the same colour, so the pad, the marks and the blue Pencil lantern belong together.</div>
+<div class="caption">Pencil mode · Proposal · Number pad colours (today's Solve tiles, four Pencil candidates)</div>
+<script>
+  const sets = [
+    { name: 'Solve (today)', why: 'Warm wood, dark ink digits.', tile: '#d9a35f', text: '#2a1a10', pencil: '#5b4f3d', seg: 0 },
+    { name: 'A · Indigo ink', why: 'Deep indigo like the Pencil lantern; paper-white digits.', tile: '#34518a', text: '#f3ead6', pencil: '#34518a', seg: 1, rec: true },
+    { name: 'B · Celadon', why: 'Pale jade glaze; ink digits. Calm, but close to the moss frame.', tile: '#a9cbb0', text: '#1f2a22', pencil: '#3f7a52', seg: 1 },
+    { name: 'C · Graphite', why: 'Grey stone like a pencil lead; white digits.', tile: '#6c6a66', text: '#f4f1ea', pencil: '#55534f', seg: 1 },
+    { name: 'D · Rice paper', why: 'Paper tiles with a dashed ink rim; grey pencil digits.', tile: '#efe4cb', text: '#6b6457', pencil: '#6b6457', seg: 1, dashed: true }
+  ];
+  const cols = document.getElementById('cols');
+  sets.forEach((s, i) => {
+    const x = 70 + i * 360;
+    let pad = '';
+    for (let n = 1; n <= 9; n++)
+      pad += `<div class="t${n === 9 ? ' off' : ''}" style="background:${s.tile};color:${s.text};${s.dashed ? 'border:2px dashed #6b6457;' : ''}">${n}</div>`;
+    const solveOn = s.seg === 0;
+    const marks = [1, '', 3, '', '', 6, 7, '', ''].map(m => `<span style="color:${s.pencil}">${m}</span>`).join('');
+    cols.insertAdjacentHTML('beforeend', `
+      <div class="col" style="left:${x}px">
+        ${s.rec ? `<div class="rec" style="left:110px">Suggested</div>` : ''}
+        <h2>${s.name}</h2><p>${s.why}</p>
+        <div class="pad" style="background:rgba(20,16,10,.55)">${pad}</div>
+        <div class="seg"><div style="background:${solveOn ? '#c9963c' : 'rgba(20,16,10,.75)'};color:${solveOn ? '#2a1a10' : '#f3e9cf'}">Solve</div>
+          <div style="background:${solveOn ? 'rgba(20,16,10,.75)' : s.tile};color:${solveOn ? '#f3e9cf' : s.text}">Pencil</div></div>
+        <div class="cell">${marks}</div>
+      </div>`);
+  });
+</script>
+</body></html>

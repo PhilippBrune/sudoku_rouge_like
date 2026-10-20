@@ -1,0 +1,84 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="scenes.css">
+<style>
+  /* Options as a hand scroll with cloth bookmarks for the pages; rows are ink lines, volumes are brush strokes with
+     a stone, switches are hanko stamps. ?tab=a11y shows the Accessibility page with a live board preview. */
+  .bg { background-image:url('../../../../Assets/Resources/background/bg_settings_menu.png'); filter:brightness(.5) saturate(.85); }
+  .scroll { position:absolute; left:250px; top:200px; width:1420px; height:700px; background:linear-gradient(180deg,#f2e7cc,#e7d7b2);
+            box-shadow:0 30px 60px rgba(0,0,0,.6); color:#231e17; }
+  .scroll::before, .scroll::after { content:''; position:absolute; top:-30px; bottom:-30px; width:42px; border-radius:21px;
+            background:linear-gradient(90deg,#3a2414,#8a5a32 35%,#c08a52 50%,#8a5a32 65%,#3a2414); box-shadow:0 12px 24px rgba(0,0,0,.6); }
+  .scroll::before { left:-34px; } .scroll::after { right:-34px; }
+  .band { position:absolute; left:0; right:0; height:26px; background:repeating-linear-gradient(90deg,#2c4632 0 18px,#33523a 18px 36px);
+          border-top:2px solid #c9a24f; border-bottom:2px solid #c9a24f; }
+  .tabs { position:absolute; left:300px; top:150px; display:flex; gap:8px; }
+  .tabs div { padding:10px 26px 16px; border-radius:8px 8px 0 0; background:#7a4f2c; color:#f3e9cf; font-size:22px;
+              box-shadow:0 -4px 10px rgba(0,0,0,.35); }
+  .tabs div.on { background:#efe3c6; color:#231e17; padding-bottom:22px; margin-top:-6px; }
+  .tabs .lb { background:none; box-shadow:none; color:#d8c9a8; font-size:18px; padding-top:14px; }
+  .page { position:absolute; left:70px; top:66px; width:840px; }
+  .page h2 { margin:0 0 6px; font-weight:normal; font-size:40px; } .page .sub { color:#5b5244; font-size:19px; margin-bottom:26px; }
+  .row { display:flex; align-items:center; height:74px; border-bottom:1px solid rgba(90,70,40,.25); font-size:24px; }
+  .row.focus { background:linear-gradient(90deg, rgba(201,162,79,.28), transparent 80%); }
+  .row .lbl { width:300px; } .row .val { width:80px; text-align:right; color:#9e2a2b; }
+  .stroke { position:relative; width:380px; height:16px; margin:0 26px; }
+  .stroke .track { position:absolute; inset:5px 0; border-radius:4px; background:rgba(60,45,30,.18); }
+  .stroke .ink { position:absolute; left:0; top:0; bottom:0; border-radius:8px 3px 3px 8px; background:#231e17; filter:url(#brush); }
+  .stroke .stone { position:absolute; top:-12px; width:40px; height:40px; margin-left:-20px; border-radius:50%;
+                   background:radial-gradient(circle at 35% 30%, #d9d2c0, #8f8a7c 70%, #5d5a52); box-shadow:0 4px 8px rgba(0,0,0,.4); }
+  .stamp { width:46px; height:46px; margin:0 26px; border-radius:8px; border:3px solid #b23a2e; color:#b23a2e; font-size:20px;
+           display:flex; align-items:center; justify-content:center; transform:rotate(-6deg); }
+  .stamp.on { background:#b23a2e; color:#fff; }
+  .choice { margin:0 26px; font-size:24px; } .choice b { color:#9e2a2b; font-weight:normal; padding:0 14px; }
+  .side { position:absolute; right:60px; top:70px; width:390px; }
+  .slip { background:#efe3c6; padding:22px 26px; box-shadow:0 12px 26px rgba(0,0,0,.25); font-size:20px; line-height:1.55; transform:rotate(1.5deg); }
+  .slip small { display:block; font-size:15px; letter-spacing:.14em; color:#6b5f4c; }
+  .board { display:grid; grid-template-columns:repeat(4, 64px); gap:2px; margin:14px 0; }
+  .board div { height:64px; background:#f6efdf; border:1px solid #2a241c; display:flex; align-items:center; justify-content:center; font-size:30px; }
+  .footer { position:absolute; left:0; right:0; top:930px; text-align:center; }
+  .footer .btn { margin:0 10px; }
+</style></head><body>
+<svg width="0" height="0" style="position:absolute"><filter id="brush"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="5"/><feDisplacementMap in="SourceGraphic" scale="6"/></filter></svg>
+<div class="bg"></div><div class="shade"></div>
+<div class="banner" style="top:24px;height:104px"><small>Settings</small><h1>Options</h1></div>
+<div class="tabs" id="tabs"></div>
+<div class="scroll"><div class="band" style="top:0"></div><div class="band" style="bottom:0"></div>
+  <div class="page" id="page"></div><div class="side" id="side"></div></div>
+<div class="footer"><span class="btn">Reset this page</span><span class="btn main">Back</span>
+  <div class="hint" style="position:static;margin-top:16px">LB / RB turn the page · ← → change the value · A switches · changes save at once</div></div>
+<div class="caption" id="caption">Options · Proposal · Hand scroll with bookmarks</div>
+<script src="common.js"></script>
+<script>
+  const a11y = PARAMS.get('tab') === 'a11y';
+  const tabs = ['Audio', 'Display', 'Gameplay', 'Accessibility', 'Controls', 'Language'];
+  const on = a11y ? 'Accessibility' : 'Audio';
+  document.getElementById('tabs').innerHTML = '<div class="lb">LB</div>' +
+    tabs.map(t => `<div class="${t === on ? 'on' : ''}">${t}</div>`).join('') + '<div class="lb">RB</div>';
+  const vol = (lbl, p, focus) => `<div class="row${focus ? ' focus' : ''}"><div class="lbl">${lbl}</div>
+      <div class="stroke"><div class="track"></div><div class="ink" style="width:${p}%"></div><div class="stone" style="left:${p}%"></div></div>
+      <div class="val">${p}%</div></div>`;
+  const sw = (lbl, onState, note) => `<div class="row"><div class="lbl">${lbl}</div><div class="stamp${onState ? ' on' : ''}">${onState ? '印' : ''}</div>
+      <div style="font-size:19px;color:#5b5244">${note}</div></div>`;
+  const choice = (lbl, val, extra) => `<div class="row"><div class="lbl">${lbl}</div><div class="choice">‹<b>${val}</b>›</div>${extra || ''}</div>`;
+  const page = document.getElementById('page'), side = document.getElementById('side');
+  if (!a11y) {
+    page.innerHTML = `<h2>Audio</h2><div class="sub">Music, effects and the menu's tune</div>` +
+      vol('Master', 100) + vol('Music', 80, true) + vol('Effects', 70) + vol('Interface', 60) +
+      sw('Mute when unfocused', true, 'quiet while the window is in the background') + sw('Mute all', false, '') +
+      choice('Menu music', 'Garden Theme', '<span class="btn" style="padding:6px 18px;font-size:18px;color:#231e17;border-color:#9e2a2b">▶ Listen</span>');
+    side.innerHTML = `<div class="slip"><small>NOW PLAYING</small>Floor 2 · Moss Garden<br><span style="color:#9e2a2b">Music 80 % of Master 100 %</span>
+      <br><br><small>TIP</small>In a run these sliders change only the volume; the menu's tune waits for the menu.</div>`;
+  } else {
+    page.innerHTML = `<h2>Accessibility</h2><div class="sub">See the board the way that works for you</div>` +
+      sw('Colourblind mode', true, 'shapes and patterns next to colours') + sw('High contrast', false, '') +
+      sw('Reduce motion', false, 'no shakes or flying digits') + sw('Other rule symbols', true, 'letters on dots and lines') +
+      vol('Text size', 75, true) + choice('Pencil marks', 'Large');
+    side.innerHTML = `<div class="slip"><small>PREVIEW</small>
+      <div class="board"><div>3</div><div style="color:#34518a">7</div><div style="background:#f1d48a">4</div><div></div>
+      <div style="background:#e4b5aa">4</div><div>1</div><div></div><div style="color:#34518a">2</div></div>
+      Selected cell, the same digit and a conflict, as the board will show them.</div>`;
+    document.getElementById('caption').textContent = 'Options · Proposal · Accessibility page with a live preview';
+  }
+</script>
+</body></html>

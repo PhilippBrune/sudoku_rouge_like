@@ -1,4 +1,8 @@
 {
+    "CustomPuzzle.Book.Random":  "Al azar: {0}",
+    "MainMenu.Version":  "Versión {0}",
+    "InRun.BossDefeated.Column.Floor":  "Piso",
+    "InRun.BossDefeated.Column.Boss":  "Jefe",
     "CustomPuzzle.Family.OutsideClues":  "Pistas exteriores",
     "CustomPuzzle.Family.WholeBoard":  "Todo el tablero",
     "CustomPuzzle.Family.Cells":  "Celdas",
@@ -236,7 +240,7 @@
     "InRun.BossDefeated.Stat.ItemsUsed":  "Objetos usados",
     "InRun.BossDefeated.Stat.HpLost":  "PV perdidos",
     "InRun.BossDefeated.Stat.Mistakes":  "Errores",
-    "InRun.BossDefeated.StatsHeader":  "Este combate",
+    "InRun.BossDefeated.StatsHeader":  "Tu piso",
     "InRun.BossDefeated.Title":  "Derrotado: {0}",
     "InRun.BossDefeated.Eyebrow":  "Piso {0} de {1} · {2}",
     "InRun.BossGate.UnknownRule":  "Aún no descubierta. Elígela para conocer su regla.",

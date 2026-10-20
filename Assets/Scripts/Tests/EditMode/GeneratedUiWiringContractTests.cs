@@ -253,11 +253,13 @@ namespace SudokuRoguelike.Tests
             // Choosing a bowl lifts its slip; choosing it again drinks it, once.
             StringAssert.Contains("if (_selectedRest == index)", rewardSource);
             StringAssert.Contains("if (_restTaken || index < 0 || index >= _restChoices.Count) return;", rewardSource);
-            // Keys 1-4 reach the bowls in a run (the reward's keys 1-3 come after and must not swallow them).
+            // GAP-056: the scenes' number keys are read in Update before the board-only keyboard handler, and the rest is
+            // asked first (the reward view also owns the rest scene).
             var inRunSource = ReadSource(InRunControllerPath);
-            StringAssert.Contains("_rewardView.SelectRestByIndex(k)", inRunSource);
-            Assert.Less(inRunSource.IndexOf("_rewardView.SelectRestByIndex(k)", StringComparison.Ordinal),
-                inRunSource.IndexOf("_rewardView.SelectRewardByIndex(0)", StringComparison.Ordinal));
+            Assert.Less(inRunSource.IndexOf("&& TryHandleSceneDigit(k))", StringComparison.Ordinal),
+                inRunSource.IndexOf("HandleKeyboard();", StringComparison.Ordinal), "scene keys are read outside HandleKeyboard");
+            Assert.Less(inRunSource.IndexOf("_rewardView.SelectRestByIndex(index)", StringComparison.Ordinal),
+                inRunSource.IndexOf("_rewardView.SelectRewardByIndex(index)", StringComparison.Ordinal));
         }
 
         [Test]

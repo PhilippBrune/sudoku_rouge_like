@@ -1,4 +1,8 @@
 ﻿{
+    "CustomPuzzle.Book.Random":  "Random: {0}",
+    "MainMenu.Version":  "Version {0}",
+    "InRun.BossDefeated.Column.Floor":  "Floor",
+    "InRun.BossDefeated.Column.Boss":  "Boss",
     "CustomPuzzle.Family.OutsideClues":  "Outside clues",
     "CustomPuzzle.Family.WholeBoard":  "Whole board",
     "CustomPuzzle.Family.Cells":  "Cells",
@@ -236,7 +240,7 @@
     "InRun.BossDefeated.Stat.ItemsUsed":  "Items used",
     "InRun.BossDefeated.Stat.HpLost":  "HP lost",
     "InRun.BossDefeated.Stat.Mistakes":  "Mistakes",
-    "InRun.BossDefeated.StatsHeader":  "This fight",
+    "InRun.BossDefeated.StatsHeader":  "Your floor",
     "InRun.BossDefeated.Title":  "The {0} is defeated",
     "InRun.BossDefeated.Eyebrow":  "Floor {0} of {1} · {2}",
     "InRun.BossGate.UnknownRule":  "Not discovered yet. Choose it to learn its rule.",

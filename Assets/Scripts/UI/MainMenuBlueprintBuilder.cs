@@ -222,6 +222,16 @@ namespace SudokuRoguelike.UI
             statusShadow.effectColor = GamePalette.ShadowMid;
             statusShadow.effectDistance = new Vector2(1f, -1f);
 
+            // [REQ: UI-MENU-VERSION-001] The game's version in the bottom-left corner (Player Settings' version, e.g. "0.2.0").
+            var version = BuildText("VersionText", root, LocalizationService.Format("MainMenu.Version", "Version {0}", Application.version),
+                16, TextAnchor.MiddleLeft);
+            SetRect(version.rectTransform, new Vector2(0.012f, 0.012f), new Vector2(0.25f, 0.045f), Vector2.zero, Vector2.zero);
+            version.color = GamePalette.WithAlpha(TxtColor, 0.75f);
+            version.raycastTarget = false;
+            var versionShadow = EnsureComponent<Shadow>(version.gameObject);
+            versionShadow.effectColor = GamePalette.ShadowDark;
+            versionShadow.effectDistance = new Vector2(1f, -1f);
+
             // -- Sub-panels -----------------------------------------------------
             var classPanel     = BuildClassSelectPanel(root, mc);
             var optPanel       = BuildOptionsPanel(root, mc, optCtrl);

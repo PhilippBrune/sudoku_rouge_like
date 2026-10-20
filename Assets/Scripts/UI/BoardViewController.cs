@@ -602,12 +602,16 @@ namespace SudokuRoguelike.UI
             ng.spacing = srcGrid.spacing;
             ng.cellSize = srcGrid.cellSize;
             ng.childAlignment = TextAnchor.MiddleCenter;
-            _gridNumberRoot.SetSiblingIndex(_gridRoot.GetSiblingIndex() + 1);
+            OrderBoardLayers();
         }
 
         private void EnsureOverlayRoot()
         {
-            if (_gridOverlayRoot != null) return;
+            if (_gridOverlayRoot != null)
+            {
+                OrderBoardLayers();
+                return;
+            }
             var go = new GameObject("GridOverlay", typeof(RectTransform));
             go.transform.SetParent(_gridRoot.parent, false);
             _gridOverlayRoot = go.GetComponent<RectTransform>();
@@ -617,10 +621,30 @@ namespace SudokuRoguelike.UI
             cg.blocksRaycasts = false;
             cg.interactable = false;
             ScrollUiKit.SnapToPixels(go); // UI-STYLE-002: crisp cage sums and clue labels
-            _gridOverlayRoot.SetSiblingIndex(_gridRoot.GetSiblingIndex() + 1);
-            if (_gridNumberRoot != null)
-                _gridNumberRoot.SetSiblingIndex(_gridOverlayRoot.GetSiblingIndex() + 1);
+            OrderBoardLayers();
         }
+
+        /// <summary>
+        /// The cells, then the rule overlay (lines, dots, cages, clues), then the digits on top, so no line covers a digit
+        /// (setters' convention). Applied on every board build: before, a second board put the digits under the overlay,
+        /// and lines covered them from the second puzzle of a run on (GAP-058).
+        /// </summary>
+        private void OrderBoardLayers()
+        {
+            if (_gridRoot == null) return;
+            var next = _gridRoot.GetSiblingIndex() + 1;
+            if (_gridOverlayRoot != null)
+            {
+                if (_gridOverlayRoot.GetSiblingIndex() != next) _gridOverlayRoot.SetSiblingIndex(next);
+                next = _gridOverlayRoot.GetSiblingIndex() + 1;
+            }
+            if (_gridNumberRoot != null && _gridNumberRoot.GetSiblingIndex() != next) _gridNumberRoot.SetSiblingIndex(next);
+        }
+
+        /// <summary>True when the digit layer is drawn above the rule overlay (a test hook for GAP-058).</summary>
+        public bool DigitsAboveOverlay => _gridNumberRoot != null && _gridOverlayRoot != null
+            && _gridNumberRoot.parent == _gridOverlayRoot.parent
+            && _gridNumberRoot.GetSiblingIndex() > _gridOverlayRoot.GetSiblingIndex();
 
         // ────────────────────── Board rendering helpers ──────────────────────
 

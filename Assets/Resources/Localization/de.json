@@ -1,4 +1,8 @@
 ﻿{
+    "CustomPuzzle.Book.Random":  "Zufall: {0}",
+    "MainMenu.Version":  "Version {0}",
+    "InRun.BossDefeated.Column.Floor":  "Etage",
+    "InRun.BossDefeated.Column.Boss":  "Boss",
     "CustomPuzzle.Family.OutsideClues":  "Hinweise außen",
     "CustomPuzzle.Family.WholeBoard":  "Ganzes Brett",
     "CustomPuzzle.Family.Cells":  "Zellen",
@@ -236,7 +240,7 @@
     "InRun.BossDefeated.Stat.ItemsUsed":  "Gegenstände benutzt",
     "InRun.BossDefeated.Stat.HpLost":  "LP verloren",
     "InRun.BossDefeated.Stat.Mistakes":  "Fehler",
-    "InRun.BossDefeated.StatsHeader":  "Dieser Kampf",
+    "InRun.BossDefeated.StatsHeader":  "Deine Etage",
     "InRun.BossDefeated.Title":  "Besiegt: {0}",
     "InRun.BossDefeated.Eyebrow":  "Etage {0} von {1} · {2}",
     "InRun.BossGate.UnknownRule":  "Noch nicht entdeckt. Wähle sie, um ihre Regel zu lernen.",

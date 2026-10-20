@@ -142,29 +142,37 @@ namespace SudokuRoguelike.UI
                 "BossDefeatedTitle", F("InRun.BossDefeated.Title", FloorThemeData.GetBossName(floor)));
         }
 
-        // The fight's numbers on a paper tag hanging from a string (REQ-BOSS-107 stats, now beside the offerings).
+        // The fight's and the whole floor's numbers on a paper tag hanging from a string (REQ-BOSS-107 stats beside the
+        // offerings): one column for the boss puzzle, one for every puzzle of the floor including it (0.2.0 playtest).
         private void BuildStatsTag(Transform screen, RunDirector run)
         {
-            var tag = ScrollUiKit.PaperTag(screen, "BossClearedStats", new Vector2(0.061f, 0.572f), new Vector2(0.220f, 0.773f),
+            var tag = ScrollUiKit.PaperTag(screen, "BossClearedStats", new Vector2(0.050f, 0.560f), new Vector2(0.250f, 0.785f),
                 1.5f, 46f);
 
             ScrollUiKit.Label(tag.transform, "Header", T("InRun.BossDefeated.StatsHeader").ToUpperInvariant(), 16,
-                TextAnchor.MiddleLeft, ScrollUiKit.InkSoft, new Vector2(0.08f, 0.80f), new Vector2(0.92f, 0.95f), 11);
-            var stats = BuildBossClearedStats(run);
-            var rows = new (string key, int value)[]
+                TextAnchor.MiddleLeft, ScrollUiKit.InkSoft, new Vector2(0.07f, 0.81f), new Vector2(0.55f, 0.95f), 11);
+            ScrollUiKit.Label(tag.transform, "ColumnBoss", T("InRun.BossDefeated.Column.Boss"), 15, TextAnchor.MiddleRight,
+                ScrollUiKit.InkSoft, new Vector2(0.55f, 0.81f), new Vector2(0.74f, 0.95f), 10);
+            ScrollUiKit.Label(tag.transform, "ColumnFloor", T("InRun.BossDefeated.Column.Floor"), 15, TextAnchor.MiddleRight,
+                ScrollUiKit.InkSoft, new Vector2(0.74f, 0.81f), new Vector2(0.93f, 0.95f), 10);
+            var boss = BuildBossClearedStats(run);
+            var floor = BuildFloorStats(run);
+            var rows = new (string key, int boss, int floor)[]
             {
-                ("InRun.BossDefeated.Stat.Mistakes", stats.Mistakes),
-                ("InRun.BossDefeated.Stat.HpLost", stats.HpLost),
-                ("InRun.BossDefeated.Stat.ItemsUsed", stats.ItemsUsed),
-                ("InRun.BossDefeated.Stat.PencilMarks", stats.PencilMarks)
+                ("InRun.BossDefeated.Stat.Mistakes", boss.Mistakes, floor.Mistakes),
+                ("InRun.BossDefeated.Stat.HpLost", boss.HpLost, floor.HpLost),
+                ("InRun.BossDefeated.Stat.ItemsUsed", boss.ItemsUsed, floor.ItemsUsed),
+                ("InRun.BossDefeated.Stat.PencilMarks", boss.PencilMarks, floor.PencilMarks)
             };
             for (var k = 0; k < rows.Length; k++)
             {
-                var top = 0.78f - k * 0.175f;
+                var top = 0.79f - k * 0.175f;
                 ScrollUiKit.Label(tag.transform, $"Stat_{k}_Label", T(rows[k].key), 20, TextAnchor.MiddleLeft,
-                    ScrollUiKit.Ink, new Vector2(0.08f, top - 0.16f), new Vector2(0.74f, top), 12);
-                ScrollUiKit.Label(tag.transform, $"Stat_{k}_Value", rows[k].value.ToString(), 20, TextAnchor.MiddleRight,
-                    ScrollUiKit.Vermilion, new Vector2(0.74f, top - 0.16f), new Vector2(0.92f, top), 12);
+                    ScrollUiKit.Ink, new Vector2(0.07f, top - 0.16f), new Vector2(0.58f, top), 12);
+                ScrollUiKit.Label(tag.transform, $"Stat_{k}_Value", rows[k].boss.ToString(), 20, TextAnchor.MiddleRight,
+                    ScrollUiKit.Vermilion, new Vector2(0.58f, top - 0.16f), new Vector2(0.74f, top), 12);
+                ScrollUiKit.Label(tag.transform, $"Stat_{k}_Floor", rows[k].floor.ToString(), 20, TextAnchor.MiddleRight,
+                    ScrollUiKit.Vermilion, new Vector2(0.74f, top - 0.16f), new Vector2(0.93f, top), 12);
             }
         }
 
@@ -230,6 +238,15 @@ namespace SudokuRoguelike.UI
                 level?.HpLost ?? 0,
                 level?.ItemsUsedThisLevel ?? 0,
                 level?.PencilMarksUsed ?? 0);
+        }
+
+        /// <summary>Every solved puzzle of the current floor, the boss fight included (it is completed before this screen).</summary>
+        public static BossClearedStatsSnapshot BuildFloorStats(RunDirector run)
+        {
+            var tally = run?.State?.FloorTally;
+            return tally == null
+                ? BuildBossClearedStats(run)
+                : new BossClearedStatsSnapshot(tally.Mistakes, tally.HpLost, tally.ItemsUsed, tally.PencilMarks);
         }
 
         /// <summary>Removes the boss-defeated screen. Only call from a player-triggered action or a new end screen.</summary>

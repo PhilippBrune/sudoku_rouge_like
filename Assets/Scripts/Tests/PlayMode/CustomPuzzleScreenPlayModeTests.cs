@@ -77,6 +77,12 @@ namespace SudokuRoguelike.Tests
             CollectionAssert.AreEqual(new[] { BossModifierId.Skyscrapers }, setup.SelectedModifiers);
             Assert.IsNull(FindObjectOrNull(FindObject(panel, "RuleChip_1"), "Icon"), "the second slot is empty again");
 
+            ClickButton(panel, "RandomInc");   // 3 → 4 random rules
+            ClickButton(panel, "BtnRandomRules");
+            yield return null;
+            Assert.AreEqual(4, setup.SelectedModifiers.Count, "Random fills the tray with the chosen number of rules");
+            Assert.NotNull(FindObjectOrNull(FindObject(panel, "RuleChip_3"), "Icon"), "and shows them as chips");
+
             ClickButton(panel, "BtnTutBack");
             yield return null;
             Assert.IsFalse(panel.activeInHierarchy, "Back closes the rule book");

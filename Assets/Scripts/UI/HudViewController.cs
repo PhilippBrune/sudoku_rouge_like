@@ -64,6 +64,7 @@ namespace SudokuRoguelike.UI
         public Action<HashSet<(int, int)>, float> OnBagHighlightRequested;
         // ── Timer ──
         private float _puzzleStartTime = -1f;
+        private float _lastPuzzleSeconds;
         private Text  _timerText;
         private Text  _runTimerText;
 
@@ -96,6 +97,12 @@ namespace SudokuRoguelike.UI
 
         public float GetPuzzleElapsed() =>
             _puzzleStartTime >= 0f ? Time.realtimeSinceStartup - _puzzleStartTime : 0f;
+
+        /// <summary>
+        /// The running puzzle's time, or the last puzzle's after its timer stopped. The reward tally is built after the
+        /// board closes and the timer stops, so it reads this (GAP-055).
+        /// </summary>
+        public float LastPuzzleSeconds => _puzzleStartTime >= 0f ? GetPuzzleElapsed() : _lastPuzzleSeconds;
 
         public Action<BossModifierId> OnModifierTapped;
 
@@ -177,12 +184,14 @@ namespace SudokuRoguelike.UI
 
         public void StartPuzzleTimer()
         {
+            _lastPuzzleSeconds = 0f;
             _puzzleStartTime = Time.realtimeSinceStartup;
             _classBadgeCacheValid = false; // re-read level/prestige at puzzle start
         }
 
         public void StopPuzzleTimer()
         {
+            if (_puzzleStartTime >= 0f) _lastPuzzleSeconds = GetPuzzleElapsed();
             _puzzleStartTime = -1f;
         }
 

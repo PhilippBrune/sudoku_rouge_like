@@ -94,6 +94,7 @@ namespace SudokuRoguelike.Tests
             run.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, ClassLevel = 1 }, 4242);
             var analytics = run.GetAnalytics();
             analytics.RecordTileXp(new TileXpEntry { TotalXp = 388 });
+            for (var m = 0; m < 3; m++) analytics.RecordMistake();
             analytics.RecordPuzzleSolved(3, 10);
             analytics.RecordPerfectPuzzle();
             analytics.RecordCursedPuzzleCompleted();

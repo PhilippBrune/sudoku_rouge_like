@@ -63,6 +63,11 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-052](#gap-052) | Event nodes opened behind the garden path; their close button did nothing | FIXED (found and fixed 2026-10-20) | HIGH | P2 |
 | [GAP-053](#gap-053) | The run score multiplied its bonuses instead of adding them, so the shown breakdown did not add up | FIXED (2026-10-20) | LOW | P3 |
 | [GAP-054](#gap-054) | Cleared cursed puzzles never earned their run-score bonus | FIXED (found and fixed 2026-10-20) | MEDIUM | P3 |
+| [GAP-055](#gap-055) | The reward tally showed 00:00 as the puzzle's time | FIXED (0.2.0 playtest, 2026-10-20) | LOW | P4 |
+| [GAP-056](#gap-056) | Number keys did nothing on the scenes over the path; more than three reward plaques ran off the screen | FIXED (0.2.0 playtest, 2026-10-20) | MEDIUM | P3 |
+| [GAP-057](#gap-057) | Changing a volume in a puzzle started the menu music | OPEN (not reproduced, 0.2.0 playtest) | LOW | P3 |
+| [GAP-058](#gap-058) | From the second board of a run on, lines were drawn over the digits | FIXED (0.2.0 playtest, 2026-10-20) | MEDIUM | P2 |
+| [GAP-059](#gap-059) | Mistakes counted toward the run only when a puzzle was solved | FIXED (0.2.0 playtest, 2026-10-20) | MEDIUM | P3 |
 | [GAP-044](#gap-044) | Region borders showed the previous puzzle's regions on a same-size board | FIXED (found 2026-10-14 by the owner) | HIGH | P1 |
 | [GAP-043](#gap-043) | Without the `ActiveProfileSlot` pref the game opens an empty slot 0, not the existing profile | FIXED (0.1.5, found 2026-10-14) | LOW | P3 |
 
@@ -902,3 +907,52 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Fix:** `CompleteLevelAndGrantRewards` counts a completed cursed puzzle; the run result takes the cursed and perfect counts from the run's analytics.
 - **Affected Files:** `Assets/Scripts/Run/RunDirector.cs`, `Assets/Scripts/Run/RunResultFactory.cs`
 - **Tests:** `RunScoreBreakdownTests.ClearedCursedPuzzle_CountsForTheRunScore` (plays a cursed 5×5 through the real completion; fails without the fix).
+
+## GAP-055
+**The reward tally showed 00:00 as the puzzle's time**
+
+- **Requirement:** UI-STYLE-007 (the tally's numbers)
+- **Status:** FIXED (owner's 0.2.0 playtest, 2026-10-20) · **Severity:** LOW · **Priority:** P4
+- **Problem:** After a puzzle the reward's tally always said "Time 00:00".
+- **Root Cause:** After a normal puzzle the game shows the path first, which stops and resets the HUD timer, and then builds the reward, which read the reset timer.
+- **Fix:** The HUD keeps the time of the puzzle it stopped (`HudViewController.LastPuzzleSeconds`); the tally reads that.
+- **Tests:** `RewardScreenPlayModeTests.SolvedPuzzle_RewardShowsItsTime_AndKeysChooseThenTake` (solves a board after 1.3 s the way the game does and checks the time is not 00:00).
+
+## GAP-056
+**Number keys did nothing on the scenes over the path; more than three reward plaques ran off the screen**
+
+- **Requirement:** UI-STYLE-007, UI-STYLE-009, UI-STYLE-013, UI-STYLE-014 (keys 1–N choose, the same key again takes)
+- **Status:** FIXED (owner's 0.2.0 playtest, 2026-10-20) · **Severity:** MEDIUM · **Priority:** P3
+- **Problem:** On the reward, the shop, the rest and the event, keys 1–3 (1–4 at the rest) did nothing. With five reward plaques (bag slots and relics can raise the count) the plaques overlapped the tally and ran off the right edge, and the hint still said "1–3".
+- **Root Cause:** The scene keys were read in `InRunController.HandleKeyboard`, which only runs while the puzzle board is open, but these scenes open after the board closes. The plaque layout had fixed sizes for "three" and "more than three", and the hint was capped at three.
+- **Fix:** `Update` reads keys 1–9 (and the keypad) for any open scene through `TryHandleSceneDigit` before the board-only handler. The keys do nothing while the bag-swap layer is open and leave the in-run Options alone. The plaques share the cord right of the tally and shrink in proportion (`RewardViewController.PlaqueLayout`); the hint names every plaque.
+- **Tests:** `RewardScreenPlayModeTests` (the real solve flow: the board is closed and key 1, then key 1 again, chooses and takes), `RewardPlaqueLayoutTests` (four to nine plaques stay on screen and right of the tally), `GeneratedUiWiringContractTests.RestScreen_IsATeaTable_WithOneSlipPerBowl` (scene keys are read outside `HandleKeyboard`). Screenshots `before_reward_five` (playtest) and `after_reward_five`.
+
+## GAP-057
+**Changing a volume in a puzzle started the menu music**
+
+- **Requirement:** AUDIO-MUSIC (run music stays the floor's), UI-OPT-001
+- **Status:** OPEN — not reproduced (owner's 0.2.0 playtest, 2026-10-20) · **Severity:** LOW · **Priority:** P3
+- **Report:** In a puzzle, changing a sound volume started the menu music.
+- **Checked:** `InRunAudioPlayModeTests.InRunVolumeChange_DoesNotStartTheMenuMusic` runs the real `GameBootstrap`, launches a Garden Run, enters a puzzle, opens the puzzle's Options and presses every volume button and Mute all. The menu's music player stays off (its object is inactive during runs) and the floor track keeps playing. On the path, before the first puzzle, the run plays its generic `puzzle_loop` track, which may sound like the menu.
+- **Next step:** the exact steps from the owner (which screen, which control, keyboard or controller, which floor). The test stays as a guard.
+
+## GAP-058
+**From the second board of a run on, lines were drawn over the digits**
+
+- **Requirement:** UI-STYLE-002 (the puzzle scroll), BossMechanicsSystem line drawing (setters' convention: lines under the digits)
+- **Status:** FIXED (owner's 0.2.0 playtest, 2026-10-20) · **Severity:** MEDIUM · **Priority:** P2
+- **Problem:** Dutch Whispers' orange band (and every other line, dot and cage mark) covered the digits, so they were hard to read. It showed from the second puzzle of a run on.
+- **Root Cause:** `BoardViewController` orders three layers: cells, rule overlay, digits. On the first board the overlay was created after the digit layer and put it back on top; on every later board `EnsureOverlayRoot` returned early while `EnsureNumberRoot` moved the digits directly above the cells, under the overlay.
+- **Fix:** `OrderBoardLayers` puts cells, overlay and digits in this order on every build.
+- **Tests:** `InRunUiPlayModeTests.Lines_StayUnderTheDigits_OnEveryBoardOfARun` (three boards in a row). Screenshots `before_lines_over_digits` (playtest) and `after_lines_second_board`.
+
+## GAP-059
+**Mistakes counted toward the run only when a puzzle was solved**
+
+- **Requirement:** GameDesignSpec §9c (MistakePenalty), REQ-BOSS-107 (the floor's numbers)
+- **Status:** FIXED (owner's 0.2.0 playtest, 2026-10-20) · **Severity:** MEDIUM · **Priority:** P3
+- **Problem:** The end screen's mistakes did not match the run: the mistakes of the puzzle that ended the run (and of an Endless Zen session's last board) were missing, so a run lost to mistakes showed only the earlier puzzles' ones.
+- **Root Cause:** `PostRunAnalyticsService.TotalMistakes` grew only in `RecordPuzzleSolved`.
+- **Fix:** `RecordMistake` counts each mistake when it happens (both places that add a mistake to the board); solving a puzzle only records its per-puzzle count. Weighting mistakes by when they happen is a separate owner decision (`docs/design/mistake-scoring-proposals.md`, RM-109). A run saved mid-puzzle before this build keeps the earlier mistakes of that one puzzle uncounted (they were never in the total); everything after the update counts.
+- **Tests:** `RunMistakeCountTests.EveryPuzzlesMistakes_CountAtTheEnd_AlsoThePuzzleThatEndedTheRun` (2 + 1 solved, 3 in the lost puzzle = 6; failed with 3 before the fix).

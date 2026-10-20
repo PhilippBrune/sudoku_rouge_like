@@ -1,4 +1,8 @@
 {
+    "CustomPuzzle.Book.Random":  "Au hasard : {0}",
+    "MainMenu.Version":  "Version {0}",
+    "InRun.BossDefeated.Column.Floor":  "Étage",
+    "InRun.BossDefeated.Column.Boss":  "Boss",
     "CustomPuzzle.Family.OutsideClues":  "Indices extérieurs",
     "CustomPuzzle.Family.WholeBoard":  "Toute la grille",
     "CustomPuzzle.Family.Cells":  "Cases",
@@ -236,7 +240,7 @@
     "InRun.BossDefeated.Stat.ItemsUsed":  "Objets utilisés",
     "InRun.BossDefeated.Stat.HpLost":  "PV perdus",
     "InRun.BossDefeated.Stat.Mistakes":  "Erreurs",
-    "InRun.BossDefeated.StatsHeader":  "Ce combat",
+    "InRun.BossDefeated.StatsHeader":  "Ton étage",
     "InRun.BossDefeated.Title":  "Vaincu : {0}",
     "InRun.BossDefeated.Eyebrow":  "Étage {0} sur {1} · {2}",
     "InRun.BossGate.UnknownRule":  "Pas encore découverte. Choisis-la pour connaître sa règle.",

@@ -4,6 +4,27 @@ using UnityEngine;
 
 namespace SudokuRoguelike.Core
 {
+    /// <summary>Mistakes, HP lost, items used and pencil marks of the current floor's solved puzzles.</summary>
+    [Serializable]
+    public sealed class FloorTally
+    {
+        public int Puzzles;
+        public int Mistakes;
+        public int HpLost;
+        public int ItemsUsed;
+        public int PencilMarks;
+
+        public void Add(LevelState level)
+        {
+            if (level == null) return;
+            Puzzles++;
+            Mistakes += level.Mistakes;
+            HpLost += level.HpLost;
+            ItemsUsed += level.ItemsUsedThisLevel;
+            PencilMarks += level.PencilMarksUsed;
+        }
+    }
+
     [Serializable]
     public sealed class RunState
     {
@@ -152,6 +173,8 @@ namespace SudokuRoguelike.Core
             GoldCollectedThisRun += amount;
         }
         public int HpAtCurrentFloorEntry; // HP when player entered the current floor (before relic heals)
+        /// <summary>[REQ: REQ-BOSS-107] The current floor's solved puzzles added up; the boss-defeated screen shows it.</summary>
+        public FloorTally FloorTally = new FloorTally();
         public int ItemsUsedThisRun;
         public bool TempleVowReady;        // GardenMonk L30: trigger ready (HP ≤ 25%, fires once/puzzle)
         // [REDESIGN] AccurateMap: guarantee one relic-tier node this floor (read by RunDirector).

@@ -1,4 +1,8 @@
 {
+    "CustomPuzzle.Book.Random":  "Aleatório: {0}",
+    "MainMenu.Version":  "Versão {0}",
+    "InRun.BossDefeated.Column.Floor":  "Andar",
+    "InRun.BossDefeated.Column.Boss":  "Chefe",
     "CustomPuzzle.Family.OutsideClues":  "Pistas externas",
     "CustomPuzzle.Family.WholeBoard":  "Tabuleiro inteiro",
     "CustomPuzzle.Family.Cells":  "Células",
@@ -236,7 +240,7 @@
     "InRun.BossDefeated.Stat.ItemsUsed":  "Itens usados",
     "InRun.BossDefeated.Stat.HpLost":  "PV perdidos",
     "InRun.BossDefeated.Stat.Mistakes":  "Erros",
-    "InRun.BossDefeated.StatsHeader":  "Esta luta",
+    "InRun.BossDefeated.StatsHeader":  "Seu andar",
     "InRun.BossDefeated.Title":  "Derrotado: {0}",
     "InRun.BossDefeated.Eyebrow":  "Andar {0} de {1} · {2}",
     "InRun.BossGate.UnknownRule":  "Ainda não descoberta. Escolha-a para conhecer a regra.",

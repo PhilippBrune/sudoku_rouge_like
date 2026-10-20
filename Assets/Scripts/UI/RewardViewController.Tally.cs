@@ -34,9 +34,14 @@ namespace SudokuRoguelike.UI
         public bool IsAwaitingReward => _awaitingReward;
 
         private const float PlaqueTop = 0.7407f;      // apex of a plaque's gable
-        private const float PlaqueBottom = 0.3333f;
+        private const float PlaqueBottom = 0.3333f;   // bottom of a full-size plaque (three or fewer)
         private const float PlaqueLift = 0.016f;      // how far the chosen plaque rises
         private const float CordY = 0.7796f;
+        // Three plaques at full size; more share the cord's width right of the tally and shrink, keeping their shape (GAP-056).
+        private const float PlaqueWidth = 0.1719f, PlaqueStep = 0.1875f, PlaqueMiddle = 0.638f;
+        private const float CordLeft = 0.3333f, CordRight = 0.9583f;
+        private const int MaxKeyedChoices = 9;
+        private float _plaqueBottom = PlaqueBottom;
 
         public void ShowRewardScreen()
         {
@@ -60,7 +65,7 @@ namespace SudokuRoguelike.UI
             RevealPlaques();
         }
 
-        /// <summary>RW-1: keys 1–3 choose a plaque; the same key again takes it.</summary>
+        /// <summary>RW-1: keys 1–9 choose a plaque; the same key again takes it.</summary>
         public void SelectRewardByIndex(int i)
         {
             if (_rewardPanel == null || !_rewardPanel.activeSelf || IsSwapOpen || i < 0 || i >= _rewardPlaques.Count) return;
@@ -123,7 +128,7 @@ namespace SudokuRoguelike.UI
                 FinishReward();
             });
 
-            var hint = ScrollUiKit.Label(screen.transform, "RewardKeysHint", F("InRun.Reward.KeysHint", Mathf.Min(3, _rewardSlots.Count)),
+            var hint = ScrollUiKit.Label(screen.transform, "RewardKeysHint", F("InRun.Reward.KeysHint", Mathf.Min(MaxKeyedChoices, _rewardSlots.Count)),
                 18, TextAnchor.MiddleRight, new Color(0.86f, 0.82f, 0.70f, 1f), new Vector2(0.79f, 0.0898f),
                 new Vector2(0.958f, 0.1435f), 12);
             AddShadow(hint);
@@ -224,14 +229,15 @@ namespace SudokuRoguelike.UI
             UpdateTakeButton();
 
             var count = _rewardSlots.Count;
-            var width = count <= 3 ? 0.1719f : 0.150f;
-            var step = count <= 3 ? 0.1875f : 0.160f;
-            const float middle = 0.638f;
+            var (middle, step, width, bottom) = PlaqueLayout(count);
+            _plaqueBottom = bottom;
             for (var i = 0; i < count; i++)
             {
                 var centre = middle + (i - (count - 1) * 0.5f) * step;
                 _rewardPlaques.Add(BuildPlaque(i, _rewardSlots[i], centre, width));
             }
+            var hint = _rewardPanel.transform.Find("RewardKeysHint")?.GetComponent<Text>();
+            if (hint != null) hint.text = F("InRun.Reward.KeysHint", Mathf.Min(MaxKeyedChoices, count));
 
             for (var i = 0; i < _rewardPlaques.Count; i++)
                 _rewardPlaques[i].navigation = new Navigation
@@ -251,11 +257,23 @@ namespace SudokuRoguelike.UI
             if (first != null) EventSystem.current?.SetSelectedGameObject(first.gameObject);
         }
 
+        /// <summary>
+        /// Where the plaques hang: up to three at full size round the mockup's middle; more share the cord right of the
+        /// tally, each narrower and shorter in the same proportion, so none runs off the screen or over the tally.
+        /// </summary>
+        public static (float middle, float step, float width, float bottom) PlaqueLayout(int count)
+        {
+            if (count <= 3) return (PlaqueMiddle, PlaqueStep, PlaqueWidth, PlaqueBottom);
+            var step = (CordRight - CordLeft) / count;
+            var scale = step / PlaqueStep;
+            return ((CordLeft + CordRight) * 0.5f, step, PlaqueWidth * scale, PlaqueTop - (PlaqueTop - PlaqueBottom) * scale);
+        }
+
         // One ema plaque on a string from the cord: icon, name, rarity tag, rule and its key. "Nothing" slots show a
         // blank plaque that grants the Take-nothing gold.
         private Button BuildPlaque(int index, ItemInstance item, float centre, float width)
         {
-            var holder = ScrollUiKit.Area(_rewardPanel.transform, $"Plaque_{index}", new Vector2(centre - width * 0.5f, PlaqueBottom),
+            var holder = ScrollUiKit.Area(_rewardPanel.transform, $"Plaque_{index}", new Vector2(centre - width * 0.5f, _plaqueBottom),
                 new Vector2(centre + width * 0.5f, PlaqueTop));
             var str = ScrollUiKit.Fill(holder, "String", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), ScrollUiKit.Vermilion);
             str.rectTransform.offsetMin = new Vector2(-1f, -2f);
@@ -316,7 +334,7 @@ namespace SudokuRoguelike.UI
                 if (plaque == null) continue;
                 var holder = (RectTransform)plaque.transform.parent;
                 var lift = i == index ? PlaqueLift : 0f;
-                holder.anchorMin = new Vector2(holder.anchorMin.x, PlaqueBottom + lift);
+                holder.anchorMin = new Vector2(holder.anchorMin.x, _plaqueBottom + lift);
                 holder.anchorMax = new Vector2(holder.anchorMax.x, PlaqueTop + lift);
                 var glow = holder.Find("Glow")?.GetComponent<Image>();
                 if (glow != null) glow.color = new Color(1f, 0.85f, 0.50f, i == index ? 0.55f : 0f);

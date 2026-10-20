@@ -87,6 +87,38 @@ namespace SudokuRoguelike.UI
             return true;
         }
 
+        /// <summary>How many rules the Random button draws (1 to the limit of five).</summary>
+        public int RandomRuleCount { get; private set; } = 3;
+
+        public void StepRandomRuleCount(int delta)
+        {
+            RandomRuleCount = Mathf.Clamp(RandomRuleCount + delta, 1, TutorialModeService.CustomModifierLimit);
+            SetupChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Replaces the chosen rules with <see cref="RandomRuleCount"/> random ones that fit the board and each other
+        /// (0.2.0 playtest). Fewer when not enough rules fit, for example on a 5×5 board.
+        /// </summary>
+        public void RollRandomRules(System.Random random = null)
+        {
+            random ??= new System.Random(Environment.TickCount);
+            var pool = new List<BossModifierId>(ModifierFamilies.All());
+            for (var i = pool.Count - 1; i > 0; i--)
+            {
+                var j = random.Next(i + 1);
+                (pool[i], pool[j]) = (pool[j], pool[i]);
+            }
+            _config.SelectedModifiers.Clear();
+            foreach (var id in pool)
+            {
+                if (_config.SelectedModifiers.Count >= RandomRuleCount) break;
+                if (TutorialModeService.CanAddCustomModifier(_config.BoardSize, _config.SelectedModifiers, id, out _))
+                    _config.SelectedModifiers.Add(id);
+            }
+            Changed();
+        }
+
         /// <summary>Why Start is off (null when the setup is valid).</summary>
         public string ValidationMessage =>
             TutorialModeService.TryValidateCustomSetup(_config, out var message) ? null : message;

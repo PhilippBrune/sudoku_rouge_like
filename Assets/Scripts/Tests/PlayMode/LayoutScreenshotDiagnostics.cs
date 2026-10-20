@@ -113,11 +113,41 @@ namespace SudokuRoguelike.Tests
 
             var (clearedHost, clearedRun) = StartRun(7304, true);
             clearedRun.State.CurrentFloor = 2;
+            // The boss fight and the whole floor (REQ-BOSS-107, 0.2.0 playtest): six puzzles, the boss one included.
+            clearedRun.CurrentLevelState.Mistakes = 1;
+            clearedRun.CurrentLevelState.HpLost = 1;
+            clearedRun.CurrentLevelState.PencilMarksUsed = 9;
+            clearedRun.State.FloorTally = new FloorTally { Puzzles = 6, Mistakes = 4, HpLost = 5, ItemsUsed = 2, PencilMarks = 37 };
             yield return DismissIntro();
             clearedHost.GetComponentInChildren<EndScreenViewController>(true)
                 .ShowBossCleared(clearedRun, clearedRun.RollRelicChoices(3), _ => { }, () => { });
             yield return new WaitForSecondsRealtime(0.4f);
             yield return Shoot(clearedHost, camera, "after_boss_defeated.png");
+        }
+
+        // GAP-058: the second board of a run (8×8, Dutch Whispers, as in the 0.2.0 playtest) keeps its digits over the lines.
+        [UnityTest]
+        public IEnumerator RenderSecondBoardLines()
+        {
+            var camera = CreateCamera();
+            _puzzleSize = 8;
+            var (host, run) = StartRun(7351, true, BossModifierId.DutchWhispers, BossModifierId.FullWhiteKropki);
+            _puzzleSize = 6;
+            yield return DismissIntro();
+            var config = run.BuildLevelConfig(false, false, run.State.CurrentNodeIndex);
+            config.BoardSize = 8;
+            config.RegionVariant = 0;
+            config.ActiveModifiers.Clear();
+            config.ActiveModifiers.Add(BossModifierId.DutchWhispers);
+            config.ActiveModifiers.Add(BossModifierId.FullWhiteKropki);
+            run.StartLevel(config);
+            var board = run.CurrentBoard;
+            for (var r = 0; r < board.Size; r++)          // fill some digits so lines cross them
+            for (var c = 0; c < board.Size; c++)
+                if (board.Cells[r, c] == 0 && (r + c) % 3 == 0) board.PlaceValue(r, c, board.Solution[r, c]);
+            host.GetComponentInChildren<BoardViewController>(true).RebuildBoard(-1, -1, 0, false, null, 0, new AccessibilityService());
+            yield return new WaitForSecondsRealtime(0.5f);
+            yield return Shoot(host, camera, "after_lines_second_board.png");
         }
 
         // UI-STYLE-001: the garden path as a hand scroll on each of the five floors (one run advanced floor by floor).
@@ -261,6 +291,15 @@ namespace SudokuRoguelike.Tests
             reward.SelectRewardByIndex(1);
             yield return new WaitForSecondsRealtime(0.3f);
             yield return Shoot(host, camera, "after_reward.png");
+            // GAP-056: five plaques (as in the 0.2.0 playtest) shrink to fit right of the tally.
+            reward.RerollRewardSlots(new List<ItemInstance>
+            {
+                null, null, new ItemInstance { Id = "five-a", Type = ItemType.MeditationStone, Charges = 1 }, null,
+                new ItemInstance { Id = "five-b", Type = ItemType.BambooScroll, Charges = 1 }
+            });
+            yield return new WaitForSecondsRealtime(1.2f);
+            yield return Shoot(host, camera, "after_reward_five.png");
+            reward.SelectRewardByIndex(1);
             reward.SelectRewardByIndex(1);   // the same key again takes it
             yield return null;
 
@@ -328,6 +367,7 @@ namespace SudokuRoguelike.Tests
             var tile = new TileXpEntry { BoardSize = 9, Stars = 3, TotalXp = 388 };   // a ledger with every kind of row
             run.TileXpLog.Add(tile);
             run.GetAnalytics().RecordTileXp(tile);
+            for (var m = 0; m < 3; m++) run.GetAnalytics().RecordMistake();
             run.GetAnalytics().RecordPuzzleSolved(3, 0);
             for (var i = 0; i < 4; i++) run.GetAnalytics().RecordPerfectPuzzle();
             run.GetAnalytics().RecordCursedPuzzleCompleted();
@@ -339,6 +379,33 @@ namespace SudokuRoguelike.Tests
             end.ShowGameOver(run, false);
             yield return new WaitForSecondsRealtime(0.8f);
             yield return Shoot(host, camera, prefix + "run_end_defeat.png");
+        }
+
+        // The main menu (with its version) and the menu screens the next proposals rework: Options, the Codex and Meta
+        // Progression. Shot as they are, for the proposals' "before" images.
+        [UnityTest]
+        public IEnumerator RenderMenuScreens()
+        {
+            var prefix = Environment.GetEnvironmentVariable("SR_SHOT_PREFIX");
+            if (string.IsNullOrEmpty(prefix)) prefix = "before_";
+            var camera = CreateCamera();
+            var host = new GameObject("LayoutShotMenus");
+            _createdRoots.Add(host);
+            host.AddComponent<MainMenuBlueprintBuilder>().Build();
+            var rootGroup = Find(host, "MainMenuRoot").GetComponent<CanvasGroup>();
+            if (rootGroup != null) rootGroup.alpha = 1f;
+            var menu = host.GetComponent<MainMenuController>();
+            menu.ShowMainMenu();
+            yield return new WaitForSecondsRealtime(0.4f);
+            yield return Shoot(host, camera, "after_main_menu.png");
+            foreach (var (button, file) in new[] { ("BtnOptions", "options"), ("BtnItems", "codex"), ("BtnMeta", "meta_progression") })
+            {
+                menu.ShowMainMenu();
+                yield return null;
+                Find(host, button).GetComponent<Button>().onClick.Invoke();
+                yield return new WaitForSecondsRealtime(0.5f);
+                yield return Shoot(host, camera, prefix + file + ".png");
+            }
         }
 
         // UI-STYLE-012: the Custom Puzzle screen at 9×9, 3 stars, with Dutch Whispers, Killer Cages and Skyscrapers chosen

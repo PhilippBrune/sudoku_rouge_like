@@ -22,9 +22,23 @@ namespace SudokuRoguelike.Run
         public void RecordPuzzleSolved(int mistakes, int goldEarned)
         {
             TotalPuzzlesSolved++;
-            TotalMistakes += mistakes;
             TotalGoldEarned += goldEarned;
             _mistakesPerPuzzle.Add(mistakes);
+        }
+
+        /// <summary>
+        /// Counts one mistake when it happens. The total used to grow only when a puzzle was solved, so the mistakes of
+        /// the puzzle that ended a run (or an Endless Zen session) never counted (GAP-059).
+        /// </summary>
+        public void RecordMistake()
+        {
+            TotalMistakes++;
+        }
+
+        /// <summary>An item took the last mistake back (Ginkgo Leaf): it no longer counts.</summary>
+        public void RecordMistakeUndone()
+        {
+            if (TotalMistakes > 0) TotalMistakes--;
         }
 
         public void RecordItemUsed()

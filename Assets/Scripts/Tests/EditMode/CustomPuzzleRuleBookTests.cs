@@ -95,6 +95,32 @@ namespace SudokuRoguelike.Tests
             Assert.AreEqual(ClassId.NumberFreak, setup.GetConfig().SimulationClassId, "the class steps wrap");
         }
 
+        // 0.2.0 playtest: Random fills the tray with the chosen number of rules that fit the board and each other.
+        [Test]
+        public void Random_FillsTheTrayWithFittingRules_AndRerolls()
+        {
+            var setup = NewSetup(9);
+            setup.ToggleModifier(BossModifierId.Thermo);
+            setup.StepRandomRuleCount(+1);   // 3 → 4
+            Assert.AreEqual(4, setup.RandomRuleCount);
+
+            setup.RollRandomRules(new System.Random(1));
+            var first = setup.SelectedModifiers.ToList();
+            Assert.AreEqual(4, first.Count, "four random rules");
+            Assert.IsNull(setup.ValidationMessage, "they fit together and the board");
+            setup.RollRandomRules(new System.Random(2));
+            CollectionAssert.AreNotEqual(first, setup.SelectedModifiers.ToList(), "rolling again gives other rules");
+
+            for (var i = 0; i < 10; i++) setup.StepRandomRuleCount(+1);
+            Assert.AreEqual(5, setup.RandomRuleCount, "at most five");
+
+            var small = NewSetup(5);
+            small.StepRandomRuleCount(+2);
+            small.RollRandomRules(new System.Random(3));
+            Assert.AreEqual(5, small.SelectedModifiers.Count);
+            Assert.IsTrue(small.SelectedModifiers.All(id => BossService.GetMinimumBoardSize(id) <= 5), "only rules a 5×5 allows");
+        }
+
         private TutorialMenuController NewSetup(int size)
         {
             _host = new GameObject("CustomPuzzleSetup");

@@ -263,6 +263,7 @@ namespace SudokuRoguelike.Run
             State.FloorGraphVersion = RunGraphService.CurrentGraphVersion; // a new floor always uses the current layout
             State.Depth = 0;
             State.HpAtCurrentFloorEntry = State.CurrentHP; // capture before relic heals apply
+            State.FloorTally = new FloorTally();
 
             // Clear boss modifiers from previous floor
             State.ChosenBossModifiers.Clear();
@@ -448,6 +449,7 @@ namespace SudokuRoguelike.Run
             State.LastMistakeRow = row;
             State.LastMistakeCol = col;
             CurrentLevelState.Mistakes++;
+            _analytics?.RecordMistake();   // GAP-059: counted when it happens
             CurrentLevelState.PerfectSoFar = false;
             // [REQ: PRESSURE-TICK-002] Wrong placements also decrement threat counters (no success check).
             TickPressureCountersOnly();
@@ -542,6 +544,7 @@ namespace SudokuRoguelike.Run
                 {
                     // Deferred wrong placement revealed — apply full debuff-aware penalty.
                     CurrentLevelState.Mistakes++;
+                    _analytics?.RecordMistake();   // GAP-059: counted when it happens
                     CurrentLevelState.PerfectSoFar = false;
                     State.LastComboBeforeMistake = State.ComboStreak;
                     State.LastMistakeRow = r;
@@ -1572,6 +1575,8 @@ namespace SudokuRoguelike.Run
             State.TempleSealActive     = false;
             if (level?.FogPendingCells != null)
                 level.FogPendingCells.Clear();
+            // [REQ: REQ-BOSS-107] The floor's numbers for the boss-defeated screen (older saves have no tally yet).
+            (State.FloorTally ??= new FloorTally()).Add(level);
 
             // Special modes without progression rewards: no gold/XP/item flow, but still log the board.
             if (State.IsSeasonalChallenge || State.DisableProgressionRewards)
@@ -1978,6 +1983,7 @@ namespace SudokuRoguelike.Run
                         if (CurrentLevelState != null && CurrentLevelState.Mistakes > 0)
                         {
                             CurrentLevelState.Mistakes--;
+                            _analytics?.RecordMistakeUndone();   // GAP-059: the run total follows the undo
                             if (CurrentLevelState.Mistakes == 0)
                                 CurrentLevelState.PerfectSoFar = true;
                         }

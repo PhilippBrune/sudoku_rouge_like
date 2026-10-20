@@ -24,6 +24,7 @@ namespace SudokuRoguelike.UI
         private readonly List<Image> _resourceSegments = new List<Image>();
         private readonly List<GameObject> _chips = new List<GameObject>();
         private RectTransform _tray;
+        private Button _randomButton;
 
         /// <summary>Builds the slip, the book and the tray on <paramref name="screen"/> (a full-screen panel).</summary>
         public void Build(RectTransform screen, TutorialMenuController setup, Button startButton)
@@ -162,7 +163,15 @@ namespace SudokuRoguelike.UI
             _rulesCount = ScrollUiKit.Label(_tray, "RulesCount", string.Empty, 17, TextAnchor.MiddleLeft, Rim,
                 new Vector2(0.14f, 0.62f), new Vector2(0.24f, 0.86f), 11);
             _rulesMessage = ScrollUiKit.Label(_tray, "RulesMessage", string.Empty, 16, TextAnchor.MiddleLeft,
-                new Color(0.96f, 0.62f, 0.52f, 1f), new Vector2(0.24f, 0.62f), new Vector2(0.78f, 0.86f), 10);
+                new Color(0.96f, 0.62f, 0.52f, 1f), new Vector2(0.24f, 0.62f), new Vector2(0.585f, 0.86f), 10);
+
+            // Random: fills the tray with as many random rules as the count says (0.2.0 playtest).
+            _randomButton = ScrollUiKit.PillButton(_tray, "BtnRandomRules", new Vector2(0.597f, 0.63f), new Vector2(0.700f, 0.88f),
+                string.Empty, 18, new Color(0.45f, 0.33f, 0.14f, 1f), ScrollUiKit.PaperText, 18f);
+            _randomButton.navigation = new Navigation { mode = Navigation.Mode.Automatic };
+            _randomButton.onClick.AddListener(() => _setup.RollRandomRules());
+            RoundButton(_tray, "RandomDec", new Vector2(0.722f, 0.755f), "−", () => _setup.StepRandomRuleCount(-1));
+            RoundButton(_tray, "RandomInc", new Vector2(0.760f, 0.755f), "+", () => _setup.StepRandomRuleCount(1));
 
             var start = (RectTransform)startButton.transform;
             start.SetParent(_tray, false);
@@ -180,6 +189,8 @@ namespace SudokuRoguelike.UI
                 _chips.Add(i < chosen.Count ? BuildChip(i, chosen[i]) : BuildEmptyChip(i));
             _rulesCount.text = F("CustomPuzzle.Book.Count", "{0} of {1}", chosen.Count, Tutorial.TutorialModeService.CustomModifierLimit);
             _rulesMessage.text = _setup.ValidationMessage ?? string.Empty;
+            var randomLabel = _randomButton != null ? _randomButton.transform.Find("Label")?.GetComponent<Text>() : null;
+            if (randomLabel != null) randomLabel.text = F("CustomPuzzle.Book.Random", "Random: {0}", _setup.RandomRuleCount);
         }
 
         private static Vector2 ChipMin(int i) => new Vector2(0.022f + i * 0.153f, 0.20f);

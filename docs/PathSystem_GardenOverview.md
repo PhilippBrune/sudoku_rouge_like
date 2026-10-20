@@ -1,11 +1,12 @@
 # Path System & Garden Overview
 
-**Version:** 1.7 | **Date:** 2026-10-15 | **Status:** implemented
+**Version:** 1.8 | **Date:** 2026-10-20 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.8 | 2026-10-20 | implemented | Owner's 0.2.0 playtest: the offering table's numbers show the boss fight and the whole floor side by side (mistakes, HP lost, items used, pencil marks; REQ-BOSS-107). |
 | 1.7 | 2026-10-15 | implemented | Floor transition after a non-final boss: the offering table shows the fight's numbers and the relic choice on one screen (layout-proposals.md UI-STYLE-005); taking a relic or leaving them loads the next floor (REQ-BOSS-107). |
 | 1.6 | 2026-10-07 | implemented | 1.1 review decisions (2026-10-07): floor modifiers 0/1/1/1/2 (SPEC-CONF-001); boss options floor+1 / picks floor, no minimum (SPEC-CONF-002); floor names from FloorThemeData/GDS (SPEC-CONF-009); exactly one cross-connection per floor with tiles keeping their type, anchors and graph version for 1.0 saves (SPEC-CONF-010, GAP-022); generatable modifier pool instead of "15" (SPEC-CONF-019); all tile types visible, details on reachable/visited tiles (SPEC-CONF-030); class player marker as built; node-type roll weight table (SPEC-MAC-004); legend and View Modifiers noted; file references updated (SPEC-CONF-036). |
 | 1.5 | 2026-04-14 | implemented | Added requirement IDs (MAP-STRUCT, MAP-ROUTE, MAP-CROSS, MAP-NODE, MAP-FX, MAP-ICON, MAP-UI). |
@@ -291,7 +292,7 @@ On boss defeat the following sequence plays before the next floor loads:
 2. **Cutscene panel** — a single fullscreen static image previewing the next garden's theme. No animation is required in the first implementation pass.
 3. **Next floor canvas fade-in** — the new garden's path appears; the player icon slides onto the Shared Start Tile from off-screen.
 
-**As built (SPEC-AMB-008 1.1, offering table 2026-10-15):** after a non-final boss the offering table names the defeated boss and floor, shows the fight's numbers and offers the relics on the same screen, each with a **Take** button (one is selected for keyboard and controller), plus **Leave them**; with nothing to offer a single **Continue** button is shown (UI-STYLE-005). Taking or leaving loads the next floor, whose path fades in and shows the floor's narrative line. The status line reads "Garden cleared! Next floor...". The static cutscene image and the icon slide-in are not built. Evidence: `BossClearedFlowPlayModeTests` (GAP-002).
+**As built (SPEC-AMB-008 1.1, offering table 2026-10-15):** after a non-final boss the offering table names the defeated boss and floor, shows the numbers of the boss fight and of the whole floor side by side (mistakes, HP lost, items used, pencil marks of every solved puzzle of the floor; 0.2.0 playtest) and offers the relics on the same screen, each with a **Take** button (one is selected for keyboard and controller), plus **Leave them**; with nothing to offer a single **Continue** button is shown (UI-STYLE-005). Taking or leaving loads the next floor, whose path fades in and shows the floor's narrative line. The status line reads "Garden cleared! Next floor...". The static cutscene image and the icon slide-in are not built. Evidence: `BossClearedFlowPlayModeTests` (GAP-002).
 
 ---
 

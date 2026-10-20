@@ -123,6 +123,32 @@ namespace SudokuRoguelike.Tests
                 "a same-size puzzle with other regions must redraw the borders (they showed the previous puzzle's regions)");
         }
 
+        // GAP-058 (0.2.0 playtest): from the second board of a run on, the rule overlay (Dutch Whispers in the report) was
+        // drawn over the digits. The digits stay on top on every rebuild.
+        [UnityTest]
+        [Requirement("UI-STYLE-002")]
+        public IEnumerator Lines_StayUnderTheDigits_OnEveryBoardOfARun()
+        {
+            var h = StartPuzzle(8613, BossModifierId.DutchWhispers);
+            yield return null;
+            yield return null;
+            var view = h.Host.GetComponentInChildren<BoardViewController>(true);
+            Assert.IsTrue(view.DigitsAboveOverlay, "first board: digits over the lines");
+
+            for (var board = 0; board < 2; board++)
+            {
+                var config = h.Run.BuildLevelConfig(false, false, h.Run.State.CurrentNodeIndex);
+                config.BoardSize = board == 0 ? 7 : 6;
+                config.RegionVariant = 0;
+                config.ActiveModifiers.Clear();
+                config.ActiveModifiers.Add(BossModifierId.DutchWhispers);
+                h.Run.StartLevel(config);
+                view.RebuildBoard(-1, -1, 0, false, null, 0, new AccessibilityService());
+                yield return null;
+                Assert.IsTrue(view.DigitsAboveOverlay, $"board {board + 2}: digits over the lines");
+            }
+        }
+
         private static bool SameRegions(int[,] a, int[,] b)
         {
             if (a == null || b == null) return a == b;
@@ -337,6 +363,24 @@ namespace SudokuRoguelike.Tests
             Assert.IsFalse(reward.IsAwaitingReward);
             Assert.IsNull(reward.ActivePanel);
             Assert.IsNull(FindObjectOrNull(h.Host, "RewardPanel"), "a run that ends closes the reward scene");
+        }
+
+        // GameDesignSpec 4.1/4.2 (0.2.0 playtest): a digit is taken 0.25 s after a cell is chosen (it was 0.5 s), and a placed
+        // digit highlights every cell with that digit.
+        [UnityTest]
+        public IEnumerator PlacingADigit_AQuarterSecondAfterChoosingTheCell_HighlightsThatDigit()
+        {
+            var h = StartPuzzle(8612);
+            var cell = EmptyCells(h.Run)[0];
+            yield return Select(h, cell);
+            yield return new WaitForSecondsRealtime(InRunController.CellSelectInputDelay + 0.05f);
+            var digit = h.Run.CurrentBoard.Solution[cell.row, cell.col];
+            ClickButton(h.Host, $"Num_{digit}");
+            yield return null;
+
+            Assert.AreEqual(digit, h.Run.CurrentBoard.Cells[cell.row, cell.col], "the digit is taken 0.3 s after the cell was chosen");
+            Assert.AreEqual(digit, h.Host.GetComponentInChildren<InRunController>(true).HighlightValue,
+                "the placed digit is highlighted");
         }
 
         private static Text PencilLabel(Harness h, int row, int col) =>
@@ -663,7 +707,7 @@ namespace SudokuRoguelike.Tests
         private static IEnumerator PlaceCorrect(Harness h, (int row, int col) cell)
         {
             yield return Select(h, cell);
-            // InRunController ignores digits for 0.5 s after a cell is selected (touch safety window).
+            // InRunController ignores digits for 0.25 s after a cell is selected (touch safety window).
             yield return new WaitForSecondsRealtime(0.6f);
             ClickButton(h.Host, $"Num_{h.Run.CurrentBoard.Solution[cell.row, cell.col]}");
             yield return null;

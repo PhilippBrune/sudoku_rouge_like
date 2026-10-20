@@ -55,6 +55,8 @@ namespace SudokuRoguelike.UI
         private int _selectedRow = -1;
         private int _selectedCol = -1;
         private int _highlightValue;
+        /// <summary>The digit whose cells are highlighted (0 = none).</summary>
+        public int HighlightValue => _highlightValue;
         private bool _pencilMode;
         private bool _completionHandled;
         private int  _pendingKeyboardDigit;
@@ -63,9 +65,9 @@ namespace SudokuRoguelike.UI
         private bool _spiritTrialsTimerStarted;
 
         // Input safety: block digit entry for a short window after cell selection
-        // to prevent accidental placements on touch/tap.
+        // to prevent accidental placements on touch/tap. GameDesignSpec 4.2: 0.25 s (halved after the 0.2.0 playtest).
         private float _cellSelectedTime = -1f;
-        private const float CellSelectInputDelay = 0.5f;
+        public const float CellSelectInputDelay = 0.25f;
 
         // ── Sudoku Basics Tutorial ──
         private SudokuBasicsTutorialController _basicsTutorial;
@@ -338,7 +340,7 @@ namespace SudokuRoguelike.UI
 
             _rewardView.OnStatusChanged   = msg => SetStatus(msg);
             _rewardView.OnPostRewardReady = OnPostRewardReady;
-            _rewardView.PuzzleSeconds     = () => _hudView?.GetPuzzleElapsed() ?? 0f; // the reward tally's time
+            _rewardView.PuzzleSeconds     = () => _hudView != null ? _hudView.LastPuzzleSeconds : 0f; // the reward tally's time (GAP-055)
             _shopView.OnStatusChanged     = msg => SetStatus(msg);
             _shopView.OnShopClosed        = ShowPath;
             _bossGateView.OnModsConfirmed = OnBossModsConfirmed;
@@ -607,6 +609,15 @@ namespace SudokuRoguelike.UI
                     _basicsTutorial.StartTutorial(_sudokuPanel.transform);
                 }
             }
+
+            // Number keys on the scenes over the path (reward, rest, shop, event). HandleKeyboard below runs only while
+            // the board is open, and these scenes open after it closes, so their keys never arrived (GAP-056).
+            for (var k = 0; k < 9; k++)
+                if ((Input.GetKeyDown(KeyCode.Alpha1 + k) || Input.GetKeyDown(KeyCode.Keypad1 + k)) && TryHandleSceneDigit(k))
+                {
+                    _inputRemap.Tick();
+                    return;
+                }
 
             if (_sudokuPanel != null && _sudokuPanel.activeSelf)
             {
@@ -1769,36 +1780,6 @@ namespace SudokuRoguelike.UI
                 return;
             }
 
-            // SH-1: keyboard number shortcuts when shop overlay is open
-            if (_shopView?.ActivePanel != null && _shopView.ActivePanel.activeSelf)
-            {
-                if (Input.GetKeyDown(KeyCode.Alpha1)) { _shopView.SelectSlotByIndex(0); _inputRemap.Tick(); return; }
-                if (Input.GetKeyDown(KeyCode.Alpha2)) { _shopView.SelectSlotByIndex(1); _inputRemap.Tick(); return; }
-                if (Input.GetKeyDown(KeyCode.Alpha3)) { _shopView.SelectSlotByIndex(2); _inputRemap.Tick(); return; }
-            }
-
-            // UI-STYLE-013: keys 1-4 choose a tea bowl at the rest; the same key again drinks it
-            if (_rewardView != null && _rewardView.IsRestOpen)
-            {
-                for (var k = 0; k < 4; k++)
-                    if (Input.GetKeyDown(KeyCode.Alpha1 + k)) { _rewardView.SelectRestByIndex(k); _inputRemap.Tick(); return; }
-            }
-
-            // RW-1: keyboard number shortcuts when reward overlay is open
-            if (_rewardView?.ActivePanel != null && _rewardView.ActivePanel.activeSelf)
-            {
-                if (Input.GetKeyDown(KeyCode.Alpha1)) { _rewardView.SelectRewardByIndex(0); _inputRemap.Tick(); return; }
-                if (Input.GetKeyDown(KeyCode.Alpha2)) { _rewardView.SelectRewardByIndex(1); _inputRemap.Tick(); return; }
-                if (Input.GetKeyDown(KeyCode.Alpha3)) { _rewardView.SelectRewardByIndex(2); _inputRemap.Tick(); return; }
-            }
-
-            // RW-3: keyboard number shortcuts when event choice overlay is open
-            if (_eventChoiceView?.ActivePanel != null && _eventChoiceView.ActivePanel.activeSelf)
-            {
-                if (Input.GetKeyDown(KeyCode.Alpha1)) { InvokeEventChoice(0); _inputRemap.Tick(); return; }
-                if (Input.GetKeyDown(KeyCode.Alpha2)) { InvokeEventChoice(1); _inputRemap.Tick(); return; }
-                if (Input.GetKeyDown(KeyCode.Alpha3)) { InvokeEventChoice(2); _inputRemap.Tick(); return; }
-            }
             // House-choice phase for Wind Chime takes over all digit keys
             if (_windChimeChoosingHouses) { HandleWindChimeHouseChoice(); _inputRemap.Tick(); return; }
             HandleGamepadController();
@@ -2317,7 +2298,24 @@ namespace SudokuRoguelike.UI
         }
 
         // RW-3: invoke an event choice button by index
-        private void InvokeEventChoice(int idx) => _eventChoiceView?.SelectChoiceByIndex(idx);
+        /// <summary>
+        /// Key 1–9 (index 0–8) on a scene over the path: chooses on the open rest, event, shop or reward; the same key
+        /// again takes it. Returns false when no such scene is open, so the key reaches the board.
+        /// </summary>
+        public bool TryHandleSceneDigit(int index)
+        {
+            // The in-run Options sit on top of every scene; their keys win.
+            if (_inGameOptionsPanel != null && _inGameOptionsPanel.activeSelf) return false;
+            // The bag-swap layer is modal over the reward and the shop: its choice is made by click or controller.
+            if (_rewardView != null && _rewardView.IsSwapOpen) return true;
+            if (_rewardView != null && _rewardView.IsRestOpen) { _rewardView.SelectRestByIndex(index); return true; }
+            var ep = _eventChoiceView?.ActivePanel;
+            if (ep != null && ep.activeSelf) { _eventChoiceView.SelectChoiceByIndex(index); return true; }
+            var sp = _shopView?.ActivePanel;
+            if (sp != null && sp.activeSelf) { _shopView.SelectSlotByIndex(index); return true; }
+            if (_rewardView != null && _rewardView.IsAwaitingReward) { _rewardView.SelectRewardByIndex(index); return true; }
+            return false;
+        }
 
         private void CancelPendingItemInteraction(bool showStatus = true)
         {
@@ -2733,6 +2731,8 @@ namespace SudokuRoguelike.UI
 
             if (result == PlaceResult.Correct)
             {
+                // GameDesignSpec 4.1: a placed digit highlights every cell with that digit, as clicking a filled cell does.
+                _highlightValue = value;
                 _audio?.PlayCorrectPlacement();
                 _boardView?.PlayDigitPlaced(_selectedRow, _selectedCol);
                 RumbleService.PulseCorrect(this);

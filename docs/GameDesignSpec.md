@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.12 | **Date:** 2026-10-20 | **Status:** implemented
+**Version:** 1.13 | **Date:** 2026-10-20 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.13 | 2026-10-20 | implemented | Owner's 0.2.0 playtest: a placed digit highlights every cell with that digit (4.1); digits are taken 0.25 s after a cell is chosen, half of before (4.2); the main menu shows the version (UI-MENU-VERSION-001); every mistake counts toward the run score when it happens (9c, GAP-059). |
 | 1.12 | 2026-10-20 | implemented | Post-run score (9c): rounding stated — each row is its share of the base rounded to whole points, and the final score is the base plus the rows, so the breakdown adds up. The code now adds the bonuses as the formula says; it had multiplied them one after another (GAP-053), and cleared cursed puzzles now count (GAP-054). The 71 player modifiers are chosen in the Custom Puzzle rule book (UI-STYLE-012). |
 | 1.11 | 2026-10-19 | implemented | 43 player modifiers: the catalog batches B1 and B2 (13 modifiers) are live (BossMechanicsSystem 2.8). |
 | 1.10 | 2026-10-15 | implemented | Seed of the week: one Garden Run seed per ISO week for all players, a button in the start-run modal (RUN-WEEK-001); the Discord posts compute the Daily Walk goals, the weekly seed and the Monthly Walk board exactly like the game (RUN-WEEK-002). Credits name community playtesters and translators and link the Discord (CREDITS-COMMUNITY-001). |
@@ -101,6 +102,7 @@ Irregular puzzles are controlled by `RunState.AllowIrregularPuzzles` toggle (def
 ### 4.1 Selection
 
 - Mouse click / tap: select one cell; clicking a filled cell highlights all cells with the same digit
+- Placing a correct digit highlights all cells with that digit, as clicking it would (0.2.0 playtest)
 - Arrow keys / D-pad: move the selection cursor
 - Multi-cell selection (CTRL/SHIFT + click or arrows, select all, deselect all, invert) is **not built** and is moved to future scope (decided 2026-10-07, SPEC-MAC-005; `future-scope-decision-register.md`). Only single-cell selection exists.
 
@@ -109,6 +111,7 @@ Irregular puzzles are controlled by `RunState.AllowIrregularPuzzles` toggle (def
 - Keyboard `0-9`
 - Numpad keys
 - On-screen numpad buttons
+- Touch safety: after a cell is chosen, digit input is ignored for 0.25 s (0.5 s before the 0.2.0 playtest)
 
 ### 4.3 Pencil Mode
 
@@ -280,7 +283,7 @@ Run Score Breakdown
   Final Score:         1 728
 ```
 
-- Tracked in `PostRunAnalyticsService`: `PerfectPuzzleCount`, `CursedPuzzlesCompleted`, `RunScore`.
+- Tracked in `PostRunAnalyticsService`: `PerfectPuzzleCount`, `CursedPuzzlesCompleted`, `RunScore`. Each mistake is counted when it happens, also in the puzzle that ends the run (GAP-059).
 - Stored in `RunResult`: `PerfectPuzzleCount`, `CursedPuzzlesAccepted`, `RunScore`.
 - Score of 0 (e.g. immediate game over) suppresses the breakdown section.
 
@@ -379,6 +382,7 @@ Source of truth: [EndlessZenMode](EndlessZenMode.md) (decided 2026-10-07, SPEC-C
 - Items & Relic Codex
 - Custom Puzzle (sandbox, formerly "Tutorial"; SPEC-CONF-033)
 - Profiles, Options, Credits, Quit
+- **[UI-MENU-VERSION-001]** The game's version ("Version 0.2.0", from the player settings) in the bottom-left corner
 - Daily Walk and Monthly Walk widgets next to the menu, with today's goals, streak, theme and countdown (SPEC-CONF-027, GAP-028)
 
 ### Start Game Flow

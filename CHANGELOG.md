@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+### Fixed (0.2.0 playtest)
+
+- The reward's tally shows the puzzle's real time (it said 00:00).
+- Number keys work on the reward, shop, rest and event screens (they did nothing), and with more than three rewards the plaques shrink to fit instead of running off the screen; the key hint names every plaque.
+- Lines, dots and cage marks stay under the digits on every board (from the second puzzle of a run on they covered them).
+- Every mistake counts toward the run score when it happens, also in the puzzle that ends the run.
+
+### Changed
+
+- Digits are taken 0.25 s after a cell is chosen (was 0.5 s), and a placed digit highlights every cell with that digit.
+- After a boss, the numbers show the boss fight and the whole floor side by side.
+- The main menu shows the game's version.
+- Custom Puzzle: a Random button fills the tray with as many random rules as you choose (1–5).
+
 ## 0.2.0 — 6th iteration (2026-10-20)
 
 The sixth Early Access build. Every screen of a run is redrawn in ink and paper, the puzzle rules grow from 30 to 71, and the Custom Puzzle screen offers all of them. It follows 0.1.5; testers of the 0.2.0 beta find the changes since then at the end of this section.

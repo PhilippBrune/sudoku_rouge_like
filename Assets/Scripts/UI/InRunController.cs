@@ -1937,7 +1937,7 @@ namespace SudokuRoguelike.UI
 
         private void HandleGamepadOptionsFocus()
         {
-            if (_optionsFocusCache.Count == 0) RebuildOptionsFocusCache();
+            if (_optionsFocusCache.Count == 0 || OptionsPageChanged()) RebuildOptionsFocusCache();
             if (_optionsFocusCache.Count == 0) return;
 
             var es = UnityEngine.EventSystems.EventSystem.current;
@@ -1966,6 +1966,7 @@ namespace SudokuRoguelike.UI
                 var sel = _optionsFocusCache[idx];
                 if (sel is Button btn) btn.onClick.Invoke();
                 else if (sel is Toggle tgl) tgl.isOn = !tgl.isOn;
+                else if (sel is Dropdown dd) dd.Show();
             }
 
             // B / Start: close options panel

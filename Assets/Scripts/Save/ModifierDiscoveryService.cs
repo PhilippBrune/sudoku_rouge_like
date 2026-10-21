@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Run;
 
 namespace SudokuRoguelike.Save
 {
@@ -13,6 +14,16 @@ namespace SudokuRoguelike.Save
         public static void SanitizeMetaProgress(MetaProgressionState meta)
         {
             if (meta == null) return;
+
+            // [REQ: META-CODEX-008] Saves from before the Curses page have no list. Empty and doubled ids are dropped; ids this
+            // build does not know stay (a curse of a newer build must survive a start of an older one). The Codex shows
+            // only the curses of the catalog.
+            var curses = meta.DiscoveredCurses ?? new List<string>();
+            var kept = new List<string>(curses.Count);
+            var seenCurses = new HashSet<string>();
+            foreach (var id in curses)
+                if (!string.IsNullOrEmpty(id) && seenCurses.Add(id)) kept.Add(id);
+            meta.DiscoveredCurses = kept;
 
             if (meta.DiscoveredBossModifiers == null)
             {
@@ -36,6 +47,25 @@ namespace SudokuRoguelike.Save
 
             meta.DiscoveredBossModifiers.Clear();
             meta.DiscoveredBossModifiers.AddRange(sanitized);
+        }
+
+        /// <summary>[REQ: META-CODEX-008] Adds the curses met in a run to the Codex: each known curse once, in the order met.
+        /// Returns how many were new.</summary>
+        public static int MergeCursesIntoMeta(MetaProgressionState meta, IEnumerable<string> curseIds)
+        {
+            if (meta == null || curseIds == null) return 0;
+            meta.DiscoveredCurses ??= new List<string>();
+
+            var added = 0;
+            foreach (var id in curseIds)
+            {
+                if (string.IsNullOrEmpty(id) || CurseService.GetDefinition(id) == null || meta.DiscoveredCurses.Contains(id))
+                    continue;
+                meta.DiscoveredCurses.Add(id);
+                added++;
+            }
+
+            return added;
         }
 
         public static int MergeIntoMeta(MetaProgressionState meta, IEnumerable<BossModifierId> modifiers)

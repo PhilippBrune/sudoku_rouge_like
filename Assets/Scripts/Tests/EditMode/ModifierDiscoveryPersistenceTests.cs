@@ -178,6 +178,173 @@ namespace SudokuRoguelike.Tests
                 runState.SeenBossModifierList);
         }
 
+        // ── Curse discovery (META-CODEX-008, the Codex's Curses page UI-STYLE-018) ─────────────────────
+
+        [Test]
+        [Requirement("META-CODEX-008")]
+        public void ApplyCurse_RecordsTheCurseAsSeenEvenAfterItIsCleansed()
+        {
+            var runState = new RunState();
+
+            CurseService.ApplyCurse(runState, "misfortune");
+            CurseService.TryRemoveCurse(runState, "misfortune");
+            CurseService.ApplyCurse(runState, "misfortune");
+
+            CollectionAssert.AreEqual(new[] { "misfortune" }, runState.CursesSeenThisRun);
+        }
+
+        [Test]
+        [Requirement("META-CODEX-008")]
+        public void MergeCursesIntoMeta_AddsEachKnownCurseOnceAndSkipsUnknownIds()
+        {
+            var meta = new MetaProgressionState { DiscoveredCurses = new List<string> { "inkblot" } };
+
+            var added = ModifierDiscoveryService.MergeCursesIntoMeta(meta,
+                new[] { "inkblot", "misfortune", "misfortune", "no_such_curse", "" });
+
+            Assert.AreEqual(1, added);
+            CollectionAssert.AreEqual(new[] { "inkblot", "misfortune" }, meta.DiscoveredCurses);
+        }
+
+        [Test]
+        [Requirement("META-CODEX-008")]
+        public void RecordRunAndGetNewUnlocks_PersistsCursesSeenThisRun()
+        {
+            var save = new SaveFileService(TestSlot);
+            save.Save(new SaveFileEnvelope());
+            var liveRunState = new RunState();
+            liveRunState.CursesSeenThisRun.Add("bad_luck");
+
+            new ProfileService(save).RecordRunAndGetNewUnlocks(new RunResult
+            {
+                PlayedClassId = ClassId.NumberFreak,
+                Mode = GameMode.GardenRun,
+                Victory = false
+            }, liveRunState);
+
+            CollectionAssert.AreEqual(new[] { "bad_luck" }, save.Load().MetaProgress.DiscoveredCurses);
+        }
+
+        [Test]
+        [Requirement("META-CODEX-008")]
+        public void RunAutoSave_MergesSeenCursesIntoMetaProgress()
+        {
+            var save = new SaveFileService(TestSlot);
+            save.Save(new SaveFileEnvelope());
+            var runState = new RunState { Mode = GameMode.GardenRun };
+            runState.CursesSeenThisRun.Add("price_gouge");
+
+            new RunAutoSaveCoordinator(save).Save(runState, null);
+
+            CollectionAssert.AreEqual(new[] { "price_gouge" }, save.Load().MetaProgress.DiscoveredCurses);
+        }
+
+        [Test]
+        [Requirement("META-CODEX-008")]
+        public void Load_GivesLegacySavesAnEmptyCurseCodex()
+        {
+            File.WriteAllText(_savePath, "{\"SaveVersion\":\"1.0.0\",\"MetaProgress\":{\"SpiritTrialsUnlocked\":true}}");
+
+            var loaded = new SaveFileService(TestSlot).Load();
+
+            Assert.IsNotNull(loaded.MetaProgress.DiscoveredCurses);
+            Assert.AreEqual(0, loaded.MetaProgress.DiscoveredCurses.Count);
+        }
+
+        // ── Item counts (META-CODEX-009, the Codex's right page UI-STYLE-018) ─────────────────────────
+
+        [Test]
+        [Requirement("META-CODEX-009")]
+        public void RecordItemDiscovery_CountsEveryPickup()
+        {
+            var save = new SaveFileService(TestSlot);
+            save.Save(new SaveFileEnvelope());
+            var profile = new ProfileService(save);
+
+            profile.RecordItemDiscovery(ItemType.InkWell);
+            profile.RecordItemDiscovery(ItemType.InkWell);
+
+            var entry = save.Load().MetaProgress.ItemCodex.Entries.Single(e => e.ItemId == nameof(ItemType.InkWell));
+            Assert.AreEqual(2, entry.TimesFound);
+        }
+
+        [Test]
+        [Requirement("META-CODEX-009")]
+        public void RecordRunAndGetNewUnlocks_CountsThisRunsUsesOfFoundItemsOnly()
+        {
+            var save = new SaveFileService(TestSlot);
+            save.Save(new SaveFileEnvelope());
+            new ProfileService(save).RecordItemDiscovery(ItemType.InkWell);
+            var liveRunState = new RunState();
+            liveRunState.ItemTypesUsedThisRun.AddRange(new[] { "InkWell", "InkWell", "Solver" });
+
+            new ProfileService(save).RecordRunAndGetNewUnlocks(new RunResult
+            {
+                PlayedClassId = ClassId.NumberFreak,
+                Mode = GameMode.GardenRun,
+                Victory = false
+            }, liveRunState);
+
+            var entries = save.Load().MetaProgress.ItemCodex.Entries;
+            Assert.AreEqual(2, entries.Single(e => e.ItemId == "InkWell").TimesUsed);
+            Assert.IsFalse(entries.Any(e => e.ItemId == "Solver"), "a use never reveals an item the Codex has not found");
+        }
+
+        [Test]
+        [Requirement("META-CODEX-009")]
+        public void RunAutoSave_LeavesItemUsesToTheRunsEnd()
+        {
+            var save = new SaveFileService(TestSlot);
+            save.Save(new SaveFileEnvelope());
+            new ProfileService(save).RecordItemDiscovery(ItemType.InkWell);
+            var runState = new RunState { Mode = GameMode.GardenRun };
+            runState.ItemTypesUsedThisRun.Add("InkWell");
+
+            var coordinator = new RunAutoSaveCoordinator(save);
+            coordinator.Save(runState, null);
+            coordinator.Save(runState, null);
+            Assert.AreEqual(0, InkWellUses(save), "an autosave does not count uses");
+
+            new ProfileService(save).RecordRunAndGetNewUnlocks(new RunResult
+            {
+                PlayedClassId = ClassId.NumberFreak,
+                Mode = GameMode.GardenRun,
+                Victory = false
+            }, runState);
+            Assert.AreEqual(1, InkWellUses(save), "the run's end counts the one use once");
+        }
+
+        private static int InkWellUses(SaveFileService save) =>
+            save.Load().MetaProgress.ItemCodex.Entries.Single(e => e.ItemId == "InkWell").TimesUsed;
+
+        [Test]
+        [Requirement("META-CODEX-009")]
+        public void RecordItemDiscovery_AnItemFoundBeforeTheCountersCountsAsFoundOnceAlready()
+        {
+            var save = new SaveFileService(TestSlot);
+            var meta = new MetaProgressionState { ItemCodex = new ItemCodexData() };
+            meta.ItemCodex.Entries.Add(new ItemCodexEntry { ItemId = "InkWell", Discovered = true, DiscoveredDate = "2026-10-01" });
+            save.Save(new SaveFileEnvelope { MetaProgress = meta });
+
+            new ProfileService(save).RecordItemDiscovery(ItemType.InkWell);
+
+            Assert.AreEqual(2, save.Load().MetaProgress.ItemCodex.Entries.Single(e => e.ItemId == "InkWell").TimesFound);
+        }
+
+        [Test]
+        [Requirement("META-CODEX-008")]
+        public void SanitizeMetaProgress_KeepsCurseIdsThisBuildDoesNotKnow()
+        {
+            var meta = new MetaProgressionState
+            {
+                DiscoveredCurses = new List<string> { "curse_of_a_newer_build", "inkblot", "inkblot", "" }
+            };
+
+            ModifierDiscoveryService.SanitizeMetaProgress(meta);
+
+            CollectionAssert.AreEqual(new[] { "curse_of_a_newer_build", "inkblot" }, meta.DiscoveredCurses);
+        }
+
         private static void DeleteIfExists(string path)
         {
             if (File.Exists(path))
@@ -764,15 +931,11 @@ namespace SudokuRoguelike.Tests
                 "Auto Pencil Cleanup",
                 "Double-Tap to Confirm",
                 "Controller Rumble",
-                "Controls & Accessibility",
                 "Keybindings...",
-                "Accessibility...",
                 "Sudoku Tutorial",
                 "Reset",
                 "Apply",
                 "Cancel",
-                "Reset to Defaults",
-                "Text Size",
                 "Accessibility",
                 "Colorblind Mode",
                 "High Contrast",

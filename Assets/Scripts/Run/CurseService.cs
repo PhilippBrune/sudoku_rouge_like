@@ -85,6 +85,9 @@ namespace SudokuRoguelike.Run
 
         // ── Query ──────────────────────────────────────────────────────────────
 
+        /// <summary>Every curse of the pool, in the order of the catalog (the Codex lists them).</summary>
+        public static IReadOnlyList<CurseDefinition> All => AllCurses;
+
         public static bool HasActiveCurse(RunState state) =>
             state.ActiveCurseIds != null && state.ActiveCurseIds.Count > 0;
 
@@ -163,6 +166,8 @@ namespace SudokuRoguelike.Run
             if (state.ActiveCurseIds == null) state.ActiveCurseIds = new System.Collections.Generic.List<string>();
             if (state.ActiveCurseIds.Contains(curseId)) return false;
             state.ActiveCurseIds.Add(curseId);
+            state.CursesSeenThisRun ??= new System.Collections.Generic.List<string>();
+            if (!state.CursesSeenThisRun.Contains(curseId)) state.CursesSeenThisRun.Add(curseId);   // META-CODEX-008
 
             // Apply immediate stat effects
             if (!CurseById.TryGetValue(curseId, out var def)) return true;

@@ -216,6 +216,10 @@ namespace SudokuRoguelike.Core
 
         // Curse system — [REQ: CURSE-DATA-001] [REQ: CURSE-STACK-003] [REQ: CURSE-INT-012]
         public List<string> ActiveCurseIds = new List<string>();
+        // [REQ: META-CODEX-008] Every curse taken this run (also cleansed ones); merged into the Codex at the run's end.
+        public List<string> CursesSeenThisRun = new List<string>();
+        // [REQ: META-CODEX-009] One entry (the ItemType name) per item use; counted into the Codex once, at the run's end.
+        public List<string> ItemTypesUsedThisRun = new List<string>();
         public bool TremblingHandFired;    // reset each puzzle — tracks first-placement curse
 
         public BossModifierId? ChosenBossModifier

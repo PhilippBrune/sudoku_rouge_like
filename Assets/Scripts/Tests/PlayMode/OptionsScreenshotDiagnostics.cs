@@ -106,8 +106,9 @@ namespace SudokuRoguelike.Tests
             for (var i = 0; i < tabs.Count; i++)
             {
                 tabs.Tabs[i].onClick.Invoke();
-                EventSystem.current.SetSelectedGameObject(null);
-                yield return null;
+                // The bookmark keeps the focus, as after a click or LB/RB (with none, the menu focuses its first button).
+                EventSystem.current.SetSelectedGameObject(tabs.Tabs[i].gameObject);
+                yield return new WaitForSecondsRealtime(0.3f);   // the bookmarks' colour fade (0.1 s) ends first
                 foreach (var size in Sizes)
                     yield return Shoot(host, camera,
                         Path.Combine(_outDir, $"{prefix}_{i}_{tabs.Tabs[i].name}_{size.x}x{size.y}.png"), size);

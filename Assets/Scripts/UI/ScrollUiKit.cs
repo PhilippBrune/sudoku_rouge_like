@@ -40,6 +40,19 @@ namespace SudokuRoguelike.UI
 
         /// <summary>Destroy is deferred to the end of the frame; hide and rename first so a rebuild in the same frame
         /// never finds the old object by name.</summary>
+        /// <summary>Destroys at once the children of <paramref name="parent"/> whose name starts with <paramref name="prefix"/>
+        /// (all children with null), so a rebuild in the same frame never finds them.</summary>
+        internal static void DestroyChildrenNow(Transform parent, string prefix = null)
+        {
+            if (parent == null) return;
+            for (var i = parent.childCount - 1; i >= 0; i--)
+            {
+                var child = parent.GetChild(i);
+                if (prefix == null || child.name.StartsWith(prefix, System.StringComparison.Ordinal))
+                    DestroyNow(child.gameObject);
+            }
+        }
+
         internal static void DestroyNow(GameObject go)
         {
             if (go == null) return;

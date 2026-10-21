@@ -86,6 +86,19 @@ namespace SudokuRoguelike.UI
             if (_map?.Run?.CurrentBoard != null) RebuildBoard();
         }
 
+        private int _optionsFocusPage = -1;
+
+        // The page shown in the in-run Options changed (LB/RB, a bookmark): the gamepad focus list must follow it, or the
+        // D-pad lands on the hidden controls of the previous page (UI-STYLE-017 review).
+        private bool OptionsPageChanged()
+        {
+            var tabs = _inGameOptionsPanel != null ? _inGameOptionsPanel.GetComponentInChildren<OptionsTabSet>() : null;
+            var page = tabs != null ? tabs.ActiveIndex : -1;
+            if (page == _optionsFocusPage) return false;
+            _optionsFocusPage = page;
+            return true;
+        }
+
         /// <summary>Kept for the in-run Options' Highlight Errors toggle.</summary>
         public void SetHighlightConflictsLive(bool enabled) => OnGameplayOptionsChanged();
     }

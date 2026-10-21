@@ -1846,6 +1846,8 @@ namespace SudokuRoguelike.Run
             if (CurrentLevelState != null)
                 CurrentLevelState.ItemsUsedThisLevel++;
             State.ItemsUsedThisRun++;
+            State.ItemTypesUsedThisRun ??= new List<string>();
+            State.ItemTypesUsedThisRun.Add(item.Type.ToString());   // META-CODEX-009
             _analytics?.RecordItemUsed();
             if (DailyGoals != null && !State.IsSeasonalChallenge)
             {

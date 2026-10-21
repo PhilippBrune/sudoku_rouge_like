@@ -126,6 +126,8 @@ namespace SudokuRoguelike.Tests
             yield return null;
             AssertPanelActive(host, "OptionsPanel");
 
+            ClickButton(host, "TabControls");   // UI-STYLE-017: keybindings live on the Controls page
+            yield return null;
             ClickButton(host, "BtnKeybindings");
             yield return null;
             AssertPanelActive(host, "KeybindingsPanel");
@@ -134,13 +136,11 @@ namespace SudokuRoguelike.Tests
             yield return null;
             AssertPanelActive(host, "OptionsPanel");
 
-            ClickButton(host, "BtnAccessibility");
+            // UI-STYLE-017: Accessibility is a page of the Options scroll (the separate panel is gone).
+            ClickButton(host, "TabAccessibility");
             yield return null;
-            AssertPanelActive(host, "AccessibilityPanel");
-
-            ClickButton(host, "BtnAccBack");
-            yield return null;
-            AssertPanelActive(host, "OptionsPanel");
+            AssertPanelActive(host, "AccessibilitySection");
+            AssertPanelActive(host, "AccessPreview");
 
             ClickButton(host, "BtnOptBack");
             yield return null;
@@ -246,7 +246,6 @@ namespace SudokuRoguelike.Tests
             AssertPanelActive(host, "DisplaySection");
             AssertPanelInactive(host, "GameSection");
             AssertDropdownActive(host, "ResolutionDropdown");
-            AssertDropdownActive(host, "LanguageDropdown");
             AssertDisplayModeOptions(host);
 
             // The open list shows every mode: before 1.1 the list was sized for 28 px items while the layout used
@@ -258,6 +257,9 @@ namespace SudokuRoguelike.Tests
             displayModeDropdown.Hide();
             yield return new WaitForSecondsRealtime(0.3f);
 
+            ClickButton(host, "TabLanguage");   // UI-STYLE-017: Language is its own page
+            yield return null;
+            AssertDropdownActive(host, "LanguageDropdown");
             var languageDropdown = FindComponent<Dropdown>(host, "LanguageDropdown");
             var originalLanguage = languageDropdown.value;
             languageDropdown.value = originalLanguage == 0 ? 1 : 0;
@@ -355,6 +357,8 @@ namespace SudokuRoguelike.Tests
             AssertOpenListShowsAllItems(displayModeDropdown);
             displayModeDropdown.Hide();
             yield return new WaitForSecondsRealtime(0.3f);
+            ClickButton(host, "IGTabLanguage");   // UI-STYLE-017: Language is its own page
+            yield return null;
             AssertPanelActive(host, "IGLangHint");
 
             // Gameplay
@@ -408,9 +412,9 @@ namespace SudokuRoguelike.Tests
             var runHost = BuildInRunHarness();
             yield return null;
 
-            var mainOnly = new HashSet<string> { "LanguageDropdown", "BtnLangApply", "BtnLangCancel", "FontScaleSlider", "BtnResetAcc", "BtnAccBack" };
+            var mainOnly = new HashSet<string> { "LanguageDropdown", "BtnLangApply", "BtnLangCancel", "FontScaleDec", "FontScaleInc" };
             var checkedCount = 0;
-            foreach (var container in new[] { "AudioSection", "DisplaySection", "GameSection", "AccessibilityPanel" })
+            foreach (var container in new[] { "AudioSection", "DisplaySection", "GameSection", "AccessibilitySection" })
             {
                 foreach (var control in OwnSelectables(FindObject(menuHost, container)))
                 {
@@ -423,7 +427,7 @@ namespace SudokuRoguelike.Tests
             }
             Assert.Greater(checkedCount, 25, "the comparison found the main Options controls");
 
-            foreach (var tab in new[] { "IGTabAudio", "IGTabDisplay", "IGTabGame", "IGTabAccessibility", "IGTabRun" })
+            foreach (var tab in new[] { "IGTabAudio", "IGTabDisplay", "IGTabGame", "IGTabAccessibility", "IGTabLanguage", "IGTabRun" })
                 FindComponent<Button>(runHost, tab);
             Assert.NotNull(FindObject(menuHost, "OptionsPanel").GetComponentInChildren<OptionsTabSet>(true));
             Assert.NotNull(FindObject(runHost, "InGameOptionsPanel").GetComponentInChildren<OptionsTabSet>(true));
@@ -465,10 +469,10 @@ namespace SudokuRoguelike.Tests
             yield return null;
             AssertPanelActive(menuHost, "OptionsPanel");
 
-            ClickButton(menuHost, "BtnAccessibility");
+            ClickButton(menuHost, "TabAccessibility");
             yield return null;
-            AssertPanelActive(menuHost, "AccessibilityPanel");
-            Assert.AreEqual(1.5f, FindComponent<Slider>(menuHost, "FontScaleSlider").value, 0.01f);
+            AssertPanelActive(menuHost, "AccessibilitySection");
+            Assert.AreEqual("150%", FindComponent<Text>(menuHost, "FontScaleVal").text);
             AssertNoMissingGermanKeys("main menu at 150% font scale");
 
             var runHost = BuildInRunHarness();
@@ -637,7 +641,9 @@ namespace SudokuRoguelike.Tests
                 yield return null;
                 var reached = Reachable(tabs.Tabs[i]);
                 var expected = OwnSelectables(tabs.Sections[i].gameObject, false).Where(s => s.IsInteractable()).ToList();
-                Assert.IsNotEmpty(expected, $"{panel.name}/{tabs.Sections[i].name} has no controls");
+                // A page with only a note (the run's Language page says where to change it) still leads to Back.
+                if (!tabs.Sections[i].name.EndsWith("LanguageSection"))
+                    Assert.IsNotEmpty(expected, $"{panel.name}/{tabs.Sections[i].name} has no controls");
                 expected.Add(back);
                 expected.AddRange(tabs.Tabs);
                 foreach (var control in expected)

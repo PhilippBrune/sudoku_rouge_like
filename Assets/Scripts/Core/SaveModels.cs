@@ -121,6 +121,8 @@ namespace SudokuRoguelike.Core
         public bool SpiritTrialsUnlocked;
         public bool HiddenDualModifierBossUnlocked;
         public List<BossModifierId> DiscoveredBossModifiers = new List<BossModifierId>();
+        // [REQ: META-CODEX-008] Curses met in any run (the Codex's Curses page, UI-STYLE-018).
+        public List<string> DiscoveredCurses = new List<string>();
         // [HARMONY-UNLOCK-001] Global Harmony difficulty level progression (0–10).
         // MaxUnlockedHarmonyLevel is never decremented; LastSelectedHarmonyLevel clamped to it on load.
         public int MaxUnlockedHarmonyLevel;
@@ -173,6 +175,9 @@ namespace SudokuRoguelike.Core
         public bool Discovered;
         public bool Mastered;
         public string DiscoveredDate;
+        // [REQ: META-CODEX-009] How often the item was taken and used over all runs (the Codex's right page, UI-STYLE-018).
+        public int TimesFound;
+        public int TimesUsed;
     }
 
     [Serializable]

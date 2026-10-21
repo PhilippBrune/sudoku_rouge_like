@@ -384,64 +384,64 @@ namespace SudokuRoguelike.UI
 
         // [REQ: UI-OPT-001] [REQ: UI-OPT-002] [REQ: UI-OPT-003] GAP-029 / FUTURE-015: the main-menu Options tabs and
         // controls (OptionsUiFactory), plus Accessibility and Run tabs. Object names carry the "IG" prefix.
+        // [REQ: UI-OPT-001] [REQ: UI-OPT-002] [REQ: UI-STYLE-017] The in-run Options: the main Options' scroll and pages
+        // (Audio, Display, Gameplay, Accessibility, Language with the hint), plus the Run page; Back under the scroll.
         private GameObject BuildInGameOptionsPanel(RectTransform root)
         {
             var optCtrl = EnsureComponent<OptionsController>(gameObject);
+            using var paperScope = OptionsUiStyle.UsePaper();
 
             var panel = EnsureRect("InGameOptionsPanel", root, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero).gameObject;
-            EnsureOrGetImage(panel, new Color(0.055f, 0.07f, 0.065f, 1f));
-            InRunUiFactory.ClearNamedChildren(panel.transform, "PanelBackground");
-            InRunUiFactory.ClearNamedChildren(panel.transform, "Content");
+            EnsureOrGetImage(panel, new Color(0.04f, 0.035f, 0.03f, 1f));   // opaque: the puzzle never shows through
+            // Destroyed at once (not deferred), so a lookup in the same frame never finds the old Back button.
+            foreach (var part in new[] { "PanelBackground", "Content", "OptionsBanner", "OptionsScroll", "OptionsKeyHint" })
+                ScrollUiKit.DestroyChildrenNow(panel.transform, part);
 
-            var pr = OptionsUiStyle.MakeCard(panel.transform as RectTransform);
-            var runScreen = root.GetComponent<InRunController>() ?? root.GetComponentInParent<InRunController>();
+            var card = OptionsUiFactory.BuildOptionsScroll((RectTransform)panel.transform, "InGameOptionsTitle");
+            // Explicit null checks: Unity's missing-component "null" is not null to ?? (fake null).
+            var runScreen = root.GetComponent<InRunController>();
+            if (runScreen == null) runScreen = root.GetComponentInParent<InRunController>();
 
-            var title = OptionsUiFactory.BuildText("InGameOptionsTitle", pr, T("Options", "Options"),
-                OptionsUiStyle.TitleSize, TextAnchor.UpperCenter);
-            SetRect(title.rectTransform, new Vector2(0.08f, 0.94f), new Vector2(0.92f, 0.99f), Vector2.zero, Vector2.zero);
-
-            var tabs = OptionsTabSet.On(pr);
+            var tabs = OptionsTabSet.On(card);
             var refreshStandard = OptionsUiFactory.BuildStandardTabs(tabs, optCtrl, new OptionsUiFactory.Setup
             {
                 Prefix = "IG",
                 OnHighlightConflictsChanged = v => { if (runScreen != null) runScreen.SetHighlightConflictsLive(v); }
             });
 
-            var accIndex = tabs.Count;
-            var accSec = tabs.Add("IGTabAccessibility", "IGAccessibilitySection", T("Accessibility", "Accessibility"));
-            var refreshAccessibility = OptionsUiFactory.BuildAccessibilitySection(tabs, accIndex, accSec, optCtrl, "IG");
-
             // ── Run ── [REQ: REQ-RUN-101] seed, View Modifiers, Abandon Run (GAP-020); wired in InRunController.RunMenu.
             var runIndex = tabs.Count;
             var runSec = tabs.Add("IGTabRun", "IGRunSection", T("InRun.Options.RunTab", "Run"));
             OptionsUiFactory.SectionHeader("IGRunHdr", runSec, T("InRun.Options.RunTab", "Run"));
-            var seedTxt = OptionsUiFactory.BuildText("IGRunSeed", runSec, "", 15, TextAnchor.MiddleLeft);
-            SetRect(seedTxt.rectTransform, new Vector2(0.05f, 0.74f), new Vector2(0.95f, 0.84f), Vector2.zero, Vector2.zero);
-            var modsBtn = OptionsUiFactory.BuildButton("BtnInGameOptionsModifiers", runSec, T("View Modifiers", "View Modifiers"), 16);
-            SetRect(modsBtn.GetComponent<RectTransform>(), new Vector2(0.20f, 0.56f), new Vector2(0.80f, 0.68f), Vector2.zero, Vector2.zero);
-            var saveQuitBtn = OptionsUiFactory.BuildButton("BtnInGameOptionsSaveQuit", runSec, T("InRun.Options.SaveQuit", "Save & Quit"), 16);
-            SetRect(saveQuitBtn.GetComponent<RectTransform>(), new Vector2(0.20f, 0.40f), new Vector2(0.80f, 0.52f), Vector2.zero, Vector2.zero);
+            OptionsUiFactory.PageSubtitle("IGRunSub", runSec, T("Options.Sub.Run", "This run's seed, its rules and how to leave it"));
+            var seedTxt = OptionsUiFactory.BuildText("IGRunSeed", runSec, "", 20, TextAnchor.MiddleLeft);
+            SetRect(seedTxt.rectTransform, OptionsUiFactory.LineMin(0), OptionsUiFactory.LineMax(0), Vector2.zero, Vector2.zero);
+            Button RunButton(string name, int line, string label)
+            {
+                var button = OptionsUiFactory.BuildButton(name, runSec, label, 19);
+                SetRect((RectTransform)button.transform, OptionsUiFactory.LineMin(line, 0.0f), OptionsUiFactory.LineMax(line, 0.55f),
+                    Vector2.zero, Vector2.zero);
+                return button;
+            }
+            var modsBtn = RunButton("BtnInGameOptionsModifiers", 1, T("View Modifiers", "View Modifiers"));
+            var saveQuitBtn = RunButton("BtnInGameOptionsSaveQuit", 2, T("InRun.Options.SaveQuit", "Save & Quit"));
             if (runScreen != null)
                 saveQuitBtn.onClick.AddListener(runScreen.SaveAndQuitPublic);
-            var abandonBtn = OptionsUiFactory.BuildButton("BtnInGameOptionsAbandon", runSec, T("Abandon Run", "Abandon Run"), 16);
-            SetRect(abandonBtn.GetComponent<RectTransform>(), new Vector2(0.20f, 0.18f), new Vector2(0.80f, 0.30f), Vector2.zero, Vector2.zero);
+            var abandonBtn = RunButton("BtnInGameOptionsAbandon", 3, T("Abandon Run", "Abandon Run"));
+            for (var line = 0; line < 4; line++) OptionsUiFactory.LineRule(runSec, line);
+            OptionsUiFactory.PageSlip("IGRunSlip", runSec, T("Options.Slip.Tip", "Tip"),
+                T("Options.Tip.Run", "Save & Quit keeps the run; Abandon Run ends it and records it as a defeat."));
             tabs.SetRows(runIndex, new Selectable[] { modsBtn }, new Selectable[] { saveQuitBtn }, new Selectable[] { abandonBtn });
 
             // ── Back, always visible ──
-            var closeBtn = OptionsUiFactory.BuildButton("BtnInGameOptionsClose", pr, T("Back", "Back"), 18);
-            SetRect(closeBtn.GetComponent<RectTransform>(), new Vector2(0.30f, 0.015f), new Vector2(0.70f, 0.085f), Vector2.zero, Vector2.zero);
-            ApplyButtonIcon(closeBtn, "back_leaf", "ui"); // F16: back/close uses dedicated back_leaf icon
+            var closeBtn = OptionsUiFactory.BuildBackPill("BtnInGameOptionsClose", card, T("Back", "Back"));
             tabs.SetFooter(new Selectable[] { closeBtn });
             tabs.Activate(0);
 
             // Resets and profile switches raise OnOptionsChanged; replace the handler of an earlier build.
             if (_optionsRefreshSource != null && _optionsRefresh != null)
                 _optionsRefreshSource.OnOptionsChanged -= _optionsRefresh;
-            _optionsRefresh = () =>
-            {
-                refreshStandard();
-                refreshAccessibility();
-            };
+            _optionsRefresh = refreshStandard;
             _optionsRefreshSource = optCtrl;
             optCtrl.OnOptionsChanged += _optionsRefresh;
 

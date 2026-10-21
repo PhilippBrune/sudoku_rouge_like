@@ -33,12 +33,10 @@ namespace SudokuRoguelike.UI
         private OptionsController _slotChangedOptionsController;
         private Action _keybindingSlotChangedHandler;
         private Action _optionsSlotChangedHandler;
-        private Action _accessibilitySlotChangedHandler;
 
         public int SlotChangedHandlerRegistrationCount =>
             (_keybindingSlotChangedHandler != null ? 1 : 0) +
-            (_optionsSlotChangedHandler != null ? 1 : 0) +
-            (_accessibilitySlotChangedHandler != null ? 1 : 0);
+            (_optionsSlotChangedHandler != null ? 1 : 0);
 
         private static string T(string key) => LocalizationService.T(key);
 
@@ -242,7 +240,6 @@ namespace SudokuRoguelike.UI
             var itemsPanel     = BuildItemsPanel(root, mc, itemsCtrl);
             var profilePanel   = BuildProfileSelectPanel(root, mc);
             var keybindPanel   = BuildKeybindingsPanel(root, mc, keybindCtrl);
-            var accessPanel    = BuildAccessibilityPanel(root, mc, optCtrl);
             var dailyPanel     = BuildDailyWalkPanel(root, mc);
             var monthlyPanel   = BuildMonthlyWalkPanel(root, mc);
 
@@ -257,7 +254,7 @@ namespace SudokuRoguelike.UI
                 card.gameObject, classPanel, optPanel, credPanel,
                 tutPanel, metaPanel, modesPanel, itemsPanel, profilePanel, keybindPanel,
                 optCtrl, tutCtrl, metaCtrl, modesCtrl, itemsCtrl, keybindCtrl,
-                status, btnResume, dailyPanel, monthlyPanel, accessPanel,
+                status, btnResume, dailyPanel, monthlyPanel, null,   // no Accessibility panel: it is a page of the Options (UI-STYLE-017)
                 trialsSelectPanel, zenLeaderboardPanel,
                 trialsSelectCtrl, zenLeaderboardCtrl);
 
@@ -327,14 +324,11 @@ namespace SudokuRoguelike.UI
                     _slotChangedOptionsController.OnSlotChanged -= _keybindingSlotChangedHandler;
                 if (_optionsSlotChangedHandler != null)
                     _slotChangedOptionsController.OnOptionsChanged -= _optionsSlotChangedHandler;
-                if (_accessibilitySlotChangedHandler != null)
-                    _slotChangedOptionsController.OnOptionsChanged -= _accessibilitySlotChangedHandler;
             }
 
             _slotChangedOptionsController = null;
             _keybindingSlotChangedHandler = null;
             _optionsSlotChangedHandler = null;
-            _accessibilitySlotChangedHandler = null;
         }
 
         private static void ClearGeneratedRoot(RectTransform root)
@@ -599,76 +593,70 @@ namespace SudokuRoguelike.UI
         // Panel: Options
         // ------------------------------------------------------------------------
 
+        // [REQ: UI-STYLE-017] Options as a hand scroll with bookmarks (owner pick 2026-10-20): Audio, Display, Gameplay,
+        // Accessibility (with Text Size and the preview board; the separate Accessibility panel is gone), Controls
+        // (keybindings, the Sudoku Basics lesson) and Language; "Reset this page" and Back under the scroll.
         private GameObject BuildOptionsPanel(RectTransform root, MainMenuController mc,
             OptionsController optCtrl)
         {
-            var panel = MakePanel("OptionsPanel", root,
-                new Vector2(0.18f, 0.04f), new Vector2(0.82f, 0.96f));
-            var pr = GetPanelContent(panel);
+            using var paperScope = OptionsUiStyle.UsePaper();
+            var panel = EnsureRect("OptionsPanel", root, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero).gameObject;
+            var backdrop = EnsureOrGetImage(panel, BgColor);
+            if (ApplyPanelBackground(backdrop, "background/bg_settings_menu"))
+                backdrop.color = new Color(0.50f, 0.50f, 0.50f, 1f);   // the candle room, dimmed behind the scroll
+            var pr = (RectTransform)panel.transform;
+            foreach (var part in new[] { "Content", "OptionsBanner", "OptionsScroll", "OptionsKeyHint" })
+                ScrollUiKit.DestroyChildrenNow(pr, part);
 
-            // -- Title ----------------------------------------------------------
-            var title = BuildText("Title", pr, T("Options"), OptionsUiStyle.TitleSize, TextAnchor.UpperCenter);
-            SetRect(title.rectTransform,
-                new Vector2(0.08f, 0.94f), new Vector2(0.92f, 0.99f), Vector2.zero, Vector2.zero);
+            var card = OptionsUiFactory.BuildOptionsScroll(pr, "Title");
+            var tabs = OptionsTabSet.On(card);
+            var setup = new OptionsUiFactory.Setup
+            {
+                OnLanguageApplied = mc.RefreshLanguage,
+                AccessibilityPreview = true,
+                AddPagesBeforeLanguage = t => BuildControlsPage(t, mc)
+            };
+            var refreshControls = OptionsUiFactory.BuildStandardTabs(tabs, optCtrl, setup);
 
-            // -- Tabs, sections and controls: shared with the in-run Options (OptionsUiFactory, UI-OPT-001) --
-            var tabs = OptionsTabSet.On(pr);
-            var refreshControls = OptionsUiFactory.BuildStandardTabs(tabs, optCtrl,
-                new OptionsUiFactory.Setup { OnLanguageApplied = mc.RefreshLanguage });
+            var back = OptionsUiFactory.BuildBackPill("BtnOptBack", card, T("Back"));
+            back.onClick.RemoveAllListeners();
+            back.onClick.AddListener(mc.BackToMainMenu);
+            tabs.SetFooter(new Selectable[] { back });
 
-            // -- Bottom row: Back, Tutorial, Controls & Accessibility ------------
-            var ctrlHdr = BuildText("CtrlHdr", pr, T("Controls & Accessibility"), 14, TextAnchor.MiddleLeft);
-            SetRect(ctrlHdr.rectTransform,
-                new Vector2(0.05f, 0.05f), new Vector2(0.40f, 0.09f), Vector2.zero, Vector2.zero);
-            ctrlHdr.color = GamePalette.TextMuted;
+            // -- Slot-change refresh (the Accessibility page's preview and text size are part of it) -------------
+            ReplaceOptionsChangedHandler(optCtrl, ref _optionsSlotChangedHandler, refreshControls);
 
-            var btnKeybinds = BuildButton("BtnKeybindings", pr, T("Keybindings..."), 13);
-            SetRect(btnKeybinds.GetComponent<RectTransform>(),
-                new Vector2(0.43f, 0.05f), new Vector2(0.65f, 0.09f), Vector2.zero, Vector2.zero);
+            tabs.Activate(0);
+            panel.SetActive(false);
+            return panel;
+        }
+
+        // The Controls page: keys and buttons, and the Sudoku Basics lesson.
+        private void BuildControlsPage(OptionsTabSet tabs, MainMenuController mc)
+        {
+            var index = tabs.Count;
+            var section = tabs.Add("TabControls", "ControlsSection", T("Options.Tab.Controls"));
+            OptionsUiFactory.SectionHeader("ControlsHdr", section, T("Options.Tab.Controls"));
+            OptionsUiFactory.PageSubtitle("ControlsSub", section, T("Options.Sub.Controls"));
+
+            OptionsUiFactory.LineLabel("KeybindingsLabel", section, 0, T("Options.KeysAndButtons"));
+            var btnKeybinds = OptionsUiFactory.BuildButton("BtnKeybindings", section, T("Keybindings..."), 19);
+            OptionsUiFactory.SetRect((RectTransform)btnKeybinds.transform, OptionsUiFactory.LineMin(0, 0.38f),
+                OptionsUiFactory.LineMax(0, 0.82f));
             btnKeybinds.onClick.RemoveAllListeners();
             btnKeybinds.onClick.AddListener(mc.OpenKeybindings);
 
-            var btnAccess = BuildButton("BtnAccessibility", pr, T("Accessibility..."), 13);
-            SetRect(btnAccess.GetComponent<RectTransform>(),
-                new Vector2(0.67f, 0.05f), new Vector2(0.96f, 0.09f), Vector2.zero, Vector2.zero);
-            btnAccess.onClick.RemoveAllListeners();
-            btnAccess.onClick.AddListener(mc.OpenAccessibility);
-
-            var back = BuildButton("BtnOptBack", pr, T("Back"), 16);
-            SetRect(back.GetComponent<RectTransform>(),
-                new Vector2(0.05f, 0.01f), new Vector2(0.35f, 0.05f), Vector2.zero, Vector2.zero);
-            back.onClick.RemoveAllListeners();
-            back.onClick.AddListener(mc.BackToMainMenu);
-            ApplyMenuButtonIcon(back, "ui/icon_back_leaf"); // F16: back/close uses dedicated back_leaf icon;
-
-            var btnBasicsTut = BuildButton("BtnReplayBasicsTutorial", pr, T("Sudoku Tutorial"), 13);
-            SetRect(btnBasicsTut.GetComponent<RectTransform>(),
-                new Vector2(0.37f, 0.01f), new Vector2(0.65f, 0.05f), Vector2.zero, Vector2.zero);
+            OptionsUiFactory.LineLabel("BasicsLabel", section, 1, T("Options.SudokuBasics"));
+            var btnBasicsTut = OptionsUiFactory.BuildButton("BtnReplayBasicsTutorial", section, T("Sudoku Tutorial"), 19);
+            OptionsUiFactory.SetRect((RectTransform)btnBasicsTut.transform, OptionsUiFactory.LineMin(1, 0.38f),
+                OptionsUiFactory.LineMax(1, 0.82f));
             btnBasicsTut.onClick.RemoveAllListeners();
             btnBasicsTut.onClick.AddListener(mc.LaunchSudokuBasicsTutorial);
+            OptionsUiFactory.LineRule(section, 0);
+            OptionsUiFactory.LineRule(section, 1);
+            OptionsUiFactory.PageSlip("ControlsSlip", section, T("Options.Slip.Tip"), T("Options.Tip.Controls"));
 
-            // D-pad: the last row of every tab leads down to these buttons (UI-OPT-003).
-            tabs.SetFooter(new Selectable[] { btnKeybinds, btnAccess }, new Selectable[] { back, btnBasicsTut });
-
-            // -- Slot-change refresh ----------------------------------------------
-            ReplaceOptionsChangedHandler(optCtrl, ref _optionsSlotChangedHandler, refreshControls);
-
-            // Start on Audio tab
-            tabs.Activate(0);
-
-            if (ApplyPanelBackground(panel.GetComponent<Image>(), "background/bg_settings_menu")) // F19: renamed from bg_options
-            {
-                var contentImg = pr.GetComponent<Image>();
-                if (contentImg != null) contentImg.color = ContentScrimColor;
-                var contentOutline = pr.GetComponent<Outline>();
-                if (contentOutline != null) contentOutline.effectColor = Color.clear;
-
-                foreach (var btn in pr.GetComponentsInChildren<Button>(true))
-                    StyleButtonForBackground(btn);
-            }
-
-            panel.SetActive(false);
-            return panel;
+            tabs.SetRows(index, new Selectable[] { btnKeybinds }, new Selectable[] { btnBasicsTut });
         }
 
         // ------------------------------------------------------------------------
@@ -1094,42 +1082,119 @@ namespace SudokuRoguelike.UI
         // Panel: Items Codex
         // ------------------------------------------------------------------------
 
+        // [REQ: UI-STYLE-018] The Codex as a collector's book (owner pick 2026-10-20): the banner, a wooden book with two
+        // paper pages, bookmarks Items / Relics / Rules / Curses with their counts, the left page's filter and tile grid,
+        // the right page with the chosen entry (ItemsMenuController), Back under the book.
         private GameObject BuildItemsPanel(RectTransform root, MainMenuController mc,
             ItemsMenuController itemsCtrl)
         {
-            var panel = MakePanel("ItemsPanel", root,
-                new Vector2(0.18f, 0.10f), new Vector2(0.82f, 0.90f));
-            var pr = GetPanelContent(panel);
+            using var paperScope = OptionsUiStyle.UsePaper();
+            var panel = EnsureRect("ItemsPanel", root, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero).gameObject;
+            var backdrop = EnsureOrGetImage(panel, BgColor);
+            if (ApplyPanelBackground(backdrop, "background/bg_items_menu"))
+                backdrop.color = new Color(0.42f, 0.42f, 0.42f, 1f);   // the market, dimmed behind the book
+            var pr = (RectTransform)panel.transform;
+            foreach (var part in new[] { "Content", "CodexBanner", "CodexBook", "CodexKeyHint", "BtnCodex", "BtnItemsBack" })
+                ScrollUiKit.DestroyChildrenNow(pr, part);
 
-            var title = BuildText("Title", pr, T("Items & Relic Codex"), 30, TextAnchor.UpperCenter);
-            SetRect(title.rectTransform,
-                new Vector2(0.08f, 0.90f), new Vector2(0.92f, 0.98f), Vector2.zero, Vector2.zero);
+            ScrollUiKit.Banner(pr, "CodexBanner", new Vector2(0.344f, 0.891f), new Vector2(0.656f, 0.983f),
+                "CodexEyebrow", T("Codex.Eyebrow"), "Title", T("Codex.Title"), 46);
+            var book = ScrollUiKit.Fill(pr, "CodexBook", new Vector2(0.068f, 0.155f), new Vector2(0.932f, 0.835f),
+                new Color(0.33f, 0.21f, 0.11f, 1f), ScrollUiKit.Rounded(14f));
+            var bookShadow = book.gameObject.AddComponent<Shadow>();
+            bookShadow.effectColor = new Color(0f, 0f, 0f, 0.6f);
+            bookShadow.effectDistance = new Vector2(0f, -12f);
+            var paperColor = new Color(0.94f, 0.90f, 0.81f, 1f);
+            var left = ScrollUiKit.Fill(book.transform, "LeftPage", new Vector2(0.012f, 0.022f), new Vector2(0.495f, 0.978f), paperColor);
+            var right = ScrollUiKit.Fill(book.transform, "RightPage", new Vector2(0.505f, 0.022f), new Vector2(0.988f, 0.978f), paperColor);
+            ScrollUiKit.Fill(book.transform, "Spine", new Vector2(0.495f, 0.022f), new Vector2(0.505f, 0.978f),
+                new Color(0.22f, 0.14f, 0.07f, 1f));
 
-            var tabItems = BuildButton("BtnCodexItems", pr, T("Items"), 15); SetRect(tabItems.GetComponent<RectTransform>(), new Vector2(0.06f, 0.82f), new Vector2(0.33f, 0.88f), Vector2.zero, Vector2.zero);
-            var tabRelics = BuildButton("BtnCodexRelics", pr, T("Relics"), 15); SetRect(tabRelics.GetComponent<RectTransform>(), new Vector2(0.365f, 0.82f), new Vector2(0.635f, 0.88f), Vector2.zero, Vector2.zero);
-            var tabModifiers = BuildButton("BtnCodexModifiers", pr, T("Boss Modifiers"), 15); SetRect(tabModifiers.GetComponent<RectTransform>(), new Vector2(0.67f, 0.82f), new Vector2(0.94f, 0.88f), Vector2.zero, Vector2.zero);
-            var scrollContent = BuildScrollArea("ItemsScroll", pr, new Vector2(0.06f, 0.14f), new Vector2(0.94f, 0.80f));
+            // Bookmarks above the book; their labels (with the counts) are written by the controller.
+            Button Bookmark(string name, int index)
+            {
+                var tab = OptionsUiFactory.BuildButton(name, pr, "", 21);
+                var x = 0.078f + index * 0.118f;
+                SetRect((RectTransform)tab.transform, new Vector2(x, 0.835f), new Vector2(x + 0.110f, 0.888f), Vector2.zero, Vector2.zero);
+                var img = tab.GetComponent<Image>();
+                img.sprite = ScrollUiKit.Rounded(10f);
+                img.type = Image.Type.Sliced;
+                var label = tab.GetComponentInChildren<Text>();
+                if (label != null)
+                {
+                    // "Gegenstände 18/31", "Malédictions 6/17": long names shrink to the bookmark.
+                    label.resizeTextForBestFit = true;
+                    label.resizeTextMinSize = 13;
+                    label.resizeTextMaxSize = 21;
+                    label.horizontalOverflow = HorizontalWrapMode.Wrap;
+                    label.verticalOverflow = VerticalWrapMode.Truncate;
+                }
+                return tab;
+            }
+            var tabItems = Bookmark("BtnCodexItems", 0);
+            var tabRelics = Bookmark("BtnCodexRelics", 1);
+            var tabModifiers = Bookmark("BtnCodexModifiers", 2);
+            var tabCurses = Bookmark("BtnCodexCurses", 3);
 
-            var back = BuildButton("BtnItemsBack", pr, T("Back"), 18);
-            SetRect(back.GetComponent<RectTransform>(),
-                new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
+            // Filter on the left page: All · Found · Not yet found (Y switches).
+            Button FilterButton(string name, string label, float x0, float x1)
+            {
+                var button = OptionsUiFactory.BuildButton(name, left.rectTransform, label, 19);
+                SetRect((RectTransform)button.transform, new Vector2(x0, 0.905f), new Vector2(x1, 0.975f), Vector2.zero, Vector2.zero);
+                var colors = button.colors;
+                colors.normalColor = new Color(1f, 1f, 1f, 0f);
+                colors.highlightedColor = new Color(0.97f, 0.83f, 0.52f, 0.35f);
+                button.colors = colors;
+                button.GetComponent<Image>().color = Color.white;
+                var outline = button.GetComponent<Outline>();
+                if (outline != null) outline.effectColor = Color.clear;
+                return button;
+            }
+            var filterAll = FilterButton("BtnCodexFilterAll", T("Codex.Filter.All"), 0.03f, 0.18f);
+            var filterFound = FilterButton("BtnCodexFilterFound", T("Codex.Filter.Found"), 0.19f, 0.38f);
+            var filterUnknown = FilterButton("BtnCodexFilterUnknown", T("Codex.Filter.Unknown"), 0.39f, 0.70f);
+
+            // The tile grid scrolls inside the left page.
+            var view = EnsureRect("CodexGridView", left.rectTransform, new Vector2(0.03f, 0.03f), new Vector2(0.97f, 0.89f),
+                Vector2.zero, Vector2.zero);
+            view.gameObject.AddComponent<RectMask2D>();
+            var grid = EnsureRect("CodexGrid", view, new Vector2(0f, 1f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero);
+            grid.pivot = new Vector2(0.5f, 1f);
+            var layout = EnsureComponent<GridLayoutGroup>(grid.gameObject);
+            layout.cellSize = new Vector2(138f, 138f);
+            layout.spacing = new Vector2(12f, 12f);
+            layout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            layout.constraintCount = 5;
+            layout.childAlignment = TextAnchor.UpperCenter;
+            layout.padding = new RectOffset(4, 4, 4, 4);
+            EnsureComponent<ContentSizeFitter>(grid.gameObject).verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            var scroll = EnsureComponent<ScrollRect>(view.gameObject);
+            scroll.viewport = view;
+            scroll.content = grid;
+            scroll.horizontal = false;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+            scroll.scrollSensitivity = 40f;
+
+            var detail = EnsureRect("CodexDetail", right.rectTransform, new Vector2(0.04f, 0.03f), new Vector2(0.96f, 0.97f),
+                Vector2.zero, Vector2.zero);
+
+            itemsCtrl.Configure(grid);
+            itemsCtrl.ConfigureDetail(detail);
+            itemsCtrl.SetTabButtons(tabItems, tabRelics, tabModifiers, tabCurses);
+            itemsCtrl.SetFilterButtons(filterAll, filterFound, filterUnknown);
+            tabItems.onClick.AddListener(() => itemsCtrl.ShowTab(CodexTabId.Items));
+            tabRelics.onClick.AddListener(() => itemsCtrl.ShowTab(CodexTabId.Relics));
+            tabModifiers.onClick.AddListener(() => itemsCtrl.ShowTab(CodexTabId.Modes));
+            tabCurses.onClick.AddListener(() => itemsCtrl.ShowTab(CodexTabId.Curses));
+
+            var back = OptionsUiFactory.BuildBackPill("BtnItemsBack", pr, T("Back"));
+            SetRect((RectTransform)back.transform, new Vector2(0.44f, 0.075f), new Vector2(0.56f, 0.135f), Vector2.zero, Vector2.zero);
             back.onClick.RemoveAllListeners();
             back.onClick.AddListener(mc.BackToMainMenu);
-            ApplyMenuButtonIcon(back, "ui/icon_back_leaf"); // F16: back/close uses dedicated back_leaf icon;
-
-            itemsCtrl.Configure(scrollContent); itemsCtrl.SetTabButtons(tabItems, tabRelics, tabModifiers);
-            tabItems.onClick.AddListener(() => itemsCtrl.ShowTab(CodexTabId.Items)); tabRelics.onClick.AddListener(() => itemsCtrl.ShowTab(CodexTabId.Relics)); tabModifiers.onClick.AddListener(() => itemsCtrl.ShowTab(CodexTabId.Modes));
-
-            if (ApplyPanelBackground(panel.GetComponent<Image>(), "background/bg_items_menu"))
-            {
-                var contentImg = pr.GetComponent<Image>();
-                if (contentImg != null) contentImg.color = ContentScrimColor;
-                var contentOutline = pr.GetComponent<Outline>();
-                if (contentOutline != null) contentOutline.effectColor = Color.clear;
-
-                foreach (var btn in pr.GetComponentsInChildren<Button>(true))
-                    StyleButtonForBackground(btn);
-            }
+            itemsCtrl.SetBackButton(back);
+            var hint = OptionsUiFactory.BuildText("CodexKeyHint", pr, T("Codex.KeyHint"), 17, TextAnchor.MiddleCenter);
+            SetRect(hint.rectTransform, new Vector2(0.2f, 0.03f), new Vector2(0.8f, 0.065f), Vector2.zero, Vector2.zero);
+            hint.color = new Color(0.86f, 0.82f, 0.72f, 1f);
 
             panel.SetActive(false);
             return panel;
@@ -1319,178 +1384,6 @@ namespace SudokuRoguelike.UI
 
             // Back
             var back = BuildButton("BtnKeybindBack", pr, T("Back"), 18);
-            SetRect(back.GetComponent<RectTransform>(),
-                new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
-            back.onClick.RemoveAllListeners();
-            back.onClick.AddListener(mc.BackFromPanel);
-            ApplyMenuButtonIcon(back, "ui/icon_back_leaf"); // F16: back/close uses dedicated back_leaf icon
-
-            ApplySettingsInRunBackground(panel, pr); // F-QA: shared settings background helper
-
-            panel.SetActive(false);
-            return panel;
-        }
-
-        // ------------------------------------------------------------------------
-        // Panel: Accessibility (descriptions + live preview board)
-        // ------------------------------------------------------------------------
-
-        private GameObject BuildAccessibilityPanel(RectTransform root, MainMenuController mc,
-            OptionsController optCtrl)
-        {
-            var panel = MakePanel("AccessibilityPanel", root,
-                new Vector2(0.18f, 0.04f), new Vector2(0.82f, 0.96f));
-            var pr = GetPanelContent(panel);
-            var opts = optCtrl.GetOptions();
-
-            // -- Title --
-            var title = BuildText("Title", pr, T("Accessibility"), 26, TextAnchor.UpperCenter);
-            SetRect(title.rectTransform,
-                new Vector2(0.04f, 0.92f), new Vector2(0.96f, 0.99f), Vector2.zero, Vector2.zero);
-
-            // -- Left column: toggles with description labels ------------------
-
-            // Helper: description label beneath toggle
-            Text MakeDesc(RectTransform parent, string name, string text,
-                Vector2 min, Vector2 max)
-            {
-                var go = new GameObject(name, typeof(RectTransform), typeof(Text));
-                go.transform.SetParent(parent, false);
-                var rt = go.GetComponent<RectTransform>();
-                rt.anchorMin = min; rt.anchorMax = max;
-                rt.offsetMin = Vector2.zero; rt.offsetMax = Vector2.zero;
-                var t = go.GetComponent<Text>();
-                t.font      = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-                t.fontSize  = 11;
-                t.alignment = TextAnchor.UpperLeft;
-                t.color     = new Color(0.80f, 0.78f, 0.68f, 0.85f);
-                t.text      = text;
-                return t;
-            }
-
-            // Pair 1 ? Colorblind Mode
-            var tColorblind = BuildOptionToggle(pr, "Colorblind", T("Colorblind Mode"),
-                new Vector2(0.04f, 0.82f), new Vector2(0.48f, 0.87f),
-                opts.Accessibility.ColorblindMode, optCtrl.SetColorblindMode);
-            MakeDesc(pr, "DescColorblind",
-                "Recolours conflict cells to cyan\nfor red-green colour blindness.",
-                new Vector2(0.06f, 0.76f), new Vector2(0.47f, 0.82f));
-
-            // Pair 2 ? High Contrast
-            var tHighContrast = BuildOptionToggle(pr, "HighContrast", T("High Contrast"),
-                new Vector2(0.04f, 0.68f), new Vector2(0.48f, 0.73f),
-                opts.Accessibility.HighContrastMode, optCtrl.SetHighContrast);
-            MakeDesc(pr, "DescHighContrast",
-                "Brightens given cells and conflict\ncolours for dim or low-contrast displays.",
-                new Vector2(0.06f, 0.62f), new Vector2(0.47f, 0.68f));
-
-            // Pair 3 ? Reduce Motion
-            var tReduceMotion = BuildOptionToggle(pr, "ReduceMotion", T("Reduce Motion"),
-                new Vector2(0.04f, 0.54f), new Vector2(0.48f, 0.59f),
-                opts.Accessibility.ReduceMotion, optCtrl.SetReduceMotion);
-            MakeDesc(pr, "DescReduceMotion",
-                "Disables all UI animations\nand overlay transitions.",
-                new Vector2(0.06f, 0.48f), new Vector2(0.47f, 0.54f));
-
-            // Pair 4 ? Alt Constraint Symbols
-            var tAltSymbols = BuildOptionToggle(pr, "AltSymbols", T("Alt Constraint Symbols"),
-                new Vector2(0.04f, 0.40f), new Vector2(0.48f, 0.45f),
-                opts.Accessibility.AlternativeConstraintSymbols, optCtrl.SetAltSymbols);
-            MakeDesc(pr, "DescAltSymbols",
-                "Shows text labels for constraint\ntypes instead of graphical icons.",
-                new Vector2(0.06f, 0.34f), new Vector2(0.47f, 0.40f));
-
-            // Pair 5 ? Text Size (FontScale) slider
-            var fontScaleLbl = BuildText("FontScaleLabel", pr, T("Text Size"), 15, TextAnchor.MiddleLeft);
-            SetRect(fontScaleLbl.rectTransform,
-                new Vector2(0.06f, 0.29f), new Vector2(0.47f, 0.34f), Vector2.zero, Vector2.zero);
-            var fontScaleSlider = BuildSlider("FontScaleSlider", pr);
-            SetRect(fontScaleSlider.GetComponent<RectTransform>(),
-                new Vector2(0.06f, 0.24f), new Vector2(0.42f, 0.29f), Vector2.zero, Vector2.zero);
-            fontScaleSlider.minValue = 0.8f;
-            fontScaleSlider.maxValue = 1.5f;
-            fontScaleSlider.SetValueWithoutNotify(opts.Accessibility.FontScale);
-            fontScaleSlider.onValueChanged.RemoveAllListeners();
-            fontScaleSlider.onValueChanged.AddListener(optCtrl.SetFontScale);
-            var fontScalePct = BuildText("FontScalePct", pr,
-                Mathf.RoundToInt(opts.Accessibility.FontScale * 100f) + "%",
-                12, TextAnchor.MiddleLeft);
-            SetRect(fontScalePct.rectTransform,
-                new Vector2(0.43f, 0.24f), new Vector2(0.48f, 0.29f), Vector2.zero, Vector2.zero);
-            fontScalePct.color = GamePalette.TextMuted;
-            fontScaleSlider.onValueChanged.AddListener(v =>
-                fontScalePct.text = Mathf.RoundToInt(v * 100f) + "%");
-
-            // -- Right column: preview board ------------------------------------
-
-            var previewLabel = BuildText("PreviewLabel", pr, T("Accessibility.Preview"), 13, TextAnchor.MiddleCenter);
-            SetRect(previewLabel.rectTransform,
-                new Vector2(0.53f, 0.89f), new Vector2(0.96f, 0.93f), Vector2.zero, Vector2.zero);
-            previewLabel.color = new Color(0.80f, 0.78f, 0.68f, 0.75f);
-
-            var previewGo = new GameObject("AccessPreview", typeof(RectTransform));
-            previewGo.transform.SetParent(pr, false);
-            var previewRt = previewGo.GetComponent<RectTransform>();
-            previewRt.anchorMin = new Vector2(0.53f, 0.22f);
-            previewRt.anchorMax = new Vector2(0.96f, 0.88f);
-            previewRt.offsetMin = Vector2.zero;
-            previewRt.offsetMax = Vector2.zero;
-            var previewCtrl = previewGo.AddComponent<AccessibilityPreviewController>();
-            previewCtrl.Configure(optCtrl);
-
-            // -- Explicit nav order (left column, top-to-bottom loop) -----------
-            void LinkNav(Toggle from, Toggle to)
-            {
-                var n = from.navigation;
-                n.mode = Navigation.Mode.Explicit;
-                n.selectOnDown = to;
-                from.navigation = n;
-                var nu = to.navigation;
-                nu.mode = Navigation.Mode.Explicit;
-                nu.selectOnUp = from;
-                to.navigation = nu;
-            }
-            LinkNav(tColorblind, tHighContrast);
-            LinkNav(tHighContrast, tReduceMotion);
-            LinkNav(tReduceMotion, tAltSymbols);
-
-            // -- Sync on slot change --------------------------------------------
-            ReplaceOptionsChangedHandler(optCtrl, ref _accessibilitySlotChangedHandler, () =>
-            {
-                var o = optCtrl.GetOptions();
-                tColorblind.SetIsOnWithoutNotify(o.Accessibility.ColorblindMode);
-                tHighContrast.SetIsOnWithoutNotify(o.Accessibility.HighContrastMode);
-                tReduceMotion.SetIsOnWithoutNotify(o.Accessibility.ReduceMotion);
-                tAltSymbols.SetIsOnWithoutNotify(o.Accessibility.AlternativeConstraintSymbols);
-                fontScaleSlider.SetValueWithoutNotify(o.Accessibility.FontScale);
-                fontScalePct.text = Mathf.RoundToInt(o.Accessibility.FontScale * 100f) + "%";
-                // Profile slot switches raise OnOptionsChanged; refresh the preview through this managed
-                // handler so a rebuild never leaves a subscription to a destroyed preview behind.
-                if (previewCtrl != null) previewCtrl.Refresh(o.Accessibility);
-            });
-
-            // -- Accessibility captions (mirrors status updates on-screen) --
-            var tScreenReader = BuildOptionToggle(pr, "ScreenReader", T("Options.StatusCaptions"),
-                new Vector2(0.04f, 0.18f), new Vector2(0.48f, 0.23f),
-                opts.Accessibility.ScreenReaderEnabled, optCtrl.SetScreenReaderEnabled);
-            MakeDesc(pr, "DescScreenReader",
-                "Shows an on-screen announcement bar for status and interaction updates.",
-                new Vector2(0.06f, 0.12f), new Vector2(0.47f, 0.18f));
-
-            // -- Reset to Defaults ----------------------------------------------
-            var btnResetAcc = BuildButton("BtnResetAcc", pr, T("Reset to Defaults"), 13);
-            SetRect(btnResetAcc.GetComponent<RectTransform>(),
-                new Vector2(0.04f, 0.01f), new Vector2(0.48f, 0.09f), Vector2.zero, Vector2.zero);
-            btnResetAcc.onClick.RemoveAllListeners();
-            btnResetAcc.onClick.AddListener(() =>
-            {
-                optCtrl.ResetAccessibilityToDefaults();
-                mc.RefreshOptionsPanel();
-            });
-            ApplyMenuButtonIcon(btnResetAcc, "ui/icon_flame_stone");       // F-QA: reset/clear action icon (was unused)
-
-            // -- Back ----------------------------------------------------------
-            var back = BuildButton("BtnAccBack", pr, T("Back"), 18);
             SetRect(back.GetComponent<RectTransform>(),
                 new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
             back.onClick.RemoveAllListeners();

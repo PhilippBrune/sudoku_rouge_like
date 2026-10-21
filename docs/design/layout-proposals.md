@@ -1,11 +1,13 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 2.0 | **Date:** 2026-10-21 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and Pencil mode in indigo; picked and being built: Options, Codex, Meta Progression)
+**Version:** 2.2 | **Date:** 2026-10-21 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry, Pencil mode in indigo, the Options scroll and the Codex book; picked and being built: Meta Progression)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.2 | 2026-10-21 | review | The Codex as a collector's book built (UI-STYLE-018), with a new Curses page (the game now records the curses met, META-CODEX-008) and how often each item was found and used (META-CODEX-009). Two parts of the mockup are left out: the Normal · Rare · Epic filter and "Best paired with", which no game data backs. Screenshots below. |
+| 2.1 | 2026-10-21 | review | Options as a hand scroll with bookmarks built (UI-STYLE-017) in the main menu and in a run, after the Options audit (GAP-061). Screenshots below. |
 | 2.0 | 2026-10-21 | review | Owner picks: Options, Codex and Meta Progression as proposed (UI-STYLE-017 to 019, being built), garden flow **D · Entering a floor** (UI-STYLE-021) and Pencil mode **A · Indigo ink** (UI-STYLE-020). D and A are built, with screenshots from the game below. |
 | 1.9 | 2026-10-20 | review | Owner's 0.2.0 playtest: fixes built with screenshots (reward plaques fit and keys work, lines under the digits, the boss screen shows the floor, the version on the main menu, Custom Puzzle Random). New proposals waiting for the owner's pick: Options, Codex and Meta Progression (proposed UI-STYLE-017 to 019), four ways to bring the garden painting back to the path, and Pencil-mode colours for the number pad. |
 | 1.8 | 2026-10-20 | implemented | Owner decision: build Custom Puzzle **A · Rule book** (UI-STYLE-012) and the rest, event, cursed-tile and run-end proposals as shown (UI-STYLE-013 to 016); built, with before/after screenshots below. The rule book keeps a third region choice ("Turned", the rotated boxes of 6×6 and 8×8) that the mockup left out, so no setting is lost. Rebuilding the event found GAP-052: the old event panel opened under the full-screen path. The run-end scroll is used for the Garden Run; the Monthly Walk, Spirit Trials and Endless Zen keep their text results. |
@@ -32,6 +34,8 @@ The mockups are HTML pages in `layout-proposals/src/`, built from `Assets/Resour
 | UI-STYLE-007 | The reward after a puzzle as a tally scroll (result, gold, XP, HP, Pencil, the puzzle's numbers, a "Perfect" stamp) beside the item choices as ema plaques on a red cord, with Take, Reroll and Take nothing. | built 2026-10-19 |
 | UI-STYLE-008 | The relic node as the offering table (UI-STYLE-005) at the shrine painting: three relics on plinths with tier, Take each, "Leave them", the run's HP, gold and held relics on paper tags. | built 2026-10-19 |
 | UI-STYLE-009 | The shop as the market stall painting with the goods on the counter, wooden price tags, the chosen item on a paper slip with Buy and the gold after buying, the purse (gold, reroll tokens, bag slots), Reroll and Leave. | built 2026-10-19 |
+| UI-STYLE-017 | Options as a hand scroll with bookmarks, main menu and run alike: the "Settings · Options" banner, one cloth bookmark per page above the paper (main menu: Audio, Display, Gameplay, Accessibility, Controls, Language; run: Audio, Display, Gameplay, Accessibility, Language, Run), LB/RB (PageUp/PageDown) turn the page; one setting per line with the label on the left, values as a brush stroke with a stone and the value in vermilion, switches as hanko stamps with a short note; a pinned slip on the right with the page's tip (the main menu's Accessibility page shows the preview board there, with Text Size on the page); "Reset this page" and Back under the scroll. The separate Accessibility panel is gone. | built 2026-10-21 |
+| UI-STYLE-018 | The Codex as a collector's book: the "Your collection · Codex" banner, a wooden book with two paper pages, bookmarks Items, Relics, Rules and Curses with their counts (LB/RB, PageUp/PageDown); the left page has the filter All · Found · Not yet found (Y) and the tiles, found ones in colour, the rest as ink silhouettes with "???"; the right page shows the chosen entry: icon, rarities (or tier, family, severity), its rule, how often it was found and used, where it comes from and when it was found, the collection's goal (for items the Reed Duelist unlock) and a "found" stamp with the share. Back under the book. | built 2026-10-21 |
 | UI-STYLE-020 | Pencil mode in indigo ink: the number pad tiles and the switch's Pencil half turn indigo with paper-white digits, and the pencil marks on the board are indigo too. | built 2026-10-21 |
 | UI-STYLE-021 | Entering a floor of a Garden Run: two seconds of the floor's painting with its name on a hanging banner and the path rolled up below, then the path scroll unrolls. A click or any key skips it; once per floor, not on a resumed floor; Reduce Motion skips the unroll. | built 2026-10-21 |
 | UI-STYLE-006 | A killer cage is one dashed outline around all its cells: inset into the cells, joined across them (no line between two cells of the same cage) and closed at every corner. Same rule in the game (`CageOutline`) and in the mockups (`cageRuns` in `src/common.js`). | built 2026-10-15 |
@@ -342,9 +346,23 @@ Today's screens (from the game):
 
 ![Options accessibility](layout-proposals/options_scroll_a11y.jpg)
 
+**As built (UI-STYLE-017, 2026-10-21):** the main menu and the run use the same scroll and controls. Each switch carries a short note on what it does (the Options audit, GAP-061, made every option act as named). The run's Options have a Language page that says where to change it and a Run page (seed, View Modifiers, Save & Quit, Abandon Run). "Pencil marks" from the mockup is not a setting and was left out.
+
+![Options, Audio](layout-proposals/after_options.jpg)
+
+![Options, Accessibility with the preview](layout-proposals/after_options_a11y.jpg)
+
+![Options in a run, Gameplay](layout-proposals/after_options_inrun.jpg)
+
 **Codex as a collector's book (UI-STYLE-018):** in the family of the Custom Puzzle rule book: tabs Items, Relics, Rules, Curses with their counts; found entries in colour, the rest as ink silhouettes; the chosen entry on the right page with its rarities, effect, how often it was found and used, and the "find all" goal with its class unlock.
 
 ![Codex](layout-proposals/codex_book.jpg)
+
+**As built (UI-STYLE-018, 2026-10-21):** as in the mockup, with the game's own counts. The Curses page needed the game to remember the curses met (META-CODEX-008: every curse taken, also when cleansed later), and the item page's "Found 6 times · Used 4 times" needed two counters (META-CODEX-009: every pickup from a reward or the shop, every use, counted at the run's end). Items found before this build show "found once". Left out: the Normal · Rare · Epic filter (rarity belongs to an item in a run, not to the codex entry) and "Best paired with" (no game data says which class an item suits). The D-pad goes from the bookmarks to the filter, through the tiles and down to Back. The shots use a profile about half way through its collections.
+
+![Codex, Items with Meditation Stone chosen](layout-proposals/after_codex.jpg)
+
+![Codex, Curses](layout-proposals/after_codex_curses.jpg)
 
 **Meta Progression as the garden of classes (UI-STYLE-019):** the eight classes as ema plaques (locked ones dark, with their unlock goal and progress); the chosen class on a hanging scroll with its level stroke, passive, unlock path and prestige; the collection totals along the bottom.
 

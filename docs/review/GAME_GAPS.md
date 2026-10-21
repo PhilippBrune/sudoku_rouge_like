@@ -70,6 +70,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-059](#gap-059) | Mistakes counted toward the run only when a puzzle was solved | FIXED (0.2.0 playtest, 2026-10-20) | MEDIUM | P3 |
 | [GAP-060](#gap-060) | The trial the Warding Flame removed came back after Save & Quit at the boss gate | FIXED (found in review, 2026-10-21) | LOW | P3 |
 | [GAP-061](#gap-061) | Options that did nothing or less than their names said | FIXED (Options audit, 2026-10-21) | MEDIUM | P2 |
+| [GAP-062](#gap-062) | Main menu: the D-pad steps through a panel in creation order, and arrow keys may move twice | OPEN (found building the Codex book, 2026-10-21; not checked in the player) | MEDIUM | P2 |
 | [GAP-044](#gap-044) | Region borders showed the previous puzzle's regions on a same-size board | FIXED (found 2026-10-14 by the owner) | HIGH | P1 |
 | [GAP-043](#gap-043) | Without the `ActiveProfileSlot` pref the game opens an empty slot 0, not the existing profile | FIXED (0.1.5, found 2026-10-14) | LOW | P3 |
 
@@ -977,3 +978,12 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Problem:** Highlight Errors, Confirm Wrong Placement, Show Candidate Count, Cursor Snap and Double-Tap to Confirm were saved but read by nothing; Auto Pencil Cleanup was always on (and missed the box); Screen Shake was ignored (only Reduce Motion stopped it); Master Volume counted twice (50 % played at 25 %); Brightness and Contrast changed only the board, and only from the next puzzle; Text Size changed only the preview and some menus; Colorblind Mode passed the cells through a protanopia simulation (harder to read for colour-blind players) and left the line colours as they were; "Screen Reader" is a caption bar.
 - **Fix:** each option acts as named (see the requirement rows); Confirm Wrong Placement is removed (asking only before a wrong digit would give the answer away); labels renamed (Show Digits Left, Jump to Next Empty Cell, Board Brightness/Contrast, Status Captions).
 - **Tests:** `GameplayOptionsTests` (3) and `GameplayOptionsPlayModeTests` (7), all failing before the fix.
+
+## GAP-062
+**Main menu: the D-pad steps through a panel in creation order, and arrow keys may move twice**
+
+- **Requirement:** REQ-UI-102 (every menu works with a controller), UI-STYLE-017 and UI-STYLE-018 (the D-pad follows the page: bookmarks, lines, the Codex's tile grid)
+- **Status:** OPEN (found while building the Codex book, 2026-10-21; seen in the code, not yet checked in the player) · **Severity:** MEDIUM · **Priority:** P2
+- **Problem:** On every main-menu panel, `MainMenuController.HandleMenuGamepadNavigation` moves the focus to the next or previous control in creation order on any Up/Down/Left/Right press (D-pad buttons, D-pad axes, left stick, arrow keys). So the D-pad ignores the panel's layout: in the Codex, Down goes one tile to the right instead of one row down, and the D-pad links the panels set (the Codex's grid, the Options lines) are not used. Unity's `StandaloneInputModule` reads the arrow keys and the left stick too (Input Manager axes Horizontal/Vertical) and moves along those links in the same frame, so an arrow key or a stick push may move the focus twice.
+- **Why it is there:** commit 92933d2 (Steam review, 2026-07-03) added the cycle because the legacy module does not read the D-pad on many controllers.
+- **Next step:** with platform phase 1 (RM-107: controller input through the Input System), use `InputSystemUIInputModule`, which reads the D-pad, and replace the cycle with one step along the panel's links (`FindSelectableOnUp/Down/Left/Right`), once per press. Check it in the player with a controller and the keyboard; `CodexBookPlayModeTests` and `GeneratedUiPlayModeTraversalTests` already check the links themselves.

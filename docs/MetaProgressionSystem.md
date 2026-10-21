@@ -1,11 +1,12 @@
 # Meta Progression System
 
-**Version:** 1.10 | **Date:** 2026-10-20 | **Status:** implemented
+**Version:** 1.11 | **Date:** 2026-10-21 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.11 | 2026-10-21 | implemented | The Codex as a collector's book (UI-STYLE-018, owner pick): bookmarks Items, Relics, Rules and Curses. New: the curses met in any run are recorded for the Curses page (META-CODEX-008), and each item counts how often it was found and used (META-CODEX-009). META-CODEX-005 is verified by a test. |
 | 1.10 | 2026-10-20 | implemented | Owner decisions: the prestige reward is the badge plus +1 starting gold per tier (SPEC-CONF-039, META-PRESTIGE-005); Ascension is retired, because Harmony already is the post-win difficulty ladder and prestige the per-class goal (GAP-017, FUTURE-009): META-ASCEND-001..003 descoped, the unused save fields stay for old saves, OPEN-A closed. |
 | 1.9 | 2026-10-19 | implemented | Catalog batch B5 (BossMechanicsSystem 2.12) adds 5 modifiers to the codex and completion: 70 clearable modifiers. |
 | 1.8 | 2026-10-19 | implemented | Catalog batch B4 (BossMechanicsSystem 2.11) adds 5 modifiers to the codex and completion: 65 clearable modifiers. |
@@ -175,6 +176,10 @@ Completion percentage is displayed on the meta progression panel.
 - **[META-CODEX-005]** Undiscovered entries show "???" with silhouette icon
 - **[META-CODEX-006]** Full discovery feeds into Reed Duelist unlock condition (items only)
 - **[META-CODEX-007]** Codex accessible from main menu "Items" button
+- **[META-CODEX-008]** Curses met in any run (taken, also when cleansed later) are recorded and shown on the Codex's Curses page. They are merged into the save at the run's end and on every autosave, so a run saved and quit to the menu shows them too. Old saves start with none. A curse id this build does not know stays in the save (a newer build may have added it); the Codex lists only the curses of the catalog.
+- **[META-CODEX-009]** Each item's entry counts how often it was **found** (every pickup from a reward or the shop) and **used**. Uses are counted once, at the run's end (autosaves do not count them); an item the Codex has not found (a starting item, the tutorial's) is not counted, so a count never reveals an unknown item. Entries from before the counters show "found once", and their next pickup counts as the second.
+
+The Codex is shown as a collector's book (layout-proposals.md, UI-STYLE-018): bookmarks Items, Relics, Rules (the boss modifiers) and Curses with their counts, a filter (All, Found, Not yet found), the entries as tiles and the chosen entry on the right page with the collection's goal.
 
 ---
 

@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.15 | **Date:** 2026-10-21 | **Status:** implemented
+**Version:** 1.16 | **Date:** 2026-10-21 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.16 | 2026-10-21 | implemented | Options Structure: the Options are a hand scroll with six pages (UI-STYLE-017); Accessibility, Controls and Language are pages, the separate Accessibility panel is gone. |
 | 1.15 | 2026-10-21 | implemented | Options audit after the 0.2.0 playtest (GAP-061): every option now does what its name says (Options Effects, OPT-GAME-001..005, OPT-GFX-001, OPT-AUDIO-001, OPT-LABEL-001, ACCESS-COLOR-003, ACCESS-FONT-001); "Confirm Wrong Placement" removed; Show Digits Left, Jump to Next Empty Cell, Board Brightness/Contrast and Status Captions renamed. |
 | 1.14 | 2026-10-21 | implemented | Owner picks after the 0.2.0 playtest: Pencil mode shows in indigo ink on the number pad and in the pencil marks (4.3, UI-STYLE-020). Run score (9c): every puzzle gets a grade from its own mistakes (Perfect, Clean, Rough, Messy; proposal C of `design/mistake-scoring-proposals.md`), which replaces the flat mistake penalty and the perfect bonus; the puzzle that ends a run is Messy; the end screen shows one stamp per puzzle (SCORE-GRADE-001..004). Unspent gold adds a point per 5 gold, at most 15 % (SCORE-GOLD-001, lever L5 of `design/gold-and-items-concept.md`). Economy levers L1 and L6 (GoldEconomySystem 2.2): from Floor 4 a mistake costs at least 2 HP (5.1, ECON-BAL-003) and the rest heals a quarter (ECON-BAL-004). Garden flow D: entering a floor shows its painting (UI-STYLE-021). |
 | 1.13 | 2026-10-20 | implemented | Owner's 0.2.0 playtest: a placed digit highlights every cell with that digit (4.1); digits are taken 0.25 s after a cell is chosen, half of before (4.2); the main menu shows the version (UI-MENU-VERSION-001); every mistake counts toward the run score when it happens (9c, GAP-059). |
@@ -434,13 +435,17 @@ Source of truth: [EndlessZenMode](EndlessZenMode.md) (decided 2026-10-07, SPEC-C
 
 ### Options Structure
 
-Main menu → Options has three tabs; each has a Reset button for its own settings:
+Main menu → Options is a hand scroll with six pages (UI-STYLE-017); LB/RB or PageUp/PageDown turn the page, and "Reset this page" under the scroll resets the shown page:
 
 - **Audio:** Master / Music / SFX / UI volume (arrow rows in 5 % steps), Mute when unfocused, Mute all, menu music style
-- **Display:** Fullscreen, VSync, Screen Shake, Particles, Board Brightness, Board Contrast, Resolution, Display Mode (see Display Modes below), Language (English / German / French / Spanish / Brazilian Portuguese, applied after a confirmation; all five are also offered in first-run setup, SPEC-CONF-032)
+- **Display:** Fullscreen, VSync, Screen Shake, Particles, Board Brightness, Board Contrast, Resolution, Display Mode (see Display Modes below); all five languages are also offered in first-run setup (SPEC-CONF-032)
 - **Gameplay:** Highlight Errors, Auto Pencil Cleanup, Show Digits Left, Jump to Next Empty Cell, Double-Tap to Confirm, Controller Rumble
 
-Below the tabs: Keybindings…, Accessibility… (colorblind, high contrast, reduce motion, alternative constraint symbols, text size, status captions, with a preview board), Sudoku Tutorial and Back.
+- **Accessibility:** Colorblind Mode, High Contrast, Reduce Motion, Alternative Constraint Symbols, Status Captions, Text Size, with a preview board on the page's slip
+- **Controls:** Keybindings… and the Sudoku Basics lesson
+- **Language:** English / German / French / Spanish / Brazilian Portuguese, applied after a confirmation
+
+Below the scroll: Reset this page and Back. In a run the Options have the same pages (Language says where to change it) plus a Run page (UI-OPT-002).
 
 ### Options Effects (GAP-061, 1.15)
 

@@ -20,6 +20,7 @@ namespace SudokuRoguelike.Tests
         private const string RunMapControllerPath = "Assets/Scripts/UI/RunMapController.cs";
         private const string InRunUiFactoryPath = "Assets/Scripts/UI/InRunUiFactory.cs";
         private const string OptionsUiFactoryPath = "Assets/Scripts/UI/OptionsUiFactory.cs";
+        private const string OptionsUiFactoryPagesPath = "Assets/Scripts/UI/OptionsUiFactory.Pages.cs";
         private const string OptionsTabSetPath = "Assets/Scripts/UI/OptionsTabSet.cs";
         private const string GamePalettePath = "Assets/Scripts/UI/GamePalette.cs";
         private const string BossServicePath = "Assets/Scripts/Boss/BossService.cs";
@@ -49,6 +50,7 @@ namespace SudokuRoguelike.Tests
             Button("ItemsCodex", MainMenuPath, "BtnCodexItems", "CodexTabId.Items"),
             Button("ItemsCodex", MainMenuPath, "BtnCodexRelics", "CodexTabId.Relics"),
             Button("ItemsCodex", MainMenuPath, "BtnCodexModifiers", "CodexTabId.Modes"),
+            Button("ItemsCodex", MainMenuPath, "BtnCodexCurses", "CodexTabId.Curses"),
             Button("ItemsCodex", MainMenuPath, "BtnItemsBack", "mc.BackToMainMenu"),
 
             Button("ClassSelect", MainMenuPath, "BtnConfirmClass", "mc.ShowStartRunModal"),
@@ -75,7 +77,7 @@ namespace SudokuRoguelike.Tests
             Slider("Options", OptionsUiFactoryPath, "\"Contrast\"", "SetContrast"),
             Dropdown("Options", OptionsUiFactoryPath, "ResolutionDropdown", "optCtrl.SetResolution"),
             Dropdown("Options", OptionsUiFactoryPath, "DisplayModeDropdown", "optCtrl.SetDisplayMode"),
-            Dropdown("Options", OptionsUiFactoryPath, "LanguageDropdown", "confirmRow.SetActive"),
+            Dropdown("Options", OptionsUiFactoryPagesPath, "LanguageDropdown", "langConfirmRow.SetActive"),
             Button("Options", OptionsUiFactoryPath, "BtnLangApply", "optCtrl.SetLanguage"),
             Button("Options", OptionsUiFactoryPath, "BtnLangCancel", "SetValueWithoutNotify"),
             Toggle("Options", OptionsUiFactoryPath, "\"HighlightErrors\"", "SetHighlightConflicts"),
@@ -90,7 +92,6 @@ namespace SudokuRoguelike.Tests
             Toggle("Options", OptionsUiFactoryPath, "\"AltSymbols\"", "SetAltSymbols"),
             Toggle("Options", OptionsUiFactoryPath, "\"ScreenReader\"", "SetScreenReaderEnabled"),
             Button("Options", MainMenuPath, "BtnKeybindings", "mc.OpenKeybindings"),
-            Button("Options", MainMenuPath, "BtnAccessibility", "mc.OpenAccessibility"),
             Button("Options", MainMenuPath, "BtnOptBack", "mc.BackToMainMenu"),
             Button("Options", MainMenuPath, "BtnReplayBasicsTutorial", "mc.LaunchSudokuBasicsTutorial"),
 
@@ -214,7 +215,8 @@ namespace SudokuRoguelike.Tests
             StringAssert.Contains("OptionsUiFactory.BuildStandardTabs(tabs, optCtrl,", mainMenuSource);
             StringAssert.Contains("OptionsUiFactory.BuildStandardTabs(tabs, optCtrl,", inRunSource);
             StringAssert.Contains("Prefix = \"IG\"", inRunSource);
-            StringAssert.Contains("OptionsUiFactory.BuildAccessibilitySection(", inRunSource);
+            // UI-STYLE-017: the Accessibility page is one of the shared pages built by BuildStandardTabs.
+            StringAssert.Contains("BuildAccessibilitySection(tabs, accIdx, accSec, optCtrl", ReadSource(OptionsUiFactoryPath));
             StringAssert.Contains("tabs.Add(\"IGTabRun\", \"IGRunSection\"", inRunSource);
             Assert.That(inRunSource, Does.Not.Contain("BuildSlider("), "the in-run Options use the main menu's arrow rows");
         }
@@ -536,8 +538,10 @@ namespace SudokuRoguelike.Tests
             var inRunSource = ReadSource(InRunBlueprintPath);
 
             StringAssert.Contains("EnsureRect(\"InGameOptionsPanel\", root, Vector2.zero, Vector2.one", inRunSource);
-            StringAssert.Contains("new Color(0.055f, 0.07f, 0.065f, 1f)", inRunSource);
-            StringAssert.Contains("InRunUiFactory.ClearNamedChildren(panel.transform, \"PanelBackground\")", inRunSource);
+            StringAssert.Contains("new Color(0.04f, 0.035f, 0.03f, 1f)", inRunSource);
+            // A rebuild clears the old background, card and scroll parts first (UI-STYLE-017).
+            StringAssert.Contains("new[] { \"PanelBackground\", \"Content\", \"OptionsBanner\", \"OptionsScroll\"", inRunSource);
+            StringAssert.Contains("ScrollUiKit.DestroyChildrenNow(panel.transform, part)", inRunSource);
             Assert.That(
                 inRunSource,
                 Does.Not.Contain("AddPanelBackground(panel.transform, \"bg_menu_pause\""),
@@ -640,19 +644,23 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
-        public void ItemsCodex_ProvidesRelicAndBossModifierTabsWithIcons()
+        [Requirement("UI-STYLE-018")]
+        public void ItemsCodex_ProvidesRelicRuleAndCurseTabsWithIcons()
         {
             var menuSource = ReadSource(MainMenuPath);
             var itemsSource = ReadSource(ItemsMenuControllerPath);
 
             StringAssert.Contains("BtnCodexRelics", menuSource);
             StringAssert.Contains("BtnCodexModifiers", menuSource);
-            StringAssert.Contains("itemsCtrl.SetTabButtons(tabItems, tabRelics, tabModifiers)", menuSource);
+            StringAssert.Contains("BtnCodexCurses", menuSource);
+            StringAssert.Contains("itemsCtrl.SetTabButtons(tabItems, tabRelics, tabModifiers, tabCurses)", menuSource);
             StringAssert.Contains("itemsCtrl.ShowTab(CodexTabId.Relics)", menuSource);
             StringAssert.Contains("itemsCtrl.ShowTab(CodexTabId.Modes)", menuSource);
+            StringAssert.Contains("itemsCtrl.ShowTab(CodexTabId.Curses)", menuSource);
             StringAssert.Contains("BossService.GetIconName(id)", itemsSource);
             StringAssert.Contains("BossService.GetIconFolder(id)", itemsSource);
-            StringAssert.Contains("InRunUiFactory.LoadResourceSprite", itemsSource);
+            // Icons load through the scroll kit (which uses InRunUiFactory.LoadResourceSprite).
+            StringAssert.Contains("ScrollUiKit.Icon(", itemsSource);
         }
 
         [Test]
@@ -825,7 +833,8 @@ namespace SudokuRoguelike.Tests
             {
                 case GeneratedUiControlType.Button:
                     // Runtime panels create their buttons through InRunUiFactory.
-                    return new[] { "BuildButton", "BuildMenuButton", "CreateActionButton", "CreatePanelButton", "RoundButton", "RimButton", "PillButton" };
+                    return new[] { "BuildButton", "BuildMenuButton", "CreateActionButton", "CreatePanelButton", "RoundButton", "RimButton", "PillButton",
+                        "BuildBackPill", "RunButton" };
                 case GeneratedUiControlType.Toggle:
                     return new[] { "BuildToggle", "BuildOptionToggle" };
                 case GeneratedUiControlType.Dropdown:

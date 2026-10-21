@@ -48,6 +48,8 @@ namespace SudokuRoguelike.Save
                     if (!envelope.MetaProgress.DiscoveredBossModifiers.Contains(mod))
                         envelope.MetaProgress.DiscoveredBossModifiers.Add(mod);
                 }
+                // [REQ: META-CODEX-008] So a run saved and quit to the menu shows its curses in the Codex.
+                ModifierDiscoveryService.MergeCursesIntoMeta(envelope.MetaProgress, runState.CursesSeenThisRun);
             }
 
             if (runState.IsSeasonalChallenge)

@@ -105,7 +105,11 @@ namespace SudokuRoguelike.Save
             {
                 if (meta.ItemCodex.Entries[i].ItemId == key)
                 {
-                    meta.ItemCodex.Entries[i].Discovered = true;
+                    // META-CODEX-009: an item found before the counters existed (0) was found at least once already.
+                    var codexEntry = meta.ItemCodex.Entries[i];
+                    var before = codexEntry.Discovered ? Math.Max(1, codexEntry.TimesFound) : codexEntry.TimesFound;
+                    codexEntry.TimesFound = CodexCount(before + 1L);
+                    codexEntry.Discovered = true;
                     found = true;
                     break;
                 }
@@ -116,13 +120,32 @@ namespace SudokuRoguelike.Save
                 {
                     ItemId = key,
                     Discovered = true,
-                    DiscoveredDate = System.DateTime.UtcNow.ToString("yyyy-MM-dd")
+                    DiscoveredDate = System.DateTime.UtcNow.ToString("yyyy-MM-dd"),
+                    TimesFound = 1
                 });
             }
 
             envelope.MetaProgress = meta;
             _saveFile.Save(envelope);
         }
+
+        // [REQ: META-CODEX-009] Adds each use to the item's Codex entry; an item the Codex has not recorded as found
+        // (a starting item, the tutorial's) gets no entry, so the count never reveals an unknown item.
+        internal static void CountItemUses(MetaProgressionState meta, IEnumerable<string> itemTypesUsed)
+        {
+            if (meta?.ItemCodex?.Entries == null || itemTypesUsed == null) return;
+            var found = new Dictionary<string, ItemCodexEntry>();
+            foreach (var entry in meta.ItemCodex.Entries)
+                if (entry != null && entry.Discovered && !string.IsNullOrEmpty(entry.ItemId) && !found.ContainsKey(entry.ItemId))
+                    found.Add(entry.ItemId, entry);
+            foreach (var used in itemTypesUsed)
+                if (used != null && found.TryGetValue(used, out var entry))
+                    entry.TimesUsed = CodexCount(entry.TimesUsed + 1L);
+        }
+
+        // A Codex counter stays between 0 and MaxCodexCount, also with an edited save (no wrap to negative numbers).
+        private const int MaxCodexCount = 999_999;
+        private static int CodexCount(long value) => (int)Math.Clamp(value, 0L, MaxCodexCount);
 
         /// <summary>
         /// Records a relic as discovered in meta progression and saves.
@@ -262,6 +285,10 @@ namespace SudokuRoguelike.Save
             SteamStatsService.SyncFromLocalStats(stats);
 
             var discoveryAdded = ModifierDiscoveryService.MergeIntoMeta(meta, liveRunState?.SeenBossModifiers);
+            // [REQ: META-CODEX-008] Curses met in this run join the Codex.
+            ModifierDiscoveryService.MergeCursesIntoMeta(meta, liveRunState?.CursesSeenThisRun);
+            // [REQ: META-CODEX-009] This run's item uses join the Codex's counts (only here, so autosaves never count twice).
+            CountItemUses(meta, liveRunState?.ItemTypesUsedThisRun);
             if (liveRunState?.SeenBossModifiers != null)
             {
                 UnityEngine.Debug.Log(

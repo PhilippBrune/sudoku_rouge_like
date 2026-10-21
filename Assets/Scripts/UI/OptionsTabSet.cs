@@ -21,6 +21,7 @@ namespace SudokuRoguelike.UI
         private Selectable[][] _footer = NoRows;
         private RectTransform _card;
         private int _linkedSignature;
+        private bool _paper;   // UI-STYLE-017: bookmarks above the scroll's paper
 
         public int ActiveIndex { get; private set; }
         public int Count => _tabs.Count;
@@ -37,6 +38,7 @@ namespace SudokuRoguelike.UI
             set._rows.Clear();
             set._footer = NoRows;
             set.ActiveIndex = 0;
+            set._paper = OptionsUiStyle.Paper;
             return set;
         }
 
@@ -53,6 +55,27 @@ namespace SudokuRoguelike.UI
             _sections.Add(section);
             _rows.Add(NoRows);
 
+            if (_paper)
+            {
+                // [REQ: UI-STYLE-017] Cloth bookmarks hanging over the top of the paper, between the LB and RB marks.
+                tab.GetComponent<Image>().sprite = ScrollUiKit.Rounded(10f);
+                tab.GetComponent<Image>().type = Image.Type.Sliced;
+                var tabLabel = tab.GetComponentInChildren<Text>();
+                if (tabLabel != null)
+                {
+                    // Long translations ("Barrierefreiheit", "Acessibilidade") shrink to the bookmark.
+                    tabLabel.resizeTextForBestFit = true;
+                    tabLabel.resizeTextMinSize = 12;
+                    tabLabel.resizeTextMaxSize = OptionsUiStyle.TabLabelSize;
+                    tabLabel.horizontalOverflow = HorizontalWrapMode.Wrap;
+                    tabLabel.verticalOverflow = VerticalWrapMode.Truncate;
+                }
+                var w = 0.82f / _tabs.Count;
+                for (var i = 0; i < _tabs.Count; i++)
+                    OptionsUiFactory.SetRect((RectTransform)_tabs[i].transform,
+                        new Vector2(0.09f + i * w, 1.0f), new Vector2(0.09f + (i + 1) * w - 0.008f, 1.075f));
+                return section;
+            }
             var width = 0.96f / _tabs.Count;
             for (var i = 0; i < _tabs.Count; i++)
                 OptionsUiFactory.SetRect((RectTransform)_tabs[i].transform,
@@ -81,6 +104,20 @@ namespace SudokuRoguelike.UI
                 _sections[i].gameObject.SetActive(i == index);
                 var img = _tabs[i].GetComponent<Image>();
                 var lbl = _tabs[i].GetComponentInChildren<Text>();
+                if (_paper)
+                {
+                    // The open page's bookmark is paper and sits a little higher; the others are brown cloth.
+                    var colors = _tabs[i].colors;
+                    colors.normalColor = i == index ? new Color(0.94f, 0.90f, 0.81f, 1f) : new Color(0.47f, 0.31f, 0.17f, 1f);
+                    colors.highlightedColor = Color.Lerp(colors.normalColor, Color.white, 0.12f);
+                    colors.selectedColor = Color.Lerp(colors.normalColor, OptionsUiStyle.PaperFocus, 0.6f);
+                    _tabs[i].colors = colors;
+                    if (img != null) img.color = Color.white;
+                    if (lbl != null) lbl.color = i == index ? OptionsUiStyle.PaperInk : new Color(0.97f, 0.92f, 0.80f, 1f);
+                    var rt = (RectTransform)_tabs[i].transform;
+                    rt.anchoredPosition = new Vector2(0f, i == index ? 6f : 0f);
+                    continue;
+                }
                 if (img != null) img.color = i == index
                     ? GamePalette.WithAlpha(GamePalette.AccentGold, 0.40f)
                     : GamePalette.WithAlpha(GamePalette.Panel, 0.80f);
@@ -92,6 +129,20 @@ namespace SudokuRoguelike.UI
         private void Update()
         {
             if (Signature() != _linkedSignature) Relink();
+            // [REQ: UI-STYLE-017] LB/RB (PageUp/PageDown on a keyboard) turn the page; the focus moves to its bookmark.
+            if (_tabs.Count < 2) return;
+            var step = Input.GetKeyDown(KeyCode.JoystickButton5) || Input.GetKeyDown(KeyCode.PageDown) ? 1
+                : Input.GetKeyDown(KeyCode.JoystickButton4) || Input.GetKeyDown(KeyCode.PageUp) ? -1 : 0;
+            if (step != 0) TurnPage(step);
+        }
+
+        /// <summary>Opens the next (+1) or previous (-1) page, wrapping round, and selects its bookmark.</summary>
+        public void TurnPage(int step)
+        {
+            var next = ((ActiveIndex + step) % _tabs.Count + _tabs.Count) % _tabs.Count;
+            Activate(next);
+            var eventSystem = UnityEngine.EventSystems.EventSystem.current;
+            if (eventSystem != null) eventSystem.SetSelectedGameObject(_tabs[next].gameObject);
         }
 
         public void Relink()

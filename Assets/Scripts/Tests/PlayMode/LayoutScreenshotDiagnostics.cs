@@ -6,6 +6,7 @@ using System.Linq;
 using NUnit.Framework;
 using SudokuRoguelike.Boss;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Items;
 using SudokuRoguelike.Run;
 using SudokuRoguelike.Save;
 using SudokuRoguelike.Sudoku;
@@ -498,6 +499,56 @@ namespace SudokuRoguelike.Tests
             }
         }
 
+        // UI-STYLE-018: the Codex book with a profile about half way through its collections (the mockup's state):
+        // the Items page with an item chosen that was found and used, then the Curses page.
+        [UnityTest]
+        public IEnumerator RenderCodexBook()
+        {
+            var meta = new MetaProgressionState { ItemCodex = new ItemCodexData() };
+            var items = (ItemType[])Enum.GetValues(typeof(ItemType));
+            for (var i = 0; i < items.Length; i++)
+                if (i % 5 != 2)
+                    meta.ItemCodex.Entries.Add(new ItemCodexEntry
+                    {
+                        ItemId = items[i].ToString(), Discovered = true, DiscoveredDate = "2026-10-1" + (i % 10),
+                        TimesFound = 1 + i % 7, TimesUsed = i % 5
+                    });
+            meta.DiscoveredRelics = ((RelicId[])Enum.GetValues(typeof(RelicId))).Where((_, i) => i % 4 == 0).ToList();
+            meta.DiscoveredBossModifiers = ModifierFamilies.All().Where((_, i) => i % 3 != 1).ToList();
+            meta.DiscoveredCurses = CurseService.All.Where((_, i) => i % 3 == 0).Select(c => c.Id).ToList();
+            new SaveFileService(TestSlot).Save(new SaveFileEnvelope { MetaProgress = meta });
+            SaveFileService.FlushSharedPendingWrites();
+
+            if (Object.FindFirstObjectByType<EventSystem>() == null)
+                _createdRoots.Add(new GameObject("LayoutShotCodexEventSystem", typeof(EventSystem), typeof(StandaloneInputModule)));
+            // No pointer in a batch run: its stale position would hover a button in the shot.
+            var inputModules = Object.FindObjectsByType<BaseInputModule>(FindObjectsSortMode.None);
+            foreach (var module in inputModules) module.enabled = false;
+            var camera = CreateCamera();
+            var host = new GameObject("LayoutShotCodex");
+            _createdRoots.Add(host);
+            host.AddComponent<MainMenuBlueprintBuilder>().Build();
+            var rootGroup = Find(host, "MainMenuRoot").GetComponent<CanvasGroup>();
+            if (rootGroup != null) rootGroup.alpha = 1f;
+            var menu = host.GetComponent<MainMenuController>();
+            menu.ShowMainMenu();
+            yield return null;
+            menu.OpenItems();
+            Find(host, "BtnCodexItems").GetComponent<Button>().onClick.Invoke();
+            yield return null;
+            EventSystem.current.SetSelectedGameObject(Find(host, "CodexTile_3"));   // Meditation Stone: found and used
+            yield return new WaitForSecondsRealtime(0.5f);
+            yield return Shoot(host, camera, "after_codex.png");
+
+            Find(host, "BtnCodexCurses").GetComponent<Button>().onClick.Invoke();
+            EventSystem.current.SetSelectedGameObject(Find(host, "CodexTile_0"));   // the entry the right page shows
+            yield return new WaitForSecondsRealtime(0.3f);
+            yield return Shoot(host, camera, "after_codex_curses.png");
+            foreach (var module in inputModules) if (module != null) module.enabled = true;
+            new SaveFileService(TestSlot).Save(new SaveFileEnvelope());
+            SaveFileService.FlushSharedPendingWrites();
+        }
+
         // UI-STYLE-012: the Custom Puzzle screen at 9×9, 3 stars, with Dutch Whispers, Killer Cages and Skyscrapers chosen
         // (the mockup's example). ToggleModifier is looked up by name, so the same test also shoots the old panel.
         [UnityTest]
@@ -680,6 +731,13 @@ namespace SudokuRoguelike.Tests
             }
             yield return null;
             yield return null;
+            // Texts built before the font atlas grew keep stale glyph coordinates (small labels smear): rebuild them all
+            // against the final atlas before rendering.
+            for (var pass = 0; pass < 2; pass++)
+            {
+                Canvas.ForceUpdateCanvases();
+                foreach (var text in host.GetComponentsInChildren<Text>()) text.SetAllDirty();
+            }
             Canvas.ForceUpdateCanvases();
             camera.Render();
             var previous = RenderTexture.active;

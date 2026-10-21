@@ -27,9 +27,9 @@ namespace SudokuRoguelike.Tests
 
                 var firstChildCount = root.childCount;
                 Assert.Greater(firstChildCount, 0);
-                Assert.AreEqual(3, builder.SlotChangedHandlerRegistrationCount);
+                Assert.AreEqual(2, builder.SlotChangedHandlerRegistrationCount);   // keybindings and Options (UI-STYLE-017)
                 Assert.AreEqual(1, GetSlotChangedHandlerCount(optionsController));
-                Assert.AreEqual(2, GetOptionsChangedHandlerCount(optionsController));
+                Assert.AreEqual(1, GetOptionsChangedHandlerCount(optionsController));   // the Options scroll refreshes every page
 
                 var staleChild = new GameObject("StaleGeneratedChild", typeof(RectTransform));
                 staleChild.transform.SetParent(root, false);
@@ -45,9 +45,9 @@ namespace SudokuRoguelike.Tests
                     "a rebuild (e.g. after a language change) must keep the menu visible");
                 Assert.IsNull(rebuiltRoot.Find("StaleGeneratedChild"));
                 Assert.AreEqual(firstChildCount, rebuiltRoot.childCount);
-                Assert.AreEqual(3, builder.SlotChangedHandlerRegistrationCount);
+                Assert.AreEqual(2, builder.SlotChangedHandlerRegistrationCount);   // keybindings and Options (UI-STYLE-017)
                 Assert.AreEqual(1, GetSlotChangedHandlerCount(optionsController));
-                Assert.AreEqual(2, GetOptionsChangedHandlerCount(optionsController));
+                Assert.AreEqual(1, GetOptionsChangedHandlerCount(optionsController));   // the Options scroll refreshes every page
 
                 var controllerSource = System.IO.File.ReadAllText("Assets/Scripts/UI/MainMenuController.cs");
                 StringAssert.Contains("NotifyOptionsChangedForUiRefresh", controllerSource);

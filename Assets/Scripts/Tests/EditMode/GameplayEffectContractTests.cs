@@ -260,6 +260,18 @@ namespace SudokuRoguelike.Tests
             Assert.AreEqual(4, stats.PencilMarks);
         }
 
+        [Test]
+        [Requirement("META-CODEX-009")]
+        public void TryUseItem_RecordsTheItemTypeForTheCodex()
+        {
+            var run = StartPuzzleRun(93011);
+            run.State.HeldItems.Add(BuildItem(ItemType.GoldenKoi, ItemRarity.Rare));
+
+            Assert.IsTrue(run.TryUseItem(run.State.HeldItems.Count - 1));
+
+            CollectionAssert.AreEqual(new[] { nameof(ItemType.GoldenKoi) }, run.State.ItemTypesUsedThisRun);
+        }
+
         private static RunDirector StartPuzzleRun(int seed, ClassId classId = ClassId.NumberFreak,
             int classLevel = 1)
         {

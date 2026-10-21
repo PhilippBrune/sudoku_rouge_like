@@ -457,8 +457,9 @@ namespace SudokuRoguelike.UI
         public void OpenItems()
         {
             var meta = Profile.LoadMetaProgress();
-            _itemsMenuController?.Refresh(meta);
+            if (_itemsMenuController != null) _itemsMenuController.Refresh(meta);   // no ?. on a MonoBehaviour
             _menu.Show(MenuScreen.Items);
+            if (_itemsMenuController != null) _itemsMenuController.FocusFirst();   // UI-STYLE-018: start on the first tile
         }
 
         public void OpenMetaProgression()
@@ -486,7 +487,6 @@ namespace SudokuRoguelike.UI
             _menu.Show(MenuScreen.GameModes);
         }
         public void OpenKeybindings()  => _menu.Show(MenuScreen.Keybindings);
-        public void OpenAccessibility() => _menu.Show(MenuScreen.Accessibility);
 
         /// <summary>
         /// Forces the options panel to re-read option values and refresh all UI widgets.

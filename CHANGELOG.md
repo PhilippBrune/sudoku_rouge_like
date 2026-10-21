@@ -20,6 +20,9 @@
 - **Gold kept counts:** every 5 gold left at the end of a run adds a point to the run score (up to 15 %).
 - **Six counter items**, one for each family of rules: Water Basin (lines), Twin Pebbles (dots and pairs), Rice Bowl (cages and arrows), Moss Stone (marked cells), Compass of Order (whole-board rules) and Sun Medallion (clues outside the grid). Each writes correct digits into the cells its rules use, and shops lean toward the ones that answer the floor's and the boss's rules.
 
+- **Options as a hand scroll** with a bookmark per page (LB/RB turn the page), one setting per line, switches as stamps with a short note on what each does, and Reset this page. Accessibility is now a page of the Options, with the preview board beside it; the run's Options have the same pages plus a Run page.
+- **The Codex as a collector's book:** bookmarks for Items, Relics, Rules and the new Curses page, each with its count; found entries in colour, the rest as silhouettes, a filter for found and not yet found, and the chosen entry on the right page with how often you found and used it, where it comes from and what finding them all unlocks.
+
 ### Changed
 
 - Digits are taken 0.25 s after a cell is chosen (was 0.5 s), and a placed digit highlights every cell with that digit.

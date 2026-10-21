@@ -1,6 +1,6 @@
 # Accessibility Specification
 
-**Version:** 2.2  
+**Version:** 2.3  
 **Date:** 2026-10-21  
 **Status:** implemented
 
@@ -8,6 +8,7 @@
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.3 | 2026-10-21 | implemented | Accessibility is a page of the Options scroll (UI-STYLE-017) with Text Size and the preview board on its slip; the separate panel is gone. |
 | 2.2 | 2026-10-21 | implemented | Options audit (GAP-061): Colorblind Mode uses the Okabe–Ito palette for line colours and no longer simulates colour blindness on the cells (ACCESS-COLOR-003); Text Size scales the board digits and pencil marks (ACCESS-FONT-001); "Screen Reader" is named Status Captions; the gameplay assists act as named (GameDesignSpec 1.15 Options Effects). |
 | 2.1 | 2026-10-07 | implemented | Measurable contrast criteria and measured values (SPEC-MAC-006); given/player digit styles and visible toggle states (GAP-029); high-contrast behaviour stated with its multipliers. |
 
@@ -49,17 +50,17 @@ Current behavior:
 
 ## Accessibility UI
 
-The Accessibility panel is built in `MainMenuBlueprintBuilder` and currently exposes:
+The Accessibility page of the Options scroll (UI-STYLE-017, `OptionsUiFactory.BuildAccessibilitySection`) exposes:
 
 - Colorblind Mode
 - High Contrast
 - Reduce Motion
 - Alternative Symbols
-- Font Scale
+- Text Size (80–150 %)
 - Status Captions
-- Reset to Defaults
+- Reset this page
 
-`AccessibilityPreviewController` renders a read-only preview board so visual changes can be inspected immediately.
+`AccessibilityPreviewController` renders a read-only preview board on the page's slip (main menu) so visual changes can be inspected immediately. The run's Options have the same page without Text Size and the preview.
 
 ## Related Gameplay Assist Settings
 

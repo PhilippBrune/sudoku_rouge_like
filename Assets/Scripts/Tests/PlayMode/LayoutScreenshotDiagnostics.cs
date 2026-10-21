@@ -634,6 +634,109 @@ namespace SudokuRoguelike.Tests
             foreach (var module in inputModules) if (module != null) module.enabled = true;
         }
 
+        // UI-STYLE-024 and UI-STYLE-025: Select Class and Game Modes with the mockups' profile (Number Freak at Level 23 with
+        // two prestige stars, Harmony IV open and chosen, Endless Zen at depth 14, Spirit Trials still locked), plus the main
+        // menu with the Codex renamed.
+        [UnityTest]
+        public IEnumerator RenderModeScreens()
+        {
+            var meta = new MetaProgressionState
+            {
+                ClassUnlocks = new ClassUnlockProgress { BossesDefeated = 1, ItemsUsed = 22, RelicsCollected = 9, GoldCollected = 12400 },
+                MaxUnlockedHarmonyLevel = 4,
+                LastSelectedHarmonyLevel = 4,
+                EndlessZenUnlocked = true
+            };
+            meta.UnlockedClasses.AddRange(new[] { ClassId.GardenMonk, ClassId.ShrineArchivist });
+            meta.GardenProgression.ClassEntries.Add(new ClassGardenProgressEntry
+            {
+                ClassId = ClassId.NumberFreak, TotalXp = Economy.XpTable.CumulativeXpForLevel(23) + 400, PrestigeTier = 2,
+                GardenRuns = 41, BestFloor = 5
+            });
+            meta.GardenProgression.ClassEntries.Add(new ClassGardenProgressEntry
+                { ClassId = ClassId.GardenMonk, TotalXp = Economy.XpTable.CumulativeXpForLevel(9), GardenRuns = 6, BestFloor = 3 });
+            var envelope = new SaveFileEnvelope { MetaProgress = meta };
+            envelope.Statistics.HighestEndlessDepth = 14;
+            envelope.Statistics.TotalZenSessions = 5;
+            envelope.Statistics.TotalRunsStarted = 47;
+            new SaveFileService(TestSlot).Save(envelope);
+            SaveFileService.FlushSharedPendingWrites();
+
+            if (Object.FindFirstObjectByType<EventSystem>() == null)
+                _createdRoots.Add(new GameObject("LayoutShotModesEventSystem", typeof(EventSystem), typeof(StandaloneInputModule)));
+            var inputModules = Object.FindObjectsByType<BaseInputModule>(FindObjectsSortMode.None);
+            foreach (var module in inputModules) module.enabled = false;
+            var camera = CreateCamera();
+            var host = new GameObject("LayoutShotModes");
+            _createdRoots.Add(host);
+            host.AddComponent<MainMenuBlueprintBuilder>().Build();
+            var rootGroup = Find(host, "MainMenuRoot").GetComponent<CanvasGroup>();
+            if (rootGroup != null) rootGroup.alpha = 1f;
+            var menu = host.GetComponent<MainMenuController>();
+            menu.ShowMainMenu();
+            EventSystem.current.SetSelectedGameObject(null);
+            yield return new WaitForSecondsRealtime(0.4f);
+            yield return Shoot(host, camera, "after_main_menu.png");
+
+            menu.ShowGameModes();
+            EventSystem.current.SetSelectedGameObject(Find(host, "BtnGarden"));
+            yield return new WaitForSecondsRealtime(0.5f);
+            yield return Shoot(host, camera, "after_game_modes.png");
+            EventSystem.current.SetSelectedGameObject(Find(host, "BtnDailyWalk"));
+            yield return new WaitForSecondsRealtime(0.3f);
+            yield return Shoot(host, camera, "after_game_modes_daily.png");
+
+            Find(host, "BtnGarden").GetComponent<Button>().onClick.Invoke();
+            EventSystem.current.SetSelectedGameObject(Find(host, "BtnClassNumberFreak"));
+            yield return new WaitForSecondsRealtime(0.5f);
+            yield return Shoot(host, camera, "after_class_select.png");
+
+            menu.BackToMainMenu();
+            menu.StartEndlessZen();
+            menu.SetSelectedClass(ClassId.GardenMonk);
+            EventSystem.current.SetSelectedGameObject(Find(host, "BtnClassGardenMonk"));
+            yield return new WaitForSecondsRealtime(0.4f);
+            yield return Shoot(host, camera, "after_class_select_endless.png");
+            foreach (var module in inputModules) if (module != null) module.enabled = true;
+        }
+
+        // UI-STYLE-026: the results of Endless Zen (depth 14 after a best of 11), Spirit Trials (Adept, passed) and the
+        // Monthly Walk (completed). SR_SHOT_PREFIX "before_" shoots the old text results on a mirror with the old code.
+        [UnityTest]
+        public IEnumerator RenderModeResults()
+        {
+            var prefix = Environment.GetEnvironmentVariable("SR_SHOT_PREFIX");
+            if (string.IsNullOrEmpty(prefix)) prefix = "after_";
+            var envelope = new SaveFileEnvelope();
+            envelope.Statistics.HighestEndlessDepth = 11;
+            envelope.Statistics.TotalZenSessions = 4;
+            envelope.Statistics.TrialsBestScore_Adept = 900;
+            new SaveFileService(TestSlot).Save(envelope);
+            SaveFileService.FlushSharedPendingWrites();
+            var camera = CreateCamera();
+            var (host, run) = StartRun(7321, true);
+            yield return DismissIntro();
+            var end = host.GetComponentInChildren<EndScreenViewController>(true);
+            var level = run.CurrentLevelState;
+            level.CorrectPlacements = 52;
+            level.Mistakes = 2;
+            level.PencilMarksUsed = 9;
+            run.State.Depth = 14;
+            run.State.TotalRunSeconds = 754f;
+
+            end.ShowEndlessZenResult(run);
+            yield return new WaitForSecondsRealtime(0.8f);
+            yield return Shoot(host, camera, prefix + "result_endless_zen.png");
+            run.State.SpiritTrialsTier = SpiritTrialsTier.Adept;
+            end.ShowSpiritTrialsResult(run, true);
+            yield return new WaitForSecondsRealtime(0.8f);
+            yield return Shoot(host, camera, prefix + "result_spirit_trials.png");
+            run.State.IsSeasonalChallenge = true;
+            end.ShowGameOver(run, true);
+            yield return new WaitForSecondsRealtime(0.8f);
+            yield return Shoot(host, camera, prefix + "result_monthly_walk.png");
+        }
+
         // UI-STYLE-012: the Custom Puzzle screen at 9×9, 3 stars, with Dutch Whispers, Killer Cages and Skyscrapers chosen
         // (the mockup's example). ToggleModifier is looked up by name, so the same test also shoots the old panel.
         [UnityTest]

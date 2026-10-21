@@ -1312,6 +1312,7 @@ namespace SudokuRoguelike.UI
 
         private System.Collections.IEnumerator ShakeBadgeCoroutine(RectTransform rt)
         {
+            if (AnimationHelper.MotionReduced) yield break;   // ACCESS-MOTION-002
             const float duration  = 0.30f;
             const float amplitude = 3f;
             const float cycles    = 3f;

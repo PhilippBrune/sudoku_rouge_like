@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -296,38 +297,7 @@ namespace SudokuRoguelike.Core
             { "InRun.End.Detail.NewUnlockHeader", "NEW UNLOCK -" },
             { "InRun.End.Detail.ClassUnlocked", "  \u2605 {0} is now available!" },
             { "InRun.End.Detail.HarmonyUnlocked", "  \u2605 Harmony {0} difficulty unlocked!" },
-            { "InRun.End.Seasonal.Title", "Monthly Walk\n{0}" },
-            { "InRun.End.Seasonal.Grade", "Grade:  {0}" },
-            { "InRun.End.Seasonal.Score", "Score:  {0:N0}" },
-            { "InRun.End.Seasonal.CellsCorrect", "Cells Correct:  {0}" },
-            { "InRun.End.Seasonal.Mistakes", "Mistakes:       {0}" },
-            { "InRun.End.Seasonal.PencilLeft", "Pencil Left:    {0} / {1}" },
-            { "InRun.End.Seasonal.NewPersonalBest", "New Personal Best!  (prev: {0:N0})" },
-            { "InRun.End.Seasonal.PersonalBest", "Personal Best:  {0:N0}" },
-            { "InRun.End.Seasonal.FirstAttempt", "First attempt this month!" },
-            { "InRun.End.Seasonal.InkStampFirst", "+1 Ink Stamp  (first completion)" },
-            { "InRun.End.Seasonal.InkStampS", "+2 Ink Stamps  (S grade)" },
-            { "InRun.End.Trials.TitleComplete", "Spirit Trials\n{0} - Complete!" },
-            { "InRun.End.Trials.TitleFailed", "Spirit Trials\n{0} - Failed" },
-            { "InRun.End.Trials.Score", "Score:          {0:N0}" },
-            { "InRun.End.Trials.Time", "Time:           {0}:{1:D2}" },
-            { "InRun.End.Trials.CellsFilled", "Cells Filled:   {0}" },
-            { "InRun.End.Trials.PencilMarks", "Pencil Marks:   {0}" },
-            { "InRun.End.Trials.Mistakes", "Mistakes:       {0}" },
-            { "InRun.End.Trials.Modifiers", "Modifiers:      +{0}" },
-            { "InRun.End.Trials.NewPersonalBest", "New Personal Best!  (prev: {0:N0})" },
-            { "InRun.End.Trials.PersonalBest", "Personal Best:  {0:N0}" },
-            { "InRun.End.Trials.FirstCompletion", "First completion!" },
             { "InRun.End.Trials.AwaitAgain", "The spirit trials await again." },
-            { "InRun.End.Trials.BestScore", "Best Score:     {0:N0}" },
-            { "InRun.End.Zen.Title", "Endless Zen\nDepth {0}" },
-            { "InRun.End.Zen.DepthReached", "Depth Reached:  {0}" },
-            { "InRun.End.Zen.SessionTime", "Session Time:   {0}:{1:D2}" },
-            { "InRun.End.Zen.Mistakes", "Mistakes:       {0}" },
-            { "InRun.End.Zen.NewPersonalBest", "New Personal Best!  (prev: {0})" },
-            { "InRun.End.Zen.PersonalBest", "Personal Best:  {0}" },
-            { "InRun.End.Zen.FirstSession", "First Endless Zen session!" },
-            { "InRun.End.Zen.TotalSessions", "Total Sessions: {0}" },
             { "Curse.hollow_pencil.Name", "Hollow Pencil" },
             { "Curse.hollow_pencil.Description", "All pencil marks cost 2 Pencil instead of 1." },
             { "Curse.fog_of_memory.Name", "Fog of Memory" },
@@ -415,8 +385,6 @@ namespace SudokuRoguelike.Core
             { "DisplayMode.Borderless", "Borderless Fullscreen" },
             { "DisplayMode.Windowed", "Windowed" },
             { "DisplayMode.FramelessWindow", "Frameless Window" },
-            { "GameModes.HarmonyHeader", "Garden Run Harmony" },
-            { "GameModes.Description", "Garden Run: Full roguelike pathing, economy, and boss gates.\n\nEndless Zen: Infinite 9x9 puzzle chain with HP attrition and no run rewards.\n\nSpirit Trials: Single timed puzzle with tiered modifier pressure.\n\nDaily Walk and Monthly Walk are focused objective modes." },
             { "SpiritTrials.TierSelectSubtitle", "Select a tier to begin" },
             { "SpiritTrials.TierStats", "HP {0} - Pencil {1} - Par {2}" },
             { "SpiritTrials.Tier.Apprentice", "Apprentice" },
@@ -480,10 +448,8 @@ namespace SudokuRoguelike.Core
             { "Ready.", "Bereit." },
 
             // Class Select
-            { "Select Class", "Klasse wählen" },
             { "Continue", "Weiter" },
             { "Back", "Zurück" },
-            { "Allow Irregular Puzzles", "Unregelmäßige Rätsel erlauben" },
             { "Class not yet unlocked.", "Klasse noch nicht freigeschaltet." },
 
             // Options
@@ -563,7 +529,6 @@ namespace SudokuRoguelike.Core
             { "Start Puzzle", "Rätsel starten" },
 
             // Game Modes
-            { "Start Garden Run", "Gartenrunde starten" },
             { "Start Endless Zen", "Endloses Zen starten" },
             { "Start Spirit Trials", "Geisterprüfungen starten" },
 
@@ -585,7 +550,6 @@ namespace SudokuRoguelike.Core
             { "No run to resume.", "Kein Spiel zum Fortsetzen." },
             { "Debug: All features enabled.", "Debug: Alles freigeschaltet." },
             { "Debug mode off.", "Debug-Modus aus." },
-            { "Items & Relic Codex", "Gegenstands- & Reliktkodex" },
             { "Profiles", "Profile" },
             { "Custom Puzzle", "Eigenes R\u00e4tsel" },
             { "Global/Neg", "Global/Neg." },
@@ -775,38 +739,7 @@ namespace SudokuRoguelike.Core
             { "InRun.End.Detail.NewUnlockHeader", "NEU FREIGESCHALTET -" },
             { "InRun.End.Detail.ClassUnlocked", "  \u2605 {0} ist jetzt verf\u00fcgbar!" },
             { "InRun.End.Detail.HarmonyUnlocked", "  \u2605 Schwierigkeit Harmony {0} freigeschaltet!" },
-            { "InRun.End.Seasonal.Title", "Monatslauf\n{0}" },
-            { "InRun.End.Seasonal.Grade", "Rang:   {0}" },
-            { "InRun.End.Seasonal.Score", "Punkte: {0:N0}" },
-            { "InRun.End.Seasonal.CellsCorrect", "Korrekte Felder: {0}" },
-            { "InRun.End.Seasonal.Mistakes", "Fehler:          {0}" },
-            { "InRun.End.Seasonal.PencilLeft", "Bleistift \u00fcbrig: {0} / {1}" },
-            { "InRun.End.Seasonal.NewPersonalBest", "Neue Bestleistung!  (vorher: {0:N0})" },
-            { "InRun.End.Seasonal.PersonalBest", "Bestleistung: {0:N0}" },
-            { "InRun.End.Seasonal.FirstAttempt", "Erster Versuch diesen Monat!" },
-            { "InRun.End.Seasonal.InkStampFirst", "+1 Tintenstempel  (erster Abschluss)" },
-            { "InRun.End.Seasonal.InkStampS", "+2 Tintenstempel  (S-Rang)" },
-            { "InRun.End.Trials.TitleComplete", "Geisterpr\u00fcfungen\n{0} - geschafft!" },
-            { "InRun.End.Trials.TitleFailed", "Geisterpr\u00fcfungen\n{0} - gescheitert" },
-            { "InRun.End.Trials.Score", "Punkte:          {0:N0}" },
-            { "InRun.End.Trials.Time", "Zeit:            {0}:{1:D2}" },
-            { "InRun.End.Trials.CellsFilled", "Felder gef\u00fcllt: {0}" },
-            { "InRun.End.Trials.PencilMarks", "Bleistiftmarken: {0}" },
-            { "InRun.End.Trials.Mistakes", "Fehler:          {0}" },
-            { "InRun.End.Trials.Modifiers", "Modifikatoren:   +{0}" },
-            { "InRun.End.Trials.NewPersonalBest", "Neue Bestleistung!  (vorher: {0:N0})" },
-            { "InRun.End.Trials.PersonalBest", "Bestleistung:   {0:N0}" },
-            { "InRun.End.Trials.FirstCompletion", "Erster Abschluss!" },
             { "InRun.End.Trials.AwaitAgain", "Die Geisterpr\u00fcfungen warten erneut." },
-            { "InRun.End.Trials.BestScore", "Beste Punkte:    {0:N0}" },
-            { "InRun.End.Zen.Title", "Endlos-Zen\nTiefe {0}" },
-            { "InRun.End.Zen.DepthReached", "Erreichte Tiefe: {0}" },
-            { "InRun.End.Zen.SessionTime", "Sitzungszeit:    {0}:{1:D2}" },
-            { "InRun.End.Zen.Mistakes", "Fehler:          {0}" },
-            { "InRun.End.Zen.NewPersonalBest", "Neue Bestleistung!  (vorher: {0})" },
-            { "InRun.End.Zen.PersonalBest", "Bestleistung:   {0}" },
-            { "InRun.End.Zen.FirstSession", "Erste Endlos-Zen-Sitzung!" },
-            { "InRun.End.Zen.TotalSessions", "Sitzungen gesamt: {0}" },
             { "Curse.hollow_pencil.Name", "Hohler Bleistift" },
             { "Curse.hollow_pencil.Description", "Alle Bleistiftmarkierungen kosten 2 Bleistift statt 1." },
             { "Curse.fog_of_memory.Name", "Nebel der Erinnerung" },
@@ -889,8 +822,6 @@ namespace SudokuRoguelike.Core
             { "Keybindings.Action.SkipAnimation", "Animation \u00fcberspringen" },
             { "Keybindings.Action.TabNext", "N\u00e4chster Tab" },
             { "Keybindings.Action.TabPrevious", "Vorheriger Tab" },
-            { "GameModes.HarmonyHeader", "Gartenrunden-Harmonie" },
-            { "GameModes.Description", "Gartenrunde: Voller Roguelike-Pfad mit Wirtschaft und Boss-Toren.\n\nEndloses Zen: Endlose 9x9-R\u00e4tselkette mit LP-Abnutzung und ohne Run-Belohnungen.\n\nGeisterpr\u00fcfungen: Einzelnes Zeitr\u00e4tsel mit gestaffeltem Modifikatordruck.\n\nTagesgang und Monatsgang sind fokussierte Zielmodi." },
             { "SpiritTrials.TierSelectSubtitle", "W\u00e4hle eine Stufe zum Beginnen" },
             { "SpiritTrials.TierStats", "LP {0} - Bleistift {1} - Par {2}" },
             { "SpiritTrials.Tier.Apprentice", "Lehrling" },
@@ -937,22 +868,8 @@ namespace SudokuRoguelike.Core
             { "Skip", "\u00dcberspringen" },
 
             // Generated menu and run-confirm UI
-            { "Begin", "Beginnen" },
             { "MAX", "MAX" },
-            { "Endless Zen (Locked)", "Endloses Zen (gesperrt)" },
-            { "Spirit Trials (Locked)", "Geisterpr\u00fcfungen (gesperrt)" },
-            { "RunConfirm.StatsLine", "LP: {0}  -  Bleistift: {1}  -  Gegenstandsslots: {2}" },
-            { "RunConfirm.Mode.EndlessZen", "Modus: Endloses Zen" },
-            { "RunConfirm.Mode.SpiritTrials", "Modus: Geisterpr\u00fcfungen  -  Stufe: {0}" },
-            { "RunConfirm.Mode.GardenRun", "Modus: Gartenrunde  -  Harmonie: {0}" },
-            { "RunConfirm.Irregular.On", "Unregelm\u00e4\u00dfige R\u00e4tsel: AN" },
-            { "RunConfirm.Irregular.Off", "Unregelm\u00e4\u00dfige R\u00e4tsel: aus" },
             { "Harmony.Readout", "Schwierigkeit: {0}  ({1})" },
-            { "Harmony.SelectedLabel", "{0}  ({1})" },
-            { "Harmony.SubLabel", "Freigeschaltet: H0-H{0}  -  EP x{1:0.0}" },
-            { "Harmony.Perk.Button", "Vorteil: {0}" },
-            { "Perk: Locked until H4", "Vorteil: bis H4 gesperrt" },
-            { "Perks unlock at H4, H6, H8, and H10.", "Vorteile werden bei H4, H6, H8 und H10 freigeschaltet." },
             { "Harmony.Name.0", "Gartenpfad" },
             { "Harmony.Name.1", "Harmonie I" },
             { "Harmony.Name.2", "Harmonie II" },
@@ -1546,6 +1463,40 @@ namespace SudokuRoguelike.Core
 
         public static LanguageOption Current => _current;
 
+        // [REQ: LOC-NUM-001] Numbers in texts follow the chosen language, not the PC's region (GAP-065): decimal point or
+        // comma, thousands groups. French groups with U+00A0; its culture's narrow no-break space (U+202F) is not in the
+        // game font.
+        private static readonly Dictionary<LanguageOption, CultureInfo> Cultures = new Dictionary<LanguageOption, CultureInfo>();
+
+        /// <summary>The culture of the chosen language, for numbers formatted outside <see cref="Format"/>.</summary>
+        public static CultureInfo Culture => CultureFor(_current);
+
+        public static CultureInfo CultureFor(LanguageOption language)
+        {
+            if (Cultures.TryGetValue(language, out var cached)) return cached;
+            var name = language switch
+            {
+                LanguageOption.German              => "de-DE",
+                LanguageOption.French              => "fr-FR",
+                LanguageOption.Spanish             => "es-ES",
+                LanguageOption.BrazilianPortuguese => "pt-BR",
+                _                                  => "en-US",
+            };
+            CultureInfo culture;
+            try
+            {
+                culture = (CultureInfo)CultureInfo.GetCultureInfo(name).Clone();
+            }
+            catch (CultureNotFoundException)
+            {
+                culture = (CultureInfo)CultureInfo.InvariantCulture.Clone();   // a player without culture data: plain numbers
+            }
+            if (culture.NumberFormat.NumberGroupSeparator.Trim().Length == 0)
+                culture.NumberFormat.NumberGroupSeparator = " ";
+            Cultures[language] = CultureInfo.ReadOnly(culture);
+            return Cultures[language];
+        }
+
         public static IReadOnlyList<string> RequiredCreditKeys => CreditLocalizationKeys;
 
         public static IReadOnlyList<string> RequiredRuntimeFeedbackKeys => RuntimeFeedbackLocalizationKeys;
@@ -1659,7 +1610,7 @@ namespace SudokuRoguelike.Core
 
         public static string Format(string key, string englishFallback, params object[] args)
         {
-            return string.Format(T(key, englishFallback), args);
+            return string.Format(Culture, T(key, englishFallback), args);
         }
 
         public static string Plural(
@@ -1688,7 +1639,7 @@ namespace SudokuRoguelike.Core
                 for (var i = 0; i < additionalArgs.Length; i++)
                     args[i + 1] = additionalArgs[i];
 
-            return string.Format(
+            return string.Format(Culture,
                 Plural(count, singularKey, pluralKey, singularEnglishFallback, pluralEnglishFallback),
                 args);
         }

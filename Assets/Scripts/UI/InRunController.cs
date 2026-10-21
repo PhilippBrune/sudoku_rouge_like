@@ -3136,7 +3136,7 @@ namespace SudokuRoguelike.UI
             const float Half    = Dur * 0.5f;
 
             var count      = nodes.Count;
-            if (count == 0) yield break;
+            if (count == 0 || AnimationHelper.MotionReduced) yield break;   // ACCESS-MOTION-002
 
             var startTimes = new float[count];
             for (var i = 0; i < count; i++) startTimes[i] = float.MaxValue; // unstarted

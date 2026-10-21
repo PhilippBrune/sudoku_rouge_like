@@ -197,6 +197,8 @@ namespace SudokuRoguelike.Tests
             return expression == "\"\""
                 || expression == "\"<\""
                 || expression == "\">\""
+                || expression == "\"‹\""
+                || expression == "\"›\""
                 || expression == "\"0\""
                 || expression == "\"(Q)\""
                 || expression == "\"(O)\""

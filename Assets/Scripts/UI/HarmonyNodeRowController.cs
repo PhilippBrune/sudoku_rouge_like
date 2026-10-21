@@ -108,7 +108,7 @@ namespace SudokuRoguelike.UI
         {
             if (_titleText   != null) _titleText.text    = HarmonyDifficultyService.GetDisplayName(level);
             if (_hudLabelText != null) _hudLabelText.text = HarmonyDifficultyService.GetHudLabel(level);
-            if (_xpMultText  != null) _xpMultText.text   = $"XP ×{HarmonyDifficultyService.GetXpMultiplier(level):0.0}";
+            if (_xpMultText  != null) _xpMultText.text   = "XP ×" + HarmonyDifficultyService.GetXpMultiplier(level).ToString("0.0", LocalizationService.Culture);   // LOC-NUM-001
 
             if (_subtitleText != null)
             {

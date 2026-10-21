@@ -69,7 +69,6 @@ namespace SudokuRoguelike.UI
         // ── UI Widgets ──
         private Text _statusText;
         private Button _resumeButton;
-        private Text _classInfoText;
         private Text _harmonyReadout;
         private Text _harmonyDescriptionLabel;
         private Button _harmonyPrevClassBtn;
@@ -77,11 +76,8 @@ namespace SudokuRoguelike.UI
         private readonly Dictionary<ClassId, Button> _classButtons = new Dictionary<ClassId, Button>();
         private readonly Dictionary<ClassId, GameObject> _classLockOverlays = new Dictionary<ClassId, GameObject>();
         private ClassId? _highlightedClassId;
-        private GameObject _startRunConfirmOverlay;   // #8 modal
         private GameObject _sudokuBasicsOverlay;      // #14 dismiss
         private GameObject _firstRunSetupOverlay;
-        private GameObject _classLockTooltipPanel;    // C-3 lock tooltip
-        private Text       _classLockTooltipText;
 
         private static string HarmonyName(int level)
         {
@@ -136,11 +132,6 @@ namespace SudokuRoguelike.UI
         {
             InputRemapService.UpdateCursorVisibility();
 
-            // GAP-029: the lock tooltip lives on the canvas root; leaving class select (Back, B) fires no pointer-exit,
-            // so it used to stay on the main menu.
-            if (_classLockTooltipPanel != null && _classLockTooltipPanel.activeSelf
-                && (_classSelectPanel == null || !_classSelectPanel.activeInHierarchy))
-                HideClassLockTooltip();
 
             // MM-2/MM-6: axis-driven scroll for scrollable panels (runs every frame, before anyKeyDown guard)
             ScrollActivePanelIfNeeded();
@@ -189,24 +180,6 @@ namespace SudokuRoguelike.UI
                 }
             }
 
-            // #8 — B/Escape dismisses the Start Run confirmation modal
-            if (_startRunConfirmOverlay != null && _startRunConfirmOverlay.activeSelf)
-            {
-                // MM-5: A/Enter confirms (triggers the Start action); B/Escape cancels
-                if (Input.GetKeyDown(KeyCode.JoystickButton0) || Input.GetKeyDown(KeyCode.Return))
-                {
-                    var confirmBtn = _startRunConfirmOverlay.GetComponentInChildren<Button>();
-                    if (confirmBtn != null && confirmBtn.interactable)
-                        confirmBtn.onClick.Invoke();
-                    return;
-                }
-                if (Input.GetKeyDown(KeyCode.JoystickButton1) || Input.GetKeyDown(KeyCode.Escape))
-                {
-                    ExecuteMainMenuCancelRoute(CancelRouteAction.DismissStartRunConfirmation);
-                    return;
-                }
-            }
-
             // B button / Escape = back/cancel  (X-1: Escape now handles class select + all panels)
             if (TryHandleMainMenuCancelInput())
                 return;
@@ -247,7 +220,7 @@ namespace SudokuRoguelike.UI
                 new MainMenuCancelContext(
                     IsActive(_firstRunSetupOverlay),
                     IsActive(_sudokuBasicsOverlay),
-                    IsActive(_startRunConfirmOverlay),
+                    false,   // the start-run confirmation window is gone (UI-STYLE-024)
                     _menu?.CurrentScreen ?? MenuScreen.MainMenu)));
             return true;
         }
@@ -258,9 +231,6 @@ namespace SudokuRoguelike.UI
             {
                 case CancelRouteAction.DismissSudokuBasicsOverlay:
                     DismissSudokuBasicsOverlay();
-                    break;
-                case CancelRouteAction.DismissStartRunConfirmation:
-                    DismissStartRunConfirmation();
                     break;
                 case CancelRouteAction.BackFromMenuPanel:
                     BackFromPanel();
@@ -274,13 +244,6 @@ namespace SudokuRoguelike.UI
             Destroy(_sudokuBasicsOverlay);
             _sudokuBasicsOverlay = null;
             MarkSudokuBasicsComplete();
-        }
-
-        private void DismissStartRunConfirmation()
-        {
-            if (_startRunConfirmOverlay == null) return;
-            Destroy(_startRunConfirmOverlay);
-            _startRunConfirmOverlay = null;
         }
 
         private static bool IsActive(GameObject go) => go != null && go.activeSelf;
@@ -428,6 +391,7 @@ namespace SudokuRoguelike.UI
 
         public void StartGame()
         {
+            ClearSeed();
             _pendingLaunchMode = GameMode.GardenRun;
             RefreshClassLockStates();
             _menu.Show(MenuScreen.ClassSelect);
@@ -825,31 +789,29 @@ namespace SudokuRoguelike.UI
             _classLockOverlays[classId] = overlay;
         }
 
-        // [REQ: META-UNLOCK-003] RefreshClassLockStates: unlocked classes shown fully interactive with normal colours
-        // [REQ: META-UNLOCK-004] Locked classes are greyed out (button non-interactive, lock icon overlay visible, muted text colour)
+        // [REQ: META-UNLOCK-003] Unlocked classes can be chosen; [REQ: META-UNLOCK-004] locked ones are dark seals with their
+        // unlock goal and no click (UI-STYLE-024), the LockOverlay showing.
         public void RefreshClassLockStates()
         {
             var meta = Profile.LoadMetaProgress();
             foreach (var kvp in _classButtons)
             {
                 var locked = !IsClassUnlockedOrDebug(kvp.Key, meta);
-                // C-3 — Block interaction on locked buttons
                 kvp.Value.interactable = !locked;
-                // GAP-029: Unity's default disabled tint (50 % alpha) turned locked cards dark-on-dark; the colours
-                // below are shown as set, with a light label on both states.
                 var colors = kvp.Value.colors;
-                colors.disabledColor = Color.white;
+                colors.disabledColor = Color.white;   // the seal draws its locked look itself
                 kvp.Value.colors = colors;
-                var img = kvp.Value.GetComponent<UnityEngine.UI.Image>();
-                if (img != null)
-                    img.color = locked ? new Color(0.16f, 0.15f, 0.13f, 0.92f) : new Color(0.40f, 0.37f, 0.32f, 0.80f);
-                var lbl = kvp.Value.transform.Find("Label")?.GetComponent<Text>();
-                if (lbl != null)
-                    lbl.color = locked ? new Color(0.72f, 0.69f, 0.62f, 1f) : new Color(0.96f, 0.93f, 0.82f, 1f);
-
-                // #6 — show/hide lock icon overlay
                 if (_classLockOverlays.TryGetValue(kvp.Key, out var lockGo) && lockGo != null)
                     lockGo.SetActive(locked);
+            }
+            if (_classSelectScreen != null)
+            {
+                _classSelectScreen.RefreshSeals(meta, id => IsClassUnlockedOrDebug(id, meta));
+                // The scroll shows the chosen class as it is now (another profile, a prestige); a class this profile has
+                // not unlocked falls back to the Number Freak, which every profile has.
+                if (!IsClassUnlockedOrDebug(_selectedClass, meta)) _selectedClass = ClassId.NumberFreak;
+                _highlightedClassId = _selectedClass;
+                _classSelectScreen.ShowClass(_selectedClass, meta, true);
             }
             RefreshHarmonyReadout();
         }
@@ -883,121 +845,20 @@ namespace SudokuRoguelike.UI
             var maxUnlocked = _gameModesController.GetMaxUnlockedHarmonyLevel(meta);
             if (_harmonyPrevClassBtn != null) _harmonyPrevClassBtn.interactable = level > 0;
             if (_harmonyNextClassBtn != null) _harmonyNextClassBtn.interactable = level < maxUnlocked;
-        }
-
-        // C-3 — Hover tooltip showing unlock condition for locked class buttons
-        public void ShowClassLockTooltip(ClassId classId, Vector2 screenPos)
-        {
-            var meta = Profile.LoadMetaProgress();
-            var isUnlocked = IsClassUnlockedOrDebug(classId, meta);
-
-            // [UX-FIX] Never show unlock progress tooltip for classes the player already has.
-            if (isUnlocked) return;
-
-            var progress = MainMenuClassInfoPresenter.GetUnlockProgress(classId, meta);
-
-            // Only show tooltip if there is unlock progress to display
-            if (progress == null) return;
-
-            // Lazy-create the tooltip panel on first use
-            if (_classLockTooltipPanel == null)
-            {
-                var canvas = FindFirstObjectByType<Canvas>()?.rootCanvas;
-                if (canvas == null) return;
-                _classLockTooltipPanel = new GameObject("ClassLockTooltip",
-                    typeof(RectTransform), typeof(UnityEngine.UI.Image));
-                _classLockTooltipPanel.transform.SetParent(canvas.transform, false);
-                var rt = _classLockTooltipPanel.GetComponent<RectTransform>();
-                rt.anchorMin = new Vector2(0.5f, 0.5f);
-                rt.anchorMax = new Vector2(0.5f, 0.5f);
-                rt.pivot     = new Vector2(0f, 1f);
-                rt.sizeDelta = new Vector2(240f, 52f);
-                _classLockTooltipPanel.GetComponent<UnityEngine.UI.Image>().color =
-                    new Color(0.05f, 0.06f, 0.10f, 0.96f);
-                _classLockTooltipText = InRunUiFactory.CreateText(
-                    _classLockTooltipPanel.transform, "LockTipText", "",
-                    10, TextAnchor.UpperLeft, new Color(0.90f, 0.87f, 0.72f, 1f));
-                var textRt = _classLockTooltipText.rectTransform;
-                textRt.anchorMin = Vector2.zero;
-                textRt.anchorMax = Vector2.one;
-                textRt.offsetMin = new Vector2(6f, 4f);
-                textRt.offsetMax = new Vector2(-6f, -4f);
-                _classLockTooltipText.horizontalOverflow = HorizontalWrapMode.Wrap;
-                _classLockTooltipText.verticalOverflow   = VerticalWrapMode.Overflow;
-            }
-
-            _classLockTooltipText.text = isUnlocked ? progress + " \u2713" : progress;
-
-            // Use the canvas's own RectTransform — transform.root may be a non-UI scene root
-            var parentCanvas = _classLockTooltipPanel.GetComponentInParent<Canvas>();
-            var canvasRt = parentCanvas != null ? parentCanvas.GetComponent<RectTransform>() : null;
-            if (canvasRt == null) { _classLockTooltipPanel.SetActive(false); return; }
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                canvasRt, screenPos, null, out var local);
-            var tipRt = _classLockTooltipPanel.GetComponent<RectTransform>();
-            const float TipW = 220f, TipH = 52f, TipOff = 14f;
-            var halfW = canvasRt.rect.width  * 0.5f;
-            var halfH = canvasRt.rect.height * 0.5f;
-            var tx = local.x + TipOff;
-            var ty = local.y + TipOff;
-            if (tx + TipW >  halfW) tx = local.x - TipW - TipOff;
-            if (ty - TipH < -halfH) ty = local.y + TipH + TipOff;
-            tx = Mathf.Clamp(tx, -halfW,         halfW - TipW);
-            ty = Mathf.Clamp(ty, -halfH + TipH,  halfH);
-            tipRt.anchoredPosition = new Vector2(tx, ty);
-            _classLockTooltipPanel.SetActive(true);
-            _classLockTooltipPanel.transform.SetAsLastSibling();
-        }
-
-        public void HideClassLockTooltip()
-        {
-            if (_classLockTooltipPanel != null) _classLockTooltipPanel.SetActive(false);
-        }
-
-        public void SetClassInfoText(Text infoText)
-        {
-            _classInfoText = infoText;
+            var perk = _gameModesController.SelectedHarmonyPerk;
+            if (_classSelectScreen != null)
+                _classSelectScreen.ShowRunSettings(_pendingLaunchMode, _pendingTrialsTier, level, maxUnlocked, perk, HarmonyPerkName(perk),
+                    _gameBootstrap != null && _gameBootstrap.HasResumableRun());
+            RefreshGameModesHarmony(meta);
         }
 
         public void SetSelectedClass(ClassId classId)
         {
             _selectedClass = classId;
             _highlightedClassId = classId;
-
-            // Update button outlines
-            var goldColor = new Color(1f, 0.84f, 0f, 1f);
-            var defaultColor = new Color(0f, 0f, 0f, 0f);
-
-            foreach (var kvp in _classButtons)
-            {
-                var outline = kvp.Value.GetComponent<Outline>();
-                if (outline == null)
-                    outline = kvp.Value.gameObject.AddComponent<Outline>();
-
-                if (kvp.Key == classId)
-                {
-                    outline.effectColor = goldColor;
-                    outline.effectDistance = new Vector2(2, -2);
-                    outline.enabled = true;
-                }
-                else
-                {
-                    outline.effectColor = defaultColor;
-                    outline.enabled = false;
-                }
-            }
-
-            // Update class info text
-            if (_classInfoText != null)
-            {
-                var meta = Profile.LoadMetaProgress();
-                var isUnlocked = IsClassUnlockedOrDebug(classId, meta);
-                var view = MainMenuClassInfoPresenter.Build(classId, meta, isUnlocked);
-
-                _classInfoText.supportRichText = true;
-                _classInfoText.color = view.Color;
-                _classInfoText.text = view.Text;
-            }
+            if (_classSelectScreen == null) return;
+            var meta = Profile.LoadMetaProgress();
+            _classSelectScreen.ShowClass(classId, meta, IsClassUnlockedOrDebug(classId, meta));
         }
 
         public void ConfirmClassAndStart()
@@ -1034,161 +895,6 @@ namespace SudokuRoguelike.UI
             _gameBootstrap.LaunchRun(request);
         }
 
-        // #8 — Shows a confirmation modal before launching; called by Start Run button
-        public void ShowStartRunModal()
-        {
-            if (_gameBootstrap == null) return;
-
-            var meta = Profile.LoadMetaProgress();
-            if (!IsClassUnlockedOrDebug(_selectedClass, meta))
-            {
-                SetStatus(LocalizationService.T(
-                    "MainMenu.Status.ClassLocked",
-                    "Class not yet unlocked."));
-                return;
-            }
-
-            if (_startRunConfirmOverlay != null) Destroy(_startRunConfirmOverlay);
-
-            // F — use stored canvas ref to avoid slow scene-wide search
-            var canvas = _menuCanvas != null ? _menuCanvas : FindFirstObjectByType<Canvas>()?.rootCanvas;
-            if (canvas == null) { ConfirmClassAndStart(); return; }
-
-            var shell = InRunUiFactory.CreateThemedModalShell(canvas.transform, "StartRunModal",
-                new Vector2(0.18f, 0.20f), new Vector2(0.82f, 0.80f), "bg_class_select", 0.12f);
-            var overlayRoot = shell.Root;
-            var overlay = shell.Panel.gameObject;
-            _startRunConfirmOverlay = overlayRoot;
-
-            // F / 6 — fade in + pop scale on the modal
-            var overlayCg = overlayRoot.AddComponent<CanvasGroup>();
-            overlayCg.alpha = 0f;
-            StartCoroutine(AnimationHelper.FadeIn(overlayCg, 0.15f));
-            StartCoroutine(AnimationHelper.PulseScale(overlay.transform, 1f, 1.04f, 0.15f));
-
-            var def = ClassCatalog.GetDefinition(_selectedClass);
-
-            // Class icon
-            var iconSprite = Resources.Load<Sprite>("class/icon_" + ClassCatalog.GetIconName(_selectedClass));
-            if (iconSprite != null)
-            {
-                var iconGo = new GameObject("ClassIcon", typeof(RectTransform), typeof(Image));
-                iconGo.transform.SetParent(overlay.transform, false);
-                var iconRt = iconGo.GetComponent<RectTransform>();
-                iconRt.anchorMin = new Vector2(0.40f, 0.80f);
-                iconRt.anchorMax = new Vector2(0.60f, 0.97f);
-                iconRt.offsetMin = iconRt.offsetMax = Vector2.zero;
-                var iconImg = iconGo.GetComponent<Image>();
-                iconImg.sprite = iconSprite;
-                iconImg.preserveAspect = true;
-                iconImg.raycastTarget = false;
-            }
-
-            // Class name
-            var nameTxt = InRunUiFactory.CreateText(overlay.transform, "ClassName",
-                LocalizationService.T(def.Name), 22, TextAnchor.UpperCenter, GamePalette.AccentGold);
-            nameTxt.rectTransform.anchorMin = new Vector2(0.05f, 0.70f);
-            nameTxt.rectTransform.anchorMax = new Vector2(0.95f, 0.81f);
-            nameTxt.rectTransform.offsetMin = nameTxt.rectTransform.offsetMax = Vector2.zero;
-            nameTxt.fontStyle = FontStyle.Bold;
-
-            // Passive description
-            var passiveTxt = InRunUiFactory.CreateText(overlay.transform, "Passive",
-                MainMenuClassInfoPresenter.GetClassPassive(def), 12, TextAnchor.UpperCenter,
-                new Color(0.90f, 0.87f, 0.72f, 1f));
-            passiveTxt.rectTransform.anchorMin = new Vector2(0.05f, 0.53f);
-            passiveTxt.rectTransform.anchorMax = new Vector2(0.95f, 0.71f);
-            passiveTxt.rectTransform.offsetMin = passiveTxt.rectTransform.offsetMax = Vector2.zero;
-            passiveTxt.horizontalOverflow = HorizontalWrapMode.Wrap;
-
-            // Stats line
-            // GAP-023: stats at run start, as "base (+level bonus)".
-            var bonus = RunArchetypeService.GetLevelBonuses(_selectedClass,
-                new SudokuRoguelike.Meta.ClassGardenProgressionService().GetLevel(meta, _selectedClass));
-            var statsTxt = InRunUiFactory.CreateText(overlay.transform, "Stats",
-                LocalizationService.Format("RunConfirm.StatsLine", "HP: {0}  -  Pencil: {1}  -  Item Slots: {2}",
-                    MainMenuClassInfoPresenter.WithBonus(def.BaseHP, bonus.Hp),
-                    MainMenuClassInfoPresenter.WithBonus(def.BasePencil, bonus.Pencil),
-                    MainMenuClassInfoPresenter.WithBonus(def.BaseItemSlots, bonus.Slots)),
-                11, TextAnchor.UpperCenter, new Color(0.75f, 0.72f, 0.58f, 1f));
-            statsTxt.rectTransform.anchorMin = new Vector2(0.05f, 0.46f);
-            statsTxt.rectTransform.anchorMax = new Vector2(0.95f, 0.54f);
-            statsTxt.rectTransform.offsetMin = statsTxt.rectTransform.offsetMax = Vector2.zero;
-
-            var modeLabel = _pendingLaunchMode switch
-            {
-                GameMode.EndlessZen => LocalizationService.T("RunConfirm.Mode.EndlessZen", "Mode: Endless Zen"),
-                GameMode.SpiritTrials => LocalizationService.Format("RunConfirm.Mode.SpiritTrials", "Mode: Spirit Trials  -  Tier: {0}", _pendingTrialsTier),
-                _ => LocalizationService.Format("RunConfirm.Mode.GardenRun", "Mode: Garden Run  -  Harmony: {0}", HarmonyName(_gameModesController?.SelectedHarmonyLevel ?? 0))
-            };
-            var modeTxt = InRunUiFactory.CreateText(overlay.transform, "ModeState",
-                modeLabel, 10, TextAnchor.UpperCenter, new Color(0.86f, 0.82f, 0.66f, 1f));
-            modeTxt.rectTransform.anchorMin = new Vector2(0.05f, 0.41f);
-            modeTxt.rectTransform.anchorMax = new Vector2(0.95f, 0.47f);
-            modeTxt.rectTransform.offsetMin = modeTxt.rectTransform.offsetMax = Vector2.zero;
-
-            // C-4 — Show irregular toggle state in modal
-            var irregularLine = LocalizationService.T(_allowIrregularPuzzles ? "RunConfirm.Irregular.On" : "RunConfirm.Irregular.Off", _allowIrregularPuzzles ? "Irregular puzzles: ON" : "Irregular puzzles: off");
-            var irregularTxt = InRunUiFactory.CreateText(overlay.transform, "IrregularState",
-                irregularLine, 10, TextAnchor.UpperCenter,
-                _allowIrregularPuzzles
-                    ? new Color(0.90f, 0.75f, 0.30f, 1f)
-                    : new Color(0.60f, 0.58f, 0.48f, 0.70f));
-            irregularTxt.rectTransform.anchorMin = new Vector2(0.05f, 0.36f);
-            irregularTxt.rectTransform.anchorMax = new Vector2(0.95f, 0.42f);
-            irregularTxt.rectTransform.offsetMin = irregularTxt.rectTransform.offsetMax = Vector2.zero;
-
-            // GAP-020: optional seed; GAP-032: warn that a saved run would be abandoned.
-            var abandonsSavedRun = _gameBootstrap.HasResumableRun();
-            BuildStartRunExtras(overlay.transform, abandonsSavedRun);
-
-            // "Begin" button — shifted down to leave room for C-4 irregular line
-            var beginBtn = InRunUiFactory.CreateActionButton(overlay.transform, "BtnBegin",
-                new Vector2(0.08f, 0.02f), new Vector2(0.46f, 0.13f),
-                abandonsSavedRun ? LocalizationService.T("RunConfirm.AbandonAndBegin", "Abandon & Begin") : LocalizationService.T("Begin"),
-                UiAction.Begin);
-            ConfigureModalActionLabel(beginBtn);
-            var beginLbl = beginBtn.transform.Find("Label")?.GetComponent<Text>();
-            if (beginLbl != null) beginLbl.color = GamePalette.AccentGold;
-            beginBtn.onClick.AddListener(() =>
-            {
-                Destroy(overlayRoot);
-                _startRunConfirmOverlay = null;
-                BeginRunFromModal(abandonsSavedRun);
-            });
-
-            // "Back" button
-            var backBtn = InRunUiFactory.CreateActionButton(overlay.transform, "BtnBack",
-                new Vector2(0.54f, 0.02f), new Vector2(0.92f, 0.13f), LocalizationService.T("Back"), UiAction.Back);
-            ConfigureModalActionLabel(backBtn);
-            backBtn.onClick.AddListener(() =>
-            {
-                Destroy(overlayRoot);
-                _startRunConfirmOverlay = null;
-            });
-
-            // C1 — explicit D-pad nav between Begin ↔ Back, and focus Begin immediately on open
-            var beginNav = beginBtn.navigation;
-            beginNav.mode = Navigation.Mode.Explicit;
-            beginNav.selectOnRight = backBtn;
-            beginBtn.navigation = beginNav;
-
-            var backNav = backBtn.navigation;
-            backNav.mode = Navigation.Mode.Explicit;
-            backNav.selectOnLeft = beginBtn;
-            backBtn.navigation = backNav;
-
-            // RUN-WEEK-001: Up from Begin reaches the Seed of the week button (no keyboard needed).
-            if (_weeklySeedButton != null)
-            {
-                beginNav.selectOnUp = _weeklySeedButton;
-                beginBtn.navigation = beginNav;
-                _weeklySeedButton.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnDown = beginBtn };
-            }
-
-            UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(beginBtn.gameObject);
-        }
-
         public void SetAllowIrregularPuzzles(bool allow)
         {
             _allowIrregularPuzzles = allow;
@@ -1223,6 +929,7 @@ namespace SudokuRoguelike.UI
                 return;
             }
 
+            ClearSeed();
             _pendingLaunchMode = GameMode.EndlessZen;
             RefreshClassLockStates();
             _menu.Show(MenuScreen.ClassSelect);
@@ -1256,6 +963,7 @@ namespace SudokuRoguelike.UI
                 return;
             }
 
+            ClearSeed();
             _pendingLaunchMode = GameMode.SpiritTrials;
             _pendingTrialsTier = tier;
             RefreshClassLockStates();
@@ -1323,63 +1031,6 @@ namespace SudokuRoguelike.UI
             if (_debugEnableAllFeatures) return true;
             if (meta?.UnlockedClasses == null) return classId == ClassId.NumberFreak;
             return meta.UnlockedClasses.Contains(classId);
-        }
-
-        private void RefreshGameModesPanel()
-        {
-            var meta = Profile.LoadMetaProgress();
-            _gameModesController?.LoadFromMeta(meta);
-
-            var endlessUnlocked = _debugEnableAllFeatures || (meta?.EndlessZenUnlocked ?? false);
-            var trialsUnlocked = _debugEnableAllFeatures || (meta?.SpiritTrialsUnlocked ?? false);
-            var harmonyLevel = _gameModesController?.SelectedHarmonyLevel ?? 0;
-            var maxUnlocked = _gameModesController?.GetMaxUnlockedHarmonyLevel(meta) ?? 0;
-            var perk = _gameModesController?.SelectedHarmonyPerk ?? HarmonyPerkId.None;
-
-            SetPanelButtonState("BtnEndless", endlessUnlocked, LocalizationService.T(endlessUnlocked ? "Start Endless Zen" : "Endless Zen (Locked)"));
-            SetPanelButtonState("BtnZenRecords", endlessUnlocked, LocalizationService.T("Records"));
-            SetPanelButtonState("BtnTrials", trialsUnlocked, LocalizationService.T(trialsUnlocked ? "Spirit Trials" : "Spirit Trials (Locked)"));
-            SetPanelButtonState("BtnHarmonyPrev", harmonyLevel > 0, "<");
-            SetPanelButtonState("BtnHarmonyNext", harmonyLevel < maxUnlocked, ">");
-
-            SetPanelText("HarmonySelectedLabel", LocalizationService.Format("Harmony.SelectedLabel",
-                "{0}  ({1})",
-                HarmonyName(harmonyLevel),
-                HarmonyDifficultyService.GetHudLabel(harmonyLevel)));
-            SetPanelText("HarmonySubLabel", LocalizationService.Format("Harmony.SubLabel", "Unlocked range: H0-H{0}  -  XP x{1:0.0}", maxUnlocked, HarmonyDifficultyService.GetXpMultiplier(harmonyLevel)));
-
-            var perkUnlocked = harmonyLevel >= 4;
-            SetPanelButtonState("BtnHarmonyPerk", perkUnlocked,
-                perkUnlocked
-                    ? LocalizationService.Format("Harmony.Perk.Button", "Perk: {0}", HarmonyPerkName(perk))
-                    : LocalizationService.T("Perk: Locked until H4"));
-            SetPanelText("HarmonyPerkDesc",
-                perkUnlocked
-                    ? HarmonyPerkDescription(perk)
-                    : LocalizationService.T(
-                        "MainMenu.Perks.UnlockHint",
-                        "Perks unlock at H4, H6, H8, and H10."));
-        }
-
-        private void SetPanelButtonState(string buttonName, bool interactable, string label)
-        {
-            Button btn = null;
-            if (_gameModesPanel != null)
-                foreach (var candidate in _gameModesPanel.GetComponentsInChildren<Button>(true))
-                    if (candidate.name == buttonName) { btn = candidate; break; }
-            if (btn == null) return;
-            btn.interactable = interactable;
-            var txt = btn.transform.Find("Label")?.GetComponent<Text>();
-            if (txt != null) txt.text = label;
-        }
-
-        private void SetPanelText(string textName, string value)
-        {
-            Text txt = null;
-            if (_gameModesPanel != null)
-                foreach (var candidate in _gameModesPanel.GetComponentsInChildren<Text>(true))
-                    if (candidate.name == textName) { txt = candidate; break; }
-            if (txt != null) txt.text = value;
         }
 
         // ── Sudoku Basics First-Time Tutorial ──

@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 2.5 | **Date:** 2026-10-21 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book and the garden of classes; proposed: main menu, Select Class, Game Modes)
+**Version:** 2.6 | **Date:** 2026-10-21 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes and the results of Endless Zen, Spirit Trials and the Monthly Walk; proposed, not built: the main menu)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.6 | 2026-10-21 | review | Owner picks: **Select Class · Who walks the garden** (UI-STYLE-024) and **Game Modes · Five paths** (UI-STYLE-025) built; the main menu stays as it is (UI-STYLE-023 not built), only "Items & Relic Codex" is renamed "Codex"; Select Class has no confirmation window; Harmony is set on both screens. The results of Endless Zen, Spirit Trials and the Monthly Walk are in the run-end family now (UI-STYLE-026, owner request). Screenshots below. |
 | 2.5 | 2026-10-21 | review | Owner request: review the main menu, Select Class and Game Modes and make mockups in the same family. One proposal each (proposed UI-STYLE-023 to 025), with today's screens from the game and the review notes; waiting for the owner's pick. |
 | 2.4 | 2026-10-21 | review | Owner pick: garden flow **A · Washi window** as well (UI-STYLE-022, with D): built, screenshots below. The garden of classes shows the Level 40 frames (GAP-063 fixed). |
 | 2.3 | 2026-10-21 | review | Meta Progression as the garden of classes built (UI-STYLE-019): plaques with level or unlock goal (META-UNLOCK-006), the scroll with runs and best floor (META-STATS-001) and the class's whole level path, the totals. The XP stroke differs from ClassXpProgressionSystem ("no bar"): SPEC-CONF-041, for the owner. Building it found GAP-063 (the Level 30 starting items and Level 40 frames are listed but not granted). Screenshots below. |
@@ -43,6 +44,9 @@ The mockups are HTML pages in `layout-proposals/src/`, built from `Assets/Resour
 | UI-STYLE-020 | Pencil mode in indigo ink: the number pad tiles and the switch's Pencil half turn indigo with paper-white digits, and the pencil marks on the board are indigo too. | built 2026-10-21 |
 | UI-STYLE-021 | Entering a floor of a Garden Run: two seconds of the floor's painting with its name on a hanging banner and the path rolled up below, then the path scroll unrolls. A click or any key skips it; once per floor, not on a resumed floor; Reduce Motion skips the unroll. | built 2026-10-21 |
 | UI-STYLE-022 | Garden flow A · Washi window (with D): on the garden path the floor's painting stays sharp and only lightly dimmed round the scroll and shows through the scroll's thin paper; the floor's title, the first-pick note, the route names, the floor marks, the legend and every node label sit on paper slips so they stay readable. High Contrast keeps the opaque paper and the dark, blurred room. | built 2026-10-21 |
+| UI-STYLE-024 | Select Class · Who walks the garden: the class painting dimmed, eight class seals (icon, name, level and prestige stars, the Level 40 frame; a locked class dark with its unlock goal and progress), the chosen class on a hanging scroll (level line, HP, Pencil, Bag, Relics and Gold as "base (+bonus)", passive, the next level rewards, the optional seed and the week's seed), the run's settings on a strip (Harmony stones with the level's rule and the perk for a Garden Run, a line on the mode for Endless Zen and Spirit Trials, irregular puzzles), Back and **Begin the run**; no confirmation window ("Abandon & Begin" and a warning when a saved run would end). | built 2026-10-21 |
+| UI-STYLE-025 | Game Modes · Five paths: five noren curtains from a wooden beam (Garden Run, Endless Zen, Spirit Trials, Daily Walk, Monthly Walk) with icon, name, a line on the mode and its state on a strip (Harmony, best depth, best score, goals and streak, the month's garden and days left; a locked mode dark with what opens it); Endless Zen's Records under its curtain; the focused mode's slip below (the Garden Run's Harmony stones, rule, next level and perk; the others' numbers) with Back and the way in. Harmony is the same setting as on Select Class. | built 2026-10-21 |
+| UI-STYLE-026 | The results of Endless Zen, Spirit Trials and the Monthly Walk in the run-end family: the mode's painting, a banner with the mode and the outcome, the numbers on a tally paper with a closing line, the record (deepest descent, the tier's score, the month's grade) large on a dark panel with the personal best and a "New best" stamp, notes on a slip (ink stamps, the month's countdown), "Back to the garden gate". | built 2026-10-21 |
 | UI-STYLE-006 | A killer cage is one dashed outline around all its cells: inset into the cells, joined across them (no line between two cells of the same cage) and closed at every corner. Same rule in the game (`CageOutline`) and in the mockups (`cageRuns` in `src/common.js`). | built 2026-10-15 |
 
 ## Garden path
@@ -440,33 +444,52 @@ The last three menu screens still in the old look: dark panels with button lists
 - **Select Class.** The class texts are 10–12 px; a locked class shows its passive but not what unlocks it (Meta Progression does); the level path is one dense text block; the run's settings (Harmony with its perk, irregular puzzles) sit in small controls under it, and Start Run opens a second confirmation window with the stats the screen could show itself.
 - **Game Modes.** A text block explains the modes, and the buttons below say "(Locked)" without saying how to open the mode; the Harmony control is the same as on Select Class; "XP x1,0" shows a decimal comma in the English text (GAP-065: numbers follow the PC's region, not the game's language).
 
-### Main menu · The gate (proposed UI-STYLE-023)
+### Main menu · The gate (proposed UI-STYLE-023, not built: the owner keeps the main menu)
 
 ![Main menu, the gate](layout-proposals/main_menu_gate.jpg)
 
 The main menu painting stays bright. The title hangs as a lacquer signboard under the torii's beam; the menu is a hanging scroll in the gate, one line per entry with its icon, the chosen one circled by a vermilion ensō. Resume appears only with a saved run, at the top, with where the run stands ("Floor 3 · Number Freak") and a "Saved" seal; the rules group the entries (play, collection, settings). The Daily Walk (today's goals as three marks, the streak, ink stamps) and the Monthly Walk (its garden, days left, best score) hang as paper tags on the right, each with Open. The profile in the top-left corner, the version in the bottom-left; no status line.
 
-### Select Class · Who walks the garden (proposed UI-STYLE-024)
+### Select Class · Who walks the garden (UI-STYLE-024, built)
 
 ![Select Class, who walks the garden](layout-proposals/class_select_seals.jpg)
 
 The classes are round seals over the class painting: icon, name, level and prestige stars, the Level 40 frame round the seal (META-XP-008); a locked class is dark with its unlock goal and progress, as in the garden of classes. The chosen class hangs on a scroll with what the run starts with: HP, Pencil, bag slots, relics and gold, each "base (+bonus)"; its passive; the next level rewards. The run's settings sit on a strip along the bottom: the Harmony stones with the level's rule, the perk, irregular puzzles as a stamp switch, Back and **Begin the run**. The scroll shows what the confirmation window shows today, so Begin starts the run directly.
 
-### Game Modes · Five paths (proposed UI-STYLE-025)
+### Game Modes · Five paths (UI-STYLE-025, built)
 
 ![Game Modes, five paths](layout-proposals/game_modes_noren.jpg)
 
 The five modes hang as noren curtains from a wooden beam over the modes painting: icon, name, one line on what it is, and its own state on a paper strip (Garden Run: the Harmony level; Endless Zen: best depth; Daily Walk: goals and streak; Monthly Walk: its garden and days left). A locked mode is dark and says what opens it ("Defeat your first boss"). The chosen mode's settings sit on a paper slip below: for the Garden Run the Harmony stones (reached ones light, the chosen one vermilion), the level's rule and the next level's condition, the perk; then Back and "Choose a class". Endless Zen's slip carries its Records, Spirit Trials' its tiers.
 
-**For the owner to decide with the pick:**
+**Owner's answers (2026-10-21):** 1. "Items & Relic Codex" is renamed "Codex" (the only change to the main menu). 2. Select Class has no confirmation window. 3. Harmony stays on both screens (one setting: a change on either shows on the other).
 
-1. Rename "Items & Relic Codex" to "Codex" in the main menu (the screen is called Codex)?
-2. Select Class without the confirmation window (Begin starts the run, since the scroll shows the stats)?
-3. The Harmony setting is on Game Modes and on Select Class today; keep it on both (one setting, as now) or only on Select Class?
+### As built (UI-STYLE-024, UI-STYLE-025)
+
+![Select Class, before](layout-proposals/before_class_select.jpg)
+![Select Class, as built](layout-proposals/after_class_select.jpg)
+![Select Class for Endless Zen, as built](layout-proposals/after_class_select_endless.jpg)
+
+Select Class as in the mockup. The seed field and the week's seed moved from the confirmation window onto the scroll, under the class; the warning before a saved run is abandoned sits above the strip. For Endless Zen and Spirit Trials the strip shows a line on the mode instead of Harmony.
+
+![Game Modes, before](layout-proposals/before_game_modes.jpg)
+![Game Modes, as built](layout-proposals/after_game_modes.jpg)
+![Game Modes with the Daily Walk chosen](layout-proposals/after_game_modes_daily.jpg)
+
+Game Modes as in the mockup. A click (or A) on a curtain enters the mode as the old buttons did; focus or the pointer shows its slip. Endless Zen's Records hang as a small pill under its curtain. Spirit Trials' slip lists each tier's best score; the tiers are chosen on the next screen as before.
+
+### The results of the other modes (UI-STYLE-026, built)
+
+![Spirit Trials result, before](layout-proposals/before_result_spirit_trials.jpg)
+![Spirit Trials result, as built](layout-proposals/after_result_spirit_trials.jpg)
+![Endless Zen result, as built](layout-proposals/after_result_endless_zen.jpg)
+![Monthly Walk result, as built](layout-proposals/after_result_monthly_walk.jpg)
+
+Built at the owner's request without a separate mockup, from the run-end scroll's parts: the mode's own painting, the banner (mode and outcome: "Depth 14", "Trial passed", "Grade A"), the numbers on a tally paper with a closing line, the record large on the dark panel with the personal best and a gold "New best" ensō, the Monthly Walk's ink stamps and countdown on a slip, and "Back to the garden gate".
 
 ## Decisions and next step
 
-Boss gate **B** and boss defeated **B** are built (2026-10-15); the garden path **B** (UI-STYLE-001), the puzzle screen **B** (UI-STYLE-002), the reward, the relic node and the shop (UI-STYLE-007/008/009) on 2026-10-19; the Custom Puzzle rule book **A** and the rest, event, cursed-tile and run-end screens (UI-STYLE-012 to 016) on 2026-10-20, all from the same scroll parts (`ScrollUiKit`). Every screen of a Garden Run is now in this style; the result texts of the Monthly Walk, Spirit Trials and Endless Zen are not.
+Boss gate **B** and boss defeated **B** are built (2026-10-15); the garden path **B** (UI-STYLE-001), the puzzle screen **B** (UI-STYLE-002), the reward, the relic node and the shop (UI-STYLE-007/008/009) on 2026-10-19; the Custom Puzzle rule book **A** and the rest, event, cursed-tile and run-end screens (UI-STYLE-012 to 016) on 2026-10-20, all from the same scroll parts (`ScrollUiKit`). Every screen of a Garden Run is now in this style; on 2026-10-21 the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes and the results of Endless Zen, Spirit Trials and the Monthly Walk (UI-STYLE-017 to 026) followed. The main menu stays as it is (owner, 2026-10-21).
 
 ## Rendering
 

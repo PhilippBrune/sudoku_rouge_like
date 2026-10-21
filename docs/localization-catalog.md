@@ -1,11 +1,12 @@
 # Localization Catalog Workflow
 
-**Version:** 1.1 | **Date:** 2026-10-14 | **Status:** implemented
+**Version:** 1.2 | **Date:** 2026-10-21 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.2 | 2026-10-21 | implemented | Numbers follow the game's language, not the PC's region (LOC-NUM-001, GAP-065). |
 | 1.1 | 2026-10-14 | implemented | French, Spanish and Brazilian Portuguese complete (LOC-PARITY-001..003): every German key, same placeholders; export/import tooling in `tools/localization/`, glossary `docs/localization-glossary.md`; AI-assisted first pass, native review pending (FUTURE-014, GAP-019). |
 | 1.0 | — | implemented | Catalog workflow, English/German source order, validation tests (before version tracking). |
 
@@ -47,6 +48,10 @@ Workflow for new or changed German keys:
 2. Translate with the glossary (`docs/localization-glossary.md`) into `tools/localization/translations/<lang>.txt`, one `NNN|text` line per exported row.
 3. `python tools/localization/import_translations.py fr es pt` validates row coverage and placeholders, then appends the keys to the catalogs.
 4. Native review per language before a release claims full support (PRG-LOCALIZATION).
+
+## Numbers (LOC-NUM-001)
+
+Numbers in texts follow the chosen language, never the PC's region: `LocalizationService.Format` and `FormatPlural` format with `LocalizationService.Culture`, the culture of the language (English en-US, German de-DE, French fr-FR, Spanish es-ES, Brazilian Portuguese pt-BR). So "{0:N0}" reads 50,000 in English, 50.000 in German and 50 000 in French, and "{0:0.0}" 1.5 or 1,5. Where a space groups digits (French), it is a no-break space (U+00A0): the game font has it, not the narrow one (U+202F). Code that formats a number outside `Format` passes the same culture (`ToString("N0", LocalizationService.Culture)`). Tested by `LocalizedNumberTests`.
 
 ## Editing Rules
 

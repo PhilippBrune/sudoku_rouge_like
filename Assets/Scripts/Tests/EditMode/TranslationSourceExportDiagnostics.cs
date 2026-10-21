@@ -79,8 +79,6 @@ namespace SudokuRoguelike.Tests
                 sources[$"Harmony.Perk.Name.{perk}"] = HarmonyDifficultyService.GetPerkDisplayName(perk);
                 sources[$"Harmony.Perk.Description.{perk}"] = HarmonyDifficultyService.GetPerkDescription(perk);
             }
-            sources["RunConfirm.Irregular.On"] = "Irregular puzzles: ON";
-            sources["RunConfirm.Irregular.Off"] = "Irregular puzzles: off";
 
             var path = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "tools", "localization", "english_sources.json"));
             Directory.CreateDirectory(Path.GetDirectoryName(path));

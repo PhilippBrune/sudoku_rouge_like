@@ -388,7 +388,6 @@ namespace SudokuRoguelike.UI
 
         private void ShowSeasonalResult(RunDirector run, bool completed)
         {
-            UseRunEndScroll(false);
             if (_gameOverPanel != null) _gameOverPanel.SetActive(true);
 
             var now = DateTime.Today;
@@ -402,12 +401,6 @@ namespace SudokuRoguelike.UI
             var grade = SeasonalChallengeService.GetGrade(score, completed);
             var theme = SeasonalChallengeService.GetThemeName(now.Year, now.Month);
 
-            if (_gameOverSummary != null)
-            {
-                _gameOverSummary.text = F("InRun.End.Seasonal.Title", theme);
-                _gameOverSummary.color = GamePalette.WinGold;
-            }
-
             // Persist personal best
             var save = new SaveFileService(SaveProfileService.ActiveSlot);
             var envelope = save.HasSaveFile() ? save.Load() : new SaveFileEnvelope();
@@ -417,7 +410,6 @@ namespace SudokuRoguelike.UI
             var hpRemaining = state.CurrentHP;
             var pencilUsed = Math.Max(0, state.MaxPencil - state.CurrentPencil);
             var timeSeconds = Mathf.RoundToInt(state.TotalRunSeconds);
-
             if (completed)
                 envelope.SeasonalChallenge.SetBest(now.Year, now.Month, score, hpRemaining, pencilUsed, timeSeconds);
 
@@ -437,48 +429,43 @@ namespace SudokuRoguelike.UI
             envelope.ActiveSeasonalPuzzle = null;
             save.Save(envelope);
 
-            if (_gameOverDetails != null)
+            // [REQ: UI-STYLE-026] The month's result on the scroll: the grade large, the score against the month's best.
+            var newBest = completed && score > prevBest;
+            var end = new ModeEndSummary
             {
-                var sb = new StringBuilder();
-                sb.AppendLine(F("InRun.End.Seasonal.Grade", grade));
-                sb.AppendLine(F("InRun.End.Seasonal.Score", score));
-                sb.AppendLine();
-                sb.AppendLine(F("InRun.End.Seasonal.CellsCorrect", cellsCorrect));
-                sb.AppendLine(F("InRun.End.Seasonal.Mistakes", mistakes));
-                sb.AppendLine(F("InRun.End.Seasonal.PencilLeft", pencilLeft, state.MaxPencil));
-                sb.AppendLine();
-                if (completed && score > prevBest && prevBest > 0)
-                    sb.AppendLine(F("InRun.End.Seasonal.NewPersonalBest", prevBest));
-                else if (prevBest > 0)
-                    sb.AppendLine(F("InRun.End.Seasonal.PersonalBest", prevBest));
-                else
-                    sb.AppendLine(T("InRun.End.Seasonal.FirstAttempt"));
-                if (completed && prevBest == 0)
-                    sb.AppendLine(T("InRun.End.Seasonal.InkStampFirst"));
-                if (completed && grade == "S")
-                    sb.AppendLine(T("InRun.End.Seasonal.InkStampS"));
-                sb.AppendLine();
-                sb.AppendLine(SeasonalChallengeService.GetCountdownLabel(DateTime.Today));
-                _gameOverDetails.text = sb.ToString().TrimEnd();
-            }
+                Painting = "bg_monthly_walk",
+                Good = completed,
+                Eyebrow = F("InRun.End.Mode.Monthly.Eyebrow", theme),
+                Title = completed ? F("InRun.End.Mode.Monthly.Title", grade) : T("InRun.End.Mode.Monthly.Unfinished"),
+                Closing = completed ? T("InRun.End.Mode.Monthly.Closing") : T("InRun.End.Mode.Monthly.ClosingUnfinished"),
+                RecordHeader = T("InRun.End.Mode.Monthly.Record"),
+                RecordValue = grade,
+                RecordLine = F("InRun.End.Mode.Monthly.ScoreLine", Number(score)) + "\n" + BestLine(newBest, prevBest, Number(prevBest),
+                    T("InRun.End.Mode.Monthly.FirstAttempt")),
+                NewBest = newBest && prevBest > 0
+            };
+            end.Rows.Add((T("InRun.End.Mode.Score"), Number(score)));
+            end.Rows.Add((T("InRun.End.Mode.CellsCorrect"), Number(cellsCorrect)));
+            end.Rows.Add((T("InRun.End.Mode.Mistakes"), Number(mistakes)));
+            end.Rows.Add((T("InRun.End.Mode.PencilLeft"), $"{pencilLeft} / {state.MaxPencil}"));
+            end.Rows.Add((T("InRun.End.Mode.Time"), Clock(timeSeconds)));
+            if (completed && prevBest == 0) end.Notes.Add(T("InRun.End.Mode.Monthly.StampFirst"));
+            if (completed && grade == "S") end.Notes.Add(T("InRun.End.Mode.Monthly.StampS"));
+            end.Notes.Add(SeasonalChallengeService.GetCountdownLabel(DateTime.Today));
+            ShowModeEndScroll(end);
         }
 
         public void ShowSpiritTrialsResult(RunDirector run, bool completed)
         {
-            UseRunEndScroll(false);
             if (_gameOverPanel != null) _gameOverPanel.SetActive(true);
-
-            var bgImg = _gameOverPanel?.transform.Find("PanelBackground")?.GetComponent<RawImage>();
-            if (bgImg != null)
-            {
-                var tex = Resources.Load<Texture2D>("background/bg_trials_menu");
-                bgImg.texture = tex;
-                bgImg.color   = new Color(1f, 1f, 1f, tex != null ? 0.85f : 0f);
-            }
 
             var state = run?.State;
             var level = run?.CurrentLevelState;
-            if (state == null) return;
+            if (state == null)
+            {
+                UseRunEndScroll(false);
+                return;
+            }
 
             var tier       = state.SpiritTrialsTier;
             var tierName   = SpiritTierLabel(tier);
@@ -491,14 +478,6 @@ namespace SudokuRoguelike.UI
             var score = completed
                 ? SpiritTrialsService.CalculateScore(tier, seconds, modCount, cells, pencilUsed, mistakes)
                 : 0;
-
-            if (_gameOverSummary != null)
-            {
-                _gameOverSummary.text  = completed
-                    ? F("InRun.End.Trials.TitleComplete", tierName)
-                    : F("InRun.End.Trials.TitleFailed", tierName);
-                _gameOverSummary.color = completed ? GamePalette.WinGold : InRunUiFactory.CursedTitleRed;
-            }
 
             // Persist personal best per tier
             var save     = new SaveFileService(SaveProfileService.ActiveSlot);
@@ -526,63 +505,43 @@ namespace SudokuRoguelike.UI
                 new ProfileService(save).UpdateStats(envelope, stats);
             }
 
-            if (_gameOverDetails != null)
+            // [REQ: UI-STYLE-026] The trial's result on the scroll: the score large against the tier's best.
+            var newBest = completed && score > prevBest;
+            var end = new ModeEndSummary
             {
-                var mins = (int)(seconds / 60);
-                var secs = (int)(seconds % 60);
-                var sb   = new StringBuilder();
-                if (completed)
-                {
-                    sb.AppendLine(F("InRun.End.Trials.Score", score));
-                    sb.AppendLine(F("InRun.End.Trials.Time", mins, secs));
-                    sb.AppendLine(F("InRun.End.Trials.CellsFilled", cells));
-                    sb.AppendLine(F("InRun.End.Trials.PencilMarks", pencilUsed));
-                    sb.AppendLine(F("InRun.End.Trials.Mistakes", mistakes));
-                    if (modCount > 0) sb.AppendLine(F("InRun.End.Trials.Modifiers", modCount));
-                    sb.AppendLine();
-                    if (score > prevBest && prevBest > 0)
-                        sb.AppendLine(F("InRun.End.Trials.NewPersonalBest", prevBest));
-                    else if (prevBest > 0)
-                        sb.AppendLine(F("InRun.End.Trials.PersonalBest", prevBest));
-                    else
-                        sb.AppendLine(T("InRun.End.Trials.FirstCompletion"));
-                }
-                else
-                {
-                    sb.AppendLine(T("InRun.End.Trials.AwaitAgain"));
-                    sb.AppendLine();
-                    sb.AppendLine(F("InRun.End.Trials.CellsFilled", cells));
-                    sb.AppendLine(F("InRun.End.Trials.Mistakes", mistakes));
-                    if (prevBest > 0) sb.AppendLine(F("InRun.End.Trials.BestScore", prevBest));
-                }
-                _gameOverDetails.text = sb.ToString().TrimEnd();
+                Painting = "bg_menu_trials_results",
+                Good = completed,
+                Eyebrow = F("InRun.End.Mode.Trials.Eyebrow", tierName),
+                Title = completed ? T("InRun.End.Mode.Trials.Passed") : T("InRun.End.Mode.Trials.Failed"),
+                Closing = completed ? T("InRun.End.Mode.Trials.Closing") : T("InRun.End.Trials.AwaitAgain"),
+                RecordHeader = F("InRun.End.Mode.Trials.Record", tierName),
+                RecordValue = completed ? Number(score) : "\u2013",
+                RecordLine = completed
+                    ? BestLine(newBest, prevBest, Number(prevBest), T("InRun.End.Mode.Trials.FirstCompletion"))
+                    : prevBest > 0 ? F("InRun.End.Mode.Best", Number(prevBest)) : T("InRun.End.Mode.Trials.NoScore"),
+                NewBest = newBest && prevBest > 0
+            };
+            if (completed)
+            {
+                end.Rows.Add((T("InRun.End.Mode.Score"), Number(score)));
+                end.Rows.Add((T("InRun.End.Mode.Time"), Clock(seconds)));
             }
+            end.Rows.Add((T("InRun.End.Mode.CellsFilled"), Number(cells)));
+            end.Rows.Add((T("InRun.End.Mode.PencilMarks"), Number(pencilUsed)));
+            end.Rows.Add((T("InRun.End.Mode.Mistakes"), Number(mistakes)));
+            if (modCount > 0) end.Rows.Add((T("InRun.End.Mode.Modifiers"), "+" + modCount));
+            ShowModeEndScroll(end);
         }
 
         public void ShowEndlessZenResult(RunDirector run)
         {
-            UseRunEndScroll(false);
             if (_gameOverPanel != null) _gameOverPanel.SetActive(true);
-
-            var bgImg = _gameOverPanel?.transform.Find("PanelBackground")?.GetComponent<RawImage>();
-            if (bgImg != null)
-            {
-                var tex = Resources.Load<Texture2D>("background/bg_zen_menu");
-                bgImg.texture = tex;
-                bgImg.color   = new Color(1f, 1f, 1f, tex != null ? 0.85f : 0f);
-            }
 
             var state   = run?.State;
             var level   = run?.CurrentLevelState;
             var depth   = state?.Depth ?? 0;
             var seconds = state?.TotalRunSeconds ?? 0f;
             var mistakes = run?.GetAnalytics()?.TotalMistakes ?? level?.Mistakes ?? 0;
-
-            if (_gameOverSummary != null)
-            {
-                _gameOverSummary.text  = F("InRun.End.Zen.Title", depth);
-                _gameOverSummary.color = GamePalette.WinGold;
-            }
 
             // Persist depth + session count
             var save     = new SaveFileService(SaveProfileService.ActiveSlot);
@@ -596,26 +555,30 @@ namespace SudokuRoguelike.UI
             stats.TotalZenSessions += 1;
             new ProfileService(save).UpdateStats(envelope, stats);
 
-            if (_gameOverDetails != null)
+            // [REQ: UI-STYLE-026] The dive on the scroll: the depth large against the deepest dive.
+            var end = new ModeEndSummary
             {
-                var mins = (int)(seconds / 60);
-                var secs = (int)(seconds % 60);
-                var sb   = new StringBuilder();
-                sb.AppendLine(F("InRun.End.Zen.DepthReached", depth));
-                sb.AppendLine(F("InRun.End.Zen.SessionTime", mins, secs));
-                sb.AppendLine(F("InRun.End.Zen.Mistakes", mistakes));
-                sb.AppendLine();
-                if (isNewBest && prevBest > 0)
-                    sb.AppendLine(F("InRun.End.Zen.NewPersonalBest", prevBest));
-                else if (prevBest > 0)
-                    sb.AppendLine(F("InRun.End.Zen.PersonalBest", prevBest));
-                else
-                    sb.AppendLine(T("InRun.End.Zen.FirstSession"));
-                sb.AppendLine();
-                sb.AppendLine(F("InRun.End.Zen.TotalSessions", stats.TotalZenSessions));
-                _gameOverDetails.text = sb.ToString().TrimEnd();
-            }
+                Painting = "bg_menu_zen_results",
+                Good = true,
+                Eyebrow = T("Endless Zen"),
+                Title = F("InRun.End.Mode.Zen.Title", depth),
+                Closing = T("InRun.End.Mode.Zen.Closing"),
+                RecordHeader = T("InRun.End.Mode.Zen.Record"),
+                RecordValue = Number(Math.Max(depth, prevBest)),
+                RecordLine = prevBest <= 0 ? T("InRun.End.Mode.Zen.FirstSession")
+                    : isNewBest ? F("InRun.End.Mode.NewBestLine", Number(prevBest)) : F("InRun.End.Mode.Zen.ThisTime", Number(depth)),
+                NewBest = isNewBest && prevBest > 0
+            };
+            end.Rows.Add((T("InRun.End.Mode.Zen.Depth"), Number(depth)));
+            end.Rows.Add((T("InRun.End.Mode.Time"), Clock(seconds)));
+            end.Rows.Add((T("InRun.End.Mode.Mistakes"), Number(mistakes)));
+            end.Rows.Add((T("InRun.End.Mode.Zen.Sessions"), Number(stats.TotalZenSessions)));
+            ShowModeEndScroll(end);
         }
+
+        // "New best (before: …)", "Your best: …" or the first-attempt line.
+        private static string BestLine(bool newBest, int prevBest, string prevText, string first) =>
+            prevBest <= 0 ? first : newBest ? F("InRun.End.Mode.NewBestLine", prevText) : F("InRun.End.Mode.Best", prevText);
 
         private static string T(string key) => LocalizationService.T(key);
 

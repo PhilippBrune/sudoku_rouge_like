@@ -66,10 +66,13 @@ namespace SudokuRoguelike.Tests
                 AssertClassButtonState(host, ClassId.NumberFreak, true);
                 AssertClassButtonState(host, ClassId.GardenMonk, false);
 
+                // [REQ: UI-STYLE-025] A locked curtain is dark and not interactable; its strip says what opens it.
                 controller.ShowGameModes();
-                AssertButtonState(host, "BtnEndless", false, LocalizationService.T("Endless Zen (Locked)"));
+                AssertCurtainState(host, "BtnEndless", false, LocalizationService.T("Endless Zen"),
+                    LocalizationService.Format("GameModes.Locked.Endless", "Runs started {0} / 10", 0));
                 AssertButtonState(host, "BtnZenRecords", false, LocalizationService.T("Records"));
-                AssertButtonState(host, "BtnTrials", false, LocalizationService.T("Spirit Trials (Locked)"));
+                AssertCurtainState(host, "BtnTrials", false, LocalizationService.T("Spirit Trials"),
+                    LocalizationService.T("GameModes.Locked.Trials", "Defeat your first boss"));
             }
             finally
             {
@@ -101,9 +104,11 @@ namespace SudokuRoguelike.Tests
                 AssertClassButtonState(host, ClassId.StoneGardener, false);
 
                 controller.ShowGameModes();
-                AssertButtonState(host, "BtnEndless", true, LocalizationService.T("Start Endless Zen"));
+                AssertCurtainState(host, "BtnEndless", true, LocalizationService.T("Endless Zen"),
+                    LocalizationService.Format("GameModes.State.Endless", "Best depth {0}", "<color=#9E2A2B>0</color>"));
                 AssertButtonState(host, "BtnZenRecords", true, LocalizationService.T("Records"));
-                AssertButtonState(host, "BtnTrials", true, LocalizationService.T("Spirit Trials"));
+                AssertCurtainState(host, "BtnTrials", true, LocalizationService.T("Spirit Trials"),
+                    LocalizationService.T("GameModes.State.TrialsNew", "Four tiers wait"));
             }
             finally
             {
@@ -134,6 +139,15 @@ namespace SudokuRoguelike.Tests
             var button = FindButton(host, buttonName);
             Assert.AreEqual(expectedInteractable, button.interactable, buttonName);
             Assert.AreEqual(expectedLabel, FindButtonLabel(button).text, buttonName);
+        }
+
+        private static void AssertCurtainState(GameObject host, string buttonName, bool expectedInteractable, string expectedLabel,
+            string expectedState)
+        {
+            AssertButtonState(host, buttonName, expectedInteractable, expectedLabel);
+            var state = FindButton(host, buttonName).transform.Find("State/StateText")?.GetComponent<Text>();
+            Assert.NotNull(state, buttonName);
+            Assert.AreEqual(expectedState, state.text, buttonName);
         }
 
         private static void AssertClassButtonState(GameObject host, ClassId classId, bool expectedUnlocked)

@@ -32,6 +32,10 @@ namespace SudokuRoguelike.UI
         public const float ShakeHpCriticalPx = 2f;
         public const float ShakeHpCriticalDuration = 0.15f;
 
+        /// <summary>[REQ: ACCESS-MOTION-002] Reduce Motion is on: pulses, pops and shakes do not play.</summary>
+        public static bool MotionReduced =>
+            OptionsController.LiveAccessibility != null && OptionsController.LiveAccessibility.ReduceMotion;
+
         public static float GetDuration(float baseDuration, bool reduceMotion)
         {
             return reduceMotion ? 0f : baseDuration;
@@ -137,6 +141,11 @@ namespace SudokuRoguelike.UI
             float duration)
         {
             if (target == null || duration <= 0f) yield break;
+            if (MotionReduced)
+            {
+                target.localScale = new Vector3(baseScale, baseScale, 1f);
+                yield break;
+            }
 
             var half = duration * 0.5f;
             var elapsed = 0f;

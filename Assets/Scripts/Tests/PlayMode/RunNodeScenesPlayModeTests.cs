@@ -274,6 +274,62 @@ namespace SudokuRoguelike.Tests
             Assert.AreNotEqual(Vector2.zero, rt.anchorMin);
         }
 
+        // [REQ: UI-STYLE-026] Endless Zen, Spirit Trials and the Monthly Walk end on a result scroll: the record large with
+        // the personal best, the numbers on the tally paper, the text layout hidden, the way back to the menu; the bests
+        // are still saved.
+        [UnityTest]
+        [Requirement("UI-STYLE-026", "ZENMODE-SCORE-001")]
+        public IEnumerator ModeResults_ShowTheRecordOnAScroll_AndKeepSavingTheBests()
+        {
+            var envelope = new SaveFileEnvelope();
+            envelope.Statistics.HighestEndlessDepth = 11;
+            new SaveFileService(TestSlot).Save(envelope);
+            SaveFileService.FlushSharedPendingWrites();
+            var (host, run) = StartRun(5153);
+            yield return null;
+            var end = host.GetComponentInChildren<EndScreenViewController>(true);
+            var returned = false;
+            end.OnReturnToMenuPressed = () => returned = true;
+            var panel = FindObject(host, "GameOverPanel");
+
+            run.State.Depth = 14;
+            end.ShowEndlessZenResult(run);
+            yield return null;
+            var scroll = FindObject(panel, "ModeEndScroll");
+            Assert.AreEqual(Vector2.one, ((RectTransform)panel.transform).anchorMax, "the scroll covers the whole screen");
+            Assert.IsFalse(FindObject(panel, "GameOverDetails").activeSelf, "the text layout is hidden");
+            Assert.AreEqual(LocalizationService.Format("InRun.End.Mode.Zen.Title", "Depth {0}", 14), FindObject(scroll, "ModeEndTitle").GetComponent<Text>().text);
+            Assert.AreEqual("14", FindObject(scroll, "RecordValue").GetComponent<Text>().text, "the deepest descent");
+            Assert.NotNull(FindObjectOrNull(scroll, "NewBestStamp"), "14 beats 11");
+            Assert.AreEqual(14, new SaveFileService(TestSlot).Load().Statistics.HighestEndlessDepth, "the best depth is saved");
+            ClickButton(scroll, "BtnModeEndBack");
+            Assert.IsTrue(returned, "the back button returns to the menu");
+
+            run.State.SpiritTrialsTier = SpiritTrialsTier.Adept;
+            end.ShowSpiritTrialsResult(run, false);
+            yield return null;
+            scroll = FindObject(panel, "ModeEndScroll");
+            Assert.AreEqual(LocalizationService.T("InRun.End.Mode.Trials.Failed", "The trial ends"),
+                FindObject(scroll, "ModeEndTitle").GetComponent<Text>().text);
+            Assert.IsNull(FindObjectOrNull(scroll, "NewBestStamp"));
+            Assert.AreEqual(1, panel.GetComponentsInChildren<Transform>(true).Count(t => t.name == "ModeEndScroll"), "one scroll at a time");
+
+            run.State.IsSeasonalChallenge = true;
+            end.ShowGameOver(run, false);
+            yield return null;
+            scroll = FindObject(panel, "ModeEndScroll");
+            Assert.AreEqual("\u2014", FindObject(scroll, "RecordValue").GetComponent<Text>().text, "an unfinished walk has no grade");
+            StringAssert.Contains(SudokuRoguelike.Run.SeasonalChallengeService.GetCountdownLabel(System.DateTime.Today),
+                FindObject(FindObject(scroll, "ModeEndNotes"), "Text").GetComponent<Text>().text, "the month's countdown");
+
+            run.State.IsSeasonalChallenge = false;
+            run.State.Mode = GameMode.EndlessZen;
+            end.ShowGameOver(run, false);
+            yield return null;
+            Assert.IsNull(FindObjectOrNull(panel, "ModeEndScroll"), "the generic end goes back to the text layout");
+            Assert.IsTrue(FindObject(panel, "GameOverDetails").activeSelf);
+        }
+
         private static LaunchRequest Request() =>
             new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, ClassLevel = 1 };
 

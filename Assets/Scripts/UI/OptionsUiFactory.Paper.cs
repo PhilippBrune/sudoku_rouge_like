@@ -55,7 +55,7 @@ namespace SudokuRoguelike.UI
             return back;
         }
 
-        private static void PaintPill(Button button, Color fill, Color text)
+        internal static void PaintPill(Button button, Color fill, Color text)
         {
             var img = button.GetComponent<Image>();
             img.sprite = ScrollUiKit.Rounded(26f);
@@ -183,11 +183,9 @@ namespace SudokuRoguelike.UI
             });
         }
 
-        // [REQ: OPT-GAME-006] A time in seconds with two decimals and the language's decimal point ("0.25 s", "0,25 s").
+        // [REQ: OPT-GAME-006] A time in seconds with two decimals in the language's notation ("0.25 s", "0,25 s").
         private static string Seconds(float value) =>
-            SudokuRoguelike.Core.LocalizationService.Format("Options.SecondsValue", "{0} s",
-                value.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)
-                    .Replace(".", SudokuRoguelike.Core.LocalizationService.T("Options.DecimalPoint", ".")));
+            SudokuRoguelike.Core.LocalizationService.Format("Options.SecondsValue", "{0:0.00} s", value);   // LOC-NUM-001
 
         // A chevron without a fill; the focus still shows (controller).
         private static void MakeQuiet(Button button)

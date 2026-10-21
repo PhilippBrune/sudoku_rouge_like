@@ -53,7 +53,7 @@ namespace SudokuRoguelike.Tests
             Button("ItemsCodex", MainMenuPath, "BtnCodexCurses", "CodexTabId.Curses"),
             Button("ItemsCodex", MainMenuPath, "BtnItemsBack", "mc.BackToMainMenu"),
 
-            Button("ClassSelect", MainMenuPath, "BtnConfirmClass", "mc.ShowStartRunModal"),
+            Button("ClassSelect", MainMenuPath, "BtnConfirmClass", "mc.BeginRunFromSelect"),
             Button("ClassSelect", MainMenuPath, "BtnClassBack", "mc.BackToMainMenu"),
             Toggle("ClassSelect", MainMenuPath, "TglAllowIrregular", "SetAllowIrregularPuzzles"),
 

@@ -1,6 +1,6 @@
 # Accessibility Specification
 
-**Version:** 2.3  
+**Version:** 2.4  
 **Date:** 2026-10-21  
 **Status:** implemented
 
@@ -8,6 +8,7 @@
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.4 | 2026-10-21 | implemented | Second Options audit (GAP-066): Reduce Motion also stops every scale pulse and pop (path nodes, the boss node, digits, the board-fill wave, combo, reward plaques) and the badge shake (ACCESS-MOTION-002). |
 | 2.3 | 2026-10-21 | implemented | Accessibility is a page of the Options scroll (UI-STYLE-017) with Text Size and the preview board on its slip; the separate panel is gone. |
 | 2.2 | 2026-10-21 | implemented | Options audit (GAP-061): Colorblind Mode uses the Okabe–Ito palette for line colours and no longer simulates colour blindness on the cells (ACCESS-COLOR-003); Text Size scales the board digits and pencil marks (ACCESS-FONT-001); "Screen Reader" is named Status Captions; the gameplay assists act as named (GameDesignSpec 1.15 Options Effects). |
 | 2.1 | 2026-10-07 | implemented | Measurable contrast criteria and measured values (SPEC-MAC-006); given/player digit styles and visible toggle states (GAP-029); high-contrast behaviour stated with its multipliers. |
@@ -32,7 +33,7 @@ Primary implementation references:
 |---|---|---|
 | `ColorblindMode` | Line colours that tell rules apart switch to the Okabe–Ito palette (`BoardViewController.LineColorFor`, ACCESS-COLOR-003); cells keep their colours (the old protanopia simulation made them harder to read) | Refreshed live from Options |
 | `HighContrastMode` | Replaces cell colours with the `GamePalette.Hc*` set (by cell luminance and conflict state), overlay line width ×1.5 and overlay alpha ×1.4 (`AccessibilityService`) | Refreshed live from Options |
-| `ReduceMotion` | Suppresses or reduces motion-heavy feedback and particle effects | `AmbientParticleController.RefreshSettings()` respects it |
+| `ReduceMotion` | No screen shake (ACCESS-MOTION-001), no particles, no unroll of the path scroll, no wave ripple; scale pulses and pops (path nodes, the boss node, digits, the board-fill wave, combo, reward plaques) and the badge shake do not play (ACCESS-MOTION-002, `AnimationHelper.MotionReduced`); menu fades run at 30 % of their time. Colour pulses (the haunted cell, chain lines) stay: they carry state, not movement | Live: the next animation reads the setting |
 | `AlternativeConstraintSymbols` | Swaps to alternate constraint symbols where supported | Applied during board rebuild |
 | `FontScale` | Scales the board's digits and pencil marks (within the cell, ACCESS-FONT-001), the preview and accessibility-aware menu text | Stored in `AccessibilitySettings` |
 | `ScreenReaderEnabled` | "Status Captions": an on-screen announcement bar for status updates | A caption bar, not OS speech; renamed from "Screen Reader" (GAP-061) |

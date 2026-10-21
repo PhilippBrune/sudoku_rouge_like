@@ -161,18 +161,8 @@ namespace SudokuRoguelike.UI
         }
 
         // A locked class's goal with its progress, as on the plaque and the scroll (META-UNLOCK-006).
-        private static string GoalText(ClassId id, ClassUnlockService.UnlockProgress p) => id switch
-        {
-            ClassId.GardenMonk or ClassId.StoneGardener => F("MetaProgression.Goal.Bosses", "Defeat {1} bosses · {0}/{1}", p.Current, p.Target),
-            ClassId.ShrineArchivist => F("MetaProgression.Goal.ItemsUsed", "Use {1} items · {0}/{1}", p.Current, p.Target),
-            ClassId.KoiGambler => F("MetaProgression.Goal.Relics", "Collect {1} relics · {0}/{1}", p.Current, p.Target),
-            ClassId.LanternSeer => F("MetaProgression.Goal.Gold", "Collect {1:N0} gold · {0:N0}", p.Current, p.Target),
-            ClassId.ReedDuelist => F("MetaProgression.Goal.Codex", "Find every item · {0}/{1}", p.Current, p.Target),
-            _ => T("MetaProgression.Goal.PerfectRun", "A run with no mistakes")
-        };
+        private static string GoalText(ClassId id, ClassUnlockService.UnlockProgress p) => ClassUnlockText.Goal(id, p);
 
-        // A focus change to the class already shown keeps its page (no rebuild); a pending "Confirm" is dropped once the
-        // focus leaves the prestige button for a plaque.
         private void Select(ClassId id, bool force = false)
         {
             CancelPendingPrestige();

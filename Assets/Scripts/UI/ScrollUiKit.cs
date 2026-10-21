@@ -58,7 +58,9 @@ namespace SudokuRoguelike.UI
             if (go == null) return;
             go.SetActive(false);
             go.name += "_old";
-            Object.Destroy(go);
+            // A menu built in edit mode (editor tooling, EditMode tests) may only destroy immediately.
+            if (Application.isPlaying) Object.Destroy(go);
+            else Object.DestroyImmediate(go);
         }
 
         internal static Image Fill(Transform parent, string name, Vector2 min, Vector2 max, Color color,

@@ -70,8 +70,10 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-059](#gap-059) | Mistakes counted toward the run only when a puzzle was solved | FIXED (0.2.0 playtest, 2026-10-20) | MEDIUM | P3 |
 | [GAP-060](#gap-060) | The trial the Warding Flame removed came back after Save & Quit at the boss gate | FIXED (found in review, 2026-10-21) | LOW | P3 |
 | [GAP-061](#gap-061) | Options that did nothing or less than their names said | FIXED (Options audit, 2026-10-21) | MEDIUM | P2 |
-| [GAP-065](#gap-065) | Numbers in texts follow the PC's region, not the game's language ("XP x1,0" in English) | OPEN (found in the menu review, 2026-10-21) | LOW | P3 |
-| [GAP-064](#gap-064) | The Harmony perk Scholar's Burden never gives its free Ink Well | OPEN (found in the review of GAP-063, 2026-10-21) | LOW | P3 |
+| [GAP-066](#gap-066) | Reduce Motion left the pulses, pops and the node reveal running (the boss node pulsed for ever) | FIXED (second Options audit, 2026-10-21) | MEDIUM | P2 |
+| [GAP-065](#gap-065) | Numbers in texts follow the PC's region, not the game's language ("XP x1,0" in English) | FIXED (2026-10-21) | LOW | P3 |
+| [GAP-067](#gap-067) | Moonshade Offering's "+2 starting pencil" does nothing (the run starts at full pencil) | OPEN (found analysing GAP-064, 2026-10-21) | LOW | P3 |
+| [GAP-064](#gap-064) | Scholar's Burden: no free Ink Well, "+5 pencil" does nothing, "−1 slot" can add a slot | OPEN, planned (analysis 2026-10-21; rules for the owner) | MEDIUM | P3 |
 | [GAP-063](#gap-063) | Class levels 30 and 40 promised rewards the game did not grant (starting items, frames) | FIXED (2026-10-21) | MEDIUM | P2 |
 | [GAP-062](#gap-062) | Main menu: the D-pad steps through a panel in creation order, and arrow keys may move twice | OPEN (found building the Codex book, 2026-10-21; not checked in the player) | MEDIUM | P2 |
 | [GAP-044](#gap-044) | Region borders showed the previous puzzle's regions on a same-size board | FIXED (found 2026-10-14 by the owner) | HIGH | P1 |
@@ -1003,19 +1005,50 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Tests:** `ClassLevelRewardTests` (every class's item exists and the schedule names it; Level 30 starts with it, Level 29 does not; the same id for the same seed; the frame at Level 40 and after prestige; one colour per class).
 
 ## GAP-064
-**The Harmony perk Scholar's Burden never gives its free Ink Well**
+**Scholar's Burden: no free Ink Well, "+5 pencil" does nothing, "−1 slot" can add a slot**
 
-- **Requirement:** HarmonyDifficultySystem §Perks (`ScholarsBurden`: "Max item slots −1, +5 starting pencil, gain 1 free Rare InkWell")
-- **Status:** OPEN (found in the code review of the GAP-063 fix, 2026-10-21; not yet seen in the player) · **Severity:** LOW · **Priority:** P3
-- **Problem:** `RunArchetypeService.ApplyHarmonyPerk` sets `RunState.ScholarsBurdenGrantsInkWell`, and `PerkService.ApplyRunStartEffects` would turn it into one Rare Ink Well (two from H8). Nothing calls `ApplyRunStartEffects`, so the run starts without it; only tests call it.
-- **To decide before wiring it:** the method adds the Ink Wells even when the bag is full (Scholar's Burden also takes a slot, and from Level 30 the class's item takes one, META-XP-007), and it gives them random ids (`Guid`), which a seeded run should not have.
-- **Next step:** call it once from `RunDirector.StartRun` after the starting inventory, with a slot check (or let the perk's Ink Well replace the class item) and fixed ids; a test that a Scholar's Burden run starts with the Ink Well.
+- **Requirement:** HarmonyDifficultySystem §Perks (`ScholarsBurden`, H6+: "Max item slots −1 (beyond the H6 penalty), +5 starting pencil, gain 1 free Rare InkWell")
+- **Status:** OPEN, analysed and planned (2026-10-21; found in the code review of the GAP-063 fix; not yet seen in the player) · **Severity:** MEDIUM (the perk gives the opposite of its trade in some cases) · **Priority:** P3
+- **Analysis (code, 2026-10-21):**
+  1. *No Ink Well.* `RunArchetypeService.ApplyHarmonyPerk` sets `RunState.ScholarsBurdenGrantsInkWell`; `PerkService.ApplyRunStartEffects` would turn it into one Rare Ink Well (two from H8), but nothing in the game calls it, so the flag stays set and the run starts without the Ink Well. `ApplyRunStartEffects` also adds the Ink Wells past a full bag (the HUD draws only `ItemSlots` slots, so an extra item would be invisible) and gives them random ids (`Guid`), which a seeded run should not have.
+  2. *"+5 starting pencil" does nothing.* `CurrentPencil = Math.Min(MaxPencil, CurrentPencil + 5)`, and a run starts with `CurrentPencil == MaxPencil`, so the cap takes the 5 away. (Moonshade Offering's "+2 starting pencil" has the same problem, GAP-067.)
+  3. *"Max item slots −1" can add a slot.* `ItemSlots = Math.Max(2, ItemSlots - 1)`: a bag of 2 stays 2 (no cost), and a bag of 1 grows to 2. A bag of 1 happens at H6 for a class with one base slot (Garden Monk: 1 − 1 → floor 1, then the perk makes it 2) and at H8+ for a class with three slots after its level bonus (3 − 2 = 1 → 2).
+  4. *The full bag.* From class Level 30 the class's starting item takes a slot (META-XP-007, added before the perk so Empty Canvas strips it). With Scholar's Burden at H8 a bag of 2 would have to hold the class item and two Ink Wells.
+- **Plan (to build after the owner's answers below):**
+  1. In `RunArchetypeService.CreateRunState`: apply the perk's slot cost as `ItemSlots = Math.Max(1, ItemSlots - 1)` (never more than before).
+  2. Pencil: "+5 starting pencil" raises `MaxPencil` and `CurrentPencil` by 5 (the same for Moonshade's +2, GAP-067).
+  3. Starting bag in a fixed order, never past `ItemSlots`: the perk's Ink Wells first (1, or 2 from H8), then the Level 30 class item if a slot is left; Empty Canvas still starts with nothing. The Ink Wells get fixed ids (`perk-inkwell-1`, `perk-inkwell-2`) like the class item (`start-<type>`), so a seeded run starts the same.
+  4. Move the Ink Well grant from `PerkService.ApplyRunStartEffects` into that order in `CreateRunState` (the one place that builds the starting state) and drop the flag `ScholarsBurdenGrantsInkWell`, or keep `ApplyRunStartEffects` and call it from `CreateRunState` with the slot check; old saves only carry the flag in a run already started, where it is ignored.
+  5. Tests (EditMode, `HarmonyPerkStartTests`): Scholar's Burden starts with one Rare Ink Well at H6 and two at H8 when they fit; the bag never holds more items than slots; the perk never adds a slot; the starting pencil and its maximum rise by 5; two runs with the same seed start with the same item ids; Empty Canvas still starts empty. Docs: HarmonyDifficultySystem 1.3 (§Perks with the order and the floor), the requirement row, this entry.
+- **For the owner to decide (rules for a full bag):**
+  1. When the class item and the Ink Well(s) do not all fit: **the Ink Wells first** (recommended: they are what the player chose the perk for; the class item waits for a free slot it never gets), or the class item first and only as many Ink Wells as fit?
+  2. The slot cost on a bag of one: the bag stays at 1 (recommended; the perk then still gives its Ink Well into that slot), or the perk cannot be chosen when the bag would drop below 2?
+  3. "+5 starting pencil": raise the maximum too (recommended; otherwise it can never show), or only refill to the maximum (then the line should be removed from the perk)?
+- **Effort:** about two hours with the tests; no save-format change.
+
+## GAP-067
+**Moonshade Offering's "+2 starting pencil" does nothing**
+
+- **Requirement:** HarmonyDifficultySystem §Perks (`MoonshadeOffering`, H4+: "+20 starting gold, +2 starting pencil. First puzzle's reward slot 1 forced to Nothing.")
+- **Status:** OPEN (found analysing GAP-064, 2026-10-21) · **Severity:** LOW · **Priority:** P3
+- **Problem:** `CurrentPencil = Math.Min(MaxPencil, CurrentPencil + 2)` on a run that starts at full pencil: the cap takes the 2 away; the gold and the forced Nothing work.
+- **Next step:** with GAP-064 (same rule): raise `MaxPencil` and `CurrentPencil` by 2; a test that a Moonshade run starts with 2 more pencil than the same run without the perk.
 
 ## GAP-065
 **Numbers in texts follow the PC's region, not the game's language**
 
 - **Requirement:** REQ-UI-101 (localized text), LocalizationService
-- **Status:** OPEN (found in the review of the main menu, Select Class and Game Modes, 2026-10-21) · **Severity:** LOW · **Priority:** P3
+- **Status:** FIXED (2026-10-21; found in the review of the main menu, Select Class and Game Modes) · **Severity:** LOW · **Priority:** P3
 - **Problem:** `LocalizationService.Format` formats numbers with the PC's culture. On a German Windows the English Game Modes screen shows "XP x1,0" and the English garden of classes "Collect 50.000 gold · 12.400"; on an English PC a German player would see "1.0" and "50,000".
-- **Next step:** format with the culture of the chosen language (en-US, de-DE, fr-FR, es-ES, pt-BR) in `LocalizationService.Format`; a test that "{0:N0}" and "{0:0.0}" follow the language, not the thread. The Input Lock time already uses the language's decimal point (`Options.DecimalPoint`).
+- **Fix (LOC-NUM-001):** `LocalizationService.Culture` is the chosen language's culture (en-US, de-DE, fr-FR, es-ES, pt-BR; a space as group separator becomes a no-break space, which the game font has and U+202F it lacks); `Format` and `FormatPlural` use it, and so do the Harmony XP multiplier and the Input Lock seconds (the `Options.DecimalPoint` key is gone). A missing culture falls back to the invariant one.
+- **Tests:** `LocalizedNumberTests` (English on a German thread, German on an English thread, French grouping, every language's decimal separator, `FormatPlural`).
+
+## GAP-066
+**Reduce Motion left the pulses, pops and the node reveal running**
+
+- **Requirement:** ACCESS-MOTION-002 (AccessibilitySpec 2.4)
+- **Status:** FIXED (second Options audit requested by the owner, 2026-10-21) · **Severity:** MEDIUM · **Priority:** P2
+- **Problem:** Reduce Motion stopped the screen shake, the particles, the path's unroll and the wave ripple, but every scale animation kept playing: the pop of each path node, the pulse of the reachable nodes, the boss node's endless pulse, the digit pop, the board-fill wave, the combo and reward-plaque pulses and the shake of a modifier badge.
+- **Fix:** `AnimationHelper.MotionReduced` reads the live setting; `PulseScale` sets the base scale and ends at once, and the node reveal and the badge shake do not start. A change takes effect on the next animation, also mid-run.
+- **Tests:** `ReduceMotionTests` (a pulse with Reduce Motion ends at once at its base scale; without it, it runs).
 

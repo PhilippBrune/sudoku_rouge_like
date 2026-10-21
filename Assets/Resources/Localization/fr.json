@@ -1,4 +1,9 @@
 {
+    "Options.DecimalPoint":  ",",
+    "Options.SecondsValue":  "{0} s",
+    "Options.InputLockTime":  "Durée du verrou",
+    "Options.Note.InputLock":  "les chiffres attendent un instant après le choix de la case",
+    "Options.InputLock":  "Verrou de saisie",
     "Start: Temple Incense":  "Départ : Encens du temple",
     "Start: Rice Paper Umbrella":  "Départ : Ombrelle en papier de riz",
     "Start: Golden Koi":  "Départ : Koï doré",

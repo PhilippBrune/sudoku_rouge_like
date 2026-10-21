@@ -123,11 +123,11 @@ namespace SudokuRoguelike.UI
 
         // [REQ: UI-STYLE-017] A value as a brush stroke with a stone: label | ‹ | stroke | › | value in vermilion.
         private static ArrowRow BuildPaperValueRow(string id, string label, RectTransform parent, Vector2 aMin, Vector2 aMax,
-            float initValue, float min, float max, float step, Action<float> setter)
+            float initValue, float min, float max, float step, Action<float> setter, Func<float, string> format = null)
         {
             float X(float t) => aMin.x + t * (aMax.x - aMin.x);
             var current = initValue;
-            string Percent(float v) => Mathf.RoundToInt(v * 100f) + "%";
+            string Percent(float v) => format != null ? format(v) : Mathf.RoundToInt(v * 100f) + "%";
 
             var lbl = BuildText(id + "Label", parent, label, 21, TextAnchor.MiddleLeft);
             SetRect(lbl.rectTransform, new Vector2(X(0f), aMin.y), new Vector2(X(LabelEnd), aMax.y));
@@ -182,6 +182,11 @@ namespace SudokuRoguelike.UI
                 Show(v);
             });
         }
+
+        // [REQ: OPT-GAME-006] A time in seconds with two decimals and the language's decimal point ("0.25 s", "0,25 s").
+        private static string Seconds(float value) =>
+            SudokuRoguelike.Core.LocalizationService.Format("Options.SecondsValue", "{0} s",
+                value.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture).Replace(".", T("Options.DecimalPoint")));
 
         // A chevron without a fill; the focus still shows (controller).
         private static void MakeQuiet(Button button)

@@ -184,7 +184,13 @@ namespace SudokuRoguelike.UI
                 opts.Gameplay.DoubleTapConfirmNumberEntry, optCtrl.SetDoubleTapConfirm, T("Options.Note.DoubleTap"));
             var tRumble = BuildOptionToggle(gameSec, p + "ControllerRumble", T("Controller Rumble"), LineMin(5), LineMax(5),
                 opts.Gameplay.ControllerRumbleEnabled, optCtrl.SetControllerRumbleEnabled, T("Options.Note.Rumble"));
-            for (var line = 0; line < 6; line++) LineRule(gameSec, line);
+            // [REQ: OPT-GAME-006] The input lock after choosing a cell: on/off and its time, 0.10–1.00 s in 0.05 s steps.
+            var tInputLock = BuildOptionToggle(gameSec, p + "InputLock", T("Options.InputLock"), LineMin(6), LineMax(6),
+                opts.Gameplay.InputLockEnabled, optCtrl.SetInputLockEnabled, T("Options.Note.InputLock"));
+            var lockTime = BuildPaperValueRow(p + "InputLockTime", T("Options.InputLockTime"), gameSec, LineMin(7), LineMax(7),
+                GameplaySettings.ClampInputLockSeconds(opts.Gameplay.InputLockSeconds), GameplaySettings.MinInputLockSeconds,
+                GameplaySettings.MaxInputLockSeconds, GameplaySettings.InputLockStepSeconds, optCtrl.SetInputLockSeconds, Seconds);
+            for (var line = 0; line < 8; line++) LineRule(gameSec, line);
             PageSlip(p + "GameSlip", gameSec, T("Options.Slip.Tip"), T("Options.Tip.Gameplay"));
 
             tabs.SetRows(index,
@@ -194,6 +200,8 @@ namespace SudokuRoguelike.UI
                 Row(tCursorSnap),
                 Row(tDoubleTap),
                 Row(tRumble),
+                Row(tInputLock),
+                Row(lockTime.Dec, lockTime.Inc),
                 Row(btnResetGame));
 
             return () =>
@@ -205,6 +213,8 @@ namespace SudokuRoguelike.UI
                 tCursorSnap.SetIsOnWithoutNotify(o.Gameplay.CursorSnapOnSelection);
                 tDoubleTap.SetIsOnWithoutNotify(o.Gameplay.DoubleTapConfirmNumberEntry);
                 tRumble.SetIsOnWithoutNotify(o.Gameplay.ControllerRumbleEnabled);
+                tInputLock.SetIsOnWithoutNotify(o.Gameplay.InputLockEnabled);
+                lockTime.Refresh(GameplaySettings.ClampInputLockSeconds(o.Gameplay.InputLockSeconds));
             };
         }
 

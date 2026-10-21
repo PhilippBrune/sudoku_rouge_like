@@ -204,6 +204,12 @@ namespace SudokuRoguelike.UI
 
         public void SetDoubleTapConfirm(bool on) => SetGameplay(g => g.DoubleTapConfirmNumberEntry = on);
 
+        /// <summary>[REQ: OPT-GAME-006] The input lock after choosing a cell: on or off, and its time (0.10–1.00 s).</summary>
+        public void SetInputLockEnabled(bool on) => SetGameplay(g => g.InputLockEnabled = on);
+
+        public void SetInputLockSeconds(float seconds) =>
+            SetGameplay(g => g.InputLockSeconds = GameplaySettings.ClampInputLockSeconds(seconds));
+
         /// <summary>[REQ: OPT-GAME-002] On: a placed digit leaves the pencil marks of its row, column and box.</summary>
         public void SetAutoPencilCleanup(bool on) => SetGameplay(g =>
         {
@@ -396,6 +402,8 @@ namespace SudokuRoguelike.UI
             gp.ShowCandidateCount           = defaults.ShowCandidateCount;
             gp.CursorSnapOnSelection        = defaults.CursorSnapOnSelection;
             gp.ControllerRumbleEnabled      = defaults.ControllerRumbleEnabled;
+            gp.InputLockEnabled             = defaults.InputLockEnabled;
+            gp.InputLockSeconds             = defaults.InputLockSeconds;
             RumbleService.Enabled           = gp.ControllerRumbleEnabled;
             LiveGameplay                    = gp;
             SaveOptions();

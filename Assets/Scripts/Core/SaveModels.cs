@@ -102,6 +102,26 @@ namespace SudokuRoguelike.Core
         public bool ShowCandidateCount = true;
         public bool CursorSnapOnSelection;
         public bool ControllerRumbleEnabled = true;
+
+        // [REQ: OPT-GAME-006] Input lock: after a cell is chosen, digits wait this long, so a fast key, pad or touch press
+        // does not land in the new cell by accident. On with 0.25 s by default, also for saves from before the option.
+        public bool InputLockEnabled = true;
+        public float InputLockSeconds = DefaultInputLockSeconds;
+
+        public const float MinInputLockSeconds = 0.10f;
+        public const float MaxInputLockSeconds = 1.00f;
+        public const float InputLockStepSeconds = 0.05f;
+        public const float DefaultInputLockSeconds = 0.25f;
+
+        /// <summary>The wait in seconds: 0 with the lock off, else the set time on its 0.05 s steps between the limits.</summary>
+        public float InputLockDelay => InputLockEnabled ? ClampInputLockSeconds(InputLockSeconds) : 0f;
+
+        public static float ClampInputLockSeconds(float seconds)
+        {
+            if (float.IsNaN(seconds) || float.IsInfinity(seconds)) return DefaultInputLockSeconds;
+            var snapped = Math.Round(seconds / InputLockStepSeconds) * InputLockStepSeconds;
+            return (float)Math.Clamp(snapped, MinInputLockSeconds, MaxInputLockSeconds);
+        }
     }
 
     [Serializable]

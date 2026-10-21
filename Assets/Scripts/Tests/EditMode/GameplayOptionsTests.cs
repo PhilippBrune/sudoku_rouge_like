@@ -13,6 +13,41 @@ namespace SudokuRoguelike.Tests
     [Requirement("OPT-GAME-002", "ACCESS-COLOR-003", "OPT-AUDIO-001")]
     public sealed class GameplayOptionsTests
     {
+        // [REQ: OPT-GAME-006] The input lock: on with 0.25 s for new and old saves, 0.10–1.00 s in 0.05 s steps.
+        [Test]
+        [Requirement("OPT-GAME-006")]
+        public void InputLock_DefaultsToOnWithAQuarterSecond_EvenForOldSaves()
+        {
+            var fresh = new GameplaySettings();
+            Assert.IsTrue(fresh.InputLockEnabled);
+            Assert.AreEqual(0.25f, fresh.InputLockSeconds, 1e-4f);
+
+            var old = JsonUtility.FromJson<GameplaySettings>("{\"HighlightConflicts\":true}");
+            Assert.IsTrue(old.InputLockEnabled, "a save from before the option keeps the lock");
+            Assert.AreEqual(0.25f, old.InputLockSeconds, 1e-4f);
+        }
+
+        [TestCase(0.02f, 0.10f)]
+        [TestCase(0.33f, 0.35f)]
+        [TestCase(0.71f, 0.70f)]
+        [TestCase(5f, 1.00f)]
+        [TestCase(float.NaN, 0.25f)]
+        [Requirement("OPT-GAME-006")]
+        public void InputLockSeconds_SnapsToTheStepsBetweenTheLimits(float stored, float used)
+        {
+            Assert.AreEqual(used, GameplaySettings.ClampInputLockSeconds(stored), 1e-4f);
+        }
+
+        [Test]
+        [Requirement("OPT-GAME-006")]
+        public void InputLock_OffMeansNoWait_AndResetBringsItBack()
+        {
+            var settings = new GameplaySettings { InputLockEnabled = false, InputLockSeconds = 0.8f };
+            Assert.AreEqual(0f, settings.InputLockDelay);
+            settings.InputLockEnabled = true;
+            Assert.AreEqual(0.8f, settings.InputLockDelay, 1e-4f);
+        }
+
         private static RunDirector StartSixBySix(int seed)
         {
             var run = new RunDirector();

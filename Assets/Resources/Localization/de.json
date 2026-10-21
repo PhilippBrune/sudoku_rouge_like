@@ -1,4 +1,9 @@
 ﻿{
+    "Options.DecimalPoint":  ",",
+    "Options.SecondsValue":  "{0} s",
+    "Options.InputLockTime":  "Dauer der Sperre",
+    "Options.Note.InputLock":  "Ziffern warten kurz nach der Feldwahl",
+    "Options.InputLock":  "Eingabesperre",
     "Start: Temple Incense":  "Start: Tempelweihrauch",
     "Start: Rice Paper Umbrella":  "Start: Reispapier-Schirm",
     "Start: Golden Koi":  "Start: Goldener Koi",

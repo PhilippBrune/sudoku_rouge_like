@@ -67,7 +67,7 @@ namespace SudokuRoguelike.UI
         // Input safety: block digit entry for a short window after cell selection
         // to prevent accidental placements on touch/tap. GameDesignSpec 4.2: 0.25 s (halved after the 0.2.0 playtest).
         private float _cellSelectedTime = -1f;
-        public const float CellSelectInputDelay = 0.25f;
+        public const float CellSelectInputDelay = GameplaySettings.DefaultInputLockSeconds;   // the input lock's default (OPT-GAME-006)
 
         // ── Sudoku Basics Tutorial ──
         private SudokuBasicsTutorialController _basicsTutorial;
@@ -2692,9 +2692,9 @@ namespace SudokuRoguelike.UI
             {
                 if (!TryFindEditable(board, out _selectedRow, out _selectedCol)) return;
             }
-            // Safety window: ignore digit input for a brief period after cell selection
+            // [REQ: OPT-GAME-006] The input lock: ignore digits for the set time after a cell is chosen (none when off),
             // to prevent accidental placements on touch/fast keyboard usage.
-            if (Time.realtimeSinceStartup - _cellSelectedTime < CellSelectInputDelay) return;
+            if (Time.realtimeSinceStartup - _cellSelectedTime < Gameplay.InputLockDelay) return;
             if (board.GivenMask[_selectedRow, _selectedCol]) { SetStatus(T("Given cell.")); return; }
             if (run.GetLockedCells().Contains((_selectedRow, _selectedCol))) { SetStatus(T("Cell is locked!")); return; } // [REQ: DEBUFF-HOOK-013] block digit input on locked cells
             if (value < 1 || value > board.Size) return;

@@ -1,4 +1,9 @@
 ﻿{
+    "Options.DecimalPoint":  ".",
+    "Options.SecondsValue":  "{0} s",
+    "Options.InputLockTime":  "Input Lock Time",
+    "Options.Note.InputLock":  "digits wait briefly after you choose a cell",
+    "Options.InputLock":  "Input Lock",
     "Start: Temple Incense":  "Start: Temple Incense",
     "Start: Rice Paper Umbrella":  "Start: Rice Paper Umbrella",
     "Start: Golden Koi":  "Start: Golden Koi",

@@ -1,4 +1,9 @@
 {
+    "Options.DecimalPoint":  ",",
+    "Options.SecondsValue":  "{0} s",
+    "Options.InputLockTime":  "Duração do bloqueio",
+    "Options.Note.InputLock":  "os dígitos esperam um instante após escolher a célula",
+    "Options.InputLock":  "Bloqueio de entrada",
     "Start: Temple Incense":  "Início: Incenso do templo",
     "Start: Rice Paper Umbrella":  "Início: Sombrinha de papel de arroz",
     "Start: Golden Koi":  "Início: Koi dourado",

@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.16 | **Date:** 2026-10-21 | **Status:** implemented
+**Version:** 1.17 | **Date:** 2026-10-21 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.17 | 2026-10-21 | implemented | Owner request: the input lock after choosing a cell is an option (OPT-GAME-006): on or off, 0.10–1.00 s in 0.05 s steps, 0.25 s by default. |
 | 1.16 | 2026-10-21 | implemented | Options Structure: the Options are a hand scroll with six pages (UI-STYLE-017); Accessibility, Controls and Language are pages, the separate Accessibility panel is gone. |
 | 1.15 | 2026-10-21 | implemented | Options audit after the 0.2.0 playtest (GAP-061): every option now does what its name says (Options Effects, OPT-GAME-001..005, OPT-GFX-001, OPT-AUDIO-001, OPT-LABEL-001, ACCESS-COLOR-003, ACCESS-FONT-001); "Confirm Wrong Placement" removed; Show Digits Left, Jump to Next Empty Cell, Board Brightness/Contrast and Status Captions renamed. |
 | 1.14 | 2026-10-21 | implemented | Owner picks after the 0.2.0 playtest: Pencil mode shows in indigo ink on the number pad and in the pencil marks (4.3, UI-STYLE-020). Run score (9c): every puzzle gets a grade from its own mistakes (Perfect, Clean, Rough, Messy; proposal C of `design/mistake-scoring-proposals.md`), which replaces the flat mistake penalty and the perfect bonus; the puzzle that ends a run is Messy; the end screen shows one stamp per puzzle (SCORE-GRADE-001..004). Unspent gold adds a point per 5 gold, at most 15 % (SCORE-GOLD-001, lever L5 of `design/gold-and-items-concept.md`). Economy levers L1 and L6 (GoldEconomySystem 2.2): from Floor 4 a mistake costs at least 2 HP (5.1, ECON-BAL-003) and the rest heals a quarter (ECON-BAL-004). Garden flow D: entering a floor shows its painting (UI-STYLE-021). |
@@ -456,7 +457,8 @@ An audit after the 0.2.0 playtest found options that did nothing or less than th
 | OPT-GAME-001 | Highlight Errors (on) | A wrong digit flashes its cell red; placed digits that break a rule and the cells a digit would conflict with are coloured. Off: neither. |
 | OPT-GAME-002 | Auto Pencil Cleanup (on) | A placed digit leaves the pencil marks of its row, column **and box** (the box was missed). Off: every mark stays. Saves from before keep it on. |
 | OPT-GAME-003 | Show Digits Left (on; was "Show Candidate Count") | Each number pad tile shows in its corner how many of its digit the board still needs (nothing on a finished digit). |
-| OPT-GAME-004 | Jump to Next Empty Cell (off; was "Cursor Snap") | After a correct digit the selection moves to the next empty cell in reading order that takes input (locked and pre-solved cells are skipped). The jump does not start the 0.25 s input pause of a chosen cell, so a quickly typed next digit counts. |
+| OPT-GAME-004 | Jump to Next Empty Cell (off; was "Cursor Snap") | After a correct digit the selection moves to the next empty cell in reading order that takes input (locked and pre-solved cells are skipped). The jump does not start the input lock of a chosen cell (OPT-GAME-006), so a quickly typed next digit counts. |
+| OPT-GAME-006 | Input Lock (on) and Input Lock Time (0.25 s) | After a cell is chosen, digits wait for the set time, so a fast key, pad or touch press does not land in the new cell by accident. The time goes from 0.10 to 1.00 s in 0.05 s steps; off, a digit counts at once. Saves from before the option keep the lock with 0.25 s. |
 | OPT-GAME-005 | Double-Tap to Confirm (off) | The first press of a digit on a cell asks ("Press 4 again to place it."), the same digit on the same cell within 1.5 s places it. Pencil marks and the Sudoku Basics lesson are never asked for. |
 | OPT-GFX-001 | Screen Shake | Off stops every shake of the board (it stopped only with Reduce Motion). |
 | OPT-AUDIO-001 | Master Volume | Counts once: every sound multiplies it in and the listener stays at full volume (it was applied twice, so 50 % played at 25 %). |

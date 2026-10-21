@@ -115,6 +115,64 @@ namespace SudokuRoguelike.Tests
             Assert.AreEqual(0, run.CurrentBoard.Cells[selected.row, selected.col], "to an empty cell");
         }
 
+        // [REQ: OPT-GAME-006] The input lock: a digit right after choosing a cell is ignored for the set time; off, it counts.
+        [UnityTest]
+        [Requirement("OPT-GAME-006")]
+        public IEnumerator InputLock_IgnoresADigitForTheSetTime_AndOffTakesItAtOnce()
+        {
+            var (host, run) = StartPuzzle(9508);
+            yield return WaitForBoard(host);
+            UseGameplay(host, new GameplaySettings { InputLockEnabled = true, InputLockSeconds = 0.6f });
+            var cell = EmptyCell(run);
+            var digit = run.CurrentBoard.Solution[cell.r, cell.c];
+
+            FindObject(host, $"C_{cell.r}_{cell.c}").GetComponent<Button>().onClick.Invoke();
+            yield return new WaitForSecondsRealtime(0.35f);
+            ClickButton(host, $"Num_{digit}");
+            yield return null;
+            Assert.AreEqual(0, run.CurrentBoard.Cells[cell.r, cell.c], "0.35 s after choosing the cell, a 0.6 s lock ignores the digit");
+            yield return new WaitForSecondsRealtime(0.35f);
+            ClickButton(host, $"Num_{digit}");
+            yield return null;
+            Assert.AreEqual(digit, run.CurrentBoard.Cells[cell.r, cell.c], "after the lock the digit counts");
+
+            UseGameplay(host, new GameplaySettings { InputLockEnabled = false });
+            var next = EmptyCell(run);
+            var nextDigit = run.CurrentBoard.Solution[next.r, next.c];
+            FindObject(host, $"C_{next.r}_{next.c}").GetComponent<Button>().onClick.Invoke();
+            ClickButton(host, $"Num_{nextDigit}");
+            yield return null;
+            Assert.AreEqual(nextDigit, run.CurrentBoard.Cells[next.r, next.c], "without the lock the digit counts at once");
+        }
+
+        // [REQ: OPT-GAME-006] The Gameplay page has the switch and the time row (0.10–1.00 s in 0.05 s steps).
+        [UnityTest]
+        [Requirement("OPT-GAME-006")]
+        public IEnumerator Options_InputLockTime_StepsByAFifthOfATenthBetweenTheLimits()
+        {
+            var host = new GameObject("InputLockOptionsHost");
+            _createdRoots.Add(host);
+            EnsureCameraAndEventSystem();
+            host.AddComponent<MainMenuBlueprintBuilder>().Build();
+            host.GetComponent<MainMenuController>().ShowMainMenu();
+            yield return null;
+            FindObject(host, "BtnOptions").GetComponent<Button>().onClick.Invoke();
+            yield return null;
+            FindObject(host, "TabGame").GetComponent<Button>().onClick.Invoke();
+            yield return null;
+            Assert.NotNull(FindObject(host, "InputLockToggle").GetComponent<Toggle>());
+            var value = FindObject(host, "InputLockTimeVal").GetComponent<Text>();
+            Assert.AreEqual("0.25 s", value.text);
+
+            ClickButton(host, "InputLockTimeInc");
+            Assert.AreEqual("0.30 s", value.text);
+            Assert.AreEqual(0.30f, OptionsController.LiveGameplay.InputLockSeconds, 1e-4f);
+            for (var i = 0; i < 30; i++) ClickButton(host, "InputLockTimeInc");
+            Assert.AreEqual("1.00 s", value.text);
+            for (var i = 0; i < 30; i++) ClickButton(host, "InputLockTimeDec");
+            Assert.AreEqual("0.10 s", value.text);
+        }
+
         // [REQ: OPT-GAME-005] Double-Tap to Confirm: the first press of a digit only asks; the second places it.
         [UnityTest]
         [Requirement("OPT-GAME-005")]

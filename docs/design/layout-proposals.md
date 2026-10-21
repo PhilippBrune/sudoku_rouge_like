@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 2.3 | **Date:** 2026-10-21 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry, Pencil mode in indigo, the Options scroll, the Codex book and the garden of classes)
+**Version:** 2.4 | **Date:** 2026-10-21 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book and the garden of classes)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.4 | 2026-10-21 | review | Owner pick: garden flow **A · Washi window** as well (UI-STYLE-022, with D): built, screenshots below. The garden of classes shows the Level 40 frames (GAP-063 fixed). |
 | 2.3 | 2026-10-21 | review | Meta Progression as the garden of classes built (UI-STYLE-019): plaques with level or unlock goal (META-UNLOCK-006), the scroll with runs and best floor (META-STATS-001) and the class's whole level path, the totals. The XP stroke differs from ClassXpProgressionSystem ("no bar"): SPEC-CONF-041, for the owner. Building it found GAP-063 (the Level 30 starting items and Level 40 frames are listed but not granted). Screenshots below. |
 | 2.2 | 2026-10-21 | review | The Codex as a collector's book built (UI-STYLE-018), with a new Curses page (the game now records the curses met, META-CODEX-008) and how often each item was found and used (META-CODEX-009). Two parts of the mockup are left out: the Normal · Rare · Epic filter and "Best paired with", which no game data backs. Screenshots below. |
 | 2.1 | 2026-10-21 | review | Options as a hand scroll with bookmarks built (UI-STYLE-017) in the main menu and in a run, after the Options audit (GAP-061). Screenshots below. |
@@ -40,6 +41,7 @@ The mockups are HTML pages in `layout-proposals/src/`, built from `Assets/Resour
 | UI-STYLE-019 | Meta Progression as the garden of classes: the eight classes as ema plaques on two red cords (level and prestige stars; locked ones dark, with a silhouette and their unlock goal and progress), the chosen class on a hanging scroll (level, runs and best floor, the XP stroke or the way to its unlock, the passive, every milestone of its level path ticked off up to its level, prestige stars and their gold, the prestige button at Level 40), the collection's totals along the bottom, Back. | built 2026-10-21 |
 | UI-STYLE-020 | Pencil mode in indigo ink: the number pad tiles and the switch's Pencil half turn indigo with paper-white digits, and the pencil marks on the board are indigo too. | built 2026-10-21 |
 | UI-STYLE-021 | Entering a floor of a Garden Run: two seconds of the floor's painting with its name on a hanging banner and the path rolled up below, then the path scroll unrolls. A click or any key skips it; once per floor, not on a resumed floor; Reduce Motion skips the unroll. | built 2026-10-21 |
+| UI-STYLE-022 | Garden flow A · Washi window (with D): on the garden path the floor's painting stays sharp and only lightly dimmed round the scroll and shows through the scroll's thin paper; the floor's title, the first-pick note, the route names, the floor marks, the legend and every node label sit on paper slips so they stay readable. High Contrast keeps the opaque paper and the dark, blurred room. | built 2026-10-21 |
 | UI-STYLE-006 | A killer cage is one dashed outline around all its cells: inset into the cells, joined across them (no line between two cells of the same cage) and closed at every corner. Same rule in the game (`CageOutline`) and in the mockups (`cageRuns` in `src/common.js`). | built 2026-10-15 |
 
 ## Garden path
@@ -376,9 +378,17 @@ Today's screens (from the game):
 
 ![A locked class chosen](layout-proposals/after_meta_progression_locked.jpg)
 
-### The garden's flow on the path: D chosen (UI-STYLE-021)
+### The garden's flow on the path: D and A chosen (UI-STYLE-021, UI-STYLE-022)
 
-The old path crossed the bright floor painting; the hand scroll covers it with paper and darkens the rest. Four ways to bring the garden back were proposed (they can be combined, D with any of A–C); the owner picked **D**.
+The old path crossed the bright floor painting; the hand scroll covers it with paper and darkens the rest. Four ways to bring the garden back were proposed (they can be combined, D with any of A–C); the owner picked **D**, and then **A** as well (2026-10-21).
+
+**As built, A (UI-STYLE-022, 2026-10-21):** the painting behind the scroll is the sharp floor painting (it was blurred) under a light shade, and the paper is thin enough to show it; the faint wash printed on the paper is gone, since the painting itself shows through. Everything written on the paper sits on a paper slip: the floor's title, the first-pick note, the route names, the floor marks, the legend and each node's label (a pill the size of its text). With High Contrast on, the path keeps the opaque paper and the dark, blurred room of before.
+
+![Washi window, Floor 1](layout-proposals/after_path_washi_floor1.jpg)
+
+![Washi window, Floor 2](layout-proposals/after_path_washi_floor2.jpg)
+
+![Washi window, Floor 4](layout-proposals/after_path_washi_floor4.jpg)
 
 **As built (2026-10-21):** after the class card the first floor is entered, and every later floor after its boss. The painting stays for two seconds (a click or any key skips it), then it fades while the path scroll opens from its middle. A resumed floor is not entered again.
 

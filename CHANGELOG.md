@@ -13,6 +13,7 @@
 
 ### New
 
+- **The garden shows through the path:** the floor's painting stays bright round the path scroll and shows through its thin paper; titles and labels sit on small paper slips. With High Contrast the paper stays opaque.
 - **Entering a floor** shows the floor's painting for two seconds with its name on a hanging banner, then the path scroll unrolls (a click or any key skips it).
 - **Pencil mode in indigo:** the number pad turns indigo with paper-white digits, and the pencil marks are indigo too.
 - **A grade for every puzzle:** Perfect (no mistake) +5 %, Clean (one) ±0, Rough (two or three) −2 %, Messy (four or more, or the puzzle that ends the run) −5 %. The end of a run shows one stamp per puzzle, floor by floor. This replaces the flat −2 % per mistake.

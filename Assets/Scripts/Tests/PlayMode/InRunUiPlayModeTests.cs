@@ -494,6 +494,57 @@ namespace SudokuRoguelike.Tests
             Assert.AreEqual(crossLinks, FindAll(h.Host, "CrossLinkBadge").Count, "one badge per cross-link tile");
         }
 
+        // [REQ: UI-STYLE-022] Garden flow A: the painting shows through the thin paper, sharp and only lightly dimmed round
+        // it; titles and node labels sit on paper slips. High Contrast keeps the opaque paper and the dark room.
+        [UnityTest]
+        [Requirement("UI-STYLE-022")]
+        public IEnumerator PathScroll_WashiWindow_ShowsThePainting_AndHighContrastKeepsTheOpaquePaper()
+        {
+            try
+            {
+                SaveHighContrast(false);   // the run's Options load the save when they are built
+                var h = StartPathMap(8611);
+                yield return null;
+                yield return null;
+                var paper = FindObject(h.Host, "PathScroll").GetComponent<Image>();
+                Assert.Less(paper.color.a, 0.75f, "thin paper: the painting shows through");
+                Assert.Less(FindObject(h.Host, "BackgroundScrim").GetComponent<Image>().color.a, 0.35f, "the room stays bright");
+                var labels = h.Host.GetComponentsInChildren<Text>().Count(t => t.name == "Label" && t.transform.parent.name.StartsWith("Node_"));
+                Assert.Greater(labels, 0);
+                Assert.AreEqual(labels, FindAll(h.Host, "LabelPill").Count, "every node label on a paper pill");
+                Assert.IsTrue(FindObject(h.Host, "PathTitleSlip").activeInHierarchy, "the floor's title on a slip");
+                var background = FindObject(h.Host, "FloorBackground").GetComponent<RawImage>().texture;
+                Assert.NotNull(background);
+                Assert.IsInstanceOf<Texture2D>(background, "the sharp painting, not the blurred copy (a RenderTexture)");
+
+                SaveHighContrast(true);
+                Object.Destroy(h.Host);   // a second in-run blueprint would find the first one's objects
+                yield return null;
+                var hc = StartPathMap(8612);
+                yield return null;
+                yield return null;
+                var hcPaper = hc.Host.GetComponentsInChildren<Image>(true).First(i => i.name == "PathScroll");
+                Assert.AreEqual(1f, hcPaper.color.a, 1e-3f, "High Contrast: opaque paper");
+                Assert.AreEqual(0, FindAll(hc.Host, "LabelPill").Count, "no pills needed on opaque paper");
+            }
+            finally
+            {
+                OptionsController.LiveAccessibility.HighContrastMode = false;   // the next tests start without it
+            }
+        }
+
+        private static void SaveHighContrast(bool on)
+        {
+            var save = new SaveFileService(TestSlot);
+            var envelope = save.Load();
+            envelope.PlayerProfile ??= new ProfileSaveData();
+            envelope.PlayerProfile.Options ??= new OptionsState();
+            envelope.PlayerProfile.Options.Accessibility ??= new AccessibilitySettings();
+            envelope.PlayerProfile.Options.Accessibility.HighContrastMode = on;
+            save.Save(envelope);
+            SaveFileService.FlushSharedPendingWrites();
+        }
+
         // [REQ: UI-STYLE-001] The path is refreshed from many places, sometimes twice in one frame: the scroll keeps
         // exactly one legend, one Save & Quit and one Options button, and the floor title follows the run.
         [UnityTest]

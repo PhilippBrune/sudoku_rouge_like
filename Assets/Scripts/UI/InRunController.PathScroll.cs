@@ -177,15 +177,17 @@ namespace SudokuRoguelike.UI
                     FontStyle.Italic);
                 _firstPickBand = hint.gameObject;
             }
+            SlipFirstPickNote(_firstPickBand != null ? _firstPickBand.GetComponent<Text>() : null);
 
             RebuildPathCanvas(run, FloorThemeData.GetFloorTint(s.CurrentFloor));
         }
 
-        // Per floor: the painting behind the scroll (cross-faded on a floor change) and as a faint wash on the paper.
+        // Per floor: the painting behind the scroll (cross-faded on a floor change): sharp with the washi window
+        // (UI-STYLE-022), blurred with the opaque paper of High Contrast, which also shows it as a faint wash.
         private void ApplyPathFloorArt(int floor, bool isFloorAdvance)
         {
             var painting = Resources.Load<Texture2D>("background/" + PathBackgroundName(floor));
-            var blurred = ScrollUiKit.BlurredCopy(painting);
+            var blurred = PathWashiOn ? painting : ScrollUiKit.BlurredCopy(painting);
             if (_floorBgRaw != null)
             {
                 if (isFloorAdvance && blurred != null && _floorBgPrev != null && _floorBgRaw.texture != null)
@@ -219,6 +221,7 @@ namespace SudokuRoguelike.UI
                     calmName, riskName);
             RebuildFloorProgressStrip(run);
             RebuildPathLegend(run);
+            ApplyPathWashi();
         }
 
         // Floor marks on the paper: ink = done, vermilion = this floor, an outline = still to come.
@@ -413,6 +416,7 @@ namespace SudokuRoguelike.UI
             lbl.resizeTextForBestFit = false;
             lbl.horizontalOverflow = HorizontalWrapMode.Overflow;
             lbl.verticalOverflow = VerticalWrapMode.Overflow;
+            PillUnderLabel(lbl, above);   // UI-STYLE-022: readable over the painting
 
             if (node.IsCrossLink && bridgeWasUsed)
                 ScrollUiKit.Fill(go.transform, "CrossBadge", new Vector2(0.72f, 0.72f), new Vector2(1.06f, 1.06f),

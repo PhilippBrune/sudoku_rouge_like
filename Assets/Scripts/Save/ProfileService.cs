@@ -51,6 +51,11 @@ namespace SudokuRoguelike.Save
             return envelope.MetaProgress ?? new MetaProgressionState();
         }
 
+        /// <summary>[REQ: META-COMPLETE-001] The profile's completion in whole percent (the class garden's totals, UI-STYLE-019).</summary>
+        public int LoadCompletionPercent() =>
+            // The share is a sum of float quarters; the small epsilon keeps 0.29 from flooring to 28 % (review).
+            (int)Math.Floor(_completion.GetCompletionPercent(_saveFile.Load().Completion) * 100f + 0.001f);
+
         public ProfileStats LoadStats()
         {
             var envelope = _saveFile.Load();
@@ -208,25 +213,17 @@ namespace SudokuRoguelike.Save
 
             // Check if item codex is now complete: every item type discovered, except the counter items (ITEM-COUNTER-007),
             // which only shops sell and only for the floor's rules, so they would make the unlock depend on luck.
-            if (!progress.ItemCodexComplete && meta.ItemCodex?.Entries != null)
-            {
-                var required = 0;
-                foreach (Core.ItemType type in System.Enum.GetValues(typeof(Core.ItemType)))
-                    if (!Items.CounterItems.IsCounterItem(type)) required++;
-                var discovered = 0;
-                for (var ci = 0; ci < meta.ItemCodex.Entries.Count; ci++)
-                    if (meta.ItemCodex.Entries[ci].Discovered
-                        && !(System.Enum.TryParse<Core.ItemType>(meta.ItemCodex.Entries[ci].ItemId, out var found)
-                             && Items.CounterItems.IsCounterItem(found)))
-                        discovered++;
-                if (discovered >= required)
-                    progress.ItemCodexComplete = true;
-            }
+            if (!progress.ItemCodexComplete && CodexProgress.RequiredItems(meta).Complete)
+                progress.ItemCodexComplete = true;
 
             // 3. Commit XP to class (skip if tutorial)
             // [REQ: XP-COMMIT-001] XP committed to class at run end only; no mid-run leveling
             // [HARMONY-XP-001] XP is scaled by the harmony multiplier before commit, on every run end (victory or
             // defeat), with no flat bonus (SPEC-CONF-024, decided 2026-10-06; spec §4.7).
+            // [REQ: META-STATS-001] Garden Runs and the best floor per class (the class garden, UI-STYLE-019).
+            if (result.Mode == GameMode.GardenRun && !result.TutorialMode && !result.DisableProgressionRewards)
+                _garden.RecordGardenRun(meta, result.PlayedClassId, result.FloorReached);
+
             if (!result.TutorialMode)
             {
                 var xpToCommit = (int)Math.Round(result.XpEarned * HarmonyDifficultyService.GetXpMultiplier(result.HarmonyLevel));

@@ -60,6 +60,17 @@ namespace SudokuRoguelike.Meta
                 && (meta.ClassUnlocks?.BossesDefeated ?? 0) >= RequiredBossesForPrestige(entry.PrestigeTier);
         }
 
+        /// <summary>[REQ: META-STATS-001] Counts a Garden Run with the class and keeps its best floor.</summary>
+        public void RecordGardenRun(MetaProgressionState meta, ClassId classId, int floorReached)
+        {
+            var entry = FindOrCreateEntry(meta, classId);
+            entry.GardenRuns = Math.Max(0, entry.GardenRuns) + 1;
+            entry.BestFloor = Math.Max(entry.BestFloor, Math.Max(0, floorReached));
+        }
+
+        /// <summary>The class's saved progress, or null before its first run.</summary>
+        public ClassGardenProgressEntry GetEntry(MetaProgressionState meta, ClassId classId) => FindEntry(meta, classId);
+
         // [REQ: META-PRESTIGE-004] On prestige: TotalXp=0, PrestigeTier++
         public bool TryPrestige(MetaProgressionState meta, ClassId classId)
         {

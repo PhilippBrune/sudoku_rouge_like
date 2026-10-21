@@ -1,11 +1,12 @@
 # Open points
 
-**Version:** 1.1 | **Date:** 2026-10-21 | **Status:** review (a living list; update it whenever an item closes or a new one opens)
+**Version:** 1.2 | **Date:** 2026-10-21 | **Status:** review (a living list; update it whenever an item closes or a new one opens)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.2 | 2026-10-21 | review | Garden of classes built (UI-STYLE-019); SPEC-CONF-041 and GAP-063 wait for the owner. |
 | 1.1 | 2026-10-21 | review | Options scroll and Codex book built (UI-STYLE-017/018): moved to the playtest table; the Codex's left-out parts listed. |
 | 1.0 | 2026-10-21 | review | First list, at the owner's request after the 0.2.0 playtest: what to check at the next playtest (GAP-057 included), what is being built, what waits for the owner, and known technical leftovers. |
 
@@ -40,6 +41,7 @@ Questions for the playtest, if it happens again:
 | Counter items | Shops from Floor 2 on | Six items that write digits into the cells of one family of rules; offered for the floor's rules. |
 | Options that act | Options → Gameplay, Display, Accessibility | Highlight Errors, Auto Pencil Cleanup, Show Digits Left, Jump to Next Empty Cell, Double-Tap to Confirm, Screen Shake, Master Volume, Board Brightness/Contrast, Text Size on the board, colour-blind line colours (GAP-061). |
 | Options as a hand scroll | Main menu → Options; Options in a puzzle | Bookmarks (LB/RB), a note under every switch, Reset this page; Accessibility is a page now (with the preview board), the run has a Run page. Check that long German and French bookmark names stay readable. |
+| Garden of classes | Main menu → Meta Progression | Plaques with level or unlock goal, the scroll with runs, best floor and the level path, prestige with two presses (X). Runs and best floor count from this build on. |
 | Codex as a collector's book | Main menu → Codex | Bookmarks Items, Relics, Rules, Curses with counts; Y filters; the right page shows how often an item was found and used. The Curses page fills from this build on (curses met before it are not known). |
 
 **Balance check (RM-108):** after a won run note the gold left at the end, how many shop visits ended with a purchase
@@ -51,7 +53,6 @@ late floors harder for everyone; say if it feels too harsh.
 
 | Item | State | Reference |
 |---|---|---|
-| Meta Progression as the garden of classes (UI-STYLE-019) | Next (the Options scroll and the Codex book are built) | `docs/design/layout-proposals.md` |
 | Linux and Steam Deck, then macOS (RM-107) | Phase 1 next: controller buttons through the Input System, rumble through the Input System, Frameless Window hidden off Windows; then a Linux build | `docs/platform-ports-macos-linux.md` |
 
 ## 3. Waiting for the owner
@@ -62,6 +63,8 @@ late floors harder for everyone; say if it feels too harsh.
 | Steam Input default layout or the Input System rewrite for controllers | The rewrite is planned as the default (it is needed for the Deck either way); Steam Input could be added on top | platform plan, decision 3 |
 | A Mac and a Steam Deck (or a Linux PC) for a first start | A build that was never started on the system should not be published | platform plan, risks |
 | Listening to the 8-bit soundtrack set | The music loops are still the short placeholders (GAP-030) | `steam_assets/audio_8bit/synth`, `docs/audio-8bit-prompts.md` |
+| SPEC-CONF-041: the Meta Progression screen's XP stroke (picked mockup) vs ClassXpProgressionSystem's "no bar, Most Progressed Class line" | Built as picked; the spec text waits for the confirmation | [SPECIFICATION_ISSUES](SPECIFICATION_ISSUES.md) |
+| GAP-063: Level 30 starting items and Level 40 frames are listed but never granted; three of the items do not exist | Players see rewards they do not get | [GAME_GAPS](GAME_GAPS.md#gap-063) |
 | Sign-offs SPEC-CONF-008 (class balance values) and SPEC-PROC-007 (legal wording) | Open owner sign-offs | [SPECIFICATION_ISSUES](SPECIFICATION_ISSUES.md) |
 | Result screens of the Monthly Walk, Spirit Trials and Endless Zen in the ink-and-paper look | The Garden Run end uses the new scroll; these three still show text | `docs/design/layout-proposals.md` (no mockup yet) |
 | Upload and release of the next build | Everything since 0.2.0 is in the CHANGELOG under "Unreleased"; local commits on `feature/game-ui-refactor`, not pushed | `CHANGELOG.md` |

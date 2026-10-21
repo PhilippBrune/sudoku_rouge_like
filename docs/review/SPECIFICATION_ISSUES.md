@@ -17,7 +17,7 @@ Contents: [Contradictions](#1-contradictions) · [Ambiguities](#2-ambiguous-requ
 
 | Group | Entries | Resolved in 1.1 | Open |
 |---|---:|---:|---|
-| Contradictions | 40 | 40 | SPEC-CONF-039 decided 2026-10-20. Owner sign-offs requested: SPEC-CONF-008 balance values, SPEC-PROC-007 legal wording. |
+| Contradictions | 41 | 40 | SPEC-CONF-039 decided 2026-10-20. SPEC-CONF-041 open (2026-10-21). Owner sign-offs requested: SPEC-CONF-008 balance values, SPEC-PROC-007 legal wording. |
 | Ambiguities | 14 | 14 | Listening check for SPEC-AMB-011 (GAP-030). |
 | Obsolete requirements | 13 rows | 13 | — |
 | Missing acceptance criteria | 11 | 9 | SPEC-MAC-005 (deferred, FUTURE-011), SPEC-MAC-011 (profiler session). |
@@ -418,6 +418,17 @@ Where a recommendation was doc-only but the matching gap asked for code (SPEC-CO
   1. **Update HarmonyDifficultySystem §9 to the live display names, and mark only `harmony_10_perfect` hidden.** *(recommended)* No portal or code change; the spec describes what players see.
   2. **Rename the achievements in Steamworks to the §9 names and hide `harmony_all_classes`.** Restores the spec's naming, but renames achievements players already know and needs a publish.
 - **Resolution (0.1.5, 2026-10-14):** Suggestion 1, on the owner's request. HarmonyDifficultySystem 1.2 §9 lists the live names and descriptions; only `harmony_10_perfect` is hidden (`harmony_all_classes` is Expert tier). No portal or code change.
+
+### SPEC-CONF-041
+**The Meta Progression screen: XP bar and "Most Progressed Class"** *(added 2026-10-21)*
+- **CONFLICT:** ClassXpProgressionSystem v1.5 §UI Placement (and MetaProgressionSystem v1.12 META-UNLOCK-005, the class screen's "no progress bar") says the Meta Progression screen shows each class's XP as "X / Y XP" text with **no progress bar**, that the bar appears **only** on the end-of-run screen, and that the screen has an overall "Most Progressed Class" summary at the top. The owner's pick of 2026-10-20 (layout-proposals.md, UI-STYLE-019, the garden of classes) shows an **XP stroke** on the chosen class's scroll and no "Most Progressed Class" summary.
+- Code (2026-10-21): built as the picked mockup: the XP stroke (for a locked class the same stroke shows the way to its unlock) and no summary; the totals along the bottom take its place. The class screen keeps text only (META-UNLOCK-005).
+- Likely current: the owner's pick (newer, and about this screen); the spec's line predates the redesign.
+- **Recommendation:** Confirm the pick and update §UI Placement.
+- **Suggestions:**
+  1. **Keep the stroke and the totals, and update ClassXpProgressionSystem §UI Placement to the garden of classes.** *(recommended)* Matches what was picked and built; the end screen keeps its animated bar.
+  2. **Show the XP as text only on the scroll and add the "Most Progressed Class" line.** Follows the spec; changes the picked design.
+- **Resolution:** Open, owner decision. ClassXpProgressionSystem §UI Placement is unchanged until then.
 
 ---
 

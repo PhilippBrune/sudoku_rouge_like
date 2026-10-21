@@ -1,11 +1,12 @@
 # Class XP & Level Progression System
 
-**Version:** 1.4 | **Date:** 2026-10-20 | **Status:** implemented
+**Version:** 1.5 | **Date:** 2026-10-21 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.5 | 2026-10-21 | implemented | Schedule texts follow the code (SPEC-CONF-008: the code is the source): Koi Gambler L10 "correct gold chance 35%", L20 "no-HP-loss chance 35%"; Lantern Seer L10 "modifiers 35% weaker", L25 "40% weaker" (`ClassPassiveService`). The L30 starting items and L40 frames are listed but not granted (GAP-063). The Meta Progression screen's XP stroke (UI-STYLE-019) differs from "UI Placement" below: SPEC-CONF-041. |
 | 1.4 | 2026-10-20 | implemented | Owner decision (SPEC-CONF-039): the prestige reward is the badge plus **+1 starting gold per prestige tier** for runs with that class (at most +9); "Passive tier +1" is dropped. |
 | 1.3 | 2026-10-07 | implemented | 1.1 review decisions (2026-10-07): class roster, passives, unlock conditions and level schedules regenerated from ClassCatalog, the decided source (SPEC-CONF-008, GAP-023); "base (+bonus)" display; Number Freak L3 "+1 Pencil" fix (D07); XP above Level 40 discarded (SPEC-CONF-034); prestige button with confirmation in Meta Progression (GAP-017); "Passive tier +1" on prestige marked undecided (new SPEC-CONF-039); header now matches the newest history row (SPEC-CONF-023). |
 | 1.2 | 2026-04-15 | implemented | Added requirement IDs (XP-TILE-*, XP-CURVE-*, XP-LOG-*, XP-COMMIT-*, META-XP-*, META-PRESTIGE-*) |
@@ -370,11 +371,11 @@ Fix in 1.1: Number Freak's L3 entry read "+ 1 Pencil" and was never applied; Num
 | 3 | +1 HP |
 | 5 | +15 Starting Gold |
 | 7 | +1 Pencil |
-| 10 | Passive: correct gold chance 30%, +1 Starting Relic |
+| 10 | Passive: correct gold chance 35%, +1 Starting Relic |
 | 13 | +1 HP |
 | 15 | +1 Item Slot |
 | 18 | +15 Starting Gold |
-| 20 | Passive: no-HP-loss chance 30% |
+| 20 | Passive: no-HP-loss chance 35% |
 | 25 | +2 Pencil, +1 HP |
 | 30 | Start: Lucky Charm |
 | 35 | +1 Reroll Token |
@@ -414,12 +415,12 @@ Fix in 1.1: Number Freak's L3 entry read "+ 1 Pencil" and was never applied; Num
 | 3 | +1 Pencil |
 | 5 | +1 HP |
 | 7 | +10 Starting Gold |
-| 10 | Passive: modifiers 25% weaker |
+| 10 | Passive: modifiers 35% weaker |
 | 13 | +2 Pencil |
 | 15 | +1 HP, +1 Reroll Token |
 | 18 | +1 Item Slot |
 | 20 | +2 HP, +1 Starting Relic |
-| 25 | Passive: modifiers 30% weaker |
+| 25 | Passive: modifiers 40% weaker |
 | 30 | Start: Lantern of Clarity |
 | 35 | +2 Pencil, +1 HP |
 | 40 | Cosmetic: Spirit Lantern frame |

@@ -20,6 +20,7 @@ namespace SudokuRoguelike.Run
                 Mode = state.Mode,
                 Victory = victory,
                 GardenDepthReached = state.Depth,
+                FloorReached = Mathf.Clamp(state.CurrentFloor + 1, 1, Mathf.Max(1, state.TotalFloors)),
                 // [REQ: REQ-ECON-101] Gold collected during the run, not gold still held at the end (GAP-027).
                 GoldEarned = state.GoldCollectedThisRun,
                 XpEarned = run.GetTotalRunXp(),

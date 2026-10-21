@@ -549,6 +549,60 @@ namespace SudokuRoguelike.Tests
             SaveFileService.FlushSharedPendingWrites();
         }
 
+        // UI-STYLE-019: the garden of classes with the mockup's profile: Number Freak at Level 23 with two prestige stars
+        // after 41 runs, Garden Monk and Shrine Archivist started, the other five locked part way to their goals.
+        [UnityTest]
+        public IEnumerator RenderClassGarden()
+        {
+            var meta = new MetaProgressionState
+            {
+                ClassUnlocks = new ClassUnlockProgress { BossesDefeated = 6, ItemsUsed = 22, RelicsCollected = 9, GoldCollected = 12400 },
+                MaxUnlockedHarmonyLevel = 4,
+                ItemCodex = new ItemCodexData(),
+                DiscoveredRelics = ((RelicId[])Enum.GetValues(typeof(RelicId))).Take(9).ToList(),
+                DiscoveredBossModifiers = ModifierFamilies.All().Take(30).ToList()
+            };
+            meta.UnlockedClasses.AddRange(new[] { ClassId.GardenMonk, ClassId.ShrineArchivist });
+            foreach (var type in ((ItemType[])Enum.GetValues(typeof(ItemType))).Take(18))
+                meta.ItemCodex.Entries.Add(new ItemCodexEntry { ItemId = type.ToString(), Discovered = true });
+            meta.GardenProgression.ClassEntries.Add(new ClassGardenProgressEntry
+            {
+                ClassId = ClassId.NumberFreak, TotalXp = Economy.XpTable.CumulativeXpForLevel(23) + 400, PrestigeTier = 2,
+                GardenRuns = 41, BestFloor = 5
+            });
+            meta.GardenProgression.ClassEntries.Add(new ClassGardenProgressEntry
+                { ClassId = ClassId.GardenMonk, TotalXp = Economy.XpTable.CumulativeXpForLevel(9), GardenRuns = 6, BestFloor = 3 });
+            meta.GardenProgression.ClassEntries.Add(new ClassGardenProgressEntry
+                { ClassId = ClassId.ShrineArchivist, TotalXp = Economy.XpTable.CumulativeXpForLevel(4), GardenRuns = 2, BestFloor = 2 });
+            new SaveFileService(TestSlot).Save(new SaveFileEnvelope { MetaProgress = meta });
+            SaveFileService.FlushSharedPendingWrites();
+
+            if (Object.FindFirstObjectByType<EventSystem>() == null)
+                _createdRoots.Add(new GameObject("LayoutShotGardenEventSystem", typeof(EventSystem), typeof(StandaloneInputModule)));
+            var inputModules = Object.FindObjectsByType<BaseInputModule>(FindObjectsSortMode.None);
+            foreach (var module in inputModules) module.enabled = false;
+            var camera = CreateCamera();
+            var host = new GameObject("LayoutShotGarden");
+            _createdRoots.Add(host);
+            host.AddComponent<MainMenuBlueprintBuilder>().Build();
+            var rootGroup = Find(host, "MainMenuRoot").GetComponent<CanvasGroup>();
+            if (rootGroup != null) rootGroup.alpha = 1f;
+            var menu = host.GetComponent<MainMenuController>();
+            menu.ShowMainMenu();
+            yield return null;
+            menu.OpenMetaProgression();
+            yield return new WaitForSecondsRealtime(0.5f);
+            yield return Shoot(host, camera, "after_meta_progression.png");
+
+            Find(host, "ClassPlaque_KoiGambler").GetComponent<Button>().onClick.Invoke();
+            EventSystem.current.SetSelectedGameObject(Find(host, "ClassPlaque_KoiGambler"));
+            yield return new WaitForSecondsRealtime(0.3f);
+            yield return Shoot(host, camera, "after_meta_progression_locked.png");
+            foreach (var module in inputModules) if (module != null) module.enabled = true;
+            new SaveFileService(TestSlot).Save(new SaveFileEnvelope());
+            SaveFileService.FlushSharedPendingWrites();
+        }
+
         // UI-STYLE-012: the Custom Puzzle screen at 9×9, 3 stars, with Dutch Whispers, Killer Cages and Skyscrapers chosen
         // (the mockup's example). ToggleModifier is looked up by name, so the same test also shoots the old panel.
         [UnityTest]

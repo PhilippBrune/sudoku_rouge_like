@@ -5,6 +5,7 @@ using SudokuRoguelike.Classes;
 using SudokuRoguelike.Core;
 using SudokuRoguelike.Economy;
 using SudokuRoguelike.Items;
+using SudokuRoguelike.Meta;
 using SudokuRoguelike.Run;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -294,7 +295,7 @@ namespace SudokuRoguelike.UI
                 button.colors = colors;
                 var shown = entry;
                 button.onClick.AddListener(() => ShowDetail(shown));
-                tile.gameObject.AddComponent<CodexTileFocus>().OnFocus = () => ShowDetail(shown);
+                tile.gameObject.AddComponent<FocusNotifier>().OnFocus = () => ShowDetail(shown);
                 _tiles.Add(button);
             }
             if (_scroll != null) _scroll.verticalNormalizedPosition = 1f;
@@ -415,29 +416,14 @@ namespace SudokuRoguelike.UI
 
         private void UpdateTabLabels(MetaProgressionState meta)
         {
-            var itemTotal = Enum.GetValues(typeof(ItemType)).Length;
-            var itemsFound = 0;
-            foreach (ItemType type in Enum.GetValues(typeof(ItemType)))
-                if (IsItemFound(meta, type, out _)) itemsFound++;
-            var relicTotal = Enum.GetValues(typeof(RelicId)).Length;
-            var relicsFound = meta?.DiscoveredRelics?.Count ?? 0;
-            var ruleTotal = 0;
-            var rulesFound = 0;
-            foreach (var id in ModifierFamilies.All())
-            {
-                if (!BossService.IsImplementedModifier(id)) continue;
-                ruleTotal++;
-                if (meta?.DiscoveredBossModifiers != null && meta.DiscoveredBossModifiers.Contains(id)) rulesFound++;
-            }
-            var curseTotal = CurseService.All.Count;
-            var cursesFound = 0;
-            foreach (var curse in CurseService.All)
-                if (meta?.DiscoveredCurses != null && meta.DiscoveredCurses.Contains(curse.Id)) cursesFound++;
-
-            SetTab(_tabItems, F("Codex.Tab.Items", "Items {0}/{1}", itemsFound, itemTotal), _currentTab == CodexTabId.Items);
-            SetTab(_tabRelics, F("Codex.Tab.Relics", "Relics {0}/{1}", relicsFound, relicTotal), _currentTab == CodexTabId.Relics);
-            SetTab(_tabModes, F("Codex.Tab.Rules", "Rules {0}/{1}", rulesFound, ruleTotal), _currentTab == CodexTabId.Modes);
-            SetTab(_tabCurses, F("Codex.Tab.Curses", "Curses {0}/{1}", cursesFound, curseTotal), _currentTab == CodexTabId.Curses);
+            var items = CodexProgress.Items(meta);
+            var relics = CodexProgress.Relics(meta);
+            var rules = CodexProgress.Rules(meta);
+            var curses = CodexProgress.Curses(meta);
+            SetTab(_tabItems, F("Codex.Tab.Items", "Items {0}/{1}", items.Found, items.Total), _currentTab == CodexTabId.Items);
+            SetTab(_tabRelics, F("Codex.Tab.Relics", "Relics {0}/{1}", relics.Found, relics.Total), _currentTab == CodexTabId.Relics);
+            SetTab(_tabModes, F("Codex.Tab.Rules", "Rules {0}/{1}", rules.Found, rules.Total), _currentTab == CodexTabId.Modes);
+            SetTab(_tabCurses, F("Codex.Tab.Curses", "Curses {0}/{1}", curses.Found, curses.Total), _currentTab == CodexTabId.Curses);
         }
 
         private static void SetTab(Button tab, string label, bool active)
@@ -520,18 +506,11 @@ namespace SudokuRoguelike.UI
             if (_currentTab == CodexTabId.Items)
             {
                 // The codex unlock leaves out the counter items, which only shops sell (ITEM-COUNTER-007).
-                var required = 0;
-                var requiredFound = 0;
-                foreach (ItemType type in Enum.GetValues(typeof(ItemType)))
-                {
-                    if (CounterItems.IsCounterItem(type)) continue;
-                    required++;
-                    if (IsItemFound(_currentMeta, type, out _)) requiredFound++;
-                }
+                var required = CodexProgress.RequiredItems(_currentMeta);
                 var className = LocalizationService.T(ClassCatalog.GetDefinition(ClassId.ReedDuelist).Name);
-                goal = requiredFound >= required
+                goal = required.Complete
                     ? F("Codex.Goal.ItemsDone", "Every item found: the {0} is yours.", className)
-                    : F("Codex.Goal.Items", "Find every item to unlock the {0}. {1} still unknown.", className, required - requiredFound);
+                    : F("Codex.Goal.Items", "Find every item to unlock the {0}. {1} still unknown.", className, required.Total - required.Found);
             }
             else
                 goal = unknown == 0 ? T("Codex.Goal.Complete", "All found.") : F("Codex.Goal.Other", "{0} still unknown.", unknown);
@@ -548,10 +527,4 @@ namespace SudokuRoguelike.UI
         }
     }
 
-    /// <summary>Shows a Codex tile's entry when the controller's focus lands on it.</summary>
-    public sealed class CodexTileFocus : MonoBehaviour, ISelectHandler
-    {
-        public Action OnFocus;
-        public void OnSelect(BaseEventData eventData) => OnFocus?.Invoke();
-    }
 }

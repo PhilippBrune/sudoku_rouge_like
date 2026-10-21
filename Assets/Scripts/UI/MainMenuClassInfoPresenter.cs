@@ -167,9 +167,9 @@ namespace SudokuRoguelike.UI
                 var (unlockLevel, description) = allUnlocks[ui];
                 var achieved = currentLevel.HasValue && unlockLevel <= currentLevel.Value;
                 if (achieved)
-                    sb.Append($"<color=#C8A44A>[L{unlockLevel}\u2713]</color> {description}");
+                    sb.Append($"<color=#C8A44A>[L{unlockLevel}\u2713]</color> {ClassUnlockText.Localize(description)}");
                 else
-                    sb.Append($"<color=#888888>[L{unlockLevel}]</color> {description}");
+                    sb.Append($"<color=#888888>[L{unlockLevel}]</color> {ClassUnlockText.Localize(description)}");
 
                 itemsOnRow++;
                 if (itemsOnRow == 2 || ui == allUnlocks.Length - 1)

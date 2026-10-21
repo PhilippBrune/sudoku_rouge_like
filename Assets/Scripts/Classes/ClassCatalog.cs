@@ -106,17 +106,17 @@ namespace SudokuRoguelike.Classes
                     (13,"+2 Pencil"),(15,"+1 HP, +1 Item Slot"),(18,"+10 Starting Gold"),(20,"Passive: 2 free pencil uses/cell"),
                     (25,"+2 Pencil, +1 HP"),(30,"Start: Pattern Scroll"),(35,"+1 Reroll Token"),(40,"Cosmetic: Scroll Archive frame") },
             // KoiGambler
-            new[] { (3,"+1 HP"),(5,"+15 Starting Gold"),(7,"+1 Pencil"),(10,"Passive: correct gold chance 30%, +1 Starting Relic"),
-                    (13,"+1 HP"),(15,"+1 Item Slot"),(18,"+15 Starting Gold"),(20,"Passive: no-HP-loss chance 30%"),
+            new[] { (3,"+1 HP"),(5,"+15 Starting Gold"),(7,"+1 Pencil"),(10,"Passive: correct gold chance 35%, +1 Starting Relic"),
+                    (13,"+1 HP"),(15,"+1 Item Slot"),(18,"+15 Starting Gold"),(20,"Passive: no-HP-loss chance 35%"),
                     (25,"+2 Pencil, +1 HP"),(30,"Start: Lucky Charm"),(35,"+1 Reroll Token"),(40,"Cosmetic: Golden Koi frame") },
             // StoneGardener
             new[] { (3,"+1 Pencil"),(5,"+1 HP"),(7,"+1 Item Slot"),(10,"+10 Starting Gold, +1 Starting Relic"),
                     (13,"+2 Pencil"),(15,"+1 HP, +1 Reroll Token"),(18,"+1 Item Slot"),(20,"Passive: 2 free items/level, +1 Starting Relic"),
                     (25,"+2 HP"),(30,"Start: Harmony Charm"),(35,"+1 Pencil, +1 HP"),(40,"Cosmetic: Mossy Stone frame") },
             // LanternSeer
-            new[] { (3,"+1 Pencil"),(5,"+1 HP"),(7,"+10 Starting Gold"),(10,"Passive: modifiers 25% weaker"),
+            new[] { (3,"+1 Pencil"),(5,"+1 HP"),(7,"+10 Starting Gold"),(10,"Passive: modifiers 35% weaker"),
                     (13,"+2 Pencil"),(15,"+1 HP, +1 Reroll Token"),(18,"+1 Item Slot"),(20,"+2 HP, +1 Starting Relic"),
-                    (25,"Passive: modifiers 30% weaker"),(30,"Start: Lantern of Clarity"),(35,"+2 Pencil, +1 HP"),(40,"Cosmetic: Spirit Lantern frame") },
+                    (25,"Passive: modifiers 40% weaker"),(30,"Start: Lantern of Clarity"),(35,"+2 Pencil, +1 HP"),(40,"Cosmetic: Spirit Lantern frame") },
             // ReedDuelist
             new[] { (3,"+1 Pencil"),(5,"+1 HP"),(7,"+1 Reroll Token"),(10,"+10 Starting Gold"),
                     (13,"+2 Pencil"),(15,"Passive: perfect no-pencil → +3 Pencil"),(18,"+1 HP"),(20,"+1 Item Slot, +1 Starting Relic"),

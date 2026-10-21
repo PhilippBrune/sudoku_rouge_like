@@ -145,6 +145,10 @@ namespace SudokuRoguelike.Core
         public ClassId ClassId;
         public int TotalXp;
         public int PrestigeTier;
+        // [REQ: META-STATS-001] Garden Runs played with this class and the furthest floor reached (the class garden,
+        // UI-STYLE-019). Counted from this build on; older saves start at 0.
+        public int GardenRuns;
+        public int BestFloor;
     }
 
     // [REQ: META-UNLOCK-001] ClassUnlockProgress: cumulative counters for the 8-class unlock system; persisted in MetaProgressionState.ClassUnlocks

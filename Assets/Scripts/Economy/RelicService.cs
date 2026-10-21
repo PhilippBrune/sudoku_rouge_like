@@ -108,6 +108,10 @@ namespace SudokuRoguelike.Economy
         public static ClassId GetExclusiveRelicClass(RelicId id) =>
             ClassExclusiveRelics.TryGetValue(id, out var d) ? d.ClassId : (ClassId)0;
 
+        /// <summary>The class level that offers the relic (the class garden's level path, UI-STYLE-019).</summary>
+        public static int GetExclusiveRelicUnlockLevel(RelicId id) =>
+            ClassExclusiveRelics.TryGetValue(id, out var def) ? def.UnlockLevel : 0;
+
         public static RelicId? GetExclusiveRelicForClass(ClassId classId)
         {
             foreach (var kvp in ClassExclusiveRelics)

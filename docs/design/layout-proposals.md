@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 2.2 | **Date:** 2026-10-21 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry, Pencil mode in indigo, the Options scroll and the Codex book; picked and being built: Meta Progression)
+**Version:** 2.3 | **Date:** 2026-10-21 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry, Pencil mode in indigo, the Options scroll, the Codex book and the garden of classes)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.3 | 2026-10-21 | review | Meta Progression as the garden of classes built (UI-STYLE-019): plaques with level or unlock goal (META-UNLOCK-006), the scroll with runs and best floor (META-STATS-001) and the class's whole level path, the totals. The XP stroke differs from ClassXpProgressionSystem ("no bar"): SPEC-CONF-041, for the owner. Building it found GAP-063 (the Level 30 starting items and Level 40 frames are listed but not granted). Screenshots below. |
 | 2.2 | 2026-10-21 | review | The Codex as a collector's book built (UI-STYLE-018), with a new Curses page (the game now records the curses met, META-CODEX-008) and how often each item was found and used (META-CODEX-009). Two parts of the mockup are left out: the Normal · Rare · Epic filter and "Best paired with", which no game data backs. Screenshots below. |
 | 2.1 | 2026-10-21 | review | Options as a hand scroll with bookmarks built (UI-STYLE-017) in the main menu and in a run, after the Options audit (GAP-061). Screenshots below. |
 | 2.0 | 2026-10-21 | review | Owner picks: Options, Codex and Meta Progression as proposed (UI-STYLE-017 to 019, being built), garden flow **D · Entering a floor** (UI-STYLE-021) and Pencil mode **A · Indigo ink** (UI-STYLE-020). D and A are built, with screenshots from the game below. |
@@ -36,6 +37,7 @@ The mockups are HTML pages in `layout-proposals/src/`, built from `Assets/Resour
 | UI-STYLE-009 | The shop as the market stall painting with the goods on the counter, wooden price tags, the chosen item on a paper slip with Buy and the gold after buying, the purse (gold, reroll tokens, bag slots), Reroll and Leave. | built 2026-10-19 |
 | UI-STYLE-017 | Options as a hand scroll with bookmarks, main menu and run alike: the "Settings · Options" banner, one cloth bookmark per page above the paper (main menu: Audio, Display, Gameplay, Accessibility, Controls, Language; run: Audio, Display, Gameplay, Accessibility, Language, Run), LB/RB (PageUp/PageDown) turn the page; one setting per line with the label on the left, values as a brush stroke with a stone and the value in vermilion, switches as hanko stamps with a short note; a pinned slip on the right with the page's tip (the main menu's Accessibility page shows the preview board there, with Text Size on the page); "Reset this page" and Back under the scroll. The separate Accessibility panel is gone. | built 2026-10-21 |
 | UI-STYLE-018 | The Codex as a collector's book: the "Your collection · Codex" banner, a wooden book with two paper pages, bookmarks Items, Relics, Rules and Curses with their counts (LB/RB, PageUp/PageDown); the left page has the filter All · Found · Not yet found (Y) and the tiles, found ones in colour, the rest as ink silhouettes with "???"; the right page shows the chosen entry: icon, rarities (or tier, family, severity), its rule, how often it was found and used, where it comes from and when it was found, the collection's goal (for items the Reed Duelist unlock) and a "found" stamp with the share. Back under the book. | built 2026-10-21 |
+| UI-STYLE-019 | Meta Progression as the garden of classes: the eight classes as ema plaques on two red cords (level and prestige stars; locked ones dark, with a silhouette and their unlock goal and progress), the chosen class on a hanging scroll (level, runs and best floor, the XP stroke or the way to its unlock, the passive, every milestone of its level path ticked off up to its level, prestige stars and their gold, the prestige button at Level 40), the collection's totals along the bottom, Back. | built 2026-10-21 |
 | UI-STYLE-020 | Pencil mode in indigo ink: the number pad tiles and the switch's Pencil half turn indigo with paper-white digits, and the pencil marks on the board are indigo too. | built 2026-10-21 |
 | UI-STYLE-021 | Entering a floor of a Garden Run: two seconds of the floor's painting with its name on a hanging banner and the path rolled up below, then the path scroll unrolls. A click or any key skips it; once per floor, not on a resumed floor; Reduce Motion skips the unroll. | built 2026-10-21 |
 | UI-STYLE-006 | A killer cage is one dashed outline around all its cells: inset into the cells, joined across them (no line between two cells of the same cage) and closed at every corner. Same rule in the game (`CageOutline`) and in the mockups (`cageRuns` in `src/common.js`). | built 2026-10-15 |
@@ -367,6 +369,12 @@ Today's screens (from the game):
 **Meta Progression as the garden of classes (UI-STYLE-019):** the eight classes as ema plaques (locked ones dark, with their unlock goal and progress); the chosen class on a hanging scroll with its level stroke, passive, unlock path and prestige; the collection totals along the bottom.
 
 ![Meta Progression](layout-proposals/meta_class_garden.jpg)
+
+**As built (UI-STYLE-019, 2026-10-21):** as in the mockup, with the game's data. The level path lists every milestone of the class (12 levels; the exclusive item at 15 and relic at 30 join their level's row, "???" until reached), not the mockup's five sample rows. "41 runs · best floor 5" needed two counters per class (META-STATS-001, counted from this build on; a count of 0 is left out). The codex total is the share of all four Codex collections; "highest Harmony" is the highest level unlocked. A locked class's scroll shows its unlock goal on the stroke. The XP stroke follows the pick, not ClassXpProgressionSystem's "no bar" line: SPEC-CONF-041 asks the owner to confirm. GAP-063: the Level 30 starting items and Level 40 frames the path lists are not granted by the game.
+
+![The garden of classes, Number Freak chosen](layout-proposals/after_meta_progression.jpg)
+
+![A locked class chosen](layout-proposals/after_meta_progression_locked.jpg)
 
 ### The garden's flow on the path: D chosen (UI-STYLE-021)
 

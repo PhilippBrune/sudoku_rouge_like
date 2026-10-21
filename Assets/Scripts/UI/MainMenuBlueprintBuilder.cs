@@ -857,44 +857,36 @@ namespace SudokuRoguelike.UI
         // Panel: Meta Progression
         // ------------------------------------------------------------------------
 
+        // [REQ: UI-STYLE-019] Meta Progression as the garden of classes (owner pick 2026-10-20): the class-select painting
+        // dimmed, the banner, the plaque area (cords and ema plaques, filled by MetaProgressionPanelController), the hanging
+        // scroll with the chosen class, the totals along the bottom, Back and the key hint.
         private GameObject BuildMetaProgressionPanel(RectTransform root, MainMenuController mc,
             MetaProgressionPanelController metaCtrl)
         {
-            var panel = MakePanel("MetaProgressionPanel", root,
-                new Vector2(0.20f, 0.10f), new Vector2(0.80f, 0.90f));
-            var pr = GetPanelContent(panel);
+            using var paperScope = OptionsUiStyle.UsePaper();
+            var panel = EnsureRect("MetaProgressionPanel", root, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero).gameObject;
+            var backdrop = EnsureOrGetImage(panel, BgColor);
+            if (ApplyPanelBackground(backdrop, "background/bg_class_select"))
+                backdrop.color = new Color(0.45f, 0.45f, 0.45f, 1f);   // the garden, dimmed behind the plaques
+            var pr = (RectTransform)panel.transform;
+            foreach (var part in new[] { "Content", "MetaBanner", "ClassGarden", "ClassScroll", "MetaTotals", "MetaKeyHint", "BtnMetaBack" })
+                ScrollUiKit.DestroyChildrenNow(pr, part);
 
-            var title = BuildText("Title", pr, T("Meta Progression"), 30, TextAnchor.UpperCenter);
-            SetRect(title.rectTransform,
-                new Vector2(0.08f, 0.90f), new Vector2(0.92f, 0.98f), Vector2.zero, Vector2.zero);
+            ScrollUiKit.Banner(pr, "MetaBanner", new Vector2(0.156f, 0.891f), new Vector2(0.448f, 0.983f),
+                "MetaEyebrow", T("MetaProgression.Eyebrow"), "Title", T("Meta Progression"), 46);
+            var garden = ScrollUiKit.Area(pr, "ClassGarden", Vector2.zero, Vector2.one);
+            var scroll = ScrollUiKit.HangingScroll(pr, "ClassScroll", new Vector2(0.578f, 0.150f), new Vector2(0.9375f, 0.862f));
+            var totals = ScrollUiKit.Area(pr, "MetaTotals", new Vector2(0.047f, 0.135f), new Vector2(0.536f, 0.205f));
 
-            var summary = BuildText("SummaryText", pr, "", 17, TextAnchor.UpperLeft);
-            SetRect(summary.rectTransform,
-                new Vector2(0.08f, 0.82f), new Vector2(0.92f, 0.88f), Vector2.zero, Vector2.zero);
-
-            var scrollContent = BuildScrollArea("MetaScroll", pr,
-                new Vector2(0.08f, 0.14f), new Vector2(0.92f, 0.80f));
-
-            var back = BuildButton("BtnMetaBack", pr, T("Back"), 18);
-            SetRect(back.GetComponent<RectTransform>(),
-                new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
+            var back = OptionsUiFactory.BuildBackPill("BtnMetaBack", pr, T("Back"));
+            SetRect((RectTransform)back.transform, new Vector2(0.232f, 0.050f), new Vector2(0.352f, 0.110f), Vector2.zero, Vector2.zero);
             back.onClick.RemoveAllListeners();
             back.onClick.AddListener(mc.BackToMainMenu);
-            ApplyMenuButtonIcon(back, "ui/icon_back_leaf"); // F16: back/close uses dedicated back_leaf icon;
+            var hint = OptionsUiFactory.BuildText("MetaKeyHint", pr, T("MetaProgression.KeyHint"), 17, TextAnchor.MiddleCenter);
+            SetRect(hint.rectTransform, new Vector2(0.03f, 0.008f), new Vector2(0.553f, 0.045f), Vector2.zero, Vector2.zero);
+            hint.color = new Color(0.86f, 0.82f, 0.72f, 1f);
 
-            metaCtrl.Configure(scrollContent, summary);
-
-            if (ApplyPanelBackground(panel.GetComponent<Image>(), "background/bg_meta_progression"))
-            {
-                var contentImg = pr.GetComponent<Image>();
-                if (contentImg != null) contentImg.color = ContentScrimColor;
-                var contentOutline = pr.GetComponent<Outline>();
-                if (contentOutline != null) contentOutline.effectColor = Color.clear;
-
-                foreach (var btn in pr.GetComponentsInChildren<Button>(true))
-                    StyleButtonForBackground(btn);
-            }
-
+            metaCtrl.Configure(garden, scroll, totals, back);
             panel.SetActive(false);
             return panel;
         }

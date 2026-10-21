@@ -1,11 +1,12 @@
 # Meta Progression System
 
-**Version:** 1.11 | **Date:** 2026-10-21 | **Status:** implemented
+**Version:** 1.12 | **Date:** 2026-10-21 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.12 | 2026-10-21 | implemented | The Meta Progression screen is the garden of classes (UI-STYLE-019, owner pick): new META-UNLOCK-006 (each locked class shows its goal with its progress), META-STATS-001 (Garden Runs and best floor per class). META-XP-006 now says where the schedule lives (ClassCatalog) and that it is shown in the player's language; the Koi Gambler's and Lantern Seer's passive steps name the values the game uses. The XP stroke on this screen is logged as SPEC-CONF-041 (ClassXpProgressionSystem says no bar). |
 | 1.11 | 2026-10-21 | implemented | The Codex as a collector's book (UI-STYLE-018, owner pick): bookmarks Items, Relics, Rules and Curses. New: the curses met in any run are recorded for the Curses page (META-CODEX-008), and each item counts how often it was found and used (META-CODEX-009). META-CODEX-005 is verified by a test. |
 | 1.10 | 2026-10-20 | implemented | Owner decisions: the prestige reward is the badge plus +1 starting gold per tier (SPEC-CONF-039, META-PRESTIGE-005); Ascension is retired, because Harmony already is the post-win difficulty ladder and prestige the per-class goal (GAP-017, FUTURE-009): META-ASCEND-001..003 descoped, the unused save fields stay for old saves, OPEN-A closed. |
 | 1.9 | 2026-10-19 | implemented | Catalog batch B5 (BossMechanicsSystem 2.12) adds 5 modifiers to the codex and completion: 70 clearable modifiers. |
@@ -60,7 +61,11 @@ Typical unlock order based on natural play progression:
 
 **[META-UNLOCK-003]** Unlocked classes: selectable with full stat block, passive description, current level.
 **[META-UNLOCK-004]** Locked classes: greyed out, show silhouette icon + unlock condition text.
-**[META-UNLOCK-005]** Current class level shown as "X / Y XP" text (no progress bar).
+**[META-UNLOCK-005]** Current class level shown as "X / Y XP" text (no progress bar). (The Meta Progression screen's XP stroke from the picked garden of classes, UI-STYLE-019, differs from this line and from ClassXpProgressionSystem §UI Placement: SPEC-CONF-041, open for the owner.)
+
+### Meta Progression Display (the garden of classes, UI-STYLE-019)
+
+**[META-UNLOCK-006]** Each locked class shows its unlock goal with its progress, on its plaque and on the scroll: bosses defeated (2 or 10), items used (15), relics collected (10), gold collected (50,000), items found (the Codex without the counter items, META-CODEX-006), or "a run with no mistakes" (done or not). The progress never shows more than the goal. Goals and progress come from `ClassUnlockService` (`GetProgress`, the same thresholds `CheckNewUnlocks` uses).
 
 ---
 
@@ -78,9 +83,13 @@ See [ClassXpProgressionSystem](ClassXpProgressionSystem.md) for the full XP curv
 
 ### Per-Class Level Rewards
 
-**[META-XP-006]** Each class has **12 milestone levels** (L3, L5, L7, L10, L12, L15, L20, L25, L30, L35, L38, L40) granting stat bonuses (+HP, +Pencil, +Reroll, +Slot, +Gold) and passive upgrades. See `ClassGardenProgressionService.GetStatBonuses()` for the full unlock schedule.
+**[META-XP-006]** Each class has **12 milestone levels** granting stat bonuses (+HP, +Pencil, +Reroll, +Slot, +Gold, +Starting Relic) and passive upgrades; the schedule is `ClassCatalog.GetAllUnlocks` (listed in ClassXpProgressionSystem) and the stat bonuses are applied by `RunArchetypeService.GetLevelBonuses`. The class screen and the garden of classes show each entry in the player's language (`ClassUnlockText`). Not yet granted: the Level 30 starting items and the Level 40 frames (GAP-063).
 
 ---
+
+## Profile Statistics per Class
+
+**[META-STATS-001]** Each class counts its **Garden Runs** and keeps its **best floor** (1–5, the floor the run ended on). Only Garden Runs count, not the tutorial, Endless Zen, Spirit Trials or the Monthly Walk. Counted from 2026-10-21 on; older saves start at 0, and the screen leaves out a count of 0.
 
 ## Prestige System
 

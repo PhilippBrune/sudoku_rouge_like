@@ -465,8 +465,10 @@ namespace SudokuRoguelike.UI
         public void OpenMetaProgression()
         {
             var meta = Profile.LoadMetaProgress();
-            _metaProgressionController?.Refresh(meta);
+            if (_metaProgressionController != null)   // no ?. on a MonoBehaviour
+                _metaProgressionController.Refresh(meta, Profile.LoadCompletionPercent());
             _menu.Show(MenuScreen.MetaProgression);
+            if (_metaProgressionController != null) _metaProgressionController.FocusSelected();   // UI-STYLE-019
         }
 
         // [REQ: META-PRESTIGE-004] GAP-017: prestige a level-40 class from the Meta Progression panel.
@@ -474,8 +476,10 @@ namespace SudokuRoguelike.UI
         {
             var done = Profile.TryPrestigeClass(classId);
             Debug.Log($"[MainMenu] Prestige {classId}: {(done ? "done" : "not eligible")}.");
-            // The rebuilt rows drop the selection; EnsureControllerSelection picks the panel's first button again.
-            _metaProgressionController?.Refresh(Profile.LoadMetaProgress());
+            // The rebuilt plaques drop the selection: the focus goes back to the prestiged class (UI-STYLE-019).
+            if (_metaProgressionController == null) return;
+            _metaProgressionController.Refresh(Profile.LoadMetaProgress(), Profile.LoadCompletionPercent());
+            _metaProgressionController.FocusSelected();
         }
 
         public void OpenGameModes()    => ShowGameModes();

@@ -70,6 +70,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-059](#gap-059) | Mistakes counted toward the run only when a puzzle was solved | FIXED (0.2.0 playtest, 2026-10-20) | MEDIUM | P3 |
 | [GAP-060](#gap-060) | The trial the Warding Flame removed came back after Save & Quit at the boss gate | FIXED (found in review, 2026-10-21) | LOW | P3 |
 | [GAP-061](#gap-061) | Options that did nothing or less than their names said | FIXED (Options audit, 2026-10-21) | MEDIUM | P2 |
+| [GAP-063](#gap-063) | Class levels 30 and 40 promise rewards the game does not grant (starting items, frames) | OPEN (found building the class garden, 2026-10-21; owner decision) | MEDIUM | P2 |
 | [GAP-062](#gap-062) | Main menu: the D-pad steps through a panel in creation order, and arrow keys may move twice | OPEN (found building the Codex book, 2026-10-21; not checked in the player) | MEDIUM | P2 |
 | [GAP-044](#gap-044) | Region borders showed the previous puzzle's regions on a same-size board | FIXED (found 2026-10-14 by the owner) | HIGH | P1 |
 | [GAP-043](#gap-043) | Without the `ActiveProfileSlot` pref the game opens an empty slot 0, not the existing profile | FIXED (0.1.5, found 2026-10-14) | LOW | P3 |
@@ -987,3 +988,14 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Problem:** On every main-menu panel, `MainMenuController.HandleMenuGamepadNavigation` moves the focus to the next or previous control in creation order on any Up/Down/Left/Right press (D-pad buttons, D-pad axes, left stick, arrow keys). So the D-pad ignores the panel's layout: in the Codex, Down goes one tile to the right instead of one row down, and the D-pad links the panels set (the Codex's grid, the Options lines) are not used. Unity's `StandaloneInputModule` reads the arrow keys and the left stick too (Input Manager axes Horizontal/Vertical) and moves along those links in the same frame, so an arrow key or a stick push may move the focus twice.
 - **Why it is there:** commit 92933d2 (Steam review, 2026-07-03) added the cycle because the legacy module does not read the D-pad on many controllers.
 - **Next step:** with platform phase 1 (RM-107: controller input through the Input System), use `InputSystemUIInputModule`, which reads the D-pad, and replace the cycle with one step along the panel's links (`FindSelectableOnUp/Down/Left/Right`), once per press. Check it in the player with a controller and the keyboard; `CodexBookPlayModeTests` and `GeneratedUiPlayModeTraversalTests` already check the links themselves.
+
+## GAP-063
+**Class levels 30 and 40 promise rewards the game does not grant**
+
+- **Requirement:** META-XP-006 (the level schedule), ClassXpProgressionSystem §Class Base Stats & Level Unlock Schedules
+- **Status:** OPEN (found while building the garden of classes, 2026-10-21) · **Severity:** MEDIUM · **Priority:** P2
+- **Problem:** Every class's Level 30 entry promises a starting item ("Start: Rare Solver", "Start: Meditation Stone", …) and its Level 40 entry a cosmetic frame ("Cosmetic: Golden Number frame", …). No code grants either: runs start without the item, and `MetaProgressionState.UnlockedCosmetics` is never written. Three of the eight starting items do not exist as items at all: Lucky Charm (Koi Gambler), Harmony Charm (Stone Gardener) and Tea of Focus (Reed Duelist). The class screen and the garden of classes both list these entries.
+- **Fixed with it (2026-10-21):** the schedule's passive steps named old values: Koi Gambler L10/L20 said 30 % (the game uses 35 %), Lantern Seer L10/L25 said 25 %/30 % (35 %/40 %). The texts now follow `ClassPassiveService` (SPEC-CONF-008: the code is the source); `ClassGardenDataTests.ScheduleTexts_NameThePassiveValuesTheGameUses`.
+- **Until then:** the garden of classes lists these parts in soft italic and never ticks them off, so it does not claim a reward the game does not give (`ClassUnlockText.IsGranted`); the class screen lists them as before.
+- **Next step (owner):** decide per entry: grant the starting item at run start (and design the three missing items, or name existing ones), build the frames, or replace the entries with rewards the game has. Until then the entries stay listed as the spec has them.
+

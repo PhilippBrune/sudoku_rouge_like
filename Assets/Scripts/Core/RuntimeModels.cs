@@ -571,6 +571,8 @@ namespace SudokuRoguelike.Core
         public GameMode Mode;
         public bool Victory;
         public int GardenDepthReached;
+        /// <summary>[REQ: META-STATS-001] The floor the run ended on, 1 to TotalFloors.</summary>
+        public int FloorReached;
         public int GoldEarned;
         public int XpEarned;
         public int BossPhaseReached;

@@ -34,7 +34,8 @@ namespace SudokuRoguelike.Tests
             Assert.AreEqual(0.42f, service.ParticleIntensity, 0.001f);
             Assert.AreEqual(18, service.ScaleFont(12));
             Assert.AreEqual(30f, service.GetAnimationDuration(100f), 0.001f);
-            Assert.AreEqual(AccessibilityService.ColorMode.Protanopia, service.ActiveColorMode);
+            // ACCESS-COLOR-003 (GAP-061): colour-blind mode recolours the lines; the cells are not simulated any more.
+            Assert.AreEqual(AccessibilityService.ColorMode.Normal, service.ActiveColorMode);
         }
 
         [Test]

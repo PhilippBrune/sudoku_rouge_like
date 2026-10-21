@@ -9,6 +9,7 @@
 - Lines, dots and cage marks stay under the digits on every board (from the second puzzle of a run on they covered them).
 - Every mistake counts toward the run score when it happens, also in the puzzle that ends the run.
 - The trial the Warding Flame removed at a boss gate stays removed after Save & Quit.
+- Options do what they say: Highlight Errors, Show Digits Left (was Show Candidate Count), Jump to Next Empty Cell (was Cursor Snap) and Double-Tap to Confirm now act; Auto Pencil Cleanup also clears the box and can be turned off; Screen Shake off stops the shake; Master Volume no longer counts twice (50 % played at 25 %); Board Brightness and Board Contrast redraw the board at once; Text Size scales the board's digits; Colorblind Mode uses colour-blind-safe line colours instead of tinting the cells. "Confirm Wrong Placement" is gone (it would have given the answer away), and "Screen Reader" is now called Status Captions.
 
 ### New
 

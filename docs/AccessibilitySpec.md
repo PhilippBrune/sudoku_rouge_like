@@ -1,13 +1,14 @@
 # Accessibility Specification
 
-**Version:** 2.1  
-**Date:** 2026-10-07  
+**Version:** 2.2  
+**Date:** 2026-10-21  
 **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.2 | 2026-10-21 | implemented | Options audit (GAP-061): Colorblind Mode uses the Okabe–Ito palette for line colours and no longer simulates colour blindness on the cells (ACCESS-COLOR-003); Text Size scales the board digits and pencil marks (ACCESS-FONT-001); "Screen Reader" is named Status Captions; the gameplay assists act as named (GameDesignSpec 1.15 Options Effects). |
 | 2.1 | 2026-10-07 | implemented | Measurable contrast criteria and measured values (SPEC-MAC-006); given/player digit styles and visible toggle states (GAP-029); high-contrast behaviour stated with its multipliers. |
 
 ## Overview
@@ -28,12 +29,12 @@ Primary implementation references:
 
 | Setting | Runtime Behavior | Notes |
 |---|---|---|
-| `ColorblindMode` | Recolours high-risk conflict visuals through `AccessibilityService` | Refreshed live from Options |
+| `ColorblindMode` | Line colours that tell rules apart switch to the Okabe–Ito palette (`BoardViewController.LineColorFor`, ACCESS-COLOR-003); cells keep their colours (the old protanopia simulation made them harder to read) | Refreshed live from Options |
 | `HighContrastMode` | Replaces cell colours with the `GamePalette.Hc*` set (by cell luminance and conflict state), overlay line width ×1.5 and overlay alpha ×1.4 (`AccessibilityService`) | Refreshed live from Options |
 | `ReduceMotion` | Suppresses or reduces motion-heavy feedback and particle effects | `AmbientParticleController.RefreshSettings()` respects it |
 | `AlternativeConstraintSymbols` | Swaps to alternate constraint symbols where supported | Applied during board rebuild |
-| `FontScale` | Scales accessibility-aware UI text and preview content | Stored in `AccessibilitySettings` |
-| `ScreenReaderEnabled` | Enables an on-screen announcement bar for status updates | Implemented as caption fallback, not OS speech |
+| `FontScale` | Scales the board's digits and pencil marks (within the cell, ACCESS-FONT-001), the preview and accessibility-aware menu text | Stored in `AccessibilitySettings` |
+| `ScreenReaderEnabled` | "Status Captions": an on-screen announcement bar for status updates | A caption bar, not OS speech; renamed from "Screen Reader" (GAP-061) |
 
 ## Announcement Captions
 
@@ -55,7 +56,7 @@ The Accessibility panel is built in `MainMenuBlueprintBuilder` and currently exp
 - Reduce Motion
 - Alternative Symbols
 - Font Scale
-- Screen Reader
+- Status Captions
 - Reset to Defaults
 
 `AccessibilityPreviewController` renders a read-only preview board so visual changes can be inspected immediately.
@@ -64,13 +65,15 @@ The Accessibility panel is built in `MainMenuBlueprintBuilder` and currently exp
 
 These are not stored in `AccessibilitySettings`, but they affect usability and are part of the shipped options flow:
 
-- `HighlightConflicts`
-- `ConfirmBeforeWrongPlacement`
-- `DoubleTapConfirmNumberEntry`
-- `AutoPencilCleanup`
-- `ShowCandidateCount`
-- `CursorSnapOnSelection`
+- `HighlightConflicts` (Highlight Errors, OPT-GAME-001)
+- `KeepPencilMarks` (Auto Pencil Cleanup off, OPT-GAME-002; `AutoPencilCleanup` is kept for old saves)
+- `ShowCandidateCount` (Show Digits Left, OPT-GAME-003)
+- `CursorSnapOnSelection` (Jump to Next Empty Cell, OPT-GAME-004)
+- `DoubleTapConfirmNumberEntry` (Double-Tap to Confirm, OPT-GAME-005)
 - `ControllerRumbleEnabled`
+- `ConfirmBeforeWrongPlacement` is no longer offered (GAP-061); the field stays for old saves.
+
+Their effects are listed in GameDesignSpec §Options Effects.
 
 Implementation references:
 

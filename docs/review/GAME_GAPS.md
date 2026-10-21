@@ -69,6 +69,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-058](#gap-058) | From the second board of a run on, lines were drawn over the digits | FIXED (0.2.0 playtest, 2026-10-20) | MEDIUM | P2 |
 | [GAP-059](#gap-059) | Mistakes counted toward the run only when a puzzle was solved | FIXED (0.2.0 playtest, 2026-10-20) | MEDIUM | P3 |
 | [GAP-060](#gap-060) | The trial the Warding Flame removed came back after Save & Quit at the boss gate | FIXED (found in review, 2026-10-21) | LOW | P3 |
+| [GAP-061](#gap-061) | Options that did nothing or less than their names said | FIXED (Options audit, 2026-10-21) | MEDIUM | P2 |
 | [GAP-044](#gap-044) | Region borders showed the previous puzzle's regions on a same-size board | FIXED (found 2026-10-14 by the owner) | HIGH | P1 |
 | [GAP-043](#gap-043) | Without the `ActiveProfileSlot` pref the game opens an empty slot 0, not the existing profile | FIXED (0.1.5, found 2026-10-14) | LOW | P3 |
 
@@ -936,7 +937,7 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Status:** OPEN — not reproduced (owner's 0.2.0 playtest, 2026-10-20) · **Severity:** LOW · **Priority:** P3
 - **Report:** In a puzzle, changing a sound volume started the menu music.
 - **Checked:** `InRunAudioPlayModeTests.InRunVolumeChange_DoesNotStartTheMenuMusic` runs the real `GameBootstrap`, launches a Garden Run, enters a puzzle, opens the puzzle's Options and presses every volume button and Mute all. The menu's music player stays off (its object is inactive during runs) and the floor track keeps playing. On the path, before the first puzzle, the run plays its generic `puzzle_loop` track, which may sound like the menu.
-- **Next step:** the exact steps from the owner (which screen, which control, keyboard or controller, which floor). The test stays as a guard.
+- **Next step:** on the list for the next playtest review ([OPEN_POINTS](OPEN_POINTS.md) §1) with the questions to answer: which screen, which control, keyboard or controller, which floor. The test stays as a guard.
 
 ## GAP-058
 **From the second board of a run on, lines were drawn over the digits**
@@ -967,3 +968,12 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Root Cause:** only `RunState.WardingFlameUsed` was saved, not which trial it removed; the gate rolls the same offer again after a resume.
 - **Fix:** `RunDirector.TryUseWardingFlame(trial)` records the floor and the trial (`RunState.WardingFlameOnFloor`, `WardingFlameTrial`), the gate saves at once, and `ApplyGateRemovals` drops it (and a trial struck with gold, ECON-GATE-001) from every later offer of that gate.
 - **Tests:** `BossGateGoldTests.GateRemovals_DropTheStruckAndTheWardedTrial_AfterResume`.
+
+## GAP-061
+**Options that did nothing or less than their names said**
+
+- **Requirement:** GameDesignSpec 1.15 Options Effects (OPT-GAME-001..005, OPT-GFX-001, OPT-AUDIO-001, OPT-LABEL-001), AccessibilitySpec 2.2 (ACCESS-COLOR-003, ACCESS-FONT-001)
+- **Status:** FIXED (Options audit requested by the owner after the 0.2.0 playtest, 2026-10-21) · **Severity:** MEDIUM · **Priority:** P2
+- **Problem:** Highlight Errors, Confirm Wrong Placement, Show Candidate Count, Cursor Snap and Double-Tap to Confirm were saved but read by nothing; Auto Pencil Cleanup was always on (and missed the box); Screen Shake was ignored (only Reduce Motion stopped it); Master Volume counted twice (50 % played at 25 %); Brightness and Contrast changed only the board, and only from the next puzzle; Text Size changed only the preview and some menus; Colorblind Mode passed the cells through a protanopia simulation (harder to read for colour-blind players) and left the line colours as they were; "Screen Reader" is a caption bar.
+- **Fix:** each option acts as named (see the requirement rows); Confirm Wrong Placement is removed (asking only before a wrong digit would give the answer away); labels renamed (Show Digits Left, Jump to Next Empty Cell, Board Brightness/Contrast, Status Captions).
+- **Tests:** `GameplayOptionsTests` (3) and `GameplayOptionsPlayModeTests` (7), all failing before the fix.

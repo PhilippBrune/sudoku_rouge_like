@@ -136,10 +136,10 @@ namespace SudokuRoguelike.UI
             var particle = BuildVolumeArrowRow(p + "ParticleIntensity", T("Particles"), displaySec,
                 new Vector2(0.52f, 0.59f), new Vector2(0.92f, 0.72f),
                 opts.Graphics.ParticleIntensity, optCtrl.SetParticleIntensity);
-            var brightness = BuildVolumeArrowRow(p + "Brightness", T("Brightness"), displaySec,
+            var brightness = BuildVolumeArrowRow(p + "Brightness", T("Options.BoardBrightness"), displaySec,
                 new Vector2(0.05f, 0.45f), new Vector2(0.45f, 0.58f),
                 opts.Graphics.Brightness, optCtrl.SetBrightness);
-            var contrast = BuildVolumeArrowRow(p + "Contrast", T("Contrast"), displaySec,
+            var contrast = BuildVolumeArrowRow(p + "Contrast", T("Options.BoardContrast"), displaySec,
                 new Vector2(0.52f, 0.45f), new Vector2(0.92f, 0.58f),
                 opts.Graphics.Contrast, optCtrl.SetContrast);
 
@@ -263,31 +263,29 @@ namespace SudokuRoguelike.UI
                     optCtrl.SetHighlightConflicts(v);
                     setup?.OnHighlightConflictsChanged?.Invoke(v);
                 });
-            var tConfirmWrong = BuildOptionToggle(gameSec, p + "ConfirmWrong", T("Confirm Wrong Placement"),
-                new Vector2(0.52f, 0.74f), new Vector2(0.96f, 0.87f),
-                opts.Gameplay.ConfirmBeforeWrongPlacement, optCtrl.SetConfirmBeforeWrongPlacement);
+            // GAP-061: "Confirm Wrong Placement" is gone (a question asked only before a wrong digit would give the answer
+            // away); the other toggles act and are named for what they do (OPT-GAME-001..005, OPT-LABEL-001).
             var tAutoPencil = BuildOptionToggle(gameSec, p + "AutoPencil", T("Auto Pencil Cleanup"),
+                new Vector2(0.52f, 0.74f), new Vector2(0.96f, 0.87f),
+                !opts.Gameplay.KeepPencilMarks, optCtrl.SetAutoPencilCleanup);
+            var tCandidates = BuildOptionToggle(gameSec, p + "CandidateCount", T("Options.DigitsLeft"),
                 new Vector2(0.05f, 0.58f), new Vector2(0.45f, 0.71f),
-                opts.Gameplay.AutoPencilCleanup, optCtrl.SetAutoPencilCleanup);
-            var tCandidates = BuildOptionToggle(gameSec, p + "CandidateCount", T("Show Candidate Count"),
-                new Vector2(0.52f, 0.58f), new Vector2(0.96f, 0.71f),
                 opts.Gameplay.ShowCandidateCount, optCtrl.SetShowCandidateCount);
-            var tCursorSnap = BuildOptionToggle(gameSec, p + "CursorSnap", T("Cursor Snap"),
-                new Vector2(0.05f, 0.42f), new Vector2(0.45f, 0.55f),
+            var tCursorSnap = BuildOptionToggle(gameSec, p + "CursorSnap", T("Options.JumpToNextEmpty"),
+                new Vector2(0.52f, 0.58f), new Vector2(0.96f, 0.71f),
                 opts.Gameplay.CursorSnapOnSelection, optCtrl.SetCursorSnapOnSelection);
             var tDoubleTap = BuildOptionToggle(gameSec, p + "DoubleTap", T("Double-Tap to Confirm"),
-                new Vector2(0.52f, 0.42f), new Vector2(0.96f, 0.55f),
+                new Vector2(0.05f, 0.42f), new Vector2(0.45f, 0.55f),
                 opts.Gameplay.DoubleTapConfirmNumberEntry, optCtrl.SetDoubleTapConfirm);
             var tRumble = BuildOptionToggle(gameSec, p + "ControllerRumble", T("Controller Rumble"),
-                new Vector2(0.05f, 0.26f), new Vector2(0.45f, 0.39f),
+                new Vector2(0.52f, 0.42f), new Vector2(0.96f, 0.55f),
                 opts.Gameplay.ControllerRumbleEnabled, optCtrl.SetControllerRumbleEnabled);
 
             tabs.SetRows(audioIdx + 2,
                 Row(btnResetGame),
-                Row(tHighlight, tConfirmWrong),
-                Row(tAutoPencil, tCandidates),
-                Row(tCursorSnap, tDoubleTap),
-                Row(tRumble));
+                Row(tHighlight, tAutoPencil),
+                Row(tCandidates, tCursorSnap),
+                Row(tDoubleTap, tRumble));
 
             return () =>
             {
@@ -311,8 +309,7 @@ namespace SudokuRoguelike.UI
                 if (langDrop != null) langDrop.SetValueWithoutNotify((int)o.Language);
                 if (langConfirmRow != null) langConfirmRow.SetActive(false);
                 tHighlight.SetIsOnWithoutNotify(o.Gameplay.HighlightConflicts);
-                tConfirmWrong.SetIsOnWithoutNotify(o.Gameplay.ConfirmBeforeWrongPlacement);
-                tAutoPencil.SetIsOnWithoutNotify(o.Gameplay.AutoPencilCleanup);
+                tAutoPencil.SetIsOnWithoutNotify(!o.Gameplay.KeepPencilMarks);
                 tCandidates.SetIsOnWithoutNotify(o.Gameplay.ShowCandidateCount);
                 tCursorSnap.SetIsOnWithoutNotify(o.Gameplay.CursorSnapOnSelection);
                 tDoubleTap.SetIsOnWithoutNotify(o.Gameplay.DoubleTapConfirmNumberEntry);
@@ -345,7 +342,7 @@ namespace SudokuRoguelike.UI
             var tAltSymbols = BuildOptionToggle(section, p + "AltSymbols", T("Alt Constraint Symbols"),
                 new Vector2(0.52f, 0.58f), new Vector2(0.96f, 0.71f),
                 opts.Accessibility.AlternativeConstraintSymbols, optCtrl.SetAltSymbols);
-            var tScreenReader = BuildOptionToggle(section, p + "ScreenReader", T("Screen Reader"),
+            var tScreenReader = BuildOptionToggle(section, p + "ScreenReader", T("Options.StatusCaptions"),
                 new Vector2(0.05f, 0.42f), new Vector2(0.45f, 0.55f),
                 opts.Accessibility.ScreenReaderEnabled, optCtrl.SetScreenReaderEnabled);
 

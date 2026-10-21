@@ -435,12 +435,17 @@ namespace SudokuRoguelike.Run
 
                 RelicService.OnCorrectPlacement(State);
 
-                // Pencil mark cleanup: remove the placed digit from all cells in the same row and column.
-                var boardSize = CurrentBoard.Size;
-                for (var pc = 0; pc < boardSize; pc++)
-                    CurrentBoard.RemovePencilMark(row, pc, value);
-                for (var pr = 0; pr < boardSize; pr++)
-                    CurrentBoard.RemovePencilMark(pr, col, value);
+                // [REQ: OPT-GAME-002] Auto Pencil Cleanup: the placed digit leaves the marks of its row, column and box
+                // (the box was missed, GAP-061); with the option off every mark stays.
+                if (AutoPencilCleanup)
+                {
+                    var boardSize = CurrentBoard.Size;
+                    var region = CurrentBoard.RegionMap[row, col];
+                    for (var pr = 0; pr < boardSize; pr++)
+                    for (var pc = 0; pc < boardSize; pc++)
+                        if (pr == row || pc == col || CurrentBoard.RegionMap[pr, pc] == region)
+                            CurrentBoard.RemovePencilMark(pr, pc, value);
+                }
 
                 return PlaceResult.Correct;
             }
@@ -635,6 +640,9 @@ namespace SudokuRoguelike.Run
                 CurrentLevelState.HpLost += State.LastMistakeHpLost;
             RelicService.OnHpChanged(State);
         }
+
+        /// <summary>[REQ: OPT-GAME-002] Placing a digit removes it from the pencil marks around it (Options, Gameplay).</summary>
+        public bool AutoPencilCleanup { get; set; } = true;
 
         public const int LateFloorIndex = 3;   // Floor 4
         public const int LateFloorMistakeHp = 2;

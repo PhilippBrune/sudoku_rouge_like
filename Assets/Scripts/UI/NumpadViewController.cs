@@ -61,6 +61,16 @@ namespace SudokuRoguelike.UI
                 var inRange = digit <= boardSize;
                 var completed = inRange && board != null && counts[digit] >= boardSize;
                 btn.interactable = inRange && !completed;
+                // [REQ: OPT-GAME-003] Show Digits Left: how many of this digit the board still needs.
+                var left = btn.transform.Find("Left")?.GetComponent<Text>();
+                if (left != null)
+                {
+                    // A finished digit (its tile darkened) shows no count.
+                    var remaining = inRange && board != null ? Mathf.Max(0, boardSize - counts[digit]) : 0;
+                    var showLeft = remaining > 0 && OptionsController.LiveGameplay.ShowCandidateCount;
+                    left.gameObject.SetActive(showLeft);
+                    if (showLeft) left.text = remaining.ToString();
+                }
                 // Out of range: the tile fades (Button disabled tint); completed: it darkens like worn wood.
                 var img = btn.GetComponent<Image>();
                 if (img != null)
@@ -77,6 +87,8 @@ namespace SudokuRoguelike.UI
             {
                 var label = btn != null ? btn.transform.Find("L")?.GetComponent<Text>() : null;
                 if (label != null) label.color = btn.interactable ? ink : new Color(ink.r, ink.g, ink.b, 0.35f);
+                var left = btn != null ? btn.transform.Find("Left")?.GetComponent<Text>() : null;
+                if (left != null) left.color = new Color(ink.r, ink.g, ink.b, 0.75f);
             }
         }
 
@@ -135,6 +147,9 @@ namespace SudokuRoguelike.UI
                 var t = InRunUiFactory.CreateText(go.transform, "L", v.ToString(), 44, TextAnchor.MiddleCenter, ScrollUiKit.WoodTileText);
                 InRunUiFactory.StretchFill(t.rectTransform);
                 t.raycastTarget = false;
+                var left = ScrollUiKit.Label(go.transform, "Left", string.Empty, 18, TextAnchor.UpperRight,
+                    ScrollUiKit.WoodTileText, new Vector2(0.55f, 0.58f), new Vector2(0.92f, 0.94f));
+                left.gameObject.SetActive(false);
                 var ring = ScrollUiKit.Area(go.transform, "CursorRing", Vector2.zero, Vector2.one);
                 ring.offsetMin = new Vector2(-5f, -5f);
                 ring.offsetMax = new Vector2(5f, 5f);

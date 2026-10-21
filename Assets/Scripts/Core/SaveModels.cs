@@ -94,7 +94,10 @@ namespace SudokuRoguelike.Core
     {
         public bool ConfirmBeforeWrongPlacement;
         public bool DoubleTapConfirmNumberEntry;
-        public bool AutoPencilCleanup;
+        public bool AutoPencilCleanup;   // superseded by KeepPencilMarks (the cleanup was always on; GAP-061)
+        // [REQ: OPT-GAME-002] Auto Pencil Cleanup off: placing a digit keeps the pencil marks around it. False (cleanup on)
+        // also for saves written before the field existed.
+        public bool KeepPencilMarks;
         public bool HighlightConflicts = true;
         public bool ShowCandidateCount = true;
         public bool CursorSnapOnSelection;

@@ -79,7 +79,6 @@ namespace SudokuRoguelike.Tests
             Button("Options", OptionsUiFactoryPath, "BtnLangApply", "optCtrl.SetLanguage"),
             Button("Options", OptionsUiFactoryPath, "BtnLangCancel", "SetValueWithoutNotify"),
             Toggle("Options", OptionsUiFactoryPath, "\"HighlightErrors\"", "SetHighlightConflicts"),
-            Toggle("Options", OptionsUiFactoryPath, "\"ConfirmWrong\"", "SetConfirmBeforeWrongPlacement"),
             Toggle("Options", OptionsUiFactoryPath, "\"AutoPencil\"", "SetAutoPencilCleanup"),
             Toggle("Options", OptionsUiFactoryPath, "\"CandidateCount\"", "SetShowCandidateCount"),
             Toggle("Options", OptionsUiFactoryPath, "\"CursorSnap\"", "SetCursorSnapOnSelection"),

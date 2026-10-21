@@ -86,9 +86,8 @@ namespace SudokuRoguelike.Tests
                 controller.SetAltSymbols(true);
                 controller.SetFontScale(1.35f);
                 controller.SetHighlightConflicts(false);
-                controller.SetConfirmBeforeWrongPlacement(true);
                 controller.SetDoubleTapConfirm(true);
-                controller.SetAutoPencilCleanup(true);
+                controller.SetAutoPencilCleanup(false);   // GAP-061: off keeps the marks
                 controller.SetShowCandidateCount(false);
                 controller.SetCursorSnapOnSelection(true);
                 controller.SetControllerRumbleEnabled(false);
@@ -132,9 +131,8 @@ namespace SudokuRoguelike.Tests
             Assert.IsTrue(reloaded.Accessibility.AlternativeConstraintSymbols);
             Assert.AreEqual(1.35f, reloaded.Accessibility.FontScale, 0.001f);
             Assert.IsFalse(reloaded.Gameplay.HighlightConflicts);
-            Assert.IsTrue(reloaded.Gameplay.ConfirmBeforeWrongPlacement);
             Assert.IsTrue(reloaded.Gameplay.DoubleTapConfirmNumberEntry);
-            Assert.IsTrue(reloaded.Gameplay.AutoPencilCleanup);
+            Assert.IsTrue(reloaded.Gameplay.KeepPencilMarks, "Auto Pencil Cleanup off is kept");
             Assert.IsFalse(reloaded.Gameplay.ShowCandidateCount);
             Assert.IsTrue(reloaded.Gameplay.CursorSnapOnSelection);
             Assert.IsFalse(reloaded.Gameplay.ControllerRumbleEnabled);

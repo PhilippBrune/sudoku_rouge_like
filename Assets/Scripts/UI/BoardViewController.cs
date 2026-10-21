@@ -43,6 +43,7 @@ namespace SudokuRoguelike.UI
         // ── Constraint conflict preview cache ──
         // Invalidated whenever the selected cell or highlight value changes.
         private HashSet<(int, int)> _conflictPreviewCells = new HashSet<(int, int)>();
+        private float _gridFontScale = 1f;   // ACCESS-FONT-001: the Text Size the grid was built with
         private int _prevConflictRow = -2, _prevConflictCol = -2, _prevConflictValue = -1;
 
         // ── Forbidden-empty-cell cache (digit-based structural constraint preview) ──
@@ -253,13 +254,15 @@ namespace SudokuRoguelike.UI
 
             // [REQ: UI-STYLE-010] A board with outside clues is drawn smaller, so the clue ring fits round it.
             var clueRing = HasClueRing(run.CurrentOverlay);
-            if (_boardSize != board.Size || _cells.Count == 0 || clueRing != _gridHasClueRing)
+            // [REQ: ACCESS-FONT-001] The digits follow the Text Size option, so a new size rebuilds the grid.
+            _accessibility = accessibility;
+            var fontScale = accessibility?.FontScale ?? 1f;
+            if (_boardSize != board.Size || _cells.Count == 0 || clueRing != _gridHasClueRing
+                || !Mathf.Approximately(fontScale, _gridFontScale))
             {
                 BuildGrid(board.Size, clueRing);
                 _overlaysBuilt = false;
             }
-
-            _accessibility = accessibility;
 
             if (!_overlaysBuilt)
             {
@@ -290,6 +293,9 @@ namespace SudokuRoguelike.UI
                 BuildConflictCache(board, overlay);
                 _conflictCacheChecksum = boardChecksum;
             }
+
+            // [REQ: OPT-GAME-001] Highlight Errors off: no red conflict colouring and no conflict preview.
+            var highlightErrors = OptionsController.LiveGameplay?.HighlightConflicts ?? true;
 
             // Build a HashSet of fogged cells once per render — O(1) lookup replaces O(n) scan per cell.
             HashSet<(int, int)> fogSet = null;
@@ -366,7 +372,7 @@ namespace SudokuRoguelike.UI
                 // Constraint conflict preview: highlight cells that would be forbidden
                 // by ANY active rule (row/col/region/Antiknight/Nonconsecutive/Kropki/etc.)
                 // if highlightValue were placed at the selected cell.
-                if (_conflictPreviewCells.Count > 0 && _conflictPreviewCells.Contains((cell.Row, cell.Col)))
+                if (highlightErrors && _conflictPreviewCells.Count > 0 && _conflictPreviewCells.Contains((cell.Row, cell.Col)))
                     c = Color.Lerp(c, AntiknightForbidColor, 0.70f);
 
                 // Forbidden empty cells: empty cells where the highlighted digit cannot be placed
@@ -389,7 +395,7 @@ namespace SudokuRoguelike.UI
                     if (cell.LastPencilText != "") { cell.PencilLabel.text = ""; cell.LastPencilText = ""; }
                 }
 
-                if (!given && _conflictCellsCache.Contains((cell.Row, cell.Col)))
+                if (highlightErrors && !given && _conflictCellsCache.Contains((cell.Row, cell.Col)))
                 {
                     c = ConflictColor;
                     cell.Label.color = GamePalette.CellNumberGiven;
@@ -496,6 +502,7 @@ namespace SudokuRoguelike.UI
 
         private void BuildGrid(int size, bool clueRing = false)
         {
+            _gridFontScale = _accessibility?.FontScale ?? 1f;
             _boardSize = size;
             _gridHasClueRing = clueRing;
             _cells.Clear();
@@ -546,11 +553,12 @@ namespace SudokuRoguelike.UI
                 // Number cell
                 var numGo = new GameObject($"N_{row}_{col}", typeof(RectTransform));
                 numGo.transform.SetParent(_gridNumberRoot, false);
-                var fs = Mathf.Clamp(Mathf.RoundToInt(cellPx * 0.50f), 18, 56);
+                // [REQ: ACCESS-FONT-001] Text Size scales the digits and pencil marks, never past the cell.
+                var fs = Mathf.Min(Mathf.RoundToInt(cellPx * 0.8f), Mathf.Clamp(Mathf.RoundToInt(cellPx * 0.50f * _gridFontScale), 18, 80));
                 var valText = InRunUiFactory.CreateText(numGo.transform, "Val", "", fs, TextAnchor.MiddleCenter, Color.white);
                 InRunUiFactory.StretchFill(valText.rectTransform);
                 valText.raycastTarget = false;
-                var pencilFs = Mathf.Clamp(Mathf.RoundToInt(cellPx * 0.19f), 11, 21);
+                var pencilFs = Mathf.Min(Mathf.RoundToInt(cellPx * 0.30f), Mathf.Clamp(Mathf.RoundToInt(cellPx * 0.19f * _gridFontScale), 11, 30));
                 var pencilText = InRunUiFactory.CreateText(numGo.transform, "Pencil", "", pencilFs, TextAnchor.UpperLeft, GamePalette.PencilMarkColor);
                 pencilText.rectTransform.anchorMin = new Vector2(0.08f, 0.08f);
                 pencilText.rectTransform.anchorMax = new Vector2(0.92f, 0.92f);
@@ -967,7 +975,35 @@ namespace SudokuRoguelike.UI
             UseOverlayGroup(null);
         }
 
-        private static Color GetLineColor(LineType t) => t switch
+
+        /// <summary>
+        /// [REQ: ACCESS-COLOR-003] A line type's colour; in colour-blind mode the rules that are told apart by colour use the
+        /// Okabe–Ito palette (German green, Dutch orange, Renban purple, Parity blue, Consecutive yellow, Between sky blue).
+        /// </summary>
+        public static Color LineColorFor(LineType t, bool colorblind)
+        {
+            var standard = StandardLineColor(t);
+            if (!colorblind) return standard;
+            Color? safe = t switch
+            {
+                LineType.GermanWhispers or LineType.ZoneWhisper => new Color(0f, 0.62f, 0.45f),
+                LineType.DutchWhispers => new Color(0.90f, 0.62f, 0f),
+                LineType.RenbanLine => new Color(0.80f, 0.47f, 0.65f),
+                LineType.ParityLine => new Color(0f, 0.45f, 0.70f),
+                LineType.ConsecutiveLine => new Color(0.94f, 0.89f, 0.26f),
+                LineType.BetweenLine => new Color(0.34f, 0.71f, 0.91f),
+                LineType.NabnerLine or LineType.EntropicLine or LineType.ModularLine => new Color(0.84f, 0.37f, 0f),
+                _ => null
+            };
+            return safe.HasValue ? new Color(safe.Value.r, safe.Value.g, safe.Value.b, standard.a) : standard;
+        }
+
+        // [REQ: ACCESS-COLOR-003] Board and legend read the live setting, so the legend matches the board even when it is
+        // built before the overlays.
+        private static Color GetLineColor(LineType t) =>
+            LineColorFor(t, OptionsController.LiveAccessibility?.ColorblindMode ?? false);
+
+        private static Color StandardLineColor(LineType t) => t switch
         {
             LineType.GermanWhispers  => GamePalette.LineGermanWhispers,
             LineType.DutchWhispers   => GamePalette.LineDutchWhispers,

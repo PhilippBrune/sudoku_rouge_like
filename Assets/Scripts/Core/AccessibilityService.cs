@@ -33,12 +33,10 @@ namespace SudokuRoguelike.Core
             _graphics = graphics      ?? new GraphicsSettingsModel();
 
             // Sync ColorMode from settings flags so the board renderer stays consistent.
-            if (_settings.HighContrastMode)
-                ActiveColorMode = ColorMode.HighContrast;
-            else if (_settings.ColorblindMode)
-                ActiveColorMode = ColorMode.Protanopia;   // default CB mode until per-type setting added
-            else
-                ActiveColorMode = ColorMode.Normal;
+            // [REQ: ACCESS-COLOR-003] Colour-blind mode swaps the overlay line colours for a colour-blind-safe palette
+            // (BoardViewController.LineColorFor). It no longer passes the cells through a colour-blindness simulation,
+            // which made them harder to tell apart for the players it was meant to help (GAP-061).
+            ActiveColorMode = _settings.HighContrastMode ? ColorMode.HighContrast : ColorMode.Normal;
         }
 
         public int ScaleFont(int baseSize) => (int)(baseSize * FontScale);

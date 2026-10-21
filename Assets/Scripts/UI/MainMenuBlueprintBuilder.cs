@@ -1470,7 +1470,7 @@ namespace SudokuRoguelike.UI
             });
 
             // -- Accessibility captions (mirrors status updates on-screen) --
-            var tScreenReader = BuildOptionToggle(pr, "ScreenReader", "Screen Reader",
+            var tScreenReader = BuildOptionToggle(pr, "ScreenReader", T("Options.StatusCaptions"),
                 new Vector2(0.04f, 0.18f), new Vector2(0.48f, 0.23f),
                 opts.Accessibility.ScreenReaderEnabled, optCtrl.SetScreenReaderEnabled);
             MakeDesc(pr, "DescScreenReader",

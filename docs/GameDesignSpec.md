@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.14 | **Date:** 2026-10-21 | **Status:** implemented
+**Version:** 1.15 | **Date:** 2026-10-21 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.15 | 2026-10-21 | implemented | Options audit after the 0.2.0 playtest (GAP-061): every option now does what its name says (Options Effects, OPT-GAME-001..005, OPT-GFX-001, OPT-AUDIO-001, OPT-LABEL-001, ACCESS-COLOR-003, ACCESS-FONT-001); "Confirm Wrong Placement" removed; Show Digits Left, Jump to Next Empty Cell, Board Brightness/Contrast and Status Captions renamed. |
 | 1.14 | 2026-10-21 | implemented | Owner picks after the 0.2.0 playtest: Pencil mode shows in indigo ink on the number pad and in the pencil marks (4.3, UI-STYLE-020). Run score (9c): every puzzle gets a grade from its own mistakes (Perfect, Clean, Rough, Messy; proposal C of `design/mistake-scoring-proposals.md`), which replaces the flat mistake penalty and the perfect bonus; the puzzle that ends a run is Messy; the end screen shows one stamp per puzzle (SCORE-GRADE-001..004). Unspent gold adds a point per 5 gold, at most 15 % (SCORE-GOLD-001, lever L5 of `design/gold-and-items-concept.md`). Economy levers L1 and L6 (GoldEconomySystem 2.2): from Floor 4 a mistake costs at least 2 HP (5.1, ECON-BAL-003) and the rest heals a quarter (ECON-BAL-004). Garden flow D: entering a floor shows its painting (UI-STYLE-021). |
 | 1.13 | 2026-10-20 | implemented | Owner's 0.2.0 playtest: a placed digit highlights every cell with that digit (4.1); digits are taken 0.25 s after a cell is chosen, half of before (4.2); the main menu shows the version (UI-MENU-VERSION-001); every mistake counts toward the run score when it happens (9c, GAP-059). |
 | 1.12 | 2026-10-20 | implemented | Post-run score (9c): rounding stated — each row is its share of the base rounded to whole points, and the final score is the base plus the rows, so the breakdown adds up. The code now adds the bonuses as the formula says; it had multiplied them one after another (GAP-053), and cleared cursed puzzles now count (GAP-054). The 71 player modifiers are chosen in the Custom Puzzle rule book (UI-STYLE-012). |
@@ -436,10 +437,29 @@ Source of truth: [EndlessZenMode](EndlessZenMode.md) (decided 2026-10-07, SPEC-C
 Main menu → Options has three tabs; each has a Reset button for its own settings:
 
 - **Audio:** Master / Music / SFX / UI volume (arrow rows in 5 % steps), Mute when unfocused, Mute all, menu music style
-- **Display:** Fullscreen, VSync, Screen Shake, Particles, Brightness, Contrast, Resolution, Display Mode (see Display Modes below), Language (English / German / French / Spanish / Brazilian Portuguese, applied after a confirmation; all five are also offered in first-run setup, SPEC-CONF-032)
-- **Gameplay:** Highlight Errors, Confirm Wrong Placement, Auto Pencil Cleanup, Show Candidate Count, Cursor Snap, Double-Tap to Confirm, Controller Rumble
+- **Display:** Fullscreen, VSync, Screen Shake, Particles, Board Brightness, Board Contrast, Resolution, Display Mode (see Display Modes below), Language (English / German / French / Spanish / Brazilian Portuguese, applied after a confirmation; all five are also offered in first-run setup, SPEC-CONF-032)
+- **Gameplay:** Highlight Errors, Auto Pencil Cleanup, Show Digits Left, Jump to Next Empty Cell, Double-Tap to Confirm, Controller Rumble
 
-Below the tabs: Keybindings…, Accessibility… (colorblind, high contrast, reduce motion, alternative constraint symbols, text size, screen reader, with a preview board), Sudoku Tutorial and Back.
+Below the tabs: Keybindings…, Accessibility… (colorblind, high contrast, reduce motion, alternative constraint symbols, text size, status captions, with a preview board), Sudoku Tutorial and Back.
+
+### Options Effects (GAP-061, 1.15)
+
+An audit after the 0.2.0 playtest found options that did nothing or less than their names said. Each now acts as named:
+
+| ID | Option | Effect |
+|---|---|---|
+| OPT-GAME-001 | Highlight Errors (on) | A wrong digit flashes its cell red; placed digits that break a rule and the cells a digit would conflict with are coloured. Off: neither. |
+| OPT-GAME-002 | Auto Pencil Cleanup (on) | A placed digit leaves the pencil marks of its row, column **and box** (the box was missed). Off: every mark stays. Saves from before keep it on. |
+| OPT-GAME-003 | Show Digits Left (on; was "Show Candidate Count") | Each number pad tile shows in its corner how many of its digit the board still needs (nothing on a finished digit). |
+| OPT-GAME-004 | Jump to Next Empty Cell (off; was "Cursor Snap") | After a correct digit the selection moves to the next empty cell in reading order that takes input (locked and pre-solved cells are skipped). The jump does not start the 0.25 s input pause of a chosen cell, so a quickly typed next digit counts. |
+| OPT-GAME-005 | Double-Tap to Confirm (off) | The first press of a digit on a cell asks ("Press 4 again to place it."), the same digit on the same cell within 1.5 s places it. Pencil marks and the Sudoku Basics lesson are never asked for. |
+| OPT-GFX-001 | Screen Shake | Off stops every shake of the board (it stopped only with Reduce Motion). |
+| OPT-AUDIO-001 | Master Volume | Counts once: every sound multiplies it in and the listener stays at full volume (it was applied twice, so 50 % played at 25 %). |
+| OPT-LABEL-001 | Names | "Confirm Wrong Placement" is removed: a question asked only before a wrong digit would give the answer away. Brightness and Contrast are **Board** Brightness and **Board** Contrast (they calibrate the puzzle board and now redraw it at once); "Screen Reader" is **Status Captions** (an on-screen caption bar, not speech). |
+| ACCESS-COLOR-003 | Colorblind Mode | Line colours that tell rules apart use the Okabe–Ito palette (German Whispers green, Dutch Whispers orange, Renban purple, Parity blue, Consecutive yellow, Between sky blue, Nabner/Entropic/Modular vermilion). The cells are no longer passed through a colour-blindness simulation, which made them harder to tell apart. |
+| ACCESS-FONT-001 | Text Size | Scales the board's digits and pencil marks too (it changed only the preview and some menus), never past the cell. |
+
+Unchanged and working: the volumes, Mute all, Mute when unfocused, menu music style, Fullscreen, VSync, Particles, Resolution, Display Mode, Language, Controller Rumble, High Contrast, Reduce Motion, Alternative Constraint Symbols, Status Captions.
 
 ### Shared challenges: Daily, Weekly, Monthly
 

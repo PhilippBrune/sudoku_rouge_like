@@ -21,6 +21,13 @@ namespace SudokuRoguelike.UI
         /// </summary>
         public static AudioSettingsModel LiveAudio { get; private set; } = new AudioSettingsModel();
         public static AccessibilitySettings LiveAccessibility { get; private set; } = new AccessibilitySettings();
+        /// <summary>Live copy of the gameplay settings; the board, the number pad and digit entry read it (GAP-061).</summary>
+        public static GameplaySettings LiveGameplay
+        {
+            get => _liveGameplay;
+            set => _liveGameplay = value ?? new GameplaySettings();
+        }
+        private static GameplaySettings _liveGameplay = new GameplaySettings();
 
         private void Awake()
         {
@@ -60,8 +67,10 @@ namespace SudokuRoguelike.UI
             LiveAccessibility = _options.Accessibility ?? new AccessibilitySettings();
             AccessibilityAnnouncementOverlay.SetEnabled(LiveAccessibility.ScreenReaderEnabled);
             RumbleService.Enabled = _options.Gameplay.ControllerRumbleEnabled;
-            // Apply graphics settings immediately so they take effect on startup/slot switch
-            AudioListener.volume = _options.Audio.MasterVolume;
+            LiveGameplay = _options.Gameplay ?? new GameplaySettings();
+            // [REQ: OPT-AUDIO-001] Every audio source multiplies the master volume in; the listener stays at full volume
+            // (it was set to the master volume too, so the master counted twice: 50 % played at 25 %; GAP-061).
+            AudioListener.volume = 1f;
             var gfx = _options.Graphics;
             ApplyDisplay(gfx);
             QualitySettings.vSyncCount = gfx.VSync ? 1 : 0;
@@ -78,7 +87,7 @@ namespace SudokuRoguelike.UI
         public void SetMasterVolume(float value)
         {
             GetOptions().Audio.MasterVolume = value;
-            AudioListener.volume = value;
+            AudioListener.volume = 1f;   // OPT-AUDIO-001
             LiveAudio = GetOptions().Audio;
             SaveOptions();
         }
@@ -189,40 +198,31 @@ namespace SudokuRoguelike.UI
 
         // ── Gameplay ──────────────────────────────────────────────────────────────
 
-        public void SetHighlightConflicts(bool on)
-        {
-            GetOptions().Gameplay.HighlightConflicts = on;
-            SaveOptions();
-        }
+        // GAP-061: every Gameplay option now acts (OPT-GAME-001..005); the board and the number pad read LiveGameplay and
+        // are redrawn when an option changes during a puzzle.
+        public void SetHighlightConflicts(bool on) => SetGameplay(g => g.HighlightConflicts = on);
 
-        public void SetConfirmBeforeWrongPlacement(bool on)
-        {
-            GetOptions().Gameplay.ConfirmBeforeWrongPlacement = on;
-            SaveOptions();
-        }
+        public void SetDoubleTapConfirm(bool on) => SetGameplay(g => g.DoubleTapConfirmNumberEntry = on);
 
-        public void SetDoubleTapConfirm(bool on)
+        /// <summary>[REQ: OPT-GAME-002] On: a placed digit leaves the pencil marks of its row, column and box.</summary>
+        public void SetAutoPencilCleanup(bool on) => SetGameplay(g =>
         {
-            GetOptions().Gameplay.DoubleTapConfirmNumberEntry = on;
-            SaveOptions();
-        }
+            g.KeepPencilMarks = !on;
+            g.AutoPencilCleanup = on;
+        });
 
-        public void SetAutoPencilCleanup(bool on)
-        {
-            GetOptions().Gameplay.AutoPencilCleanup = on;
-            SaveOptions();
-        }
+        /// <summary>[REQ: OPT-GAME-003] "Show Digits Left" (the old "Show Candidate Count" field).</summary>
+        public void SetShowCandidateCount(bool on) => SetGameplay(g => g.ShowCandidateCount = on);
 
-        public void SetShowCandidateCount(bool on)
-        {
-            GetOptions().Gameplay.ShowCandidateCount = on;
-            SaveOptions();
-        }
+        /// <summary>[REQ: OPT-GAME-004] "Jump to Next Empty Cell" (the old "Cursor Snap" field).</summary>
+        public void SetCursorSnapOnSelection(bool on) => SetGameplay(g => g.CursorSnapOnSelection = on);
 
-        public void SetCursorSnapOnSelection(bool on)
+        private void SetGameplay(Action<GameplaySettings> change)
         {
-            GetOptions().Gameplay.CursorSnapOnSelection = on;
+            change(GetOptions().Gameplay);
+            LiveGameplay = GetOptions().Gameplay;
             SaveOptions();
+            FindFirstObjectByType<InRunController>()?.OnGameplayOptionsChanged();
         }
 
         public void SetControllerRumbleEnabled(bool on)
@@ -268,6 +268,7 @@ namespace SudokuRoguelike.UI
         {
             GetOptions().Graphics.ScreenShake = on;
             SaveOptions();
+            NotifyAccessibilityChanged();   // OPT-GFX-001: the run reads it with Reduce Motion
         }
 
         public void SetParticleIntensity(float value)
@@ -277,16 +278,20 @@ namespace SudokuRoguelike.UI
             FindFirstObjectByType<AmbientParticleController>()?.RefreshSettings();
         }
 
+        // [REQ: OPT-LABEL-001] Board Brightness and Board Contrast calibrate the puzzle board's cells; the open board is
+        // redrawn at once (it waited for the next puzzle).
         public void SetBrightness(float value)
         {
             GetOptions().Graphics.Brightness = Mathf.Clamp01(value);
             SaveOptions();
+            NotifyAccessibilityChanged();
         }
 
         public void SetContrast(float value)
         {
             GetOptions().Graphics.Contrast = Mathf.Clamp01(value);
             SaveOptions();
+            NotifyAccessibilityChanged();
         }
 
         public void SetResolution(int width, int height)
@@ -352,7 +357,7 @@ namespace SudokuRoguelike.UI
             audio.UiVolume           = defaults.UiVolume;
             audio.MuteAll            = defaults.MuteAll;
             audio.MuteWhenUnfocused  = defaults.MuteWhenUnfocused;
-            AudioListener.volume     = audio.MasterVolume;
+            AudioListener.volume     = 1f;   // OPT-AUDIO-001
             LiveAudio                = audio;
             SaveOptions();
         }
@@ -387,11 +392,14 @@ namespace SudokuRoguelike.UI
             gp.ConfirmBeforeWrongPlacement  = defaults.ConfirmBeforeWrongPlacement;
             gp.DoubleTapConfirmNumberEntry  = defaults.DoubleTapConfirmNumberEntry;
             gp.AutoPencilCleanup            = defaults.AutoPencilCleanup;
+            gp.KeepPencilMarks              = defaults.KeepPencilMarks;
             gp.ShowCandidateCount           = defaults.ShowCandidateCount;
             gp.CursorSnapOnSelection        = defaults.CursorSnapOnSelection;
             gp.ControllerRumbleEnabled      = defaults.ControllerRumbleEnabled;
             RumbleService.Enabled           = gp.ControllerRumbleEnabled;
+            LiveGameplay                    = gp;
             SaveOptions();
+            FindFirstObjectByType<InRunController>()?.OnGameplayOptionsChanged();
         }
 
         public void ResetAccessibilityToDefaults()

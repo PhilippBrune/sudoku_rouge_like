@@ -527,11 +527,6 @@ namespace SudokuRoguelike.UI
         public void SetInGameOptionsPanel(GameObject panel) => _inGameOptionsPanel = panel;
         public void SaveAndQuitPublic() => SaveAndQuit();
 
-        public void SetHighlightConflictsLive(bool enabled)
-        {
-            if (_map?.Run?.CurrentBoard != null) RebuildBoard();
-        }
-
         private void Update()
         {
             InputRemapService.UpdateCursorVisibility();
@@ -937,6 +932,7 @@ namespace SudokuRoguelike.UI
 
         private void RebuildBoard()
         {
+            if (_map?.Run != null) _map.Run.AutoPencilCleanup = PencilCleanupOn;   // OPT-GAME-002 for every placement path
             _boardView.RebuildBoard(_selectedRow, _selectedCol, _highlightValue,
                 HasActiveModifier(BossModifierId.Antiknight),
                 _bagHighlightCells, _fogDisabledMovesRemaining, _accessibility,
@@ -2731,6 +2727,7 @@ namespace SudokuRoguelike.UI
             if (_basicsTutorial != null && _basicsTutorial.IsOnPencilStep)
             { SetStatus(T("Use pencil mode for this step!")); return; }
 
+            if (!ConfirmDigitEntry(value)) return;   // OPT-GAME-005, after the tutorial guards
             var umbrellaChargesBefore = run.State.MistakeShieldCharges;
             // RunDirector rejects a wrong digit and applies its penalty (HP, shields, relics, debuffs).
             var result = run.PlaceNumber(_selectedRow, _selectedCol, value);
@@ -2747,6 +2744,7 @@ namespace SudokuRoguelike.UI
                 RumbleService.PulseCorrect(this);
                 _map?.SaveNow();
                 SetStatus(Tf("Placed {0}.", value));
+                JumpToNextEmptyCellIfOn(board);   // OPT-GAME-004
             }
             else if (result == PlaceResult.Unchanged)
                 SetStatus(Tf("{0} is already there.", value));
@@ -2758,7 +2756,7 @@ namespace SudokuRoguelike.UI
             {
                 _lastMistakeRow = _selectedRow;
                 _lastMistakeCol = _selectedCol;
-                _boardView?.FlashCells(new HashSet<(int row, int col)> { (_selectedRow, _selectedCol) },
+                if (HighlightErrorsOn) _boardView?.FlashCells(new HashSet<(int row, int col)> { (_selectedRow, _selectedCol) },
                     GamePalette.CellConflict, 0.45f);
                 if (run.State.MistakeShieldCharges < umbrellaChargesBefore)
                     SetStatus(Tf("Umbrella blocked the penalty! ({0} left)", run.State.MistakeShieldCharges));
@@ -2768,8 +2766,8 @@ namespace SudokuRoguelike.UI
                     _audio?.PlayHpLoss();
                     RumbleService.PulseMistake(this);
                     SetStatus(Tf("{0} is wrong here. HP: {1}", value, run.State.CurrentHP));
-                    // [REQ: ACCESS-MOTION-001] Screen shake skipped entirely when ReduceMotion is enabled
-                    if (!_accessibility.IsReduceMotion)
+                    // [REQ: ACCESS-MOTION-001] [REQ: OPT-GFX-001] No shake with Reduce Motion or with Screen Shake off
+                    if (ScreenShakeAllowed)
                         StartCoroutine(AnimationHelper.ScreenShake(
                             _sudokuPanel != null ? _sudokuPanel.transform : transform,
                             AnimationHelper.ShakeWrongPx, AnimationHelper.ShakeWrongDuration));
@@ -2786,7 +2784,7 @@ namespace SudokuRoguelike.UI
                 if (pr.ExpiryFlashCells?.Count > 0)
                 {
                     _boardView?.FlashCells(pr.ExpiryFlashCells, new Color(0.95f, 0.15f, 0.15f, 1f), 0.45f);
-                    if (!_accessibility.IsReduceMotion)
+                    if (ScreenShakeAllowed)
                     {
                         StartCoroutine(AnimationHelper.ScreenShake(
                             _sudokuPanel != null ? _sudokuPanel.transform : transform,

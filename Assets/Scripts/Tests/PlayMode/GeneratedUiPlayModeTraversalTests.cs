@@ -361,9 +361,9 @@ namespace SudokuRoguelike.Tests
             ClickButton(host, "IGTabGame");
             yield return null;
             AssertPanelActive(host, "IGGameSection");
-            var autoPencil = options.GetOptions().Gameplay.AutoPencilCleanup;
+            var keepMarks = options.GetOptions().Gameplay.KeepPencilMarks;   // Auto Pencil Cleanup off = keep (GAP-061)
             ToggleValue(host, "IGAutoPencilToggle");
-            Assert.AreNotEqual(autoPencil, options.GetOptions().Gameplay.AutoPencilCleanup);
+            Assert.AreNotEqual(keepMarks, options.GetOptions().Gameplay.KeepPencilMarks);
             ToggleValue(host, "IGHighlightErrorsToggle");
 
             // Accessibility: the toggles write the option; Reset restores the defaults and refreshes the toggles.

@@ -72,6 +72,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-061](#gap-061) | Options that did nothing or less than their names said | FIXED (Options audit, 2026-10-21) | MEDIUM | P2 |
 | [GAP-066](#gap-066) | Reduce Motion left the pulses, pops and the node reveal running (the boss node pulsed for ever) | FIXED (second Options audit, 2026-10-21) | MEDIUM | P2 |
 | [GAP-065](#gap-065) | Numbers in texts follow the PC's region, not the game's language ("XP x1,0" in English) | FIXED (2026-10-21) | LOW | P3 |
+| [GAP-068](#gap-068) | The builds left out the licence texts the font and Steamworks.NET licences require | FIXED (legal check, 0.2.1, 2026-10-21) | MEDIUM | P2 |
 | [GAP-067](#gap-067) | Moonshade Offering's "+2 starting pencil" does nothing (the run starts at full pencil) | OPEN (found analysing GAP-064, 2026-10-21) | LOW | P3 |
 | [GAP-064](#gap-064) | Scholar's Burden: no free Ink Well, "+5 pencil" does nothing, "−1 slot" can add a slot | OPEN, planned (analysis 2026-10-21; rules for the owner) | MEDIUM | P3 |
 | [GAP-063](#gap-063) | Class levels 30 and 40 promised rewards the game did not grant (starting items, frames) | FIXED (2026-10-21) | MEDIUM | P2 |
@@ -1033,6 +1034,15 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Status:** OPEN (found analysing GAP-064, 2026-10-21) · **Severity:** LOW · **Priority:** P3
 - **Problem:** `CurrentPencil = Math.Min(MaxPencil, CurrentPencil + 2)` on a run that starts at full pencil: the cap takes the 2 away; the gold and the forced Nothing work.
 - **Next step:** with GAP-064 (same rule): raise `MaxPencil` and `CurrentPencil` by 2; a test that a Moonshade run starts with 2 more pencil than the same run without the perk.
+
+## GAP-068
+**The builds left out the licence texts the font and Steamworks.NET licences require**
+
+- **Requirement:** Credits / third-party notices (SPEC-PROC-007), Apache License 2.0 §4 (Roboto), MIT licence (Steamworks.NET)
+- **Status:** FIXED (found in the legal check, 2026-10-21; 0.2.1) · **Severity:** MEDIUM · **Priority:** P2
+- **Problem:** the Credits name both licences but point to files in the repository (`docs/legal/third-party/...`); the 0.2.0 build had no licence file, so players never received the texts the licences require with the copy.
+- **Fix:** every build carries `Licenses/` (`APACHE-2.0.txt`, `Roboto-NOTICE.md`, `Steamworks.NET-LICENSE.md`), copied from `docs/legal/third-party/` when the build is packaged; 0.2.1 is the first (`docs/review/E2E_TEST_REPORT.md` §12, B30). `docs/legal/legal-check-2026-10.md` lists it.
+- **Next step (optional):** show the licence texts on the Credits screen, so the duty does not depend on the packaging step.
 
 ## GAP-065
 **Numbers in texts follow the PC's region, not the game's language**

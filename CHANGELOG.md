@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+## 0.2.1 — 7th iteration (2026-10-21)
+
+The seventh Early Access build, made from the 0.2.0 playtest. The menus join the ink-and-paper look (Options, the Codex,
+the classes, Select Class, Game Modes and the results of every mode), gold and items matter more, every puzzle gets a
+grade, and the options do what they say. The main menu keeps its look.
+
+### Highlights
+
+- **Choose your class at a glance.** Select Class shows every class as a seal (level and prestige stars, or what unlocks
+  it), the chosen class on a scroll with what the run starts with, and the run's settings on a strip: Harmony and its
+  perk (LB/RB, Y), irregular puzzles, the seed and the week's seed. **Begin the run** starts it: no second window.
+- **Game Modes as five curtains.** Garden Run, Endless Zen, Spirit Trials, Daily Walk and Monthly Walk hang side by side,
+  each with its state (your Harmony, best depth, best score, today's goals, the month's garden and days left); a locked
+  mode says what opens it. Harmony set here is the same as on Select Class.
+- **Results on a scroll.** Endless Zen, Spirit Trials and the Monthly Walk end like a Garden Run: the record large
+  (deepest descent, the tier's score, the month's grade) with your best and a "New best" stamp, the numbers on a tally
+  paper.
+- **A grade for every puzzle**, **gold that matters** and **counter items** (below).
+
 ### Fixed (0.2.0 playtest)
 
 - The reward's tally shows the puzzle's real time (it said 00:00).
@@ -10,6 +29,10 @@
 - Every mistake counts toward the run score when it happens, also in the puzzle that ends the run.
 - The trial the Warding Flame removed at a boss gate stays removed after Save & Quit.
 - Options do what they say: Highlight Errors, Show Digits Left (was Show Candidate Count), Jump to Next Empty Cell (was Cursor Snap) and Double-Tap to Confirm now act; Auto Pencil Cleanup also clears the box and can be turned off; Screen Shake off stops the shake; Master Volume no longer counts twice (50 % played at 25 %); Board Brightness and Board Contrast redraw the board at once; Text Size scales the board's digits; Colorblind Mode uses colour-blind-safe line colours instead of tinting the cells. "Confirm Wrong Placement" is gone (it would have given the answer away), and "Screen Reader" is now called Status Captions.
+- Numbers follow the game's language, not the PC's region: an English game on a German PC shows "XP ×1.4" and
+  "50,000" (it showed "1,4" and "50.000").
+- Reduce Motion also stops the pulsing path nodes and boss node, the digit pops and the other scale pulses.
+- The builds include the licence texts of the font and of Steamworks.NET (`Licenses/`).
 
 ### New
 
@@ -27,6 +50,7 @@
 
 ### Changed
 
+- The main menu's "Items & Relic Codex" is called "Codex", like its screen.
 - Class Level 30 now really starts every run with the class's item, and Level 40 gives the class its frame (round its plaque in Meta Progression and its badge in a run; it stays after prestige). Three Level 30 items that did not exist are now Golden Koi (Koi Gambler), Rice Paper Umbrella (Stone Gardener) and Temple Incense (Reed Duelist).
 - The class level rewards are shown in your language, and the Koi Gambler's and Lantern Seer's passive steps name the values the game uses (35 %, 35 %/40 %).
 - **Input Lock** in Options → Gameplay: the short wait after choosing a cell can be turned off or set from 0.10 to 1.00 s (0.25 s by default).

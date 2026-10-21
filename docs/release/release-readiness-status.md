@@ -1,6 +1,6 @@
-# Release Readiness Status — 0.2.0 beta
+# Release Readiness Status — 0.2.1
 
-Updated 2026-10-19 · Milestone: **Steam build v0.2.0 beta (6th iteration)** for a password beta branch (testers with keys); the previous milestone was Steam build v0.1.5 (5th iteration)
+Updated 2026-10-21 · Milestone: **Steam build v0.2.1 (7th iteration)**, built and smoke-tested, not uploaded; the previous milestones were Steam build v0.2.0 (6th iteration) and its beta
 
 ## Evidence
 
@@ -10,10 +10,10 @@ Updated 2026-10-19 · Milestone: **Steam build v0.2.0 beta (6th iteration)** for
 
 | Suite | Total | Passed | Failed | Skipped | Date |
 |-------|------:|-------:|-------:|--------:|------|
-| EditMode | 552 | 525 | 0 | 27 (`[Explicit]` review diagnostics and the translation export) | 2026-10-19 |
-| PlayMode | 47 | 38 | 0 | 9 (`[Explicit]` screenshot diagnostics) | 2026-10-19 |
+| EditMode | 689 | 661 | 0 | 28 (`[Explicit]` review diagnostics and the translation export) | 2026-10-21 |
+| PlayMode | 105 | 85 | 0 | 20 (`[Explicit]` screenshot diagnostics) | 2026-10-21 |
 
-Windows x64 player build 0.2.0 beta: built 2026-10-19 (B28) and smoke-tested (B29: reaches the main menu, no exception in the player log; saves and PlayerPrefs restored afterwards), `docs/review/E2E_TEST_REPORT.md` §11.
+Windows x64 player build 0.2.1: built 2026-10-21 (B30, with the licence texts in `Licenses/`) and smoke-tested (B31: reaches the main menu with "Version 0.2.1", no exception in the player log; saves unchanged, PlayerPrefs restored), `docs/review/E2E_TEST_REPORT.md` §12. Before it: 0.2.0 beta B28/B29 (§11).
 
 Previous build (0.1.5): smoke test B01–B15 passed (fresh install, first-run setup, seed entry, path map, wrong-digit rule, Save & Quit and Resume, reward reroll, codex persistence, Abandon & Begin; no exception in the player log); display modes B16–B19, Steam names, window title and save folder B23–B25, the uploaded 0.1.5 build B26–B27 (`docs/review/E2E_TEST_REPORT.md` §10.2b–§10.2e).
 
@@ -29,4 +29,4 @@ All gates with their state are in `docs/release/platform-release-manifest.md`. O
 
 ## Repository state
 
-The 0.2.0 beta change set is committed on `feature/game-ui-refactor` (not pushed); `CHANGELOG.md` 0.2.0 beta lists it; `docs/repository-working-tree-triage.md` describes how the 0.1.5 set was grouped.
+The 0.2.1 change set is committed on `feature/game-ui-refactor`, tagged `v0.2.1` and pushed with the owner's OK (2026-10-21); `CHANGELOG.md` 0.2.1 lists it; `docs/repository-working-tree-triage.md` describes how the 0.1.5 set was grouped.

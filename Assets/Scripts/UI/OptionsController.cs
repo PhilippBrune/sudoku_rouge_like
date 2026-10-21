@@ -205,10 +205,11 @@ namespace SudokuRoguelike.UI
         public void SetDoubleTapConfirm(bool on) => SetGameplay(g => g.DoubleTapConfirmNumberEntry = on);
 
         /// <summary>[REQ: OPT-GAME-006] The input lock after choosing a cell: on or off, and its time (0.10–1.00 s).</summary>
-        public void SetInputLockEnabled(bool on) => SetGameplay(g => g.InputLockEnabled = on);
+        // The board does not draw the lock, so a change (or each step of the time row) does not rebuild the open board.
+        public void SetInputLockEnabled(bool on) => SetGameplay(g => g.InputLockEnabled = on, redrawBoard: false);
 
         public void SetInputLockSeconds(float seconds) =>
-            SetGameplay(g => g.InputLockSeconds = GameplaySettings.ClampInputLockSeconds(seconds));
+            SetGameplay(g => g.InputLockSeconds = GameplaySettings.ClampInputLockSeconds(seconds), redrawBoard: false);
 
         /// <summary>[REQ: OPT-GAME-002] On: a placed digit leaves the pencil marks of its row, column and box.</summary>
         public void SetAutoPencilCleanup(bool on) => SetGameplay(g =>
@@ -223,11 +224,12 @@ namespace SudokuRoguelike.UI
         /// <summary>[REQ: OPT-GAME-004] "Jump to Next Empty Cell" (the old "Cursor Snap" field).</summary>
         public void SetCursorSnapOnSelection(bool on) => SetGameplay(g => g.CursorSnapOnSelection = on);
 
-        private void SetGameplay(Action<GameplaySettings> change)
+        private void SetGameplay(Action<GameplaySettings> change, bool redrawBoard = true)
         {
             change(GetOptions().Gameplay);
             LiveGameplay = GetOptions().Gameplay;
             SaveOptions();
+            if (!redrawBoard) return;
             FindFirstObjectByType<InRunController>()?.OnGameplayOptionsChanged();
         }
 

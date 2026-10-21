@@ -186,7 +186,8 @@ namespace SudokuRoguelike.UI
         // [REQ: OPT-GAME-006] A time in seconds with two decimals and the language's decimal point ("0.25 s", "0,25 s").
         private static string Seconds(float value) =>
             SudokuRoguelike.Core.LocalizationService.Format("Options.SecondsValue", "{0} s",
-                value.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture).Replace(".", T("Options.DecimalPoint")));
+                value.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)
+                    .Replace(".", SudokuRoguelike.Core.LocalizationService.T("Options.DecimalPoint", ".")));
 
         // A chevron without a fill; the focus still shows (controller).
         private static void MakeQuiet(Button button)

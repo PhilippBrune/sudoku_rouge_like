@@ -40,9 +40,12 @@ namespace SudokuRoguelike.UI
             SlipBehind(_pathLegend != null ? (RectTransform)_pathLegend.transform : null, "Slip", washi);
         }
 
-        // A paper slip behind the given labels on the scroll, as wide as their text.
+        // A paper slip behind the given labels on the scroll, as wide as their text. The labels are anchored on the left
+        // (their text starts at anchorMin.x); a centred or right-aligned label would need its own bounds. Without the
+        // washi window no slip is made (null).
         private Image FitSlip(Image slip, string name, bool show, params Text[] labels)
         {
+            if (slip == null && !show) return null;
             if (slip == null)
             {
                 slip = ScrollUiKit.Fill(_pathPaper, name, Vector2.zero, Vector2.zero, SlipPaper, ScrollUiKit.Rounded(6f));
@@ -110,8 +113,8 @@ namespace SudokuRoguelike.UI
             var r = pill.rectTransform;
             r.anchorMin = r.anchorMax = lrt.anchorMin;
             r.pivot = lrt.pivot;
-            r.sizeDelta = new Vector2(Mathf.Round(Mathf.Min(label.preferredWidth, lrt.sizeDelta.x) + 14f),
-                Mathf.Round(label.preferredHeight + 4f));
+            // The label overflows its 220 px box for a long name (a boss), so the pill follows the text, not the box.
+            r.sizeDelta = new Vector2(Mathf.Round(label.preferredWidth + 14f), Mathf.Round(label.preferredHeight + 4f));
             r.anchoredPosition = lrt.anchoredPosition + new Vector2(0f, above ? -2f : 2f);
             pill.transform.SetSiblingIndex(label.transform.GetSiblingIndex());
         }

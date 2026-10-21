@@ -153,6 +153,28 @@ namespace SudokuRoguelike.UI
             return Coverage((top - v) * s) * Coverage((1f - u) * s * 0.5f);
         }, (x, y, s) => Color.Lerp(new Color(0.72f, 0.51f, 0.31f), new Color(0.93f, 0.77f, 0.53f), y / (s - 1f)));
 
+        /// <summary>[REQ: META-XP-008] The band just inside an ema's edge: a class's Level 40 frame, tinted per class.</summary>
+        internal static Sprite EmaFrame() => Cached("emaframe", 128, (x, y, s) =>
+        {
+            float Shape(float inset)
+            {
+                const float roof = 0.16f;
+                var half = s * (0.5f - inset);
+                var u = Mathf.Abs(x + 0.5f - s * 0.5f) / half;
+                var v = (y + 0.5f) / s;
+                var top = 1f - inset - roof * u;
+                return Coverage((top - v) * s) * Coverage((1f - u) * half) * Coverage((v - inset) * s);
+            }
+            return Mathf.Clamp01(Shape(0.025f) - Shape(0.065f));
+        });
+
+        /// <summary>A ring: a disc with a hole (the class badge's frame).</summary>
+        internal static Sprite Ring() => Cached("ring", 96, (x, y, s) =>
+        {
+            var d = Mathf.Sqrt((x + 0.5f - s * 0.5f) * (x + 0.5f - s * 0.5f) + (y + 0.5f - s * 0.5f) * (y + 0.5f - s * 0.5f));
+            return Coverage(s * 0.5f - d) * Coverage(d - s * 0.40f);
+        });
+
         /// <summary>A tea bowl seen from the side: the lower half of an ellipse, porcelain with a band of green tea at the
         /// rim (the rest node, UI-STYLE-013).</summary>
         internal static Sprite TeaBowl() => Cached("teabowl", 128, (x, y, s) =>

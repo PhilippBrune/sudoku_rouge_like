@@ -15,12 +15,6 @@ namespace SudokuRoguelike.UI
         private static readonly Regex Stat = new Regex(@"^\+(\d+)\s+(HP|Pencil|Starting Gold|Item Slot|Reroll Token|Starting Relic)$",
             RegexOptions.Compiled);
 
-        /// <summary>[REQ: META-XP-006] False for the schedule parts the game does not grant yet: the Level 30 starting items
-        /// ("Start: …") and the Level 40 frames ("Cosmetic: …"), GAP-063.</summary>
-        public static bool IsGranted(string part) =>
-            !string.IsNullOrEmpty(part) && !part.StartsWith("Start: ", System.StringComparison.Ordinal)
-            && !part.StartsWith("Cosmetic: ", System.StringComparison.Ordinal);
-
         public static string Localize(string unlock)
         {
             if (string.IsNullOrEmpty(unlock)) return unlock;

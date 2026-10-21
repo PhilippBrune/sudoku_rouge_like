@@ -1,11 +1,12 @@
 # Class XP & Level Progression System
 
-**Version:** 1.5 | **Date:** 2026-10-21 | **Status:** implemented
+**Version:** 1.6 | **Date:** 2026-10-21 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.6 | 2026-10-21 | implemented | GAP-063 fixed (owner request 2026-10-21: "analyze, plan and fix"): the Level 30 starting item is given at run start (META-XP-007) and the Level 40 frame is shown (META-XP-008, kept after prestige). Three Level 30 items that did not exist are replaced by existing items that fit the class: Koi Gambler **Golden Koi** (was "Lucky Charm"), Stone Gardener **Rice Paper Umbrella** (was "Harmony Charm"), Reed Duelist **Temple Incense** (was "Tea of Focus"). §UI Placement describes the garden of classes (SPEC-CONF-041 decided: the XP stroke and the totals, no "Most Progressed Class" line). |
 | 1.5 | 2026-10-21 | implemented | Schedule texts follow the code (SPEC-CONF-008: the code is the source): Koi Gambler L10 "correct gold chance 35%", L20 "no-HP-loss chance 35%"; Lantern Seer L10 "modifiers 35% weaker", L25 "40% weaker" (`ClassPassiveService`). The L30 starting items and L40 frames are listed but not granted (GAP-063). The Meta Progression screen's XP stroke (UI-STYLE-019) differs from "UI Placement" below: SPEC-CONF-041. |
 | 1.4 | 2026-10-20 | implemented | Owner decision (SPEC-CONF-039): the prestige reward is the badge plus **+1 starting gold per prestige tier** for runs with that class (at most +9); "Passive tier +1" is dropped. |
 | 1.3 | 2026-10-07 | implemented | 1.1 review decisions (2026-10-07): class roster, passives, unlock conditions and level schedules regenerated from ClassCatalog, the decided source (SPEC-CONF-008, GAP-023); "base (+bonus)" display; Number Freak L3 "+1 Pencil" fix (D07); XP above Level 40 discarded (SPEC-CONF-034); prestige button with confirmation in Meta Progression (GAP-017); "Passive tier +1" on prestige marked undecided (new SPEC-CONF-039); header now matches the newest history row (SPEC-CONF-023). |
@@ -264,15 +265,14 @@ Each class card shows:
 
 ### Meta Progression Screen
 
-A dedicated **Class Levels** section shows:
-- All 8 classes in a scrollable list.
-- Each row: class icon, name, level badge, **XP text** displayed as `X / Y XP` (same format as Class Select — **no progress bar**).
-- Clicking/selecting a class expands a **Unlocks Timeline** — a vertical list of all levels with their granted upgrades, ticked off for completed levels and shown as locked for future ones.
-- Overall "Most Progressed Class" summary at the top.
+The garden of classes (UI-STYLE-019, owner pick 2026-10-20; SPEC-CONF-041 decided 2026-10-21):
+- The 8 classes as plaques: level and prestige stars, or the unlock goal with its progress for a locked class; the Level 40 frame round a class that has reached it.
+- The chosen class on a scroll: level, runs and best floor, an **XP stroke** with `X / Y XP` and "to Level N" (for a locked class the stroke shows the way to its unlock), the passive, and the **Unlocks Timeline** — every milestone level with its rewards, ticked off for completed levels — then prestige.
+- The collection's totals along the bottom (classes, relics, codex, highest Harmony, completion) instead of a "Most Progressed Class" line.
 
 ### Game Over / Game Completion Screen
 
-The **XP progress bar** is shown **only** on this screen, as part of the End-of-Run XP Breakdown panel (see above). This is the sole place where an animated XP bar appears.
+The **animated XP progress bar** is shown **only** on this screen, as part of the End-of-Run XP Breakdown panel (see above). The Meta Progression screen shows a still XP stroke (SPEC-CONF-041).
 
 ---
 
@@ -377,7 +377,7 @@ Fix in 1.1: Number Freak's L3 entry read "+ 1 Pencil" and was never applied; Num
 | 18 | +15 Starting Gold |
 | 20 | Passive: no-HP-loss chance 35% |
 | 25 | +2 Pencil, +1 HP |
-| 30 | Start: Lucky Charm |
+| 30 | Start: Golden Koi |
 | 35 | +1 Reroll Token |
 | 40 | Cosmetic: Golden Koi frame |
 
@@ -399,7 +399,7 @@ Fix in 1.1: Number Freak's L3 entry read "+ 1 Pencil" and was never applied; Num
 | 18 | +1 Item Slot |
 | 20 | Passive: 2 free items/level, +1 Starting Relic |
 | 25 | +2 HP |
-| 30 | Start: Harmony Charm |
+| 30 | Start: Rice Paper Umbrella |
 | 35 | +1 Pencil, +1 HP |
 | 40 | Cosmetic: Mossy Stone frame |
 
@@ -443,7 +443,7 @@ Fix in 1.1: Number Freak's L3 entry read "+ 1 Pencil" and was never applied; Num
 | 18 | +1 HP |
 | 20 | +1 Item Slot, +1 Starting Relic |
 | 25 | +2 HP, +1 Pencil |
-| 30 | Start: Tea of Focus |
+| 30 | Start: Temple Incense |
 | 35 | +1 Reroll Token |
 | 40 | Cosmetic: Cutting Reed frame |
 

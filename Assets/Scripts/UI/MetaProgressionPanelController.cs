@@ -128,6 +128,8 @@ namespace SudokuRoguelike.UI
             shadow.effectColor = new Color(0f, 0f, 0f, 0.55f);
             shadow.effectDistance = new Vector2(4f, -8f);
 
+            if (ClassFrames.IsUnlocked(_meta, id))   // META-XP-008: the Level 40 frame
+                ScrollUiKit.Fill(board.transform, "Frame", Vector2.zero, Vector2.one, ClassFrames.Colour(id), ScrollUiKit.EmaFrame());
             var def = ClassCatalog.GetDefinition(id);
             ScrollUiKit.Icon(board.transform, "Icon", "class/icon_" + ClassCatalog.GetIconName(id), new Vector2(0.24f, 0.46f),
                 new Vector2(0.76f, 0.82f), unlocked ? Color.white : Silhouette);

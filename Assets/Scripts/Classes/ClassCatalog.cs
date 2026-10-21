@@ -108,11 +108,11 @@ namespace SudokuRoguelike.Classes
             // KoiGambler
             new[] { (3,"+1 HP"),(5,"+15 Starting Gold"),(7,"+1 Pencil"),(10,"Passive: correct gold chance 35%, +1 Starting Relic"),
                     (13,"+1 HP"),(15,"+1 Item Slot"),(18,"+15 Starting Gold"),(20,"Passive: no-HP-loss chance 35%"),
-                    (25,"+2 Pencil, +1 HP"),(30,"Start: Lucky Charm"),(35,"+1 Reroll Token"),(40,"Cosmetic: Golden Koi frame") },
+                    (25,"+2 Pencil, +1 HP"),(30,"Start: Golden Koi"),(35,"+1 Reroll Token"),(40,"Cosmetic: Golden Koi frame") },
             // StoneGardener
             new[] { (3,"+1 Pencil"),(5,"+1 HP"),(7,"+1 Item Slot"),(10,"+10 Starting Gold, +1 Starting Relic"),
                     (13,"+2 Pencil"),(15,"+1 HP, +1 Reroll Token"),(18,"+1 Item Slot"),(20,"Passive: 2 free items/level, +1 Starting Relic"),
-                    (25,"+2 HP"),(30,"Start: Harmony Charm"),(35,"+1 Pencil, +1 HP"),(40,"Cosmetic: Mossy Stone frame") },
+                    (25,"+2 HP"),(30,"Start: Rice Paper Umbrella"),(35,"+1 Pencil, +1 HP"),(40,"Cosmetic: Mossy Stone frame") },
             // LanternSeer
             new[] { (3,"+1 Pencil"),(5,"+1 HP"),(7,"+10 Starting Gold"),(10,"Passive: modifiers 35% weaker"),
                     (13,"+2 Pencil"),(15,"+1 HP, +1 Reroll Token"),(18,"+1 Item Slot"),(20,"+2 HP, +1 Starting Relic"),
@@ -120,7 +120,7 @@ namespace SudokuRoguelike.Classes
             // ReedDuelist
             new[] { (3,"+1 Pencil"),(5,"+1 HP"),(7,"+1 Reroll Token"),(10,"+10 Starting Gold"),
                     (13,"+2 Pencil"),(15,"Passive: perfect no-pencil → +3 Pencil"),(18,"+1 HP"),(20,"+1 Item Slot, +1 Starting Relic"),
-                    (25,"+2 HP, +1 Pencil"),(30,"Start: Tea of Focus"),(35,"+1 Reroll Token"),(40,"Cosmetic: Cutting Reed frame") },
+                    (25,"+2 HP, +1 Pencil"),(30,"Start: Temple Incense"),(35,"+1 Reroll Token"),(40,"Cosmetic: Cutting Reed frame") },
             // QuietCartographer
             new[] { (3,"+1 Pencil"),(5,"+10 Starting Gold"),(7,"+1 HP"),(10,"+1 Reroll Token, +1 Starting Relic"),
                     (13,"+1 Pencil, +1 HP"),(15,"Passive: preview always active"),(18,"+10 Starting Gold"),(20,"+1 Item Slot"),
@@ -156,6 +156,22 @@ namespace SudokuRoguelike.Classes
                 if (table[i].level > currentLevel) return table[i];
             return null;
         }
+
+        // [REQ: META-XP-007] The Level 30 reward: every run with the class starts with this item (GAP-063). The schedule's
+        // "Start: …" entries name the same items (ClassLevelRewardTests).
+        public const int StartingItemLevel = 30;
+
+        public static (ItemType Type, ItemRarity Rarity) GetStartingItem(ClassId id) => id switch
+        {
+            ClassId.NumberFreak       => (ItemType.Solver, ItemRarity.Rare),
+            ClassId.GardenMonk        => (ItemType.MeditationStone, ItemRarity.Normal),
+            ClassId.ShrineArchivist   => (ItemType.PatternScroll, ItemRarity.Normal),
+            ClassId.KoiGambler        => (ItemType.GoldenKoi, ItemRarity.Normal),
+            ClassId.StoneGardener     => (ItemType.RicePaperUmbrella, ItemRarity.Normal),
+            ClassId.LanternSeer       => (ItemType.LanternOfClarity, ItemRarity.Normal),
+            ClassId.ReedDuelist       => (ItemType.TempleIncense, ItemRarity.Normal),
+            _                         => (ItemType.CompassOfOrder, ItemRarity.Normal)
+        };
 
         public static string GetIconName(ClassId id)
         {

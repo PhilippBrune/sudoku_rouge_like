@@ -1,4 +1,7 @@
 {
+    "Start: Temple Incense":  "Inicio: Incienso del templo",
+    "Start: Rice Paper Umbrella":  "Inicio: Sombrilla de papel de arroz",
+    "Start: Golden Koi":  "Inicio: Koi dorado",
     "MetaProgression.Prestige.ReadyShort":  "Listo: vuelta al nivel 1, una estrella más.",
     "MetaProgression.Prestige.Needs":  "El prestigio pide {0} jefes derrotados ({1}/{0}).",
     "MetaProgression.Prestige.Opens":  "El prestigio se abre en el nivel {0}.",
@@ -53,10 +56,7 @@
     "Cosmetic: Blooming Monk frame":  "Cosmético: marco del Monje en flor",
     "Cosmetic: Golden Number frame":  "Cosmético: marco del Número dorado",
     "Start: Compass of Order":  "Inicio: Brújula del orden",
-    "Start: Tea of Focus":  "Inicio: Té de concentración",
     "Start: Lantern of Clarity":  "Inicio: Farol de claridad",
-    "Start: Harmony Charm":  "Inicio: Amuleto de armonía",
-    "Start: Lucky Charm":  "Inicio: Amuleto de la suerte",
     "Start: Pattern Scroll":  "Inicio: Pergamino de patrones",
     "Start: Meditation Stone":  "Inicio: Piedra de meditación",
     "Start: Rare Solver":  "Inicio: Solucionador raro",

@@ -17,7 +17,7 @@ Contents: [Contradictions](#1-contradictions) · [Ambiguities](#2-ambiguous-requ
 
 | Group | Entries | Resolved in 1.1 | Open |
 |---|---:|---:|---|
-| Contradictions | 41 | 40 | SPEC-CONF-039 decided 2026-10-20. SPEC-CONF-041 open (2026-10-21). Owner sign-offs requested: SPEC-CONF-008 balance values, SPEC-PROC-007 legal wording. |
+| Contradictions | 41 | 41 | SPEC-CONF-039 decided 2026-10-20, SPEC-CONF-041 on 2026-10-21. Owner sign-offs requested: SPEC-CONF-008 balance values, SPEC-PROC-007 legal wording. |
 | Ambiguities | 14 | 14 | Listening check for SPEC-AMB-011 (GAP-030). |
 | Obsolete requirements | 13 rows | 13 | — |
 | Missing acceptance criteria | 11 | 9 | SPEC-MAC-005 (deferred, FUTURE-011), SPEC-MAC-011 (profiler session). |
@@ -428,7 +428,7 @@ Where a recommendation was doc-only but the matching gap asked for code (SPEC-CO
 - **Suggestions:**
   1. **Keep the stroke and the totals, and update ClassXpProgressionSystem §UI Placement to the garden of classes.** *(recommended)* Matches what was picked and built; the end screen keeps its animated bar.
   2. **Show the XP as text only on the scroll and add the "Most Progressed Class" line.** Follows the spec; changes the picked design.
-- **Resolution:** Open, owner decision. ClassXpProgressionSystem §UI Placement is unchanged until then.
+- **Resolution (2026-10-21):** Suggestion 1 (owner request 2026-10-21: "analyze, plan and fix"). ClassXpProgressionSystem 1.6 §UI Placement describes the garden of classes (the still XP stroke and the totals; the animated bar stays on the end screen); MetaProgressionSystem 1.13 META-UNLOCK-005 says it is about the class screen.
 
 ---
 

@@ -1,11 +1,12 @@
 # Meta Progression System
 
-**Version:** 1.12 | **Date:** 2026-10-21 | **Status:** implemented
+**Version:** 1.13 | **Date:** 2026-10-21 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.13 | 2026-10-21 | implemented | GAP-063 fixed (owner request 2026-10-21: "analyze, plan and fix"): META-XP-007 (the Level 30 starting item) and META-XP-008 (the Level 40 frame) are granted; SPEC-CONF-041 decided for the XP stroke on the Meta Progression screen. |
 | 1.12 | 2026-10-21 | implemented | The Meta Progression screen is the garden of classes (UI-STYLE-019, owner pick): new META-UNLOCK-006 (each locked class shows its goal with its progress), META-STATS-001 (Garden Runs and best floor per class). META-XP-006 now says where the schedule lives (ClassCatalog) and that it is shown in the player's language; the Koi Gambler's and Lantern Seer's passive steps name the values the game uses. The XP stroke on this screen is logged as SPEC-CONF-041 (ClassXpProgressionSystem says no bar). |
 | 1.11 | 2026-10-21 | implemented | The Codex as a collector's book (UI-STYLE-018, owner pick): bookmarks Items, Relics, Rules and Curses. New: the curses met in any run are recorded for the Curses page (META-CODEX-008), and each item counts how often it was found and used (META-CODEX-009). META-CODEX-005 is verified by a test. |
 | 1.10 | 2026-10-20 | implemented | Owner decisions: the prestige reward is the badge plus +1 starting gold per tier (SPEC-CONF-039, META-PRESTIGE-005); Ascension is retired, because Harmony already is the post-win difficulty ladder and prestige the per-class goal (GAP-017, FUTURE-009): META-ASCEND-001..003 descoped, the unused save fields stay for old saves, OPEN-A closed. |
@@ -61,7 +62,7 @@ Typical unlock order based on natural play progression:
 
 **[META-UNLOCK-003]** Unlocked classes: selectable with full stat block, passive description, current level.
 **[META-UNLOCK-004]** Locked classes: greyed out, show silhouette icon + unlock condition text.
-**[META-UNLOCK-005]** Current class level shown as "X / Y XP" text (no progress bar). (The Meta Progression screen's XP stroke from the picked garden of classes, UI-STYLE-019, differs from this line and from ClassXpProgressionSystem §UI Placement: SPEC-CONF-041, open for the owner.)
+**[META-UNLOCK-005]** Current class level shown as "X / Y XP" text (no progress bar). This line is about the class screen; the Meta Progression screen shows a still XP stroke (UI-STYLE-019, SPEC-CONF-041 decided 2026-10-21).
 
 ### Meta Progression Display (the garden of classes, UI-STYLE-019)
 
@@ -83,7 +84,11 @@ See [ClassXpProgressionSystem](ClassXpProgressionSystem.md) for the full XP curv
 
 ### Per-Class Level Rewards
 
-**[META-XP-006]** Each class has **12 milestone levels** granting stat bonuses (+HP, +Pencil, +Reroll, +Slot, +Gold, +Starting Relic) and passive upgrades; the schedule is `ClassCatalog.GetAllUnlocks` (listed in ClassXpProgressionSystem) and the stat bonuses are applied by `RunArchetypeService.GetLevelBonuses`. The class screen and the garden of classes show each entry in the player's language (`ClassUnlockText`). Not yet granted: the Level 30 starting items and the Level 40 frames (GAP-063).
+**[META-XP-006]** Each class has **12 milestone levels** granting stat bonuses (+HP, +Pencil, +Reroll, +Slot, +Gold, +Starting Relic) and passive upgrades; the schedule is `ClassCatalog.GetAllUnlocks` (listed in ClassXpProgressionSystem) and the stat bonuses are applied by `RunArchetypeService.GetLevelBonuses`. The class screen and the garden of classes show each entry in the player's language (`ClassUnlockText`).
+
+**[META-XP-007]** From **Level 30** every run with the class starts with its item in the bag (`ClassCatalog.GetStartingItem`, given by `RunArchetypeService.CreateRunState`): Number Freak a Rare Solver, Garden Monk Meditation Stone, Shrine Archivist Pattern Scroll, Koi Gambler Golden Koi, Stone Gardener Rice Paper Umbrella, Lantern Seer Lantern of Clarity, Reed Duelist Temple Incense, Quiet Cartographer Compass of Order. The item has its normal charges and a fixed id (a seeded run stays the same); it is not a Codex find.
+
+**[META-XP-008]** At **Level 40** the class earns its frame (the schedule's "Cosmetic: … frame"): a band in the class's colour round its plaque in the garden of classes and a ring round its badge in a run. Once earned it stays, also after prestige resets the level (`ClassFrames.IsUnlocked`: Level 40 or a prestige tier).
 
 ---
 

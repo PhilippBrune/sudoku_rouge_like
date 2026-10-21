@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using SudokuRoguelike.Core;
 using SudokuRoguelike.Classes;
 using SudokuRoguelike.Economy;
+using SudokuRoguelike.Items;
 
 namespace SudokuRoguelike.Run
 {
@@ -122,8 +123,24 @@ namespace SudokuRoguelike.Run
 
             // [HARMONY-PERK-001] Apply selected perk modifications at run start.
             ApplyHarmonyPerk(state, harmonyPerk);
+            AddStartingItem(state, classId, classLevel);
 
             return state;
+        }
+
+        // [REQ: META-XP-007] From Level 30 the run starts with the class's item (GAP-063). The id is fixed, so a seeded run
+        // stays the same; tiered items take the catalog's rarity, the others their fixed one.
+        private static void AddStartingItem(RunState state, ClassId classId, int classLevel)
+        {
+            if (classLevel < ClassCatalog.StartingItemLevel || state.ItemSlots <= state.HeldItems.Count) return;
+            var (type, rarity) = ClassCatalog.GetStartingItem(classId);
+            state.HeldItems.Add(new ItemInstance
+            {
+                Id = "start-" + type,
+                Type = type,
+                Rarity = ItemService.IsTiered(type) ? rarity : ItemService.GetFixedRarity(type),
+                Charges = ItemService.GetDefaultCharges(type)
+            });
         }
 
         // [HARMONY-PERK-001] Applies the selected pre-run perk to a freshly created RunState.

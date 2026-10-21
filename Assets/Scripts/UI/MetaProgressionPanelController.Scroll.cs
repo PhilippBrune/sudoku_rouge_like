@@ -19,8 +19,7 @@ namespace SudokuRoguelike.UI
         private static readonly Color StrokeGold = new Color(0.80f, 0.62f, 0.25f, 1f);
         private static readonly Color PassiveSlip = new Color(0.94f, 0.89f, 0.78f, 1f);
 
-        private static readonly string GrantedColor = "#B23A2E";
-        private static readonly string NotGrantedColor = "#6B6152";
+        private static readonly string ReachedColor = "#B23A2E";
 
         private Button _prestigeButton;
         private Text _prestigeLabel;
@@ -117,7 +116,7 @@ namespace SudokuRoguelike.UI
             for (var i = 0; i < rows.Count; i++)
             {
                 var (rowLevel, parts) = rows[i];
-                var done = rowLevel <= level && parts.Exists(p => p.granted);
+                var done = rowLevel <= level;
                 var top = 1f - i * step;
                 var center = top - step * 0.5f;
                 var dot = ScrollUiKit.Spot(path, $"Step_{i}", new Vector2(0.025f, center), new Vector2(20f, 20f),
@@ -126,39 +125,29 @@ namespace SudokuRoguelike.UI
                     ScrollUiKit.Fill(dot.transform, "Hollow", new Vector2(0.2f, 0.2f), new Vector2(0.8f, 0.8f), ScrollUiKit.Paper, ScrollUiKit.Disc());
                 ScrollUiKit.Label(path, $"StepLevel_{i}", F("MetaProgression.Path.Level", "Lv {0}", rowLevel), 18, TextAnchor.MiddleLeft,
                     ScrollUiKit.Ink, new Vector2(0.06f, top - step), new Vector2(0.205f, top), 11);
-                var label = ScrollUiKit.Label(path, $"StepText_{i}", RowText(parts, rowLevel <= level), 18, TextAnchor.MiddleLeft,
+                var label = ScrollUiKit.Label(path, $"StepText_{i}", RowText(parts, done), 18, TextAnchor.MiddleLeft,
                     ScrollUiKit.InkSoft, new Vector2(0.21f, top - step), new Vector2(1f, top), 10);
                 label.supportRichText = true;
             }
         }
 
-        // A reached part in vermilion, one not reached in soft ink; a part the game does not grant yet (GAP-063: the
-        // Level 30 starting items and Level 40 frames) in soft italic, never ticked off, until the owner decides.
-        private static string RowText(List<(string text, bool granted)> parts, bool reached)
+        // A reached row in vermilion, one not reached in soft ink (the label's colour).
+        private static string RowText(List<string> parts, bool reached)
         {
-            var sb = new System.Text.StringBuilder();
-            for (var i = 0; i < parts.Count; i++)
-            {
-                if (i > 0) sb.Append(" · ");
-                var (text, granted) = parts[i];
-                if (!granted) sb.Append($"<i><color={NotGrantedColor}>{text}</color></i>");
-                else if (reached) sb.Append($"<color={GrantedColor}>{text}</color>");
-                else sb.Append(text);
-            }
-            return sb.ToString();
+            var text = string.Join(" · ", parts);
+            return reached ? $"<color={ReachedColor}>{text}</color>" : text;
         }
 
-        private List<(int level, List<(string text, bool granted)> parts)> PathRows(ClassId id, int level)
+        private List<(int level, List<string> parts)> PathRows(ClassId id, int level)
         {
-            var texts = new SortedDictionary<int, List<(string, bool)>>();
-            void Add(int at, string text, bool granted = true)
+            var texts = new SortedDictionary<int, List<string>>();
+            void Add(int at, string text)
             {
-                if (!texts.TryGetValue(at, out var list)) texts[at] = list = new List<(string, bool)>();
-                list.Add((text, granted));
+                if (!texts.TryGetValue(at, out var list)) texts[at] = list = new List<string>();
+                list.Add(text);
             }
             foreach (var (at, unlock) in ClassCatalog.GetAllUnlocks(id))
-                foreach (var part in unlock.Split(new[] { ", " }, System.StringSplitOptions.None))
-                    Add(at, ClassUnlockText.Localize(part), ClassUnlockText.IsGranted(part));
+                Add(at, ClassUnlockText.Localize(unlock));
             var unknown = T("MetaProgression.Unknown", "???");
             var item = ItemService.GetExclusiveItemForClass(id);
             if (item.HasValue)
@@ -173,7 +162,7 @@ namespace SudokuRoguelike.UI
             }
             Add(XpTable.MaxLevel, T("MetaProgression.Prestige", "Prestige"));   // its gold is on the prestige line below
 
-            var rows = new List<(int, List<(string, bool)>)>();
+            var rows = new List<(int, List<string>)>();
             foreach (var pair in texts) rows.Add((pair.Key, pair.Value));
             return rows;
         }

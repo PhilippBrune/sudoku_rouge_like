@@ -1,4 +1,7 @@
 {
+    "Start: Temple Incense":  "Départ : Encens du temple",
+    "Start: Rice Paper Umbrella":  "Départ : Ombrelle en papier de riz",
+    "Start: Golden Koi":  "Départ : Koï doré",
     "MetaProgression.Prestige.ReadyShort":  "Prêt : retour au niveau 1, une étoile de plus.",
     "MetaProgression.Prestige.Needs":  "Le prestige demande {0} boss vaincus ({1}/{0}).",
     "MetaProgression.Prestige.Opens":  "Le prestige s'ouvre au niveau {0}.",
@@ -53,10 +56,7 @@
     "Cosmetic: Blooming Monk frame":  "Cosmétique : cadre du Moine en fleur",
     "Cosmetic: Golden Number frame":  "Cosmétique : cadre du Nombre doré",
     "Start: Compass of Order":  "Départ : Boussole de l'ordre",
-    "Start: Tea of Focus":  "Départ : Thé de concentration",
     "Start: Lantern of Clarity":  "Départ : Lanterne de clarté",
-    "Start: Harmony Charm":  "Départ : Amulette d'harmonie",
-    "Start: Lucky Charm":  "Départ : Porte-bonheur",
     "Start: Pattern Scroll":  "Départ : Rouleau des motifs",
     "Start: Meditation Stone":  "Départ : Pierre de méditation",
     "Start: Rare Solver":  "Départ : Solveur rare",

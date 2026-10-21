@@ -1,4 +1,7 @@
 ﻿{
+    "Start: Temple Incense":  "Start: Tempelweihrauch",
+    "Start: Rice Paper Umbrella":  "Start: Reispapier-Schirm",
+    "Start: Golden Koi":  "Start: Goldener Koi",
     "MetaProgression.Prestige.ReadyShort":  "Bereit: zurück auf Stufe 1, ein Stern mehr.",
     "MetaProgression.Prestige.Needs":  "Prestige braucht {0} besiegte Bosse ({1}/{0}).",
     "MetaProgression.Prestige.Opens":  "Prestige ab Stufe {0}.",
@@ -53,10 +56,7 @@
     "Cosmetic: Blooming Monk frame":  "Kosmetik: Rahmen des blühenden Mönchs",
     "Cosmetic: Golden Number frame":  "Kosmetik: Rahmen der goldenen Zahl",
     "Start: Compass of Order":  "Start: Kompass der Ordnung",
-    "Start: Tea of Focus":  "Start: Tee der Konzentration",
     "Start: Lantern of Clarity":  "Start: Laterne der Klarheit",
-    "Start: Harmony Charm":  "Start: Harmonie-Amulett",
-    "Start: Lucky Charm":  "Start: Glücksbringer",
     "Start: Pattern Scroll":  "Start: Musterrolle",
     "Start: Meditation Stone":  "Start: Meditationsstein",
     "Start: Rare Solver":  "Start: seltener Löser",

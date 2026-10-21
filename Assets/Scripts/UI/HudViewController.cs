@@ -655,6 +655,26 @@ namespace SudokuRoguelike.UI
 
         // ────────────────────── Class XP badge ──────────────────────
 
+        // [REQ: META-XP-008] The class's Level 40 frame: a ring in its colour round the portrait (the plain gold ring
+        // otherwise).
+        private void ApplyClassFrame(Color? frame)
+        {
+            var badge = _classBadgeIcon != null ? _classBadgeIcon.transform.parent : null;
+            if (badge == null) return;
+            var existing = badge.Find("PortraitFrame");
+            if (frame == null)
+            {
+                if (existing != null) existing.gameObject.SetActive(false);
+                return;
+            }
+            var ring = existing != null ? existing.GetComponent<Image>()
+                : ScrollUiKit.Spot(badge, "PortraitFrame", new Vector2(0.18f, 0.5f), new Vector2(98f, 98f), frame.Value, ScrollUiKit.Ring());
+            ring.color = frame.Value;
+            ring.raycastTarget = false;
+            ring.gameObject.SetActive(true);
+            ring.transform.SetAsFirstSibling();
+        }
+
         private void EnsureClassBadge()
         {
             var run = _map?.Run;
@@ -731,6 +751,7 @@ namespace SudokuRoguelike.UI
                                 "InRun.Hud.ClassBadge",
                                 LocalizationService.T(classDef.Name),
                                 level);
+                        ApplyClassFrame(ClassFrames.IsUnlocked(meta, classId) ? ClassFrames.Colour(classId) : (Color?)null);
                         _cachedClassBadgeColor = prestige >= 5
                             ? new Color(1.00f, 0.80f, 0.25f, 1f)
                             : prestige >= 1

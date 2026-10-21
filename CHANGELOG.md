@@ -26,6 +26,7 @@
 
 ### Changed
 
+- Class Level 30 now really starts every run with the class's item, and Level 40 gives the class its frame (round its plaque in Meta Progression and its badge in a run; it stays after prestige). Three Level 30 items that did not exist are now Golden Koi (Koi Gambler), Rice Paper Umbrella (Stone Gardener) and Temple Incense (Reed Duelist).
 - The class level rewards are shown in your language, and the Koi Gambler's and Lantern Seer's passive steps name the values the game uses (35 %, 35 %/40 %).
 - Digits are taken 0.25 s after a cell is chosen (was 0.5 s), and a placed digit highlights every cell with that digit.
 - After a boss, the numbers show the boss fight and the whole floor side by side.

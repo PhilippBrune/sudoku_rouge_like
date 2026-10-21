@@ -1,4 +1,7 @@
 ﻿{
+    "Start: Temple Incense":  "Start: Temple Incense",
+    "Start: Rice Paper Umbrella":  "Start: Rice Paper Umbrella",
+    "Start: Golden Koi":  "Start: Golden Koi",
     "MetaProgression.Prestige.ReadyShort":  "Ready: back to Level 1, one more star.",
     "MetaProgression.Prestige.Needs":  "Prestige needs {0} boss defeats ({1}/{0}).",
     "MetaProgression.Prestige.Opens":  "Prestige opens at Level {0}.",
@@ -53,10 +56,7 @@
     "Cosmetic: Blooming Monk frame":  "Cosmetic: Blooming Monk frame",
     "Cosmetic: Golden Number frame":  "Cosmetic: Golden Number frame",
     "Start: Compass of Order":  "Start: Compass of Order",
-    "Start: Tea of Focus":  "Start: Tea of Focus",
     "Start: Lantern of Clarity":  "Start: Lantern of Clarity",
-    "Start: Harmony Charm":  "Start: Harmony Charm",
-    "Start: Lucky Charm":  "Start: Lucky Charm",
     "Start: Pattern Scroll":  "Start: Pattern Scroll",
     "Start: Meditation Stone":  "Start: Meditation Stone",
     "Start: Rare Solver":  "Start: Rare Solver",

@@ -55,6 +55,16 @@ namespace SudokuRoguelike.Tests
 
         [Test]
         [Requirement("META-XP-007")]
+        public void EmptyCanvasPerk_StripsTheClassItemToo()
+        {
+            var state = RunArchetypeService.CreateRunState(ClassId.NumberFreak, 1234, classLevel: 30, harmonyLevel: 10,
+                harmonyPerk: HarmonyPerkId.EmptyCanvas);
+
+            Assert.AreEqual(0, state.HeldItems.Count, "Empty Canvas: no starting items");
+        }
+
+        [Test]
+        [Requirement("META-XP-007")]
         public void StartingItem_IsTheSameForTheSameSeed()
         {
             var a = RunArchetypeService.CreateRunState(ClassId.GardenMonk, 77, classLevel: 35).HeldItems[0];

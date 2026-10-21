@@ -762,6 +762,7 @@ namespace SudokuRoguelike.UI
                     {
                         _cachedClassBadgeText  = LocalizationService.T(classDef.Name);
                         _cachedClassBadgeColor = Color.white;
+                        ApplyClassFrame(null);   // no profile: no ring left from an earlier run
                     }
                 }
                 _classBadgeText.text  = _cachedClassBadgeText ?? "";

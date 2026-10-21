@@ -121,9 +121,10 @@ namespace SudokuRoguelike.Run
                 HarmonyConfig      = harmony,
             };
 
+            // The class's item first, so a perk that strips the starting items (Empty Canvas) strips it too.
+            AddStartingItem(state, classId, classLevel);
             // [HARMONY-PERK-001] Apply selected perk modifications at run start.
             ApplyHarmonyPerk(state, harmonyPerk);
-            AddStartingItem(state, classId, classLevel);
 
             return state;
         }

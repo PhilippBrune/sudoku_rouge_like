@@ -70,6 +70,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-059](#gap-059) | Mistakes counted toward the run only when a puzzle was solved | FIXED (0.2.0 playtest, 2026-10-20) | MEDIUM | P3 |
 | [GAP-060](#gap-060) | The trial the Warding Flame removed came back after Save & Quit at the boss gate | FIXED (found in review, 2026-10-21) | LOW | P3 |
 | [GAP-061](#gap-061) | Options that did nothing or less than their names said | FIXED (Options audit, 2026-10-21) | MEDIUM | P2 |
+| [GAP-064](#gap-064) | The Harmony perk Scholar's Burden never gives its free Ink Well | OPEN (found in the review of GAP-063, 2026-10-21) | LOW | P3 |
 | [GAP-063](#gap-063) | Class levels 30 and 40 promised rewards the game did not grant (starting items, frames) | FIXED (2026-10-21) | MEDIUM | P2 |
 | [GAP-062](#gap-062) | Main menu: the D-pad steps through a panel in creation order, and arrow keys may move twice | OPEN (found building the Codex book, 2026-10-21; not checked in the player) | MEDIUM | P2 |
 | [GAP-044](#gap-044) | Region borders showed the previous puzzle's regions on a same-size board | FIXED (found 2026-10-14 by the owner) | HIGH | P1 |
@@ -999,4 +1000,13 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Analysis:** granting beats removing: Level 30 and 40 are the schedule's biggest steps, and removing them would leave two empty milestones. New items for the three missing names would need balance work; each class has an existing item that fits its play. A frame needs no new art: a band in the class's colour on the shapes the game already draws.
 - **Fix:** META-XP-007: from Level 30 every run starts with the class's item (`ClassCatalog.GetStartingItem`, `RunArchetypeService.AddStartingItem`); the missing three are now Golden Koi (Koi Gambler, gold per star), Rice Paper Umbrella (Stone Gardener, two blocked mistakes; its free first item keeps it longer) and Temple Incense (Reed Duelist, correct digits without pencil marks). META-XP-008: at Level 40 the class's frame, a band in its colour round its plaque in the garden of classes and a ring round its badge in a run, kept after prestige (`ClassFrames`). The garden ticks both rows off like every other reward.
 - **Tests:** `ClassLevelRewardTests` (every class's item exists and the schedule names it; Level 30 starts with it, Level 29 does not; the same id for the same seed; the frame at Level 40 and after prestige; one colour per class).
+
+## GAP-064
+**The Harmony perk Scholar's Burden never gives its free Ink Well**
+
+- **Requirement:** HarmonyDifficultySystem §Perks (`ScholarsBurden`: "Max item slots −1, +5 starting pencil, gain 1 free Rare InkWell")
+- **Status:** OPEN (found in the code review of the GAP-063 fix, 2026-10-21; not yet seen in the player) · **Severity:** LOW · **Priority:** P3
+- **Problem:** `RunArchetypeService.ApplyHarmonyPerk` sets `RunState.ScholarsBurdenGrantsInkWell`, and `PerkService.ApplyRunStartEffects` would turn it into one Rare Ink Well (two from H8). Nothing calls `ApplyRunStartEffects`, so the run starts without it; only tests call it.
+- **To decide before wiring it:** the method adds the Ink Wells even when the bag is full (Scholar's Burden also takes a slot, and from Level 30 the class's item takes one, META-XP-007), and it gives them random ids (`Guid`), which a seeded run should not have.
+- **Next step:** call it once from `RunDirector.StartRun` after the starting inventory, with a slot check (or let the perk's Ink Well replace the class item) and fixed ids; a test that a Scholar's Burden run starts with the Ink Well.
 

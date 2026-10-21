@@ -14,11 +14,10 @@ namespace SudokuRoguelike.UI
     {
         public const int UnlockLevel = XpTable.MaxLevel;
 
-        public static bool IsUnlocked(MetaProgressionState meta, ClassId id)
-        {
-            var progression = new ClassGardenProgressionService();
-            return progression.GetLevel(meta, id) >= UnlockLevel || progression.GetPrestigeTier(meta, id) > 0;
-        }
+        private static readonly ClassGardenProgressionService Progression = new ClassGardenProgressionService();
+
+        public static bool IsUnlocked(MetaProgressionState meta, ClassId id) =>
+            Progression.GetLevel(meta, id) >= UnlockLevel || Progression.GetPrestigeTier(meta, id) > 0;
 
         // One colour per frame, after its name in the schedule.
         public static Color Colour(ClassId id) => id switch

@@ -70,6 +70,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-059](#gap-059) | Mistakes counted toward the run only when a puzzle was solved | FIXED (0.2.0 playtest, 2026-10-20) | MEDIUM | P3 |
 | [GAP-060](#gap-060) | The trial the Warding Flame removed came back after Save & Quit at the boss gate | FIXED (found in review, 2026-10-21) | LOW | P3 |
 | [GAP-061](#gap-061) | Options that did nothing or less than their names said | FIXED (Options audit, 2026-10-21) | MEDIUM | P2 |
+| [GAP-065](#gap-065) | Numbers in texts follow the PC's region, not the game's language ("XP x1,0" in English) | OPEN (found in the menu review, 2026-10-21) | LOW | P3 |
 | [GAP-064](#gap-064) | The Harmony perk Scholar's Burden never gives its free Ink Well | OPEN (found in the review of GAP-063, 2026-10-21) | LOW | P3 |
 | [GAP-063](#gap-063) | Class levels 30 and 40 promised rewards the game did not grant (starting items, frames) | FIXED (2026-10-21) | MEDIUM | P2 |
 | [GAP-062](#gap-062) | Main menu: the D-pad steps through a panel in creation order, and arrow keys may move twice | OPEN (found building the Codex book, 2026-10-21; not checked in the player) | MEDIUM | P2 |
@@ -1009,4 +1010,12 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Problem:** `RunArchetypeService.ApplyHarmonyPerk` sets `RunState.ScholarsBurdenGrantsInkWell`, and `PerkService.ApplyRunStartEffects` would turn it into one Rare Ink Well (two from H8). Nothing calls `ApplyRunStartEffects`, so the run starts without it; only tests call it.
 - **To decide before wiring it:** the method adds the Ink Wells even when the bag is full (Scholar's Burden also takes a slot, and from Level 30 the class's item takes one, META-XP-007), and it gives them random ids (`Guid`), which a seeded run should not have.
 - **Next step:** call it once from `RunDirector.StartRun` after the starting inventory, with a slot check (or let the perk's Ink Well replace the class item) and fixed ids; a test that a Scholar's Burden run starts with the Ink Well.
+
+## GAP-065
+**Numbers in texts follow the PC's region, not the game's language**
+
+- **Requirement:** REQ-UI-101 (localized text), LocalizationService
+- **Status:** OPEN (found in the review of the main menu, Select Class and Game Modes, 2026-10-21) · **Severity:** LOW · **Priority:** P3
+- **Problem:** `LocalizationService.Format` formats numbers with the PC's culture. On a German Windows the English Game Modes screen shows "XP x1,0" and the English garden of classes "Collect 50.000 gold · 12.400"; on an English PC a German player would see "1.0" and "50,000".
+- **Next step:** format with the culture of the chosen language (en-US, de-DE, fr-FR, es-ES, pt-BR) in `LocalizationService.Format`; a test that "{0:N0}" and "{0:0.0}" follow the language, not the thread. The Input Lock time already uses the language's decimal point (`Options.DecimalPoint`).
 

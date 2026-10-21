@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 2.4 | **Date:** 2026-10-21 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book and the garden of classes)
+**Version:** 2.5 | **Date:** 2026-10-21 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book and the garden of classes; proposed: main menu, Select Class, Game Modes)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.5 | 2026-10-21 | review | Owner request: review the main menu, Select Class and Game Modes and make mockups in the same family. One proposal each (proposed UI-STYLE-023 to 025), with today's screens from the game and the review notes; waiting for the owner's pick. |
 | 2.4 | 2026-10-21 | review | Owner pick: garden flow **A · Washi window** as well (UI-STYLE-022, with D): built, screenshots below. The garden of classes shows the Level 40 frames (GAP-063 fixed). |
 | 2.3 | 2026-10-21 | review | Meta Progression as the garden of classes built (UI-STYLE-019): plaques with level or unlock goal (META-UNLOCK-006), the scroll with runs and best floor (META-STATS-001) and the class's whole level path, the totals. The XP stroke differs from ClassXpProgressionSystem ("no bar"): SPEC-CONF-041, for the owner. Building it found GAP-063 (the Level 30 starting items and Level 40 frames are listed but not granted). Screenshots below. |
 | 2.2 | 2026-10-21 | review | The Codex as a collector's book built (UI-STYLE-018), with a new Curses page (the game now records the curses met, META-CODEX-008) and how often each item was found and used (META-CODEX-009). Two parts of the mockup are left out: the Normal · Rare · Epic filter and "Best paired with", which no game data backs. Screenshots below. |
@@ -422,6 +423,46 @@ The number pad changes colour in Pencil mode, and the pencil marks take the same
 ![Pencil mode before](layout-proposals/before_pencil_mode.jpg)
 
 ![Pencil mode after](layout-proposals/after_pencil_mode.jpg)
+
+## Main menu, Select Class and Game Modes (proposals, 2.5)
+
+The last three menu screens still in the old look: dark panels with button lists. Today's screens, from the game:
+
+![Main menu before](layout-proposals/before_main_menu.jpg)
+
+![Select Class before](layout-proposals/before_class_select.jpg)
+
+![Game Modes before](layout-proposals/before_game_modes.jpg)
+
+**Review notes:**
+
+- **Main menu.** Ten equal bars; Resume is a dimmed bar even without a saved run; the Daily and Monthly Walk widgets are dark boxes with small text; "Items & Relic Codex" is called "Codex" on its own screen; a "Ready." status line sits under the menu. The debug switch only shows in the Editor and development builds.
+- **Select Class.** The class texts are 10–12 px; a locked class shows its passive but not what unlocks it (Meta Progression does); the level path is one dense text block; the run's settings (Harmony with its perk, irregular puzzles) sit in small controls under it, and Start Run opens a second confirmation window with the stats the screen could show itself.
+- **Game Modes.** A text block explains the modes, and the buttons below say "(Locked)" without saying how to open the mode; the Harmony control is the same as on Select Class; "XP x1,0" shows a decimal comma in the English text (GAP-065: numbers follow the PC's region, not the game's language).
+
+### Main menu · The gate (proposed UI-STYLE-023)
+
+![Main menu, the gate](layout-proposals/main_menu_gate.jpg)
+
+The main menu painting stays bright. The title hangs as a lacquer signboard under the torii's beam; the menu is a hanging scroll in the gate, one line per entry with its icon, the chosen one circled by a vermilion ensō. Resume appears only with a saved run, at the top, with where the run stands ("Floor 3 · Number Freak") and a "Saved" seal; the rules group the entries (play, collection, settings). The Daily Walk (today's goals as three marks, the streak, ink stamps) and the Monthly Walk (its garden, days left, best score) hang as paper tags on the right, each with Open. The profile in the top-left corner, the version in the bottom-left; no status line.
+
+### Select Class · Who walks the garden (proposed UI-STYLE-024)
+
+![Select Class, who walks the garden](layout-proposals/class_select_seals.jpg)
+
+The classes are round seals over the class painting: icon, name, level and prestige stars, the Level 40 frame round the seal (META-XP-008); a locked class is dark with its unlock goal and progress, as in the garden of classes. The chosen class hangs on a scroll with what the run starts with: HP, Pencil, bag slots, relics and gold, each "base (+bonus)"; its passive; the next level rewards. The run's settings sit on a strip along the bottom: the Harmony stones with the level's rule, the perk, irregular puzzles as a stamp switch, Back and **Begin the run**. The scroll shows what the confirmation window shows today, so Begin starts the run directly.
+
+### Game Modes · Five paths (proposed UI-STYLE-025)
+
+![Game Modes, five paths](layout-proposals/game_modes_noren.jpg)
+
+The five modes hang as noren curtains from a wooden beam over the modes painting: icon, name, one line on what it is, and its own state on a paper strip (Garden Run: the Harmony level; Endless Zen: best depth; Daily Walk: goals and streak; Monthly Walk: its garden and days left). A locked mode is dark and says what opens it ("Defeat your first boss"). The chosen mode's settings sit on a paper slip below: for the Garden Run the Harmony stones (reached ones light, the chosen one vermilion), the level's rule and the next level's condition, the perk; then Back and "Choose a class". Endless Zen's slip carries its Records, Spirit Trials' its tiers.
+
+**For the owner to decide with the pick:**
+
+1. Rename "Items & Relic Codex" to "Codex" in the main menu (the screen is called Codex)?
+2. Select Class without the confirmation window (Begin starts the run, since the scroll shows the stats)?
+3. The Harmony setting is on Game Modes and on Select Class today; keep it on both (one setting, as now) or only on Select Class?
 
 ## Decisions and next step
 

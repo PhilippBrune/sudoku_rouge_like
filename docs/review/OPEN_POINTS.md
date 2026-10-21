@@ -1,11 +1,12 @@
 # Open points
 
-**Version:** 1.3 | **Date:** 2026-10-21 | **Status:** review (a living list; update it whenever an item closes or a new one opens)
+**Version:** 1.4 | **Date:** 2026-10-21 | **Status:** review (a living list; update it whenever an item closes or a new one opens)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.4 | 2026-10-21 | review | Input Lock option and the washi window built; proposals for the main menu, Select Class and Game Modes wait for the owner's pick; GAP-064 and GAP-065 logged. |
 | 1.3 | 2026-10-21 | review | SPEC-CONF-041 decided and GAP-063 fixed on the owner's request; the class rewards moved to the playtest table. |
 | 1.2 | 2026-10-21 | review | Garden of classes built (UI-STYLE-019); SPEC-CONF-041 and GAP-063 wait for the owner. |
 | 1.1 | 2026-10-21 | review | Options scroll and Codex book built (UI-STYLE-017/018): moved to the playtest table; the Codex's left-out parts listed. |
@@ -67,6 +68,7 @@ late floors harder for everyone; say if it feels too harsh.
 | Steam Input default layout or the Input System rewrite for controllers | The rewrite is planned as the default (it is needed for the Deck either way); Steam Input could be added on top | platform plan, decision 3 |
 | A Mac and a Steam Deck (or a Linux PC) for a first start | A build that was never started on the system should not be published | platform plan, risks |
 | Listening to the 8-bit soundtrack set | The music loops are still the short placeholders (GAP-030) | `steam_assets/audio_8bit/synth`, `docs/audio-8bit-prompts.md` |
+| Pick for the main menu, Select Class and Game Modes (proposed UI-STYLE-023 to 025), with three questions (Codex name, the run's confirmation window, where Harmony is set) | The last menu screens in the old look | `docs/design/layout-proposals.md` §Main menu, Select Class and Game Modes |
 | Sign-offs SPEC-CONF-008 (class balance values) and SPEC-PROC-007 (legal wording) | Open owner sign-offs | [SPECIFICATION_ISSUES](SPECIFICATION_ISSUES.md) |
 | Result screens of the Monthly Walk, Spirit Trials and Endless Zen in the ink-and-paper look | The Garden Run end uses the new scroll; these three still show text | `docs/design/layout-proposals.md` (no mockup yet) |
 | Upload and release of the next build | Everything since 0.2.0 is in the CHANGELOG under "Unreleased"; local commits on `feature/game-ui-refactor`, not pushed | `CHANGELOG.md` |
@@ -76,6 +78,8 @@ late floors harder for everyone; say if it feels too harsh.
 - Modifier catalog plan, Phase 0 step 3 (one catalog entry per modifier instead of the switch statements) and step 5
   (golden geometry snapshots) — `docs/design/modifier-catalog-plan.md`.
 - The Pattern Scroll item's list (`InRunController.BuildPatternScrollMechanics`) leaves out cell pairs, cell markers and outside clues, shows line rules by their internal names ("GermanWhispers #1") and its entries are English only (not through the localization catalogs).
+- GAP-064: the Scholar's Burden perk never gives its free Ink Well (needs a bag-slot rule and fixed ids first).
+- GAP-065: numbers in texts follow the PC's region, not the game's language ("XP x1,0" in English).
 - GAP-062: on the main menu the D-pad steps through a panel in creation order (not along its rows), and arrow keys may
   move twice; to fix with the controller work of platform phase 1 and to check in the player with a controller.
 - Codex book (UI-STYLE-018): the mockup's Normal · Rare · Epic filter and "Best paired with" are left out (no game data backs them); add them only if the owner wants them. Item uses are counted from this build on.

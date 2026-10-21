@@ -1,0 +1,83 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="scenes.css">
+<style>
+  /* Select Class · Who walks the garden: the classes as round seals over the class painting (locked ones dark with their
+     goal), the chosen class on a hanging scroll with the run's starting stats as lantern, bag and relic marks, and the
+     run's settings (Harmony stones, perk, irregular puzzles) on a strip along the bottom. */
+  .bg { background-image:url('../../../../Assets/Resources/background/bg_class_select.png'); filter:brightness(.55) saturate(.9); }
+  .banner { left:160px; width:620px; top:24px; height:104px; }
+  .banner small { padding-top:16px; } .banner h1 { font-size:44px; }
+  .seal { position:absolute; width:190px; text-align:center; color:#f3e9cf; }
+  .seal .disc { position:relative; width:150px; height:150px; margin:0 auto; border-radius:50%; background:#efe3c6;
+                box-shadow:0 10px 24px rgba(0,0,0,.55); }
+  .seal .disc img { position:absolute; left:22px; top:22px; width:106px; height:106px; object-fit:contain; }
+  .seal .disc::after { content:''; position:absolute; inset:-8px; border-radius:50%; border:5px solid #2a241c; border-right-color:transparent; transform:rotate(25deg); }
+  .seal.sel .disc { box-shadow:0 0 40px rgba(244,200,120,.75), 0 10px 24px rgba(0,0,0,.55); }
+  .seal.sel .disc::after { border-color:#b23a2e; border-right-color:transparent; border-width:7px; }
+  .seal.frame .disc { outline:7px solid #d9a93a; outline-offset:5px; }
+  .seal .n { margin-top:12px; font-size:22px; } .seal .lv { font-size:17px; color:#e9c46a; }
+  .seal .stars { color:#e06650; letter-spacing:3px; font-size:16px; }
+  .seal.locked .disc { background:#4a3e31; } .seal.locked .disc img { filter:brightness(0) opacity(.5); }
+  .seal.locked .lv { color:#e0a24a; font-size:15px; }
+  .scroll { position:absolute; left:1030px; top:110px; width:780px; height:720px; background:linear-gradient(180deg,#f2e7cc,#e7d7b2);
+            box-shadow:0 30px 60px rgba(0,0,0,.6); color:#231e17; padding:40px 50px; }
+  .scroll::before, .scroll::after { content:''; position:absolute; left:-22px; right:-22px; height:26px; border-radius:13px;
+            background:linear-gradient(180deg,#3a2414,#c08a52 50%,#3a2414); }
+  .scroll::before { top:-14px; } .scroll::after { bottom:-14px; }
+  .scroll h2 { margin:0; font-weight:normal; font-size:46px; } .scroll .sub { color:#5b5244; font-size:20px; }
+  .stats { display:flex; gap:18px; margin:26px 0 18px; }
+  .stat { flex:1; padding:12px 6px 10px; background:#efe3c6; text-align:center; font-size:17px; color:#5b5244; }
+  .stat b { display:block; font-weight:normal; font-size:34px; color:#231e17; } .stat i { font-style:normal; color:#9e2a2b; font-size:20px; }
+  .stat img { width:38px; height:38px; object-fit:contain; display:block; margin:0 auto 2px; }
+  .passive { padding:14px 18px; background:#efe3c6; font-size:20px; line-height:1.45; }
+  .passive small, .next small { display:block; font-size:14px; letter-spacing:.14em; color:#6b5f4c; }
+  .next { margin-top:16px; font-size:20px; line-height:1.6; } .next b { color:#9e2a2b; font-weight:normal; }
+  .strip { position:absolute; left:80px; right:80px; top:868px; height:110px; background:rgba(20,16,10,.74); border:1.5px solid #c9a24f;
+           border-radius:14px; color:#f3e9cf; display:flex; align-items:center; padding:0 26px; gap:30px; }
+  .stones { display:flex; gap:9px; align-items:center; }
+  .stones span { width:24px; height:24px; border-radius:50%; background:#d9d2c0; opacity:.9; }
+  .stones span.off { background:#5d564a; } .stones span.on { background:#b23a2e; box-shadow:0 0 0 4px rgba(233,196,106,.6); }
+  .lbl small { display:block; font-size:14px; letter-spacing:.14em; color:#c9b88f; } .lbl { font-size:22px; }
+  .hanko { width:42px; height:42px; border:3px solid #b23a2e; border-radius:6px; display:inline-block; vertical-align:middle; margin-right:10px; }
+  .go { margin-left:auto; display:flex; gap:16px; }
+</style></head><body>
+<div class="bg"></div><div class="shade"></div>
+<div class="banner"><small>Garden Run</small><h1>Choose your class</h1></div>
+<div id="seals"></div>
+<div class="scroll">
+  <h2>Number Freak</h2><div class="sub">Level 23 of 40 · 3 120 / 5 000 XP · ★★ prestige</div>
+  <div class="stats">
+    <div class="stat"><img src="../../../../Assets/Resources/ui/icon_flame_stone.png">HP<b>14 <i>(+4)</i></b></div>
+    <div class="stat"><img src="../../../../Assets/Resources/ui/icon_flow_ribbon.png">Pencil<b>14 <i>(+4)</i></b></div>
+    <div class="stat"><img src="../../../../Assets/Resources/items/icon_solver.png">Bag<b>3 <i>(+1)</i></b></div>
+    <div class="stat"><img src="../../../../Assets/Resources/ui/icon_petal_orb.png">Relics<b>3 <i>(+2)</i></b></div>
+    <div class="stat"><img src="../../../../Assets/Resources/economy/icon_sakura_coin.png">Gold<b>22 <i>(+22)</i></b></div>
+  </div>
+  <div class="passive"><small>PASSIVE</small>After completing a puzzle with zero mistakes: +1 Reroll Token.</div>
+  <div class="next"><small>NEXT</small>Lv 25 · <b>+2 HP, +2 Pencil</b><br>Lv 30 · <b>Start: Rare Solver</b> · exclusive relic ???</div>
+</div>
+<div class="strip">
+  <div class="lbl"><small>HARMONY</small>Harmony IV</div>
+  <div class="stones"><span></span><span></span><span></span><span></span><span class="on"></span><span class="off"></span><span class="off"></span><span class="off"></span><span class="off"></span><span class="off"></span><span class="off"></span></div>
+  <div class="lbl" style="font-size:17px;max-width:330px;color:#d8c9a8">Gold −4 %. Shop +5 %. Starting pencil −1. Perks unlock.</div>
+  <div class="lbl"><small>PERK</small>Moonshade Offering</div>
+  <div class="lbl"><span class="hanko"></span>Irregular puzzles</div>
+  <div class="go"><span class="btn">Back</span><span class="btn main">Begin the run</span></div>
+</div>
+<div class="hint" style="top:1000px">D-pad chooses a class · LB / RB Harmony · Y perk · A begins · B back</div>
+<div class="caption">Select Class · Proposal · Who walks the garden (class seals, the class's starting stats, the run's settings)</div>
+<script>
+  const R = '../../../../Assets/Resources/';
+  const classes = [
+    ['number_freak','Number Freak','Lv 23','★★','sel frame'], ['garden_monk','Garden Monk','Lv 9','',''], ['shrine_archivist','Shrine Archivist','Lv 4','',''],
+    ['koi_gambler','Koi Gambler','Collect 10 relics · 9/10','','locked'], ['stone_gardener','Stone Gardener','Defeat 10 bosses · 6/10','','locked'],
+    ['lantern_seer','Lantern Seer','Collect 50,000 gold','','locked'], ['reed_duelist','Reed Duelist','Find every item · 18/31','','locked'],
+    ['quiet_cartographer','Quiet Cartographer','A run with no mistakes','','locked']];
+  document.getElementById('seals').innerHTML = classes.map(([icon, name, lv, stars, cls], i) => {
+    const x = 70 + (i % 4) * 225, y = (i < 4 ? 190 : 520);
+    return `<div class="seal ${cls}" style="left:${x}px;top:${y}px"><div class="disc"><img src="${R}class/icon_${icon}.png"></div>
+      <div class="n">${name}</div><div class="lv">${lv}</div><div class="stars">${stars}</div></div>`;
+  }).join('');
+</script>
+</body></html>

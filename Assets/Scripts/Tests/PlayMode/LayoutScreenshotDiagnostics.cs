@@ -603,6 +603,37 @@ namespace SudokuRoguelike.Tests
             SaveFileService.FlushSharedPendingWrites();
         }
 
+        // The main menu, Game Modes and Select Class as they are: the "before" images for the next proposals.
+        [UnityTest]
+        public IEnumerator RenderMenuScreensBefore()
+        {
+            if (Object.FindFirstObjectByType<EventSystem>() == null)
+                _createdRoots.Add(new GameObject("LayoutShotBeforeEventSystem", typeof(EventSystem), typeof(StandaloneInputModule)));
+            var inputModules = Object.FindObjectsByType<BaseInputModule>(FindObjectsSortMode.None);
+            foreach (var module in inputModules) module.enabled = false;
+            var camera = CreateCamera();
+            var host = new GameObject("LayoutShotMenusBefore");
+            _createdRoots.Add(host);
+            host.AddComponent<MainMenuBlueprintBuilder>().Build();
+            var rootGroup = Find(host, "MainMenuRoot").GetComponent<CanvasGroup>();
+            if (rootGroup != null) rootGroup.alpha = 1f;
+            var menu = host.GetComponent<MainMenuController>();
+            menu.ShowMainMenu();
+            EventSystem.current.SetSelectedGameObject(null);
+            yield return new WaitForSecondsRealtime(0.4f);
+            yield return Shoot(host, camera, "before_main_menu.png");
+            foreach (var (button, file) in new[] { ("BtnModes", "game_modes"), ("BtnStart", "class_select") })
+            {
+                menu.ShowMainMenu();
+                yield return null;
+                Find(host, button).GetComponent<Button>().onClick.Invoke();
+                EventSystem.current.SetSelectedGameObject(null);
+                yield return new WaitForSecondsRealtime(0.5f);
+                yield return Shoot(host, camera, "before_" + file + ".png");
+            }
+            foreach (var module in inputModules) if (module != null) module.enabled = true;
+        }
+
         // UI-STYLE-012: the Custom Puzzle screen at 9×9, 3 stars, with Dutch Whispers, Killer Cages and Skyscrapers chosen
         // (the mockup's example). ToggleModifier is looked up by name, so the same test also shoots the old panel.
         [UnityTest]

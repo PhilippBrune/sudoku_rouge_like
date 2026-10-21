@@ -1,11 +1,12 @@
 # Tutorial Mode System
 
-**Version:** 1.9 | **Date:** 2026-10-07 | **Status:** implemented
+**Version:** 1.10 | **Date:** 2026-10-21 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.10 | 2026-10-21 | implemented | Docs clean-up: completion is stored in the save (`TutorialProgressState.CompletedKeys`, written by `MainMenuController`); there is no `TutorialProgressService`. |
 | 1.9 | 2026-10-07 | implemented | 7★ requires a modifier, as the code enforces (SPEC-CONF-015); dropdown → region variant mapping and why variant 2 is not offered (SPEC-CONF-018); entry named Custom Puzzle, Sudoku Basics separate (SPEC-CONF-033); 7★ uses rule-based validation (SPEC-CONF-003). |
 | 1.8 | 2026-04-16 | implemented | Inline requirement IDs added (SAVE-TUTO-001). Stale REQ-TUTORIAL-173..202 auto-generated table replaced with canonical IDs. |
 | 1.7 | 2026-03-29 | implemented | Tutorial saves hard-blocked: RunAutoSaveCoordinator.Save() returns early when runState.TutorialMode=true; SaveFileService.HasActiveRun() returns false when ActiveRunState.TutorialMode=true. This ensures Resume Game is always greyed out after tutorial sessions and no tutorial state ever writes to the save file ActiveRunState slot. |
@@ -220,7 +221,7 @@ Class leveling and prestige are fully disabled. The tutorial uses **base class s
 | File | Responsibility |
 |------|---------------|
 | `Assets/Scripts/Tutorial/TutorialModeService.cs` | Static helper — board sizes, stars (1–7), modifier availability, validation, descriptions |
-| `Assets/Scripts/Tutorial/TutorialProgressService.cs` | Completion tracking by configuration key |
+| `Assets/Scripts/Core/SaveModels.cs` (`TutorialProgressState`) | Completion tracking by key (`CompletedKeys`, written by `MainMenuController`) |
 | `Assets/Scripts/UI/TutorialMenuController.cs` | UI wiring — dropdowns for board/stars/class/region, 15 modifier toggles, progress display |
 | `Assets/Scripts/Run/RunDirector.cs` | Tutorial run isolation logic (disables progression, items, path) |
 | `Assets/Scripts/Save/ProfileService.cs` | Persistent tutorial completion state |

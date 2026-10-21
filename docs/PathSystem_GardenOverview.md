@@ -1,11 +1,12 @@
 # Path System & Garden Overview
 
-**Version:** 1.8 | **Date:** 2026-10-20 | **Status:** implemented
+**Version:** 1.9 | **Date:** 2026-10-21 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.9 | 2026-10-21 | implemented | Docs clean-up: the player icon is the class marker drawn by `InRunController.PathTiles.AddPlayerMarker` (GAP-022); the planned `PlayerIconController` with its entry slide and edge tween was not built and is marked so. |
 | 1.8 | 2026-10-20 | implemented | Owner's 0.2.0 playtest: the offering table's numbers show the boss fight and the whole floor side by side (mistakes, HP lost, items used, pencil marks; REQ-BOSS-107). |
 | 1.7 | 2026-10-15 | implemented | Floor transition after a non-final boss: the offering table shows the fight's numbers and the relic choice on one screen (layout-proposals.md UI-STYLE-005); taking a relic or leaving them loads the next floor (REQ-BOSS-107). |
 | 1.6 | 2026-10-07 | implemented | 1.1 review decisions (2026-10-07): floor modifiers 0/1/1/1/2 (SPEC-CONF-001); boss options floor+1 / picks floor, no minimum (SPEC-CONF-002); floor names from FloorThemeData/GDS (SPEC-CONF-009); exactly one cross-connection per floor with tiles keeping their type, anchors and graph version for 1.0 saves (SPEC-CONF-010, GAP-022); generatable modifier pool instead of "15" (SPEC-CONF-019); all tile types visible, details on reachable/visited tiles (SPEC-CONF-030); class player marker as built; node-type roll weight table (SPEC-MAC-004); legend and View Modifiers noted; file references updated (SPEC-CONF-036). |
@@ -101,9 +102,7 @@ Each floor graph contains:
 
 - As built (1.1, GAP-022): a marker above the current tile shows the class icon (`class/icon_<class>`), falling back to a gold "▼" when the icon is missing (`InRunController.PathTiles.AddPlayerMarker`).
 - The player icon represents the active class. **Each class will have its own sprite in a future pass.** Until class icons are implemented, the placeholder is a **clearly visible, high-contrast dot** (~24 px, bright white or gold filled circle). The dot must remain legible on all 5 floor backgrounds.
-- `PlayerIconController` renders the dot procedurally (same technique as overlay circles). Swap for class sprite when class icons are produced.
-- On floor entry the icon **enters from off-screen**, sliding in from the left edge of the canvas, and lands on the Shared Start Tile. This entry animation plays once per floor transition.
-- When the player selects a tile, the icon animates along the connecting edge to land on the new tile (~0.4 s lerp/tween).
+- Not built (design idea, 1.0): a separate `PlayerIconController` with an entry slide from the left edge on each floor and a ~0.4 s tween along the edge to the chosen tile. The marker is placed on the current tile without animation; the floor entry (UI-STYLE-021) shows the floor instead.
 - The icon always rests on the last completed (or currently active) tile.
 - The icon does not move during puzzle solving — only on the path overview screen after a tile choice.
 
@@ -409,5 +408,5 @@ Tile node positions are computed once at graph generation time, stored per node,
 | `Assets/Scripts/Core/RuntimeModels.cs` | `IsCrossLink` on `RunNode`; `CurrentFloor`, `TotalFloors`, `ChosenBossModifiers` on `RunState` |
 | `Assets/Scripts/Boss/BossService.cs` | Per-floor option/choice count; uniform pool draw across the generatable modifiers |
 | `Assets/Scripts/Save/RunResumeService.cs` | Restore `CurrentFloor`, `TotalFloors`, `ChosenBossModifiers` on resume; `RebuildCurrentFloorGraph()` for floor > 0 |
-| New: `Assets/Scripts/UI/PlayerIconController.cs` | Procedural dot placeholder; off-screen entry animation; edge-following tween |
+| `Assets/Scripts/UI/InRunController.PathTiles.cs` | `AddPlayerMarker`: the class icon above the current tile (GAP-022) |
 | New: `Assets/Scripts/Data/FloorThemeData.cs` | Maps floor index to background `Sprite`, music `AudioClip`, palette |

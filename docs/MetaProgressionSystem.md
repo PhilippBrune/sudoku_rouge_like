@@ -1,11 +1,12 @@
 # Meta Progression System
 
-**Version:** 1.13 | **Date:** 2026-10-21 | **Status:** implemented
+**Version:** 1.14 | **Date:** 2026-10-21 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.14 | 2026-10-21 | implemented | Docs clean-up: the file table no longer lists `AscensionService.cs` (removed with Ascension, GAP-017); the monthly seed lives in `SeasonalChallengeService.BuildSeed`. |
 | 1.13 | 2026-10-21 | implemented | GAP-063 fixed (owner request 2026-10-21: "analyze, plan and fix"): META-XP-007 (the Level 30 starting item) and META-XP-008 (the Level 40 frame) are granted; SPEC-CONF-041 decided for the XP stroke on the Meta Progression screen. |
 | 1.12 | 2026-10-21 | implemented | The Meta Progression screen is the garden of classes (UI-STYLE-019, owner pick): new META-UNLOCK-006 (each locked class shows its goal with its progress), META-STATS-001 (Garden Runs and best floor per class). META-XP-006 now says where the schedule lives (ClassCatalog) and that it is shown in the player's language; the Koi Gambler's and Lantern Seer's passive steps name the values the game uses. The XP stroke on this screen is logged as SPEC-CONF-041 (ClassXpProgressionSystem says no bar). |
 | 1.11 | 2026-10-21 | implemented | The Codex as a collector's book (UI-STYLE-018, owner pick): bookmarks Items, Relics, Rules and Curses. New: the curses met in any run are recorded for the Curses page (META-CODEX-008), and each item counts how often it was found and used (META-CODEX-009). META-CODEX-005 is verified by a test. |
@@ -359,7 +360,6 @@ Tutorial achievements grant **no gameplay progression** (no XP, no gold, no clas
 
 | File | Purpose |
 |------|---------|
-| `Assets/Scripts/Meta/AscensionService.cs` | Ascension, global prestige reset, seasonal seeds |
 | `Assets/Scripts/Meta/CompletionService.cs` | 4-check global completion tracker |
 | `Assets/Scripts/Meta/ClassGardenProgressionService.cs` | XP curve, level derivation, per-class unlock schedules, prestige |
 | `Assets/Scripts/Meta/SteamAchievementService.cs` | Achievement definitions and unlock evaluation |

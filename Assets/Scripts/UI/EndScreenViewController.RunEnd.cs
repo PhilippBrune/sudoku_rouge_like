@@ -25,6 +25,8 @@ namespace SudokuRoguelike.UI
             public int PreLevel, PostLevel, XpInto, XpToNext;
             public List<ClassId> NewUnlocks;
             public List<ClassId> Unlocked;
+            public List<string> SoClose;   // RM-111
+            public List<string> Moved;     // RM-112
         }
 
         private const int MaxClassLevel = 40;
@@ -81,19 +83,58 @@ namespace SudokuRoguelike.UI
 
             var state = run.State;
             var floorReached = run.Victory ? state.TotalFloors : state.CurrentFloor + 1;
+            // [REQ: RUN-LENGTH-001] The eyebrow names the run's length too ("· 41 min"), from one minute on.
+            var eyebrow = F("InRun.End.Scroll.Eyebrow", ClassLabel(state.ClassId));
+            if (state.ActiveSeconds >= 60f) eyebrow += " · " + RunLengthLog.FormatDuration(state.ActiveSeconds);
             ScrollUiKit.Banner(screen, "RunEndBanner", new Vector2(0.3177f, 0.8444f), new Vector2(0.6823f, 0.9574f),
-                "RunEndEyebrow", F("InRun.End.Scroll.Eyebrow", ClassLabel(state.ClassId)),
+                "RunEndEyebrow", eyebrow,
                 "RunEndTitle", run.Victory ? T("InRun.End.Scroll.Victory") : F("InRun.End.Scroll.Defeat", floorReached));
             BuildFloorSeals(screen, state, run.Victory);
             BuildRunTally(screen, run, floorReached);
             BuildXpPanel(screen, run);
             BuildScoreLedger(screen, run.Result);
             BuildUnlocks(screen, run);
+            BuildThisRun(screen, run);
+            BuildEndButtons(screen, "BtnRunEndBack", new Vector2(0.7135f, 0.1407f), new Vector2(0.9219f, 0.1944f), RunAgain.KindOf(state));
+        }
 
-            var back = ScrollUiKit.PillButton(screen, "BtnRunEndBack", new Vector2(0.7135f, 0.1407f), new Vector2(0.9219f, 0.1944f),
-                T("InRun.End.Scroll.Back"), 26, ScrollUiKit.Vermilion, Color.white, 30f);
+        // [REQ: RUN-AGAIN-001] Walk again first (it has the focus), Back under it; a run without Walk again has Back only.
+        private void BuildEndButtons(Transform screen, string backName, Vector2 backMin, Vector2 backMax, RunAgain.Kind again)
+        {
+            var events = UnityEngine.EventSystems.EventSystem.current;
+            var back = ScrollUiKit.PillButton(screen, backName, backMin, backMax, T("InRun.End.Scroll.Back"), 24,
+                new Color(0.24f, 0.20f, 0.16f, 1f), ScrollUiKit.PaperText, 30f);
             back.onClick.AddListener(() => OnReturnToMenuPressed?.Invoke());
-            UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(back.gameObject);
+            if (again == RunAgain.Kind.None)
+            {
+                if (events != null) events.SetSelectedGameObject(back.gameObject);
+                return;
+            }
+            var step = backMax.y - backMin.y + 0.012f;
+            var walk = ScrollUiKit.PillButton(screen, "BtnWalkAgain", new Vector2(backMin.x, backMin.y + step),
+                new Vector2(backMax.x, backMax.y + step), T("InRun.End.WalkAgain"), 26, ScrollUiKit.Vermilion, Color.white, 30f);
+            walk.onClick.AddListener(() => OnWalkAgainPressed?.Invoke());
+            walk.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnDown = back };
+            back.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnUp = walk };
+            if (events != null) events.SetSelectedGameObject(walk.gameObject);
+        }
+
+        // [REQ: RUN-END-NEAR-001] [REQ: RUN-END-MOVED-001] "This run": how close a lost run came, then what it moved.
+        private static void BuildThisRun(Transform screen, RunEndSummary run)
+        {
+            var near = run.SoClose ?? new List<string>();
+            var moved = run.Moved ?? new List<string>();
+            if (near.Count == 0 && moved.Count == 0) return;
+            var header = ScrollUiKit.Label(screen, "ThisRunHeader", T("InRun.End.ThisRun").ToUpperInvariant(), 18, TextAnchor.MiddleLeft,
+                ScrollUiKit.Gold, new Vector2(0.7135f, 0.405f), new Vector2(0.96f, 0.43f), 12);
+            Shade(header);
+            var lines = new List<string>();
+            foreach (var line in near) lines.Add("<color=#E2B866>" + line + "</color>");
+            lines.AddRange(moved);
+            var text = ScrollUiKit.Label(screen, "ThisRunLines", string.Join("\n", lines), 18, TextAnchor.UpperLeft,
+                new Color(0.88f, 0.84f, 0.74f, 1f), new Vector2(0.7135f, 0.272f), new Vector2(0.97f, 0.40f), 11);
+            text.supportRichText = true;
+            Shade(text);
         }
 
         // One seal per floor: the boss's mask on vermilion up to the floor reached, the lost floor crossed out, the rest

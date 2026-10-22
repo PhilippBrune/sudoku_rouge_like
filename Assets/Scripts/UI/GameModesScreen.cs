@@ -73,6 +73,7 @@ namespace SudokuRoguelike.UI
         private Button _perk;
         private Button _records;
         private Button _back;
+        private Button[] _tiers = Array.Empty<Button>();
         private Mode _shown = Mode.Garden;
 
         /// <summary>LB / RB (PageUp / PageDown) on the Garden Run slip: the Harmony level down or up.</summary>
@@ -107,6 +108,21 @@ namespace SudokuRoguelike.UI
             _back = back;
         }
 
+        /// <summary>The Spirit Trials tier pills on its slip.</summary>
+        public void SetTierButtons(Button[] tiers) => _tiers = tiers ?? Array.Empty<Button>();
+
+        /// <summary>Each tier pill's text (the tier and its best score); the pills work only while Spirit Trials is open.</summary>
+        public void ShowTiers(IReadOnlyList<string> labels, bool unlocked)
+        {
+            for (var i = 0; i < _tiers.Length; i++)
+            {
+                if (_tiers[i] == null) continue;
+                _tiers[i].interactable = unlocked;
+                SetText(_tiers[i].transform, "Label", i < labels.Count ? labels[i] : string.Empty);
+            }
+            WireNavigation();
+        }
+
         /// <summary>A Harmony level as the stones show it: 0, I … IX, VG.</summary>
         public static string Numeral(int level) =>
             level <= 0 ? "0" : level >= 10 ? "VG" : new[] { "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX" }[level - 1];
@@ -122,12 +138,13 @@ namespace SudokuRoguelike.UI
                 if (!_curtains.TryGetValue(modes[i], out var curtain) || curtain == null) continue;
                 var enter = EnterOf(modes[i]);
                 var records = modes[i] == Mode.Endless && Usable(_records) ? _records : null;
+                var firstTier = modes[i] == Mode.Trials && _tiers.Length > 0 && Usable(_tiers[0]) ? _tiers[0] : null;
                 curtain.navigation = new Navigation
                 {
                     mode = Navigation.Mode.Explicit,
                     selectOnLeft = i > 0 ? _curtains[modes[i - 1]] : null,
                     selectOnRight = i + 1 < modes.Length ? _curtains[modes[i + 1]] : null,
-                    selectOnDown = records != null ? records : Usable(enter) ? enter : _back
+                    selectOnDown = records != null ? records : firstTier != null ? firstTier : Usable(enter) ? enter : _back
                 };
                 if (records != null)
                     records.navigation = new Navigation
@@ -139,7 +156,23 @@ namespace SudokuRoguelike.UI
                 enter.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnUp = above, selectOnLeft = _back };
             }
             WireGardenSlip();
+            WireTrialTiers();
             WireBack();
+        }
+
+        // The tier pills in a row, then Back and "Choose a tier"; up goes to the Spirit Trials curtain.
+        private void WireTrialTiers()
+        {
+            if (_tiers.Length == 0 || !_curtains.TryGetValue(Mode.Trials, out var curtain)) return;
+            var enter = EnterOf(Mode.Trials);
+            for (var i = 0; i < _tiers.Length; i++)
+                if (_tiers[i] != null)
+                    _tiers[i].navigation = new Navigation
+                    {
+                        mode = Navigation.Mode.Explicit, selectOnUp = curtain, selectOnDown = Usable(enter) ? enter : _back,
+                        selectOnLeft = i > 0 ? _tiers[i - 1] : null,
+                        selectOnRight = i + 1 < _tiers.Length ? _tiers[i + 1] : (Selectable)_back
+                    };
         }
 
         private void WireGardenSlip()
@@ -172,9 +205,11 @@ namespace SudokuRoguelike.UI
         {
             if (_back == null || !_curtains.TryGetValue(_shown, out var curtain)) return;
             var enter = EnterOf(_shown);
+            var lastTier = _shown == Mode.Trials && _tiers.Length > 0 && Usable(_tiers[_tiers.Length - 1]) ? _tiers[_tiers.Length - 1] : null;
             _back.navigation = new Navigation
             {
-                mode = Navigation.Mode.Explicit, selectOnUp = curtain, selectOnRight = Usable(enter) ? enter : null
+                mode = Navigation.Mode.Explicit, selectOnUp = curtain, selectOnRight = Usable(enter) ? enter : null,
+                selectOnLeft = lastTier
             };
         }
 

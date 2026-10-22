@@ -1617,7 +1617,7 @@ namespace SudokuRoguelike.Run
                 switch (State.ActivePositiveFloorEffect)
                 {
                     case PositiveFloorEffect.Bounty:
-                        goldBase = (int)(goldBase * 1.4f);
+                        goldBase = (int)(goldBase * RewardPreview.BountyGoldMultiplier);
                         break;
                     case PositiveFloorEffect.PencilRefill:
                         State.CurrentPencil = Math.Min(State.MaxPencil, State.CurrentPencil + 2);
@@ -1782,7 +1782,26 @@ namespace SudokuRoguelike.Run
                 State.HeldItems.RemoveAll(it => it?.Type == ItemType.LoadedCoin);
             }
 
+            // [REQ: HARMONY-PERK-003] Moonshade Offering's price: slot 1 of the first reward is Nothing (GAP-067). The flag
+            // goes when that reward is taken or left (ResolveRewardRoll), so a resume on the reward screen pays it again.
+            if (State.MoonshadeOfferingActive && RolledItemSlots.Count > 0)
+                RolledItemSlots[0] = null;
+            ApplyEmptyCanvas();
             return RolledItemSlots;
+        }
+
+        // [REQ: HARMONY-PERK-005] Empty Canvas: every item in a reward is Rare or better (GAP-069).
+        private void ApplyEmptyCanvas()
+        {
+            if (!State.EmptyCanvasActive || RolledItemSlots == null) return;
+            var classId = State.IsSeasonalChallenge ? (ClassId)0 : State.ClassId;
+            for (var i = 0; i < RolledItemSlots.Count; i++)
+            {
+                if (RolledItemSlots[i] == null) continue;
+                var index = i;
+                RolledItemSlots[i] = _itemService.AtLeastRare(RolledItemSlots[i], GetCurrentClassLevel(), classId,
+                    type => RolledItemSlots.Exists(other => other != null && other != RolledItemSlots[index] && other.Type == type));
+            }
         }
 
         public void PickRewardItem(int slotIndex)
@@ -1792,6 +1811,13 @@ namespace SudokuRoguelike.Run
             if (item == null) return;
 
             AddItemToInventory(item);
+            ResolveRewardRoll();
+        }
+
+        // The rolled reward is taken, swapped in or left: Moonshade Offering's first-reward price is paid.
+        private void ResolveRewardRoll()
+        {
+            if (RolledItemSlots != null) State.MoonshadeOfferingActive = false;
             RolledItemSlots = null;
         }
 
@@ -1812,7 +1838,7 @@ namespace SudokuRoguelike.Run
         {
             if (slotIndex < 0 || slotIndex >= State.HeldItems.Count) return;
             State.HeldItems[slotIndex] = newItem;
-            RolledItemSlots = null;
+            ResolveRewardRoll();
             if (DailyGoals != null && !State.IsSeasonalChallenge)
                 DailyGoalService.EvaluateInRun(DailyGoals, State, CurrentLevelState, DailyGoalService.TriggerItemCollected);
         }
@@ -2379,6 +2405,7 @@ namespace SudokuRoguelike.Run
             State.CurrentNodeIndex = nodeIndex;
             State.NodePath.Add(nodeIndex);
             State.Depth++;
+            RunLengthLog.OnPathChoice(State);   // [REQ: RUN-LENGTH-001]
 
             // Daily goal: node-type triggers
             if (DailyGoals != null && !State.IsSeasonalChallenge)

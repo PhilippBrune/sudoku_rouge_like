@@ -176,6 +176,28 @@ namespace SudokuRoguelike.Items
             };
         }
 
+        /// <summary>
+        /// [REQ: HARMONY-PERK-005] The item, raised to Rare if it rolled Normal: a tiered item keeps its type, a fixed-rarity
+        /// one is rolled again from the Rare pool (Empty Canvas, GAP-069).
+        /// </summary>
+        public ItemInstance AtLeastRare(ItemInstance item, int classLevel, ClassId classId = (ClassId)0,
+            Func<ItemType, bool> taken = null)
+        {
+            if (item == null || item.Rarity != ItemRarity.Normal) return item;
+            var type = IsTiered(item.Type) ? item.Type : RollItemType(ItemRarity.Rare, classLevel, classId);
+            // A rolled-again type must be Rare-capable and not already in the reward (the roll keeps types different).
+            for (var attempt = 0; attempt < 8 && type != item.Type
+                     && ((!IsTiered(type) && GetFixedRarity(type) == ItemRarity.Normal) || (taken != null && taken(type))); attempt++)
+                type = RollItemType(ItemRarity.Rare, classLevel, classId);
+            var rarity = IsTiered(type) ? ItemRarity.Rare : GetFixedRarity(type);
+            if (rarity == ItemRarity.Normal)
+            {
+                type = ItemType.InkWell;   // a tiered type, so the guarantee holds whatever the pool returned
+                rarity = ItemRarity.Rare;
+            }
+            return new ItemInstance { Id = item.Id, Type = type, Rarity = rarity, Charges = GetDefaultCharges(type) };
+        }
+
         // ── Rarity & Type ──
 
         private ItemRarity RollItemRarity(int stars, int classLevel)

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using SudokuRoguelike.Boss;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Economy;
 using SudokuRoguelike.Run;
 using UnityEngine;
 using UnityEngine.UI;
@@ -43,7 +44,7 @@ namespace SudokuRoguelike.UI
             var screen = ScrollUiKit.Scene(pathPanel, "CursedChoicePanel", "bg_curse", new Color(0.62f, 0.62f, 0.58f, 1f));
             _cursedPanel = screen.gameObject;
             BuildTalisman(screen.transform, run.State, cursedConfig, extra);
-            BuildCursedGainTag(screen.transform, cursedConfig);
+            BuildCursedGainTag(screen.transform, run.State, cursedConfig);
             BuildCursedRiskTag(screen.transform);
             BuildCursedCurseTag(screen.transform, run);
 
@@ -126,7 +127,7 @@ namespace SudokuRoguelike.UI
                 ScrollUiKit.Enso());
         }
 
-        private static void BuildCursedGainTag(Transform screen, LevelConfig config)
+        private static void BuildCursedGainTag(Transform screen, RunState state, LevelConfig config)
         {
             var tag = ScrollUiKit.PaperTag(screen, "CursedGain", new Vector2(0.1495f, 0.5167f), new Vector2(0.3292f, 0.7269f), 1.5f, 20f);
             var t = tag.transform;
@@ -137,10 +138,15 @@ namespace SudokuRoguelike.UI
             var xpBonus = Mathf.RoundToInt((config.CursedXpMult - 1f) * 100f);
             if (goldBonus > 0 || xpBonus > 0)
             {
-                ScrollUiKit.Label(t, "Gold", F("InRun.Cursed.GoldBonus", goldBonus), 34, TextAnchor.MiddleLeft, green,
-                    new Vector2(0.07f, 0.60f), new Vector2(0.93f, 0.80f), 18);
-                ScrollUiKit.Label(t, "Xp", F("InRun.Cursed.XpBonus", xpBonus), 34, TextAnchor.MiddleLeft, green,
-                    new Vector2(0.07f, 0.40f), new Vector2(0.93f, 0.60f), 18);
+                // [REQ: STAKES-001] The stake in numbers (RM-115): what the puzzle pays played normally and cursed.
+                var gold = RewardPreview.PuzzleGold(state, config.BoardSize, config.Stars);
+                var cursedGold = RewardPreview.PuzzleGold(state, config.BoardSize, config.Stars, config.CursedGoldMult);
+                var xp = RewardPreview.PuzzleXp(config.BoardSize, config.Stars);
+                var cursedXp = RewardPreview.PuzzleXp(config.BoardSize, config.Stars, config.CursedXpMult);
+                ScrollUiKit.Label(t, "Gold", F("InRun.Cursed.GoldStake", gold, cursedGold, goldBonus), 30, TextAnchor.MiddleLeft, green,
+                    new Vector2(0.07f, 0.60f), new Vector2(0.93f, 0.80f), 16);
+                ScrollUiKit.Label(t, "Xp", F("InRun.Cursed.XpStake", xp, cursedXp, xpBonus), 30, TextAnchor.MiddleLeft, green,
+                    new Vector2(0.07f, 0.40f), new Vector2(0.93f, 0.60f), 16);
             }
             else
             {

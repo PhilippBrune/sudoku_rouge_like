@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Items;
 using SudokuRoguelike.Run;
 using SudokuRoguelike.Save;
 using SudokuRoguelike.UI;
@@ -137,6 +138,39 @@ namespace SudokuRoguelike.Tests
             Assert.AreEqual("once", Find<Text>(host, "CodexFact_0_Value").text, "found before the counters: at least once");
             Assert.AreEqual("Used", Find<Text>(host, "CodexFact_1_Label").text);
             Assert.AreEqual("3 times", Find<Text>(host, "CodexFact_1_Value").text);
+        }
+
+        // [REQ: META-CODEX-010] The Items page filters by rarity (each press the next one, then every rarity again), and an
+        // item a class claims names that class under "Best paired with" (the Meditation Stone starts the Garden Monk's runs).
+        [UnityTest]
+        [Requirement("META-CODEX-010")]
+        public IEnumerator ItemsPage_FiltersByRarity_AndNamesTheClassAnItemBelongsTo()
+        {
+            var host = OpenCodex();
+            yield return null;
+            Click(host, "BtnCodexItems");
+            yield return null;
+            var every = TileCount(host);
+            var epics = System.Enum.GetValues(typeof(ItemType)).Cast<ItemType>()
+                .Count(t => ItemService.IsTiered(t) || ItemService.GetFixedRarity(t) == ItemRarity.Epic);
+
+            for (var i = 0; i < 3; i++) Click(host, "BtnCodexRarity");   // Normal, Rare, Epic
+            yield return null;
+            Assert.AreEqual(epics, TileCount(host), "every item that can be Epic");
+            Assert.Less(TileCount(host), every);
+            Assert.AreEqual("Epic", Find<Button>(host, "BtnCodexRarity").GetComponentInChildren<Text>().text);
+            Click(host, "BtnCodexRarity");
+            yield return null;
+            Assert.AreEqual(every, TileCount(host), "the fourth press shows every rarity again");
+
+            Click(host, "BtnCodexFilterFound");
+            yield return null;
+            Assert.AreEqual("Best paired with", Find<Text>(host, "CodexFact_3_Label").text);
+            StringAssert.Contains("Garden Monk", Find<Text>(host, "CodexFact_3_Value").text);
+
+            Click(host, "BtnCodexRelics");
+            yield return null;
+            Assert.IsFalse(Find<Button>(host, "BtnCodexRarity").gameObject.activeSelf, "rarity belongs to the Items page");
         }
 
         [UnityTest]

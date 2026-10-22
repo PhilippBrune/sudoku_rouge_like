@@ -1,6 +1,6 @@
 # Documentation index: Run of the Nine
 
-**Updated:** 2026-10-21
+**Updated:** 2026-10-22
 
 `docs/` is the game's specification (CLAUDE.md: it wins over code and generic rules). Every spec carries a version, a
 status (new → under review → review → implemented → deprecate) and a change history; requirement IDs are listed in
@@ -29,7 +29,7 @@ status (new → under review → review → implemented → deprecate) and a cha
 | Document | State |
 |---|---|
 | [design/layout-proposals.md](design/layout-proposals.md) | Ink-and-paper screens: everything built except the main menu proposal (UI-STYLE-023) |
-| [design/one-more-run-concept.md](design/one-more-run-concept.md) | New: what makes a player start one more run; RM-110 to RM-121 for the owner's pick |
+| [design/one-more-run-concept.md](design/one-more-run-concept.md) | First slice built (RM-110, 111, 112, 115, run-length measures); the rest for the owner's pick |
 | [design/gold-and-items-concept.md](design/gold-and-items-concept.md), [design/mistake-scoring-proposals.md](design/mistake-scoring-proposals.md), [design/modifier-catalog-plan.md](design/modifier-catalog-plan.md) | Built |
 
 ## Review, tests and quality
@@ -39,7 +39,7 @@ what waits for the owner) · [review/SPECIFICATION_ISSUES.md](review/SPECIFICATI
 [review/E2E_TEST_REPORT.md](review/E2E_TEST_REPORT.md) · [review/REQUIREMENT_TRACEABILITY.md](review/REQUIREMENT_TRACEABILITY.md) ·
 [technical-debt-register.md](technical-debt-register.md) · [development.md](development.md) (workflow, test runner) ·
 [ci-validation.md](ci-validation.md) · [smoke-test-readiness.md](smoke-test-readiness.md) ·
-[runtime-resource-validation.md](runtime-resource-validation.md) · performance budgets
+[runtime-resource-validation.md](runtime-resource-validation.md) · run-length report (`tools/playtest/run_length_report.py`, concept §6) · performance budgets
 ([generation](performance-generation-budget.md), [runtime](performance-runtime-budget.md),
 [profiler results](performance-profiler-results.md), [UI helpers](performance-ui-update-components.md))
 

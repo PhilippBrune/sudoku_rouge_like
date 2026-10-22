@@ -143,6 +143,12 @@ namespace SudokuRoguelike.Core
 
         // Run timer
         public float TotalRunSeconds;      // Accumulated puzzle time across all puzzles this run
+        // [REQ: RUN-LENGTH-001] How long the run was open in the game (path, puzzles, shops; saved, so a resumed run goes on
+        // counting), when the first path choice came, and the gap since the previous run's end in this session (-1: none).
+        public float ActiveSeconds;
+        public float SecondsToFirstChoice = -1f;
+        public float SecondsSincePreviousRun = -1f;
+        [System.NonSerialized] public bool RunLengthRecorded;
 
         // Per-floor snapshot — HP at the moment the current floor's first puzzle started
         public int HpAtFloorStart;
@@ -201,7 +207,6 @@ namespace SudokuRoguelike.Core
         public HarmonyPerkId HarmonyPerk;
         // [HARMONY-PERK-002] Perk state flags read by RewardService and RunDirector.
         public bool MoonshadeOfferingActive;     // first puzzle reward slot 1 forced Nothing
-        public bool ScholarsBurdenGrantsInkWell; // grant 1 free Rare InkWell at run start
         public bool VoidWardActive;              // positive floor effects disabled
         public bool EmptyCanvasActive;           // item reward slots guaranteed Rare+
         // [HARMONY-RELIC-001] True when LanternOfVoid is held; boss modifier ??? labels permanently hidden.

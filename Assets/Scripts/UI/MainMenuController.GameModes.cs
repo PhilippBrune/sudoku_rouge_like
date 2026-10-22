@@ -30,10 +30,11 @@ namespace SudokuRoguelike.UI
             _gameModesScreen.Refresh(new Dictionary<GameModesScreen.Mode, GameModesScreen.ModeView>
             {
                 [GameModesScreen.Mode.Endless] = EndlessView(endlessUnlocked, stats),
-                [GameModesScreen.Mode.Trials] = TrialsView(trialsUnlocked, stats),
+                [GameModesScreen.Mode.Trials] = TrialsView(trialsUnlocked, stats, out var tierLabels),
                 [GameModesScreen.Mode.Daily] = DailyView(envelope.DailyGoals ?? new DailyGoalState()),
                 [GameModesScreen.Mode.Monthly] = MonthlyView(envelope.SeasonalChallenge)
             });
+            _gameModesScreen.ShowTiers(tierLabels, trialsUnlocked);
             var records = _gameModesPanel != null ? _gameModesPanel.transform.Find("BtnZenRecords") : null;
             if (records != null) records.GetComponent<UnityEngine.UI.Button>().interactable = endlessUnlocked;
             RefreshGameModesHarmony(meta);
@@ -81,12 +82,8 @@ namespace SudokuRoguelike.UI
                     stats.HighestEndlessDepth, stats.TotalZenSessions));
         }
 
-        private static GameModesScreen.ModeView TrialsView(bool unlocked, ProfileStats stats)
+        private static GameModesScreen.ModeView TrialsView(bool unlocked, ProfileStats stats, out List<string> tierLabels)
         {
-            if (!unlocked)
-                return new GameModesScreen.ModeView(false,
-                    LocalizationService.T("GameModes.Locked.Trials", "Defeat your first boss"),
-                    LocalizationService.T("MainMenu.Status.SpiritTrialsLocked", "Spirit Trials unlock after your first boss defeat."));
             var tiers = new (string Key, string Name, int Best)[]
             {
                 ("Apprentice", "Apprentice", stats.TrialsBestScore_Apprentice),
@@ -95,19 +92,22 @@ namespace SudokuRoguelike.UI
                 ("Grandmaster", "Grandmaster", stats.TrialsBestScore_Grandmaster)
             };
             var best = 0;
-            var lines = new List<string>();
+            tierLabels = new List<string>();
             foreach (var tier in tiers)
             {
                 best = Math.Max(best, tier.Best);
-                var score = tier.Best > 0 ? tier.Best.ToString("N0", LocalizationService.Culture) : "–";
-                lines.Add(LocalizationService.T("SpiritTrials.Tier." + tier.Key, tier.Name) + " " + score);
+                var score = tier.Best > 0 ? tier.Best.ToString("N0", LocalizationService.Culture) : "\u2013";
+                tierLabels.Add(LocalizationService.T("SpiritTrials.Tier." + tier.Key, tier.Name) + "\n" + score);
             }
+            if (!unlocked)
+                return new GameModesScreen.ModeView(false,
+                    LocalizationService.T("GameModes.Locked.Trials", "Defeat your first boss"),
+                    LocalizationService.T("MainMenu.Status.SpiritTrialsLocked", "Spirit Trials unlock after your first boss defeat."));
             var state = best > 0
                 ? LocalizationService.Format("GameModes.State.Trials", "Best score {0}", Accent(best.ToString("N0", LocalizationService.Culture)))
                 : LocalizationService.T("GameModes.State.TrialsNew", "Four tiers wait");
             return new GameModesScreen.ModeView(true, state,
-                LocalizationService.T("GameModes.Body.Trials", "One timed puzzle under rising pressure. Choose a tier, then a class.")
-                + "\n" + string.Join("  ·  ", lines));
+                LocalizationService.T("GameModes.Body.Trials", "One timed puzzle under rising pressure. Choose a tier, then a class."));
         }
 
         private static GameModesScreen.ModeView DailyView(DailyGoalState goals)

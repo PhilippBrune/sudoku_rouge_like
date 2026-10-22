@@ -33,6 +33,7 @@ namespace SudokuRoguelike.UI
             public string IconPath;
             public bool Found;
             public List<(string Label, Color Color)> Pills = new List<(string, Color)>();
+            public readonly List<ItemRarity> Rarities = new List<ItemRarity>();
             public List<(string Label, string Value)> Facts = new List<(string, string)>();
         }
 
@@ -46,6 +47,8 @@ namespace SudokuRoguelike.UI
         private MetaProgressionState _currentMeta;
         private CodexTabId _currentTab = CodexTabId.Items;
         private Filter _filter = Filter.All;
+        private ItemRarity? _rarity;   // the Items page's rarity filter; null shows every rarity
+        private Button _rarityButton;
         private readonly List<Entry> _entries = new List<Entry>();
         private readonly List<Button> _tiles = new List<Button>();
 
@@ -88,10 +91,32 @@ namespace SudokuRoguelike.UI
             }
         }
 
+        /// <summary>[REQ: META-CODEX-010] The rarity filter of the Items page: each press shows the next rarity.</summary>
+        public void SetRarityButton(Button button)
+        {
+            _rarityButton = button;
+            if (button == null) return;
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(CycleRarity);
+        }
+
+        public void CycleRarity()
+        {
+            _rarity = _rarity switch
+            {
+                null => ItemRarity.Normal,
+                ItemRarity.Normal => ItemRarity.Rare,
+                ItemRarity.Rare => ItemRarity.Epic,
+                _ => (ItemRarity?)null
+            };
+            SetFilter(_filter);
+        }
+
         public void ShowTab(CodexTabId tab)
         {
             _currentTab = tab;
             _filter = Filter.All;
+            _rarity = null;
             if (_currentMeta != null) Refresh(_currentMeta);
         }
 
@@ -151,13 +176,18 @@ namespace SudokuRoguelike.UI
                     ? new[] { ItemRarity.Normal, ItemRarity.Rare, ItemRarity.Epic }
                     : new[] { ItemService.GetFixedRarity(type) };
                 foreach (var rarity in rarities)
+                {
                     entry.Pills.Add((T($"Item.Rarity.{rarity}", rarity.ToString()), RarityColor(rarity)));
+                    entry.Rarities.Add(rarity);
+                }
                 entry.Description = ItemService.GetItemDescription(type, rarities[0]);
                 var counts = CodexEntryOf(meta, type);
                 // Found at least once when found at all (entries from before the counters have 0).
                 entry.Facts.Add((T("Codex.TimesFound", "Found"), Times(Math.Max(1, counts?.TimesFound ?? 0))));
                 entry.Facts.Add((T("Codex.TimesUsed", "Used"), Times(counts?.TimesUsed ?? 0)));
                 entry.Facts.Add((T("Codex.ComesFrom", "Comes from"), ItemSource(type)));
+                var paired = BestPairedWith(type);
+                if (paired != null) entry.Facts.Add((T("Codex.BestPairedWith", "Best paired with"), paired));
                 if (!string.IsNullOrEmpty(date)) entry.Facts.Add((T("Codex.FoundOn", "Found on"), date));
                 _entries.Add(entry);
             }
@@ -230,6 +260,20 @@ namespace SudokuRoguelike.UI
             _ => F("Codex.Times", "{0} times", count)
         };
 
+        // [REQ: META-CODEX-010] The classes the item belongs to: the class whose Level 30 run starts with it (META-XP-007)
+        // and the class it is exclusive to. Null for an item no class claims.
+        private static string BestPairedWith(ItemType type)
+        {
+            var names = new List<string>();
+            foreach (var def in ClassCatalog.GetAll())
+            {
+                var exclusive = ItemService.IsClassExclusive(type) && ItemService.GetExclusiveClass(type) == def.Id;
+                if (ClassCatalog.GetStartingItem(def.Id).Item1 == type || exclusive)
+                    names.Add(LocalizationService.T(def.Name, def.Name));
+            }
+            return names.Count > 0 ? string.Join(", ", names) : null;
+        }
+
         // Where an item comes from, as the pools decide (ItemService, ShopService).
         private static string ItemSource(ItemType type)
         {
@@ -263,7 +307,9 @@ namespace SudokuRoguelike.UI
 
         // ── Tiles ────────────────────────────────────────────────────────────
 
-        private bool Shown(Entry entry) => _filter == Filter.All || (_filter == Filter.Found) == entry.Found;
+        private bool Shown(Entry entry) =>
+            (_filter == Filter.All || (_filter == Filter.Found) == entry.Found)
+            && (_rarity == null || _currentTab != CodexTabId.Items || entry.Rarities.Contains(_rarity.Value));
 
         private void BuildTiles()
         {
@@ -316,6 +362,7 @@ namespace SudokuRoguelike.UI
             var filters = new List<Button>();
             foreach (var filter in _filterButtons)
                 if (filter != null) filters.Add(filter);
+            if (_rarityButton != null && _currentTab == CodexTabId.Items) filters.Add(_rarityButton);   // shown on Items only
             Selectable firstTile = _tiles.Count > 0 ? _tiles[0] : _back;
             Selectable activeFilter = (int)_filter < filters.Count ? filters[(int)_filter] : null;
             var aboveTiles = activeFilter != null ? activeFilter : activeTab;
@@ -387,6 +434,18 @@ namespace SudokuRoguelike.UI
 
         private void RefreshFilterMarks()
         {
+            if (_rarityButton != null)
+            {
+                _rarityButton.gameObject.SetActive(_currentTab == CodexTabId.Items);
+                var rarityLabel = _rarityButton.GetComponentInChildren<Text>();
+                if (rarityLabel != null)
+                {
+                    rarityLabel.text = _rarity == null ? T("Codex.Rarity.Every", "Every rarity")
+                        : T($"Item.Rarity.{_rarity.Value}", _rarity.Value.ToString());
+                    rarityLabel.color = _rarity == null ? OptionsUiStyle.PaperInkSoft : OptionsUiStyle.PaperVermilion;
+                    rarityLabel.fontStyle = _rarity == null ? FontStyle.Normal : FontStyle.Bold;
+                }
+            }
             for (var i = 0; i < _filterButtons.Length; i++)
             {
                 var label = _filterButtons[i] != null ? _filterButtons[i].GetComponentInChildren<Text>() : null;
@@ -485,12 +544,17 @@ namespace SudokuRoguelike.UI
             rule.verticalOverflow = VerticalWrapMode.Truncate;
 
             if (entry.Found)
+            {
+                // Four rows, or five closer together (an item with "Best paired with"): the last ends above the goal and stamp.
+                var crowded = entry.Facts.Count > 4;
+                var step = crowded ? 0.05f : 0.065f;
                 for (var i = 0; i < entry.Facts.Count; i++)
                 {
-                    var y = 0.46f - i * 0.065f;   // the last of four rows ends above the goal and the stamp
-                    ScrollUiKit.ValueRow(_detail, $"CodexFact_{i}", new Vector2(0.05f, y - 0.03f), new Vector2(0.95f, y + 0.03f),
-                        entry.Facts[i].Label, entry.Facts[i].Value, 20, OptionsUiStyle.PaperInk);
+                    var y = (crowded ? 0.47f : 0.46f) - i * step;
+                    ScrollUiKit.ValueRow(_detail, $"CodexFact_{i}", new Vector2(0.05f, y - step * 0.46f), new Vector2(0.95f, y + step * 0.46f),
+                        entry.Facts[i].Label, entry.Facts[i].Value, crowded ? 18 : 20, OptionsUiStyle.PaperInk);
                 }
+            }
             BuildGoal();
         }
 

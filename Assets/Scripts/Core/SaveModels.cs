@@ -24,6 +24,25 @@ namespace SudokuRoguelike.Core
         public CompletionTrackerState Completion = new CompletionTrackerState();
         public DailyGoalState DailyGoals = new DailyGoalState();           // [REQ: DAILY-GOAL-005]
         public SeasonalChallengeState SeasonalChallenge = new SeasonalChallengeState(); // [REQ: SEASON-SCORE-001]
+        // [REQ: RUN-LENGTH-001] The last runs' lengths, kept on this PC only (one-more-run concept §6).
+        public List<RunHistoryEntry> RunHistory = new List<RunHistoryEntry>();
+    }
+
+    /// <summary>[REQ: RUN-LENGTH-001] One finished run, for the run-length measures of the one-more-run concept (§6).</summary>
+    [Serializable]
+    public sealed class RunHistoryEntry
+    {
+        public string EndedUtc;                 // ISO 8601
+        public string SessionId;                // one per game start
+        public GameMode Mode;
+        public ClassId ClassId;
+        public int HarmonyLevel;
+        public bool Victory;
+        public int FloorReached;                // Garden Run: 1–5; Endless Zen: the depth
+        public int ActiveSeconds;               // time the run was open in the game
+        public int PuzzleSeconds;               // time spent in puzzles
+        public int SecondsToFirstChoice = -1;   // from the run's start to its first path choice
+        public int SecondsSincePreviousRun = -1;// from the previous run's end (same session) to this run's start
     }
 
     [Serializable]

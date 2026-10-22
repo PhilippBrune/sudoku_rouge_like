@@ -1,11 +1,11 @@
 # Quick compile check without Unity (about 20 s): copies the Unity-generated csproj files, adds .cs files Unity has
 # not imported yet, points the test projects at the copy, runs `dotnet build` and prints the errors.
-# Usage: python tools/quick_compile.py [Game|GameTests.EditMode|GameTests.PlayMode]   (exit code = dotnet's)
+# Usage: python tools/quick_compile.py [Game|GameTests.EditMode|GameTests.PlayMode|Game.Editor]   (exit code = dotnet's)
 import os, re, subprocess, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FOLDERS = {'Game': r'Assets\Scripts', 'GameTests.EditMode': r'Assets\Scripts\Tests\EditMode',
-           'GameTests.PlayMode': r'Assets\Scripts\Tests\PlayMode'}
+           'GameTests.PlayMode': r'Assets\Scripts\Tests\PlayMode', 'Game.Editor': r'Assets\Scripts\Editor'}
 
 
 def write_check(name):
@@ -18,8 +18,15 @@ def write_check(name):
             rel = os.path.relpath(os.path.join(dirpath, f), ROOT)
             if f.endswith('.cs') and not any(s in '\\' + rel.lower() for s in skip) and rel.lower() not in listed:
                 extra.append(rel)
-    anchor = text.index('<Compile Include=')
-    text = text[:anchor] + ''.join(f'<Compile Include="{e}" />\n    ' for e in extra) + text[anchor:]
+    # Files deleted since Unity last wrote the csproj would stop the build: leave them out.
+    text = re.sub(r'\s*<(?:Compile|Analyzer) Include="([^"]+)" />',
+                  lambda m: m.group(0) if os.path.exists(os.path.join(ROOT, m.group(1))) else '', text)
+    items = ''.join(f'<Compile Include="{e}" />\n    ' for e in extra)
+    if '<Compile Include=' in text:
+        anchor = text.index('<Compile Include=')
+        text = text[:anchor] + items + text[anchor:]
+    else:   # every listed file is gone: a new item group for the new ones
+        text = text.replace('</Project>', f'<ItemGroup>\n    {items}</ItemGroup>\n</Project>', 1)
     text = text.replace('Include="Game.csproj"', 'Include="Game.check.csproj"')
     path = os.path.join(ROOT, name + '.check.csproj')
     open(path, 'w', encoding='utf-8').write(text)

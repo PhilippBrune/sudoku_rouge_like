@@ -121,10 +121,11 @@ namespace SudokuRoguelike.Run
                 HarmonyConfig      = harmony,
             };
 
-            // The class's item first, so a perk that strips the starting items (Empty Canvas) strips it too.
-            AddStartingItem(state, classId, classLevel);
-            // [HARMONY-PERK-001] Apply selected perk modifications at run start.
+            // [HARMONY-PERK-002] The perk first (its slot cost and flags), then the bag in a fixed order: the perk's items,
+            // then the Level 30 class item if a slot is left (GAP-064). Empty Canvas starts with nothing.
             ApplyHarmonyPerk(state, harmonyPerk);
+            AddPerkItems(state);
+            if (!state.EmptyCanvasActive) AddStartingItem(state, classId, classLevel);
 
             return state;
         }
@@ -144,22 +145,23 @@ namespace SudokuRoguelike.Run
             });
         }
 
-        // [HARMONY-PERK-001] Applies the selected pre-run perk to a freshly created RunState.
+        // [HARMONY-PERK-001] Applies the selected pre-run perk to a freshly created RunState (HarmonyDifficultySystem §7).
         private static void ApplyHarmonyPerk(RunState state, HarmonyPerkId perk)
         {
             switch (perk)
             {
                 case HarmonyPerkId.MoonshadeOffering:
-                    // +20g, +2 pencil; first puzzle reward slot 1 forced Nothing (enforced by RewardService)
+                    // [REQ: HARMONY-PERK-003] +20 gold, +2 pencil (the maximum too: a run starts full, so the cap would take
+                    // it away, GAP-067); the first reward's slot 1 is Nothing (RunDirector.BuildItemRewardSlots).
                     state.CurrentGold += 20;
-                    state.CurrentPencil = Math.Min(state.MaxPencil, state.CurrentPencil + 2);
+                    AddPencil(state, MoonshadePencil);
                     state.MoonshadeOfferingActive = true;
                     break;
                 case HarmonyPerkId.ScholarsBurden:
-                    // Max item slots -1 (min 2); grant +5 pencil + 2 InkWells at H8+, 1 otherwise
-                    state.ItemSlots = Math.Max(2, state.ItemSlots - 1);
-                    state.CurrentPencil = Math.Min(state.MaxPencil, state.CurrentPencil + 5);
-                    state.ScholarsBurdenGrantsInkWell = true;
+                    // [REQ: HARMONY-PERK-004] One item slot less, but never below one (it used to raise a bag of one to
+                    // two); +5 pencil with the maximum; the Ink Well comes in AddPerkItems (GAP-064).
+                    state.ItemSlots = Math.Max(1, state.ItemSlots - 1);
+                    AddPencil(state, ScholarsBurdenPencil);
                     break;
                 case HarmonyPerkId.VoidWard:
                     // All positive floor effects disabled; start with 1 mistake-absorb charge
@@ -167,11 +169,38 @@ namespace SudokuRoguelike.Run
                     state.VoidWardActive = true;
                     break;
                 case HarmonyPerkId.EmptyCanvas:
-                    // Starting items stripped; reward slots guaranteed Rare+ (enforced by RewardService)
+                    // [REQ: HARMONY-PERK-005] No starting items (the class item is not added); item rewards Rare or better
+                    // (RunDirector.ApplyEmptyCanvas, GAP-069).
                     state.HeldItems.Clear();
                     state.EmptyCanvasActive = true;
                     break;
             }
+        }
+
+        private const int MoonshadePencil = 2;
+        private const int ScholarsBurdenPencil = 5;
+        private const int ScholarsBurdenTwoInkWellsFrom = 8;   // Harmony level
+
+        private static void AddPencil(RunState state, int amount)
+        {
+            state.MaxPencil += amount;
+            state.CurrentPencil += amount;
+        }
+
+        // [REQ: HARMONY-PERK-004] Scholar's Burden's Rare Ink Well (two from H8), first in the bag and never past its slots.
+        // Fixed ids, so a seeded run starts the same.
+        private static void AddPerkItems(RunState state)
+        {
+            if (state.HarmonyPerk != HarmonyPerkId.ScholarsBurden) return;
+            var count = state.HarmonyLevel >= ScholarsBurdenTwoInkWellsFrom ? 2 : 1;
+            for (var i = 1; i <= count && state.HeldItems.Count < state.ItemSlots; i++)
+                state.HeldItems.Add(new ItemInstance
+                {
+                    Id = "perk-inkwell-" + i,
+                    Type = ItemType.InkWell,
+                    Rarity = ItemRarity.Rare,
+                    Charges = ItemService.GetDefaultCharges(ItemType.InkWell)
+                });
         }
     }
 }

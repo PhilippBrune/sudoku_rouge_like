@@ -544,6 +544,19 @@ namespace SudokuRoguelike.Tests
             EventSystem.current.SetSelectedGameObject(Find(host, "CodexTile_0"));   // the entry the right page shows
             yield return new WaitForSecondsRealtime(0.3f);
             yield return Shoot(host, camera, "after_codex_curses.png");
+
+            // META-CODEX-010: the Items page filtered to Rare, the Meditation Stone with "Best paired with".
+            Find(host, "BtnCodexItems").GetComponent<Button>().onClick.Invoke();
+            for (var i = 0; i < 2; i++) Find(host, "BtnCodexRarity").GetComponent<Button>().onClick.Invoke();
+            yield return null;
+            foreach (var tile in host.GetComponentsInChildren<Button>(true).Where(b => b.name.StartsWith("CodexTile_")))
+                if (tile.transform.Find("Name").GetComponent<Text>().text == "Meditation Stone")
+                {
+                    tile.onClick.Invoke();
+                    EventSystem.current.SetSelectedGameObject(tile.gameObject);
+                }
+            yield return new WaitForSecondsRealtime(0.3f);
+            yield return Shoot(host, camera, "after_codex_rarity.png");
             foreach (var module in inputModules) if (module != null) module.enabled = true;
             new SaveFileService(TestSlot).Save(new SaveFileEnvelope());
             SaveFileService.FlushSharedPendingWrites();
@@ -659,6 +672,9 @@ namespace SudokuRoguelike.Tests
             envelope.Statistics.HighestEndlessDepth = 14;
             envelope.Statistics.TotalZenSessions = 5;
             envelope.Statistics.TotalRunsStarted = 47;
+            envelope.Statistics.TrialsBestScore_Adept = 900;
+            envelope.Statistics.TrialsBestScore_Master = 1240;
+            meta.SpiritTrialsUnlocked = true;
             new SaveFileService(TestSlot).Save(envelope);
             SaveFileService.FlushSharedPendingWrites();
 
@@ -685,6 +701,9 @@ namespace SudokuRoguelike.Tests
             EventSystem.current.SetSelectedGameObject(Find(host, "BtnDailyWalk"));
             yield return new WaitForSecondsRealtime(0.3f);
             yield return Shoot(host, camera, "after_game_modes_daily.png");
+            EventSystem.current.SetSelectedGameObject(Find(host, "BtnTrials"));
+            yield return new WaitForSecondsRealtime(0.3f);
+            yield return Shoot(host, camera, "after_game_modes_trials.png");
 
             Find(host, "BtnGarden").GetComponent<Button>().onClick.Invoke();
             EventSystem.current.SetSelectedGameObject(Find(host, "BtnClassNumberFreak"));
@@ -697,6 +716,23 @@ namespace SudokuRoguelike.Tests
             EventSystem.current.SetSelectedGameObject(Find(host, "BtnClassGardenMonk"));
             yield return new WaitForSecondsRealtime(0.4f);
             yield return Shoot(host, camera, "after_class_select_endless.png");
+
+            // LEGAL-LICENSE-001 (GAP-068): the Credits end with the licence texts.
+            menu.BackToMainMenu();
+            menu.OpenCredits();
+            yield return null;
+            Canvas.ForceUpdateCanvases();
+            var credits = Find(host, "CreditsScroll").GetComponentInChildren<ScrollRect>(true);
+            if (credits == null) credits = Find(host, "CreditsScroll").GetComponentInParent<ScrollRect>();
+            var heading = host.GetComponentsInChildren<Text>(true).FirstOrDefault(t => t.text == LocalizationService.T("Credits.Section.Licenses"));
+            if (credits != null && heading != null)
+            {
+                var content = credits.content;
+                var offset = -heading.rectTransform.anchoredPosition.y - 20f;
+                content.anchoredPosition = new Vector2(content.anchoredPosition.x, Mathf.Max(0f, offset));
+            }
+            yield return new WaitForSecondsRealtime(0.4f);
+            yield return Shoot(host, camera, "after_credits_licenses.png");
             foreach (var module in inputModules) if (module != null) module.enabled = true;
         }
 

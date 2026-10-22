@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.17 | **Date:** 2026-10-21 | **Status:** implemented
+**Version:** 1.18 | **Date:** 2026-10-22 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.18 | 2026-10-22 | implemented | The first slice of the one-more-run concept (owner request): Walk again on every run end (RUN-AGAIN-001), "This run" with the near miss and what the run moved (RUN-END-NEAR-001, RUN-END-MOVED-001), the stakes in numbers at the boss gate and on cursed tiles (STAKES-001), the run-length measures kept on the PC (RUN-LENGTH-001). Five floors stay (owner). The Credits carry the licence texts (LEGAL-LICENSE-001, GAP-068); the main menu D-pad follows each panel's links (REQ-UI-102, GAP-062). |
 | 1.17 | 2026-10-21 | implemented | Owner request: the input lock after choosing a cell is an option (OPT-GAME-006): on or off, 0.10–1.00 s in 0.05 s steps, 0.25 s by default. |
 | 1.16 | 2026-10-21 | implemented | Options Structure: the Options are a hand scroll with six pages (UI-STYLE-017); Accessibility, Controls and Language are pages, the separate Accessibility panel is gone. |
 | 1.15 | 2026-10-21 | implemented | Options audit after the 0.2.0 playtest (GAP-061): every option now does what its name says (Options Effects, OPT-GAME-001..005, OPT-GFX-001, OPT-AUDIO-001, OPT-LABEL-001, ACCESS-COLOR-003, ACCESS-FONT-001); "Confirm Wrong Placement" removed; Show Digits Left, Jump to Next Empty Cell, Board Brightness/Contrast and Status Captions renamed. |
@@ -483,6 +484,7 @@ The Daily Walk uses each player's local date, so the goals change at local midni
 
 | ID | Requirement |
 |---|---|
+| LEGAL-LICENSE-001 | The credits end with the **Licence Texts**: the Roboto notice and the Apache License 2.0, and the Steamworks.NET MIT licence, bundled as `Resources/Legal` (copies of `docs/legal/third-party`, kept equal by a test). Every standalone build also carries them in a `Licenses` folder next to the executable (`LicenseFilesBuildStep`, GAP-068). |
 | CREDITS-COMMUNITY-001 | The credits have a **Community** section: playtesters and translators by name (translators with their language) from `Resources/credits_community.json`, and the Discord invite. The file is written by `discord_admin.py export-credits` from the Discord roles Playtester and Translator and reviewed by the owner before a build; with no names it says that helpers will be named there. |
 
 ### Options Panels (main menu and in-run)
@@ -527,6 +529,16 @@ As built (1.1, GAP-020; Run tab since 1.9, UI-OPT-002): the in-run Options panel
 - Floor reached
 - Mistakes made
 - Items used / relics held
+
+**Between runs (one-more-run concept, first slice, 1.18):**
+
+| ID | Requirement |
+|---|---|
+| RUN-AGAIN-001 | Every run end (the Garden Run scroll and the Endless Zen, Spirit Trials and Monthly Walk results) offers **Walk again** first, with the focus, and Back to the garden gate under it. Walk again finishes the run as Back does (and does nothing if the return is refused, for example while a puzzle loads) and starts the next one at once: the same class, mode, Harmony level and perk, the same Spirit Trials tier and irregular-puzzle setting, a new seed; the Monthly Walk starts the month's garden again. Tutorials and custom puzzles have Back only. |
+| RUN-END-NEAR-001 | A lost run says how close it came: on the Garden Run scroll "So close: the Floor 3 boss, 9 cells from the end" (or a puzzle of the floor) and the best floor with the class ("Your best with the Number Freak: Floor 4", or "A new best floor"); a lost Spirit Trial or Monthly Walk notes the cells left. |
+| RUN-END-MOVED-001 | Under "This run" the Garden Run scroll lists at most three things the run moved, a newly opened Harmony level first ("Harmony IV is open."), then each class unlock the run brought closer (closest first, "Koi Gambler: 2 → 9 of 10"), the Codex ("Codex: 41 → 44 of 160 found"), and otherwise what opens the next Harmony level ("Harmony I: win a run on Garden Path."). |
+| STAKES-001 | Choices show their stakes in numbers: the cursed tile shows the gold and XP the puzzle pays played normally and cursed ("Gold 24 → 36 (+50%)"), computed like the reward itself (`RewardPreview`); the boss gate says what the fight pays ("×1.5 XP, and +15 XP for each trial you face") and "Strike a trial" names the XP a struck trial costs. |
+| RUN-LENGTH-001 | The game measures its runs on the player's PC only (no telemetry): how long a run was open (path, puzzles, shops; resumed runs go on counting), the time to its first path choice, and the gap since the previous run's end in the same session. The Garden Run scroll names the run's length in its eyebrow. The last 200 runs are kept in the save (`RunHistory`); `tools/playtest/run_length_report.py` reads them and says whether RM-113 (a short walk) is needed (a won Harmony 0 run over 45 minutes). The number of floors does not change (owner). |
 
 ---
 

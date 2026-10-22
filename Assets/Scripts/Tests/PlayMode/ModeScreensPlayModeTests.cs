@@ -146,6 +146,7 @@ namespace SudokuRoguelike.Tests
             Assert.AreEqual("Harmony 0 of IV", Strip(panel, "BtnGarden"));
             Assert.IsFalse(Find<Button>(panel, "BtnTrials").interactable, "Spirit Trials stay locked before the first boss");
             Assert.AreEqual("Defeat your first boss", Strip(panel, "BtnTrials"));
+            Assert.IsFalse(Find<Button>(panel, "BtnTrialTier_Apprentice").interactable, "no tier before Spirit Trials open");
 
             EventSystem.current.SetSelectedGameObject(Find<Button>(panel, "BtnEndless").gameObject);
             yield return null;
@@ -217,6 +218,35 @@ namespace SudokuRoguelike.Tests
 
             StringAssert.StartsWith($"Level {FreakLevel + 3} of", Find<Text>(panel, "ChosenClassSub").text);
             Assert.AreEqual(string.Empty, Find<InputField>(panel, "SeedInput").text, "a new visit starts without the old seed");
+        }
+
+        // [REQ: UI-STYLE-025] Spirit Trials' slip carries its tiers: each pill names the tier and its best score and goes to
+        // Select Class for that tier.
+        [UnityTest]
+        [Requirement("UI-STYLE-025")]
+        public IEnumerator GameModes_TheTrialsSlipChoosesATier()
+        {
+            var envelope = new SaveFileEnvelope { MetaProgress = SeededMeta() };
+            envelope.MetaProgress.SpiritTrialsUnlocked = true;
+            envelope.Statistics.TrialsBestScore_Master = 1240;
+            new SaveFileService(TestSlot).Save(envelope);
+            SaveFileService.FlushSharedPendingWrites();
+            var (host, menu) = OpenMenu();
+            menu.ShowGameModes();
+            yield return null;
+            var panel = Panel(host, "GameModesPanel");
+
+            var master = Find<Button>(panel, "BtnTrialTier_Master");
+            StringAssert.Contains("1,240", master.GetComponentInChildren<Text>().text);
+            Assert.AreSame(Find<Button>(panel, "BtnTrialTier_Apprentice"), Find<Button>(panel, "BtnTrials").navigation.selectOnDown);
+            EventSystem.current.SetSelectedGameObject(Find<Button>(panel, "BtnTrials").gameObject);
+            yield return null;
+            Click(panel, "BtnTrialTier_Master");
+            yield return null;
+
+            var select = Panel(host, "ClassSelectPanel");
+            Assert.IsTrue(select.activeInHierarchy, "a tier goes straight to Select Class");
+            StringAssert.Contains("Master", Find<Text>(select, "ModeInfo").text);
         }
 
         // A language change rebuilds the menu in place: each seal and curtain exists once, with the new language's text.

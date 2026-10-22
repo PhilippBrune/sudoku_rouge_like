@@ -1,11 +1,12 @@
 # Harmony Difficulty System
 
-**Version:** 1.2 | **Date:** 2026-10-14 | **Status:** implemented
+**Version:** 1.3 | **Date:** 2026-10-22 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.3 | 2026-10-22 | implemented | §7 Pre-Run Perks as built and fixed (owner: "implement GAP-064 as planned", "analyze, plan and fix GAP-067"): the pencil a perk gives raises the maximum too; Scholar's Burden's slot cost never goes below one slot, its Rare Ink Well (two from H8) comes first in the bag, the Level 30 class item only when a slot is left; Moonshade's first-reward Nothing and Empty Canvas's Rare+ rewards are applied (GAP-069). HARMONY-PERK-003..005. |
 | 1.2 | 2026-10-14 | implemented | §9 Achievements: display names, descriptions and visibility follow the live Steamworks configuration (App 4858470, published with the first Early Access build); only harmony_10_perfect is hidden (SPEC-CONF-040). |
 | 1.1 | 2026-10-07 | implemented | 1.1 (2026-10-07): all table fields consumed, code aligned to the tables (SPEC-CONF-025, GAP-008); XP multiplier on every run end without flat bonus (SPEC-CONF-024); §4.8 documents how grid and star weights, boss bonuses, flags and reward pressure are applied, incl. the early-floor star cap (REQ-RUN-106). Change history added. |
 
@@ -216,9 +217,18 @@ Only one perk may be active per run.
 | HarmonyPerkId | Gate | Effect |
 |---|---|---|
 | `MoonshadeOffering` | H4+ | +20 starting gold, +2 starting pencil. First puzzle's reward slot 1 forced to Nothing. |
-| `ScholarsBurden` | H6+ | Max item slots −1 (beyond the H6 penalty), +5 starting pencil, gain 1 free Rare InkWell. |
+| `ScholarsBurden` | H6+ | Max item slots −1 (beyond the H6 penalty), +5 starting pencil, gain 1 free Rare InkWell (2 from H8). |
 | `VoidWard` | H8+ | All positive floor effects disabled. Start with 1 mistake-shield charge. |
 | `EmptyCanvas` | H10 | All starting items stripped. Item reward slots guaranteed Rare+. |
+
+As built (1.3, GAP-064, GAP-067, GAP-069):
+
+| ID | Requirement |
+|---|---|
+| HARMONY-PERK-002 | The perk is applied when the run is created (`RunArchetypeService.CreateRunState`), before the starting bag is filled: first the perk's items, then the Level 30 class item (META-XP-007) if a slot is left; Empty Canvas starts with no item at all. Pencil a perk gives raises the starting pencil and its maximum alike (a run starts full, so a capped bonus would be lost). |
+| HARMONY-PERK-003 | Moonshade Offering: +20 gold and +2 pencil (maximum too); the first item reward of the run has its first slot as Nothing (also after a reroll, which keeps Nothing slots, and when the reward is rolled again after a resume); the price counts as paid once that reward is taken, swapped in or left. |
+| HARMONY-PERK-004 | Scholar's Burden: one item slot less, never below one (a bag of one stays one); +5 pencil (maximum too); one Rare Ink Well, two from H8, first in the bag and never past its slots, with fixed ids (`perk-inkwell-1`, `-2`) so a seeded run starts the same. |
+| HARMONY-PERK-005 | Empty Canvas: no starting items (the class item is not added); every item in a reward is Rare or better, also after a reroll (a Normal tiered item becomes Rare, a fixed-rarity Normal item is rolled again from the Rare pool, never into a type the reward already holds). |
 
 ---
 

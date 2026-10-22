@@ -261,30 +261,26 @@ namespace SudokuRoguelike.UI
                 sr.verticalNormalizedPosition + v * Time.unscaledDeltaTime * 0.8f);
         }
 
+        // [REQ: INPUT-NAV-001] The D-pad steps along the panel's links, once per press (GAP-062). It used to cycle through the
+        // panel in creation order on every direction, arrow keys and stick included, which the input module also moved on.
         private void HandleMenuGamepadNavigation()
         {
-            var moveNext = _inputRemap.WasActionPressed(InputAction.MoveDown)
-                        || _inputRemap.WasActionPressed(InputAction.MoveRight);
-            var movePrev = _inputRemap.WasActionPressed(InputAction.MoveUp)
-                        || _inputRemap.WasActionPressed(InputAction.MoveLeft);
-            if (!moveNext && !movePrev) return;
-
+            var direction = MenuDpad.ReadPressed();
+            if (direction == MoveDirection.None) direction = MenuDpad.ReadRemapped(_inputRemap);
+            if (direction == MoveDirection.None) return;
             var panel = _menu?.CurrentPanel;
-            if (panel == null) return;
-
-            var active = new List<Selectable>();
-            foreach (var s in panel.GetComponentsInChildren<Selectable>(true))
-                if (s.interactable && s.gameObject.activeInHierarchy) active.Add(s);
-            if (active.Count == 0) return;
-
             var es = EventSystem.current;
-            var cur = es?.currentSelectedGameObject?.GetComponent<Selectable>();
-            var idx = cur != null ? active.IndexOf(cur) : 0;
-            if (idx < 0) idx = 0;
+            if (panel == null || es == null) return;
 
-            idx = moveNext ? (idx + 1) % active.Count
-                           : (idx + active.Count - 1) % active.Count;
-            es?.SetSelectedGameObject(active[idx].gameObject);
+            var selected = es.currentSelectedGameObject;
+            var current = selected != null ? selected.GetComponent<Selectable>() : null;
+            if (current == null || !current.transform.IsChildOf(panel.transform))
+            {
+                SelectFirstInPanel(panel);
+                return;
+            }
+            var next = MenuDpad.Step(current, direction);
+            if (next != null) es.SetSelectedGameObject(next.gameObject);
         }
 
         private void EnsureControllerSelection()

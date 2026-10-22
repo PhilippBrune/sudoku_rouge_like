@@ -1,4 +1,5 @@
 using System;
+using SudokuRoguelike.Core;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -70,8 +71,10 @@ namespace SudokuRoguelike.UI
                 {
                     ScrollUiKit.Label(page, "Title", T(m.Name), 32, TextAnchor.MiddleLeft, ScrollUiKit.Ink,
                         new Vector2(0.029f, 0.63f), new Vector2(0.70f, 0.83f), 18);
+                    var trials = m.Mode == GameModesScreen.Mode.Trials;
                     ScrollUiKit.Label(page, "Body", string.Empty, 19, TextAnchor.UpperLeft, ScrollUiKit.Ink,
-                        new Vector2(0.029f, 0.06f), new Vector2(0.70f, 0.61f), 12).supportRichText = true;
+                        new Vector2(0.029f, trials ? 0.34f : 0.06f), new Vector2(0.70f, 0.61f), 12).supportRichText = true;
+                    if (trials) BuildTrialTiers(page, mc, screen);
                 }
                 screen.Register(m.Mode, curtain, page.gameObject);
             }
@@ -191,6 +194,34 @@ namespace SudokuRoguelike.UI
             screen.SetPerkButton(perk);
             screen.HarmonyStep = mc.StepHarmonyClassLevel;
             screen.PerkCycle = mc.CyclePerkOnClassSelect;
+        }
+
+        // [REQ: UI-STYLE-025] Spirit Trials' slip carries its tiers (the mockup): one pill per tier with its best score; a
+        // pill goes straight to Select Class for that tier. "Choose a tier" still opens the tier screen with each tier's rules.
+        private void BuildTrialTiers(RectTransform page, MainMenuController mc, GameModesScreen screen)
+        {
+            var tiers = (SpiritTrialsTier[])Enum.GetValues(typeof(SpiritTrialsTier));
+            var pills = new Button[tiers.Length];
+            const float left = 0.029f, width = 0.160f, gap = 0.008f;
+            for (var i = 0; i < tiers.Length; i++)
+            {
+                var tier = tiers[i];
+                var pill = OptionsUiFactory.BuildButton("BtnTrialTier_" + tier, page, string.Empty, 17);
+                var x = left + i * (width + gap);
+                SetRect((RectTransform)pill.transform, new Vector2(x, 0.09f), new Vector2(x + width, 0.31f), Vector2.zero, Vector2.zero);
+                OptionsUiFactory.PaintPill(pill, new Color(0.90f, 0.84f, 0.69f, 1f), ScrollUiKit.Ink);
+                var label = pill.transform.Find("Label");
+                ((RectTransform)label).offsetMin = new Vector2(6f, 2f);
+                ((RectTransform)label).offsetMax = new Vector2(-6f, -2f);
+                var text = label.GetComponent<Text>();
+                text.resizeTextForBestFit = true;
+                text.resizeTextMinSize = 11;
+                text.resizeTextMaxSize = 17;
+                pill.onClick.RemoveAllListeners();
+                pill.onClick.AddListener(() => mc.StartSpiritTrials(tier));
+                pills[i] = pill;
+            }
+            screen.SetTierButtons(pills);
         }
     }
 }

@@ -1,8 +1,15 @@
 # Input, Controller Support & Save Profiles
 
-**Version:** 2.0  
-**Date:** 2026-04-27  
+**Version:** 2.1  
+**Date:** 2026-10-22  
 **Status:** implemented
+
+### Change History
+
+| Version | Date | Status | Changes |
+|---------|------|--------|---------|
+| 2.1 | 2026-10-22 | implemented | GAP-062 (owner: "analyze, plan and fix"): on the main menu's panels the D-pad takes one step along the focused control's links, once per press (INPUT-NAV-001); arrow keys and the left stick stay with the UI input module. |
+| 2.0 | 2026-04-27 | implemented | Spec matched to the implementation (before this history). |
 
 ## Overview
 
@@ -62,6 +69,10 @@ Gamepad support is still present for core menu and puzzle navigation, but it is 
 Current implementation split:
 
 - `MainMenuController` handles menu navigation, confirmation, cancel/back, and overlays
+
+| ID | Requirement |
+|---|---|
+| INPUT-NAV-001 | On every main-menu panel the D-pad moves the focus one step along the focused control's own link (its explicit Up/Down/Left/Right, or Unity's automatic neighbour), once per press, so grids and rows move as they look (the Codex's Down goes one row down). The D-pad is read through the Input System (`Gamepad.dpad`) and the legacy D-pad buttons 12–15 (`MenuDpad`); the arrow keys and the left stick are left to the UI input module, so nothing moves twice. A movement key bound in Keybindings that the module does not read (anything but the arrow keys and W/A/S/D) moves the same way. An explicit link to a hidden control falls back to the nearest control in that direction. With no focus on the panel, the first control is chosen. (It used to cycle through the panel's controls in creation order on any direction key, GAP-062.) |
 - `InputRemapService` centralizes keyboard action bindings
 - in-run input logic is handled directly inside `InRunController`
 

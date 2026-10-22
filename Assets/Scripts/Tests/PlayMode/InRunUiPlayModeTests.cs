@@ -197,6 +197,9 @@ namespace SudokuRoguelike.Tests
             gate.ShowBossGateChoice();
             yield return null;
             StringAssert.Contains("500", FindObject(h.Host, "GatePurse").GetComponent<Text>().text);
+            // [REQ: STAKES-001] What the fight pays, and what a struck trial costs in XP (RM-115).
+            StringAssert.Contains("+15 XP", FindObject(h.Host, "GateStakes").GetComponent<Text>().text);
+            StringAssert.Contains("15 XP", FindObject(h.Host, "BtnStrikeTrial").GetComponentInChildren<Text>().text);
             var struck = h.Run.RollBossModifierChoices()[0];
 
             ClickButton(h.Host, "BtnStrikeTrial");

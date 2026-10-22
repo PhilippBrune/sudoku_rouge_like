@@ -54,7 +54,11 @@ namespace SudokuRoguelike.UI
                     RebuildGate();
                 });
             }
-            if (!gold) return;
+            if (!gold)
+            {
+                BuildGateStakes(scroll, x);
+                return;
+            }
 
             // A floor whose boss takes a single trial (Floor 1) has nothing to strike.
             run.GetBossModifierCounts(out _, out var basePicks);
@@ -64,7 +68,7 @@ namespace SudokuRoguelike.UI
                 _strikeBtn = RowButton(scroll, "BtnStrikeTrial", ref x, 0.21f,
                     struck ? T("InRun.BossGate.Struck")
                     : _striking ? T("InRun.BossGate.StrikeChoose")
-                    : F("InRun.BossGate.Strike", run.GetBossStrikeCost()));
+                    : F("InRun.BossGate.Strike", run.GetBossStrikeCost(), XpTable.ModifierBonusPerMod));
                 _strikeBtn.interactable = !struck && (_striking || run.CanStrikeBossTrial(_bossGateOptions.Count));
                 _strikeBtn.onClick.AddListener(() =>
                 {
@@ -92,6 +96,19 @@ namespace SudokuRoguelike.UI
                     if (_calmBtn != null) UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(_calmBtn.gameObject);
                 });
             }
+            BuildGateStakes(scroll, x);
+        }
+
+        // [REQ: STAKES-001] The stake of the fight, right of the gold row (RM-115): the boss pays more XP than a puzzle, and
+        // each trial faced adds to it, so striking one costs that XP.
+        private static void BuildGateStakes(RectTransform scroll, float x)
+        {
+            const float right = 0.775f;   // the boss's seal starts right of it
+            if (right - x < 0.12f) return;
+            var stakes = ScrollUiKit.Label(scroll, "GateStakes",
+                F("InRun.BossGate.Stakes", XpTable.BossMultiplier, XpTable.ModifierBonusPerMod), 16, TextAnchor.MiddleLeft,
+                ScrollUiKit.InkSoft, new Vector2(x, GateRowMin - 0.012f), new Vector2(right, GateRowMax + 0.012f), 11);
+            stakes.fontStyle = FontStyle.Italic;
         }
 
         private Button RowButton(RectTransform scroll, string name, ref float x, float width, string label)

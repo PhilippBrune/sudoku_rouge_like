@@ -243,6 +243,7 @@ namespace SudokuRoguelike.Bootstrap
 
             _autoSave.ClearActiveRun();
             _run.StartRun(request, runtimeSeed);
+            RunLengthLog.OnRunStarted(_run.State, Time.realtimeSinceStartup);   // [REQ: RUN-LENGTH-001]
 
             // Pre-seed modifier discovery so previously seen modifiers don't show as "???"
             if (meta?.DiscoveredBossModifiers != null && meta.DiscoveredBossModifiers.Count > 0)
@@ -305,6 +306,7 @@ namespace SudokuRoguelike.Bootstrap
                 var levelConfig = SeasonalChallengeService.BuildChallengeConfig(now.Year, now.Month);
                 _run.RestoreState(runState);
                 _run.StartSeasonalChallenge(levelConfig);
+                RunLengthLog.OnRunStarted(_run.State, Time.realtimeSinceStartup);   // [REQ: RUN-LENGTH-001]
             }
 
             // [REQ: SEASON-PUZZLE-001] Never enter the puzzle screen without a puzzle (GAP-004).

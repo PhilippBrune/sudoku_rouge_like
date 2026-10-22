@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 2.6 | **Date:** 2026-10-21 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes and the results of Endless Zen, Spirit Trials and the Monthly Walk; proposed, not built: the main menu)
+**Version:** 2.7 | **Date:** 2026-10-22 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes and the results of Endless Zen, Spirit Trials and the Monthly Walk; proposed, not built: the main menu)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.7 | 2026-10-22 | review | Owner: "implement UI-STYLE-017 to 026 if not done". Built what the mockups had and the game left out: the Codex's rarity filter and "Best paired with" (UI-STYLE-018, META-CODEX-010) and the Spirit Trials tiers on the Game Modes slip (UI-STYLE-025). The main menu (UI-STYLE-023) stays unbuilt: the owner kept it (2026-10-21). With the one-more-run slice the run ends gained Walk again and "This run", the cursed tile and the boss gate their stakes in numbers. Screenshots below. |
 | 2.6 | 2026-10-21 | review | Owner picks: **Select Class · Who walks the garden** (UI-STYLE-024) and **Game Modes · Five paths** (UI-STYLE-025) built; the main menu stays as it is (UI-STYLE-023 not built), only "Items & Relic Codex" is renamed "Codex"; Select Class has no confirmation window; Harmony is set on both screens. The results of Endless Zen, Spirit Trials and the Monthly Walk are in the run-end family now (UI-STYLE-026, owner request). Screenshots below. |
 | 2.5 | 2026-10-21 | review | Owner request: review the main menu, Select Class and Game Modes and make mockups in the same family. One proposal each (proposed UI-STYLE-023 to 025), with today's screens from the game and the review notes; waiting for the owner's pick. |
 | 2.4 | 2026-10-21 | review | Owner pick: garden flow **A · Washi window** as well (UI-STYLE-022, with D): built, screenshots below. The garden of classes shows the Level 40 frames (GAP-063 fixed). |
@@ -486,6 +487,33 @@ Game Modes as in the mockup. A click (or A) on a curtain enters the mode as the 
 ![Monthly Walk result, as built](layout-proposals/after_result_monthly_walk.jpg)
 
 Built at the owner's request without a separate mockup, from the run-end scroll's parts: the mode's own painting, the banner (mode and outcome: "Depth 14", "Trial passed", "Grade A"), the numbers on a tally paper with a closing line, the record large on the dark panel with the personal best and a gold "New best" ensō, the Monthly Walk's ink stamps and countdown on a slip, and "Back to the garden gate".
+
+## The parts left out, built (2.7, 2026-10-22)
+
+**Codex (UI-STYLE-018):** the rarity filter on the Items page (Every rarity · Normal · Rare · Epic; an item shows under every rarity it can have) and "Best paired with" (the class whose Level 30 runs start with the item, or that it is exclusive to). Before (2.2) and after, filtered to Rare:
+
+![Codex before](layout-proposals/after_codex.jpg)
+![Codex with the rarity filter](layout-proposals/after_codex_rarity.jpg)
+
+**Game Modes (UI-STYLE-025):** Spirit Trials' slip carries its four tiers with their best scores; a tier goes straight to Select Class. Before (2.6, the scores as a line of text) and after:
+
+![Game Modes, Spirit Trials before](layout-proposals/after_game_modes.jpg)
+![Game Modes, Spirit Trials with its tiers](layout-proposals/after_game_modes_trials.jpg)
+
+**The one-more-run slice on the run ends** (`docs/design/one-more-run-concept.md` 1.1): Walk again first, "This run" with the near miss and what the run moved, the run's length in the banner; the cursed tile and the boss gate show their stakes in numbers. Before and after:
+
+![Run end before](layout-proposals/after_run_end_defeat.jpg)
+![Run end with Walk again and This run](layout-proposals/after_one_more_run_defeat.jpg)
+![A won run: what it moved](layout-proposals/after_one_more_run_victory.jpg)
+![Spirit Trials result with Walk again](layout-proposals/after_result_spirit_trials_walk_again.jpg)
+![Cursed tile before](layout-proposals/after_cursed.jpg)
+![Cursed tile with the stakes](layout-proposals/after_cursed_stakes.jpg)
+![Boss gate before](layout-proposals/after_boss_gate.jpg)
+![Boss gate with the stakes](layout-proposals/after_boss_gate_stakes.jpg)
+
+**Credits:** the licence texts at the end (LEGAL-LICENSE-001, GAP-068):
+
+![Credits with the licence texts](layout-proposals/after_credits_licenses.jpg)
 
 ## Decisions and next step
 

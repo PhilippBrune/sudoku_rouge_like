@@ -1,11 +1,12 @@
 # Roadmap backlog: Run of the Nine
 
-**Version:** 1.3 | **Date:** 2026-10-21 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
+**Version:** 1.4 | **Date:** 2026-10-22 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.4 | 2026-10-22 | review | Owner pick: the first slice of the one-more-run concept built (RM-110 Walk again, RM-111 So close, RM-112 What this run moved, RM-115 Wagers you can feel) and the run length measured for RM-113; five floors stay. |
 | 1.3 | 2026-10-21 | review | RM-006 done (Select Class, Game Modes and the mode results in the new look; the main menu stays). Suggested RM-110 to RM-121 from the one-more-run concept (`docs/design/one-more-run-concept.md`), for the owner's pick. |
 | 1.2 | 2026-10-21 | review | Owner picks after the 0.2.0 playtest built: RM-006 (Pencil mode in indigo, the floor entry; Options, Codex and Meta Progression being built), RM-108 (levers L1, L2, L5, L6; L3 counter items next), RM-109 (per-puzzle grades). |
 | 1.1 | 2026-10-20 | review | Owner's 0.2.0 playtest: RM-005 (small wishes, built), RM-006 (menus in the new look, mockups), RM-107 (macOS and Linux/SteamOS plan), RM-108 (gold and items concept), RM-109 (mistake scoring proposals). |
@@ -39,7 +40,8 @@ Horizons: **short term** = the next one to three updates, **mid term** = after t
 | RM-108 | Gold and items that matter | Fewer but meaningful purchases: prices against income, gold to shape the boss, items that answer the floor's rules, leftover gold in the score. | Concept: `docs/design/gold-and-items-concept.md`; the owner picks the levers. | L1, L2, L3, L5, L6 built (GoldEconomySystem 2.2, ItemsAndRelicsSystem 2.3); balance check at the next playtest |
 | RM-109 | Mistakes that count fairly | Every mistake counts (done, GAP-059); how much depends on when it happens, for example a grade per puzzle on the end screen. | Proposals: `docs/design/mistake-scoring-proposals.md`. | built: per-puzzle grades (GameDesignSpec 1.14 §9c) |
 | RM-106 | More accessibility | Colour-blind safe colours for every overlay, a text size setting for all screens, a dyslexia-friendly font option. | Sudoku players skew older; accessibility widens the audience. | M |
-| RM-110 to RM-121 | One more run | Walk again from the run end, "so close" and "what this run moved" on the end scroll, a short walk, keystone relics, wagers you can see, class challenges, a daily garden, early unlocks, pacts, a faster first choice, a rival run. | Roguelike pull after each run; details, effort and a first slice in `docs/design/one-more-run-concept.md`. | S to L each |
+| RM-110, RM-111, RM-112, RM-115 | One more run, first slice | Built 2026-10-22: Walk again, So close, What this run moved, the stakes in numbers; the run length is measured in the game (RM-113 decided from it). | `docs/design/one-more-run-concept.md` §8 | done |
+| RM-113, RM-114, RM-116 to RM-121 | One more run | Walk again from the run end, "so close" and "what this run moved" on the end scroll, a short walk, keystone relics, wagers you can see, class challenges, a daily garden, early unlocks, pacts, a faster first choice, a rival run. | Roguelike pull after each run; details, effort and a first slice in `docs/design/one-more-run-concept.md`. | S to L each |
 
 ## Long term (suggested)
 

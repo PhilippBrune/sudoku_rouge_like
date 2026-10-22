@@ -186,6 +186,7 @@ namespace SudokuRoguelike.Run
             for (var i = 0; i < RolledItemSlots.Count; i++)
                 if (RolledItemSlots[i] != null)
                     RolledItemSlots[i] = _itemService.RollOneItem(stars, GetCurrentClassLevel(), classId);
+            ApplyEmptyCanvas();
             return RolledItemSlots;
         }
 
@@ -195,7 +196,7 @@ namespace SudokuRoguelike.Run
 
         public int TakeNothingReward()
         {
-            RolledItemSlots = null;
+            ResolveRewardRoll();
             if (State.IsSeasonalChallenge || State.DisableProgressionRewards) return 0;
             var gold = GetNothingRewardGold();
             State.GainGold(gold);

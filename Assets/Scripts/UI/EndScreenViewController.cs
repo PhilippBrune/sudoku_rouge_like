@@ -27,6 +27,8 @@ namespace SudokuRoguelike.UI
         private bool _offeringTaken;
 
         public Action OnReturnToMenuPressed;
+        /// <summary>[REQ: RUN-AGAIN-001] Walk again: the next run with the same class, mode and Harmony.</summary>
+        public Action OnWalkAgainPressed;
 
         public bool IsShown => _gameOverShown;
         public void ResetShown() => _gameOverShown = false;
@@ -294,12 +296,14 @@ namespace SudokuRoguelike.UI
                     : InRunUiFactory.CursedTitleRed;
             }
 
-            // Snapshot XP before persisting so we can show level-up
+            // Snapshot the profile before persisting: the level-up, the best floor and what the run moved (RM-111, RM-112).
             var classId = run.State.ClassId;
             var snapshotSave = new SaveFileService(SaveProfileService.ActiveSlot);
-            var preXp = snapshotSave.HasSaveFile()
-                ? GetClassTotalXpFromSave(snapshotSave.Load(), classId) : 0;
+            var preEnvelope = snapshotSave.HasSaveFile() ? snapshotSave.Load() : null;
+            var preXp = preEnvelope != null ? GetClassTotalXpFromSave(preEnvelope, classId) : 0;
             var preLevel = XpTable.DeriveLevel(preXp);
+            var preMeta = preEnvelope?.MetaProgress ?? new MetaProgressionState();   // a profile's first run: from nothing
+            var preBestFloor = new SudokuRoguelike.Meta.ClassGardenProgressionService().GetEntry(preMeta, classId)?.BestFloor ?? 0;
 
             var result = _map.BuildRunResult(victory, 0, 0);
             var newUnlocks = PersistResult(result, run);
@@ -319,11 +323,16 @@ namespace SudokuRoguelike.UI
             // [REQ: UI-STYLE-016] A Garden Run ends on the run-end scroll; the other modes keep the text layout.
             if (run.State.Mode == GameMode.GardenRun && !run.State.TutorialMode)
             {
+                var floorReached = victory ? run.State.TotalFloors : run.State.CurrentFloor + 1;
+                RunLengthLog.Record(postSave, run.State, victory, floorReached, Time.realtimeSinceStartup);
                 ShowRunEndScroll(new RunEndSummary
                 {
                     Victory = victory, State = run.State, Result = result, PreLevel = preLevel, PostLevel = postLevel,
                     XpInto = postXpInto, XpToNext = postXpToNext, NewUnlocks = newUnlocks,
-                    Unlocked = postEnvelope?.MetaProgress?.UnlockedClasses
+                    Unlocked = postEnvelope?.MetaProgress?.UnlockedClasses,
+                    SoClose = RunEndInsights.SoClose(victory, floorReached, run.CurrentLevelConfig?.IsBoss == true, CellsLeft(run),
+                        preBestFloor, ClassLabel(classId)),
+                    Moved = RunEndInsights.Moved(preMeta, postEnvelope?.MetaProgress, run.State, victory)
                 });
                 return;
             }
@@ -428,6 +437,7 @@ namespace SudokuRoguelike.UI
             envelope.ActiveSeasonalRunState = null;
             envelope.ActiveSeasonalPuzzle = null;
             save.Save(envelope);
+            RunLengthLog.Record(save, state, completed, 1, Time.realtimeSinceStartup);   // [REQ: RUN-LENGTH-001]
 
             // [REQ: UI-STYLE-026] The month's result on the scroll: the grade large, the score against the month's best.
             var newBest = completed && score > prevBest;
@@ -442,13 +452,15 @@ namespace SudokuRoguelike.UI
                 RecordValue = grade,
                 RecordLine = F("InRun.End.Mode.Monthly.ScoreLine", Number(score)) + "\n" + BestLine(newBest, prevBest, Number(prevBest),
                     T("InRun.End.Mode.Monthly.FirstAttempt")),
-                NewBest = newBest && prevBest > 0
+                NewBest = newBest && prevBest > 0,
+                Again = RunAgain.KindOf(state)
             };
             end.Rows.Add((T("InRun.End.Mode.Score"), Number(score)));
             end.Rows.Add((T("InRun.End.Mode.CellsCorrect"), Number(cellsCorrect)));
             end.Rows.Add((T("InRun.End.Mode.Mistakes"), Number(mistakes)));
             end.Rows.Add((T("InRun.End.Mode.PencilLeft"), $"{pencilLeft} / {state.MaxPencil}"));
             end.Rows.Add((T("InRun.End.Mode.Time"), Clock(timeSeconds)));
+            if (!completed) AddNearMiss(end, run);
             if (completed && prevBest == 0) end.Notes.Add(T("InRun.End.Mode.Monthly.StampFirst"));
             if (completed && grade == "S") end.Notes.Add(T("InRun.End.Mode.Monthly.StampS"));
             end.Notes.Add(SeasonalChallengeService.GetCountdownLabel(DateTime.Today));
@@ -504,6 +516,7 @@ namespace SudokuRoguelike.UI
                 }
                 new ProfileService(save).UpdateStats(envelope, stats);
             }
+            RunLengthLog.Record(save, state, completed, 1, Time.realtimeSinceStartup);   // [REQ: RUN-LENGTH-001]
 
             // [REQ: UI-STYLE-026] The trial's result on the scroll: the score large against the tier's best.
             var newBest = completed && score > prevBest;
@@ -519,8 +532,10 @@ namespace SudokuRoguelike.UI
                 RecordLine = completed
                     ? BestLine(newBest, prevBest, Number(prevBest), T("InRun.End.Mode.Trials.FirstCompletion"))
                     : prevBest > 0 ? F("InRun.End.Mode.Best", Number(prevBest)) : T("InRun.End.Mode.Trials.NoScore"),
-                NewBest = newBest && prevBest > 0
+                NewBest = newBest && prevBest > 0,
+                Again = RunAgain.KindOf(state)
             };
+            if (!completed) AddNearMiss(end, run);
             if (completed)
             {
                 end.Rows.Add((T("InRun.End.Mode.Score"), Number(score)));
@@ -554,6 +569,7 @@ namespace SudokuRoguelike.UI
             if (isNewBest) stats.HighestEndlessDepth = depth;
             stats.TotalZenSessions += 1;
             new ProfileService(save).UpdateStats(envelope, stats);
+            if (state != null) RunLengthLog.Record(save, state, false, depth, Time.realtimeSinceStartup);   // [REQ: RUN-LENGTH-001]
 
             // [REQ: UI-STYLE-026] The dive on the scroll: the depth large against the deepest dive.
             var end = new ModeEndSummary
@@ -567,7 +583,8 @@ namespace SudokuRoguelike.UI
                 RecordValue = Number(Math.Max(depth, prevBest)),
                 RecordLine = prevBest <= 0 ? T("InRun.End.Mode.Zen.FirstSession")
                     : isNewBest ? F("InRun.End.Mode.NewBestLine", Number(prevBest)) : F("InRun.End.Mode.Zen.ThisTime", Number(depth)),
-                NewBest = isNewBest && prevBest > 0
+                NewBest = isNewBest && prevBest > 0,
+                Again = RunAgain.KindOf(state)
             };
             end.Rows.Add((T("InRun.End.Mode.Zen.Depth"), Number(depth)));
             end.Rows.Add((T("InRun.End.Mode.Time"), Clock(seconds)));
@@ -576,11 +593,32 @@ namespace SudokuRoguelike.UI
             ShowModeEndScroll(end);
         }
 
+        // [REQ: RUN-END-NEAR-001] A lost trial or walk: how many cells were left.
+        private static void AddNearMiss(ModeEndSummary end, RunDirector run)
+        {
+            var left = CellsLeft(run);
+            if (left > 0)
+                end.Notes.Insert(0, LocalizationService.FormatPlural(left, "InRun.End.Near.CellsOne", "InRun.End.Near.CellsMany",
+                    "So close: {0} cell from the end.", "So close: {0} cells from the end."));
+        }
+
         // "New best (before: …)", "Your best: …" or the first-attempt line.
         private static string BestLine(bool newBest, int prevBest, string prevText, string first) =>
             prevBest <= 0 ? first : newBest ? F("InRun.End.Mode.NewBestLine", prevText) : F("InRun.End.Mode.Best", prevText);
 
         private static string T(string key) => LocalizationService.T(key);
+
+        // [REQ: RUN-END-NEAR-001] The empty cells of the board the run ended on.
+        private static int CellsLeft(RunDirector run)
+        {
+            var board = run?.CurrentBoard;
+            if (board == null) return 0;
+            var left = 0;
+            for (var r = 0; r < board.Size; r++)
+            for (var c = 0; c < board.Size; c++)
+                if (board.Cells[r, c] == 0) left++;
+            return left;
+        }
 
         private void ClearBossClearedDynamicContent()
         {

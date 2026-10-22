@@ -592,6 +592,20 @@ namespace SudokuRoguelike.UI
             AddSpacer(6f);
             AddRole(T("Credits.Role.AssetLicenses"));
             AddBody(T("Credits.Body.AssetLicenses"));
+            AddSpacer(10f);
+
+            // -- Section 8: Licence texts [REQ: LEGAL-LICENSE-001] (GAP-068) -------
+            // The full texts the font's and Steamworks.NET's licences require; legal texts stay in English.
+            AddHeader(T("Credits.Section.Licenses"));
+            AddSeparator();
+            AddSpacer(4f);
+            AddBody(T("Credits.Body.LicensesIntro"));
+            foreach (var license in ThirdPartyLicenses.All)
+            {
+                AddSpacer(6f);
+                AddRole(T(license.RoleKey));
+                AddBody(ThirdPartyLicenses.Load(license)).fontSize = 11;
+            }
             AddSpacer(16f);
 
             // F4: no icon ? navigation back, not a save action
@@ -762,6 +776,8 @@ namespace SudokuRoguelike.UI
             tabRelics.onClick.AddListener(() => itemsCtrl.ShowTab(CodexTabId.Relics));
             tabModifiers.onClick.AddListener(() => itemsCtrl.ShowTab(CodexTabId.Modes));
             tabCurses.onClick.AddListener(() => itemsCtrl.ShowTab(CodexTabId.Curses));
+            // [REQ: META-CODEX-010] The Items page also filters by rarity (Every rarity · Normal · Rare · Epic).
+            itemsCtrl.SetRarityButton(FilterButton("BtnCodexRarity", T("Codex.Rarity.Every"), 0.71f, 0.99f));
 
             var back = OptionsUiFactory.BuildBackPill("BtnItemsBack", pr, T("Back"));
             SetRect((RectTransform)back.transform, new Vector2(0.44f, 0.075f), new Vector2(0.56f, 0.135f), Vector2.zero, Vector2.zero);

@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+### New
+
+- **Walk again:** every run end (the Garden Run, Endless Zen, Spirit Trials, the Monthly Walk) has Walk again as its first button: the next run starts at once with the same class, mode, Harmony and perk.
+- **This run:** a lost Garden Run says how close it came ("So close: the Floor 3 boss, 9 cells from the end") next to your best floor with the class, and lists what the run moved: unlocks brought closer, the Codex, the next Harmony level.
+- **Stakes in numbers:** a cursed tile shows the gold and XP it pays played normally and cursed; the boss gate says what the fight pays and what striking a trial costs in XP.
+- **The run's length** on the run-end banner. The game keeps its last 200 runs' lengths on your PC (nothing is sent anywhere).
+- **Codex:** filter the items by rarity, and see which class an item belongs to ("Best paired with").
+- **Game Modes:** Spirit Trials' tiers with their best scores on its slip; a tier goes straight to choosing a class.
+- **Licence texts** at the end of the Credits, and in a Licenses folder with every build.
+
+### Fixed
+
+- Scholar's Burden now gives its free Rare Ink Well (two from Harmony VIII) and its +5 pencil, and never adds a bag slot instead of taking one.
+- Moonshade Offering's +2 pencil counts, and its price (the first reward's first slot is empty) is paid.
+- Empty Canvas's rewards are Rare or better, as the perk says.
+- The D-pad on the main menu's screens moves along each screen's rows and columns (the Codex's Down goes one row down), and an arrow key no longer moves twice.
+
 ## 0.2.1 — 7th iteration (2026-10-21)
 
 The seventh Early Access build, made from the 0.2.0 playtest. The menus join the ink-and-paper look (Options, the Codex,

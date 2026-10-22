@@ -72,11 +72,12 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-061](#gap-061) | Options that did nothing or less than their names said | FIXED (Options audit, 2026-10-21) | MEDIUM | P2 |
 | [GAP-066](#gap-066) | Reduce Motion left the pulses, pops and the node reveal running (the boss node pulsed for ever) | FIXED (second Options audit, 2026-10-21) | MEDIUM | P2 |
 | [GAP-065](#gap-065) | Numbers in texts follow the PC's region, not the game's language ("XP x1,0" in English) | FIXED (2026-10-21) | LOW | P3 |
-| [GAP-068](#gap-068) | The builds left out the licence texts the font and Steamworks.NET licences require | FIXED (legal check, 0.2.1, 2026-10-21) | MEDIUM | P2 |
-| [GAP-067](#gap-067) | Moonshade Offering's "+2 starting pencil" does nothing (the run starts at full pencil) | OPEN (found analysing GAP-064, 2026-10-21) | LOW | P3 |
-| [GAP-064](#gap-064) | Scholar's Burden: no free Ink Well, "+5 pencil" does nothing, "−1 slot" can add a slot | OPEN, planned (analysis 2026-10-21; rules for the owner) | MEDIUM | P3 |
+| [GAP-068](#gap-068) | The builds left out the licence texts the font and Steamworks.NET licences require | FIXED (0.2.1 by hand; since 2026-10-22 automatic and on the Credits screen) | MEDIUM | P2 |
+| [GAP-069](#gap-069) | Moonshade Offering's Nothing slot and Empty Canvas's Rare+ rewards were never applied | FIXED (found fixing GAP-064/067, 2026-10-22) | MEDIUM | P3 |
+| [GAP-067](#gap-067) | Moonshade Offering's "+2 starting pencil" did nothing (the run starts at full pencil) | FIXED (2026-10-22) | LOW | P3 |
+| [GAP-064](#gap-064) | Scholar's Burden: no free Ink Well, "+5 pencil" did nothing, "−1 slot" could add a slot | FIXED (as planned, 2026-10-22) | MEDIUM | P3 |
 | [GAP-063](#gap-063) | Class levels 30 and 40 promised rewards the game did not grant (starting items, frames) | FIXED (2026-10-21) | MEDIUM | P2 |
-| [GAP-062](#gap-062) | Main menu: the D-pad steps through a panel in creation order, and arrow keys may move twice | OPEN (found building the Codex book, 2026-10-21; not checked in the player) | MEDIUM | P2 |
+| [GAP-062](#gap-062) | Main menu: the D-pad stepped through a panel in creation order, and arrow keys could move twice | FIXED (2026-10-22; check with a controller in the player) | MEDIUM | P2 |
 | [GAP-044](#gap-044) | Region borders showed the previous puzzle's regions on a same-size board | FIXED (found 2026-10-14 by the owner) | HIGH | P1 |
 | [GAP-043](#gap-043) | Without the `ActiveProfileSlot` pref the game opens an empty slot 0, not the existing profile | FIXED (0.1.5, found 2026-10-14) | LOW | P3 |
 
@@ -986,14 +987,15 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Tests:** `GameplayOptionsTests` (3) and `GameplayOptionsPlayModeTests` (7), all failing before the fix.
 
 ## GAP-062
-**Main menu: the D-pad steps through a panel in creation order, and arrow keys may move twice**
+**Main menu: the D-pad stepped through a panel in creation order, and arrow keys could move twice**
 
-- **Requirement:** REQ-UI-102 (every menu works with a controller), UI-STYLE-017 and UI-STYLE-018 (the D-pad follows the page: bookmarks, lines, the Codex's tile grid)
-- **Status:** OPEN (found while building the Codex book, 2026-10-21; seen in the code, not yet checked in the player) · **Severity:** MEDIUM · **Priority:** P2
+- **Requirement:** INPUT-NAV-001 (InputAndProfilesSpec 2.1; the entry first cited REQ-UI-102, which is the language requirement), UI-STYLE-017 and UI-STYLE-018 (the D-pad follows the page: bookmarks, lines, the Codex's tile grid)
+- **Status:** FIXED (owner: "analyze, plan and fix", 2026-10-22; found while building the Codex book; still to check with a controller in the player) · **Severity:** MEDIUM · **Priority:** P2
 - **Problem:** On every main-menu panel, `MainMenuController.HandleMenuGamepadNavigation` moves the focus to the next or previous control in creation order on any Up/Down/Left/Right press (D-pad buttons, D-pad axes, left stick, arrow keys). So the D-pad ignores the panel's layout: in the Codex, Down goes one tile to the right instead of one row down, and the D-pad links the panels set (the Codex's grid, the Options lines) are not used. Unity's `StandaloneInputModule` reads the arrow keys and the left stick too (Input Manager axes Horizontal/Vertical) and moves along those links in the same frame, so an arrow key or a stick push may move the focus twice.
 - **Why it is there:** commit 92933d2 (Steam review, 2026-07-03) added the cycle because the legacy module does not read the D-pad on many controllers.
-- **Next step:** with platform phase 1 (RM-107: controller input through the Input System), use `InputSystemUIInputModule`, which reads the D-pad, and replace the cycle with one step along the panel's links (`FindSelectableOnUp/Down/Left/Right`), once per press. Check it in the player with a controller and the keyboard; `CodexBookPlayModeTests` and `GeneratedUiPlayModeTraversalTests` already check the links themselves.
-
+- **Analysis (2026-10-22):** the cycle was the only way the D-pad moved on the main menu, because the legacy `StandaloneInputModule` reads only the Input Manager axes (arrow keys, left stick). Arrow keys and the stick were read twice: by the module (along the links) and by the cycle (to the next control in creation order). The Input System package is already in the project (`activeInputHandler` = both), so the D-pad can be read through `Gamepad.dpad` without waiting for the platform work.
+- **Fix:** `MenuDpad` reads the D-pad (Input System `Gamepad.dpad`, plus the legacy D-pad buttons 12–15 some pads report) and `HandleMenuGamepadNavigation` takes one step along the focused control's own link (`FindSelectableOnUp/Down/Left/Right`, which follows explicit links and falls back to Unity's automatic neighbour), once per press; with no focus on the panel the first control is chosen. Arrow keys and the stick are left to the input module, so nothing moves twice. The in-run screens were not affected (they read the D-pad themselves).
+- **Tests:** `MenuDpadPlayModeTests` (the Codex's Down goes one row down, not to the next tile; Game Modes along the curtains and down to the way in; the menu no longer reads the arrow keys or cycles). A real controller in the player is still to check (OPEN_POINTS).
 ## GAP-063
 **Class levels 30 and 40 promise rewards the game does not grant**
 
@@ -1006,10 +1008,10 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Tests:** `ClassLevelRewardTests` (every class's item exists and the schedule names it; Level 30 starts with it, Level 29 does not; the same id for the same seed; the frame at Level 40 and after prestige; one colour per class).
 
 ## GAP-064
-**Scholar's Burden: no free Ink Well, "+5 pencil" does nothing, "−1 slot" can add a slot**
+**Scholar's Burden: no free Ink Well, "+5 pencil" did nothing, "−1 slot" could add a slot**
 
 - **Requirement:** HarmonyDifficultySystem §Perks (`ScholarsBurden`, H6+: "Max item slots −1 (beyond the H6 penalty), +5 starting pencil, gain 1 free Rare InkWell")
-- **Status:** OPEN, analysed and planned (2026-10-21; found in the code review of the GAP-063 fix; not yet seen in the player) · **Severity:** MEDIUM (the perk gives the opposite of its trade in some cases) · **Priority:** P3
+- **Status:** FIXED as planned (owner: "implement GAP-064 as planned", 2026-10-22; the plan's recommended answers were taken: Ink Wells before the class item, a bag of one stays one, the pencil raises the maximum) · **Severity:** MEDIUM · **Priority:** P3
 - **Analysis (code, 2026-10-21):**
   1. *No Ink Well.* `RunArchetypeService.ApplyHarmonyPerk` sets `RunState.ScholarsBurdenGrantsInkWell`; `PerkService.ApplyRunStartEffects` would turn it into one Rare Ink Well (two from H8), but nothing in the game calls it, so the flag stays set and the run starts without the Ink Well. `ApplyRunStartEffects` also adds the Ink Wells past a full bag (the HUD draws only `ItemSlots` slots, so an extra item would be invisible) and gives them random ids (`Guid`), which a seeded run should not have.
   2. *"+5 starting pencil" does nothing.* `CurrentPencil = Math.Min(MaxPencil, CurrentPencil + 5)`, and a run starts with `CurrentPencil == MaxPencil`, so the cap takes the 5 away. (Moonshade Offering's "+2 starting pencil" has the same problem, GAP-067.)
@@ -1026,23 +1028,36 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
   2. The slot cost on a bag of one: the bag stays at 1 (recommended; the perk then still gives its Ink Well into that slot), or the perk cannot be chosen when the bag would drop below 2?
   3. "+5 starting pencil": raise the maximum too (recommended; otherwise it can never show), or only refill to the maximum (then the line should be removed from the perk)?
 - **Effort:** about two hours with the tests; no save-format change.
+- **Fix (2026-10-22):** `RunArchetypeService.CreateRunState` applies the perk first (slot cost `Math.Max(1, slots − 1)`, pencil and its maximum +5), then `AddPerkItems` puts one Rare Ink Well in the bag (two from H8, fixed ids `perk-inkwell-1/2`, never past the slots), then the Level 30 class item if a slot is left. `PerkService` (never called) and the `ScholarsBurdenGrantsInkWell` flag are gone; old saves carry the flag only inside a started run, where the loader ignores it. HarmonyDifficultySystem 1.3 (HARMONY-PERK-002, -004).
+- **Tests:** `HarmonyPerkStartTests` (9 of 10 failed before the fix): the Ink Well (one, two from H8), +5 pencil with the maximum, the slot cost never adds a slot nor lets the bag overflow (Garden Monk H6, Number Freak H8/H10, levels 1–40), the Ink Well before the class item, the same ids for the same seed.
 
 ## GAP-067
-**Moonshade Offering's "+2 starting pencil" does nothing**
+**Moonshade Offering's "+2 starting pencil" did nothing**
 
-- **Requirement:** HarmonyDifficultySystem §Perks (`MoonshadeOffering`, H4+: "+20 starting gold, +2 starting pencil. First puzzle's reward slot 1 forced to Nothing.")
-- **Status:** OPEN (found analysing GAP-064, 2026-10-21) · **Severity:** LOW · **Priority:** P3
-- **Problem:** `CurrentPencil = Math.Min(MaxPencil, CurrentPencil + 2)` on a run that starts at full pencil: the cap takes the 2 away; the gold and the forced Nothing work.
-- **Next step:** with GAP-064 (same rule): raise `MaxPencil` and `CurrentPencil` by 2; a test that a Moonshade run starts with 2 more pencil than the same run without the perk.
+- **Requirement:** HarmonyDifficultySystem §7 (`MoonshadeOffering`, H4+: "+20 starting gold, +2 starting pencil. First puzzle's reward slot 1 forced to Nothing."), HARMONY-PERK-003
+- **Status:** FIXED (owner: "analyze, plan and fix", 2026-10-22) · **Severity:** LOW · **Priority:** P3
+- **Analysis:** `CurrentPencil = Math.Min(MaxPencil, CurrentPencil + 2)` on a run that starts at full pencil, so the cap took the 2 away. Looking at the whole perk showed its price was missing too: `MoonshadeOfferingActive` was set but read by nothing ("RewardService reads it" said a comment; no such code), so the perk was +20 gold for free (GAP-069).
+- **Plan and fix:** the same rule as Scholar's Burden (GAP-064): a perk's pencil raises the maximum and the current pencil alike (`AddPencil`). `RunDirector.BuildItemRewardSlots` sets slot 1 of the run's first item reward to Nothing and clears the flag (saved with the run, so a resume does not repeat it; a reroll keeps Nothing slots).
+- **Tests:** `HarmonyPerkStartTests.MoonshadeOffering_StartsWithTwoMorePencil` and `MoonshadeOffering_TheFirstRewardsFirstSlotIsNothing_OnlyOnce` (both failed before).
+
+## GAP-069
+**Moonshade Offering's Nothing slot and Empty Canvas's Rare+ rewards were never applied**
+
+- **Requirement:** HarmonyDifficultySystem §7, HARMONY-PERK-003, HARMONY-PERK-005
+- **Status:** FIXED (found while fixing GAP-064 and GAP-067, 2026-10-22) · **Severity:** MEDIUM (two perks had no price or no gain) · **Priority:** P3
+- **Problem:** `RunState.MoonshadeOfferingActive` and `EmptyCanvasActive` were set at run start, and comments said `RewardService` reads them; nothing did. Moonshade Offering cost nothing; Empty Canvas took the starting items and gave nothing back.
+- **Fix:** Moonshade: see GAP-067. Empty Canvas: `RunDirector.ApplyEmptyCanvas` raises every rolled item to Rare or better after the roll and after each reroll (`ItemService.AtLeastRare`: a tiered Normal item becomes Rare, a fixed-rarity Normal item is rolled again from the Rare pool). Void Ward's flag was already read (`RollFloorModifiers`).
+- **Tests:** `HarmonyPerkStartTests.EmptyCanvas_StartsEmpty_AndEveryItemRewardIsRareOrBetter` (failed before: a Normal Pattern Scroll in the first reward).
 
 ## GAP-068
 **The builds left out the licence texts the font and Steamworks.NET licences require**
 
 - **Requirement:** Credits / third-party notices (SPEC-PROC-007), Apache License 2.0 §4 (Roboto), MIT licence (Steamworks.NET)
-- **Status:** FIXED (found in the legal check, 2026-10-21; 0.2.1) · **Severity:** MEDIUM · **Priority:** P2
+- **Status:** FIXED (found in the legal check, 2026-10-21; 0.2.1 packaged by hand; automatic and on the Credits screen since 2026-10-22, owner: "implement GAP-068") · **Severity:** MEDIUM · **Priority:** P2
 - **Problem:** the Credits name both licences but point to files in the repository (`docs/legal/third-party/...`); the 0.2.0 build had no licence file, so players never received the texts the licences require with the copy.
 - **Fix:** every build carries `Licenses/` (`APACHE-2.0.txt`, `Roboto-NOTICE.md`, `Steamworks.NET-LICENSE.md`), copied from `docs/legal/third-party/` when the build is packaged; 0.2.1 is the first (`docs/review/E2E_TEST_REPORT.md` §12, B30). `docs/legal/legal-check-2026-10.md` lists it.
-- **Next step (optional):** show the licence texts on the Credits screen, so the duty does not depend on the packaging step.
+- **Fix, step 2 (2026-10-22, LEGAL-LICENSE-001):** the texts no longer depend on a packaging step. `LicenseFilesBuildStep` (an editor post-build step) copies them into `Licenses/` of every standalone build, and the Credits end with a **Licence Texts** section that shows them in full, bundled as `Resources/Legal` (`ThirdPartyLicenses`). A test keeps the bundled copies equal to `docs/legal/third-party`.
+- **Tests:** `ThirdPartyLicensesTests` (bundled and equal to the sources, the build step copies all three, the Credits show them).
 
 ## GAP-065
 **Numbers in texts follow the PC's region, not the game's language**

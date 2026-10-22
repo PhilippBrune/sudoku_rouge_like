@@ -193,6 +193,9 @@ namespace SudokuRoguelike.Tests
             Assert.Greater(scene.transform.GetSiblingIndex(), path.transform.GetSiblingIndex(), "the talisman covers the path");
             Assert.AreEqual(scene, gate.ActivePanel);
             Assert.IsTrue(CancelRouteContract.IsOverlayCancelControlName("BtnDeclineSkip"), "B presses Decline");
+            // [REQ: STAKES-001] The stake in numbers: what the puzzle pays played normally and cursed.
+            StringAssert.Contains("\u2192", FindObject(scene, "Gold").GetComponent<Text>().text);
+            StringAssert.Contains("\u2192", FindObject(scene, "Xp").GetComponent<Text>().text);
             ClickButton(scene, "BtnAccept");
             yield return null;
             Assert.NotNull(accepted);
@@ -220,6 +223,7 @@ namespace SudokuRoguelike.Tests
             var end = host.GetComponentInChildren<EndScreenViewController>(true);
             var returned = false;
             end.OnReturnToMenuPressed = () => returned = true;
+            run.State.ActiveSeconds = 41 * 60 + 5;   // [REQ: RUN-LENGTH-001] the banner names a run's length from a minute on
 
             end.ShowGameOver(run, false);
             yield return null;
@@ -234,6 +238,19 @@ namespace SudokuRoguelike.Tests
             Assert.IsNull(FindObjectOrNull(FindObject(scroll, "FloorSeal_2"), "Mask"));
             Assert.IsFalse(FindObject(panel, "GameOverDetails").activeSelf, "the text layout is hidden");
             Assert.NotNull(FindObjectOrNull(scroll, "NothingNew"));
+
+            // [REQ: RUN-AGAIN-001] Walk again comes first and has the focus; [REQ: RUN-END-MOVED-001] "This run" names
+            // what opens the next Harmony; [REQ: RUN-LENGTH-001] the eyebrow names the run's length.
+            var walked = false;
+            end.OnWalkAgainPressed = () => walked = true;
+            Assert.AreEqual("BtnWalkAgain", EventSystem.current.currentSelectedGameObject.name, "Walk again has the focus");
+            ClickButton(scroll, "BtnWalkAgain");
+            Assert.IsTrue(walked, "Walk again starts the next run");
+            StringAssert.Contains("Harmony I", FindObject(scroll, "ThisRunLines").GetComponent<Text>().text);
+            StringAssert.EndsWith(RunLengthLog.FormatDuration(run.State.ActiveSeconds).ToUpperInvariant(),
+                FindObject(scroll, "RunEndEyebrow").GetComponent<Text>().text);
+            Assert.AreEqual(1, new SaveFileService(TestSlot).Load().RunHistory.Count, "the run's length is kept");
+
             ClickButton(scroll, "BtnRunEndBack");
             Assert.IsTrue(returned, "the back button returns to the menu");
 
@@ -301,6 +318,7 @@ namespace SudokuRoguelike.Tests
             Assert.AreEqual(LocalizationService.Format("InRun.End.Mode.Zen.Title", "Depth {0}", 14), FindObject(scroll, "ModeEndTitle").GetComponent<Text>().text);
             Assert.AreEqual("14", FindObject(scroll, "RecordValue").GetComponent<Text>().text, "the deepest descent");
             Assert.NotNull(FindObjectOrNull(scroll, "NewBestStamp"), "14 beats 11");
+            Assert.NotNull(FindObjectOrNull(scroll, "BtnWalkAgain"), "Walk again after a mode too (RUN-AGAIN-001)");
             Assert.AreEqual(14, new SaveFileService(TestSlot).Load().Statistics.HighestEndlessDepth, "the best depth is saved");
             ClickButton(scroll, "BtnModeEndBack");
             Assert.IsTrue(returned, "the back button returns to the menu");

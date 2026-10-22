@@ -1,11 +1,12 @@
 # Open points
 
-**Version:** 1.5 | **Date:** 2026-10-21 | **Status:** review (a living list; update it whenever an item closes or a new one opens)
+**Version:** 1.6 | **Date:** 2026-10-22 | **Status:** review (a living list; update it whenever an item closes or a new one opens)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.6 | 2026-10-22 | review | GAP-062, GAP-064, GAP-067, GAP-068 fixed, GAP-069 found and fixed; the one-more-run slice and the run-length measures built; the Codex rarity filter, "Best paired with" and the Trials tiers built. Open gaps: GAP-030 (listening), GAP-057 (not reproduced). |
 | 1.5 | 2026-10-21 | review | Select Class, Game Modes and the three mode results built (UI-STYLE-024 to 026); the main menu stays (owner); GAP-065 and GAP-066 fixed; GAP-064 planned with three rules for the owner, GAP-067 logged; the one-more-run concept and the legal check wait for the owner; 0.2.1 built. |
 | 1.4 | 2026-10-21 | review | Input Lock option and the washi window built; proposals for the main menu, Select Class and Game Modes wait for the owner's pick; GAP-064 and GAP-065 logged. |
 | 1.3 | 2026-10-21 | review | SPEC-CONF-041 decided and GAP-063 fixed on the owner's request; the class rewards moved to the playtest table. |
@@ -50,6 +51,10 @@ Questions for the playtest, if it happens again:
 | Game Modes as five curtains | Main menu → Game Modes | Each curtain's state strip, the slip of the focused mode, Records under Endless Zen; a locked mode says what opens it. Harmony set here shows on Select Class and back. |
 | Results of Endless Zen, Spirit Trials, Monthly Walk | End of each mode | The record large with the personal best and a "New best" stamp, the numbers on a tally paper; "Back to the garden gate". |
 | Reduce Motion | Options → Accessibility | With it on: no pulsing path nodes or boss node, no digit pops (GAP-066). |
+| Walk again and "This run" | End of any run | Walk again starts the next run at once (same class, mode, Harmony, perk); a lost run says how close it came and what it moved. Say if it makes you start another run. |
+| Run length | Play two or three runs in one sitting | Then run `python tools/playtest/run_length_report.py` (or send the save): it says whether a won Harmony 0 run takes over 45 minutes (RM-113). |
+| The D-pad on the menus | Codex, Game Modes, Options with a controller | The D-pad moves along rows and columns; an arrow key moves once (GAP-062). |
+| Harmony perks | Moonshade Offering, Scholar's Burden, Empty Canvas | Moonshade: +2 pencil, first reward's first slot empty; Scholar's Burden: Ink Well in the bag, +5 pencil; Empty Canvas: Rare+ rewards. |
 | Numbers in the game's language | Any screen with numbers, English on a German PC | "XP ×1.4", "50,000" in English; "1,4", "50.000" in German (GAP-065). |
 | Class rewards at Level 30 and 40 | A class at Level 30+ (start a run), a class at 40 or prestiged (Meta Progression, the puzzle's class badge) | The run starts with the class's item; the frame in the class's colour. Say if Golden Koi, Rice Paper Umbrella and Temple Incense fit their classes. |
 | Garden of classes | Main menu → Meta Progression | Plaques with level or unlock goal, the scroll with runs, best floor and the level path, prestige with two presses (X). Runs and best floor count from this build on. |
@@ -74,20 +79,19 @@ late floors harder for everyone; say if it feels too harsh.
 | Steam Input default layout or the Input System rewrite for controllers | The rewrite is planned as the default (it is needed for the Deck either way); Steam Input could be added on top | platform plan, decision 3 |
 | A Mac and a Steam Deck (or a Linux PC) for a first start | A build that was never started on the system should not be published | platform plan, risks |
 | Listening to the 8-bit soundtrack set | The music loops are still the short placeholders (GAP-030) | `steam_assets/audio_8bit/synth`, `docs/audio-8bit-prompts.md` |
-| GAP-064 rules: Scholar's Burden with a full bag, its slot cost on a bag of one, "+5 pencil" | The perk gives no Ink Well, no pencil, and can add a slot; three questions decide the fix | [GAME_GAPS](GAME_GAPS.md#gap-064) |
-| Pick from the one-more-run concept (RM-110 to RM-121) | What makes a player start the next run; a small first slice is proposed | `docs/design/one-more-run-concept.md` |
+| Pick from the rest of the one-more-run concept (RM-113, RM-114, RM-116 to RM-121) | The first slice is built; RM-113 waits for the run-length report | `docs/design/one-more-run-concept.md` §4, §8 |
 | Legal check: Steamworks content survey (AI content, simulated gambling), trader status (DSA), trademark search, Impressum, tax | No law broken by the game; these are store and business duties | `docs/legal/legal-check-2026-10.md` |
 | Sign-offs SPEC-CONF-008 (class balance values) and SPEC-PROC-007 (legal wording) | Open owner sign-offs | [SPECIFICATION_ISSUES](SPECIFICATION_ISSUES.md) |
-| Upload and release of the next build | Everything since 0.2.0 is in the CHANGELOG under "Unreleased"; local commits on `feature/game-ui-refactor`, not pushed | `CHANGELOG.md` |
+| Upload and release of 0.2.1, and a build with the changes since (CHANGELOG "Unreleased") | 0.2.1 is built, tagged and pushed (`steam_assets/ReleaseNotes_v0.2.1.md`); the newer commits are local | `CHANGELOG.md` |
 
 ## 4. Known technical leftovers
 
 - Modifier catalog plan, Phase 0 step 3 (one catalog entry per modifier instead of the switch statements) and step 5
   (golden geometry snapshots) — `docs/design/modifier-catalog-plan.md`.
 - The Pattern Scroll item's list (`InRunController.BuildPatternScrollMechanics`) leaves out cell pairs, cell markers and outside clues, shows line rules by their internal names ("GermanWhispers #1") and its entries are English only (not through the localization catalogs).
-- GAP-064 and GAP-067: Scholar's Burden (no Ink Well, "+5 pencil" lost to the cap, the slot cost can add a slot) and Moonshade Offering ("+2 pencil" lost) — planned, waiting for the owner's rules.
+
 - `MainMenuClassInfoPresenter` lost its last caller with the confirmation window (its tests still cover the unlock texts); remove it once `ClassUnlockText` carries those tests.
-- GAP-062: on the main menu the D-pad steps through a panel in creation order (not along its rows), and arrow keys may
+
   move twice; to fix with the controller work of platform phase 1 and to check in the player with a controller.
 - Codex book (UI-STYLE-018): the mockup's Normal · Rare · Epic filter and "Best paired with" are left out (no game data backs them); add them only if the owner wants them. Item uses are counted from this build on.
 - `Game.csproj` and the test `.csproj` files are regenerated by Unity on the owner's machine and stay uncommitted on

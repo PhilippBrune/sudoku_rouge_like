@@ -345,6 +345,7 @@ namespace SudokuRoguelike.UI
             _shopView.OnShopClosed        = ShowPath;
             _bossGateView.OnModsConfirmed = OnBossModsConfirmed;
             _endScreenView.OnReturnToMenuPressed = SaveAndQuit;
+            _endScreenView.OnWalkAgainPressed = WalkAgain;
 
             // ── Controller feedback overlays ──
             _uiRoot = uiRoot;
@@ -533,6 +534,7 @@ namespace SudokuRoguelike.UI
 
             if (_map == null) return;
             var run = _map.Run;
+            if (_gameOverPanel == null || !_gameOverPanel.activeSelf) RunLengthLog.Tick(run?.State, Time.unscaledDeltaTime);
 
             // GAP-029: gold granted by rewards, events or the shop shows at once, not only on the next path refresh.
             if (_goldLabel != null && run?.State != null && _shownGold != run.State.CurrentGold)
@@ -2856,7 +2858,7 @@ namespace SudokuRoguelike.UI
 
         // ─────────────────────────── Save / Resume ───────────────────────────
 
-        private void SaveAndQuit()
+        private bool TrySaveAndQuit()
         {
             Time.timeScale = 1f;
 
@@ -2876,7 +2878,7 @@ namespace SudokuRoguelike.UI
             {
                 SetStatus(T(decision.BlockedStatusKey));
                 Time.timeScale = 1f; // ensure timeScale stays unblocked
-                return;
+                return false;
             }
 
             if (decision.PersistenceAction == InRunSaveQuitPersistenceAction.SaveResumeState)
@@ -2934,6 +2936,7 @@ namespace SudokuRoguelike.UI
             // Seasonal challenge should land back on the Monthly Walk panel with refreshed PB info.
             if (decision.ShouldShowMonthlyWalkPanel)
                 FindFirstObjectByType<MainMenuController>()?.ShowMonthlyWalkPanel();
+            return true;
         }
 
         /// <summary>

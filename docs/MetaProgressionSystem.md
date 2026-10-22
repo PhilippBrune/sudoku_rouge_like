@@ -1,11 +1,12 @@
 # Meta Progression System
 
-**Version:** 1.14 | **Date:** 2026-10-21 | **Status:** implemented
+**Version:** 1.15 | **Date:** 2026-10-22 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.15 | 2026-10-22 | implemented | The Codex's Items page as in the mockup (owner: "implement UI-STYLE-017 to 026 if not done"): the rarity filter and "Best paired with" (META-CODEX-010). |
 | 1.14 | 2026-10-21 | implemented | Docs clean-up: the file table no longer lists `AscensionService.cs` (removed with Ascension, GAP-017); the monthly seed lives in `SeasonalChallengeService.BuildSeed`. |
 | 1.13 | 2026-10-21 | implemented | GAP-063 fixed (owner request 2026-10-21: "analyze, plan and fix"): META-XP-007 (the Level 30 starting item) and META-XP-008 (the Level 40 frame) are granted; SPEC-CONF-041 decided for the XP stroke on the Meta Progression screen. |
 | 1.12 | 2026-10-21 | implemented | The Meta Progression screen is the garden of classes (UI-STYLE-019, owner pick): new META-UNLOCK-006 (each locked class shows its goal with its progress), META-STATS-001 (Garden Runs and best floor per class). META-XP-006 now says where the schedule lives (ClassCatalog) and that it is shown in the player's language; the Koi Gambler's and Lantern Seer's passive steps name the values the game uses. The XP stroke on this screen is logged as SPEC-CONF-041 (ClassXpProgressionSystem says no bar). |
@@ -193,6 +194,7 @@ Completion percentage is displayed on the meta progression panel.
 - **[META-CODEX-007]** Codex accessible from main menu "Items" button
 - **[META-CODEX-008]** Curses met in any run (taken, also when cleansed later) are recorded and shown on the Codex's Curses page. They are merged into the save at the run's end and on every autosave, so a run saved and quit to the menu shows them too. Old saves start with none. A curse id this build does not know stays in the save (a newer build may have added it); the Codex lists only the curses of the catalog.
 - **[META-CODEX-009]** Each item's entry counts how often it was **found** (every pickup from a reward or the shop) and **used**. Uses are counted once, at the run's end (autosaves do not count them); an item the Codex has not found (a starting item, the tutorial's) is not counted, so a count never reveals an unknown item. Entries from before the counters show "found once", and their next pickup counts as the second.
+- **[META-CODEX-010]** The Items page filters by rarity as well (Every rarity · Normal · Rare · Epic, one press each; an item shows under every rarity it can have: a tiered item under all three, a fixed one under its own). An item a class claims names that class under **Best paired with**: the class whose Level 30 runs start with it (META-XP-007) and the class it is exclusive to.
 
 The Codex is shown as a collector's book (layout-proposals.md, UI-STYLE-018): bookmarks Items, Relics, Rules (the boss modifiers) and Curses with their counts, a filter (All, Found, Not yet found), the entries as tiles and the chosen entry on the right page with the collection's goal.
 

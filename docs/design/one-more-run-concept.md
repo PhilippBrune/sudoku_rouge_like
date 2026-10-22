@@ -1,11 +1,12 @@
 # One more run: making Run of the Nine feel like a roguelike
 
-**Version:** 1.0 | **Date:** 2026-10-21 | **Status:** review (concept for the owner's pick; nothing built)
+**Version:** 1.1 | **Date:** 2026-10-22 | **Status:** review (the first slice of §5 is built; the other proposals wait for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.1 | 2026-10-22 | review | Owner request: "implement 5. A first slice for the next update and measure the run length to decide on RM-113. Do not change the amount of floors!" RM-110, RM-111, RM-112 and RM-115 built; the run-length measures of §6 are recorded in the game and read by `tools/playtest/run_length_report.py`; five floors stay. See §8. |
 | 1.0 | 2026-10-21 | review | First concept, at the owner's request: what makes a player start one more run, what the game already has, what is missing, and twelve proposals ranked by effect and effort (suggested RM-110 to RM-121). |
 
 ## 1. What pulls a player into one more run
@@ -96,6 +97,20 @@ the playtests (and from Steam's own stats where they exist) note:
 | Sessions with two or more runs | more than half |
 | Where runs end (floor) | spread over the floors, not a wall on one |
 | What the player says after a loss | "I know what to do next time" |
+
+## 8. As built (1.1, 2026-10-22)
+
+| Proposal | In the game | Requirement |
+|---|---|---|
+| RM-110 Walk again | Every run end (the Garden Run scroll, the Endless Zen, Spirit Trials and Monthly Walk results) shows **Walk again** first and focused, Back to the garden gate under it. The next run starts at once with the same class, mode, Harmony and perk (and Spirit Trials tier); the Monthly Walk starts the month's garden again. Tutorials and custom puzzles keep Back only. | RUN-AGAIN-001 |
+| RM-111 So close | Under "This run" a lost Garden Run names where it ended ("So close: the Floor 3 boss, 9 cells from the end") and the best floor with the class; lost trials and walks note the cells left. | RUN-END-NEAR-001 |
+| RM-112 What this run moved | The same block lists up to three things the run moved: a newly opened Harmony, the class unlocks it brought closer (closest first), the Codex, or what opens the next Harmony. | RUN-END-MOVED-001 |
+| RM-115 Wagers you can feel | The cursed tile shows the gold and XP in numbers ("Gold 34 → 51 (+50%)"); the boss gate says what the fight pays and what a struck trial costs in XP. | STAKES-001 |
+| §6 Measure the run length | The game counts how long each run was open, the time to its first path choice and the gap since the previous run of the session, and keeps the last 200 runs in the save (on this PC only). `python tools/playtest/run_length_report.py` prints the §6 table and the verdict on RM-113 (a short walk only if a won Harmony 0 run takes over 45 minutes). The run-end banner names the run's length. | RUN-LENGTH-001 |
+
+Not built: RM-113 (waits for the measures; the floor count stays five), RM-114 and the rest of §4.
+
+**For the next playtests:** play two or three runs in one sitting, then run the report on the playtester's save (`AppData/LocalLow/Kratossos/sudoku_rouge_like/save_profile_*.json`, or pass the file sent in).
 
 ## 7. Open questions for the owner
 

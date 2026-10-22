@@ -1,11 +1,12 @@
 # Legal check: Run of the Nine (October 2026)
 
-**Version:** 1.0 | **Date:** 2026-10-21 | **Status:** review (owner's request: "Check if the game violates any laws")
+**Version:** 1.1 | **Date:** 2026-10-22 | **Status:** review (owner's request: "Check if the game violates any laws")
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.1 | 2026-10-22 | review | GAP-068 completed (owner: "implement GAP-068"): every standalone build gets the `Licenses` folder from an editor build step, and the Credits show the texts (LEGAL-LICENSE-001). The game shows a clean Roboto attribution (`Roboto-ATTRIBUTION.txt`); `Roboto-NOTICE.md` stays the internal note. |
 | 1.0 | 2026-10-21 | review | First check of the game, the repository and the release setup against the laws and platform rules that apply to a German developer selling a PC game on Steam worldwide. |
 
 > This is a technical check from the code, the build and the documents, not legal advice. Points marked **Check** need
@@ -24,7 +25,7 @@ texts were not in the build). The open points are about the store and the busine
 | Gambling and loot boxes | The Koi Gambler and "Double or Quits" risk in-game gold or 1 HP on chance. No real money, nothing to buy, nothing to cash out, so not gambling (GlüStV § 3) and no paid loot boxes. | OK; declare "simulated gambling" in the content survey |
 | Age rating | No violence, no real gambling; simulated chance with game gold. | **Check** the Steamworks content survey and, if Steam offers it for the app, a free IARC/USK rating for Germany |
 | AI-generated content (Steam rules) | Art made with Fooocus, code and texts with AI assistance (Credits). Valve requires a disclosure of pre-generated AI content in the content survey; it is shown on the store page. | **Check** that the survey for App 4858470 lists art, text and any AI music |
-| Licences of bundled code and font | Roboto (Apache 2.0) and Steamworks.NET (MIT) require their licence text to travel with the game. The Credits name them but point to repository paths; the 0.2.0 build had no licence files. | **Fixed for 0.2.1**: `Licenses/` folder in the build (GAP-068) |
+| Licences of bundled code and font | Roboto (Apache 2.0) and Steamworks.NET (MIT) require their licence text to travel with the game. The Credits named them but pointed to repository paths; the 0.2.0 build had no licence files. | **Fixed** (GAP-068): `Licenses/` in every build (automatic since 1.1) and the full texts on the Credits screen |
 | AI art and copyright | Images made by a model without enough human creative input are, in the EU and the US, likely not protected by copyright: others could reuse them. Using them is allowed (SDXL's CreativeML Open RAIL++-M licence permits commercial use; Fooocus is GPL software, which does not cover its outputs). | OK; a business risk, not a legal one |
 | Music | The shipped music, SFX and UI sounds are project-made synthesis (provenance register). Mureka-made music is not in the game; `audio/music_new` is empty. If Mureka tracks are added, the paid plan's commercial terms apply. | OK |
 | Trademarks | "Run of the Nine": no search on record. "Sudoku" is a Nikoli trademark in Japan and generic elsewhere. | **Check** a DPMA/EUIPO search before the full release |
@@ -50,14 +51,15 @@ texts were not in the build). The open points are about the store and the busine
 
 | Component | Licence | Duty | 0.2.1 |
 |---|---|---|---|
-| Roboto Regular (`Assets/Resources/Fonts/MainFont.ttf`) | Apache 2.0 | Give recipients a copy of the licence and the NOTICE | `Licenses/APACHE-2.0.txt`, `Licenses/Roboto-NOTICE.md` |
+| Roboto Regular (`Assets/Resources/Fonts/MainFont.ttf`) | Apache 2.0 | Give recipients a copy of the licence and keep the attribution | `Licenses/APACHE-2.0.txt`, `Licenses/Roboto-ATTRIBUTION.txt` (0.2.1 shipped the internal `Roboto-NOTICE.md` instead) |
 | Steamworks.NET (compiled into the game) | MIT | Include the copyright and permission notice with copies | `Licenses/Steamworks.NET-LICENSE.md` |
 | Steamworks API (`steam_api64.dll`) | Steamworks SDK Access Agreement | Redistribution allowed for Steam games | nothing to add |
 | Google Mobile Dependency Resolver | Apache 2.0 | Editor-only, not in the build | nothing to add |
 | Unity runtime | Unity terms | covered by the Unity licence | nothing to add |
 
-Next step after 0.2.1: the Credits screen could show the licence texts itself instead of repository paths, so the duty
-does not depend on the build folder.
+Since 1.1 (LEGAL-LICENSE-001) the duty no longer depends on packaging: `LicenseFilesBuildStep` copies the three texts
+into `Licenses/` after every standalone build, and the Credits end with a **Licence Texts** section that shows them in
+full (bundled in `Resources/Legal`, kept equal to `docs/legal/third-party` by `ThirdPartyLicensesTests`).
 
 ### Gambling-like content
 
@@ -73,4 +75,4 @@ does not depend on the build folder.
    status (DSA), and, if offered, an IARC/USK rating. Screenshots before saving, as usual.
 2. Before the full release: trademark search for "Run of the Nine"; an Impressum on any website or public page.
 3. Tax adviser: business registration and the tax side of Steam income.
-4. Keep the `Licenses/` folder in every build (`docs/release/platform-release-manifest.md`, build checklist).
+4. Nothing to do for the licence texts any more: every build carries them (since 1.1).

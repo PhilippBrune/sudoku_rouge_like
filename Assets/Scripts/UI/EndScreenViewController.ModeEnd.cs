@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SudokuRoguelike.Run;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -21,6 +22,7 @@ namespace SudokuRoguelike.UI
             public string RecordHeader, RecordValue, RecordLine;
             public bool NewBest;
             public readonly List<string> Notes = new List<string>();
+            public RunAgain.Kind Again;
         }
 
         private void ShowModeEndScroll(ModeEndSummary end)
@@ -44,11 +46,7 @@ namespace SudokuRoguelike.UI
                 ScrollUiKit.Label(slip.transform, "Text", string.Join("\n", end.Notes), 20, TextAnchor.MiddleLeft, ScrollUiKit.Ink,
                     new Vector2(0.06f, 0.08f), new Vector2(0.94f, 0.92f), 12);
             }
-            var back = ScrollUiKit.PillButton(screen, "BtnModeEndBack", new Vector2(0.62f, 0.135f), new Vector2(0.84f, 0.195f),
-                T("InRun.End.Scroll.Back"), 26, ScrollUiKit.Vermilion, Color.white, 30f);
-            back.onClick.AddListener(() => OnReturnToMenuPressed?.Invoke());
-            var events = UnityEngine.EventSystems.EventSystem.current;
-            if (events != null) events.SetSelectedGameObject(back.gameObject);
+            BuildEndButtons(screen, "BtnModeEndBack", new Vector2(0.62f, 0.135f), new Vector2(0.84f, 0.195f), end.Again);
         }
 
         // The numbers of this attempt on a tally paper, the closing line at its foot.

@@ -1,11 +1,12 @@
 # Open points
 
-**Version:** 1.6 | **Date:** 2026-10-22 | **Status:** review (a living list; update it whenever an item closes or a new one opens)
+**Version:** 1.7 | **Date:** 2026-10-22 | **Status:** review (a living list; update it whenever an item closes or a new one opens)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.7 | 2026-10-22 | review | The owner closed GAP-030, GAP-057 and GAP-062: no gap is open. |
 | 1.6 | 2026-10-22 | review | GAP-062, GAP-064, GAP-067, GAP-068 fixed, GAP-069 found and fixed; the one-more-run slice and the run-length measures built; the Codex rarity filter, "Best paired with" and the Trials tiers built. Open gaps: GAP-030 (listening), GAP-057 (not reproduced). |
 | 1.5 | 2026-10-21 | review | Select Class, Game Modes and the three mode results built (UI-STYLE-024 to 026); the main menu stays (owner); GAP-065 and GAP-066 fixed; GAP-064 planned with three rules for the owner, GAP-067 logged; the one-more-run concept and the legal check wait for the owner; 0.2.1 built. |
 | 1.4 | 2026-10-21 | review | Input Lock option and the washi window built; proposals for the main menu, Select Class and Game Modes wait for the owner's pick; GAP-064 and GAP-065 logged. |
@@ -19,20 +20,6 @@ This list collects what is still open across the project. Bugs keep their detail
 page points to them.
 
 ## 1. For the next playtest review
-
-### GAP-057: the menu music on a volume change (not reproduced)
-
-In the 0.2.0 playtest, changing a sound volume in a puzzle started the menu music. A test that starts the real game,
-enters a puzzle, opens its Options and presses every volume button and Mute all could not make it happen: the floor
-music keeps playing and the menu music stays off (`InRunAudioPlayModeTests`). The gap stays open.
-
-Questions for the playtest, if it happens again:
-
-- Which screen was open: the puzzle, the garden path, the reward, the shop, the boss gate?
-- Which control: a volume arrow, Mute all, Mute when unfocused, the menu music style, Reset?
-- Keyboard and mouse, or a controller?
-- Which floor, and was it the first puzzle of the run? (Before the first puzzle the path plays a generic track that may
-  sound like the menu.)
 
 ### New since the 0.2.0 build, to try at the next playtest
 
@@ -53,7 +40,7 @@ Questions for the playtest, if it happens again:
 | Reduce Motion | Options → Accessibility | With it on: no pulsing path nodes or boss node, no digit pops (GAP-066). |
 | Walk again and "This run" | End of any run | Walk again starts the next run at once (same class, mode, Harmony, perk); a lost run says how close it came and what it moved. Say if it makes you start another run. |
 | Run length | Play two or three runs in one sitting | Then run `python tools/playtest/run_length_report.py` (or send the save): it says whether a won Harmony 0 run takes over 45 minutes (RM-113). |
-| The D-pad on the menus | Codex, Game Modes, Options with a controller | The D-pad moves along rows and columns; an arrow key moves once (GAP-062). |
+| The D-pad on the menus | Codex, Game Modes, Options with a controller | The D-pad moves along rows and columns; an arrow key moves once (GAP-062, closed). |
 | Harmony perks | Moonshade Offering, Scholar's Burden, Empty Canvas | Moonshade: +2 pencil, first reward's first slot empty; Scholar's Burden: Ink Well in the bag, +5 pencil; Empty Canvas: Rare+ rewards. |
 | Numbers in the game's language | Any screen with numbers, English on a German PC | "XP ×1.4", "50,000" in English; "1,4", "50.000" in German (GAP-065). |
 | Class rewards at Level 30 and 40 | A class at Level 30+ (start a run), a class at 40 or prestiged (Meta Progression, the puzzle's class badge) | The run starts with the class's item; the frame in the class's colour. Say if Golden Koi, Rice Paper Umbrella and Temple Incense fit their classes. |
@@ -78,7 +65,7 @@ late floors harder for everyone; say if it feels too harsh.
 | Apple Developer account (99 USD a year) for signing and notarizing the macOS build | Without it macOS warns about or blocks the game | platform plan, decision 2 |
 | Steam Input default layout or the Input System rewrite for controllers | The rewrite is planned as the default (it is needed for the Deck either way); Steam Input could be added on top | platform plan, decision 3 |
 | A Mac and a Steam Deck (or a Linux PC) for a first start | A build that was never started on the system should not be published | platform plan, risks |
-| Listening to the 8-bit soundtrack set | The music loops are still the short placeholders (GAP-030) | `steam_assets/audio_8bit/synth`, `docs/audio-8bit-prompts.md` |
+| The 8-bit soundtrack set (optional) | The game's audio is accepted as it is (GAP-030 closed); the longer 8-bit loops would replace the 6-second ones if you want them | `steam_assets/audio_8bit/synth`, `docs/audio-8bit-prompts.md` |
 | Pick from the rest of the one-more-run concept (RM-113, RM-114, RM-116 to RM-121) | The first slice is built; RM-113 waits for the run-length report | `docs/design/one-more-run-concept.md` §4, §8 |
 | Legal check: Steamworks content survey (AI content, simulated gambling), trader status (DSA), trademark search, Impressum, tax | No law broken by the game; these are store and business duties | `docs/legal/legal-check-2026-10.md` |
 | Sign-offs SPEC-CONF-008 (class balance values) and SPEC-PROC-007 (legal wording) | Open owner sign-offs | [SPECIFICATION_ISSUES](SPECIFICATION_ISSUES.md) |

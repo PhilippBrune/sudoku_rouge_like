@@ -33,7 +33,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-020](#gap-020) | No seed entry / View Seed / Abandon Run / View Modifiers | FIXED (1.1) | MEDIUM | P2 |
 | [GAP-021](#gap-021) | Accepted boss relic was not added (observed via resume path) | FIXED (1.1) | MEDIUM | P2 |
 | [GAP-023](#gap-023) | Class stats/passives/levels: 3-way spec conflict; no "base (+bonus)" display | FIXED (1.1) | MEDIUM | P2 |
-| [GAP-030](#gap-030) | Audio assets are not valid WAV files; audio unverifiable | PARTIALLY FIXED (clips load; listening pending) | MEDIUM | P2 |
+| [GAP-030](#gap-030) | Audio assets are not valid WAV files; audio unverifiable | CLOSED (owner, 2026-10-22: the audio is accepted as it is) | MEDIUM | P2 |
 | [GAP-037](#gap-037) | Codex discoveries (and in-run option changes) are overwritten by the next autosave | FIXED (1.1) | MEDIUM | P2 |
 | [GAP-022](#gap-022) | Path map: hidden "?" tiles, many cross-links, no player marker | FIXED (1.1) | LOW | P3 |
 | [GAP-024](#gap-024) | Rest node gives +MaxHP/3 HP and +4 pencil (spec +2 / +3) | FIXED (1.1, spec aligned) | LOW | P3 |
@@ -65,7 +65,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-054](#gap-054) | Cleared cursed puzzles never earned their run-score bonus | FIXED (found and fixed 2026-10-20) | MEDIUM | P3 |
 | [GAP-055](#gap-055) | The reward tally showed 00:00 as the puzzle's time | FIXED (0.2.0 playtest, 2026-10-20) | LOW | P4 |
 | [GAP-056](#gap-056) | Number keys did nothing on the scenes over the path; more than three reward plaques ran off the screen | FIXED (0.2.0 playtest, 2026-10-20) | MEDIUM | P3 |
-| [GAP-057](#gap-057) | Changing a volume in a puzzle started the menu music | OPEN (not reproduced, 0.2.0 playtest) | LOW | P3 |
+| [GAP-057](#gap-057) | Changing a volume in a puzzle started the menu music | CLOSED (owner, 2026-10-22: not reproduced) | LOW | P3 |
 | [GAP-058](#gap-058) | From the second board of a run on, lines were drawn over the digits | FIXED (0.2.0 playtest, 2026-10-20) | MEDIUM | P2 |
 | [GAP-059](#gap-059) | Mistakes counted toward the run only when a puzzle was solved | FIXED (0.2.0 playtest, 2026-10-20) | MEDIUM | P3 |
 | [GAP-060](#gap-060) | The trial the Warding Flame removed came back after Save & Quit at the boss gate | FIXED (found in review, 2026-10-21) | LOW | P3 |
@@ -77,7 +77,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-067](#gap-067) | Moonshade Offering's "+2 starting pencil" did nothing (the run starts at full pencil) | FIXED (2026-10-22) | LOW | P3 |
 | [GAP-064](#gap-064) | Scholar's Burden: no free Ink Well, "+5 pencil" did nothing, "−1 slot" could add a slot | FIXED (as planned, 2026-10-22) | MEDIUM | P3 |
 | [GAP-063](#gap-063) | Class levels 30 and 40 promised rewards the game did not grant (starting items, frames) | FIXED (2026-10-21) | MEDIUM | P2 |
-| [GAP-062](#gap-062) | Main menu: the D-pad stepped through a panel in creation order, and arrow keys could move twice | FIXED (2026-10-22; check with a controller in the player) | MEDIUM | P2 |
+| [GAP-062](#gap-062) | Main menu: the D-pad stepped through a panel in creation order, and arrow keys could move twice | CLOSED (fixed 2026-10-22; closed by the owner) | MEDIUM | P2 |
 | [GAP-044](#gap-044) | Region borders showed the previous puzzle's regions on a same-size board | FIXED (found 2026-10-14 by the owner) | HIGH | P1 |
 | [GAP-043](#gap-043) | Without the `ActiveProfileSlot` pref the game opens an empty slot 0, not the existing profile | FIXED (0.1.5, found 2026-10-14) | LOW | P3 |
 
@@ -649,7 +649,7 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 **Audio assets are not valid WAV files; audio unverifiable**
 
 - **Requirement:** REQ-AUDIO-100/101
-- **Status:** PARTIALLY FIXED (headers 2026-10-05; clip loading verified 1.1, see [1.1 fix log](#fix-log-2026-10-07-release-110)). Open: listening check; the music loops are 6.0 s mono · **Severity:** MEDIUM · **Priority:** P2
+- **Status:** CLOSED by the owner (2026-10-22). Headers fixed 2026-10-05, every release clip loads since 1.1 ([1.1 fix log](#fix-log-2026-10-07-release-110), `AudioClipPlayModeTests`); the listening check is the owner's, and the audio is accepted as it is. Longer music loops stay an option (the 8-bit set in `steam_assets/audio_8bit/synth`, `docs/audio-8bit-prompts.md`), not a gap · **Severity:** MEDIUM · **Priority:** P2
 - **Problem:** All 14 music files and the SFX files under `Assets/Resources/audio/` have a `.wav` extension, but none starts with a `RIFF` header (all music files are 529,232 bytes). `AudioAssetServiceTests.ReleaseRequiredClips_HaveAuthoredAssetFilesAndMetas` and `MenuMusicController_InitializeRestoresMissingAudioSource` fail. Audio could not be judged by ear in this review, and the player log contains no audio lines.
 - **Suggested Fix:** Re-export the source audio as real WAV/OGG, re-import, and confirm `AudioClip` loads (log clip length at startup). Then run a manual listening checklist: menu, each floor, puzzle, boss layer, stingers, volume sliders, mute, mute-when-unfocused.
 - **Affected Files:** `Assets/Resources/audio/**`, `Assets/Scripts/UI/AudioAssetService.cs`, `MenuMusicController.cs`, `RunAudioController.cs`
@@ -942,10 +942,10 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 **Changing a volume in a puzzle started the menu music**
 
 - **Requirement:** AUDIO-MUSIC (run music stays the floor's), UI-OPT-001
-- **Status:** OPEN — not reproduced (owner's 0.2.0 playtest, 2026-10-20) · **Severity:** LOW · **Priority:** P3
+- **Status:** CLOSED by the owner (2026-10-22): not reproduced (owner's 0.2.0 playtest, 2026-10-20) · **Severity:** LOW · **Priority:** P3
 - **Report:** In a puzzle, changing a sound volume started the menu music.
 - **Checked:** `InRunAudioPlayModeTests.InRunVolumeChange_DoesNotStartTheMenuMusic` runs the real `GameBootstrap`, launches a Garden Run, enters a puzzle, opens the puzzle's Options and presses every volume button and Mute all. The menu's music player stays off (its object is inactive during runs) and the floor track keeps playing. On the path, before the first puzzle, the run plays its generic `puzzle_loop` track, which may sound like the menu.
-- **Next step:** on the list for the next playtest review ([OPEN_POINTS](OPEN_POINTS.md) §1) with the questions to answer: which screen, which control, keyboard or controller, which floor. The test stays as a guard.
+- **Closed:** the test stays as a guard. If it shows again, a new gap with the screen, the control, keyboard or controller and the floor.
 
 ## GAP-058
 **From the second board of a run on, lines were drawn over the digits**
@@ -990,12 +990,12 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 **Main menu: the D-pad stepped through a panel in creation order, and arrow keys could move twice**
 
 - **Requirement:** INPUT-NAV-001 (InputAndProfilesSpec 2.1; the entry first cited REQ-UI-102, which is the language requirement), UI-STYLE-017 and UI-STYLE-018 (the D-pad follows the page: bookmarks, lines, the Codex's tile grid)
-- **Status:** FIXED (owner: "analyze, plan and fix", 2026-10-22; found while building the Codex book; still to check with a controller in the player) · **Severity:** MEDIUM · **Priority:** P2
+- **Status:** CLOSED (fixed 2026-10-22, owner: "analyze, plan and fix"; closed by the owner the same day; found while building the Codex book) · **Severity:** MEDIUM · **Priority:** P2
 - **Problem:** On every main-menu panel, `MainMenuController.HandleMenuGamepadNavigation` moves the focus to the next or previous control in creation order on any Up/Down/Left/Right press (D-pad buttons, D-pad axes, left stick, arrow keys). So the D-pad ignores the panel's layout: in the Codex, Down goes one tile to the right instead of one row down, and the D-pad links the panels set (the Codex's grid, the Options lines) are not used. Unity's `StandaloneInputModule` reads the arrow keys and the left stick too (Input Manager axes Horizontal/Vertical) and moves along those links in the same frame, so an arrow key or a stick push may move the focus twice.
 - **Why it is there:** commit 92933d2 (Steam review, 2026-07-03) added the cycle because the legacy module does not read the D-pad on many controllers.
 - **Analysis (2026-10-22):** the cycle was the only way the D-pad moved on the main menu, because the legacy `StandaloneInputModule` reads only the Input Manager axes (arrow keys, left stick). Arrow keys and the stick were read twice: by the module (along the links) and by the cycle (to the next control in creation order). The Input System package is already in the project (`activeInputHandler` = both), so the D-pad can be read through `Gamepad.dpad` without waiting for the platform work.
 - **Fix:** `MenuDpad` reads the D-pad (Input System `Gamepad.dpad`, plus the legacy D-pad buttons 12–15 some pads report) and `HandleMenuGamepadNavigation` takes one step along the focused control's own link (`FindSelectableOnUp/Down/Left/Right`, which follows explicit links and falls back to Unity's automatic neighbour), once per press; with no focus on the panel the first control is chosen. Arrow keys and the stick are left to the input module, so nothing moves twice. The in-run screens were not affected (they read the D-pad themselves).
-- **Tests:** `MenuDpadPlayModeTests` (the Codex's Down goes one row down, not to the next tile; Game Modes along the curtains and down to the way in; the menu no longer reads the arrow keys or cycles). A real controller in the player is still to check (OPEN_POINTS).
+- **Tests:** `MenuDpadPlayModeTests` (the Codex's Down goes one row down, not to the next tile; Game Modes along the curtains and down to the way in; the menu no longer reads the arrow keys or cycles). A check with a real controller in the player is part of the normal playtests.
 ## GAP-063
 **Class levels 30 and 40 promise rewards the game does not grant**
 

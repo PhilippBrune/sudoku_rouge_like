@@ -7,7 +7,7 @@ param([switch]$WithLibrary)
 $src = Resolve-Path (Join-Path $PSScriptRoot '..')
 $dst = Join-Path $env:TEMP 'sr_testcopy'
 $exclude = @('.git', 'build', 'build.app', 'TestResults', 'Temp', 'Logs', 'obj', 'bin', 'foocus_api', '.claude', '.vs', '.vscode',
-             'ProfilerCaptures', 'ai')
+             'ProfilerCaptures', 'ai', 'graphify-out')
 if (-not $WithLibrary) { $exclude += 'Library' }
 $xd = @(); foreach ($d in $exclude) { $xd += (Join-Path $src $d) }
 & robocopy $src $dst /MIR /R:0 /W:0 /NFL /NDL /NP /NJH /XF '*.lscache' /XD @xd | Select-Object -Last 3

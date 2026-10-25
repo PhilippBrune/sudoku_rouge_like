@@ -145,3 +145,6 @@ steam_assets/audio_8bit/synth/
 
 # Layout mockups: the committed images are the JPGs (render.ps1 writes PNGs)
 docs/design/layout-proposals/*.png
+
+# graphify code graph (local, rebuilt with `graphify update .`)
+graphify-out/

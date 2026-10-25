@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.2.2 beta: 8th iteration (2026-10-25)
+
+A playtest build for the password beta branch. It makes the end of a run the start of the next one: Walk again,
+what the run came close to and what it moved, and the stakes of a choice in numbers. Three Harmony perks now do what
+they say, and the D-pad moves through the menus as they look. Five floors per run, as before.
+
 ### New
 
 - **Walk again:** every run end (the Garden Run, Endless Zen, Spirit Trials, the Monthly Walk) has Walk again as its first button: the next run starts at once with the same class, mode, Harmony and perk.

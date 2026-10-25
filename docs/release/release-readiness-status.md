@@ -1,6 +1,6 @@
-# Release Readiness Status — 0.2.1
+# Release Readiness Status: 0.2.2 beta
 
-Updated 2026-10-21 · Milestone: **Steam build v0.2.1 (7th iteration)**, built and smoke-tested, not uploaded; the previous milestones were Steam build v0.2.0 (6th iteration) and its beta
+Updated 2026-10-25 · Milestone: **Steam build v0.2.2 beta (8th iteration)** for the password beta branch (playtest of the one-more-run slice, the fixed perks and the D-pad); the previous milestones were Steam build v0.2.1 (7th iteration) and v0.2.0 (6th iteration)
 
 ## Evidence
 
@@ -10,10 +10,10 @@ Updated 2026-10-21 · Milestone: **Steam build v0.2.1 (7th iteration)**, built a
 
 | Suite | Total | Passed | Failed | Skipped | Date |
 |-------|------:|-------:|-------:|--------:|------|
-| EditMode | 689 | 661 | 0 | 28 (`[Explicit]` review diagnostics and the translation export) | 2026-10-21 |
-| PlayMode | 105 | 85 | 0 | 20 (`[Explicit]` screenshot diagnostics) | 2026-10-21 |
+| EditMode | 712 | 684 | 0 | 28 (`[Explicit]` review diagnostics and the translation export) | 2026-10-25 |
+| PlayMode | 110 | 90 | 0 | 20 (`[Explicit]` screenshot diagnostics) | 2026-10-25 |
 
-Windows x64 player build 0.2.1: built 2026-10-21 (B30, with the licence texts in `Licenses/`) and smoke-tested (B31: reaches the main menu with "Version 0.2.1", no exception in the player log; saves unchanged, PlayerPrefs restored), `docs/review/E2E_TEST_REPORT.md` §12. Before it: 0.2.0 beta B28/B29 (§11).
+Windows x64 player build 0.2.2 beta: built 2026-10-25 (B32, with `Licenses/`) and smoke-tested (B33: "Version 0.2.2" on the main menu, no exception in the player log; one of two starts ended with a D3D12 present error after Steam started, not reproduced; saves and PlayerPrefs restored), `docs/review/E2E_TEST_REPORT.md` §13. Before it: 0.2.1 B30/B31 (§12), 0.2.0 beta B28/B29 (§11).
 
 Previous build (0.1.5): smoke test B01–B15 passed (fresh install, first-run setup, seed entry, path map, wrong-digit rule, Save & Quit and Resume, reward reroll, codex persistence, Abandon & Begin; no exception in the player log); display modes B16–B19, Steam names, window title and save folder B23–B25, the uploaded 0.1.5 build B26–B27 (`docs/review/E2E_TEST_REPORT.md` §10.2b–§10.2e).
 
@@ -29,4 +29,4 @@ All gates with their state are in `docs/release/platform-release-manifest.md`. O
 
 ## Repository state
 
-The 0.2.1 change set is committed on `feature/game-ui-refactor`, tagged `v0.2.1` and pushed with the owner's OK (2026-10-21); `CHANGELOG.md` 0.2.1 lists it; `docs/repository-working-tree-triage.md` describes how the 0.1.5 set was grouped.
+The 0.2.2 beta change set is committed on `feature/game-ui-refactor` and tagged `v0.2.2-beta` locally (not pushed); `CHANGELOG.md` 0.2.2 beta lists it. 0.2.1 was tagged `v0.2.1` and pushed with the owner's OK (2026-10-21).

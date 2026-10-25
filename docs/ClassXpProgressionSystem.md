@@ -1,11 +1,12 @@
 # Class XP & Level Progression System
 
-**Version:** 1.6 | **Date:** 2026-10-21 | **Status:** implemented
+**Version:** 1.7 | **Date:** 2026-10-22 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.7 | 2026-10-22 | implemented | Owner sign-off of the class balance values (SPEC-CONF-008): the base stats, passives, unlock conditions and level schedules in this document stand as documented. No value changed. |
 | 1.6 | 2026-10-21 | implemented | GAP-063 fixed (owner request 2026-10-21: "analyze, plan and fix"): the Level 30 starting item is given at run start (META-XP-007) and the Level 40 frame is shown (META-XP-008, kept after prestige). Three Level 30 items that did not exist are replaced by existing items that fit the class: Koi Gambler **Golden Koi** (was "Lucky Charm"), Stone Gardener **Rice Paper Umbrella** (was "Harmony Charm"), Reed Duelist **Temple Incense** (was "Tea of Focus"). §UI Placement describes the garden of classes (SPEC-CONF-041 decided: the XP stroke and the totals, no "Most Progressed Class" line). |
 | 1.5 | 2026-10-21 | implemented | Schedule texts follow the code (SPEC-CONF-008: the code is the source): Koi Gambler L10 "correct gold chance 35%", L20 "no-HP-loss chance 35%"; Lantern Seer L10 "modifiers 35% weaker", L25 "40% weaker" (`ClassPassiveService`). The L30 starting items and L40 frames are listed but not granted (GAP-063). The Meta Progression screen's XP stroke (UI-STYLE-019) differs from "UI Placement" below: SPEC-CONF-041. |
 | 1.4 | 2026-10-20 | implemented | Owner decision (SPEC-CONF-039): the prestige reward is the badge plus **+1 starting gold per prestige tier** for runs with that class (at most +9); "Passive tier +1" is dropped. |

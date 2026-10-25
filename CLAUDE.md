@@ -38,7 +38,7 @@ ECC ([affaan-m/ECC](https://github.com/affaan-m/ECC), v2.2.3) is installed user-
 
 ## More skills and plugins (owner's pick, 2026-10-25)
 
-Installed user-wide: the plugins `ponytail` (DietrichGebert/ponytail 5.3.2) and `agent-skills` (addyosmani/agent-skills 0.6.13); in `~/.claude/skills` the skills `graphify` (Graphify-Labs, CLI in `~/.local/bin`), `grill-me`/`grilling`, `handoff`, `writing-for-agents` (mattpocock/skills, MIT) and `prompt-master`, `how-to`, `48` (alias `5`), `fable`, `personal-voice`, `anti-ai`, `write-a-skill` (written for this setup after Ruben Hassid's list). OmniRoute is not installed: it is an AI gateway server, not a skill set.
+Installed user-wide: the plugins `ponytail` (DietrichGebert/ponytail 5.3.2) and `agent-skills` (addyosmani/agent-skills 0.6.13); in `~/.claude/skills` the skills `graphify` (Graphify-Labs, CLI in `~/.local/bin`), `grill-me`/`grilling`, `handoff`, `writing-for-agents` (mattpocock/skills, MIT) and `prompt-master`, `how-to`, `48` (alias `5`), `fable`, `personal-voice`, `anti-ai`, `write-a-skill` (written for this setup after Ruben Hassid's list). OmniRoute stays out (owner, 2026-10-25): it is an AI gateway server that would route the project code through third-party providers, not a skill set.
 
 - `ponytail` is on in every session (its hooks): the smallest complete change. "Complete" includes what this file asks for: tests, requirement IDs, the five catalogs, spec bumps, screenshots.
 - ECC stays the workflow above. From `agent-skills` take single skills where they add something (`doubt-driven-development` for risky changes, `constraint-driven-development`, `shipping-and-launch` before a release), not its `/spec` `/plan` `/build` `/ship` as a second pipeline.

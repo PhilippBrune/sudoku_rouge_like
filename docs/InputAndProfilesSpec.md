@@ -1,6 +1,6 @@
 # Input, Controller Support & Save Profiles
 
-**Version:** 2.1  
+**Version:** 2.2  
 **Date:** 2026-10-22  
 **Status:** implemented
 
@@ -8,6 +8,7 @@
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.2 | 2026-10-22 | implemented | Owner decision (platform plan, decision 3): controllers reach the game through Steam Input's default layout as Xbox pads; no Steam Input API code. |
 | 2.1 | 2026-10-22 | implemented | GAP-062 (owner: "analyze, plan and fix"): on the main menu's panels the D-pad takes one step along the focused control's links, once per press (INPUT-NAV-001); arrow keys and the left stick stay with the UI input module. |
 | 2.0 | 2026-04-27 | implemented | Spec matched to the implementation (before this history). |
 
@@ -63,6 +64,8 @@ Controller input uses direct `Input` / `KeyCode` checks plus fixed gamepad defau
 - per-controller-type remapping UI
 
 Gamepad support is still present for core menu and puzzle navigation, but it is implemented through the existing custom input layer.
+
+The button numbers are those of an Xbox (XInput) pad on Windows. Other pads, and the Steam Deck (which runs the Windows build through Proton), are made to look like one by Steam Input's default layout in Steamworks (owner decision 2026-10-22, `docs/platform-ports-macos-linux.md` decision 3). This is a Steamworks setting, not code: the game has no Steam Input action sets.
 
 ## Main Menu and In-Run Input Model
 

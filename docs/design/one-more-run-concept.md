@@ -1,11 +1,12 @@
 # One more run: making Run of the Nine feel like a roguelike
 
-**Version:** 1.1 | **Date:** 2026-10-22 | **Status:** review (the first slice of §5 is built; the other proposals wait for the owner's pick)
+**Version:** 1.2 | **Date:** 2026-10-22 | **Status:** review (the first slice of §5 is built; RM-114 is picked; the other proposals wait for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.2 | 2026-10-22 | review | Owner answers to §7: keystone relics (RM-114) go next with RM-104, and a keystone may bend Sudoku's own rules ("let it bend the rules"), not only the economy. RM-113 is decided from the run-length report of the 0.2.2 playtest. |
 | 1.1 | 2026-10-22 | review | Owner request: "implement 5. A first slice for the next update and measure the run length to decide on RM-113. Do not change the amount of floors!" RM-110, RM-111, RM-112 and RM-115 built; the run-length measures of §6 are recorded in the game and read by `tools/playtest/run_length_report.py`; five floors stay. See §8. |
 | 1.0 | 2026-10-21 | review | First concept, at the owner's request: what makes a player start one more run, what the game already has, what is missing, and twelve proposals ranked by effect and effort (suggested RM-110 to RM-121). |
 
@@ -117,4 +118,4 @@ Not built: RM-113 (waits for the measures; the floor count stays five), RM-114 a
 1. Which of RM-110 to RM-121 go on the roadmap, and which first?
 2. Is a three-floor Short walk (RM-113) right for this game, or should runs stay five floors and get faster puzzles
    (smaller boards on Floors 1 and 2)?
-3. Keystones (RM-114): may a relic change Sudoku's rules (for example free pencil marks), or only the economy around them?
+3. ~~Keystones (RM-114): may a relic change Sudoku's rules (for example free pencil marks), or only the economy around them?~~ **Answered 2026-10-22:** it may bend the rules.

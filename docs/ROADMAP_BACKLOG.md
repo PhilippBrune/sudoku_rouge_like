@@ -1,11 +1,12 @@
 # Roadmap backlog: Run of the Nine
 
-**Version:** 1.4 | **Date:** 2026-10-22 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
+**Version:** 1.5 | **Date:** 2026-10-22 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.5 | 2026-10-22 | review | Owner picks: the Steam Deck next with Steam Input (RM-102; the Deck runs the Windows build, `docs/platform-ports-macos-linux.md` 1.1), and keystone relics that may bend Sudoku's rules with more relics, items and events (RM-114 with RM-104). |
 | 1.4 | 2026-10-22 | review | Owner pick: the first slice of the one-more-run concept built (RM-110 Walk again, RM-111 So close, RM-112 What this run moved, RM-115 Wagers you can feel) and the run length measured for RM-113; five floors stay. |
 | 1.3 | 2026-10-21 | review | RM-006 done (Select Class, Game Modes and the mode results in the new look; the main menu stays). Suggested RM-110 to RM-121 from the one-more-run concept (`docs/design/one-more-run-concept.md`), for the owner's pick. |
 | 1.2 | 2026-10-21 | review | Owner picks after the 0.2.0 playtest built: RM-006 (Pencil mode in indigo, the floor entry; Options, Codex and Meta Progression being built), RM-108 (levers L1, L2, L5, L6; L3 counter items next), RM-109 (per-puzzle grades). |
@@ -32,16 +33,17 @@ Horizons: **short term** = the next one to three updates, **mid term** = after t
 | ID | Item | What players get | Why | Effort |
 |---|---|---|---|---|
 | RM-101 | Seed leaderboards | A leaderboard for every Seed of the week and Monthly Walk, with a friends filter. | Makes seed sharing (RM-003) competitive; Steam leaderboards already exist in the game (`SteamLeaderboardService`). | M |
-| RM-102 | Steam Deck Verified | Readable at 1280×800, the on-screen keyboard for the seed field, Deck button glyphs. | The game is built controller-first, so most of the work is done; the Deck badge helps sales. | M |
+| RM-102 | Steam Deck Verified | Readable at 1280×800, the on-screen keyboard for the seed field, Deck button glyphs. | Owner pick 2026-10-22: next, with Steam Input; the Deck runs the Windows build through Proton, no build of its own (`docs/platform-ports-macos-linux.md` 1.1). | M |
 | RM-103 | A signature rule per boss | Each of the five bosses brings its own rule on top of the chosen trials (for example, the Koi Warden moves one given digit). | Bosses feel different, not only harder. | L |
-| RM-104 | More relics, items and events | A content pack: new relics with build-defining effects, new events with choices that matter. | Run variety is what brings players back to a roguelike. | M |
+| RM-104 | More relics, items and events | A content pack: new relics with build-defining effects, new events with choices that matter. | Owner pick 2026-10-22: together with the keystone relics (RM-114). | M |
 | RM-105 | Custom puzzle codes | Share a Custom Puzzle as a code; a "community puzzle of the week" on Discord. | Uses the same code idea as RM-003; gives the community something to make. | M |
 | RM-107 | macOS and Linux / SteamOS | The game on Mac (Intel and Apple Silicon) and Linux, Steam Deck included, with one cloud save on every system. | Plan: `docs/platform-ports-macos-linux.md`. First step: controller input that is the same on every OS (also RM-102). | M |
 | RM-108 | Gold and items that matter | Fewer but meaningful purchases: prices against income, gold to shape the boss, items that answer the floor's rules, leftover gold in the score. | Concept: `docs/design/gold-and-items-concept.md`; the owner picks the levers. | L1, L2, L3, L5, L6 built (GoldEconomySystem 2.2, ItemsAndRelicsSystem 2.3); balance check at the next playtest |
 | RM-109 | Mistakes that count fairly | Every mistake counts (done, GAP-059); how much depends on when it happens, for example a grade per puzzle on the end screen. | Proposals: `docs/design/mistake-scoring-proposals.md`. | built: per-puzzle grades (GameDesignSpec 1.14 §9c) |
 | RM-106 | More accessibility | Colour-blind safe colours for every overlay, a text size setting for all screens, a dyslexia-friendly font option. | Sudoku players skew older; accessibility widens the audience. | M |
 | RM-110, RM-111, RM-112, RM-115 | One more run, first slice | Built 2026-10-22: Walk again, So close, What this run moved, the stakes in numbers; the run length is measured in the game (RM-113 decided from it). | `docs/design/one-more-run-concept.md` §8 | done |
-| RM-113, RM-114, RM-116 to RM-121 | One more run | Walk again from the run end, "so close" and "what this run moved" on the end scroll, a short walk, keystone relics, wagers you can see, class challenges, a daily garden, early unlocks, pacts, a faster first choice, a rival run. | Roguelike pull after each run; details, effort and a first slice in `docs/design/one-more-run-concept.md`. | S to L each |
+| RM-114 | Keystone relics | After the first boss, one of three keystones that shape the run; a keystone may bend Sudoku's own rules (owner, 2026-10-22: for example free pencil marks). | Owner pick 2026-10-22, with RM-104. `docs/design/one-more-run-concept.md` §4. | M–L |
+| RM-113, RM-116 to RM-121 | One more run | A short walk, class challenges, a daily garden, early unlocks, pacts, a faster first choice, a rival run. | Roguelike pull after each run; details and effort in `docs/design/one-more-run-concept.md`. RM-113 waits for the run-length report of the 0.2.2 playtest. | S to L each |
 
 ## Long term (suggested)
 

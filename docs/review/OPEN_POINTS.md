@@ -1,11 +1,12 @@
 # Open points
 
-**Version:** 1.7 | **Date:** 2026-10-22 | **Status:** review (a living list; update it whenever an item closes or a new one opens)
+**Version:** 1.8 | **Date:** 2026-10-22 | **Status:** review (a living list; update it whenever an item closes or a new one opens)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.8 | 2026-10-22 | review | The owner signed off SPEC-CONF-008 and SPEC-PROC-007, chose Steam Input with the Steam Deck next (the Deck runs the Windows build), asked for a playtest build on the password beta branch with the content survey, and picked keystone relics that may bend Sudoku's rules (RM-114 with RM-104). |
 | 1.7 | 2026-10-22 | review | The owner closed GAP-030, GAP-057 and GAP-062: no gap is open. |
 | 1.6 | 2026-10-22 | review | GAP-062, GAP-064, GAP-067, GAP-068 fixed, GAP-069 found and fixed; the one-more-run slice and the run-length measures built; the Codex rarity filter, "Best paired with" and the Trials tiers built. Open gaps: GAP-030 (listening), GAP-057 (not reproduced). |
 | 1.5 | 2026-10-21 | review | Select Class, Game Modes and the three mode results built (UI-STYLE-024 to 026); the main menu stays (owner); GAP-065 and GAP-066 fixed; GAP-064 planned with three rules for the owner, GAP-067 logged; the one-more-run concept and the legal check wait for the owner; 0.2.1 built. |
@@ -56,19 +57,19 @@ late floors harder for everyone; say if it feels too harsh.
 
 | Item | State | Reference |
 |---|---|---|
-| Linux and Steam Deck, then macOS (RM-107) | Phase 1 next: controller buttons through the Input System, rumble through the Input System, Frameless Window hidden off Windows; then a Linux build | `docs/platform-ports-macos-linux.md` |
+| Steam Deck (RM-102, RM-107) | Decided 2026-10-22: Steam Input, the Deck runs the Windows build through Proton (no build of its own). Left: the Steam Input default layout and the compatibility review in Steamworks (owner), text of size 13 or more at 1280×800, the on-screen keyboard for the seed field, the Deck's button names | `docs/platform-ports-macos-linux.md` 1.1 |
+| Playtest build 0.2.2 on the password beta branch | Asked for 2026-10-22: Walk again, "This run", the fixed perks and the D-pad, two or three runs per sitting for the run-length report (RM-113); the content survey in the same Steamworks visit | `steam_assets/ReleaseNotes_v0.2.2-beta.md` |
+| Keystone relics (RM-114) with more relics, items and events (RM-104) | Owner pick 2026-10-22: a keystone may bend Sudoku's own rules (for example free pencil marks), not only the gold and items around them | `docs/design/one-more-run-concept.md` §4 |
 
 ## 3. Waiting for the owner
 
 | Decision | Why it matters | Reference |
 |---|---|---|
 | Apple Developer account (99 USD a year) for signing and notarizing the macOS build | Without it macOS warns about or blocks the game | platform plan, decision 2 |
-| Steam Input default layout or the Input System rewrite for controllers | The rewrite is planned as the default (it is needed for the Deck either way); Steam Input could be added on top | platform plan, decision 3 |
-| A Mac and a Steam Deck (or a Linux PC) for a first start | A build that was never started on the system should not be published | platform plan, risks |
+| A Steam Deck for a first start, and a Mac later | A build that was never started on the system should not be published; the Deck can test the beta branch | platform plan, risks |
 | The 8-bit soundtrack set (optional) | The game's audio is accepted as it is (GAP-030 closed); the longer 8-bit loops would replace the 6-second ones if you want them | `steam_assets/audio_8bit/synth`, `docs/audio-8bit-prompts.md` |
-| Pick from the rest of the one-more-run concept (RM-113, RM-114, RM-116 to RM-121) | The first slice is built; RM-113 waits for the run-length report | `docs/design/one-more-run-concept.md` §4, §8 |
+| Pick from the rest of the one-more-run concept (RM-113, RM-116 to RM-121) | RM-114 is picked; RM-113 waits for the run-length report from the 0.2.2 playtest | `docs/design/one-more-run-concept.md` §4, §8 |
 | Legal check: Steamworks content survey (AI content, simulated gambling), trader status (DSA), trademark search, Impressum, tax | No law broken by the game; these are store and business duties | `docs/legal/legal-check-2026-10.md` |
-| Sign-offs SPEC-CONF-008 (class balance values) and SPEC-PROC-007 (legal wording) | Open owner sign-offs | [SPECIFICATION_ISSUES](SPECIFICATION_ISSUES.md) |
 | Upload and release of 0.2.1, and a build with the changes since (CHANGELOG "Unreleased") | 0.2.1 is built, tagged and pushed (`steam_assets/ReleaseNotes_v0.2.1.md`); the newer commits are local | `CHANGELOG.md` |
 
 ## 4. Known technical leftovers

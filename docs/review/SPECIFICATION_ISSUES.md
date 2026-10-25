@@ -1,7 +1,7 @@
 # Specification Issues
 
 **Review date:** 2026-10-01 · **Scope:** all `docs/*.md` (52 files, ~8,800 lines) plus `REQUIREMENT_MAP.md`
-**Resolution pass:** 2026-10-07, release 1.1.0 ([status](#0-resolution-status-release-110)) · **Companion docs:** [FULL_GAME_REVIEW](FULL_GAME_REVIEW.md) · [GAME_GAPS](GAME_GAPS.md) · [REQUIREMENT_TRACEABILITY](REQUIREMENT_TRACEABILITY.md) · [E2E_TEST_REPORT](E2E_TEST_REPORT.md)
+**Resolution pass:** 2026-10-07, release 1.1.0 ([status](#0-resolution-status-release-110)); last owner sign-offs 2026-10-22 · **Companion docs:** [FULL_GAME_REVIEW](FULL_GAME_REVIEW.md) · [GAME_GAPS](GAME_GAPS.md) · [REQUIREMENT_TRACEABILITY](REQUIREMENT_TRACEABILITY.md) · [E2E_TEST_REPORT](E2E_TEST_REPORT.md)
 
 No conflict was resolved silently. Each entry names the documents involved, their version and date, what each one says, what the code does, which source *appears* current, and a recommendation. **The decisions are yours.** Where code follows neither document, a code change or a spec update is needed either way.
 
@@ -17,8 +17,8 @@ Contents: [Contradictions](#1-contradictions) · [Ambiguities](#2-ambiguous-requ
 
 | Group | Entries | Resolved in 1.1 | Open |
 |---|---:|---:|---|
-| Contradictions | 41 | 41 | SPEC-CONF-039 decided 2026-10-20, SPEC-CONF-041 on 2026-10-21. Owner sign-offs requested: SPEC-CONF-008 balance values, SPEC-PROC-007 legal wording. |
-| Ambiguities | 14 | 14 | Listening check for SPEC-AMB-011 (GAP-030). |
+| Contradictions | 41 | 41 | — (SPEC-CONF-039 decided 2026-10-20, SPEC-CONF-041 on 2026-10-21; the owner signed off SPEC-CONF-008 and SPEC-PROC-007 on 2026-10-22.) |
+| Ambiguities | 14 | 14 | — (SPEC-AMB-011's listening check ended when the owner accepted the audio and closed GAP-030, 2026-10-22.) |
 | Obsolete requirements | 13 rows | 13 | — |
 | Missing acceptance criteria | 11 | 9 | SPEC-MAC-005 (deferred, FUTURE-011), SPEC-MAC-011 (profiler session). |
 | Process | 7 | 5 | SPEC-PROC-002 partly; SPEC-PROC-006 needs nothing. |
@@ -124,7 +124,7 @@ Where a recommendation was doc-only but the matching gap asked for code (SPEC-CO
 - **Suggestions:**
   1. **The code is the source: document `ClassCatalog`'s current stats and passives (Koi 33 % / +3 gold / 2 relics, Lantern 30 % + preview, …) in ClassXpProgressionSystem, and reduce GDS §6 to a link.** *(recommended)* No gameplay change; needs a balance sign-off on the documented values. The level schedule (Number Freak L10 15/12) is documented as it is.
   2. **ClassXpProgressionSystem v1.2 is the source: change `ClassCatalog`, `ClassPassiveService` and `RunArchetypeService` to its stats, passives and level schedule.** A balance change for Reed Duelist, Quiet Cartographer and five passives, so existing players' classes play differently.
-- **Resolution (1.1, 2026-10-07):** Suggestion 1. ClassXpProgressionSystem 1.3 generated from `ClassCatalog`; GDS §6 is a link; "base (+bonus)" display (GAP-023). Found and fixed on the way: GAP-041. **Owner action:** balance sign-off on the documented values.
+- **Resolution (1.1, 2026-10-07):** Suggestion 1. ClassXpProgressionSystem 1.3 generated from `ClassCatalog`; GDS §6 is a link; "base (+bonus)" display (GAP-023). Found and fixed on the way: GAP-041. **Signed off** by the owner on 2026-10-22: the documented values stand.
 
 ### SPEC-CONF-009
 **Floor themes and names**
@@ -487,7 +487,7 @@ No requirement covers overwrite confirmation, recording the abandoned run (XP? s
 ### SPEC-AMB-011
 **Audio**
 AudioVisualDirection describes moods, layering and mixing, but no testable criteria: which clip plays in which context, ducking amount, loop points, volume curve, mute-when-unfocused behaviour.
-- **Resolution (1.1, 2026-10-07):** AudioVisualDirection 1.5 has a clip-per-context table generated from `AudioAssetService`. Evidence: `AudioClipPlayModeTests`. Listening check still open (GAP-030).
+- **Resolution (1.1, 2026-10-07):** AudioVisualDirection 1.5 has a clip-per-context table generated from `AudioAssetService`. Evidence: `AudioClipPlayModeTests`. Listening check done: the owner accepted the audio and closed GAP-030 (2026-10-22).
 
 ### SPEC-AMB-012
 **Performance budgets vs UX**
@@ -586,4 +586,4 @@ The review brief names `tickets/`, `tickets/ai-spec/`, `tickets/to_review/` and 
 - **Suggestions:**
   1. **Update the credits and third-party notices for Steamworks.NET (MIT) and the Steamworks SDK redistributables (Valve SDK licence), then update the test to assert the new notice.** *(recommended)* Required anyway for a Steam release.
   2. **Remove the binaries from the repository and fetch them in the build pipeline, keeping the current notice.** Keeps the repository free of SDK binaries; needs a build step.
-**Resolution (1.1, 2026-10-07):** Suggestion 1. Credits, third-party notices and in-game credits name Steamworks.NET (MIT, licence copy in `docs/legal/third-party/`) and the Valve redistributables; `CreditsLegalContentTests` and `LegalReleaseReadinessTests` assert the notice. **Owner action:** legal review of the wording.
+**Resolution (1.1, 2026-10-07):** Suggestion 1. Credits, third-party notices and in-game credits name Steamworks.NET (MIT, licence copy in `docs/legal/third-party/`) and the Valve redistributables; `CreditsLegalContentTests` and `LegalReleaseReadinessTests` assert the notice. **Signed off** by the owner on 2026-10-22: the wording stands.

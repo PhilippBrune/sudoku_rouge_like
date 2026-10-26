@@ -1,11 +1,12 @@
 # Roadmap backlog: Run of the Nine
 
-**Version:** 1.5 | **Date:** 2026-10-22 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
+**Version:** 1.6 | **Date:** 2026-10-26 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.6 | 2026-10-26 | review | Suggested RM-122 to RM-125 from the owner's requests of 2026-10-25 (concepts in `docs/design/`, for the owner's pick); 21 new achievements built (`docs/Achievements.md`). |
 | 1.5 | 2026-10-22 | review | Owner picks: the Steam Deck next with Steam Input (RM-102; the Deck runs the Windows build, `docs/platform-ports-macos-linux.md` 1.1), and keystone relics that may bend Sudoku's rules with more relics, items and events (RM-114 with RM-104). |
 | 1.4 | 2026-10-22 | review | Owner pick: the first slice of the one-more-run concept built (RM-110 Walk again, RM-111 So close, RM-112 What this run moved, RM-115 Wagers you can feel) and the run length measured for RM-113; five floors stay. |
 | 1.3 | 2026-10-21 | review | RM-006 done (Select Class, Game Modes and the mode results in the new look; the main menu stays). Suggested RM-110 to RM-121 from the one-more-run concept (`docs/design/one-more-run-concept.md`), for the owner's pick. |
@@ -44,6 +45,10 @@ Horizons: **short term** = the next one to three updates, **mid term** = after t
 | RM-110, RM-111, RM-112, RM-115 | One more run, first slice | Built 2026-10-22: Walk again, So close, What this run moved, the stakes in numbers; the run length is measured in the game (RM-113 decided from it). | `docs/design/one-more-run-concept.md` §8 | done |
 | RM-114 | Keystone relics | After the first boss, one of three keystones that shape the run; a keystone may bend Sudoku's own rules (owner, 2026-10-22: for example free pencil marks). | Owner pick 2026-10-22, with RM-104. `docs/design/one-more-run-concept.md` §4. | M–L |
 | RM-113, RM-116 to RM-121 | One more run | A short walk, class challenges, a daily garden, early unlocks, pacts, a faster first choice, a rival run. | Roguelike pull after each run; details and effort in `docs/design/one-more-run-concept.md`. RM-113 waits for the run-length report of the 0.2.2 playtest. | S to L each |
+| RM-122 | A quick run every day | The Daily Walk as one floor of its own (three puzzles and a boss, about 15 minutes), the same seed for everyone, paid in class XP with a streak bonus instead of gold. | Concept: `docs/design/daily-walk-concept.md`. | M |
+| RM-123 | The Incense Walk (time attack) | A clock instead of HP: start with 8 minutes, each solved puzzle adds time, mistakes cost time, over at 0:00. | Concept: `docs/design/time-attack-concept.md`. | M–L |
+| RM-124 | Class relic sets | Three relics per class (signature from Level 1, mastery at 15, the existing exclusive at 30) that play to the class's passive. | Concept: `docs/design/class-relics-concept.md`; fits with RM-114. | M–L |
+| RM-125 | The story of the Nine | The eight classes as the keepers who stayed, five wardens, chapters told on the floor entry, the boss gate and the run end, a Tales page in the Codex. | Concept: `docs/design/story-concept.md`. | M |
 
 ## Long term (suggested)
 

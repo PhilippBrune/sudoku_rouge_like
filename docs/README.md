@@ -1,6 +1,6 @@
 # Documentation index: Run of the Nine
 
-**Updated:** 2026-10-22
+**Updated:** 2026-10-26
 
 `docs/` is the game's specification (CLAUDE.md: it wins over code and generic rules). Every spec carries a version, a
 status (new → under review → review → implemented → deprecate) and a change history; requirement IDs are listed in
@@ -16,7 +16,7 @@ status (new → under review → review → implemented → deprecate) and a cha
 | Garden path and floors | [PathSystem_GardenOverview.md](PathSystem_GardenOverview.md) |
 | Bosses, trials and modifiers | [BossMechanicsSystem.md](BossMechanicsSystem.md), [BossDebuffEffects.md](BossDebuffEffects.md), [CurseSystem.md](CurseSystem.md), [PressureMechanicsSpec.md](PressureMechanicsSpec.md) |
 | Items, relics, gold | [ItemsAndRelicsSystem.md](ItemsAndRelicsSystem.md), [GoldEconomySystem.md](GoldEconomySystem.md) |
-| Classes and progression | [ClassXpProgressionSystem.md](ClassXpProgressionSystem.md), [ClassProgressionUnlocks.md](ClassProgressionUnlocks.md), [MetaProgressionSystem.md](MetaProgressionSystem.md), [HarmonyDifficultySystem.md](HarmonyDifficultySystem.md) |
+| Classes and progression | [ClassXpProgressionSystem.md](ClassXpProgressionSystem.md), [ClassProgressionUnlocks.md](ClassProgressionUnlocks.md), [MetaProgressionSystem.md](MetaProgressionSystem.md), [HarmonyDifficultySystem.md](HarmonyDifficultySystem.md), [Achievements.md](Achievements.md) |
 | Other modes | [EndlessZenMode.md](EndlessZenMode.md), [SpiritTrialsMode.md](SpiritTrialsMode.md), [DailyGoalSystem.md](DailyGoalSystem.md), [SeasonalChallengeSpec.md](SeasonalChallengeSpec.md), [TutorialModeSystem.md](TutorialModeSystem.md), [FirstTimePlayTutorial.md](FirstTimePlayTutorial.md) |
 | Puzzles | [SudokuGenerationPipeline.md](SudokuGenerationPipeline.md), [puzzle-generation-readiness.md](puzzle-generation-readiness.md) |
 | Saves, input, accessibility | [SaveLoadArchitecture.md](SaveLoadArchitecture.md), [InputAndProfilesSpec.md](InputAndProfilesSpec.md), [AccessibilitySpec.md](AccessibilitySpec.md), [accessibility-validation.md](accessibility-validation.md) |
@@ -30,6 +30,7 @@ status (new → under review → review → implemented → deprecate) and a cha
 |---|---|
 | [design/layout-proposals.md](design/layout-proposals.md) | Ink-and-paper screens: everything built except the main menu proposal (UI-STYLE-023) |
 | [design/one-more-run-concept.md](design/one-more-run-concept.md) | First slice built (RM-110, 111, 112, 115, run-length measures); the rest for the owner's pick |
+| [design/daily-walk-concept.md](design/daily-walk-concept.md), [design/time-attack-concept.md](design/time-attack-concept.md), [design/class-relics-concept.md](design/class-relics-concept.md), [design/story-concept.md](design/story-concept.md) | New concepts (2026-10-25): a daily one-floor walk with XP, the Incense Walk (time attack), class relic sets, the story of the Nine; for the owner's pick |
 | [design/gold-and-items-concept.md](design/gold-and-items-concept.md), [design/mistake-scoring-proposals.md](design/mistake-scoring-proposals.md), [design/modifier-catalog-plan.md](design/modifier-catalog-plan.md) | Built |
 
 ## Review, tests and quality

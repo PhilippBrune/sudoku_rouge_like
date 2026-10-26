@@ -363,8 +363,10 @@ namespace SudokuRoguelike.Core
         private string PrefsKey()
         {
             var slot = _activeSlot >= 0 ? _activeSlot : SaveProfileService.ActiveSlot;
-            return $"InputOverrides_{slot}";
+            return TestSaves.PrefKey(PrefsKeyFor(slot));
         }
+
+        public static string PrefsKeyFor(int slot) => $"InputOverrides_{slot}";
 
         private void SaveOverrides()
         {

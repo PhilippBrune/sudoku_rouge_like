@@ -31,7 +31,7 @@ namespace SudokuRoguelike.Save
         {
             try
             {
-                if (!string.IsNullOrEmpty(SaveFileService.RootDirectoryOverride)) return;
+                if (!string.IsNullOrEmpty(SaveFileService.RootDirectoryOverride) || TestSaves.Active) return;
                 var saveRoot = Application.persistentDataPath;
                 var localLow = Directory.GetParent(saveRoot)?.Parent?.FullName;
                 var slot = Run(saveRoot, localLow);

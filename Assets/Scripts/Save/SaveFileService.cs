@@ -21,14 +21,16 @@ namespace SudokuRoguelike.Save
         }
 
         /// <summary>
-        /// Directory that holds the slot files. Defaults to Application.persistentDataPath.
+        /// Directory that holds the slot files. Defaults to Application.persistentDataPath, and to its test-saves folder in
+        /// the Editor and development builds (SAVE-TEST-001).
         /// Automated tests point this at a temporary directory so they never read or write the
         /// player's real saves (GAP-010). Production code never sets it.
         /// </summary>
         public static string RootDirectoryOverride { get; set; }
 
         public static string SaveRoot =>
-            string.IsNullOrEmpty(RootDirectoryOverride) ? Application.persistentDataPath : RootDirectoryOverride;
+            !string.IsNullOrEmpty(RootDirectoryOverride) ? RootDirectoryOverride
+            : TestSaves.Active ? TestSaves.Folder : Application.persistentDataPath;
 
         public static string GetSlotPath(int slotIndex) =>
             Path.Combine(SaveRoot, $"save_profile_{Math.Max(0, Math.Min(slotIndex, MaxSlots - 1))}.json");

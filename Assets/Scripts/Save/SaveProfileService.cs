@@ -13,7 +13,8 @@ namespace SudokuRoguelike.Save
     // [REQ: SAVE-SLOT-002] SaveProfileService: cross-slot manager - ActiveSlot stored in PlayerPrefs (key "ActiveProfileSlot"), 3 slots max
     public sealed class SaveProfileService
     {
-        private const string ActiveSlotPrefKey = "ActiveProfileSlot";
+        public const string ActiveSlotPrefKey = "ActiveProfileSlot";
+        private static string SlotKey => TestSaves.PrefKey(ActiveSlotPrefKey);   // SAVE-TEST-001
 
         // ── Active slot ──────────────────────────────────────────────────────────
 
@@ -21,10 +22,10 @@ namespace SudokuRoguelike.Save
         {
             // Without a stored slot the most recently written profile is used and stored (EnsureActiveSlot), so every
             // reader agrees whichever runs first.
-            get => PlayerPrefs.HasKey(ActiveSlotPrefKey) ? PlayerPrefs.GetInt(ActiveSlotPrefKey, 0) : EnsureActiveSlot();
+            get => PlayerPrefs.HasKey(SlotKey) ? PlayerPrefs.GetInt(SlotKey, 0) : EnsureActiveSlot();
             set
             {
-                PlayerPrefs.SetInt(ActiveSlotPrefKey, Math.Max(0, Math.Min(value, SaveFileService.MaxSlots - 1)));
+                PlayerPrefs.SetInt(SlotKey, Math.Max(0, Math.Min(value, SaveFileService.MaxSlots - 1)));
                 PlayerPrefs.Save();
             }
         }
@@ -41,7 +42,7 @@ namespace SudokuRoguelike.Save
         // [REQ: SAVE-SLOT-004] GAP-043: a missing active-slot pref selects the most recently written existing profile
         public static int EnsureActiveSlot()
         {
-            if (PlayerPrefs.HasKey(ActiveSlotPrefKey)) return PlayerPrefs.GetInt(ActiveSlotPrefKey, 0);
+            if (PlayerPrefs.HasKey(SlotKey)) return PlayerPrefs.GetInt(SlotKey, 0);
 
             var newest = NewestExistingSlot();
             if (newest < 0) return 0;

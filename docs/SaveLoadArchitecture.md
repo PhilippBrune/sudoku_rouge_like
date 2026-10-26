@@ -1,13 +1,14 @@
 # Save & Load Architecture
 
-**Version:** 2.4  
-**Date:** 2026-10-14  
+**Version:** 2.5  
+**Date:** 2026-10-26  
 **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.5 | 2026-10-26 | implemented | Owner request: the Editor and development builds use their own save folder and start as a new game every time (SAVE-TEST-001, TestSavesTests); release builds unchanged. |
 | 2.4 | 2026-10-14 | implemented | Active profile slot without a stored pref: the most recently written profile is used and stored (SAVE-SLOT-004, GAP-043, ActiveSlotRecoveryTests). |
 | 2.3 | 2026-10-14 | implemented | Save folder stays LocalLow/Kratossos/sudoku_rouge_like, the folder of the released 1.0 build and the Steam Auto-Cloud root (SAVE-FOLDER-001); the 2.2 move to "Run of the Nine" was withdrawn the same day, before any release. SAVE-MIGRATE-001 copies only from the pre-release folder DefaultCompany/RunOfTheNine. Steam Auto-Cloud recorded as configured (portal check 2026-10-14). |
 | 2.2 | 2026-10-14 | implemented | Save folder follows the Steamworks names: LocalLow/Kratossos/Run of the Nine; one-time copy of earlier save folders (SAVE-MIGRATE-001, LegacySaveMigrationTests); optional Steam Auto-Cloud settings recorded. |
@@ -48,6 +49,7 @@ Crash-safety support:
 | ID | Requirement |
 |---|---|
 | SAVE-FOLDER-001 | The Player Settings company and product names stay `Kratossos` / `sudoku_rouge_like`, so the save folder is `LocalLow\Kratossos\sudoku_rouge_like`: the folder of the released 1.0 build (Steam build 24153478, whose `app.info` holds these names) and the Steam Auto-Cloud root. Changing either name would hide every player's saves from the game and from Steam Cloud. The store name "Run of the Nine" is shown as the window title instead (GameDesignSpec DISPLAY-MODE-007). Test: `LegacySaveMigrationTests.PlayerSettings_KeepTheSaveFolderOfTheReleasedGame`. |
+| SAVE-TEST-001 | The Editor and development builds (`Debug.isDebugBuild`) keep their profiles in `test-saves` inside the save folder and use PlayerPrefs keys of their own (`test.` prefix; a development build shares the player's registry key). At every start (entering Play mode, starting a development build) that folder and those keys are emptied, so every test starts as a new game: profile select, first-run setup, default options. A file named `.keep` in `test-saves` keeps the saves for the next start. Release builds read and write the real folder as before; automated tests still use their own temporary folder (REQ-SAVE-102). Test: `TestSavesTests`. |
 
 ### Active profile slot (SAVE-SLOT-004)
 

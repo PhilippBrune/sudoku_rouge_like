@@ -13,7 +13,7 @@ namespace SudokuRoguelike.Tests
     [Requirement("SAVE-SLOT-004")]
     public sealed class ActiveSlotRecoveryTests
     {
-        private const string PrefKey = "ActiveProfileSlot";
+        private static readonly string PrefKey = TestSaves.PrefKey(SaveProfileService.ActiveSlotPrefKey);
 
         private string _root;
         private string _previousRoot;

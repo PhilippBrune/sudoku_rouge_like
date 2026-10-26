@@ -80,7 +80,7 @@ namespace SudokuRoguelike.Tests
                 remap.GetBinding(InputAction.ClearCell));
         }
 
-        private static string PrefsKey(int slot) => $"InputOverrides_{slot}";
+        private static string PrefsKey(int slot) => TestSaves.PrefKey(InputRemapService.PrefsKeyFor(slot));
 
         private void PreserveAndDelete(string key)
         {

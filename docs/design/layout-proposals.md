@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 2.8 | **Date:** 2026-10-26 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes and the results of Endless Zen, Spirit Trials and the Monthly Walk; proposed, not built: the main menu)
+**Version:** 2.9 | **Date:** 2026-10-26 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes and the results of Endless Zen, Spirit Trials and the Monthly Walk; proposed, not built: the main menu, six game modes, the Daily Walk result, the stamp shop, the Incense Walk screen)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.9 | 2026-10-26 | review | The offering table after the first boss shows the keystones with a vermilion tier tag (RELIC-KEY-001). New proposals for the owner's pick: Game Modes with six paths (proposed UI-STYLE-027), the Daily Walk result where the XP goes to a chosen class (UI-STYLE-028), the ink stamp shop (UI-STYLE-029) and the Incense Walk's puzzle screen (UI-STYLE-030), for RM-122 and RM-123. |
 | 2.8 | 2026-10-26 | review | The run-end ledger gets a time row for a won run on the seed of the week (SCORE-TIME-001). The Options' Controls page gets a Controller line: Automatic, X-input or D-input (INPUT-PAD-002). Screenshots below. |
 | 2.7 | 2026-10-22 | review | Owner: "implement UI-STYLE-017 to 026 if not done". Built what the mockups had and the game left out: the Codex's rarity filter and "Best paired with" (UI-STYLE-018, META-CODEX-010) and the Spirit Trials tiers on the Game Modes slip (UI-STYLE-025). The main menu (UI-STYLE-023) stays unbuilt: the owner kept it (2026-10-21). With the one-more-run slice the run ends gained Walk again and "This run", the cursed tile and the boss gate their stakes in numbers. Screenshots below. |
 | 2.6 | 2026-10-21 | review | Owner picks: **Select Class · Who walks the garden** (UI-STYLE-024) and **Game Modes · Five paths** (UI-STYLE-025) built; the main menu stays as it is (UI-STYLE-023 not built), only "Items & Relic Codex" is renamed "Codex"; Select Class has no confirmation window; Harmony is set on both screens. The results of Endless Zen, Spirit Trials and the Monthly Walk are in the run-end family now (UI-STYLE-026, owner request). Screenshots below. |
@@ -531,6 +532,57 @@ the tip says when to choose D-input. Before and after:
 
 ![Controls before](layout-proposals/before_options_controls.jpg)
 ![Controls with the Controller line](layout-proposals/after_options_controls.jpg)
+
+## Keystones on the offering table (2.9, 2026-10-26)
+
+After the Garden Run's first boss the offering table holds three of the four keystones instead of relics
+(RELIC-KEY-001); the tier tag reads "Keystone" in vermilion. Before (a normal boss offering) and after:
+
+![Boss defeated, relics](layout-proposals/after_boss_defeated.jpg)
+![Boss defeated, keystones after Floor 1](layout-proposals/after_boss_defeated_keystones.jpg)
+
+## The Daily Walk and the Incense Walk (proposals, 2.9)
+
+The owner's picks from the two concepts (`docs/design/daily-walk-concept.md`, `docs/design/time-attack-concept.md`) need
+four screens. One proposal each, waiting for the owner's pick; the numbers are the concepts' own.
+
+### Game Modes · Six paths (proposed UI-STYLE-027)
+
+![Game Modes with six paths, the Daily Walk chosen](layout-proposals/game_modes_six.jpg)
+![Game Modes with six paths, the Incense Walk chosen](layout-proposals/game_modes_six_incense.jpg)
+
+UI-STYLE-025 with a sixth curtain: the Incense Walk, marked "New" until it has been walked once. The Daily Walk's slip
+says what changes: two floors with their bosses, no class (everyone walks with the same HP, Pencil and bag), the XP
+goes to a class chosen at the end, one scored walk a day; the three goals, the streak bonus, the ink stamps and the
+day's board on the right; "Stamp shop" beside the Walk button (Y on a pad). The Incense Walk's slip gives the start
+time and the bonus rule, its records and the week's board; "Practice (random seed)" plays without a score.
+
+### Daily Walk result · The XP waits for a class (proposed UI-STYLE-028)
+
+![Daily Walk result](layout-proposals/daily_walk_result.jpg)
+
+The run-end family (UI-STYLE-016/026). Left the day's tally and the three goals with their XP; in the middle the walk's
+XP with its sum (walk × 1.5 dawn bonus, goals, streak) and the unlocked classes as seals on a red cord, the chosen one
+lifted, the XP stroke and "Lv 4 → 6" for it; right the day's board (place, top three, friends). The XP stays on the
+scroll until it is given: B goes back to the garden gate and the result opens again next time.
+
+### Ink stamp shop (proposed UI-STYLE-029)
+
+![Ink stamp shop](layout-proposals/stamp_shop.jpg)
+
+Looks only. Three shelves on a scroll: board ink (the given digits and the lines), class seal frames (Select Class and
+the garden of classes), path seals (the stamp of a won floor on the run end). Owned looks carry a small "owned" stamp,
+the chosen one a vermilion frame; the slip below says what the look changes. Prices are placeholders.
+
+### Incense Walk · The stick is the clock (proposed UI-STYLE-030)
+
+![Incense Walk puzzle screen](layout-proposals/incense_walk_hud.jpg)
+![Incense Walk, the last 30 seconds](layout-proposals/incense_walk_hud_late.jpg)
+
+The hanging scroll of UI-STYLE-002. Where the HP lantern hangs, an incense stick burns down in a bowl: its length is
+the time left, the time stands large below it, a solved puzzle's bonus floats up beside it. A slip on the right shows
+what this puzzle would add and how each mistake cuts it; under it the walk's count, score, best and the class's time
+passive. In the last 30 seconds the ember and the time turn red.
 
 ## Decisions and next step
 

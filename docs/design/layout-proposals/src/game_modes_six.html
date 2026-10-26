@@ -1,0 +1,73 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="scenes.css">
+<style>
+  /* Game Modes with six paths (proposed UI-STYLE-027): the five noren curtains of UI-STYLE-025 plus the Incense Walk, each
+     a little narrower so six fit under the beam. The Daily Walk's slip now starts the day's two floors (RM-122); ?incense
+     shows the Incense Walk's slip instead (RM-123). */
+  .bg { background-image:url('../../../../Assets/Resources/background/bg_game_modes.png'); filter:brightness(.55) saturate(.9); }
+  .beam { position:absolute; left:70px; right:70px; top:196px; height:30px; border-radius:15px;
+          background:linear-gradient(180deg,#3a2414,#c08a52 50%,#3a2414); box-shadow:0 10px 20px rgba(0,0,0,.5); }
+  .noren { position:absolute; top:212px; width:272px; height:430px; color:#f6ead0; text-align:center;
+           box-shadow:0 18px 30px rgba(0,0,0,.5); }
+  .noren .cloth { position:absolute; inset:0; background:linear-gradient(180deg,#30473a,#24382d); }
+  .noren .cloth::after { content:''; position:absolute; left:50%; top:60%; bottom:0; width:6px; margin-left:-3px; background:rgba(0,0,0,.35); }
+  .noren img { position:relative; width:100px; height:100px; margin-top:44px; object-fit:contain; }
+  .noren h3 { position:relative; margin:16px 0 6px; font-weight:normal; font-size:28px; }
+  .noren p { position:relative; margin:0 22px; font-size:16px; line-height:1.4; color:#d9cfb6; }
+  .noren .state { position:absolute; left:18px; right:18px; bottom:26px; padding:8px 0; background:rgba(239,227,198,.92); color:#231e17; font-size:17px; }
+  .noren .state b { color:#9e2a2b; font-weight:normal; }
+  .noren.sel { box-shadow:0 0 44px rgba(244,200,120,.6), 0 18px 30px rgba(0,0,0,.5); }
+  .noren.sel .cloth { background:linear-gradient(180deg,#8f2a22,#6e1f19); }
+  .noren.new::before { content:'NEW'; position:absolute; z-index:2; right:-10px; top:-10px; padding:4px 10px; background:#e9c46a; color:#2a1a10; font-size:14px; letter-spacing:.12em; }
+  .slip { position:absolute; left:220px; right:220px; top:690px; height:270px; background:#efe3c6; color:#231e17; padding:26px 40px;
+          box-shadow:0 16px 32px rgba(0,0,0,.55); }
+  .slip small { display:block; font-size:14px; letter-spacing:.14em; color:#6b5f4c; }
+  .slip h3 { margin:2px 0 10px; font-weight:normal; font-size:32px; }
+  .slip .desc { font-size:19px; color:#3a3228; line-height:1.5; width:760px; }
+  .slip .goals { margin-top:8px; font-size:18px; line-height:1.6; color:#3a3228; }
+  .slip .goals span { color:#2f6b3a; }
+  .slip .side { position:absolute; right:40px; top:26px; width:420px; padding:12px 16px; background:#e6d6b0; font-size:18px; line-height:1.5; }
+  .slip .side b { color:#9e2a2b; font-weight:normal; }
+  .slip .go { position:absolute; right:40px; bottom:24px; }
+  .incense .daily-only, .daily .incense-only { display:none; }
+</style></head><body>
+<div class="bg"></div><div class="shade"></div>
+<div class="banner" style="top:22px;height:104px"><small>Choose your path</small><h1 style="font-size:44px">Game Modes</h1></div>
+<div class="beam"></div>
+<div class="noren" style="left:90px"><div class="cloth"></div><img src="../../../../Assets/Resources/ui/icon_framed_garden.png">
+  <h3>Garden Run</h3><p>Five floors, a boss on each, gold, items and relics.</p><div class="state">Harmony <b>IV</b> of IV</div></div>
+<div class="noren" style="left:382px"><div class="cloth"></div><img src="../../../../Assets/Resources/ui/icon_zen_mode.png">
+  <h3>Endless Zen</h3><p>One 9×9 after another until your HP runs out.</p><div class="state">Best depth <b>14</b></div></div>
+<div class="noren" style="left:674px"><div class="cloth"></div><img src="../../../../Assets/Resources/ui/icon_trials_seal.png">
+  <h3>Spirit Trials</h3><p>One timed puzzle under rising pressure.</p><div class="state">Adept · best <b>4,210</b></div></div>
+<div class="noren daily-sel" style="left:966px"><div class="cloth"></div><img src="../../../../Assets/Resources/ui/icon_start_run.png">
+  <h3>Daily Walk</h3><p>Two floors, the same for everyone today.</p><div class="state">Not walked · streak <b>4</b></div></div>
+<div class="noren" style="left:1258px"><div class="cloth"></div><img src="../../../../Assets/Resources/ui/icon_monthly_lantern.png">
+  <h3>Monthly Walk</h3><p>The month's seeded garden, one score.</p><div class="state">Old Tree Grove · <b>12</b> days</div></div>
+<div class="noren new incense-sel" style="left:1550px"><div class="cloth"></div><img src="../../../../Assets/Resources/items/icon_temple_incense.png">
+  <h3>Incense Walk</h3><p>A burning stick for a clock; it ends at 0:00.</p><div class="state">Best <b>2,840</b> · 11 puzzles</div></div>
+
+<div class="slip daily-only">
+  <small>DAILY WALK · SATURDAY 25 OCTOBER</small><h3>Today's garden: two floors</h3>
+  <div class="desc">Two floors and their bosses, the same seed for everyone. No class: everyone walks with the same HP, pencil and bag.
+    The XP goes to a class you choose at the end. One scored walk a day.</div>
+  <div class="goals">Goals: <span>✓</span> Solve a puzzle without pencil · ○ No mistake on a boss · ○ Finish with 3 HP or more</div>
+  <div class="side"><small>STREAK · INK STAMPS</small>Day <b>4</b>: +10 % XP (day 7: +25 %)<br>Ink stamps <b>9</b> · Stamp shop<br><small>TODAY'S BOARD</small>You: not walked · 132 walkers · best <b>1,912</b></div>
+  <div class="go"><span class="btn">Back</span> <span class="btn">Stamp shop</span> <span class="btn main">Walk today's garden</span></div>
+</div>
+<div class="slip incense-only">
+  <small>INCENSE WALK · TIME ATTACK</small><h3>The stick burns: 8:00 to start</h3>
+  <div class="desc">Solve puzzle after puzzle. Each solved puzzle adds time (5×5 +1:00 up to 9×9 +3:30, +0:15 a star);
+    each mistake costs 0:10 and a fifth of the puzzle's bonus. At 0:00 the walk ends, also in the middle of a puzzle.</div>
+  <div class="side"><small>RECORDS</small>Best score <b>2,840</b> · most puzzles <b>11</b> · largest board <b>8×8</b><br><small>THIS WEEK'S BOARD</small>Week 43 seed · you <b>17th</b> of 96</div>
+  <div class="go"><span class="btn">Back</span> <span class="btn">Practice (random seed)</span> <span class="btn main">Choose a class</span></div>
+</div>
+<div class="hint" style="top:1000px">D-pad chooses a path · A enters · Y stamp shop · B back</div>
+<div class="caption">Game Modes · Proposal · Six paths (the Incense Walk joins; the Daily Walk starts its two floors)</div>
+<script>
+  const incense = location.search.includes('incense');
+  document.body.classList.add(incense ? 'incense' : 'daily');
+  document.querySelector(incense ? '.incense-sel' : '.daily-sel').classList.add('sel');
+</script>
+</body></html>

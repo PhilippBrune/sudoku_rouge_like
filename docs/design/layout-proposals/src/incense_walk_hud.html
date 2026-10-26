@@ -1,0 +1,71 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css"><link rel="stylesheet" href="scenes.css">
+<script src="common.js"></script>
+<style>
+  /* The Incense Walk on the puzzle screen (proposed UI-STYLE-030, RM-123): the hanging scroll of UI-STYLE-002, but where
+     the HP lantern hangs, an incense stick burns down in a bowl: its length is the time left, the time in large type
+     beside it, the bonus the current puzzle would add (shrinking with each mistake) on a paper slip. ?late shows the last
+     30 seconds: the ember red, the time in vermilion. */
+  .bg { background-image:url('../../../../Assets/Resources/background/bg_garden_grove.png'); filter:brightness(.55); }
+  .scrollp { position:absolute; left:560px; top:70px; width:800px; height:900px; background:linear-gradient(180deg,#f3e9cf,#e8d8b2);
+             box-shadow:0 30px 60px rgba(0,0,0,.6); }
+  .scrollp::before, .scrollp::after { content:''; position:absolute; left:-14px; right:-14px; height:24px; border-radius:12px;
+             background:linear-gradient(180deg,#3a2414,#c08a52 50%,#3a2414); }
+  .scrollp::before { top:-12px; } .scrollp::after { bottom:-12px; }
+  .scrollp .head { text-align:center; color:#5b5244; font-size:17px; letter-spacing:.14em; margin-top:26px; }
+  .scrollp h2 { text-align:center; margin:4px 0 0; font-weight:normal; font-size:34px; color:#231e17; }
+  .board { position:absolute; left:130px; top:140px; width:540px; height:540px; display:grid; grid-template-columns:repeat(6,1fr);
+           border:4px solid #231e17; background:#f7f0dc; }
+  .board span { border:1px solid #8f8a7c; display:flex; align-items:center; justify-content:center; font-size:40px; color:#231e17; }
+  .board span.g { color:#231e17; } .board span.p { color:#2f4b8f; font-size:30px; } .board span.sel { background:#f1d9a4; }
+  .board span.r2 { border-bottom:3px solid #231e17; } .board span.c3 { border-right:3px solid #231e17; }
+  .pad { position:absolute; left:130px; top:720px; width:540px; display:flex; gap:10px; justify-content:center; }
+  .pad span { width:76px; height:76px; border-radius:10px; background:linear-gradient(180deg,#c99a63,#9a6b3a); color:#2a1a10;
+              display:flex; align-items:center; justify-content:center; font-size:34px; box-shadow:0 6px 12px rgba(0,0,0,.4); }
+  .bowl { position:absolute; left:250px; top:200px; width:240px; text-align:center; color:#f3e9cf; }
+  .stick { position:relative; width:14px; margin:0 auto; height:420px; }
+  .stick i { position:absolute; bottom:0; left:0; right:0; border-radius:3px; background:linear-gradient(180deg,#8a5a3c,#5e3a24); }
+  .stick b { position:absolute; left:-6px; width:26px; height:26px; border-radius:50%; background:radial-gradient(circle,#ffd27a,#e3672a 55%,transparent 70%);
+             box-shadow:0 0 30px 10px rgba(255,160,60,.55); }
+  .stick .smoke { position:absolute; left:-30px; width:74px; height:120px; border-radius:50%;
+                  background:radial-gradient(ellipse at 50% 80%, rgba(230,230,230,.35), transparent 70%); }
+  .stick .ash { position:absolute; left:2px; width:10px; border-radius:2px; background:repeating-linear-gradient(180deg,#9b9488 0 6px,#7c766b 6px 9px); }
+  .bowl .dish { width:180px; height:54px; margin:-6px auto 0; border-radius:0 0 90px 90px; background:linear-gradient(180deg,#5b5f63,#2b2e31); }
+  .time { position:absolute; left:120px; top:690px; width:300px; text-align:center; font-size:76px; color:#f3e9cf; text-shadow:0 4px 12px rgba(0,0,0,.6); }
+  .time small { display:block; font-size:18px; letter-spacing:.14em; color:#d8c9a8; }
+  .slipr { position:absolute; left:1440px; top:200px; width:330px; padding:20px 24px; background:#efe3c6; color:#231e17;
+           box-shadow:0 14px 28px rgba(0,0,0,.5); font-size:20px; line-height:1.7; }
+  .slipr small { display:block; font-size:15px; letter-spacing:.14em; color:#6b5f4c; }
+  .slipr .big { font-size:40px; color:#2f6b3a; } .slipr s { color:#9a8f7a; } .slipr .m { color:#9e2a2b; }
+  .tag2 { position:absolute; left:1440px; top:560px; width:330px; padding:18px 24px; background:#efe3c6; color:#231e17; font-size:20px; line-height:1.8; box-shadow:0 14px 28px rgba(0,0,0,.5); }
+  .tag2 small { display:block; font-size:15px; letter-spacing:.14em; color:#6b5f4c; } .tag2 span { float:right; color:#9e2a2b; }
+  .float { position:absolute; left:440px; top:560px; font-size:34px; color:#9fd3a8; text-shadow:0 2px 8px rgba(0,0,0,.6); }
+  body.late .stick b { background:radial-gradient(circle,#ffb0a0,#d0302a 55%,transparent 70%); box-shadow:0 0 34px 14px rgba(220,60,40,.6); }
+  body.late .time { color:#ff8f7a; } body:not(.late) .late-only, body.late .calm-only { display:none; }
+</style></head><body>
+<script>if (location.search.includes('late')) document.body.classList.add('late');</script>
+<div class="bg"></div><div class="shade"></div>
+<div class="bowl"><div class="stick">
+  <i class="calm-only" style="height:300px"></i><i class="late-only" style="height:46px"></i>
+  <div class="ash calm-only" style="bottom:300px;height:36px"></div>
+  <b class="calm-only" style="bottom:322px"></b><b class="late-only" style="bottom:36px"></b>
+  <div class="smoke calm-only" style="bottom:338px"></div><div class="smoke late-only" style="bottom:52px"></div></div>
+  <div class="dish"></div></div>
+<div class="time calm-only"><small>TIME LEFT</small>5:42</div>
+<div class="time late-only"><small>TIME LEFT</small>0:24</div>
+<div class="float calm-only">+1:30</div>
+<div class="scrollp"><div class="head">INCENSE WALK · PUZZLE 6</div><h2>6×6 · ★★</h2>
+  <div class="board" id="board"></div>
+  <div class="pad"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span></div></div>
+<div class="slipr"><small>THIS PUZZLE ADDS</small><span class="big">+1:24</span><br>6×6 +1:30 · ★★ +0:15<br><span class="m">1 mistake: −20 % (−0:21), and −0:10 at once</span><br><s>Perfect +0:20</s></div>
+<div class="tag2"><small>THE WALK</small>Puzzles solved <span>5</span><br>Score <span>1,240</span><br>Best <span>2,840</span><br>Garden Monk <span>+3 s per 5 digits</span></div>
+<div class="hint" style="top:1000px">The stick is the clock · Start pauses (the board is covered) · at 0:00 the walk ends</div>
+<div class="caption calm-only">Incense Walk · Proposal · The incense stick in place of the HP lantern</div>
+<div class="caption late-only">Incense Walk · Proposal · The last 30 seconds: the ember turns red</div>
+<script>
+  const b = document.getElementById('board');
+  const v = '3 . 5 . 1 . . 4 . 2 . 6 1 . . 6 . 2 . 6 . . 4 . . . 2 . . 1 5 . 6 . 3 .'.split(' ');
+  v.forEach((d, i) => b.insertAdjacentHTML('beforeend',
+    `<span class="${(Math.floor(i / 6) === 1 || Math.floor(i / 6) === 3) ? 'r2' : ''} ${i % 6 === 2 ? 'c3' : ''} ${i === 15 ? 'sel' : ''}">${d === '.' ? '' : d}</span>`));
+</script>
+</body></html>

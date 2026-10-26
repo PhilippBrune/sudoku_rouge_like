@@ -32,6 +32,7 @@ namespace SudokuRoguelike.Core
         public GameMode Mode;
         public int RunNumber;
         public int Seed;
+        public bool WeeklySeedRun;   // [REQ: SCORE-TIME-001] started with the seed of the week
         public int Depth;
         public int CurrentFloor;
         public int TotalFloors = 5;
@@ -654,6 +655,7 @@ namespace SudokuRoguelike.Core
         public List<PuzzleGradeEntry> PuzzleGrades = new List<PuzzleGradeEntry>();
         /// <summary>[REQ: SCORE-GOLD-001] Gold still held when the run ended.</summary>
         public int GoldLeft;
+        public int WeeklySeconds = -1;   // [REQ: SCORE-TIME-001] the run's length when it was the seed of the week, else -1
     }
 
     /// <summary>[REQ: SCORE-GRADE-001] A puzzle's grade from its own mistakes (GameDesignSpec §9c).</summary>

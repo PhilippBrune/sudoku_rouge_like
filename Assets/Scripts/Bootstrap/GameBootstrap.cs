@@ -243,6 +243,9 @@ namespace SudokuRoguelike.Bootstrap
 
             _autoSave.ClearActiveRun();
             _run.StartRun(request, runtimeSeed);
+            // [REQ: SCORE-TIME-001] A Garden Run on the seed of the week also scores its pace.
+            _run.State.WeeklySeedRun = request.Mode == GameMode.GardenRun && request.HasSeed
+                && request.Seed == WeeklySeedService.SeedFor(System.DateTime.Today);
             RunLengthLog.OnRunStarted(_run.State, Time.realtimeSinceStartup);   // [REQ: RUN-LENGTH-001]
 
             // Pre-seed modifier discovery so previously seen modifiers don't show as "???"

@@ -345,6 +345,7 @@ namespace SudokuRoguelike.UI
                     RunScoreLineKind.Messy => F("InRun.End.Scroll.Messy", line.Count, percent),
                     RunScoreLineKind.Cursed => F("InRun.End.Scroll.Cursed", line.Count, percent),
                     RunScoreLineKind.Victory => F("InRun.End.Scroll.VictoryBonus", percent),
+                    RunScoreLineKind.Time => F("InRun.End.Scroll.TimeBonus", line.Count, percent),
                     _ => F("InRun.End.Scroll.GoldKept", line.Count, percent)
                 };
                 rows.Add((label, Points(line.Points), line.Points < 0 ? ScrollUiKit.Vermilion : Green));

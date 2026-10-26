@@ -1,4 +1,6 @@
 ﻿{
+    "EndPresenter.RunScore.Time":  "  Week's seed, {0} min:  +{1} ({2}%)",
+    "InRun.End.Scroll.TimeBonus":  "Week's seed in {0} min (+{1}%)",
     "Codex.BestPairedWith":  "Best paired with",
     "Codex.Rarity.Every":  "Every rarity",
     "InRun.Cursed.XpStake":  "XP {0} → {1} (+{2}%)",

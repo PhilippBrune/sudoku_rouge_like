@@ -466,6 +466,13 @@ namespace SudokuRoguelike.Tests
             end.ShowGameOver(run, true);
             yield return new WaitForSecondsRealtime(0.8f);
             yield return Shoot(host, camera, prefix + "run_end_victory.png");
+            // [REQ: SCORE-TIME-001] The same win on the seed of the week, in 38 minutes: the ledger's time row.
+            run.State.WeeklySeedRun = true;
+            run.State.ActiveSeconds = 38 * 60;
+            end.ShowGameOver(run, true);
+            yield return new WaitForSecondsRealtime(0.8f);
+            yield return Shoot(host, camera, prefix + "run_end_weekly.png");
+            run.State.WeeklySeedRun = false;
             run.State.CurrentHP = 0;
             end.ShowGameOver(run, false);
             yield return new WaitForSecondsRealtime(0.8f);

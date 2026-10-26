@@ -97,6 +97,7 @@ namespace SudokuRoguelike.UI
                     RunScoreLineKind.Messy => F("EndPresenter.RunScore.Messy", "  Messy puzzles x{0}:     -{1} (-{2}%)", line.Count, points, percent),
                     RunScoreLineKind.Cursed => F("EndPresenter.RunScore.Cursed", "  Cursed clears x{0}:     +{1} ({2}%)", line.Count, points, percent),
                     RunScoreLineKind.Victory => F("EndPresenter.RunScore.Victory", "  Victory bonus:         +{0} ({1}%)", points, percent),
+                    RunScoreLineKind.Time => F("EndPresenter.RunScore.Time", "  Week's seed, {0} min:  +{1} ({2}%)", line.Count, points, percent),
                     _ => F("EndPresenter.RunScore.Gold", "  Gold kept ({0}):         +{1}", line.Count, points)
                 });
             }

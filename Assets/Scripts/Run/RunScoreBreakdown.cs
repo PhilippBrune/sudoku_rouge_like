@@ -11,7 +11,8 @@ namespace SudokuRoguelike.Run
         Messy,
         Cursed,
         Victory,
-        Gold
+        Gold,
+        Time
     }
 
     /// <summary>One row of the run score: how often it applied, its share of the base in percent and the points it adds.</summary>
@@ -49,6 +50,8 @@ namespace SudokuRoguelike.Run
         public const int VictoryPercent = 25;     // the Floor 5 boss defeated
         public const int GoldPerPoint = 5;        // unspent gold: one point per 5 gold
         public const int MaxGoldPercent = 15;
+        public const int TimeParMinutes = 60;     // [REQ: SCORE-TIME-001] a won run of the week's seed: +1 % per minute under this
+        public const int MaxTimePercent = 30;
 
         private readonly List<RunScoreLine> _lines;
 
@@ -83,7 +86,7 @@ namespace SudokuRoguelike.Run
         }
 
         public static RunScoreBreakdown Calculate(int baseXp, IReadOnlyList<PuzzleGrade> grades, int cursedCompleted,
-            bool victory, int goldLeft)
+            bool victory, int goldLeft, int weeklySeconds = -1)
         {
             baseXp = Math.Max(0, baseXp);
             grades ??= Array.Empty<PuzzleGrade>();
@@ -120,6 +123,14 @@ namespace SudokuRoguelike.Run
                 lines.Add(new RunScoreLine(RunScoreLineKind.Gold, goldLeft,
                     (int)Math.Round(goldPoints * 100.0 / baseXp, MidpointRounding.AwayFromZero), goldPoints));
 
+            // [REQ: SCORE-TIME-001] The seed of the week scores its pace; a started minute counts as a whole one, and a lost
+            // run gets nothing (a quick loss must not pay).
+            if (victory && weeklySeconds >= 0)
+            {
+                var minutes = (weeklySeconds + 59) / 60;
+                Add(RunScoreLineKind.Time, minutes, Math.Min(MaxTimePercent, Math.Max(0, TimeParMinutes - minutes)));
+            }
+
             var total = baseXp;
             foreach (var line in lines) total += line.Points;
             return new RunScoreBreakdown(baseXp, lines, Math.Max(0, total), grades);
@@ -135,7 +146,7 @@ namespace SudokuRoguelike.Run
             // Analytics built by the run carry the base XP and the grades; one without them (made elsewhere, or older) is
             // rebuilt from the result, which knows only how many puzzles were perfect.
             if (a != null && (a.BaseXp > 0 || baseXp == 0))
-                return Calculate(a.BaseXp, GradesOf(a), a.CursedPuzzlesCompleted, a.RunCompleted, a.GoldLeft);
+                return Calculate(a.BaseXp, GradesOf(a), a.CursedPuzzlesCompleted, a.RunCompleted, a.GoldLeft, a.WeeklySeconds);
             return Calculate(baseXp, PerfectOnly(result.PerfectPuzzleCount), result.CursedPuzzlesAccepted, result.Victory, 0);
         }
 

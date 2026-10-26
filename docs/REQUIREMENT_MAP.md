@@ -1,6 +1,6 @@
 # Requirement Traceability Map — All Systems
 
-**Updated:** 2026-10-26 (ACHIEVE-RUN-001, ACHIEVE-CLASS-001, ACHIEVE-MODE-001, ACHIEVE-COLLECT-001; before: INPUT-PAD-001 (GAP-070); before: HARMONY-PERK-002..005 (GAP-064, GAP-067, GAP-069), LEGAL-LICENSE-001 (GAP-068), INPUT-NAV-001 (GAP-062), the one-more-run slice RUN-AGAIN-001, RUN-END-NEAR-001, RUN-END-MOVED-001, STAKES-001, RUN-LENGTH-001, META-CODEX-010; before: UI-STYLE-024..026, LOC-NUM-001, ACCESS-MOTION-002)
+**Updated:** 2026-10-26 (SCORE-TIME-001, SAVE-TEST-001, ACHIEVE-RUN-001, ACHIEVE-CLASS-001, ACHIEVE-MODE-001, ACHIEVE-COLLECT-001; before: INPUT-PAD-001 (GAP-070); before: HARMONY-PERK-002..005 (GAP-064, GAP-067, GAP-069), LEGAL-LICENSE-001 (GAP-068), INPUT-NAV-001 (GAP-062), the one-more-run slice RUN-AGAIN-001, RUN-END-NEAR-001, RUN-END-MOVED-001, STAKES-001, RUN-LENGTH-001, META-CODEX-010; before: UI-STYLE-024..026, LOC-NUM-001, ACCESS-MOTION-002)
 
 Legend: ✅ Implemented and verified | ⚠️ Partial / conflicting | ❌ Not implemented | ◻️ Code present, not verified (no tagged test or E2E check yet) | 🗄️ Deprecated / descoped | 🆕 New (spec only, no code yet)
 
@@ -657,6 +657,8 @@ Key requirements (see spec for full list):
 | ACHIEVE-CLASS-001 | Class achievements: a second class and all eight unlocked, a class at Level 10 and 40, a win with every class (`ClassesWithAWin`) | `Assets/Scripts/Meta/SteamAchievementService.cs`, `Core/SaveModels.cs` | `EvaluateProgressAchievements` | ProgressAchievementTests | ✅ |
 | ACHIEVE-MODE-001 | Mode achievements at the results of Endless Zen (depth 25), Spirit Trials (Grandmaster passed) and the Monthly Walk (finished), saved even without a new best | `Assets/Scripts/Meta/SteamAchievementService.cs`, `UI/EndScreenViewController.cs` | `EvaluateModeAchievements` | ProgressAchievementTests | ✅ |
 | ACHIEVE-COLLECT-001 | Collection achievements: a 7-day Daily Walk streak, half and all of the Codex | `Assets/Scripts/Meta/SteamAchievementService.cs` | `EvaluateProgressAchievements`, `CodexHalf` | ProgressAchievementTests | ✅ |
+| SAVE-TEST-001 | Editor and development builds: own save folder (`test-saves`) and PlayerPrefs keys, emptied at every start; `.keep` keeps them | `Assets/Scripts/Save/TestSaves.cs`, `SaveFileService.cs`, `SaveProfileService.cs`, `Core/InputRemapService.cs` | `TestSaves.StartFresh`, `TestSaves.Clear`, `SaveFileService.SaveRoot` | TestSavesTests | ✅ |
+| SCORE-TIME-001 | A won Garden Run on the seed of the week scores its pace: +1 % of the base per minute under 60, at most +30 %, as a ledger row; lost runs and other runs have none | `Assets/Scripts/Run/RunScoreBreakdown.cs`, `PostRunAnalyticsService.cs`, `RunResultFactory.cs`, `Bootstrap/GameBootstrap.cs` | `Calculate`, `Build`, `LaunchRun` | WeeklyTimeScoreTests | ✅ |
 | HARMONY-SAVE-001 | Harmony fields clamped on load | `Assets/Scripts/Save/SaveFileService.cs` | `SanitizeEnvelope` | — | ◻️ |
 | HARMONY-BADGE-001 | Per-level badge flags (perfect, speed) | `Assets/Scripts/Core/SaveModels.cs` | `HarmonyBadgeFlags` | — | ◻️ |
 | HARMONY-DISPLAY-001 | Display name and HUD label per level | `Assets/Scripts/Run/HarmonyDifficultyService.cs` | `GetDisplayName`, `GetHudLabel` | — | ◻️ |

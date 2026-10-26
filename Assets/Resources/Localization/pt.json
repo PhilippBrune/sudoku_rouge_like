@@ -1,4 +1,6 @@
 {
+    "EndPresenter.RunScore.Time":  "  Semente da semana, {0} min:  +{1} ({2}%)",
+    "InRun.End.Scroll.TimeBonus":  "Semente da semana em {0} min (+{1}%)",
     "Codex.BestPairedWith":  "Combina melhor com",
     "Codex.Rarity.Every":  "Toda raridade",
     "InRun.Cursed.XpStake":  "XP {0} → {1} (+{2}%)",

@@ -48,7 +48,7 @@ namespace SudokuRoguelike.Run
                 var lostInPuzzle = gardenRun && !victory && run.CurrentBoard != null && run.CurrentLevelState != null
                     && !run.IsLevelComplete;
                 result.Analytics = analytics.Build(state.CurrentGold, lostInPuzzle ? state.CurrentFloor : -1,
-                    lostInPuzzle ? run.CurrentLevelState.Mistakes : 0);
+                    lostInPuzzle ? run.CurrentLevelState.Mistakes : 0, state.WeeklySeedRun ? (int)state.ActiveSeconds : -1);
                 result.ItemsUsedThisRun = analytics.TotalItemsUsed;
                 // [REQ: MAP-NODE-CURSED-004] Cursed puzzles accepted and completed (GameDesignSpec §9c); perfect puzzles (GAP-054).
                 result.CursedPuzzlesAccepted = analytics.CursedPuzzlesCompleted;

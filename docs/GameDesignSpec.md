@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.18 | **Date:** 2026-10-22 | **Status:** implemented
+**Version:** 1.19 | **Date:** 2026-10-26 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.19 | 2026-10-26 | implemented | Owner request: the seed of the week scores its pace. A won Garden Run started with the seed of the week gets +1 % of BaseScore per minute under 60, at most +30 %, as its own ledger row (SCORE-TIME-001). |
 | 1.18 | 2026-10-22 | implemented | The first slice of the one-more-run concept (owner request): Walk again on every run end (RUN-AGAIN-001), "This run" with the near miss and what the run moved (RUN-END-NEAR-001, RUN-END-MOVED-001), the stakes in numbers at the boss gate and on cursed tiles (STAKES-001), the run-length measures kept on the PC (RUN-LENGTH-001). Five floors stay (owner). The Credits carry the licence texts (LEGAL-LICENSE-001, GAP-068); the main menu D-pad follows each panel's links (REQ-UI-102, GAP-062). |
 | 1.17 | 2026-10-21 | implemented | Owner request: the input lock after choosing a cell is an option (OPT-GAME-006): on or off, 0.10–1.00 s in 0.05 s steps, 0.25 s by default. |
 | 1.16 | 2026-10-21 | implemented | Options Structure: the Options are a hand scroll with six pages (UI-STYLE-017); Accessibility, Controls and Language are pages, the separate Accessibility panel is gone. |
@@ -288,6 +289,14 @@ Every puzzle of the run gets a grade from its own mistakes (owner pick C, 2026-1
 Gold still held when the run ends adds one point per 5 gold, at most 15 % of BaseScore (lever L5 of
 `design/gold-and-items-concept.md`). It is its own ledger row, so spending now and scoring later are a visible choice.
 
+### Pace on the seed of the week (SCORE-TIME-001)
+
+A Garden Run started with the seed of the week (RUN-WEEK-001; the run is marked at its start, so a run resumed next
+week keeps it) scores its pace when it is won: +1 % of BaseScore for every minute under 60, at most +30 % (a 38-minute
+win: +22 %). The minutes are the run's active time (RUN-LENGTH-001: path, puzzles and shops, resumed runs go on
+counting; a started minute counts as a whole one). A lost run gets no time row, so a quick loss never pays. Other runs
+are scored as before.
+
 ### Score Formula
 
 ```
@@ -298,8 +307,9 @@ MessyPenalty = −5% per Messy puzzle  ┘
 CursedBonus  = +10% per Cursed puzzle accepted and completed
 VictoryBonus = +25% if the run was completed (Floor 5 boss defeated)
 GoldKept     = +1 point per 5 gold held at the end, at most 15% of BaseScore
+WeekPace     = +1% per minute under 60 for a won run on the seed of the week, at most 30%
 
-FinalScore = BaseScore × (1 + PerfectBonus + RoughPenalty + MessyPenalty + CursedBonus + VictoryBonus) + GoldKept
+FinalScore = BaseScore × (1 + PerfectBonus + RoughPenalty + MessyPenalty + CursedBonus + VictoryBonus + WeekPace) + GoldKept
 ```
 
 Each row of the breakdown is its percentage of BaseScore, rounded to whole points (halves away from zero); FinalScore is

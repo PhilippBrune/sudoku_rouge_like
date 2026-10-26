@@ -326,6 +326,11 @@ namespace SudokuRoguelike.Core
 
         // Endless Zen session tracking
         public int TotalZenSessions;
+        // [REQ: INCENSE-SCORE-002] The Incense Walk's records.
+        public int IncenseWalks;
+        public int IncenseBestScore;
+        public int IncenseMostPuzzles;
+        public int IncenseLargestBoard;
     }
 
     [Serializable]

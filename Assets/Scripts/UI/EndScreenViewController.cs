@@ -263,6 +263,12 @@ namespace SudokuRoguelike.UI
                 ShowSeasonalResult(run, victory);
                 return;
             }
+            // [REQ: INCENSE-SCORE-002] An Incense Walk left from the run menu ends on its result too.
+            if (run?.State?.Mode == GameMode.IncenseWalk)
+            {
+                ShowIncenseResult(run);
+                return;
+            }
             // [REQ: UI-STYLE-028] The day's walk ends on its own result: the XP waits there for a class.
             if (run?.State?.DailyWalk == true)
             {

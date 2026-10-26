@@ -14,7 +14,7 @@ namespace SudokuRoguelike.UI
     /// </summary>
     public sealed class GameModesScreen : MonoBehaviour
     {
-        public enum Mode { Garden, Endless, Trials, Daily, Monthly }
+        public enum Mode { Garden, Endless, Trials, Daily, Monthly, Incense }
 
         /// <summary>One curtain's state and its slip's body.</summary>
         public readonly struct ModeView
@@ -78,6 +78,7 @@ namespace SudokuRoguelike.UI
         private Button _records;
         private Button _back;
         private Button[] _tiers = Array.Empty<Button>();
+        private readonly Dictionary<Mode, Button> _extras = new Dictionary<Mode, Button>();
         private Mode _shown = Mode.Garden;
 
         /// <summary>LB / RB (PageUp / PageDown) on the Garden Run slip: the Harmony level down or up.</summary>
@@ -111,6 +112,9 @@ namespace SudokuRoguelike.UI
             _records = records;
             _back = back;
         }
+
+        /// <summary>[REQ: UI-STYLE-027] A second way in on a mode's slip (the Incense Walk's practice), left of Back.</summary>
+        public void SetExtraButton(Mode mode, Button button) => _extras[mode] = button;
 
         /// <summary>The Spirit Trials tier pills on its slip.</summary>
         public void SetTierButtons(Button[] tiers) => _tiers = tiers ?? Array.Empty<Button>();
@@ -210,11 +214,14 @@ namespace SudokuRoguelike.UI
             if (_back == null || !_curtains.TryGetValue(_shown, out var curtain)) return;
             var enter = EnterOf(_shown);
             var lastTier = _shown == Mode.Trials && _tiers.Length > 0 && Usable(_tiers[_tiers.Length - 1]) ? _tiers[_tiers.Length - 1] : null;
+            var extra = _extras.TryGetValue(_shown, out var e) && Usable(e) ? e : null;
             _back.navigation = new Navigation
             {
                 mode = Navigation.Mode.Explicit, selectOnUp = curtain, selectOnRight = Usable(enter) ? enter : null,
-                selectOnLeft = lastTier
+                selectOnLeft = lastTier != null ? lastTier : extra
             };
+            if (extra != null)
+                extra.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnUp = curtain, selectOnRight = _back };
         }
 
         private Button EnterOf(Mode mode) =>

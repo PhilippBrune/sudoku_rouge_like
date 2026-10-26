@@ -72,6 +72,12 @@ namespace SudokuRoguelike.UI
                 return;
             }
 
+            if (run.State.Mode == GameMode.IncenseWalk)
+            {
+                HandleIncenseSolved(run);   // [REQ: INCENSE-CLOCK-002]
+                return;
+            }
+
             if (run.State.Mode == GameMode.EndlessZen)
             {
                 run.CompleteLevelAndGrantRewards();

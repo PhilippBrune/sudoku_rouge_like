@@ -18,7 +18,8 @@ namespace SudokuRoguelike.Core
         Tutorial,
         EndlessZen,
         SpiritTrials,
-        SeasonalChallenge // [REQ: SEASON-UI-002]
+        SeasonalChallenge, // [REQ: SEASON-UI-002]
+        IncenseWalk        // [REQ: INCENSE-CLOCK-001] the time attack (IncenseWalkMode.md)
     }
 
     // [REQ: BOSS-MOD-001] BossModifierId: 15 active modifier IDs (0–14) plus extended pool and system IDs (debuffs ≥94, pressure ≥103)

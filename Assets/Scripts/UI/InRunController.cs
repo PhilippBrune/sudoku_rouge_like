@@ -556,6 +556,7 @@ namespace SudokuRoguelike.UI
             if (run == null) return;
 
             if (!_resumeApplied) { ApplyResumeState(); return; }
+            TickIncense(run);   // [REQ: INCENSE-CLOCK-004]
 
             // UI-STYLE-021: a click or any key skips the floor's painting; nothing behind it reacts meanwhile.
             if (IsFloorEntryShowing)
@@ -665,7 +666,7 @@ namespace SudokuRoguelike.UI
                 SetStatus(T("InRun.Status.MonthlyWalk"));
                 return;
             }
-            if (run?.State?.Mode == GameMode.EndlessZen || run?.State?.Mode == GameMode.SpiritTrials)
+            if (run?.State?.Mode == GameMode.EndlessZen || run?.State?.Mode == GameMode.SpiritTrials || run?.State?.Mode == GameMode.IncenseWalk)
             {
                 ShowSudoku();
                 RebuildBoard();
@@ -949,10 +950,7 @@ namespace SudokuRoguelike.UI
                 if (infoText != null && run.State != null)
                 {
                     // [REQ: REQ-UI-101] Localized header with the shared "7×7 3★" notation (GAP-019, GAP-029).
-                    var cfg = run.CurrentLevelConfig;
-                    infoText.text = LocalizationService.Format("InRun.LevelInfo",
-                        "Floor {0}  Depth {1}  {2}×{2}  {3}★",
-                        run.State.CurrentFloor + 1, run.State.Depth, board.Size, cfg?.Stars ?? 0);
+                    infoText.text = LevelInfoText(run, board);
                 }
 
                 ApplyPuzzleScrollFloor(panelRt, run.State);
@@ -2763,9 +2761,9 @@ namespace SudokuRoguelike.UI
                 else
                 {
                     _audio?.PlayWrongPlacement();
-                    _audio?.PlayHpLoss();
+                    if (run.State.Mode != GameMode.IncenseWalk) _audio?.PlayHpLoss();
                     RumbleService.PulseMistake(this);
-                    SetStatus(Tf("{0} is wrong here. HP: {1}", value, run.State.CurrentHP));
+                    SetStatus(MistakeNote(run, value));
                     // [REQ: ACCESS-MOTION-001] [REQ: OPT-GFX-001] No shake with Reduce Motion or with Screen Shake off
                     if (ScreenShakeAllowed)
                         StartCoroutine(AnimationHelper.ScreenShake(
@@ -2891,7 +2889,7 @@ namespace SudokuRoguelike.UI
             {
                 var safeSave = new Save.SaveFileService(Save.SaveProfileService.ActiveSlot);
                 var safeEnv = safeSave.Load();
-                if (safeEnv.ActiveRunState != null && safeEnv.ActiveRunState.DisableProgressionRewards)
+                if (safeEnv.ActiveRunState != null && (safeEnv.ActiveRunState.DisableProgressionRewards || safeEnv.ActiveRunState.Mode == GameMode.IncenseWalk))
                 {
                     safeEnv.ActiveRunState = null;
                     safeEnv.ActivePuzzle = null;

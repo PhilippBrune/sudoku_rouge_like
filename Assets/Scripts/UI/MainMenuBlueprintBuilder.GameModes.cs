@@ -11,8 +11,9 @@ namespace SudokuRoguelike.UI
     // The Harmony setting stays here and on Select Class (owner 2026-10-21).
     public sealed partial class MainMenuBlueprintBuilder
     {
-        private static readonly float[] CurtainLeft = { 130f / 1920f, 466f / 1920f, 802f / 1920f, 1138f / 1920f, 1474f / 1920f };
-        private const float CurtainWidth = 300f / 1920f, CurtainTop = 0.804f, CurtainBottom = 0.406f;
+        // [REQ: UI-STYLE-027] Six curtains (the Incense Walk joins), 272 px wide with 20 px between them.
+        private static readonly float[] CurtainLeft = { 90f / 1920f, 382f / 1920f, 674f / 1920f, 966f / 1920f, 1258f / 1920f, 1550f / 1920f };
+        private const float CurtainWidth = 272f / 1920f, CurtainTop = 0.804f, CurtainBottom = 0.406f;
 
         private GameObject BuildGameModesPanel(RectTransform root, MainMenuController mc, GameModesPanelController modesCtrl)
         {
@@ -24,13 +25,13 @@ namespace SudokuRoguelike.UI
             var pr = (RectTransform)panel.transform;
             // A rebuild (language change) reuses the panel: everything built below goes first, the curtains by their names.
             foreach (var part in new[] { "Content", "ModesBanner", "ModesBeam", "CurtainGlow", "BtnGarden", "BtnEndless", "BtnTrials",
-                         "BtnDailyWalk", "BtnMonthlyWalk", "BtnZenRecords", "ModeSlip", "ModesKeyHint" })
+                         "BtnDailyWalk", "BtnMonthlyWalk", "BtnIncenseWalk", "IncenseNew", "BtnZenRecords", "ModeSlip", "ModesKeyHint" })
                 ScrollUiKit.DestroyChildrenNow(pr, part);
             var screen = EnsureComponent<GameModesScreen>(panel);
 
             ScrollUiKit.Banner(pr, "ModesBanner", new Vector2(0.318f, 0.884f), new Vector2(0.682f, 0.980f),
                 "ModesEyebrow", T("GameModes.Eyebrow"), "Title", T("Game Modes"), 44);
-            var beam = ScrollUiKit.Fill(pr, "ModesBeam", new Vector2(0.057f, 0.791f), new Vector2(0.943f, 0.819f),
+            var beam = ScrollUiKit.Fill(pr, "ModesBeam", new Vector2(0.036f, 0.791f), new Vector2(0.964f, 0.819f),
                 new Color(0.55f, 0.36f, 0.20f, 1f), ScrollUiKit.Rounded(14f));
             ScrollUiKit.Fill(beam.transform, "Light", new Vector2(0.004f, 0.40f), new Vector2(0.996f, 0.62f),
                 new Color(0.75f, 0.54f, 0.32f, 1f), ScrollUiKit.Rounded(6f));
@@ -50,7 +51,8 @@ namespace SudokuRoguelike.UI
                 (GameModesScreen.Mode.Endless, "BtnEndless", "Endless Zen", "ui/icon_zen_mode", "GameModes.Desc.Endless", mc.StartEndlessZen, "GameModes.ChooseClass"),
                 (GameModesScreen.Mode.Trials, "BtnTrials", "Spirit Trials", "ui/icon_trials_seal", "GameModes.Desc.Trials", mc.ShowSpiritTrialsTierSelect, "GameModes.ChooseTier"),
                 (GameModesScreen.Mode.Daily, "BtnDailyWalk", "Daily Walk", "ui/icon_start_run", "GameModes.Desc.Daily", mc.EnterDailyWalk, "GameModes.Daily.Walk"),
-                (GameModesScreen.Mode.Monthly, "BtnMonthlyWalk", "Monthly Walk", "ui/icon_monthly_lantern", "GameModes.Desc.Monthly", mc.ShowMonthlyWalkPanel, "GameModes.Open")
+                (GameModesScreen.Mode.Monthly, "BtnMonthlyWalk", "Monthly Walk", "ui/icon_monthly_lantern", "GameModes.Desc.Monthly", mc.ShowMonthlyWalkPanel, "GameModes.Open"),
+                (GameModesScreen.Mode.Incense, "BtnIncenseWalk", "Incense Walk", "items/icon_temple_incense", "GameModes.Desc.Incense", mc.StartIncenseWalkWeekly, "GameModes.ChooseClass")
             };
             for (var i = 0; i < modes.Length; i++)
             {
@@ -71,17 +73,24 @@ namespace SudokuRoguelike.UI
                 {
                     // [REQ: UI-STYLE-027] The Daily Walk's slip: its own title, the rules, and a side box with the streak,
                     // the ink stamps and the day's board.
-                    var side = m.Mode == GameModesScreen.Mode.Daily;
-                    ScrollUiKit.Label(page, "Title", side ? T("GameModes.Daily.Title") : T(m.Name), 32, TextAnchor.MiddleLeft, ScrollUiKit.Ink,
+                    var incense = m.Mode == GameModesScreen.Mode.Incense;
+                    var side = m.Mode == GameModesScreen.Mode.Daily || incense;
+                    var title = m.Mode == GameModesScreen.Mode.Daily ? T("GameModes.Daily.Title") : incense ? T("GameModes.Incense.Title") : T(m.Name);
+                    ScrollUiKit.Label(page, "Title", title, 32, TextAnchor.MiddleLeft, ScrollUiKit.Ink,
                         new Vector2(0.029f, 0.63f), new Vector2(0.70f, 0.83f), 18);
                     var trials = m.Mode == GameModesScreen.Mode.Trials;
                     ScrollUiKit.Label(page, "Body", string.Empty, side ? 18 : 19, TextAnchor.UpperLeft, ScrollUiKit.Ink,
-                        new Vector2(0.029f, trials ? 0.34f : 0.06f), new Vector2(side ? 0.60f : 0.70f, 0.61f), 12).supportRichText = true;
+                        new Vector2(0.029f, trials ? 0.34f : 0.06f), new Vector2(incense ? 0.485f : side ? 0.60f : 0.70f, 0.61f), 12).supportRichText = true;
                     if (trials) BuildTrialTiers(page, mc, screen);
                     if (side) BuildSideBox(page);
+                    if (incense) BuildIncensePractice(page, mc, screen);
                 }
                 screen.Register(m.Mode, curtain, page.gameObject);
             }
+
+            // [REQ: UI-STYLE-027] "New" on the Incense Walk's curtain until it has been walked once.
+            ScrollUiKit.Pill(pr, "IncenseNew", new Vector2(CurtainLeft[5] + CurtainWidth - 0.032f, 0.792f),
+                new Vector2(CurtainLeft[5] + CurtainWidth + 0.006f, 0.818f), T("GameModes.New"), ScrollUiKit.Gold, ScrollUiKit.Ink, 14);
 
             // Endless Zen's Records hang under its curtain.
             var records = OptionsUiFactory.BuildButton("BtnZenRecords", pr, T("Records"), 18);
@@ -156,6 +165,24 @@ namespace SudokuRoguelike.UI
                 new Color(0.90f, 0.84f, 0.69f, 1f));
             ScrollUiKit.Label(box.transform, "SideText", string.Empty, 17, TextAnchor.UpperLeft, ScrollUiKit.Ink,
                 new Vector2(0.05f, 0.04f), new Vector2(0.95f, 0.95f), 11).supportRichText = true;
+        }
+
+        // [REQ: INCENSE-BOARD-001] The Incense Walk's practice on a random seed (no board), left of Back.
+        private static void BuildIncensePractice(RectTransform page, MainMenuController mc, GameModesScreen screen)
+        {
+            var practice = OptionsUiFactory.BuildButton("BtnIncensePractice", page, T("GameModes.Incense.Practice"), 20);
+            SetRect((RectTransform)practice.transform, new Vector2(0.495f, 0.09f), new Vector2(0.718f, 0.31f), Vector2.zero, Vector2.zero);
+            OptionsUiFactory.PaintPill(practice, new Color(0.24f, 0.20f, 0.16f, 1f), new Color(0.97f, 0.93f, 0.84f, 1f));
+            var label = practice.GetComponentInChildren<Text>(true);   // long in German and French: shrink to fit
+            if (label != null)
+            {
+                label.resizeTextForBestFit = true;
+                label.resizeTextMinSize = 12;
+                label.resizeTextMaxSize = 20;
+            }
+            practice.onClick.RemoveAllListeners();
+            practice.onClick.AddListener(mc.StartIncensePractice);
+            screen.SetExtraButton(GameModesScreen.Mode.Incense, practice);
         }
 
         // The Garden Run slip: Harmony with its stones (< >), the level's rule and the next level's condition, the perk.

@@ -33,7 +33,8 @@ namespace SudokuRoguelike.UI
                 [GameModesScreen.Mode.Endless] = EndlessView(endlessUnlocked, stats),
                 [GameModesScreen.Mode.Trials] = TrialsView(trialsUnlocked, stats, out var tierLabels),
                 [GameModesScreen.Mode.Daily] = DailyView(envelope.DailyGoals ?? new DailyGoalState()),
-                [GameModesScreen.Mode.Monthly] = MonthlyView(envelope.SeasonalChallenge)
+                [GameModesScreen.Mode.Monthly] = MonthlyView(envelope.SeasonalChallenge),
+                [GameModesScreen.Mode.Incense] = IncenseView(stats)
             });
             _gameModesScreen.ShowTiers(tierLabels, trialsUnlocked);
             // [REQ: UI-STYLE-027] The Daily Walk's caption carries the day; its board fills the side box when Steam answers.
@@ -42,6 +43,9 @@ namespace SudokuRoguelike.UI
                 caption.GetComponent<UnityEngine.UI.Text>().text = (LocalizationService.T("Daily Walk") + " · "
                     + DateTime.Today.ToString("dddd d MMMM", LocalizationService.Culture)).ToUpperInvariant();
             SteamLeaderboardService.SubmitToBoard(SteamLeaderboardService.DailyWalkBoard(DateTime.Today), 0, ShowDailySide);
+            SteamLeaderboardService.SubmitToBoard(EndScreenViewController.IncenseBoard(DateTime.Today), 0, ShowIncenseSide);
+            var incenseNew = _gameModesPanel != null ? _gameModesPanel.transform.Find("IncenseNew") : null;
+            if (incenseNew != null) incenseNew.gameObject.SetActive(stats.IncenseWalks == 0);
             var records = _gameModesPanel != null ? _gameModesPanel.transform.Find("BtnZenRecords") : null;
             if (records != null) records.GetComponent<UnityEngine.UI.Button>().interactable = endlessUnlocked;
             RefreshGameModesHarmony(meta);
@@ -148,6 +152,52 @@ namespace SudokuRoguelike.UI
         }
 
         private string _dailySide;
+        private string _incenseSide;
+        private bool _incenseWeekly;
+
+        // [REQ: UI-STYLE-027] The Incense Walk's slip: the rule, the records and the week's board in the side box.
+        private GameModesScreen.ModeView IncenseView(ProfileStats stats)
+        {
+            const string soft = "<size=14><color=#6B5F4C>{0}</color></size>";
+            var state = stats.IncenseWalks > 0
+                ? LocalizationService.Format("GameModes.State.Incense", "Best {0} · {1} puzzles",
+                    Accent(stats.IncenseBestScore.ToString("N0", LocalizationService.Culture)), stats.IncenseMostPuzzles)
+                : LocalizationService.T("GameModes.State.IncenseNew");
+            var largest = stats.IncenseLargestBoard > 0 ? $"{stats.IncenseLargestBoard}×{stats.IncenseLargestBoard}" : "\u2013";
+            _incenseSide = string.Format(soft, LocalizationService.T("GameModes.Incense.Records").ToUpperInvariant()) + "\n"
+                           + LocalizationService.Format("GameModes.Incense.RecordLine", "Best score {0} · most puzzles {1} · largest board {2}",
+                               stats.IncenseBestScore.ToString("N0", LocalizationService.Culture), stats.IncenseMostPuzzles, largest) + "\n"
+                           + string.Format(soft, LocalizationService.T("GameModes.Incense.BoardHeader").ToUpperInvariant());
+            return new GameModesScreen.ModeView(true, state, LocalizationService.T("GameModes.Body.Incense"), null,
+                _incenseSide + "\n" + LocalizationService.T("DailyWalk.Board.Loading"));
+        }
+
+        // [REQ: INCENSE-BOARD-001] The week's board in the Incense Walk's side box.
+        private void ShowIncenseSide(BoardStanding standing)
+        {
+            if (_gameModesScreen == null || _incenseSide == null) return;
+            var week = System.Globalization.ISOWeek.GetWeekOfYear(DateTime.Today);
+            var line = standing == null
+                ? LocalizationService.T("DailyWalk.Board.Offline")
+                : LocalizationService.Format("GameModes.Incense.BoardLine", "Week {0} seed · {1}", week, standing.Rank > 0
+                    ? LocalizationService.Format("DailyWalk.Board.Place", "Place {0} of {1}", standing.Rank, standing.Entries)
+                    : LocalizationService.T("GameModes.Daily.NotWalked"));
+            _gameModesScreen.SetSide(GameModesScreen.Mode.Incense, _incenseSide + "\n" + line);
+        }
+
+        /// <summary>[REQ: INCENSE-BOARD-001] The week's walk (its seed, its board) or a practice walk; both choose a class first.</summary>
+        public void StartIncenseWalkWeekly() => StartIncenseWalk(true);
+        public void StartIncensePractice() => StartIncenseWalk(false);
+
+        private void StartIncenseWalk(bool weekly)
+        {
+            ClearSeed();
+            _pendingLaunchMode = GameMode.IncenseWalk;
+            _incenseWeekly = weekly;
+            RefreshClassLockStates();
+            _menu.Show(MenuScreen.ClassSelect);
+            SetStatus(LocalizationService.T("ClassSelect.Mode.IncenseWalk"));
+        }
 
         private static string DailySide(DailyGoalState goals)
         {

@@ -726,6 +726,10 @@ namespace SudokuRoguelike.Tests
             yield return Shoot(host, camera, "after_daily_walk_waiting.png");
             Find(host, "BtnWaitingBack").GetComponent<Button>().onClick.Invoke();
             yield return null;
+            // UI-STYLE-027: the sixth curtain, the Incense Walk, with its rule, records and practice.
+            EventSystem.current.SetSelectedGameObject(Find(host, "BtnIncenseWalk"));
+            yield return new WaitForSecondsRealtime(0.3f);
+            yield return Shoot(host, camera, "after_game_modes_incense.png");
             EventSystem.current.SetSelectedGameObject(Find(host, "BtnTrials"));
             yield return new WaitForSecondsRealtime(0.3f);
             yield return Shoot(host, camera, "after_game_modes_trials.png");
@@ -838,6 +842,51 @@ namespace SudokuRoguelike.Tests
             host.GetComponentInChildren<EndScreenViewController>(true).ShowGameOver(run, true);
             yield return new WaitForSecondsRealtime(0.8f);
             yield return Shoot(host, camera, "after_daily_walk_result.png");
+        }
+
+        // UI-STYLE-030: the Incense Walk's puzzle screen as the mockup has it (Garden Monk, puzzle 6, five solved, 5:42 left,
+        // one mistake on this puzzle), then the last 30 seconds, then the result when the stick has burned down.
+        [UnityTest]
+        public IEnumerator RenderIncenseWalk()
+        {
+            var envelope = new SaveFileEnvelope();
+            envelope.Statistics.IncenseWalks = 3;
+            envelope.Statistics.IncenseBestScore = 2840;
+            envelope.Statistics.IncenseMostPuzzles = 11;
+            new SaveFileService(TestSlot).Save(envelope);
+            SaveFileService.FlushSharedPendingWrites();
+
+            var camera = CreateCamera();
+            var host = new GameObject("LayoutShotIncense");
+            _createdRoots.Add(host);
+            host.AddComponent<InRunUiBlueprintBuilder>().BuildBlueprint();
+            var run = new RunDirector();
+            run.StartRun(new LaunchRequest { ClassId = ClassId.GardenMonk, Mode = GameMode.IncenseWalk, ClassLevel = 4 }, 4242);
+            for (var i = 0; i < 5; i++)
+            {
+                run.Incense.Tick(70f);
+                run.Incense.OnPuzzleSolved(i < 3 ? 5 : 6, 2, i % 2, true);
+                run.AdvanceIncenseLevel();
+            }
+            run.Incense.Tick(run.Incense.SecondsLeft - 352f);   // 5:52, the mistake below takes it to 5:42
+            var map = host.GetComponentInChildren<RunMapController>(true);
+            map.BindRun(run, new SaveFileService(TestSlot));
+            host.GetComponentInChildren<InRunController>(true).NotifyRunStarted();
+            yield return new WaitForSecondsRealtime(0.4f);
+            var board = run.CurrentBoard;
+            for (var r = 0; r < board.Size && run.CurrentLevelState.Mistakes == 0; r++)
+                for (var c = 0; c < board.Size && run.CurrentLevelState.Mistakes == 0; c++)
+                    if (board.Cells[r, c] == 0) run.PlaceNumber(r, c, board.Solution[r, c] % board.Size + 1);
+            yield return new WaitForSecondsRealtime(0.5f);
+            yield return Shoot(host, camera, "after_incense_walk.png");
+
+            run.Incense.Tick(run.Incense.SecondsLeft - 24f);
+            yield return new WaitForSecondsRealtime(0.4f);
+            yield return Shoot(host, camera, "after_incense_walk_late.png");
+
+            run.Incense.Tick(60f);
+            yield return new WaitForSecondsRealtime(0.8f);
+            yield return Shoot(host, camera, "after_incense_walk_result.png");
         }
 
         // UI-STYLE-012: the Custom Puzzle screen at 9×9, 3 stars, with Dutch Whispers, Killer Cages and Skyscrapers chosen

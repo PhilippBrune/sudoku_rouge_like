@@ -887,6 +887,11 @@ namespace SudokuRoguelike.UI
             {
                 request.SelectedTier = _pendingTrialsTier;
             }
+            else if (_pendingLaunchMode == GameMode.IncenseWalk && _incenseWeekly)
+            {
+                request.HasSeed = true;   // [REQ: INCENSE-BOARD-001] the week's seed: the same walk for everyone this week
+                request.Seed = WeeklySeedService.SeedFor(DateTime.Today);
+            }
 
             _gameBootstrap.LaunchRun(request);
         }

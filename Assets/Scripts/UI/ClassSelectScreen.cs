@@ -228,6 +228,7 @@ namespace SudokuRoguelike.UI
                 {
                     GameMode.EndlessZen => LocalizationService.T("ClassSelect.Eyebrow.EndlessZen", "Endless Zen"),
                     GameMode.SpiritTrials => LocalizationService.T("ClassSelect.Eyebrow.SpiritTrials", "Spirit Trials"),
+                    GameMode.IncenseWalk => LocalizationService.T("ClassSelect.Eyebrow.IncenseWalk", "Incense Walk"),
                     _ => LocalizationService.T("ClassSelect.Eyebrow.GardenRun", "Garden Run")
                 }).ToUpperInvariant();
             var garden = mode == GameMode.GardenRun;
@@ -238,7 +239,9 @@ namespace SudokuRoguelike.UI
                 _modeInfo.text = mode == GameMode.SpiritTrials
                     ? LocalizationService.Format("ClassSelect.Mode.SpiritTrials", "Spirit Trials · {0}: one timed puzzle under rising pressure.",
                         LocalizationService.T($"SpiritTrials.Tier.{tier}", tier.ToString()))
-                    : LocalizationService.T("ClassSelect.Mode.EndlessZen", "Endless Zen: one 9×9 after another until your HP runs out.");
+                    : mode == GameMode.IncenseWalk
+                        ? LocalizationService.T("ClassSelect.Mode.IncenseWalk")
+                        : LocalizationService.T("ClassSelect.Mode.EndlessZen", "Endless Zen: one 9×9 after another until your HP runs out.");
             }
             for (var i = 0; i < _stones.Length; i++)
                 if (_stones[i] != null)

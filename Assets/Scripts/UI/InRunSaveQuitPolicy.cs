@@ -69,7 +69,8 @@ namespace SudokuRoguelike.UI
             }
 
             var runWasSeasonal = context.RunState?.IsSeasonalChallenge == true;
-            var supportsResume = context.RunState != null && !context.RunState.DisableProgressionRewards;
+            var supportsResume = context.RunState != null && !context.RunState.DisableProgressionRewards
+                && context.RunState.Mode != GameMode.IncenseWalk;
 
             var persistenceAction = InRunSaveQuitPersistenceAction.None;
             if (!context.OnEndScreen && supportsResume)

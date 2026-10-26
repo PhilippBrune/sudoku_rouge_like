@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 3.0 | **Date:** 2026-10-26 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; being built: the sixth curtain, the stamp shop, the Incense Walk screen; not built: the main menu)
+**Version:** 3.1 | **Date:** 2026-10-26 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result; being built: the stamp shop; not built: the main menu)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 3.1 | 2026-10-26 | review | The Incense Walk built: the sixth curtain on Game Modes (UI-STYLE-027) and the puzzle screen with the incense stick (UI-STYLE-030), and its result in the mode-result family. Changes from the mockups: the slips sit in the left column under the stick (the right column keeps the number pad), "Practice" sits left of Back. Screenshots below. |
 | 3.0 | 2026-10-26 | review | Owner: "Implementier die UI-Styles" (UI-STYLE-027 to 030). Built first: the Daily Walk's slip on Game Modes (UI-STYLE-027) and its result (UI-STYLE-028), with the walk behind them (DailyGoalSystem 0.4). Two changes from the mockup: Back sits beside the give button (the XP waits), and a seal is chosen by a click or focus, given only by the button. Screenshots below. |
 | 2.9 | 2026-10-26 | review | The offering table after the first boss shows the keystones with a vermilion tier tag (RELIC-KEY-001). New proposals for the owner's pick: Game Modes with six paths (proposed UI-STYLE-027), the Daily Walk result where the XP goes to a chosen class (UI-STYLE-028), the ink stamp shop (UI-STYLE-029) and the Incense Walk's puzzle screen (UI-STYLE-030), for RM-122 and RM-123. |
 | 2.8 | 2026-10-26 | review | The run-end ledger gets a time row for a won run on the seed of the week (SCORE-TIME-001). The Options' Controls page gets a Controller line: Automatic, X-input or D-input (INPUT-PAD-002). Screenshots below. |
@@ -600,6 +601,27 @@ panel:
 
 ![Daily Walk result](layout-proposals/after_daily_walk_result.jpg)
 ![XP waiting, given from Game Modes](layout-proposals/after_daily_walk_waiting.jpg)
+
+## The Incense Walk, built (3.1, 2026-10-26)
+
+The sixth curtain with the Incense Walk chosen: its rule, its records and the week's board in the side box, "Practice
+(random seed)", Back and "Choose a class" (the week's seed). Before (2.7, five curtains) and after:
+
+![Game Modes, five curtains](layout-proposals/after_game_modes_trials.jpg)
+![Game Modes, the Incense Walk](layout-proposals/after_game_modes_incense.jpg)
+
+The puzzle screen: where the HP and Pencil lanterns hang, the incense stick burns in its bowl, the time beside it; the
+slips "This puzzle adds" (here one mistake: −20 % and the perfect bonus lost) and "The walk" with the class's time form.
+The number pad keeps its place on the right. Before (a Garden Run puzzle) and after, then the last 30 seconds:
+
+![Puzzle screen, a Garden Run](layout-proposals/after_puzzle_6x6.jpg)
+![Incense Walk](layout-proposals/after_incense_walk.jpg)
+![Incense Walk, the last 30 seconds](layout-proposals/after_incense_walk_late.jpg)
+
+The result when the stick has burned down, in the mode-result family: the walk's numbers, the score against the best
+and the week's board (or "a practice walk"):
+
+![Incense Walk result](layout-proposals/after_incense_walk_result.jpg)
 
 ## Decisions and next step
 

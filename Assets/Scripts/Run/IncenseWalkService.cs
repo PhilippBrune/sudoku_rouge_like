@@ -48,6 +48,21 @@ namespace SudokuRoguelike.Run
             SecondsLeft = StartSeconds + (classId == ClassId.StoneGardener ? StoneStartSeconds : 0);
         }
 
+        /// <summary>The walk's run: the class (its level for its passive), no HP to lose, no pencil to spend, no bag.</summary>
+        public static RunState CreateRunState(ClassId classId, int seed, int classLevel) => new RunState
+        {
+            ClassId = classId,
+            ClassLevel = classLevel,
+            Mode = GameMode.IncenseWalk,
+            Seed = seed,
+            RunNumber = 1,
+            CurrentHP = 1,
+            MaxHP = 1,
+            ItemSlots = 0,
+            TotalFloors = 1,
+            HarmonyConfig = HarmonyDifficultyService.BuildConfig(0)
+        };
+
         /// <summary>[REQ: INCENSE-PUZZLE-001] The walk's n-th puzzle (0-based): boards and rules grow every three puzzles.</summary>
         public LevelConfig BuildLevel(int index)
         {

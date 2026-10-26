@@ -777,7 +777,7 @@ namespace SudokuRoguelike.UI
             var state = _map?.Run?.State;
 
             // Bag is irrelevant in Tutorial and Seasonal Challenge — hide and bail out.
-            if (state?.Mode == GameMode.Tutorial || state?.Mode == GameMode.SeasonalChallenge)
+            if (state?.Mode == GameMode.Tutorial || state?.Mode == GameMode.SeasonalChallenge || state?.Mode == GameMode.IncenseWalk)
             {
                 if (_bagPanel != null) _bagPanel.SetActive(false);
                 return;

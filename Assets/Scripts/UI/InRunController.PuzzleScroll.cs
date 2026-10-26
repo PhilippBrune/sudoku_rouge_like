@@ -18,7 +18,8 @@ namespace SudokuRoguelike.UI
         {
             if (panel == null || state == null) return;
             var gardenRun = state.Mode == GameMode.GardenRun && !state.TutorialMode;
-            var floorKey = gardenRun ? state.CurrentFloor : -1;
+            var incense = state.Mode == GameMode.IncenseWalk;   // [REQ: UI-STYLE-030] the walk's own title and grove
+            var floorKey = gardenRun ? state.CurrentFloor : incense ? -3 : -1;
             // The language can change in Options during a puzzle; the title follows it.
             if (floorKey == _puzzleArtFloor && LocalizationService.Current == _puzzleArtLanguage) return;
             _puzzleArtFloor = floorKey;
@@ -28,11 +29,12 @@ namespace SudokuRoguelike.UI
             if (title != null)
                 title.text = gardenRun
                     ? FloorThemeData.GetFloorName(state.CurrentFloor)
+                    : incense ? LocalizationService.T("Incense Walk")
                     : LocalizationService.T("InRun.Blueprint.SudokuGameplayTitle", "Sudoku Puzzle");
             var painting = panel.Find("PanelBackground")?.GetComponent<RawImage>();
             if (painting != null)
             {
-                var name = gardenRun ? PathBackgroundName(state.CurrentFloor) : "bg_puzzle_board";
+                var name = gardenRun ? PathBackgroundName(state.CurrentFloor) : incense ? "bg_garden_grove" : "bg_puzzle_board";
                 var texture = Resources.Load<Texture2D>("background/" + name);
                 if (texture == null) Debug.LogWarning($"[InRunController] Puzzle painting background/{name} is missing.");
                 painting.texture = texture;

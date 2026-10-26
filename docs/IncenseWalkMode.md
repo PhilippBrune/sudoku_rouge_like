@@ -1,11 +1,12 @@
 # Incense Walk Mode
 
-**Version:** 0.1 | **Date:** 2026-10-26 | **Status:** under review (the clock, score, puzzle growth and class time forms are built in `IncenseWalkService`; the mode, its screens and the leaderboard wait for the owner's pick of the mockups)
+**Version:** 0.2 | **Date:** 2026-10-26 | **Status:** review (built: the mode, its curtain on Game Modes, the puzzle screen with the incense stick, the result and the week's board)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 0.2 | 2026-10-26 | review | Owner: "Implementier die UI-Styles". Built: `GameMode.IncenseWalk` in `RunDirector` (no path, no bag, free pencil marks, a wrong digit costs time instead of HP), the sixth curtain (UI-STYLE-027) with a practice walk on a random seed, the incense stick in place of the lanterns (UI-STYLE-030), the result in the mode-result family and the week's Steam board "IncenseWalk_yyyy-Www" for a walk on the week's seed. The walk cannot be resumed: Save & Quit ends it without a result, as in Endless Zen. |
 | 0.1 | 2026-10-26 | under review | From `docs/design/time-attack-concept.md` 1.1 and the owner's answers (2026-10-25): "implement as it is now for playtesting and balancing", both mistake penalties, no boons, classes with time passives, a sixth mode. Roadmap RM-123. |
 
 ## Overview
@@ -59,6 +60,14 @@ Proposed time forms, for playtesting:
 | Lantern Seer | its passive as in the Garden Run (the rules are weaker) |
 | Reed Duelist | a perfect puzzle solved without pencil +30 s |
 | Quiet Cartographer | the first 5 s of each new board do not burn |
+
+## Open for the owner
+
+- A Koi Gambler mistake that costs no time still counts as a mistake on the puzzle: it cuts the bonus by 20 % and loses
+  the perfect bonus. Should a free mistake not count at all?
+- A walk counts as a started run (the Endless Zen unlock after 10 runs) and gives its puzzles' XP; its puzzle gold does
+  not count toward class unlocks. Should walks count as runs?
+- A walk on the week's seed that ends after Sunday midnight is scored on the new week's board.
 
 ## Screens
 

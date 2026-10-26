@@ -115,6 +115,8 @@ namespace SudokuRoguelike.Run
             _preBakedBossConfig = null;
             _preBakedNodePuzzles.Clear();
             InitServices(seed);
+            Incense = null;
+            if (request.Mode == GameMode.IncenseWalk) { StartIncenseRun(request, seed); return; }   // [REQ: INCENSE-PUZZLE-001]
 
             if (request.Mode == GameMode.EndlessZen)
             {
@@ -387,6 +389,7 @@ namespace SudokuRoguelike.Run
                 return PlaceResult.Correct; // confirmation deferred until fog lifts
             }
 
+            var hadMarks = Incense != null && CurrentBoard.GetPencilMarks(row, col).Count > 0;   // [REQ: INCENSE-CLASS-001]
             var isValid = IsPlacementCorrect(row, col, value);
 
             if (isValid)
@@ -433,6 +436,7 @@ namespace SudokuRoguelike.Run
 
                 RelicService.OnCorrectPlacement(State);
                 RelicService.OnDigitPlaced(State, CurrentBoard, row, col, value);   // [REQ: RELIC-SIG-002] [REQ: RELIC-KEY-002]
+                Incense?.OnCorrectDigit(hadMarks);
 
                 // [REQ: OPT-GAME-002] Auto Pencil Cleanup: the placed digit leaves the marks of its row, column and box
                 // (the box was missed, GAP-061); with the option off every mark stays.
@@ -573,7 +577,8 @@ namespace SudokuRoguelike.Run
                 || State.Mode == GameMode.Tutorial
                 || ClassPassiveService.IsPencilFree(State, CurrentLevelState, row, col, cellAlreadyHasMark)
                 || RelicService.HasEndlessArchive(State)
-                || RelicService.PencilFreeOnBoard(State, CurrentBoard.Size);   // [REQ: RELIC-KEY-002] Open Margin
+                || RelicService.PencilFreeOnBoard(State, CurrentBoard.Size)   // [REQ: RELIC-KEY-002] Open Margin
+                || State.Mode == GameMode.IncenseWalk;   // [REQ: INCENSE-CLOCK-001] only the clock counts
 
             if (!free && State.CurrentPencil <= 0) return false;
 
@@ -594,6 +599,7 @@ namespace SudokuRoguelike.Run
                 if (DailyGoals != null && !State.IsSeasonalChallenge)
                     DailyGoalService.EvaluateInRun(DailyGoals, State, CurrentLevelState, DailyGoalService.TriggerPencilMarkUsed);
             }
+            else if (!isRemoving && State.Mode == GameMode.IncenseWalk) CurrentLevelState.PencilMarksUsed++;   // [REQ: INCENSE-CLASS-001]
             return true;
         }
 
@@ -663,6 +669,7 @@ namespace SudokuRoguelike.Run
         // [REQ: DEBUFF-HOOK-001] ApplyMistakePenalty(row,col) is the central dispatch for all debuff effects
         public void ApplyMistakePenalty(int row, int col)
         {
+            if (IncenseMistake()) return;   // [REQ: INCENSE-CLOCK-003] the clock pays, not the HP
             // [REQ: HARMONY-SURV-002] Base damage is the run's mistake HP cost (1; 2 from H5; 3 from H9) (GAP-008).
             // [REQ: DEBUFF-HOOK-002] DoublePenalty doubles it.
             // [REQ: CURSE-INT-002] phantom_pain curse raises base damage to 2

@@ -32,6 +32,7 @@ namespace SudokuRoguelike.Save
             // Seasonal challenge saves go to a separate slot — do NOT block on DisableProgressionRewards.
             // For all other modes (e.g. SpiritTrials which also sets DisableProgressionRewards), skip.
             if (!runState.IsSeasonalChallenge && runState.DisableProgressionRewards) return;
+            if (runState.Mode == GameMode.IncenseWalk) return;   // [REQ: INCENSE-CLOCK-004] the walk cannot be resumed
 
             runState.SyncSeenModifiersToList();
 

@@ -130,6 +130,13 @@ namespace SudokuRoguelike.Tests
                 .ShowBossCleared(clearedRun, clearedRun.RollRelicChoices(3), _ => { }, () => { });
             yield return new WaitForSecondsRealtime(0.4f);
             yield return Shoot(clearedHost, camera, "after_boss_defeated.png");
+
+            // [REQ: RELIC-KEY-001] After the first boss the table offers keystones.
+            clearedRun.State.CurrentFloor = 0;
+            clearedHost.GetComponentInChildren<EndScreenViewController>(true)
+                .ShowBossCleared(clearedRun, clearedRun.RollBossOfferings(), _ => { }, () => { });
+            yield return new WaitForSecondsRealtime(0.4f);
+            yield return Shoot(clearedHost, camera, "after_boss_defeated_keystones.png");
         }
 
         // GAP-058: the second board of a run (8×8, Dutch Whispers, as in the 0.2.0 playtest) keeps its digits over the lines.

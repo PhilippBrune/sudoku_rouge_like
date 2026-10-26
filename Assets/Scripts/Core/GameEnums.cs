@@ -334,7 +334,21 @@ namespace SudokuRoguelike.Core
         CrackedStone,      // [HARMONY-H2+] T1: +8g at run start, -1 starting HP
         FrostedMirror,     // [HARMONY-H5+] T2: absorb 1 HP of mistake damage at cost of 3 pencil
         VoidPetal,         // [HARMONY-H7+] T3: survive lethal hit at 1 HP, receive 1 Normal Solver (once/run)
-        LanternOfVoid      // [HARMONY-H9+] Legendary: boss modifiers never ???; +1g per active floor modifier per solve
+        LanternOfVoid,     // [HARMONY-H9+] Legendary: boss modifiers never ???; +1g per active floor modifier per solve
+        // ── Class signature relics, from class Level 1 [RELIC-SIG-001] ──
+        CountingBeads,     // NumberFreak: the last copy of a digit placed gives +1 Pencil
+        PrayerBeads,       // GardenMonk: the first mistake of a puzzle costs no HP while HP are full
+        InkStone,          // ShrineArchivist: erasing pencil marks down to one writes that digit
+        LuckyScale,        // KoiGambler: a puzzle finished with exactly one mistake pays double gold
+        MossPouch,         // StoneGardener: +1 bag slot
+        SecondWick,        // LanternSeer: reachable cursed tiles name their extra rule on the path
+        SingleStroke,      // ReedDuelist: with no pencil mark on the board, the first wrong digit is taken back
+        CompassNeedle,     // QuietCartographer: board size and stars of every tile on the floor
+        // ── Keystones, one of three after the first boss [RELIC-KEY-001] ──
+        GildedBox,         // every finished box pays 1 gold
+        OpenMargin,        // pencil marks cost nothing on boards up to 6×6
+        SteadyHand,        // the first mistake of each puzzle costs no HP
+        CageWhisper        // cages with a hidden sum show its last digit
     }
 
     public enum RelicTier
@@ -343,7 +357,8 @@ namespace SudokuRoguelike.Core
         Tier2,
         Tier3,
         Tier4,
-        Legendary
+        Legendary,
+        Keystone   // [REQ: RELIC-KEY-001]
     }
 
     /// <summary>

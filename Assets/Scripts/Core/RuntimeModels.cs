@@ -184,6 +184,8 @@ namespace SudokuRoguelike.Core
         public FloorTally FloorTally = new FloorTally();
         public int ItemsUsedThisRun;
         public bool TempleVowReady;        // GardenMonk L30: trigger ready (HP ≤ 25%, fires once/puzzle)
+        public bool FirstMistakeShieldUsed; // [RELIC-SIG-002] [RELIC-KEY-002] Prayer Beads / Steady Hand, once per puzzle
+        public bool SingleStrokeUsed;       // [RELIC-SIG-002] Single Stroke, once per puzzle
         // [REDESIGN] AccurateMap: guarantee one relic-tier node this floor (read by RunDirector).
         public bool BonusRelicNodeThisFloor;
         public bool WardingFlameUsed;      // LanternSeer L30: once-per-run auto-remove used

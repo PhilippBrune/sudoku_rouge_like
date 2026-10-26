@@ -128,8 +128,36 @@ namespace SudokuRoguelike.Run
             var classId = State.IsSeasonalChallenge ? (ClassId)0 : State.ClassId;
             _relicService.ReseedForDecision(DecisionSeed(DecisionPurpose.RelicChoices));
             RolledRelicChoices = _relicService.RollRelicChoices(State.CurrentFloor, count, tierBonus,
-                classId, GetCurrentClassLevel());
+                classId, GetCurrentClassLevel(), held: State.HeldRelics);
             return RolledRelicChoices;
+        }
+
+        /// <summary>[REQ: RELIC-KEY-001] The offering table after a boss: three of the four keystones after a Garden Run's
+        /// first boss, relics after the others.</summary>
+        public List<RelicInstance> RollBossOfferings()
+        {
+            var firstBoss = State.Mode == GameMode.GardenRun && State.CurrentFloor == 0 && !State.IsSeasonalChallenge
+                && !State.TutorialMode;
+            if (!firstBoss) return RollRelicChoices(3);
+            _relicService.ReseedForDecision(DecisionSeed(DecisionPurpose.RelicChoices, 1));
+            RolledRelicChoices = _relicService.RollKeystoneChoices(3);
+            return RolledRelicChoices;
+        }
+
+        /// <summary>[REQ: RELIC-SIG-002] Second Wick: the extra rule a reachable cursed tile will bring (it is entered one
+        /// step deeper than now).</summary>
+        public BossModifierId? PeekCursedRule(int nodeIndex)
+        {
+            State.Depth++;
+            try
+            {
+                var mods = BuildCursedLevelConfig(nodeIndex).ActiveModifiers;
+                return mods.Count > 0 ? mods[mods.Count - 1] : (BossModifierId?)null;
+            }
+            finally
+            {
+                State.Depth--;
+            }
         }
 
         /// <summary>Accept the relic at the given choice index (from RolledRelicChoices).</summary>

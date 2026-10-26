@@ -975,6 +975,7 @@ namespace SudokuRoguelike.UI
             var run   = _map?.Run;
             var board = run?.CurrentBoard;
             if (board == null) return;
+            BoardViewController.WhisperHiddenSums = RelicService.WhispersHiddenSums(run.State);   // [REQ: RELIC-KEY-002]
             _boardView.RenderBoard(board, _selectedRow, _selectedCol, _highlightValue,
                 HasActiveModifier(BossModifierId.Antiknight),
                 _bagHighlightCells, _fogDisabledMovesRemaining,
@@ -2717,6 +2718,7 @@ namespace SudokuRoguelike.UI
                         _blurredPencilCells.Add((r, c));
                         _unblurCoroutines.Add(StartCoroutine(UnblurPencilCellAfterDelay(r, c, 1.5f)));
                     }
+                    InkStoneAfterPencil(value);   // [REQ: RELIC-SIG-002]
                 }
                 RenderBoard();
                 return;
@@ -2745,8 +2747,8 @@ namespace SudokuRoguelike.UI
                 SetStatus(Tf("Placed {0}.", value));
                 JumpToNextEmptyCellIfOn(board);   // OPT-GAME-004
             }
-            else if (result == PlaceResult.Unchanged)
-                SetStatus(Tf("{0} is already there.", value));
+            else if (result == PlaceResult.Unchanged || result == PlaceResult.TakenBack)
+                SetStatus(PlacementNote(result, value));
             else if (result == PlaceResult.IsGiven)
                 SetStatus(T("Given cell."));
             else if (result == PlaceResult.IsPresolved)

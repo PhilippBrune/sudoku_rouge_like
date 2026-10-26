@@ -434,6 +434,7 @@ namespace SudokuRoguelike.Run
                 // Fog placement (lantern active): treat normally, no deferred logic.
 
                 RelicService.OnCorrectPlacement(State);
+                RelicService.OnDigitPlaced(State, CurrentBoard, row, col, value);   // [REQ: RELIC-SIG-002] [REQ: RELIC-KEY-002]
 
                 // [REQ: OPT-GAME-002] Auto Pencil Cleanup: the placed digit leaves the marks of its row, column and box
                 // (the box was missed, GAP-061); with the option off every mark stays.
@@ -449,6 +450,9 @@ namespace SudokuRoguelike.Run
 
                 return PlaceResult.Correct;
             }
+
+            // [REQ: RELIC-SIG-002] Single Stroke: with no pencil mark on the board, the first wrong digit is taken back.
+            if (RelicService.TrySingleStroke(State, CurrentBoard)) return PlaceResult.TakenBack;
 
             State.LastComboBeforeMistake = State.ComboStreak;
             State.LastMistakeRow = row;
@@ -570,7 +574,8 @@ namespace SudokuRoguelike.Run
             var free = isRemoving
                 || State.Mode == GameMode.Tutorial
                 || ClassPassiveService.IsPencilFree(State, CurrentLevelState, row, col, cellAlreadyHasMark)
-                || RelicService.HasEndlessArchive(State);
+                || RelicService.HasEndlessArchive(State)
+                || RelicService.PencilFreeOnBoard(State, CurrentBoard.Size);   // [REQ: RELIC-KEY-002] Open Margin
 
             if (!free && State.CurrentPencil <= 0) return false;
 
@@ -606,6 +611,7 @@ namespace SudokuRoguelike.Run
             if (State.MistakeShieldCharges > 0) { State.MistakeShieldCharges--; State.LastMistakeHpLost = 0; return; }
             if (ClassPassiveService.OnMistake(State)) { State.LastMistakeHpLost = 0; return; } // class passive absorbs
             if (RelicService.TryAbsorbMistake(State)) { State.LastMistakeHpLost = 0; return; }
+            if (RelicService.TryFirstMistakeShield(State)) { State.LastMistakeHpLost = 0; return; }   // [REQ: RELIC-SIG-002] [REQ: RELIC-KEY-002]
             State.MonksBeadsCountdown = 0; // any mistake cancels MonksBeads streak
 
             // Shield system: drain ShieldPoints before touching CurrentHP.
@@ -2932,6 +2938,7 @@ namespace SudokuRoguelike.Run
         Invalid,
         IsGiven,
         IsPresolved,
-        Unchanged
+        Unchanged,
+        TakenBack   // [REQ: RELIC-SIG-002] Single Stroke took a wrong digit back
     }
 }

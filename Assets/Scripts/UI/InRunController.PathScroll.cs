@@ -336,6 +336,17 @@ namespace SudokuRoguelike.UI
 
         // ── nodes and routes ──
 
+        // [REQ: RELIC-SIG-002] Second Wick: a reachable cursed tile names the extra rule it will bring.
+        private string SecondWickNote(RunNode node)
+        {
+            var run = _map?.Run;
+            if (node.Type != NodeType.Cursed || node.Visited || run?.State == null
+                || !SudokuRoguelike.Economy.RelicService.RevealsCursedRules(run.State)
+                || !run.GetReachableNodes().Contains(node.Index)) return string.Empty;
+            var rule = run.PeekCursedRule(node.Index);
+            return rule.HasValue ? "\n<size=13>" + SudokuRoguelike.Boss.BossService.GetModifierName(rule.Value) + "</size>" : string.Empty;
+        }
+
         private Button CreateNodeButton(RectTransform parent, RunNode node, Vector2 pos, Color color,
             LevelConfig config = null, Color floorTint = default, bool bridgeWasUsed = false, bool hidden = false)
         {
@@ -393,6 +404,7 @@ namespace SudokuRoguelike.UI
                 if (config != null && IsPuzzleNodeType(node.Type))
                     label += " " + Tf("InRun.Path.SizeLabel", config.BoardSize)
                         + (node.Visited ? string.Empty : "\n<size=15>" + new string('★', Mathf.Clamp(config.Stars, 1, 6)) + "</size>");
+                label += SecondWickNote(node);
             }
             if (node.Index == _map?.Run?.State?.CurrentNodeIndex && node.Type == NodeType.Start)
                 label = T("InRun.Path.YouAreHere");

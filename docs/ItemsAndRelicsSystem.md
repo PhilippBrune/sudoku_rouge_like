@@ -1,13 +1,14 @@
 # Items & Relics System
 
-**Version:** 2.3  
-**Date:** 2026-10-21  
+**Version:** 2.4  
+**Date:** 2026-10-26  
 **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.4 | 2026-10-26 | implemented | Owner picks (2026-10-25): a signature relic per class from Level 1 with a higher chance in offerings (RELIC-SIG-001/002, `design/class-relics-concept.md`, Single Stroke for the Reed Duelist), and four keystones offered after a Garden Run's first boss that bend a rule of the puzzle (RELIC-KEY-001/002, RM-114, the owner's answer: a relic may bend Sudoku's rules). |
 | 2.3 | 2026-10-21 | implemented | Counter items, one per modifier family (ITEM-COUNTER-001..006), and shops that lean toward the counters of the board's rules (ITEM-COUNTER-007); lever L3 of `design/gold-and-items-concept.md`. |
 | 2.2 | 2026-10-21 | implemented | Item base prices ×2.5: Normal 40, Rare 75, Epic 150 (ECON-BAL-001, lever L1 of `design/gold-and-items-concept.md`, owner pick after the 0.2.0 playtest). The Warding Flame's removed trial is kept in the save (`RunState.WardingFlameOnFloor`/`WardingFlameTrial`): it used to come back after Save & Quit at the gate. |
 | 2.1 | 2026-10-07 | implemented | Item and relic reference tables regenerated from code (SPEC-MAC-001); standalone items documented as rolled (SPEC-CONF-035); multi-relic without cap, RELIC-SLOT-001 deprecated (SPEC-CONF-004); shop offer counts 2/2/3/3/4 (SPEC-CONF-005); reward reroll and Nothing gold (GAP-015, SPEC-AMB-007); full-bag purchase rule (GAP-036). |
@@ -109,6 +110,40 @@ Relics can currently come from:
 - relic nodes / events
 
 Boss-adjacent relic rewards use rolled choice panels rather than automatic single-relic grants.
+
+### Signature relics (2.4)
+
+| ID | Requirement |
+|---|---|
+| RELIC-SIG-001 | Each class has one signature relic, open from class Level 1. It is not in the shared pool: a relic offering (relic node or boss table) for that class puts it among the choices with a 35 % chance while the player does not hold it. An offering holds at most one class relic: the signature first, else the Level 30 exclusive (25 %, CLASS-EXCL-004). Shown as Tier 2. |
+| RELIC-SIG-002 | The effects below. Prayer Beads and Steady Hand share one shield per puzzle; Single Stroke returns `PlaceResult.TakenBack` (no mistake, no HP, the status line says so). |
+
+| Class | Relic | Effect |
+|---|---|---|
+| Number Freak | Counting Beads | When the last copy of a digit is placed (the board holds it Size times), +1 Pencil up to the maximum. |
+| Garden Monk | Prayer Beads | The first mistake of each puzzle costs no HP while HP are full. The mistake still counts for the grade. |
+| Shrine Archivist | Ink Stone | Erasing pencil marks until one is left in a cell writes that digit, through the normal digit path (a wrong one is a mistake). |
+| Koi Gambler | Lucky Scale | A puzzle finished with exactly one mistake pays double gold. |
+| Stone Gardener | Moss Pouch | +1 bag slot. |
+| Lantern Seer | Second Wick | Cursed tiles the player can reach next name their extra rule on the path (the rule they will bring: they are built one step deeper). |
+| Reed Duelist | Single Stroke | While no pencil mark is on the board, the first wrong digit of each puzzle is taken back: not placed, not counted. |
+| Quiet Cartographer | Compass Needle | The path shows the board size and stars of every tile on the floor (as Survey Notes and the Accurate Map do). |
+
+### Keystones (2.4, RM-114)
+
+| ID | Requirement |
+|---|---|
+| RELIC-KEY-001 | After the first boss of a Garden Run (not a tutorial, not the Monthly Walk) the offering table offers three of the four keystones instead of relics; the player takes one or leaves them. A keystone is held like a relic for the rest of the run and shows the tier "Keystone" in vermilion. |
+| RELIC-KEY-002 | The four keystones bend a rule of the puzzle: |
+
+| Keystone | Effect |
+|---|---|
+| Gilded Box | Every box (region) the player finishes pays 1 gold. |
+| Open Margin | Pencil marks cost nothing on boards up to 6×6. |
+| Steady Hand | The first mistake of each puzzle costs no HP (the mistake still counts for the grade). |
+| Cage Whisper | Cages with a hidden sum (the Hidden Killer rule) show its last digit: "?7". |
+
+Icons: the twelve borrow existing game icons (`RelicService.GetIconFolder`) until they have art of their own.
 
 ### HUD
 

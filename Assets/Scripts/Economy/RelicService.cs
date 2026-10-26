@@ -6,7 +6,7 @@ using SudokuRoguelike.Sudoku;
 
 namespace SudokuRoguelike.Economy
 {
-    public sealed class RelicService
+    public sealed partial class RelicService
     {
         private Random _random;
 
@@ -146,13 +146,20 @@ namespace SudokuRoguelike.Economy
         /// [HARMONY] harmonyLevel gates which relics can appear.</summary>
         // [REQ: CLASS-EXCL-004] 25% inject: exclusive relic only if classId matches and classLevel >= 30
         public List<RelicInstance> RollRelicChoices(int floorIndex, int count = 3, int tierBonus = 0,
-            ClassId classId = (ClassId)0, int classLevel = 0, int harmonyLevel = 0)
+            ClassId classId = (ClassId)0, int classLevel = 0, int harmonyLevel = 0, IReadOnlyList<RelicInstance> held = null)
         {
             var choices = new List<RelicInstance>(count);
             var offeredIds = new HashSet<RelicId>();
 
-            // 25% chance to inject the class-exclusive relic if unlocked
-            if (classId != (ClassId)0 && _random.NextDouble() < 0.25)
+            // [REQ: RELIC-SIG-001] The class's signature relic first (35 % while not held), then the Level 30 exclusive
+            // (25 %); at most one class relic per offering.
+            var signature = classId != (ClassId)0 ? RollSignature(classId, held, offeredIds) : null;
+            if (signature != null)
+            {
+                choices.Add(signature);
+                offeredIds.Add(signature.Id);
+            }
+            else if (classId != (ClassId)0 && _random.NextDouble() < 0.25)
             {
                 foreach (var kvp in ClassExclusiveRelics)
                 {
@@ -350,6 +357,8 @@ namespace SudokuRoguelike.Economy
             for (var i = 0; i < HarmonyRelics.Length; i++)
                 if (HarmonyRelics[i].Id == id) return HarmonyRelics[i].Tier;
             if (ClassExclusiveRelics.ContainsKey(id)) return RelicTier.Tier3;
+            if (IsKeystone(id)) return RelicTier.Keystone;
+            if (IsSignature(id)) return RelicTier.Tier2;
             return RelicTier.Tier1;
         }
 
@@ -385,6 +394,7 @@ namespace SudokuRoguelike.Economy
                     state.CurrentHP = Math.Min(state.MaxHP, state.CurrentHP + 1);
                     break;
                 case RelicId.JadeHairpin:
+                case RelicId.MossPouch:   // [REQ: RELIC-SIG-002]
                     state.ItemSlots++;
                     break;
                 case RelicId.SilentGrid:
@@ -399,6 +409,7 @@ namespace SudokuRoguelike.Economy
         /// <summary>Called at puzzle start: apply per-puzzle relic bonuses for all held relics.</summary>
         public static void OnPuzzleStart(RunState state, SudokuBoard board)
         {
+            ResetPuzzleFlags(state);
             if (state.HeldRelics == null || state.HeldRelics.Count == 0 || board == null) return;
             foreach (var relic in state.HeldRelics)
             {
@@ -486,6 +497,10 @@ namespace SudokuRoguelike.Economy
                         // [HARMONY] +1 gold per active floor modifier on puzzle completion.
                         gold += state.ActiveFloorModifiers?.Count ?? 0;
                         break;
+                    case RelicId.LuckyScale:
+                        // [REQ: RELIC-SIG-002] Exactly one mistake: the puzzle's gold doubles.
+                        if (level.Mistakes == 1) gold *= 2;
+                        break;
                 }
             }
         }
@@ -548,6 +563,10 @@ namespace SudokuRoguelike.Economy
                     case RelicId.SilentGrid:
                         // [REDESIGN] Reset 3 mistake-shield charges at the start of every floor (was once per run).
                         state.MistakeShieldCharges = 3;
+                        break;
+                    case RelicId.CompassNeedle:
+                        // [REQ: RELIC-SIG-002] Board size and stars of every tile on the floor.
+                        state.AllNodesRevealed = true;
                         break;
                     case RelicId.AccurateMap:
                         // Reveal all nodes on the map; also guarantee at least one relic-tier reward node.
@@ -748,6 +767,18 @@ namespace SudokuRoguelike.Economy
                 RelicId.FrostedMirror    => "Frosted Mirror",
                 RelicId.VoidPetal        => "Void Petal",
                 RelicId.LanternOfVoid    => "Lantern of Void",
+                RelicId.CountingBeads    => "Counting Beads",
+                RelicId.PrayerBeads      => "Prayer Beads",
+                RelicId.InkStone         => "Ink Stone",
+                RelicId.LuckyScale       => "Lucky Scale",
+                RelicId.MossPouch        => "Moss Pouch",
+                RelicId.SecondWick       => "Second Wick",
+                RelicId.SingleStroke     => "Single Stroke",
+                RelicId.CompassNeedle    => "Compass Needle",
+                RelicId.GildedBox        => "Gilded Box",
+                RelicId.OpenMargin       => "Open Margin",
+                RelicId.SteadyHand       => "Steady Hand",
+                RelicId.CageWhisper      => "Cage Whisper",
                 _ => id.ToString()
             };
             return LocalizationService.T(RelicNameKey(id), fallback);
@@ -794,6 +825,19 @@ namespace SudokuRoguelike.Economy
                 RelicId.FrostedMirror     => "frosted_mirror",
                 RelicId.VoidPetal         => "void_petal",
                 RelicId.LanternOfVoid     => "lantern_of_void",
+                // shortcut: signature relics and keystones borrow game icons until they have art of their own
+                RelicId.CountingBeads     => "scroll_graph",
+                RelicId.PrayerBeads       => "petal_orb",
+                RelicId.InkStone          => "ink_save",
+                RelicId.LuckyScale        => "sakura_coin",
+                RelicId.MossPouch         => "empty_slot",
+                RelicId.SecondWick        => "stacked_flame",
+                RelicId.SingleStroke      => "confirm_seal",
+                RelicId.CompassNeedle     => "framed_garden",
+                RelicId.GildedBox         => "golden_bonsai",
+                RelicId.OpenMargin        => "infinity_stone",
+                RelicId.SteadyHand        => "temple_bell",
+                RelicId.CageWhisper       => "torii_lock",
                 _ => ""
             };
         }
@@ -803,6 +847,10 @@ namespace SudokuRoguelike.Economy
             RelicId.GoldenRoot or RelicId.SilentGrid or RelicId.ShiftingGarden or
             RelicId.EternalLotus or RelicId.DragonsEye or
             RelicId.LanternOfVoid => "legendary",  // [HARMONY] legendary-tier harmony relic
+            RelicId.CountingBeads or RelicId.SecondWick or RelicId.OpenMargin => "meta",
+            RelicId.PrayerBeads or RelicId.InkStone or RelicId.SingleStroke or RelicId.CompassNeedle
+                or RelicId.SteadyHand or RelicId.CageWhisper => "ui",
+            RelicId.LuckyScale or RelicId.MossPouch or RelicId.GildedBox => "economy",
             _ => "relic"
         };
 
@@ -847,6 +895,18 @@ namespace SudokuRoguelike.Economy
                 RelicId.FrostedMirror    => "[H5+] Once per mistake: spend 3 pencil to absorb 1 HP of damage (auto-triggers if pencil ≥ 3). At H5+ each hit after the first in a puzzle is partially reduced.",
                 RelicId.VoidPetal        => "[H7+] Once per run: survive a lethal hit at 1 HP. Grants 1 free Normal Solver upon activation.",
                 RelicId.LanternOfVoid    => "[H9+] Boss modifier labels are always hidden (no auto-reveal on repeat). Earn +1 gold per active floor modifier on puzzle completion.",
+                RelicId.CountingBeads    => "When the last copy of a digit is placed, +1 Pencil. (Number Freak)",
+                RelicId.PrayerBeads      => "The first mistake of each puzzle costs no HP while your HP are full. (Garden Monk)",
+                RelicId.InkStone         => "Erase pencil marks until one is left, and it is written as the digit. (Shrine Archivist)",
+                RelicId.LuckyScale       => "A puzzle finished with exactly one mistake pays double gold. (Koi Gambler)",
+                RelicId.MossPouch        => "+1 bag slot. (Stone Gardener)",
+                RelicId.SecondWick       => "Cursed tiles you can reach name their extra rule on the path. (Lantern Seer)",
+                RelicId.SingleStroke     => "While no pencil mark is on the board, the first wrong digit of each puzzle is taken back. (Reed Duelist)",
+                RelicId.CompassNeedle    => "The path shows the board size and stars of every tile on the floor. (Quiet Cartographer)",
+                RelicId.GildedBox        => "Keystone: every box you finish pays 1 gold.",
+                RelicId.OpenMargin       => "Keystone: pencil marks cost nothing on boards up to 6×6.",
+                RelicId.SteadyHand       => "Keystone: the first mistake of each puzzle costs no HP.",
+                RelicId.CageWhisper      => "Keystone: cages with a hidden sum show its last digit.",
                 _ => ""
             };
             return string.IsNullOrEmpty(fallback)

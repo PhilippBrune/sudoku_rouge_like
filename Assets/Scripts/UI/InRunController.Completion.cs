@@ -148,7 +148,7 @@ namespace SudokuRoguelike.UI
                 // and the relic choice on one screen; taking or leaving the offerings loads the next floor. The solved
                 // board is hidden first, so its keys and controller shortcuts are off while the screen is open.
                 // Normal item rewards are never shown after a boss.
-                var choices = _map?.Run?.RollRelicChoices(3);
+                var choices = _map?.Run?.RollBossOfferings();   // [REQ: RELIC-KEY-001] keystones after the first boss
                 SetActive(_sudokuPanel, false);
                 _endScreenView.ShowBossCleared(_map.Run, choices,
                     relic =>

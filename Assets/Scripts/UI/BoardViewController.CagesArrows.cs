@@ -42,10 +42,13 @@ namespace SudokuRoguelike.UI
             _ => KillerBorder
         };
 
-        /// <summary>The label in a cage's corner. A hidden sum is never shown.</summary>
+        /// <summary>[REQ: RELIC-KEY-002] Cage Whisper: a hidden sum shows its last digit ("?7").</summary>
+        public static bool WhisperHiddenSums;
+
+        /// <summary>The label in a cage's corner. A hidden sum shows "?", or its last digit with Cage Whisper.</summary>
         public static string CageLabel(KillerCage cage) => cage.CageType switch
         {
-            KillerCageType.HiddenSum => "?",
+            KillerCageType.HiddenSum => WhisperHiddenSums ? "?" + (cage.Sum % 10) : "?",
             KillerCageType.Product => "×" + cage.Sum,
             KillerCageType.Difference => "−" + cage.Sum,
             KillerCageType.Ratio => "1:" + cage.Sum,

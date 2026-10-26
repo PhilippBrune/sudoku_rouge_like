@@ -1,11 +1,12 @@
 # Class relics: a set for every class
 
-**Version:** 1.0 | **Date:** 2026-10-25 | **Status:** new (concept for the owner's pick; nothing built)
+**Version:** 1.1 | **Date:** 2026-10-26 | **Status:** implemented (two relics per class: the signature relics are built; ItemsAndRelicsSystem 2.4)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.1 | 2026-10-26 | implemented | Owner answers: two relics per class (signature and the existing exclusive), a higher chance instead of a guarantee (35 %), Single Stroke as the Reed Duelist's signature instead of Bamboo Edge, Ink Stone stays, built together with the keystones. Built as RELIC-SIG-001/002 (ItemsAndRelicsSystem 2.4); the mastery relics are dropped. |
 | 1.0 | 2026-10-25 | new | Owner request: "Create a concept for class-specific relics." Suggested roadmap item RM-124; builds on the keystone answer of 2026-10-22 (a relic may bend Sudoku's rules). |
 
 ## 1. What exists

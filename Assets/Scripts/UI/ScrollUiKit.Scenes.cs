@@ -136,6 +136,7 @@ namespace SudokuRoguelike.UI
         internal static Color TierColor(RelicTier tier) => tier switch
         {
             RelicTier.Legendary => new Color(0.80f, 0.62f, 0.14f, 1f),
+            RelicTier.Keystone => Vermilion,   // [REQ: RELIC-KEY-001]
             RelicTier.Tier1 => new Color(0.40f, 0.37f, 0.33f, 1f),
             _ => new Color(0.22f, 0.32f, 0.66f, 1f)
         };

@@ -1,6 +1,6 @@
 # Requirement Traceability Map — All Systems
 
-**Updated:** 2026-10-26 (INPUT-PAD-002, SCORE-TIME-001, SAVE-TEST-001, ACHIEVE-RUN-001, ACHIEVE-CLASS-001, ACHIEVE-MODE-001, ACHIEVE-COLLECT-001; before: INPUT-PAD-001 (GAP-070); before: HARMONY-PERK-002..005 (GAP-064, GAP-067, GAP-069), LEGAL-LICENSE-001 (GAP-068), INPUT-NAV-001 (GAP-062), the one-more-run slice RUN-AGAIN-001, RUN-END-NEAR-001, RUN-END-MOVED-001, STAKES-001, RUN-LENGTH-001, META-CODEX-010; before: UI-STYLE-024..026, LOC-NUM-001, ACCESS-MOTION-002)
+**Updated:** 2026-10-26 (RELIC-SIG-001, RELIC-SIG-002, RELIC-KEY-001, RELIC-KEY-002, INPUT-PAD-002, SCORE-TIME-001, SAVE-TEST-001, ACHIEVE-RUN-001, ACHIEVE-CLASS-001, ACHIEVE-MODE-001, ACHIEVE-COLLECT-001; before: INPUT-PAD-001 (GAP-070); before: HARMONY-PERK-002..005 (GAP-064, GAP-067, GAP-069), LEGAL-LICENSE-001 (GAP-068), INPUT-NAV-001 (GAP-062), the one-more-run slice RUN-AGAIN-001, RUN-END-NEAR-001, RUN-END-MOVED-001, STAKES-001, RUN-LENGTH-001, META-CODEX-010; before: UI-STYLE-024..026, LOC-NUM-001, ACCESS-MOTION-002)
 
 Legend: ✅ Implemented and verified | ⚠️ Partial / conflicting | ❌ Not implemented | ◻️ Code present, not verified (no tagged test or E2E check yet) | 🗄️ Deprecated / descoped | 🆕 New (spec only, no code yet)
 
@@ -614,6 +614,10 @@ Key requirements (see spec for full list):
 | CLASS-EXCL-002 | `ClassExclusive` flag on item/relic definitions | `Assets/Scripts/Items/ItemService.cs`, `RelicService.cs` | `ExclusiveDef`, `ExclusiveRelicDef` | — | ◻️ |
 | CLASS-EXCL-003 | `ClassUnlockLevel` (15 or 30) on item/relic definitions | `Assets/Scripts/Items/ItemService.cs`, `RelicService.cs` | `UnlockLevel` = 15 (items), 30 (relics) | — | ◻️ |
 | CLASS-EXCL-004 | Exclusive items/relics only rollable for their associated class | `Assets/Scripts/Items/ItemService.cs`, `RelicService.cs` | `IsAvailableForClass`, `RollRelicChoices` | GameplayEffectContractTests | ✅ |
+| RELIC-SIG-001 | A signature relic per class from Level 1, 35 % in an offering while not held, at most one class relic per offering | `Assets/Scripts/Economy/RelicService.SignatureAndKeystones.cs`, `RelicService.cs` | `SignatureRelics`, `RollSignature`, `RollRelicChoices` | SignatureAndKeystoneRelicTests | ✅ |
+| RELIC-SIG-002 | The eight signature effects (Counting Beads, Prayer Beads, Ink Stone, Lucky Scale, Moss Pouch, Second Wick, Single Stroke, Compass Needle) | `RelicService.SignatureAndKeystones.cs`, `RelicService.cs`, `Run/RunDirector.cs`, `UI/InRunController.Relics.cs`, `UI/InRunController.PathScroll.cs` | `OnDigitPlaced`, `TryFirstMistakeShield`, `TrySingleStroke`, `InkStoneAfterPencil`, `SecondWickNote` | SignatureAndKeystoneRelicTests | ✅ |
+| RELIC-KEY-001 | Three of four keystones on the offering table after a Garden Run's first boss | `RelicService.SignatureAndKeystones.cs`, `Run/RunDirector.Choices.cs`, `UI/InRunController.Completion.cs` | `RollKeystoneChoices`, `RollBossOfferings` | SignatureAndKeystoneRelicTests | ✅ |
+| RELIC-KEY-002 | The keystones bend a rule: Gilded Box, Open Margin, Steady Hand, Cage Whisper | `RelicService.SignatureAndKeystones.cs`, `Run/RunDirector.cs`, `UI/BoardViewController.CagesArrows.cs` | `OnDigitPlaced`, `PencilFreeOnBoard`, `TryFirstMistakeShield`, `CageLabel` | SignatureAndKeystoneRelicTests | ✅ |
 
 ---
 

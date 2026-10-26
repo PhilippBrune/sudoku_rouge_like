@@ -93,6 +93,8 @@ Every grant is kept in the profile (`MasteryAchievementState.UnlockedAchievement
 
 Steamworks → App 4858470 → Stats & Achievements → Achievements: one new achievement per row of §2 with the API name, name, description, hidden = no, and the two icons (`steam_assets/achievements/achieved_<api name>.jpg` and `unachieved_<api name>.jpg`, 256×256). Then publish (stop and check before the Publish button, as always). The texts in the other four languages are in §5 (Steamworks → the achievement → Localization).
 
+For entering them: `steam_assets/achievements/steamworks_entry.html` lists the 21 new achievements with both icons and every text in five languages (a click copies a field), and `new_achievements_overview.jpg` shows all icons at once (both made by `tools/steam/achievement_sheet.py` from this page).
+
 ## 5. Names and descriptions in the other languages
 
 Name and description, separated by the colon; the mode and screen names are the game's own (Gartenrunde, Parcours du jardin, Recorrido del jardín, Percurso do jardim; Etage, Étage, Piso, Andar; LP and PV).

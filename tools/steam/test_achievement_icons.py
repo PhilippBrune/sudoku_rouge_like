@@ -28,5 +28,16 @@ class AchievementIconsTests(unittest.TestCase):
             icons.main(['--only', 'no_such_achievement'])
 
 
+class AchievementSheetTests(unittest.TestCase):
+    def test_every_new_achievement_has_texts_in_five_languages(self):
+        import achievement_sheet
+        english, others = achievement_sheet.read_spec()
+        for name in icons.ICONS:
+            self.assertIn(name, english)
+            self.assertEqual(len(others[name]), 4, name)
+            for title, description in others[name]:
+                self.assertTrue(title and description[:1].isupper(), (name, title, description))
+
+
 if __name__ == '__main__':
     unittest.main()

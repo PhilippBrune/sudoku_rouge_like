@@ -1,11 +1,12 @@
 # Daily Goal System
 
-**Version:** 0.3 | **Date:** 2026-10-26 | **Status:** under review (the daily walk of two floors is specified below; its XP sum is built, the rest waits for the owner's pick of the mockups)
+**Version:** 0.4 | **Date:** 2026-10-26 | **Status:** review (the daily walk of two floors is built; the stamp shop, DAILY-WALK-007, follows)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 0.4 | 2026-10-26 | review | Owner: "Implementier die UI-Styles"; the walker gets 10 HP and 10 Pencil (2 bag slots, the class average), the pool keeps 21 goals with four replaced, and the weekly scroll stays, counted by stamps earned (owner, 2026-10-26). Built: DAILY-WALK-001 to 006 and 008, the Game Modes slip (UI-STYLE-027) and the result (UI-STYLE-028). The goals no longer count in a Garden Run, their gold, reroll and stamp rewards are gone. |
 | 0.3 | 2026-10-26 | under review | The Daily Walk becomes a run of its own (`docs/design/daily-walk-concept.md` 1.1, owner's answers 2026-10-25, RM-122): two floors with a boss each, no class, XP to a class chosen at the end, the goals only inside the walk, ink stamps for looks, a leaderboard of the day (DAILY-WALK-001 to 008). Until it is built the goals below stay as they are. |
 | 0.2 | 2026-10-07 | implemented | Status set from evidence (SPEC-CONF-022): streak and goal evaluation covered by DailyStreakTests and GameplayEffectContractTests. Daily Walk widget on the main menu as built (SPEC-CONF-027, GAP-028); skipped days reset the streak (GAP-028). |
 | 0.1 | 2026-04-09 | new | Initial specification |
@@ -215,8 +216,29 @@ sum (DAILY-WALK-003, `DailyGoalService.WalkXp`). The screens are proposed in `do
 | DAILY-WALK-007 | Ink stamps buy looks in a stamp shop (board ink, class seal frames, path seals); looks only, no balance. |
 | DAILY-WALK-008 | The walk's run score goes to a Steam leaderboard of the day; the result shows the place and the friends. |
 
-Open for the build: the neutral walker's HP, Pencil and bag; the goal pool for two floors; whether the weekly scroll
-(7 ink stamps) stays now that stamps are spent; the Discord walk posts (RUN-WEEK-002) must follow the new goal pool.
+Owner's decisions (2026-10-26): the walker starts with 10 HP, 10 Pencil and 2 bag slots (the class average, the numbers
+of `ClassId` 0 in `ClassCatalog`) and one starting relic from the day's seed. The pool keeps 21 goals, 7 per tier, so
+the Discord posts keep working (`walk_calendar.py` reads the C# lines); four that need floors 3 to 5 or a class are
+replaced: "Finish the walk (defeat the Floor 2 boss)", "Finish the walk with 3 HP or more", "Finish the walk without
+using an item", "Solve three puzzles without a mistake in one walk". The weekly scroll stays: the seventh ink stamp
+earned in an ISO week (spent or not) adds 500 XP to the XP waiting for a class.
+
+| ID | As built |
+|----|----------|
+| DAILY-WALK-001 | "Walk today's garden" on the Game Modes slip starts a Garden Run with `DailyWalk` set, `TotalFloors` 2 and the day's seed (`DailyGoalService.WalkSeed`, FNV-1a of the date). A saved run is abandoned first ("Abandon & walk"). |
+| DAILY-WALK-002 | The walker is `ClassId` 0: the catalog's base numbers, no passive, no class relics; the run's screens name it "The day's walker". |
+| DAILY-WALK-003 | At the end `ProfileService.SettleDailyWalk` adds the XP to `DailyGoalState.PendingWalkXp`; the result (UI-STYLE-028) gives it to an unlocked class (`GiveWaitingXp`). Left there, it waits, and the Daily Walk's way in reads "Give … XP" until it is given. A daily walk is never a Garden Run win (no Harmony unlock, no class garden entry). |
+| DAILY-WALK-004 | `RunDirector.DailyGoals` is set only for the day's scored walk, so a Garden Run no longer meets the goals. |
+| DAILY-WALK-005 | `DailyGoalState.LastScoredWalkDate`: a second walk the same day has no goals, no XP sum and no board entry. |
+| DAILY-WALK-006 | All three goals: +1 ink stamp (`EarnStamps`); the streak milestones and the Monthly Walk's stamps go through it too. |
+| DAILY-WALK-008 | `SteamLeaderboardService.SubmitToBoard` uploads the run score to "DailyWalk_yyyy-MM-dd" (kept best) and reads the top three, the place and the place among friends; without Steam the board says so. |
+
+A walk counts as a run for the class-unlock counters (bosses defeated, gold, items, relics), the run count and the boss
+achievements, never as a win (no Harmony unlock, no win achievements). Saves from before 0.4: pending start gold and
+reroll tokens from the old goal rewards are dropped, and a goal saved under a replaced index changes once.
+
+The Discord walk posts (RUN-WEEK-002) list the new goals and their XP on their own; their wording ("the same for
+everyone who plays today") still says nothing about the walk and is the owner's to change.
 
 ---
 

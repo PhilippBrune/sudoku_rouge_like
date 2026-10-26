@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Meta;
 using SudokuRoguelike.Run;
 
 namespace SudokuRoguelike.UI
@@ -35,6 +36,12 @@ namespace SudokuRoguelike.UI
                 [GameModesScreen.Mode.Monthly] = MonthlyView(envelope.SeasonalChallenge)
             });
             _gameModesScreen.ShowTiers(tierLabels, trialsUnlocked);
+            // [REQ: UI-STYLE-027] The Daily Walk's caption carries the day; its board fills the side box when Steam answers.
+            var caption = _gameModesPanel != null ? _gameModesPanel.transform.Find("ModeSlip/Slip_Daily/Caption") : null;
+            if (caption != null)
+                caption.GetComponent<UnityEngine.UI.Text>().text = (LocalizationService.T("Daily Walk") + " · "
+                    + DateTime.Today.ToString("dddd d MMMM", LocalizationService.Culture)).ToUpperInvariant();
+            SteamLeaderboardService.SubmitToBoard(SteamLeaderboardService.DailyWalkBoard(DateTime.Today), 0, ShowDailySide);
             var records = _gameModesPanel != null ? _gameModesPanel.transform.Find("BtnZenRecords") : null;
             if (records != null) records.GetComponent<UnityEngine.UI.Button>().interactable = endlessUnlocked;
             RefreshGameModesHarmony(meta);
@@ -110,28 +117,123 @@ namespace SudokuRoguelike.UI
                 LocalizationService.T("GameModes.Body.Trials", "One timed puzzle under rising pressure. Choose a tier, then a class."));
         }
 
-        private static GameModesScreen.ModeView DailyView(DailyGoalState goals)
+        // [REQ: UI-STYLE-027] [REQ: DAILY-WALK-001] The Daily Walk's slip: the rules, today's goals, and in the side box the
+        // streak, the ink stamps and the day's board (filled when Steam answers). XP still waiting turns the way in into
+        // "Give … XP"; a saved run into "Abandon & walk".
+        private GameModesScreen.ModeView DailyView(DailyGoalState goals)
         {
             DailyGoalService.RefreshIfNewDay(goals, DateTime.Today);
             var defs = DailyGoalService.GetTodayGoals(goals);
+            var walked = goals.LastScoredWalkDate == DateTime.Today.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
             var done = 0;
-            var lines = new List<string>();
-            for (var i = 0; i < defs.Length && i < goals.TodayGoalCompleted.Length; i++)
+            var marks = new List<string>();
+            for (var i = 0; i < defs.Length; i++)
             {
-                var text = DailyGoalService.GetGoalDescription(defs[i]);
-                if (goals.TodayGoalCompleted[i])
-                {
-                    done++;
-                    lines.Add($"<color=#7A6E5A>• {text}  ({LocalizationService.T("GameModes.Daily.Done", "done")})</color>");
-                }
-                else lines.Add($"• {text}");
+                var met = goals.TodayGoalCompleted[i];
+                if (met) done++;
+                marks.Add((met ? "<color=#2F6B3A>✓</color> " : "○ ") + DailyGoalService.GetGoalDescription(defs[i]));
             }
-            var resetIn = DateTime.Today.AddDays(1) - DateTime.Now;
-            lines.Add(LocalizationService.Format("GameModes.Body.DailyStamps", "Ink stamps {0} · new goals in {1:D2}:{2:D2}",
-                goals.TotalInkStamps, (int)resetIn.TotalHours, resetIn.Minutes));
-            return new GameModesScreen.ModeView(true,
-                LocalizationService.Format("GameModes.State.Daily", "{0} of 3 · streak {1}", done, Accent(goals.CurrentStreak.ToString())),
-                string.Join("\n", lines));
+            var body = LocalizationService.T("GameModes.Body.Daily") + "\n" + LocalizationService.T("GameModes.Daily.Goals") + " "
+                       + string.Join(" · ", marks);
+            var state = walked
+                ? LocalizationService.Format("GameModes.State.DailyWalked", "Walked · {0} of 3 · streak {1}", done, Accent(goals.CurrentStreak.ToString()))
+                : LocalizationService.Format("GameModes.State.DailyOpen", "Not walked · streak {0}", Accent(goals.CurrentStreak.ToString()));
+            _dailySide = DailySide(goals);
+            string enter = null;
+            if (goals.PendingWalkXp > 0)
+                enter = LocalizationService.Format("GameModes.Daily.Give", "Give {0} XP", goals.PendingWalkXp);
+            else if (_gameBootstrap != null && _gameBootstrap.HasResumableRun())
+                enter = LocalizationService.T("GameModes.Daily.AbandonWalk");
+            return new GameModesScreen.ModeView(true, state, body, enter, _dailySide + "\n" + LocalizationService.T("DailyWalk.Board.Loading"));
+        }
+
+        private string _dailySide;
+
+        private static string DailySide(DailyGoalState goals)
+        {
+            var day = DailyGoalService.StreakDay(goals);
+            const string soft = "<size=14><color=#6B5F4C>{0}</color></size>";
+            return string.Format(soft, LocalizationService.T("GameModes.Daily.StreakHeader").ToUpperInvariant()) + "\n"
+                   + LocalizationService.Format("GameModes.Daily.Streak", "Day {0}: +{1} % XP", day, DailyGoalService.StreakBonusPercent(day)) + "\n"
+                   + LocalizationService.Format("GameModes.Daily.Stamps", "Ink stamps {0} · this week {1} of 7", goals.TotalInkStamps,
+                       ThisWeek(goals)) + "\n"
+                   + string.Format(soft, LocalizationService.T("GameModes.Daily.BoardHeader").ToUpperInvariant());
+        }
+
+        private static int ThisWeek(DailyGoalState goals)
+        {
+            var today = DateTime.Today;
+            var week = $"{System.Globalization.ISOWeek.GetYear(today):0000}-W{System.Globalization.ISOWeek.GetWeekOfYear(today):00}";
+            return goals.StampWeek == week ? goals.StampsThisWeek : 0;
+        }
+
+        // [REQ: DAILY-WALK-008] The day's board in the side box: the player's place (or "not walked"), the walkers, the best.
+        private void ShowDailySide(BoardStanding standing)
+        {
+            if (_gameModesScreen == null || _dailySide == null) return;
+            string line;
+            if (standing == null) line = LocalizationService.T("DailyWalk.Board.Offline");
+            else
+            {
+                var place = standing.Rank > 0
+                    ? LocalizationService.Format("DailyWalk.Board.Place", "Place {0} of {1}", standing.Rank, standing.Entries)
+                    : LocalizationService.T("GameModes.Daily.NotWalked");
+                var best = standing.Top.Count > 0 ? standing.Top[0].Score.ToString("N0", LocalizationService.Culture) : "\u2013";
+                line = LocalizationService.Format("GameModes.Daily.BoardLine", "{0} · {1} walkers · best {2}", place, standing.Entries, Accent(best));
+            }
+            _gameModesScreen.SetSide(GameModesScreen.Mode.Daily, _dailySide + "\n" + line);
+        }
+
+        /// <summary>The Daily Walk's way in: XP still waiting is given first; then the day's walk (a saved run is abandoned).</summary>
+        public void EnterDailyWalk()
+        {
+            var envelope = _save.HasSaveFile() ? _save.Load() : new SaveFileEnvelope();
+            if ((envelope.DailyGoals?.PendingWalkXp ?? 0) > 0)
+            {
+                ShowWaitingXp(envelope);
+                return;
+            }
+            if (_gameBootstrap == null) return;
+            if (_gameBootstrap.HasResumableRun()) _gameBootstrap.AbandonSavedRun();
+            ClearSeed();
+            _gameBootstrap.LaunchRun(new LaunchRequest
+            {
+                Mode = GameMode.GardenRun, DailyWalk = true, HasSeed = true, Seed = DailyGoalService.WalkSeed(DateTime.Today),
+                AllowIrregularPuzzles = true
+            });
+        }
+
+        private GameObject _waitingXp;
+
+        // [REQ: UI-STYLE-028] The XP waiting from a walk left on its result (or the weekly scroll), given on the menu.
+        private void ShowWaitingXp(SaveFileEnvelope envelope)
+        {
+            if (_gameModesPanel == null) return;
+            ScrollUiKit.DestroyNow(_waitingXp);
+            var screen = ScrollUiKit.Fill(_gameModesPanel.transform, "WaitingXp", Vector2.zero, Vector2.one, Color.black);
+            screen.raycastTarget = true;
+            _waitingXp = screen.gameObject;
+            ScrollUiKit.Painting(screen.transform, "Painting", "bg_daily_walk", new Color(0.62f, 0.62f, 0.62f, 1f));
+            ScrollUiKit.Banner(screen.transform, "Banner", new Vector2(0.3177f, 0.8444f), new Vector2(0.6823f, 0.9574f),
+                "Eyebrow", LocalizationService.T("Daily Walk"), "Title", LocalizationService.T("DailyWalk.Give.WaitingTitle"));
+            void Close()
+            {
+                ScrollUiKit.DestroyNow(_waitingXp);
+                _waitingXp = null;
+                RefreshGameModesPanel();
+                _gameModesScreen?.Show(GameModesScreen.Mode.Daily);
+                var curtain = _gameModesPanel.transform.Find("BtnDailyWalk");
+                var events = UnityEngine.EventSystems.EventSystem.current;
+                if (curtain != null && events != null) events.SetSelectedGameObject(curtain.gameObject);
+            }
+            var goals = envelope.DailyGoals;
+            DailyWalkGiveView.Build(screen.transform, new Vector2(0.333f, 0.30f), new Vector2(0.667f, 0.80f),
+                new Vector2(0.40f, 0.20f), new Vector2(0.60f, 0.255f), goals.PendingWalkXp,
+                LocalizationService.Format("DailyWalk.Result.Waiting", "+{0} waiting from before", goals.PendingWalkXp),
+                envelope.MetaProgress, Profile.GiveWaitingXp, Close);
+            var back = ScrollUiKit.PillButton(screen.transform, "BtnWaitingBack", new Vector2(0.29f, 0.20f), new Vector2(0.39f, 0.255f),
+                LocalizationService.T("Back"), 22, new Color(0.24f, 0.20f, 0.16f, 1f), ScrollUiKit.PaperText, 30f);
+            back.onClick.AddListener(Close);
         }
 
         private static GameModesScreen.ModeView MonthlyView(SeasonalChallengeState seasonal)

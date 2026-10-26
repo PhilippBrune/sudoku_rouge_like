@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 2.9 | **Date:** 2026-10-26 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes and the results of Endless Zen, Spirit Trials and the Monthly Walk; proposed, not built: the main menu, six game modes, the Daily Walk result, the stamp shop, the Incense Walk screen)
+**Version:** 3.0 | **Date:** 2026-10-26 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; being built: the sixth curtain, the stamp shop, the Incense Walk screen; not built: the main menu)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 3.0 | 2026-10-26 | review | Owner: "Implementier die UI-Styles" (UI-STYLE-027 to 030). Built first: the Daily Walk's slip on Game Modes (UI-STYLE-027) and its result (UI-STYLE-028), with the walk behind them (DailyGoalSystem 0.4). Two changes from the mockup: Back sits beside the give button (the XP waits), and a seal is chosen by a click or focus, given only by the button. Screenshots below. |
 | 2.9 | 2026-10-26 | review | The offering table after the first boss shows the keystones with a vermilion tier tag (RELIC-KEY-001). New proposals for the owner's pick: Game Modes with six paths (proposed UI-STYLE-027), the Daily Walk result where the XP goes to a chosen class (UI-STYLE-028), the ink stamp shop (UI-STYLE-029) and the Incense Walk's puzzle screen (UI-STYLE-030), for RM-122 and RM-123. |
 | 2.8 | 2026-10-26 | review | The run-end ledger gets a time row for a won run on the seed of the week (SCORE-TIME-001). The Options' Controls page gets a Controller line: Automatic, X-input or D-input (INPUT-PAD-002). Screenshots below. |
 | 2.7 | 2026-10-22 | review | Owner: "implement UI-STYLE-017 to 026 if not done". Built what the mockups had and the game left out: the Codex's rarity filter and "Best paired with" (UI-STYLE-018, META-CODEX-010) and the Spirit Trials tiers on the Game Modes slip (UI-STYLE-025). The main menu (UI-STYLE-023) stays unbuilt: the owner kept it (2026-10-21). With the one-more-run slice the run ends gained Walk again and "This run", the cursed tile and the boss gate their stakes in numbers. Screenshots below. |
@@ -583,6 +584,22 @@ The hanging scroll of UI-STYLE-002. Where the HP lantern hangs, an incense stick
 the time left, the time stands large below it, a solved puzzle's bonus floats up beside it. A slip on the right shows
 what this puzzle would add and how each mistake cuts it; under it the walk's count, score, best and the class's time
 passive. In the last 30 seconds the ember and the time turn red.
+
+## The Daily Walk, built (3.0, 2026-10-26)
+
+The Daily Walk's slip on Game Modes (UI-STYLE-027) and its result (UI-STYLE-028). The slip before (2.6) and after: the
+day in the caption, the rules and today's goals, the streak, the ink stamps and the day's board in a side box, the way
+in "Walk today's garden" (here "Give 818 XP", because XP still waits):
+
+![Game Modes, the Daily Walk before](layout-proposals/after_game_modes_daily.jpg)
+![Game Modes, the Daily Walk's slip](layout-proposals/after_game_modes_daily_walk.jpg)
+
+The result: the day's garden and goals, the XP waiting for a class (the lowest-level unlocked class is chosen first),
+the day's board (offline here) and the streak stamp. Back leaves the XP waiting; Game Modes then gives it on the same
+panel:
+
+![Daily Walk result](layout-proposals/after_daily_walk_result.jpg)
+![XP waiting, given from Game Modes](layout-proposals/after_daily_walk_waiting.jpg)
 
 ## Decisions and next step
 

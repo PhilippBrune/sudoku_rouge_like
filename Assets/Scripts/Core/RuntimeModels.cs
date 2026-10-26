@@ -33,6 +33,8 @@ namespace SudokuRoguelike.Core
         public int RunNumber;
         public int Seed;
         public bool WeeklySeedRun;   // [REQ: SCORE-TIME-001] started with the seed of the week
+        public bool DailyWalk;       // [REQ: DAILY-WALK-001] the day's walk: two floors, the neutral walker
+        public bool DailyWalkScored; // [REQ: DAILY-WALK-005] the day's first walk: its goals, XP and board count
         public int Depth;
         public int CurrentFloor;
         public int TotalFloors = 5;
@@ -563,6 +565,8 @@ namespace SudokuRoguelike.Core
         /// <summary>[REQ: REQ-RUN-100] Seed entered on the start-run screen; without it the run gets a random seed (GAP-020).</summary>
         public bool HasSeed;
         public int Seed;
+        /// <summary>[REQ: DAILY-WALK-001] The day's walk (Mode stays GardenRun, ClassId stays 0: the neutral walker).</summary>
+        public bool DailyWalk;
     }
 
     [Serializable]
@@ -578,6 +582,7 @@ namespace SudokuRoguelike.Core
         public ClassId PlayedClassId = ClassId.NumberFreak;
         public GameMode Mode;
         public bool Victory;
+        public bool DailyWalk;   // [REQ: DAILY-WALK-003] its XP waits for a class; it is never a Garden Run win
         public int GardenDepthReached;
         /// <summary>[REQ: META-STATS-001] The floor the run ended on, 1 to TotalFloors.</summary>
         public int FloorReached;

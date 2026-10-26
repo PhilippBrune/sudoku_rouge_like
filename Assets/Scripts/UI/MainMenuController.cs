@@ -700,7 +700,7 @@ namespace SudokuRoguelike.UI
                         : System.DateTime.Parse(s.LastPlayedUtc).ToString("yyyy-MM-dd");
                     txt.text = LocalizationService.Format("Profile.SlotInfo",
                         "Class: {0}\nRuns: {1} started / {2} won\nBosses: {3}\nLast played: {4}{5}",
-                        s.LastPlayedClass,
+                        ClassCatalog.DisplayName(s.LastPlayedClass),
                         s.TotalRunsStarted,
                         s.TotalRunsCompleted,
                         s.TotalBossesDefeated,
@@ -766,7 +766,7 @@ namespace SudokuRoguelike.UI
             if (rs != null && lbl != null)
                 lbl.text = LocalizationService.Format("Resume.Button.Active",
                     "Resume  -  {0}  -  Floor {1}  -  HP {2}/{3}",
-                    LocalizationService.T(ClassCatalog.GetDefinition(rs.ClassId).Name), // GAP-019: class name was English
+                    ClassCatalog.DisplayName(rs.ClassId), // GAP-019: class name was English; the Daily Walk's walker
                     rs.CurrentFloor + 1,
                     rs.CurrentHP,
                     rs.MaxHP);

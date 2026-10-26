@@ -14,7 +14,7 @@ namespace SudokuRoguelike.Meta
     /// partner portal (Descending / Numeric).
     /// Call Initialize() once at game startup, then SubmitRunScore(xp) on each win.
     /// </summary>
-    public static class SteamLeaderboardService
+    public static partial class SteamLeaderboardService
     {
         private const string LeaderboardName = "Harmony_RunScore";
 

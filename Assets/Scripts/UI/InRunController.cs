@@ -750,8 +750,7 @@ namespace SudokuRoguelike.UI
             var def = ClassCatalog.GetDefinition(run.State.ClassId);
 
             // Class icon
-            var iconSprite = Resources.Load<Sprite>("class/icon_" +
-                ClassCatalog.GetIconName(run.State.ClassId));
+            var iconSprite = IntroIcon(run.State.ClassId);
             if (iconSprite != null)
             {
                 var iconGo = new GameObject("ClassIcon", typeof(RectTransform), typeof(Image));
@@ -767,14 +766,14 @@ namespace SudokuRoguelike.UI
             }
 
             var nameTxt = InRunUiFactory.CreateText(card.transform, "ClassName",
-                LocalizationService.T(def.Name), 28, TextAnchor.MiddleCenter, GamePalette.AccentGold);
+                ClassCatalog.DisplayName(run.State.ClassId), 28, TextAnchor.MiddleCenter, GamePalette.AccentGold);
             nameTxt.rectTransform.anchorMin = new Vector2(0.1f, 0.49f);
             nameTxt.rectTransform.anchorMax = new Vector2(0.9f, 0.58f);
             nameTxt.rectTransform.offsetMin = nameTxt.rectTransform.offsetMax = Vector2.zero;
             nameTxt.fontStyle = FontStyle.Bold;
 
             var narrativeTxt = InRunUiFactory.CreateText(card.transform, "ClassNarrative",
-                ParkNarrativeService.GetClassIntroFlavor(run.State.ClassId), 13, TextAnchor.UpperCenter,
+                IntroNarrative(run.State.ClassId), 13, TextAnchor.UpperCenter,
                 new Color(0.82f, 0.80f, 0.68f, 1f));
             narrativeTxt.rectTransform.anchorMin = new Vector2(0.08f, 0.34f);
             narrativeTxt.rectTransform.anchorMax = new Vector2(0.92f, 0.48f);
@@ -782,7 +781,7 @@ namespace SudokuRoguelike.UI
             narrativeTxt.horizontalOverflow = HorizontalWrapMode.Wrap;
 
             var passiveTxt = InRunUiFactory.CreateText(card.transform, "Passive",
-                LocalizationService.T($"Class.Passive.{def.Id}", def.PassiveDescription), 14, TextAnchor.UpperCenter,
+                IntroPassive(run.State.ClassId, def), 14, TextAnchor.UpperCenter,
                 new Color(0.90f, 0.87f, 0.72f, 1f));
             passiveTxt.rectTransform.anchorMin = new Vector2(0.08f, 0.20f);
             passiveTxt.rectTransform.anchorMax = new Vector2(0.92f, 0.34f);

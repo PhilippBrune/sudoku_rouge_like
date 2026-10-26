@@ -258,21 +258,21 @@ namespace SudokuRoguelike.Bootstrap
                     $"runSeen={ModifierDiscoveryService.Describe(_run.State.SeenBossModifiers)}");
             }
 
-            var supportsRunProgression = request.Mode == GameMode.GardenRun;
-            _run.DailyGoals = supportsRunProgression ? _dailyGoals : null;
-
-            // Apply any pending run-start rewards from completed daily goals only to Garden Run.
-            if (supportsRunProgression && _dailyGoals != null)
-                DailyGoalService.ApplyPendingRewards(_dailyGoals, _run.State);
-
-            // Daily goals: t3_new_class — fire when this class hasn't been played in 7+ days.
-            // Record class played regardless so the next run of the same class won't re-trigger.
-            if (supportsRunProgression && _dailyGoals != null)
+            // [REQ: DAILY-WALK-001] [REQ: DAILY-WALK-004] [REQ: DAILY-WALK-005] The day's walk: two floors as the neutral
+            // walker; only the day's first walk carries the goals (a Garden Run no longer does).
+            if (request.DailyWalk && _dailyGoals != null)
             {
-                if (DailyGoalService.HasBeenUnusedForDays(_dailyGoals, request.ClassId, DateTime.Today))
-                    DailyGoalService.EvaluateInRun(_dailyGoals, _run.State, null, DailyGoalService.TriggerNewClassUsed);
-                DailyGoalService.RecordClassPlayed(_dailyGoals, request.ClassId, DateTime.Today);
+                // The saved state: XP given since the profile was loaded must not come back with an autosave.
+                _dailyGoals = _saveFileService.Load().DailyGoals ?? _dailyGoals;
+                _run.State.DailyWalk = true;
+                _run.State.TotalFloors = DailyGoalService.WalkFloors;
+                DailyGoalService.RefreshIfNewDay(_dailyGoals, DateTime.Today);
+                _run.State.DailyWalkScored = DailyGoalService.TryStartScoredWalk(_dailyGoals, DateTime.Today);
+                var envelope = _saveFileService.Load();   // the day's walk is taken even if the game closes before an autosave
+                envelope.DailyGoals = _dailyGoals;
+                _saveFileService.Save(envelope);
             }
+            _run.DailyGoals = _run.State.DailyWalkScored ? _dailyGoals : null;
 
             _screenManager.ShowGame();
             BindRunToMap();
@@ -374,6 +374,9 @@ namespace SudokuRoguelike.Bootstrap
             // Re-initialize services with the run's seed, overlay saved progress (HP, floor, items,
             // relics, curses, NodePath, ...) and restore the mid-puzzle state, if any.
             RunResumeService.ApplyToRunDirector(_run, runState, puzzleState);
+            // [REQ: DAILY-WALK-004] The saved goals, not the ones loaded with the profile: XP given meanwhile stays given.
+            if (_run.State.DailyWalkScored) _dailyGoals = _saveFileService.Load().DailyGoals ?? _dailyGoals;
+            _run.DailyGoals = _run.State.DailyWalkScored ? _dailyGoals : null;
             Debug.Log(
                 $"[ResumeRestore] HP={_run.State.CurrentHP} Pencil={_run.State.CurrentPencil} " +
                 $"Items={_run.State.HeldItems?.Count ?? 0} NodeIdx={_run.State.CurrentNodeIndex} " +

@@ -89,6 +89,13 @@ namespace SudokuRoguelike.Classes
 
         public static ClassDefinition[] GetAll() => Definitions;
 
+        /// <summary>[REQ: DAILY-WALK-002] False for ClassId 0: the Daily Walk's neutral walker, who has no class.</summary>
+        public static bool IsClass(ClassId id) => Array.Exists(Definitions, d => d.Id == id);
+
+        /// <summary>The class's name for the player, or the Daily Walk's walker.</summary>
+        public static string DisplayName(ClassId id) =>
+            IsClass(id) ? LocalizationService.T(GetDefinition(id).Name) : LocalizationService.T("DailyWalk.Walker");
+
         // ── Per-level unlock schedules ──
         // Each entry: (level, description). Levels not listed have no unlock.
         private static readonly (int level, string unlock)[][] LevelUnlocks =

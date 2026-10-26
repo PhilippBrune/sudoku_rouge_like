@@ -160,7 +160,7 @@ namespace SudokuRoguelike.Tests
             EventSystem.current.SetSelectedGameObject(Find<Button>(panel, "BtnDailyWalk").gameObject);
             yield return null;
             var goals = Find<Transform>(panel, "Slip_Daily").Find("Body").GetComponent<Text>().text;
-            Assert.AreEqual(3, goals.Split('\n').Count(line => line.Contains("•")), "today's three goals");
+            Assert.AreEqual(3, goals.Count(c => c == '○' || c == '✓'), "today's three goals, met or open (UI-STYLE-027)");
 
             menu.BackToMainMenu();
             menu.ShowGameModes();

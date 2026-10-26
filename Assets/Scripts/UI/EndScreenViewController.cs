@@ -263,6 +263,12 @@ namespace SudokuRoguelike.UI
                 ShowSeasonalResult(run, victory);
                 return;
             }
+            // [REQ: UI-STYLE-028] The day's walk ends on its own result: the XP waits there for a class.
+            if (run?.State?.DailyWalk == true)
+            {
+                ShowDailyWalkResult(run, victory);
+                return;
+            }
 
             ClearBossClearedDynamicContent();
             UseRunEndScroll(false);
@@ -428,11 +434,7 @@ namespace SudokuRoguelike.UI
             if (completed)
             {
                 if (envelope.DailyGoals == null) envelope.DailyGoals = new DailyGoalState();
-                var isFirstCompletion = prevBest == 0;
-                if (isFirstCompletion)
-                    envelope.DailyGoals.TotalInkStamps += 1;
-                if (grade == "S")
-                    envelope.DailyGoals.TotalInkStamps += 2;
+                DailyGoalService.EarnStamps(envelope.DailyGoals, (prevBest == 0 ? 1 : 0) + (grade == "S" ? 2 : 0), now);
             }
 
             envelope.ActiveSeasonalRunState = null;

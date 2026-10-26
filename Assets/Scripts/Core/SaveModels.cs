@@ -367,14 +367,10 @@ namespace SudokuRoguelike.Core
         public int TotalInkStamps;            // [REQ: DAILY-GOAL-002]
         public List<int> UnlockedCosmetics = new List<int>(); // indices of unlocked cosmetics
 
-        // Pending run-start rewards (applied at next LaunchRun)
-        public int PendingStartGold;
-        public int PendingStartRerollTokens;
-
-        // Per-class last-played dates (parallel lists for JsonUtility compat)
-        // [REQ: DAILY-GOAL-001] t3_new_class goal: fire when selected class unused for 7+ days
-        public List<int> ClassLastPlayedIds = new List<int>();
-        public List<string> ClassLastPlayedDates = new List<string>();
+        public int PendingWalkXp;             // [REQ: DAILY-WALK-003] waits on the result until given to a class
+        public string LastScoredWalkDate;     // [REQ: DAILY-WALK-005] "yyyy-MM-dd" of the day's scored walk
+        public string StampWeek;              // [REQ: DAILY-WALK-006] ISO week of StampsThisWeek ("2026-W43")
+        public int StampsThisWeek;            // ink stamps earned this week; the 7th brings the weekly scroll
     }
 
     // [REQ: SEASON-SCORE-001] SeasonalChallengeState: personal best score stored locally per calendar month

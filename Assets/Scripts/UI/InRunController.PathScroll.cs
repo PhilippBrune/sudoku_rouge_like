@@ -143,9 +143,9 @@ namespace SudokuRoguelike.UI
             if (_pathStatsBar != null)
             {
                 var sb = new StringBuilder();
-                var classDef = ClassCatalog.GetDefinition(s.ClassId);
-                sb.Append(LocalizationService.Format("InRun.Path.Tag.Class", "{0} · Level {1}",
-                    LocalizationService.T(classDef?.Name ?? s.ClassId.ToString()), s.ClassLevel));
+                sb.Append(ClassCatalog.IsClass(s.ClassId)
+                    ? LocalizationService.Format("InRun.Path.Tag.Class", "{0} · Level {1}", ClassCatalog.DisplayName(s.ClassId), s.ClassLevel)
+                    : ClassCatalog.DisplayName(s.ClassId));
                 var hpFrac = s.MaxHP > 0 ? (float)s.CurrentHP / s.MaxHP : 1f;
                 var hpColor = hpFrac > 0.50f ? "#7d1f1f" : hpFrac > 0.25f ? "#b0651c" : "#c0281f";
                 sb.Append('\n').Append(LocalizationService.Format("InRun.Path.Tag.Vitals",

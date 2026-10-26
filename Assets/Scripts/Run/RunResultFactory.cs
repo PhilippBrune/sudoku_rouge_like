@@ -18,7 +18,8 @@ namespace SudokuRoguelike.Run
             {
                 PlayedClassId = state.ClassId,
                 Mode = state.Mode,
-                Victory = victory,
+                Victory = victory && !state.DailyWalk,   // [REQ: DAILY-WALK-003] two floors are no Garden Run win
+                DailyWalk = state.DailyWalk,
                 GardenDepthReached = state.Depth,
                 FloorReached = Mathf.Clamp(state.CurrentFloor + 1, 1, Mathf.Max(1, state.TotalFloors)),
                 // [REQ: REQ-ECON-101] Gold collected during the run, not gold still held at the end (GAP-027).

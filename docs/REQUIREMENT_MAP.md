@@ -1,6 +1,6 @@
 # Requirement Traceability Map — All Systems
 
-**Updated:** 2026-10-26 (DAILY-WALK-001..008, INCENSE-CLOCK-001..005, INCENSE-PUZZLE-001, INCENSE-SCORE-001..002, INCENSE-BOARD-001, INCENSE-XP-001, INCENSE-CLASS-001; before: RELIC-SIG-001, RELIC-SIG-002, RELIC-KEY-001, RELIC-KEY-002, INPUT-PAD-002, SCORE-TIME-001, SAVE-TEST-001, ACHIEVE-RUN-001, ACHIEVE-CLASS-001, ACHIEVE-MODE-001, ACHIEVE-COLLECT-001; before: INPUT-PAD-001 (GAP-070); before: HARMONY-PERK-002..005 (GAP-064, GAP-067, GAP-069), LEGAL-LICENSE-001 (GAP-068), INPUT-NAV-001 (GAP-062), the one-more-run slice RUN-AGAIN-001, RUN-END-NEAR-001, RUN-END-MOVED-001, STAKES-001, RUN-LENGTH-001, META-CODEX-010; before: UI-STYLE-024..026, LOC-NUM-001, ACCESS-MOTION-002)
+**Updated:** 2026-10-26 (DAILY-WALK-001..006 and 008 built, UI-STYLE-027, UI-STYLE-028; DAILY-WALK-001..008, INCENSE-CLOCK-001..005, INCENSE-PUZZLE-001, INCENSE-SCORE-001..002, INCENSE-BOARD-001, INCENSE-XP-001, INCENSE-CLASS-001; before: RELIC-SIG-001, RELIC-SIG-002, RELIC-KEY-001, RELIC-KEY-002, INPUT-PAD-002, SCORE-TIME-001, SAVE-TEST-001, ACHIEVE-RUN-001, ACHIEVE-CLASS-001, ACHIEVE-MODE-001, ACHIEVE-COLLECT-001; before: INPUT-PAD-001 (GAP-070); before: HARMONY-PERK-002..005 (GAP-064, GAP-067, GAP-069), LEGAL-LICENSE-001 (GAP-068), INPUT-NAV-001 (GAP-062), the one-more-run slice RUN-AGAIN-001, RUN-END-NEAR-001, RUN-END-MOVED-001, STAKES-001, RUN-LENGTH-001, META-CODEX-010; before: UI-STYLE-024..026, LOC-NUM-001, ACCESS-MOTION-002)
 
 Legend: ✅ Implemented and verified | ⚠️ Partial / conflicting | ❌ Not implemented | ◻️ Code present, not verified (no tagged test or E2E check yet) | 🗄️ Deprecated / descoped | 🆕 New (spec only, no code yet)
 
@@ -29,7 +29,7 @@ Legend: ✅ Implemented and verified | ⚠️ Partial / conflicting | ❌ Not im
 | [ACCESS](#accessibility) | `docs/AccessibilitySpec.md` | ◻️ 5 |
 | [ECON](#gold-economy) | `docs/GoldEconomySystem.md` | ✅ 3 |
 | [SEASON](#seasonal-challenge) | `docs/SeasonalChallengeSpec.md` | ✅ 5 · ◻️ 1 |
-| [DAILY](#daily-goal-system) | `docs/DailyGoalSystem.md` | ✅ 3 · ◻️ 3 · 🆕 7 |
+| [DAILY](#daily-goal-system) | `docs/DailyGoalSystem.md` | ✅ 10 · ◻️ 3 · 🆕 1 |
 | [CLASS](#class-progression-unlocks) | `docs/ClassProgressionUnlocks.md` | ✅ 1 · ◻️ 3 |
 | [DISPLAY](#display-modes) | `docs/GameDesignSpec.md` | ✅ 7 |
 | [UI-OPT](#options-panels) | `docs/GameDesignSpec.md` | ✅ 3 |
@@ -593,7 +593,7 @@ Key requirements (see spec for full list):
 
 ## Daily Goal System
 
-**Spec:** `docs/DailyGoalSystem.md` v0.3
+**Spec:** `docs/DailyGoalSystem.md` v0.4
 
 | ID | Description | File | Method | Evidence | Status |
 | ---- | ------------- | ------ | -------- | ---------- | -------- |
@@ -602,14 +602,14 @@ Key requirements (see spec for full list):
 | DAILY-GOAL-003 | Streak tracking (consecutive days) | `Assets/Scripts/Core/SaveModels.cs` | `DailyGoalState` | DailyStreakTests | ✅ |
 | DAILY-GOAL-004 | Daily Walk widget on main menu | `Assets/Scripts/UI/MainMenuController.cs` | `ShowDailyWalkPanel` | GeneratedUiPlayModeTraversalTests | ✅ |
 | DAILY-GOAL-005 | `DailyGoalState` in `ProfileSaveData` | `Assets/Scripts/Core/SaveModels.cs` | `SaveFileEnvelope` | — | ◻️ |
-| DAILY-WALK-001 | A run of two floors with a boss each on the day's seed | — | — | — | 🆕 |
-| DAILY-WALK-002 | No class: one neutral walker | — | — | — | 🆕 |
-| DAILY-WALK-003 | XP: walk ×1.5 + goals (50/100/200), streak +10 %/+25 %, given to a chosen class | `Assets/Scripts/Run/DailyGoalService.cs` | `WalkXp` | DailyWalkXpTests | ✅ |
-| DAILY-WALK-004 | Goals only inside the daily walk | — | — | — | 🆕 |
-| DAILY-WALK-005 | One scored walk a day | — | — | — | 🆕 |
-| DAILY-WALK-006 | All three goals: +1 ink stamp | — | — | — | 🆕 |
+| DAILY-WALK-001 | A run of two floors with a boss each on the day's seed | `Run/DailyGoalService.cs`, `Bootstrap/GameBootstrap.cs`, `UI/MainMenuController.GameModes.cs` | `WalkSeed`, `LaunchRun`, `EnterDailyWalk` | DailyWalkRunTests | ✅ |
+| DAILY-WALK-002 | No class: one neutral walker (10 HP, 10 Pencil, 2 slots) | `Classes/ClassCatalog.cs`, `UI/InRunController.DailyWalk.cs` | `IsClass`, `DisplayName` | DailyWalkRunTests | ✅ |
+| DAILY-WALK-003 | XP: walk ×1.5 + goals (50/100/200), streak +10 %/+25 %, waiting until given to an unlocked class | `Run/DailyGoalService.cs`, `Save/ProfileService.cs`, `UI/DailyWalkGiveView.cs` | `WalkXp`, `SettleDailyWalk`, `GiveWaitingXp` | DailyWalkXpTests, DailyWalkRunTests | ✅ |
+| DAILY-WALK-004 | Goals only inside the daily walk; 21 goals with four replaced | `Run/DailyGoalService.cs`, `Run/RunDirector.cs`, `Bootstrap/GameBootstrap.cs` | `AllGoals`, `EvaluateInRun`, `LaunchRun`, `LaunchResume` | DailyWalkRunTests | ✅ |
+| DAILY-WALK-005 | One scored walk a day | `Run/DailyGoalService.cs` | `TryStartScoredWalk` | DailyWalkRunTests | ✅ |
+| DAILY-WALK-006 | All three goals: +1 ink stamp; the 7th stamp earned in a week: the weekly scroll (500 XP) | `Run/DailyGoalService.cs` | `CompleteGoal`, `EarnStamps` | DailyWalkRunTests | ✅ |
 | DAILY-WALK-007 | Stamp shop for looks | — | — | — | 🆕 |
-| DAILY-WALK-008 | A Steam leaderboard of the day | — | — | — | 🆕 |
+| DAILY-WALK-008 | A Steam leaderboard of the day | `Meta/SteamLeaderboardService.Boards.cs`, `UI/EndScreenViewController.DailyWalk.cs` | `SubmitToBoard`, `DailyBoardText` | DailyWalkRunTests | ✅ |
 
 ---
 
@@ -804,6 +804,7 @@ Key requirements (see spec for full list):
 | UI-STYLE-022 | Garden flow A · Washi window (owner pick, with D): the floor's painting sharp and lightly dimmed round the path scroll and showing through its thin paper; title, first-pick note, route names, floor marks, legend and node labels on paper slips; High Contrast keeps the opaque paper and the dark blurred room | `Assets/Scripts/UI/InRunController.PathWashi.cs`, `InRunController.PathScroll.cs` | `ApplyPathWashi`, `FitSlip`, `SlipBehind`, `SlipFirstPickNote`, `PillUnderLabel`, `PathWashiOn`, `ApplyPathFloorArt` | InRunUiPlayModeTests.PathScroll_WashiWindow_ShowsThePainting_AndHighContrastKeepsTheOpaquePaper, screenshots `after_path_washi_floor1/2/4` | ✅ |
 | UI-STYLE-024 | Select Class · Who walks the garden (owner pick 2026-10-21): the class painting dimmed, eight class seals (level and prestige stars, or dark with the unlock goal), the chosen class on a hanging scroll (level line, HP, Pencil, Bag, Relics and Gold with their level bonus, passive, the next level rewards), the run's settings on a strip (Harmony stones and perk for a Garden Run, a line on the mode otherwise, irregular puzzles, seed and week seed); Begin starts the run without a confirmation window, "Abandon & Begin" with a warning when a saved run would end | `Assets/Scripts/UI/ClassSelectScreen.cs`, `MainMenuBlueprintBuilder.ClassSelect.cs`, `MainMenuController.StartRun.cs` | `ClassSelectScreen.RefreshSeals`, `ShowClass`, `ShowRunSettings`, `BuildClassSelectPanel`, `BeginRunFromSelect` | ModeScreensPlayModeTests (`SelectClass_SealsShowLevelOrGoal_AndTheScrollShowsTheChosenClass`, `SelectClass_TheStripHoldsTheRunSettings_AndThereIsNoConfirmationWindow`, `Harmony_SetOnGameModes_IsTheHarmonyOfSelectClass`), ConditionalButtonStateTests, screenshots `after_class_select` | ✅ |
 | UI-STYLE-025 | Game Modes · Five paths (owner pick 2026-10-21): five noren curtains from a wooden beam (Garden Run, Endless Zen, Spirit Trials, Daily Walk, Monthly Walk), each with icon, name, a line on the mode and its state on a strip (Harmony, best depth, best score, goals and streak, theme and days left; a locked mode dark with what opens it); the focused mode's slip below with its settings and the way in; Harmony set here and on Select Class, a change on either reaches both | `Assets/Scripts/UI/GameModesScreen.cs`, `MainMenuBlueprintBuilder.GameModes.cs`, `MainMenuController.GameModes.cs` | `GameModesScreen.Refresh`, `Show`, `ShowHarmony`, `BuildGameModesPanel`, `BuildCurtain`, `RefreshGameModesPanel`, `RefreshGameModesHarmony` | ModeScreensPlayModeTests (`GameModes_FiveCurtains_FocusShowsTheirSlip`, `Harmony_SetOnGameModes_IsTheHarmonyOfSelectClass`, `GermanAndFrench_CurtainAndSlipTextsFit`), ConditionalButtonStateTests, GeneratedUiPlayModeTraversalTests, screenshots `after_game_modes` | ✅ |
+| UI-STYLE-028 | The Daily Walk's result (owner 2026-10-26, "Implementier die UI-Styles"): the day's tally and goals, the XP waiting for a class (the sum, eight class seals on a red cord, the XP stroke and the level it reaches), the day's board, the streak as a stamp; Back leaves the XP waiting, and Game Modes gives it later on the same panel | `Assets/Scripts/UI/EndScreenViewController.DailyWalk.cs`, `DailyWalkGiveView.cs`, `MainMenuController.GameModes.cs` | `ShowDailyWalkResult`, `DailyWalkGiveView.Build`, `ShowWaitingXp` | DailyWalkRunTests, screenshots `after_daily_walk_result`, `after_daily_walk_waiting` | ✅ |
 | UI-STYLE-026 | The results of Endless Zen, Spirit Trials and the Monthly Walk in the run-end family (owner 2026-10-21): the mode's painting, a banner with the mode and the outcome, the numbers on a tally paper with a closing line, the record (deepest descent, the tier's score, the month's grade) large on a dark panel with the personal best and a "New best" stamp, notes on a slip (ink stamps, the month's countdown), the way back; the bests are saved as before | `Assets/Scripts/UI/EndScreenViewController.ModeEnd.cs`, `EndScreenViewController.cs` | `ShowModeEndScroll`, `BuildModeTally`, `BuildModeRecord`, `ShowEndlessZenResult`, `ShowSpiritTrialsResult`, `ShowSeasonalResult` | RunNodeScenesPlayModeTests (`ModeResults_ShowTheRecordOnAScroll_AndKeepSavingTheBests`), screenshots `after_result_endless_zen`, `after_result_spirit_trials`, `after_result_monthly_walk` | ✅ |
 | RUN-AGAIN-001 | Walk again on every run end, first and focused: same class, mode, Harmony, perk, tier and irregular setting, a new seed; the Monthly Walk starts again; tutorials have Back only (RM-110) | `Assets/Scripts/Run/RunAgain.cs`, `Assets/Scripts/UI/InRunController.WalkAgain.cs`, `EndScreenViewController.RunEnd.cs` | `RunAgain.Request`, `KindOf`, `WalkAgain`, `BuildEndButtons` | OneMoreRunTests (`WalkAgain_*`), RunNodeScenesPlayModeTests (run end and mode results) | ✅ |
 | RUN-END-NEAR-001 | A lost run says how close it came (the boss or a puzzle of the floor, cells left) and the best floor with the class (RM-111) | `Assets/Scripts/UI/RunEndInsights.cs`, `EndScreenViewController.cs` | `RunEndInsights.SoClose`, `CellsLeft`, `AddNearMiss` | OneMoreRunTests (`SoClose_*`) | ✅ |

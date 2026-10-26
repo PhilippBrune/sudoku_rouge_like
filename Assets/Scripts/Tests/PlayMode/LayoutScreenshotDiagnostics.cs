@@ -683,6 +683,11 @@ namespace SudokuRoguelike.Tests
             meta.GardenProgression.ClassEntries.Add(new ClassGardenProgressEntry
                 { ClassId = ClassId.GardenMonk, TotalXp = Economy.XpTable.CumulativeXpForLevel(9), GardenRuns = 6, BestFloor = 3 });
             var envelope = new SaveFileEnvelope { MetaProgress = meta };
+            // UI-STYLE-027: the Daily Walk's slip at streak day 4 with 818 XP still waiting for a class.
+            envelope.DailyGoals = new DailyGoalState { CurrentStreak = 3, TotalInkStamps = 9 };
+            DailyGoalService.RefreshIfNewDay(envelope.DailyGoals, DateTime.Today);
+            envelope.DailyGoals.TodayGoalCompleted[0] = true;
+            envelope.DailyGoals.PendingWalkXp = 818;
             envelope.Statistics.HighestEndlessDepth = 14;
             envelope.Statistics.TotalZenSessions = 5;
             envelope.Statistics.TotalRunsStarted = 47;
@@ -715,6 +720,12 @@ namespace SudokuRoguelike.Tests
             EventSystem.current.SetSelectedGameObject(Find(host, "BtnDailyWalk"));
             yield return new WaitForSecondsRealtime(0.3f);
             yield return Shoot(host, camera, "after_game_modes_daily.png");
+            // UI-STYLE-028: the way in while XP waits gives it first.
+            menu.EnterDailyWalk();
+            yield return new WaitForSecondsRealtime(0.5f);
+            yield return Shoot(host, camera, "after_daily_walk_waiting.png");
+            Find(host, "BtnWaitingBack").GetComponent<Button>().onClick.Invoke();
+            yield return null;
             EventSystem.current.SetSelectedGameObject(Find(host, "BtnTrials"));
             yield return new WaitForSecondsRealtime(0.3f);
             yield return Shoot(host, camera, "after_game_modes_trials.png");
@@ -785,6 +796,48 @@ namespace SudokuRoguelike.Tests
             end.ShowGameOver(run, true);
             yield return new WaitForSecondsRealtime(0.8f);
             yield return Shoot(host, camera, prefix + "result_monthly_walk.png");
+        }
+
+        // UI-STYLE-028: the Daily Walk's result as the mockup has it: both floors walked, two of three goals, streak day 4,
+        // the walk's XP waiting for one of four unlocked classes.
+        [UnityTest]
+        public IEnumerator RenderDailyWalkResult()
+        {
+            var meta = new MetaProgressionState();
+            meta.UnlockedClasses.AddRange(new[] { ClassId.GardenMonk, ClassId.ShrineArchivist, ClassId.KoiGambler });
+            foreach (var (id, level) in new[] { (ClassId.NumberFreak, 9), (ClassId.GardenMonk, 4), (ClassId.ShrineArchivist, 2), (ClassId.KoiGambler, 2) })
+                meta.GardenProgression.ClassEntries.Add(new ClassGardenProgressEntry
+                    { ClassId = id, TotalXp = Economy.XpTable.CumulativeXpForLevel(level) + 30 });
+            var goals = new DailyGoalState { CurrentStreak = 3, TotalInkStamps = 9 };
+            DailyGoalService.RefreshIfNewDay(goals, DateTime.Today);
+            goals.TodayGoalCompleted[0] = goals.TodayGoalCompleted[1] = true;
+            new SaveFileService(TestSlot).Save(new SaveFileEnvelope { MetaProgress = meta, DailyGoals = goals });
+            SaveFileService.FlushSharedPendingWrites();
+
+            var camera = CreateCamera();
+            _beforeBindAlways = r =>
+            {
+                r.State.ClassId = 0;
+                r.State.DailyWalk = r.State.DailyWalkScored = true;
+                r.State.TotalFloors = DailyGoalService.WalkFloors;
+                r.State.CurrentHP = 6;
+            };
+            var (host, run) = StartRun(7321, false);
+            _beforeBindAlways = null;
+            yield return DismissIntro();
+            run.DailyGoals = goals;
+            for (var i = 0; i < 9; i++)
+            {
+                var tile = new TileXpEntry { BoardSize = 6, Stars = 2, TotalXp = 44, PerfectBonus = i % 3 == 1 ? 0 : 25 };
+                run.TileXpLog.Add(tile);
+                run.GetAnalytics().RecordTileXp(tile);
+                run.GetAnalytics().RecordPuzzleSolved(i % 3 == 1 ? 1 : 0, 0, i / 5);
+                if (i % 3 != 1) run.GetAnalytics().RecordPerfectPuzzle();
+            }
+            run.GetAnalytics().RecordRunComplete();
+            host.GetComponentInChildren<EndScreenViewController>(true).ShowGameOver(run, true);
+            yield return new WaitForSecondsRealtime(0.8f);
+            yield return Shoot(host, camera, "after_daily_walk_result.png");
         }
 
         // UI-STYLE-012: the Custom Puzzle screen at 9×9, 3 stars, with Dutch Whispers, Killer Cages and Skyscrapers chosen

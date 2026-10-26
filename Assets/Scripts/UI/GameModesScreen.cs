@@ -22,12 +22,16 @@ namespace SudokuRoguelike.UI
             public readonly bool Unlocked;
             public readonly string State;
             public readonly string Body;
+            public readonly string EnterLabel;   // null: the label the slip was built with
+            public readonly string Side;         // the slip's side box (UI-STYLE-027), null: none
 
-            public ModeView(bool unlocked, string state, string body)
+            public ModeView(bool unlocked, string state, string body, string enterLabel = null, string side = null)
             {
                 Unlocked = unlocked;
                 State = state;
                 Body = body;
+                EnterLabel = enterLabel;
+                Side = side;
             }
         }
 
@@ -247,12 +251,23 @@ namespace SudokuRoguelike.UI
                 if (_slips.TryGetValue(pair.Key, out var slip) && slip != null)
                 {
                     SetText(slip.transform, "Body", pair.Value.Body);
+                    if (pair.Value.Side != null) SetText(slip.transform, "SideBox/SideText", pair.Value.Side);
                     var enter = FindEnter(slip.transform);
-                    if (enter != null) enter.interactable = pair.Value.Unlocked;
+                    if (enter != null)
+                    {
+                        enter.interactable = pair.Value.Unlocked;
+                        if (pair.Value.EnterLabel != null) SetText(enter.transform, "Label", pair.Value.EnterLabel);
+                    }
                 }
             }
             Show(_shown);
             WireNavigation();
+        }
+
+        /// <summary>The slip's side box, filled later (the day's board when Steam answers).</summary>
+        public void SetSide(Mode mode, string text)
+        {
+            if (_slips.TryGetValue(mode, out var slip) && slip != null) SetText(slip.transform, "SideBox/SideText", text);
         }
 
         /// <summary>Shows the slip of a mode and marks its curtain (vermilion cloth).</summary>

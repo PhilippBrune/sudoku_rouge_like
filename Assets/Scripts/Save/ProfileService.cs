@@ -80,6 +80,34 @@ namespace SudokuRoguelike.Save
             return true;
         }
 
+        /// <summary>[REQ: DAILY-WALK-003] The day's scored walk is over: its XP joins the XP waiting for a class. Returns that XP.</summary>
+        public int SettleDailyWalk(DailyGoalState liveGoals, int walkXp)
+        {
+            var envelope = _saveFile.Load();
+            var goals = liveGoals ?? envelope.DailyGoals ?? new DailyGoalState();
+            var xp = DailyGoalService.SettleWalk(goals, walkXp);
+            envelope.DailyGoals = goals;
+            _saveFile.Save(envelope);
+            return xp;
+        }
+
+        /// <summary>[REQ: DAILY-WALK-003] Gives the waiting XP (walks and the weekly scroll) to an unlocked class.</summary>
+        public bool GiveWaitingXp(ClassId classId)
+        {
+            var envelope = _saveFile.Load();
+            var goals = envelope.DailyGoals;
+            var meta = envelope.MetaProgress ?? new MetaProgressionState();
+            if (goals == null || goals.PendingWalkXp <= 0 || !ClassUnlockService.GetProgress(meta, classId).Unlocked) return false;
+            _garden.AddXp(meta, classId, goals.PendingWalkXp);
+            var completion = envelope.Completion ?? new CompletionTrackerState();
+            _completion.RecordClassLevel30(completion, classId, _garden.GetLevel(meta, classId));
+            goals.PendingWalkXp = 0;
+            envelope.MetaProgress = meta;
+            envelope.Completion = completion;
+            _saveFile.Save(envelope);
+            return true;
+        }
+
         public void UpdateStats(SaveFileEnvelope envelope, ProfileStats stats)
         {
             envelope.Statistics = stats;
@@ -221,10 +249,11 @@ namespace SudokuRoguelike.Save
             // [HARMONY-XP-001] XP is scaled by the harmony multiplier before commit, on every run end (victory or
             // defeat), with no flat bonus (SPEC-CONF-024, decided 2026-10-06; spec §4.7).
             // [REQ: META-STATS-001] Garden Runs and the best floor per class (the class garden, UI-STYLE-019).
-            if (result.Mode == GameMode.GardenRun && !result.TutorialMode && !result.DisableProgressionRewards)
+            // [REQ: DAILY-WALK-003] The daily walk has no class: its XP waits for one (SettleDailyWalk, GiveWaitingXp).
+            if (result.Mode == GameMode.GardenRun && !result.TutorialMode && !result.DisableProgressionRewards && !result.DailyWalk)
                 _garden.RecordGardenRun(meta, result.PlayedClassId, result.FloorReached);
 
-            if (!result.TutorialMode)
+            if (!result.TutorialMode && !result.DailyWalk)
             {
                 var xpToCommit = (int)Math.Round(result.XpEarned * HarmonyDifficultyService.GetXpMultiplier(result.HarmonyLevel));
                 _garden.AddXp(meta, result.PlayedClassId, xpToCommit);

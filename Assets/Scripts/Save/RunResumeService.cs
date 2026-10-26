@@ -30,6 +30,7 @@ namespace SudokuRoguelike.Save
             ApplyToRunDirector(abandoned, runState, puzzleState);
             var result = RunResultFactory.Build(abandoned, victory: false, bossPhaseReached: 0, secondsPlayed: 0);
             profile.RecordRunAndGetNewUnlocks(result, abandoned.State);
+            if (abandoned.State.DailyWalkScored) profile.SettleDailyWalk(null, result.XpEarned);   // [REQ: DAILY-WALK-003]
             return result;
         }
 

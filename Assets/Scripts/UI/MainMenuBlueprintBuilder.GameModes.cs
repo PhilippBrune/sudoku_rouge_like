@@ -49,7 +49,7 @@ namespace SudokuRoguelike.UI
                 (GameModesScreen.Mode.Garden, "BtnGarden", "Garden Run", "ui/icon_framed_garden", "GameModes.Desc.Garden", mc.StartGame, "GameModes.ChooseClass"),
                 (GameModesScreen.Mode.Endless, "BtnEndless", "Endless Zen", "ui/icon_zen_mode", "GameModes.Desc.Endless", mc.StartEndlessZen, "GameModes.ChooseClass"),
                 (GameModesScreen.Mode.Trials, "BtnTrials", "Spirit Trials", "ui/icon_trials_seal", "GameModes.Desc.Trials", mc.ShowSpiritTrialsTierSelect, "GameModes.ChooseTier"),
-                (GameModesScreen.Mode.Daily, "BtnDailyWalk", "Daily Walk", "ui/icon_start_run", "GameModes.Desc.Daily", mc.ShowDailyWalkPanel, "GameModes.Open"),
+                (GameModesScreen.Mode.Daily, "BtnDailyWalk", "Daily Walk", "ui/icon_start_run", "GameModes.Desc.Daily", mc.EnterDailyWalk, "GameModes.Daily.Walk"),
                 (GameModesScreen.Mode.Monthly, "BtnMonthlyWalk", "Monthly Walk", "ui/icon_monthly_lantern", "GameModes.Desc.Monthly", mc.ShowMonthlyWalkPanel, "GameModes.Open")
             };
             for (var i = 0; i < modes.Length; i++)
@@ -69,12 +69,16 @@ namespace SudokuRoguelike.UI
                     BuildHarmonyPage(page, mc, screen);
                 else
                 {
-                    ScrollUiKit.Label(page, "Title", T(m.Name), 32, TextAnchor.MiddleLeft, ScrollUiKit.Ink,
+                    // [REQ: UI-STYLE-027] The Daily Walk's slip: its own title, the rules, and a side box with the streak,
+                    // the ink stamps and the day's board.
+                    var side = m.Mode == GameModesScreen.Mode.Daily;
+                    ScrollUiKit.Label(page, "Title", side ? T("GameModes.Daily.Title") : T(m.Name), 32, TextAnchor.MiddleLeft, ScrollUiKit.Ink,
                         new Vector2(0.029f, 0.63f), new Vector2(0.70f, 0.83f), 18);
                     var trials = m.Mode == GameModesScreen.Mode.Trials;
-                    ScrollUiKit.Label(page, "Body", string.Empty, 19, TextAnchor.UpperLeft, ScrollUiKit.Ink,
-                        new Vector2(0.029f, trials ? 0.34f : 0.06f), new Vector2(0.70f, 0.61f), 12).supportRichText = true;
+                    ScrollUiKit.Label(page, "Body", string.Empty, side ? 18 : 19, TextAnchor.UpperLeft, ScrollUiKit.Ink,
+                        new Vector2(0.029f, trials ? 0.34f : 0.06f), new Vector2(side ? 0.60f : 0.70f, 0.61f), 12).supportRichText = true;
                     if (trials) BuildTrialTiers(page, mc, screen);
+                    if (side) BuildSideBox(page);
                 }
                 screen.Register(m.Mode, curtain, page.gameObject);
             }
@@ -143,6 +147,15 @@ namespace SudokuRoguelike.UI
             enterEntry.callback.AddListener(_ => screen.Show(mode));
             hover.triggers.Add(enterEntry);
             return button;
+        }
+
+        // [REQ: UI-STYLE-027] A darker slip at the top right of a mode's page (like the perk box), filled by the refresh.
+        private static void BuildSideBox(RectTransform page)
+        {
+            var box = ScrollUiKit.Fill(page, "SideBox", new Vector2(0.700f, 0.36f), new Vector2(0.971f, 0.90f),
+                new Color(0.90f, 0.84f, 0.69f, 1f));
+            ScrollUiKit.Label(box.transform, "SideText", string.Empty, 17, TextAnchor.UpperLeft, ScrollUiKit.Ink,
+                new Vector2(0.05f, 0.04f), new Vector2(0.95f, 0.95f), 11).supportRichText = true;
         }
 
         // The Garden Run slip: Harmony with its stones (< >), the level's rule and the next level's condition, the perk.

@@ -166,11 +166,9 @@ namespace SudokuRoguelike.Tests
             yield return null;
             AssertPanelActive(host, "GameModesPanel");
 
+            // [REQ: UI-STYLE-027] The Daily Walk's curtain starts the day's walk (no game here to start it, so Game Modes
+            // stays); its goals panel opens from the home widget (HomeWidgets_OpenDailyAndMonthly...).
             ClickButton(host, "BtnDailyWalk");
-            yield return null;
-            AssertPanelActive(host, "DailyWalkPanel");
-
-            ClickButton(host, "BtnDailyBack");
             yield return null;
             AssertPanelActive(host, "GameModesPanel");
 

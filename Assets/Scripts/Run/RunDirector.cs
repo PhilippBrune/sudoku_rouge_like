@@ -289,8 +289,6 @@ namespace SudokuRoguelike.Run
             {
                 if (State.CurrentFloor == 1)
                     DailyGoalService.EvaluateInRun(DailyGoals, State, CurrentLevelState, DailyGoalService.TriggerReachedFloor2);
-                if (State.CurrentFloor == 3)
-                    DailyGoalService.EvaluateInRun(DailyGoals, State, CurrentLevelState, DailyGoalService.TriggerReachedFloor4);
             }
 
             RebuildFloorGraph();
@@ -1707,6 +1705,8 @@ namespace SudokuRoguelike.Run
                 DailyGoalService.EvaluateInRun(DailyGoals, State, level, DailyGoalService.TriggerPuzzleComplete);
                 if (level.Mistakes == 0)
                     DailyGoalService.EvaluateInRun(DailyGoals, State, level, DailyGoalService.TriggerNoMistakePuzzle);
+                if (level.Mistakes == 0 && (_analytics?.PerfectPuzzleCount ?? 0) >= 3)
+                    DailyGoalService.EvaluateInRun(DailyGoals, State, level, DailyGoalService.TriggerThreePerfect);
                 if (level.NoPencilUsed)
                     DailyGoalService.EvaluateInRun(DailyGoals, State, level, DailyGoalService.TriggerNoPencilPuzzle);
                 if (config.IsBoss)
@@ -1714,10 +1714,15 @@ namespace SudokuRoguelike.Run
                     DailyGoalService.EvaluateInRun(DailyGoals, State, level, DailyGoalService.TriggerBossDefeated);
                     if (level.Mistakes == 0)
                         DailyGoalService.EvaluateInRun(DailyGoals, State, level, DailyGoalService.TriggerNoMistakeBoss);
-                    if (State.CurrentFloor == 2) // floor index 2 = floor 3
-                        DailyGoalService.EvaluateInRun(DailyGoals, State, level, DailyGoalService.TriggerBossFloor3);
-                    if (State.CurrentFloor == 4) // floor index 4 = floor 5 (final boss = run won)
+                    // [REQ: DAILY-WALK-004] The last boss ends the walk: the goals for finishing it.
+                    if (State.CurrentFloor == State.TotalFloors - 1)
+                    {
                         DailyGoalService.EvaluateInRun(DailyGoals, State, level, DailyGoalService.TriggerRunWon);
+                        if (State.CurrentHP >= 3)
+                            DailyGoalService.EvaluateInRun(DailyGoals, State, level, DailyGoalService.TriggerFinishedHp3);
+                        if (State.ItemsUsedThisRun == 0)
+                            DailyGoalService.EvaluateInRun(DailyGoals, State, level, DailyGoalService.TriggerFinishedNoItem);
+                    }
                     if (State.CurrentHP >= State.HpAtCurrentFloorEntry)
                         DailyGoalService.EvaluateInRun(DailyGoals, State, level, DailyGoalService.TriggerFullHpFloor);
                 }

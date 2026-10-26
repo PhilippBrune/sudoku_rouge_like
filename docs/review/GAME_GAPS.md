@@ -74,6 +74,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-065](#gap-065) | Numbers in texts follow the PC's region, not the game's language ("XP x1,0" in English) | FIXED (2026-10-21) | LOW | P3 |
 | [GAP-068](#gap-068) | The builds left out the licence texts the font and Steamworks.NET licences require | FIXED (0.2.1 by hand; since 2026-10-22 automatic and on the Credits screen) | MEDIUM | P2 |
 | [GAP-069](#gap-069) | Moonshade Offering's Nothing slot and Empty Canvas's Rare+ rewards were never applied | FIXED (found fixing GAP-064/067, 2026-10-22) | MEDIUM | P3 |
+| [GAP-070](#gap-070) | In a run the D-pad and LT/RT did nothing on an Xbox pad (Steam Deck and Legion Go too) | FIXED (found in the Legion Go check, 2026-10-25) | HIGH | P1 |
 | [GAP-067](#gap-067) | Moonshade Offering's "+2 starting pencil" did nothing (the run starts at full pencil) | FIXED (2026-10-22) | LOW | P3 |
 | [GAP-064](#gap-064) | Scholar's Burden: no free Ink Well, "+5 pencil" did nothing, "−1 slot" could add a slot | FIXED (as planned, 2026-10-22) | MEDIUM | P3 |
 | [GAP-063](#gap-063) | Class levels 30 and 40 promised rewards the game did not grant (starting items, frames) | FIXED (2026-10-21) | MEDIUM | P2 |
@@ -1039,6 +1040,16 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Analysis:** `CurrentPencil = Math.Min(MaxPencil, CurrentPencil + 2)` on a run that starts at full pencil, so the cap took the 2 away. Looking at the whole perk showed its price was missing too: `MoonshadeOfferingActive` was set but read by nothing ("RewardService reads it" said a comment; no such code), so the perk was +20 gold for free (GAP-069).
 - **Plan and fix:** the same rule as Scholar's Burden (GAP-064): a perk's pencil raises the maximum and the current pencil alike (`AddPencil`). `RunDirector.BuildItemRewardSlots` sets slot 1 of the run's first item reward to Nothing and clears the flag (saved with the run, so a resume does not repeat it; a reroll keeps Nothing slots).
 - **Tests:** `HarmonyPerkStartTests.MoonshadeOffering_StartsWithTwoMorePencil` and `MoonshadeOffering_TheFirstRewardsFirstSlotIsNothing_OnlyOnce` (both failed before).
+
+## GAP-070
+**In a run the D-pad and LT/RT did nothing on an Xbox pad (Steam Deck and Legion Go too)**
+
+- **Requirement:** InputAndProfilesSpec §Controller Support, INPUT-PAD-001; platform plan 1.1 (Steam Input, the Deck runs the Windows build)
+- **Status:** FIXED (found while checking controller support for a Lenovo Legion, owner request 2026-10-25) · **Severity:** HIGH (the board, the path and the bag could not be steered with the D-pad; LT/RT never worked) · **Priority:** P1
+- **Problem:** In a run the D-pad was read as the legacy joystick buttons 12–15 (`InputRemapService.GamepadDefaults`) and the triggers as the axes "Axis 9" and "Axis 10". On Windows an Xbox pad reports its D-pad as the 6th and 7th axis, which the Input Manager does not define, so the D-pad did nothing on the board, on the path and in the bag; only the left stick moved. "Axis 9" and "Axis 10" are not set up in the Input Manager at all: `Input.GetAxis` threw, an empty `catch` hid it, and LT/RT read 0 on every pad (no path scroll, no bag switch). Steam Input does not change this: it makes every pad an Xbox pad, which is exactly the case that failed. The main menu was not affected (MenuDpad reads the Input System since GAP-062).
+- **Fix:** `InputRemapService.WasDpadPressed` reads the D-pad through the Input System (`Gamepad.current.dpad`), with the legacy buttons 12–15 as the fallback; every move of the board cursor and the path cursor goes through it, and the bag reads it too. `InputRemapService.ReadTrigger` reads LT/RT through the Input System. `MenuDpad.ReadPressed` uses the same reader.
+- **Tests:** `GamepadDpadPlayModeTests` with a virtual Input System gamepad: D-pad up moves up once per press and nowhere else; LT reads its pull. Both failed before the fix (D-pad: false; LT: 0).
+- **Still to check:** a real controller in the player (the 0.2.2 beta round).
 
 ## GAP-069
 **Moonshade Offering's Nothing slot and Empty Canvas's Rare+ rewards were never applied**

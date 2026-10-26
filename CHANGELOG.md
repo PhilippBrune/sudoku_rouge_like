@@ -24,6 +24,7 @@ they say, and the D-pad moves through the menus as they look. Five floors per ru
 - Moonshade Offering's +2 pencil counts, and its price (the first reward's first slot is empty) is paid.
 - Empty Canvas's rewards are Rare or better, as the perk says.
 - The D-pad on the main menu's screens moves along each screen's rows and columns (the Codex's Down goes one row down), and an arrow key no longer moves twice.
+- In a run, the D-pad moves the cursor on the board, the path and the bag, and LT/RT scroll the path and switch bag slots, on Xbox controllers and every controller Steam Input turns into one (Steam Deck, Legion Go). Before, only the stick moved the cursor.
 
 ## 0.2.1 — 7th iteration (2026-10-21)
 

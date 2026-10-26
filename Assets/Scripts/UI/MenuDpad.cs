@@ -1,9 +1,6 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-#if ENABLE_INPUT_SYSTEM
-using UnityEngine.InputSystem;
-#endif
 
 namespace SudokuRoguelike.UI
 {
@@ -16,24 +13,13 @@ namespace SudokuRoguelike.UI
     /// </summary>
     public static class MenuDpad
     {
-        /// <summary>The D-pad direction pressed this frame, or None.</summary>
+        /// <summary>The D-pad direction pressed this frame, or None (read as in a run, INPUT-PAD-001).</summary>
         public static MoveDirection ReadPressed()
         {
-#if ENABLE_INPUT_SYSTEM
-            var pad = Gamepad.current;
-            if (pad != null)
-            {
-                if (pad.dpad.up.wasPressedThisFrame) return MoveDirection.Up;
-                if (pad.dpad.down.wasPressedThisFrame) return MoveDirection.Down;
-                if (pad.dpad.left.wasPressedThisFrame) return MoveDirection.Left;
-                if (pad.dpad.right.wasPressedThisFrame) return MoveDirection.Right;
-            }
-#endif
-            if (Input.GetKeyDown(KeyCode.JoystickButton12)) return MoveDirection.Up;
-            if (Input.GetKeyDown(KeyCode.JoystickButton13)) return MoveDirection.Down;
-            if (Input.GetKeyDown(KeyCode.JoystickButton14)) return MoveDirection.Left;
-            if (Input.GetKeyDown(KeyCode.JoystickButton15)) return MoveDirection.Right;
-            return MoveDirection.None;
+            if (Core.InputRemapService.WasDpadPressed(Core.InputAction.MoveUp)) return MoveDirection.Up;
+            if (Core.InputRemapService.WasDpadPressed(Core.InputAction.MoveDown)) return MoveDirection.Down;
+            if (Core.InputRemapService.WasDpadPressed(Core.InputAction.MoveLeft)) return MoveDirection.Left;
+            return Core.InputRemapService.WasDpadPressed(Core.InputAction.MoveRight) ? MoveDirection.Right : MoveDirection.None;
         }
 
         /// <summary>The control one step from <paramref name="current"/> in <paramref name="direction"/>, or null when

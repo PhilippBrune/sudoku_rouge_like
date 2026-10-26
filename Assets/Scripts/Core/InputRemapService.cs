@@ -173,6 +173,41 @@ namespace SudokuRoguelike.Core
 
         // ── Input query (keyboard OR gamepad) ────────────────────────────────────
 
+        // [REQ: INPUT-PAD-001] The D-pad and the triggers come through the Input System: on Windows an Xbox pad (and every
+        // pad Steam Input turns into one: Steam Deck, Legion Go) reports its D-pad as axes the legacy Input Manager does
+        // not define, and LT/RT had no axis there at all (GAP-070). The legacy D-pad buttons 12–15 some pads report stay.
+        public static bool WasDpadPressed(InputAction move)
+        {
+#if ENABLE_INPUT_SYSTEM
+            var pad = UnityEngine.InputSystem.Gamepad.current;
+            if (pad != null)
+            {
+                var button = move switch
+                {
+                    InputAction.MoveUp => pad.dpad.up,
+                    InputAction.MoveDown => pad.dpad.down,
+                    InputAction.MoveLeft => pad.dpad.left,
+                    InputAction.MoveRight => pad.dpad.right,
+                    _ => null
+                };
+                if (button != null && button.wasPressedThisFrame) return true;
+            }
+#endif
+            var legacy = move is InputAction.MoveUp or InputAction.MoveDown or InputAction.MoveLeft or InputAction.MoveRight
+                ? GetGamepadDefault(move) : KeyCode.None;
+            return legacy != KeyCode.None && Input.GetKeyDown(legacy);
+        }
+
+        /// <summary>How far LT (<paramref name="left"/>) or RT is pulled, 0 to 1.</summary>
+        public static float ReadTrigger(bool left)
+        {
+#if ENABLE_INPUT_SYSTEM
+            var pad = UnityEngine.InputSystem.Gamepad.current;
+            if (pad != null) return (left ? pad.leftTrigger : pad.rightTrigger).ReadValue();
+#endif
+            return 0f;
+        }
+
         /// <summary>
         /// Returns true if the action's gamepad button was pressed this frame,
         /// OR if the left-stick axis crossed the threshold for movement actions.
@@ -183,15 +218,18 @@ namespace SudokuRoguelike.Core
         {
             var pad = GetGamepadDefault(action);
             if (pad != KeyCode.None && Input.GetKeyDown(pad)) return true;
-            return action switch
-            {
-                InputAction.MoveUp    => WasAxisPressed(AxisVertical,   +1),
-                InputAction.MoveDown  => WasAxisPressed(AxisVertical,   -1),
-                InputAction.MoveLeft  => WasAxisPressed(AxisHorizontal, -1),
-                InputAction.MoveRight => WasAxisPressed(AxisHorizontal, +1),
-                _ => false
-            };
+            return WasMovePressed(action);
         }
+
+        // A move by the D-pad or the left stick.
+        private bool WasMovePressed(InputAction action) => action switch
+        {
+            InputAction.MoveUp    => WasDpadPressed(action) || WasAxisPressed(AxisVertical,   +1),
+            InputAction.MoveDown  => WasDpadPressed(action) || WasAxisPressed(AxisVertical,   -1),
+            InputAction.MoveLeft  => WasDpadPressed(action) || WasAxisPressed(AxisHorizontal, -1),
+            InputAction.MoveRight => WasDpadPressed(action) || WasAxisPressed(AxisHorizontal, +1),
+            _ => false
+        };
 
         /// <summary>
         /// Returns true if the action's keyboard binding was pressed this frame,
@@ -208,15 +246,7 @@ namespace SudokuRoguelike.Core
             var pad = GetGamepadDefault(action);
             if (pad != KeyCode.None && Input.GetKeyDown(pad)) return true;
 
-            // Analogue stick axis for movement
-            return action switch
-            {
-                InputAction.MoveUp    => WasAxisPressed(AxisVertical,   +1),
-                InputAction.MoveDown  => WasAxisPressed(AxisVertical,   -1),
-                InputAction.MoveLeft  => WasAxisPressed(AxisHorizontal, -1),
-                InputAction.MoveRight => WasAxisPressed(AxisHorizontal, +1),
-                _ => false
-            };
+            return WasMovePressed(action);
         }
 
         /// <summary>

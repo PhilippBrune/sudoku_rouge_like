@@ -1,11 +1,12 @@
 # Plan: Run of the Nine on macOS and Linux / SteamOS
 
-**Version:** 1.1 | **Date:** 2026-10-22 | **Status:** review (decision 3 taken: Steam Input; the Steam Deck runs the Windows build; no build settings changed yet)
+**Version:** 1.2 | **Date:** 2026-10-25 | **Status:** review (decision 3 taken: Steam Input; the Steam Deck runs the Windows build; Lenovo Legion Go checked; no build settings changed yet)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.2 | 2026-10-25 | review | Owner question: does the controller work on a Lenovo Legion? Section "Lenovo Legion Go" added. The check found GAP-070 (in a run the D-pad and LT/RT did nothing on any Xbox pad, the Deck and the Legion Go included), fixed the same day. |
 | 1.1 | 2026-10-22 | review | Owner decision 3: **Steam Input** (a default layout in Steamworks), not the Input System rewrite, and the Steam Deck as the next target. The Deck needs no build of its own: it runs the Windows build through Proton (section "Steam Deck"). Phase 1 shrinks to Steamworks settings and the Deck checks; the button work moves to the native Linux and macOS builds. |
 | 1.0 | 2026-10-20 | new | Owner request after the 0.2.0 playtest: publish on macOS (with 64-bit Intel binaries) and on Linux + SteamOS. Code audit, build and Steamworks steps, risks, order. Roadmap item RM-107 (extends RM-102 Steam Deck Verified and RM-205). |
 
@@ -50,6 +51,24 @@ What the Deck still needs (owner steps in Steamworks, then a check on a Deck):
 | On-screen keyboard | Seed field (start run, Custom Puzzle) | For "Verified" the keyboard opens by itself when a text field is chosen with the controller (`SteamUtils.ShowFloatingGamepadTextInput`); until then Steam + X opens it. Part of RM-102. |
 | Button names | Controller hints | The Deck's shoulders read L1/R1 where the game says LB/RB. Part of RM-102. |
 | Compatibility review | Steamworks → Steam Deck Compatibility | Ask for it once the steps above are done; a password beta branch can be tested on a Deck before. |
+
+## Lenovo Legion Go (checked 2026-10-25)
+
+The Legion Go (and Legion Go 2) is a Windows handheld; the Legion Go S also ships with SteamOS. A Legion laptop is an ordinary Windows PC: any pad works as below.
+
+| Case | What the game sees | Works? |
+|---|---|---|
+| Legion Go, Windows, both controllers attached | An Xbox (XInput) pad: Lenovo's guide says the console is in X-input mode with both controllers attached or both detached | Yes, like an Xbox pad on Windows |
+| Legion Go, Windows, one controller detached | "Dual D-input" mode (Lenovo's guide): a generic pad with other button numbers | Face buttons and shoulders may be wrong; use X-input mode or Steam Input |
+| Legion Go started from Steam with Steam Input on | An Xbox pad (Steam Input supports the Legion Go's controllers) | Yes |
+| Legion Go S with SteamOS | The Windows build through Proton, like the Steam Deck | Yes, as on the Deck |
+| Touch screen | Unity turns taps into mouse clicks | Yes: every screen can be played with the mouse |
+
+**Found and fixed on the way (GAP-070):** in a run the game read the D-pad as buttons 12–15 and the triggers as axes the Input Manager does not define. On an Xbox pad under Windows (so on the Legion Go, the Deck and every pad Steam Input turns into one) the D-pad did nothing on the board, the path and the bag, and LT/RT never worked; only the stick moved the cursor. Both are read through the Input System now (INPUT-PAD-001). The menus were already fine (GAP-062).
+
+**Screen:** the Legion Go has 2560×1600, the Legion Go 2 and Go S 1920×1200, all 16:10. The UI scales from 1920×1080 with match 0.5, so 16:10 gets a little more height; no layout was checked at 16:10 yet. Text size is less of a risk than on the Deck (8 to 8.8 inch screens at higher resolution).
+
+**To check on the device:** the D-pad on the board after the fix, that the button names the game shows (A, B, X, Y, LB/RB) match the labels on the controllers, and the 16:10 layouts.
 
 ## Steamworks (owner steps; I prepare and stop before every Publish)
 

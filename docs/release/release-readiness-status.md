@@ -11,7 +11,7 @@ Updated 2026-10-25 · Milestone: **Steam build v0.2.2 beta (8th iteration)** for
 | Suite | Total | Passed | Failed | Skipped | Date |
 |-------|------:|-------:|-------:|--------:|------|
 | EditMode | 712 | 684 | 0 | 28 (`[Explicit]` review diagnostics and the translation export) | 2026-10-25 |
-| PlayMode | 110 | 90 | 0 | 20 (`[Explicit]` screenshot diagnostics) | 2026-10-25 |
+| PlayMode | 113 | 93 | 0 | 20 (`[Explicit]` screenshot diagnostics) | 2026-10-26 |
 
 Windows x64 player build 0.2.2 beta: built 2026-10-25 (B32, with `Licenses/`) and smoke-tested (B33: "Version 0.2.2" on the main menu, no exception in the player log; one of two starts ended with a D3D12 present error after Steam started, not reproduced; saves and PlayerPrefs restored), `docs/review/E2E_TEST_REPORT.md` §13. Before it: 0.2.1 B30/B31 (§12), 0.2.0 beta B28/B29 (§11).
 
@@ -29,4 +29,4 @@ All gates with their state are in `docs/release/platform-release-manifest.md`. O
 
 ## Repository state
 
-The 0.2.2 beta change set is committed on `feature/game-ui-refactor` and tagged `v0.2.2-beta` locally (not pushed); `CHANGELOG.md` 0.2.2 beta lists it. 0.2.1 was tagged `v0.2.1` and pushed with the owner's OK (2026-10-21).
+The 0.2.2 beta change set is committed on `feature/game-ui-refactor` and tagged `v0.2.2-beta` locally (not pushed); `CHANGELOG.md` 0.2.2 beta lists it. 0.2.1 was tagged `v0.2.1` and pushed with the owner's OK (2026-10-21). `docs/repository-working-tree-triage.md` describes how the 0.1.5 set was grouped.

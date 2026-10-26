@@ -119,8 +119,6 @@ namespace SudokuRoguelike.UI
         private const string RightStickH       = "RightStickHorizontal";
         private const string RightStickV       = "RightStickVertical";
         private const float  RightStickThresh  = 0.5f;
-        private const string TriggerAxisL      = "Axis 9";   // LT on Xbox/generic Unity layout
-        private const string TriggerAxisR      = "Axis 10";  // RT on Xbox/generic Unity layout
         private const float  TriggerThresh     = 0.3f;
         private float _triggerLPrev, _triggerRPrev;
         private float _pathBConfirmTimer;   // retained but unused after MAP-2 rework
@@ -2081,9 +2079,8 @@ namespace SudokuRoguelike.UI
             }
 
             // LT / RT: free-scroll the path map left/right
-            float lt = 0f, rt = 0f;
-            try { lt = Input.GetAxis(TriggerAxisL); } catch { }
-            try { rt = Input.GetAxis(TriggerAxisR); } catch { }
+            var lt = InputRemapService.ReadTrigger(left: true);
+            var rt = InputRemapService.ReadTrigger(left: false);
             if (_pathScrollRect != null)
             {
                 var scrollDelta = (rt - lt) * Time.unscaledDeltaTime * 1.5f;
@@ -2223,12 +2220,11 @@ namespace SudokuRoguelike.UI
         private void HandleGamepadItemsFocus()
         {
             // D-Pad up/down or LT/RT: navigate bag item slots
-            if (Input.GetKeyDown(KeyCode.JoystickButton12)) _hudView?.ControllerSelectBagSlot(-1);
-            if (Input.GetKeyDown(KeyCode.JoystickButton13)) _hudView?.ControllerSelectBagSlot(+1);
+            if (InputRemapService.WasDpadPressed(InputAction.MoveUp)) _hudView?.ControllerSelectBagSlot(-1);
+            if (InputRemapService.WasDpadPressed(InputAction.MoveDown)) _hudView?.ControllerSelectBagSlot(+1);
 
-            float lt = 0f, rt = 0f;
-            try { lt = Input.GetAxis(TriggerAxisL); } catch { }
-            try { rt = Input.GetAxis(TriggerAxisR); } catch { }
+            var lt = InputRemapService.ReadTrigger(left: true);
+            var rt = InputRemapService.ReadTrigger(left: false);
             if (lt > TriggerThresh && _triggerLPrev <= TriggerThresh) _hudView?.ControllerSelectBagSlot(-1);
             if (rt > TriggerThresh && _triggerRPrev <= TriggerThresh) _hudView?.ControllerSelectBagSlot(+1);
             _triggerLPrev = lt;

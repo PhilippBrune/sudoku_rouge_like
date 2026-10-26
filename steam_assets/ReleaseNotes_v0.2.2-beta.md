@@ -5,7 +5,8 @@ Playtest build made 2026-10-25 from `feature/game-ui-refactor` (tag `v0.2.2-beta
 ## Build
 
 - `Builds/RunOfTheNine_0.2.2-beta/` and `Builds/RunOfTheNine_0.2.2-beta_win64.zip` (54.3 MB, 157 files, made with Python `zipfile`; the `Builds/` folder is not in git). Same layout and names as the live depot (`sudoku_rouge_like.exe`, `sudoku_rouge_like_Data`, `Licenses/`, no `steam_appid.txt`), so saves and Steam Cloud keep working.
-- Tests on this code: EditMode 712 (684 passed, 0 failed, 28 skipped review diagnostics), PlayMode 110 (90 passed, 0 failed, 20 skipped screenshot diagnostics).
+- Tests on this code: EditMode 712 (684 passed, 0 failed, 28 skipped review diagnostics), PlayMode 113 (93 passed, 0 failed, 20 skipped screenshot diagnostics).
+- Includes the controller fix GAP-070: in a run the D-pad and LT/RT now work on Xbox pads and every pad Steam Input turns into one (Steam Deck, Legion Go).
 - Smoke test: the main menu shows "Version 0.2.2". The first of two starts ended with a D3D12 error on the first frame after Steam started (`swapchain present failed`, 887a0001); the second start and a start of 0.2.1 right before ran normally. Details: `docs/review/E2E_TEST_REPORT.md` §13. Ask testers to report a start that closes by itself.
 - SteamPipe build description: **v0.2.2 beta (8th iteration)**.
 

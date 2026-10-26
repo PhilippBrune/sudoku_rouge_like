@@ -1,6 +1,6 @@
 # Requirement Traceability Map — All Systems
 
-**Updated:** 2026-10-22 (HARMONY-PERK-002..005 (GAP-064, GAP-067, GAP-069), LEGAL-LICENSE-001 (GAP-068), INPUT-NAV-001 (GAP-062), the one-more-run slice RUN-AGAIN-001, RUN-END-NEAR-001, RUN-END-MOVED-001, STAKES-001, RUN-LENGTH-001, META-CODEX-010; before: UI-STYLE-024..026, LOC-NUM-001, ACCESS-MOTION-002)
+**Updated:** 2026-10-25 (INPUT-PAD-001 (GAP-070); before: HARMONY-PERK-002..005 (GAP-064, GAP-067, GAP-069), LEGAL-LICENSE-001 (GAP-068), INPUT-NAV-001 (GAP-062), the one-more-run slice RUN-AGAIN-001, RUN-END-NEAR-001, RUN-END-MOVED-001, STAKES-001, RUN-LENGTH-001, META-CODEX-010; before: UI-STYLE-024..026, LOC-NUM-001, ACCESS-MOTION-002)
 
 Legend: ✅ Implemented and verified | ⚠️ Partial / conflicting | ❌ Not implemented | ◻️ Code present, not verified (no tagged test or E2E check yet) | 🗄️ Deprecated / descoped | 🆕 New (spec only, no code yet)
 
@@ -541,6 +541,7 @@ Key requirements (see spec for full list):
 | INPUT-REMAP-003 | `GetAnyKeyDown()` — returns first pressed key (keyboard or joystick) | `Assets/Scripts/Core/InputRemapService.cs` | `GetAnyKeyDown` | — | ◻️ |
 | INPUT-REMAP-004 | `KeybindingsPanelController` manages listen/capture/save rebind flow | `Assets/Scripts/UI/KeybindingsPanelController.cs` | `KeybindingsPanelController` | — | ◻️ |
 | INPUT-NAV-001 | Main menu panels: the D-pad moves one step along the focused control's link, once per press; arrow keys and the stick stay with the UI input module (GAP-062) | `Assets/Scripts/UI/MenuDpad.cs`, `MainMenuController.cs` | `MenuDpad.ReadPressed`, `MenuDpad.Step`, `HandleMenuGamepadNavigation` | MenuDpadPlayModeTests | ✅ |
+| INPUT-PAD-001 | In a run the D-pad (board, path, bag) and LT/RT are read through the Input System, with the legacy D-pad buttons 12–15 as the fallback, so an Xbox pad and every pad Steam Input turns into one work (GAP-070) | `Assets/Scripts/Core/InputRemapService.cs`, `InRunController.cs`, `MenuDpad.cs` | `WasDpadPressed`, `ReadTrigger`, `WasGamepadActionPressed`, `WasActionPressed` | GamepadDpadPlayModeTests | ✅ |
 | INPUT-PROFILE-001 | `MenuScreen.ProfileSelect` — shown on first launch if no files exist | `Assets/Scripts/Bootstrap/GameBootstrap.cs` | `Start` | StartupFlowPlayModeTests | ✅ |
 | INPUT-PROFILE-002 | `SelectProfileSlot(i)`, `DeleteProfileSlot(i)`, `RefreshProfileSelectCards()` | `Assets/Scripts/UI/InRunController.cs` | `MainMenuController` | — | ◻️ |
 

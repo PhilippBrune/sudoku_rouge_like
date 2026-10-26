@@ -170,6 +170,8 @@ namespace SudokuRoguelike.Core
         public List<int> HarmonyBadgeFlags = new List<int>();
         // [HARMONY-ACHIEVE-001] Classes that have won GardenRun at H5+ (for "Master of Harmony" achievement).
         public List<ClassId> HarmonyV5PlusWins = new List<ClassId>();
+        // [ACHIEVE-CLASS-001] Classes that have won a Garden Run at any Harmony (from 0.2.2 on; for "Eight Ways Through").
+        public List<ClassId> ClassesWithAWin = new List<ClassId>();
     }
 
     [Serializable]

@@ -35,6 +35,7 @@ Recordings/
 !tools/audio/*.py
 !tools/localization/*.py
 !tools/playtest/*.py
+!tools/steam/*.py
 !docs/design/layout-proposals/*.ps1
 !tools/discord/brand/*.ps1
 

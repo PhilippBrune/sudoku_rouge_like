@@ -1,6 +1,6 @@
 # Requirement Traceability Map — All Systems
 
-**Updated:** 2026-10-25 (INPUT-PAD-001 (GAP-070); before: HARMONY-PERK-002..005 (GAP-064, GAP-067, GAP-069), LEGAL-LICENSE-001 (GAP-068), INPUT-NAV-001 (GAP-062), the one-more-run slice RUN-AGAIN-001, RUN-END-NEAR-001, RUN-END-MOVED-001, STAKES-001, RUN-LENGTH-001, META-CODEX-010; before: UI-STYLE-024..026, LOC-NUM-001, ACCESS-MOTION-002)
+**Updated:** 2026-10-26 (ACHIEVE-RUN-001, ACHIEVE-CLASS-001, ACHIEVE-MODE-001, ACHIEVE-COLLECT-001; before: INPUT-PAD-001 (GAP-070); before: HARMONY-PERK-002..005 (GAP-064, GAP-067, GAP-069), LEGAL-LICENSE-001 (GAP-068), INPUT-NAV-001 (GAP-062), the one-more-run slice RUN-AGAIN-001, RUN-END-NEAR-001, RUN-END-MOVED-001, STAKES-001, RUN-LENGTH-001, META-CODEX-010; before: UI-STYLE-024..026, LOC-NUM-001, ACCESS-MOTION-002)
 
 Legend: ✅ Implemented and verified | ⚠️ Partial / conflicting | ❌ Not implemented | ◻️ Code present, not verified (no tagged test or E2E check yet) | 🗄️ Deprecated / descoped | 🆕 New (spec only, no code yet)
 
@@ -653,6 +653,10 @@ Key requirements (see spec for full list):
 | HARMONY-UI-001 | Game Modes panel: Harmony level and perk selection | `Assets/Scripts/UI/GameModesPanelController.cs` | `SetHarmonyLevel`, `SetHarmonyPerk` | E2E/diagnostic E03, E12 | ✅ |
 | HARMONY-UI-002 | Harmony node row with locked / unlocked / selected states | `Assets/Scripts/UI/HarmonyNodeRowController.cs` | `Refresh` | — | ◻️ |
 | HARMONY-ACHIEVE-001 | Harmony Steam achievements (IDs 53–60) | `Assets/Scripts/Meta/SteamAchievementService.cs` | `EvaluateHarmonyAchievements` | SteamAchievementServiceTests | ✅ |
+| ACHIEVE-RUN-001 | Run achievements at every Garden Run end (first puzzle, first boss, Floor 5, first win, no mistakes, no items, 1 HP, three cursed puzzles, 9×9, five stars); none from tutorials, custom puzzles or other modes (`docs/Achievements.md`) | `Assets/Scripts/Meta/SteamAchievementService.cs`, `Save/ProfileService.cs` | `EvaluateProgressAchievements`, `RecordRunAndGetNewUnlocks` | ProgressAchievementTests | ✅ |
+| ACHIEVE-CLASS-001 | Class achievements: a second class and all eight unlocked, a class at Level 10 and 40, a win with every class (`ClassesWithAWin`) | `Assets/Scripts/Meta/SteamAchievementService.cs`, `Core/SaveModels.cs` | `EvaluateProgressAchievements` | ProgressAchievementTests | ✅ |
+| ACHIEVE-MODE-001 | Mode achievements at the results of Endless Zen (depth 25), Spirit Trials (Grandmaster passed) and the Monthly Walk (finished), saved even without a new best | `Assets/Scripts/Meta/SteamAchievementService.cs`, `UI/EndScreenViewController.cs` | `EvaluateModeAchievements` | ProgressAchievementTests | ✅ |
+| ACHIEVE-COLLECT-001 | Collection achievements: a 7-day Daily Walk streak, half and all of the Codex | `Assets/Scripts/Meta/SteamAchievementService.cs` | `EvaluateProgressAchievements`, `CodexHalf` | ProgressAchievementTests | ✅ |
 | HARMONY-SAVE-001 | Harmony fields clamped on load | `Assets/Scripts/Save/SaveFileService.cs` | `SanitizeEnvelope` | — | ◻️ |
 | HARMONY-BADGE-001 | Per-level badge flags (perfect, speed) | `Assets/Scripts/Core/SaveModels.cs` | `HarmonyBadgeFlags` | — | ◻️ |
 | HARMONY-DISPLAY-001 | Display name and HUD label per level | `Assets/Scripts/Run/HarmonyDifficultyService.cs` | `GetDisplayName`, `GetHudLabel` | — | ◻️ |

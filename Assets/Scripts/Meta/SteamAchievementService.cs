@@ -70,6 +70,85 @@ namespace SudokuRoguelike.Meta
             }
         }
 
+        /// <summary>Every achievement's Steam API name (docs/Achievements.md); the portal must define each one.</summary>
+        public static readonly string[] AllAchievementIds =
+        {
+            "harmony_1_win", "harmony_3_win", "harmony_5_win", "harmony_7_win", "harmony_9_win", "harmony_10_win",
+            "harmony_10_perfect", "harmony_all_classes",
+            "first_puzzle", "first_boss", "first_win", "floor_5", "perfect_run", "no_items_win", "one_hp_win",
+            "cursed_three", "nine_by_nine", "five_stars",
+            "class_second", "class_all", "class_level_10", "class_level_40", "win_every_class",
+            "endless_25", "trials_grandmaster", "monthly_walk",
+            "daily_streak_7", "codex_half", "codex_all"
+        };
+
+        public const int EndlessDepthGoal = 25;
+        public const int DailyStreakGoal = 7;
+
+        /// <summary>
+        /// [REQ: ACHIEVE-RUN-001] [REQ: ACHIEVE-CLASS-001] [REQ: ACHIEVE-COLLECT-001] Called by ProfileService after every
+        /// Garden Run end, once the run's XP, class unlocks and Codex finds are counted. <paramref name="finalHp"/> is the HP
+        /// left at the end, <paramref name="maxClassLevel"/> the highest level of any class. <paramref name="meta"/> is
+        /// modified in-place (ClassesWithAWin).
+        /// </summary>
+        public static void EvaluateProgressAchievements(MetaProgressionState meta, ProfileStats stats,
+            MasteryAchievementState mastery, RunResult result, int finalHp, int maxClassLevel, int dailyStreak)
+        {
+            if (stats?.TotalPuzzlesSolved >= 1) GrantAchievement(mastery, "first_puzzle");
+            if (stats?.TotalBossesDefeated >= 1) GrantAchievement(mastery, "first_boss");
+
+            if (result != null && result.Mode == GameMode.GardenRun && !result.TutorialMode && !result.DisableProgressionRewards)
+            {
+                if (result.FloorReached >= 5) GrantAchievement(mastery, "floor_5");
+                if (result.CursedPuzzlesAccepted >= 3) GrantAchievement(mastery, "cursed_three");
+                foreach (var tile in result.TileXpEntries ?? new System.Collections.Generic.List<TileXpEntry>())
+                {
+                    if (tile.BoardSize >= 9) GrantAchievement(mastery, "nine_by_nine");
+                    if (tile.Stars >= 5) GrantAchievement(mastery, "five_stars");
+                }
+                if (result.Victory)
+                {
+                    GrantAchievement(mastery, "first_win");
+                    if (result.MistakesMade == 0) GrantAchievement(mastery, "perfect_run");
+                    if (result.ItemsUsedThisRun == 0) GrantAchievement(mastery, "no_items_win");
+                    if (finalHp == 1) GrantAchievement(mastery, "one_hp_win");
+                    if (meta != null)
+                    {
+                        meta.ClassesWithAWin ??= new System.Collections.Generic.List<ClassId>();
+                        if (!meta.ClassesWithAWin.Contains(result.PlayedClassId)) meta.ClassesWithAWin.Add(result.PlayedClassId);
+                        if (meta.ClassesWithAWin.Count >= TotalClasses) GrantAchievement(mastery, "win_every_class");
+                    }
+                }
+            }
+
+            var unlocked = new System.Collections.Generic.HashSet<ClassId> { ClassId.NumberFreak };
+            if (meta?.UnlockedClasses != null) unlocked.UnionWith(meta.UnlockedClasses);
+            if (unlocked.Count >= 2) GrantAchievement(mastery, "class_second");
+            if (unlocked.Count >= TotalClasses) GrantAchievement(mastery, "class_all");
+            if (maxClassLevel >= 10) GrantAchievement(mastery, "class_level_10");
+            if (maxClassLevel >= 40) GrantAchievement(mastery, "class_level_40");
+            if (dailyStreak >= DailyStreakGoal) GrantAchievement(mastery, "daily_streak_7");
+
+            if (meta == null) return;
+            var codex = new[] { CodexProgress.Items(meta), CodexProgress.Relics(meta), CodexProgress.Rules(meta), CodexProgress.Curses(meta) };
+            int found = 0, total = 0;
+            foreach (var count in codex) { found += count.Found; total += count.Total; }
+            if (CodexHalf(found, total)) GrantAchievement(mastery, "codex_half");
+            if (total > 0 && found >= total) GrantAchievement(mastery, "codex_all");
+        }
+
+        /// <summary>[REQ: ACHIEVE-MODE-001] At the end of an Endless Zen session, a Spirit Trial or a Monthly Walk.</summary>
+        public static void EvaluateModeAchievements(MasteryAchievementState mastery, GameMode mode, bool completed,
+            int endlessDepth = 0, SpiritTrialsTier tier = SpiritTrialsTier.Apprentice)
+        {
+            if (mode == GameMode.EndlessZen && endlessDepth >= EndlessDepthGoal) GrantAchievement(mastery, "endless_25");
+            if (mode == GameMode.SpiritTrials && completed && tier == SpiritTrialsTier.Grandmaster) GrantAchievement(mastery, "trials_grandmaster");
+            if (mode == GameMode.SeasonalChallenge && completed) GrantAchievement(mastery, "monthly_walk");
+        }
+
+        /// <summary>Half of every Codex page found together.</summary>
+        public static bool CodexHalf(int found, int total) => total > 0 && found * 2 >= total;
+
         private static void GrantAchievement(MasteryAchievementState mastery, string achievementId)
         {
             if (mastery == null) return;

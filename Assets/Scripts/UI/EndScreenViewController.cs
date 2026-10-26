@@ -5,6 +5,7 @@ using SudokuRoguelike.Classes;
 using SudokuRoguelike.Core;
 using SudokuRoguelike.Data;
 using SudokuRoguelike.Economy;
+using SudokuRoguelike.Meta;
 using SudokuRoguelike.Run;
 using SudokuRoguelike.Save;
 using UnityEngine;
@@ -436,6 +437,8 @@ namespace SudokuRoguelike.UI
 
             envelope.ActiveSeasonalRunState = null;
             envelope.ActiveSeasonalPuzzle = null;
+            envelope.Mastery ??= new MasteryAchievementState();
+            SteamAchievementService.EvaluateModeAchievements(envelope.Mastery, GameMode.SeasonalChallenge, completed);   // [REQ: ACHIEVE-MODE-001]
             save.Save(envelope);
             RunLengthLog.Record(save, state, completed, 1, Time.realtimeSinceStartup);   // [REQ: RUN-LENGTH-001]
 
@@ -505,6 +508,10 @@ namespace SudokuRoguelike.UI
                 _                            => stats.TrialsBestScore_Grandmaster,
             };
 
+            envelope.Mastery ??= new MasteryAchievementState();
+            var achievementsBefore = envelope.Mastery.UnlockedAchievements?.Count ?? 0;
+            SteamAchievementService.EvaluateModeAchievements(envelope.Mastery, GameMode.SpiritTrials, completed, tier: tier);   // [REQ: ACHIEVE-MODE-001]
+            var newAchievement = (envelope.Mastery.UnlockedAchievements?.Count ?? 0) > achievementsBefore;
             if (completed && score > prevBest)
             {
                 switch (tier)
@@ -514,8 +521,9 @@ namespace SudokuRoguelike.UI
                     case SpiritTrialsTier.Master:      stats.TrialsBestScore_Master      = score; break;
                     default:                           stats.TrialsBestScore_Grandmaster = score; break;
                 }
-                new ProfileService(save).UpdateStats(envelope, stats);
             }
+            if ((completed && score > prevBest) || newAchievement)
+                new ProfileService(save).UpdateStats(envelope, stats);
             RunLengthLog.Record(save, state, completed, 1, Time.realtimeSinceStartup);   // [REQ: RUN-LENGTH-001]
 
             // [REQ: UI-STYLE-026] The trial's result on the scroll: the score large against the tier's best.
@@ -568,6 +576,8 @@ namespace SudokuRoguelike.UI
 
             if (isNewBest) stats.HighestEndlessDepth = depth;
             stats.TotalZenSessions += 1;
+            envelope.Mastery ??= new MasteryAchievementState();
+            SteamAchievementService.EvaluateModeAchievements(envelope.Mastery, GameMode.EndlessZen, false, endlessDepth: depth);   // [REQ: ACHIEVE-MODE-001]
             new ProfileService(save).UpdateStats(envelope, stats);
             if (state != null) RunLengthLog.Record(save, state, false, depth, Time.realtimeSinceStartup);   // [REQ: RUN-LENGTH-001]
 

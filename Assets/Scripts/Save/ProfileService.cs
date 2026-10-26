@@ -286,6 +286,12 @@ namespace SudokuRoguelike.Save
             ModifierDiscoveryService.MergeCursesIntoMeta(meta, liveRunState?.CursesSeenThisRun);
             // [REQ: META-CODEX-009] This run's item uses join the Codex's counts (only here, so autosaves never count twice).
             CountItemUses(meta, liveRunState?.ItemTypesUsedThisRun);
+            // 9d. The other achievements, once XP, unlocks and Codex finds are counted [ACHIEVE-RUN-001].
+            var maxClassLevel = 0;
+            foreach (ClassId id in Enum.GetValues(typeof(ClassId))) maxClassLevel = Math.Max(maxClassLevel, _garden.GetLevel(meta, id));
+            SteamAchievementService.EvaluateProgressAchievements(meta, stats, mastery, result, liveRunState?.CurrentHP ?? -1,
+                maxClassLevel, envelope.DailyGoals?.CurrentStreak ?? 0);
+
             if (liveRunState?.SeenBossModifiers != null)
             {
                 UnityEngine.Debug.Log(

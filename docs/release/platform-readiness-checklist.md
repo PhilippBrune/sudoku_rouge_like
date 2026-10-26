@@ -58,6 +58,8 @@ Live values read from the Steamworks partner site (`partner.steamgames.com/apps/
 | `harmony_10_perfect` | Tranquil Perfection | Complete a Garden Run on Harmony Level 10 with zero mistakes. | yes |
 | `harmony_all_classes` | Master of the Garden | Complete a Garden Run on Harmony Level 5 or higher with all 8 classes. | no |
 
+21 more achievements are in the game since 2026-10-26 (after 0.2.2 beta): create them before the build that carries them goes live, with the API names, names, descriptions and translations of `docs/Achievements.md` §2 and §5 and the icons `steam_assets/achievements/achieved_<api name>.jpg` / `unachieved_<api name>.jpg` (made by `tools/steam/achievement_icons.py`).
+
 **Stats & Achievements → Leaderboards**
 - `Harmony_RunScore`: sort method Descending, display type Numeric, writes by the game (score = XP of a won run, best kept).
 

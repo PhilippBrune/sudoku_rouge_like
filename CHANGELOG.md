@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### New
+
+- **21 new achievements** for the first hours, the classes, Endless Zen, Spirit Trials, the Monthly Walk, the Daily Walk streak and the Codex (`docs/Achievements.md`). They appear on Steam once they are set up in Steamworks; a profile that already meets one earns it at its next run end.
+
 ## 0.2.2 beta: 8th iteration (2026-10-25)
 
 A playtest build for the password beta branch. It makes the end of a run the start of the next one: Walk again,

@@ -211,6 +211,24 @@ namespace SudokuRoguelike.Run
             }
         }
 
+        // ── Daily Walk XP ───────────────────────────────────────────────────
+
+        public const double DawnBonus = 1.5;
+
+        public static int GoalXp(GoalTier tier) => tier switch { GoalTier.Easy => 50, GoalTier.Medium => 100, _ => 200 };
+
+        public static int StreakBonusPercent(int streakDays) => streakDays >= 7 ? 25 : streakDays >= 3 ? 10 : 0;
+
+        /// <summary>[REQ: DAILY-WALK-003] The XP a daily walk gives the class the player picks: the walk's XP ×1.5 (dawn
+        /// bonus) plus the goals met, raised by the streak bonus.</summary>
+        public static int WalkXp(int walkXp, IEnumerable<GoalTier> goalsMet, int streakDays)
+        {
+            var goals = 0;
+            foreach (var tier in goalsMet) goals += GoalXp(tier);
+            return (int)Math.Round((walkXp * DawnBonus + goals) * (100 + StreakBonusPercent(streakDays)) / 100.0,
+                MidpointRounding.AwayFromZero);
+        }
+
         // ── Trigger strings (used by RunDirector) ────────────────────────────
 
         public const string TriggerPuzzleComplete    = "puzzle_complete";

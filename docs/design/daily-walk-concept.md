@@ -1,11 +1,12 @@
 # A quick run every day: the Daily Walk
 
-**Version:** 1.0 | **Date:** 2026-10-25 | **Status:** new (concept for the owner's pick; nothing built)
+**Version:** 1.1 | **Date:** 2026-10-26 | **Status:** review (owner's answers in; mockups for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.1 | 2026-10-26 | review | The owner's answers to section 7 (below) change the proposal: two floors with a boss each, no class, the XP to a class chosen at the end, the goals only inside the daily walk, a stamp shop for looks and a leaderboard of the day now. Mockups: `docs/design/layout-proposals.md` 2.9 (proposed UI-STYLE-027 to 029). |
 | 1.0 | 2026-10-25 | new | Owner request: "The day run should give XP, not gold. Create a concept for how it makes it more worth playing a quick run every day." Suggested roadmap item RM-122. |
 
 ## 1. What the Daily Walk is today
@@ -68,3 +69,15 @@ Effort: M (a few days). Requirement IDs follow in DailyGoalSystem when the owner
 3. Do the old goals inside the Garden Run go away, or stay as a second way to earn the daily XP?
 4. Ink stamps: only the streak's mark, or also a shop for looks?
 5. A leaderboard of the day now, or later with RM-117?
+
+## 8. The owner's answers (2026-10-25)
+
+1. Length: two floors, each with its boss ("2 floors + boss"; asked again: "Jede Etage mit Boss").
+2. Class: none, "to avoid that a class is still not unlocked". Everyone walks with the same HP, Pencil and bag. The
+   XP goes to an unlocked class the player chooses on the result screen ("Klasse am Ende wählen").
+3. The old goals inside the Garden Run go away; the three goals are met inside the daily walk.
+4. Ink stamps also buy looks in a shop.
+5. A Steam leaderboard of the day now.
+
+Open for the build: the neutral walker's HP, Pencil and bag; the goal pool for two floors; whether the weekly scroll
+(7 ink stamps, section 4) stays now that stamps are spent in the shop.

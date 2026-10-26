@@ -1,11 +1,12 @@
 # Time attack: the incense walk
 
-**Version:** 1.0 | **Date:** 2026-10-25 | **Status:** new (concept for the owner's pick; nothing built)
+**Version:** 1.1 | **Date:** 2026-10-26 | **Status:** review (owner's answers in; the rules are specified in `docs/IncenseWalkMode.md`)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.1 | 2026-10-26 | review | The owner's answers to section 7 (below). The rules moved to the spec `docs/IncenseWalkMode.md` 0.1; the clock, score, puzzle growth and class time forms are built (`IncenseWalkService`). Mockups for the sixth curtain and the incense stick: `docs/design/layout-proposals.md` 2.9. |
 | 1.0 | 2026-10-25 | new | Owner request: "A time attack mode: you start with X minutes, solving a puzzle adds Y based on how many errors etc. It is over the moment the timer reaches 0:00." Suggested roadmap item RM-123. |
 
 ## 1. The idea
@@ -67,3 +68,11 @@ Effort: M to L (a week). Requirement IDs follow in a new spec (IncenseWalkMode) 
 3. Boons every fifth puzzle, or a pure walk with no choices?
 4. Classes with time passives, or one neutral walker for a fair leaderboard?
 5. A sixth curtain on Game Modes, or a slip under Spirit Trials?
+
+## 8. The owner's answers (2026-10-25)
+
+1. Start time and bonus table: "implement as it is now for playtesting and balancing" (8:00 and the table above).
+2. Mistakes: both penalties (−10 s at once and −20 % of the bonus).
+3. Boons: none ("yes no choices").
+4. Classes: with time passives.
+5. Game Modes: a sixth curtain ("a sixth playmode").

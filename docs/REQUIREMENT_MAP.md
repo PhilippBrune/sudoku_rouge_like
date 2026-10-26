@@ -1,6 +1,6 @@
 # Requirement Traceability Map — All Systems
 
-**Updated:** 2026-10-26 (RELIC-SIG-001, RELIC-SIG-002, RELIC-KEY-001, RELIC-KEY-002, INPUT-PAD-002, SCORE-TIME-001, SAVE-TEST-001, ACHIEVE-RUN-001, ACHIEVE-CLASS-001, ACHIEVE-MODE-001, ACHIEVE-COLLECT-001; before: INPUT-PAD-001 (GAP-070); before: HARMONY-PERK-002..005 (GAP-064, GAP-067, GAP-069), LEGAL-LICENSE-001 (GAP-068), INPUT-NAV-001 (GAP-062), the one-more-run slice RUN-AGAIN-001, RUN-END-NEAR-001, RUN-END-MOVED-001, STAKES-001, RUN-LENGTH-001, META-CODEX-010; before: UI-STYLE-024..026, LOC-NUM-001, ACCESS-MOTION-002)
+**Updated:** 2026-10-26 (DAILY-WALK-001..008, INCENSE-CLOCK-001..005, INCENSE-PUZZLE-001, INCENSE-SCORE-001..002, INCENSE-BOARD-001, INCENSE-XP-001, INCENSE-CLASS-001; before: RELIC-SIG-001, RELIC-SIG-002, RELIC-KEY-001, RELIC-KEY-002, INPUT-PAD-002, SCORE-TIME-001, SAVE-TEST-001, ACHIEVE-RUN-001, ACHIEVE-CLASS-001, ACHIEVE-MODE-001, ACHIEVE-COLLECT-001; before: INPUT-PAD-001 (GAP-070); before: HARMONY-PERK-002..005 (GAP-064, GAP-067, GAP-069), LEGAL-LICENSE-001 (GAP-068), INPUT-NAV-001 (GAP-062), the one-more-run slice RUN-AGAIN-001, RUN-END-NEAR-001, RUN-END-MOVED-001, STAKES-001, RUN-LENGTH-001, META-CODEX-010; before: UI-STYLE-024..026, LOC-NUM-001, ACCESS-MOTION-002)
 
 Legend: ✅ Implemented and verified | ⚠️ Partial / conflicting | ❌ Not implemented | ◻️ Code present, not verified (no tagged test or E2E check yet) | 🗄️ Deprecated / descoped | 🆕 New (spec only, no code yet)
 
@@ -29,11 +29,12 @@ Legend: ✅ Implemented and verified | ⚠️ Partial / conflicting | ❌ Not im
 | [ACCESS](#accessibility) | `docs/AccessibilitySpec.md` | ◻️ 5 |
 | [ECON](#gold-economy) | `docs/GoldEconomySystem.md` | ✅ 3 |
 | [SEASON](#seasonal-challenge) | `docs/SeasonalChallengeSpec.md` | ✅ 5 · ◻️ 1 |
-| [DAILY](#daily-goal-system) | `docs/DailyGoalSystem.md` | ✅ 2 · ◻️ 3 |
+| [DAILY](#daily-goal-system) | `docs/DailyGoalSystem.md` | ✅ 3 · ◻️ 3 · 🆕 7 |
 | [CLASS](#class-progression-unlocks) | `docs/ClassProgressionUnlocks.md` | ✅ 1 · ◻️ 3 |
 | [DISPLAY](#display-modes) | `docs/GameDesignSpec.md` | ✅ 7 |
 | [UI-OPT](#options-panels) | `docs/GameDesignSpec.md` | ✅ 3 |
 | [RUN-WEEK](#shared-challenges) | `docs/GameDesignSpec.md` | ✅ 2 |
+| [INCENSE](#incense-walk) | `docs/IncenseWalkMode.md` | ✅ 7 · 🆕 4 |
 | [CREDITS](#credits) | `docs/GameDesignSpec.md` | ✅ 1 |
 | [UI-STYLE](#in-run-visual-style) | `docs/design/layout-proposals.md` | ✅ 9 |
 | [LOC](#localization) | `docs/localization-catalog.md` | ✅ 3 |
@@ -592,7 +593,7 @@ Key requirements (see spec for full list):
 
 ## Daily Goal System
 
-**Spec:** `docs/DailyGoalSystem.md` v0.2
+**Spec:** `docs/DailyGoalSystem.md` v0.3
 
 | ID | Description | File | Method | Evidence | Status |
 | ---- | ------------- | ------ | -------- | ---------- | -------- |
@@ -601,6 +602,14 @@ Key requirements (see spec for full list):
 | DAILY-GOAL-003 | Streak tracking (consecutive days) | `Assets/Scripts/Core/SaveModels.cs` | `DailyGoalState` | DailyStreakTests | ✅ |
 | DAILY-GOAL-004 | Daily Walk widget on main menu | `Assets/Scripts/UI/MainMenuController.cs` | `ShowDailyWalkPanel` | GeneratedUiPlayModeTraversalTests | ✅ |
 | DAILY-GOAL-005 | `DailyGoalState` in `ProfileSaveData` | `Assets/Scripts/Core/SaveModels.cs` | `SaveFileEnvelope` | — | ◻️ |
+| DAILY-WALK-001 | A run of two floors with a boss each on the day's seed | — | — | — | 🆕 |
+| DAILY-WALK-002 | No class: one neutral walker | — | — | — | 🆕 |
+| DAILY-WALK-003 | XP: walk ×1.5 + goals (50/100/200), streak +10 %/+25 %, given to a chosen class | `Assets/Scripts/Run/DailyGoalService.cs` | `WalkXp` | DailyWalkXpTests | ✅ |
+| DAILY-WALK-004 | Goals only inside the daily walk | — | — | — | 🆕 |
+| DAILY-WALK-005 | One scored walk a day | — | — | — | 🆕 |
+| DAILY-WALK-006 | All three goals: +1 ink stamp | — | — | — | 🆕 |
+| DAILY-WALK-007 | Stamp shop for looks | — | — | — | 🆕 |
+| DAILY-WALK-008 | A Steam leaderboard of the day | — | — | — | 🆕 |
 
 ---
 
@@ -732,6 +741,26 @@ Key requirements (see spec for full list):
 | ---- | ------------- | ------ | -------- | ---------- | -------- |
 | RUN-WEEK-001 | Seed of the week per ISO week, button in the start-run modal | `Assets/Scripts/Run/WeeklySeedService.cs`, `MainMenuController.StartRun.cs` | `SeedFor`, `CreateWeeklySeedButton` | WalkCalendarParityTests | ✅ |
 | RUN-WEEK-002 | Discord posts compute daily goals, weekly seed and monthly board like the game | `tools/discord/walk_calendar.py`, `walk_posts.py` | `daily_goal_ids`, `weekly_seed`, `monthly_walk` | WalkCalendarParityTests, test_walk_calendar.py, live posts 2026-10-15 | ✅ |
+
+---
+
+## Incense Walk
+
+**Spec:** `docs/IncenseWalkMode.md` v0.1
+
+| ID | Description | File | Method | Evidence | Status |
+| ---- | ------------- | ------ | -------- | ---------- | -------- |
+| INCENSE-CLOCK-001 | The walk starts with 8:00 | `Assets/Scripts/Run/IncenseWalkService.cs` | `StartSeconds` | IncenseWalkServiceTests | ✅ |
+| INCENSE-CLOCK-002 | A solved puzzle adds its board's seconds, +15 s per star above 1, +20 s when perfect | `Assets/Scripts/Run/IncenseWalkService.cs` | `SolveSeconds`, `OnPuzzleSolved` | IncenseWalkServiceTests | ✅ |
+| INCENSE-CLOCK-003 | A mistake costs 10 s at once and cuts the puzzle's bonus by 20 % (at most 80 %) | `Assets/Scripts/Run/IncenseWalkService.cs` | `OnMistake`, `SolveSeconds` | IncenseWalkServiceTests | ✅ |
+| INCENSE-CLOCK-004 | At 0:00 the walk ends at once; nothing after counts | `Assets/Scripts/Run/IncenseWalkService.cs` | `Over`, `Tick` | IncenseWalkServiceTests | ✅ |
+| INCENSE-CLOCK-005 | Pause and puzzle generation stop the clock | — | — | — | 🆕 |
+| INCENSE-PUZZLE-001 | Boards and rules grow every three puzzles; same seed, same walk | `Assets/Scripts/Run/IncenseWalkService.cs` | `BuildLevel` | IncenseWalkServiceTests | ✅ |
+| INCENSE-SCORE-001 | Score: board XP points × star multiplier plus the seconds left at each solve | `Assets/Scripts/Run/IncenseWalkService.cs` | `PuzzlePoints`, `OnPuzzleSolved` | IncenseWalkServiceTests | ✅ |
+| INCENSE-SCORE-002 | Records: best score, most puzzles, largest board | — | — | — | 🆕 |
+| INCENSE-BOARD-001 | A Steam leaderboard per week on the week's seed; practice scores nothing | — | — | — | 🆕 |
+| INCENSE-XP-001 | Each solved puzzle gives the class its normal XP | — | — | — | 🆕 |
+| INCENSE-CLASS-001 | Each class passive in time form | `Assets/Scripts/Run/IncenseWalkService.cs` | `OnCorrectDigit`, `OnMistake`, `Tick`, `OnPuzzleSolved` | IncenseWalkServiceTests | ✅ |
 
 ---
 

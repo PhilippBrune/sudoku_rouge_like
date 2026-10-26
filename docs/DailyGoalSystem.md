@@ -1,11 +1,12 @@
 # Daily Goal System
 
-**Version:** 0.2 | **Date:** 2026-10-07 | **Status:** implemented
+**Version:** 0.3 | **Date:** 2026-10-26 | **Status:** under review (the daily walk of two floors is specified below; its XP sum is built, the rest waits for the owner's pick of the mockups)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 0.3 | 2026-10-26 | under review | The Daily Walk becomes a run of its own (`docs/design/daily-walk-concept.md` 1.1, owner's answers 2026-10-25, RM-122): two floors with a boss each, no class, XP to a class chosen at the end, the goals only inside the walk, ink stamps for looks, a leaderboard of the day (DAILY-WALK-001 to 008). Until it is built the goals below stay as they are. |
 | 0.2 | 2026-10-07 | implemented | Status set from evidence (SPEC-CONF-022): streak and goal evaluation covered by DailyStreakTests and GameplayEffectContractTests. Daily Walk widget on the main menu as built (SPEC-CONF-027, GAP-028); skipped days reset the streak (GAP-028). |
 | 0.1 | 2026-04-09 | new | Initial specification |
 
@@ -196,6 +197,26 @@ DailyGoalService.RefreshIfNewDay(goalState, LocalDate.Today);
 | `UI/MainMenuController.cs` | Wire `DailyGoalService` calls; apply pending rewards on `LaunchRun()` |
 | `Bootstrap/GameBootstrap.cs` | Call `DailyGoalService.RefreshIfNewDay()` after profile load |
 | `Run/RunDirector.cs` | Call `DailyGoalService.EvaluateInRun()` after puzzle complete, node arrive, gold change |
+
+## The Daily Walk as a run (0.3, under review)
+
+The owner's answers to the concept (2026-10-25) turn the Daily Walk into a short run of its own. Built so far: the XP
+sum (DAILY-WALK-003, `DailyGoalService.WalkXp`). The screens are proposed in `docs/design/layout-proposals.md` 2.9
+(UI-STYLE-027 Game Modes, 028 the result, 029 the stamp shop) and wait for the owner's pick.
+
+| ID | Rule |
+|----|------|
+| DAILY-WALK-001 | The daily walk is a run of two floors, each ending with its boss, on the day's seed: the same boards, rules and offers for every player that day. |
+| DAILY-WALK-002 | No class: everyone walks as the same neutral walker (no passive, no class relics), so a class not unlocked yet is no disadvantage. |
+| DAILY-WALK-003 | XP: the walk's XP ×1.5 (dawn bonus), plus each goal met (easy +50, medium +100, hard +200), the sum raised by the streak bonus (+10 % from day 3, +25 % from day 7). The player gives it to an unlocked class on the result screen; until then it waits. |
+| DAILY-WALK-004 | The three goals of the day are met only inside the daily walk and fit its length; the Garden Run no longer checks them. |
+| DAILY-WALK-005 | One scored walk a day. Walking it again is allowed and pays nothing. |
+| DAILY-WALK-006 | All three goals met: +1 ink stamp. |
+| DAILY-WALK-007 | Ink stamps buy looks in a stamp shop (board ink, class seal frames, path seals); looks only, no balance. |
+| DAILY-WALK-008 | The walk's run score goes to a Steam leaderboard of the day; the result shows the place and the friends. |
+
+Open for the build: the neutral walker's HP, Pencil and bag; the goal pool for two floors; whether the weekly scroll
+(7 ink stamps) stays now that stamps are spent; the Discord walk posts (RUN-WEEK-002) must follow the new goal pool.
 
 ---
 

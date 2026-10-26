@@ -74,6 +74,7 @@ namespace SudokuRoguelike.Bootstrap
             var envelope = _saveFileService.Load();
             _dailyGoals = envelope.DailyGoals ?? new DailyGoalState();
             DailyGoalService.RefreshIfNewDay(_dailyGoals, DateTime.Today);
+            InkStampShop.Apply(_dailyGoals);   // [REQ: DAILY-WALK-007] this profile's looks
             _run.DailyGoals = _dailyGoals;
             // Persist the refreshed daily goals to the newly active slot immediately.
             envelope.DailyGoals = _dailyGoals;
@@ -92,6 +93,7 @@ namespace SudokuRoguelike.Bootstrap
             var envelope = _saveFileService.Load();
             _dailyGoals = envelope.DailyGoals ?? new DailyGoalState();
             DailyGoalService.RefreshIfNewDay(_dailyGoals, DateTime.Today);
+            InkStampShop.Apply(_dailyGoals);   // [REQ: DAILY-WALK-007] this profile's looks
             _run.DailyGoals = _dailyGoals;
 
             // Only persist if we already have an active profile — avoids creating

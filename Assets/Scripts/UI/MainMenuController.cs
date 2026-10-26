@@ -215,6 +215,7 @@ namespace SudokuRoguelike.UI
         {
             if (!Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton1)) && !Input.GetKeyDown(KeyCode.Escape))
                 return false;
+            if (CloseGameModesOverlay()) return true;   // the stamp shop or the waiting XP first
 
             ExecuteMainMenuCancelRoute(CancelRouteContract.ResolveMainMenuCancel(
                 new MainMenuCancelContext(
@@ -447,6 +448,7 @@ namespace SudokuRoguelike.UI
         {
             if (_dailyWalkPanel   != null) _dailyWalkPanel.SetActive(false);
             if (_monthlyWalkPanel != null) _monthlyWalkPanel.SetActive(false);
+            DropGameModesOverlays();
             RefreshGameModesPanel();
             _menu.Show(MenuScreen.GameModes);
         }
@@ -495,6 +497,7 @@ namespace SudokuRoguelike.UI
 
         private void HideAllPanels()
         {
+            DropGameModesOverlays();
             if (_mainMenuPanel != null) _mainMenuPanel.SetActive(false);
             if (_classSelectPanel != null) _classSelectPanel.SetActive(false);
             if (_gameModesPanel != null) _gameModesPanel.SetActive(false);

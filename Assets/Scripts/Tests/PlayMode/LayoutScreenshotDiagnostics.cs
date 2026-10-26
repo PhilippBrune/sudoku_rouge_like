@@ -889,6 +889,57 @@ namespace SudokuRoguelike.Tests
             yield return Shoot(host, camera, "after_incense_walk_result.png");
         }
 
+        // UI-STYLE-029: the stamp shop with nine ink stamps (Indigo chosen), then the looks in the game: a board in indigo
+        // ink, Select Class with the moss ring.
+        [UnityTest]
+        public IEnumerator RenderStampShop()
+        {
+            var goals = new DailyGoalState { TotalInkStamps = 9 };
+            new SaveFileService(TestSlot).Save(new SaveFileEnvelope { DailyGoals = goals });
+            SaveFileService.FlushSharedPendingWrites();
+            if (Object.FindFirstObjectByType<EventSystem>() == null)
+                _createdRoots.Add(new GameObject("LayoutShotShopEventSystem", typeof(EventSystem), typeof(StandaloneInputModule)));
+            var inputModules = Object.FindObjectsByType<BaseInputModule>(FindObjectsSortMode.None);
+            foreach (var module in inputModules) module.enabled = false;
+            var camera = CreateCamera();
+            var host = new GameObject("LayoutShotShop");
+            _createdRoots.Add(host);
+            host.AddComponent<MainMenuBlueprintBuilder>().Build();
+            var rootGroup = Find(host, "MainMenuRoot").GetComponent<CanvasGroup>();
+            if (rootGroup != null) rootGroup.alpha = 1f;
+            var menu = host.GetComponent<MainMenuController>();
+            try
+            {
+                menu.ShowMainMenu();
+                yield return new WaitForSecondsRealtime(0.3f);
+                menu.ShowGameModes();
+                yield return new WaitForSecondsRealtime(0.3f);
+                menu.OpenStampShop();
+                yield return new WaitForSecondsRealtime(0.5f);
+                yield return Shoot(host, camera, "after_stamp_shop.png");
+
+                var owned = new DailyGoalState { TotalInkStamps = 20 };
+                Meta.InkStampShop.TryBuy(owned, Meta.InkStampShop.Catalog.First(l => l.Key == "MossRing"));
+                Meta.InkStampShop.TryBuy(owned, Meta.InkStampShop.Catalog.First(l => l.Key == "Indigo"));
+                menu.StartGame();
+                EventSystem.current.SetSelectedGameObject(Find(host, "BtnClassNumberFreak"));
+                yield return new WaitForSecondsRealtime(0.5f);
+                yield return Shoot(host, camera, "after_stamp_seal_frame.png");
+
+                host.SetActive(false);   // the menu's canvas would lie over the puzzle
+                _puzzleSize = 6;
+                var (puzzleHost, _) = StartRun(7321, true);
+                yield return DismissIntro();
+                yield return new WaitForSecondsRealtime(0.5f);
+                yield return Shoot(puzzleHost, camera, "after_stamp_board_ink.png");
+            }
+            finally
+            {
+                Meta.InkStampShop.Apply(new DailyGoalState());
+                foreach (var module in inputModules) if (module != null) module.enabled = true;
+            }
+        }
+
         // UI-STYLE-012: the Custom Puzzle screen at 9×9, 3 stars, with Dutch Whispers, Killer Cages and Skyscrapers chosen
         // (the mockup's example). ToggleModifier is looked up by name, so the same test also shoots the old panel.
         [UnityTest]

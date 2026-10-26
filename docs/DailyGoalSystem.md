@@ -1,11 +1,12 @@
 # Daily Goal System
 
-**Version:** 0.4 | **Date:** 2026-10-26 | **Status:** review (the daily walk of two floors is built; the stamp shop, DAILY-WALK-007, follows)
+**Version:** 0.5 | **Date:** 2026-10-26 | **Status:** review (the daily walk of two floors and the stamp shop are built)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 0.5 | 2026-10-26 | review | The ink stamp shop built (DAILY-WALK-007, UI-STYLE-029): twelve looks on three shelves, prices from the mockup for playtesting. |
 | 0.4 | 2026-10-26 | review | Owner: "Implementier die UI-Styles"; the walker gets 10 HP and 10 Pencil (2 bag slots, the class average), the pool keeps 21 goals with four replaced, and the weekly scroll stays, counted by stamps earned (owner, 2026-10-26). Built: DAILY-WALK-001 to 006 and 008, the Game Modes slip (UI-STYLE-027) and the result (UI-STYLE-028). The goals no longer count in a Garden Run, their gold, reroll and stamp rewards are gone. |
 | 0.3 | 2026-10-26 | under review | The Daily Walk becomes a run of its own (`docs/design/daily-walk-concept.md` 1.1, owner's answers 2026-10-25, RM-122): two floors with a boss each, no class, XP to a class chosen at the end, the goals only inside the walk, ink stamps for looks, a leaderboard of the day (DAILY-WALK-001 to 008). Until it is built the goals below stay as they are. |
 | 0.2 | 2026-10-07 | implemented | Status set from evidence (SPEC-CONF-022): streak and goal evaluation covered by DailyStreakTests and GameplayEffectContractTests. Daily Walk widget on the main menu as built (SPEC-CONF-027, GAP-028); skipped days reset the streak (GAP-028). |
@@ -231,6 +232,7 @@ earned in an ISO week (spent or not) adds 500 XP to the XP waiting for a class.
 | DAILY-WALK-004 | `RunDirector.DailyGoals` is set only for the day's scored walk, so a Garden Run no longer meets the goals. |
 | DAILY-WALK-005 | `DailyGoalState.LastScoredWalkDate`: a second walk the same day has no goals, no XP sum and no board entry. |
 | DAILY-WALK-006 | All three goals: +1 ink stamp (`EarnStamps`); the streak milestones and the Monthly Walk's stamps go through it too. |
+| DAILY-WALK-007 | `InkStampShop` (Meta): board ink (sumi black, indigo 5, cinnabar 5, moss 5, gold leaf 12), class seal frames on Select Class (ink, moss 6, vermilion 8, gold 14), path seals on the run end (vermilion, indigo 6, round sumi 8); the first of each shelf is the game's own and free. Owned looks in `UnlockedCosmetics` (shelf × 10 + look), worn ones in `WornBoardInk`, `WornSealFrame`, `WornPathSeal`; the profile's looks are worn when it loads. Under indigo ink the player's own digits turn sumi black, so given and placed digits never look alike. The shop opens from the Daily Walk's slip ("Stamp shop"). |
 | DAILY-WALK-008 | `SteamLeaderboardService.SubmitToBoard` uploads the run score to "DailyWalk_yyyy-MM-dd" (kept best) and reads the top three, the place and the place among friends; without Steam the board says so. |
 
 A walk counts as a run for the class-unlock counters (bosses defeated, gold, items, relics), the run count and the boss

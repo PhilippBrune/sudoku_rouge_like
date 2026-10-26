@@ -80,10 +80,11 @@ namespace SudokuRoguelike.UI
                         new Vector2(0.029f, 0.63f), new Vector2(0.70f, 0.83f), 18);
                     var trials = m.Mode == GameModesScreen.Mode.Trials;
                     ScrollUiKit.Label(page, "Body", string.Empty, side ? 18 : 19, TextAnchor.UpperLeft, ScrollUiKit.Ink,
-                        new Vector2(0.029f, trials ? 0.34f : 0.06f), new Vector2(incense ? 0.485f : side ? 0.60f : 0.70f, 0.61f), 12).supportRichText = true;
+                        new Vector2(0.029f, trials ? 0.34f : 0.06f), new Vector2(incense ? 0.485f : side ? 0.58f : 0.70f, 0.61f), 12).supportRichText = true;
                     if (trials) BuildTrialTiers(page, mc, screen);
                     if (side) BuildSideBox(page);
                     if (incense) BuildIncensePractice(page, mc, screen);
+                    if (m.Mode == GameModesScreen.Mode.Daily) BuildStampShopButton(page, mc, screen);
                 }
                 screen.Register(m.Mode, curtain, page.gameObject);
             }
@@ -165,6 +166,17 @@ namespace SudokuRoguelike.UI
                 new Color(0.90f, 0.84f, 0.69f, 1f));
             ScrollUiKit.Label(box.transform, "SideText", string.Empty, 17, TextAnchor.UpperLeft, ScrollUiKit.Ink,
                 new Vector2(0.05f, 0.04f), new Vector2(0.95f, 0.95f), 11).supportRichText = true;
+        }
+
+        // [REQ: UI-STYLE-029] The stamp shop's way in on the Daily Walk's slip, left of Back.
+        private static void BuildStampShopButton(RectTransform page, MainMenuController mc, GameModesScreen screen)
+        {
+            var shop = OptionsUiFactory.BuildButton("BtnStampShop", page, T("GameModes.Daily.StampShop"), 20);
+            SetRect((RectTransform)shop.transform, new Vector2(0.595f, 0.09f), new Vector2(0.718f, 0.31f), Vector2.zero, Vector2.zero);
+            OptionsUiFactory.PaintPill(shop, new Color(0.24f, 0.20f, 0.16f, 1f), new Color(0.97f, 0.93f, 0.84f, 1f));
+            shop.onClick.RemoveAllListeners();
+            shop.onClick.AddListener(mc.OpenStampShop);
+            screen.SetExtraButton(GameModesScreen.Mode.Daily, shop);
         }
 
         // [REQ: INCENSE-BOARD-001] The Incense Walk's practice on a random seed (no board), left of Back.

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using SudokuRoguelike.Classes;
 using SudokuRoguelike.Core;
 using SudokuRoguelike.Data;
+using SudokuRoguelike.Meta;
 using SudokuRoguelike.Run;
 using UnityEngine;
 using UnityEngine.UI;
@@ -150,9 +151,11 @@ namespace SudokuRoguelike.UI
                 var lost = !victory && f == state.CurrentFloor;
                 if (cleared)
                 {
+                    // [REQ: DAILY-WALK-007] The path seal worn from the stamp shop: its colour, round or square.
+                    var round = InkStampShop.WornPathSeal.Round;
                     var seal = ScrollUiKit.Spot(screen, $"FloorSeal_{f}", new Vector2(x, y), new Vector2(size, size),
-                        ScrollUiKit.Vermilion, ScrollUiKit.Rounded(12f));
-                    seal.rectTransform.localRotation = Quaternion.Euler(0f, 0f, f % 2 == 0 ? -4f : 3f);
+                        InkStampShop.PathSealColour(ScrollUiKit.Vermilion), round ? ScrollUiKit.Disc() : ScrollUiKit.Rounded(12f));
+                    seal.rectTransform.localRotation = Quaternion.Euler(0f, 0f, round ? 0f : f % 2 == 0 ? -4f : 3f);
                     var shadow = seal.gameObject.AddComponent<Shadow>();
                     shadow.effectColor = new Color(0f, 0f, 0f, 0.5f);
                     shadow.effectDistance = new Vector2(2f, -4f);

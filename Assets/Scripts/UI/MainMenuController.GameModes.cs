@@ -253,7 +253,54 @@ namespace SudokuRoguelike.UI
             });
         }
 
-        private GameObject _waitingXp;
+        private GameObject _waitingXp, _stampShop;
+        private Action _closeOverlay;   // the shop's or the waiting XP's Close, for B and Escape
+
+        // B or Escape over the stamp shop or the waiting XP closes it (and refreshes Game Modes) instead of leaving Game Modes.
+        private bool CloseGameModesOverlay()
+        {
+            if (_closeOverlay == null) return false;
+            var close = _closeOverlay;
+            _closeOverlay = null;
+            close();
+            return true;
+        }
+
+        // Leaving Game Modes another way drops both, so a later visit never shows a copy loaded earlier.
+        private void DropGameModesOverlays()
+        {
+            ScrollUiKit.DestroyNow(_stampShop);
+            ScrollUiKit.DestroyNow(_waitingXp);
+            _stampShop = _waitingXp = null;
+            _closeOverlay = null;
+        }
+
+        /// <summary>[REQ: UI-STYLE-029] The ink stamp shop over Game Modes; each purchase or change is saved at once.</summary>
+        public void OpenStampShop()
+        {
+            if (_gameModesPanel == null) return;
+            ScrollUiKit.DestroyNow(_stampShop);
+            var goals = (_save.HasSaveFile() ? _save.Load() : new SaveFileEnvelope()).DailyGoals ?? new DailyGoalState();
+            void Save(DailyGoalState state)
+            {
+                var envelope = _save.HasSaveFile() ? _save.Load() : new SaveFileEnvelope();
+                envelope.DailyGoals = state;
+                _save.Save(envelope);
+            }
+            void Close()
+            {
+                ScrollUiKit.DestroyNow(_stampShop);
+                _stampShop = null;
+                _closeOverlay = null;
+                RefreshGameModesPanel();
+                _gameModesScreen?.Show(GameModesScreen.Mode.Daily);
+                var button = _gameModesPanel.transform.Find("ModeSlip/Slip_Daily/BtnStampShop");
+                var events = UnityEngine.EventSystems.EventSystem.current;
+                if (button != null && events != null) events.SetSelectedGameObject(button.gameObject);
+            }
+            _stampShop = StampShopView.Build(_gameModesPanel.transform, goals, Save, Close).gameObject;
+            _closeOverlay = Close;
+        }
 
         // [REQ: UI-STYLE-028] The XP waiting from a walk left on its result (or the weekly scroll), given on the menu.
         private void ShowWaitingXp(SaveFileEnvelope envelope)
@@ -270,6 +317,7 @@ namespace SudokuRoguelike.UI
             {
                 ScrollUiKit.DestroyNow(_waitingXp);
                 _waitingXp = null;
+                _closeOverlay = null;
                 RefreshGameModesPanel();
                 _gameModesScreen?.Show(GameModesScreen.Mode.Daily);
                 var curtain = _gameModesPanel.transform.Find("BtnDailyWalk");
@@ -284,6 +332,7 @@ namespace SudokuRoguelike.UI
             var back = ScrollUiKit.PillButton(screen.transform, "BtnWaitingBack", new Vector2(0.29f, 0.20f), new Vector2(0.39f, 0.255f),
                 LocalizationService.T("Back"), 22, new Color(0.24f, 0.20f, 0.16f, 1f), ScrollUiKit.PaperText, 30f);
             back.onClick.AddListener(Close);
+            _closeOverlay = Close;
         }
 
         private static GameModesScreen.ModeView MonthlyView(SeasonalChallengeState seasonal)

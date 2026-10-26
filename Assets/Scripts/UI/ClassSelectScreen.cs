@@ -105,7 +105,8 @@ namespace SudokuRoguelike.UI
             {
                 if (pair.Value == null) continue;
                 var chosen = pair.Key == _selected;
-                SetImageColor(pair.Value.transform, "Ring", chosen ? ScrollUiKit.Vermilion : new Color(0.16f, 0.14f, 0.11f, 0.85f));
+                SetImageColor(pair.Value.transform, "Ring", chosen ? ScrollUiKit.Vermilion
+                    : InkStampShop.SealRingColour(new Color(0.16f, 0.14f, 0.11f, 0.85f)));   // [REQ: DAILY-WALK-007]
                 var glow = pair.Value.transform.parent != null ? pair.Value.transform.parent.Find("SealGlow_" + pair.Key) : null;
                 if (glow != null) glow.GetComponent<Image>().color = new Color(1f, 0.82f, 0.48f, chosen ? 0.6f : 0f);
             }

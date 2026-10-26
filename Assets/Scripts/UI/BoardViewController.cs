@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using SudokuRoguelike.Boss;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Meta;
 using SudokuRoguelike.Run;
 using SudokuRoguelike.Sudoku;
 using UnityEngine;
@@ -251,6 +252,8 @@ namespace SudokuRoguelike.UI
             var run = _map?.Run;
             var board = run?.CurrentBoard;
             if (board == null || _gridRoot == null) return;
+            var gridInk = _gridRoot.GetComponent<Image>();   // the spacing between cells shows as the board ink
+            if (gridInk != null) gridInk.color = InkStampShop.LineColour(ScrollUiKit.Ink);
 
             // [REQ: UI-STYLE-010] A board with outside clues is drawn smaller, so the clue ring fits round it.
             var clueRing = HasClueRing(run.CurrentOverlay);
@@ -346,7 +349,8 @@ namespace SudokuRoguelike.UI
 
                 var labelText = val == 0 ? "" : val.ToString();
                 if (labelText != cell.LastLabelText) { cell.Label.text = labelText; cell.LastLabelText = labelText; }
-                cell.Label.color = given ? GamePalette.CellNumberGiven : GamePalette.CellNumberPlaced;
+                cell.Label.color = given ? InkStampShop.GivenDigitColour(GamePalette.CellNumberGiven)   // [REQ: DAILY-WALK-007]
+                    : InkStampShop.PlacedDigitColour(GamePalette.CellNumberPlaced);
                 var digitStyle = given ? FontStyle.Bold : FontStyle.Normal;
                 if (cell.Label.fontStyle != digitStyle) cell.Label.fontStyle = digitStyle;
                 var pencilBlurred = (BlurredPencilCells != null && BlurredPencilCells.Contains((cell.Row, cell.Col)))
@@ -695,7 +699,8 @@ namespace SudokuRoguelike.UI
         private void UpdateBorders(SudokuBoard board, CellView cell)
         {
             var map = board.RegionMap;
-            var clear = new Color(RegionBorder.r, RegionBorder.g, RegionBorder.b, 0);
+            var line = InkStampShop.LineColour(RegionBorder);   // [REQ: DAILY-WALK-007] the board ink
+            var clear = new Color(line.r, line.g, line.b, 0);
             if (map == null)
             {
                 cell.BorderTop.color = cell.BorderBottom.color = cell.BorderLeft.color = cell.BorderRight.color = clear;
@@ -704,10 +709,10 @@ namespace SudokuRoguelike.UI
             var r = cell.Row; var c = cell.Col; var sz = board.Size;
             var region = map[r, c];
 
-            cell.BorderTop.color    = (r == 0        || map[r - 1, c] != region) ? RegionBorder : clear;
-            cell.BorderBottom.color = (r == sz - 1   || map[r + 1, c] != region) ? RegionBorder : clear;
-            cell.BorderLeft.color   = (c == 0        || map[r, c - 1] != region) ? RegionBorder : clear;
-            cell.BorderRight.color  = (c == sz - 1   || map[r, c + 1] != region) ? RegionBorder : clear;
+            cell.BorderTop.color    = (r == 0        || map[r - 1, c] != region) ? line : clear;
+            cell.BorderBottom.color = (r == sz - 1   || map[r + 1, c] != region) ? line : clear;
+            cell.BorderLeft.color   = (c == 0        || map[r, c - 1] != region) ? line : clear;
+            cell.BorderRight.color  = (c == sz - 1   || map[r, c + 1] != region) ? line : clear;
 
             // Cage borders are drawn in BuildOverlays as inset overlay strips—do not tint cell borders here.
         }

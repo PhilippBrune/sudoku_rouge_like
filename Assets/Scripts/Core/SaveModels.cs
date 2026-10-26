@@ -376,6 +376,10 @@ namespace SudokuRoguelike.Core
         public string LastScoredWalkDate;     // [REQ: DAILY-WALK-005] "yyyy-MM-dd" of the day's scored walk
         public string StampWeek;              // [REQ: DAILY-WALK-006] ISO week of StampsThisWeek ("2026-W43")
         public int StampsThisWeek;            // ink stamps earned this week; the 7th brings the weekly scroll
+        // [REQ: DAILY-WALK-007] The looks worn from the stamp shop (0: the game's own); owned ones in UnlockedCosmetics.
+        public int WornBoardInk;
+        public int WornSealFrame;
+        public int WornPathSeal;
     }
 
     // [REQ: SEASON-SCORE-001] SeasonalChallengeState: personal best score stored locally per calendar month

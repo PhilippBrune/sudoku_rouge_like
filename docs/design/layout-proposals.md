@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 3.1 | **Date:** 2026-10-26 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result; being built: the stamp shop; not built: the main menu)
+**Version:** 3.2 | **Date:** 2026-10-26 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; not built: the main menu)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 3.2 | 2026-10-26 | review | The ink stamp shop built (UI-STYLE-029), opened from the Daily Walk's slip; its looks in the game (board ink, the seal ring on Select Class, the floor seals). A click chooses a look, Buy or Wear acts. Screenshots below. With this, UI-STYLE-027 to 030 are built. |
 | 3.1 | 2026-10-26 | review | The Incense Walk built: the sixth curtain on Game Modes (UI-STYLE-027) and the puzzle screen with the incense stick (UI-STYLE-030), and its result in the mode-result family. Changes from the mockups: the slips sit in the left column under the stick (the right column keeps the number pad), "Practice" sits left of Back. Screenshots below. |
 | 3.0 | 2026-10-26 | review | Owner: "Implementier die UI-Styles" (UI-STYLE-027 to 030). Built first: the Daily Walk's slip on Game Modes (UI-STYLE-027) and its result (UI-STYLE-028), with the walk behind them (DailyGoalSystem 0.4). Two changes from the mockup: Back sits beside the give button (the XP waits), and a seal is chosen by a click or focus, given only by the button. Screenshots below. |
 | 2.9 | 2026-10-26 | review | The offering table after the first boss shows the keystones with a vermilion tier tag (RELIC-KEY-001). New proposals for the owner's pick: Game Modes with six paths (proposed UI-STYLE-027), the Daily Walk result where the XP goes to a chosen class (UI-STYLE-028), the ink stamp shop (UI-STYLE-029) and the Incense Walk's puzzle screen (UI-STYLE-030), for RM-122 and RM-123. |
@@ -622,6 +623,20 @@ The result when the stick has burned down, in the mode-result family: the walk's
 and the week's board (or "a practice walk"):
 
 ![Incense Walk result](layout-proposals/after_incense_walk_result.jpg)
+
+## The stamp shop, built (3.2, 2026-10-26)
+
+The shop as the mockup has it (UI-STYLE-029), with nine ink stamps and Indigo chosen:
+
+![Ink stamp shop](layout-proposals/after_stamp_shop.jpg)
+
+Two looks in the game: the board in indigo ink (the given digits and every line; the player's own digits turn sumi
+black), and the moss ring round the class seals on Select Class. Before (the game's own looks) and after:
+
+![Puzzle, sumi black](layout-proposals/after_puzzle_6x6.jpg)
+![Puzzle, indigo ink](layout-proposals/after_stamp_board_ink.jpg)
+![Select Class, ink rings](layout-proposals/after_class_select.jpg)
+![Select Class, moss rings](layout-proposals/after_stamp_seal_frame.jpg)
 
 ## Decisions and next step
 

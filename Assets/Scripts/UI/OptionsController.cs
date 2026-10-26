@@ -67,6 +67,7 @@ namespace SudokuRoguelike.UI
             LiveAccessibility = _options.Accessibility ?? new AccessibilitySettings();
             AccessibilityAnnouncementOverlay.SetEnabled(LiveAccessibility.ScreenReaderEnabled);
             RumbleService.Enabled = _options.Gameplay.ControllerRumbleEnabled;
+            PadButtons.Mode = _options.Gameplay.ControllerLayout;
             LiveGameplay = _options.Gameplay ?? new GameplaySettings();
             // [REQ: OPT-AUDIO-001] Every audio source multiplies the master volume in; the listener stays at full volume
             // (it was set to the master volume too, so the master counted twice: 50 % played at 25 %; GAP-061).
@@ -231,6 +232,14 @@ namespace SudokuRoguelike.UI
             SaveOptions();
             if (!redrawBoard) return;
             FindFirstObjectByType<InRunController>()?.OnGameplayOptionsChanged();
+        }
+
+        /// <summary>[REQ: INPUT-PAD-002] Automatic, X-input or D-input.</summary>
+        public void SetControllerLayout(ControllerLayoutMode mode)
+        {
+            GetOptions().Gameplay.ControllerLayout = mode;
+            PadButtons.Mode = mode;
+            SaveOptions();
         }
 
         public void SetControllerRumbleEnabled(bool on)

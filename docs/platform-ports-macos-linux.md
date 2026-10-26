@@ -1,11 +1,12 @@
 # Plan: Run of the Nine on macOS and Linux / SteamOS
 
-**Version:** 1.2 | **Date:** 2026-10-25 | **Status:** review (decision 3 taken: Steam Input; the Steam Deck runs the Windows build; Lenovo Legion Go checked; no build settings changed yet)
+**Version:** 1.3 | **Date:** 2026-10-26 | **Status:** review (decision 3 taken: Steam Input; the Steam Deck runs the Windows build; Legion Go checked, X-input and D-input built; no build settings changed yet)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.3 | 2026-10-26 | review | X-input and D-input modes built (INPUT-PAD-002): the Legion Go's D-input mode and PlayStation pads without Steam Input press the right buttons. |
 | 1.2 | 2026-10-25 | review | Owner question: does the controller work on a Lenovo Legion? Section "Lenovo Legion Go" added. The check found GAP-070 (in a run the D-pad and LT/RT did nothing on any Xbox pad, the Deck and the Legion Go included), fixed the same day. |
 | 1.1 | 2026-10-22 | review | Owner decision 3: **Steam Input** (a default layout in Steamworks), not the Input System rewrite, and the Steam Deck as the next target. The Deck needs no build of its own: it runs the Windows build through Proton (section "Steam Deck"). Phase 1 shrinks to Steamworks settings and the Deck checks; the button work moves to the native Linux and macOS builds. |
 | 1.0 | 2026-10-20 | new | Owner request after the 0.2.0 playtest: publish on macOS (with 64-bit Intel binaries) and on Linux + SteamOS. Code audit, build and Steamworks steps, risks, order. Roadmap item RM-107 (extends RM-102 Steam Deck Verified and RM-205). |
@@ -59,7 +60,7 @@ The Legion Go (and Legion Go 2) is a Windows handheld; the Legion Go S also ship
 | Case | What the game sees | Works? |
 |---|---|---|
 | Legion Go, Windows, both controllers attached | An Xbox (XInput) pad: Lenovo's guide says the console is in X-input mode with both controllers attached or both detached | Yes, like an Xbox pad on Windows |
-| Legion Go, Windows, one controller detached | "Dual D-input" mode (Lenovo's guide): a generic pad with other button numbers | Face buttons and shoulders may be wrong; use X-input mode or Steam Input |
+| Legion Go, Windows, one controller detached | "Dual D-input" mode (Lenovo's guide): a generic pad with other button numbers | Yes since INPUT-PAD-002: Options → Controls → Controller "Automatic" picks D-input for a pad it does not know; "D-input" sets it by hand |
 | Legion Go started from Steam with Steam Input on | An Xbox pad (Steam Input supports the Legion Go's controllers) | Yes |
 | Legion Go S with SteamOS | The Windows build through Proton, like the Steam Deck | Yes, as on the Deck |
 | Touch screen | Unity turns taps into mouse clicks | Yes: every screen can be played with the mouse |

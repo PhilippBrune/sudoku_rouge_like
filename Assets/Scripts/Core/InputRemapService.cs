@@ -192,20 +192,50 @@ namespace SudokuRoguelike.Core
                 };
                 if (button != null && button.wasPressedThisFrame) return true;
             }
+            // [REQ: INPUT-PAD-002] A pad in D-input mode reports its D-pad as a hat.
+            if (WasHatPressed(move)) return true;
 #endif
             var legacy = move is InputAction.MoveUp or InputAction.MoveDown or InputAction.MoveLeft or InputAction.MoveRight
-                ? GetGamepadDefault(move) : KeyCode.None;
+                ? PadButtons.Map(GetGamepadDefault(move)) : KeyCode.None;
             return legacy != KeyCode.None && Input.GetKeyDown(legacy);
         }
+
+#if ENABLE_INPUT_SYSTEM
+        private static Vector2 _hatNow, _hatBefore;
+        private static int _hatFrame = -1;
+
+        // The hat of the joystick in use, pressed this frame in that direction; read once per frame, since several
+        // screens ask for the same direction in one frame.
+        private static bool WasHatPressed(InputAction move)
+        {
+            var hat = UnityEngine.InputSystem.Joystick.current?.hatswitch;
+            if (hat == null) return false;
+            if (_hatFrame != Time.frameCount)
+            {
+                _hatFrame = Time.frameCount;
+                _hatBefore = _hatNow;
+                _hatNow = hat.ReadValue();
+            }
+            bool Pressed(float now, float before, float sign) => now * sign > 0.5f && before * sign <= 0.5f;
+            return move switch
+            {
+                InputAction.MoveUp => Pressed(_hatNow.y, _hatBefore.y, 1f),
+                InputAction.MoveDown => Pressed(_hatNow.y, _hatBefore.y, -1f),
+                InputAction.MoveLeft => Pressed(_hatNow.x, _hatBefore.x, -1f),
+                InputAction.MoveRight => Pressed(_hatNow.x, _hatBefore.x, 1f),
+                _ => false
+            };
+        }
+#endif
 
         /// <summary>How far LT (<paramref name="left"/>) or RT is pulled, 0 to 1.</summary>
         public static float ReadTrigger(bool left)
         {
 #if ENABLE_INPUT_SYSTEM
             var pad = UnityEngine.InputSystem.Gamepad.current;
-            if (pad != null) return (left ? pad.leftTrigger : pad.rightTrigger).ReadValue();
+            if (pad != null && !PadButtons.TriggerHeld(left)) return (left ? pad.leftTrigger : pad.rightTrigger).ReadValue();
 #endif
-            return 0f;
+            return PadButtons.TriggerHeld(left) ? 1f : 0f;
         }
 
         /// <summary>
@@ -216,7 +246,7 @@ namespace SudokuRoguelike.Core
         /// </summary>
         public bool WasGamepadActionPressed(InputAction action)
         {
-            var pad = GetGamepadDefault(action);
+            var pad = PadButtons.Map(GetGamepadDefault(action));
             if (pad != KeyCode.None && Input.GetKeyDown(pad)) return true;
             return WasMovePressed(action);
         }
@@ -243,7 +273,7 @@ namespace SudokuRoguelike.Core
             var key = GetBinding(action);
             if (key != KeyCode.None && Input.GetKeyDown(key)) return true;
 
-            var pad = GetGamepadDefault(action);
+            var pad = PadButtons.Map(GetGamepadDefault(action));
             if (pad != KeyCode.None && Input.GetKeyDown(pad)) return true;
 
             return WasMovePressed(action);
@@ -300,6 +330,7 @@ namespace SudokuRoguelike.Core
         /// </summary>
         public static void UpdateCursorVisibility()
         {
+            PadButtons.SyncUiModule();   // [REQ: INPUT-PAD-002] confirm and cancel on the right buttons for the pad in use
             // Any joystick button pressed this frame?
             var anyGamepad = false;
             for (var k = 0; k < 20 && !anyGamepad; k++)

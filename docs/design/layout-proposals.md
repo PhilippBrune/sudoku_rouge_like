@@ -6,7 +6,7 @@
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
-| 2.8 | 2026-10-26 | review | The run-end ledger gets a time row for a won run on the seed of the week (SCORE-TIME-001). Screenshots below. |
+| 2.8 | 2026-10-26 | review | The run-end ledger gets a time row for a won run on the seed of the week (SCORE-TIME-001). The Options' Controls page gets a Controller line: Automatic, X-input or D-input (INPUT-PAD-002). Screenshots below. |
 | 2.7 | 2026-10-22 | review | Owner: "implement UI-STYLE-017 to 026 if not done". Built what the mockups had and the game left out: the Codex's rarity filter and "Best paired with" (UI-STYLE-018, META-CODEX-010) and the Spirit Trials tiers on the Game Modes slip (UI-STYLE-025). The main menu (UI-STYLE-023) stays unbuilt: the owner kept it (2026-10-21). With the one-more-run slice the run ends gained Walk again and "This run", the cursed tile and the boss gate their stakes in numbers. Screenshots below. |
 | 2.6 | 2026-10-21 | review | Owner picks: **Select Class · Who walks the garden** (UI-STYLE-024) and **Game Modes · Five paths** (UI-STYLE-025) built; the main menu stays as it is (UI-STYLE-023 not built), only "Items & Relic Codex" is renamed "Codex"; Select Class has no confirmation window; Harmony is set on both screens. The results of Endless Zen, Spirit Trials and the Monthly Walk are in the run-end family now (UI-STYLE-026, owner request). Screenshots below. |
 | 2.5 | 2026-10-21 | review | Owner request: review the main menu, Select Class and Game Modes and make mockups in the same family. One proposal each (proposed UI-STYLE-023 to 025), with today's screens from the game and the review notes; waiting for the owner's pick. |
@@ -523,6 +523,14 @@ win before (a normal run) and after (the seed of the week, 38 minutes):
 
 ![Run end, a normal run](layout-proposals/before_run_end_weekly.jpg)
 ![Run end, the seed of the week](layout-proposals/after_run_end_weekly.jpg)
+
+## Controller: X-input or D-input (2.8, 2026-10-26)
+
+Options → Controls gets one more line, "Controller", that cycles Automatic, X-input (Xbox) and D-input (INPUT-PAD-002);
+the tip says when to choose D-input. Before and after:
+
+![Controls before](layout-proposals/before_options_controls.jpg)
+![Controls with the Controller line](layout-proposals/after_options_controls.jpg)
 
 ## Decisions and next step
 

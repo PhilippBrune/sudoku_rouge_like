@@ -1,3 +1,4 @@
+using SudokuRoguelike.Core;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -19,9 +20,9 @@ namespace SudokuRoguelike.UI
                 var field = selected.GetComponent<InputField>();
                 if (field != null && field.isFocused) return (0, false);
             }
-            var step = Input.GetKeyDown(KeyCode.JoystickButton5) || Input.GetKeyDown(KeyCode.PageDown) ? 1
-                : Input.GetKeyDown(KeyCode.JoystickButton4) || Input.GetKeyDown(KeyCode.PageUp) ? -1 : 0;
-            return (step, Input.GetKeyDown(KeyCode.JoystickButton3) || Input.GetKeyDown(KeyCode.F));
+            var step = Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton5)) || Input.GetKeyDown(KeyCode.PageDown) ? 1
+                : Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton4)) || Input.GetKeyDown(KeyCode.PageUp) ? -1 : 0;
+            return (step, Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton3)) || Input.GetKeyDown(KeyCode.F));
         }
     }
 }

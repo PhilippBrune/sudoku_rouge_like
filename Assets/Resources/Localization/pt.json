@@ -1,4 +1,8 @@
 {
+    "Options.Controller.DInput":  "D-input",
+    "Options.Controller.XInput":  "X-input (Xbox)",
+    "Options.Controller.Automatic":  "Automático",
+    "Options.Controller":  "Controle",
     "EndPresenter.RunScore.Time":  "  Semente da semana, {0} min:  +{1} ({2}%)",
     "InRun.End.Scroll.TimeBonus":  "Semente da semana em {0} min (+{1}%)",
     "Codex.BestPairedWith":  "Combina melhor com",
@@ -238,7 +242,7 @@
     "Options.Note.MuteUnfocused":  "silêncio com a janela em segundo plano",
     "Options.Tip.Run":  "Salvar e sair mantém a partida; Abandonar encerra e conta como derrota.",
     "Options.Tip.Language":  "Os menus são refeitos na hora no novo idioma; uma partida salva continua.",
-    "Options.Tip.Controls":  "Um controle funciona em todo lugar: o direcional move, A escolhe, B volta, LB/RB viram páginas, Start abre as opções na partida.",
+    "Options.Tip.Controls":  "Um controle funciona em todo lugar: o direcional move, A escolhe, B volta, LB/RB viram páginas, Start abre as opções na partida. Se A agir como X, coloque Controle em D-input.",
     "Options.Tip.Accessibility":  "O modo daltônico dá às linhas cores distintas para todos; o tamanho do texto fica nas opções do menu principal.",
     "Options.Tip.Gameplay":  "Cada opção funciona na hora, também num quebra-cabeça aberto.",
     "Options.Tip.Display":  "O brilho e o contraste do tabuleiro mudam só o tabuleiro; um tabuleiro aberto muda na hora.",

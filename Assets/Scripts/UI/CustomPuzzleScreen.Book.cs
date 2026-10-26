@@ -59,8 +59,8 @@ namespace SudokuRoguelike.UI
         private void Update()
         {
             if (_setup == null) return;
-            if (Input.GetKeyDown(KeyCode.JoystickButton4)) StepFamily(-1);
-            if (Input.GetKeyDown(KeyCode.JoystickButton5)) StepFamily(1);
+            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton4))) StepFamily(-1);
+            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton5))) StepFamily(1);
         }
 
         private void BuildBook(RectTransform screen)

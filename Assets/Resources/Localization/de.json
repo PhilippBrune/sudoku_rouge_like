@@ -1,4 +1,8 @@
 ﻿{
+    "Options.Controller.DInput":  "D-input",
+    "Options.Controller.XInput":  "X-input (Xbox)",
+    "Options.Controller.Automatic":  "Automatisch",
+    "Options.Controller":  "Controller",
     "EndPresenter.RunScore.Time":  "  Seed der Woche, {0} Min.:  +{1} ({2} %)",
     "InRun.End.Scroll.TimeBonus":  "Seed der Woche in {0} Min. (+{1} %)",
     "Codex.BestPairedWith":  "Passt am besten zu",
@@ -238,7 +242,7 @@
     "Options.Note.MuteUnfocused":  "still, solange das Fenster im Hintergrund ist",
     "Options.Tip.Run":  "Speichern & Beenden behält den Lauf; Lauf aufgeben beendet ihn und zählt ihn als Niederlage.",
     "Options.Tip.Language":  "Die Menüs werden sofort in der neuen Sprache aufgebaut; ein gespeicherter Lauf geht weiter.",
-    "Options.Tip.Controls":  "Ein Controller geht überall: Steuerkreuz bewegt, A wählt, B geht zurück, LB/RB blättern, Start öffnet im Lauf die Optionen.",
+    "Options.Tip.Controls":  "Ein Controller geht überall: Steuerkreuz bewegt, A wählt, B geht zurück, LB/RB blättern, Start öffnet im Lauf die Optionen. Wirkt A wie X, stelle Controller auf D-input.",
     "Options.Tip.Accessibility":  "Der Farbenblind-Modus gibt den Regellinien Farben, die für jedes Auge unterscheidbar bleiben; die Textgröße stellst du in den Optionen des Hauptmenüs ein.",
     "Options.Tip.Gameplay":  "Jeder Schalter wirkt sofort, auch in einem offenen Rätsel.",
     "Options.Tip.Display":  "Brett-Helligkeit und Brett-Kontrast ändern nur das Rätselbrett; ein offenes Brett ändert sich sofort.",

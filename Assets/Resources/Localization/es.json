@@ -1,4 +1,8 @@
 {
+    "Options.Controller.DInput":  "D-input",
+    "Options.Controller.XInput":  "X-input (Xbox)",
+    "Options.Controller.Automatic":  "Automático",
+    "Options.Controller":  "Mando",
     "EndPresenter.RunScore.Time":  "  Semilla de la semana, {0} min:  +{1} ({2} %)",
     "InRun.End.Scroll.TimeBonus":  "Semilla de la semana en {0} min (+{1} %)",
     "Codex.BestPairedWith":  "Combina mejor con",
@@ -238,7 +242,7 @@
     "Options.Note.MuteUnfocused":  "silencio con la ventana en segundo plano",
     "Options.Tip.Run":  "Guardar y salir conserva la partida; Abandonar la termina y la cuenta como derrota.",
     "Options.Tip.Language":  "Los menús se rehacen al instante en el nuevo idioma; una partida guardada sigue.",
-    "Options.Tip.Controls":  "Un mando funciona en todas partes: la cruceta mueve, A elige, B vuelve, LB/RB pasan páginas, Start abre las opciones en partida.",
+    "Options.Tip.Controls":  "Un mando funciona en todas partes: la cruceta mueve, A elige, B vuelve, LB/RB pasan páginas, Start abre las opciones en partida. Si A actúa como X, pon Mando en D-input.",
     "Options.Tip.Accessibility":  "El modo daltónico da a las líneas colores que se distinguen para todos; el tamaño del texto se ajusta en las opciones del menú principal.",
     "Options.Tip.Gameplay":  "Cada interruptor actúa al instante, también en un puzle abierto.",
     "Options.Tip.Display":  "El brillo y el contraste del tablero solo cambian el tablero; un tablero abierto cambia al instante.",

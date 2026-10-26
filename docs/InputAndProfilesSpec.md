@@ -1,13 +1,14 @@
 # Input, Controller Support & Save Profiles
 
-**Version:** 2.3  
-**Date:** 2026-10-25  
+**Version:** 2.4  
+**Date:** 2026-10-26  
 **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.4 | 2026-10-26 | implemented | Owner request: X-input and D-input modes (INPUT-PAD-002). The buttons are read by position; Options → Controls → Controller: Automatic, X-input or D-input. |
 | 2.3 | 2026-10-25 | implemented | GAP-070: in a run the D-pad and LT/RT are read through the Input System (INPUT-PAD-001); before, an Xbox pad's D-pad and both triggers did nothing there. |
 | 2.2 | 2026-10-22 | implemented | Owner decision (platform plan, decision 3): controllers reach the game through Steam Input's default layout as Xbox pads; no Steam Input API code. |
 | 2.1 | 2026-10-22 | implemented | GAP-062 (owner: "analyze, plan and fix"): on the main menu's panels the D-pad takes one step along the focused control's links, once per press (INPUT-NAV-001); arrow keys and the left stick stay with the UI input module. |
@@ -78,6 +79,7 @@ Current implementation split:
 |---|---|
 | INPUT-NAV-001 | On every main-menu panel the D-pad moves the focus one step along the focused control's own link (its explicit Up/Down/Left/Right, or Unity's automatic neighbour), once per press, so grids and rows move as they look (the Codex's Down goes one row down). The D-pad is read through the Input System (`Gamepad.dpad`) and the legacy D-pad buttons 12–15 (`MenuDpad`); the arrow keys and the left stick are left to the UI input module, so nothing moves twice. A movement key bound in Keybindings that the module does not read (anything but the arrow keys and W/A/S/D) moves the same way. An explicit link to a hidden control falls back to the nearest control in that direction. With no focus on the panel, the first control is chosen. (It used to cycle through the panel's controls in creation order on any direction key, GAP-062.) |
 | INPUT-PAD-001 | In a run the D-pad moves the board cursor, the path cursor and the bag selection, and LT/RT scroll the path and switch bag slots, on every pad: they are read through the Input System (`Gamepad.current`), with the legacy D-pad buttons 12–15 some pads report as the fallback. The face buttons, the shoulders and the sticks stay on the legacy joystick buttons and axes, which match an Xbox pad on Windows (and every pad Steam Input turns into one). (On Windows an Xbox pad reports its D-pad as axes the Input Manager does not define, and the triggers had no axis there, GAP-070.) |
+| INPUT-PAD-002 | The game reads its controller buttons by position: A is the bottom face button, B the right, X the left, Y the top, then LB, RB, Back, Start and the stick presses. An X-input pad (Xbox, and every pad Steam Input turns into one) numbers them 0–9 with the D-pad as 12–15 or axes; a D-input pad (a Legion Go with one controller detached, a PlayStation pad without Steam Input, most older PC pads) numbers them X 0, A 1, B 2, Y 3, LB 4, RB 5, LT 6, RT 7, Back 8, Start 9, stick presses 10 and 11, with the D-pad as a hat (`PadButtons.Map`). Options → Controls → Controller chooses Automatic (default: D-input for PlayStation pads and pads the game does not know, X-input for Xbox and Nintendo pads), X-input or D-input; the choice is saved with the profile. The menus' confirm and cancel follow it (`Submit (D-input)`, `Cancel (D-input)` in the Input Manager). |
 - `InputRemapService` centralizes keyboard action bindings
 - in-run input logic is handled directly inside `InRunController`
 

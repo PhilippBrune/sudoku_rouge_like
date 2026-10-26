@@ -1778,7 +1778,7 @@ namespace SudokuRoguelike.UI
             bool anyPendingInteraction = _koiReflectionPending || _templeIncensePending ||
                 _patternScrollPending || _swapMode || _windChimePending;
             if (anyPendingInteraction && _selectedRow >= 0 && _selectedCol >= 0
-                && (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.JoystickButton0)))
+                && (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton0))))
             {
                 OnCellClicked(_selectedRow, _selectedCol);
                 _inputRemap.Tick();
@@ -1919,11 +1919,11 @@ namespace SudokuRoguelike.UI
                     ?.SetSelectedGameObject(_overlayBtnCache[curIdx].gameObject);
 
             // A (JoystickButton0) = confirm / invoke selected button
-            if (Input.GetKeyDown(KeyCode.JoystickButton0))
+            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton0)))
                 _overlayBtnCache[Mathf.Clamp(curIdx, 0, _overlayBtnCache.Count - 1)].SafeInvoke("OverlayGamepad-A");
 
             // B (JoystickButton1) = invoke skip / abort / cancel button if one exists
-            if (Input.GetKeyDown(KeyCode.JoystickButton1))
+            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton1)))
             {
                 Button skip = null;
                 for (var k = _overlayBtnCache.Count - 1; k >= 0; k--)
@@ -1961,7 +1961,7 @@ namespace SudokuRoguelike.UI
                     sl.minValue, sl.maxValue);
 
             // A: invoke button or flip toggle
-            if (Input.GetKeyDown(KeyCode.JoystickButton0))
+            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton0)))
             {
                 var sel = _optionsFocusCache[idx];
                 if (sel is Button btn) btn.onClick.Invoke();
@@ -1970,7 +1970,7 @@ namespace SudokuRoguelike.UI
             }
 
             // B / Start: close options panel
-            if (Input.GetKeyDown(KeyCode.JoystickButton1) || Input.GetKeyDown(KeyCode.JoystickButton7))
+            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton1)) || Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton7)))
                 ToggleOptionsPanel();
         }
 
@@ -1979,7 +1979,7 @@ namespace SudokuRoguelike.UI
             if (_basicsTutorial == null) return;
             var panel = _basicsTutorial.PanelRoot;
             if (panel == null || !panel.activeSelf) return;
-            if (Input.GetKeyDown(KeyCode.JoystickButton0))
+            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton0)))
             {
                 var tutBtns = panel.GetComponentsInChildren<Button>(false);
                 for (var k = 0; k < tutBtns.Length; k++)
@@ -1995,7 +1995,7 @@ namespace SudokuRoguelike.UI
             _inputRemap.Tick();
 
             // Start (JoystickButton7): open/close in-game options panel (save & quit lives inside)
-            if (Input.GetKeyDown(KeyCode.JoystickButton7))
+            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton7)))
             {
                 ToggleOptionsPanel();
                 return;
@@ -2030,7 +2030,7 @@ namespace SudokuRoguelike.UI
             }
 
             // LB (JoystickButton4): toggle Puzzle ↔ Items focus
-            if (Input.GetKeyDown(KeyCode.JoystickButton4))
+            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton4)))
             {
                 _gbControllerInItemsFocus = !_gbControllerInItemsFocus;
                 if (_gbControllerInItemsFocus)
@@ -2092,7 +2092,7 @@ namespace SudokuRoguelike.UI
             _triggerRPrev = rt;
 
             // A (JoystickButton0): enter the currently highlighted node
-            if (Input.GetKeyDown(KeyCode.JoystickButton0) && _gbReachableNodeButtons.Count > 0)
+            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton0)) && _gbReachableNodeButtons.Count > 0)
             {
                 var selBtn = _gbReachableNodeButtons[_gbPathCursor];
                 if (selBtn != null && selBtn.interactable)
@@ -2100,18 +2100,18 @@ namespace SudokuRoguelike.UI
             }
 
             // Start (JoystickButton7): open options panel from path screen
-            if (Input.GetKeyDown(KeyCode.JoystickButton7))
+            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton7)))
                 ToggleOptionsPanel();
 
             // MAP-2: B (JoystickButton1) shows a quit-confirm modal instead of double-press
-            if (Input.GetKeyDown(KeyCode.JoystickButton1) && !_pathQuitModalActive)
+            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton1)) && !_pathQuitModalActive)
                 ExecuteInRunCancelRoute(CancelRouteContract.ResolveInRunGamepadCancel(BuildInRunCancelContext()));
         }
 
         private void HandleGamepadPuzzleFocus()
         {
             // Start (JoystickButton7): toggle options panel
-            if (Input.GetKeyDown(KeyCode.JoystickButton7))
+            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton7)))
             { ToggleOptionsPanel(); return; }
 
             // D-Pad + left stick: move cell selection (gamepad-only — keyboard arrows are handled below
@@ -2122,7 +2122,7 @@ namespace SudokuRoguelike.UI
             if (_inputRemap.WasGamepadActionPressed(InputAction.MoveRight)) MoveSelection(0, 1);
 
             // PS-5: A (JoystickButton0) exits game-over screen before placing digits
-            if (Input.GetKeyDown(KeyCode.JoystickButton0))
+            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton0)))
             {
                 if (_gameOverPanel != null && _gameOverPanel.activeSelf)
                 { SaveAndQuit(); return; }
@@ -2137,11 +2137,11 @@ namespace SudokuRoguelike.UI
             }
 
             // B (JoystickButton1): immediate exit when defeat screen is shown (no long-press)
-            if (Input.GetKeyDown(KeyCode.JoystickButton1) && _gameOverPanel != null && _gameOverPanel.activeSelf)
+            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton1)) && _gameOverPanel != null && _gameOverPanel.activeSelf)
             { SaveAndQuit(); return; }
 
             // PS-2: B (JoystickButton1) long-press (≥0.4 s) clears cell; short press acts as cancel only
-            if (Input.GetKey(KeyCode.JoystickButton1))
+            if (Input.GetKey(PadButtons.Map(KeyCode.JoystickButton1)))
                 _bButtonHoldTime += Time.unscaledDeltaTime;
             else
                 _bButtonHoldTime = 0f;
@@ -2152,11 +2152,11 @@ namespace SudokuRoguelike.UI
             }
 
             // X (JoystickButton2) or RB (JoystickButton5): toggle pencil mode
-            if (Input.GetKeyDown(KeyCode.JoystickButton2) || Input.GetKeyDown(KeyCode.JoystickButton5))
+            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton2)) || Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton5)))
                 TogglePencilMode();
 
             // R3 (JoystickButton9): toggle highlight for value at selected cell
-            if (Input.GetKeyDown(KeyCode.JoystickButton9))
+            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton9)))
             {
                 var board = _map?.Run?.CurrentBoard;
                 if (board != null && _selectedRow >= 0 && _selectedCol >= 0)
@@ -2172,13 +2172,13 @@ namespace SudokuRoguelike.UI
             }
 
             // Select/Back (JoystickButton6): immediate exit from game-over; hold ≥1.5 s to save & quit
-            if (Input.GetKeyDown(KeyCode.JoystickButton6) && _gameOverPanel != null && _gameOverPanel.activeSelf)
+            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton6)) && _gameOverPanel != null && _gameOverPanel.activeSelf)
             {
                 _selectButtonHoldTime = 0f;
                 SaveAndQuit();
                 return;
             }
-            if (Input.GetKey(KeyCode.JoystickButton6))
+            if (Input.GetKey(PadButtons.Map(KeyCode.JoystickButton6)))
                 _selectButtonHoldTime += Time.unscaledDeltaTime;
             else
                 _selectButtonHoldTime = 0f;
@@ -2231,10 +2231,10 @@ namespace SudokuRoguelike.UI
             _triggerRPrev = rt;
 
             // A: activate selected item
-            if (Input.GetKeyDown(KeyCode.JoystickButton0)) _hudView?.ControllerActivateBagSlot();
+            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton0))) _hudView?.ControllerActivateBagSlot();
 
             // PS-4: L3 (JoystickButton8) inspects the currently selected bag slot
-            if (Input.GetKeyDown(KeyCode.JoystickButton8)) _hudView?.ControllerInspectBagSlot();
+            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton8))) _hudView?.ControllerInspectBagSlot();
         }
 
         // MAP-2: Shows a 2-button modal (Quit / Stay) on the path panel canvas.
@@ -2567,15 +2567,15 @@ namespace SudokuRoguelike.UI
             static int Count(bool a, bool b, bool c) => (a ? 1 : 0) + (b ? 1 : 0) + (c ? 1 : 0);
 
             if (Input.GetKeyDown(KeyCode.Alpha1) || Input.GetKeyDown(KeyCode.Keypad1) ||
-                Input.GetKeyDown(KeyCode.JoystickButton3)) // Y button
+                Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton3))) // Y button
                 ToggleWindChimeHouseFlag(ref _windChimeFillRow);
 
             if (Input.GetKeyDown(KeyCode.Alpha2) || Input.GetKeyDown(KeyCode.Keypad2) ||
-                Input.GetKeyDown(KeyCode.JoystickButton1)) // B button
+                Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton1))) // B button
                 ToggleWindChimeHouseFlag(ref _windChimeFillCol);
 
             if (Input.GetKeyDown(KeyCode.Alpha3) || Input.GetKeyDown(KeyCode.Keypad3) ||
-                Input.GetKeyDown(KeyCode.JoystickButton2)) // X button
+                Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton2))) // X button
                 ToggleWindChimeHouseFlag(ref _windChimeFillBox);
 
             var selected = Count(_windChimeFillRow, _windChimeFillCol, _windChimeFillBox);

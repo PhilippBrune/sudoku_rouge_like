@@ -376,7 +376,7 @@ namespace SudokuRoguelike.UI
             {
                 OnLanguageApplied = mc.RefreshLanguage,
                 AccessibilityPreview = true,
-                AddPagesBeforeLanguage = t => BuildControlsPage(t, mc)
+                AddPagesBeforeLanguage = t => BuildControlsPage(t, mc, optCtrl)
             };
             var refreshControls = OptionsUiFactory.BuildStandardTabs(tabs, optCtrl, setup);
 
@@ -394,7 +394,7 @@ namespace SudokuRoguelike.UI
         }
 
         // The Controls page: keys and buttons, and the Sudoku Basics lesson.
-        private void BuildControlsPage(OptionsTabSet tabs, MainMenuController mc)
+        private void BuildControlsPage(OptionsTabSet tabs, MainMenuController mc, OptionsController optCtrl)
         {
             var index = tabs.Count;
             var section = tabs.Add("TabControls", "ControlsSection", T("Options.Tab.Controls"));
@@ -414,12 +414,32 @@ namespace SudokuRoguelike.UI
                 OptionsUiFactory.LineMax(1, 0.82f));
             btnBasicsTut.onClick.RemoveAllListeners();
             btnBasicsTut.onClick.AddListener(mc.LaunchSudokuBasicsTutorial);
+            // [REQ: INPUT-PAD-002] X-input or D-input: Automatic follows the pad that is connected.
+            OptionsUiFactory.LineLabel("ControllerLayoutLabel", section, 2, T("Options.Controller"));
+            var btnLayout = OptionsUiFactory.BuildButton("BtnControllerLayout", section, ControllerLayoutLabel(), 19);
+            OptionsUiFactory.SetRect((RectTransform)btnLayout.transform, OptionsUiFactory.LineMin(2, 0.38f),
+                OptionsUiFactory.LineMax(2, 0.82f));
+            btnLayout.onClick.RemoveAllListeners();
+            btnLayout.onClick.AddListener(() =>
+            {
+                optCtrl.SetControllerLayout((ControllerLayoutMode)(((int)PadButtons.Mode + 1) % 3));
+                btnLayout.GetComponentInChildren<Text>().text = ControllerLayoutLabel();
+            });
+
             OptionsUiFactory.LineRule(section, 0);
             OptionsUiFactory.LineRule(section, 1);
+            OptionsUiFactory.LineRule(section, 2);
             OptionsUiFactory.PageSlip("ControlsSlip", section, T("Options.Slip.Tip"), T("Options.Tip.Controls"));
 
-            tabs.SetRows(index, new Selectable[] { btnKeybinds }, new Selectable[] { btnBasicsTut });
+            tabs.SetRows(index, new Selectable[] { btnKeybinds }, new Selectable[] { btnBasicsTut }, new Selectable[] { btnLayout });
         }
+
+        private static string ControllerLayoutLabel() => PadButtons.Mode switch
+        {
+            ControllerLayoutMode.XInput => T("Options.Controller.XInput"),
+            ControllerLayoutMode.DInput => T("Options.Controller.DInput"),
+            _ => T("Options.Controller.Automatic")
+        };
 
         // ------------------------------------------------------------------------
         // Panel: Credits

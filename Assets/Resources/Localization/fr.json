@@ -1,4 +1,8 @@
 {
+    "Options.Controller.DInput":  "D-input",
+    "Options.Controller.XInput":  "X-input (Xbox)",
+    "Options.Controller.Automatic":  "Automatique",
+    "Options.Controller":  "Manette",
     "EndPresenter.RunScore.Time":  "  Graine de la semaine, {0} min :  +{1} ({2} %)",
     "InRun.End.Scroll.TimeBonus":  "Graine de la semaine en {0} min (+{1} %)",
     "Codex.BestPairedWith":  "Va le mieux avec",
@@ -238,7 +242,7 @@
     "Options.Note.MuteUnfocused":  "silence quand la fenêtre est en arrière-plan",
     "Options.Tip.Run":  "Sauvegarder et quitter garde la partie ; Abandonner la termine et la compte comme une défaite.",
     "Options.Tip.Language":  "Les menus se refont aussitôt dans la nouvelle langue ; une partie sauvegardée continue.",
-    "Options.Tip.Controls":  "Une manette marche partout : la croix déplace, A choisit, B revient, LB/RB tournent les pages, Start ouvre les options en partie.",
+    "Options.Tip.Controls":  "Une manette marche partout : la croix déplace, A choisit, B revient, LB/RB tournent les pages, Start ouvre les options en partie. Si A agit comme X, réglez Manette sur D-input.",
     "Options.Tip.Accessibility":  "Le mode daltonien donne aux lignes des couleurs distinctes pour tous ; la taille du texte se règle dans les options du menu principal.",
     "Options.Tip.Gameplay":  "Chaque réglage agit aussitôt, même dans un puzzle ouvert.",
     "Options.Tip.Display":  "La luminosité et le contraste du plateau ne changent que le plateau ; un plateau ouvert change aussitôt.",

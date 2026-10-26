@@ -121,6 +121,7 @@ namespace SudokuRoguelike.Core
         public bool ShowCandidateCount = true;
         public bool CursorSnapOnSelection;
         public bool ControllerRumbleEnabled = true;
+        public ControllerLayoutMode ControllerLayout;   // [REQ: INPUT-PAD-002] Automatic, X-input or D-input (Options → Controls)
 
         // [REQ: OPT-GAME-006] Input lock: after a cell is chosen, digits wait this long, so a fast key, pad or touch press
         // does not land in the new cell by accident. On with 0.25 s by default, also for saves from before the option.

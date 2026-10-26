@@ -1,4 +1,8 @@
 ﻿{
+    "Options.Controller.DInput":  "D-input",
+    "Options.Controller.XInput":  "X-input (Xbox)",
+    "Options.Controller.Automatic":  "Automatic",
+    "Options.Controller":  "Controller",
     "EndPresenter.RunScore.Time":  "  Week's seed, {0} min:  +{1} ({2}%)",
     "InRun.End.Scroll.TimeBonus":  "Week's seed in {0} min (+{1}%)",
     "Codex.BestPairedWith":  "Best paired with",
@@ -238,7 +242,7 @@
     "Options.Note.MuteUnfocused":  "quiet while the window is in the background",
     "Options.Tip.Run":  "Save & Quit keeps the run; Abandon Run ends it and records it as a defeat.",
     "Options.Tip.Language":  "The menus are rebuilt in the new language at once; a saved run keeps going.",
-    "Options.Tip.Controls":  "A controller works everywhere: the D-pad moves, A chooses, B goes back, LB/RB turn pages, Start opens the Options in a run.",
+    "Options.Tip.Controls":  "A controller works everywhere: the D-pad moves, A chooses, B goes back, LB/RB turn pages, Start opens the Options in a run. If A acts like X, set Controller to D-input.",
     "Options.Tip.Accessibility":  "Colour-blind mode gives the rule lines colours that stay apart for every eye; Text Size is set in the main menu's Options.",
     "Options.Tip.Gameplay":  "Every switch works at once, also in a puzzle you have open.",
     "Options.Tip.Display":  "Board Brightness and Board Contrast change the puzzle board only; the open board changes at once.",

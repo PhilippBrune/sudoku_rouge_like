@@ -79,7 +79,7 @@ namespace SudokuRoguelike.UI
             if (_garden == null || !_garden.gameObject.activeInHierarchy) return;
             // X: prestige the chosen class when it is ready (the same two presses as its button), only while the focus is on
             // that class or its button, so a press on Back or another class never prestiges (review).
-            if (!Input.GetKeyDown(KeyCode.JoystickButton2) || _prestigeButton == null || !_prestigeButton.gameObject.activeInHierarchy)
+            if (!Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton2)) || _prestigeButton == null || !_prestigeButton.gameObject.activeInHierarchy)
                 return;
             var eventSystem = EventSystem.current;
             var focus = eventSystem != null ? eventSystem.currentSelectedGameObject : null;

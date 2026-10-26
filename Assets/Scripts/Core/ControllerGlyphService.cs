@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace SudokuRoguelike.Core
 {
-    public enum ControllerPlatform { None, Xbox, PlayStation, Generic }
+    public enum ControllerPlatform { None, Xbox, PlayStation, Generic, Nintendo }
 
     /// <summary>
     /// Detects which gamepad platform is connected by examining <see cref="Input.GetJoystickNames"/>.
@@ -37,6 +37,8 @@ namespace SudokuRoguelike.Core
                     low.Contains("wireless controller") ||
                     low.Contains("054c") || low.Contains("sony") || low.Contains("playstation"))
                     return ControllerPlatform.PlayStation;
+                if (low.Contains("nintendo") || low.Contains("pro controller") || low.Contains("057e"))
+                    return ControllerPlatform.Nintendo;
                 anyGeneric = true;
             }
             return anyGeneric ? ControllerPlatform.Generic : ControllerPlatform.None;

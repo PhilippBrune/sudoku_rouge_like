@@ -1,6 +1,6 @@
-# Release Readiness Status: 0.2.2 beta
+# Release Readiness Status: 0.3.0
 
-Updated 2026-10-25 · Milestone: **Steam build v0.2.2 beta (8th iteration)** for the password beta branch (playtest of the one-more-run slice, the fixed perks and the D-pad); the previous milestones were Steam build v0.2.1 (7th iteration) and v0.2.0 (6th iteration)
+Updated 2026-10-27 · Milestone: **Steam build v0.3.0 (9th iteration)** for `default` (the Daily Walk as a run, the Incense Walk, the stamp shop, class relics and keystones, 21 achievements, the Options test; the 0.2.2 beta is folded in, it was never uploaded); the previous milestones were Steam build v0.2.2 beta (8th iteration) and v0.2.1 (7th iteration)
 
 ## Evidence
 
@@ -10,10 +10,10 @@ Updated 2026-10-25 · Milestone: **Steam build v0.2.2 beta (8th iteration)** for
 
 | Suite | Total | Passed | Failed | Skipped | Date |
 |-------|------:|-------:|-------:|--------:|------|
-| EditMode | 712 | 684 | 0 | 28 (`[Explicit]` review diagnostics and the translation export) | 2026-10-25 |
-| PlayMode | 113 | 93 | 0 | 20 (`[Explicit]` screenshot diagnostics) | 2026-10-26 |
+| EditMode | 771 | 743 | 0 | 28 (`[Explicit]` review diagnostics and the translation export) | 2026-10-27 |
+| PlayMode | 117 | 94 | 0 | 23 (`[Explicit]` screenshot diagnostics) | 2026-10-27 |
 
-Windows x64 player build 0.2.2 beta: built 2026-10-25 (B32, with `Licenses/`) and smoke-tested (B33: "Version 0.2.2" on the main menu, no exception in the player log; one of two starts ended with a D3D12 present error after Steam started, not reproduced; saves and PlayerPrefs restored), `docs/review/E2E_TEST_REPORT.md` §13. Before it: 0.2.1 B30/B31 (§12), 0.2.0 beta B28/B29 (§11).
+Windows x64 player build 0.3.0: built 2026-10-27 from a fresh `Library` (B34, with `Licenses/`, no missing script) and smoke-tested (B35: "Version 0.3.0" on the main menu after 30 s, no exception in the player log; saves and PlayerPrefs restored), `docs/review/E2E_TEST_REPORT.md` §14. Before it: Windows x64 player build 0.2.2 beta: built 2026-10-25 (B32, with `Licenses/`) and smoke-tested (B33: "Version 0.2.2" on the main menu, no exception in the player log; one of two starts ended with a D3D12 present error after Steam started, not reproduced; saves and PlayerPrefs restored), `docs/review/E2E_TEST_REPORT.md` §13. Before it: 0.2.1 B30/B31 (§12), 0.2.0 beta B28/B29 (§11).
 
 Previous build (0.1.5): smoke test B01–B15 passed (fresh install, first-run setup, seed entry, path map, wrong-digit rule, Save & Quit and Resume, reward reroll, codex persistence, Abandon & Begin; no exception in the player log); display modes B16–B19, Steam names, window title and save folder B23–B25, the uploaded 0.1.5 build B26–B27 (`docs/review/E2E_TEST_REPORT.md` §10.2b–§10.2e).
 
@@ -29,4 +29,4 @@ All gates with their state are in `docs/release/platform-release-manifest.md`. O
 
 ## Repository state
 
-The 0.2.2 beta change set is committed on `feature/game-ui-refactor` and tagged `v0.2.2-beta` locally (not pushed); `CHANGELOG.md` 0.2.2 beta lists it. 0.2.1 was tagged `v0.2.1` and pushed with the owner's OK (2026-10-21). `docs/repository-working-tree-triage.md` describes how the 0.1.5 set was grouped.
+The 0.3.0 change set is committed on `feature/game-ui-refactor` and tagged `v0.3.0` locally (not pushed); `CHANGELOG.md` 0.3.0 lists it. The 0.2.2 beta was tagged `v0.2.2-beta` and pushed with the owner's OK (2026-10-27). 0.2.1 was tagged `v0.2.1` and pushed with the owner's OK (2026-10-21). `docs/repository-working-tree-triage.md` describes how the 0.1.5 set was grouped.

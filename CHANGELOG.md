@@ -1,10 +1,31 @@
 # Changelog
 
-## Unreleased
+## 0.3.0: 9th iteration (2026-10-27)
+
+Two short ways to play: the Daily Walk is now a run of two floors, and the Incense Walk is a time attack against a
+burning incense stick. Every class gets a relic of its own, the first boss leaves a keystone, ink stamps buy looks,
+and there are 21 new achievements. This version also carries everything listed under 0.2.2 beta below.
 
 ### New
 
-- **21 new achievements** for the first hours, the classes, Endless Zen, Spirit Trials, the Monthly Walk, the Daily Walk streak and the Codex (`docs/Achievements.md`). They appear on Steam once they are set up in Steamworks; a profile that already meets one earns it at its next run end.
+- **The Daily Walk as a short run.** Two floors, each with its boss, on the day's seed. Everyone walks as the same walker (10 HP, 10 Pencil, 2 bag slots), so no class has to be unlocked first. The day's first walk is the one that counts: its three goals pay class XP (easy 50, medium 100, hard 200), the finished walk pays its XP ×1.5, and a streak adds 10 % from day 3 and 25 % from day 7. You give the XP to a class of your choice at the end, or later from Game Modes. Each day has its own Steam leaderboard.
+- **Ink stamps buy looks.** Meeting all three goals of a day gives an ink stamp; every 7th day of a streak gives 3 more, day 30 gives 10 and day 100 gives 25, and the Monthly Walk gives one too. The stamp shop on the Daily Walk's slip sells board ink, seal frames for Select Class and path seals for the run's end. The 7th stamp you earn in a week also brings a scroll worth 500 XP.
+- **The Incense Walk,** a sixth mode. An incense stick burns down from 8:00. Every solved puzzle adds time, a mistake costs 10 seconds instead of HP, pencil marks are free, and the puzzles grow every three. Each class's passive works in time form. A walk on the week's seed goes on the week's Steam leaderboard; a practice walk takes a random seed. The next puzzle is drawn while you play, and a pause covers the board.
+- **A signature relic for every class:** Counting Beads, Prayer Beads, Ink Stone, Lucky Scale, Moss Pouch, Second Wick, Single Stroke and Compass Needle. A relic offering shows your class's relic with a 35 % chance while you don't hold it.
+- **Keystones.** After the first boss of a Garden Run, the offering table holds three of four keystones that bend a rule of the puzzle: Gilded Box, Open Margin, Steady Hand and Cage Whisper.
+- **The seed of the week rewards pace:** a won Garden Run on the week's seed scores +1 % for every minute under 60, up to +30 %.
+- **Controller mode** in Options → Controls: Automatic, X-input or D-input. Pads in D-input mode (PlayStation pads without Steam Input, a Legion Go with one controller taken off, many older PC pads) now press the right buttons.
+- **21 new achievements** for the first hours, the classes, Endless Zen, Spirit Trials, the Monthly Walk, the Daily Walk streak and the Codex, in all five languages. A profile that already meets one earns it at the end of its next run.
+
+### Changed
+
+- The daily goals are met in the Daily Walk only, no longer in a Garden Run, and they pay class XP instead of gold and reroll tokens. Four goals that needed Floors 3 to 5 or a certain class are replaced.
+- An Incense Walk keeps its XP but does not count toward the 10 runs that open Endless Zen.
+- Options → Audio has no UI Volume any more: the game plays no interface sounds, so it changed nothing.
+
+### Fixed
+
+- A setting changed in the main menu's Options is no longer undone by the next change in a run's Options, and the other way round. Both screens show the same values.
 
 ## 0.2.2 beta: 8th iteration (2026-10-25)
 

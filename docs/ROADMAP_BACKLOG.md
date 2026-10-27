@@ -1,11 +1,12 @@
 # Roadmap backlog: Run of the Nine
 
-**Version:** 1.7 | **Date:** 2026-10-27 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
+**Version:** 1.8 | **Date:** 2026-10-27 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.8 | 2026-10-27 | review | RM-206 to RM-217 from the owner's 0.3.0 playtest (`docs/review/PLAYTEST_0.3.0.md`): a short-term block "0.3.0 playtest". |
 | 1.7 | 2026-10-27 | review | Owner request (2026-10-27): the concept files are merged into their specs; every roadmap reference now points to the spec section (no roadmap status changed). |
 | 1.6 | 2026-10-26 | review | Suggested RM-122 to RM-125 from the owner's requests of 2026-10-25 (concepts, for the owner's pick; merged into the specs in 1.7); 21 new achievements built (`docs/Achievements.md`). |
 | 1.5 | 2026-10-22 | review | Owner picks: the Steam Deck next with Steam Input (RM-102; the Deck runs the Windows build, `docs/platform-ports-macos-linux.md` 1.1), and keystone relics that may bend Sudoku's rules with more relics, items and events (RM-114 with RM-104). |
@@ -29,6 +30,23 @@ Horizons: **short term** = the next one to three updates, **mid term** = after t
 | RM-005 | 0.2.0 playtest wishes | The version on the main menu, a Random button for Custom Puzzle rules (with a count), the boss screen shows the whole floor's numbers, a placed digit is highlighted, digits are taken sooner after choosing a cell. | Built 2026-10-20 with the playtest bugs GAP-055..059 (`layout-proposals.md` 1.9). | done (next build) |
 | RM-006 | Menus in the new look | Options, Codex and Meta Progression as scroll, collector's book and garden of classes; the garden painting back on the path; Pencil mode in its own colour. | Owner picks 2026-10-20 (`docs/design/layout-proposals.md` 2.0): Pencil mode in indigo ink (UI-STYLE-020) and the floor entry (UI-STYLE-021) are built; Options, Codex and Meta Progression (UI-STYLE-017 to 019) are being built. | in progress |
 | RM-004 | Visual and sound improvements | The whole run in the new ink-and-paper look: garden path as a hand scroll, puzzle on a hanging scroll, then reward, relic and shop screens. A full 8-bit soundtrack and new sound effects. | Boss gate and boss reward are done (UI-STYLE-004/005). Path and puzzle: UI-STYLE-001/002. Music: `steam_assets/audio_8bit/synth`, waiting for the owner's listening. | in progress |
+
+## Short term: 0.3.0 playtest (owner, 2026-10-27)
+
+| ID | Item | What players get | Notes and dependencies | Status |
+|---|---|---|---|---|
+| RM-206 | Puzzle pad layout | LB opens the bag, LT the relics, RB switches Solve and Pencil, Start opens the Options, a tap on Select saves and quits, L3 highlights the digit; the right stick moves the number pad cursor. | Owner, 0.3.0 playtest (docs/review/PLAYTEST_0.3.0.md); one change set with GAP-077..083. | in progress |
+| RM-207 | Key hints follow the device | The hints on every screen show pad buttons after a pad press and keys after a key or mouse press. | Owner, 0.3.0 playtest; needs an input-device tracker; about 15 hint texts, five catalogs. | planned |
+| RM-208 | Puzzle screen details | Gold shown on the puzzle screen, item and relic explanations readable there, no click sound on the board, a hint for the highlight key. | Owner, 0.3.0 playtest; gold tag and detail slip need a mockup first. | planned |
+| RM-209 | Custom Puzzle: help, seed, save | What the stars and every Board field mean; a seed field and a share code; save and quit a Custom Puzzle without touching the Garden Run save. | Owner, 0.3.0 playtest; the save is a concept first (own save slot). | planned |
+| RM-210 | Drag the option rows | Every value row in the Options can be dragged with the mouse as well as stepped with the arrows. | Owner, 0.3.0 playtest. | planned |
+| RM-211 | Reroll the floor's rule in the shop | From Floor 2 the shop offers to roll the floor's rule again for gold. | Owner, 0.3.0 playtest; price a first value; additive save field. | planned |
+| RM-212 | Golden Koi line on the reward | The reward tally lists the Golden Koi's extra gold on its own line. | Owner, 0.3.0 playtest. | planned |
+| RM-213 | Game Modes without the Garden Run | Start Game starts the Garden Run; Game Modes shows the other modes; Harmony is chosen on Select Class. | Owner, 0.3.0 playtest ("Ja, nur Select Class"); UI-STYLE-025/027 change. | planned |
+| RM-214 | Bigger clue numbers | Text Size also enlarges the small numbers of rules such as Opposite Sums (for handhelds like the Legion Go). | Owner, 0.3.0 playtest on the Legion Go 2. | planned |
+| RM-215 | Title sound | A short sound when the title screen opens. | Owner, 0.3.0 playtest; code-made 8-bit, no paid service. | planned |
+| RM-216 | Daily Walk paths and themes | Concept: the Daily Walk on one path with its own garden themes; the main game on Floors 1, 3 and 5, the Daily Walk on Floors 2 and 4. | Owner, 0.3.0 playtest; concept first. | concept |
+| RM-217 | Mockups for four screens | Three main menu proposals, the Monthly Walk, Select Profile and Spirit Trials. | Owner, 0.3.0 playtest; HTML mockups from the game's art for the owner's pick. | planned |
 
 ## Mid term (suggested)
 

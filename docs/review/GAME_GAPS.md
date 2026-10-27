@@ -78,6 +78,28 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-071](#gap-071) | A volume set in the main menu came back undone in a run (two copies of the Options) | FIXED (Options test before 0.3.0, 2026-10-27) | MEDIUM | P2 |
 | [GAP-072](#gap-072) | UI Volume set nothing: no interface sound has ever played | FIXED (row removed, owner, 2026-10-27) | LOW | P3 |
 | [GAP-073](#gap-073) | 25 of the game's 35 sound effects are never played | OPEN (found in the Options test, 2026-10-27) | LOW | P3 |
+| [GAP-074](#gap-074) | The game closed by itself after minimizing or locking the PC (exclusive fullscreen at the Legion Go's resolution, carried by the cloud save) | OPEN (0.3.0 playtest, 2026-10-27) | HIGH | P1 |
+| [GAP-075](#gap-075) | A profile switch re-applied the display mode (a window could jump to the centre) | OPEN (found 2026-10-27) | LOW | P3 |
+| [GAP-076](#gap-076) | Borderless Fullscreen below the native resolution looked blurry and different | OPEN (0.3.0 playtest) | MEDIUM | P2 |
+| [GAP-077](#gap-077) | LB/RB did not turn the Options pages on an Xbox One pad | OPEN (0.3.0 playtest) | MEDIUM | P2 |
+| [GAP-078](#gap-078) | The pad got stuck in the seed field on Select Class | OPEN (0.3.0 playtest) | HIGH | P1 |
+| [GAP-079](#gap-079) | With the pad the path's node tooltip appeared at the bottom left | OPEN (0.3.0 playtest) | LOW | P3 |
+| [GAP-080](#gap-080) | On the path the pad's Start, B and LT/RT did nothing | OPEN (found in the playtest analysis) | MEDIUM | P2 |
+| [GAP-081](#gap-081) | The right stick no longer moved the number pad cursor | OPEN (0.3.0 playtest) | MEDIUM | P2 |
+| [GAP-082](#gap-082) | Highlighting the digit by key worked only by accident; the hint said "double click" | OPEN (0.3.0 playtest) | LOW | P3 |
+| [GAP-083](#gap-083) | Keys and D-pad could walk onto the puzzle's Options and Save & Quit buttons | OPEN (0.3.0 playtest) | LOW | P3 |
+| [GAP-084](#gap-084) | Back on Select Class went to the main menu instead of the screen before | OPEN (0.3.0 playtest) | LOW | P3 |
+| [GAP-085](#gap-085) | Incense Walk: the pencil buy button covered the time | OPEN (0.3.0 playtest) | MEDIUM | P2 |
+| [GAP-086](#gap-086) | A Custom Puzzle could start without a chosen rule (9×9, 7 stars, Sum Dots) | OPEN (0.3.0 playtest) | MEDIUM | P2 |
+| [GAP-087](#gap-087) | A Custom Puzzle with Free resources showed and used a class passive | OPEN (0.3.0 playtest) | LOW | P3 |
+| [GAP-088](#gap-088) | Two timers in single-puzzle modes | OPEN (0.3.0 playtest) | LOW | P4 |
+| [GAP-089](#gap-089) | At 21:9 (3440×1440) the board covered the title and the combo line | OPEN (0.3.0 playtest) | HIGH | P1 |
+| [GAP-090](#gap-090) | The class emblem sat off-centre in its ring | OPEN (0.3.0 playtest) | LOW | P4 |
+| [GAP-091](#gap-091) | Tapping the rule slip turned the whole grid gold, and it stayed | OPEN (0.3.0 playtest) | MEDIUM | P2 |
+| [GAP-092](#gap-092) | A digit already complete on the board could be placed and cost HP | OPEN (0.3.0 playtest) | MEDIUM | P2 |
+| [GAP-093](#gap-093) | Opposite Sums: "mirror cell" was not explained | OPEN (0.3.0 playtest) | LOW | P3 |
+| [GAP-094](#gap-094) | Moving with keys coloured cells purple from a stale highlight | OPEN (0.3.0 playtest) | LOW | P3 |
+| [GAP-095](#gap-095) | The input lock applied after a mouse click but not after a key or pad move | OPEN (0.3.0 playtest; owner: lock everywhere) | LOW | P3 |
 | [GAP-067](#gap-067) | Moonshade Offering's "+2 starting pencil" did nothing (the run starts at full pencil) | FIXED (2026-10-22) | LOW | P3 |
 | [GAP-064](#gap-064) | Scholar's Burden: no free Ink Well, "+5 pencil" did nothing, "−1 slot" could add a slot | FIXED (as planned, 2026-10-22) | MEDIUM | P3 |
 | [GAP-063](#gap-063) | Class levels 30 and 40 promised rewards the game did not grant (starting items, frames) | FIXED (2026-10-21) | MEDIUM | P2 |
@@ -1043,6 +1065,10 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Analysis:** `CurrentPencil = Math.Min(MaxPencil, CurrentPencil + 2)` on a run that starts at full pencil, so the cap took the 2 away. Looking at the whole perk showed its price was missing too: `MoonshadeOfferingActive` was set but read by nothing ("RewardService reads it" said a comment; no such code), so the perk was +20 gold for free (GAP-069).
 - **Plan and fix:** the same rule as Scholar's Burden (GAP-064): a perk's pencil raises the maximum and the current pencil alike (`AddPencil`). `RunDirector.BuildItemRewardSlots` sets slot 1 of the run's first item reward to Nothing and clears the flag (saved with the run, so a resume does not repeat it; a reroll keeps Nothing slots).
 - **Tests:** `HarmonyPerkStartTests.MoonshadeOffering_StartsWithTwoMorePencil` and `MoonshadeOffering_TheFirstRewardsFirstSlotIsNothing_OnlyOnce` (both failed before).
+
+## GAP-074 to GAP-095
+
+Found in the owner's 0.3.0 playtest (2026-10-27). Analysis, causes with file and line, the review and the fix plan: [PLAYTEST_0.3.0](PLAYTEST_0.3.0.md). Each entry gets its own section here when it is fixed.
 
 ## GAP-071
 **A volume set in the main menu came back undone in a run (two copies of the Options)**

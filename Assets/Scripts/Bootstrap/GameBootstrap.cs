@@ -40,6 +40,8 @@ namespace SudokuRoguelike.Bootstrap
 
         private void Awake()
         {
+            Application.wantsToQuit -= LogQuitRequest;   // once per process, also after a second bootstrap
+            Application.wantsToQuit += LogQuitRequest;
             _profileSlots = new SaveProfileService();
             _hadAnyProfileAtStartup = _profileSlots.AnySlotExists();
             _saveFileService = new SaveFileService(SaveProfileService.ActiveSlot);
@@ -164,6 +166,18 @@ namespace SudokuRoguelike.Bootstrap
         {
             SaveFileService.FlushSharedPendingWrites();
         }
+
+        // GAP-074: every quit request is logged with the window's state, so a quit the game did not ask for (the
+        // window's close, Alt+F4, Steam, Windows) shows in Player.log after "[Quit] Quit button" is absent. It only logs:
+        // returning false would block Alt+F4 and a Windows shutdown.
+        private static bool LogQuitRequest()
+        {
+            Debug.Log($"[Quit] Quit requested (focused={Application.isFocused}, {UnityEngine.Screen.fullScreenMode} {UnityEngine.Screen.width}x{UnityEngine.Screen.height}).");
+            return true;
+        }
+
+        private void OnApplicationPause(bool paused) =>
+            Debug.Log($"[Window] paused={paused} ({UnityEngine.Screen.fullScreenMode} {UnityEngine.Screen.width}x{UnityEngine.Screen.height})");
 
         public void ContinueStartupAfterProfileSelection(MainMenuController menu)
         {
@@ -459,6 +473,7 @@ namespace SudokuRoguelike.Bootstrap
 
         private void OnApplicationFocus(bool hasFocus)
         {
+            Debug.Log($"[Window] focus={hasFocus} ({UnityEngine.Screen.fullScreenMode} {UnityEngine.Screen.width}x{UnityEngine.Screen.height})");
             var opts = _profileService?.LoadOptions();
             var muteWhenUnfocused = opts?.Audio?.MuteWhenUnfocused ?? false;
             AudioListener.pause = muteWhenUnfocused && !hasFocus;

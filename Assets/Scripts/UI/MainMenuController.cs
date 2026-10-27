@@ -998,8 +998,19 @@ namespace SudokuRoguelike.UI
 
         // ── Quit ──
 
+        private float _quitArmedUntil = -1f;
+
+        // [REQ: UI-MENU-QUIT-001] Quit closes the game only on a second press within 3 s; the first one says so on the status
+        // line. A stray press (a pad's A on the last button) no longer closes it (GAP-074).
         public void ExitGame()
         {
+            if (Time.unscaledTime > _quitArmedUntil)
+            {
+                _quitArmedUntil = Time.unscaledTime + 3f;
+                SetStatus(LocalizationService.T("MainMenu.Status.QuitConfirm", "Press Quit again to close the game."));
+                return;
+            }
+            Debug.Log("[Quit] Quit button pressed twice.");
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
 #else

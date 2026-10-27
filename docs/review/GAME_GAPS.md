@@ -78,9 +78,9 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-071](#gap-071) | A volume set in the main menu came back undone in a run (two copies of the Options) | FIXED (Options test before 0.3.0, 2026-10-27) | MEDIUM | P2 |
 | [GAP-072](#gap-072) | UI Volume set nothing: no interface sound has ever played | FIXED (row removed, owner, 2026-10-27) | LOW | P3 |
 | [GAP-073](#gap-073) | 25 of the game's 35 sound effects are never played | OPEN (found in the Options test, 2026-10-27) | LOW | P3 |
-| [GAP-074](#gap-074) | The game closed by itself after minimizing or locking the PC (exclusive fullscreen at the Legion Go's resolution, carried by the cloud save) | OPEN (0.3.0 playtest, 2026-10-27) | HIGH | P1 |
-| [GAP-075](#gap-075) | A profile switch re-applied the display mode (a window could jump to the centre) | OPEN (found 2026-10-27) | LOW | P3 |
-| [GAP-076](#gap-076) | Borderless Fullscreen below the native resolution looked blurry and different | OPEN (0.3.0 playtest) | MEDIUM | P2 |
+| [GAP-074](#gap-074) | The game closed by itself after minimizing or locking the PC (exclusive fullscreen at the Legion Go's resolution, carried by the cloud save) | FIXED in part (0.3.0 playtest, 2026-10-27): the strongest cause removed, quits logged; the owner's next report decides | HIGH | P1 |
+| [GAP-075](#gap-075) | A profile switch re-applied the display mode (a window could jump to the centre) | FIXED (found 2026-10-27) | LOW | P3 |
+| [GAP-076](#gap-076) | Borderless Fullscreen below the native resolution looked blurry and different | FIXED (0.3.0 playtest, 2026-10-27) | MEDIUM | P2 |
 | [GAP-077](#gap-077) | LB/RB did not turn the Options pages on an Xbox One pad | OPEN (0.3.0 playtest) | MEDIUM | P2 |
 | [GAP-078](#gap-078) | The pad got stuck in the seed field on Select Class | OPEN (0.3.0 playtest) | HIGH | P1 |
 | [GAP-079](#gap-079) | With the pad the path's node tooltip appeared at the bottom left | OPEN (0.3.0 playtest) | LOW | P3 |
@@ -1065,6 +1065,35 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Analysis:** `CurrentPencil = Math.Min(MaxPencil, CurrentPencil + 2)` on a run that starts at full pencil, so the cap took the 2 away. Looking at the whole perk showed its price was missing too: `MoonshadeOfferingActive` was set but read by nothing ("RewardService reads it" said a comment; no such code), so the perk was +20 gold for free (GAP-069).
 - **Plan and fix:** the same rule as Scholar's Burden (GAP-064): a perk's pencil raises the maximum and the current pencil alike (`AddPencil`). `RunDirector.BuildItemRewardSlots` sets slot 1 of the run's first item reward to Nothing and clears the flag (saved with the run, so a resume does not repeat it; a reroll keeps Nothing slots).
 - **Tests:** `HarmonyPerkStartTests.MoonshadeOffering_StartsWithTwoMorePencil` and `MoonshadeOffering_TheFirstRewardsFirstSlotIsNothing_OnlyOnce` (both failed before).
+
+## GAP-074
+**The game closed by itself after minimizing or locking the PC**
+
+- **Requirement:** DISPLAY-MODE-008, UI-MENU-QUIT-001 (GameDesignSpec 1.22)
+- **Status:** FIXED in part (0.3.0 playtest, 2026-10-27). The cause is not proven; the strongest factor is removed and every quit is logged now · **Severity:** HIGH · **Priority:** P1
+- **Problem:** The owner reports that the game "mostly" ends without asking when the window is minimized or the PC is locked; the window is simply gone, without a message. The owner's two Player.logs end in a clean shutdown, and the Windows event log has no crash after 2026-10-25. The desktop profile ran exclusive Fullscreen at 1920×1200 on a 3440×1440 monitor: the display settings were in the save, and Steam Cloud brought them from the Legion Go. Every focus change in exclusive mode at a foreign resolution switches the monitor mode (`dxgi: SetFullscreenState failed (887a0022)` in the log). The only quit in the game's code was the main menu's Quit, which closed at once.
+- **Fix:** The display belongs to the PC (`DisplayPrefs`, PlayerPrefs) and is applied once per start and by the player's changes (DISPLAY-MODE-008); without a choice on this PC the game keeps what Unity opened (Borderless at the display's size). Quit asks for a second press (UI-MENU-QUIT-001). `[Quit]` and `[Window]` lines in Player.log show every quit request with the window's state, and "[Quit] Quit button pressed twice." when it was the button. A start with the owner's own settings, minimized and restored three times by script, did not close (before the fix).
+- **Once per PC:** a player who had chosen Frameless Window opens framed once after this update (the choice was in the profile, and the profile is no longer applied); choosing it again keeps it for this PC. The C# review found that without a choice on this PC the profile's resolution still reached a later switch to Fullscreen; the size now comes from this PC as well, and exclusive sizes are checked against the monitor's list.
+- **Still to check:** the owner's next session. If the game closes again, Player.log shows whether the request came from the button or from outside (the window's close, Steam, Windows).
+- **Tests:** `DisplayPerPcTests`, `QuitConfirmPlayModeTests`.
+
+## GAP-075
+**A profile switch re-applied the display mode**
+
+- **Requirement:** DISPLAY-MODE-008
+- **Status:** FIXED (found 2026-10-27) · **Severity:** LOW · **Priority:** P3
+- **Problem:** `OptionsController.LoadShared` applied the display on every load: each profile choice (since GAP-071), the first-run setup and every new controller. A window could jump to the centre.
+- **Fix:** The display is applied once per start and by the display setters only.
+- **Tests:** `DisplayPerPcTests.ThisPcsChoice_IsKept_AndAProfileChoiceAppliesNothing` (`DisplayApplications` stays).
+
+## GAP-076
+**Borderless Fullscreen below the native resolution looked blurry and different**
+
+- **Requirement:** DISPLAY-MODE-009
+- **Status:** FIXED (0.3.0 playtest, 2026-10-27) · **Severity:** MEDIUM · **Priority:** P2
+- **Problem:** Borderless Fullscreen passed the chosen resolution to `Screen.SetResolution(w, h, FullScreenWindow)`: the window stayed desktop-sized and Windows stretched a smaller picture to it, blurry and through another colour path than exclusive Fullscreen.
+- **Fix:** Borderless always uses the display's own size (`OptionsController.SizeFor`); the Resolution row shows that size and is locked in Borderless; the chosen resolution stays for Fullscreen and windows.
+- **Tests:** `DisplayPerPcTests.Borderless_UsesTheDisplaysOwnSize`. The look itself needs the owner's check at 3440×1440.
 
 ## GAP-074 to GAP-095
 

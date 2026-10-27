@@ -104,6 +104,7 @@ namespace SudokuRoguelike.UI
                 resOpts.Add($"{r.width} x {r.height}");
             resDrop.AddOptions(resOpts);
             resDrop.SetValueWithoutNotify(ResolutionIndex(resolutions, opts.Graphics));
+            resDrop.interactable = opts.Graphics.DisplayMode != DisplayModeOption.Borderless;   // DISPLAY-MODE-009
             resDrop.onValueChanged.RemoveAllListeners();
             resDrop.onValueChanged.AddListener(idx =>
             {
@@ -150,6 +151,7 @@ namespace SudokuRoguelike.UI
                 brightness.Refresh(o.Graphics.Brightness);
                 contrast.Refresh(o.Graphics.Contrast);
                 resDrop.SetValueWithoutNotify(ResolutionIndex(resolutions, o.Graphics));
+                resDrop.interactable = o.Graphics.DisplayMode != DisplayModeOption.Borderless;
                 displayModeDrop.SetValueWithoutNotify((int)OptionsController.NormalizeDisplayMode(o.Graphics.DisplayMode));
             };
         }

@@ -23,6 +23,7 @@ namespace SudokuRoguelike.Tests
             SaveFileService.FlushSharedPendingWrites();
             _originalSlot = SaveProfileService.ActiveSlot;
             _originalMode = Screen.fullScreenMode;
+            DisplayPrefs.Clear();   // DISPLAY-MODE-008: the setters keep the display for this PC
             SaveProfileService.ActiveSlot = TestSlot;
             new SaveFileService(TestSlot).Save(new SaveFileEnvelope());
             SaveFileService.FlushSharedPendingWrites();
@@ -34,6 +35,7 @@ namespace SudokuRoguelike.Tests
             SaveFileService.FlushSharedPendingWrites();
             SaveProfileService.ActiveSlot = _originalSlot;
             Screen.fullScreenMode = _originalMode;
+            DisplayPrefs.Clear();
         }
 
         [Test]

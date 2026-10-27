@@ -43,6 +43,7 @@ namespace SudokuRoguelike.Save
             PlayerPrefs.DeleteKey(PrefKey(SaveProfileService.ActiveSlotPrefKey));
             for (var slot = 0; slot < SaveFileService.MaxSlots; slot++)
                 PlayerPrefs.DeleteKey(PrefKey(Core.InputRemapService.PrefsKeyFor(slot)));
+            DisplayPrefs.Clear();
             PlayerPrefs.Save();
         }
     }

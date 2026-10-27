@@ -97,12 +97,20 @@ namespace SudokuRoguelike.UI
             };
         }
 
+        // [REQ: DISPLAY-MODE-009] Borderless Fullscreen shows the display's own size, the one it uses.
         private static int ResolutionIndex(Resolution[] resolutions, GraphicsSettingsModel graphics)
         {
+            var size = graphics.DisplayMode == DisplayModeOption.Borderless
+                ? OptionsController.DisplaySize()
+                : new Vector2Int(graphics.ResolutionWidth, graphics.ResolutionHeight);
+            var nearest = 0;
             for (var i = 0; i < resolutions.Length; i++)
-                if (resolutions[i].width == graphics.ResolutionWidth && resolutions[i].height == graphics.ResolutionHeight)
-                    return i;
-            return 0;
+            {
+                if (resolutions[i].width == size.x && resolutions[i].height == size.y) return i;
+                if (Distance(resolutions[i]) < Distance(resolutions[nearest])) nearest = i;
+            }
+            return nearest;   // a size the list lacks (a window, an odd monitor) shows its nearest entry, not the smallest
+            int Distance(Resolution r) => Mathf.Abs(r.width - size.x) + Mathf.Abs(r.height - size.y);
         }
 
         public static Text SectionHeader(string name, RectTransform section, string label)

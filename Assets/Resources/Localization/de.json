@@ -1,4 +1,5 @@
 ﻿{
+    "MainMenu.Status.QuitConfirm":  "Drücke noch einmal auf Beenden, um das Spiel zu schließen.",
     "Incense.Status.MistakeFree":  "{0} ist hier falsch, aber der Koi lässt es durchgehen: keine Zeit verloren.",
     "StampShop.Look.RoundSumiSeal.Desc":  "Jede gewonnene Etage als rundes sumi-schwarzes Siegel am Ende eines Laufs.",
     "StampShop.Look.RoundSumiSeal":  "Rundes Sumi-Siegel",

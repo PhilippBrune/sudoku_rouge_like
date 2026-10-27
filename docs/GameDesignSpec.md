@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.21 | **Date:** 2026-10-27 | **Status:** implemented
+**Version:** 1.22 | **Date:** 2026-10-27 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.22 | 2026-10-27 | implemented | 0.3.0 playtest (GAP-074..076): the display mode and size belong to the PC, not to the profile, and are applied once per start and by the player's changes (DISPLAY-MODE-008); Borderless Fullscreen always uses the display's own size (DISPLAY-MODE-009); Reset gives Borderless Fullscreen; Quit asks for a second press (UI-MENU-QUIT-001). |
 | 1.21 | 2026-10-27 | implemented | Options test before the 0.3.0 release (owner request). The UI Volume row is removed: no interface sound has ever played, so it set nothing (owner, OPT-AUDIO-002, GAP-072). The main menu's and the run's Options share one state: a change on one shows on the other and is no longer saved over (UI-OPT-004, GAP-071). |
 | 1.20 | 2026-10-27 | implemented | Owner request (2026-10-27): the concept files are merged into the specs. Mistake scoring: the reasons for the grades and the proposals not chosen, one line each (9c). The one-more-run concept: the reasons, the targets and the proposals still open (14, End Screens). Gold references point to GoldEconomySystem 2.3. No rule changed. |
 | 1.19 | 2026-10-26 | implemented | Owner request: the seed of the week scores its pace. A won Garden Run started with the seed of the week gets +1 % of BaseScore per minute under 60, at most +30 %, as its own ledger row (SCORE-TIME-001). |
@@ -450,6 +451,7 @@ Source of truth: [EndlessZenMode](EndlessZenMode.md) (decided 2026-10-07, SPEC-C
 - Items & Relic Codex
 - Custom Puzzle (sandbox, formerly "Tutorial"; SPEC-CONF-033)
 - Profiles, Options, Credits, Quit
+- **[UI-MENU-QUIT-001]** Quit closes the game on a second press within 3 s; the first press says so on the status line (1.22, GAP-074: a stray press closed the game)
 - **[UI-MENU-VERSION-001]** The game's version ("Version 0.2.0", from the player settings) in the bottom-left corner
 - Daily Walk and Monthly Walk widgets next to the menu, with today's goals, streak, theme and countdown (SPEC-CONF-027, GAP-028)
 
@@ -524,7 +526,7 @@ The Daily Walk uses each player's local date, so the goals change at local midni
 
 ### Display Modes
 
-Options → Display → **Display Mode** (saved per profile, applied at startup and when changed):
+Options → Display → **Display Mode** (kept per PC since 1.22, DISPLAY-MODE-008):
 
 | ID | Requirement |
 |---|---|
@@ -535,6 +537,8 @@ Options → Display → **Display Mode** (saved per profile, applied at startup 
 | DISPLAY-MODE-005 | Saved values: Fullscreen 0, Borderless Fullscreen 1, Windowed 2, Frameless Window 3; unknown values load as Fullscreen, and a save that only carries "not fullscreen" loads as Windowed. The Fullscreen flag is false exactly for the two window modes. |
 | DISPLAY-MODE-006 | The Fullscreen toggle (main and in-run Options) switches between a fullscreen mode and a window: turning it off keeps Frameless Window when chosen (else Windowed); turning it on keeps Borderless Fullscreen when chosen (else Fullscreen). |
 | DISPLAY-MODE-007 | The game window is titled "Run of the Nine" (the store name) as soon as the game's code runs, in every mode and again after any fullscreen/window switch. For the first one to two seconds after launch the title is the product name, because Unity names the window before any game code runs. The Windows player sets it (`WindowFrameService`), because the Player Settings product name stays `sudoku_rouge_like` for the save folder (SaveLoadArchitecture §Save folder). |
+| DISPLAY-MODE-008 | The display mode and resolution belong to the PC (its PlayerPrefs, `DisplayPrefs`), not to the profile, which Steam Cloud carries to other PCs (GAP-074: a Legion Go's exclusive 1920×1200 opened on a 3440×1440 desktop). This PC's choice is applied once at start and whenever the player changes it; choosing a profile or finishing the first-run setup applies nothing (GAP-075). Without a choice on this PC the game keeps what Unity opened (Borderless Fullscreen at the display's size on a first start) and the Options show it. Reset this page gives Borderless Fullscreen. The profile's display fields are still written (DISPLAY-MODE-005) but not applied. |
+| DISPLAY-MODE-009 | Borderless Fullscreen always uses the display's own size; the Resolution row shows that size and is locked in this mode. A smaller size was stretched by Windows, blurry and in other colours (GAP-076). The chosen resolution is kept for Fullscreen and the window modes. |
 
 ### In-Run Pause Menu
 

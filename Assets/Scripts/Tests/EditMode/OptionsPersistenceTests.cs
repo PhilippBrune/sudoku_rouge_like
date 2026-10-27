@@ -36,6 +36,7 @@ namespace SudokuRoguelike.Tests
             _originalFullScreenMode = Screen.fullScreenMode;
             _originalFullScreen = Screen.fullScreen;
             _originalRumbleEnabled = RumbleService.Enabled;
+            DisplayPrefs.Clear();   // DISPLAY-MODE-008: the display setters keep their value for this PC
 
             Directory.CreateDirectory(SaveFileService.SaveRoot);
             PreserveAndClearSlot(PrimaryTestSlot);
@@ -61,6 +62,7 @@ namespace SudokuRoguelike.Tests
             Screen.fullScreenMode = _originalFullScreenMode;
             Screen.fullScreen = _originalFullScreen;
             RumbleService.Enabled = _originalRumbleEnabled;
+            DisplayPrefs.Clear();
         }
 
         [Test]

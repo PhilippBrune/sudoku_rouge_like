@@ -914,7 +914,6 @@ namespace SudokuRoguelike.Tests
                 "Master Volume",
                 "Music Volume",
                 "SFX Volume",
-                "UI Volume",
                 "Mute when unfocused",
                 "Mute all",
                 "Display",

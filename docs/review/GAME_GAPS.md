@@ -75,6 +75,9 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-068](#gap-068) | The builds left out the licence texts the font and Steamworks.NET licences require | FIXED (0.2.1 by hand; since 2026-10-22 automatic and on the Credits screen) | MEDIUM | P2 |
 | [GAP-069](#gap-069) | Moonshade Offering's Nothing slot and Empty Canvas's Rare+ rewards were never applied | FIXED (found fixing GAP-064/067, 2026-10-22) | MEDIUM | P3 |
 | [GAP-070](#gap-070) | In a run the D-pad and LT/RT did nothing on an Xbox pad (Steam Deck and Legion Go too) | FIXED (found in the Legion Go check, 2026-10-25) | HIGH | P1 |
+| [GAP-071](#gap-071) | A volume set in the main menu came back undone in a run (two copies of the Options) | FIXED (Options test before 0.3.0, 2026-10-27) | MEDIUM | P2 |
+| [GAP-072](#gap-072) | UI Volume set nothing: no interface sound has ever played | FIXED (row removed, owner, 2026-10-27) | LOW | P3 |
+| [GAP-073](#gap-073) | 25 of the game's 35 sound effects are never played | OPEN (found in the Options test, 2026-10-27) | LOW | P3 |
 | [GAP-067](#gap-067) | Moonshade Offering's "+2 starting pencil" did nothing (the run starts at full pencil) | FIXED (2026-10-22) | LOW | P3 |
 | [GAP-064](#gap-064) | Scholar's Burden: no free Ink Well, "+5 pencil" did nothing, "−1 slot" could add a slot | FIXED (as planned, 2026-10-22) | MEDIUM | P3 |
 | [GAP-063](#gap-063) | Class levels 30 and 40 promised rewards the game did not grant (starting items, frames) | FIXED (2026-10-21) | MEDIUM | P2 |
@@ -1040,6 +1043,33 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Analysis:** `CurrentPencil = Math.Min(MaxPencil, CurrentPencil + 2)` on a run that starts at full pencil, so the cap took the 2 away. Looking at the whole perk showed its price was missing too: `MoonshadeOfferingActive` was set but read by nothing ("RewardService reads it" said a comment; no such code), so the perk was +20 gold for free (GAP-069).
 - **Plan and fix:** the same rule as Scholar's Burden (GAP-064): a perk's pencil raises the maximum and the current pencil alike (`AddPencil`). `RunDirector.BuildItemRewardSlots` sets slot 1 of the run's first item reward to Nothing and clears the flag (saved with the run, so a resume does not repeat it; a reroll keeps Nothing slots).
 - **Tests:** `HarmonyPerkStartTests.MoonshadeOffering_StartsWithTwoMorePencil` and `MoonshadeOffering_TheFirstRewardsFirstSlotIsNothing_OnlyOnce` (both failed before).
+
+## GAP-071
+**A volume set in the main menu came back undone in a run (two copies of the Options)**
+
+- **Requirement:** UI-OPT-001, UI-OPT-004 (GameDesignSpec 1.21)
+- **Status:** FIXED (Options test before the 0.3.0 release, owner request 2026-10-27) · **Severity:** MEDIUM (a setting the player made was undone without notice) · **Priority:** P2
+- **Problem:** The main menu and the run each have an `OptionsController`, and each read the Options once at the start and kept its own copy. A change in the main menu (Master Volume 50 %) did not reach the run's copy: the run's Options showed 100 %, the next press on any row there saved the whole old copy, and the volume jumped back. The same happened the other way round. Found by the new PlayMode test: the run's Options showed "100%" after the main menu set 50 %.
+- **Fix:** One options state for both controllers (`OptionsController._options` and its slot are static; a new game session and a slot change read the save again). A change raises `OnOptionsChanged` on every controller, so both Options screens redraw their rows (the arrow rows also take the new value as their start for the next step). The C# review found two more cases, both fixed: a profile deleted and its slot chosen again kept the deleted profile's options (the slot number did not change), and a profile switch redrew only the active screen's rows. Choosing or deleting a profile now reads the options again and redraws both screens (`OptionsController.ReloadAfterProfileChange`).
+- **Tests:** `InRunAudioPlayModeTests.EveryVolumeRow_ChangesWhatIsHeard_InTheMenuAndInARun` (failed before: "100%" shown in the run), `OptionsPersistenceTests.ADeletedProfileChosenAgain_StartsWithDefaultOptions` (failed before: 0.3 instead of 1.0).
+
+## GAP-072
+**UI Volume set nothing: no interface sound has ever played**
+
+- **Requirement:** OPT-AUDIO-002 (GameDesignSpec 1.21); AudioVisualDirection (menu button hover and click)
+- **Status:** FIXED by removing the row (owner decision 2026-10-27: "UI-Regler entfernen") · **Severity:** LOW · **Priority:** P3
+- **Problem:** `RunAudioController.PlayButtonClick`, `PlayButtonHover`, `PlayMenuOpen`, `PlayMenuClose`, `PlayItemReward` and `PlayRelicReveal` have existed since release 0.1 and were never called, so the UI Volume row changed the volume of a source that never played.
+- **Fix:** The UI Volume row is gone from both Options screens (the catalogs lose "UI Volume"). `AudioSettingsModel.UiVolume` stays for old saves. The clips in `Resources/audio/ui` stay unused until interface sounds are wanted.
+- **Tests:** `InRunAudioPlayModeTests.EveryVolumeRow_ChangesWhatIsHeard_InTheMenuAndInARun` (no `UiVolumeDec`), `GeneratedUiWiringContractTests`.
+
+## GAP-073
+**25 of the game's 35 sound effects are never played**
+
+- **Requirement:** AudioVisualDirection (sound list), audio-asset-pipeline (manual check "all UI feedback sounds play")
+- **Status:** OPEN (found in the Options test, 2026-10-27) · **Severity:** LOW (the game is quieter than planned; nothing breaks) · **Priority:** P3
+- **Problem:** `RunAudioController` loads 35 effect and interface clips, but only 10 play methods have a caller: wrong and correct placement, puzzle solved, shop purchase, path advance, cell select, pencil toggle, game over, HP loss and the run victory fanfare. Never played: shop reroll, item use, reward claim, rest heal, relic pickup, combo 5/10 and combo break, HP critical, pencil depleted, gold gain, fog reveal, modifier activate, boss gate open, floor transition, level up, achievement, XP bar fill, victory stinger, and the six interface sounds (GAP-072).
+- **Suggested fix:** Decide per sound whether it is wanted (listening check), then call the play method where the event happens (for example `RunDirector` gold changes, the boss gate, the floor entry). The SFX Volume row already sets their volume.
+- **Affected Files:** `Assets/Scripts/UI/RunAudioController.cs` and the screens where the events happen.
 
 ## GAP-070
 **In a run the D-pad and LT/RT did nothing on an Xbox pad (Steam Deck and Legion Go too)**

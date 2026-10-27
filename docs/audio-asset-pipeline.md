@@ -104,7 +104,7 @@ Before beta/release, run a listening and mix pass for:
   - floor music changes without silence
   - boss layer starts and stops
   - all UI feedback sounds play
-  - settings sliders affect master, music, SFX, and UI volume in real time
+  - the volume rows change master, music and SFX volume at once (no UI volume since 0.3.0, GAP-072)
 
 ## Open Content Dependency
 

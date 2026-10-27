@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.20 | **Date:** 2026-10-27 | **Status:** implemented
+**Version:** 1.21 | **Date:** 2026-10-27 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.21 | 2026-10-27 | implemented | Options test before the 0.3.0 release (owner request). The UI Volume row is removed: no interface sound has ever played, so it set nothing (owner, OPT-AUDIO-002, GAP-072). The main menu's and the run's Options share one state: a change on one shows on the other and is no longer saved over (UI-OPT-004, GAP-071). |
 | 1.20 | 2026-10-27 | implemented | Owner request (2026-10-27): the concept files are merged into the specs. Mistake scoring: the reasons for the grades and the proposals not chosen, one line each (9c). The one-more-run concept: the reasons, the targets and the proposals still open (14, End Screens). Gold references point to GoldEconomySystem 2.3. No rule changed. |
 | 1.19 | 2026-10-26 | implemented | Owner request: the seed of the week scores its pace. A won Garden Run started with the seed of the week gets +1 % of BaseScore per minute under 60, at most +30 %, as its own ledger row (SCORE-TIME-001). |
 | 1.18 | 2026-10-22 | implemented | The first slice of the one-more-run concept (owner request): Walk again on every run end (RUN-AGAIN-001), "This run" with the near miss and what the run moved (RUN-END-NEAR-001, RUN-END-MOVED-001), the stakes in numbers at the boss gate and on cursed tiles (STAKES-001), the run-length measures kept on the PC (RUN-LENGTH-001). Five floors stay (owner). The Credits carry the licence texts (LEGAL-LICENSE-001, GAP-068); the main menu D-pad follows each panel's links (REQ-UI-102, GAP-062). |
@@ -463,7 +464,7 @@ Source of truth: [EndlessZenMode](EndlessZenMode.md) (decided 2026-10-07, SPEC-C
 
 Main menu → Options is a hand scroll with six pages (UI-STYLE-017); LB/RB or PageUp/PageDown turn the page, and "Reset this page" under the scroll resets the shown page:
 
-- **Audio:** Master / Music / SFX / UI volume (arrow rows in 5 % steps), Mute when unfocused, Mute all, menu music style
+- **Audio:** Master / Music / SFX volume (arrow rows in 5 % steps), Mute when unfocused, Mute all, menu music style (no UI volume since 1.21, OPT-AUDIO-002)
 - **Display:** Fullscreen, VSync, Screen Shake, Particles, Board Brightness, Board Contrast, Resolution, Display Mode (see Display Modes below); all five languages are also offered in first-run setup (SPEC-CONF-032)
 - **Gameplay:** Highlight Errors, Auto Pencil Cleanup, Show Digits Left, Jump to Next Empty Cell, Double-Tap to Confirm, Controller Rumble
 
@@ -487,6 +488,7 @@ An audit after the 0.2.0 playtest found options that did nothing or less than th
 | OPT-GAME-005 | Double-Tap to Confirm (off) | The first press of a digit on a cell asks ("Press 4 again to place it."), the same digit on the same cell within 1.5 s places it. Pencil marks and the Sudoku Basics lesson are never asked for. |
 | OPT-GFX-001 | Screen Shake | Off stops every shake of the board (it stopped only with Reduce Motion). |
 | OPT-AUDIO-001 | Master Volume | Counts once: every sound multiplies it in and the listener stays at full volume (it was applied twice, so 50 % played at 25 %). |
+| OPT-AUDIO-002 | Volumes (1.21) | The menu music plays Master × Music; in a run the music plays Master × Music and the sound effects Master × SFX, at once while a row changes; Mute all silences both, Mute when unfocused pauses the sound while the window is in the background. There is no UI Volume row: no interface sound plays (owner, 2026-10-27; the clips in `audio/ui` stay unused). |
 | OPT-LABEL-001 | Names | "Confirm Wrong Placement" is removed: a question asked only before a wrong digit would give the answer away. Brightness and Contrast are **Board** Brightness and **Board** Contrast (they calibrate the puzzle board and now redraw it at once); "Screen Reader" is **Status Captions** (an on-screen caption bar, not speech). |
 | ACCESS-COLOR-003 | Colorblind Mode | Line colours that tell rules apart use the Okabe–Ito palette (German Whispers green, Dutch Whispers orange, Renban purple, Parity blue, Consecutive yellow, Between sky blue, Nabner/Entropic/Modular vermilion). The cells are no longer passed through a colour-blindness simulation, which made them harder to tell apart. |
 | ACCESS-FONT-001 | Text Size | Scales the board's digits and pencil marks too (it changed only the preview and some menus), never past the cell. |
@@ -518,6 +520,7 @@ The Daily Walk uses each player's local date, so the goals change at local midni
 | UI-OPT-001 | The in-run Options show the main Options' Audio, Display and Gameplay tabs with the same controls, look and reset buttons; both panels are built by one factory (`OptionsUiFactory`), so they cannot drift apart. The language row stays in the main menu (changing it rebuilds the UI); the in-run Display tab says where to change it. |
 | UI-OPT-002 | The in-run Options add two tabs: **Accessibility** (colorblind, high contrast, reduce motion, alternative constraint symbols, screen reader, reset) and **Run** (run seed, View Modifiers, Save & Quit, Abandon Run; Abandon is hidden in tutorials). Back is always visible below the tabs. |
 | UI-OPT-003 | Both Options panels are fully usable with the D-pad: left/right moves within a row and along the tab bar, up/down moves to the nearest control of the next row; the first row leads up to the active tab and the last row down to the buttons below the tabs. Links are rebuilt when a control appears or disappears (language confirmation, Abandon Run). Start opens and B closes the in-run Options (`CancelRouteContract`). |
+| UI-OPT-004 | The main menu's and the run's Options show one state (1.21, GAP-071): a value set on one is shown by the other, and a change on either keeps every other value (each kept its own copy, so the run's Options showed a main-menu change undone and saved over it). Choosing or deleting a profile reads its options again, also when the slot number stays the same. |
 
 ### Display Modes
 

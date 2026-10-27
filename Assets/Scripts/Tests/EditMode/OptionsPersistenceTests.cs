@@ -75,7 +75,6 @@ namespace SudokuRoguelike.Tests
                 controller.SetMasterVolume(0.37f);
                 controller.SetMusicVolume(0.41f);
                 controller.SetSfxVolume(0.42f);
-                controller.SetUiVolume(0.43f);
                 controller.SetMuteAll(true);
                 controller.SetMuteWhenUnfocused(true);
                 controller.SetMusicStyleIndex(2);
@@ -121,7 +120,6 @@ namespace SudokuRoguelike.Tests
             Assert.AreEqual(0.37f, reloaded.Audio.MasterVolume, 0.001f);
             Assert.AreEqual(0.41f, reloaded.Audio.MusicVolume, 0.001f);
             Assert.AreEqual(0.42f, reloaded.Audio.SfxVolume, 0.001f);
-            Assert.AreEqual(0.43f, reloaded.Audio.UiVolume, 0.001f);
             Assert.IsTrue(reloaded.Audio.MuteAll);
             Assert.IsTrue(reloaded.Audio.MuteWhenUnfocused);
             Assert.AreEqual(2, reloaded.Audio.MenuMusicStyleIndex);
@@ -143,6 +141,35 @@ namespace SudokuRoguelike.Tests
             Assert.AreEqual(0.31f, reloaded.Graphics.Contrast, 0.001f);
             Assert.AreEqual(DisplayModeOption.Borderless, reloaded.Graphics.DisplayMode);
             Assert.IsTrue(reloaded.Graphics.Fullscreen);
+        }
+
+        // [REQ: UI-OPT-004] Deleting the active profile and choosing its slot again keeps the slot number, but the options
+        // must come from the new, empty profile: the old ones stayed in memory and the next change saved them into it.
+        [Test]
+        [Requirement("UI-OPT-004")]
+        public void ADeletedProfileChosenAgain_StartsWithDefaultOptions()
+        {
+            var host = new GameObject("OptionsProfileChangeController");
+            try
+            {
+                var controller = host.AddComponent<OptionsController>();
+                controller.LoadOptions();
+                controller.SetMasterVolume(0.3f);
+                SaveFileService.FlushSharedPendingWrites();
+
+                var profiles = new SaveProfileService();
+                profiles.DeleteSlot(PrimaryTestSlot);
+                SaveProfileService.ActiveSlot = PrimaryTestSlot;
+                profiles.SelectSlot(PrimaryTestSlot);
+                OptionsController.ReloadAfterProfileChange();
+
+                Assert.AreEqual(new AudioSettingsModel().MasterVolume, controller.GetOptions().Audio.MasterVolume, 0.001f);
+                Assert.AreEqual(new AudioSettingsModel().MasterVolume, OptionsController.LiveAudio.MasterVolume, 0.001f);
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+            }
         }
 
         [Test]

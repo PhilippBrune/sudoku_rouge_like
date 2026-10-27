@@ -28,16 +28,15 @@ namespace SudokuRoguelike.UI
                 opts.Audio.MusicVolume, optCtrl.SetMusicVolume);
             var sfx = BuildVolumeArrowRow(p + "SfxVolume", T("SFX Volume"), audioSec, LineMin(2), LineMax(2),
                 opts.Audio.SfxVolume, optCtrl.SetSfxVolume);
-            var ui = BuildVolumeArrowRow(p + "UiVolume", T("UI Volume"), audioSec, LineMin(3), LineMax(3),
-                opts.Audio.UiVolume, optCtrl.SetUiVolume);
-            var tMute = BuildOptionToggle(audioSec, p + "MuteUnfocused", T("Mute when unfocused"), LineMin(4), LineMax(4),
+            // [REQ: OPT-AUDIO-002] No UI Volume row: no interface sound plays, so it set nothing (owner, 2026-10-27).
+            var tMute = BuildOptionToggle(audioSec, p + "MuteUnfocused", T("Mute when unfocused"), LineMin(3), LineMax(3),
                 opts.Audio.MuteWhenUnfocused, optCtrl.SetMuteWhenUnfocused, T("Options.Note.MuteUnfocused"));
-            var tMuteAll = BuildOptionToggle(audioSec, p + "MuteAll", T("Mute all"), LineMin(5), LineMax(5),
+            var tMuteAll = BuildOptionToggle(audioSec, p + "MuteAll", T("Mute all"), LineMin(4), LineMax(4),
                 opts.Audio.MuteAll, optCtrl.SetMuteAll);
 
-            LineLabel(p + "MenuMusicStyleLabel", audioSec, 6, T("Audio.MenuMusicStyle.Label"));
+            LineLabel(p + "MenuMusicStyleLabel", audioSec, 5, T("Audio.MenuMusicStyle.Label"));
             var musicStyleDrop = BuildDropdown(p + "MenuMusicStyleDropdown", audioSec);
-            SetRect(musicStyleDrop.GetComponent<RectTransform>(), LineMin(6, ControlStart), LineMax(6, 0.82f));
+            SetRect(musicStyleDrop.GetComponent<RectTransform>(), LineMin(5, ControlStart), LineMax(5, 0.82f));
             musicStyleDrop.ClearOptions();
             var styleOptions = new List<string>();
             foreach (var key in AudioAssetService.MenuMusicStyleLocalizationKeys)
@@ -48,14 +47,13 @@ namespace SudokuRoguelike.UI
                 AudioAssetService.NormalizeMenuMusicStyleIndex(opts.Audio.MenuMusicStyleIndex));
             musicStyleDrop.onValueChanged.RemoveAllListeners();
             musicStyleDrop.onValueChanged.AddListener(optCtrl.SetMusicStyleIndex);
-            for (var line = 0; line < 7; line++) LineRule(audioSec, line);
+            for (var line = 0; line < 6; line++) LineRule(audioSec, line);
             PageSlip(p + "AudioSlip", audioSec, T("Options.Slip.Tip"), T("Options.Tip.Audio"));
 
             tabs.SetRows(index,
                 Row(master.Dec, master.Inc),
                 Row(music.Dec, music.Inc),
                 Row(sfx.Dec, sfx.Inc),
-                Row(ui.Dec, ui.Inc),
                 Row(tMute),
                 Row(tMuteAll),
                 Row(musicStyleDrop),
@@ -67,7 +65,6 @@ namespace SudokuRoguelike.UI
                 master.Refresh(o.Audio.MasterVolume);
                 music.Refresh(o.Audio.MusicVolume);
                 sfx.Refresh(o.Audio.SfxVolume);
-                ui.Refresh(o.Audio.UiVolume);
                 tMute.SetIsOnWithoutNotify(o.Audio.MuteWhenUnfocused);
                 tMuteAll.SetIsOnWithoutNotify(o.Audio.MuteAll);
                 musicStyleDrop.SetValueWithoutNotify(

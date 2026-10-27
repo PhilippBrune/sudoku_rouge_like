@@ -65,7 +65,6 @@ namespace SudokuRoguelike.Tests
             Slider("Options", OptionsUiFactoryPath, "\"MasterVolume\"", "SetMasterVolume"),
             Slider("Options", OptionsUiFactoryPath, "\"MusicVolume\"", "SetMusicVolume"),
             Slider("Options", OptionsUiFactoryPath, "\"SfxVolume\"", "SetSfxVolume"),
-            Slider("Options", OptionsUiFactoryPath, "\"UiVolume\"", "SetUiVolume"),
             Toggle("Options", OptionsUiFactoryPath, "\"MuteUnfocused\"", "SetMuteWhenUnfocused"),
             Toggle("Options", OptionsUiFactoryPath, "\"MuteAll\"", "SetMuteAll"),
             Dropdown("Options", OptionsUiFactoryPath, "MenuMusicStyleDropdown", "SetMusicStyleIndex"),
@@ -192,7 +191,7 @@ namespace SudokuRoguelike.Tests
         {
             var factorySource = ReadSource(OptionsUiFactoryPath);
 
-            foreach (var id in new[] { "MasterVolume", "MusicVolume", "SfxVolume", "UiVolume" })
+            foreach (var id in new[] { "MasterVolume", "MusicVolume", "SfxVolume" })
             {
                 StringAssert.Contains($"BuildVolumeArrowRow(p + \"{id}\"", factorySource);
             }

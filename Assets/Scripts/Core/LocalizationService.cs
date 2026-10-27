@@ -457,7 +457,6 @@ namespace SudokuRoguelike.Core
             { "Master Volume", "Lautstärke" },
             { "Music Volume", "Musiklautstärke" },
             { "SFX Volume", "Effektlautstärke" },
-            { "UI Volume", "UI-Lautstärke" },
             { "Mute when unfocused", "Stumm im Hintergrund" },
             { "Mute all", "Alles stummschalten" },
             { "Display", "Anzeige" },

@@ -77,7 +77,7 @@ namespace SudokuRoguelike.Core
         public float MasterVolume = 1.0f;
         public float MusicVolume = 0.8f;
         public float SfxVolume = 0.7f;
-        public float UiVolume = 0.6f;
+        public float UiVolume = 0.6f;   // no Options row since 0.3.0 (OPT-AUDIO-002); kept for saves
         public bool MuteAll;
         public bool MuteWhenUnfocused;
         public int MenuMusicStyleIndex;

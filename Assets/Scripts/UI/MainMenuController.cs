@@ -649,6 +649,7 @@ namespace SudokuRoguelike.UI
             _gameBootstrap?.ApplySlotChange();
             _save = new SaveFileService(SaveProfileService.ActiveSlot);
             _profile = new ProfileService(_save);
+            OptionsController.ReloadAfterProfileChange();   // UI-OPT-004
 
             LocalizationService.SetLanguage(Profile.LoadOptions().Language);
             if (_gameBootstrap != null)
@@ -672,6 +673,7 @@ namespace SudokuRoguelike.UI
             _gameBootstrap?.ApplySlotChange();
             _save = new SaveFileService(SaveProfileService.ActiveSlot);
             _profile = new ProfileService(_save);
+            OptionsController.ReloadAfterProfileChange();   // UI-OPT-004
 
             RefreshProfileSelectCards();
             SetStatus(LocalizationService.Format("ProfileSelect.Status.Deleted", "Profile {0} deleted.", slot + 1));

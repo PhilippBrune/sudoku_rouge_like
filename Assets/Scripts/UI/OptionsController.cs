@@ -10,9 +10,10 @@ namespace SudokuRoguelike.UI
 {
     public sealed class OptionsController : MonoBehaviour
     {
-        private SaveFileService _saveFile;
-        private ProfileService _profile;
-        private OptionsState _options;
+        // [REQ: UI-OPT-004] One options state for both controllers (the main menu's and the run's) and the slot it was read
+        // from. Each kept its own copy, so the run's Options showed a main-menu change undone and saved over it.
+        private static OptionsState _options;
+        private static int _optionsSlot = -1;
         private int _lastActiveSlot = -1;
 
         /// <summary>
@@ -31,10 +32,8 @@ namespace SudokuRoguelike.UI
 
         private void Awake()
         {
-            var slot = SaveProfileService.ActiveSlot;
-            _lastActiveSlot = slot;
-            _saveFile = new SaveFileService(slot);
-            _profile = new ProfileService(_saveFile);
+            _lastActiveSlot = SaveProfileService.ActiveSlot;
+            _options = null;   // a new game session reads the save again
         }
 
         /// <summary>Fires whenever the active profile slot changes, after services have been re-wired.</summary>
@@ -51,18 +50,25 @@ namespace SudokuRoguelike.UI
             var slot = SaveProfileService.ActiveSlot;
             if (slot == _lastActiveSlot) return;
             _lastActiveSlot = slot;
-            _saveFile = new SaveFileService(slot);
-            _profile = new ProfileService(_saveFile);
             _options = null; // force reload from new slot on next access
             OnSlotChanged?.Invoke();
-            OnOptionsChanged?.Invoke();
+            RefreshAllScreens();   // the other Options screen may be inactive and miss its own Update
         }
 
-        public void LoadOptions()
+        /// <summary>A profile was chosen or deleted: read the active slot's options again and redraw both Options screens.</summary>
+        // UI-OPT-004: no slot check, since the number can stay while its file changes (a profile deleted, its slot chosen again).
+        public static void ReloadAfterProfileChange()
         {
-            if (_saveFile == null) _saveFile = new SaveFileService(SaveProfileService.ActiveSlot);
-            if (_profile == null) _profile = new ProfileService(_saveFile);
-            _options = _profile.LoadOptions();
+            LoadShared();
+            RefreshAllScreens();
+        }
+
+        public void LoadOptions() => LoadShared();
+
+        private static void LoadShared()
+        {
+            _optionsSlot = SaveProfileService.ActiveSlot;
+            _options = new ProfileService(new SaveFileService(_optionsSlot)).LoadOptions();
             LiveAudio = _options.Audio;
             LiveAccessibility = _options.Accessibility ?? new AccessibilitySettings();
             AccessibilityAnnouncementOverlay.SetEnabled(LiveAccessibility.ScreenReaderEnabled);
@@ -79,7 +85,7 @@ namespace SudokuRoguelike.UI
 
         public OptionsState GetOptions()
         {
-            if (_options == null) LoadOptions();
+            if (_options == null || _optionsSlot != SaveProfileService.ActiveSlot) LoadOptions();
             return _options;
         }
 
@@ -103,13 +109,6 @@ namespace SudokuRoguelike.UI
         public void SetSfxVolume(float value)
         {
             GetOptions().Audio.SfxVolume = value;
-            LiveAudio = GetOptions().Audio;
-            SaveOptions();
-        }
-
-        public void SetUiVolume(float value)
-        {
-            GetOptions().Audio.UiVolume = value;
             LiveAudio = GetOptions().Audio;
             SaveOptions();
         }
@@ -371,7 +370,6 @@ namespace SudokuRoguelike.UI
             audio.MasterVolume       = defaults.MasterVolume;
             audio.MusicVolume        = defaults.MusicVolume;
             audio.SfxVolume          = defaults.SfxVolume;
-            audio.UiVolume           = defaults.UiVolume;
             audio.MuteAll            = defaults.MuteAll;
             audio.MuteWhenUnfocused  = defaults.MuteWhenUnfocused;
             AudioListener.volume     = 1f;   // OPT-AUDIO-001
@@ -440,16 +438,21 @@ namespace SudokuRoguelike.UI
 
         private void SaveOptions()
         {
-            var envelope = _saveFile.Load();
+            var saveFile = new SaveFileService(_optionsSlot);
+            var envelope = saveFile.Load();
             envelope.PlayerProfile.Options = _options;
-            _saveFile.Save(envelope);
+            saveFile.Save(envelope);
             FindFirstObjectByType<MenuMusicController>()?.ApplySettings(_options.Audio);
-            OnOptionsChanged?.Invoke();
+            NotifyOptionsChangedForUiRefresh();
         }
 
-        public void NotifyOptionsChangedForUiRefresh()
+        public void NotifyOptionsChangedForUiRefresh() => RefreshAllScreens();
+
+        // UI-OPT-004: both Options screens show the one state, so a change refreshes the rows of each.
+        private static void RefreshAllScreens()
         {
-            OnOptionsChanged?.Invoke();
+            foreach (var controller in FindObjectsByType<OptionsController>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                controller.OnOptionsChanged?.Invoke();
         }
 
         private void NotifyAccessibilityChanged()

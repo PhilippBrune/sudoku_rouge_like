@@ -35,7 +35,14 @@ namespace SudokuRoguelike.Run
         private bool IncenseMistake()
         {
             if (Incense == null || State?.Mode != GameMode.IncenseWalk) return false;
-            Incense.OnMistake();
+            if (!Incense.OnMistake())
+            {
+                // [REQ: INCENSE-CLASS-001] The Koi Gambler's free mistake does not count at all (owner 2026-10-27): the puzzle
+                // keeps its whole bonus and its perfect bonus.
+                CurrentLevelState.Mistakes--;
+                CurrentLevelState.PerfectSoFar = CurrentLevelState.Mistakes == 0;
+                _analytics?.RecordMistakeUndone();
+            }
             State.LastMistakeHpLost = 0;
             return true;
         }

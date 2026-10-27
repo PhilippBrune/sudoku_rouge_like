@@ -53,9 +53,10 @@ namespace SudokuRoguelike.UI
         }
 
         // A wrong digit's line: its cost on the clock in the walk, the HP left elsewhere.
-        private string MistakeNote(RunDirector run, int value) => run.State.Mode == GameMode.IncenseWalk
-            ? Tf("Incense.Status.Mistake", value)
-            : Tf("{0} is wrong here. HP: {1}", value, run.State.CurrentHP);
+        private string MistakeNote(RunDirector run, int value) => run.State.Mode != GameMode.IncenseWalk
+            ? Tf("{0} is wrong here. HP: {1}", value, run.State.CurrentHP)
+            : run.Incense != null && run.Incense.LastMistakeFree ? Tf("Incense.Status.MistakeFree", value)
+            : Tf("Incense.Status.Mistake", value);
 
         // [REQ: INCENSE-CLOCK-002] [REQ: INCENSE-XP-001] A solved puzzle: its XP, its seconds on the clock, the next puzzle.
         private void HandleIncenseSolved(RunDirector run)

@@ -39,6 +39,8 @@ namespace SudokuRoguelike.Run
         public int Score { get; private set; }
         public int LargestBoard { get; private set; }
         public bool Over => SecondsLeft <= 0f;   // [REQ: INCENSE-CLOCK-004]
+        /// <summary>The last mistake was one of the Koi Gambler's free ones.</summary>
+        public bool LastMistakeFree { get; private set; }
 
         public IncenseWalkService(ClassId classId, int seed)
         {
@@ -138,8 +140,8 @@ namespace SudokuRoguelike.Run
             if (Over) return false;
             _combo = 0;
             _mistakesTotal++;
-            if (_classId == ClassId.KoiGambler && new Random(_seed ^ _mistakesTotal).NextDouble() < KoiFreeMistakeChance)
-                return false;
+            LastMistakeFree = _classId == ClassId.KoiGambler && new Random(_seed ^ _mistakesTotal).NextDouble() < KoiFreeMistakeChance;
+            if (LastMistakeFree) return false;
             SecondsLeft = Math.Max(0f, SecondsLeft - MistakeSeconds);
             return true;
         }

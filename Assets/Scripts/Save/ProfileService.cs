@@ -216,7 +216,8 @@ namespace SudokuRoguelike.Save
             ModifierDiscoveryService.SanitizeMetaProgress(meta);
 
             // 1. Update stats
-            stats.TotalRunsStarted++;
+            // [REQ: INCENSE-XP-001] An Incense Walk is no run toward the 10 that open Endless Zen (owner 2026-10-27).
+            if (result.Mode != GameMode.IncenseWalk) stats.TotalRunsStarted++;
             if (result.Victory) stats.TotalRunsCompleted++;
             stats.TotalGoldEarned += result.GoldEarned;
             stats.TotalXpEarned += result.XpEarned;

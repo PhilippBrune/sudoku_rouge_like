@@ -1,3 +1,4 @@
+using System.Linq;
 using NUnit.Framework;
 using SudokuRoguelike.Core;
 using SudokuRoguelike.Run;
@@ -69,6 +70,48 @@ namespace SudokuRoguelike.Tests
                 new Save.RunAutoSaveCoordinator(save).Save(run.State, null);
                 Save.SaveFileService.FlushSharedPendingWrites();
                 Assert.IsNull(save.HasSaveFile() ? save.Load().ActiveRunState : null);
+            }
+            finally
+            {
+                Save.SaveFileService.FlushSharedPendingWrites();
+                foreach (var p in new[] { path, path + ".bak", path + ".tmp" })
+                    if (System.IO.File.Exists(p)) System.IO.File.Delete(p);
+            }
+        }
+
+        [Test]
+        [Requirement("INCENSE-CLASS-001")]
+        public void TheKoiGamblersFreeMistake_DoesNotCountAtAll()
+        {
+            var seed = Enumerable.Range(1, 200).First(s => new System.Random(s ^ 1).NextDouble() < IncenseWalkService.KoiFreeMistakeChance);
+            var run = new RunDirector();
+            run.StartRun(new LaunchRequest { ClassId = ClassId.KoiGambler, Mode = GameMode.IncenseWalk, ClassLevel = 1 }, seed);
+            var (row, col) = EmptyCell(run, 0);
+            run.PlaceNumber(row, col, run.CurrentBoard.Solution[row, col] % run.CurrentBoard.Size + 1);
+            Assert.IsTrue(run.Incense.LastMistakeFree);
+            Assert.AreEqual(480f, run.Incense.SecondsLeft, "no time");
+            Assert.AreEqual(0, run.CurrentLevelState.Mistakes, "no mistake on the puzzle");
+            Assert.IsTrue(run.CurrentLevelState.PerfectSoFar, "the perfect bonus stays");
+            Assert.AreEqual(0, run.GetAnalytics().TotalMistakes);
+        }
+
+        [Test]
+        [Requirement("INCENSE-XP-001")]
+        public void AnIncenseWalk_IsNoRunTowardEndlessZen_ButKeepsItsXp()
+        {
+            const int slot = Save.SaveFileService.MaxSlots - 1;
+            var path = Save.SaveFileService.GetSlotPath(slot);
+            try
+            {
+                Save.SaveFileService.FlushSharedPendingWrites();   // a slot left by an earlier test starts this one empty
+                foreach (var p in new[] { path, path + ".bak", path + ".tmp" })
+                    if (System.IO.File.Exists(p)) System.IO.File.Delete(p);
+                var save = new Save.SaveFileService(slot);
+                new Save.ProfileService(save).RecordRunAndGetNewUnlocks(new RunResult
+                    { PlayedClassId = ClassId.NumberFreak, Mode = GameMode.IncenseWalk, XpEarned = 90, FloorReached = 1 });
+                var envelope = save.Load();
+                Assert.AreEqual(0, envelope.Statistics.TotalRunsStarted);
+                Assert.AreEqual(90, new Meta.ClassGardenProgressionService().GetTotalXp(envelope.MetaProgress, ClassId.NumberFreak));
             }
             finally
             {

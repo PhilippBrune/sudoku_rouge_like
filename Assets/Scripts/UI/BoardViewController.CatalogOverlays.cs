@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace SudokuRoguelike.UI
 {
-    // [REQ: GEN-MOD-002] Board marks for catalog batches B1 and B2 (docs/design/modifier-catalog-plan.md): the extra
+    // [REQ: GEN-MOD-002] Board marks for catalog batches B1 and B2 (docs/BossMechanicsSystem.md "Modifier catalog"): the extra
     // marks on the new line types, the Difference ≥ 3 bar, the ×3 marker and the mirror-pair badges. Colours in
     // GamePalette; each mark draws into its modifier's legend layer.
     public sealed partial class BoardViewController

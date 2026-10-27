@@ -5,7 +5,7 @@ using SudokuRoguelike.Core;
 namespace SudokuRoguelike.Items
 {
     /// <summary>
-    /// [REQ: ITEM-COUNTER-001] One counter item per modifier family (gold-and-items concept L3, owner pick after the 0.2.0
+    /// [REQ: ITEM-COUNTER-001] One counter item per modifier family (GoldEconomySystem lever L3, owner pick after the 0.2.0
     /// playtest): each writes correct digits into the cells its family's rules use, so the item answers the rule that is
     /// hard on this board. Shops lean toward the counters of the floor's and the boss's rules (ITEM-COUNTER-007).
     /// </summary>

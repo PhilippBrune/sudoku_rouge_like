@@ -965,7 +965,7 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Status:** FIXED (owner's 0.2.0 playtest, 2026-10-20) · **Severity:** MEDIUM · **Priority:** P3
 - **Problem:** The end screen's mistakes did not match the run: the mistakes of the puzzle that ended the run (and of an Endless Zen session's last board) were missing, so a run lost to mistakes showed only the earlier puzzles' ones.
 - **Root Cause:** `PostRunAnalyticsService.TotalMistakes` grew only in `RecordPuzzleSolved`.
-- **Fix:** `RecordMistake` counts each mistake when it happens (both places that add a mistake to the board); solving a puzzle only records its per-puzzle count. Weighting mistakes by when they happen is a separate owner decision (`docs/design/mistake-scoring-proposals.md`, RM-109). A run saved mid-puzzle before this build keeps the earlier mistakes of that one puzzle uncounted (they were never in the total); everything after the update counts.
+- **Fix:** `RecordMistake` counts each mistake when it happens (both places that add a mistake to the board); solving a puzzle only records its per-puzzle count. Weighting mistakes by when they happen is a separate owner decision (GameDesignSpec.md §9c, RM-109). A run saved mid-puzzle before this build keeps the earlier mistakes of that one puzzle uncounted (they were never in the total); everything after the update counts.
 - **Tests:** `RunMistakeCountTests.EveryPuzzlesMistakes_CountAtTheEnd_AlsoThePuzzleThatEndedTheRun` (2 + 1 solved, 3 in the lost puzzle = 6; failed with 3 before the fix).
 
 ## GAP-060

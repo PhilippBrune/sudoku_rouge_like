@@ -3,7 +3,7 @@ using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.Sudoku
 {
-    // Batch B2 of the modifier catalog (docs/design/modifier-catalog-plan.md): complete Kropki sets, Difference ≥ K
+    // Batch B2 of the modifier catalog (docs/BossMechanicsSystem.md "Modifier catalog"): complete Kropki sets, Difference ≥ K
     // pairs, Multiples cells and Mirror cells. Partial-safe like the other rules.
 
     // [REQ: BOSS-LIB-058] [REQ: BOSS-LIB-059] Full White / Full Black Kropki: every pair of neighbours that differs by 1

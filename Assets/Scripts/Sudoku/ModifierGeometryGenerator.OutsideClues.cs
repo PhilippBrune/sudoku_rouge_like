@@ -4,7 +4,7 @@ using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.Sudoku
 {
-    // [REQ: GEN-MOD-002] Geometry for batch B4 of the modifier catalog (modifier-catalog-plan.md): outside clues read off
+    // [REQ: GEN-MOD-002] Geometry for batch B4 of the modifier catalog (BossMechanicsSystem.md "Modifier catalog"): outside clues read off
     // the solution (Skyscrapers, Sandwich, X-Sums on rows and columns, Little Killer on diagonals) and Quadruples on inner
     // corners. Outside clues sit in the ring round the grid and claim no cells; a clue whose cells are all givens is
     // skipped. Quadruples claim their four cells.

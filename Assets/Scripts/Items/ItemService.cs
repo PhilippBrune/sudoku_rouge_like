@@ -540,7 +540,7 @@ namespace SudokuRoguelike.Items
                 ItemType.GardenLantern  => LocalizationService.T(ItemDescriptionKey(type, rarity), "Lift fog from the entire board for 15 seconds, then re-fog."),
                 ItemType.GoldenKoi      => LocalizationService.Format(ItemDescriptionKey(type, rarity), "Grant +{0}g per star rating when this puzzle ends.", 10 * 1),
                 ItemType.TempleStamp    => LocalizationService.T(ItemDescriptionKey(type, rarity), "Protect your HP this puzzle - all wrong placements deal 0 damage. Consumed on completion."),
-                // Counter items (gold-and-items concept L3)
+                // Counter items (GoldEconomySystem lever L3)
                 ItemType.WaterBasin     => LocalizationService.T(ItemDescriptionKey(type, rarity), "Lines: writes the correct digit in up to 3 empty cells of one line - the selected cell's line, else the line closest to done."),
                 ItemType.TwinPebbles    => LocalizationService.T(ItemDescriptionKey(type, rarity), "Dots and pairs: writes the correct digits in both cells of one dot or pair mark - the selected cell's, else one that is half done."),
                 ItemType.RiceBowl       => LocalizationService.T(ItemDescriptionKey(type, rarity), "Cages and arrows: writes the correct digit in up to 3 empty cells of one cage or arrow - the selected cell's, else the one closest to done."),

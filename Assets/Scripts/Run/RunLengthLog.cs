@@ -7,7 +7,7 @@ using UnityEngine;
 namespace SudokuRoguelike.Run
 {
     /// <summary>
-    /// [REQ: RUN-LENGTH-001] Measures the runs for the one-more-run concept §6, on this PC only (no telemetry): how long a
+    /// [REQ: RUN-LENGTH-001] Measures the runs for GameDesignSpec §14, on this PC only (no telemetry): how long a
     /// run was open in the game, how long until its first path choice, and how long the player took to start it after the
     /// previous run ended in the same session. Each finished run adds one <see cref="RunHistoryEntry"/> to the save (the
     /// last <see cref="MaxEntries"/>); `tools/playtest/run_length_report.py` reads them.

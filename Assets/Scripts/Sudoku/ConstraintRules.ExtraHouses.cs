@@ -3,7 +3,7 @@ using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.Sudoku
 {
-    // Batch B5 of the modifier catalog (docs/design/modifier-catalog-plan.md): extra houses that hold no repeated digit
+    // Batch B5 of the modifier catalog (docs/BossMechanicsSystem.md "Modifier catalog"): extra houses that hold no repeated digit
     // (the X-Sudoku diagonals, the Hyper windows, the Disjoint groups, extra regions) and the magic-square box. Each
     // rule reads only the digits already on the board, so it is safe on partial boards.
 

@@ -16,7 +16,7 @@ namespace SudokuRoguelike.Boss
 
     /// <summary>
     /// [REQ: UI-STYLE-012] The 71 player modifiers in the six families of the modifier catalog plan
-    /// (docs/design/modifier-catalog-plan.md), in the order the Custom Puzzle rule book shows them.
+    /// (docs/BossMechanicsSystem.md "Modifier catalog"), in the order the Custom Puzzle rule book shows them.
     /// </summary>
     public static class ModifierFamilies
     {

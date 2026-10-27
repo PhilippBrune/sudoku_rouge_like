@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace SudokuRoguelike.UI
 {
-    // [REQ: GEN-MOD-002] Extra houses of batch B5 (modifier-catalog-plan.md), drawn under the lines: X-Sudoku as two
+    // [REQ: GEN-MOD-002] Extra houses of batch B5 (BossMechanicsSystem.md "Modifier catalog"), drawn under the lines: X-Sudoku as two
     // thin indigo diagonals, Hyper windows as teal-washed squares with a dashed outline, Disjoint groups as a small pip
     // in every cell at the cell's place in its box, extra regions as a violet wash with a dashed outline, the magic
     // square as a gold box with "15" in its corner.

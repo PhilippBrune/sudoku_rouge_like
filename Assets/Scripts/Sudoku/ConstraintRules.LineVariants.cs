@@ -3,7 +3,7 @@ using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.Sudoku
 {
-    // Batch B1 of the modifier catalog (docs/design/modifier-catalog-plan.md, BossMechanicsSystem.md "Line Constraints
+    // Batch B1 of the modifier catalog (docs/BossMechanicsSystem.md "Modifier catalog" and "Line Constraints
     // (Extended)"). Every rule reads only the digits already on the board, so it is safe on partial boards: a digit is
     // rejected only when it breaks the rule with a digit that is already placed.
 

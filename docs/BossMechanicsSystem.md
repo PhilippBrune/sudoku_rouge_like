@@ -1,11 +1,12 @@
 ﻿# Boss Mechanics System
 
-**Version:** 2.12 | **Date:** 2026-10-19 | **Status:** implemented
+**Version:** 2.13 | **Date:** 2026-10-27 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.13 | 2026-10-27 | implemented | Owner request (2026-10-27): the modifier catalog plan (v1.5, 2026-10-19; its file is removed) is merged into the new section "Modifier catalog": the Phase 0 steps with their state, the verdicts, the owner's decisions and what is open. Steps 3 and 5 stay open; the spec contradictions the plan found are listed there and not resolved. No rule changed. |
 | 2.12 | 2026-10-19 | implemented | Owner request: catalog batch B5 goes live: X-Sudoku (30), Hyper Sudoku (31), Disjoint Groups (32), Extra Region (53) and Magic Square (68). X-Sudoku, Hyper, Disjoint Groups and the magic square shape the solution (the generator fills the grid with them; givens stay chosen under the base rules, owner decision) and count as board-shaping rules (rectangular regions, 7×7 raised to 8×8). Hyper, Disjoint Groups and the magic square need the 3×3 boxes of a 9×9; a magic 3×3 square needs the digits 1–9, so Magic Square is 9×9 only (the library said 7×7). Blocked pairs from the pair benchmark (`SolutionShapePairBenchmark`): X-Sudoku with Nonconsecutive, Anti-Knight, Nonconsec. Diagonal or Entropy; Hyper with Nonconsecutive, Nonconsec. Diagonal or Entropy; Disjoint Groups + Entropy (no such grid); Magic Square with Nonconsecutive or Nonconsec. Diagonal (its digits break them). A pre-baked boss board is reused only when every solution-shaping rule matches, Entropy included (GAP-051). With this batch every modifier of the catalog plan is built: 71 player modifiers, 70 clearable. |
 | 2.11 | 2026-10-19 | implemented | Owner request: catalog batch B4 goes live: Quadruples (79, 9×9 as the library says), Skyscrapers (81), Sandwich (82), X-Sums (83) and Little Killer (84). Owner decision (2026-10-19): a board with outside clues is drawn about 12 % smaller and the clues stand in a ring round it (UI-STYLE-010); boards without them keep their size. One kind of outside clue per board (the four are blocked pairs among each other), so every number in the ring means the same thing. 66 player modifiers, 65 clearable. |
 | 2.10 | 2026-10-19 | implemented | Owner request: catalog batch B6 goes live: K-Whispers (37), 10-Line (46), Sum Line (48), Ratio 1:3 (61), Distance Pairs (63), Ratio Cage (67), Pill Arrow (72), Opposite Sums (77), Counting Circles (78), Distance Cells (80) and the Inverted Zone (93). Owner decisions (2026-10-19): the Constraint Negation Zone becomes an inverted whisper zone (green whisper lines that flip to "less than 5" for a step between two cells of a shaded 3×3 area; 9×9 only); Index Parity (33) is dropped. Catalog lines never cross themselves (GAP-050). New blocked pairs: Inverted Zone + German Whispers, Counting Circles + Prime Cells, Counting Circles + Multiples of 3. 61 player modifiers, 60 clearable. |
@@ -162,7 +163,7 @@ These 15 modifiers extend the active pool beyond the original 15. All are eligib
 
 ### Catalog batches (B1 to B6, active since 2026-10-19) `[GEN-MOD-002]`
 
-Forty-one modifiers from the Extended Library below, registered with their enum IDs (docs/design/modifier-catalog-plan.md). Geometry is read off the solution; lines run in 8 directions.
+Forty-one modifiers from the Extended Library below, registered with their enum IDs (section "Modifier catalog" below). Geometry is read off the solution; lines run in 8 directions.
 
 | ID | Modifier | Visual | Rule | Min Size | Rule Class |
 |:---:|----------|--------|------|:---:|-----------|
@@ -209,6 +210,61 @@ Forty-one modifiers from the Extended Library below, registered with their enum 
 | 93 | **Inverted Zone** | Green whisper lines and a shaded 3×3 area with a dashed green outline | Neighbours on the line differ by 5 or more, but by less than 5 for a step between two cells inside the area | 9×9 | `ZoneWhisperRule` |
 
 ---
+
+## Modifier catalog `[GEN-MOD-002]` `[BOSS-MOD-004]` `[BOSS-MOD-005]` `[BOSS-MOD-006]`
+
+The plan for the 64 catalog modifiers (enum IDs 30 to 93) was made on 2026-10-18 for roadmap RM-001. Its facts: each ID
+existed only as an enum value, an icon and a PNG; the enum comments "newly implemented" were wrong. The plan is merged
+here (plan 1.5, 2026-10-19). Status: batches B1 to B6 are built (41 modifiers, see the batch table above); with the 30
+earlier player modifiers that makes 71. Phase 0 steps 3 and 5 are open.
+
+### Phase 0: shared groundwork
+
+Nothing goes live from Phase 0 by itself; the `ModifierData` entry is the release switch, added last in each batch.
+
+| Step | What | State |
+|---|---|---|
+| 1 | Presence check per type: one check for lines, cages, arrows, markers and pairs; unknown IDs are not present (BOSS-MOD-004, fixes GAP-047) | built |
+| 2 | Subtype filters in the plain Killer and Arrow rules (plain Sum only; existing data defaults to Sum) | built |
+| 3 | One catalog entry per ID (name, description, abbreviation, localization IDs, overlay group, legend colour, Custom Puzzle list) with a contract test (BOSS-MOD-005) | **open**: the name and abbreviation switches still stand |
+| 4 | Structural rule set replacing the generator's seven flags: extra houses and a prefilled box (`SolutionShape`, GEN-SOLVE-002/003) | built |
+| 5 | Geometry helpers: a shared path grower with a per-type check, `MarkOverlayCellsUsed` for regions, cell pairs and corners. The plan's status line and OPEN_POINTS call the open part "golden geometry snapshots", which the plan's table lists under step 5 too. | **open**: golden geometry snapshots (which part of step 5 is meant is not settled) |
+| 6 | Rendering: clue ring outside the grid, corner circles, region outlines, labels, paper-safe colours | built as UI-STYLE-010 and 011 (the plan's status line does not list it) |
+| 7 | Soundness harness (EditMode): seeds × sizes × region variants; the rules accept the solution, uniqueness, time (p95 under 1 s, max under 4 s); every new modifier is paired with every live one to find blocked pairs (`SolutionShapePairBenchmark`, [Explicit]) | built |
+
+### Verdicts
+
+The plan gave each ID a verdict: ship (28), ship later (12), rework (2), drop (22). Now:
+
+- **Ship and ship later (40 IDs): built** in B1 to B6, including 32 and 68, which the plan put after the B5 benchmark.
+- **Rework:** 93 is built as the inverted whisper zone (owner, 2026-10-19). 33 Index Parity is dropped (owner, 2026-10-19).
+- **Drop (22 IDs):** 34, 35, 36, 39, 47, 49, 50, 54, 55, 56, 57, 62, 71, 75, 85, 86 and 87 to 92 (path and meta
+  rules). The enum values and icons stay; the IDs are never registered. The plan gives each a reason (for example 39
+  duplicates Parity Lines, 47 is the same as givens).
+
+### Owner's decisions (2026-10-19)
+
+| Question of the plan | Answer |
+|---|---|
+| Roll weights: unlock over time, gate by tier, or equal? | Equal weight: new modifiers roll at equal weight (plan 1.1). |
+| Codex and completion: grow the totals, or a library page? | The totals grow (plan 1.1). |
+| The drop list | It stands (plan 1.1). |
+| Outside clues: shrink the board or move the HUD? | Shrink: a board with outside clues is drawn about 12 % smaller and the clues stand in a ring (UI-STYLE-010). |
+| Clue removal counts modifier rules (fewer givens)? | Givens stay as today (plan 1.2). |
+| Index Parity (33) and the Negation Zone (93) | 33 is dropped; 93 is the inverted whisper zone (9×9 only). |
+| Rule details: the High/Low middle digit, the K and N constants | High/Low: the low half is 1 to midpoint (1 to 5 on 9×9). K-Whispers: one K per puzzle (2 or 3 up to 7×7, 3 or 6 above). Ratio 1:3 uses N = 3. |
+| Custom Puzzle, Endless Zen, Spirit Trials, Monthly Walk: new modifiers now or later? | The Custom Puzzle rule book lists all 71 player modifiers (UI-STYLE-012). Endless Zen uses the generatable modifiers for its board size (Resolved Design Decisions). **Open** for Spirit Trials and the Monthly Walk: not answered. |
+| One batch per Steam update? | **Open**: no answer recorded. |
+
+### Open
+
+- Phase 0 steps 3 and 5 (table above).
+- Spec contradictions the plan found. They are not resolved here and not yet filed as SPEC-CONF items; the owner decides
+  when filed. **Ambiguous Thermo** (52): the enum comment (`GameEnums.cs:84`) and this spec differ. **Thermo Loop** (50,
+  dropped): the spec says strictly increasing and unsatisfiable, the enum comment says ≥.
+- The library numbers (#16 to #95 in the Extended Library) do not match the enum IDs. The enum IDs are the ones in code.
+- Requirement IDs of the catalog are in `docs/REQUIREMENT_MAP.md`: GEN-MOD-002, BOSS-MOD-004 to 006, BOSS-LIB-NNN (NNN is
+  the enum ID), GEN-SOLVE-002 and 003, UI-STYLE-010 and 011.
 
 ## Floor Modifier System `[BOSS-FLOOR-001]` `[BOSS-FLOOR-003]`
 

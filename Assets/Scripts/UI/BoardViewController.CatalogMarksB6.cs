@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace SudokuRoguelike.UI
 {
-    // [REQ: GEN-MOD-002] Board marks for batch B6 of the modifier catalog (modifier-catalog-plan.md): the 1:3 dot, distance
+    // [REQ: GEN-MOD-002] Board marks for batch B6 of the modifier catalog (BossMechanicsSystem.md "Modifier catalog"): the 1:3 dot, distance
     // links, opposite-sum badges, counting circles, distance cells and the shaded inverted zone. Colours in GamePalette;
     // each mark draws into its modifier's legend layer.
     public sealed partial class BoardViewController

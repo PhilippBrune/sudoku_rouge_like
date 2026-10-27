@@ -27,7 +27,7 @@ namespace SudokuRoguelike.Tests
                 Grades(0, 1, 2, 3, 4, 9));
         }
 
-        // The proposal's example (mistake-scoring-proposals.md, C): base 400; six puzzles with 0, 1, 0, 3, 0, 2 mistakes.
+        // The proposal's example (GameDesignSpec.md §9c, C): base 400; six puzzles with 0, 1, 0, 3, 0, 2 mistakes.
         [Test]
         public void SpecExample_Base400_Gives444()
         {

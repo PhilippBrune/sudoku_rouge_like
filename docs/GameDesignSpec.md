@@ -1,17 +1,18 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.19 | **Date:** 2026-10-26 | **Status:** implemented
+**Version:** 1.20 | **Date:** 2026-10-27 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.20 | 2026-10-27 | implemented | Owner request (2026-10-27): the concept files are merged into the specs. Mistake scoring: the reasons for the grades and the proposals not chosen, one line each (9c). The one-more-run concept: the reasons, the targets and the proposals still open (14, End Screens). Gold references point to GoldEconomySystem 2.3. No rule changed. |
 | 1.19 | 2026-10-26 | implemented | Owner request: the seed of the week scores its pace. A won Garden Run started with the seed of the week gets +1 % of BaseScore per minute under 60, at most +30 %, as its own ledger row (SCORE-TIME-001). |
 | 1.18 | 2026-10-22 | implemented | The first slice of the one-more-run concept (owner request): Walk again on every run end (RUN-AGAIN-001), "This run" with the near miss and what the run moved (RUN-END-NEAR-001, RUN-END-MOVED-001), the stakes in numbers at the boss gate and on cursed tiles (STAKES-001), the run-length measures kept on the PC (RUN-LENGTH-001). Five floors stay (owner). The Credits carry the licence texts (LEGAL-LICENSE-001, GAP-068); the main menu D-pad follows each panel's links (REQ-UI-102, GAP-062). |
 | 1.17 | 2026-10-21 | implemented | Owner request: the input lock after choosing a cell is an option (OPT-GAME-006): on or off, 0.10–1.00 s in 0.05 s steps, 0.25 s by default. |
 | 1.16 | 2026-10-21 | implemented | Options Structure: the Options are a hand scroll with six pages (UI-STYLE-017); Accessibility, Controls and Language are pages, the separate Accessibility panel is gone. |
 | 1.15 | 2026-10-21 | implemented | Options audit after the 0.2.0 playtest (GAP-061): every option now does what its name says (Options Effects, OPT-GAME-001..005, OPT-GFX-001, OPT-AUDIO-001, OPT-LABEL-001, ACCESS-COLOR-003, ACCESS-FONT-001); "Confirm Wrong Placement" removed; Show Digits Left, Jump to Next Empty Cell, Board Brightness/Contrast and Status Captions renamed. |
-| 1.14 | 2026-10-21 | implemented | Owner picks after the 0.2.0 playtest: Pencil mode shows in indigo ink on the number pad and in the pencil marks (4.3, UI-STYLE-020). Run score (9c): every puzzle gets a grade from its own mistakes (Perfect, Clean, Rough, Messy; proposal C of `design/mistake-scoring-proposals.md`), which replaces the flat mistake penalty and the perfect bonus; the puzzle that ends a run is Messy; the end screen shows one stamp per puzzle (SCORE-GRADE-001..004). Unspent gold adds a point per 5 gold, at most 15 % (SCORE-GOLD-001, lever L5 of `design/gold-and-items-concept.md`). Economy levers L1 and L6 (GoldEconomySystem 2.2): from Floor 4 a mistake costs at least 2 HP (5.1, ECON-BAL-003) and the rest heals a quarter (ECON-BAL-004). Garden flow D: entering a floor shows its painting (UI-STYLE-021). |
+| 1.14 | 2026-10-21 | implemented | Owner picks after the 0.2.0 playtest: Pencil mode shows in indigo ink on the number pad and in the pencil marks (4.3, UI-STYLE-020). Run score (9c): every puzzle gets a grade from its own mistakes (Perfect, Clean, Rough, Messy; proposal C, the reasons are in 9c), which replaces the flat mistake penalty and the perfect bonus; the puzzle that ends a run is Messy; the end screen shows one stamp per puzzle (SCORE-GRADE-001..004). Unspent gold adds a point per 5 gold, at most 15 % (SCORE-GOLD-001, lever L5 of GoldEconomySystem 2.3). Economy levers L1 and L6 (GoldEconomySystem 2.3): from Floor 4 a mistake costs at least 2 HP (5.1, ECON-BAL-003) and the rest heals a quarter (ECON-BAL-004). Garden flow D: entering a floor shows its painting (UI-STYLE-021). |
 | 1.13 | 2026-10-20 | implemented | Owner's 0.2.0 playtest: a placed digit highlights every cell with that digit (4.1); digits are taken 0.25 s after a cell is chosen, half of before (4.2); the main menu shows the version (UI-MENU-VERSION-001); every mistake counts toward the run score when it happens (9c, GAP-059). |
 | 1.12 | 2026-10-20 | implemented | Post-run score (9c): rounding stated — each row is its share of the base rounded to whole points, and the final score is the base plus the rows, so the breakdown adds up. The code now adds the bonuses as the formula says; it had multiplied them one after another (GAP-053), and cleared cursed puzzles now count (GAP-054). The 71 player modifiers are chosen in the Custom Puzzle rule book (UI-STYLE-012). |
 | 1.11 | 2026-10-19 | implemented | 43 player modifiers: the catalog batches B1 and B2 (13 modifiers) are live (BossMechanicsSystem 2.8). |
@@ -135,7 +136,7 @@ Irregular puzzles are controlled by `RunState.AllowIrregularPuzzles` toggle (def
 
 - Wrong number placement: a digit that differs from the stored solution is **wrong**, even without a visible conflict. It is rejected (never written to the board) and costs the mistake HP cost: 1, 2 from Harmony H5, 3 from H9 (unless modified by class passive, relic, item or debuff). Re-entering the digit a cell already holds changes nothing. Custom Puzzle 7★ boards have no unique solution and stay rule-based. (Decided 2026-10-07, SPEC-CONF-003; every in-game puzzle has exactly one solution.)
 - **From Floor 4 of a Garden Run a mistake costs at least 2 HP** at every Harmony level (ECON-BAL-003, lever L6 of
-  `design/gold-and-items-concept.md`); Double Penalty doubles that. The floor's entry painting says so ("Here a mistake
+  GoldEconomySystem 2.3); Double Penalty doubles that. The floor's entry painting says so ("Here a mistake
   costs 2 HP").
 - A mistake is saved immediately, so quitting cannot undo it (GAP-031).
 - **Perfect puzzle** (SPEC-AMB-013): no wrong digit was entered in the puzzle. A mistake whose HP loss was absorbed (relic, Rice Paper Umbrella, shield, Koi Gambler) still breaks "perfect". The XP Perfect bonus, the Healing Path floor effect and the curse auto-cleanse all use this one definition (`LevelState.Mistakes == 0`).
@@ -284,10 +285,23 @@ Every puzzle of the run gets a grade from its own mistakes (owner pick C, 2026-1
   colour with its letter, and a legend; the text breakdown lists the letters ("P C P | R P M").
 - **SCORE-GRADE-004** Rough and Messy together cost at most 50 % of BaseScore.
 
+**Why grades, and the proposals not chosen (the proposals of 2026-10-20, merged in 1.20).** At the 0.2.0 playtest the owner
+asked: "only the mistakes of the last puzzle count; every mistake should count, with a fitting weight for when it happens".
+The counting bug came first (GAP-059: every mistake counts when it happens). Then four weightings were proposed, and the
+owner picked **C**:
+
+- **C · Per-puzzle grades (chosen).** Every mistake counts, one bad puzzle cannot sink a run, the end screen tells a story
+  ("Floor 3 was rough, the boss was perfect"), and the perfect bonus and the mistake penalty become one idea.
+- **A · Weight by difficulty (not chosen).** 2 % of the base XP times a weight from the board's stars. Harder to read on the end screen.
+- **B · Weight by floor (not chosen).** 3 % on Floor 1 down to 1 % on Floor 5. Ignores that a Floor 1 puzzle can be hard.
+- **D · Weight by the moment (not chosen).** The first mistake on a board costs 1 %, each further one 3 %. Invisible during play unless the HUD shows it.
+
+Example: base XP 400, six puzzles with 0, 1, 0, 3, 0, 2 mistakes. The flat rule (−2 % per mistake, before 1.14) gives 412; the grades give 444
+(`RunScoreBreakdownTests.SpecExample_Base400_Gives444`).
+
 ### Gold kept (SCORE-GOLD-001)
 
-Gold still held when the run ends adds one point per 5 gold, at most 15 % of BaseScore (lever L5 of
-`design/gold-and-items-concept.md`). It is its own ledger row, so spending now and scoring later are a visible choice.
+Gold still held when the run ends adds one point per 5 gold, at most 15 % of BaseScore (lever L5 of GoldEconomySystem 2.3). It is its own ledger row, so spending now and scoring later are a visible choice.
 
 ### Pace on the seed of the week (SCORE-TIME-001)
 
@@ -540,7 +554,7 @@ As built (1.1, GAP-020; Run tab since 1.9, UI-OPT-002): the in-run Options panel
 - Mistakes made
 - Items used / relics held
 
-**Between runs (one-more-run concept, first slice, 1.18):**
+**Between runs (the one-more-run concept: first slice built in 1.18, the rest open, see below):**
 
 | ID | Requirement |
 |---|---|
@@ -549,6 +563,31 @@ As built (1.1, GAP-020; Run tab since 1.9, UI-OPT-002): the in-run Options panel
 | RUN-END-MOVED-001 | Under "This run" the Garden Run scroll lists at most three things the run moved, a newly opened Harmony level first ("Harmony IV is open."), then each class unlock the run brought closer (closest first, "Koi Gambler: 2 → 9 of 10"), the Codex ("Codex: 41 → 44 of 160 found"), and otherwise what opens the next Harmony level ("Harmony I: win a run on Garden Path."). |
 | STAKES-001 | Choices show their stakes in numbers: the cursed tile shows the gold and XP the puzzle pays played normally and cursed ("Gold 24 → 36 (+50%)"), computed like the reward itself (`RewardPreview`); the boss gate says what the fight pays ("×1.5 XP, and +15 XP for each trial you face") and "Strike a trial" names the XP a struck trial costs. |
 | RUN-LENGTH-001 | The game measures its runs on the player's PC only (no telemetry): how long a run was open (path, puzzles, shops; resumed runs go on counting), the time to its first path choice, and the gap since the previous run's end in the same session. The Garden Run scroll names the run's length in its eyebrow. The last 200 runs are kept in the save (`RunHistory`); `tools/playtest/run_length_report.py` reads them and says whether RM-113 (a short walk) is needed (a won Harmony 0 run over 45 minutes). The number of floors does not change (owner). |
+
+**Why one more run (the one-more-run concept, merged in 1.20).** The strongest pulls of the classic roguelikes are a short
+way back in and the near miss ("so close"). Run of the Nine had five screens between a run's end and the first choice of
+the next, a run that takes an evening, runs that feel alike (the class is the identity more than the build), a loss that
+said little, and stakes hidden in numbers. The first slice (RUN-AGAIN-001, RUN-END-NEAR-001, RUN-END-MOVED-001,
+STAKES-001, RUN-LENGTH-001) answers the first two and shows the stakes. The playtest targets are in RUN-LENGTH-001's
+report: under 30 s from a run's end to the next first choice with Walk again; a won Garden Run at Harmony 0 under 45
+minutes (else RM-113); more than half of the sessions with two or more runs; runs that end spread over the floors.
+
+**Proposals not built (waiting for the owner's pick):**
+
+| RM | Proposal | State |
+|---|---|---|
+| RM-113 | A short walk: three floors (1, 3, 5) with their bosses, half the XP, its own Harmony track | Open. Waits for the run-length report of the 0.2.2 playtest. Five floors stay (owner, 1.18). |
+| RM-114 | Keystone relics | Built: ItemsAndRelicsSystem 2.4 (RELIC-KEY-001/002) |
+| RM-115 | Wagers you can feel | Built: STAKES-001 |
+| RM-116 | Class challenges: three per class on the garden of classes, each with a seal and a Steam achievement | Open |
+| RM-117 | The daily garden | Built in its short form as the Daily Walk (DailyGoalSystem, DAILY-WALK-001..008, RM-122) |
+| RM-118 | Something new opens in each of the first ten runs (a relic, an event, a rule in the Codex, the next class) | Open |
+| RM-119 | Pacts instead of a fixed ladder: from Harmony 4, pacts worth Harmony points | Open |
+| RM-120 | Faster first choice: the first puzzle's board ready behind the floor entry | Open |
+| RM-121 | A rival run: a friend's result as a ghost line on the end scroll | Open (needs seed sharing, RM-003, RM-204) |
+
+**Open for the owner:** the pick of RM-113, RM-116 and RM-118 to RM-121, and their order. The concept's question 1 is
+answered for the rest: the first slice (RM-110, 111, 112, 115) and RM-114 were picked on 2026-10-22.
 
 ---
 

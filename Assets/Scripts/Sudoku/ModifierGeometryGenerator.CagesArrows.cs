@@ -4,7 +4,7 @@ using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.Sudoku
 {
-    // [REQ: GEN-MOD-002] Geometry for the cage, arrow and sum-line modifiers of the catalog (modifier-catalog-plan.md,
+    // [REQ: GEN-MOD-002] Geometry for the cage, arrow and sum-line modifiers of the catalog (BossMechanicsSystem.md "Modifier catalog",
     // batches B3 and B6). Everything is read off the solution and avoids cells other modifiers already use. Each piece
     // keeps at least one cell open, so it never sits on givens alone.
     public static partial class ModifierGeometryGenerator

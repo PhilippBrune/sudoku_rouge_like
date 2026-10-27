@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace SudokuRoguelike.UI
 {
-    // [REQ: GEN-MOD-002] Cages and arrows of every kind (modifier-catalog-plan.md, batches B3 and B6). A cage is one
+    // [REQ: GEN-MOD-002] Cages and arrows of every kind (BossMechanicsSystem.md "Modifier catalog", batches B3 and B6). A cage is one
     // dashed outline (UI-STYLE-006) in its kind's colour with a label in the upper-left corner: the sum, "?" (sum
     // hidden), "×24" (product), "−3" (difference), "1:3" (ratio) or "R" (Renban). An arrow is a ring with its path;
     // an average arrow carries "Ø", a double arrow a ring at both ends, a pill arrow a two-cell pill. Each kind draws

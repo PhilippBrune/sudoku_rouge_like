@@ -51,7 +51,7 @@ namespace SudokuRoguelike.Boss
             [BossModifierId.PrimeCells]        = (1, 0.20f, 0),
             [BossModifierId.FortressCells]     = (2, 0.35f, 6),
 
-            // [REQ: GEN-MOD-002] Catalog batches B1 and B2 (modifier-catalog-plan.md; min sizes from BossMechanicsSystem.md)
+            // [REQ: GEN-MOD-002] Catalog batches B1 and B2 (BossMechanicsSystem.md "Modifier catalog"; min sizes from the same spec)
             [BossModifierId.NonconsecLine] = (1, 0.20f, 6),
             [BossModifierId.HighLowAlternating] = (2, 0.25f, 6),
             [BossModifierId.NabnerLine] = (2, 0.30f, 6),

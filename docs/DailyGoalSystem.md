@@ -1,14 +1,16 @@
 # Daily Goal System
 
-**Version:** 0.5 | **Date:** 2026-10-26 | **Status:** review (the daily walk of two floors and the stamp shop are built)
+**Version:** 0.7 | **Date:** 2026-10-27 | **Status:** review (the daily walk of two floors and the stamp shop are built)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 0.7 | 2026-10-27 | review | The older sections (overview, menu, pool, evaluation, streak, ink stamps, data model, files) brought to what is built since 0.4; the stamp gallery idea replaced by the built stamp shop; how long the shop takes (69 stamps). |
+| 0.6 | 2026-10-27 | review | Owner request (2026-10-27): the daily walk concept (v1.1) is merged into "The Daily Walk as a run": the why, the reward table, the owner's answers and the dropped alternatives. Its file is removed. No rule changed. |
 | 0.5 | 2026-10-26 | review | The ink stamp shop built (DAILY-WALK-007, UI-STYLE-029): twelve looks on three shelves, prices from the mockup for playtesting. |
 | 0.4 | 2026-10-26 | review | Owner: "Implementier die UI-Styles"; the walker gets 10 HP and 10 Pencil (2 bag slots, the class average), the pool keeps 21 goals with four replaced, and the weekly scroll stays, counted by stamps earned (owner, 2026-10-26). Built: DAILY-WALK-001 to 006 and 008, the Game Modes slip (UI-STYLE-027) and the result (UI-STYLE-028). The goals no longer count in a Garden Run, their gold, reroll and stamp rewards are gone. |
-| 0.3 | 2026-10-26 | under review | The Daily Walk becomes a run of its own (`docs/design/daily-walk-concept.md` 1.1, owner's answers 2026-10-25, RM-122): two floors with a boss each, no class, XP to a class chosen at the end, the goals only inside the walk, ink stamps for looks, a leaderboard of the day (DAILY-WALK-001 to 008). Until it is built the goals below stay as they are. |
+| 0.3 | 2026-10-26 | under review | The Daily Walk becomes a run of its own (the daily walk concept, merged in 0.6; owner's answers 2026-10-25, RM-122): two floors with a boss each, no class, XP to a class chosen at the end, the goals only inside the walk, ink stamps for looks, a leaderboard of the day (DAILY-WALK-001 to 008). Until it is built the goals below stay as they are. |
 | 0.2 | 2026-10-07 | implemented | Status set from evidence (SPEC-CONF-022): streak and goal evaluation covered by DailyStreakTests and GameplayEffectContractTests. Daily Walk widget on the main menu as built (SPEC-CONF-027, GAP-028); skipped days reset the streak (GAP-028). |
 | 0.1 | 2026-04-09 | new | Initial specification |
 
@@ -16,105 +18,93 @@
 
 ## Overview
 
-Each day, the player is presented with **3 daily goals** — small, targeted challenges drawn from a seeded pool. Completing goals earns **Ink Stamps**, a cosmetic meta-currency, and small run-start bonuses. A streak counter tracks consecutive days with all 3 goals completed.
-
-Goals are generated deterministically from the current date — no network connection required. All players playing on the same date see the same 3 goals.
+Each day the player gets **3 daily goals**, drawn from a seeded pool, the same for every player on that date (no network
+needed). Since 0.4 the goals are met only inside the **Daily Walk**, a run of two floors (section "The Daily Walk as a
+run"). The goals pay class XP, all three bring an ink stamp, and a streak counts the days with all three goals met.
 
 ---
 
 ## Main Menu Placement
 
-A **Daily Walk** widget sits on the main menu, between the Play buttons and the Class/Meta panels. It shows:
+The Daily Walk is a curtain on Game Modes (UI-STYLE-027). Its slip shows the day, the rules, today's goals (met ones
+ticked), and a side box with the streak and its XP bonus, the ink stamps (and how many this week) and the day's board.
+Its buttons: Back, Stamp shop, and "Walk today's garden" ("Give … XP" while XP waits for a class, "Abandon & walk" when a
+saved run would end).
 
-```
-┌─────────────────────────────────────────────────────┐
-│  🖊  Daily Walk — Wednesday                          │
-│                                                     │
-│  ☐  Complete any puzzle                   +20 Gold  │
-│  ☐  Defeat a boss                    +1 Reroll Tkn  │
-│  ☐  Complete a puzzle with no mistakes  +1 🖊 Stamp │
-│                                                     │
-│  Streak: 4 days  ·  Stamps: 12                      │
-└─────────────────────────────────────────────────────┘
-```
-
-- Checkboxes fill in as goals are completed mid-run or on run end
-- Completed goals show a muted tick and their reward already claimed
-- If all 3 are done: the widget header changes to `"Daily Walk — Complete ✓"` in gold
-
-**As built (1.1, SPEC-CONF-027, GAP-028):** a compact Daily Walk widget sits to the right of the main-menu buttons. It shows today's completed goals and the streak ("1/3 goals today - streak 4") and an **Open** button that leads to the full Daily Walk panel with the goal list, rewards, stamps and reset countdown. Per-goal checkboxes and the streak titles are shown in that panel, not on the widget itself.
+The compact widget on the main menu stays (1.1, SPEC-CONF-027, GAP-028): today's goals met and the streak, and an Open
+button to the goal panel with the list, stamps and the time to the next goals.
 
 ---
 
 ## Goal Seeding
 
-The 3 goals for a given day are selected via:
+The 3 goals for a day are picked with the date as the seed:
 
 ```csharp
 int seed = LocalDate.Year * 10000 + LocalDate.Month * 100 + LocalDate.Day;
 var rng = new Random(seed);
-// Pick 3 distinct goal indices from the pool (no duplicates same day)
 ```
 
-Goal selection is weighted by tier so each day has a mix:
 - Goal 1: always Tier 1 (Easy)
 - Goal 2: Tier 2 (Medium)
-- Goal 3: Tier 2 or Tier 3 (50/50 by day seed)
+- Goal 3: Tier 2 or Tier 3 (50/50 by the day's seed)
+
+The Discord walk posts compute the same goals (`tools/discord/walk_calendar.py`, RUN-WEEK-002); they read the pool from
+`DailyGoalService.cs`, so the pool keeps 7 goals per tier.
 
 ---
 
 ## Goal Pool (21 Goals)
 
-### Tier 1 — Easy (completes in ≤ 1 partial run)
+The pool since 0.4 (owner 2026-10-26: the old 21 with four replaced that needed Floors 3 to 5 or a class). Every goal
+pays class XP by its tier (DAILY-WALK-003).
+
+### Tier 1 · Easy
 
 | ID | Goal | Reward |
 |----|------|--------|
-| `t1_any_puzzle` | Complete any puzzle | +20 Gold at next run start |
-| `t1_visit_rest` | Visit a Rest node | +20 Gold at next run start |
-| `t1_spend_gold` | Spend 50 gold in a single run | +20 Gold at next run start |
-| `t1_collect_item` | Collect any item | +20 Gold at next run start |
-| `t1_use_pencil` | Use pencil marks in a puzzle | +20 Gold at next run start |
-| `t1_visit_shop` | Visit the Coffee & Ice Cream cart | +20 Gold at next run start |
-| `t1_choose_risk` | Take the Risk route on any floor | +20 Gold at next run start |
+| `t1_any_puzzle` | Complete any puzzle | +50 XP |
+| `t1_visit_rest` | Visit a Rest node | +50 XP |
+| `t1_spend_gold` | Spend 50 gold in a single run | +50 XP |
+| `t1_collect_item` | Collect any item | +50 XP |
+| `t1_use_pencil` | Use pencil marks in a puzzle | +50 XP |
+| `t1_visit_shop` | Visit the Coffee & Ice Cream cart | +50 XP |
+| `t1_choose_risk` | Take the Risk route on any floor | +50 XP |
 
-### Tier 2 — Medium (requires meaningful play)
-
-| ID | Goal | Reward |
-|----|------|--------|
-| `t2_no_mistake` | Complete a puzzle with no mistakes | +1 Reroll Token at next run start |
-| `t2_defeat_boss` | Defeat any boss | +1 Reroll Token at next run start |
-| `t2_collect_150g` | Collect 150 gold in a single run | +1 Reroll Token at next run start |
-| `t2_use_2_items` | Use 2 items in a single run | +1 Reroll Token at next run start |
-| `t2_floor2` | Reach Floor 2 | +1 Reroll Token at next run start |
-| `t2_accept_cursed` | Accept a Cursed node | +1 Reroll Token at next run start |
-| `t2_collect_relic` | Collect a relic | +1 Reroll Token at next run start |
-
-### Tier 3 — Hard (requires skill or run length)
+### Tier 2 · Medium
 
 | ID | Goal | Reward |
 |----|------|--------|
-| `t3_full_hp_floor` | Complete any floor without losing HP | +1 Ink Stamp |
-| `t3_no_pencil_puzzle` | Complete a puzzle using zero pencil marks | +1 Ink Stamp |
-| `t3_boss_floor3` | Defeat the Floor 3 boss | +1 Ink Stamp |
-| `t3_floor4` | Reach Floor 4 | +1 Ink Stamp |
-| `t3_win_run` | Win a run (defeat the Floor 5 boss) | +2 Ink Stamps |
-| `t3_no_mistake_boss` | Defeat a boss with no mistakes | +2 Ink Stamps |
-| `t3_new_class` | Play as a class you haven't used in the last 7 days | +1 Ink Stamp |
+| `t2_no_mistake` | Complete a puzzle with no mistakes | +100 XP |
+| `t2_defeat_boss` | Defeat any boss | +100 XP |
+| `t2_collect_150g` | Collect 150 gold in a single run | +100 XP |
+| `t2_use_2_items` | Use 2 items in a single run | +100 XP |
+| `t2_floor2` | Reach Floor 2 | +100 XP |
+| `t2_accept_cursed` | Accept a Cursed node | +100 XP |
+| `t2_collect_relic` | Collect a relic | +100 XP |
+
+### Tier 3 · Hard
+
+| ID | Goal | Reward |
+|----|------|--------|
+| `t3_full_hp_floor` | Complete any floor without losing HP | +200 XP |
+| `t3_no_pencil_puzzle` | Complete a puzzle using zero pencil marks | +200 XP |
+| `t3_finish_hp3` | Finish the walk with 3 HP or more (new 0.4) | +200 XP |
+| `t3_finish_no_item` | Finish the walk without using an item (new 0.4) | +200 XP |
+| `t3_finish_walk` | Finish the walk: defeat the Floor 2 boss (new 0.4) | +200 XP |
+| `t3_no_mistake_boss` | Defeat a boss with no mistakes | +200 XP |
+| `t3_three_perfect` | Solve three puzzles without a mistake in one walk (new 0.4) | +200 XP |
 
 ---
 
 ## Goal Evaluation
 
-Goals are checked at two points:
-1. **During a run** — `DailyGoalService.EvaluateInRun(RunState, GoalId)` is called after each relevant action (puzzle completion, node arrival, gold change, etc.)
-2. **On run end** — a final pass evaluates all incomplete goals against the completed run record
+`DailyGoalService.EvaluateInRun(state, run, level, trigger)` runs after each relevant action (puzzle complete, node
+entered, gold spent, boss defeated, the walk finished). It only runs in the day's scored walk: `RunDirector.DailyGoals`
+is set for that walk alone (DAILY-WALK-004, DAILY-WALK-005). A met goal stays met for the day.
 
-Each goal tracks a `bool Completed` per-goal-index in `DailyGoalState`. Completion is **permanent for the day** — a completed goal stays completed even if you start a new run.
-
-Rewards are granted once, immediately when the goal is first completed:
-- Gold reward: added to `RunState.CurrentGold` if a run is active, otherwise stored as `PendingStartGold` and applied at the next run start
-- Reroll Token: added to `RunState.RerollTokens` if active, otherwise stored as `PendingStartRerollTokens`
-- Ink Stamp: added to `DailyGoalState.TotalInkStamps` immediately
+Rewards: no gold or reroll tokens any more (removed 0.4). The goals' XP joins the walk's XP at its end (DAILY-WALK-003).
+All three goals met: +1 ink stamp (DAILY-WALK-006).
 
 ---
 
@@ -122,89 +112,110 @@ Rewards are granted once, immediately when the goal is first completed:
 
 | Condition | Effect |
 |-----------|--------|
-| All 3 goals completed today | Streak increments by 1 |
-| Any goal not completed by midnight | Streak resets to 0 — including days on which the game was not started: on the first launch after one or more skipped days the streak is 0 (fixed 1.1, GAP-028; `DailyStreakTests`) |
-| Streak = 7 | Award +3 Ink Stamps bonus, display title `"Dedicated Walker"` in main menu widget |
-| Streak = 30 | Award +10 Ink Stamps bonus, display title `"Park Regular"` in main menu widget |
-| Streak = 100 | Award +25 Ink Stamps bonus, display title `"The One Who Returns"` |
-
-Streak titles are cosmetic — shown in the Daily Walk widget header only. The 7-day bonus repeats every 7 days of unbroken streak (not a one-time award).
+| All 3 goals met on a day | The streak grows by 1 at the next day's refresh |
+| A day with a goal left, or a day not played | The streak is 0 (on the first launch after a skipped day too; fixed 1.1, GAP-028; `DailyStreakTests`) |
+| Streak day 3 to 6 | The walk's XP +10 % (DAILY-WALK-003) |
+| Streak day 7 and on | The walk's XP +25 % |
+| Every 7th day of an unbroken streak | +3 ink stamps |
+| Streak 30 | +10 ink stamps, once |
+| Streak 100 | +25 ink stamps, once |
 
 ---
 
-## Ink Stamps (Cosmetic Currency)
+## Ink Stamps
 
-Stamps are spent in a **Stamps Gallery** panel accessible from the main menu (small button in the corner of the Daily Walk widget). No gameplay impact — purely cosmetic:
+Ink stamps come from all three goals of a day (+1), the streak milestones above and the Monthly Walk (+1 for the
+month's first finish, +2 for an S grade). Every stamp goes through `DailyGoalService.EarnStamps`, which also counts the
+stamps earned in the ISO week: the 7th stamp earned in a week adds the weekly scroll, 500 XP that wait for a class like
+the walk's XP (owner 2026-10-26: counted by stamps earned, spent or not).
 
-| Cost | Reward |
-|------|--------|
-| 5 Stamps | Alternative park flavor text set for Rest and Event nodes |
-| 10 Stamps | Alternative run-start/end dialog lines (second set) |
-| 15 Stamps | Main menu background color palette variant ("Evening Walk" — warm amber tones) |
-| 20 Stamps | Alternative park flavor text set #2 (rainy day / grey weather lines) |
-| 30 Stamps | "Veteran's Bench" — a small cosmetic icon shown next to your class name in the class select panel |
-
-Stamps are not consumed by purchases — they accumulate permanently as a visible score of dedication. Stamp *spending* unlocks cosmetics; the stamp total never decreases.
-
-*(Design note: If stamp spending feels unintuitive given they don't decrease, rename to "Discovered" milestones — cosmetics unlock when the total stamps reaches the threshold, not spent.)*
+Stamps are spent in the stamp shop (DAILY-WALK-007, UI-STYLE-029) on looks only. The twelve looks cost 69 stamps in all:
+board ink 27 (indigo, cinnabar and moss 5 each, gold leaf 12), seal frames 28 (moss 6, vermilion 8, gold 14), path seals 14
+(indigo 6, round sumi 8). At one stamp a day that is 69 days; with an unbroken streak and its milestones about 42 days.
 
 ---
 
 ## Data Model
 
-### `DailyGoalState` (new, in `SaveModels.cs` → `ProfileSaveData`)
+`DailyGoalState` in `SaveModels.cs` (in the save file's envelope):
 
 ```csharp
 [Serializable]
 public sealed class DailyGoalState
 {
-    public string LastGoalDate;          // "yyyy-MM-dd" of the last day goals were generated
-    public int[] TodayGoalIds;           // [3] indices into the full goal pool
-    public bool[] TodayGoalCompleted;    // [3] completion flags
-
+    public string LastGoalDate;          // "yyyy-MM-dd" of the day the goals were picked
+    public int[] TodayGoalIds;           // [3] indices into the pool
+    public bool[] TodayGoalCompleted;    // [3]
     public int CurrentStreak;
-    public string LastStreakDate;        // last date a complete day was recorded
-
+    public string LastStreakDate;
     public int TotalInkStamps;
-    public List<int> UnlockedCosmetics; // indices of purchased cosmetics
-
-    // Run-start pending rewards (applied at next LaunchRun)
-    public int PendingStartGold;
-    public int PendingStartRerollTokens;
+    public List<int> UnlockedCosmetics;  // owned looks: shelf × 10 + look
+    public int PendingWalkXp;            // XP waiting for a class (walks and the weekly scroll)
+    public string LastScoredWalkDate;    // the day's scored walk
+    public string StampWeek;             // ISO week of StampsThisWeek
+    public int StampsThisWeek;
+    public int WornBoardInk, WornSealFrame, WornPathSeal;   // worn looks, 0 = the game's own
 }
 ```
 
-### Daily refresh logic
+Removed in 0.4 (JsonUtility drops them from old saves): `PendingStartGold`, `PendingStartRerollTokens`,
+`ClassLastPlayedIds`, `ClassLastPlayedDates`.
 
-On `GameBootstrap.Start()` (or when the main menu is shown):
-```csharp
-DailyGoalService.RefreshIfNewDay(goalState, LocalDate.Today);
-```
-
-`RefreshIfNewDay` checks `LastGoalDate != today.ToString()`. If different:
-- Evaluate streak (did all 3 goals complete yesterday?)
-- Generate new 3 goals for today using date seed
-- Reset `TodayGoalCompleted` to `[false, false, false]`
-- Save `LastGoalDate = today`
+On profile load (`GameBootstrap.Start`, `ApplySlotChange`) `RefreshIfNewDay` settles the streak of the day before and picks
+the new goals, and `InkStampShop.Apply` wears the profile's looks.
 
 ---
 
 ## Implementation Notes
 
-| File | Change |
-|------|--------|
-| `Core/SaveModels.cs` | Add `DailyGoalState` to `ProfileSaveData` |
-| `Run/DailyGoalService.cs` | **New.** Static service: `RefreshIfNewDay()`, `EvaluateInRun()`, `CompleteGoal()`, `GetTodayGoals()` |
-| `UI/MainMenuBlueprintBuilder.cs` | Add Daily Walk widget panel in menu layout |
-| `UI/MainMenuController.cs` | Wire `DailyGoalService` calls; apply pending rewards on `LaunchRun()` |
-| `Bootstrap/GameBootstrap.cs` | Call `DailyGoalService.RefreshIfNewDay()` after profile load |
-| `Run/RunDirector.cs` | Call `DailyGoalService.EvaluateInRun()` after puzzle complete, node arrive, gold change |
+| File | Role |
+|------|------|
+| `Run/DailyGoalService.cs` | Pool, seeding, `RefreshIfNewDay`, `EvaluateInRun`, `EarnStamps`, `WalkSeed`, `TryStartScoredWalk`, `WalkXp`, `SettleWalk` |
+| `Bootstrap/GameBootstrap.cs` | The walk's launch and resume (two floors, the scored walk, the saved goals reloaded) |
+| `Save/ProfileService.cs` | `SettleDailyWalk`, `GiveWaitingXp`; a walk never commits class XP or a Garden Run win |
+| `Meta/InkStampShop.cs`, `UI/StampShopView.cs` | The stamp shop and its looks |
+| `UI/MainMenuController.GameModes.cs`, `UI/EndScreenViewController.DailyWalk.cs`, `UI/DailyWalkGiveView.cs` | The slip, the result and giving the XP |
+| `Meta/SteamLeaderboardService.Boards.cs` | The day's board |
 
 ## The Daily Walk as a run (0.3, under review)
 
-The owner's answers to the concept (2026-10-25) turn the Daily Walk into a short run of its own. Built so far: the XP
-sum (DAILY-WALK-003, `DailyGoalService.WalkXp`). The screens are proposed in `docs/design/layout-proposals.md` 2.9
-(UI-STYLE-027 Game Modes, 028 the result, 029 the stamp shop) and wait for the owner's pick.
+The owner's answers (2026-10-25) turn the Daily Walk into a short run of its own. Built: DAILY-WALK-001 to 008 (table
+below), the Game Modes slip (UI-STYLE-027), the result (UI-STYLE-028) and the stamp shop (UI-STYLE-029). The mockups are
+in `docs/design/layout-proposals.md` 2.9.
+
+#### Why
+
+The daily walk concept (2026-10-25) found four reasons the Daily Walk did not bring a player back every day:
+
+1. **The rewards belong to one run.** 20 gold or a reroll token is gone when the run ends. Now the XP stays with a class.
+2. **Ink stamps buy nothing.** Now they buy looks (DAILY-WALK-007).
+3. **There is no short session.** The goals sat inside a five-floor run, and the hard ones ("win a run", "reach
+   Floor 4") need an evening. Now the walk is two floors.
+4. **Nothing to compare.** Everyone got the same goals, but nobody saw how others did. Now there is a board of the day
+   (DAILY-WALK-008).
+
+#### Reward table
+
+| Reward | Amount | Rule |
+|---|---|---|
+| Walk finished | the walk's XP ×1.5 (dawn bonus) | DAILY-WALK-003. The concept's example: about 400 XP for a walk, 600 with the bonus, one and a half levels for a class around Level 20 (365 XP to the next level). |
+| Each goal met | easy +50, medium +100, hard +200 XP | DAILY-WALK-003. They replace the old 20 gold, reroll token and stamp of the goals. |
+| All three goals | +1 ink stamp | DAILY-WALK-006 |
+| Streak | day 3: +10 % XP; day 7: +25 %; kept while the streak holds | DAILY-WALK-003. A missed day costs the bonus, not the stamps. |
+| Seventh stamp in an ISO week | 500 XP for the class the player picks | Owner, 2026-10-26: the weekly scroll stays, counted by stamps earned, spent or not (0.4). |
+
+#### Owner's answers (2026-10-25)
+
+1. **Length:** two floors, each with its boss (owner: "Jede Etage mit Boss", every floor with a boss).
+2. **Class:** none, "to avoid that a class is still not unlocked". Everyone walks with the same HP, Pencil and bag. The
+   XP goes to an unlocked class the player chooses on the result screen ("Klasse am Ende wählen").
+3. **The old goals inside the Garden Run go away;** the three goals are met inside the daily walk.
+4. **Ink stamps also buy looks** in a shop.
+5. **A Steam leaderboard of the day now.**
+
+Dropped alternatives (concept 1.0 and 1.1): a one-floor walk with three puzzles and no boss, one class for everyone on a
+day, and the old goals kept inside the Garden Run as a second source of XP. The open build questions of the concept (the
+walker's HP, Pencil and bag, the goal pool, the weekly scroll) were decided on 2026-10-26 (below).
 
 | ID | Rule |
 |----|------|

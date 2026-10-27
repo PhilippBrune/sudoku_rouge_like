@@ -73,7 +73,7 @@ namespace SudokuRoguelike.UI
         public static readonly Color LineConsecutiveLine = new(0.86f, 0.70f, 0.10f, 1f); // gold
         public static readonly Color LineSlowThermo      = new(0.70f, 0.50f, 0.92f, 1f); // violet, with an open bulb
         public static readonly Color LineUniqueSetLine   = new(0.34f, 0.78f, 0.90f, 1f); // sky blue, with rings at the ends
-        // Catalog batch B1 (modifier-catalog-plan.md): zipper lavender, entropic peach and modular teal as setters use them.
+        // Catalog batch B1 (BossMechanicsSystem.md "Modifier catalog"): zipper lavender, entropic peach and modular teal as setters use them.
         public static readonly Color LineNonconsecLine   = new(0.62f, 0.80f, 0.22f, 1f); // lime, ink crosses on each step
         public static readonly Color LineHighLow         = new(0.52f, 0.82f, 0.64f, 1f); // mint, paper stripe in the middle
         public static readonly Color LineNabner          = new(0.90f, 0.36f, 0.42f, 1f); // red

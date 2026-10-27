@@ -5,7 +5,7 @@ using SudokuRoguelike.Sudoku;
 namespace SudokuRoguelike.Tests
 {
     // [REQ: BOSS-MOD-006] Cage, arrow and sum-line rules of the modifier catalog on hand-made 9×9 boards: a digit is
-    // rejected only when it breaks the rule with the digits already placed (modifier-catalog-plan.md, B3 and B6).
+    // rejected only when it breaks the rule with the digits already placed (BossMechanicsSystem.md "Modifier catalog", B3 and B6).
     [TestFixture]
     [Requirement("BOSS-MOD-006")]
     public sealed class CatalogCageArrowRuleTests

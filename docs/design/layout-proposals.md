@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 3.2 | **Date:** 2026-10-26 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; not built: the main menu)
+**Version:** 3.3 | **Date:** 2026-10-27 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; not built: the main menu)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 3.3 | 2026-10-27 | review | Owner request (2026-10-27): the concept files are merged into their specs; the references to them point to the spec sections (DailyGoalSystem, IncenseWalkMode, GameDesignSpec §14). No mockup changed. |
 | 3.2 | 2026-10-26 | review | The ink stamp shop built (UI-STYLE-029), opened from the Daily Walk's slip; its looks in the game (board ink, the seal ring on Select Class, the floor seals). A click chooses a look, Buy or Wear acts. Screenshots below. With this, UI-STYLE-027 to 030 are built. |
 | 3.1 | 2026-10-26 | review | The Incense Walk built: the sixth curtain on Game Modes (UI-STYLE-027) and the puzzle screen with the incense stick (UI-STYLE-030), and its result in the mode-result family. Changes from the mockups: the slips sit in the left column under the stick (the right column keeps the number pad), "Practice" sits left of Back. Screenshots below. |
 | 3.0 | 2026-10-26 | review | Owner: "Implementier die UI-Styles" (UI-STYLE-027 to 030). Built first: the Daily Walk's slip on Game Modes (UI-STYLE-027) and its result (UI-STYLE-028), with the walk behind them (DailyGoalSystem 0.4). Two changes from the mockup: Back sits beside the give button (the XP waits), and a seal is chosen by a click or focus, given only by the button. Screenshots below. |
@@ -505,7 +506,7 @@ Built at the owner's request without a separate mockup, from the run-end scroll'
 ![Game Modes, Spirit Trials before](layout-proposals/after_game_modes.jpg)
 ![Game Modes, Spirit Trials with its tiers](layout-proposals/after_game_modes_trials.jpg)
 
-**The one-more-run slice on the run ends** (`docs/design/one-more-run-concept.md` 1.1): Walk again first, "This run" with the near miss and what the run moved, the run's length in the banner; the cursed tile and the boss gate show their stakes in numbers. Before and after:
+**The one-more-run slice on the run ends** (GameDesignSpec.md §14, End Screens): Walk again first, "This run" with the near miss and what the run moved, the run's length in the banner; the cursed tile and the boss gate show their stakes in numbers. Before and after:
 
 ![Run end before](layout-proposals/after_run_end_defeat.jpg)
 ![Run end with Walk again and This run](layout-proposals/after_one_more_run_defeat.jpg)
@@ -546,7 +547,7 @@ After the Garden Run's first boss the offering table holds three of the four key
 
 ## The Daily Walk and the Incense Walk (proposals, 2.9)
 
-The owner's picks from the two concepts (`docs/design/daily-walk-concept.md`, `docs/design/time-attack-concept.md`) need
+The owner's picks from the two concepts (DailyGoalSystem.md and IncenseWalkMode.md, merged 2026-10-27) need
 four screens. One proposal each, waiting for the owner's pick; the numbers are the concepts' own.
 
 ### Game Modes · Six paths (proposed UI-STYLE-027)

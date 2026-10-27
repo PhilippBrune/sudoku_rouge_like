@@ -1,11 +1,12 @@
 # Achievements
 
-**Version:** 1.0 | **Date:** 2026-10-26 | **Status:** implemented (game side; the 21 new achievements still have to be created in Steamworks)
+**Version:** 1.1 | **Date:** 2026-10-27 | **Status:** implemented (game side; the 21 new achievements are saved in Steamworks, not published yet)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.1 | 2026-10-27 | implemented | Owner: "Lade die neuen Achievements ... hoch". The 21 new achievements are created in Steamworks (App 4858470) with name, description and both icons, saved, not published (Publish waits for the owner's OK). The other four languages (§5) are not entered yet. The Daily Walk streak is checked at the end of a Daily Walk too (it is a Garden Run of two floors since DailyGoalSystem 0.4). |
 | 1.0 | 2026-10-26 | implemented | Owner request: "Review the current achievements and add more to the game." Review of the eight Harmony achievements; 21 new achievements for the first hours, the classes, the other modes and the collection (ACHIEVE-RUN-001, ACHIEVE-CLASS-001, ACHIEVE-MODE-001, ACHIEVE-COLLECT-001). |
 
 ## 1. Review of the achievements so far
@@ -74,7 +75,7 @@ Counted for Garden Runs only (not tutorials, custom puzzles or the other modes).
 
 | API name | Name | Description | Condition in the game |
 |---|---|---|---|
-| `daily_streak_7` | Seven Dawns | Keep a Daily Walk streak for 7 days. | `DailyGoalState.CurrentStreak` ≥ 7 at a Garden Run's end |
+| `daily_streak_7` | Seven Dawns | Keep a Daily Walk streak for 7 days. | `DailyGoalState.CurrentStreak` ≥ 7 at a Garden Run's or a Daily Walk's end |
 | `codex_half` | Half the Collection | Find half of everything in the Codex. | Items, Relics, Rules and Curses together: found ≥ half |
 | `codex_all` | The Complete Codex | Find everything in the Codex. | every Codex page complete |
 
@@ -85,11 +86,11 @@ Counted for Garden Runs only (not tutorials, custom puzzles or the other modes).
 | ACHIEVE-RUN-001 | At every Garden Run's end (`ProfileService.RecordRunAndGetNewUnlocks`, after XP, unlocks and Codex finds are counted) the game grants the run achievements of §2 whose condition holds. Tutorials, custom puzzles and the other modes grant none of them. |
 | ACHIEVE-CLASS-001 | At the same point the class achievements of §2 are checked; a won Garden Run adds its class to `ClassesWithAWin` (old saves start empty). |
 | ACHIEVE-MODE-001 | The results of Endless Zen, Spirit Trials and the Monthly Walk check their achievement before they save (`EndScreenViewController`); a new achievement is saved even when the result is not a new best. |
-| ACHIEVE-COLLECT-001 | The Daily Walk streak and the Codex achievements are checked at every Garden Run's end. |
+| ACHIEVE-COLLECT-001 | The Daily Walk streak and the Codex achievements are checked at every Garden Run's end, the Daily Walk's included. |
 
 Every grant is kept in the profile (`MasteryAchievementState.UnlockedAchievements`) and sent to Steam when Steam runs; unlocks made without Steam are sent at the next start with Steam (`SyncUnlockedAchievements`). An API name Steamworks does not know yet fails quietly (a warning in the log) and is sent again later.
 
-## 4. Steamworks (owner steps, before the build that carries them goes live)
+## 4. Steamworks (created 2026-10-27; publishing waits for the owner)
 
 Steamworks → App 4858470 → Stats & Achievements → Achievements: one new achievement per row of §2 with the API name, name, description, hidden = no, and the two icons (`steam_assets/achievements/achieved_<api name>.jpg` and `unachieved_<api name>.jpg`, 256×256). Then publish (stop and check before the Publish button, as always). The texts in the other four languages are in §5 (Steamworks → the achievement → Localization).
 

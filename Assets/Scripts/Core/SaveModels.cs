@@ -24,11 +24,11 @@ namespace SudokuRoguelike.Core
         public CompletionTrackerState Completion = new CompletionTrackerState();
         public DailyGoalState DailyGoals = new DailyGoalState();           // [REQ: DAILY-GOAL-005]
         public SeasonalChallengeState SeasonalChallenge = new SeasonalChallengeState(); // [REQ: SEASON-SCORE-001]
-        // [REQ: RUN-LENGTH-001] The last runs' lengths, kept on this PC only (one-more-run concept §6).
+        // [REQ: RUN-LENGTH-001] The last runs' lengths, kept on this PC only (GameDesignSpec §14, RUN-LENGTH-001).
         public List<RunHistoryEntry> RunHistory = new List<RunHistoryEntry>();
     }
 
-    /// <summary>[REQ: RUN-LENGTH-001] One finished run, for the run-length measures of the one-more-run concept (§6).</summary>
+    /// <summary>[REQ: RUN-LENGTH-001] One finished run, for the run-length measures of the one-more-run concept (GameDesignSpec §14).</summary>
     [Serializable]
     public sealed class RunHistoryEntry
     {

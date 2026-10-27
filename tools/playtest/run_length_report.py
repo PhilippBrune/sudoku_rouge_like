@@ -1,4 +1,4 @@
-"""Reports the run-length measures of the one-more-run concept (docs/design/one-more-run-concept.md §6) from the runs a
+"""Reports the run-length measures of the one-more-run concept (GameDesignSpec.md §14, RUN-LENGTH-001) from the runs a
 profile kept (RUN-LENGTH-001: `RunHistory` in the save, the last 200 runs, on this PC only).
 
     python tools/playtest/run_length_report.py                 # every profile of this PC
@@ -15,8 +15,8 @@ import sys
 from collections import Counter
 
 GARDEN_RUN = 0                     # Core.GameMode as JsonUtility writes it
-SHORT_WALK_THRESHOLD_MIN = 45      # concept §6: a won H0 run should take under 45 minutes
-WAY_BACK_TARGET_S = 30             # concept §6: end of a run to the next first choice
+SHORT_WALK_THRESHOLD_MIN = 45      # GameDesignSpec §14, one more run: a won H0 run should take under 45 minutes
+WAY_BACK_TARGET_S = 30             # GameDesignSpec §14, one more run: end of a run to the next first choice
 MIN_RUNS = 3                       # fewer won H0 runs than this say nothing yet
 
 

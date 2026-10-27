@@ -10,7 +10,7 @@ using SudokuRoguelike.UI;
 
 namespace SudokuRoguelike.Tests
 {
-    // The first slice of the one-more-run concept (docs/design/one-more-run-concept.md §5): Walk again (RM-110), So close
+    // The first slice of the one-more-run concept (GameDesignSpec.md §14 "Between runs"): Walk again (RM-110), So close
     // (RM-111), What this run moved (RM-112), the stakes in numbers (RM-115) and the run-length measures (§6).
     [TestFixture]
     public sealed class OneMoreRunTests

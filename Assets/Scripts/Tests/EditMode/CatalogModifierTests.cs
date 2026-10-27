@@ -12,7 +12,7 @@ using UnityEngine.TestTools;
 
 namespace SudokuRoguelike.Tests
 {
-    // [REQ: GEN-MOD-002] [REQ: BOSS-MOD-005] [REQ: BOSS-MOD-006] Catalog batches B1 and B2 (modifier-catalog-plan.md):
+    // [REQ: GEN-MOD-002] [REQ: BOSS-MOD-005] [REQ: BOSS-MOD-006] Catalog batches B1 and B2 (BossMechanicsSystem.md "Modifier catalog"):
     // every new rule on hand-made boards, every new modifier on generated boards (its geometry is there, the solution
     // never trips its rule while it is being filled in, a wrong digit is caught), and every playable modifier complete
     // in the catalog (name, rule text in five languages, abbreviation, icon, legend layer).

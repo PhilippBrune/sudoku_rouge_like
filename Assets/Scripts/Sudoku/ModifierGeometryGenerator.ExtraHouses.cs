@@ -4,7 +4,7 @@ using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.Sudoku
 {
-    // [REQ: GEN-MOD-002] Overlay for batch B5 of the modifier catalog (modifier-catalog-plan.md). X-Sudoku, Hyper Sudoku,
+    // [REQ: GEN-MOD-002] Overlay for batch B5 of the modifier catalog (BossMechanicsSystem.md "Modifier catalog"). X-Sudoku, Hyper Sudoku,
     // Disjoint Groups and the magic square are built into the solution by the generator (SolutionShape); here each one
     // is switched on only when the solution really keeps it, so a board made without it reports the modifier missing
     // instead of showing a rule its solution breaks. Extra regions are read off the solution like the other catalog

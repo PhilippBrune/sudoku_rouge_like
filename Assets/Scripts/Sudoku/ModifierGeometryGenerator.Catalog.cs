@@ -4,7 +4,7 @@ using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.Sudoku
 {
-    // [REQ: GEN-MOD-002] Geometry for batches B1 and B2 of the modifier catalog (docs/design/modifier-catalog-plan.md).
+    // [REQ: GEN-MOD-002] Geometry for batches B1 and B2 of the modifier catalog (docs/BossMechanicsSystem.md "Modifier catalog").
     // Everything is read off the solution, so the solution always satisfies it and the board stays unique under its
     // base rules. Lines run in 8 directions without crossing themselves and avoid cells other modifiers already use.
     public static partial class ModifierGeometryGenerator

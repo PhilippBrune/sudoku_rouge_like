@@ -3,7 +3,7 @@ using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.Sudoku
 {
-    // Arrow variants and sum lines of the modifier catalog (docs/design/modifier-catalog-plan.md). Each check compares
+    // Arrow variants and sum lines of the modifier catalog (docs/BossMechanicsSystem.md "Modifier catalog"). Each check compares
     // what the filled digits allow on both sides: the lowest and highest total the path can still reach against the
     // totals the circle digits can still stand for. A digit is rejected only when the two ranges no longer meet, so the
     // rules are safe on partial boards.

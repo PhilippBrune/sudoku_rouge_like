@@ -7,7 +7,7 @@ using SudokuRoguelike.Run;
 
 namespace SudokuRoguelike.Tests
 {
-    // Owner's 0.2.0 playtest: "it feels like gold and items are not needed" (design/gold-and-items-concept.md, RM-108).
+    // Owner's 0.2.0 playtest: "it feels like gold and items are not needed" (GoldEconomySystem.md, RM-108).
     // L1: item prices ×2.5 and puzzle gold −20 %, so a shop visit uses most of a floor's gold. L6: from Floor 4 a mistake
     // costs at least 2 HP, and the rest heals a quarter of max HP instead of a third.
     [TestFixture]

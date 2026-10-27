@@ -105,7 +105,7 @@ namespace SudokuRoguelike.Run
         // halves it, rounded up.
         public int GetRestHealAmount()
         {
-            // [REQ: ECON-BAL-004] A quarter of max HP (it was a third; gold-and-items concept L6), at least 1.
+            // [REQ: ECON-BAL-004] A quarter of max HP (it was a third; GoldEconomySystem lever L6), at least 1.
             var heal = Math.Max(1, State.MaxHP / 4);
             return Harmony.RestHealHalved ? (heal + 1) / 2 : heal;
         }

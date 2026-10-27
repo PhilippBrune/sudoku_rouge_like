@@ -4,7 +4,7 @@ using SudokuRoguelike.Sudoku;
 
 namespace SudokuRoguelike.Tests
 {
-    // [REQ: BOSS-MOD-006] Batch B4 rules of the modifier catalog on hand-made 9×9 boards (modifier-catalog-plan.md): clues
+    // [REQ: BOSS-MOD-006] Batch B4 rules of the modifier catalog on hand-made 9×9 boards (BossMechanicsSystem.md "Modifier catalog"): clues
     // outside the grid and quadruples reject a digit only when the placed digits already rule the clue out.
     [TestFixture]
     [Requirement("BOSS-MOD-006")]

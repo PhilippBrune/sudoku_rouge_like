@@ -4,7 +4,7 @@ using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.Sudoku
 {
-    // [REQ: GEN-MOD-002] Geometry for batch B6 of the modifier catalog (modifier-catalog-plan.md): whisper lines with
+    // [REQ: GEN-MOD-002] Geometry for batch B6 of the modifier catalog (BossMechanicsSystem.md "Modifier catalog"): whisper lines with
     // their own K, the inverted whisper zone, 1:3 dots, distance pairs, opposite sums, counting circles and distance
     // cells. Everything is read off the solution and avoids cells other modifiers already use; each piece keeps at least
     // one open cell.

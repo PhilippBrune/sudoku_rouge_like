@@ -9,7 +9,7 @@ using Object = UnityEngine.Object;
 
 namespace SudokuRoguelike.UI
 {
-    // [REQ: ECON-GATE-001] [REQ: ECON-GATE-002] Gold at the boss gate (gold-and-items concept L2): a row under the title
+    // [REQ: ECON-GATE-001] [REQ: ECON-GATE-002] Gold at the boss gate (GoldEconomySystem lever L2): a row under the title
     // with the purse, the Warding Flame relic when held, "Strike a trial" (then a click on the trial to strike) and
     // "Lower intensity". A button that cannot be paid fades; a used one names what it did.
     public sealed partial class BossGateViewController

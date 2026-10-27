@@ -3,7 +3,7 @@ using SudokuRoguelike.Items;
 
 namespace SudokuRoguelike.UI
 {
-    // [REQ: ITEM-COUNTER-001..006] Counter items in the bag (gold-and-items concept L3): they write correct digits into
+    // [REQ: ITEM-COUNTER-001..006] Counter items in the bag (GoldEconomySystem lever L3): they write correct digits into
     // the cells of their family's rules (RunDirector.CounterItems.cs). An item that finds nothing is not used up.
     public sealed partial class InRunController
     {

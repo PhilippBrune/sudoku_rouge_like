@@ -3,7 +3,7 @@ using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.Sudoku
 {
-    // Batch B6 of the modifier catalog (docs/design/modifier-catalog-plan.md): a whisper with its own K, the inverted
+    // Batch B6 of the modifier catalog (docs/BossMechanicsSystem.md "Modifier catalog"): a whisper with its own K, the inverted
     // whisper zone, the 1:3 dot, distance pairs, opposite sums, counting circles and distance cells. The ratio cage, pill
     // arrow, N-line and sum line live with their families (ConstraintRules.Cages.cs, ConstraintRules.ArrowsSums.cs).
     // Every rule reads only the digits already on the board, so it is safe on partial boards.

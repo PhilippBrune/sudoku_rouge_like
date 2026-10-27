@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace SudokuRoguelike.Tests
 {
-    // Gold at the boss gate (design/gold-and-items-concept.md L2, owner pick after the 0.2.0 playtest): strike one trial
+    // Gold at the boss gate (GoldEconomySystem.md, lever L2, owner pick after the 0.2.0 playtest): strike one trial
     // for 60 gold × floor number (the boss then takes one trial fewer) and lower the intensity one step for 40 gold ×
     // floor number, each once per gate, kept in the save.
     [TestFixture]

@@ -675,7 +675,7 @@ namespace SudokuRoguelike.Run
             // [REQ: CURSE-INT-002] phantom_pain curse raises base damage to 2
             var damage = Math.Max(1, State.MistakeHpCost);
             // [REQ: ECON-BAL-003] From Floor 4 of a Garden Run a mistake costs at least 2 HP, at every Harmony level
-            // (gold-and-items concept L6): healing and shield items become survival tools late in a run.
+            // (GoldEconomySystem lever L6): healing and shield items become survival tools late in a run.
             damage = Math.Max(damage, LateFloorMistakeHpCost(State));
             if (IsDebuffActive(BossModifierId.DoublePenalty)) damage *= 2;
             damage = Math.Max(damage, CurseService.GetMistakeDamage(State)); // phantom_pain

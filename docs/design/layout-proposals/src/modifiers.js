@@ -1,4 +1,4 @@
-// The player modifiers once the whole modifier plan is built (docs/design/modifier-catalog-plan.md): 71 in six
+// The player modifiers once the whole modifier plan is built (docs/BossMechanicsSystem.md, "Modifier catalog"): 71 in six
 // families, with the game's icons. "new" marks modifiers added after the first 30. Used by the Custom Puzzle mockups.
 const MOD_FAMILIES = [
   { id: 'lines', name: 'Lines', mods: [

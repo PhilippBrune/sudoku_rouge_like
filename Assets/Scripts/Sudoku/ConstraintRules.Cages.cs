@@ -3,7 +3,7 @@ using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.Sudoku
 {
-    // Cage variants of the modifier catalog (docs/design/modifier-catalog-plan.md, BossMechanicsSystem.md "Arithmetic /
+    // Cage variants of the modifier catalog (docs/BossMechanicsSystem.md "Modifier catalog" and "Arithmetic /
     // Cage Variants"). Every cage holds no repeated digit. Each rule reads only the digits already on the board, so it is
     // safe on partial boards: a digit is rejected only when it breaks the rule with the digits already placed.
 

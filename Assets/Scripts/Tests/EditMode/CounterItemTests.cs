@@ -9,7 +9,7 @@ using SudokuRoguelike.Sudoku;
 
 namespace SudokuRoguelike.Tests
 {
-    // Counter items (design/gold-and-items-concept.md L3, owner pick after the 0.2.0 playtest): one item per modifier
+    // Counter items (ItemsAndRelicsSystem.md "Counter Items" (lever L3), owner pick after the 0.2.0 playtest): one item per modifier
     // family writes correct digits into the cells that family's rules use; shops lean toward the counters of the board's
     // rules.
     [TestFixture]

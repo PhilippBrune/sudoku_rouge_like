@@ -24,7 +24,7 @@ namespace SudokuRoguelike.Economy
             return 1.0f + stars * 0.2f;
         }
 
-        // [REQ: ECON-BAL-002] Puzzle gold is four fifths of the table (gold-and-items concept L1, 0.2.0 playtest): gold had
+        // [REQ: ECON-BAL-002] Puzzle gold is four fifths of the table (GoldEconomySystem lever L1, 0.2.0 playtest): gold had
         // outrun every sink.
         public const float PuzzleGoldFactor = 0.8f;
 
@@ -54,7 +54,7 @@ namespace SudokuRoguelike.Economy
         }
 
         // [REQ: SHOP-PRICE-001] [REQ: ECON-BAL-001] Base prices: Normal 40, Rare 75, Epic 150 (×2.5 since the 0.2.0
-        // playtest, gold-and-items concept L1; they were 15/30/60). The one price table: ItemService and ShopService read it.
+        // playtest, GoldEconomySystem lever L1; they were 15/30/60). The one price table: ItemService and ShopService read it.
         public static int BaseItemPrice(Core.ItemRarity rarity)
         {
             switch (rarity)

@@ -4,7 +4,7 @@ using SudokuRoguelike.Sudoku;
 
 namespace SudokuRoguelike.Tests
 {
-    // [REQ: BOSS-MOD-006] Batch B6 rules of the modifier catalog on hand-made 9×9 boards (modifier-catalog-plan.md): a digit
+    // [REQ: BOSS-MOD-006] Batch B6 rules of the modifier catalog on hand-made 9×9 boards (BossMechanicsSystem.md "Modifier catalog"): a digit
     // is rejected only when it breaks the rule with the digits already placed.
     [TestFixture]
     [Requirement("BOSS-MOD-006")]

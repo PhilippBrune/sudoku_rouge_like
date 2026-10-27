@@ -5,7 +5,7 @@ using SudokuRoguelike.Economy;
 
 namespace SudokuRoguelike.Run
 {
-    // Gold at the boss gate (gold-and-items concept L2, owner pick after the 0.2.0 playtest): once per gate the player may
+    // Gold at the boss gate (GoldEconomySystem lever L2, owner pick after the 0.2.0 playtest): once per gate the player may
     // pay to strike one offered trial (60 gold × floor number) and to lower the boss's intensity one step (40 gold × floor
     // number). A struck trial leaves the offer and the boss takes one trial fewer (the gate always offers one more than
     // it takes, so removing an offer alone would buy nothing). Both are kept in RunState for the floor, so Save & Quit at

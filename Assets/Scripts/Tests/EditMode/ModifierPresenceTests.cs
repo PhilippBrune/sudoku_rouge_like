@@ -7,7 +7,7 @@ namespace SudokuRoguelike.Tests
 {
     // [REQ: BOSS-MOD-004] A chosen modifier counts as present only with its own geometry (GAP-047): one line modifier
     // never stands in for another, a white dot never for a black one. The plain Killer and Arrow rules ignore cage and
-    // arrow subtypes, which have their own rules (modifier-catalog-plan.md, Phase 0).
+    // arrow subtypes, which have their own rules (BossMechanicsSystem.md "Modifier catalog", Phase 0).
     [TestFixture]
     [Requirement("BOSS-MOD-004")]
     public sealed class ModifierPresenceTests

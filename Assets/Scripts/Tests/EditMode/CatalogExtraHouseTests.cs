@@ -9,7 +9,7 @@ using SudokuRoguelike.Sudoku;
 namespace SudokuRoguelike.Tests
 {
     // [REQ: BOSS-MOD-006] [REQ: GEN-SOLVE-002] [REQ: GEN-SOLVE-003] Batch B5 of the modifier catalog
-    // (modifier-catalog-plan.md): the extra-house and magic-square rules on hand-made boards, the generator building
+    // (BossMechanicsSystem.md "Modifier catalog"): the extra-house and magic-square rules on hand-made boards, the generator building
     // solutions that keep them, and the pre-baked boss board matching on every solution-shaping rule (GAP-051).
     [TestFixture]
     [Requirement("BOSS-MOD-006", "GEN-SOLVE-002")]

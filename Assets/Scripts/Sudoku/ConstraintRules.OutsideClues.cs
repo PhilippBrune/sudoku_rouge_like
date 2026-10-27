@@ -4,7 +4,7 @@ using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.Sudoku
 {
-    // Batch B4 of the modifier catalog (docs/design/modifier-catalog-plan.md): clues outside the grid (Skyscrapers,
+    // Batch B4 of the modifier catalog (docs/BossMechanicsSystem.md "Modifier catalog"): clues outside the grid (Skyscrapers,
     // Sandwich, X-Sums, Little Killer) and Quadruples on the inner corners. Each rule compares what the placed digits
     // already decide with the clue and rejects a digit only when no completion could meet it, so it is safe on partial
     // boards.

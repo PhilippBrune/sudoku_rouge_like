@@ -1,16 +1,17 @@
 # Items & Relics System
 
-**Version:** 2.4  
-**Date:** 2026-10-26  
+**Version:** 2.5  
+**Date:** 2026-10-27  
 **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
-| 2.4 | 2026-10-26 | implemented | Owner picks (2026-10-25): a signature relic per class from Level 1 with a higher chance in offerings (RELIC-SIG-001/002, `design/class-relics-concept.md`, Single Stroke for the Reed Duelist), and four keystones offered after a Garden Run's first boss that bend a rule of the puzzle (RELIC-KEY-001/002, RM-114, the owner's answer: a relic may bend Sudoku's rules). |
-| 2.3 | 2026-10-21 | implemented | Counter items, one per modifier family (ITEM-COUNTER-001..006), and shops that lean toward the counters of the board's rules (ITEM-COUNTER-007); lever L3 of `design/gold-and-items-concept.md`. |
-| 2.2 | 2026-10-21 | implemented | Item base prices ×2.5: Normal 40, Rare 75, Epic 150 (ECON-BAL-001, lever L1 of `design/gold-and-items-concept.md`, owner pick after the 0.2.0 playtest). The Warding Flame's removed trial is kept in the save (`RunState.WardingFlameOnFloor`/`WardingFlameTrial`): it used to come back after Save & Quit at the gate. |
+| 2.5 | 2026-10-27 | implemented | Owner request (2026-10-27): the concept files are merged into their specs. The class relic concept (v1.1) is in "Class relics: why and the owner's answers": the reason, the per-class table, the owner's answers and what is still open. The item part of the gold and items concept (why the counter items) is in "Counter Items". Its lever L3 is named in GoldEconomySystem 2.3. No rule changed. |
+| 2.4 | 2026-10-26 | implemented | Owner picks (2026-10-25): a signature relic per class from Level 1 with a higher chance in offerings (RELIC-SIG-001/002, Single Stroke for the Reed Duelist), and four keystones offered after a Garden Run's first boss that bend a rule of the puzzle (RELIC-KEY-001/002, RM-114, the owner's answer: a relic may bend Sudoku's rules). |
+| 2.3 | 2026-10-21 | implemented | Counter items, one per modifier family (ITEM-COUNTER-001..006), and shops that lean toward the counters of the board's rules (ITEM-COUNTER-007); lever L3 of GoldEconomySystem 2.3. |
+| 2.2 | 2026-10-21 | implemented | Item base prices ×2.5: Normal 40, Rare 75, Epic 150 (ECON-BAL-001, lever L1 of GoldEconomySystem 2.3, owner pick after the 0.2.0 playtest). The Warding Flame's removed trial is kept in the save (`RunState.WardingFlameOnFloor`/`WardingFlameTrial`): it used to come back after Save & Quit at the gate. |
 | 2.1 | 2026-10-07 | implemented | Item and relic reference tables regenerated from code (SPEC-MAC-001); standalone items documented as rolled (SPEC-CONF-035); multi-relic without cap, RELIC-SLOT-001 deprecated (SPEC-CONF-004); shop offer counts 2/2/3/3/4 (SPEC-CONF-005); reward reroll and Nothing gold (GAP-015, SPEC-AMB-007); full-bag purchase rule (GAP-036). |
 
 ## Overview
@@ -67,8 +68,12 @@ shops roll as before.
 
 ### Counter Items (2.3, ITEM-COUNTER-001..006)
 
-One item per modifier family answers the rules that are hard on this board (lever L3 of
-`design/gold-and-items-concept.md`). Each writes the solution's digits into cells its family's rules use, starting at the
+Why: in the 0.2.0 playtest most items helped a little with any puzzle ("restore 3 HP", "+4 pencil"), and few answered
+the rule that was hard on this board. With two bag slots and no pressure, keeping items "for later" was the safe play.
+A counter item answers one modifier family directly, and the shop offers the counters of the floor's rules
+(ITEM-COUNTER-007). The levers and the playtest numbers are in GoldEconomySystem.
+
+One item per modifier family answers the rules that are hard on this board (lever L3 in GoldEconomySystem). Each writes the solution's digits into cells its family's rules use, starting at the
 selected cell when it belongs to them, else at the group closest to done. The digits are placed like a hand placement
 (combo, pressure and fog react); an item that finds nothing to fill on the board is not used up. They are sold in shops
 only (ITEM-COUNTER-007); rewards keep their pools. Filled cells count as hand placements (combo, relic counters);
@@ -110,6 +115,39 @@ Relics can currently come from:
 - relic nodes / events
 
 Boss-adjacent relic rewards use rolled choice panels rather than automatic single-relic grants.
+
+### Class relics: why and the owner's answers (2.5)
+
+Why: each class had one exclusive relic, which enters the pool only from class Level 30 (CLASS-EXCL-001..003). Level 30
+takes about 10,000 class XP, so most players never saw one, and a class played like the others apart from its passive.
+A signature relic from Level 1 gives each class a relic that bends its own rule a little. The keystones (RM-114) bend
+the rules further.
+
+| Class | Passive | Signature (Level 1, RELIC-SIG-001) | Exclusive (Level 30, CLASS-EXCL) |
+|---|---|---|---|
+| Number Freak | zero-mistake puzzle: +1 reroll token | Counting Beads | Fortune's Ledger |
+| Garden Monk | every 5 correct digits +1 HP | Prayer Beads | Temple Vow |
+| Shrine Archivist | pencil mark: 25 % to reveal the digit | Ink Stone | Endless Archive |
+| Koi Gambler | 33 % no HP lost on a mistake; 33 % +3 gold | Lucky Scale | Gilded Koi Scale |
+| Stone Gardener | first item each puzzle not used up | Moss Pouch | Load-Bearing Stone |
+| Lantern Seer | boss rules 30 % weaker; preview and a free reroll | Second Wick | Warding Flame |
+| Reed Duelist | perfect puzzle without pencil: +2 pencil | Single Stroke | Dueling Reed |
+| Quiet Cartographer | preview the next node after a perfect tile | Compass Needle | Accurate Map |
+
+Owner's answers (picks of 2026-10-25, answers of 2026-10-26):
+
+- **Two relics per class, not three:** the signature and the existing exclusive. The mastery relics of the first draft
+  (Level 15) are dropped.
+- **A higher chance, not a guarantee:** the signature relic is offered with a 35 % chance while it is not held (not
+  guaranteed in the first offering).
+- **Single Stroke for the Reed Duelist** instead of Bamboo Edge. **Ink Stone stays**, although it and Single Stroke
+  bend Sudoku's rules the most.
+- **Built together with the keystones** in one content update (RELIC-KEY-001/002).
+
+Open: the class relic screens were not found in the code (checked 2026-10-27). The class scroll would list a class's relics
+with silhouettes until their level; the Codex would get a "Class" filter; a class relic would carry the class's seal on
+its plinth; an achievement would cover holding both relics of a class in one run. The balance check waits for a
+playtest.
 
 ### Signature relics (2.4)
 

@@ -1,6 +1,6 @@
 # Documentation index: Run of the Nine
 
-**Updated:** 2026-10-26
+**Updated:** 2026-10-27
 
 `docs/` is the game's specification (CLAUDE.md: it wins over code and generic rules). Every spec carries a version, a
 status (new → under review → review → implemented → deprecate) and a change history; requirement IDs are listed in
@@ -29,9 +29,13 @@ status (new → under review → review → implemented → deprecate) and a cha
 | Document | State |
 |---|---|
 | [design/layout-proposals.md](design/layout-proposals.md) | Ink-and-paper screens: everything built except the main menu proposal (UI-STYLE-023) |
-| [design/one-more-run-concept.md](design/one-more-run-concept.md) | First slice built (RM-110, 111, 112, 115, run-length measures); the rest for the owner's pick |
-| [design/daily-walk-concept.md](design/daily-walk-concept.md), [design/time-attack-concept.md](design/time-attack-concept.md), [design/class-relics-concept.md](design/class-relics-concept.md), [design/story-concept.md](design/story-concept.md) | New concepts (2026-10-25): a daily one-floor walk with XP, the Incense Walk (time attack), class relic sets, the story of the Nine; for the owner's pick |
-| [design/gold-and-items-concept.md](design/gold-and-items-concept.md), [design/mistake-scoring-proposals.md](design/mistake-scoring-proposals.md), [design/modifier-catalog-plan.md](design/modifier-catalog-plan.md) | Built |
+| [GameDesignSpec.md](GameDesignSpec.md) §9c and §14 | Run score grades (built, with the reasons for the proposals not chosen); the one-more-run concept: first slice built (RM-110, 111, 112, 115), RM-113, RM-116 and RM-118 to 121 open |
+| [DailyGoalSystem.md](DailyGoalSystem.md), "The Daily Walk as a run" | Daily Walk (RM-122, built): the why, the reward table and the owner's answers |
+| [IncenseWalkMode.md](IncenseWalkMode.md) | Incense Walk (RM-123, built): the why, fairness, the owner's answers; open: the midnight edge of the week's board |
+| [ItemsAndRelicsSystem.md](ItemsAndRelicsSystem.md), "Class relics: why and the owner's answers" | Class relics (RM-124): the signature relics built, the class relic screens open |
+| [GoldEconomySystem.md](GoldEconomySystem.md), "Why and the levers" | Gold and items: levers L1, L2, L3, L5 and L6 built; L4 not picked; the balance check waits for a playtest |
+| [BossMechanicsSystem.md](BossMechanicsSystem.md), "Modifier catalog" | Modifier catalog (RM-001): batches B1 to B6 built; Phase 0 steps 3 and 5 open |
+| [narrative-direction.md](narrative-direction.md), "Proposal: the story of the Nine" | The story of the Nine (RM-125): a proposal for the owner's pick, nothing built |
 
 ## Review, tests and quality
 
@@ -40,7 +44,7 @@ what waits for the owner) · [review/SPECIFICATION_ISSUES.md](review/SPECIFICATI
 [review/E2E_TEST_REPORT.md](review/E2E_TEST_REPORT.md) · [review/REQUIREMENT_TRACEABILITY.md](review/REQUIREMENT_TRACEABILITY.md) ·
 [technical-debt-register.md](technical-debt-register.md) · [development.md](development.md) (workflow, test runner) ·
 [ci-validation.md](ci-validation.md) · [smoke-test-readiness.md](smoke-test-readiness.md) ·
-[runtime-resource-validation.md](runtime-resource-validation.md) · run-length report (`tools/playtest/run_length_report.py`, concept §6) · performance budgets
+[runtime-resource-validation.md](runtime-resource-validation.md) · run-length report (`tools/playtest/run_length_report.py`, GameDesignSpec §14) · performance budgets
 ([generation](performance-generation-budget.md), [runtime](performance-runtime-budget.md),
 [profiler results](performance-profiler-results.md), [UI helpers](performance-ui-update-components.md))
 

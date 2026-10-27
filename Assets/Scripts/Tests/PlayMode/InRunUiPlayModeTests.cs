@@ -181,7 +181,7 @@ namespace SudokuRoguelike.Tests
             StringAssert.Contains(BossService.GetModifierName(debuff.Value), curse.text);
         }
 
-        // [REQ: ECON-GATE-001] [REQ: ECON-GATE-002] Gold at the gate (gold-and-items concept L2): on Floor 3 with 500 gold,
+        // [REQ: ECON-GATE-001] [REQ: ECON-GATE-002] Gold at the gate (GoldEconomySystem lever L2): on Floor 3 with 500 gold,
         // "Strike a trial" and a click on a trial removes it for 180 gold, and the boss takes 2 of 3; "Lower intensity"
         // takes High to Medium for 120 gold. Both buttons then name what they did and cannot be used again.
         [UnityTest]

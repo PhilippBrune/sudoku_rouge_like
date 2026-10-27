@@ -8,7 +8,7 @@ using SudokuRoguelike.Sudoku;
 
 namespace SudokuRoguelike.Tests
 {
-    // [REQ: GEN-SOLVE-002] Pair harness for the solution-shaping rules (modifier-catalog-plan.md, Phase 0 step 7): every
+    // [REQ: GEN-SOLVE-002] Pair harness for the solution-shaping rules (BossMechanicsSystem.md "Modifier catalog", Phase 0 step 7): every
     // B5 rule with every older rule the generator builds the solution with, on 9×9 boards, seeds 1–4, with the run's
     // budget per board. Prints a table; a pair that fails or is slow becomes a blocked pair. On demand only.
     [TestFixture]

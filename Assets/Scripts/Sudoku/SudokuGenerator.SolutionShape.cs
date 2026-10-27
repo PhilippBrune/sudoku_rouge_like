@@ -4,7 +4,7 @@ using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.Sudoku
 {
-    // [REQ: GEN-SOLVE-002] [REQ: GEN-SOLVE-003] Rules that shape the solution itself (modifier-catalog-plan.md, batch B5):
+    // [REQ: GEN-SOLVE-002] [REQ: GEN-SOLVE-003] Rules that shape the solution itself (BossMechanicsSystem.md "Modifier catalog", batch B5):
     // extra houses the filled grid must keep free of repeats (the X-Sudoku diagonals, the four Hyper windows, the
     // Disjoint groups) and a box filled with a magic square before the rest of the grid. The givens are still chosen
     // for a single solution under the base rules (owner decision 2026-10-19: givens stay as today), which the extra

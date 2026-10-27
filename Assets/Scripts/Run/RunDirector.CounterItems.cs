@@ -5,7 +5,7 @@ using SudokuRoguelike.Sudoku;
 
 namespace SudokuRoguelike.Run
 {
-    // [REQ: ITEM-COUNTER-001..006] Counter items (gold-and-items concept L3): each one finds the cells of its modifier
+    // [REQ: ITEM-COUNTER-001..006] Counter items (GoldEconomySystem lever L3): each one finds the cells of its modifier
     // family on the current board and writes their correct digits, starting at the selected cell when it belongs to the
     // family, else at the group closest to done. Digits go through PlaceNumber, so combos, pressure and fog react as to a
     // placement by hand.

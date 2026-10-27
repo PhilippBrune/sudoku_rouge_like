@@ -41,7 +41,7 @@ namespace SudokuRoguelike.UI
             var backBtn = ScrollUiKit.RimButton(screen, "BtnTutBack", new Vector2(0.0469f, 0.0667f), new Vector2(0.1094f, 0.1111f),
                 T("Back"), 22, ScrollUiKit.Gold, new Color(0.45f, 0.33f, 0.14f, 0.95f), ScrollUiKit.PaperText);
             backBtn.navigation = new Navigation { mode = Navigation.Mode.Automatic };
-            backBtn.onClick.AddListener(mc.BackToMainMenu);
+            backBtn.onClick.AddListener(mc.BackFromPanel);   // GAP-084: back to the screen before
 
             tutCtrl.Configure(startBtn);
             EnsureComponent<CustomPuzzleScreen>(panel).Build(screen, tutCtrl, startBtn);

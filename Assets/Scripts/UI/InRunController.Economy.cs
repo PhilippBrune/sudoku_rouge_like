@@ -30,7 +30,8 @@ namespace SudokuRoguelike.UI
             if (_buyPencilButton == null || run?.State == null) return;
             var state = run.State;
             var offered = ClassPassiveService.CanBuyPencilMidLevel(state)
-                && !state.TutorialMode && !state.IsSeasonalChallenge && !state.DisableProgressionRewards;
+                && !state.TutorialMode && !state.IsSeasonalChallenge && !state.DisableProgressionRewards
+                && state.Mode != SudokuRoguelike.Core.GameMode.IncenseWalk;   // GAP-085: marks are free there; it covered the time
             var shown = !offered ? 0 : run.CanBuyPencil() ? 2 : 1;
             if (shown != _buyPencilShownState)
             {

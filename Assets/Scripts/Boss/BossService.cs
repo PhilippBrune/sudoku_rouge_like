@@ -783,7 +783,7 @@ namespace SudokuRoguelike.Boss
                 BossModifierId.DistancePair        => "Two cells joined by a brown link differ by the number on it: the steps between them. Example: 2 = 3 and 5.",
                 BossModifierId.CageRatio           => "In a two-cell ink cage marked 1:N, the larger digit is N times the smaller. Example: 1:3 = 2 and 6.",
                 BossModifierId.PillArrow           => "The two cells of a pill read as one number (top or left first); its arrow adds up to it. Example: 1|4 = 14 = 9+5.",
-                BossModifierId.OppositeCellsSum    => "A cell with a crimson number and its mirror cell through the centre add up to that number. Example: 10 = 3+7.",
+                BossModifierId.OppositeCellsSum    => "The same crimson number sits in two cells opposite each other through the centre of the grid (turn the grid half a turn and one lands on the other). Their two digits add up to it. Example: 10 = 3+7.",   // GAP-093
                 BossModifierId.CountingCircles     => "Each digit in an orange circle says how many circles hold it: a circled 3 means exactly three circles hold 3.",
                 BossModifierId.DistanceCell        => "A cell with a small navy dot holds its distance in steps (up, down, left, right) to the cell in the navy ring.",
                 BossModifierId.ConstraintNegationZone => "Green lines are whispers (neighbours differ by 5 or more), but between two cells inside the shaded box they differ by less than 5.",

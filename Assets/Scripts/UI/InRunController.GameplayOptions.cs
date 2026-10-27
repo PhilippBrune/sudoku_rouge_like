@@ -101,5 +101,28 @@ namespace SudokuRoguelike.UI
 
         /// <summary>Kept for the in-run Options' Highlight Errors toggle.</summary>
         public void SetHighlightConflictsLive(bool enabled) => OnGameplayOptionsChanged();
+
+        private Coroutine _ruleHighlightEnd;
+
+        // [REQ: RULE-TAP-001] A tap on a whole-board rule on the rule slip (Nonconsecutive, Antiknight) shows the cells it
+        // ties to the chosen cell for as long as the legend's isolation; it marked every cell, so the whole grid turned
+        // gold for good (GAP-091).
+        private void ShowRuleAroundSelection(BossModifierId rule)
+        {
+            var size = _map?.Run?.CurrentBoard?.Size ?? 0;
+            var (row, col) = _selectedRow >= 0 && _selectedCol >= 0 ? (_selectedRow, _selectedCol) : (size / 2, size / 2);   // no cell: the centre
+            _boardView.HighlightGlobalConstraint(rule, row, col);
+            RenderBoard();
+            if (_ruleHighlightEnd != null) StopCoroutine(_ruleHighlightEnd);
+            _ruleHighlightEnd = StartCoroutine(EndRuleHighlight());
+        }
+
+        private System.Collections.IEnumerator EndRuleHighlight()
+        {
+            yield return new WaitForSeconds(BoardViewController.IsolationSeconds);
+            _ruleHighlightEnd = null;
+            _boardView.ClearGlobalConstraintHighlight();
+            RenderBoard();
+        }
     }
 }

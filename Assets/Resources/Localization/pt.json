@@ -1,4 +1,6 @@
 {
+    "Incense.Hud.PencilFree":  "As anotações a lápis são grátis.",
+    "InRun.Status.DigitComplete":  "Todos os {0} já estão no tabuleiro.",
     "MainMenu.Status.QuitConfirm":  "Pressione Sair de novo para fechar o jogo.",
     "Incense.Status.MistakeFree":  "{0} está errado aqui, mas o koi deixa passar: nenhum tempo perdido.",
     "StampShop.Look.RoundSumiSeal.Desc":  "Cada andar vencido como um selo redondo preto sumi no fim de uma partida.",
@@ -589,7 +591,7 @@
     "Boss.Name.DistanceCell":  "Células de distância",
     "Boss.Description.CountingCircles":  "Cada dígito num círculo laranja diz quantos círculos o contêm: um 3 circulado significa que exatamente três círculos contêm 3.",
     "Boss.Name.CountingCircles":  "Círculos contadores",
-    "Boss.Description.OppositeCellsSum":  "Uma célula com um número carmesim e sua célula espelhada pelo centro somam esse número. Exemplo: 10 = 3+7.",
+    "Boss.Description.OppositeCellsSum":  "O mesmo número carmesim fica em duas células opostas pelo centro da grade (gire a grade meia-volta e uma cai sobre a outra). Os dois dígitos somam esse número. Exemplo: 10 = 3+7.",
     "Boss.Name.OppositeCellsSum":  "Somas opostas",
     "Boss.Description.PillArrow":  "As duas células de uma pílula formam um número (a de cima ou da esquerda primeiro); sua flecha soma esse número. Exemplo: 1|4 = 14 = 9+5.",
     "Boss.Name.PillArrow":  "Flecha pílula",

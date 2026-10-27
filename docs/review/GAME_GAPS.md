@@ -88,16 +88,16 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-081](#gap-081) | The right stick no longer moved the number pad cursor | OPEN (0.3.0 playtest) | MEDIUM | P2 |
 | [GAP-082](#gap-082) | Highlighting the digit by key worked only by accident; the hint said "double click" | OPEN (0.3.0 playtest) | LOW | P3 |
 | [GAP-083](#gap-083) | Keys and D-pad could walk onto the puzzle's Options and Save & Quit buttons | OPEN (0.3.0 playtest) | LOW | P3 |
-| [GAP-084](#gap-084) | Back on Select Class went to the main menu instead of the screen before | OPEN (0.3.0 playtest) | LOW | P3 |
-| [GAP-085](#gap-085) | Incense Walk: the pencil buy button covered the time | OPEN (0.3.0 playtest) | MEDIUM | P2 |
+| [GAP-084](#gap-084) | Back on Select Class went to the main menu instead of the screen before | FIXED (0.3.0 playtest, 2026-10-27) | LOW | P3 |
+| [GAP-085](#gap-085) | Incense Walk: the pencil buy button covered the time | FIXED (0.3.0 playtest, 2026-10-27) | MEDIUM | P2 |
 | [GAP-086](#gap-086) | A Custom Puzzle could start without a chosen rule (9×9, 7 stars, Sum Dots) | OPEN (0.3.0 playtest) | MEDIUM | P2 |
 | [GAP-087](#gap-087) | A Custom Puzzle with Free resources showed and used a class passive | OPEN (0.3.0 playtest) | LOW | P3 |
-| [GAP-088](#gap-088) | Two timers in single-puzzle modes | OPEN (0.3.0 playtest) | LOW | P4 |
-| [GAP-089](#gap-089) | At 21:9 (3440×1440) the board covered the title and the combo line | OPEN (0.3.0 playtest) | HIGH | P1 |
-| [GAP-090](#gap-090) | The class emblem sat off-centre in its ring | OPEN (0.3.0 playtest) | LOW | P4 |
-| [GAP-091](#gap-091) | Tapping the rule slip turned the whole grid gold, and it stayed | OPEN (0.3.0 playtest) | MEDIUM | P2 |
-| [GAP-092](#gap-092) | A digit already complete on the board could be placed and cost HP | OPEN (0.3.0 playtest) | MEDIUM | P2 |
-| [GAP-093](#gap-093) | Opposite Sums: "mirror cell" was not explained | OPEN (0.3.0 playtest) | LOW | P3 |
+| [GAP-088](#gap-088) | Two timers in single-puzzle modes | FIXED (0.3.0 playtest, 2026-10-27) | LOW | P4 |
+| [GAP-089](#gap-089) | At 21:9 (3440×1440) the board covered the title and the combo line | FIXED (0.3.0 playtest, 2026-10-27) | HIGH | P1 |
+| [GAP-090](#gap-090) | The class emblem sat off-centre in its ring | FIXED (0.3.0 playtest, 2026-10-27) | LOW | P4 |
+| [GAP-091](#gap-091) | Tapping the rule slip turned the whole grid gold, and it stayed | FIXED (0.3.0 playtest, 2026-10-27) | MEDIUM | P2 |
+| [GAP-092](#gap-092) | A digit already complete on the board could be placed and cost HP | FIXED (0.3.0 playtest, 2026-10-27) | MEDIUM | P2 |
+| [GAP-093](#gap-093) | Opposite Sums: "mirror cell" was not explained | FIXED (0.3.0 playtest, 2026-10-27) | LOW | P3 |
 | [GAP-094](#gap-094) | Moving with keys coloured cells purple from a stale highlight | OPEN (0.3.0 playtest) | LOW | P3 |
 | [GAP-095](#gap-095) | The input lock applied after a mouse click but not after a key or pad move | OPEN (0.3.0 playtest; owner: lock everywhere) | LOW | P3 |
 | [GAP-067](#gap-067) | Moonshade Offering's "+2 starting pencil" did nothing (the run starts at full pencil) | FIXED (2026-10-22) | LOW | P3 |
@@ -1094,6 +1094,74 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Problem:** Borderless Fullscreen passed the chosen resolution to `Screen.SetResolution(w, h, FullScreenWindow)`: the window stayed desktop-sized and Windows stretched a smaller picture to it, blurry and through another colour path than exclusive Fullscreen.
 - **Fix:** Borderless always uses the display's own size (`OptionsController.SizeFor`); the Resolution row shows that size and is locked in Borderless; the chosen resolution stays for Fullscreen and windows.
 - **Tests:** `DisplayPerPcTests.Borderless_UsesTheDisplaysOwnSize`. The look itself needs the owner's check at 3440×1440.
+
+## GAP-084
+**Back on Select Class went to the main menu instead of the screen before**
+
+- **Requirement:** MENU-BACK-001 (GameDesignSpec 1.24)
+- **Status:** FIXED (0.3.0 playtest, 2026-10-27) · **Severity:** LOW · **Priority:** P3
+- **Problem:** Game Modes → Incense Walk → Select Class → Back went to the main menu: the button cleared the screen history (`BackToMainMenu`), while B and Escape already went back one screen.
+- **Fix:** Every menu Back button goes to the screen before (`BackFromPanel`); with no screen before, `MenuFlowService.Back` shows the main menu (it did nothing).
+- **Tests:** `ModeScreensPlayModeTests.Back_OnSelectClass_ReturnsToTheScreenBefore`, `GeneratedUiWiringContractTests`.
+
+## GAP-085
+**Incense Walk: the pencil buy button covered the time**
+
+- **Requirement:** INCENSE-PUZZLE-002 (IncenseWalkMode 0.4)
+- **Status:** FIXED (0.3.0 playtest, 2026-10-27) · **Severity:** MEDIUM · **Priority:** P2
+- **Problem:** The HUD's per-frame refresh showed "+3 Pencil (20g)" again in the walk, where pencil marks are free; it sat on the time readout. The owner missed a pencil display: there is no pencil to count in the walk.
+- **Fix:** No buy button and no purchase in the walk (`RefreshBuyPencilButton`, `RunDirector.CanBuyPencil`); the walk's slip says "Pencil marks are free." (owner: "Notizen gratis"). The screenshot diagnostic now uses the Koi Gambler, as in the playtest (the Garden Monk never had the button).
+- **Tests:** `PuzzleScreenRulesTests.TheIncenseWalk_SellsNoPencil`; `docs/design/layout-proposals/after_incense_walk_no_pencil_buy.jpg`.
+
+## GAP-088
+**Two timers in single-puzzle modes**
+
+- **Requirement:** HUD-TIMER-001 (GameDesignSpec 1.23)
+- **Status:** FIXED · **Severity:** LOW · **Priority:** P4
+- **Fix:** The run timer is hidden in Custom Puzzle and Sudoku Basics (`TutorialMode`), as in Endless Zen.
+- **Tests:** `GameplayOptionsPlayModeTests.ASinglePuzzleMode_ShowsNoRunTimer`.
+
+## GAP-089
+**At 21:9 the board covered the title and the combo line**
+
+- **Requirement:** UI-SCALE-001 (GameDesignSpec 1.23)
+- **Status:** FIXED (0.3.0 playtest, 2026-10-27) · **Severity:** HIGH · **Priority:** P1
+- **Problem:** The run's canvas used "match 0.5": at 3440×1440 it was 2225×932, the panel 875 px high, and the board a fixed 620 px, so it covered the title, the status line and the combo line (and the number pad and the floor's rules at 32:9).
+- **Fix:** The run's canvas scaler expands (`ScreenMatchMode.Expand`): the canvas is never smaller than 1920×1080, so wide screens keep the 16:9 height and only gain width; 4:3 and 16:10 gain height. The plan's alternative (capping the board) would have shrunk the approved 16:9 board.
+- **Tests:** `LayoutScreenshotDiagnostics.RenderPuzzleAtScreenSizes` at 3440×1440, 2560×1080, 5120×1440, 1920×1200, 1024×768, 1280×720 and 1920×1080; before/after in `docs/design/layout-proposals/` (`*_puzzle_3440x1440.jpg`, `*_puzzle_5120x1440.jpg`, `*_puzzle_1024x768.jpg`).
+- **Still open:** at 32:9 the HP and Pencil lanterns are drawn as ovals (they were before too).
+
+## GAP-090
+**The class emblem sat off-centre in its ring**
+
+- **Status:** FIXED · **Severity:** LOW · **Priority:** P4
+- **Problem:** The emblem was a share of the badge (centred at x 0.20, sized by the badge's height), the ring a fixed disc at x 0.18; wider badges moved it off the ring.
+- **Fix:** The emblem is a 76 px spot at the ring's centre, the face's size (`HudViewController.EnsureClassBadge`).
+- **Tests:** the screenshots above.
+
+## GAP-091
+**Tapping the rule slip turned the whole grid gold, and it stayed**
+
+- **Requirement:** RULE-TAP-001 (GameDesignSpec 1.23)
+- **Status:** FIXED · **Severity:** MEDIUM · **Priority:** P2
+- **Problem:** The rule slip under the Legend button marked every pair for Nonconsecutive and Antiknight, that is every cell; nothing cleared it.
+- **Fix:** A tap marks the chosen cell and the cells the rule ties to it (its four sides, or its knight moves) for 3 s; a new puzzle clears it.
+- **Tests:** `PuzzleScreenRulesTests.ARuleTap_MarksTheChosenCellsNeighbours_NotTheWholeGrid`.
+
+## GAP-092
+**A digit already complete on the board could be placed and cost HP**
+
+- **Requirement:** PLACE-RULE-001 (GameDesignSpec 1.23)
+- **Status:** FIXED · **Severity:** MEDIUM · **Priority:** P2
+- **Problem:** Only the number pad tile was greyed out; a key or the pad's A placed the digit anyway, which was wrong against the solution and cost HP.
+- **Fix:** `EnterNumber` refuses a digit that is on the board as often as the board's size (`SudokuBoard.IsDigitComplete`) with a status line, no mistake. Pencil marks are not affected.
+- **Tests:** `PuzzleScreenRulesTests.ADigit_IsComplete_WhenEveryCopyIsOnTheBoard`, `GameplayOptionsPlayModeTests.ACompleteDigit_IsRefused_WithoutCostingHp`.
+
+## GAP-093
+**Opposite Sums: "mirror cell" was not explained**
+
+- **Status:** FIXED · **Severity:** LOW · **Priority:** P3
+- **Fix:** The rule text in five catalogs (and the code's English fallback) says what the two cells are: opposite each other through the centre, a half turn of the grid puts one on the other; it no longer says "mirror cell", which is also another rule's name.
 
 ## GAP-074 to GAP-095
 

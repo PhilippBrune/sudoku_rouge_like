@@ -193,6 +193,46 @@ namespace SudokuRoguelike.Tests
             Assert.AreEqual(digit, run.CurrentBoard.Cells[cell.r, cell.c], "the second press places it");
         }
 
+        // [REQ: PLACE-RULE-001] A digit already on the board as often as it can be is not placed again: no mistake, no HP
+        // (GAP-092; a key or the pad's A reached the board past the greyed-out number pad tile).
+        [UnityTest]
+        [Requirement("PLACE-RULE-001")]
+        public IEnumerator ACompleteDigit_IsRefused_WithoutCostingHp()
+        {
+            var (host, run) = StartPuzzle(9505);
+            yield return WaitForBoard(host);
+            UseGameplay(host, new GameplaySettings());
+            var board = run.CurrentBoard;
+            var digit = board.Solution[EmptyCell(run).r, EmptyCell(run).c];
+            for (var r = 0; r < board.Size; r++)
+            for (var c = 0; c < board.Size; c++)
+                if (board.Cells[r, c] == 0 && board.Solution[r, c] == digit) run.PlaceNumber(r, c, digit);
+            Assert.IsTrue(board.IsDigitComplete(digit));
+            var cell = EmptyCell(run);
+            var hp = run.State.CurrentHP;
+            yield return Select(host, cell);
+
+            ClickButton(host, $"Num_{digit}");   // onClick ignores the greyed tile, like a key press
+            yield return null;
+            Assert.AreEqual(0, board.Cells[cell.r, cell.c], "not placed");
+            Assert.AreEqual(hp, run.State.CurrentHP, "no HP lost");
+        }
+
+        // [REQ: HUD-TIMER-001] A single-puzzle mode (Custom Puzzle, Sudoku Basics) shows only the puzzle's timer (GAP-088).
+        [UnityTest]
+        [Requirement("HUD-TIMER-001")]
+        public IEnumerator ASinglePuzzleMode_ShowsNoRunTimer()
+        {
+            var (host, run) = StartPuzzle(9506);
+            yield return WaitForBoard(host);
+            run.State.TotalRunSeconds = 90f;
+            yield return null;
+            StringAssert.Contains("01:30", FindObject(host, "RunTimer").GetComponent<Text>().text, "a run shows its run timer");
+            run.State.TutorialMode = true;
+            yield return null;
+            Assert.AreEqual(string.Empty, FindObject(host, "RunTimer").GetComponent<Text>().text);
+        }
+
         // [REQ: OPT-GFX-001] Screen Shake off stops the shake (it used to stop only with Reduce Motion).
         [UnityTest]
         [Requirement("OPT-GFX-001")]

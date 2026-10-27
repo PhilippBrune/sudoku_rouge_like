@@ -1,11 +1,13 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.22 | **Date:** 2026-10-27 | **Status:** implemented
+**Version:** 1.24 | **Date:** 2026-10-27 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.24 | 2026-10-27 | implemented | 0.3.0 playtest, menus: every Back button returns to the screen before, the main menu when there is none (MENU-BACK-001, GAP-084). |
+| 1.23 | 2026-10-27 | implemented | 0.3.0 playtest, puzzle screen: the run keeps a 16:9 height on wide screens (UI-SCALE-001, GAP-089); a complete digit is refused without a mistake (PLACE-RULE-001, GAP-092); a tap on a whole-board rule shows its cells around the chosen cell for 3 s (RULE-TAP-001, GAP-091); single-puzzle modes show one timer (HUD-TIMER-001, GAP-088); no click sound on the board. |
 | 1.22 | 2026-10-27 | implemented | 0.3.0 playtest (GAP-074..076): the display mode and size belong to the PC, not to the profile, and are applied once per start and by the player's changes (DISPLAY-MODE-008); Borderless Fullscreen always uses the display's own size (DISPLAY-MODE-009); Reset gives Borderless Fullscreen; Quit asks for a second press (UI-MENU-QUIT-001). |
 | 1.21 | 2026-10-27 | implemented | Options test before the 0.3.0 release (owner request). The UI Volume row is removed: no interface sound has ever played, so it set nothing (owner, OPT-AUDIO-002, GAP-072). The main menu's and the run's Options share one state: a change on one shows on the other and is no longer saved over (UI-OPT-004, GAP-071). |
 | 1.20 | 2026-10-27 | implemented | Owner request (2026-10-27): the concept files are merged into the specs. Mistake scoring: the reasons for the grades and the proposals not chosen, one line each (9c). The one-more-run concept: the reasons, the targets and the proposals still open (14, End Screens). Gold references point to GoldEconomySystem 2.3. No rule changed. |
@@ -451,6 +453,7 @@ Source of truth: [EndlessZenMode](EndlessZenMode.md) (decided 2026-10-07, SPEC-C
 - Items & Relic Codex
 - Custom Puzzle (sandbox, formerly "Tutorial"; SPEC-CONF-033)
 - Profiles, Options, Credits, Quit
+- **[MENU-BACK-001]** Every Back button and B/Escape return to the screen before (Game Modes → Incense Walk → Select Class → Back is Game Modes); with none, the main menu (1.24, GAP-084)
 - **[UI-MENU-QUIT-001]** Quit closes the game on a second press within 3 s; the first press says so on the status line (1.22, GAP-074: a stray press closed the game)
 - **[UI-MENU-VERSION-001]** The game's version ("Version 0.2.0", from the player settings) in the bottom-left corner
 - Daily Walk and Monthly Walk widgets next to the menu, with today's goals, streak, theme and countdown (SPEC-CONF-027, GAP-028)
@@ -496,6 +499,16 @@ An audit after the 0.2.0 playtest found options that did nothing or less than th
 | ACCESS-FONT-001 | Text Size | Scales the board's digits and pencil marks too (it changed only the preview and some menus), never past the cell. |
 
 Unchanged and working: the volumes, Mute all, Mute when unfocused, menu music style, Fullscreen, VSync, Particles, Resolution, Display Mode, Language, Controller Rumble, High Contrast, Reduce Motion, Alternative Constraint Symbols, Status Captions.
+
+### Puzzle screen rules (1.23, 0.3.0 playtest)
+
+| ID | Rule |
+|---|---|
+| UI-SCALE-001 | The run's canvas is never smaller than 1920×1080 (CanvasScaler "Expand"): on 21:9 and 32:9 the run keeps its 16:9 height and only gains width; on 4:3 and 16:10 it gains height. With "match 0.5" a 3440×1440 screen gave a 932 px high canvas and the fixed-size board covered the title and the combo line (GAP-089). |
+| PLACE-RULE-001 | A digit that is already on the board as often as it can be (the board's size) is not placed again, by key, pad or number pad: the status line says so, there is no mistake and no HP loss (GAP-092). Pencil marks are not affected. |
+| RULE-TAP-001 | A tap on a whole-board rule on the rule slip (Nonconsecutive, Antiknight) marks the chosen cell and the cells the rule ties to it (its four sides, or its knight moves) for 3 s, like the legend's isolation; no cell chosen marks nothing. It marked every cell of the grid, so the board turned gold and stayed so (GAP-091). |
+| HUD-TIMER-001 | A single-puzzle mode (Custom Puzzle, Sudoku Basics) shows only the puzzle's timer, not the run timer that repeated it (GAP-088). |
+| (sound) | A click on a board cell plays no sound (owner, 0.3.0 playtest). |
 
 ### Shared challenges: Daily, Weekly, Monthly
 

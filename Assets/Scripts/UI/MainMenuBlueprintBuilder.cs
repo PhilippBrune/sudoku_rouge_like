@@ -382,7 +382,7 @@ namespace SudokuRoguelike.UI
 
             var back = OptionsUiFactory.BuildBackPill("BtnOptBack", card, T("Back"));
             back.onClick.RemoveAllListeners();
-            back.onClick.AddListener(mc.BackToMainMenu);
+            back.onClick.AddListener(mc.BackFromPanel);   // GAP-084: back to the screen before
             tabs.SetFooter(new Selectable[] { back });
 
             // -- Slot-change refresh (the Accessibility page's preview and text size are part of it) -------------
@@ -633,7 +633,7 @@ namespace SudokuRoguelike.UI
             SetRect(back.GetComponent<RectTransform>(),
                 new Vector2(0.38f, 0.01f), new Vector2(0.62f, 0.09f), Vector2.zero, Vector2.zero);
             back.onClick.RemoveAllListeners();
-            back.onClick.AddListener(mc.BackToMainMenu);
+            back.onClick.AddListener(mc.BackFromPanel);   // GAP-084: back to the screen before
 
             if (ApplyPanelBackground(panel.GetComponent<Image>(), "background/bg_menu_credits"))
             {
@@ -677,7 +677,7 @@ namespace SudokuRoguelike.UI
             var back = OptionsUiFactory.BuildBackPill("BtnMetaBack", pr, T("Back"));
             SetRect((RectTransform)back.transform, new Vector2(0.232f, 0.050f), new Vector2(0.352f, 0.110f), Vector2.zero, Vector2.zero);
             back.onClick.RemoveAllListeners();
-            back.onClick.AddListener(mc.BackToMainMenu);
+            back.onClick.AddListener(mc.BackFromPanel);   // GAP-084: back to the screen before
             var hint = OptionsUiFactory.BuildText("MetaKeyHint", pr, T("MetaProgression.KeyHint"), 17, TextAnchor.MiddleCenter);
             SetRect(hint.rectTransform, new Vector2(0.03f, 0.008f), new Vector2(0.553f, 0.045f), Vector2.zero, Vector2.zero);
             hint.color = new Color(0.86f, 0.82f, 0.72f, 1f);
@@ -802,7 +802,7 @@ namespace SudokuRoguelike.UI
             var back = OptionsUiFactory.BuildBackPill("BtnItemsBack", pr, T("Back"));
             SetRect((RectTransform)back.transform, new Vector2(0.44f, 0.075f), new Vector2(0.56f, 0.135f), Vector2.zero, Vector2.zero);
             back.onClick.RemoveAllListeners();
-            back.onClick.AddListener(mc.BackToMainMenu);
+            back.onClick.AddListener(mc.BackFromPanel);   // GAP-084: back to the screen before
             itemsCtrl.SetBackButton(back);
             var hint = OptionsUiFactory.BuildText("CodexKeyHint", pr, T("Codex.KeyHint"), 17, TextAnchor.MiddleCenter);
             SetRect(hint.rectTransform, new Vector2(0.2f, 0.03f), new Vector2(0.8f, 0.065f), Vector2.zero, Vector2.zero);
@@ -1247,7 +1247,7 @@ namespace SudokuRoguelike.UI
             SetRect(back.GetComponent<RectTransform>(),
                 new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
             back.onClick.RemoveAllListeners();
-            back.onClick.AddListener(mc.BackToMainMenu);
+            back.onClick.AddListener(mc.BackFromPanel);   // GAP-084: back to the screen before
             ApplyMenuButtonIcon(back, "ui/icon_back_leaf"); // F16: back/close uses dedicated back_leaf icon;
 
             if (ApplyPanelBackground(panel.GetComponent<Image>(), "background/bg_menu_profile"))

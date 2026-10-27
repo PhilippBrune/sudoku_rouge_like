@@ -33,9 +33,15 @@ namespace SudokuRoguelike.UI
             SetActive(CurrentScreen, true);
         }
 
+        // [REQ: MENU-BACK-001] Back returns to the screen before (Game Modes → Incense Walk → Select Class → Back is Game
+        // Modes again, GAP-084); with no screen before it, the main menu.
         public void Back()
         {
-            if (_history.Count == 0) return;
+            if (_history.Count == 0)
+            {
+                if (CurrentScreen != MenuScreen.MainMenu) ShowMainMenu();
+                return;
+            }
 
             SetActive(CurrentScreen, false);
             CurrentScreen = _history.Pop();

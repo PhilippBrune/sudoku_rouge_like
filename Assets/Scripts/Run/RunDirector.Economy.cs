@@ -140,10 +140,14 @@ namespace SudokuRoguelike.Run
 
         public int GetPencilBuyCost() => GoldTable.PencilBuyCost(State.PencilBoughtCount);
 
+        /// <summary>Digits under the fog are not checked yet, so a wrong one can sit on the board (PLACE-RULE-001 waits).</summary>
+        public bool HasFogPending => CurrentLevelState?.FogPendingCells != null && CurrentLevelState.FogPendingCells.Count > 0;
+
         public bool CanBuyPencil()
         {
             if (State == null || CurrentBoard == null || CurrentLevelState == null || IsLevelComplete) return false;
             if (State.TutorialMode || State.IsSeasonalChallenge || State.DisableProgressionRewards) return false;
+            if (State.Mode == GameMode.IncenseWalk) return false;   // INCENSE-PUZZLE-002: pencil marks are free
             if (!ClassPassiveService.CanBuyPencilMidLevel(State)) return false;
             return State.CurrentPencil < State.MaxPencil && State.CurrentGold >= GetPencilBuyCost();
         }

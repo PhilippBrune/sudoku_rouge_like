@@ -1,4 +1,6 @@
 ﻿{
+    "Incense.Hud.PencilFree":  "Pencil marks are free.",
+    "InRun.Status.DigitComplete":  "All the {0}s are already on the board.",
     "MainMenu.Status.QuitConfirm":  "Press Quit again to close the game.",
     "Incense.Status.MistakeFree":  "{0} is wrong here, but the koi let it pass: no time lost.",
     "StampShop.Look.RoundSumiSeal.Desc":  "Each won floor as a round sumi-black seal at the end of a run.",
@@ -589,7 +591,7 @@
     "Boss.Name.DistanceCell":  "Distance Cells",
     "Boss.Description.CountingCircles":  "Each digit in an orange circle says how many circles hold it: a circled 3 means exactly three circles hold 3.",
     "Boss.Name.CountingCircles":  "Counting Circles",
-    "Boss.Description.OppositeCellsSum":  "A cell with a crimson number and its mirror cell through the centre add up to that number. Example: 10 = 3+7.",
+    "Boss.Description.OppositeCellsSum":  "The same crimson number sits in two cells opposite each other through the centre of the grid (turn the grid half a turn and one lands on the other). Their two digits add up to it. Example: 10 = 3+7.",
     "Boss.Name.OppositeCellsSum":  "Opposite Sums",
     "Boss.Description.PillArrow":  "The two cells of a pill read as one number (top or left first); its arrow adds up to it. Example: 1|4 = 14 = 9+5.",
     "Boss.Name.PillArrow":  "Pill Arrow",

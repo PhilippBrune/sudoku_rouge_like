@@ -1,4 +1,6 @@
 {
+    "Incense.Hud.PencilFree":  "Les notes au crayon sont gratuites.",
+    "InRun.Status.DigitComplete":  "Tous les {0} sont déjà sur la grille.",
     "MainMenu.Status.QuitConfirm":  "Appuyez encore sur Quitter pour fermer le jeu.",
     "Incense.Status.MistakeFree":  "{0} est faux ici, mais le koï laisse passer : aucun temps perdu.",
     "StampShop.Look.RoundSumiSeal.Desc":  "Chaque étage gagné en sceau rond noir sumi à la fin d'une partie.",
@@ -589,7 +591,7 @@
     "Boss.Name.DistanceCell":  "Cases de distance",
     "Boss.Description.CountingCircles":  "Chaque chiffre dans un cercle orange dit combien de cercles le contiennent : un 3 entouré signifie que trois cercles exactement contiennent 3.",
     "Boss.Name.CountingCircles":  "Cercles compteurs",
-    "Boss.Description.OppositeCellsSum":  "Une case avec un nombre cramoisi et sa case miroir par le centre ont ce nombre pour somme. Exemple : 10 = 3+7.",
+    "Boss.Description.OppositeCellsSum":  "Le même nombre cramoisi figure dans deux cases opposées par le centre de la grille (faites faire un demi-tour à la grille : l'une tombe sur l'autre). Leurs deux chiffres ont ce nombre pour somme. Exemple : 10 = 3+7.",
     "Boss.Name.OppositeCellsSum":  "Sommes opposées",
     "Boss.Description.PillArrow":  "Les deux cases d'une pilule forment un nombre (celle du haut ou de gauche d'abord) ; sa flèche a ce total. Exemple : 1|4 = 14 = 9+5.",
     "Boss.Name.PillArrow":  "Flèche pilule",

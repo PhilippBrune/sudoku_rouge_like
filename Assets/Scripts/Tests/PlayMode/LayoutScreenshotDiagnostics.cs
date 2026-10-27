@@ -844,7 +844,27 @@ namespace SudokuRoguelike.Tests
             yield return Shoot(host, camera, "after_daily_walk_result.png");
         }
 
-        // UI-STYLE-030: the Incense Walk's puzzle screen as the mockup has it (Garden Monk, puzzle 6, five solved, 5:42 left,
+        // GAP-089, GAP-090: a 9×9 puzzle on Floor 5 at seven screen shapes: 21:9 (3440×1440, 2560×1080), 32:9, 16:10 (the
+        // Legion Go), 4:3 and 16:9. File names start with SR_SHOT_PREFIX ("after_" by default).
+        [UnityTest]
+        public IEnumerator RenderPuzzleAtScreenSizes()
+        {
+            var camera = CreateCamera();
+            var prefix = Environment.GetEnvironmentVariable("SR_SHOT_PREFIX") ?? "after_";
+            _puzzleSize = 9;
+            _beforeBindAlways = run => { for (var f = 0; f < 4; f++) run.AdvanceToNextFloor(); };
+            GameObject host;
+            try { (host, _) = StartRun(7329, true, new[] { BossModifierId.KillerCages, BossModifierId.DifferenceKropki }); }
+            finally { _beforeBindAlways = null; _puzzleSize = 6; }
+            yield return DismissIntro();
+            for (var frame = 0; frame < 30 && Find(host, "C_0_0") == null; frame++)
+                yield return null;
+            yield return new WaitForSecondsRealtime(0.6f);
+            foreach (var (w, h) in new[] { (3440, 1440), (2560, 1080), (5120, 1440), (1920, 1200), (1024, 768), (1280, 720), (1920, 1080) })
+                yield return Shoot(host, camera, $"{prefix}puzzle_{w}x{h}.png", w, h);
+        }
+
+        // UI-STYLE-030: the Incense Walk's puzzle screen as the mockup has it (Koi Gambler since GAP-085, puzzle 6, five solved, 5:42 left,
         // one mistake on this puzzle), then the last 30 seconds, then the result when the stick has burned down.
         [UnityTest]
         public IEnumerator RenderIncenseWalk()
@@ -861,7 +881,8 @@ namespace SudokuRoguelike.Tests
             _createdRoots.Add(host);
             host.AddComponent<InRunUiBlueprintBuilder>().BuildBlueprint();
             var run = new RunDirector();
-            run.StartRun(new LaunchRequest { ClassId = ClassId.GardenMonk, Mode = GameMode.IncenseWalk, ClassLevel = 4 }, 4242);
+            // GAP-085: the Koi Gambler, as in the playtest (the Garden Monk never gets the pencil buy button).
+            run.StartRun(new LaunchRequest { ClassId = ClassId.KoiGambler, Mode = GameMode.IncenseWalk, ClassLevel = 4 }, 4242);
             for (var i = 0; i < 5; i++)
             {
                 run.Incense.Tick(70f);
@@ -1110,9 +1131,19 @@ namespace SudokuRoguelike.Tests
             yield return null;
         }
 
-        private IEnumerator Shoot(GameObject host, Camera camera, string file)
+        // SR_SHOT_SIZE ("3440x1440") renders every scene at another screen shape; 1920×1080 without it.
+        private static (int, int) ShotSize()
         {
-            var rt = new RenderTexture(1920, 1080, 24);
+            var parts = (Environment.GetEnvironmentVariable("SR_SHOT_SIZE") ?? "").Split('x');
+            return parts.Length == 2 && int.TryParse(parts[0], out var w) && int.TryParse(parts[1], out var h) && w > 0 && h > 0
+                ? (w, h) : (1920, 1080);
+        }
+
+        // GAP-089: the canvas scaler follows the render target, so a size other than 1920×1080 shows that screen's shape.
+        private IEnumerator Shoot(GameObject host, Camera camera, string file, int width = 0, int height = 0)
+        {
+            if (width <= 0) (width, height) = ShotSize();
+            var rt = new RenderTexture(width, height, 24);
             camera.targetTexture = rt;
             foreach (var canvas in host.GetComponentsInChildren<Canvas>(true).Where(c => c.isRootCanvas))
             {
@@ -1133,8 +1164,8 @@ namespace SudokuRoguelike.Tests
             camera.Render();
             var previous = RenderTexture.active;
             RenderTexture.active = rt;
-            var tex = new Texture2D(1920, 1080, TextureFormat.RGB24, false);
-            tex.ReadPixels(new Rect(0, 0, 1920, 1080), 0, 0);
+            var tex = new Texture2D(width, height, TextureFormat.RGB24, false);
+            tex.ReadPixels(new Rect(0, 0, width, height), 0, 0);
             tex.Apply();
             RenderTexture.active = previous;
             File.WriteAllBytes(Path.Combine(_outDir, file), tex.EncodeToPNG());

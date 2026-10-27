@@ -76,7 +76,8 @@ namespace SudokuRoguelike.UI
                 : "<color=#9A8F7A>" + Tf("Incense.Hud.PerfectLost", Clock(IncenseWalkService.PerfectSeconds)) + "</color>");
             _addsLines.text = lines;
             _walkLines.text = Tf("Incense.Hud.Walk", walk.PuzzlesSolved, Number(walk.Score), Number(System.Math.Max(best, walk.Score)))
-                              + "\n" + Classes.ClassCatalog.DisplayName(classId) + ": " + LocalizationService.T("Incense.Class." + classId);
+                              + "\n" + Classes.ClassCatalog.DisplayName(classId) + ": " + LocalizationService.T("Incense.Class." + classId)
+                              + "\n" + LocalizationService.T("Incense.Hud.PencilFree");   // GAP-085: no pencil to count or buy
         }
 
         /// <summary>The seconds a solved puzzle added, floating up beside the time for a moment.</summary>

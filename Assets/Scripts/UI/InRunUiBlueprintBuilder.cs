@@ -494,7 +494,10 @@ namespace SudokuRoguelike.UI
             var scaler = canvasGo.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920, 1080);
-            scaler.matchWidthOrHeight = 0.5f;
+            // [REQ: UI-SCALE-001] Expand: the canvas is never smaller than 1920×1080, so on 21:9 and 32:9 the run keeps its
+            // 16:9 height and only gains width. With "match 0.5" a 3440×1440 canvas was 932 px high and the fixed-size
+            // board covered the title and the combo line (GAP-089).
+            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.Expand;
             return canvas;
         }
 

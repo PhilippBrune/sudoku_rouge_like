@@ -33,6 +33,16 @@ namespace SudokuRoguelike.Sudoku
 
         public bool IsGiven(int row, int col) => GivenMask[row, col];
 
+        /// <summary>[REQ: PLACE-RULE-001] Every copy of the digit is on the board (the number pad greys it out).</summary>
+        public bool IsDigitComplete(int value)
+        {
+            var count = 0;
+            for (var r = 0; r < Size; r++)
+            for (var c = 0; c < Size; c++)
+                if (Cells[r, c] == value) count++;
+            return count >= Size;
+        }
+
         // [REQ: GEN-VALID-001] IsCorrectAt: placement is valid when it satisfies all standard row/column/region constraints
         // (solution value not consulted — any valid completion is accepted, supporting multiple-solution puzzles)
         public bool IsCorrectAt(int row, int col)

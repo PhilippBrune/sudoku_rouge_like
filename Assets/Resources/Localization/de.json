@@ -1,4 +1,6 @@
 ﻿{
+    "Incense.Hud.PencilFree":  "Bleistiftnotizen sind gratis.",
+    "InRun.Status.DigitComplete":  "Alle {0} stehen schon auf dem Brett.",
     "MainMenu.Status.QuitConfirm":  "Drücke noch einmal auf Beenden, um das Spiel zu schließen.",
     "Incense.Status.MistakeFree":  "{0} ist hier falsch, aber der Koi lässt es durchgehen: keine Zeit verloren.",
     "StampShop.Look.RoundSumiSeal.Desc":  "Jede gewonnene Etage als rundes sumi-schwarzes Siegel am Ende eines Laufs.",
@@ -589,7 +591,7 @@
     "Boss.Name.DistanceCell":  "Abstandszellen",
     "Boss.Description.CountingCircles":  "Jede Ziffer in einem orangen Kreis sagt, wie viele Kreise sie enthalten: Eine eingekreiste 3 heißt, genau drei Kreise enthalten 3.",
     "Boss.Name.CountingCircles":  "Zählkreise",
-    "Boss.Description.OppositeCellsSum":  "Eine Zelle mit karminroter Zahl und ihre Spiegelzelle durch die Mitte ergeben zusammen diese Zahl. Beispiel: 10 = 3+7.",
+    "Boss.Description.OppositeCellsSum":  "Dieselbe karminrote Zahl steht in zwei Zellen, die sich durch die Mitte des Rasters gegenüberliegen (dreh das Raster um eine halbe Drehung, dann liegt die eine auf der anderen). Ihre zwei Ziffern ergeben zusammen diese Zahl. Beispiel: 10 = 3+7.",
     "Boss.Name.OppositeCellsSum":  "Gegenüber-Summen",
     "Boss.Description.PillArrow":  "Die zwei Zellen einer Pille ergeben eine Zahl (oben oder links zuerst); ihr Pfeil ergibt diese Summe. Beispiel: 1|4 = 14 = 9+5.",
     "Boss.Name.PillArrow":  "Pillenpfeil",

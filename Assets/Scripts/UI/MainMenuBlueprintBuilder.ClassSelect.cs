@@ -209,7 +209,7 @@ namespace SudokuRoguelike.UI
             SetRect((RectTransform)back.transform, new Vector2(0.815f, 0.18f), new Vector2(0.875f, 0.82f), Vector2.zero, Vector2.zero);
             OptionsUiFactory.PaintPill(back, new Color(0.24f, 0.20f, 0.16f, 1f), new Color(0.97f, 0.93f, 0.84f, 1f));
             back.onClick.RemoveAllListeners();
-            back.onClick.AddListener(mc.BackToMainMenu);
+            back.onClick.AddListener(mc.BackFromPanel);   // GAP-084: back to the screen before
             var begin = OptionsUiFactory.BuildButton("BtnConfirmClass", rt, T("ClassSelect.Begin"), 22);
             SetRect((RectTransform)begin.transform, new Vector2(0.882f, 0.18f), new Vector2(0.99f, 0.82f), Vector2.zero, Vector2.zero);
             OptionsUiFactory.PaintPill(begin, OptionsUiStyle.PaperVermilion, new Color(0.99f, 0.95f, 0.88f, 1f));

@@ -51,14 +51,14 @@ namespace SudokuRoguelike.Tests
             Button("ItemsCodex", MainMenuPath, "BtnCodexRelics", "CodexTabId.Relics"),
             Button("ItemsCodex", MainMenuPath, "BtnCodexModifiers", "CodexTabId.Modes"),
             Button("ItemsCodex", MainMenuPath, "BtnCodexCurses", "CodexTabId.Curses"),
-            Button("ItemsCodex", MainMenuPath, "BtnItemsBack", "mc.BackToMainMenu"),
+            Button("ItemsCodex", MainMenuPath, "BtnItemsBack", "mc.BackFromPanel"),
 
             Button("ClassSelect", MainMenuPath, "BtnConfirmClass", "mc.BeginRunFromSelect"),
-            Button("ClassSelect", MainMenuPath, "BtnClassBack", "mc.BackToMainMenu"),
+            Button("ClassSelect", MainMenuPath, "BtnClassBack", "mc.BackFromPanel"),
             Toggle("ClassSelect", MainMenuPath, "TglAllowIrregular", "SetAllowIrregularPuzzles"),
 
             Button("CustomPuzzle", MainMenuPath, "BtnTutStart", "mc.StartTutorialGame"),
-            Button("CustomPuzzle", MainMenuPath, "BtnTutBack", "mc.BackToMainMenu"),
+            Button("CustomPuzzle", MainMenuPath, "BtnTutBack", "mc.BackFromPanel"),
 
             // [REQ: UI-OPT-001] Options tabs and controls: one factory for the main menu and the run.
             Button("Options", OptionsTabSetPath, "BuildButton(tabName", "Activate(index)"),
@@ -91,10 +91,10 @@ namespace SudokuRoguelike.Tests
             Toggle("Options", OptionsUiFactoryPath, "\"AltSymbols\"", "SetAltSymbols"),
             Toggle("Options", OptionsUiFactoryPath, "\"ScreenReader\"", "SetScreenReaderEnabled"),
             Button("Options", MainMenuPath, "BtnKeybindings", "mc.OpenKeybindings"),
-            Button("Options", MainMenuPath, "BtnOptBack", "mc.BackToMainMenu"),
+            Button("Options", MainMenuPath, "BtnOptBack", "mc.BackFromPanel"),
             Button("Options", MainMenuPath, "BtnReplayBasicsTutorial", "mc.LaunchSudokuBasicsTutorial"),
 
-            Button("Credits", MainMenuPath, "BtnCredBack", "mc.BackToMainMenu"),
+            Button("Credits", MainMenuPath, "BtnCredBack", "mc.BackFromPanel"),
             Button("DailyWalk", ChallengePanelsPath, "BtnDailyBack", "mc.ShowGameModes"),
             Button("MonthlyWalk", ChallengePanelsPath, "BtnBeginMonthly", "mc.LaunchSeasonalChallenge"),
             Button("MonthlyWalk", ChallengePanelsPath, "BtnMonthlyBack", "mc.ShowGameModes"),
@@ -102,7 +102,7 @@ namespace SudokuRoguelike.Tests
             Button("SpiritTrials", MainMenuPath, "BtnTrialsSelectBack", "mc.BackFromPanel"),
             Button("EndlessZen", MainMenuPath, "BtnZenStart", "mc.StartEndlessZen"),
             Button("EndlessZen", MainMenuPath, "BtnZenLeaderboardBack", "mc.BackFromPanel"),
-            Button("ProfileSelect", MainMenuPath, "BtnProfileBack", "mc.BackToMainMenu"),
+            Button("ProfileSelect", MainMenuPath, "BtnProfileBack", "mc.BackFromPanel"),
             Button("ProfileSelect", MainMenuPath, "BtnLoad_", "mc.SelectProfileSlot"),
             Button("ProfileSelect", MainMenuPath, "BtnDelete_", "mc.DeleteProfileSlot"),
 

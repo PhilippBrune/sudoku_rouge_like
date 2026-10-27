@@ -330,11 +330,7 @@ namespace SudokuRoguelike.UI
                 _bagHighlightCells = cells;
                 _bagHighlightEndTime = endTime;
             };
-            _hudView.OnModifierTapped = rule =>
-            {
-                _boardView.HighlightGlobalConstraint(rule);
-                RenderBoard();
-            };
+            _hudView.OnModifierTapped = ShowRuleAroundSelection;   // GAP-091
 
             _rewardView.OnStatusChanged   = msg => SetStatus(msg);
             _rewardView.OnPostRewardReady = OnPostRewardReady;
@@ -2669,7 +2665,6 @@ namespace SudokuRoguelike.UI
                 _cellSelectedTime = Time.realtimeSinceStartup;
             _selectedRow = r;
             _selectedCol = c;
-            _audio?.PlayCellSelect();
             RenderBoard();
 
             // Anti-Knight: after selecting an empty cell, clear highlight so forbidden cells
@@ -2694,6 +2689,7 @@ namespace SudokuRoguelike.UI
             if (board.GivenMask[_selectedRow, _selectedCol]) { SetStatus(T("Given cell.")); return; }
             if (run.GetLockedCells().Contains((_selectedRow, _selectedCol))) { SetStatus(T("Cell is locked!")); return; } // [REQ: DEBUFF-HOOK-013] block digit input on locked cells
             if (value < 1 || value > board.Size) return;
+            if (!_pencilMode && board.IsDigitComplete(value) && !run.HasFogPending) { SetStatus(Tf("InRun.Status.DigitComplete", value)); return; }   // GAP-092
 
             // Basics tutorial: lock input to the guided cell during step 6
             if (_basicsTutorial != null && _basicsTutorial.IsInputLockedToCell(_selectedRow, _selectedCol))

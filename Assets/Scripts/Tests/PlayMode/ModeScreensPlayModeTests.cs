@@ -128,6 +128,32 @@ namespace SudokuRoguelike.Tests
             Assert.AreEqual("ENDLESS ZEN", Find<Text>(panel, "ClassSelectEyebrow").text);
         }
 
+        // [REQ: MENU-BACK-001] Back returns to the screen before: Game Modes → Incense Walk → Select Class → Back is Game
+        // Modes again (it was the main menu, GAP-084); from the main menu's Start Game it is the main menu.
+        [UnityTest]
+        [Requirement("MENU-BACK-001")]
+        public IEnumerator Back_OnSelectClass_ReturnsToTheScreenBefore()
+        {
+            var (host, menu) = OpenMenu();
+            menu.ShowGameModes();
+            yield return null;
+            Find<Button>(Panel(host, "GameModesPanel"), "BtnIncenseWalk").onClick.Invoke();
+            yield return null;
+            Assert.IsTrue(Panel(host, "ClassSelectPanel").activeSelf);
+            Find<Button>(Panel(host, "ClassSelectPanel"), "BtnClassBack").onClick.Invoke();
+            yield return null;
+            Assert.IsTrue(Panel(host, "GameModesPanel").activeSelf, "back on Game Modes");
+            Assert.IsFalse(Panel(host, "ClassSelectPanel").activeSelf);
+
+            menu.BackToMainMenu();
+            menu.StartGame();
+            yield return null;
+            Find<Button>(Panel(host, "ClassSelectPanel"), "BtnClassBack").onClick.Invoke();
+            yield return null;
+            Assert.IsFalse(Panel(host, "ClassSelectPanel").activeSelf);
+            Assert.IsFalse(Panel(host, "GameModesPanel").activeSelf, "from Start Game, Back is the main menu");
+        }
+
         [UnityTest]
         [Requirement("UI-STYLE-025")]
         public IEnumerator GameModes_FiveCurtains_FocusShowsTheirSlip()

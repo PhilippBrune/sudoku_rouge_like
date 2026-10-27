@@ -105,7 +105,7 @@ namespace SudokuRoguelike.UI
             SetRect((RectTransform)back.transform, new Vector2(0.725f, 0.09f), new Vector2(0.807f, 0.31f), Vector2.zero, Vector2.zero);
             OptionsUiFactory.PaintPill(back, new Color(0.24f, 0.20f, 0.16f, 1f), new Color(0.97f, 0.93f, 0.84f, 1f));
             back.onClick.RemoveAllListeners();
-            back.onClick.AddListener(mc.BackToMainMenu);
+            back.onClick.AddListener(mc.BackFromPanel);   // GAP-084: back to the screen before
 
             var hint = OptionsUiFactory.BuildText("ModesKeyHint", pr, T("GameModes.KeyHint"), 17, TextAnchor.MiddleCenter);
             SetRect(hint.rectTransform, new Vector2(0.2f, 0.03f), new Vector2(0.8f, 0.07f), Vector2.zero, Vector2.zero);

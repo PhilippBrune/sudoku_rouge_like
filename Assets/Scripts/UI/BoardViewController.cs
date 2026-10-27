@@ -109,37 +109,28 @@ namespace SudokuRoguelike.UI
             _conflictCacheChecksum = uint.MaxValue; // overlay affects HasConstraintConflict
         }
 
-        public void HighlightGlobalConstraint(BossModifierId rule)
+        /// <summary>[REQ: RULE-TAP-001] Marks the cells a whole-board rule ties to the chosen cell (GAP-091).</summary>
+        public void HighlightGlobalConstraint(BossModifierId rule, int row, int col)
         {
             _globalConstraintHighlight.Clear();
             var board = _map?.Run?.CurrentBoard;
             if (board == null) return;
-            var size = board.Size;
+            foreach (var cell in RuleCells(rule, row, col, board.Size)) _globalConstraintHighlight.Add(cell);
+        }
 
-            if (rule == BossModifierId.Nonconsecutive)
-            {
-                // Highlight all orthogonally adjacent cell pairs
-                for (var r = 0; r < size; r++)
-                for (var c = 0; c < size; c++)
-                {
-                    if (c + 1 < size) { _globalConstraintHighlight.Add((r, c)); _globalConstraintHighlight.Add((r, c + 1)); }
-                    if (r + 1 < size) { _globalConstraintHighlight.Add((r, c)); _globalConstraintHighlight.Add((r + 1, c)); }
-                }
-            }
-            else if (rule == BossModifierId.Antiknight)
-            {
-                // Highlight all knight-move pairs
-                int[] dr = { -2, -2, -1, -1, 1, 1, 2, 2 };
-                int[] dc = { -1, 1, -2, 2, -2, 2, -1, 1 };
-                for (var r = 0; r < size; r++)
-                for (var c = 0; c < size; c++)
-                for (var k = 0; k < 8; k++)
-                {
-                    var nr = r + dr[k]; var nc = c + dc[k];
-                    if (nr >= 0 && nr < size && nc >= 0 && nc < size)
-                    { _globalConstraintHighlight.Add((r, c)); _globalConstraintHighlight.Add((nr, nc)); }
-                }
-            }
+        private static readonly (int dr, int dc)[] Orthogonal = { (-1, 0), (1, 0), (0, -1), (0, 1) };
+        private static readonly (int dr, int dc)[] KnightMoves = { (-2, -1), (-2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2), (2, -1), (2, 1) };
+
+        /// <summary>The cell and its neighbours under Nonconsecutive (side by side) or Antiknight (a knight's move away).</summary>
+        public static List<(int, int)> RuleCells(BossModifierId rule, int row, int col, int size)
+        {
+            var cells = new List<(int, int)>();
+            var steps = rule == BossModifierId.Nonconsecutive ? Orthogonal : rule == BossModifierId.Antiknight ? KnightMoves : null;
+            if (steps == null || row < 0 || col < 0 || row >= size || col >= size) return cells;
+            cells.Add((row, col));
+            foreach (var (dr, dc) in steps)
+                if (row + dr >= 0 && row + dr < size && col + dc >= 0 && col + dc < size) cells.Add((row + dr, col + dc));
+            return cells;
         }
 
         public void ClearGlobalConstraintHighlight() => _globalConstraintHighlight.Clear();
@@ -506,6 +497,7 @@ namespace SudokuRoguelike.UI
 
         private void BuildGrid(int size, bool clueRing = false)
         {
+            _globalConstraintHighlight.Clear();   // GAP-091: a rule highlight never carries into the next puzzle
             _gridFontScale = _accessibility?.FontScale ?? 1f;
             _boardSize = size;
             _gridHasClueRing = clueRing;

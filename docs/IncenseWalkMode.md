@@ -1,11 +1,12 @@
 # Incense Walk Mode
 
-**Version:** 0.3 | **Date:** 2026-10-27 | **Status:** review (built: the mode, its curtain on Game Modes, the puzzle screen with the incense stick, the result and the week's board)
+**Version:** 0.4 | **Date:** 2026-10-27 | **Status:** review (built: the mode, its curtain on Game Modes, the puzzle screen with the incense stick, the result and the week's board)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 0.4 | 2026-10-27 | review | 0.3.0 playtest: no pencil to buy in the walk, and the walk's slip says that pencil marks are free (INCENSE-PUZZLE-002, GAP-085; owner: "Notizen gratis"). |
 | 0.3 | 2026-10-27 | review | Owner request (2026-10-27): the time attack concept (v1.1) is merged here: "Why", "How it differs from the other modes", "Fairness and technique" and the owner's answers. The two open answers of 2026-10-27 are now rules: a free Koi Gambler mistake counts for nothing (INCENSE-CLASS-001, built) and a walk is not a run (INCENSE-XP-001, built). Only the midnight edge of the week's board stays open. Its file is removed. |
 | 0.2 | 2026-10-26 | review | Owner: "Implementier die UI-Styles". Built: `GameMode.IncenseWalk` in `RunDirector` (no path, no bag, free pencil marks, a wrong digit costs time instead of HP), the sixth curtain (UI-STYLE-027) with a practice walk on a random seed, the incense stick in place of the lanterns (UI-STYLE-030), the result in the mode-result family and the week's Steam board "IncenseWalk_yyyy-Www" for a walk on the week's seed. The walk cannot be resumed: Save & Quit ends it without a result, as in Endless Zen. |
 | 0.1 | 2026-10-26 | under review | From the time attack concept (merged in 0.3) and the owner's answers (2026-10-25): "implement as it is now for playtesting and balancing", both mistake penalties, no boons, classes with time passives, a sixth mode. Roadmap RM-123. |
@@ -57,6 +58,7 @@ There are no boons and no choices between puzzles (owner, 2026-10-25).
 | ID | Rule |
 |----|------|
 | INCENSE-PUZZLE-001 | The puzzles grow every three: puzzles 1–3 are 5×5 or 6×6 with 1–2 stars and no rule; 4–6 are 6×6 or 7×7 with 2 stars and one rule; 7–9 are 7×7 or 8×8 with 2–3 stars and one or two rules; from 10 on 8×8 or 9×9 with 3 stars and two rules. The rules are drawn from the modifiers that generate on the board's size. The same seed gives the same walk. |
+| INCENSE-PUZZLE-002 | Pencil marks cost nothing in the walk, so there is no pencil to count or buy: the buy button never shows (it covered the time, GAP-085), and the walk's slip says "Pencil marks are free." |
 
 ## Score and records
 

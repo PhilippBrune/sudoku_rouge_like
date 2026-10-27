@@ -365,7 +365,9 @@ namespace SudokuRoguelike.UI
                 var totalSec = (int)state.TotalRunSeconds;
                 if (_puzzleStartTime >= 0f)
                     totalSec += (int)(Time.realtimeSinceStartup - _puzzleStartTime);
-                if (state.Mode == GameMode.EndlessZen)
+                // [REQ: HUD-TIMER-001] No run timer in a single-puzzle mode (Custom Puzzle, Sudoku Basics): it only repeated
+                // the puzzle's own (GAP-088).
+                if (state.Mode == GameMode.EndlessZen || state.TutorialMode)
                 {
                     if (_cachedRunTimerSec != -1) { _cachedRunTimerSec = -1; _runTimerText.text = string.Empty; }
                 }
@@ -694,13 +696,10 @@ namespace SudokuRoguelike.UI
                 ScrollUiKit.Spot(badgeGo.transform, "PortraitFace", new Vector2(0.18f, 0.5f), new Vector2(76f, 76f),
                     new Color(0.10f, 0.12f, 0.10f, 1f), ScrollUiKit.Disc());
 
-                var iconGo = new GameObject("ClassIcon", typeof(RectTransform), typeof(Image));
-                iconGo.transform.SetParent(badgeGo.transform, false);
-                var iconRt = iconGo.GetComponent<RectTransform>();
-                iconRt.anchorMin = new Vector2(0.04f, 0.10f);
-                iconRt.anchorMax = new Vector2(0.36f, 0.90f);
-                iconRt.offsetMin = iconRt.offsetMax = Vector2.zero;
-                _classBadgeIcon = iconGo.GetComponent<Image>();
+                // GAP-090: the emblem has the face's centre and size (it was a share of the badge, which drifted off the
+                // ring as the badge grew wider).
+                _classBadgeIcon = ScrollUiKit.Spot(badgeGo.transform, "ClassIcon", new Vector2(0.18f, 0.5f), new Vector2(76f, 76f),
+                    Color.white);
                 _classBadgeIcon.preserveAspect = true;
                 _classBadgeIcon.raycastTarget  = false;
 

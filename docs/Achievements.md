@@ -1,11 +1,12 @@
 # Achievements
 
-**Version:** 1.1 | **Date:** 2026-10-27 | **Status:** implemented (game side; the 21 new achievements are saved in Steamworks, not published yet)
+**Version:** 1.2 | **Date:** 2026-10-27 | **Status:** implemented (game side; the 21 new achievements and all 29 in four more languages are saved in Steamworks, not published yet)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.2 | 2026-10-27 | implemented | §5 has the eight Harmony achievements too. All 29 achievements are entered in German, French, Spanish (Spain) and Portuguese (Brazil) on the Achievement Localization page (files by `tools/steam/achievement_loc_vdf.py`); saved, not published. |
 | 1.1 | 2026-10-27 | implemented | Owner: "Lade die neuen Achievements ... hoch". The 21 new achievements are created in Steamworks (App 4858470) with name, description and both icons, saved, not published (Publish waits for the owner's OK). The other four languages (§5) are not entered yet. The Daily Walk streak is checked at the end of a Daily Walk too (it is a Garden Run of two floors since DailyGoalSystem 0.4). |
 | 1.0 | 2026-10-26 | implemented | Owner request: "Review the current achievements and add more to the game." Review of the eight Harmony achievements; 21 new achievements for the first hours, the classes, the other modes and the collection (ACHIEVE-RUN-001, ACHIEVE-CLASS-001, ACHIEVE-MODE-001, ACHIEVE-COLLECT-001). |
 
@@ -92,7 +93,7 @@ Every grant is kept in the profile (`MasteryAchievementState.UnlockedAchievement
 
 ## 4. Steamworks (created 2026-10-27; publishing waits for the owner)
 
-Steamworks → App 4858470 → Stats & Achievements → Achievements: one new achievement per row of §2 with the API name, name, description, hidden = no, and the two icons (`steam_assets/achievements/achieved_<api name>.jpg` and `unachieved_<api name>.jpg`, 256×256). Then publish (stop and check before the Publish button, as always). The texts in the other four languages are in §5 (Steamworks → the achievement → Localization).
+Steamworks → App 4858470 → Stats & Achievements → Achievements: one new achievement per row of §2 with the API name, name, description, hidden = no, and the two icons (`steam_assets/achievements/achieved_<api name>.jpg` and `unachieved_<api name>.jpg`, 256×256). Then publish (stop and check before the Publish button, as always). The texts in the other four languages (§5) go in on Stats & Achievements → Achievement Localization: `tools/steam/achievement_loc_vdf.py` writes one Key/Values file per language from §5 into `steam_assets/achievements/localization/`, and each file is uploaded there (entered 2026-10-27 for all 29).
 
 For entering them: `steam_assets/achievements/steamworks_entry.html` lists the 21 new achievements with both icons and every text in five languages (a click copies a field), and `new_achievements_overview.jpg` shows all icons at once (both made by `tools/steam/achievement_sheet.py` from this page).
 
@@ -102,6 +103,14 @@ Name and description, separated by the colon; the mode and screen names are the 
 
 | API name | Deutsch | Français | Español | Português (Brasil) |
 |---|---|---|---|---|
+| `harmony_1_win` | Erstes Erwachen: Schließe eine Gartenrunde auf Harmonie 1 oder höher ab. | Premier éveil : terminez un parcours du jardin en Harmonie 1 ou plus. | Primer despertar: completa un recorrido del jardín en Armonía 1 o superior. | Primeiro despertar: conclua um percurso do jardim em Harmonia 1 ou superior. |
+| `harmony_3_win` | Moos und Kies: Schließe eine Gartenrunde auf Harmonie 3 oder höher ab. | Mousse et gravier : terminez un parcours du jardin en Harmonie 3 ou plus. | Musgo y grava: completa un recorrido del jardín en Armonía 3 o superior. | Musgo e cascalho: conclua um percurso do jardim em Harmonia 3 ou superior. |
+| `harmony_5_win` | Wasserspiegelung: Schließe eine Gartenrunde auf Harmonie 5 oder höher ab. | Reflet dans l'eau : terminez un parcours du jardin en Harmonie 5 ou plus. | Reflejo en el agua: completa un recorrido del jardín en Armonía 5 o superior. | Reflexo na água: conclua um percurso do jardim em Harmonia 5 ou superior. |
+| `harmony_7_win` | Laternenschein: Schließe eine Gartenrunde auf Harmonie 7 oder höher ab. | Lueur de lanterne : terminez un parcours du jardin en Harmonie 7 ou plus. | Brillo de farol: completa un recorrido del jardín en Armonía 7 o superior. | Brilho da lanterna: conclua um percurso do jardim em Harmonia 7 ou superior. |
+| `harmony_9_win` | Das Torii-Tor: Schließe eine Gartenrunde auf Harmonie 9 oder höher ab. | Le portail torii : terminez un parcours du jardin en Harmonie 9 ou plus. | El portal torii: completa un recorrido del jardín en Armonía 9 o superior. | O portal torii: conclua um percurso do jardim em Harmonia 9 ou superior. |
+| `harmony_10_win` | Aufstieg zum Gipfel: Schließe eine Gartenrunde auf Harmonie 10 ab. | Ascension du sommet : terminez un parcours du jardin en Harmonie 10. | Ascenso a la cima: completa un recorrido del jardín en Armonía 10. | Subida ao cume: conclua um percurso do jardim em Harmonia 10. |
+| `harmony_10_perfect` | Stille Vollkommenheit: Schließe eine Gartenrunde auf Harmonie 10 ohne einen einzigen Fehler ab. | Perfection tranquille : terminez un parcours du jardin en Harmonie 10 sans aucune erreur. | Perfección serena: completa un recorrido del jardín en Armonía 10 sin ningún error. | Perfeição tranquila: conclua um percurso do jardim em Harmonia 10 sem nenhum erro. |
+| `harmony_all_classes` | Meister des Gartens: Schließe mit allen 8 Klassen eine Gartenrunde auf Harmonie 5 oder höher ab. | Maître du jardin : terminez un parcours du jardin en Harmonie 5 ou plus avec les 8 classes. | Maestro del jardín: completa un recorrido del jardín en Armonía 5 o superior con las 8 clases. | Mestre do jardim: conclua um percurso do jardim em Harmonia 5 ou superior com as 8 classes. |
 | `first_puzzle` | Der erste Stein: Löse dein erstes Rätsel. | La première pierre : résolvez votre premier puzzle. | La primera piedra: resuelve tu primer puzle. | A primeira pedra: resolva seu primeiro quebra-cabeça. |
 | `first_boss` | Das Tor öffnet sich: Besiege deinen ersten Boss. | La porte s'ouvre : battez votre premier boss. | La puerta se abre: derrota a tu primer jefe. | O portão se abre: derrote seu primeiro chefe. |
 | `floor_5` | Der Gipfel in Sicht: Erreiche Etage 5 in einer Gartenrunde. | Le sommet en vue : atteignez l'étage 5 dans un parcours du jardin. | La cima a la vista: llega al piso 5 en un recorrido del jardín. | O cume à vista: chegue ao andar 5 em um percurso do jardim. |

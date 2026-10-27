@@ -39,5 +39,18 @@ class AchievementSheetTests(unittest.TestCase):
                 self.assertTrue(title and description[:1].isupper(), (name, title, description))
 
 
+class AchievementLocalizationTests(unittest.TestCase):
+    def test_every_achievement_in_the_game_has_a_steam_token_and_a_file_entry(self):
+        import achievement_loc_vdf as loc
+        source = open(SERVICE, encoding='utf-8-sig').read()
+        listed = re.search(r'AllAchievementIds\s*=\s*\{(.*?)\};', source, re.S).group(1)
+        self.assertEqual(set(re.findall(r'"(\w+)"', listed)), set(loc.TOKEN_ORDER))
+        _, others = loc.read_spec()
+        for api in loc.TOKEN_ORDER:
+            self.assertEqual(len(others.get(api, [])), len(loc.STEAM_LANGUAGES), api)
+        german = loc.vdf('german', {api: others[api][0] for api in loc.TOKEN_ORDER})
+        self.assertEqual(german.count('_NAME"'), len(loc.TOKEN_ORDER))
+
+
 if __name__ == '__main__':
     unittest.main()

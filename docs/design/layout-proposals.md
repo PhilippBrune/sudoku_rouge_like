@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 3.3 | **Date:** 2026-10-27 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; not built: the main menu)
+**Version:** 3.4 | **Date:** 2026-10-27 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; not built: the main menu)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 3.4 | 2026-10-27 | review | 0.3.0 playtest, owner: "Garden Run muss nicht unter Game modes gelistet werden" and "Ja, nur Select Class": Game Modes has five curtains, centred, without the Garden Run and its Harmony strip; Harmony is chosen on Select Class (UI-STYLE-031, RM-213). Game Modes opens on Endless Zen. |
 | 3.3 | 2026-10-27 | review | Owner request (2026-10-27): the concept files are merged into their specs; the references to them point to the spec sections (DailyGoalSystem, IncenseWalkMode, GameDesignSpec §14). No mockup changed. |
 | 3.2 | 2026-10-26 | review | The ink stamp shop built (UI-STYLE-029), opened from the Daily Walk's slip; its looks in the game (board ink, the seal ring on Select Class, the floor seals). A click chooses a look, Buy or Wear acts. Screenshots below. With this, UI-STYLE-027 to 030 are built. |
 | 3.1 | 2026-10-26 | review | The Incense Walk built: the sixth curtain on Game Modes (UI-STYLE-027) and the puzzle screen with the incense stick (UI-STYLE-030), and its result in the mode-result family. Changes from the mockups: the slips sit in the left column under the stick (the right column keeps the number pad), "Practice" sits left of Back. Screenshots below. |

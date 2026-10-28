@@ -850,7 +850,6 @@ namespace SudokuRoguelike.UI
             if (_classSelectScreen != null)
                 _classSelectScreen.ShowRunSettings(_pendingLaunchMode, _pendingTrialsTier, level, maxUnlocked, perk, HarmonyPerkName(perk),
                     _gameBootstrap != null && _gameBootstrap.HasResumableRun());
-            RefreshGameModesHarmony(meta);
         }
 
         public void SetSelectedClass(ClassId classId)

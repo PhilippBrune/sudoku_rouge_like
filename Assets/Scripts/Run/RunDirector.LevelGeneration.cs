@@ -1058,10 +1058,17 @@ namespace SudokuRoguelike.Run
             return false;
         }
 
-        // Boss modifiers the player picked at the gate; these must not be dropped silently.
+        // Boss modifiers the player picked at the gate, and every rule of a Custom Puzzle; these must not be dropped
+        // silently. [REQ: CUSTOM-RULE-001] A Custom Puzzle's rules were not protected: a board without room for one
+        // started without it (GAP-086).
         private List<BossModifierId> GetMandatoryModifiers(LevelConfig config)
         {
             var mandatory = new List<BossModifierId>();
+            if (config != null && State != null && State.TutorialMode && config.ActiveModifiers != null)
+            {
+                mandatory.AddRange(config.ActiveModifiers);
+                return mandatory;
+            }
             if (config == null || !config.IsBoss || State?.ChosenBossModifiers == null) return mandatory;
             for (var i = 0; i < State.ChosenBossModifiers.Count; i++)
                 if (config.ActiveModifiers.Contains(State.ChosenBossModifiers[i]))

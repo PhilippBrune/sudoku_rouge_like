@@ -14,7 +14,7 @@ namespace SudokuRoguelike.UI
     /// </summary>
     public sealed class GameModesScreen : MonoBehaviour
     {
-        public enum Mode { Garden, Endless, Trials, Daily, Monthly, Incense }
+        public enum Mode { Endless, Trials, Daily, Monthly, Incense }   // UI-STYLE-031: no Garden Run curtain (RM-213)
 
         /// <summary>One curtain's state and its slip's body.</summary>
         public readonly struct ModeView
@@ -35,37 +35,9 @@ namespace SudokuRoguelike.UI
             }
         }
 
-        /// <summary>The Garden Run slip: the chosen Harmony level, its rule and the next level's condition, the perk.</summary>
-        public readonly struct HarmonyView
-        {
-            public readonly int Level;
-            public readonly int MaxUnlocked;
-            public readonly string Title;
-            public readonly string Body;
-            public readonly string State;
-            public readonly string PerkName;
-            public readonly string PerkDescription;
-            public readonly bool PerkUnlocked;
-
-            public HarmonyView(int level, int maxUnlocked, string title, string body, string state, string perkName,
-                string perkDescription, bool perkUnlocked)
-            {
-                Level = level;
-                MaxUnlocked = maxUnlocked;
-                Title = title;
-                Body = body;
-                State = state;
-                PerkName = perkName;
-                PerkDescription = perkDescription;
-                PerkUnlocked = perkUnlocked;
-            }
-        }
-
         private static readonly Color Cloth = new Color(0.19f, 0.28f, 0.23f, 1f);
         private static readonly Color ClothChosen = new Color(0.56f, 0.17f, 0.14f, 1f);
         private static readonly Color ClothLocked = new Color(0.23f, 0.21f, 0.19f, 1f);
-        private static readonly Color StoneReached = new Color(0.81f, 0.78f, 0.69f, 1f);
-        private static readonly Color StoneLocked = new Color(0.60f, 0.58f, 0.52f, 0.45f);
         private static readonly Color StripPaper = new Color(0.94f, 0.89f, 0.78f, 0.95f);
         private static readonly Color StripLocked = new Color(0.24f, 0.20f, 0.16f, 0.92f);
         private static readonly Color Amber = new Color(0.88f, 0.64f, 0.29f, 1f);
@@ -73,37 +45,17 @@ namespace SudokuRoguelike.UI
         private readonly Dictionary<Mode, Button> _curtains = new Dictionary<Mode, Button>();
         private readonly Dictionary<Mode, GameObject> _slips = new Dictionary<Mode, GameObject>();
         private readonly Dictionary<Mode, bool> _unlocked = new Dictionary<Mode, bool>();
-        private Image[] _stones = Array.Empty<Image>();
-        private Button _perk;
         private Button _records;
         private Button _back;
         private Button[] _tiers = Array.Empty<Button>();
         private readonly Dictionary<Mode, Button> _extras = new Dictionary<Mode, Button>();
-        private Mode _shown = Mode.Garden;
-
-        /// <summary>LB / RB (PageUp / PageDown) on the Garden Run slip: the Harmony level down or up.</summary>
-        public Action<int> HarmonyStep;
-        /// <summary>Y (F) on the Garden Run slip: the next perk.</summary>
-        public Action PerkCycle;
+        private Mode _shown = Mode.Endless;
 
         public void Register(Mode mode, Button curtain, GameObject slip)
         {
             _curtains[mode] = curtain;
             _slips[mode] = slip;
             _unlocked[mode] = true;
-        }
-
-        public void SetStones(Image[] stones) => _stones = stones ?? Array.Empty<Image>();
-
-        public void SetPerkButton(Button perk) => _perk = perk;
-
-        private void Update()
-        {
-            if (_shown != Mode.Garden || !_slips.TryGetValue(Mode.Garden, out var slip) || slip == null || !slip.activeInHierarchy)
-                return;
-            var (step, perk) = HarmonyHotkeys.Read();
-            if (step != 0) HarmonyStep?.Invoke(step);
-            if (perk && _perk != null && _perk.interactable) PerkCycle?.Invoke();
         }
 
         /// <summary>The Records pill under Endless Zen and Back, for the D-pad links (<see cref="WireNavigation"/>).</summary>
@@ -131,13 +83,9 @@ namespace SudokuRoguelike.UI
             WireNavigation();
         }
 
-        /// <summary>A Harmony level as the stones show it: 0, I … IX, VG.</summary>
-        public static string Numeral(int level) =>
-            level <= 0 ? "0" : level >= 10 ? "VG" : new[] { "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX" }[level - 1];
-
         // D-pad: left and right along the curtains (a locked one too, to read what opens it); down from a curtain to the
-        // way in, or Records under Endless Zen, or Back when the mode is locked; on the Garden Run slip the perk and the
-        // Harmony chevrons. Rewired on every refresh, so focus never lands on a button that is switched off.
+        // way in, or Records under Endless Zen, or Back when the mode is locked. Rewired on every refresh, so focus never
+        // lands on a button that is switched off.
         private void WireNavigation()
         {
             var modes = (Mode[])Enum.GetValues(typeof(Mode));
@@ -160,10 +108,9 @@ namespace SudokuRoguelike.UI
                         mode = Navigation.Mode.Explicit, selectOnUp = curtain, selectOnDown = Usable(enter) ? enter : _back
                     };
                 if (enter == null) continue;
-                var above = modes[i] == Mode.Garden && Usable(_perk) ? _perk : records != null ? (Selectable)records : curtain;
+                var above = records != null ? (Selectable)records : curtain;
                 enter.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnUp = above, selectOnLeft = _back };
             }
-            WireGardenSlip();
             WireTrialTiers();
             WireBack();
         }
@@ -181,31 +128,6 @@ namespace SudokuRoguelike.UI
                         selectOnLeft = i > 0 ? _tiers[i - 1] : null,
                         selectOnRight = i + 1 < _tiers.Length ? _tiers[i + 1] : (Selectable)_back
                     };
-        }
-
-        private void WireGardenSlip()
-        {
-            if (!_slips.TryGetValue(Mode.Garden, out var slip) || slip == null || !_curtains.TryGetValue(Mode.Garden, out var curtain))
-                return;
-            var enter = EnterOf(Mode.Garden);
-            var prev = FindButton(slip.transform, "BtnHarmonyPrev");
-            var next = FindButton(slip.transform, "BtnHarmonyNext");
-            if (_perk != null)
-                _perk.navigation = new Navigation
-                {
-                    mode = Navigation.Mode.Explicit, selectOnUp = curtain, selectOnDown = enter, selectOnLeft = next
-                };
-            if (next != null)
-                next.navigation = new Navigation
-                {
-                    mode = Navigation.Mode.Explicit, selectOnUp = curtain, selectOnDown = _back, selectOnLeft = prev,
-                    selectOnRight = Usable(_perk) ? _perk : (Selectable)enter
-                };
-            if (prev != null)
-                prev.navigation = new Navigation
-                {
-                    mode = Navigation.Mode.Explicit, selectOnUp = curtain, selectOnDown = _back, selectOnRight = next
-                };
         }
 
         // Back leads up to the shown mode's curtain and right to its way in.
@@ -228,12 +150,6 @@ namespace SudokuRoguelike.UI
             _slips.TryGetValue(mode, out var slip) && slip != null ? FindEnter(slip.transform) : null;
 
         private static bool Usable(Selectable selectable) => selectable != null && selectable.interactable;
-
-        private static Button FindButton(Transform parent, string name)
-        {
-            var found = parent.Find(name);
-            return found != null ? found.GetComponent<Button>() : null;
-        }
 
         public Mode Shown => _shown;
 
@@ -292,39 +208,9 @@ namespace SudokuRoguelike.UI
             }
             foreach (var pair in _slips)
                 if (pair.Value != null) pair.Value.SetActive(pair.Key == mode);
-            WireBack();
-        }
-
-        /// <summary>The Garden Run slip and curtain strip; the stones: reached ones light, the chosen one vermilion.</summary>
-        public void ShowHarmony(in HarmonyView view)
-        {
-            for (var i = 0; i < _stones.Length; i++)
-            {
-                if (_stones[i] == null) continue;
-                _stones[i].color = i == view.Level ? ScrollUiKit.Vermilion : i <= view.MaxUnlocked ? StoneReached : StoneLocked;
-                var numeral = _stones[i].transform.Find("Numeral");
-                if (numeral != null) numeral.GetComponent<Text>().color = i == view.Level ? Color.white : ScrollUiKit.InkSoft;
-            }
-            if (_curtains.TryGetValue(Mode.Garden, out var curtain) && curtain != null)
-                SetText(curtain.transform, "State/StateText", view.State);
-            if (!_slips.TryGetValue(Mode.Garden, out var slip) || slip == null) return;
-            SetText(slip.transform, "HarmonySelectedLabel", view.Title);
-            SetText(slip.transform, "HarmonySubLabel", view.Body);
-            SetText(slip.transform, "PerkBox/HarmonyPerkDesc", view.PerkDescription);
-            if (_perk != null)
-            {
-                _perk.interactable = view.PerkUnlocked;
-                SetText(_perk.transform, "Label", view.PerkName);
-            }
-            SetInteractable(slip.transform, "BtnHarmonyPrev", view.Level > 0);
-            SetInteractable(slip.transform, "BtnHarmonyNext", view.Level < view.MaxUnlocked);
+            // Down from a curtain leads to its way in, which is active only while its slip shows: wire again (Down led to
+            // Back on every curtain but the first one shown; found with UI-STYLE-031).
             WireNavigation();
-        }
-
-        private static void SetInteractable(Transform parent, string path, bool interactable)
-        {
-            var button = parent.Find(path);
-            if (button != null) button.GetComponent<Button>().interactable = interactable;
         }
 
         private static Button FindEnter(Transform slip)

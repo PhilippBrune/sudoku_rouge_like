@@ -90,8 +90,8 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-083](#gap-083) | Keys and D-pad could walk onto the puzzle's Options and Save & Quit buttons | FIXED (0.3.0 playtest, 2026-10-27; a real pad still to check) | LOW | P3 |
 | [GAP-084](#gap-084) | Back on Select Class went to the main menu instead of the screen before | FIXED (0.3.0 playtest, 2026-10-27) | LOW | P3 |
 | [GAP-085](#gap-085) | Incense Walk: the pencil buy button covered the time | FIXED (0.3.0 playtest, 2026-10-27) | MEDIUM | P2 |
-| [GAP-086](#gap-086) | A Custom Puzzle could start without a chosen rule (9×9, 7 stars, Sum Dots) | OPEN (0.3.0 playtest) | MEDIUM | P2 |
-| [GAP-087](#gap-087) | A Custom Puzzle with Free resources showed and used a class passive | OPEN (0.3.0 playtest) | LOW | P3 |
+| [GAP-086](#gap-086) | A Custom Puzzle could start without a chosen rule (9×9, 7 stars, Sum Dots) | FIXED in part (0.3.0 playtest, 2026-10-27): rules protected and named; the playtest case not reproduced | MEDIUM | P2 |
+| [GAP-087](#gap-087) | A Custom Puzzle with Free resources showed and used a class passive | FIXED (0.3.0 playtest, 2026-10-27) | LOW | P3 |
 | [GAP-088](#gap-088) | Two timers in single-puzzle modes | FIXED (0.3.0 playtest, 2026-10-27) | LOW | P4 |
 | [GAP-089](#gap-089) | At 21:9 (3440×1440) the board covered the title and the combo line | FIXED (0.3.0 playtest, 2026-10-27) | HIGH | P1 |
 | [GAP-090](#gap-090) | The class emblem sat off-centre in its ring | FIXED (0.3.0 playtest, 2026-10-27) | LOW | P4 |
@@ -1183,6 +1183,25 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Problem:** The HUD's per-frame refresh showed "+3 Pencil (20g)" again in the walk, where pencil marks are free; it sat on the time readout. The owner missed a pencil display: there is no pencil to count in the walk.
 - **Fix:** No buy button and no purchase in the walk (`RefreshBuyPencilButton`, `RunDirector.CanBuyPencil`); the walk's slip says "Pencil marks are free." (owner: "Notizen gratis"). The screenshot diagnostic now uses the Koi Gambler, as in the playtest (the Garden Monk never had the button).
 - **Tests:** `PuzzleScreenRulesTests.TheIncenseWalk_SellsNoPencil`; `docs/design/layout-proposals/after_incense_walk_no_pencil_buy.jpg`.
+
+## GAP-086
+**A Custom Puzzle could start without a chosen rule (9×9, 7 stars, Sum Dots)**
+
+- **Requirement:** CUSTOM-RULE-001 (TutorialModeSystem 1.11)
+- **Status:** FIXED in part (0.3.0 playtest, 2026-10-27) · **Severity:** MEDIUM · **Priority:** P2
+- **Problem:** Only the boss gate's picks were protected from being dropped (`GetMandatoryModifiers`); a Custom Puzzle's rules were not, and the result's missing list was read by nothing, so a rule without room left no trace.
+- **Analysis:** The playtest case did not reproduce: Sum Dot alone and in three busy sets (with cages, thermos, whispers, other dots, arrows, renban) was placed on every seed tried, on boxes, turned boxes and irregular regions (`CustomPuzzleRulesTests`). The rule set and seed of the playtest board are unknown.
+- **Fix:** Every Custom Puzzle rule is mandatory (the generation tries other boards first); if one still finds no room, the status line names it.
+- **Tests:** `CustomPuzzleRulesTests` (three rules × three region kinds × eight seeds, three busy sets × six seeds).
+- **Still to check:** if the owner sees it again, the rules chosen and the seed shown in the run menu.
+
+## GAP-087
+**A Custom Puzzle with Free resources showed and used a class passive**
+
+- **Requirement:** CUSTOM-CLASS-001 (TutorialModeSystem 1.11)
+- **Status:** FIXED · **Severity:** LOW · **Priority:** P3
+- **Fix:** Free resources run without a class (ClassId 0, as the Daily Walk's walker): no portrait, no passive line, no passive effect; Class-Based keeps the chosen class.
+- **Tests:** `CustomPuzzleRulesTests.FreeResources_MeanNoClass`.
 
 ## GAP-088
 **Two timers in single-puzzle modes**

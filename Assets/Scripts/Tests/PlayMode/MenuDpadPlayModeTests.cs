@@ -69,10 +69,13 @@ namespace SudokuRoguelike.Tests
             menu.ShowGameModes();
             yield return null;
 
-            var garden = Find(host, "BtnGarden");
-            Assert.AreSame(Find(host, "BtnEndless"), MenuDpad.Step(garden, MoveDirection.Right));
-            Assert.IsNull(MenuDpad.Step(garden, MoveDirection.Left), "the first curtain: Left stays");
-            Assert.AreSame(Find(host, "BtnGardenEnter"), MenuDpad.Step(garden, MoveDirection.Down));
+            var monthly = Find(host, "BtnMonthlyWalk");   // UI-STYLE-031: the curtains start with Endless Zen
+            Assert.AreSame(Find(host, "BtnIncenseWalk"), MenuDpad.Step(monthly, MoveDirection.Right));
+            Assert.AreSame(Find(host, "BtnDailyWalk"), MenuDpad.Step(monthly, MoveDirection.Left));
+            Assert.IsNull(MenuDpad.Step(Find(host, "BtnEndless"), MoveDirection.Left), "the first curtain: Left stays");
+            EventSystem.current.SetSelectedGameObject(monthly.gameObject);   // focus shows the curtain's slip and its way in
+            yield return null;
+            Assert.AreSame(Find(host, "BtnMonthlyWalkEnter"), MenuDpad.Step(monthly, MoveDirection.Down), "the Monthly Walk is always open");
         }
 
         [Test]

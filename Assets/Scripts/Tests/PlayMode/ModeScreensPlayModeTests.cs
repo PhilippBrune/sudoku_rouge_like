@@ -163,21 +163,22 @@ namespace SudokuRoguelike.Tests
             yield return null;
 
             var panel = Panel(host, "GameModesPanel");
-            var names = new[] { "BtnGarden", "BtnEndless", "BtnTrials", "BtnDailyWalk", "BtnMonthlyWalk" };
-            var titles = new[] { "Garden Run", "Endless Zen", "Spirit Trials", "Daily Walk", "Monthly Walk" };
+            // UI-STYLE-031: no Garden Run curtain (Start Game starts it; Harmony is on Select Class).
+            var names = new[] { "BtnEndless", "BtnTrials", "BtnDailyWalk", "BtnMonthlyWalk", "BtnIncenseWalk" };
+            var titles = new[] { "Endless Zen", "Spirit Trials", "Daily Walk", "Monthly Walk", "Incense Walk" };
             for (var i = 0; i < names.Length; i++)
                 Assert.AreEqual(titles[i], Find<Button>(panel, names[i]).transform.Find("Label").GetComponent<Text>().text);
-            Assert.IsTrue(Find<Transform>(panel, "Slip_Garden").gameObject.activeSelf, "the Garden Run slip shows first");
-            Assert.AreEqual(11, panel.GetComponentsInChildren<Image>(true).Count(img => img.name.StartsWith("HarmonyStone_")));
-            Assert.AreEqual("Harmony 0 of IV", Strip(panel, "BtnGarden"));
+            Assert.IsNull(panel.transform.GetComponentsInChildren<Button>(true).FirstOrDefault(b => b.name == "BtnGarden"),
+                "no Garden Run curtain");
+            Assert.IsTrue(Find<Transform>(panel, "Slip_Endless").gameObject.activeSelf, "the Endless Zen slip shows first");
             Assert.IsFalse(Find<Button>(panel, "BtnTrials").interactable, "Spirit Trials stay locked before the first boss");
             Assert.AreEqual("Defeat your first boss", Strip(panel, "BtnTrials"));
             Assert.IsFalse(Find<Button>(panel, "BtnTrialTier_Apprentice").interactable, "no tier before Spirit Trials open");
 
-            EventSystem.current.SetSelectedGameObject(Find<Button>(panel, "BtnEndless").gameObject);
+            EventSystem.current.SetSelectedGameObject(Find<Button>(panel, "BtnMonthlyWalk").gameObject);
             yield return null;
-            Assert.IsTrue(Find<Transform>(panel, "Slip_Endless").gameObject.activeSelf, "focus shows the mode's slip");
-            Assert.IsFalse(Find<Transform>(panel, "Slip_Garden").gameObject.activeSelf);
+            Assert.IsTrue(Find<Transform>(panel, "Slip_Monthly").gameObject.activeSelf, "focus shows the mode's slip");
+            Assert.IsFalse(Find<Transform>(panel, "Slip_Endless").gameObject.activeSelf);
             StringAssert.Contains("Best depth 0", Find<Transform>(panel, "Slip_Endless").Find("Body").GetComponent<Text>().text);
             Assert.AreSame(Find<Button>(panel, "BtnModesBack"), Find<Button>(panel, "BtnTrials").navigation.selectOnDown,
                 "down from a locked mode goes to Back, not to its switched-off way in");
@@ -191,35 +192,7 @@ namespace SudokuRoguelike.Tests
             menu.BackToMainMenu();
             menu.ShowGameModes();
             yield return null;
-            Assert.IsTrue(Find<Transform>(panel, "Slip_Garden").gameObject.activeSelf, "Game Modes opens on the Garden Run again");
-        }
-
-        [UnityTest]
-        [Requirement("UI-STYLE-025", "UI-STYLE-024")]
-        public IEnumerator Harmony_SetOnGameModes_IsTheHarmonyOfSelectClass()
-        {
-            var (host, menu) = OpenMenu();
-            menu.ShowGameModes();
-            yield return null;
-
-            var modes = Panel(host, "GameModesPanel");
-            for (var i = 0; i < 4; i++) Click(modes, "BtnHarmonyNext");
-            yield return null;
-            Assert.AreEqual("Harmony IV of IV", Strip(modes, "BtnGarden"));
-            Assert.IsFalse(Find<Button>(modes, "BtnHarmonyNext").interactable, "Harmony V is not open yet");
-            Assert.IsTrue(Find<Button>(modes, "BtnHarmonyPerk").interactable, "perks from Harmony IV");
-            Assert.AreSame(Find<Button>(modes, "BtnHarmonyPerk"), Find<Button>(modes, "BtnGardenEnter").navigation.selectOnUp,
-                "the D-pad reaches the perk from the way in once it can be used");
-
-            Click(modes, "BtnGarden");
-            yield return null;
-            var select = Panel(host, "ClassSelectPanel");
-            Assert.IsTrue(select.activeInHierarchy, "the Garden Run curtain leads to Select Class");
-            StringAssert.Contains("Harmony IV", Find<Text>(select, "HarmonyReadout").text);
-
-            Click(select, "BtnHarmonyPrevClass");
-            yield return null;
-            Assert.AreEqual("Harmony III of IV", Strip(modes, "BtnGarden"), "a change on Select Class reaches Game Modes");
+            Assert.IsTrue(Find<Transform>(panel, "Slip_Endless").gameObject.activeSelf, "Game Modes opens on Endless Zen again");
         }
 
         // The scroll follows the profile: a class that levelled up since the last visit shows its new level, and a seed left
@@ -286,14 +259,13 @@ namespace SudokuRoguelike.Tests
             host.GetComponent<MainMenuBlueprintBuilder>().ForceRebuild();
             yield return null;
 
-            foreach (var name in new[] { "BtnGarden", "BtnEndless", "BtnTrials", "BtnDailyWalk", "BtnMonthlyWalk", "BtnZenRecords",
-                         "BtnClassNumberFreak", "BtnConfirmClass", "BtnHarmonyPerk" })
+            foreach (var name in new[] { "BtnEndless", "BtnTrials", "BtnDailyWalk", "BtnMonthlyWalk", "BtnIncenseWalk", "BtnZenRecords",
+                         "BtnClassNumberFreak", "BtnConfirmClass" })
                 Assert.AreEqual(1, host.GetComponentsInChildren<Button>(true).Count(b => b.name == name), $"one {name}");
             menu.ShowGameModes();
             yield return null;
-            Assert.AreEqual(LocalizationService.T("Garden Run"),
-                Find<Button>(Panel(host, "GameModesPanel"), "BtnGarden").transform.Find("Label").GetComponent<Text>().text);
-            Assert.AreEqual("Gartenrunde", LocalizationService.T("Garden Run"));
+            Assert.AreEqual(LocalizationService.T("Endless Zen"),
+                Find<Button>(Panel(host, "GameModesPanel"), "BtnEndless").transform.Find("Label").GetComponent<Text>().text);
         }
 
         // German and French: the curtains, strips and slips keep a readable size (11 px, or the label's own size if smaller).
@@ -310,7 +282,7 @@ namespace SudokuRoguelike.Tests
                 menu.ShowGameModes();
                 yield return null;
                 var panel = Panel(host, "GameModesPanel");
-                foreach (var name in new[] { "BtnGarden", "BtnEndless", "BtnTrials", "BtnDailyWalk", "BtnMonthlyWalk" })
+                foreach (var name in new[] { "BtnEndless", "BtnTrials", "BtnDailyWalk", "BtnMonthlyWalk", "BtnIncenseWalk" })
                 {
                     EventSystem.current.SetSelectedGameObject(Find<Button>(panel, name).gameObject);
                     yield return null;

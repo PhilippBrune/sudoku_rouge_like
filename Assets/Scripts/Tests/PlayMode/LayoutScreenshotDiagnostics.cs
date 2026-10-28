@@ -714,7 +714,7 @@ namespace SudokuRoguelike.Tests
             yield return Shoot(host, camera, "after_main_menu.png");
 
             menu.ShowGameModes();
-            EventSystem.current.SetSelectedGameObject(Find(host, "BtnGarden"));
+            EventSystem.current.SetSelectedGameObject(Find(host, "BtnEndless"));
             yield return new WaitForSecondsRealtime(0.5f);
             yield return Shoot(host, camera, "after_game_modes.png");
             EventSystem.current.SetSelectedGameObject(Find(host, "BtnDailyWalk"));
@@ -734,7 +734,7 @@ namespace SudokuRoguelike.Tests
             yield return new WaitForSecondsRealtime(0.3f);
             yield return Shoot(host, camera, "after_game_modes_trials.png");
 
-            Find(host, "BtnGarden").GetComponent<Button>().onClick.Invoke();
+            menu.StartGame();   // UI-STYLE-031: Select Class from Start Game
             EventSystem.current.SetSelectedGameObject(Find(host, "BtnClassNumberFreak"));
             yield return new WaitForSecondsRealtime(0.5f);
             yield return Shoot(host, camera, "after_class_select.png");

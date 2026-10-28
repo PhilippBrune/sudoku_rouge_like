@@ -590,6 +590,10 @@ namespace SudokuRoguelike.UI
                 _tutorialShown = true;
                 ShowSudoku();
                 RebuildBoard();
+                // [REQ: CUSTOM-RULE-001] A chosen rule that found no room on this board is named, never dropped silently (GAP-086).
+                if (run.LastGenerationMissingModifiers.Count > 0)
+                    SetStatus(Tf("CustomPuzzle.Status.RuleMissing", string.Join(", ",
+                        System.Linq.Enumerable.Select(run.LastGenerationMissingModifiers, Boss.BossService.GetModifierName))));
 
                 // Sudoku Basics first-time tutorial (RunNumber == 0 marks the basics run)
                 if (run.State.RunNumber == 0 && _basicsTutorial == null && _sudokuPanel != null)

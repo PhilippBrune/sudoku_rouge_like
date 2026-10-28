@@ -22,7 +22,7 @@ namespace SudokuRoguelike.UI
             var meta = Profile.LoadMetaProgress();
             _gameModesController?.LoadFromMeta(meta);
             if (_gameModesScreen == null) return;
-            _gameModesScreen.Show(GameModesScreen.Mode.Garden);
+            _gameModesScreen.Show(GameModesScreen.Mode.Endless);
 
             var stats = Profile.LoadStats() ?? new ProfileStats();
             var envelope = _save.HasSaveFile() ? _save.Load() : new SaveFileEnvelope();
@@ -48,35 +48,8 @@ namespace SudokuRoguelike.UI
             if (incenseNew != null) incenseNew.gameObject.SetActive(stats.IncenseWalks == 0);
             var records = _gameModesPanel != null ? _gameModesPanel.transform.Find("BtnZenRecords") : null;
             if (records != null) records.GetComponent<UnityEngine.UI.Button>().interactable = endlessUnlocked;
-            RefreshGameModesHarmony(meta);
         }
 
-        // The Garden Run slip and curtain: Harmony name, its rule, the next level's condition and XP, the perk.
-        private void RefreshGameModesHarmony(MetaProgressionState meta)
-        {
-            if (_gameModesScreen == null || _gameModesController == null) return;
-            var level = _gameModesController.SelectedHarmonyLevel;
-            var maxUnlocked = _gameModesController.GetMaxUnlockedHarmonyLevel(meta);
-            var perk = _gameModesController.SelectedHarmonyPerk;
-            var rule = LocalizationService.T("Harmony.Description." + level, HarmonyDifficultyService.GetDescription(level));
-            var next = level == maxUnlocked && maxUnlocked < 10
-                ? LocalizationService.Format("GameModes.Harmony.Next", "Win at {0} to open {1}.", HarmonyName(level), HarmonyName(level + 1))
-                : LocalizationService.Format("GameModes.Harmony.Open", "Open up to {0}.", HarmonyName(maxUnlocked));
-            var xp = LocalizationService.Format("GameModes.Harmony.Xp", "XP ×{0:0.0}", HarmonyDifficultyService.GetXpMultiplier(level));
-            var perkUnlocked = level >= 4;
-            _gameModesScreen.ShowHarmony(new GameModesScreen.HarmonyView(
-                level,
-                maxUnlocked,
-                HarmonyName(level),
-                $"{rule}\n{next}  {xp}",
-                LocalizationService.Format("GameModes.State.Garden", "Harmony {0} of {1}", Accent(GameModesScreen.Numeral(level)),
-                    GameModesScreen.Numeral(maxUnlocked)),
-                perkUnlocked ? HarmonyPerkName(perk) : LocalizationService.T("ClassSelect.PerkLocked", "from Harmony IV"),
-                perkUnlocked
-                    ? HarmonyPerkDescription(perk)
-                    : LocalizationService.T("MainMenu.Perks.UnlockHint", "Perks unlock at H4, H6, H8, and H10."),
-                perkUnlocked));
-        }
 
         private static GameModesScreen.ModeView EndlessView(bool unlocked, ProfileStats stats)
         {

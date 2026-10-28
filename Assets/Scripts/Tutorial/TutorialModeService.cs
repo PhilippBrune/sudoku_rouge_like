@@ -242,7 +242,9 @@ namespace SudokuRoguelike.Tutorial
 
             return new RunState
             {
-                ClassId = setup.SimulationClassId,
+                // [REQ: CUSTOM-CLASS-001] Free resources: no class, so no passive shown or applied (it showed and used the
+                // default class's, GAP-087); ClassId 0 is the classless walker of the Daily Walk.
+                ClassId = isFree ? (ClassId)0 : setup.SimulationClassId,
                 Mode = GameMode.Tutorial,
                 Seed = seed,
                 RunNumber = 1,

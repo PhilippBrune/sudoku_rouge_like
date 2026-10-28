@@ -8,11 +8,12 @@ namespace SudokuRoguelike.UI
     // [REQ: UI-STYLE-025] Game Modes · Five paths (owner pick 2026-10-21): the modes painting dimmed, the banner, a wooden
     // beam with five noren curtains (Garden Run, Endless Zen, Spirit Trials, Daily Walk, Monthly Walk), Endless Zen's
     // Records under its curtain, and a paper slip with the focused mode's settings and the way in (GameModesScreen).
-    // The Harmony setting stays here and on Select Class (owner 2026-10-21).
+    // [REQ: UI-STYLE-031] No Garden Run curtain: Start Game starts it, and Harmony is chosen on Select Class (owner,
+    // 0.3.0 playtest, RM-213).
     public sealed partial class MainMenuBlueprintBuilder
     {
-        // [REQ: UI-STYLE-027] Six curtains (the Incense Walk joins), 272 px wide with 20 px between them.
-        private static readonly float[] CurtainLeft = { 90f / 1920f, 382f / 1920f, 674f / 1920f, 966f / 1920f, 1258f / 1920f, 1550f / 1920f };
+        // [REQ: UI-STYLE-031] Five curtains, 272 px wide with 20 px between them, centred.
+        private static readonly float[] CurtainLeft = { 240f / 1920f, 532f / 1920f, 824f / 1920f, 1116f / 1920f, 1408f / 1920f };
         private const float CurtainWidth = 272f / 1920f, CurtainTop = 0.804f, CurtainBottom = 0.406f;
 
         private GameObject BuildGameModesPanel(RectTransform root, MainMenuController mc, GameModesPanelController modesCtrl)
@@ -47,7 +48,6 @@ namespace SudokuRoguelike.UI
 
             var modes = new (GameModesScreen.Mode Mode, string Button, string Name, string Icon, string Desc, Action Enter, string EnterLabel)[]
             {
-                (GameModesScreen.Mode.Garden, "BtnGarden", "Garden Run", "ui/icon_framed_garden", "GameModes.Desc.Garden", mc.StartGame, "GameModes.ChooseClass"),
                 (GameModesScreen.Mode.Endless, "BtnEndless", "Endless Zen", "ui/icon_zen_mode", "GameModes.Desc.Endless", mc.StartEndlessZen, "GameModes.ChooseClass"),
                 (GameModesScreen.Mode.Trials, "BtnTrials", "Spirit Trials", "ui/icon_trials_seal", "GameModes.Desc.Trials", mc.ShowSpiritTrialsTierSelect, "GameModes.ChooseTier"),
                 (GameModesScreen.Mode.Daily, "BtnDailyWalk", "Daily Walk", "ui/icon_start_run", "GameModes.Desc.Daily", mc.EnterDailyWalk, "GameModes.Daily.Walk"),
@@ -67,9 +67,6 @@ namespace SudokuRoguelike.UI
                 var enter = m.Enter;
                 enterButton.onClick.RemoveAllListeners();
                 enterButton.onClick.AddListener(() => enter());
-                if (m.Mode == GameModesScreen.Mode.Garden)
-                    BuildHarmonyPage(page, mc, screen);
-                else
                 {
                     // [REQ: UI-STYLE-027] The Daily Walk's slip: its own title, the rules, and a side box with the streak,
                     // the ink stamps and the day's board.
@@ -90,13 +87,13 @@ namespace SudokuRoguelike.UI
             }
 
             // [REQ: UI-STYLE-027] "New" on the Incense Walk's curtain until it has been walked once.
-            ScrollUiKit.Pill(pr, "IncenseNew", new Vector2(CurtainLeft[5] + CurtainWidth - 0.032f, 0.792f),
-                new Vector2(CurtainLeft[5] + CurtainWidth + 0.006f, 0.818f), T("GameModes.New"), ScrollUiKit.Gold, ScrollUiKit.Ink, 14);
+            ScrollUiKit.Pill(pr, "IncenseNew", new Vector2(CurtainLeft[4] + CurtainWidth - 0.032f, 0.792f),
+                new Vector2(CurtainLeft[4] + CurtainWidth + 0.006f, 0.818f), T("GameModes.New"), ScrollUiKit.Gold, ScrollUiKit.Ink, 14);
 
             // Endless Zen's Records hang under its curtain.
             var records = OptionsUiFactory.BuildButton("BtnZenRecords", pr, T("Records"), 18);
-            SetRect((RectTransform)records.transform, new Vector2(CurtainLeft[1] + 0.03f, 0.366f),
-                new Vector2(CurtainLeft[1] + CurtainWidth - 0.03f, 0.401f), Vector2.zero, Vector2.zero);
+            SetRect((RectTransform)records.transform, new Vector2(CurtainLeft[0] + 0.03f, 0.366f),
+                new Vector2(CurtainLeft[0] + CurtainWidth - 0.03f, 0.401f), Vector2.zero, Vector2.zero);
             OptionsUiFactory.PaintPill(records, new Color(0.24f, 0.20f, 0.16f, 1f), new Color(0.97f, 0.93f, 0.84f, 1f));
             records.onClick.RemoveAllListeners();
             records.onClick.AddListener(mc.ShowZenLeaderboard);
@@ -113,7 +110,7 @@ namespace SudokuRoguelike.UI
 
             screen.SetNavigationButtons(records, back);
             mc.SetGameModesScreen(screen);
-            screen.Show(GameModesScreen.Mode.Garden);
+            screen.Show(GameModesScreen.Mode.Endless);
             panel.SetActive(false);
             return panel;
         }
@@ -195,57 +192,6 @@ namespace SudokuRoguelike.UI
             practice.onClick.RemoveAllListeners();
             practice.onClick.AddListener(mc.StartIncensePractice);
             screen.SetExtraButton(GameModesScreen.Mode.Incense, practice);
-        }
-
-        // The Garden Run slip: Harmony with its stones (< >), the level's rule and the next level's condition, the perk.
-        private void BuildHarmonyPage(RectTransform page, MainMenuController mc, GameModesScreen screen)
-        {
-            ScrollUiKit.Label(page, "HarmonySelectedLabel", string.Empty, 32, TextAnchor.MiddleLeft, ScrollUiKit.Ink,
-                new Vector2(0.029f, 0.63f), new Vector2(0.60f, 0.83f), 18);
-            var prev = OptionsUiFactory.BuildButton("BtnHarmonyPrev", page, "‹", 30);
-            SetRect((RectTransform)prev.transform, new Vector2(0.008f, 0.45f), new Vector2(0.028f, 0.61f), Vector2.zero, Vector2.zero);
-            prev.onClick.RemoveAllListeners();
-            prev.onClick.AddListener(() => mc.StepHarmonyClassLevel(-1));
-            var stones = new Image[11];
-            for (var i = 0; i < stones.Length; i++)
-            {
-                stones[i] = ScrollUiKit.Spot(page, $"HarmonyStone_{i}", new Vector2(0.040f + i * 0.030f, 0.53f), new Vector2(30f, 30f),
-                    new Color(0.81f, 0.78f, 0.69f, 1f), ScrollUiKit.Disc());
-                ScrollUiKit.Label(stones[i].transform, "Numeral", GameModesScreen.Numeral(i), 12, TextAnchor.MiddleCenter, ScrollUiKit.InkSoft,
-                    Vector2.zero, Vector2.one, 8);
-            }
-            var next = OptionsUiFactory.BuildButton("BtnHarmonyNext", page, "›", 30);
-            SetRect((RectTransform)next.transform, new Vector2(0.367f, 0.45f), new Vector2(0.387f, 0.61f), Vector2.zero, Vector2.zero);
-            next.onClick.RemoveAllListeners();
-            next.onClick.AddListener(() => mc.StepHarmonyClassLevel(+1));
-            foreach (var chevron in new[] { prev, next }) QuietChevron(chevron);
-            screen.SetStones(stones);
-            ScrollUiKit.Label(page, "HarmonySubLabel", string.Empty, 19, TextAnchor.UpperLeft, ScrollUiKit.Ink,
-                new Vector2(0.029f, 0.05f), new Vector2(0.70f, 0.42f), 12);
-
-            // The perk box (Y changes it): a darker slip at the top right with the perk's name and what it does.
-            var box = ScrollUiKit.Fill(page, "PerkBox", new Vector2(0.700f, 0.39f), new Vector2(0.971f, 0.90f),
-                new Color(0.90f, 0.84f, 0.69f, 1f));
-            ScrollUiKit.Label(box.transform, "PerkCaption", T("GameModes.PerkCaption").ToUpperInvariant(), 13, TextAnchor.MiddleLeft,
-                ScrollUiKit.InkSoft, new Vector2(0.05f, 0.80f), new Vector2(0.95f, 0.96f), 9);
-            var perk = OptionsUiFactory.BuildButton("BtnHarmonyPerk", box.rectTransform, string.Empty, 18);
-            SetRect((RectTransform)perk.transform, new Vector2(0.03f, 0.50f), new Vector2(0.97f, 0.80f), Vector2.zero, Vector2.zero);
-            OptionsUiFactory.PaintPill(perk, new Color(0.84f, 0.76f, 0.58f, 1f), ScrollUiKit.Ink);
-            // A 40 px pill: the label gets the height (the factory's 8 px padding would clip 18 pt to nothing).
-            var perkLabel = perk.transform.Find("Label");
-            ((RectTransform)perkLabel).offsetMin = new Vector2(10f, 2f);
-            ((RectTransform)perkLabel).offsetMax = new Vector2(-10f, -2f);
-            var perkText = perkLabel.GetComponent<Text>();
-            perkText.resizeTextForBestFit = true;
-            perkText.resizeTextMinSize = 11;
-            perkText.resizeTextMaxSize = 18;
-            perk.onClick.RemoveAllListeners();
-            perk.onClick.AddListener(mc.CyclePerkOnClassSelect);
-            ScrollUiKit.Label(box.transform, "HarmonyPerkDesc", string.Empty, 16, TextAnchor.UpperLeft, ScrollUiKit.Ink,
-                new Vector2(0.05f, 0.04f), new Vector2(0.95f, 0.47f), 10);
-            screen.SetPerkButton(perk);
-            screen.HarmonyStep = mc.StepHarmonyClassLevel;
-            screen.PerkCycle = mc.CyclePerkOnClassSelect;
         }
 
         // [REQ: UI-STYLE-025] Spirit Trials' slip carries its tiers (the mockup): one pill per tier with its best score; a

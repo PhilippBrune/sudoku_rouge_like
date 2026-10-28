@@ -652,6 +652,7 @@ namespace SudokuRoguelike.UI
             var def = SudokuRoguelike.Classes.ClassCatalog.GetDefinition(run.State.ClassId);
             _passiveText.text = SudokuRoguelike.Classes.ClassCatalog.IsClass(run.State.ClassId)
                 ? F("InRun.Hud.Passive", LocalizationService.T($"Class.Passive.{def.Id}", def.PassiveDescription))
+                : run.State.TutorialMode ? string.Empty   // CUSTOM-CLASS-001: a Custom Puzzle without a class has no passive
                 : LocalizationService.T("DailyWalk.Walker.Passive");   // [REQ: DAILY-WALK-002]
         }
 

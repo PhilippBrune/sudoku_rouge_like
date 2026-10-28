@@ -1,11 +1,12 @@
 # Tutorial Mode System
 
-**Version:** 1.10 | **Date:** 2026-10-21 | **Status:** implemented
+**Version:** 1.11 | **Date:** 2026-10-27 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.11 | 2026-10-27 | implemented | 0.3.0 playtest: every chosen rule is mandatory for the board, and a rule without room is named on the status line (CUSTOM-RULE-001, GAP-086); Free resources mean no class: no passive shown or applied (CUSTOM-CLASS-001, GAP-087); one timer (HUD-TIMER-001, GAP-088). |
 | 1.10 | 2026-10-21 | implemented | Docs clean-up: completion is stored in the save (`TutorialProgressState.CompletedKeys`, written by `MainMenuController`); there is no `TutorialProgressService`. |
 | 1.9 | 2026-10-07 | implemented | 7★ requires a modifier, as the code enforces (SPEC-CONF-015); dropdown → region variant mapping and why variant 2 is not offered (SPEC-CONF-018); entry named Custom Puzzle, Sudoku Basics separate (SPEC-CONF-033); 7★ uses rule-based validation (SPEC-CONF-003). |
 | 1.8 | 2026-04-16 | implemented | Inline requirement IDs added (SAVE-TUTO-001). Stale REQ-TUTORIAL-173..202 auto-generated table replaced with canonical IDs. |
@@ -102,13 +103,15 @@ All **15 modifiers** are available as individual toggles in the tutorial setup p
 
 Multiple modifiers can be combined for advanced practice.
 
+**[CUSTOM-RULE-001]** Every chosen rule must be on the board: generation retries with other boards until each one has its marks, as for the boss gate's picks. If a rule still finds no room, the puzzle starts and the status line names it ("No room on this board for: …"); a rule is never dropped silently (GAP-086, 0.3.0 playtest: a 9×9 at 7 stars with Sum Dot showed no dots).
+
 ### Resource Mode
 
 Two resource modes are available:
 
 | Mode | HP | Pencil | Behaviour |
 |------|:---:|:---:|-----------|
-| **Free** | ∞ | ∞ | No penalties — pure practice. Mistakes have no HP cost, pencil marks are unlimited. |
+| **Free** | ∞ | ∞ | No penalties — pure practice. Mistakes have no HP cost, pencil marks are unlimited. No class: no portrait, no passive shown or applied (**[CUSTOM-CLASS-001]**, 1.11, GAP-087; it showed and used the default class's). |
 | **Class-Based** | Class stat | Class stat | Uses the selected class's base HP, Pencil, and Item Slots. Mistakes cost HP normally. |
 
 When Class-Based is selected, the player chooses from their **unlocked classes**:

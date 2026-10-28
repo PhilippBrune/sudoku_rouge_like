@@ -1,0 +1,75 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="scenes.css">
+<style>
+  /* Monthly Walk · Under the old tree: the month's painting, the board and its rules on a slip, the month's best on a dark
+     panel with its grade, the days of the month as ink marks, Begin. Same family as the mode results (UI-STYLE-026). */
+  .bg { background-image:url('../../../../Assets/Resources/background/bg_monthly_walk.png'); filter:brightness(.55) saturate(.9); }
+  .slip { position:absolute; left:250px; top:250px; width:640px; height:520px; background:#efe3c6; color:#231e17;
+          box-shadow:0 18px 34px rgba(0,0,0,.55); padding:28px 34px; transform:rotate(-.6deg); }
+  .slip::before { content:''; position:absolute; left:0; right:0; top:0; height:12px; background:repeating-linear-gradient(90deg,#2b4b34 0 10px,#36593f 10px 20px); }
+  .slip small, .panel small, .days small { display:block; font-size:15px; letter-spacing:.16em; color:#6b5f4c; text-transform:uppercase; }
+  .facts { display:flex; gap:12px; margin:12px 0 22px; }
+  .facts span { padding:6px 14px; border-radius:999px; background:rgba(60,45,30,.12); font-size:21px; }
+  .facts span.stars { color:#b8892b; }
+  .rule { display:flex; gap:18px; align-items:flex-start; padding:14px 0; border-top:1px solid rgba(60,45,30,.2); }
+  .rule img { width:72px; height:72px; object-fit:contain; background:#2a1a10; border-radius:10px; padding:6px; }
+  .rule h3 { margin:0 0 4px; font-weight:normal; font-size:27px; color:#9e2a2b; }
+  .rule p { margin:0; font-size:19px; line-height:1.45; color:#3a332a; }
+  .score { margin-top:14px; padding-top:14px; border-top:1px solid rgba(60,45,30,.2); font-size:19px; line-height:1.7; color:#3a332a; }
+  .score span { float:right; color:#9e2a2b; }
+  .note { position:absolute; left:34px; right:34px; bottom:24px; font-size:17px; color:#6b5f4c; line-height:1.45; }
+  .panel { position:absolute; left:1000px; top:250px; width:640px; height:250px; background:rgba(22,18,12,.88); border:2px solid #c9a24f;
+           box-shadow:0 18px 34px rgba(0,0,0,.55); padding:26px 34px; color:#f3e9cf; }
+  .panel small { color:#d9b874; }
+  .panel .best { font-size:84px; line-height:1.1; margin-top:6px; }
+  .panel .grade { position:absolute; right:40px; top:44px; width:132px; height:132px; border-radius:50%; border:6px solid #b23a2e;
+                  color:#e05a48; font-size:76px; text-align:center; line-height:118px; transform:rotate(-8deg); }
+  .panel .next { font-size:19px; color:#d8c9a8; }
+  .ladder { margin-top:8px; font-size:16px; color:#a99c80; letter-spacing:.04em; }
+  .days { position:absolute; left:1000px; top:530px; width:640px; height:240px; background:#efe3c6; color:#231e17;
+          box-shadow:0 18px 34px rgba(0,0,0,.55); padding:22px 34px; transform:rotate(.5deg); }
+  .marks { display:flex; flex-wrap:wrap; gap:5px; margin:14px 0 10px; }
+  .marks i { width:12px; height:28px; border-radius:6px; background:#231e17; opacity:.85; }
+  .marks i.left { background:transparent; border:2px solid #8f8a7c; opacity:1; }
+  .marks i.today { background:#b23a2e; opacity:1; height:34px; margin-top:-3px; }
+  .days .line { font-size:20px; }
+  .days .line b { font-weight:normal; color:#9e2a2b; }
+  .actions { position:absolute; left:0; right:0; top:800px; text-align:center; }
+  .actions .btn { margin:0 14px; }
+</style></head><body>
+<div class="bg"></div><div class="shade"></div>
+<div class="banner"><small>Monthly Walk · October</small><h1>The Old Tree Grove</h1></div>
+
+<div class="slip">
+  <small>This month's board</small>
+  <div class="facts"><span>9×9</span><span class="stars">★★★★</span><span>HP 10</span><span>Pencil 12</span></div>
+  <div class="rule">
+    <img src="../../../../Assets/Resources/modifier/icon_antiknight.png">
+    <div><h3>Anti-Knight</h3><p>The same digit never sits a knight's move apart: two cells one way and one cell across.</p></div>
+  </div>
+  <div class="score">Every cell of the board <span>8 100</span><br>Each mistake <span>−300</span><br>Pencil left over <span>up to +500</span><br>No mistake at all <span>+1 000</span></div>
+  <div class="note">One board for every player this month. Class passives, items and relics stay at home; walk it as often as you like, the best score counts.</div>
+</div>
+
+<div class="panel">
+  <small>Your best this month</small>
+  <div class="best">7 667</div>
+  <div class="next">833 more for an S · no mistakes gives +1 000</div>
+  <div class="ladder">S 8 500 · A 6 500 · B 4 500 · C 2 500</div>
+  <div class="grade">A</div>
+</div>
+
+<div class="days">
+  <small>October</small>
+  <div class="marks">
+    <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+    <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="today"></i><i class="left"></i><i class="left"></i><i class="left"></i>
+  </div>
+  <div class="line">Resets in <b>4 days</b> · a new garden on 1 November</div>
+</div>
+
+<div class="actions"><span class="btn">Back</span><span class="btn main">Begin the walk</span></div>
+<div class="hint" style="top:900px">A begins · B back</div>
+<div class="caption">Monthly Walk · Proposal · Under the old tree (board and rules, the month's best and grade, the days left)</div>
+</body></html>

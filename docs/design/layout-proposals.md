@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 3.4 | **Date:** 2026-10-27 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; not built: the main menu)
+**Version:** 3.5 | **Date:** 2026-10-28 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; not built: the main menu; proposals of 2026-10-28 for the main menu, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll wait for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 3.5 | 2026-10-28 | review | 0.3.0 playtest, owner: three main menu mockups, the Monthly Walk, Select Profile and Spirit Trials (RM-217); the puzzle screen's gold and details (RM-208), Custom Puzzle help, seed and share code (RM-209), the market's rule roll (RM-211). Proposed UI-STYLE-032 to 038, waiting for the owner's pick. GAP-096 (Spirit Trials stars) fixed on the way. |
 | 3.4 | 2026-10-27 | review | 0.3.0 playtest, owner: "Garden Run muss nicht unter Game modes gelistet werden" and "Ja, nur Select Class": Game Modes has five curtains, centred, without the Garden Run and its Harmony strip; Harmony is chosen on Select Class (UI-STYLE-031, RM-213). Game Modes opens on Endless Zen. |
 | 3.3 | 2026-10-27 | review | Owner request (2026-10-27): the concept files are merged into their specs; the references to them point to the spec sections (DailyGoalSystem, IncenseWalkMode, GameDesignSpec §14). No mockup changed. |
 | 3.2 | 2026-10-26 | review | The ink stamp shop built (UI-STYLE-029), opened from the Daily Walk's slip; its looks in the game (board ink, the seal ring on Select Class, the floor seals). A click chooses a look, Buy or Wear acts. Screenshots below. With this, UI-STYLE-027 to 030 are built. |
@@ -639,6 +640,101 @@ black), and the moss ring round the class seals on Select Class. Before (the gam
 ![Puzzle, indigo ink](layout-proposals/after_stamp_board_ink.jpg)
 ![Select Class, ink rings](layout-proposals/after_class_select.jpg)
 ![Select Class, moss rings](layout-proposals/after_stamp_seal_frame.jpg)
+
+## 0.3.0 playtest: proposals (3.5, 2026-10-28)
+
+The owner's 0.3.0 playtest asked for three main menus, the Monthly Walk, Select Profile and Spirit Trials (RM-217),
+and for the gold, the item and relic texts on the puzzle screen (RM-208), help, a seed and a share code on Custom Puzzle
+(RM-209) and a roll of the floor's rule in the market (RM-211). One proposal each (three for the main menu), waiting for
+the owner's pick. The screens as they are today, from the game:
+
+![Main menu, 0.3.0](layout-proposals/before_main_menu_030.jpg)
+![Monthly Walk, 0.3.0](layout-proposals/before_monthly_walk_030.jpg)
+![Select Profile, 0.3.0](layout-proposals/before_profile_select_030.jpg)
+![Spirit Trials, 0.3.0](layout-proposals/before_spirit_trials_030.jpg)
+
+Review notes: the main menu has ten equal bars and dark walk boxes; the three other screens are the old dark panels
+with small text, the only screens before a run not yet in the paper and lacquer family. Spirit Trials showed "???"
+instead of the stars (GAP-096, fixed: [before](layout-proposals/before_spirit_trials_stars.jpg),
+[after](layout-proposals/after_spirit_trials_stars.jpg)).
+
+### Main menu (proposed UI-STYLE-032, pick one of three)
+
+**A · The gate** (UI-STYLE-023, brought up to 0.3.0): the title as a lacquer signboard under the torii, the menu as a
+hanging scroll in the gate with Resume on top only when a run is saved, the walks as paper tags.
+
+![Main menu A, the gate](layout-proposals/main_menu_a_gate.jpg)
+
+**B · The garden path:** the painting stays bright and free; the menu walks down the left side as wooden tablets, the
+chosen one slides out on paper; the saved run is a card above them (class, floor and garden, HP, gold, Harmony); the
+walks hang bottom right, the profile top right.
+
+![Main menu B, the garden path](layout-proposals/main_menu_b_path.jpg)
+
+**C · Three ways in:** the three ways to play as large plaques under the signboard (the Garden Run with Resume or a new
+run, Game Modes, Custom Puzzle), everything else as a row of round stones; large targets for a pad and a handheld. The
+walks hang from the cherry branches; Y starts a new run beside a saved one, LB/RB open the walks.
+
+![Main menu C, three ways in](layout-proposals/main_menu_c_three_ways.jpg)
+
+### Monthly Walk · Under the old tree (proposed UI-STYLE-033)
+
+![Monthly Walk](layout-proposals/monthly_walk_tree.jpg)
+
+The month's painting and a banner with the month and the garden. A slip with the board (9×9, ★★★★, HP 10, Pencil 12),
+each rule with its icon and text, and how the score is counted (SeasonalChallengeSpec); the month's best large on a
+dark panel with its grade and what the next grade needs; the days of the month as ink marks with the days left;
+Back and "Begin the walk". Before a first walk the panel says "Not walked yet".
+
+### Select Profile · Three ema (proposed UI-STYLE-034)
+
+![Select Profile](layout-proposals/profile_select_ema.jpg)
+
+Each profile is a wooden prayer plaque on a beam in the lantern garden: the class last walked with its level, runs and
+wins, bosses, last played, and a seal when a run is saved; the active profile is framed in vermilion with its lantern
+lit. An empty plaque invites a new garden (Create). Delete stays a quiet link and asks first.
+
+### Spirit Trials · Four steles (proposed UI-STYLE-035)
+
+![Spirit Trials](layout-proposals/spirit_trials_steles.jpg)
+
+The four tiers as stone steles in the jizo forest, rising with the difficulty: name, stars, the number of rules, HP,
+Pencil, par time and the best score with its grade. The chosen tier wears the red bib; its terms are on a slip below,
+and "Choose a class" goes on to Select Class as today.
+
+### Puzzle screen · Gold, bag rows and a detail slip (proposed UI-STYLE-036, RM-208)
+
+![Puzzle screen with gold and an item in focus](layout-proposals/puzzle_details.jpg)
+![Puzzle screen with a relic in focus](layout-proposals/puzzle_details_relic.jpg)
+
+On today's puzzle screen: the gold as a tag beside "+3 Pencil", which it pays for; the bag rows show each item's icon,
+name, rarity and uses; a paper slip at the foot of the left column shows the class passive, or the item or relic under
+the pointer or in pad focus (name, rarity, the catalog's text, how to use it). Today the relic text opens above the
+slot and lands under the scroll; the slip never leaves the left column.
+
+### Custom Puzzle · Help, a seed and a share code (proposed UI-STYLE-037, RM-209)
+
+![Custom Puzzle with help, seed and share code](layout-proposals/custom_puzzle_help.jpg)
+
+A "?" beside each Board field opens a slip on what it does: Size (the board and its boxes), Difficulty (how empty the
+board starts: ★ 40 %, ★★★★ 70 %, ★★★★★★★ 100 %, an empty grid the rules alone decide), Regions (Boxes, Turned,
+Irregular), Resources (Free: the same HP and Pencil for everyone, no class; Class-Based: the chosen class's values and
+passive) and Class. Under the Board paper a seed (typed or Random) and a share code that holds the whole setup, with
+Copy and "Paste a code". The code's format is a placeholder.
+
+### Market · Roll the floor's rule (proposed UI-STYLE-038, RM-211)
+
+![Market with the floor's rule](layout-proposals/shop_floor_reroll.jpg)
+
+From Floor 2 the market shows the floor's rule on a slip with its text and "Roll it again" for gold, once per market;
+the rest of the floor's puzzles use the new rule, the boss keeps its own. The price (50 gold here) is a first value.
+
+### Open for the owner
+
+1. The main menu: A, B, C or keep it.
+2. The four other proposals: build as shown, or what to change.
+3. RM-211: the price, and once per market or once per floor.
+4. RM-209: a share code short enough to type (letters and digits, about 20 signs) or a longer one that reads as words.
 
 ## Decisions and next step
 

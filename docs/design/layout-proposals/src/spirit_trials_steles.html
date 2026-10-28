@@ -1,0 +1,61 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="scenes.css">
+<style>
+  /* Spirit Trials · Four steles: the tiers stand as stone steles in the jizo forest, rising with the difficulty; the chosen
+     one wears the red bib. Its terms are on a slip below; the trial goes on to Select Class as today. */
+  .bg { background-image:url('../../../../Assets/Resources/background/bg_menu_trials_select.png'); filter:brightness(.55) saturate(.85); }
+  .stele { position:absolute; bottom:340px; width:300px; text-align:center; color:#f3efe2; border-radius:150px 150px 10px 10px;
+           background:linear-gradient(180deg,#8d8c84,#5d5c55 60%,#4a4943); box-shadow:0 18px 34px rgba(0,0,0,.6), inset 0 -18px 0 rgba(47,74,51,.55);
+           padding-top:46px; text-shadow:0 2px 3px rgba(0,0,0,.6); }
+  .stele h2 { margin:0; font-weight:normal; font-size:32px; }
+  .stele .stars { margin-top:4px; font-size:26px; color:#e9c46a; letter-spacing:.06em; }
+  .stele .rules { margin-top:6px; font-size:18px; color:#d9d2c0; }
+  .stele .facts { margin:16px 38px 0; text-align:left; font-size:19px; line-height:1.7; }
+  .stele .facts span { float:right; }
+  .stele .best { position:absolute; left:20px; right:20px; bottom:30px; font-size:18px; color:#d9d2c0; }
+  .stele .best b { font-weight:normal; color:#f3dfa6; }
+  .stele.sel { padding-top:72px; box-shadow:0 0 0 5px #e9c46a, 0 26px 44px rgba(0,0,0,.65), inset 0 -18px 0 rgba(47,74,51,.55); }
+  .bib { position:absolute; left:50%; transform:translateX(-50%); width:150px; height:46px; background:#b23a2e;
+         clip-path:polygon(0 0, 100% 0, 85% 100%, 15% 100%); }
+  .slip { position:absolute; left:360px; top:780px; width:1200px; height:118px; background:#efe3c6; color:#231e17;
+          box-shadow:0 16px 30px rgba(0,0,0,.55); padding:18px 30px; }
+  .slip h3 { margin:0; font-weight:normal; font-size:26px; }
+  .slip h3 b { font-weight:normal; color:#9e2a2b; }
+  .slip p { margin:6px 0 0; font-size:19px; color:#4d4436; }
+  .actions { position:absolute; left:0; right:0; top:930px; text-align:center; }
+  .actions .btn { margin:0 14px; }
+</style></head><body>
+<div class="bg"></div><div class="shade"></div>
+<div class="banner"><small>Spirit Trials</small><h1>Choose a trial</h1></div>
+
+<div class="stele" style="left:250px; height:330px">
+  <h2>Apprentice</h2><div class="stars">★★★</div><div class="rules">no rule</div>
+  <div class="facts">HP <span>5</span><br>Pencil <span>15</span><br>Par <span>5:00</span></div>
+  <div class="best">Best <b>9 120 · S</b></div>
+</div>
+<div class="stele" style="left:610px; height:370px">
+  <h2>Adept</h2><div class="stars">★★★</div><div class="rules">1 rule</div>
+  <div class="facts">HP <span>4</span><br>Pencil <span>12</span><br>Par <span>7:00</span></div>
+  <div class="best">Best <b>7 480 · A</b></div>
+</div>
+<div class="stele sel" style="left:970px; height:430px">
+  <h2>Master</h2><div class="stars">★★★★</div><div class="rules">1 rule</div>
+  <div class="facts">HP <span>3</span><br>Pencil <span>10</span><br>Par <span>9:00</span></div>
+  <div class="best">Not passed yet</div>
+</div>
+<div class="bib" style="left:1120px; top:312px; height:34px"></div>
+<div class="stele" style="left:1330px; height:450px">
+  <h2>Grandmaster</h2><div class="stars">★★★★★</div><div class="rules">2 rules</div>
+  <div class="facts">HP <span>2</span><br>Pencil <span>8</span><br>Par <span>12:00</span></div>
+  <div class="best">Not passed yet</div>
+</div>
+
+<div class="slip">
+  <h3><b>Master</b> · one 9×9 board, ★★★★, one rule drawn by the trial</h3>
+  <p>HP 3 · Pencil 10 · finish under 9:00 for the time bonus. No XP, items or relics; the best score per tier is kept.</p>
+</div>
+<div class="actions"><span class="btn">Back</span><span class="btn main">Choose a class</span></div>
+<div class="hint" style="top:1005px; left:0; right:0">◀ ▶ choose a trial · A on to Select Class · B back</div>
+<div class="caption">Spirit Trials · Proposal · Four steles (the tiers rise with the difficulty; the chosen one on a slip)</div>
+</body></html>

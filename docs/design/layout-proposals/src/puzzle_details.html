@@ -1,0 +1,51 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<style>
+  /* RM-208 · The puzzle screen as built (UI-STYLE-002) with three additions: the gold beside the Pencil you buy with it,
+     filled bag rows, and a detail slip in the left column that shows the class passive and, on hover or focus, the item
+     or relic under the pointer (today the relic tooltip opens above the slot, under the scroll). ?relic shows a relic. */
+  .shot { position:absolute; inset:0; width:1920px; height:1080px; }
+  .gold { position:absolute; left:125px; top:437px; width:170px; height:38px; border-radius:8px; background:#3a2a1c;
+          color:#f3dfa6; font-size:19px; display:flex; align-items:center; gap:8px; padding-left:10px; box-shadow:0 4px 10px rgba(0,0,0,.4); }
+  .gold img { width:26px; height:26px; }
+  .slot { position:absolute; left:132px; width:365px; height:90px; background:rgba(40,28,18,.92); border:2px solid #6b5436; border-radius:8px;
+          display:flex; align-items:center; gap:16px; padding-left:14px; color:#f3e9cf; font-size:22px; }
+  .slot img { width:62px; height:62px; object-fit:contain; background:#efe3c6; border-radius:8px; padding:4px; }
+  .slot small { display:block; font-size:16px; color:#d9b874; }
+  .slot.sel { border-color:#e9c46a; box-shadow:0 0 0 3px rgba(233,196,106,.45); }
+  .relicsel { position:absolute; left:121px; top:788px; width:96px; height:96px; border:4px solid #e9c46a; border-radius:8px; }
+  .cover { position:absolute; left:110px; top:975px; width:470px; height:40px; background:#2a120e; }
+  .slip { position:absolute; left:120px; top:890px; width:400px; height:168px; background:#efe3c6; color:#231e17; padding:14px 18px;
+          box-shadow:0 12px 24px rgba(0,0,0,.55); transform:rotate(-.5deg); }
+  .slip::before { content:''; position:absolute; left:0; right:0; top:0; height:8px; background:repeating-linear-gradient(90deg,#2b4b34 0 10px,#36593f 10px 20px); }
+  .slip small { display:block; font-size:14px; letter-spacing:.14em; color:#6b5f4c; margin-top:4px; }
+  .slip h3 { margin:2px 0 4px; font-weight:normal; font-size:25px; color:#9e2a2b; }
+  .slip p { margin:0; font-size:18px; line-height:1.4; }
+  .slip .use { position:absolute; left:18px; bottom:10px; font-size:15px; color:#6b5f4c; }
+  .note { position:absolute; padding:8px 14px; background:#b23a2e; color:#fff; font:600 17px 'Segoe UI', sans-serif; border-radius:6px; box-shadow:0 6px 14px rgba(0,0,0,.5); }
+  .note::after { content:''; position:absolute; width:14px; height:14px; background:#b23a2e; transform:rotate(45deg); }
+  .n1::after { left:-6px; top:12px; } .n2::after { left:-6px; top:12px; } .n3::after { left:-6px; top:12px; }
+  .relic-only { display:none; } body.relic .relic-only { display:block; } body.relic .item-only { display:none; }
+</style></head><body>
+<img class="shot" src="../after_puzzle_9x9.jpg">
+<div class="gold"><img src="../../../../Assets/Resources/economy/icon_sakura_coin.png">Gold 142</div>
+<div class="slot sel item-only" style="top:522px"><img src="../../../../Assets/Resources/items/icon_ink_well.png"><div>Ink Well<small>RARE · 1 use</small></div></div>
+<div class="slot" style="top:620px"><img src="../../../../Assets/Resources/items/icon_wind_chime.png"><div>Wind Chime<small>NORMAL · 1 use</small></div></div>
+<div class="relicsel relic-only"></div>
+<div class="cover"></div>
+<div class="slip item-only">
+  <small>BAG · RARE</small><h3>Ink Well</h3>
+  <p>Restore 11 pencil marks.</p>
+  <div class="use">Click or A to use · Tab or LB: the bag</div>
+</div>
+<div class="slip relic-only">
+  <small>RELIC</small><h3>Cracked Teacup</h3>
+  <p>Absorb the first mistake each puzzle (no HP loss).</p>
+  <div class="use">Always on · LT: the relics</div>
+</div>
+<div class="note n2" style="left:520px; top:540px">2 · the bag shows what it holds</div>
+<div class="note n1" style="left:478px; top:437px">1 · your gold beside the Pencil you buy with it</div>
+<div class="note n3" style="left:540px; top:930px">3 · the detail slip: the passive, or the item or relic in focus</div>
+<div class="caption">Puzzle screen · RM-208 · gold, bag rows and a detail slip in the left column (?relic: a relic in focus)</div>
+<script>if (new URLSearchParams(location.search).has('relic')) document.body.classList.add('relic');</script>
+</body></html>

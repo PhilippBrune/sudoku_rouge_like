@@ -1,0 +1,76 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="scenes.css">
+<style>
+  /* Main menu B · The garden path: the painting is the screen, the menu walks down its left side as wooden tablets, the
+     saved run is a card at the top of the path, the walks hang bottom right. */
+  .bg { background-image:url('../../../../Assets/Resources/background/bg_main_menu.png'); filter:brightness(.92) saturate(1); }
+  .shade { background: linear-gradient(90deg, rgba(12,9,6,.86) 0, rgba(12,9,6,.6) 520px, rgba(12,9,6,0) 900px); }
+  .title { position:absolute; left:84px; top:52px; color:#f3dfa6; text-shadow:0 4px 10px rgba(0,0,0,.8); }
+  .title h1 { margin:0; font-weight:normal; font-size:68px; letter-spacing:.01em; }
+  .title small { display:block; margin-top:2px; font-size:19px; letter-spacing:.3em; color:#d9b874; text-transform:uppercase; }
+  .title .stroke { width:300px; height:6px; margin-top:12px; border-radius:3px; background:linear-gradient(90deg,#b23a2e,#b23a2e 70%,transparent); }
+  .run { position:absolute; left:84px; top:236px; width:520px; height:132px; background:#efe3c6; color:#231e17;
+         box-shadow:0 16px 30px rgba(0,0,0,.55); border-left:14px solid #b23a2e; padding:16px 20px 0 128px; }
+  .run .cls { position:absolute; left:18px; top:16px; width:96px; height:96px; border-radius:50%; background:#2a1a10; border:4px solid #c9a24f; padding:8px; }
+  .run .cls img { width:100%; height:100%; object-fit:contain; }
+  .run h2 { margin:0; font-weight:normal; font-size:36px; color:#9e2a2b; }
+  .run .line { font-size:19px; color:#4d4436; margin-top:2px; }
+  .run .chips { margin-top:8px; font-size:17px; color:#231e17; }
+  .run .chips span { display:inline-block; margin-right:8px; padding:3px 10px; border-radius:999px; background:rgba(60,45,30,.12); }
+  .run .seal { position:absolute; right:14px; top:14px; padding:4px 10px; background:#b23a2e; color:#fbeee0; font-size:14px; letter-spacing:.1em; }
+  .list { position:absolute; left:84px; top:400px; width:470px; }
+  .tab { position:relative; height:52px; margin-bottom:8px; padding-left:70px; display:flex; align-items:center; font-size:26px; color:#f3e9cf;
+         background:linear-gradient(90deg, rgba(58,36,20,.92), rgba(58,36,20,.55)); border-left:4px solid #8a6a3a; }
+  .tab img { position:absolute; left:14px; top:6px; width:40px; height:40px; object-fit:contain; }
+  .tab.sel { left:26px; background:#efe3c6; color:#231e17; border-left-color:#b23a2e; box-shadow:0 10px 22px rgba(0,0,0,.5); }
+  .tab.sel::after { content:''; position:absolute; right:-26px; top:14px; border:12px solid transparent; border-left-color:#efe3c6; border-right:0; }
+  .gap { height:14px; }
+  .walk { position:absolute; width:330px; padding:16px 22px; background:#efe3c6; color:#231e17; box-shadow:0 14px 28px rgba(0,0,0,.5); }
+  .walk::before { content:''; position:absolute; left:50%; top:-30px; width:2px; height:30px; background:#c9a24f; }
+  .walk small { display:block; font-size:15px; letter-spacing:.14em; color:#6b5f4c; }
+  .walk h3 { margin:2px 0 6px; font-weight:normal; font-size:26px; }
+  .walk .row { font-size:18px; line-height:1.6; }
+  .walk .dots span { display:inline-block; width:20px; height:20px; margin-right:6px; border-radius:50%; border:3px solid #231e17; vertical-align:middle; }
+  .walk .dots span.on { background:#b23a2e; border-color:#b23a2e; }
+  .walk .open { margin-top:10px; display:inline-block; padding:7px 24px; border-radius:999px; background:#231e17; color:#f3e9cf; font-size:17px; }
+  .profile { position:absolute; right:46px; top:40px; padding:10px 18px; background:rgba(20,16,10,.7); border:1.5px solid #c9a24f; border-radius:10px; font-size:18px; color:#f3e9cf; }
+  .version { position:absolute; left:46px; bottom:40px; font-size:17px; color:#f3e9cf; text-shadow:0 2px 4px #000; }
+</style></head><body>
+<div class="bg"></div><div class="shade"></div>
+<div class="title"><h1>Run of the Nine</h1><small>Sudoku Roguelike</small><div class="stroke"></div></div>
+<div class="profile">Profile 1 · Number Freak Lv 23</div>
+<div class="run">
+  <div class="cls"><img src="../../../../Assets/Resources/class/icon_number_freak.png"></div>
+  <span class="seal">SAVED</span>
+  <h2>Resume</h2>
+  <div class="line">Floor 3 · Koi Terrace · Number Freak</div>
+  <div class="chips"><span>HP 7/10</span><span>Gold 142</span><span>Harmony 2</span></div>
+</div>
+<div class="list">
+  <div class="tab sel"><img src="../../../../Assets/Resources/ui/icon_start_game.png">New run</div>
+  <div class="tab"><img src="../../../../Assets/Resources/ui/icon_modes_lantern.png">Game Modes</div>
+  <div class="tab"><img src="../../../../Assets/Resources/ui/icon_tutorial_bamboo.png">Custom Puzzle</div>
+  <div class="gap"></div>
+  <div class="tab"><img src="../../../../Assets/Resources/ui/icon_golden_bloom.png">Meta Progression</div>
+  <div class="tab"><img src="../../../../Assets/Resources/ui/icon_items_codex.png">Codex</div>
+  <div class="gap"></div>
+  <div class="tab"><img src="../../../../Assets/Resources/ui/icon_profiles_mask.png">Profiles</div>
+  <div class="tab"><img src="../../../../Assets/Resources/ui/icon_stone_gear.png">Options</div>
+  <div class="tab"><img src="../../../../Assets/Resources/ui/icon_credits_scroll.png">Credits</div>
+  <div class="tab"><img src="../../../../Assets/Resources/ui/icon_gate_close.png">Quit</div>
+</div>
+<div class="walk" style="left:1140px; top:770px; transform:rotate(-1deg)">
+  <small>DAILY WALK</small><h3>Today's goals</h3>
+  <div class="row dots"><span class="on"></span><span class="on"></span><span></span> 2 of 3 · streak 4</div>
+  <div class="open">Open</div>
+</div>
+<div class="walk" style="left:1520px; top:770px; transform:rotate(1.2deg)">
+  <small>MONTHLY WALK</small><h3>The Old Tree Grove</h3>
+  <div class="row">Resets in 4 days · best A</div>
+  <div class="open">Open</div>
+</div>
+<div class="version">Version 0.3.0</div>
+<div class="hint" style="top:975px; left:600px">D-pad chooses · A opens · B back</div>
+<div class="caption">Main menu · B · The garden path (menu down the left, the saved run on a card, the painting free)</div>
+</body></html>

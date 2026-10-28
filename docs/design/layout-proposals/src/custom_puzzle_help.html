@@ -1,0 +1,60 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<style>
+  /* RM-209 · Custom Puzzle as built (UI-STYLE-012) with help on the Board paper: a "?" beside each field opens a slip that
+     says what it does (here Difficulty), and the paper grows by a seed row and a share code. */
+  .shot { position:absolute; inset:0; width:1920px; height:1080px; }
+  .q { position:absolute; width:26px; height:26px; border-radius:50%; border:2px solid #8a6a3a; color:#8a6a3a; font:700 16px 'Segoe UI', sans-serif;
+       text-align:center; line-height:22px; background:#f3ead6; }
+  .q.sel { background:#b23a2e; border-color:#b23a2e; color:#fff; }
+  .ext { position:absolute; left:91px; top:608px; width:364px; height:300px; background:#f1e8d4; box-shadow:0 14px 26px rgba(0,0,0,.45);
+         color:#231e17; padding:16px 26px; }
+  .ext small { display:block; font-size:14px; letter-spacing:.12em; color:#6b5f4c; margin-top:8px; }
+  .row { display:flex; align-items:center; gap:10px; margin-top:6px; }
+  .field { flex:1; height:42px; border:2px solid #b8a27a; border-radius:8px; background:#fffaf0; font-size:22px; padding:6px 12px; }
+  .code { flex:1; height:42px; border:2px solid #b8a27a; border-radius:8px; background:#fffaf0; font:17px Consolas, monospace; padding:10px 10px; letter-spacing:.04em; }
+  .pill { padding:8px 14px; border-radius:999px; background:#c9963c; color:#2a1a10; font-size:17px; }
+  .pill.ghost { background:transparent; border:2px solid #c9963c; color:#6b4a1c; }
+  .ext p { margin:10px 0 0; font-size:16px; color:#6b5f4c; line-height:1.4; }
+  .help { position:absolute; left:470px; top:250px; width:520px; background:#efe3c6; color:#231e17; padding:18px 22px;
+          box-shadow:0 18px 34px rgba(0,0,0,.55); border-left:10px solid #b23a2e; }
+  .help::before { content:''; position:absolute; left:-24px; top:62px; border:12px solid transparent; border-right-color:#b23a2e; }
+  .help small { display:block; font-size:14px; letter-spacing:.14em; color:#6b5f4c; }
+  .help h3 { margin:2px 0 6px; font-weight:normal; font-size:28px; color:#9e2a2b; }
+  .help p { margin:0 0 10px; font-size:19px; line-height:1.45; }
+  .bars { margin-top:4px; }
+  .bar { display:flex; align-items:center; gap:10px; font-size:16px; height:24px; }
+  .bar b { width:104px; font-weight:normal; color:#b8892b; font-size:14px; }
+  .bar i { height:12px; background:#2f4a33; border-radius:6px; }
+  .bar span { color:#4d4436; white-space:nowrap; }
+  .bar.on b { color:#9e2a2b; } .bar.on i { background:#b23a2e; }
+  .back { position:absolute; left:90px; top:958px; }
+</style></head><body>
+<img class="shot" src="../after_custom_puzzle.jpg">
+<div class="q" style="left:165px; top:255px">?</div>
+<div class="q sel" style="left:209px; top:312px">?</div>
+<div class="q" style="left:186px; top:362px">?</div>
+<div class="q" style="left:210px; top:445px">?</div>
+<div class="q" style="left:170px; top:537px">?</div>
+
+<div class="ext">
+  <small>SEED</small>
+  <div class="row"><div class="field">48213</div><span class="pill">Random</span></div>
+  <small>SHARE CODE</small>
+  <div class="row"><div class="code">R1-93BF-0C1A2F-48213</div></div>
+  <div class="row" style="margin-top:8px"><span class="pill">Copy</span><span class="pill ghost">Paste a code</span></div>
+  <p>The code holds the size, stars, regions, resources, rules and seed: a friend who pastes it gets the same board.</p>
+</div>
+
+<div class="help">
+  <small>BOARD · DIFFICULTY</small><h3>How empty the board starts</h3>
+  <p>Each star leaves more cells empty. With seven stars the grid starts empty and the rules alone decide every digit.</p>
+  <div class="bars">
+    <div class="bar"><b>★</b><i style="width:120px"></i><span>40 % empty</span></div>
+    <div class="bar on"><b>★★★</b><i style="width:180px"></i><span>60 %</span></div>
+    <div class="bar"><b>★★★★</b><i style="width:210px"></i><span>70 %</span></div>
+    <div class="bar"><b>★★★★★★★</b><i style="width:300px"></i><span>100 %</span></div>
+  </div>
+</div>
+<div class="caption">Custom Puzzle · RM-209 · "?" help on every Board field, a seed and a share code</div>
+</body></html>

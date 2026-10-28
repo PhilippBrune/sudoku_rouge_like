@@ -1,0 +1,30 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<style>
+  /* RM-211 · The market as built (UI-STYLE-009) with a slip for the floor's rule from Floor 2: the rule in force on this
+     floor and "Roll it again" for gold, once per market. */
+  .shot { position:absolute; inset:0; width:1920px; height:1080px; }
+  .slip { position:absolute; left:90px; top:330px; width:330px; height:300px; background:#efe3c6; color:#231e17; padding:14px 22px;
+          box-shadow:0 14px 28px rgba(0,0,0,.55); transform:rotate(-1deg); }
+  .slip small { display:block; font-size:14px; letter-spacing:.12em; color:#6b5f4c; }
+  .slip .rule { display:flex; gap:12px; align-items:center; margin:10px 0 6px; }
+  .slip .rule img { width:56px; height:56px; background:#2a1a10; border-radius:8px; padding:5px; }
+  .slip h3 { margin:0; font-weight:normal; font-size:24px; color:#9e2a2b; }
+  .slip p { margin:0; font-size:16px; line-height:1.4; color:#3a332a; }
+  .slip .roll { display:inline-block; margin-top:14px; padding:9px 20px; border-radius:999px; border:2px solid #b23a2e; color:#9e2a2b; font-size:19px; }
+  .slip .after { margin-top:6px; font-size:15px; color:#6b5f4c; }
+  .note { position:absolute; left:440px; top:650px; padding:8px 14px; background:#b23a2e; color:#fff; font:600 17px 'Segoe UI', sans-serif;
+          border-radius:6px; box-shadow:0 6px 14px rgba(0,0,0,.5); }
+  .note::after { content:''; position:absolute; left:-6px; top:12px; width:14px; height:14px; background:#b23a2e; transform:rotate(45deg); }
+</style></head><body>
+<img class="shot" src="../after_shop.jpg">
+<div class="slip">
+  <small>FLOOR 2 · THIS FLOOR'S RULE</small>
+  <div class="rule"><img src="../../../../Assets/Resources/modifier/icon_german_whisper.png"><h3>German Whispers</h3></div>
+  <p>Adjacent cells on green lines must differ by 5 or more. Example: 1-7-2-8.</p>
+  <div class="roll">Roll it again · 50 gold</div>
+  <div class="after">142 → 92 gold · once per market</div>
+</div>
+<div class="note">The rest of the floor's puzzles use the new rule; the boss keeps its own</div>
+<div class="caption">Market · RM-211 · the floor's rule rolled again for gold (from Floor 2, once per market)</div>
+</body></html>

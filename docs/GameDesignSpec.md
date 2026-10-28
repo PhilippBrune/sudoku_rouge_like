@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.29 | **Date:** 2026-10-28 | **Status:** implemented
+**Version:** 1.30 | **Date:** 2026-10-28 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.30 | 2026-10-28 | implemented | 0.3.0 playtest (RM-217, owner's pick): the main menu as the garden path (UI-STYLE-032): New run, a card for the saved run, Continue for a saved Custom Puzzle, the walks as paper tags. |
 | 1.29 | 2026-10-28 | implemented | 0.3.0 playtest (RM-208, owner's pick UI-STYLE-036): the gold beside the Pencil it buys (HUD-GOLD-001); a detail slip at the foot of the left column shows the passive, or the item or relic in focus, instead of the status line above the board (HUD-DETAIL-001). |
 | 1.28 | 2026-10-28 | implemented | 0.3.0 playtest, owner answer to D2 ("New Run"): no main menu button is chosen while the title screen shows, so A or Enter on the title no longer opens Select Class (UI-MENU-TITLE-001, GAP-097). |
 | 1.27 | 2026-10-28 | implemented | OPT-DRAG-001: a drag shows the value and sets and saves it once when the press ends (review: one save per drag, not one per step). |
@@ -461,6 +462,7 @@ Source of truth: [EndlessZenMode](EndlessZenMode.md) (decided 2026-10-07, SPEC-C
 - **[MENU-BACK-001]** Every Back button and B/Escape return to the screen before (Game Modes → Incense Walk → Select Class → Back is Game Modes); with none, the main menu (1.24, GAP-084)
 - **[UI-MENU-QUIT-001]** Quit closes the game on a second press within 3 s; the first press says so on the status line (1.22, GAP-074: a stray press closed the game)
 - **[UI-MENU-TITLE-001]** While the title screen shows, the main menu behind it has no chosen button and reads no input; it takes the focus when the title ends (1.28, GAP-097: a pad's A on the title opened Select Class)
+- **[UI-STYLE-032]** The main menu is the garden path (1.30, owner's pick of three, RM-217): the title top left, a paper card for the saved Garden Run (hidden without one), the entries as wooden tablets down the left (New run, Game Modes, Custom Puzzle with Continue for a saved one; Meta Progression, Codex; Profiles, Options, Credits, Quit), the Daily and Monthly Walk as paper tags bottom right, the profile top right, the version bottom left (layout-proposals 3.9)
 - **[UI-MENU-VERSION-001]** The game's version ("Version 0.2.0", from the player settings) in the bottom-left corner
 - Daily Walk and Monthly Walk widgets next to the menu, with today's goals, streak, theme and countdown (SPEC-CONF-027, GAP-028)
 

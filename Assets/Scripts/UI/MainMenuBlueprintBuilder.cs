@@ -89,136 +89,50 @@ namespace SudokuRoguelike.UI
             var rootCg = EnsureComponent<CanvasGroup>(root.gameObject);
             rootCg.alpha = previousAlpha;
 
-            // -- Title --------------------------------------------------------
-            var titleText = BuildText("TitleText", root, "Run of the Nine", 42, TextAnchor.MiddleCenter);
-            SetRect(titleText.rectTransform,
-                new Vector2(0.15f, 0.88f), new Vector2(0.85f, 0.96f), Vector2.zero, Vector2.zero);
-            titleText.fontStyle = FontStyle.BoldAndItalic;
-            titleText.color = TxtColor;
-            var titleShadow = EnsureComponent<Shadow>(titleText.gameObject);
-            titleShadow.effectColor = GamePalette.ShadowDark;
-            titleShadow.effectDistance = new Vector2(2f, -2f);
-
-            var subtitleText = BuildText("SubtitleText", root, T("MainMenu.Subtitle"), 18, TextAnchor.MiddleCenter);
-            SetRect(subtitleText.rectTransform,
-                new Vector2(0.25f, 0.845f), new Vector2(0.75f, 0.885f), Vector2.zero, Vector2.zero);
-            subtitleText.color = GamePalette.WithAlpha(TxtColor, 0.65f);
-
-            // -- Menu Card ------------------------------------------------------
-            var card = EnsureRect("MenuCard", root,
-                new Vector2(0.28f, 0.08f), new Vector2(0.72f, 0.84f),
-                Vector2.zero, Vector2.zero);
-            // 3 ? Stone tablet card: visible background + subtle gold border when no art bg
-            EnsureOrGetImage(card.gameObject, new Color(0.12f, 0.14f, 0.11f, 0.85f));
-            var cardOutline = EnsureComponent<Outline>(card.gameObject);
-            cardOutline.effectColor = new Color(GamePalette.AccentGold.r, GamePalette.AccentGold.g, GamePalette.AccentGold.b, 0.28f);
-            cardOutline.effectDistance = new Vector2(1.5f, -1.5f);
-
-            // -- Main Menu Buttons ----------------------------------------------
-            // Primary group (Start / Resume) ? taller and gold-accented
-            var btnStart    = BuildMenuButton(card, "BtnStart",    T("Start Game"),       new Vector2(0.06f, 0.81f), new Vector2(0.94f, 0.89f), mc.StartGame);
-            var btnResume   = BuildMenuButton(card, "BtnResume",   T("Resume Game"),      new Vector2(0.06f, 0.72f), new Vector2(0.94f, 0.80f), mc.ResumeGame);
-
-            // Style primary buttons: larger text, gold label
-            StylePrimaryMenuButton(btnStart);
-            StylePrimaryMenuButton(btnResume);
-
-            // Thin separator line between primary and secondary groups
-            var sepGo = new GameObject("MenuGroupSeparator", typeof(RectTransform), typeof(Image));
-            sepGo.transform.SetParent(card, false);
-            var sepRt = sepGo.GetComponent<RectTransform>();
-            sepRt.anchorMin = new Vector2(0.06f, 0.705f);
-            sepRt.anchorMax = new Vector2(0.94f, 0.707f);
-            sepRt.offsetMin = sepRt.offsetMax = Vector2.zero;
-            sepGo.GetComponent<Image>().color = new Color(GamePalette.AccentGold.r, GamePalette.AccentGold.g, GamePalette.AccentGold.b, 0.30f);
-
-            // Secondary group ? same height, slightly muted (M-1: Meta ? Modes ? Items ? Custom Puzzle)
-            var btnMeta     = BuildMenuButton(card, "BtnMeta",     T("Meta Progression"), new Vector2(0.06f, 0.63f), new Vector2(0.94f, 0.70f), mc.OpenMetaProgression);
-            var btnModes    = BuildMenuButton(card, "BtnModes",    T("Game Modes"),       new Vector2(0.06f, 0.55f), new Vector2(0.94f, 0.62f), mc.OpenGameModes);
-            var btnItems    = BuildMenuButton(card, "BtnItems",    T("Codex.Title"), new Vector2(0.06f, 0.47f), new Vector2(0.94f, 0.54f), mc.OpenItems);
-            var btnTut      = BuildMenuButton(card, "BtnTutorial", T("Custom Puzzle"),   new Vector2(0.06f, 0.39f), new Vector2(0.94f, 0.46f), mc.OpenTutorial);
-
-            // Thin separator before system group
-            var sepGo2 = new GameObject("MenuGroupSeparator2", typeof(RectTransform), typeof(Image));
-            sepGo2.transform.SetParent(card, false);
-            var sepRt2 = sepGo2.GetComponent<RectTransform>();
-            sepRt2.anchorMin = new Vector2(0.06f, 0.375f);
-            sepRt2.anchorMax = new Vector2(0.94f, 0.377f);
-            sepRt2.offsetMin = sepRt2.offsetMax = Vector2.zero;
-            sepGo2.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.10f);
-
-            // System group ? visually muted (smaller text, lower alpha buttons handled via StyleSecondaryMenuButton)
-            // GAP-029: all four system buttons share one height (0.06).
-            var btnProfiles = BuildMenuButton(card, "BtnProfiles", T("Profiles"),        new Vector2(0.06f, 0.31f), new Vector2(0.94f, 0.37f), mc.ShowProfileSelect);
-            var btnOpt      = BuildMenuButton(card, "BtnOptions",  T("Options"),          new Vector2(0.06f, 0.24f), new Vector2(0.94f, 0.30f), mc.OpenOptions);
-            var btnCred     = BuildMenuButton(card, "BtnCredits",  T("Credits"),          new Vector2(0.06f, 0.17f), new Vector2(0.94f, 0.23f), mc.OpenCredits);
-            var btnQuit     = BuildMenuButton(card, "BtnQuit",     T("Quit"),             new Vector2(0.06f, 0.10f), new Vector2(0.94f, 0.16f), mc.ExitGame);
-
-            StyleSecondaryMenuButton(btnProfiles);
-            StyleSecondaryMenuButton(btnOpt);
-            StyleSecondaryMenuButton(btnCred);
-            StyleSecondaryMenuButton(btnQuit);
-
-            // MM-1: explicit vertical navigation chain for main-menu buttons
-            var mainMenuButtons = new Button[] { btnStart, btnResume, btnMeta, btnModes, btnItems, btnTut, btnProfiles, btnOpt, btnCred, btnQuit };
-            for (var i = 0; i < mainMenuButtons.Length; i++)
-            {
-                var nav = mainMenuButtons[i].navigation;
-                nav.mode = Navigation.Mode.Explicit;
-                nav.selectOnUp   = mainMenuButtons[(i + mainMenuButtons.Length - 1) % mainMenuButtons.Length];
-                nav.selectOnDown = mainMenuButtons[(i + 1) % mainMenuButtons.Length];
-                mainMenuButtons[i].navigation = nav;
-            }
-            BuildHomeWidgets(card, mc, mainMenuButtons); // SPEC-CONF-027: Daily/Monthly widgets
-
-            ApplyMenuButtonIcon(btnStart,    "ui/icon_start_game");               // start: dedicated torii gate icon
-            ApplyMenuButtonIcon(btnResume,   "ui/icon_resume_scroll");             // F18: dedicated resume icon
-            ApplyMenuButtonIcon(btnTut,      "ui/icon_tutorial_bamboo");           // F18: dedicated tutorial/custom-puzzle icon
-            ApplyMenuButtonIcon(btnMeta,     "ui/icon_golden_bloom");
-            ApplyMenuButtonIcon(btnModes,    "ui/icon_modes_lantern");             // F18: dedicated game-modes icon
-            ApplyMenuButtonIcon(btnItems,    "ui/icon_items_codex");               // F18: dedicated items-codex icon
-            ApplyMenuButtonIcon(btnProfiles, "ui/icon_profiles_mask");             // F18/F13: profiles icon; scroll_stamp reserved for Confirm
-            ApplyMenuButtonIcon(btnOpt,      "ui/icon_stone_gear");
-            ApplyMenuButtonIcon(btnCred,     "ui/icon_credits_scroll");               // F-QA: dedicated credits icon replaces language_scroll
-            ApplyMenuButtonIcon(btnQuit,     "ui/icon_gate_close");                // F17: dedicated quit/exit icon
-
-            // Apply art background to main-menu card if the asset is available
+            // [REQ: UI-STYLE-032] Main menu B · The garden path (owner's pick, RM-217): the painting stays bright; the title top
+            // left over a soft shade, the saved run on a paper card, the menu as wooden tablets down the left, the walks bottom
+            // right, the profile top right (MainMenuBlueprintBuilder.Home).
             var rootBgImg = EnsureOrGetImage(root.gameObject, BgColor);
-            var rootBgApplied = ApplyPanelBackground(rootBgImg, "background/bg_main_menu");
-            if (rootBgApplied)
-            {
-                // Art background overrides the stone tablet ? revert card to transparent
-                EnsureOrGetImage(card.gameObject, Color.clear);
-                cardOutline.effectColor = Color.clear;
-                titleText.color    = new Color(0.06f, 0.04f, 0.02f, 1f);
-                subtitleText.color = new Color(0.06f, 0.04f, 0.02f, 1f);
-                AddTextPill(titleText.rectTransform);
-                AddTextPill(subtitleText.rectTransform);
-                foreach (var btn in new Button[] { btnStart, btnResume, btnTut, btnMeta, btnModes, btnItems, btnProfiles, btnOpt, btnCred, btnQuit })
-                    StyleButtonForBackground(btn);
-            }
+            ApplyPanelBackground(rootBgImg, "background/bg_main_menu");
+            BuildHomeTitle(root);
+
+            var card = EnsureRect("MenuCard", root, CardMin, CardMax, Vector2.zero, Vector2.zero);
+            EnsureOrGetImage(card.gameObject, Color.clear).raycastTarget = false;
+
+            var btnResume   = BuildRunCard(card, "BtnResume", mc.ResumeGame);
+            var btnStart    = BuildTablet(card, "BtnStart",    T("MainMenu.NewRun"),  0, 0, "ui/icon_start_game", mc.StartGame);
+            var btnModes    = BuildTablet(card, "BtnModes",    T("Game Modes"),       1, 0, "ui/icon_modes_lantern", mc.OpenGameModes);
+            var btnTut      = BuildTablet(card, "BtnTutorial", T("Custom Puzzle"),    2, 0, "ui/icon_tutorial_bamboo", mc.OpenTutorial);
+            var btnMeta     = BuildTablet(card, "BtnMeta",     T("Meta Progression"), 3, 1, "ui/icon_golden_bloom", mc.OpenMetaProgression);
+            var btnItems    = BuildTablet(card, "BtnItems",    T("Codex.Title"),      4, 1, "ui/icon_items_codex", mc.OpenItems);
+            var btnProfiles = BuildTablet(card, "BtnProfiles", T("Profiles"),         5, 2, "ui/icon_profiles_mask", mc.ShowProfileSelect);
+            var btnOpt      = BuildTablet(card, "BtnOptions",  T("Options"),          6, 2, "ui/icon_stone_gear", mc.OpenOptions);
+            var btnCred     = BuildTablet(card, "BtnCredits",  T("Credits"),          7, 2, "ui/icon_credits_scroll", mc.OpenCredits);
+            var btnQuit     = BuildTablet(card, "BtnQuit",     T("Quit"),             8, 2, "ui/icon_gate_close", mc.ExitGame);
+            // [REQ: CUSTOM-SAVE-001] Continue the saved Custom Puzzle from the main menu (owner, RM-209).
+            BuildContinuePill(btnTut, "BtnHomeContinueCustom", mc.ContinueCustomPuzzle);
+            BuildHomeWidgets(card, mc, btnStart);   // SPEC-CONF-027: the Daily and Monthly Walk
+            BuildProfileTag(card);
+            WireHomeNavigation(card);   // again whenever the run card or the Continue pill shows or hides
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            // Debug toggle (hidden in release builds)
+            // Debug toggle (hidden in release builds), under the profile tag.
             var debug = BuildToggle("DebugToggle", card, T("Enable All (Debug)"));
-            SetRect(debug.GetComponent<RectTransform>(),
-                new Vector2(0.06f, 0.01f), new Vector2(0.50f, 0.07f), Vector2.zero, Vector2.zero);
+            var (debugMin, debugMax) = OnCard(0.80f, 0.86f, 0.976f, 0.905f);
+            SetRect(debug.GetComponent<RectTransform>(), debugMin, debugMax, Vector2.zero, Vector2.zero);
             debug.SetIsOnWithoutNotify(false);
             debug.onValueChanged.RemoveAllListeners();
             debug.onValueChanged.AddListener(mc.OnDebugEnableAllChanged);
 #endif
 
-            // -- Status Bar -----------------------------------------------------
-            var status = BuildText("StatusText", root, T("Ready."), 20, TextAnchor.MiddleCenter);
-            SetRect(status.rectTransform,
-                new Vector2(0.28f, 0.02f), new Vector2(0.72f, 0.07f), Vector2.zero, Vector2.zero);
-            status.color = rootBgApplied
-                ? new Color(0.06f, 0.04f, 0.02f, 0.70f)
-                : GamePalette.WithAlpha(TxtColor, 0.6f);
-            if (rootBgApplied) AddTextPill(status.rectTransform);
-            var statusShadow = EnsureComponent<Shadow>(status.gameObject);
-            statusShadow.effectColor = GamePalette.ShadowMid;
-            statusShadow.effectDistance = new Vector2(1f, -1f);
+            // -- Status line and key hint ----------------------------------------
+            var status = ScrollUiKit.Label(root, "StatusText", string.Empty, 20, TextAnchor.MiddleLeft, TitleCream,
+                new Vector2(0.33f, 0.06f), new Vector2(0.58f, 0.10f), 12);
+            status.gameObject.AddComponent<Shadow>().effectColor = new Color(0f, 0f, 0f, 0.85f);
+            var hint = ScrollUiKit.Label(root, "HomeKeyHint", string.Empty, 17, TextAnchor.MiddleLeft, new Color(0.85f, 0.79f, 0.66f, 1f),
+                new Vector2(0.33f, 0.02f), new Vector2(0.58f, 0.055f), 11);
+            hint.gameObject.AddComponent<Shadow>().effectColor = new Color(0f, 0f, 0f, 0.85f);
+            DeviceHint.Attach(hint, "MainMenu.KeyHint");   // INPUT-HINT-001
 
             // [REQ: UI-MENU-VERSION-001] The game's version in the bottom-left corner (Player Settings' version, e.g. "0.2.0").
             var version = BuildText("VersionText", root, LocalizationService.Format("MainMenu.Version", "Version {0}", Application.version),
@@ -1414,51 +1328,6 @@ namespace SudokuRoguelike.UI
         // Helpers: Menu Button
         // ------------------------------------------------------------------------
 
-        private Button BuildMenuButton(RectTransform parent, string name, string label,
-            Vector2 anchorMin, Vector2 anchorMax, UnityEngine.Events.UnityAction action)
-        {
-            var rect = EnsureRect(name, parent, anchorMin, anchorMax, Vector2.zero, Vector2.zero);
-            var img = EnsureOrGetImage(rect.gameObject, BtnColor);
-            img.raycastTarget = true;
-
-            var btn = EnsureComponent<Button>(rect.gameObject);
-
-            // Warm outline to match the mockup
-            var outline = EnsureComponent<Outline>(rect.gameObject);
-            outline.effectColor = GamePalette.ButtonOutline;
-            outline.effectDistance = new Vector2(1.2f, -1.2f);
-
-            var colors = btn.colors;
-            colors.normalColor      = BtnColor;
-            colors.highlightedColor = GamePalette.ButtonHighlight;
-            colors.pressedColor     = GamePalette.ButtonPressed;
-            colors.selectedColor    = new Color(0.98f, 0.83f, 0.26f, 0.70f); // gold tint when controller-focused
-            colors.disabledColor    = GamePalette.ButtonDisabled;
-            colors.fadeDuration     = 0.08f;
-            colors.colorMultiplier  = 1f;
-            btn.colors = colors;
-
-            // Enable automatic navigation so EventSystem can traverse with stick/d-pad
-            btn.navigation = new Navigation { mode = Navigation.Mode.Automatic };
-
-            // Dark text on cream button
-            var lblRect = EnsureRect("Label", rect, Vector2.zero, Vector2.one,
-                new Vector2(10f, 4f), new Vector2(-10f, -4f));
-            var text = EnsureComponent<Text>(lblRect.gameObject);
-            text.text = label;
-            text.font = GetBuiltInFont();
-            text.fontSize = 22;
-            text.fontStyle = FontStyle.Bold;
-            text.alignment = TextAnchor.MiddleCenter;
-            text.color = BtnTextColor;
-            lblRect.SetAsLastSibling();
-
-            btn.onClick.RemoveAllListeners();
-            btn.onClick.AddListener(action);
-
-            return btn;
-        }
-
         private void ApplyMenuButtonIcon(Button button, string resourcePath)
         {
             if (button == null) return;
@@ -1567,27 +1436,7 @@ namespace SudokuRoguelike.UI
         }
 
         /// <summary>Applies gold label and larger font to a primary main-menu button (Start/Resume).</summary>
-        private static void StylePrimaryMenuButton(Button btn)
-        {
-            if (btn == null) return;
-            var label = btn.transform.Find("Label")?.GetComponent<Text>();
-            if (label == null) return;
-            label.fontSize = 26;
-            label.color    = GamePalette.AccentGold;
-        }
-
         /// <summary>Applies muted label to system-tier buttons (Options/Credits/Profiles/Quit).</summary>
-        private static void StyleSecondaryMenuButton(Button btn)
-        {
-            if (btn == null) return;
-            var img = btn.GetComponent<Image>();
-            if (img != null) img.color = new Color(BtnColor.r * 0.80f, BtnColor.g * 0.80f, BtnColor.b * 0.80f, 0.60f);
-            var label = btn.transform.Find("Label")?.GetComponent<Text>();
-            if (label == null) return;
-            label.fontSize = 18;
-            label.color    = new Color(BtnTextColor.r, BtnTextColor.g, BtnTextColor.b, 0.62f);
-        }
-
         /// <summary>
         /// Turns all non-button Text children black and adds a very-transparent pill background
         /// so they read clearly against art backgrounds.

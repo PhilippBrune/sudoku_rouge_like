@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using SudokuRoguelike.Bootstrap;
 using SudokuRoguelike.Classes;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Data;
 using SudokuRoguelike.Run;
 using SudokuRoguelike.Save;
 using SudokuRoguelike.Tutorial;
@@ -750,39 +751,71 @@ namespace SudokuRoguelike.UI
             }
         }
 
+        // [REQ: UI-STYLE-032] The run card shows the saved Garden Run (class, floor, garden, HP, gold, Harmony) and hides
+        // without one; the profile tag top right and the Custom Puzzle's Continue pill follow the save too.
         private void SetupResumeButton()
         {
-            var hasRun = _gameBootstrap != null && _gameBootstrap.HasResumableRun();
             if (_resumeButton == null) return;
-
-            // M-7 — Grey and relabel when no active run
-            _resumeButton.interactable = hasRun;
-            var lbl = _resumeButton.transform.Find("Label")?.GetComponent<Text>();
-            if (!hasRun)
-            {
-                if (lbl != null)
-                {
-                    // [UX-FIX] Show plain "Resume" (greyed) when no run is active — no run details.
-                    lbl.text  = LocalizationService.T("Resume");
-                    lbl.color = GamePalette.WithAlpha(GamePalette.AccentGold, 0.35f);
-                }
-                return;
-            }
-
-            // Restore full label opacity for an active run
-            if (lbl != null)
-                lbl.color = GamePalette.AccentGold;
-
-            // N-1 — Show run summary in the Resume button label
-            var env = _save.HasSaveFile() ? _save.Load() : null;
+            var save = new SaveFileService(SaveProfileService.ActiveSlot);
+            var env = save.HasSaveFile() ? save.Load() : null;
             var rs = env?.ActiveRunState;
-            if (rs != null && lbl != null)
-                lbl.text = LocalizationService.Format("Resume.Button.Active",
-                    "Resume  -  {0}  -  Floor {1}  -  HP {2}/{3}",
-                    ClassCatalog.DisplayName(rs.ClassId), // GAP-019: class name was English; the Daily Walk's walker
-                    rs.CurrentFloor + 1,
-                    rs.CurrentHP,
-                    rs.MaxHP);
+            var hasRun = save.HasActiveRun() && rs != null;   // the slot's own file, as the bootstrap's resume reads it
+            _resumeButton.interactable = hasRun;
+            _resumeButton.gameObject.SetActive(hasRun);
+            if (hasRun) FillRunCard(_resumeButton.transform, rs);
+
+            var card = _resumeButton.transform.parent;
+            RefreshHomeProfile(card, env);
+            RefreshHomeContinue(card, save);
+            MainMenuBlueprintBuilder.WireHomeNavigation(card);
+        }
+
+        private static void FillRunCard(Transform runCard, RunState rs)
+        {
+            SetText(runCard, "RunLine", LocalizationService.Format("MainMenu.RunLine", "Floor {0} · {1} · {2}",
+                rs.CurrentFloor + 1, FloorThemeData.GetFloorName(rs.CurrentFloor), ClassCatalog.DisplayName(rs.ClassId)));
+            SetText(runCard, "RunChips", LocalizationService.Format("MainMenu.RunChips", "HP {0}/{1} · Gold {2} · Harmony {3}",
+                rs.CurrentHP, rs.MaxHP, rs.CurrentGold, rs.HarmonyLevel));
+            var icon = runCard.Find("ClassDisc/ClassIcon")?.GetComponent<Image>();
+            if (icon == null) return;
+            var name = ClassCatalog.IsClass(rs.ClassId) ? ClassCatalog.GetIconName(rs.ClassId) : null;
+            icon.sprite = string.IsNullOrEmpty(name) ? null : InRunUiFactory.LoadResourceSprite("class/icon_" + name);
+            icon.color = icon.sprite != null ? Color.white : Color.clear;
+        }
+
+        // "Profile 1 · Number Freak Lv 23": the slot, and the class of the saved run or the highest level.
+        private static void RefreshHomeProfile(Transform card, SaveFileEnvelope env)
+        {
+            var slot = SaveProfileService.ActiveSlot + 1;
+            var meta = env?.MetaProgress;
+            var classId = env?.ActiveRunState != null && ClassCatalog.IsClass(env.ActiveRunState.ClassId)
+                ? env.ActiveRunState.ClassId : (ClassId)0;
+            var garden = new Meta.ClassGardenProgressionService();
+            if (classId == 0 && meta != null)
+                foreach (ClassId id in Enum.GetValues(typeof(ClassId)))
+                    if (classId == 0 || garden.GetLevel(meta, id) > garden.GetLevel(meta, classId)) classId = id;
+            SetText(card, "HomeProfile/HomeProfileText", classId == 0 || meta == null
+                ? LocalizationService.Format("MainMenu.ProfileTagEmpty", "Profile {0}", slot)
+                : LocalizationService.Format("MainMenu.ProfileTag", "Profile {0} · {1} Lv {2}", slot, ClassCatalog.DisplayName(classId),
+                    garden.GetLevel(meta, classId)));
+        }
+
+        // [REQ: CUSTOM-SAVE-001] Continue on the Custom Puzzle tablet with the saved board (owner, RM-209).
+        private static void RefreshHomeContinue(Transform card, SaveFileService save)
+        {
+            var pill = card.Find("BtnTutorial/BtnHomeContinueCustom");
+            if (pill == null) return;
+            var saved = save.SavedCustomPuzzle();
+            pill.gameObject.SetActive(saved != null);
+            if (saved != null)
+                SetText(pill, "Label", LocalizationService.Format("CustomPuzzle.Continue", "Continue · {0}×{0} {1}", saved.BoardSize,
+                    new string('\u2605', Mathf.Clamp(saved.Stars, 1, 7))));
+        }
+
+        private static void SetText(Transform root, string path, string text)
+        {
+            var label = root.Find(path)?.GetComponent<Text>();
+            if (label != null) label.text = text;
         }
 
         // ── Class Select ──

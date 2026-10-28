@@ -431,8 +431,6 @@ namespace SudokuRoguelike.Core
         private static readonly Dictionary<string, string> De = new Dictionary<string, string>
         {
             // Main Menu
-            { "Start Game", "Spiel starten" },
-            { "Resume Game", "Fortsetzen" },
             { "Tutorial", "Anleitung" },
             { "Meta Progression", "Fortschritt" },
             { "Game Modes", "Spielmodi" },
@@ -441,7 +439,6 @@ namespace SudokuRoguelike.Core
             { "Options", "Einstellungen" },
             { "Credits", "Mitwirkende" },
             { "Quit", "Beenden" },
-            { "Ready.", "Bereit." },
 
             // Class Select
             { "Continue", "Weiter" },

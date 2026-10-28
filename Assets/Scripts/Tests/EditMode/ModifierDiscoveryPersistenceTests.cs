@@ -854,8 +854,6 @@ namespace SudokuRoguelike.Tests
         {
             return new[]
             {
-                "Start Game",
-                "Resume Game",
                 "Tutorial",
                 "Meta Progression",
                 "Game Modes",
@@ -863,7 +861,6 @@ namespace SudokuRoguelike.Tests
                 "Options",
                 "Credits",
                 "Quit",
-                "Ready.",
                 "Continue",
                 "Back",
                 "Class not yet unlocked.",

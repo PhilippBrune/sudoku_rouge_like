@@ -1,4 +1,12 @@
 ﻿{
+    "MainMenu.KeyHint.Keys":  "Arrows choose · Enter opens · Esc back",
+    "MainMenu.KeyHint":  "D-pad chooses · A opens · B back",
+    "MainMenu.ProfileTagEmpty":  "Profile {0}",
+    "MainMenu.ProfileTag":  "Profile {0} · {1} Lv {2}",
+    "MainMenu.RunChips":  "HP {0}/{1} · Gold {2} · Harmony {3}",
+    "MainMenu.RunLine":  "Floor {0} · {1} · {2}",
+    "MainMenu.Saved":  "Saved",
+    "MainMenu.NewRun":  "New run",
     "CustomPuzzle.ReplaceSaved":  "This replaces your saved puzzle. Press \"Start puzzle\" again.",
     "CustomPuzzle.ContinueFailed":  "The saved puzzle could not be opened.",
     "CustomPuzzle.Continue":  "Continue · {0}×{0} {1}",

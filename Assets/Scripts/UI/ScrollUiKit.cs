@@ -308,6 +308,13 @@ namespace SudokuRoguelike.UI
             return Coverage(half - Mathf.Abs(x + 0.5f - s * 0.5f));
         }, (x, y, s) => Color.Lerp(new Color(0.58f, 0.41f, 0.24f), new Color(0.88f, 0.73f, 0.50f), y / (s - 1f)));
 
+        /// <summary>Opaque on the left, clear on the right (the main menu's shade behind the title and the menu).</summary>
+        internal static Sprite FadeRight() => Cached("fade-right", 64, (x, y, s) => Mathf.SmoothStep(1f, 0f, x / (s - 1f)));
+
+        /// <summary>A small triangle pointing right (the chosen main menu tablet).</summary>
+        internal static Sprite ArrowRight() => Cached("arrow-right", 64, (x, y, s) =>
+            Coverage(Mathf.Min(x + 0.5f, (s * 0.5f - Mathf.Abs(y + 0.5f - s * 0.5f)) * 2f - (x + 0.5f))));
+
         /// <summary>A vertical roller's shading: dark edges, a lit band left of the centre.</summary>
         internal static Sprite RollerShade() => Cached("roller", 32, (x, y, s) => 1f, (x, y, s) =>
         {

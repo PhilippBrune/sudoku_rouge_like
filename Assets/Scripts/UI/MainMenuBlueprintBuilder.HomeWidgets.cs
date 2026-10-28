@@ -6,58 +6,31 @@ namespace SudokuRoguelike.UI
 {
     public sealed partial class MainMenuBlueprintBuilder
     {
-        private static readonly Color HomeWidgetBg = new Color(0.10f, 0.12f, 0.09f, 0.90f);
-
-        // [REQ: DAILY-GOAL-004] [REQ: SEASON-UI-001] SPEC-CONF-027 / GAP-028: Daily Walk and Monthly Walk widgets on the
-        // main menu, right of the menu card. They are children of the card, so they show and hide with the main menu.
-        private void BuildHomeWidgets(RectTransform card, MainMenuController mc, Button[] menuButtons)
+        // [REQ: DAILY-GOAL-004] [REQ: SEASON-UI-001] [REQ: UI-STYLE-032] SPEC-CONF-027 / GAP-028: the Daily and Monthly Walk as
+        // paper tags at the bottom right of the main menu, children of the menu card so they show and hide with it.
+        private void BuildHomeWidgets(RectTransform card, MainMenuController mc, Button firstTablet)
         {
-            var column = EnsureRect("HomeWidgets", card,
-                new Vector2(1.05f, 0.47f), new Vector2(1.55f, 0.89f), Vector2.zero, Vector2.zero);
-
-            var daily = BuildHomeWidget(column, "DailyWidget", new Vector2(0f, 0.52f), new Vector2(1f, 1f),
-                T("Daily Walk"), "BtnDailyWidget", mc.ShowDailyWalkPanel);
-            var monthly = BuildHomeWidget(column, "MonthlyWidget", new Vector2(0f, 0f), new Vector2(1f, 0.48f),
-                T("Monthly Walk"), "BtnMonthlyWidget", mc.ShowMonthlyWalkPanel);
+            var (dMin, dMax) = OnCard(0.594f, 0.135f, 0.765f, 0.285f);
+            var (mMin, mMax) = OnCard(0.792f, 0.135f, 0.963f, 0.285f);
+            var column = ScrollUiKit.Area(card, "HomeWidgets", Vector2.zero, Vector2.one);
+            var daily = BuildWalkTag(column, "DailyWidget", dMin, dMax, -1f, T("Daily Walk"), "BtnDailyWidget", mc.ShowDailyWalkPanel);
+            var monthly = BuildWalkTag(column, "MonthlyWidget", mMin, mMax, 1.2f, T("Monthly Walk"), "BtnMonthlyWidget", mc.ShowMonthlyWalkPanel);
             EnsureComponent<MainMenuHomeWidgetsController>(column.gameObject);
-
-            // Gamepad: right from the menu column reaches the widgets, left returns to Start Game.
-            foreach (var button in menuButtons)
-            {
-                var nav = button.navigation;
-                nav.selectOnRight = daily;
-                button.navigation = nav;
-            }
-            daily.navigation = new Navigation
-            {
-                mode = Navigation.Mode.Explicit, selectOnLeft = menuButtons[0], selectOnDown = monthly, selectOnUp = monthly
-            };
-            monthly.navigation = new Navigation
-            {
-                mode = Navigation.Mode.Explicit, selectOnLeft = menuButtons[0], selectOnUp = daily, selectOnDown = daily
-            };
+            daily.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnLeft = firstTablet, selectOnRight = monthly };
+            monthly.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnLeft = daily };
         }
 
-        private Button BuildHomeWidget(RectTransform parent, string name, Vector2 min, Vector2 max,
-            string title, string buttonName, UnityAction open)
+        private Button BuildWalkTag(RectTransform parent, string name, Vector2 min, Vector2 max, float angle, string title,
+            string buttonName, UnityAction open)
         {
-            var widget = EnsureRect(name, parent, min, max, Vector2.zero, Vector2.zero);
-            EnsureOrGetImage(widget.gameObject, HomeWidgetBg);
-            var outline = EnsureComponent<Outline>(widget.gameObject);
-            outline.effectColor = GamePalette.AccentGoldGlow;
-            outline.effectDistance = new Vector2(1.2f, -1.2f);
-
-            var titleText = BuildText("WidgetTitle", widget, title, 18, TextAnchor.MiddleCenter);
-            SetRect(titleText.rectTransform, new Vector2(0.05f, 0.74f), new Vector2(0.95f, 0.97f), Vector2.zero, Vector2.zero);
-            titleText.color = GamePalette.AccentGold;
-
+            var tag = ScrollUiKit.PaperTag(parent, name, min, max, angle, 30f);
+            ScrollUiKit.Label(tag.transform, "WidgetTitle", title.ToUpperInvariant(), 15, TextAnchor.MiddleLeft, ScrollUiKit.InkSoft,
+                new Vector2(0.07f, 0.74f), new Vector2(0.95f, 0.92f), 9);
             // Filled by MainMenuHomeWidgetsController whenever the main menu is shown.
-            var info = BuildText("WidgetInfo", widget, "", 14, TextAnchor.MiddleCenter);
-            SetRect(info.rectTransform, new Vector2(0.05f, 0.36f), new Vector2(0.95f, 0.74f), Vector2.zero, Vector2.zero);
-
-            var button = BuildButton(buttonName, widget, T("MainMenu.Widget.Open"), 15);
-            SetRect(button.GetComponent<RectTransform>(), new Vector2(0.25f, 0.06f), new Vector2(0.75f, 0.32f), Vector2.zero, Vector2.zero);
-            button.onClick.RemoveAllListeners();
+            ScrollUiKit.Label(tag.transform, "WidgetInfo", string.Empty, 19, TextAnchor.UpperLeft, ScrollUiKit.Ink,
+                new Vector2(0.07f, 0.36f), new Vector2(0.95f, 0.72f), 11);
+            var button = ScrollUiKit.PillButton(tag.transform, buttonName, new Vector2(0.07f, 0.08f), new Vector2(0.42f, 0.30f),
+                T("MainMenu.Widget.Open"), 17, ScrollUiKit.Ink, TabletText, 16f);
             button.onClick.AddListener(open);
             return button;
         }

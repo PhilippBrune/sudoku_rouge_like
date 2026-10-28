@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 3.8 | **Date:** 2026-10-28 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; not built: the main menu; proposals of 2026-10-28 for the main menu, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll wait for the owner's pick)
+**Version:** 3.9 | **Date:** 2026-10-28 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; the main menu B (UI-STYLE-032, 2026-10-28); proposals of 2026-10-28 for the main menu, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll wait for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 3.9 | 2026-10-28 | review | Main menu B · The garden path built (UI-STYLE-032, owner's pick). Screenshots below. |
 | 3.8 | 2026-10-28 | review | Custom Puzzle help, seed and share code built (UI-STYLE-037, RM-209). Screenshots below. |
 | 3.7 | 2026-10-28 | review | Puzzle screen details built (UI-STYLE-036, RM-208): the gold tag, the detail slip, the bag moved up. Screenshots below. |
 | 3.6 | 2026-10-28 | review | Owner picks for the 0.3.0 proposals (2026-10-28): main menu B, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll, all to build. Built first: the market's rule roll (UI-STYLE-038) with 100 gold, once per floor. |
@@ -673,6 +674,16 @@ chosen one slides out on paper; the saved run is a card above them (class, floor
 walks hang bottom right, the profile top right.
 
 ![Main menu B, the garden path](layout-proposals/main_menu_b_path.jpg)
+
+**As built (3.9, the owner's pick):** as in the mockup. "Start Game" reads **New run**; the run card shows the saved
+Garden Run (class, floor, garden, HP, gold, Harmony) and is hidden without one; the Custom Puzzle tablet carries
+**Continue · 7×7 ★★★★** when a Custom Puzzle is saved (CUSTOM-SAVE-001); the key hint under the path follows the device
+(INPUT-HINT-001). Up and down walk the shown entries, right goes to the Continue pill or the Daily Walk. The status line
+"Ready." is gone; the line under the menu shows only messages.
+
+![Main menu B, as built, with a saved run and a saved Custom Puzzle](layout-proposals/after_main_menu_saved_run.jpg)
+![Main menu B, as built, a tablet in focus](layout-proposals/after_main_menu_focus.jpg)
+![Main menu B, as built, a new profile](layout-proposals/after_main_menu.jpg)
 
 **C · Three ways in:** the three ways to play as large plaques under the signboard (the Garden Run with Resume or a new
 run, Game Modes, Custom Puzzle), everything else as a row of round stones; large targets for a pad and a handheld. The

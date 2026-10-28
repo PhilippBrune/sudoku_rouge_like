@@ -550,6 +550,29 @@ namespace SudokuRoguelike.Tests
             menu.ShowMainMenu();
             yield return new WaitForSecondsRealtime(0.4f);
             yield return Shoot(host, camera, "after_main_menu.png");
+
+            // UI-STYLE-032: with a saved Garden Run on Floor 3 the run card leads the menu; a saved Custom Puzzle adds Continue.
+            var saved = new RunDirector();
+            saved.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, ClassLevel = 1 }, 7381);
+            saved.AdvanceToNextFloor();
+            saved.AdvanceToNextFloor();
+            saved.State.CurrentHP = 7;
+            saved.State.CurrentGold = 142;
+            saved.State.HarmonyLevel = 2;
+            var autoSave = new RunAutoSaveCoordinator(new SaveFileService(TestSlot));
+            autoSave.Save(saved.State, null);
+            var custom = new RunDirector();
+            custom.StartTutorialRun(new TutorialSetupConfig { BoardSize = 7, Stars = 4, Seed = 77 }, 77);
+            autoSave.Save(custom.State, custom.ExportPuzzleSaveState());
+            SaveFileService.FlushSharedPendingWrites();
+            menu.ShowMainMenu();
+            yield return new WaitForSecondsRealtime(0.4f);
+            yield return Shoot(host, camera, "after_main_menu_saved_run.png");
+            Find(host, "BtnModes").GetComponent<Button>().Select();
+            yield return new WaitForSecondsRealtime(0.2f);
+            yield return Shoot(host, camera, "after_main_menu_focus.png");
+            autoSave.ClearActiveRun();
+            autoSave.ClearCustomPuzzle();
             foreach (var (button, file) in new[] { ("BtnOptions", "options"), ("BtnItems", "codex"), ("BtnMeta", "meta_progression") })
             {
                 menu.ShowMainMenu();

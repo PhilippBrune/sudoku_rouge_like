@@ -1,11 +1,12 @@
 # Seasonal Challenge
 
-**Version:** 0.2 | **Date:** 2026-10-07 | **Status:** implemented
+**Version:** 0.3 | **Date:** 2026-10-28 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 0.3 | 2026-10-28 | implemented | 0.3.0 playtest (RM-217, owner's pick UI-STYLE-033): the Monthly Walk panel under the old tree: the board, its rules and how the score is counted; the month's best with its grade and what the next grade needs; the days of the month. |
 | 0.2 | 2026-10-07 | implemented | Status set from evidence (SPEC-CONF-022): monthly puzzle generation for all months fixed and verified in 1.0.x (GAP-004, E2E F02). Always available, no ascension gate (SPEC-CONF-026); main-menu widget as built (SPEC-CONF-027, GAP-028); Monthly Walk HUD status/badge fixed (GAP-029). |
 | 0.1 | 2026-04-09 | new | Initial specification |
 

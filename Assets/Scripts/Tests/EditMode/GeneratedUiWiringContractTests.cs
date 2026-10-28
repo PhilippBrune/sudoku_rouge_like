@@ -832,7 +832,7 @@ namespace SudokuRoguelike.Tests
                 case GeneratedUiControlType.Button:
                     // Runtime panels create their buttons through InRunUiFactory.
                     return new[] { "BuildButton", "BuildMenuButton", "CreateActionButton", "CreatePanelButton", "RoundButton", "RimButton", "PillButton",
-                        "BuildBackPill", "RunButton", "BuildTablet", "BuildRunCard" };   // UI-STYLE-032: the main menu's tablets and run card
+                        "BuildBackPill", "RunButton", "BuildTablet", "BuildRunCard", "AddComponent<Button>" };   // UI-STYLE-032: the main menu's tablets and run card
                 case GeneratedUiControlType.Toggle:
                     return new[] { "BuildToggle", "BuildOptionToggle" };
                 case GeneratedUiControlType.Dropdown:

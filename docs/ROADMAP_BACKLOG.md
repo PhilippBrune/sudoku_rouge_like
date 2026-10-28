@@ -47,7 +47,7 @@ Horizons: **short term** = the next one to three updates, **mid term** = after t
 | RM-214 | Bigger clue numbers | Text Size also enlarges the small numbers of rules such as Opposite Sums (for handhelds like the Legion Go). | Owner, 0.3.0 playtest on the Legion Go 2; built (ACCESS-FONT-002, AccessibilitySpec 2.5). | built |
 | RM-215 | Title sound | A short sound when the title screen opens. | Owner, 0.3.0 playtest; built: a code-made 8-bit sting, no paid service (AUDIO-TITLE-001, AudioVisualDirection 1.7). | built |
 | RM-216 | Daily Walk paths and themes | Concept: the Daily Walk on one path with its own garden themes; the main game on Floors 1, 3 and 5, the Daily Walk on Floors 2 and 4. | Owner, 0.3.0 playtest; concept in DailyGoalSystem 0.8 (two ways, A or B; recommendation B). | concept |
-| RM-217 | Mockups for four screens | Three main menu proposals, the Monthly Walk, Select Profile and Spirit Trials. | Owner, 0.3.0 playtest; picks: main menu B (built, UI-STYLE-032), the Monthly Walk, Select Profile and Spirit Trials as proposed (033 to 035, next). | in progress |
+| RM-217 | Mockups for four screens | Three main menu proposals, the Monthly Walk, Select Profile and Spirit Trials. | Owner, 0.3.0 playtest; built: main menu B (UI-STYLE-032), the Monthly Walk (033), Select Profile (034), Spirit Trials (035). | built |
 
 ## Mid term (suggested)
 

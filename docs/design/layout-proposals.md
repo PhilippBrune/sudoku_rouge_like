@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 3.9 | **Date:** 2026-10-28 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; the main menu B (UI-STYLE-032, 2026-10-28); proposals of 2026-10-28 for the main menu, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll wait for the owner's pick)
+**Version:** 3.10 | **Date:** 2026-10-28 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; the main menu B (UI-STYLE-032, 2026-10-28); proposals of 2026-10-28 for the main menu, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll wait for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 3.10 | 2026-10-28 | review | The Monthly Walk, Select Profile and Spirit Trials built (UI-STYLE-033 to 035, owner's picks). Screenshots below. |
 | 3.9 | 2026-10-28 | review | Main menu B · The garden path built (UI-STYLE-032, owner's pick). Screenshots below. |
 | 3.8 | 2026-10-28 | review | Custom Puzzle help, seed and share code built (UI-STYLE-037, RM-209). Screenshots below. |
 | 3.7 | 2026-10-28 | review | Puzzle screen details built (UI-STYLE-036, RM-208): the gold tag, the detail slip, the bag moved up. Screenshots below. |
@@ -700,6 +701,11 @@ each rule with its icon and text, and how the score is counted (SeasonalChalleng
 dark panel with its grade and what the next grade needs; the days of the month as ink marks with the days left;
 Back and "Begin the walk". Before a first walk the panel says "Not walked yet".
 
+**As built (3.10):** as in the mockup. The days are ink marks for the whole month (gone, today, left); the line under
+them gives the reset countdown. HP and Pencil come from the walk's own state, the rules from the month's board.
+
+![Monthly Walk, as built](layout-proposals/after_monthly_walk.jpg)
+
 ### Select Profile · Three ema (proposed UI-STYLE-034)
 
 ![Select Profile](layout-proposals/profile_select_ema.jpg)
@@ -708,6 +714,11 @@ Each profile is a wooden prayer plaque on a beam in the lantern garden: the clas
 wins, bosses, last played, and a seal when a run is saved; the active profile is framed in vermilion with its lantern
 lit. An empty plaque invites a new garden (Create). Delete stays a quiet link and asks first.
 
+**As built (3.10):** as in the mockup, with the game's ema plaque. Delete asks on the status line and deletes on a
+second press within 3 s (it deleted at once before). The level is the class's garden level.
+
+![Select Profile, as built](layout-proposals/after_profile_select.jpg)
+
 ### Spirit Trials · Four steles (proposed UI-STYLE-035)
 
 ![Spirit Trials](layout-proposals/spirit_trials_steles.jpg)
@@ -715,6 +726,11 @@ lit. An empty plaque invites a new garden (Create). Delete stays a quiet link an
 The four tiers as stone steles in the jizo forest, rising with the difficulty: name, stars, the number of rules, HP,
 Pencil, par time and the best score with its grade. The chosen tier wears the red bib; its terms are on a slip below,
 and "Choose a class" goes on to Select Class as today.
+
+**As built (3.10):** as in the mockup, without a grade beside a tier's best (the trials keep a score, no grade). A click
+on a stele goes straight on to Select Class; the pointer or the pad focus chooses it for the slip.
+
+![Spirit Trials, as built](layout-proposals/after_spirit_trials.jpg)
 
 ### Puzzle screen · Gold, bag rows and a detail slip (proposed UI-STYLE-036, RM-208)
 

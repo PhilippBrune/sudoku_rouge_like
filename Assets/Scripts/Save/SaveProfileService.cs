@@ -106,7 +106,9 @@ namespace SudokuRoguelike.Save
                 TotalRunsCompleted = env.Statistics?.TotalRunsCompleted  ?? 0,
                 TotalBossesDefeated= env.Statistics?.TotalBossesDefeated ?? 0,
                 HasActiveRun = env.ActiveRunState != null && !env.ActiveRunState.TutorialMode,
-                LastPlayedUtc= env.TimestampUtc ?? ""
+                LastPlayedUtc= env.TimestampUtc ?? "",
+                ClassLevel   = env.MetaProgress != null ? new Meta.ClassGardenProgressionService().GetLevel(env.MetaProgress, lastClass) : 1,
+                RunFloor     = env.ActiveRunState != null && !env.ActiveRunState.TutorialMode ? env.ActiveRunState.CurrentFloor + 1 : 0,
             };
         }
 

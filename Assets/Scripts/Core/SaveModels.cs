@@ -502,5 +502,7 @@ namespace SudokuRoguelike.Core
         public int TotalBossesDefeated;
         public bool HasActiveRun;
         public string LastPlayedUtc;   // ISO timestamp from envelope
+        public int ClassLevel;         // [REQ: UI-STYLE-034] the class's level in the garden
+        public int RunFloor;           // the saved run's floor (1-based), 0 without one
     }
 }

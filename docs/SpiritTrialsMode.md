@@ -1,13 +1,14 @@
 # Spirit Trials Mode
 
-**Version:** 2.1  
-**Date:** 2026-10-07  
+**Version:** 2.2  
+**Date:** 2026-10-28  
 **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.2 | 2026-10-28 | implemented | 0.3.0 playtest (RM-217, owner's pick UI-STYLE-035): the tier select as four steles with the chosen tier's slip; stars and rules per tier come from `SpiritTrialsService.StarsFor` and `RulesFor`. |
 | 2.1 | 2026-10-07 | implemented | Unlock rule confirmed as the single source: first boss defeat (SPEC-CONF-007); modifier pool limited to generatable modifiers (GAP-007). |
 
 ## Overview

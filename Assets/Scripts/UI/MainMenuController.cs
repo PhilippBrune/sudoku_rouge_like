@@ -572,57 +572,89 @@ namespace SudokuRoguelike.UI
             }
         }
 
-        // [REQ: SEASON-UI-001] Monthly Walk panel: prominent main menu panel showing theme, personal best, countdown-to-reset
+        // [REQ: SEASON-UI-001] [REQ: UI-STYLE-033] The Monthly Walk under the old tree: the month and its garden, the board and
+        // its rules, the month's best with its grade and what the next grade needs, the days of the month as ink marks.
         private void RefreshMonthlyWalkPanel()
         {
             if (_monthlyWalkPanel == null) return;
-            var now = System.DateTime.Today;
-            var theme = SeasonalChallengeService.GetThemeName(now.Year, now.Month);
+            var now = DateTime.Today;
+            var culture = LocalizationService.Culture;
             var cfg = SeasonalChallengeService.BuildChallengeConfig(now.Year, now.Month);
-            var subtitle = SeasonalChallengeService.GetPanelSubtitle(cfg);
-            var countdown = SeasonalChallengeService.GetCountdownLabel(now);
+            var walker = SeasonalChallengeService.CreateChallengeRunState(now.Year, now.Month);
+            var month = culture.DateTimeFormat.GetMonthName(now.Month);
 
-            FindAndSetText(_monthlyWalkPanel, "MonthlyThemeLabel", theme);
-            FindAndSetText(_monthlyWalkPanel, "MonthlySubtitleLabel", subtitle);
-            FindAndSetText(_monthlyWalkPanel, "MonthlyCountdownLabel", countdown);
+            FindAndSetText(_monthlyWalkPanel, "MonthlyEyebrow",
+                LocalizationService.Format("Monthly.Eyebrow", "Monthly Walk · {0}", month).ToUpper(culture));
+            FindAndSetText(_monthlyWalkPanel, "MonthlyThemeLabel", SeasonalChallengeService.GetThemeName(now.Year, now.Month));
+            FindAndSetText(_monthlyWalkPanel, "MonthlySubtitleLabel", LocalizationService.Format("Monthly.Facts",
+                "{0}×{0}   {1}   HP {2}   Pencil {3}", cfg.BoardSize, new string('\u2605', cfg.Stars), walker.MaxHP, walker.MaxPencil));
+            FillMonthlyRules(_monthlyWalkPanel.transform.Find("MonthlySlip/MonthlyRules"), cfg);
 
-            var envelope = _save.HasSaveFile() ? _save.Load() : new SaveFileEnvelope();
-            var seasonal = envelope.SeasonalChallenge;
+            var seasonal = (_save.HasSaveFile() ? _save.Load() : new SaveFileEnvelope()).SeasonalChallenge;
             var best = seasonal?.GetBest(now.Year, now.Month) ?? 0;
+            var grade = best > 0 ? SeasonalChallengeService.GetGrade(best, true) : string.Empty;
+            FindAndSetText(_monthlyWalkPanel, "MonthlyBestLabel", best > 0
+                ? best.ToString("N0", culture)
+                : LocalizationService.T("Monthly.NotWalked", "Not walked yet"));
+            FindAndSetText(_monthlyWalkPanel, "MonthlyGrade", grade);
+            var ring = _monthlyWalkPanel.transform.Find("MonthlyBestPanel/GradeRing");
+            if (ring != null) ring.gameObject.SetActive(best > 0);
+            FindAndSetText(_monthlyWalkPanel, "MonthlyBestBreakdownLabel", NextGradeLine(best, culture));
 
-            FindAndSetText(_monthlyWalkPanel, "MonthlyBestLabel",
-                best > 0
-                    ? LocalizationService.Format("Challenge.Monthly.PersonalBest", "Personal Best: {0:N0}", best)
-                    : LocalizationService.T("Challenge.Monthly.PersonalBest.None", "Personal Best: -"));
+            FindAndSetText(_monthlyWalkPanel, "MonthName", month.ToUpper(culture));
+            FillMonthlyDays(_monthlyWalkPanel.transform.Find("MonthlyDaysPaper/MonthlyDays"), now);
+            FindAndSetText(_monthlyWalkPanel, "MonthlyCountdownLabel", SeasonalChallengeService.GetCountdownLabel(now) + " · "
+                + LocalizationService.T("Monthly.NewGarden", "then a new garden"));
+        }
 
-            if (best > 0 && seasonal != null
-                && seasonal.TryGetBestBreakdown(now.Year, now.Month,
-                    out _, out var hp, out var pencilUsed, out var timeSeconds))
+        // What the next grade needs; a walk without a mistake adds 1 000.
+        private static string NextGradeLine(int best, System.Globalization.CultureInfo culture)
+        {
+            if (best <= 0) return LocalizationService.T("Monthly.FirstWalk", "One board, the same for everyone this month.");
+            foreach (var (grade, score) in new[] { ("C", 2500), ("B", 4500), ("A", 6500), ("S", 8500) })
+                if (best < score)
+                    return LocalizationService.Format("Monthly.NextGrade", "{0} more for {1} · no mistake adds {2}",
+                        (score - best).ToString("N0", culture), grade, 1000.ToString("N0", culture));
+            return LocalizationService.T("Monthly.TopGrade", "The top grade. A walk again can still raise the score.");
+        }
+
+        // One row per rule: its icon, name and text.
+        private static void FillMonthlyRules(Transform area, LevelConfig cfg)
+        {
+            if (area == null) return;
+            ScrollUiKit.DestroyChildrenNow(area);
+            var rules = cfg?.ActiveModifiers ?? new List<BossModifierId>();
+            var height = rules.Count > 1 ? 0.5f : 1f;
+            for (var i = 0; i < rules.Count; i++)
             {
-                var hpPart = hp >= 0
-                    ? LocalizationService.Format("Challenge.Monthly.Best.Hp", "HP: {0}", hp)
-                    : LocalizationService.T("Challenge.Monthly.Best.Hp.None", "HP: -");
-                var pencilPart = pencilUsed >= 0
-                    ? LocalizationService.Format("Challenge.Monthly.Best.PencilUsed", "Pencil used: {0}", pencilUsed)
-                    : LocalizationService.T("Challenge.Monthly.Best.PencilUsed.None", "Pencil used: -");
-                var timePart = timeSeconds >= 0
-                    ? LocalizationService.Format(
-                        "Challenge.Monthly.Best.Time",
-                        "Time: {0}",
-                        $"{timeSeconds / 60:00}:{timeSeconds % 60:00}")
-                    : LocalizationService.T("Challenge.Monthly.Best.Time.None", "Time: -");
-
-                FindAndSetText(_monthlyWalkPanel, "MonthlyBestBreakdownLabel",
-                    LocalizationService.Format(
-                        "Challenge.Monthly.BestBreakdown",
-                        "{0}  -  {1}  -  {2}",
-                        hpPart,
-                        pencilPart,
-                        timePart));
+                var top = 1f - i * height;
+                var rule = rules[i];
+                var icon = ScrollUiKit.Icon(area, "RuleIcon_" + i, CustomPuzzleScreen.IconPath(rule),
+                    new Vector2(0f, top - Mathf.Min(height, 0.42f)), new Vector2(0.11f, top), Color.white);
+                icon.raycastTarget = false;
+                ScrollUiKit.Label(area, "RuleName_" + i, Boss.BossService.GetModifierName(rule), 25, TextAnchor.MiddleLeft,
+                    ScrollUiKit.Vermilion, new Vector2(0.14f, top - height * 0.30f), new Vector2(1f, top), 14);
+                ScrollUiKit.Label(area, "RuleText_" + i, Boss.BossService.GetModifierDescription(rule), 17, TextAnchor.UpperLeft,
+                    ScrollUiKit.Ink, new Vector2(0.14f, top - height * 0.98f), new Vector2(1f, top - height * 0.31f), 11);
             }
-            else
+        }
+
+        // One ink mark per day: the days gone dark, today vermilion, the days left open.
+        private static void FillMonthlyDays(Transform area, DateTime today)
+        {
+            if (area == null) return;
+            ScrollUiKit.DestroyChildrenNow(area);
+            var days = DateTime.DaysInMonth(today.Year, today.Month);
+            var step = 1f / days;
+            for (var d = 1; d <= days; d++)
             {
-                FindAndSetText(_monthlyWalkPanel, "MonthlyBestBreakdownLabel", "");
+                var x = (d - 1) * step;
+                var past = d < today.Day;
+                var mark = ScrollUiKit.Fill(area, "Day_" + d, new Vector2(x + step * 0.18f, d == today.Day ? 0f : 0.10f),
+                    new Vector2(x + step * 0.82f, d == today.Day ? 1f : 0.90f),
+                    d == today.Day ? ScrollUiKit.Vermilion : past ? ScrollUiKit.Ink : Color.clear, ScrollUiKit.Rounded(6f));
+                mark.raycastTarget = false;
+                if (d > today.Day) ScrollUiKit.InkFrame(mark.transform, ScrollUiKit.InkSoft, 1.5f);
             }
         }
 
@@ -674,8 +706,22 @@ namespace SudokuRoguelike.UI
                 ShowSudokuBasicsPrompt();
         }
 
+        private const float DeleteConfirmSeconds = 3f;
+        private int _deleteAskedSlot = -1;
+        private float _deleteAskedAt = float.NegativeInfinity;
+
+        // [REQ: UI-STYLE-034] Delete asks first: the first press says so on the status line, a second within 3 s deletes.
         public void DeleteProfileSlot(int slot)
         {
+            if (_deleteAskedSlot != slot || Time.unscaledTime - _deleteAskedAt > DeleteConfirmSeconds)
+            {
+                _deleteAskedSlot = slot;
+                _deleteAskedAt = Time.unscaledTime;
+                SetStatus(LocalizationService.Format("ProfileSelect.Status.ConfirmDelete",
+                    "Press Delete again to remove Profile {0} for good.", slot + 1));
+                return;
+            }
+            _deleteAskedSlot = -1;
             _profileSlots.DeleteSlot(slot);
 
             // Re-wire save services — ActiveSlot may have changed (e.g. slot 0 deleted → still 0 but file is gone).
@@ -688,48 +734,51 @@ namespace SudokuRoguelike.UI
             SetStatus(LocalizationService.Format("ProfileSelect.Status.Deleted", "Profile {0} deleted.", slot + 1));
         }
 
+        // [REQ: UI-STYLE-034] Each ema: the class last walked with its level, the record and a seal for a saved run, or the
+        // invitation to a new garden; the active one framed in vermilion with its lantern lit.
         private void RefreshProfileSelectCards()
         {
             if (_profileSelectPanel == null) return;
             var summaries = _profileSlots.GetAllSlotSummaries();
+            var content = _profileSelectPanel.transform.Find("Content");
+            if (content == null) return;
 
             for (var i = 0; i < summaries.Length; i++)
             {
                 var s = summaries[i];
-                var infoName = $"SlotInfo_{i}";
-                var infoT = _profileSelectPanel.transform.Find($"Content/SlotCard_{i}/{infoName}");
-                if (infoT == null) continue;
-
-                var txt = infoT.GetComponent<Text>();
-                if (txt == null) continue;
-
-                if (s.IsEmpty)
-                {
-                    txt.text = LocalizationService.T("Profile.EmptySlot");
-                }
-                else
-                {
-                    var runInfo = s.HasActiveRun ? " (" + LocalizationService.T("run in progress") + ")" : "";
-                    var lastPlayed = string.IsNullOrEmpty(s.LastPlayedUtc) ? LocalizationService.T("Never")
-                        : System.DateTime.Parse(s.LastPlayedUtc).ToString("yyyy-MM-dd");
-                    txt.text = LocalizationService.Format("Profile.SlotInfo",
-                        "Class: {0}\nRuns: {1} started / {2} won\nBosses: {3}\nLast played: {4}{5}",
-                        ClassCatalog.DisplayName(s.LastPlayedClass),
-                        s.TotalRunsStarted,
-                        s.TotalRunsCompleted,
-                        s.TotalBossesDefeated,
-                        lastPlayed,
-                        runInfo);
-                }
-
-                // Mark active slot with gold outline on the card
-                var card = _profileSelectPanel.transform.Find($"Content/SlotCard_{i}");
+                var card = content.Find($"SlotCard_{i}");
                 if (card == null) continue;
-                var outline = card.GetComponent<Outline>();
-                if (outline != null)
-                    outline.effectColor = (i == SaveProfileService.ActiveSlot)
-                        ? GamePalette.AccentGold
-                        : GamePalette.ButtonOutline;
+                var active = i == SaveProfileService.ActiveSlot && !s.IsEmpty;
+                content.Find($"SlotFrame_{i}")?.gameObject.SetActive(active);
+                content.Find($"SlotGlow_{i}")?.gameObject.SetActive(active);
+                content.Find($"SlotActive_{i}")?.gameObject.SetActive(active);
+
+                var icon = card.Find("ClassDisc/ClassIcon")?.GetComponent<Image>();
+                if (icon != null)
+                {
+                    var iconName = s.IsEmpty ? null : ClassCatalog.GetIconName(s.LastPlayedClass);
+                    icon.sprite = string.IsNullOrEmpty(iconName) ? null : InRunUiFactory.LoadResourceSprite("class/icon_" + iconName);
+                    icon.color = icon.sprite != null ? Color.white : Color.clear;
+                }
+                card.Find("ClassDisc/Plus")?.gameObject.SetActive(s.IsEmpty);
+                SetText(card, "Who", s.IsEmpty ? LocalizationService.T("Profile.EmptySlot")
+                    : LocalizationService.Format("ProfileSelect.Who", "{0} · Lv {1}", ClassCatalog.DisplayName(s.LastPlayedClass), s.ClassLevel));
+                var lastPlayed = string.IsNullOrEmpty(s.LastPlayedUtc) ? LocalizationService.T("Never")
+                    : DateTime.Parse(s.LastPlayedUtc, null, System.Globalization.DateTimeStyles.RoundtripKind)
+                        .ToString("d MMM", LocalizationService.Culture);
+                SetText(card, $"SlotInfo_{i}", s.IsEmpty ? LocalizationService.T("ProfileSelect.NewGarden")
+                    : LocalizationService.T("ProfileSelect.Rows"));
+                SetText(card, "Numbers", s.IsEmpty ? string.Empty
+                    : LocalizationService.Format("ProfileSelect.Numbers", "{0} · {1} won\n{2}\n{3}",
+                        s.TotalRunsStarted, s.TotalRunsCompleted, s.TotalBossesDefeated, lastPlayed));
+                var info = card.Find($"SlotInfo_{i}")?.GetComponent<Text>();
+                if (info != null) info.alignment = s.IsEmpty ? TextAnchor.UpperCenter : TextAnchor.UpperLeft;
+                card.Find("RunSeal")?.gameObject.SetActive(s.HasActiveRun);
+                if (s.HasActiveRun)
+                    SetText(card, "RunSeal/Text", LocalizationService.Format("ProfileSelect.RunSeal", "Run in progress · Floor {0}", s.RunFloor)
+                        .ToUpper(LocalizationService.Culture));
+                SetText(card, $"BtnLoad_{i}/Label", s.IsEmpty ? LocalizationService.T("ProfileSelect.Create") : LocalizationService.T("ProfileSelect.Play"));
+                card.Find($"BtnDelete_{i}")?.gameObject.SetActive(!s.IsEmpty);
             }
         }
 

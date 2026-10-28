@@ -315,6 +315,25 @@ namespace SudokuRoguelike.UI
         internal static Sprite ArrowRight() => Cached("arrow-right", 64, (x, y, s) =>
             Coverage(Mathf.Min(x + 0.5f, (s * 0.5f - Mathf.Abs(y + 0.5f - s * 0.5f)) * 2f - (x + 0.5f))));
 
+        /// <summary>A stele: a rectangle with a round arch on top (Spirit Trials). The arch is a half ellipse over the top
+        /// third, so a tall or a short stele keeps a round-looking top.</summary>
+        internal static Sprite Stele() => Cached("stele", 128, (x, y, s) =>
+        {
+            var u = (x + 0.5f) / s * 2f - 1f;
+            var v = (y + 0.5f) / s;
+            if (v <= 0.70f) return 1f;
+            var dy = (v - 0.70f) / 0.30f;
+            return Mathf.Clamp01((1f - Mathf.Sqrt(u * u + dy * dy)) * s * 0.5f);
+        });
+
+        /// <summary>A jizo's bib: a band narrowing downwards.</summary>
+        internal static Sprite Bib() => Cached("bib", 64, (x, y, s) =>
+        {
+            var v = (y + 0.5f) / s;   // 0 bottom, 1 top
+            var half = 0.35f + 0.15f * v;
+            return Mathf.Clamp01((half - Mathf.Abs((x + 0.5f) / s - 0.5f)) * s);
+        });
+
         /// <summary>A vertical roller's shading: dark edges, a lit band left of the centre.</summary>
         internal static Sprite RollerShade() => Cached("roller", 32, (x, y, s) => 1f, (x, y, s) =>
         {

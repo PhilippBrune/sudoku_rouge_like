@@ -581,6 +581,14 @@ namespace SudokuRoguelike.Tests
                 yield return new WaitForSecondsRealtime(0.5f);
                 yield return Shoot(host, camera, prefix + file + ".png");
             }
+            // RM-217 (UI-STYLE-033 to 035): a month's best and two trial bests, so the screens show their records.
+            var bestSave = new SaveFileService(TestSlot);
+            var bests = bestSave.Load();
+            bests.SeasonalChallenge.SetBest(DateTime.Today.Year, DateTime.Today.Month, 7667, 9, 4, 512);
+            bests.Statistics.TrialsBestScore_Apprentice = 9120;
+            bests.Statistics.TrialsBestScore_Adept = 7480;
+            bestSave.Save(bests);
+            SaveFileService.FlushSharedPendingWrites();
             // RM-217: the screens the new mockups replace (Monthly Walk, Select Profile, Spirit Trials).
             foreach (var (show, file) in new (Action, string)[]
                      {

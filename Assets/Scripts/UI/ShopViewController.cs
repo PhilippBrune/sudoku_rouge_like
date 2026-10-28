@@ -32,6 +32,8 @@ namespace SudokuRoguelike.UI
         private Button _rerollButton;
         private Button _leaveButton;
         private Transform _purse;
+        private Image _ruleSlip;
+        private Button _ruleRerollButton;
         private bool _swapOpen;
 
         // Delegate to show bag-swap panel (supplied by InRunController)
@@ -106,6 +108,11 @@ namespace SudokuRoguelike.UI
 
             _slip = ScrollUiKit.PaperTag(screen.transform, "ShopSlip", new Vector2(0.6823f, 0.1806f), new Vector2(0.9531f, 0.4074f), -1f);
             _purse = ScrollUiKit.PaperTag(screen.transform, "ShopPurse", new Vector2(0.0469f, 0.2037f), new Vector2(0.2188f, 0.3935f), 1f).transform;
+            // [REQ: SHOP-RULE-001] From Floor 2 a slip above the purse shows the floor's rule and the roll (RM-211).
+            var state = _map?.Run?.State;
+            _ruleSlip = state != null && !state.TutorialMode && state.CurrentFloor >= 1 && state.ActiveFloorModifiers?.Count > 0
+                ? ScrollUiKit.PaperTag(screen.transform, "ShopFloorRule", new Vector2(0.0469f, 0.425f), new Vector2(0.2100f, 0.70f), -1f)
+                : null;
 
             _rerollButton = ScrollUiKit.RimButton(screen.transform, "ShopRerollBtn", new Vector2(0.387f, 0.037f), new Vector2(0.4885f, 0.0852f),
                 "", 20, ScrollUiKit.Gold, ScrollUiKit.OfferingFocus, ScrollUiKit.OfferingText);
@@ -131,6 +138,7 @@ namespace SudokuRoguelike.UI
             }
 
             RefreshPurse();
+            RefreshFloorRule();
             RefreshReroll();
             RefreshSlip();
             WireNavigation();
@@ -267,6 +275,53 @@ namespace SudokuRoguelike.UI
             }
         }
 
+        // The floor's rule: its icon and name (and its text when there is one rule), the roll and the gold after it, or a
+        // note once it was rolled on this floor.
+        private void RefreshFloorRule()
+        {
+            if (_ruleSlip == null) return;
+            foreach (Transform child in _ruleSlip.transform)
+                if (child.name != "Cord") DestroyNow(child.gameObject);
+            _ruleRerollButton = null;
+            var run = _map?.Run;
+            var state = run?.State;
+            if (state == null) return;
+
+            ScrollUiKit.Label(_ruleSlip.transform, "Eyebrow", F("InRun.Shop.FloorRule.Eyebrow", state.CurrentFloor + 1).ToUpperInvariant(),
+                14, TextAnchor.MiddleLeft, ScrollUiKit.InkSoft, new Vector2(0.07f, 0.86f), new Vector2(0.95f, 0.96f), 9);
+            var rules = state.ActiveFloorModifiers;
+            var rowHeight = rules.Count > 1 ? 0.14f : 0.18f;
+            var top = 0.84f;
+            foreach (var rule in rules)
+            {
+                ScrollUiKit.Icon(_ruleSlip.transform, "RuleIcon_" + rule, "modifier/icon_" + Boss.BossService.GetIconName(rule),
+                    new Vector2(0.07f, top - rowHeight), new Vector2(0.24f, top), Color.white);
+                ScrollUiKit.Label(_ruleSlip.transform, "RuleName_" + rule, Boss.BossService.GetModifierName(rule), 21, TextAnchor.MiddleLeft,
+                    ScrollUiKit.Vermilion, new Vector2(0.27f, top - rowHeight), new Vector2(0.96f, top), 13);
+                top -= rowHeight + 0.01f;
+            }
+            if (rules.Count == 1)
+                ScrollUiKit.Label(_ruleSlip.transform, "RuleText", Boss.BossService.GetModifierDescription(rules[0]), 15, TextAnchor.UpperLeft,
+                    ScrollUiKit.Ink, new Vector2(0.07f, 0.33f), new Vector2(0.95f, top), 10);
+
+            if (!run.OffersFloorRuleReroll())
+            {
+                ScrollUiKit.Label(_ruleSlip.transform, "RuleDone", T("InRun.Shop.FloorRule.Done"), 14, TextAnchor.MiddleLeft,
+                    ScrollUiKit.InkSoft, new Vector2(0.07f, 0.04f), new Vector2(0.95f, 0.31f), 10);
+                return;
+            }
+            var cost = Run.RunDirector.FloorRuleRerollCost;
+            var canAfford = state.CurrentGold >= cost;
+            _ruleRerollButton = ScrollUiKit.PillButton(_ruleSlip.transform, "ShopFloorRuleBtn", new Vector2(0.07f, 0.14f),
+                new Vector2(0.93f, 0.30f), F("InRun.Shop.FloorRule.Roll", cost), 18, ScrollUiKit.Vermilion, Color.white, 22f);
+            _ruleRerollButton.interactable = canAfford;
+            _ruleRerollButton.onClick.AddListener(RerollFloorRule);
+            ScrollUiKit.Label(_ruleSlip.transform, "RuleAfter",
+                canAfford ? F("InRun.Shop.FloorRule.After", state.CurrentGold, state.CurrentGold - cost) : T("InRun.Shop.NotEnoughGold"),
+                14, TextAnchor.MiddleLeft, canAfford ? ScrollUiKit.InkSoft : ScrollUiKit.Vermilion,
+                new Vector2(0.07f, 0.02f), new Vector2(0.95f, 0.13f), 9);
+        }
+
         private void RefreshReroll()
         {
             if (_rerollButton == null) return;
@@ -288,7 +343,7 @@ namespace SudokuRoguelike.UI
                 _offerButtons[i].navigation = new Navigation
                 {
                     mode = Navigation.Mode.Explicit,
-                    selectOnLeft = i > 0 ? _offerButtons[i - 1] : null,
+                    selectOnLeft = i > 0 ? _offerButtons[i - 1] : RuleRerollIfUsable(),
                     selectOnRight = i < _offerButtons.Count - 1 ? _offerButtons[i + 1] : null,
                     selectOnDown = _shopBuyButton != null && _shopBuyButton.interactable ? _shopBuyButton : (Selectable)_rerollButton
                 };
@@ -303,7 +358,12 @@ namespace SudokuRoguelike.UI
             if (_leaveButton != null)
                 _leaveButton.navigation = new Navigation
                     { mode = Navigation.Mode.Explicit, selectOnUp = (Selectable)_shopBuyButton ?? centre, selectOnLeft = _rerollButton };
+            if (_ruleRerollButton != null)
+                _ruleRerollButton.navigation = new Navigation
+                    { mode = Navigation.Mode.Explicit, selectOnRight = (Selectable)centre ?? _leaveButton, selectOnDown = _rerollButton };
         }
+
+        private Selectable RuleRerollIfUsable() => _ruleRerollButton != null && _ruleRerollButton.interactable ? _ruleRerollButton : null;
 
         // ── actions ──
 
@@ -315,6 +375,23 @@ namespace SudokuRoguelike.UI
             _shopOffers.Clear();
             _shopOffers.AddRange(run.CurrentShopOffers);
             RebuildGoods();
+        }
+
+        private void RerollFloorRule()
+        {
+            if (_map == null || !_map.RerollFloorRule())
+            {
+                OnStatusChanged?.Invoke(T("InRun.Shop.FloorRule.NoOther"));
+                return;
+            }
+            var names = _map.Run.State.ActiveFloorModifiers.ConvertAll(Boss.BossService.GetModifierName);
+            OnStatusChanged?.Invoke(F("InRun.Shop.FloorRule.Rolled", string.Join(", ", names)));
+            RefreshPurse();
+            RefreshFloorRule();
+            RefreshReroll();
+            RefreshSlip();
+            var focus = _offerButtons.Count > 0 ? _offerButtons[0] : _leaveButton;
+            EventSystem.current?.SetSelectedGameObject(focus.gameObject);
         }
 
         private void TryBuySelectedOffer()

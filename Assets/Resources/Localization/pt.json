@@ -1,4 +1,10 @@
 {
+    "InRun.Shop.FloorRule.NoOther":  "Nenhuma outra regra cabe neste andar; você mantém seu ouro.",
+    "InRun.Shop.FloorRule.Rolled":  "A regra do andar agora é: {0}.",
+    "InRun.Shop.FloorRule.Done":  "Rolada de novo neste andar. Os próximos quebra-cabeças a usam; o chefe mantém as próprias provas.",
+    "InRun.Shop.FloorRule.After":  "{0} → {1} de ouro · uma vez por andar",
+    "InRun.Shop.FloorRule.Roll":  "Rolar de novo · {0} de ouro",
+    "InRun.Shop.FloorRule.Eyebrow":  "Andar {0} · a regra do andar",
     "InRun.BoardHint.Keys":  "Teclas 1-{0} ou o teclado numérico · clique ou setas: escolher célula\nEnter ou H: destacar o dígito · Ctrl: lápis · Tab: bolsa\nO: Opções · Q: salvar e sair",
     "InRun.Rest.Hint.Keys":  "1–4 ou as setas para escolher · a mesma tecla de novo bebe",
     "CustomPuzzle.Book.Hint.Keys":  "Passe o cursor numa regra para lê-la · PageUp / PageDown trocam a família · até {0} regras",

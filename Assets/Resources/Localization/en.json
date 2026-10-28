@@ -1,4 +1,10 @@
 ﻿{
+    "InRun.Shop.FloorRule.NoOther":  "No other rule fits this floor; your gold stays.",
+    "InRun.Shop.FloorRule.Rolled":  "The floor's rule is now: {0}.",
+    "InRun.Shop.FloorRule.Done":  "Rolled again on this floor. The next puzzles use it; the boss keeps its own trials.",
+    "InRun.Shop.FloorRule.After":  "{0} → {1} gold · once per floor",
+    "InRun.Shop.FloorRule.Roll":  "Roll it again · {0} gold",
+    "InRun.Shop.FloorRule.Eyebrow":  "Floor {0} · this floor's rule",
     "InRun.BoardHint.Keys":  "Keys 1-{0} or the number pad · click or arrows: choose a cell\nEnter or H: highlight its digit · Ctrl: pencil · Tab: bag\nO: Options · Q: save and quit",
     "InRun.Rest.Hint.Keys":  "1–4 or the arrows to choose · the same key again drinks",
     "CustomPuzzle.Book.Hint.Keys":  "Hover or focus a rule to read it · PageUp / PageDown switch the family · up to {0} rules",

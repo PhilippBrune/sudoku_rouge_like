@@ -1,6 +1,6 @@
 # Gold Economy System
 
-**Version:** 2.4  
+**Version:** 2.5  
 **Date:** 2026-10-28  
 **Status:** implemented
 
@@ -8,6 +8,7 @@
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.5 | 2026-10-28 | implemented | 0.3.0 playtest (RM-211, owner: 100 gold, once per floor): from Floor 2 the market rolls the floor's rule again (SHOP-RULE-001). |
 | 2.4 | 2026-10-28 | implemented | 0.3.0 playtest (RM-212): the reward tally lists the Golden Koi's gold on its own line (REWARD-KOI-001). |
 | 2.3 | 2026-10-27 | implemented | Owner request (2026-10-27): the gold and items concept (v1.2) is merged here: "Why and the levers" with the playtest numbers, the lever status (L1 to L6), the owner's picks and the open balance check. Its item part is in ItemsAndRelicsSystem (Counter Items). No rule changed. Its file is removed. |
 | 2.2 | 2026-10-21 | implemented | Owner's 0.2.0 playtest ("gold and items are not needed"), levers L1, L2, L5 and L6 of the gold and items concept: item prices ×2.5 (Normal 40, Rare 75, Epic 150; ECON-BAL-001); puzzle gold −20 % (ECON-BAL-002); gold at the boss gate: strike a trial for 60 × floor number, lower the intensity for 40 × floor number (ECON-GATE-001/002); gold kept at the end scores (SCORE-GOLD-001, GameDesignSpec §9c). The late-floor mistake cost and the quarter heal (ECON-BAL-003/004) are in GameDesignSpec §5.1 and §7. |
@@ -177,6 +178,19 @@ At the boss gate the purse is shown beside two once-per-gate actions (GoldEconom
 
 Both are stored in the run (`RunState.BossTrialStruckOnFloor`, `BossTrialStruck`, `BossIntensityLoweredOnFloor`, as 1-based floor numbers so an older save reads as "nothing done"), so Save &
 Quit at the gate keeps them, and count as gold spent.
+
+### The Floor's Rule in the Market (2.5, SHOP-RULE-001)
+
+From Floor 2 a paper slip above the purse in the market shows the floor's rule (its icon, name and, for a single rule, its
+text) and **Roll it again** for **100 gold**, once per floor (owner, 0.3.0 playtest, RM-211):
+
+- The new roll has as many rules as before, none of the old ones and none the boss gate already offers or took; with no
+  such roll in 16 seeded tries nothing is charged and the status line says so.
+- The floor's remaining puzzles are built again with the new rule (the node configs and the pre-baked boards), so the
+  path and the next puzzles show it; the boss puzzle keeps its own trials, and the gate rolls them around the new rule.
+- The goods on the counter stay as they are.
+- Stored in the run as `RunState.FloorRuleRerolledOnFloor` (1-based floor number, 0 = not yet, so an older save reads as
+  "not rolled"); counts as gold spent. Not in a Custom Puzzle (no market).
 
 ### Gold Kept (2.2, SCORE-GOLD-001)
 

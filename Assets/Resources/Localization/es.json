@@ -1,4 +1,10 @@
 {
+    "InRun.Shop.FloorRule.NoOther":  "Ninguna otra regla encaja en este piso; conservas tu oro.",
+    "InRun.Shop.FloorRule.Rolled":  "La regla del piso ahora es: {0}.",
+    "InRun.Shop.FloorRule.Done":  "Tirada de nuevo en este piso. Los próximos puzles la usan; el jefe conserva sus propias pruebas.",
+    "InRun.Shop.FloorRule.After":  "{0} → {1} de oro · una vez por piso",
+    "InRun.Shop.FloorRule.Roll":  "Volver a tirar · {0} de oro",
+    "InRun.Shop.FloorRule.Eyebrow":  "Piso {0} · la regla del piso",
     "InRun.BoardHint.Keys":  "Teclas 1-{0} o el teclado numérico · clic o flechas: elegir casilla\nIntro o H: resaltar su dígito · Ctrl: lápiz · Tab: bolsa\nO: Opciones · Q: guardar y salir",
     "InRun.Rest.Hint.Keys":  "1–4 o las flechas para elegir · la misma tecla otra vez bebe",
     "CustomPuzzle.Book.Hint.Keys":  "Pasa el cursor por una regla para leerla · RePág / AvPág cambian de familia · hasta {0} reglas",

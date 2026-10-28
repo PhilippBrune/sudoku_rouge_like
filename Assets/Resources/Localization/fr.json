@@ -1,4 +1,10 @@
 {
+    "InRun.Shop.FloorRule.NoOther":  "Aucune autre règle ne convient à cet étage ; vous gardez votre or.",
+    "InRun.Shop.FloorRule.Rolled":  "La règle de l'étage est maintenant : {0}.",
+    "InRun.Shop.FloorRule.Done":  "Relancée sur cet étage. Les prochaines grilles l'utilisent ; le boss garde ses propres épreuves.",
+    "InRun.Shop.FloorRule.After":  "{0} → {1} or · une fois par étage",
+    "InRun.Shop.FloorRule.Roll":  "Relancer · {0} or",
+    "InRun.Shop.FloorRule.Eyebrow":  "Étage {0} · la règle de l'étage",
     "InRun.BoardHint.Keys":  "Touches 1-{0} ou le pavé · clic ou flèches : choisir une case\nEntrée ou H : surligner son chiffre · Ctrl : crayon · Tab : sac\nO : Options · Q : sauvegarder et quitter",
     "InRun.Rest.Hint.Keys":  "1–4 ou les flèches pour choisir · la même touche encore pour boire",
     "CustomPuzzle.Book.Hint.Keys":  "Survolez une règle pour la lire · Page↑ / Page↓ changent de famille · jusqu'à {0} règles",

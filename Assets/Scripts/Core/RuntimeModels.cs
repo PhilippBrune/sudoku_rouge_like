@@ -106,6 +106,8 @@ namespace SudokuRoguelike.Core
         public int RewardRerollCount;
         public int RerollCount;
         public int ShopRerollCount;
+        // [REQ: SHOP-RULE-001] The floor (1-based) whose rule the market rolled again; 0 = none yet (RM-211, additive).
+        public int FloorRuleRerolledOnFloor;
         // [REQ: REQ-RUN-103] [REQ: REQ-PATH-102] Puzzle configs of the current floor's nodes (one per node index), built
         // once at floor entry and saved, so map previews and puzzles do not change after Save & Quit (GAP-018/GAP-013).
         public int NodeConfigsFloor = -1;

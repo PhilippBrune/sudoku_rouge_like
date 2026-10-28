@@ -394,6 +394,12 @@ namespace SudokuRoguelike.Tests
             yield return new WaitForSecondsRealtime(0.2f);
             yield return Shoot(host, camera, "after_shop.png");
 
+            // SHOP-RULE-001 (RM-211): the floor's rule rolled again for 100 gold, the slip then says so.
+            run.State.CurrentGold = 142;
+            Find(host, "ShopFloorRuleBtn")?.GetComponent<Button>().onClick.Invoke();
+            yield return new WaitForSecondsRealtime(0.3f);
+            yield return Shoot(host, camera, "after_shop_floor_rule_rolled.png");
+
             // ITEM-COUNTER-007: with lines and cages on the floor the market leans toward their counter items (the first
             // reroll count whose offers hold one).
             run.State.ActiveFloorModifiers = new List<BossModifierId> { BossModifierId.DutchWhispers, BossModifierId.KillerCages };

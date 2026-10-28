@@ -241,6 +241,19 @@ namespace SudokuRoguelike.UI
             SaveNow();
         }
 
+        /// <summary>[REQ: SHOP-RULE-001] Rolls the floor's rule again (RM-211) and builds the floor's puzzles anew, as at floor
+        /// entry, so the map and the next puzzles show the new rule.</summary>
+        public bool RerollFloorRule()
+        {
+            if (_run == null || !_run.RerollFloorRule()) return false;
+            _preBakeCancel.Cancel();
+            _preBakeCancel = new CancellationTokenSource();
+            _run.ClearPreBakedNodePuzzles();
+            PrepareFixedNodeConfigs();
+            SaveNow();
+            return true;
+        }
+
         public RunDirector Run => _run;
         public ProfileService Profile => _profile;
 

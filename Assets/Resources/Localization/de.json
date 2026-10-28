@@ -1,4 +1,10 @@
 ﻿{
+    "InRun.Shop.FloorRule.NoOther":  "Keine andere Regel passt auf diese Etage; dein Gold bleibt.",
+    "InRun.Shop.FloorRule.Rolled":  "Die Regel der Etage ist jetzt: {0}.",
+    "InRun.Shop.FloorRule.Done":  "Auf dieser Etage neu gewürfelt. Die nächsten Rätsel nutzen sie; der Boss behält seine eigenen Prüfungen.",
+    "InRun.Shop.FloorRule.After":  "{0} → {1} Gold · einmal pro Etage",
+    "InRun.Shop.FloorRule.Roll":  "Neu würfeln · {0} Gold",
+    "InRun.Shop.FloorRule.Eyebrow":  "Etage {0} · Regel dieser Etage",
     "InRun.BoardHint.Keys":  "Tasten 1-{0} oder der Ziffernblock · Klick oder Pfeile: Zelle wählen\nEnter oder H: ihre Ziffer hervorheben · Strg: Bleistift · Tab: Tasche\nO: Optionen · Q: speichern und beenden",
     "InRun.Rest.Hint.Keys":  "1–4 oder die Pfeile zum Wählen · dieselbe Taste noch einmal trinkt",
     "CustomPuzzle.Book.Hint.Keys":  "Zeig auf eine Regel, um sie zu lesen · Bild↑ / Bild↓ wechseln die Familie · bis zu {0} Regeln",

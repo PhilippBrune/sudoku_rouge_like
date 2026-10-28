@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using SudokuRoguelike.Classes;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Data;
 using SudokuRoguelike.Economy;
 
 namespace SudokuRoguelike.Run
@@ -30,6 +31,45 @@ namespace SudokuRoguelike.Run
         }
 
         public int GetShopRerollCost() => 15 + State.ShopRerollCount * 5;
+
+        // [REQ: SHOP-RULE-001] From Floor 2 the market rolls the floor's rule again for gold, once per floor (RM-211).
+        public const int FloorRuleRerollCost = 100;
+        private const int FloorRuleRerollAttempts = 16;
+
+        /// <summary>The market offers the roll on this floor (Floor 2 on, a rule to replace, not rolled here yet).</summary>
+        public bool OffersFloorRuleReroll() =>
+            State != null && !State.TutorialMode && State.CurrentFloor >= 1
+            && State.ActiveFloorModifiers != null && State.ActiveFloorModifiers.Count > 0
+            && State.FloorRuleRerolledOnFloor != State.CurrentFloor + 1;
+
+        /// <summary>Rolls the floor's rule again: the same number of rules, none of the old ones and none the boss gate
+        /// already offers. The rest of the floor's puzzles take it once the node configs are rebuilt
+        /// (<c>RunMapController.RerollFloorRule</c>). False, with no gold taken, when it is not offered, the gold is short
+        /// or no other rule fits.</summary>
+        public bool RerollFloorRule()
+        {
+            if (!OffersFloorRuleReroll() || State.CurrentGold < FloorRuleRerollCost) return false;
+            var old = State.ActiveFloorModifiers;
+            var minSize = FloorThemeData.GetMinBoardSize(State.CurrentFloor);
+            for (var salt = 1; salt <= FloorRuleRerollAttempts; salt++)
+            {
+                _bossService.ReseedForDecision(DecisionSeed(DecisionPurpose.FloorModifiers, salt));
+                var rolled = _bossService.RollFloorModifiers(State.CurrentFloor, minSize, State.HarmonyLevel);
+                if (rolled.Count != old.Count || rolled.Exists(old.Contains)
+                    || (BossModifierChoices != null && rolled.Exists(BossModifierChoices.Contains))
+                    || (State.ChosenBossModifiers != null && rolled.Exists(State.ChosenBossModifiers.Contains)))
+                    continue;
+
+                SpendGateGold(FloorRuleRerollCost);
+                State.ActiveFloorModifiers = rolled;
+                State.FloorRuleRerolledOnFloor = State.CurrentFloor + 1;
+                foreach (var rule in rolled) State.SeenBossModifiers.Add(rule);
+                State.NodeConfigsFloor = -1;   // the floor's puzzles are built again with the new rule
+                State.NodeConfigs.Clear();
+                return true;
+            }
+            return false;
+        }
 
         public bool RerollShop()
         {

@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 3.5 | **Date:** 2026-10-28 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; not built: the main menu; proposals of 2026-10-28 for the main menu, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll wait for the owner's pick)
+**Version:** 3.6 | **Date:** 2026-10-28 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; not built: the main menu; proposals of 2026-10-28 for the main menu, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll wait for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 3.6 | 2026-10-28 | review | Owner picks for the 0.3.0 proposals (2026-10-28): main menu B, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll, all to build. Built first: the market's rule roll (UI-STYLE-038) with 100 gold, once per floor. |
 | 3.5 | 2026-10-28 | review | 0.3.0 playtest, owner: three main menu mockups, the Monthly Walk, Select Profile and Spirit Trials (RM-217); the puzzle screen's gold and details (RM-208), Custom Puzzle help, seed and share code (RM-209), the market's rule roll (RM-211). Proposed UI-STYLE-032 to 038, waiting for the owner's pick. GAP-096 (Spirit Trials stars) fixed on the way. |
 | 3.4 | 2026-10-27 | review | 0.3.0 playtest, owner: "Garden Run muss nicht unter Game modes gelistet werden" and "Ja, nur Select Class": Game Modes has five curtains, centred, without the Garden Run and its Harmony strip; Harmony is chosen on Select Class (UI-STYLE-031, RM-213). Game Modes opens on Endless Zen. |
 | 3.3 | 2026-10-27 | review | Owner request (2026-10-27): the concept files are merged into their specs; the references to them point to the spec sections (DailyGoalSystem, IncenseWalkMode, GameDesignSpec §14). No mockup changed. |
@@ -729,12 +730,18 @@ Copy and "Paste a code". The code's format is a placeholder.
 From Floor 2 the market shows the floor's rule on a slip with its text and "Roll it again" for gold, once per market;
 the rest of the floor's puzzles use the new rule, the boss keeps its own. The price (50 gold here) is a first value.
 
-### Open for the owner
+**As built (3.6, owner: 100 gold, once per floor):** the slip hangs above the purse; with one rule it shows the rule's
+text, with two their icons and names. After the roll it says the floor's rule was rolled again and the next puzzles use
+it (SHOP-RULE-001, GoldEconomySystem).
 
-1. The main menu: A, B, C or keep it.
-2. The four other proposals: build as shown, or what to change.
-3. RM-211: the price, and once per market or once per floor.
-4. RM-209: a share code short enough to type (letters and digits, about 20 signs) or a longer one that reads as words.
+![Market with the floor's rule, as built](layout-proposals/after_shop.jpg)
+![Market after the roll](layout-proposals/after_shop_floor_rule_rolled.jpg)
+
+### The owner's picks (2026-10-28)
+
+Main menu **B · The garden path**; the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details (with the
+relic variant), Custom Puzzle help, seed and share code, and the market's rule roll as shown. RM-211: 100 gold, once per
+floor. A saved Custom Puzzle: one per profile, Continue also on the main menu.
 
 ## Decisions and next step
 

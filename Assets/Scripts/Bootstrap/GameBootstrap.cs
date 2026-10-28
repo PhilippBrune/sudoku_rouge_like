@@ -142,7 +142,7 @@ namespace SudokuRoguelike.Bootstrap
             }
             else
             {
-                _menuMusic.Play();
+                // AUDIO-TITLE-001: the menu music starts after the title screen, so its sound plays alone.
                 // Hide all canvases beneath the splash so scene-level UI doesn't bleed through.
                 var hiddenCanvases = new System.Collections.Generic.List<Canvas>();
                 foreach (var c in FindObjectsByType<Canvas>(FindObjectsSortMode.None))

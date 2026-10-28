@@ -285,6 +285,18 @@ def relic_reveal():
     return shot.add(0.6, tone(midi_hz(81), 0.4, wave='tri', tau=0.25)).done()
 
 
+def title_sting():
+    # RM-215: the title screen's sound, about 2.6 s inside the 2.9 s the title shows: wind, a rising A minor pentatonic
+    # chime over a low A, and a soft A minor chord that rings out like a temple bell.
+    shot = Shot().add(0, nz(1.2, 900, 3000, tau=0.6, swell=True), 0.12)
+    shot.add(0, tone(midi_hz(45), 2.4, wave='tri', tau=1.2), 0.7)
+    for i, m in enumerate([69, 72, 74, 76, 79, 81]):
+        shot.add(0.18 + i * 0.12, tone(midi_hz(m), 0.5, duty=0.125, tau=0.35), 0.55)
+    shot.add(0.95, chord([57, 64, 69, 72], 1.6, rate=30, duty=0.25, tau=0.9), 0.6)
+    shot.add(0.95, tone(midi_hz(93), 1.2, duty=0.125, tau=0.6, vib=(4.5, 8)), 0.35)
+    return shot.done()
+
+
 # file path (as in AudioAssetService) -> (generator, peak dBFS)
 EFFECTS = {
     'sfx/cell_select': (cell_select, -14.0),
@@ -316,6 +328,7 @@ EFFECTS = {
     'sfx/victory': (victory, -3.0),
     'sfx/run_victory_fanfare': (run_victory_fanfare, -3.0),
     'sfx/game_over': (game_over, -3.0),
+    'sfx/title_sting': (title_sting, -6.0),
     'ui/button_hover': (button_hover, -18.0),
     'ui/button_click': (button_click, -10.0),
     'ui/menu_open': (menu_open, -9.0),

@@ -1,11 +1,12 @@
 # Audio & Visual Direction
 
-**Version:** 1.6 | **Date:** 2026-10-14 | **Status:** implemented
+**Version:** 1.7 | **Date:** 2026-10-28 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.7 | 2026-10-28 | implemented | 0.3.0 playtest (RM-215): a title sound plays when the title screen opens (AUDIO-TITLE-001); the menu music starts after the title. |
 | 1.6 | 2026-10-14 | implemented | Owner decision: all music and sound effects move to an 8-bit (chiptune) set made with an AI tool; prompts and delivery rules in docs/audio-8bit-prompts.md (AUDIO-MUSIC-001/002). The boss puzzle now plays the floor's boss track instead of the floor track (AUDIO-MUSIC-003; the additive boss layer was never started, GAP-045). Optional tracks for Daily/Monthly Walk, Endless Zen, Spirit Trials, custom puzzles, credits and the victory/defeat end screens (AUDIO-MUSIC-005..007); until a file exists the current music plays. |
 | 1.5 | 2026-10-07 | implemented | Clip-per-context table generated from AudioAssetService with testable rules (SPEC-AMB-011, SPEC-MAC-007); clip load logging and PlayMode clip test (GAP-030); 6 s mono music loops recorded as an asset limitation; SPICE table archived (SPEC-OBS-001). |
 | 1.4 | 2026-03-24 | implemented | Audio wiring completed: GameBootstrap creates MenuMusicController + RunAudioController. FloorMusicGenerator loop durations reduced from 120-300s to 30-48s for fast startup. Menu music plays on menu, stops on run launch. Color scheme: BtnColor cream (0.82,0.75,0.62), BtnTextColor dark (0.12,0.10,0.08), AccentColor gold (0.98,0.83,0.26). |
@@ -117,6 +118,7 @@ Owner decision 2026-10-14: every music track and sound effect is replaced by an 
 | AUDIO-MUSIC-005 | Daily/Monthly Walk (`walk_loop`), Endless Zen, Spirit Trials and custom puzzles (`tutorial_loop`) play their own track when its file exists, else the stage tracks. Code: `AudioAssetService.GetModeLoopId`, `RunAudioController.SetMode`. Tests: `AudioAssetServiceTests.OptionalSoundtrackSlots_AreOptionalMusic_AndModesMapToThem`, `AudioClipPlayModeTests.OptionalTracks_WithoutFiles_KeepTheExistingMusic`. |
 | AUDIO-MUSIC-006 | End screen: after the stinger (game over 1.5 s, victory fanfare 4.5 s) the defeat or victory track plays when its file exists. Code: `RunAudioController.PlayRunEndMusic`. |
 | AUDIO-MUSIC-007 | The credits screen plays `credits_loop` when its file exists and returns to the menu track when it closes. Code: `MenuMusicController.SetCreditsActive`. Test: `AudioClipPlayModeTests.OptionalTracks_WithoutFiles_KeepTheExistingMusic`. |
+| AUDIO-TITLE-001 | The title screen plays `audio/sfx/title_sting` (2.55 s, code-made 8-bit: wind, a rising A minor pentatonic chime over a low A, a soft A minor chord; `tools/audio/chip_sfx.py` `title_sting`) when it opens, at Master × SFX of the last profile and not with Mute all; the menu music starts after the title (RM-215). Without the file the title is silent. |
 
 ### Music (1.0 acoustic direction)
 

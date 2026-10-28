@@ -56,6 +56,7 @@ namespace SudokuRoguelike.UI
         UiMenuClose,
         UiItemReward,
         UiRelicReveal,
+        SfxTitleSting,   // AUDIO-TITLE-001 (RM-215)
 
         // AUDIO-MUSIC-005: optional tracks of the 8-bit soundtrack; until a file exists the existing music plays.
         MusicWalk,
@@ -153,6 +154,7 @@ namespace SudokuRoguelike.UI
             new AudioAssetInfo(AudioClipId.UiMenuClose, "audio/ui/menu_close", AudioAssetCategory.Ui, false, true, "Menu panel close."),
             new AudioAssetInfo(AudioClipId.UiItemReward, "audio/ui/item_reward", AudioAssetCategory.Ui, false, true, "Item reward reveal."),
             new AudioAssetInfo(AudioClipId.UiRelicReveal, "audio/ui/relic_reveal", AudioAssetCategory.Ui, false, true, "Relic reveal."),
+            new AudioAssetInfo(AudioClipId.SfxTitleSting, "audio/sfx/title_sting", AudioAssetCategory.Sfx, false, false, "Title screen (optional; silence without it)."),
             new AudioAssetInfo(AudioClipId.MusicWalk, "audio/music/walk_loop", AudioAssetCategory.Music, true, false, "Daily Walk and Monthly Walk puzzles (optional; falls back to the floor tracks)."),
             new AudioAssetInfo(AudioClipId.MusicCredits, "audio/music/credits_loop", AudioAssetCategory.Music, true, false, "Credits screen (optional; falls back to the menu track)."),
             new AudioAssetInfo(AudioClipId.MusicRunVictory, "audio/music/run_victory", AudioAssetCategory.Music, true, false, "End screen after a full-run victory, after the fanfare (optional)."),

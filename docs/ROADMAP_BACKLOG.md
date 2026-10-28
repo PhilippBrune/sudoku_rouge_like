@@ -44,7 +44,7 @@ Horizons: **short term** = the next one to three updates, **mid term** = after t
 | RM-212 | Golden Koi line on the reward | The reward tally lists the Golden Koi's extra gold on its own line. | Owner, 0.3.0 playtest; built (REWARD-KOI-001, GoldEconomySystem 2.4). | built |
 | RM-213 | Game Modes without the Garden Run | Start Game starts the Garden Run; Game Modes shows the other modes; Harmony is chosen on Select Class. | Owner, 0.3.0 playtest ("Ja, nur Select Class"); built as UI-STYLE-031 (layout-proposals 3.4). | built |
 | RM-214 | Bigger clue numbers | Text Size also enlarges the small numbers of rules such as Opposite Sums (for handhelds like the Legion Go). | Owner, 0.3.0 playtest on the Legion Go 2; built (ACCESS-FONT-002, AccessibilitySpec 2.5). | built |
-| RM-215 | Title sound | A short sound when the title screen opens. | Owner, 0.3.0 playtest; code-made 8-bit, no paid service. | planned |
+| RM-215 | Title sound | A short sound when the title screen opens. | Owner, 0.3.0 playtest; built: a code-made 8-bit sting, no paid service (AUDIO-TITLE-001, AudioVisualDirection 1.7). | built |
 | RM-216 | Daily Walk paths and themes | Concept: the Daily Walk on one path with its own garden themes; the main game on Floors 1, 3 and 5, the Daily Walk on Floors 2 and 4. | Owner, 0.3.0 playtest; concept first. | concept |
 | RM-217 | Mockups for four screens | Three main menu proposals, the Monthly Walk, Select Profile and Spirit Trials. | Owner, 0.3.0 playtest; HTML mockups from the game's art for the owner's pick. | planned |
 

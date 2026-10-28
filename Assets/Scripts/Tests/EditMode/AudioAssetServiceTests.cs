@@ -84,6 +84,16 @@ namespace SudokuRoguelike.Tests
             }
         }
 
+        // [REQ: AUDIO-TITLE-001] The title screen's sound is in the game and loads (RM-215).
+        [Test]
+        [Requirement("AUDIO-TITLE-001")]
+        public void TheTitleSting_Loads_AndIsShorterThanTheTitleScreen()
+        {
+            AudioAssetService.ResetCacheForTests();
+            Assert.IsTrue(AudioAssetService.TryLoadAuthoredClip(AudioClipId.SfxTitleSting, out var clip));
+            Assert.Less(clip.length, 2.9f, "it ends while the title still shows");
+        }
+
         [Test]
         public void GetClip_UnknownCatalogId_UsesProceduralFallback()
         {

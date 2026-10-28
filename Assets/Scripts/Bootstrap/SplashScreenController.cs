@@ -68,6 +68,7 @@ namespace SudokuRoguelike.Bootstrap
 
         private IEnumerator RunSplash(Action onComplete)
         {
+            PlayTitleSting();
             // Already fully visible — just hold, then fade out.
             yield return new WaitForSecondsRealtime(2.9f);
             StartCoroutine(ScaleToward(_panel.transform, 1.025f, 0.6f));
@@ -75,6 +76,20 @@ namespace SudokuRoguelike.Bootstrap
             _panel.SetActive(false);
             _done = true;
             onComplete?.Invoke();
+        }
+
+        // [REQ: AUDIO-TITLE-001] The title screen's sound (RM-215), at Master × SFX of the last profile, silent with Mute all.
+        // The splash runs before any options are loaded, so it reads them itself.
+        private void PlayTitleSting()
+        {
+            if (!AudioAssetService.TryLoadAuthoredClip(AudioClipId.SfxTitleSting, out var clip)) return;
+            var audio = new Save.ProfileService(new Save.SaveFileService(Save.SaveProfileService.ActiveSlot)).LoadOptions().Audio
+                        ?? new Core.AudioSettingsModel();
+            if (audio.MuteAll) return;
+            var source = _panel.AddComponent<AudioSource>();
+            source.playOnAwake = false;
+            source.spatialBlend = 0f;
+            source.PlayOneShot(clip, Mathf.Clamp01(audio.MasterVolume) * Mathf.Clamp01(audio.SfxVolume));
         }
 
         private static IEnumerator ScaleToward(Transform target, float toScale, float duration)

@@ -44,14 +44,13 @@ namespace SudokuRoguelike.UI
                 {
                     if (_timerText != null) _timerText.gameObject.SetActive(true);
                     if (_runTimerText != null) _runTimerText.gameObject.SetActive(true);
-                    if (_passiveText != null) _passiveText.gameObject.SetActive(true);
                 }
             }
             if (!on) return;
-            // The puzzle and run timers and the HP passive mean nothing here; both are made later than the walk starts.
+            // The puzzle and run timers mean nothing here; both are made later than the walk starts. The detail slip hides
+            // itself in the walk (RefreshDetail).
             if (_timerText != null && _timerText.gameObject.activeSelf) _timerText.gameObject.SetActive(false);
             if (_runTimerText != null && _runTimerText.gameObject.activeSelf) _runTimerText.gameObject.SetActive(false);
-            if (_passiveText != null && _passiveText.gameObject.activeSelf) _passiveText.gameObject.SetActive(false);
 
             var late = walk.SecondsLeft <= LateSeconds;
             var length = Mathf.Clamp01(walk.SecondsLeft / StickFullSeconds);

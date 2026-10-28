@@ -43,7 +43,6 @@ namespace SudokuRoguelike.UI
         // ── Combo / Passive ──
         private GameObject _comboBox;
         private Text _comboText;
-        private Text _passiveText;
 
         // ── Bag panel ──
         private GameObject _bagPanel;
@@ -216,12 +215,7 @@ namespace SudokuRoguelike.UI
                 : Mathf.Clamp(_selectedBagSlot + delta, 0, count - 1);
             EnsureBagPanel();
             RefreshBagHighlights();
-            var item = run.State.HeldItems[_selectedBagSlot];
-            if (item != null)
-            {
-                var desc = ItemService.GetItemDescription(item.Type, item.Rarity);
-                OnStatusChanged?.Invoke(F("InRun.Hud.Status.ItemControllerHint", ItemService.GetItemName(item.Type), desc));
-            }
+            RefreshDetail(announce: true);   // HUD-DETAIL-001: the item's text is on the slip
         }
 
         /// <summary>
@@ -238,6 +232,7 @@ namespace SudokuRoguelike.UI
             var idx = _selectedBagSlot;
             _selectedBagSlot = -1;
             RefreshBagHighlights();
+            RefreshDetail();
             OnItemEffectRequested?.Invoke(idx, item);
         }
 
@@ -252,9 +247,7 @@ namespace SudokuRoguelike.UI
             if (_selectedBagSlot >= count) return;
             var item = run.State.HeldItems[_selectedBagSlot];
             if (item == null) return;
-            var name = ItemService.GetItemName(item.Type);
-            var desc = ItemService.GetItemDescription(item.Type, item.Rarity);
-            OnStatusChanged?.Invoke(F("InRun.Hud.Status.ItemInspect", name, RarityLabel(item.Rarity), desc));
+            RefreshDetail(announce: true);
         }
 
         public void Refresh(RunState state, LevelConfig levelConfig)
@@ -617,44 +610,8 @@ namespace SudokuRoguelike.UI
             }
         }
 
-        private void EnsurePassiveLabel()
-        {
-            var run = _map?.Run;
-            if (run?.State == null || _sudokuPanel == null) return;
-
-            if (_passiveText == null)
-            {
-                var go = new GameObject("PassiveLabel", typeof(RectTransform), typeof(Image));
-                go.transform.SetParent(_sudokuPanel.transform, false);
-                var rt = go.GetComponent<RectTransform>();
-                // Compact lane below the bag panel; text size adapts instead of widening across the board.
-                rt.anchorMin = new Vector2(0.035f, 0.015f);
-                rt.anchorMax = new Vector2(0.25f, 0.095f);
-                rt.offsetMin = Vector2.zero;
-                rt.offsetMax = Vector2.zero;
-                go.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0f);
-                go.GetComponent<Image>().raycastTarget = false;
-                _passiveText = InRunUiFactory.CreateText(go.transform, "PassiveText", "", 15, TextAnchor.MiddleLeft,
-                    new Color(0.93f, 0.89f, 0.80f, 1f));
-                _passiveText.gameObject.AddComponent<Shadow>().effectColor = new Color(0f, 0f, 0f, 0.7f);
-                _passiveText.horizontalOverflow = HorizontalWrapMode.Wrap;
-                _passiveText.verticalOverflow = VerticalWrapMode.Truncate;
-                _passiveText.resizeTextForBestFit = true;
-                _passiveText.resizeTextMinSize = 10;
-                _passiveText.resizeTextMaxSize = 15;
-                _passiveText.lineSpacing = 0.90f;
-                _passiveText.rectTransform.anchorMin = Vector2.zero;
-                _passiveText.rectTransform.anchorMax = Vector2.one;
-                _passiveText.rectTransform.offsetMin = new Vector2(6f, 2f);
-                _passiveText.rectTransform.offsetMax = new Vector2(-6f, -2f);
-            }
-
-            var def = SudokuRoguelike.Classes.ClassCatalog.GetDefinition(run.State.ClassId);
-            _passiveText.text = SudokuRoguelike.Classes.ClassCatalog.IsClass(run.State.ClassId)
-                ? F("InRun.Hud.Passive", LocalizationService.T($"Class.Passive.{def.Id}", def.PassiveDescription))
-                : run.State.TutorialMode ? string.Empty   // CUSTOM-CLASS-001: a Custom Puzzle without a class has no passive
-                : LocalizationService.T("DailyWalk.Walker.Passive");   // [REQ: DAILY-WALK-002]
-        }
+        // [REQ: HUD-DETAIL-001] The passive line became the detail slip at the foot of the left column (RM-208).
+        private void EnsurePassiveLabel() => RefreshDetailIfChanged();
 
         // ────────────────────── Class XP badge ──────────────────────
 
@@ -799,7 +756,7 @@ namespace SudokuRoguelike.UI
                 var bagRt = bagGo.GetComponent<RectTransform>();
                 // L5: bag bottom raised to y=0.10 so its lower edge aligns with the right-column description bottom
                 // UI-STYLE-002: no box; the item and relic plaques hang on the painting under the lanterns.
-                bagRt.anchorMin = new Vector2(0.035f, 0.105f);
+                bagRt.anchorMin = new Vector2(0.035f, 0.19f);   // RM-208: the detail slip sits below
                 bagRt.anchorMax = new Vector2(0.25f, 0.555f);
                 bagRt.offsetMin = Vector2.zero;
                 bagRt.offsetMax = Vector2.zero;
@@ -895,10 +852,11 @@ namespace SudokuRoguelike.UI
             }
 
             // Relic area: 0.02-0.43 (bottom half of bag, below divider).
-            // Pack up to 4 mini-icons per row; each slot is square, with width controlling height.
-            const int perRow    = 4;
+            // Pack up to 4 mini-icons per row (5 from five relics, so two rows fit the bag under RM-208's slip); each slot is
+            // square, with width controlling height.
+            var perRow = relicCount <= 4 ? 4 : 5;
             const float relicAreaBottom = 0.02f;
-            const float relicAreaTop    = 0.43f;
+            const float relicAreaTop    = 0.40f;   // clear of the RELICS label (RM-208)
             const float relicAreaH = relicAreaTop - relicAreaBottom;
             var rows   = Mathf.CeilToInt(relicCount / (float)perRow);
             var slotH  = rows > 0 ? relicAreaH / rows : relicAreaH;
@@ -941,6 +899,7 @@ namespace SudokuRoguelike.UI
                 var btn = go.GetComponent<Button>();
                 var idx = i;
                 btn.onClick.AddListener(() => OnBagRelicClicked(idx));
+                WatchForDetail(btn, idx, relic: true);
                 _bagRelicButtons.Add(btn);
             }
 
@@ -967,6 +926,7 @@ namespace SudokuRoguelike.UI
                 _bagItemButtons.Add(btn);
                 var idx = i;
                 btn.onClick.AddListener(() => OnBagItemClicked(idx));
+                WatchForDetail(btn, idx, relic: false);
             }
         }
 
@@ -1036,6 +996,7 @@ namespace SudokuRoguelike.UI
                 _bagItemButtons.Add(btn);
                 var idx = i;
                 btn.onClick.AddListener(() => OnBagItemClicked(idx));
+                WatchForDetail(btn, idx, relic: false);
             }
         }
 
@@ -1223,15 +1184,15 @@ namespace SudokuRoguelike.UI
                 // Second click on same slot → use the item
                 _selectedBagSlot = -1;
                 RefreshBagHighlights();
+                RefreshDetail();
                 OnItemEffectRequested?.Invoke(idx, item);
             }
             else
             {
-                // First click → show description
+                // First click → its text stays on the detail slip (HUD-DETAIL-001)
                 _selectedBagSlot = idx;
                 RefreshBagHighlights();
-                var desc = ItemService.GetItemDescription(item.Type, item.Rarity);
-                OnStatusChanged?.Invoke(F("InRun.Hud.Status.ItemClickHint", ItemService.GetItemName(item.Type), desc));
+                RefreshDetail(announce: true);
             }
         }
 
@@ -1258,7 +1219,7 @@ namespace SudokuRoguelike.UI
 
         /// <summary>
         /// [REQ: INPUT-PAD-004] Controller: move the relic selection by <paramref name="delta"/> (0 keeps it) and show what
-        /// the relic does on the status line; the chosen relic is drawn larger (RM-206).
+        /// the relic does on the detail slip; the chosen relic is drawn larger (RM-206, RM-208).
         /// </summary>
         public void ControllerSelectRelicSlot(int delta)
         {
@@ -1274,6 +1235,7 @@ namespace SudokuRoguelike.UI
             if (keep) return;
             _selectedRelicSlot = -1;
             ShowRelicSelection();
+            RefreshDetail();
         }
 
         private void ShowRelicSelection()
@@ -1287,8 +1249,7 @@ namespace SudokuRoguelike.UI
         {
             var state = _map?.Run?.State;
             if (state?.HeldRelics == null || idx >= state.HeldRelics.Count) return;
-            var relic = state.HeldRelics[idx];
-            OnStatusChanged?.Invoke(F("InRun.Hud.Status.RelicInspect", RelicService.GetRelicName(relic.Id), RelicService.GetRelicDescription(relic.Id)));
+            RefreshDetail(announce: true);   // HUD-DETAIL-001: the relic under the pointer or in pad focus is on the slip
         }
 
         private static string T(string key) => LocalizationService.T(key);

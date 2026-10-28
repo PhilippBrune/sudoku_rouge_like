@@ -433,16 +433,15 @@ namespace SudokuRoguelike.Tests
         [Test]
         public void SudokuPassiveText_UsesCompactPanelWithAdaptiveFontSize()
         {
-            var hudSource = ReadSource(HudViewControllerPath);
+            // [REQ: HUD-DETAIL-001] RM-208: the passive line became the detail slip at the foot of the left column; its
+            // texts shrink to fit instead of running out of the paper.
+            var source = ReadSource(HudViewControllerPath.Replace("HudViewController.cs", "HudViewController.Details.cs"));
 
-            StringAssert.Contains("new GameObject(\"PassiveLabel\", typeof(RectTransform), typeof(Image))", hudSource);
-            StringAssert.Contains("rt.anchorMax = new Vector2(0.25f, 0.095f)", hudSource);
-            StringAssert.Contains("\"PassiveText\", \"\", 15", hudSource);
-            StringAssert.Contains("_passiveText.resizeTextForBestFit = true", hudSource);
-            StringAssert.Contains("_passiveText.resizeTextMinSize = 10", hudSource);
-            StringAssert.Contains("_passiveText.resizeTextMaxSize = 15", hudSource);
-            StringAssert.Contains("_passiveText.rectTransform.offsetMin = new Vector2(6f, 2f)", hudSource);
-            StringAssert.Contains("_passiveText.verticalOverflow = VerticalWrapMode.Truncate", hudSource);
+            StringAssert.Contains("\"DetailSlip\", new Vector2(0.035f, 0.015f)", source);
+            StringAssert.Contains("new Vector2(0.25f, 0.175f)", source);
+            StringAssert.Contains("\"DetailBody\", \"\", 16, TextAnchor.UpperLeft", source);
+            StringAssert.Contains("new Vector2(0.05f, 0.17f), new Vector2(0.96f, 0.55f), 10);", source);
+            StringAssert.Contains("private void EnsurePassiveLabel() => RefreshDetailIfChanged();", ReadSource(HudViewControllerPath));
         }
 
         [Test]

@@ -1248,8 +1248,6 @@ namespace SudokuRoguelike.Tests
                 "InRun.End.Detail.NewUnlockHeader",
                 "InRun.End.Detail.ClassUnlocked",
                 "InRun.End.Trials.AwaitAgain",
-                "InRun.Hud.Status.ItemControllerHint",
-                "InRun.Hud.Status.ItemInspect",
                 "InRun.Hud.Hp",
                 "InRun.Hud.Pencil",
                 "InRun.Hud.RunTimer",
@@ -1266,8 +1264,6 @@ namespace SudokuRoguelike.Tests
                 "InRun.Hud.RelicSpent",
                 "InRun.Hud.RelicSlot",
                 "InRun.Hud.NoRelic",
-                "InRun.Hud.Status.ItemClickHint",
-                "InRun.Hud.Status.RelicInspect"
             };
         }
     }

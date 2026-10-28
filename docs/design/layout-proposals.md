@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 3.6 | **Date:** 2026-10-28 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; not built: the main menu; proposals of 2026-10-28 for the main menu, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll wait for the owner's pick)
+**Version:** 3.7 | **Date:** 2026-10-28 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; not built: the main menu; proposals of 2026-10-28 for the main menu, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll wait for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 3.7 | 2026-10-28 | review | Puzzle screen details built (UI-STYLE-036, RM-208): the gold tag, the detail slip, the bag moved up. Screenshots below. |
 | 3.6 | 2026-10-28 | review | Owner picks for the 0.3.0 proposals (2026-10-28): main menu B, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll, all to build. Built first: the market's rule roll (UI-STYLE-038) with 100 gold, once per floor. |
 | 3.5 | 2026-10-28 | review | 0.3.0 playtest, owner: three main menu mockups, the Monthly Walk, Select Profile and Spirit Trials (RM-217); the puzzle screen's gold and details (RM-208), Custom Puzzle help, seed and share code (RM-209), the market's rule roll (RM-211). Proposed UI-STYLE-032 to 038, waiting for the owner's pick. GAP-096 (Spirit Trials stars) fixed on the way. |
 | 3.4 | 2026-10-27 | review | 0.3.0 playtest, owner: "Garden Run muss nicht unter Game modes gelistet werden" and "Ja, nur Select Class": Game Modes has five curtains, centred, without the Garden Run and its Harmony strip; Harmony is chosen on Select Class (UI-STYLE-031, RM-213). Game Modes opens on Endless Zen. |
@@ -712,6 +713,14 @@ On today's puzzle screen: the gold as a tag beside "+3 Pencil", which it pays fo
 name, rarity and uses; a paper slip at the foot of the left column shows the class passive, or the item or relic under
 the pointer or in pad focus (name, rarity, the catalog's text, how to use it). Today the relic text opens above the
 slot and lands under the scroll; the slip never leaves the left column.
+
+**As built (3.7):** as in the mockup. The bag moves up (its foot from 10.5 % to 19 % of the screen) and, from five
+relics, holds five to a row so two rows fit; the rarity under an item's name is larger. The slip's last line follows the
+device (keys or pad, INPUT-HINT-001). The item and relic texts no longer go to the status line (HUD-DETAIL-001, HUD-GOLD-001).
+
+![Puzzle screen, the passive on the slip](layout-proposals/after_puzzle_details_passive.jpg)
+![Puzzle screen, an item in focus](layout-proposals/after_puzzle_details.jpg)
+![Puzzle screen, six relics and one in focus](layout-proposals/after_puzzle_details_relic.jpg)
 
 ### Custom Puzzle · Help, a seed and a share code (proposed UI-STYLE-037, RM-209)
 

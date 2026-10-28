@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.28 | **Date:** 2026-10-28 | **Status:** implemented
+**Version:** 1.29 | **Date:** 2026-10-28 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.29 | 2026-10-28 | implemented | 0.3.0 playtest (RM-208, owner's pick UI-STYLE-036): the gold beside the Pencil it buys (HUD-GOLD-001); a detail slip at the foot of the left column shows the passive, or the item or relic in focus, instead of the status line above the board (HUD-DETAIL-001). |
 | 1.28 | 2026-10-28 | implemented | 0.3.0 playtest, owner answer to D2 ("New Run"): no main menu button is chosen while the title screen shows, so A or Enter on the title no longer opens Select Class (UI-MENU-TITLE-001, GAP-097). |
 | 1.27 | 2026-10-28 | implemented | OPT-DRAG-001: a drag shows the value and sets and saves it once when the press ends (review: one save per drag, not one per step). |
 | 1.26 | 2026-10-28 | implemented | 0.3.0 playtest (RM-210): every Options value row can be set by pressing or dragging its bar with the mouse (OPT-DRAG-001). |
@@ -514,6 +515,8 @@ Unchanged and working: the volumes, Mute all, Mute when unfocused, menu music st
 | PLACE-RULE-001 | A digit that is already on the board as often as it can be (the board's size) is not placed again, by key, pad or number pad: the status line says so, there is no mistake and no HP loss (GAP-092). Pencil marks are not affected. |
 | RULE-TAP-001 | A tap on a whole-board rule on the rule slip (Nonconsecutive, Antiknight) marks the chosen cell and the cells the rule ties to it (its four sides, or its knight moves) for 3 s, like the legend's isolation; no cell chosen marks nothing. It marked every cell of the grid, so the board turned gold and stayed so (GAP-091). |
 | HUD-TIMER-001 | A single-puzzle mode (Custom Puzzle, Sudoku Basics) shows only the puzzle's timer, not the run timer that repeated it (GAP-088). |
+| HUD-GOLD-001 | The puzzle screen shows the gold on a tag beside "+3 Pencil", whenever the Pencil can be bought (1.29, RM-208). |
+| HUD-DETAIL-001 | A paper slip at the foot of the puzzle screen's left column shows the class passive (the day's walker in a Daily Walk, nothing in a Custom Puzzle without a class), or the item or relic under the pointer, in keyboard or pad focus or picked: its name, rarity or kind, the catalog's text and how to use it in the words of the device in use. The item and relic texts no longer go to the status line above the board, where a long one ran behind it. The bag moves up to make room; from five relics they sit five to a row. Hidden in the Incense Walk (1.29, RM-208, UI-STYLE-036). |
 | (sound) | A click on a board cell plays no sound (owner, 0.3.0 playtest). |
 
 ### Shared challenges: Daily, Weekly, Monthly

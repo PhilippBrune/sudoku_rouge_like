@@ -278,6 +278,46 @@ namespace SudokuRoguelike.Tests
             _regionVariant = 0;
         }
 
+        // UI-STYLE-036 (RM-208): the gold beside the Pencil, two bag rows, two relics and the detail slip with the passive,
+        // an item and a relic.
+        [UnityTest]
+        public IEnumerator RenderPuzzleDetails()
+        {
+            var camera = CreateCamera();
+            _puzzleSize = 9;
+            try
+            {
+                var (host, run) = StartRun(7351, true, BossModifierId.KillerCages, BossModifierId.DifferenceKropki);
+                yield return DismissIntro();
+                for (var frame = 0; frame < 30 && Find(host, "C_0_0") == null; frame++)
+                    yield return null;
+                run.State.CurrentGold = 142;
+                run.State.HeldItems.Add(new ItemInstance { Id = "shot-ink", Type = ItemType.InkWell, Rarity = ItemRarity.Rare, Charges = 1 });
+                run.State.HeldItems.Add(new ItemInstance { Id = "shot-chime", Type = ItemType.WindChime, Charges = 1 });
+                run.State.HeldRelics.Add(new RelicInstance { Id = RelicId.CrackedTeacup, UsesRemaining = -1 });
+                yield return new WaitForSecondsRealtime(0.6f);
+                yield return Shoot(host, camera, "after_puzzle_details_passive.png");
+
+                var hud = host.GetComponentInChildren<HudViewController>(true);
+                hud.ControllerSelectBagSlot(0);
+                yield return new WaitForSecondsRealtime(0.3f);
+                yield return Shoot(host, camera, "after_puzzle_details.png");
+
+                hud.ControllerActivateBagSlot();   // spends nothing visible: the ink well tops up the pencil
+                // six relics: two rows of five fit the bag above the slip
+                foreach (var id in new[] { RelicId.AccurateMap, RelicId.CopperTortoise, RelicId.CrimsonFan, RelicId.JadeHairpin })
+                    run.State.HeldRelics.Add(new RelicInstance { Id = id, UsesRemaining = -1 });
+                yield return null;
+                hud.ControllerSelectRelicSlot(1);
+                yield return new WaitForSecondsRealtime(0.3f);
+                yield return Shoot(host, camera, "after_puzzle_details_relic.png");
+            }
+            finally
+            {
+                _puzzleSize = 6;
+            }
+        }
+
         // UI-STYLE-020: Pencil mode on a 6×6 puzzle with a few marks on the board. File names start with SR_SHOT_PREFIX
         // ("after_" by default).
         [UnityTest]

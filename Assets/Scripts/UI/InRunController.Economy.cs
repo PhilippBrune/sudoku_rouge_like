@@ -12,6 +12,8 @@ namespace SudokuRoguelike.UI
         private Text _buyPencilLabel;
         private int _buyPencilShownCost = -1;
         private int _buyPencilShownState = -1;   // -1 unknown, 0 hidden, 1 disabled, 2 enabled
+        private Text _goldTagText;
+        private int _goldTagShown = -1;
 
         private void WireBuyPencilButton(RectTransform sudokuPanel)
         {
@@ -22,6 +24,20 @@ namespace SudokuRoguelike.UI
             _buyPencilButton.onClick.AddListener(BuyPencil);
             _buyPencilShownCost = -1;
             _buyPencilShownState = -1;
+            _goldTagShown = -1;
+            EnsureGoldTag();
+        }
+
+        // [REQ: HUD-GOLD-001] RM-208: the gold sits beside the Pencil it buys, under the HP lantern (UI-STYLE-036).
+        private void EnsureGoldTag()
+        {
+            if (_goldTagText != null) return;
+            var tag = ScrollUiKit.Fill(_buyPencilButton.transform.parent, "GoldTag", new Vector2(0.040f, 0.563f), new Vector2(0.1177f, 0.603f),
+                new Color(0.23f, 0.16f, 0.11f, 0.92f), ScrollUiKit.Rounded(8f));
+            ScrollUiKit.Icon(tag.transform, "Coin", "economy/icon_sakura_coin", new Vector2(0.05f, 0.14f), new Vector2(0.24f, 0.86f), Color.white);
+            _goldTagText = ScrollUiKit.Label(tag.transform, "Gold", "", 17, TextAnchor.MiddleLeft, new Color(0.95f, 0.87f, 0.65f, 1f),
+                new Vector2(0.28f, 0f), new Vector2(0.98f, 1f), 11);
+            tag.gameObject.SetActive(false);
         }
 
         /// <summary>Called with the HUD refresh: shows the cost and whether a purchase is possible right now.</summary>
@@ -37,12 +53,18 @@ namespace SudokuRoguelike.UI
             {
                 _buyPencilShownState = shown;
                 _buyPencilButton.gameObject.SetActive(shown != 0);
+                if (_goldTagText != null) _goldTagText.transform.parent.gameObject.SetActive(shown != 0);
                 _buyPencilButton.interactable = shown == 2;
                 // UI-STYLE-002: dark ink on the wooden tile; light text on the faded tile when a purchase isn't possible.
                 if (_buyPencilLabel != null)
                     _buyPencilLabel.color = shown == 2 ? ScrollUiKit.WoodTileText : new Color(0.95f, 0.91f, 0.82f, 0.85f);
             }
             if (shown == 0) return;
+            if (_goldTagText != null && state.CurrentGold != _goldTagShown)
+            {
+                _goldTagShown = state.CurrentGold;
+                _goldTagText.text = Tf("InRun.Hud.GoldTag", state.CurrentGold);
+            }
             var cost = run.GetPencilBuyCost();
             if (cost != _buyPencilShownCost && _buyPencilLabel != null)
             {

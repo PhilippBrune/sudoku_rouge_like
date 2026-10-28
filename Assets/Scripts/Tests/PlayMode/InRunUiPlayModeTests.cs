@@ -366,6 +366,42 @@ namespace SudokuRoguelike.Tests
             }
         }
 
+        // [REQ: HUD-DETAIL-001] [REQ: HUD-GOLD-001] RM-208: the slip at the foot of the left column shows the passive, then an
+        // item or relic under the pointer or picked; the gold sits beside the Pencil it buys.
+        [UnityTest]
+        [Requirement("HUD-DETAIL-001", "HUD-GOLD-001")]
+        public IEnumerator DetailSlip_ShowsThePassive_ThenTheItemOrRelicInFocus_AndTheGoldShows()
+        {
+            var h = StartPuzzle(8607);
+            for (var frame = 0; frame < 30 && FindObjectOrNull(h.Host, "C_0_0") == null; frame++)
+                yield return null;
+            h.Run.State.CurrentGold = 142;
+            h.Run.State.HeldItems.Add(new ItemInstance { Id = "detail-a", Type = ItemType.InkWell, Rarity = ItemRarity.Rare, Charges = 1 });
+            h.Run.State.HeldRelics.Add(new RelicInstance { Id = RelicId.CrackedTeacup, UsesRemaining = -1 });
+            yield return null;
+            yield return null;
+
+            var title = FindObject(h.Host, "DetailSlip").transform.Find("DetailTitle").GetComponent<Text>();
+            Assert.AreEqual(SudokuRoguelike.Classes.ClassCatalog.DisplayName(ClassId.NumberFreak), title.text, "the passive first");
+            StringAssert.Contains("142", FindObject(h.Host, "GoldTag").GetComponentInChildren<Text>().text, "the gold beside the Pencil");
+
+            var item = FindObject(h.Host, "BagSlot_0");
+            UnityEngine.EventSystems.ExecuteEvents.Execute(item, new UnityEngine.EventSystems.PointerEventData(
+                UnityEngine.EventSystems.EventSystem.current), UnityEngine.EventSystems.ExecuteEvents.pointerEnterHandler);
+            yield return null;
+            Assert.AreEqual(SudokuRoguelike.Items.ItemService.GetItemName(ItemType.InkWell), title.text, "the item under the pointer");
+
+            UnityEngine.EventSystems.ExecuteEvents.Execute(item, new UnityEngine.EventSystems.PointerEventData(
+                UnityEngine.EventSystems.EventSystem.current), UnityEngine.EventSystems.ExecuteEvents.pointerExitHandler);
+            h.Host.GetComponentInChildren<HudViewController>(true).ControllerSelectRelicSlot(0);
+            yield return null;
+            Assert.AreEqual(SudokuRoguelike.Economy.RelicService.GetRelicName(RelicId.CrackedTeacup), title.text, "the relic in pad focus");
+
+            h.Host.GetComponentInChildren<HudViewController>(true).ClearControllerRelicSelection(false);
+            yield return null;
+            Assert.AreEqual(SudokuRoguelike.Classes.ClassCatalog.DisplayName(ClassId.NumberFreak), title.text, "and back to the passive");
+        }
+
         // [REQ: UI-STYLE-007] With a full bag, taking a plaque opens the swap layer, which is modal: keys and the scene
         // behind it do nothing. Keeping the bag returns to the plaques (the reward is not lost). A run that ends while
         // the reward is open closes the scene.

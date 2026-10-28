@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 3.7 | **Date:** 2026-10-28 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; not built: the main menu; proposals of 2026-10-28 for the main menu, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll wait for the owner's pick)
+**Version:** 3.8 | **Date:** 2026-10-28 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; not built: the main menu; proposals of 2026-10-28 for the main menu, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll wait for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 3.8 | 2026-10-28 | review | Custom Puzzle help, seed and share code built (UI-STYLE-037, RM-209). Screenshots below. |
 | 3.7 | 2026-10-28 | review | Puzzle screen details built (UI-STYLE-036, RM-208): the gold tag, the detail slip, the bag moved up. Screenshots below. |
 | 3.6 | 2026-10-28 | review | Owner picks for the 0.3.0 proposals (2026-10-28): main menu B, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll, all to build. Built first: the market's rule roll (UI-STYLE-038) with 100 gold, once per floor. |
 | 3.5 | 2026-10-28 | review | 0.3.0 playtest, owner: three main menu mockups, the Monthly Walk, Select Profile and Spirit Trials (RM-217); the puzzle screen's gold and details (RM-208), Custom Puzzle help, seed and share code (RM-209), the market's rule roll (RM-211). Proposed UI-STYLE-032 to 038, waiting for the owner's pick. GAP-096 (Spirit Trials stars) fixed on the way. |
@@ -731,6 +732,13 @@ board starts: ★ 40 %, ★★★★ 70 %, ★★★★★★★ 100 %, an empty
 Irregular), Resources (Free: the same HP and Pencil for everyone, no class; Class-Based: the chosen class's values and
 passive) and Class. Under the Board paper a seed (typed or Random) and a share code that holds the whole setup, with
 Copy and "Paste a code". The code's format is a placeholder.
+
+**As built (3.8):** as in the mockup, with one column of "?" at the right of the Board paper (the steppers moved
+left a little) and all seven star counts on the Difficulty slip. The code reads "R1-" and four groups of four
+(CUSTOM-HELP-001, CUSTOM-SEED-001, CUSTOM-CODE-001, TutorialModeSystem).
+
+![Custom Puzzle with the seed and the share code](layout-proposals/after_custom_puzzle.jpg)
+![Custom Puzzle with the Difficulty help](layout-proposals/after_custom_puzzle_help.jpg)
 
 ### Market · Roll the floor's rule (proposed UI-STYLE-038, RM-211)
 

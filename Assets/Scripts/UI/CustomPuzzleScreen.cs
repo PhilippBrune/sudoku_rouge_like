@@ -35,6 +35,7 @@ namespace SudokuRoguelike.UI
             _tabs.Clear();
             _setup = setup;
             BuildSettingsSlip(screen);
+            BuildSeedPaper(screen);
             BuildBook(screen);
             BuildTray(screen, startButton);
             _setup.SetupChanged += Refresh;
@@ -55,6 +56,7 @@ namespace SudokuRoguelike.UI
             MarkSegments(_resourceSegments, _setup.IsClassBased ? 1 : 0);
             RefreshTiles();
             RefreshTray();
+            RefreshSeedAndCode();
         }
 
         // ── settings slip ──
@@ -85,6 +87,7 @@ namespace SudokuRoguelike.UI
             RoundButton(classRow, "ClassNext", new Vector2(0.92f, 0.5f), "›", () => _setup.StepClass(1));
             _setup.ConfigureArrowClassRow(classRow);
             _setup.SetClassArrowLabel(classValue);
+            BuildHelp(t);
         }
 
         private static void Header(Transform parent, string name, string key, string fallback, float centre)
@@ -97,11 +100,12 @@ namespace SudokuRoguelike.UI
         private static Text Stepper(Transform parent, string id, string label, float centre, Action<int> step)
         {
             ScrollUiKit.Label(parent, id + "Label", label, 21, TextAnchor.MiddleLeft, ScrollUiKit.Ink,
-                new Vector2(0.08f, centre - 0.04f), new Vector2(0.45f, centre + 0.04f), 13);
-            RoundButton(parent, id + "Dec", new Vector2(0.51f, centre), "−", () => step(-1));
+                new Vector2(0.08f, centre - 0.04f), new Vector2(0.43f, centre + 0.04f), 13);
+            // Left of the column of "?" (RM-209, CustomPuzzleScreen.Help).
+            RoundButton(parent, id + "Dec", new Vector2(0.48f, centre), "−", () => step(-1));
             var value = ScrollUiKit.Label(parent, id + "Value", string.Empty, 22, TextAnchor.MiddleCenter, ScrollUiKit.Ink,
-                new Vector2(0.56f, centre - 0.04f), new Vector2(0.82f, centre + 0.04f), 12);
-            RoundButton(parent, id + "Inc", new Vector2(0.87f, centre), "+", () => step(1));
+                new Vector2(0.53f, centre - 0.04f), new Vector2(0.77f, centre + 0.04f), 12);
+            RoundButton(parent, id + "Inc", new Vector2(0.82f, centre), "+", () => step(1));
             return value;
         }
 

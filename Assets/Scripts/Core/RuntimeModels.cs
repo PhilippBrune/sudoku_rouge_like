@@ -546,6 +546,8 @@ namespace SudokuRoguelike.Core
         public ClassId SimulationClassId = ClassId.NumberFreak;
         public int RegionVariant;
         public List<BossModifierId> SelectedModifiers = new List<BossModifierId>();
+        // [REQ: CUSTOM-SEED-001] The puzzle's seed (RM-209): the same setup and seed give the same board.
+        public int Seed;
     }
 
     [Serializable]

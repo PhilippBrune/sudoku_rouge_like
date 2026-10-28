@@ -1,11 +1,12 @@
 # Tutorial Mode System
 
-**Version:** 1.12 | **Date:** 2026-10-28 | **Status:** implemented
+**Version:** 1.13 | **Date:** 2026-10-28 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.13 | 2026-10-28 | implemented | 0.3.0 playtest (RM-209, owner's pick UI-STYLE-037): a "?" beside each Board field explains it (CUSTOM-HELP-001); the puzzle's seed is shown, typed or rolled, and gives the same board (CUSTOM-SEED-001); a share code holds the whole setup with Copy and Paste (CUSTOM-CODE-001). |
 | 1.12 | 2026-10-28 | implemented | Concept (RM-209, 0.3.0 playtest): save and quit a Custom Puzzle in a pair of its own beside the Garden Run and the Monthly Walk. Not built. |
 | 1.11 | 2026-10-27 | implemented | 0.3.0 playtest: every chosen rule is mandatory for the board, and a rule without room is named on the status line (CUSTOM-RULE-001, GAP-086); Free resources mean no class: no passive shown or applied (CUSTOM-CLASS-001, GAP-087); one timer (HUD-TIMER-001, GAP-088). |
 | 1.10 | 2026-10-21 | implemented | Docs clean-up: completion is stored in the save (`TutorialProgressState.CompletedKeys`, written by `MainMenuController`); there is no `TutorialProgressService`. |
@@ -105,6 +106,19 @@ All **15 modifiers** are available as individual toggles in the tutorial setup p
 Multiple modifiers can be combined for advanced practice.
 
 **[CUSTOM-RULE-001]** Every chosen rule must be on the board: generation retries with other boards until each one has its marks, as for the boss gate's picks. If a rule still finds no room, the puzzle starts and the status line names it ("No room on this board for: …"); a rule is never dropped silently (GAP-086, 0.3.0 playtest: a 9×9 at 7 stars with Sum Dot showed no dots).
+
+### Help, seed and share code (1.13, RM-209)
+
+- **[CUSTOM-HELP-001]** A "?" beside Size, Difficulty, Regions and Resources opens a paper slip beside the Board paper that
+  says what the field does; Difficulty's slip shows each star count with the share of empty cells (1 star about 40 %, each
+  star a tenth more, 7 stars an empty grid that the rules alone decide). The pointer over a "?" shows it, a click pins it;
+  with a pad the slip follows the focus on the row's controls.
+- **[CUSTOM-SEED-001]** The Seed field under the Board paper holds the puzzle's seed: rolled when the screen opens, typed
+  (1 to 999 999 999) or rolled again with Random. The same setup and seed give the same board.
+- **[CUSTOM-CODE-001]** The share code holds the size, stars, regions, resources, class, rules and seed:
+  `R1-` and about twenty letters and digits (Crockford base32 in groups of four, a check byte at the end). Copy puts it
+  on the clipboard; Paste a code reads the clipboard and sets the screen, or says why not (no code or a typo, a class not
+  unlocked on this profile, a rule that does not fit the board). Nothing else from the clipboard is taken.
 
 ### Resource Mode
 

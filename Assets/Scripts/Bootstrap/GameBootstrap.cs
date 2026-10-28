@@ -351,7 +351,8 @@ namespace SudokuRoguelike.Bootstrap
                 return;
             }
 
-            var runtimeSeed = BuildRuntimeSeed(seed);
+            // [REQ: CUSTOM-SEED-001] The screen's seed, so the same setup and seed give the same board (RM-209).
+            var runtimeSeed = setup.Seed > 0 ? setup.Seed : BuildRuntimeSeed(seed);
             _menuMusic.Stop();
             _run.StartTutorialRun(setup, runtimeSeed);
             _screenManager.ShowGame();

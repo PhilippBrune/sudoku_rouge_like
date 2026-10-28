@@ -22,7 +22,8 @@ namespace SudokuRoguelike.UI
         private Button _startButton;
         private RectTransform _classRow;
         private Text _classArrowLabel;
-        private TutorialSetupConfig _config = new TutorialSetupConfig { BoardSize = 5, Stars = 2 };
+        private const int MaxSeed = 999999999;
+        private TutorialSetupConfig _config = new TutorialSetupConfig { BoardSize = 5, Stars = 2, Seed = NewSeed() };
 
         // Tracks which classes are offered (unlocked ones only)
         private List<ClassId> _availableClasses = new List<ClassId>
@@ -53,8 +54,51 @@ namespace SudokuRoguelike.UI
                 ResourceMode = _config.ResourceMode,
                 SimulationClassId = SelectedClass,
                 RegionVariant = _config.RegionVariant,
-                SelectedModifiers = new List<BossModifierId>(_config.SelectedModifiers)
+                SelectedModifiers = new List<BossModifierId>(_config.SelectedModifiers),
+                Seed = _config.Seed,
             };
+        }
+
+        // [REQ: CUSTOM-SEED-001] The puzzle's seed (RM-209): rolled when the screen first opens, typed or rolled again.
+        public int Seed => _config.Seed;
+
+        public void SetSeed(int seed)
+        {
+            _config.Seed = Mathf.Clamp(seed, 1, MaxSeed);
+            Changed();
+        }
+
+        public void RollSeed() => SetSeed(NewSeed());
+
+        private static int NewSeed() => new System.Random(Guid.NewGuid().GetHashCode()).Next(1, 1000000);
+
+        /// <summary>[REQ: CUSTOM-CODE-001] Takes a pasted share code's setup. False, with nothing changed, when its class is
+        /// not unlocked here or a rule does not fit; <paramref name="reason"/> says which.</summary>
+        public bool TryApply(TutorialSetupConfig read, out string reason)
+        {
+            reason = null;
+            if (read.ResourceMode == TutorialResourceMode.Simulation && !_availableClasses.Contains(read.SimulationClassId))
+            {
+                reason = LocalizationService.Format("CustomPuzzle.Code.ClassLocked", "{0} is not unlocked yet.",
+                    ClassCatalog.DisplayName(read.SimulationClassId));
+                return false;
+            }
+            var mods = new List<BossModifierId>();
+            foreach (var id in read.SelectedModifiers)
+                if (!TutorialModeService.CanAddCustomModifier(read.BoardSize, mods, id, out reason)) return false;
+                else mods.Add(id);
+
+            _config.BoardSize = read.BoardSize;
+            _config.Stars = read.Stars;
+            _config.RegionVariant = read.RegionVariant;
+            _config.ResourceMode = read.ResourceMode;
+            _config.SelectedModifiers.Clear();
+            _config.SelectedModifiers.AddRange(mods);
+            _config.Seed = Mathf.Clamp(read.Seed, 1, MaxSeed);
+            var classIndex = _availableClasses.IndexOf(read.SimulationClassId);
+            if (classIndex >= 0) SetClassIndex(classIndex);   // raises Changed
+            else Changed();
+            return true;
         }
 
         public int GetBoardSize() => _config.BoardSize;

@@ -1045,9 +1045,15 @@ namespace SudokuRoguelike.Tests
             if (toggle != null)
                 foreach (var id in new[] { BossModifierId.DutchWhispers, BossModifierId.KillerCages, BossModifierId.Skyscrapers })
                     toggle.Invoke(setup, new object[] { id });
+            setup.SetSeed(48213);
             EventSystem.current?.SetSelectedGameObject(null);
             yield return new WaitForSecondsRealtime(0.5f);
             yield return Shoot(host, camera, prefix + "custom_puzzle.png");
+
+            // UI-STYLE-037 (RM-209): the Difficulty help pinned by a click on its "?".
+            Find(host, "HelpDifficulty").GetComponent<Button>().onClick.Invoke();
+            yield return new WaitForSecondsRealtime(0.3f);
+            yield return Shoot(host, camera, prefix + "custom_puzzle_help.png");
         }
 
         // BOSS-MOD-002 / GAP-048: the line colours on real generated 9×9 puzzles. Every line on a board belongs to a rule

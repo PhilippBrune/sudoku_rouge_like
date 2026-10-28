@@ -1,4 +1,5 @@
 ﻿{
+    "InRun.Reward.Row.GoldenKoi":  "Goldener Koi",
     "CustomPuzzle.Status.RuleMissing":  "Kein Platz auf diesem Brett für: {0}. Versuch es noch einmal oder mit weniger Regeln.",
     "Incense.Hud.PencilFree":  "Bleistiftnotizen sind gratis.",
     "InRun.Status.DigitComplete":  "Alle {0} stehen schon auf dem Brett.",

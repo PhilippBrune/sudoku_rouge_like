@@ -1,4 +1,5 @@
 {
+    "InRun.Reward.Row.GoldenKoi":  "Koï doré",
     "CustomPuzzle.Status.RuleMissing":  "Pas de place sur cette grille pour : {0}. Réessayez ou choisissez moins de règles.",
     "Incense.Hud.PencilFree":  "Les notes au crayon sont gratuites.",
     "InRun.Status.DigitComplete":  "Tous les {0} sont déjà sur la grille.",

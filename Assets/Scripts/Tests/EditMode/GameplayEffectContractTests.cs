@@ -33,6 +33,7 @@ namespace SudokuRoguelike.Tests
 
             Assert.AreEqual(goldBeforeCompletion + expectedGold, run.State.CurrentGold);
             Assert.IsFalse(run.State.GoldenKoiActive);
+            Assert.AreEqual(stars * 10, run.LastKoiGold, "[REWARD-KOI-001] the reward lists the Koi's share on its own line");
         }
 
         [Test]

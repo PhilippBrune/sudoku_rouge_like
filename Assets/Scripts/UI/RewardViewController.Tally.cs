@@ -153,16 +153,20 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.10f, 0.815f), new Vector2(0.95f, 0.905f), 28);
 
             var xp = run.TileXpLog != null && run.TileXpLog.Count > 0 ? run.TileXpLog[run.TileXpLog.Count - 1].TotalXp : 0;
-            var gains = new (string key, string value, Color color, string icon)[]
+            // [REQ: REWARD-KOI-001] The Golden Koi's gold on its own line under the puzzle's (RM-212); the rows close up for it.
+            var koi = Mathf.Clamp(run.LastKoiGold, 0, gold);
+            var gains = new List<(string key, string value, Color color, string icon)>
             {
-                ("InRun.Reward.Row.Gold", "+" + gold, ScrollUiKit.Vermilion, "economy/icon_sakura_coin"),
+                ("InRun.Reward.Row.Gold", "+" + (gold - koi), ScrollUiKit.Vermilion, "economy/icon_sakura_coin"),
                 ("InRun.Reward.Row.Xp", "+" + xp, ScrollUiKit.Vermilion, "ui/icon_golden_bloom"),
                 ("InRun.Reward.Row.Hp", $"{state.CurrentHP} / {state.MaxHP}", ScrollUiKit.Ink, "ui/icon_petal_orb"),
                 ("InRun.Reward.Row.Pencil", $"{state.CurrentPencil} / {state.MaxPencil}", ScrollUiKit.Ink, "ui/icon_ink_save")
             };
-            for (var k = 0; k < gains.Length; k++)
+            if (koi > 0) gains.Insert(1, ("InRun.Reward.Row.GoldenKoi", "+" + koi, ScrollUiKit.Vermilion, "items/icon_golden_koi"));
+            var step = gains.Count > 4 ? 0.062f : 0.0757f;
+            for (var k = 0; k < gains.Count; k++)
             {
-                var centre = 0.749f - k * 0.0757f;
+                var centre = 0.749f - k * step;
                 ScrollUiKit.ValueRow(tally, $"Gain_{k}", new Vector2(0.105f, centre - 0.029f), new Vector2(0.895f, centre + 0.029f),
                     T(gains[k].key), gains[k].value, 26, gains[k].color, gains[k].icon);
             }

@@ -1,4 +1,5 @@
 {
+    "InRun.Reward.Row.GoldenKoi":  "Koi dorado",
     "CustomPuzzle.Status.RuleMissing":  "No hay sitio en este tablero para: {0}. Inténtalo otra vez o con menos reglas.",
     "Incense.Hud.PencilFree":  "Las notas a lápiz son gratis.",
     "InRun.Status.DigitComplete":  "Todos los {0} ya están en el tablero.",

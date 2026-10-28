@@ -1,13 +1,14 @@
 # Gold Economy System
 
-**Version:** 2.3  
-**Date:** 2026-10-27  
+**Version:** 2.4  
+**Date:** 2026-10-28  
 **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.4 | 2026-10-28 | implemented | 0.3.0 playtest (RM-212): the reward tally lists the Golden Koi's gold on its own line (REWARD-KOI-001). |
 | 2.3 | 2026-10-27 | implemented | Owner request (2026-10-27): the gold and items concept (v1.2) is merged here: "Why and the levers" with the playtest numbers, the lever status (L1 to L6), the owner's picks and the open balance check. Its item part is in ItemsAndRelicsSystem (Counter Items). No rule changed. Its file is removed. |
 | 2.2 | 2026-10-21 | implemented | Owner's 0.2.0 playtest ("gold and items are not needed"), levers L1, L2, L5 and L6 of the gold and items concept: item prices ×2.5 (Normal 40, Rare 75, Epic 150; ECON-BAL-001); puzzle gold −20 % (ECON-BAL-002); gold at the boss gate: strike a trial for 60 × floor number, lower the intensity for 40 × floor number (ECON-GATE-001/002); gold kept at the end scores (SCORE-GOLD-001, GameDesignSpec §9c). The late-floor mistake cost and the quarter heal (ECON-BAL-003/004) are in GameDesignSpec §5.1 and §7. |
 | 2.1 | 2026-10-07 | implemented | Pencil purchase and item-reward reroll implemented and documented (SPEC-CONF-029, GAP-015/016); Nothing/Skip gold (SPEC-AMB-007); gold collected definition (SPEC-AMB-006, GAP-027); shop offer counts and full-bag rule (SPEC-CONF-005, GAP-036). |
@@ -23,6 +24,13 @@ Primary implementation references:
 - `Assets/Scripts/Run/RunDirector.cs`
 - `Assets/Scripts/Economy/RelicService.cs`
 - `Assets/Scripts/Run/CurseService.cs`
+
+
+## Reward breakdown (2.4)
+
+| ID | Rule |
+|---|---|
+| REWARD-KOI-001 | The puzzle reward's tally shows the Golden Koi's gold (+10 per star, after the Harmony multiplier) on its own line under the puzzle's gold, which then shows the gold without it; the line appears only when the Koi was used on that puzzle (owner, 0.3.0 playtest, RM-212). |
 
 ## Why and the levers (2.3)
 

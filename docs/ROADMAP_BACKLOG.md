@@ -41,7 +41,7 @@ Horizons: **short term** = the next one to three updates, **mid term** = after t
 | RM-209 | Custom Puzzle: help, seed, save | What the stars and every Board field mean; a seed field and a share code; save and quit a Custom Puzzle without touching the Garden Run save. | Owner, 0.3.0 playtest; the save is a concept first (own save slot). | planned |
 | RM-210 | Drag the option rows | Every value row in the Options can be dragged with the mouse as well as stepped with the arrows. | Owner, 0.3.0 playtest. | planned |
 | RM-211 | Reroll the floor's rule in the shop | From Floor 2 the shop offers to roll the floor's rule again for gold. | Owner, 0.3.0 playtest; price a first value; additive save field. | planned |
-| RM-212 | Golden Koi line on the reward | The reward tally lists the Golden Koi's extra gold on its own line. | Owner, 0.3.0 playtest. | planned |
+| RM-212 | Golden Koi line on the reward | The reward tally lists the Golden Koi's extra gold on its own line. | Owner, 0.3.0 playtest; built (REWARD-KOI-001, GoldEconomySystem 2.4). | built |
 | RM-213 | Game Modes without the Garden Run | Start Game starts the Garden Run; Game Modes shows the other modes; Harmony is chosen on Select Class. | Owner, 0.3.0 playtest ("Ja, nur Select Class"); built as UI-STYLE-031 (layout-proposals 3.4). | built |
 | RM-214 | Bigger clue numbers | Text Size also enlarges the small numbers of rules such as Opposite Sums (for handhelds like the Legion Go). | Owner, 0.3.0 playtest on the Legion Go 2. | planned |
 | RM-215 | Title sound | A short sound when the title screen opens. | Owner, 0.3.0 playtest; code-made 8-bit, no paid service. | planned |

@@ -1643,10 +1643,11 @@ namespace SudokuRoguelike.Run
             // Relic: puzzle-complete gold adjustments (CopperTortoise, TransmutedSigil, SakuraSeal)
             RelicService.OnPuzzleComplete(State, level, ref goldBase);
 
-            // GoldenKoi: +10g per puzzle star rating, then consumed.
+            // GoldenKoi: +10g per puzzle star rating, then consumed; the reward lists it on its own line (RM-212).
+            _koiGold = State.GoldenKoiActive ? config.Stars * 10 : 0;
             if (State.GoldenKoiActive)
             {
-                goldBase += config.Stars * 10;
+                goldBase += _koiGold;
                 State.GoldenKoiActive = false;
             }
 

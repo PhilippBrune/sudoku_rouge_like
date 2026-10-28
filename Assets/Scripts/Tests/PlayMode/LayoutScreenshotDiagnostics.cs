@@ -358,6 +358,7 @@ namespace SudokuRoguelike.Tests
             run.State.ComboStreak = 5;
             run.State.CurrentGold = 130;
             run.State.RerollTokens = 1;
+            run.State.GoldenKoiActive = true;   // RM-212: the Koi's gold on its own line
             var reward = host.GetComponentInChildren<RewardViewController>(true);
             // The game notices the solved board and opens the reward itself; open it here if it has not after 3 s.
             for (var waited = 0f; waited < 3f && !reward.IsAwaitingReward; waited += Time.unscaledDeltaTime)

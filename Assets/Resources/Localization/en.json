@@ -1,4 +1,5 @@
 ﻿{
+    "InRun.Reward.Row.GoldenKoi":  "Golden Koi",
     "CustomPuzzle.Status.RuleMissing":  "No room on this board for: {0}. Try another seed or fewer rules.",
     "Incense.Hud.PencilFree":  "Pencil marks are free.",
     "InRun.Status.DigitComplete":  "All the {0}s are already on the board.",

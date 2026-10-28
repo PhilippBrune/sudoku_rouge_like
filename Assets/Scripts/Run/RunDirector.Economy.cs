@@ -140,6 +140,12 @@ namespace SudokuRoguelike.Run
 
         public int GetPencilBuyCost() => GoldTable.PencilBuyCost(State.PencilBoughtCount);
 
+        private int _koiGold;
+
+        /// <summary>[REQ: REWARD-KOI-001] The Golden Koi's share of the last puzzle's gold, after the Harmony multiplier.</summary>
+        public int LastKoiGold => State != null && State.GlobalGoldMultiplier > 0f
+            ? (int)Math.Round(_koiGold * State.GlobalGoldMultiplier) : _koiGold;
+
         /// <summary>Digits under the fog are not checked yet, so a wrong one can sit on the board (PLACE-RULE-001 waits).</summary>
         public bool HasFogPending => CurrentLevelState?.FogPendingCells != null && CurrentLevelState.FogPendingCells.Count > 0;
 

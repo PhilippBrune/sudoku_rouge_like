@@ -7,7 +7,8 @@ namespace SudokuRoguelike.UI
         None,
         SaveResumeState,
         ClearNonProgressionAutosave,
-        ClearFinishedGardenRun
+        ClearFinishedGardenRun,
+        ClearCustomPuzzle   // [REQ: CUSTOM-SAVE-001] solved or lost: nothing left to continue
     }
 
     public readonly struct InRunSaveQuitContext
@@ -17,9 +18,11 @@ namespace SudokuRoguelike.UI
             bool hasCurrentBoard,
             bool hasCurrentLevelState,
             bool onEndScreen,
-            RunState runState)
+            RunState runState,
+            bool levelComplete = false)
         {
             InPuzzle = inPuzzle;
+            LevelComplete = levelComplete;
             HasCurrentBoard = hasCurrentBoard;
             HasCurrentLevelState = hasCurrentLevelState;
             OnEndScreen = onEndScreen;
@@ -31,6 +34,7 @@ namespace SudokuRoguelike.UI
         public bool HasCurrentLevelState { get; }
         public bool OnEndScreen { get; }
         public RunState RunState { get; }
+        public bool LevelComplete { get; }
     }
 
     public readonly struct InRunSaveQuitDecision
@@ -67,6 +71,16 @@ namespace SudokuRoguelike.UI
                     persistenceAction: InRunSaveQuitPersistenceAction.None,
                     shouldShowMonthlyWalkPanel: false);
             }
+
+            // [REQ: CUSTOM-SAVE-001] A Custom Puzzle is kept to continue, until it is solved or lost.
+            if (Save.SaveFileService.IsCustomPuzzle(context.RunState))
+                return new InRunSaveQuitDecision(
+                    shouldBlockReturn: false,
+                    blockedStatusKey: null,
+                    persistenceAction: context.OnEndScreen || context.LevelComplete || context.RunState.CurrentHP <= 0
+                        ? InRunSaveQuitPersistenceAction.ClearCustomPuzzle
+                        : InRunSaveQuitPersistenceAction.SaveResumeState,
+                    shouldShowMonthlyWalkPanel: false);
 
             var runWasSeasonal = context.RunState?.IsSeasonalChallenge == true;
             var supportsResume = context.RunState != null && !context.RunState.DisableProgressionRewards

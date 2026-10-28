@@ -168,7 +168,7 @@ namespace SudokuRoguelike.Run
         /// Resumes a saved Seasonal Challenge attempt without regenerating the puzzle. Requires a save
         /// that carries its level definition (written after the GAP-001 fix).
         /// </summary>
-        public bool ResumeSeasonalChallenge(PuzzleSaveState savedPuzzle)
+        public bool ResumeSavedPuzzle(PuzzleSaveState savedPuzzle)
         {
             if (savedPuzzle == null || !savedPuzzle.HasLevelConfig) return false;
             ClearLevelForNewMode();

@@ -67,6 +67,19 @@ namespace SudokuRoguelike.Save
             return true;
         }
 
+        /// <summary>[REQ: CUSTOM-SAVE-001] The saved Custom Puzzle, if there is one to continue.</summary>
+        public bool TryResumeCustomFromSave(out RunState runState, out PuzzleSaveState puzzleState)
+        {
+            runState = null;
+            puzzleState = null;
+            if (_saveFile.SavedCustomPuzzle() == null) return false;
+            var envelope = _saveFile.Load();
+            runState = envelope.ActiveCustomRunState;
+            puzzleState = envelope.ActiveCustomPuzzle;
+            RestoreTransientState(runState);
+            return true;
+        }
+
         // [REQ: SAVE-RESUME-001] Restores full run state including boss modifier, AllowIrregularPuzzles
         public bool TryResumeFromSave(out RunState runState, out PuzzleSaveState puzzleState)
         {

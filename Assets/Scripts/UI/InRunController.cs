@@ -2564,7 +2564,8 @@ namespace SudokuRoguelike.UI
                 run?.CurrentBoard != null,
                 run?.CurrentLevelState != null,
                 onEndScreen,
-                run?.State));
+                run?.State,
+                run?.IsLevelComplete == true));
 
             if (decision.ShouldBlockReturn)
             {
@@ -2581,6 +2582,10 @@ namespace SudokuRoguelike.UI
                 if (runState != null)
                     runState.TotalRunSeconds += _hudView?.GetPuzzleElapsed() ?? 0f;
                 _map?.SaveNow();
+            }
+            else if (decision.PersistenceAction == InRunSaveQuitPersistenceAction.ClearCustomPuzzle)
+            {
+                new Save.RunAutoSaveCoordinator(new Save.SaveFileService(Save.SaveProfileService.ActiveSlot)).ClearCustomPuzzle();
             }
             else if (decision.PersistenceAction == InRunSaveQuitPersistenceAction.ClearNonProgressionAutosave)
             {

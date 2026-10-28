@@ -18,6 +18,10 @@ namespace SudokuRoguelike.Core
         public RunState ActiveSeasonalRunState;
         public PuzzleSaveState ActiveSeasonalPuzzle;
 
+        // [REQ: CUSTOM-SAVE-001] One saved Custom Puzzle per profile, beside the Garden Run and the Monthly Walk (RM-209).
+        public RunState ActiveCustomRunState;
+        public PuzzleSaveState ActiveCustomPuzzle;
+
         public TutorialProgressState TutorialProgress = new TutorialProgressState();
         public ProfileStats Statistics = new ProfileStats();
         public MasteryAchievementState Mastery = new MasteryAchievementState();

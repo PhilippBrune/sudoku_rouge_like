@@ -1,4 +1,7 @@
 {
+    "CustomPuzzle.ReplaceSaved":  "Cela remplace votre puzzle sauvegardé. Appuyez encore sur « Lancer le puzzle ».",
+    "CustomPuzzle.ContinueFailed":  "La grille sauvegardée n'a pas pu être ouverte.",
+    "CustomPuzzle.Continue":  "Continuer · {0}×{0} {1}",
     "CustomPuzzle.Code.ClassLocked":  "{0} n'est pas encore débloqué.",
     "CustomPuzzle.Code.Read":  "Code lu : la grille est réglée comme partagée.",
     "CustomPuzzle.Code.Invalid":  "Le presse-papiers ne contient aucun code de partage (ou un code avec une faute).",

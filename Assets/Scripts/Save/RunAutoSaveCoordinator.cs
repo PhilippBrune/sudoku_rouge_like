@@ -24,14 +24,14 @@ namespace SudokuRoguelike.Save
         }
 
         // [REQ: SAVE-AUTO-001] Atomic write before serializing run state
-        // [REQ: SAVE-TUTO-001] Tutorial runs are not persisted
+        // [REQ: SAVE-TUTO-001] Sudoku Basics is not persisted; [REQ: CUSTOM-SAVE-001] a Custom Puzzle has a pair of its own
         public void Save(RunState runState, PuzzleSaveState puzzleState)
         {
-            if (runState == null || runState.TutorialMode) return;
+            if (runState == null || (runState.TutorialMode && !SaveFileService.IsCustomPuzzle(runState))) return;
 
             // Seasonal challenge saves go to a separate slot — do NOT block on DisableProgressionRewards.
             // For all other modes (e.g. SpiritTrials which also sets DisableProgressionRewards), skip.
-            if (!runState.IsSeasonalChallenge && runState.DisableProgressionRewards) return;
+            if (!runState.IsSeasonalChallenge && !runState.TutorialMode && runState.DisableProgressionRewards) return;
             if (runState.Mode == GameMode.IncenseWalk) return;   // [REQ: INCENSE-CLOCK-004] the walk cannot be resumed
 
             runState.SyncSeenModifiersToList();
@@ -53,7 +53,12 @@ namespace SudokuRoguelike.Save
                 ModifierDiscoveryService.MergeCursesIntoMeta(envelope.MetaProgress, runState.CursesSeenThisRun);
             }
 
-            if (runState.IsSeasonalChallenge)
+            if (runState.TutorialMode)
+            {
+                envelope.ActiveCustomRunState = runState;
+                envelope.ActiveCustomPuzzle = puzzleState;
+            }
+            else if (runState.IsSeasonalChallenge)
             {
                 envelope.ActiveSeasonalRunState = runState;
                 envelope.ActiveSeasonalPuzzle = puzzleState;
@@ -91,6 +96,17 @@ namespace SudokuRoguelike.Save
             var envelope = _saveFile.Load();
             envelope.ActiveRunState = null;
             envelope.ActivePuzzle = null;
+            _saveFile.Save(envelope);
+        }
+
+        /// <summary>[REQ: CUSTOM-SAVE-001] Drops the saved Custom Puzzle (solved, lost, or replaced by a new one).</summary>
+        public void ClearCustomPuzzle()
+        {
+            if (!_saveFile.HasSaveFile()) return;
+            var envelope = _saveFile.Load();
+            if (envelope.ActiveCustomRunState == null && envelope.ActiveCustomPuzzle == null) return;
+            envelope.ActiveCustomRunState = null;
+            envelope.ActiveCustomPuzzle = null;
             _saveFile.Save(envelope);
         }
 

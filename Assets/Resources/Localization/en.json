@@ -1,4 +1,7 @@
 ﻿{
+    "CustomPuzzle.ReplaceSaved":  "This replaces your saved puzzle. Press \"Start puzzle\" again.",
+    "CustomPuzzle.ContinueFailed":  "The saved puzzle could not be opened.",
+    "CustomPuzzle.Continue":  "Continue · {0}×{0} {1}",
     "CustomPuzzle.Code.ClassLocked":  "{0} is not unlocked yet.",
     "CustomPuzzle.Code.Read":  "Code read: the board is set up as shared.",
     "CustomPuzzle.Code.Invalid":  "The clipboard holds no share code (or one with a typo).",

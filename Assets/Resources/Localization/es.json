@@ -1,4 +1,7 @@
 {
+    "CustomPuzzle.ReplaceSaved":  "Esto reemplaza tu puzle guardado. Pulsa «Empezar puzle» otra vez.",
+    "CustomPuzzle.ContinueFailed":  "No se pudo abrir el puzle guardado.",
+    "CustomPuzzle.Continue":  "Continuar · {0}×{0} {1}",
     "CustomPuzzle.Code.ClassLocked":  "{0} aún no está desbloqueada.",
     "CustomPuzzle.Code.Read":  "Código leído: el tablero está como se compartió.",
     "CustomPuzzle.Code.Invalid":  "El portapapeles no tiene un código para compartir (o tiene uno con un error).",

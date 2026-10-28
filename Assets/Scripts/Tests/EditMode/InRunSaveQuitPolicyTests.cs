@@ -53,6 +53,21 @@ namespace SudokuRoguelike.Tests
             Assert.IsFalse(decision.ShouldShowMonthlyWalkPanel);
         }
 
+        // [REQ: CUSTOM-SAVE-001] A Custom Puzzle is saved on Save & Quit and dropped once solved or lost.
+        [Test]
+        [Requirement("CUSTOM-SAVE-001")]
+        public void Resolve_SavesACustomPuzzle_UntilItIsSolvedOrLost()
+        {
+            var custom = new RunState { Mode = GameMode.Tutorial, TutorialMode = true, RunNumber = 1, CurrentHP = 5, MaxHP = 5,
+                DisableProgressionRewards = true };
+            InRunSaveQuitPersistenceAction Action(bool onEndScreen, bool complete) => InRunSaveQuitPolicy.Resolve(
+                new InRunSaveQuitContext(true, true, true, onEndScreen, custom, complete)).PersistenceAction;
+
+            Assert.AreEqual(InRunSaveQuitPersistenceAction.SaveResumeState, Action(false, false), "mid-puzzle: kept");
+            Assert.AreEqual(InRunSaveQuitPersistenceAction.ClearCustomPuzzle, Action(false, true), "solved");
+            Assert.AreEqual(InRunSaveQuitPersistenceAction.ClearCustomPuzzle, Action(true, false), "lost, from the end screen");
+        }
+
         [Test]
         public void Resolve_ClearsFinishedGardenRunFromEndScreen()
         {

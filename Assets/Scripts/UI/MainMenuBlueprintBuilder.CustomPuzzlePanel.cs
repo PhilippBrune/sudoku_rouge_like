@@ -43,6 +43,13 @@ namespace SudokuRoguelike.UI
             backBtn.navigation = new Navigation { mode = Navigation.Mode.Automatic };
             backBtn.onClick.AddListener(mc.BackFromPanel);   // GAP-084: back to the screen before
 
+            // [REQ: CUSTOM-SAVE-001] Continue the saved Custom Puzzle (RM-209); OpenTutorial shows it with its board.
+            var continueBtn = ScrollUiKit.PillButton(screen, "BtnTutContinue", new Vector2(0.1172f, 0.0667f), new Vector2(0.2354f, 0.1111f),
+                string.Empty, 18, ScrollUiKit.Vermilion, Color.white, 22f);
+            continueBtn.navigation = new Navigation { mode = Navigation.Mode.Automatic };
+            continueBtn.onClick.AddListener(mc.ContinueCustomPuzzle);
+            continueBtn.gameObject.SetActive(false);
+
             tutCtrl.Configure(startBtn);
             EnsureComponent<CustomPuzzleScreen>(panel).Build(screen, tutCtrl, startBtn);
 

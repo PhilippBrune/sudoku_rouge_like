@@ -184,6 +184,12 @@ namespace SudokuRoguelike.UI
             start.offsetMin = start.offsetMax = Vector2.zero;
         }
 
+        /// <summary>A note on the tray's message line until the setup changes (RefreshTray).</summary>
+        public void ShowMessage(string text)
+        {
+            if (_rulesMessage != null) _rulesMessage.text = text;
+        }
+
         private void RefreshTray()
         {
             foreach (var chip in _chips) ScrollUiKit.DestroyNow(chip);

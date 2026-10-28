@@ -417,6 +417,7 @@ namespace SudokuRoguelike.UI
                 if (IsClassUnlockedOrDebug(cls, meta)) unlocked.Add(cls);
             if (unlocked.Count == 0) unlocked.Add(ClassId.NumberFreak);
             _tutorialMenuController?.RefreshClassDropdown(unlocked);
+            RefreshCustomContinue();
             _menu.Show(MenuScreen.TutorialSetup);
             InRunUiFactory.SelectFirstInteractable(_tutorialSetupPanel);
         }
@@ -925,7 +926,41 @@ namespace SudokuRoguelike.UI
                 return;
             }
 
+            // [REQ: CUSTOM-SAVE-001] Over a saved Custom Puzzle, Start asks first: a second press within 3 s replaces it.
+            if (new SaveFileService(SaveProfileService.ActiveSlot).SavedCustomPuzzle() != null
+                && Time.unscaledTime - _customReplaceAskedAt > CustomReplaceSeconds)
+            {
+                _customReplaceAskedAt = Time.unscaledTime;
+                _tutorialSetupPanel?.GetComponent<CustomPuzzleScreen>()?.ShowMessage(
+                    LocalizationService.T("CustomPuzzle.ReplaceSaved", "This replaces your saved puzzle. Press Start again."));
+                return;
+            }
+
             _gameBootstrap.LaunchTutorial(setup);
+        }
+
+        private const float CustomReplaceSeconds = 3f;
+        private float _customReplaceAskedAt = float.NegativeInfinity;
+
+        /// <summary>[REQ: CUSTOM-SAVE-001] Continues the saved Custom Puzzle (RM-209).</summary>
+        public void ContinueCustomPuzzle()
+        {
+            if (_gameBootstrap == null || _gameBootstrap.LaunchCustomResume()) return;
+            SetStatus(LocalizationService.T("CustomPuzzle.ContinueFailed", "The saved puzzle could not be opened."));
+            RefreshCustomContinue();
+        }
+
+        /// <summary>Shows Continue on the Custom Puzzle screen with the saved board's size, stars and rule count.</summary>
+        private void RefreshCustomContinue()
+        {
+            var button = _tutorialSetupPanel != null ? _tutorialSetupPanel.transform.Find("BtnTutContinue") : null;
+            if (button == null) return;
+            var saved = new SaveFileService(SaveProfileService.ActiveSlot).SavedCustomPuzzle();
+            button.gameObject.SetActive(saved != null);
+            var label = button.Find("Label")?.GetComponent<Text>();
+            if (saved != null && label != null)
+                label.text = LocalizationService.Format("CustomPuzzle.Continue", "Continue · {0}×{0} {1}", saved.BoardSize,
+                    new string('★', Mathf.Clamp(saved.Stars, 1, 7)));
         }
 
         // ── Game Modes ──

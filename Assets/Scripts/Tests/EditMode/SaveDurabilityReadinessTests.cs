@@ -253,6 +253,50 @@ namespace SudokuRoguelike.Tests
             Assert.AreEqual(0, queue.FailedWrites);
         }
 
+        // [REQ: CUSTOM-SAVE-001] RM-209: a Custom Puzzle is saved in a pair of its own beside the Garden Run, continues on
+        // the same board, and is gone once cleared; Sudoku Basics is never saved.
+        [Test]
+        [Requirement("CUSTOM-SAVE-001")]
+        public void ACustomPuzzle_IsSavedBesideTheGardenRun_AndContinuesOnTheSameBoard()
+        {
+            var save = new SaveFileService(TestSlot, new SaveWriteQueue());
+            var coordinator = new RunAutoSaveCoordinator(save);
+            var setup = new TutorialSetupConfig { BoardSize = 7, Stars = 3, Seed = 4242,
+                SelectedModifiers = new System.Collections.Generic.List<BossModifierId> { BossModifierId.KillerCages } };
+            var custom = new RunDirector();
+            custom.StartTutorialRun(setup, setup.Seed);
+            var board = custom.CurrentBoard;
+            int row = -1, col = -1;
+            for (var i = 0; i < board.Size * board.Size && row < 0; i++)
+                if (board.Cells[i / board.Size, i % board.Size] == 0) { row = i / board.Size; col = i % board.Size; }
+            board.PlaceValue(row, col, board.Solution[row, col]);
+
+            coordinator.Save(BuildRunState(9, 1), null);
+            coordinator.Save(custom.State, custom.ExportPuzzleSaveState());
+
+            var loaded = save.Load();
+            Assert.AreEqual(GameMode.GardenRun, loaded.ActiveRunState.Mode, "the Garden Run stays");
+            Assert.IsTrue(SaveFileService.IsCustomPuzzle(loaded.ActiveCustomRunState), "the Custom Puzzle has its own pair");
+            Assert.AreEqual(7, save.SavedCustomPuzzle().BoardSize, "Continue shows its board");
+
+            Assert.IsTrue(new RunResumeService(save).TryResumeCustomFromSave(out var state, out var puzzle));
+            var resumed = new RunDirector();
+            resumed.RestoreState(state);
+            Assert.IsTrue(resumed.ResumeSavedPuzzle(puzzle));
+            Assert.AreEqual(board.Solution[row, col], resumed.CurrentBoard.Cells[row, col], "the placed digit is back");
+            for (var r = 0; r < board.Size; r++)
+            for (var c = 0; c < board.Size; c++)
+                Assert.AreEqual(board.Solution[r, c], resumed.CurrentBoard.Solution[r, c], "the same board");
+
+            coordinator.ClearCustomPuzzle();
+            Assert.IsNull(save.SavedCustomPuzzle(), "cleared once solved, lost or replaced");
+            Assert.NotNull(save.Load().ActiveRunState, "and the Garden Run is untouched");
+
+            var basics = Tutorial.TutorialModeService.CreateSudokuBasicsRunState();
+            coordinator.Save(basics, null);
+            Assert.IsNull(save.Load().ActiveCustomRunState, "Sudoku Basics is not saved");
+        }
+
         [Test]
         public void GameBootstrap_QuitHookFlushesSharedPendingWrites()
         {

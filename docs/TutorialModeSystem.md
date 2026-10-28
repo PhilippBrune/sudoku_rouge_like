@@ -1,11 +1,12 @@
 # Tutorial Mode System
 
-**Version:** 1.13 | **Date:** 2026-10-28 | **Status:** implemented
+**Version:** 1.14 | **Date:** 2026-10-28 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.14 | 2026-10-28 | implemented | 0.3.0 playtest (RM-209, owner: one per profile, Continue also on the main menu): a Custom Puzzle is saved in a pair of its own and continued (CUSTOM-SAVE-001); the 1.12 concept is built. SAVE-TUTO-001 now covers Sudoku Basics only. |
 | 1.13 | 2026-10-28 | implemented | 0.3.0 playtest (RM-209, owner's pick UI-STYLE-037): a "?" beside each Board field explains it (CUSTOM-HELP-001); the puzzle's seed is shown, typed or rolled, and gives the same board (CUSTOM-SEED-001); a share code holds the whole setup with Copy and Paste (CUSTOM-CODE-001). |
 | 1.12 | 2026-10-28 | implemented | Concept (RM-209, 0.3.0 playtest): save and quit a Custom Puzzle in a pair of its own beside the Garden Run and the Monthly Walk. Not built. |
 | 1.11 | 2026-10-27 | implemented | 0.3.0 playtest: every chosen rule is mandatory for the board, and a rule without room is named on the status line (CUSTOM-RULE-001, GAP-086); Free resources mean no class: no passive shown or applied (CUSTOM-CLASS-001, GAP-087); one timer (HUD-TIMER-001, GAP-088). |
@@ -27,7 +28,7 @@
 
 Tutorial mode is an isolated practice environment using the same Sudoku engine as normal play, but with **all progression disabled**. It allows players to learn board mechanics, modifier rules, and class resource management without risk.
 
-**Disabled in tutorial:** `[SAVE-TUTO-001]`
+**Disabled in Sudoku Basics:** `[SAVE-TUTO-001]` (a Custom Puzzle is saved, CUSTOM-SAVE-001)
 - No XP earned or applied
 - No Gold earned
 - No item or relic acquisition
@@ -262,7 +263,7 @@ TutorialProgress (in ProfileService):
 
 ---
 
-## Concept: save and quit a Custom Puzzle (proposed 2026-10-28, RM-209, not built)
+## Save and quit a Custom Puzzle (concept 1.12, built 1.14, RM-209)
 
 The owner's request (0.3.0 playtest): a Custom Puzzle can be saved and quit, and continued later, without touching the
 Garden Run's save.
@@ -303,8 +304,15 @@ A third pair for the Custom Puzzle, built like the Monthly Walk's:
   the pair loads.
 - With the seed and the setup in the save, the share code of RM-209 (seed and setup in one code) uses the same fields.
 
-**Open for the owner:** one saved Custom Puzzle per profile (proposed) or several; whether Continue also sits on the
-main menu.
+**Owner's answers (2026-10-28):** one saved Custom Puzzle per profile; Continue also on the main menu.
+
+**[CUSTOM-SAVE-001] As built (1.14):** `SaveFileEnvelope.ActiveCustomRunState` and `ActiveCustomPuzzle`;
+`RunAutoSaveCoordinator.Save` routes a Custom Puzzle (Tutorial mode, run number 1) there and Sudoku Basics nowhere;
+`SaveFileService.Sanitize` drops a pair it cannot continue as a whole. Save & Quit keeps it (`InRunSaveQuitPolicy`);
+solving it, losing it or starting a new one clears it. The Custom Puzzle screen shows **Continue · 7×7 ★★★★** beside Back,
+and Start over a saved puzzle asks first ("This replaces your saved puzzle", a second press within 3 s);
+`GameBootstrap.LaunchCustomResume` rebuilds the board from the saved level, without generating it again. The main menu's
+Continue comes with its new layout (UI-STYLE-032).
 
 ## 7★ — Empty Grid Rules
 

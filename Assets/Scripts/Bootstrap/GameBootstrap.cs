@@ -312,7 +312,7 @@ namespace SudokuRoguelike.Bootstrap
             {
                 _run.RestoreState(savedState);
                 // Saves carrying their level definition resume without regenerating the puzzle.
-                if (!_run.ResumeSeasonalChallenge(savedPuzzle))
+                if (!_run.ResumeSavedPuzzle(savedPuzzle))
                 {
                     _run.StartSeasonalChallenge(SeasonalChallengeService.BuildChallengeConfig(now.Year, now.Month));
                     if (savedPuzzle != null && _run.CurrentBoard != null)
@@ -351,6 +351,7 @@ namespace SudokuRoguelike.Bootstrap
                 return;
             }
 
+            _autoSave.ClearCustomPuzzle();   // [REQ: CUSTOM-SAVE-001] a new Custom Puzzle replaces the saved one (the screen asked)
             // [REQ: CUSTOM-SEED-001] The screen's seed, so the same setup and seed give the same board (RM-209).
             var runtimeSeed = setup.Seed > 0 ? setup.Seed : BuildRuntimeSeed(seed);
             _menuMusic.Stop();
@@ -380,6 +381,25 @@ namespace SudokuRoguelike.Bootstrap
             BindRunToMap();
 
             Debug.Log("[GameBootstrap] Launched Sudoku Basics tutorial.");
+        }
+
+        /// <summary>[REQ: CUSTOM-SAVE-001] Continues the saved Custom Puzzle; false, staying on the menu, when there is
+        /// none or it cannot be rebuilt.</summary>
+        public bool LaunchCustomResume()
+        {
+            if (!_resumeService.TryResumeCustomFromSave(out var state, out var puzzle)) return false;
+            _run.DailyGoals = null;
+            _run.RestoreState(state);
+            if (!_run.ResumeSavedPuzzle(puzzle) || _run.CurrentBoard == null)
+            {
+                Debug.LogWarning("[GameBootstrap] The saved Custom Puzzle could not be rebuilt; staying on the menu.");
+                return false;
+            }
+            _menuMusic.Stop();
+            _screenManager.ShowGame();
+            BindRunToMap();
+            Debug.Log("[GameBootstrap] Continued the saved Custom Puzzle.");
+            return true;
         }
 
         public bool LaunchResume()

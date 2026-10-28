@@ -1,4 +1,7 @@
 ﻿{
+    "CustomPuzzle.ReplaceSaved":  "Das ersetzt dein gespeichertes Rätsel. Drück noch einmal auf „Rätsel starten“.",
+    "CustomPuzzle.ContinueFailed":  "Das gespeicherte Rätsel ließ sich nicht öffnen.",
+    "CustomPuzzle.Continue":  "Fortsetzen · {0}×{0} {1}",
     "CustomPuzzle.Code.ClassLocked":  "{0} ist noch nicht freigeschaltet.",
     "CustomPuzzle.Code.Read":  "Code gelesen: das Brett ist wie geteilt eingestellt.",
     "CustomPuzzle.Code.Invalid":  "In der Zwischenablage ist kein Teilen-Code (oder einer mit Tippfehler).",

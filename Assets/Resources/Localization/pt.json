@@ -1,4 +1,7 @@
 {
+    "CustomPuzzle.ReplaceSaved":  "Isso substitui seu quebra-cabeça salvo. Aperte “Começar quebra-cabeça” de novo.",
+    "CustomPuzzle.ContinueFailed":  "Não foi possível abrir o quebra-cabeça salvo.",
+    "CustomPuzzle.Continue":  "Continuar · {0}×{0} {1}",
     "CustomPuzzle.Code.ClassLocked":  "{0} ainda não está desbloqueada.",
     "CustomPuzzle.Code.Read":  "Código lido: o tabuleiro está como foi compartilhado.",
     "CustomPuzzle.Code.Invalid":  "A área de transferência não tem um código para compartilhar (ou tem um com erro).",

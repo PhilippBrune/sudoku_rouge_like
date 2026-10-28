@@ -1036,6 +1036,12 @@ namespace SudokuRoguelike.Tests
             if (rootGroup != null) rootGroup.alpha = 1f;
             host.GetComponent<MainMenuController>().ShowMainMenu();
             yield return null;
+            // CUSTOM-SAVE-001 (RM-209): a saved Custom Puzzle, so the screen offers Continue beside Back.
+            var saved = new RunDirector();
+            saved.StartTutorialRun(new TutorialSetupConfig { BoardSize = 7, Stars = 4, Seed = 77 }, 77);
+            var autoSave = new RunAutoSaveCoordinator(new SaveFileService(TestSlot));
+            autoSave.Save(saved.State, saved.ExportPuzzleSaveState());
+            SaveFileService.FlushSharedPendingWrites();
             Find(host, "BtnTutorial").GetComponent<Button>().onClick.Invoke();
             yield return null;
             var setup = host.GetComponentInChildren<TutorialMenuController>(true);
@@ -1054,6 +1060,7 @@ namespace SudokuRoguelike.Tests
             Find(host, "HelpDifficulty").GetComponent<Button>().onClick.Invoke();
             yield return new WaitForSecondsRealtime(0.3f);
             yield return Shoot(host, camera, prefix + "custom_puzzle_help.png");
+            autoSave.ClearCustomPuzzle();
         }
 
         // BOSS-MOD-002 / GAP-048: the line colours on real generated 9×9 puzzles. Every line on a board belongs to a rule

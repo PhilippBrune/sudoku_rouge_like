@@ -171,6 +171,25 @@ namespace SudokuRoguelike.Save
                 && runState.MaxPencil > 0;
         }
 
+        /// <summary>A Custom Puzzle (not Sudoku Basics, which is run number 0).</summary>
+        public static bool IsCustomPuzzle(RunState runState) =>
+            runState != null && runState.TutorialMode && runState.Mode == GameMode.Tutorial && runState.RunNumber > 0;
+
+        // [REQ: CUSTOM-SAVE-001]
+        public static bool IsResumableCustomRunState(RunState runState) =>
+            IsCustomPuzzle(runState) && runState.MaxHP > 0 && runState.CurrentHP > 0;
+
+        /// <summary>The saved Custom Puzzle's board, or null when there is none to continue.</summary>
+        public LevelConfig SavedCustomPuzzle()
+        {
+            if (!HasSaveFile()) return null;
+            var envelope = Load();
+            return IsResumableCustomRunState(envelope.ActiveCustomRunState) && IsUsablePuzzleSave(envelope.ActiveCustomPuzzle)
+                   && envelope.ActiveCustomPuzzle.HasLevelConfig
+                ? envelope.ActiveCustomPuzzle.LevelConfig
+                : null;
+        }
+
         public static bool IsResumableSeasonalRunState(RunState runState)
         {
             return runState != null
@@ -304,6 +323,14 @@ namespace SudokuRoguelike.Save
                 envelope.ActiveSeasonalRunState = null;
             if (!IsUsablePuzzleSave(envelope.ActiveSeasonalPuzzle))
                 envelope.ActiveSeasonalPuzzle = null;
+
+            // [REQ: CUSTOM-SAVE-001] A pair that cannot be continued is dropped as a whole.
+            if (!IsResumableCustomRunState(envelope.ActiveCustomRunState) || !IsUsablePuzzleSave(envelope.ActiveCustomPuzzle)
+                || !envelope.ActiveCustomPuzzle.HasLevelConfig)
+            {
+                envelope.ActiveCustomRunState = null;
+                envelope.ActiveCustomPuzzle = null;
+            }
         }
 
         private static void SanitizeOptions(OptionsState options)

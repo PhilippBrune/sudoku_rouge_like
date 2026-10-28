@@ -615,6 +615,7 @@ namespace SudokuRoguelike.Run
         // Safe to call from any thread — CreatePuzzleForConfig and PuzzleGenerationService use no Unity APIs.
         public void BakeNodePuzzle(LevelConfig config, int nodeIndex, CancellationToken cancel)
         {
+            var rules = RulesKey(config);   // before sanitizing, as the consumer's config is
             SanitizeGeneratedLevelConfig(config);
             EnsureBoardSizeSupportsActiveModifiers(config);
             PuzzleGenerationSettings settings = HasBoardShapingModifier(config)
@@ -661,7 +662,7 @@ namespace SudokuRoguelike.Run
 
             if (result.IsSuccess && !cancel.IsCancellationRequested)
             {
-                _preBakedNodePuzzles[nodeIndex] = (result.Board, result.Overlay);
+                _preBakedNodePuzzles[nodeIndex] = (result.Board, result.Overlay, rules);
                 Debug.Log($"[RunDirector] BakeNodePuzzle: node {nodeIndex} pre-baked (size={config.BoardSize}, mods={config.ActiveModifiers.Count}).");
             }
             else if (!cancel.IsCancellationRequested)
@@ -675,9 +676,11 @@ namespace SudokuRoguelike.Run
         // Atomically reads and removes a pre-baked puzzle for the given node index.
         // Returns false when the background task hasn't finished yet (or was cancelled);
         // the caller should fall back to synchronous StartLevel in that case.
-        public bool TryConsumePreBakedNode(int nodeIndex, out SudokuBoard board, out ModifierOverlayData overlay)
+        // [REQ: SHOP-RULE-001] A board baked for other rules is dropped: a bake that finished just as the market rolled the
+        // floor's rule again lands after the clear (review of RM-211).
+        public bool TryConsumePreBakedNode(int nodeIndex, LevelConfig expected, out SudokuBoard board, out ModifierOverlayData overlay)
         {
-            if (_preBakedNodePuzzles.TryRemove(nodeIndex, out var bake))
+            if (_preBakedNodePuzzles.TryRemove(nodeIndex, out var bake) && bake.rules == RulesKey(expected))
             {
                 board   = bake.board;
                 overlay = bake.overlay;
@@ -690,6 +693,9 @@ namespace SudokuRoguelike.Run
 
         // Discard all pre-baked non-boss node puzzles. Call at floor change and run start.
         public void ClearPreBakedNodePuzzles() => _preBakedNodePuzzles.Clear();
+
+        private static string RulesKey(LevelConfig config) =>
+            config == null ? string.Empty : config.BoardSize + ":" + string.Join(",", config.ActiveModifiers);
 
         /// <summary>
         /// Identical to <see cref="StartLevel"/> but skips board and overlay generation by using

@@ -67,8 +67,8 @@ namespace SudokuRoguelike.Run
         // Pre-baked full puzzles (board + overlay) for non-boss floor nodes, keyed by node index.
         // Populated in background tasks spawned by RunMapController.PrepareFixedNodeConfigs.
         // ConcurrentDictionary: written on background threads, read+removed on the main thread.
-        private readonly ConcurrentDictionary<int, (SudokuBoard board, ModifierOverlayData overlay)>
-            _preBakedNodePuzzles = new ConcurrentDictionary<int, (SudokuBoard, ModifierOverlayData)>();
+        private readonly ConcurrentDictionary<int, (SudokuBoard board, ModifierOverlayData overlay, string rules)>
+            _preBakedNodePuzzles = new ConcurrentDictionary<int, (SudokuBoard, ModifierOverlayData, string)>();
 
         // Async overlay generation — background task state for StartLevelAsync / TryCompleteAsyncLevel.
         // _asyncResult is written inside Task.Run and read on the main thread after Task.IsCompleted

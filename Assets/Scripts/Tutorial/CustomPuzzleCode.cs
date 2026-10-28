@@ -42,7 +42,8 @@ namespace SudokuRoguelike.Tutorial
         {
             setup = null;
             if (string.IsNullOrWhiteSpace(code) || code.Length > 64) return false;
-            var text = code.Trim().ToUpperInvariant().Replace("-", "").Replace(" ", "");
+            var text = code.Trim().ToUpperInvariant().Replace("-", "").Replace(" ", "")
+                .Replace('I', '1').Replace('L', '1').Replace('O', '0');
             if (!text.StartsWith(Prefix, StringComparison.Ordinal)) return false;
             if (!TryFromBase32(text.Substring(Prefix.Length), out var bytes) || bytes.Count < 7 || bytes.Count > MaxBytes) return false;
             if (bytes[bytes.Count - 1] != Check(bytes.GetRange(0, bytes.Count - 1))) return false;
@@ -108,9 +109,8 @@ namespace SudokuRoguelike.Tutorial
         {
             bytes = new List<byte>();
             int buffer = 0, bits = 0;
-            foreach (var raw in text)
+            foreach (var c in text)
             {
-                var c = raw == 'I' || raw == 'L' ? '1' : raw == 'O' ? '0' : raw;
                 var value = Alphabet.IndexOf(c);
                 if (value < 0) return false;
                 buffer = ((buffer << 5) | value) & 0xFFFF;
@@ -121,7 +121,7 @@ namespace SudokuRoguelike.Tutorial
                     bits -= 8;
                 }
             }
-            return bytes.Count > 0;
+            return bytes.Count > 0 && bits < 5 && (buffer & ((1 << bits) - 1)) == 0;   // one code per puzzle: no stray bits
         }
     }
 }

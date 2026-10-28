@@ -103,6 +103,18 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
+        public void ILAndO_ReadAsOneAndZero_AndStrayBitsAreRefused()
+        {
+            var code = CustomPuzzleCode.Encode(Setup());
+            Assert.IsTrue(CustomPuzzleCode.TryDecode("RI" + code.Substring(2), out _), "a typed I for the 1 in R1");
+            var last = code[code.Length - 1];
+            var alphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+            var next = alphabet[(alphabet.IndexOf(last) + 1) % 32];
+            Assert.IsFalse(CustomPuzzleCode.TryDecode(code.Substring(0, code.Length - 1) + next, out _),
+                "the last letter's unused bits must be zero, so one puzzle has one code");
+        }
+
+        [Test]
         public void AMistypedCode_IsRefused()
         {
             var code = CustomPuzzleCode.Encode(Setup());

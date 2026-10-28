@@ -184,11 +184,14 @@ namespace SudokuRoguelike.Save
         {
             if (!HasSaveFile()) return null;
             var envelope = Load();
-            return IsResumableCustomRunState(envelope.ActiveCustomRunState) && IsUsablePuzzleSave(envelope.ActiveCustomPuzzle)
-                   && envelope.ActiveCustomPuzzle.HasLevelConfig
-                ? envelope.ActiveCustomPuzzle.LevelConfig
-                : null;
+            return IsOpenCustomPair(envelope) ? envelope.ActiveCustomPuzzle.LevelConfig : null;
         }
+
+        // A saved, unsolved Custom Puzzle: the autosave after the last digit writes a full board, and a game closed on the
+        // end screen keeps it (review of RM-209).
+        private static bool IsOpenCustomPair(SaveFileEnvelope envelope) =>
+            IsResumableCustomRunState(envelope.ActiveCustomRunState) && IsUsablePuzzleSave(envelope.ActiveCustomPuzzle)
+            && envelope.ActiveCustomPuzzle.HasLevelConfig && Array.IndexOf(envelope.ActiveCustomPuzzle.Board, 0) >= 0;
 
         public static bool IsResumableSeasonalRunState(RunState runState)
         {
@@ -325,8 +328,7 @@ namespace SudokuRoguelike.Save
                 envelope.ActiveSeasonalPuzzle = null;
 
             // [REQ: CUSTOM-SAVE-001] A pair that cannot be continued is dropped as a whole.
-            if (!IsResumableCustomRunState(envelope.ActiveCustomRunState) || !IsUsablePuzzleSave(envelope.ActiveCustomPuzzle)
-                || !envelope.ActiveCustomPuzzle.HasLevelConfig)
+            if (!IsOpenCustomPair(envelope))
             {
                 envelope.ActiveCustomRunState = null;
                 envelope.ActiveCustomPuzzle = null;

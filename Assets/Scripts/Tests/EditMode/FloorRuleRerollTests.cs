@@ -60,6 +60,23 @@ namespace SudokuRoguelike.Tests
             CollectionAssert.AreEqual(old, poor.State.ActiveFloorModifiers);
         }
 
+        // A board baked before the roll is not served for the new rule (review of RM-211).
+        [Test]
+        public void ABoardBakedForTheOldRule_IsNotServedAfterTheRoll()
+        {
+            var run = StartRun(1, 150);
+            var index = run.CurrentFloorGraph.FindIndex(n => n != null && n.Type == NodeType.Puzzle);
+            var old = run.BuildNodeLevelConfig(run.CurrentFloorGraph[index], index);
+            run.BakeNodePuzzle(old.Clone(), index, System.Threading.CancellationToken.None);
+            Assume.That(run.RerollFloorRule());
+            var fresh = run.BuildNodeLevelConfig(run.CurrentFloorGraph[index], index);
+            Assert.IsFalse(run.TryConsumePreBakedNode(index, fresh, out _, out _), "the old rule's board is dropped");
+
+            run.BakeNodePuzzle(fresh.Clone(), index, System.Threading.CancellationToken.None);
+            Assert.IsTrue(run.TryConsumePreBakedNode(index, fresh, out var board, out _), "a board for the new rule is served");
+            Assert.IsNotNull(board);
+        }
+
         [Test]
         public void TheRoll_IsKeptInTheSave()
         {

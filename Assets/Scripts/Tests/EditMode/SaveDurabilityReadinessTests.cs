@@ -288,6 +288,13 @@ namespace SudokuRoguelike.Tests
             for (var c = 0; c < board.Size; c++)
                 Assert.AreEqual(board.Solution[r, c], resumed.CurrentBoard.Solution[r, c], "the same board");
 
+            // A full board is solved: nothing to continue, even when the game closed on the end screen (review of RM-209).
+            for (var r = 0; r < board.Size; r++)
+            for (var c = 0; c < board.Size; c++)
+                if (board.Cells[r, c] == 0) board.PlaceValue(r, c, board.Solution[r, c]);
+            coordinator.Save(custom.State, custom.ExportPuzzleSaveState());
+            Assert.IsNull(save.SavedCustomPuzzle(), "a solved puzzle is not offered");
+
             coordinator.ClearCustomPuzzle();
             Assert.IsNull(save.SavedCustomPuzzle(), "cleared once solved, lost or replaced");
             Assert.NotNull(save.Load().ActiveRunState, "and the Garden Run is untouched");

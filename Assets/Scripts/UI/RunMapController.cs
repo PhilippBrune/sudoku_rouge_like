@@ -145,7 +145,7 @@ namespace SudokuRoguelike.UI
             nextLevel = GetFixedLevelConfig(node) ?? _run.BuildNodeLevelConfig(node, nodeIndex);
 
             // Use a pre-baked puzzle if the background task finished in time; otherwise generate async.
-            if (_run.TryConsumePreBakedNode(nodeIndex, out var preBakedBoard, out var preBakedOverlay))
+            if (_run.TryConsumePreBakedNode(nodeIndex, nextLevel, out var preBakedBoard, out var preBakedOverlay))
             {
                 Debug.Log($"[RunMapController] Pre-baked hit for node {nodeIndex} — skipping synchronous generation.");
                 _run.StartLevelWithPreBakedPuzzle(nextLevel, preBakedBoard, preBakedOverlay);

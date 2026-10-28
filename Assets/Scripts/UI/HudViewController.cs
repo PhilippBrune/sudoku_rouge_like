@@ -816,6 +816,7 @@ namespace SudokuRoguelike.UI
                 if (btn != null) Destroy(btn.gameObject);
             _bagItemButtons.Clear();
             _selectedBagSlot = -1;
+            _hoverItem = -1;
 
             // Tear down the scroll container if one was built for a previous slot count.
             if (_bagScrollContainer != null)
@@ -837,6 +838,7 @@ namespace SudokuRoguelike.UI
             foreach (var btn in _bagRelicButtons)
                 if (btn != null) Destroy(btn.gameObject);
             _bagRelicButtons.Clear();
+            _hoverRelic = -1;   // HUD-DETAIL-001: a destroyed slot sends no pointer exit
 
             if (_bagRelicScrollContainer != null)
             {

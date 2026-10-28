@@ -14,8 +14,12 @@ namespace SudokuRoguelike.Bootstrap
 
         public bool IsDone => _done;
 
+        /// <summary>[REQ: UI-MENU-TITLE-001] True while the title screen covers the game (GAP-097).</summary>
+        public static bool Showing { get; private set; }
+
         public void Initialize(Transform _unused = null, Color _unusedColor = default)
         {
+            Showing = true;
             // Root-level object — not parented to anything so no hierarchy can interfere.
             _panel = new GameObject("_SplashOverlay");
             DontDestroyOnLoad(_panel);
@@ -75,6 +79,7 @@ namespace SudokuRoguelike.Bootstrap
             yield return StartCoroutine(AnimationHelper.FadeOut(_cg, 0.6f));
             _panel.SetActive(false);
             _done = true;
+            Showing = false;
             onComplete?.Invoke();
         }
 
@@ -106,5 +111,7 @@ namespace SudokuRoguelike.Bootstrap
             }
             if (target != null) target.localScale = Vector3.one * toScale;
         }
+
+        private void OnDestroy() => Showing = false;
     }
 }

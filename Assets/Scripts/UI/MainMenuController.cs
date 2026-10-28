@@ -130,6 +130,13 @@ namespace SudokuRoguelike.UI
         // left-stick / d-pad → navigate via EventSystem
         private void Update()
         {
+            // [REQ: UI-MENU-TITLE-001] GAP-097: nothing is chosen under the title screen, so A or Enter there presses nothing.
+            if (SudokuRoguelike.Bootstrap.SplashScreenController.Showing)
+            {
+                if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
+                return;
+            }
+
             InputRemapService.UpdateCursorVisibility();
 
 

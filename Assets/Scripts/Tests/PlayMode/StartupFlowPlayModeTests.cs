@@ -81,6 +81,33 @@ namespace SudokuRoguelike.Tests
             Assert.IsTrue(StartupFlowController.IsFirstRunSetupComplete(new SaveFileService(TestSlot).Load()));
         }
 
+        // [REQ: UI-MENU-TITLE-001] GAP-097: the main menu waited behind the title screen with "Start Game" chosen, so a
+        // pad's A (or Enter) on the title opened Select Class ("New Run"). Both the menu's A handler and the input
+        // module's Submit act on the chosen button; a virtual pad cannot press the old input's joystick button, so the
+        // test checks that nothing is chosen while the title shows, and that the menu takes the focus after it.
+        [UnityTest]
+        [Requirement("UI-MENU-TITLE-001")]
+        public IEnumerator UnderTheTitle_NoMenuButtonIsChosen()
+        {
+            var envelope = new SaveFileEnvelope();
+            StartupFlowController.MarkFirstRunSetupComplete(envelope);
+            envelope.TutorialProgress.CompletedKeys.Add("sudoku_basics");
+            new SaveFileService(TestSlot).Save(envelope);
+            SaveFileService.FlushSharedPendingWrites();
+            SetSplashShown(false);   // a start from the main scene: the title screen shows inline
+
+            new GameObject("TitleBootstrapUnderTest").AddComponent<GameBootstrap>();
+            for (var i = 0; i < 5; i++) yield return null;
+            Assert.IsTrue(SplashScreenController.Showing, "the title screen is up");
+            Assert.IsNull(UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject,
+                "no menu button is chosen under the title, so A there presses nothing");
+
+            yield return new WaitForSecondsRealtime(4f);
+            Assert.IsFalse(SplashScreenController.Showing, "the title screen ended");
+            Assert.IsTrue(Find("MenuCard").activeInHierarchy, "the main menu shows after the title");
+            Assert.NotNull(UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject, "and takes the focus");
+        }
+
         private static GameObject Find(string name)
         {
             foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))

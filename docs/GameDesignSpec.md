@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.27 | **Date:** 2026-10-28 | **Status:** implemented
+**Version:** 1.28 | **Date:** 2026-10-28 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.28 | 2026-10-28 | implemented | 0.3.0 playtest, owner answer to D2 ("New Run"): no main menu button is chosen while the title screen shows, so A or Enter on the title no longer opens Select Class (UI-MENU-TITLE-001, GAP-097). |
 | 1.27 | 2026-10-28 | implemented | OPT-DRAG-001: a drag shows the value and sets and saves it once when the press ends (review: one save per drag, not one per step). |
 | 1.26 | 2026-10-28 | implemented | 0.3.0 playtest (RM-210): every Options value row can be set by pressing or dragging its bar with the mouse (OPT-DRAG-001). |
 | 1.25 | 2026-10-27 | implemented | 0.3.0 playtest: the input lock also follows a key or pad move (owner: everywhere, GAP-095); a move takes the new cell's digit as the highlight, as a click does (GAP-094). The pad layout is in InputAndProfilesSpec 2.5 (INPUT-PAD-004). |
@@ -458,6 +459,7 @@ Source of truth: [EndlessZenMode](EndlessZenMode.md) (decided 2026-10-07, SPEC-C
 - Profiles, Options, Credits, Quit
 - **[MENU-BACK-001]** Every Back button and B/Escape return to the screen before (Game Modes → Incense Walk → Select Class → Back is Game Modes); with none, the main menu (1.24, GAP-084)
 - **[UI-MENU-QUIT-001]** Quit closes the game on a second press within 3 s; the first press says so on the status line (1.22, GAP-074: a stray press closed the game)
+- **[UI-MENU-TITLE-001]** While the title screen shows, the main menu behind it has no chosen button and reads no input; it takes the focus when the title ends (1.28, GAP-097: a pad's A on the title opened Select Class)
 - **[UI-MENU-VERSION-001]** The game's version ("Version 0.2.0", from the player settings) in the bottom-left corner
 - Daily Walk and Monthly Walk widgets next to the menu, with today's goals, streak, theme and countdown (SPEC-CONF-027, GAP-028)
 

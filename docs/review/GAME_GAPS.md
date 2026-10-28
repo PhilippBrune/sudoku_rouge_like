@@ -101,6 +101,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-094](#gap-094) | Moving with keys coloured cells purple from a stale highlight | FIXED (0.3.0 playtest, 2026-10-27; a real pad still to check) | LOW | P3 |
 | [GAP-095](#gap-095) | The input lock applied after a mouse click but not after a key or pad move | FIXED (0.3.0 playtest, 2026-10-27; a real pad still to check) | LOW | P3 |
 | [GAP-096](#gap-096) | Spirit Trials tier select showed "???" instead of the stars | FIXED (found making the RM-217 mockups, 2026-10-28) | LOW | P4 |
+| [GAP-097](#gap-097) | A pad's A on the title screen opened Select Class instead of the main menu | FIXED (0.3.0 playtest D2, 2026-10-28) | LOW | P3 |
 | [GAP-067](#gap-067) | Moonshade Offering's "+2 starting pencil" did nothing (the run starts at full pencil) | FIXED (2026-10-22) | LOW | P3 |
 | [GAP-064](#gap-064) | Scholar's Burden: no free Ink Well, "+5 pencil" did nothing, "−1 slot" could add a slot | FIXED (as planned, 2026-10-22) | MEDIUM | P3 |
 | [GAP-063](#gap-063) | Class levels 30 and 40 promised rewards the game did not grant (starting items, frames) | FIXED (2026-10-21) | MEDIUM | P2 |
@@ -1166,6 +1167,15 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Status:** FIXED (owner: "Überall") · **Severity:** LOW · **Priority:** P3
 - **Fix:** A key or pad move starts the lock like a click (`MoveSelection`); "Jump to Next Empty Cell" still does not.
 - **Tests:** as GAP-094.
+
+## GAP-097
+**A pad's A on the title screen opened Select Class instead of the main menu**
+
+- **Requirement:** UI-MENU-TITLE-001 (GameDesignSpec)
+- **Status:** FIXED (owner, D2: the game started on "New Run") · **Severity:** LOW · **Priority:** P3
+- **Problem:** The main menu is built and shown behind the title screen, and its update chose the first button (Start Game) at once. An A press or Enter on the title went to that button, through the menu's own A handler and the input module's Submit, and opened Select Class.
+- **Fix:** `SplashScreenController.Showing` is true while the title shows; the main menu clears the choice and reads no input until it ends, then takes the focus as before.
+- **Tests:** `StartupFlowPlayModeTests.UnderTheTitle_NoMenuButtonIsChosen` (nothing chosen under the title, the focus after it). A virtual pad cannot press the old input's joystick button, so the A press itself is for the real-pad check (K2).
 
 ## GAP-096
 **Spirit Trials tier select showed "???" instead of the stars**

@@ -161,6 +161,9 @@ namespace SudokuRoguelike.Tests
             ClickButton(host, "BtnTrials");
             yield return null;
             AssertPanelActive(host, "SpiritTrialsTierSelectPanel");
+            // [REQ: TRIAL-TIER-001] GAP-096: each tier shows its stars, not "???".
+            Assert.AreEqual("\u2605\u2605\u2605", FindComponent<Text>(host, "TierStars_0").text, "Apprentice");
+            Assert.AreEqual("\u2605\u2605\u2605\u2605\u2605", FindComponent<Text>(host, "TierStars_3").text, "Grandmaster");
 
             ClickButton(host, "BtnTrialsSelectBack");
             yield return null;

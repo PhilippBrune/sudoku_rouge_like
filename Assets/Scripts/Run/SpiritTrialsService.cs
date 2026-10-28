@@ -14,24 +14,29 @@ namespace SudokuRoguelike.Run
             _random = new Random(seed);
         }
 
+        /// <summary>[REQ: TRIAL-TIER-001] The tier's stars (SpiritTrialsMode tier table); the tier select shows the same.</summary>
+        public static int StarsFor(SpiritTrialsTier tier) => tier switch
+        {
+            SpiritTrialsTier.Apprentice => 3,
+            SpiritTrialsTier.Adept => 3,
+            SpiritTrialsTier.Master => 4,
+            _ => 5,   // Grandmaster
+        };
+
         public LevelConfig BuildTrialLevel(SpiritTrialsTier tier, bool allowIrregularPuzzles)
         {
             // [REQ: TRIAL-SESSION-001] All tiers use 9×9 board per spec
             const int size = 9;
-            int stars, modCount;
+            var stars = StarsFor(tier);
 
             // [REQ: TRIAL-TIER-001]
-            switch (tier)
+            var modCount = tier switch
             {
-                case SpiritTrialsTier.Apprentice:
-                    stars = 3; modCount = 0; break;
-                case SpiritTrialsTier.Adept:
-                    stars = 3; modCount = 1; break;  // 3★, 1 modifier
-                case SpiritTrialsTier.Master:
-                    stars = 4; modCount = 1; break;  // 4★, 1 modifier
-                default: // Grandmaster
-                    stars = 5; modCount = 2; break;  // 5★, 2 modifiers
-            }
+                SpiritTrialsTier.Apprentice => 0,
+                SpiritTrialsTier.Adept => 1,
+                SpiritTrialsTier.Master => 1,
+                _ => 2,   // Grandmaster
+            };
 
             var config = new LevelConfig
             {

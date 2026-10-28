@@ -1033,10 +1033,10 @@ namespace SudokuRoguelike.UI
             // Four tier rows: Apprentice, Adept, Master, Grandmaster
             var tiers = new[]
             {
-                (SpiritTrialsTier.Apprentice,  "SpiritTrials.Tier.Apprentice",  "???  ",  5, 15, "5:00"),
-                (SpiritTrialsTier.Adept,       "SpiritTrials.Tier.Adept",       "???  ",  4, 12, "7:00"),
-                (SpiritTrialsTier.Master,      "SpiritTrials.Tier.Master",      "???? ",  3, 10, "9:00"),
-                (SpiritTrialsTier.Grandmaster, "SpiritTrials.Tier.Grandmaster", "?????", 2,  8, "12:00"),
+                (SpiritTrialsTier.Apprentice,  "SpiritTrials.Tier.Apprentice",  5, 15, "5:00"),
+                (SpiritTrialsTier.Adept,       "SpiritTrials.Tier.Adept",       4, 12, "7:00"),
+                (SpiritTrialsTier.Master,      "SpiritTrials.Tier.Master",      3, 10, "9:00"),
+                (SpiritTrialsTier.Grandmaster, "SpiritTrials.Tier.Grandmaster", 2,  8, "12:00"),
             };
 
             float[] rowBases = { 0.62f, 0.49f, 0.36f, 0.23f };
@@ -1044,7 +1044,9 @@ namespace SudokuRoguelike.UI
 
             for (var i = 0; i < tiers.Length; i++)
             {
-                var (tier, nameKey, stars, hp, pencil, parTime) = tiers[i];
+                var (tier, nameKey, hp, pencil, parTime) = tiers[i];
+                // GAP-096: an escape, so a file saved in another encoding cannot turn the stars into "?" again
+                var stars = new string('\u2605', SpiritTrialsService.StarsFor(tier));
                 var rowBase    = rowBases[i];
                 var capturedTier = tier;
 

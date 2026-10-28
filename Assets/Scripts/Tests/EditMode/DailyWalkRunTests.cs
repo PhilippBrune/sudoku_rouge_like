@@ -7,6 +7,7 @@ using SudokuRoguelike.Core;
 using SudokuRoguelike.Meta;
 using SudokuRoguelike.Run;
 using SudokuRoguelike.Save;
+using UnityEngine;
 using static SudokuRoguelike.Run.DailyGoalService;
 
 namespace SudokuRoguelike.Tests
@@ -148,6 +149,71 @@ namespace SudokuRoguelike.Tests
             var result = RunResultFactory.Build(run, victory: true, bossPhaseReached: 0, secondsPlayed: 60);
             Assert.IsTrue(result.DailyWalk);
             Assert.IsFalse(result.Victory);
+        }
+
+        // [REQ: DAILY-WALK-009] RM-216, way B (owner): the walk on one path over the gardens of Floors 2 and 4; the player
+        // counts its floors 1 and 2; one event tile per floor for the goal that replaced "Take the Risk route".
+        [Test]
+        [Requirement("DAILY-WALK-009")]
+        public void TheWalk_GoesOnOnePathOverFloorsTwoAndFour()
+        {
+            var run = new RunDirector();
+            run.StartRun(new LaunchRequest { ClassId = 0, Mode = GameMode.GardenRun, DailyWalk = true }, WalkSeed(Monday));
+            Assert.AreEqual(1, run.State.CurrentFloor, "the Moss Garden first");
+            Assert.AreEqual(1, run.State.WalkFloor, "the walk's first floor");
+            Assert.IsFalse(run.State.OnLastFloor);
+            AssertOnePathWithAnEvent(run);
+
+            run.AdvanceToNextFloor();
+            Assert.AreEqual(3, run.State.CurrentFloor, "then the Stone Lantern Walk");
+            Assert.AreEqual(2, run.State.WalkFloor);
+            Assert.IsTrue(run.State.OnLastFloor, "its boss ends the walk");
+            AssertOnePathWithAnEvent(run);
+            Assert.IsTrue(SaveFileService.IsResumableRunState(run.State), "Floor 4 of a two-floor walk can be resumed");
+
+            var garden = new RunDirector();
+            garden.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, ClassLevel = 1 }, WalkSeed(Monday));
+            Assert.AreEqual(0, garden.State.CurrentFloor, "a Garden Run is untouched");
+            Assert.IsTrue(garden.CurrentFloorGraph.Any(n => n.Route == RouteType.RiskRoute), "and keeps both routes");
+        }
+
+        private static void AssertOnePathWithAnEvent(RunDirector run)
+        {
+            var graph = run.CurrentFloorGraph;
+            Assert.IsFalse(graph.Any(n => n.Route == RouteType.RiskRoute), "no Risk route");
+            Assert.IsFalse(graph.Any(n => n.IsCrossLink), "no cross-link");
+            Assert.AreEqual(1, graph.Count(n => n.Type == NodeType.Event), "one event tile");
+            Assert.IsTrue(graph.Where(n => n.Type != NodeType.Boss).All(n => n.NextNodes.Count == 1), "one way on from every tile");
+        }
+
+        // [REQ: DAILY-WALK-009] A walk saved before RM-216 resumes on its old Floors 1 and 2 with both routes.
+        [Test]
+        [Requirement("DAILY-WALK-009")]
+        public void AWalkSavedBefore_KeepsItsFloorsAndRoutes()
+        {
+            var old = JsonUtility.FromJson<RunState>("{\"DailyWalk\":true,\"TotalFloors\":2,\"CurrentFloor\":1}");
+            Assert.IsFalse(old.DailyWalkPath);
+            Assert.AreEqual(2, old.WalkFloor);
+            Assert.IsTrue(old.OnLastFloor);
+            Assert.AreEqual(1, old.FloorStep);
+        }
+
+        // [REQ: DAILY-WALK-009] "Read an event on the path" replaced "Take the Risk route" in the pool's easy tier.
+        [Test]
+        [Requirement("DAILY-WALK-009")]
+        public void ReadingAnEvent_CompletesTheEasyGoal()
+        {
+            var ids = GetAllGoals().Select(g => g.Id).ToList();
+            CollectionAssert.DoesNotContain(ids, "t1_choose_risk");
+            var state = new DailyGoalState();
+            RefreshIfNewDay(state, DateTime.Today);
+            state.TodayGoalIds = new[] { ids.IndexOf("t1_read_event"), ids.IndexOf("t2_floor2"), ids.IndexOf("t3_finish_hp3") };
+            var run = new RunDirector();
+            run.StartRun(new LaunchRequest { ClassId = 0, Mode = GameMode.GardenRun, DailyWalk = true }, WalkSeed(Monday));
+            run.DailyGoals = state;
+            run.BuildCurrentEvent();
+            run.ResolveCurrentEventChoice(0);
+            Assert.IsTrue(state.TodayGoalCompleted[0], "reading the event completes the goal");
         }
 
         [Test]

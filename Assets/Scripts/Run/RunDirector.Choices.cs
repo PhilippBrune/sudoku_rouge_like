@@ -95,6 +95,15 @@ namespace SudokuRoguelike.Run
 
         // ── Events ──
 
+        /// <summary>[REQ: DAILY-WALK-009] The Daily Walk on one path over the gardens of Floors 2 and 4 (RM-216).</summary>
+        private void BeginDailyWalkPath()
+        {
+            State.DailyWalk = true;
+            State.DailyWalkPath = true;
+            State.TotalFloors = DailyGoalService.WalkFloors;
+            State.CurrentFloor = 1;
+        }
+
         public RunEvent BuildCurrentEvent()
         {
             _eventService.ReseedForDecision(DecisionSeed(DecisionPurpose.Event));
@@ -109,6 +118,9 @@ namespace SudokuRoguelike.Run
             _eventService.ReseedForDecision(DecisionSeed(DecisionPurpose.EventChoice, optionIndex));
             var summary = _eventService.ResolveChoice(State, CurrentEvent, optionIndex);
             CurrentEvent = null;
+            // [REQ: DAILY-WALK-009] The easy goal of the Daily Walk's path (owner's pick for the Risk route goal).
+            if (DailyGoals != null)
+                DailyGoalService.EvaluateInRun(DailyGoals, State, CurrentLevelState, DailyGoalService.TriggerEventRead);
             return summary;
         }
 

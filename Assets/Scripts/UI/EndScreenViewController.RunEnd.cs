@@ -83,7 +83,7 @@ namespace SudokuRoguelike.UI
                 run.Victory ? new Color(0.80f, 0.78f, 0.78f, 1f) : new Color(0.62f, 0.62f, 0.62f, 1f));
 
             var state = run.State;
-            var floorReached = run.Victory ? state.TotalFloors : state.CurrentFloor + 1;
+            var floorReached = run.Victory ? state.TotalFloors : state.WalkFloor;
             // [REQ: RUN-LENGTH-001] The eyebrow names the run's length too ("· 41 min"), from one minute on.
             var eyebrow = F("InRun.End.Scroll.Eyebrow", ClassLabel(state.ClassId));
             if (state.ActiveSeconds >= 60f) eyebrow += " · " + RunLengthLog.FormatDuration(state.ActiveSeconds);
@@ -147,7 +147,7 @@ namespace SudokuRoguelike.UI
             for (var f = 0; f < floors; f++)
             {
                 var x = 0.5f + (f - (floors - 1) * 0.5f) * step;
-                var cleared = victory || f < state.CurrentFloor;
+                var cleared = victory || f < state.WalkFloor - 1;
                 var lost = !victory && f == state.CurrentFloor;
                 if (cleared)
                 {

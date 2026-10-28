@@ -1,4 +1,6 @@
 ﻿{
+    "InRun.Path.OnePath":  "One path: <i>{0}</i>",
+    "Challenge.Daily.Goal.t1_read_event.Description":  "Read an event on the path",
     "SpiritTrials.KeyHint.Keys":  "Arrows choose a trial · Enter on to Select Class · Esc back",
     "SpiritTrials.KeyHint":  "◀ ▶ choose a trial · A on to Select Class · B back",
     "SpiritTrials.Slip.Body":  "HP {0} · Pencil {1} · finish under {2} for the time bonus. No XP, items or relics; the best score per tier is kept.",
@@ -995,7 +997,6 @@
     "Challenge.Daily.Goal.t1_collect_item.Description":  "Collect any item",
     "Challenge.Daily.Goal.t1_use_pencil.Description":  "Use pencil marks in a puzzle",
     "Challenge.Daily.Goal.t1_visit_shop.Description":  "Visit the Coffee & Ice Cream cart",
-    "Challenge.Daily.Goal.t1_choose_risk.Description":  "Take the Risk route on any floor",
     "Challenge.Daily.Goal.t2_no_mistake.Description":  "Complete a puzzle with no mistakes",
     "Challenge.Daily.Goal.t2_defeat_boss.Description":  "Defeat any boss",
     "Challenge.Daily.Goal.t2_collect_150g.Description":  "Collect 150 gold in a single run",

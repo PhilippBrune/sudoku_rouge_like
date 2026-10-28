@@ -1,4 +1,6 @@
 {
+    "InRun.Path.OnePath":  "Un seul chemin : <i>{0}</i>",
+    "Challenge.Daily.Goal.t1_read_event.Description":  "Lire un événement sur le chemin",
     "SpiritTrials.KeyHint.Keys":  "Flèches : choisir une épreuve · Entrée vers le choix de classe · Échap retour",
     "SpiritTrials.KeyHint":  "◀ ▶ choisir une épreuve · A vers le choix de classe · B retour",
     "SpiritTrials.Slip.Body":  "PV {0} · Crayon {1} · finissez sous {2} pour le bonus de temps. Ni XP, ni objets, ni reliques ; le meilleur score par niveau est gardé.",
@@ -1003,7 +1005,6 @@
     "Challenge.Daily.Goal.t1_collect_item.Description":  "Collecter n'importe quel objet",
     "Challenge.Daily.Goal.t1_use_pencil.Description":  "Utiliser des marques de crayon dans un puzzle",
     "Challenge.Daily.Goal.t1_visit_shop.Description":  "Visiter le stand de café et glaces",
-    "Challenge.Daily.Goal.t1_choose_risk.Description":  "Prendre la voie risquée à n'importe quel étage",
     "Challenge.Daily.Goal.t2_no_mistake.Description":  "Terminer un puzzle sans erreur",
     "Challenge.Daily.Goal.t2_defeat_boss.Description":  "Vaincre n'importe quel boss",
     "Challenge.Daily.Goal.t2_collect_150g.Description":  "Collecter 150 or en une seule partie",

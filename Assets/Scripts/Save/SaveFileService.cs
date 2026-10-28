@@ -165,7 +165,7 @@ namespace SudokuRoguelike.Save
                 && runState.RunNumber > 0
                 && runState.TotalFloors > 0
                 && runState.CurrentFloor >= 0
-                && runState.CurrentFloor < runState.TotalFloors
+                && runState.WalkFloor <= runState.TotalFloors   // DAILY-WALK-009: the walk's path is on Floors 2 and 4
                 && runState.MaxHP > 0
                 && runState.CurrentHP > 0
                 && runState.MaxPencil > 0;

@@ -822,7 +822,7 @@ namespace SudokuRoguelike.UI
         private static void FillRunCard(Transform runCard, RunState rs)
         {
             SetText(runCard, "RunLine", LocalizationService.Format("MainMenu.RunLine", "Floor {0} · {1} · {2}",
-                rs.CurrentFloor + 1, FloorThemeData.GetFloorName(rs.CurrentFloor), ClassCatalog.DisplayName(rs.ClassId)));
+                rs.WalkFloor, FloorThemeData.GetFloorName(rs.CurrentFloor), ClassCatalog.DisplayName(rs.ClassId)));
             SetText(runCard, "RunChips", LocalizationService.Format("MainMenu.RunChips", "HP {0}/{1} · Gold {2} · Harmony {3}",
                 rs.CurrentHP, rs.MaxHP, rs.CurrentGold, rs.HarmonyLevel));
             var icon = runCard.Find("ClassDisc/ClassIcon")?.GetComponent<Image>();

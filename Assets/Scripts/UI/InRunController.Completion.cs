@@ -134,7 +134,7 @@ namespace SudokuRoguelike.UI
             var node = _map?.Run?.GetCurrentNode();
             var isBoss = node?.Type == NodeType.Boss;
             var runState = _map?.Run?.State;
-            var isFinalBoss = isBoss && runState != null && runState.CurrentFloor >= runState.TotalFloors - 1;
+            var isFinalBoss = isBoss && runState != null && runState.OnLastFloor;
 
             // Boss nodes do not show normal item rewards, but they must still grant
             // completion rewards and record boss defeat/statistics before end-screen persistence.
@@ -219,7 +219,7 @@ namespace SudokuRoguelike.UI
             if (node != null && node.Type == NodeType.Boss)
             {
                 var s = _map.Run.State;
-                if (s.CurrentFloor >= s.TotalFloors - 1)
+                if (s.OnLastFloor)
                 {
                     SetActive(_sudokuPanel, false);
                     SetActive(_pathPanel, false);

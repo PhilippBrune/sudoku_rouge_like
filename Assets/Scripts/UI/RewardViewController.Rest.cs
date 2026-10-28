@@ -53,7 +53,7 @@ namespace SudokuRoguelike.UI
             ScrollUiKit.Fill(screen.transform, "FloorShade", Vector2.zero, new Vector2(1f, 0.33f), new Color(0f, 0f, 0f, 0.30f));
 
             ScrollUiKit.Banner(screen.transform, "RestBanner", new Vector2(0.3177f, 0.8444f), new Vector2(0.6823f, 0.9574f),
-                "RestEyebrow", F("InRun.BossDefeated.Eyebrow", state.CurrentFloor + 1, state.TotalFloors,
+                "RestEyebrow", F("InRun.BossDefeated.Eyebrow", state.WalkFloor, state.TotalFloors,
                     FloorThemeData.GetFloorName(state.CurrentFloor)),
                 "RestTitle", T("InRun.Rest.SceneTitle"));
             BuildRestRunTag(screen.transform, state);

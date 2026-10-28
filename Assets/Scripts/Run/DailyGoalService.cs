@@ -34,7 +34,7 @@ namespace SudokuRoguelike.Run
             new GoalDefinition { Id = "t1_collect_item", Tier = GoalTier.Easy, Description = "Collect any item", RewardDescription = "+50 XP" },
             new GoalDefinition { Id = "t1_use_pencil", Tier = GoalTier.Easy, Description = "Use pencil marks in a puzzle", RewardDescription = "+50 XP" },
             new GoalDefinition { Id = "t1_visit_shop", Tier = GoalTier.Easy, Description = "Visit the Coffee & Ice Cream cart", RewardDescription = "+50 XP" },
-            new GoalDefinition { Id = "t1_choose_risk", Tier = GoalTier.Easy, Description = "Take the Risk route on any floor", RewardDescription = "+50 XP" },
+            new GoalDefinition { Id = "t1_read_event", Tier = GoalTier.Easy, Description = "Read an event on the path", RewardDescription = "+50 XP" },
 
             // ── Tier 2 (Medium) ──────────────────────────────
             new GoalDefinition { Id = "t2_no_mistake", Tier = GoalTier.Medium, Description = "Complete a puzzle with no mistakes", RewardDescription = "+100 XP" },
@@ -270,7 +270,7 @@ namespace SudokuRoguelike.Run
         public const string TriggerNoMistakeBoss      = "no_mistake_boss";
         public const string TriggerRestVisited        = "rest_visited";
         public const string TriggerShopVisited        = "shop_visited";
-        public const string TriggerRiskRouteChosen    = "risk_route_chosen";
+        public const string TriggerEventRead          = "event_read";
         public const string TriggerItemCollected      = "item_collected";
         public const string TriggerItemUsed           = "item_used";
         public const string TriggerPencilMarkUsed     = "pencil_mark_used";
@@ -299,7 +299,7 @@ namespace SudokuRoguelike.Run
                 case "t1_collect_item":  return trigger == TriggerItemCollected;
                 case "t1_use_pencil":    return trigger == TriggerPencilMarkUsed;
                 case "t1_visit_shop":    return trigger == TriggerShopVisited;
-                case "t1_choose_risk":   return trigger == TriggerRiskRouteChosen;
+                case "t1_read_event":    return trigger == TriggerEventRead;
 
                 case "t2_no_mistake":    return trigger == TriggerNoMistakePuzzle;
                 case "t2_defeat_boss":   return trigger == TriggerBossDefeated;

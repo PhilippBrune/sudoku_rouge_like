@@ -188,6 +188,32 @@ namespace SudokuRoguelike.Tests
             }
         }
 
+        // DAILY-WALK-009 (RM-216): the Daily Walk's path on its two floors (the gardens of Floors 2 and 4, one row, one event).
+        [UnityTest]
+        public IEnumerator RenderDailyWalkPath()
+        {
+            var camera = CreateCamera();
+            _dailyWalk = true;
+            try
+            {
+                for (var walkFloor = 1; walkFloor <= 2; walkFloor++)
+                {
+                    var target = walkFloor;
+                    _beforeBindAlways = run => { if (target == 2) run.AdvanceToNextFloor(); };
+                    var (host, _) = StartRun(7390, false);
+                    _beforeBindAlways = null;
+                    yield return DismissIntro();
+                    yield return new WaitForSecondsRealtime(2.0f);
+                    yield return Shoot(host, camera, $"after_daily_walk_path_{walkFloor}.png");
+                    host.SetActive(false);
+                }
+            }
+            finally
+            {
+                _dailyWalk = false;
+            }
+        }
+
         // UI-STYLE-021: entering a floor (garden flow D) on floors 1, 2 and 4 (with ECON-BAL-003's mistake cost), and the
         // path half unrolled.
         [UnityTest]
@@ -223,6 +249,7 @@ namespace SudokuRoguelike.Tests
 
         private Action<RunDirector> _beforeBindAlways;
         private int _puzzleSize = 6;
+        private bool _dailyWalk;
         private int _regionVariant;
 
         // UI-STYLE-002: the puzzle on the hanging scroll: 6×6 on floor 1 with Dutch whispers and parity lines, a 7×7 with
@@ -1228,10 +1255,11 @@ namespace SudokuRoguelike.Tests
             var run = new RunDirector();
             run.StartRun(new LaunchRequest
             {
-                ClassId = ClassId.NumberFreak,
+                ClassId = _dailyWalk ? 0 : ClassId.NumberFreak,
                 Mode = GameMode.GardenRun,
                 AllowIrregularPuzzles = false,
-                ClassLevel = 1
+                ClassLevel = 1,
+                DailyWalk = _dailyWalk
             }, seed);
             _beforeBindAlways?.Invoke(run);
             if (startPuzzle)

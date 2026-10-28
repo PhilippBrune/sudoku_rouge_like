@@ -27,7 +27,7 @@ namespace SudokuRoguelike.UI
             var profile = new ProfileService(save);
             var walkXp = result?.XpEarned ?? 0;
             var settled = state.DailyWalkScored ? profile.SettleDailyWalk(run.DailyGoals, walkXp) : 0;
-            var floorReached = victory ? state.TotalFloors : state.CurrentFloor + 1;
+            var floorReached = victory ? state.TotalFloors : state.WalkFloor;
             RunLengthLog.Record(save, state, victory, floorReached, Time.realtimeSinceStartup);   // [REQ: RUN-LENGTH-001]
             var envelope = save.HasSaveFile() ? save.Load() : new SaveFileEnvelope();
             var goals = envelope.DailyGoals ?? new DailyGoalState();

@@ -29,7 +29,7 @@ namespace SudokuRoguelike.UI
             _relicShrine = screen.gameObject;
 
             ScrollUiKit.Banner(screen.transform, "RelicShrineBanner", new Vector2(0.3177f, 0.8444f), new Vector2(0.6823f, 0.9574f),
-                "RelicShrineEyebrow", F("InRun.BossDefeated.Eyebrow", state.CurrentFloor + 1, state.TotalFloors,
+                "RelicShrineEyebrow", F("InRun.BossDefeated.Eyebrow", state.WalkFloor, state.TotalFloors,
                     FloorThemeData.GetFloorName(state.CurrentFloor)),
                 "RelicShrineTitle", T("InRun.Relic.ShrineTitle"));
             BuildRunTag(screen.transform, state);

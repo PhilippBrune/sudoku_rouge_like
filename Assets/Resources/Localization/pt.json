@@ -1,4 +1,6 @@
 {
+    "InRun.Path.OnePath":  "Um só caminho: <i>{0}</i>",
+    "Challenge.Daily.Goal.t1_read_event.Description":  "Ler um evento no caminho",
     "SpiritTrials.KeyHint.Keys":  "Setas escolhem uma prova · Enter para escolher a classe · Esc voltar",
     "SpiritTrials.KeyHint":  "◀ ▶ escolha uma prova · A para escolher a classe · B voltar",
     "SpiritTrials.Slip.Body":  "PV {0} · Lápis {1} · termine em menos de {2} para o bônus de tempo. Sem XP, itens ou relíquias; a melhor pontuação por nível fica salva.",
@@ -1003,7 +1005,6 @@
     "Challenge.Daily.Goal.t1_collect_item.Description":  "Coletar qualquer item",
     "Challenge.Daily.Goal.t1_use_pencil.Description":  "Usar marcas de lápis em um quebra-cabeça",
     "Challenge.Daily.Goal.t1_visit_shop.Description":  "Visitar a barraca de café e sorvetes",
-    "Challenge.Daily.Goal.t1_choose_risk.Description":  "Pegar o caminho de risco em qualquer andar",
     "Challenge.Daily.Goal.t2_no_mistake.Description":  "Completar um quebra-cabeça sem erros",
     "Challenge.Daily.Goal.t2_defeat_boss.Description":  "Derrotar qualquer chefe",
     "Challenge.Daily.Goal.t2_collect_150g.Description":  "Coletar 150 de ouro em uma partida",

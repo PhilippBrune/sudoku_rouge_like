@@ -336,7 +336,7 @@ namespace SudokuRoguelike.UI
             // [REQ: UI-STYLE-016] A Garden Run ends on the run-end scroll; the other modes keep the text layout.
             if (run.State.Mode == GameMode.GardenRun && !run.State.TutorialMode)
             {
-                var floorReached = victory ? run.State.TotalFloors : run.State.CurrentFloor + 1;
+                var floorReached = victory ? run.State.TotalFloors : run.State.WalkFloor;
                 RunLengthLog.Record(postSave, run.State, victory, floorReached, Time.realtimeSinceStartup);
                 ShowRunEndScroll(new RunEndSummary
                 {

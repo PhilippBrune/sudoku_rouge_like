@@ -93,7 +93,7 @@ namespace SudokuRoguelike.UI
             ScrollUiKit.InkFrame(border, new Color(0.75f, 0.22f, 0.17f, 1f), 3f);
             ScrollUiKit.Spot(t, "Pin", new Vector2(0.5f, 1f), new Vector2(22f, 22f), new Color(0.24f, 0.15f, 0.08f, 1f), ScrollUiKit.Disc());
 
-            ScrollUiKit.Label(t, "Eyebrow", F("InRun.Cursed.Eyebrow", state.CurrentFloor + 1).ToUpperInvariant(), 17, TextAnchor.MiddleCenter,
+            ScrollUiKit.Label(t, "Eyebrow", F("InRun.Cursed.Eyebrow", state.WalkFloor).ToUpperInvariant(), 17, TextAnchor.MiddleCenter,
                 ScrollUiKit.Vermilion, new Vector2(0.06f, 0.895f), new Vector2(0.94f, 0.945f), 11);
             ScrollUiKit.Label(t, "Title", T("InRun.Cursed.SceneTitle"), 54, TextAnchor.MiddleCenter, new Color(0.62f, 0.16f, 0.12f, 1f),
                 new Vector2(0.06f, 0.80f), new Vector2(0.94f, 0.905f), 28);

@@ -2684,7 +2684,7 @@ namespace SudokuRoguelike.UI
             var s = run.State;
             var floorName = FloorThemeData.GetFloorName(s.CurrentFloor);
             _floorEntryShownFor = s.CurrentFloor;   // UI-STYLE-021: a resumed floor was entered before
-            _pathMessage = $"Resumed — Floor {s.CurrentFloor + 1}: {floorName}";
+            _pathMessage = $"Resumed — Floor {s.WalkFloor}: {floorName}";
             ShowPath();
         }
 

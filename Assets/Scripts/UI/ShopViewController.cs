@@ -222,7 +222,7 @@ namespace SudokuRoguelike.UI
             var state = run?.State;
             if (state == null) return;
             ScrollUiKit.Label(_slip.transform, "Eyebrow",
-                F("InRun.Shop.SlipEyebrow", state.CurrentFloor + 1, FloorThemeData.GetFloorName(state.CurrentFloor)).ToUpperInvariant(),
+                F("InRun.Shop.SlipEyebrow", state.WalkFloor, FloorThemeData.GetFloorName(state.CurrentFloor)).ToUpperInvariant(),
                 15, TextAnchor.MiddleLeft, ScrollUiKit.InkSoft, new Vector2(0.05f, 0.82f), new Vector2(0.96f, 0.95f), 10);
 
             var offer = _selectedShopOffer >= 0 && _selectedShopOffer < _shopOffers.Count ? _shopOffers[_selectedShopOffer] : null;
@@ -287,7 +287,7 @@ namespace SudokuRoguelike.UI
             var state = run?.State;
             if (state == null) return;
 
-            ScrollUiKit.Label(_ruleSlip.transform, "Eyebrow", F("InRun.Shop.FloorRule.Eyebrow", state.CurrentFloor + 1).ToUpperInvariant(),
+            ScrollUiKit.Label(_ruleSlip.transform, "Eyebrow", F("InRun.Shop.FloorRule.Eyebrow", state.WalkFloor).ToUpperInvariant(),
                 14, TextAnchor.MiddleLeft, ScrollUiKit.InkSoft, new Vector2(0.07f, 0.86f), new Vector2(0.95f, 0.96f), 9);
             var rules = state.ActiveFloorModifiers;
             var rowHeight = rules.Count > 1 ? 0.14f : 0.18f;

@@ -143,7 +143,7 @@ namespace SudokuRoguelike.UI
 
         private void BuildPurse(Transform screen, RunState state)
         {
-            var line = $"{F("InRun.BossDefeated.Eyebrow", state.CurrentFloor + 1, state.TotalFloors, FloorThemeData.GetFloorName(state.CurrentFloor))}";
+            var line = $"{F("InRun.BossDefeated.Eyebrow", state.WalkFloor, state.TotalFloors, FloorThemeData.GetFloorName(state.CurrentFloor))}";
             var floor = ScrollUiKit.Label(screen, "EventFloor", line, 22, TextAnchor.MiddleLeft, ScrollUiKit.PaperText,
                 new Vector2(0.078f, 0.905f), new Vector2(0.40f, 0.950f), 14);
             Shade(floor);

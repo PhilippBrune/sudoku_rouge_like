@@ -77,7 +77,7 @@ namespace SudokuRoguelike.UI
                 ScrollUiKit.Ink, Vector2.zero, Vector2.one, 30);
 
             var eyebrow = ScrollUiKit.Label(screen.transform, "FloorEntryEyebrow",
-                LocalizationService.Format("InRun.Path.Eyebrow", "Floor {0} of {1}", floor + 1, state.TotalFloors)
+                LocalizationService.Format("InRun.Path.Eyebrow", "Floor {0} of {1}", state.WalkFloor, state.TotalFloors)
                     .ToUpperInvariant(), 24, TextAnchor.UpperCenter, ScrollUiKit.PaperText,
                 new Vector2(0.735f, 0.205f), new Vector2(0.885f, 0.27f), 14);
             var eyebrowShadow = eyebrow.gameObject.AddComponent<Shadow>();

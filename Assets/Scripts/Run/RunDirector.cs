@@ -138,6 +138,7 @@ namespace SudokuRoguelike.Run
             State = RunArchetypeService.CreateRunState(request.ClassId, seed, request.AllowIrregularPuzzles, request.ClassLevel,
                 request.HarmonyLevel, request.HarmonyPerk, request.ClassPrestigeTier);
             State.Mode = request.Mode;
+            if (request.DailyWalk) BeginDailyWalkPath();   // [REQ: DAILY-WALK-009] before the first floor is built
 
             // Roll floor modifiers for the initial floor (Floor 1 = 0 modifiers)
             var startingRelicCount = RunArchetypeService.GetStartingRelicCount(request.ClassId, request.ClassLevel);
@@ -254,14 +255,14 @@ namespace SudokuRoguelike.Run
         // [REQ: MAP-CROSS-001] The floor graph is rebuilt from the seed with the layout version the floor started with.
         public void RebuildFloorGraph()
         {
-            CurrentFloorGraph = _graphService.BuildFloorGraph(State.CurrentFloor, State.Seed, State.FloorGraphVersion);
+            CurrentFloorGraph = _graphService.BuildFloorGraph(State.CurrentFloor, State.Seed, State.FloorGraphVersion, State.DailyWalkPath);
             State.CurrentNodeIndex = 0;
         }
 
         // [REQ: MAP-STRUCT-001] AdvanceToNextFloor: run spans exactly 5 floors (index 0–4); floor 4 boss win = run complete
         public void AdvanceToNextFloor()
         {
-            State.CurrentFloor++;
+            State.CurrentFloor += State.FloorStep;   // [REQ: DAILY-WALK-009] the Daily Walk's path skips to Floor 4
             State.FloorGraphVersion = RunGraphService.CurrentGraphVersion; // a new floor always uses the current layout
             State.Depth = 0;
             State.HpAtCurrentFloorEntry = State.CurrentHP; // capture before relic heals apply
@@ -289,7 +290,7 @@ namespace SudokuRoguelike.Run
             // Daily goals: floor-reached triggers
             if (DailyGoals != null && !State.IsSeasonalChallenge)
             {
-                if (State.CurrentFloor == 1)
+                if (State.WalkFloor == 2)
                     DailyGoalService.EvaluateInRun(DailyGoals, State, CurrentLevelState, DailyGoalService.TriggerReachedFloor2);
             }
 
@@ -1723,7 +1724,7 @@ namespace SudokuRoguelike.Run
                     if (level.Mistakes == 0)
                         DailyGoalService.EvaluateInRun(DailyGoals, State, level, DailyGoalService.TriggerNoMistakeBoss);
                     // [REQ: DAILY-WALK-004] The last boss ends the walk: the goals for finishing it.
-                    if (State.CurrentFloor == State.TotalFloors - 1)
+                    if (State.OnLastFloor)
                     {
                         DailyGoalService.EvaluateInRun(DailyGoals, State, level, DailyGoalService.TriggerRunWon);
                         if (State.CurrentHP >= 3)
@@ -2436,8 +2437,6 @@ namespace SudokuRoguelike.Run
                         DailyGoalService.EvaluateInRun(DailyGoals, State, CurrentLevelState, DailyGoalService.TriggerRestVisited);
                     if (node.Type == NodeType.Shop)
                         DailyGoalService.EvaluateInRun(DailyGoals, State, CurrentLevelState, DailyGoalService.TriggerShopVisited);
-                    if (node.Route == RouteType.RiskRoute)
-                        DailyGoalService.EvaluateInRun(DailyGoals, State, CurrentLevelState, DailyGoalService.TriggerRiskRouteChosen);
                 }
             }
 

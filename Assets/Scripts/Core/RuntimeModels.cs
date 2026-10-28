@@ -35,6 +35,18 @@ namespace SudokuRoguelike.Core
         public bool WeeklySeedRun;   // [REQ: SCORE-TIME-001] started with the seed of the week
         public bool DailyWalk;       // [REQ: DAILY-WALK-001] the day's walk: two floors, the neutral walker
         public bool DailyWalkScored; // [REQ: DAILY-WALK-005] the day's first walk: its goals, XP and board count
+        // [REQ: DAILY-WALK-009] The walk on one path over the gardens of Floors 2 and 4 (RM-216, way B): CurrentFloor is the
+        // garden's floor (1, then 3). False for walks saved before, which keep Floors 1 and 2 and both routes.
+        public bool DailyWalkPath;
+
+        /// <summary>The floor as the player counts it: the walk's own 1 and 2 on the Daily Walk's path, else CurrentFloor + 1.</summary>
+        public int WalkFloor => DailyWalkPath ? (CurrentFloor >= 3 ? 2 : 1) : CurrentFloor + 1;
+
+        /// <summary>The run's last floor (its boss ends the run).</summary>
+        public bool OnLastFloor => WalkFloor >= TotalFloors;
+
+        /// <summary>The garden floors a run walks: 2 and 4 on the Daily Walk's path, else every floor.</summary>
+        public int FloorStep => DailyWalkPath ? 2 : 1;
         public int Depth;
         public int CurrentFloor;
         public int TotalFloors = 5;

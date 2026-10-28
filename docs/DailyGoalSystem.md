@@ -1,11 +1,12 @@
 # Daily Goal System
 
-**Version:** 0.8 | **Date:** 2026-10-28 | **Status:** review (the daily walk of two floors and the stamp shop are built; the one-path concept is proposed)
+**Version:** 0.9 | **Date:** 2026-10-28 | **Status:** implemented (the daily walk on one path over Floors 2 and 4, the stamp shop)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 0.9 | 2026-10-28 | implemented | 0.3.0 playtest, owner: way B and "Read an event" (RM-216): the Daily Walk on one path over the gardens of Floors 2 and 4, one event tile per floor, the goal "Read an event on the path" in place of "Take the Risk route" (DAILY-WALK-009). The Garden Run keeps its five floors and two routes. |
 | 0.8 | 2026-10-28 | review | Concept (RM-216, 0.3.0 playtest): the Daily Walk on one path and on Floors 2 and 4, the Garden Run on Floors 1, 3 and 5 (RM-113); two ways to build it and the open questions. Not built. |
 | 0.7 | 2026-10-27 | review | The older sections (overview, menu, pool, evaluation, streak, ink stamps, data model, files) brought to what is built since 0.4; the stamp gallery idea replaced by the built stamp shop; how long the shop takes (69 stamps). |
 | 0.6 | 2026-10-27 | review | Owner request (2026-10-27): the daily walk concept (v1.1) is merged into "The Daily Walk as a run": the why, the reward table, the owner's answers and the dropped alternatives. Its file is removed. No rule changed. |
@@ -70,7 +71,7 @@ pays class XP by its tier (DAILY-WALK-003).
 | `t1_collect_item` | Collect any item | +50 XP |
 | `t1_use_pencil` | Use pencil marks in a puzzle | +50 XP |
 | `t1_visit_shop` | Visit the Coffee & Ice Cream cart | +50 XP |
-| `t1_choose_risk` | Take the Risk route on any floor | +50 XP |
+| `t1_read_event` | Read an event on the path (owner, 2026-10-28; it replaced `t1_choose_risk`) | +50 XP |
 
 ### Tier 2 · Medium
 
@@ -228,6 +229,7 @@ walker's HP, Pencil and bag, the goal pool, the weekly scroll) were decided on 2
 | DAILY-WALK-006 | All three goals met: +1 ink stamp. |
 | DAILY-WALK-007 | Ink stamps buy looks in a stamp shop (board ink, class seal frames, path seals); looks only, no balance. |
 | DAILY-WALK-008 | The walk's run score goes to a Steam leaderboard of the day; the result shows the place and the friends. |
+| DAILY-WALK-009 | The walk goes on **one path** over the gardens of **Floors 2 and 4** (Moss Garden, Stone Lantern Walk) with their boards, rules and bosses; each floor has one event tile; the player counts the walk's floors 1 and 2. A walk saved before keeps its Floors 1 and 2 and both routes. |
 
 Owner's decisions (2026-10-26): the walker starts with 10 HP, 10 Pencil and 2 bag slots (the class average, the numbers
 of `ClassId` 0 in `ClassCatalog`) and one starting relic from the day's seed. The pool keeps 21 goals, 7 per tier, so
@@ -246,6 +248,7 @@ earned in an ISO week (spent or not) adds 500 XP to the XP waiting for a class.
 | DAILY-WALK-006 | All three goals: +1 ink stamp (`EarnStamps`); the streak milestones and the Monthly Walk's stamps go through it too. |
 | DAILY-WALK-007 | `InkStampShop` (Meta): board ink (sumi black, indigo 5, cinnabar 5, moss 5, gold leaf 12), class seal frames on Select Class (ink, moss 6, vermilion 8, gold 14), path seals on the run end (vermilion, indigo 6, round sumi 8); the first of each shelf is the game's own and free. Owned looks in `UnlockedCosmetics` (shelf × 10 + look), worn ones in `WornBoardInk`, `WornSealFrame`, `WornPathSeal`; the profile's looks are worn when it loads. Under indigo ink the player's own digits turn sumi black, so given and placed digits never look alike. The shop opens from the Daily Walk's slip ("Stamp shop"). |
 | DAILY-WALK-008 | `SteamLeaderboardService.SubmitToBoard` uploads the run score to "DailyWalk_yyyy-MM-dd" (kept best) and reads the top three, the place and the place among friends; without Steam the board says so. |
+| DAILY-WALK-009 | `RunDirector.BeginDailyWalkPath` sets `RunState.DailyWalkPath` and starts on floor index 1; `AdvanceToNextFloor` steps by `FloorStep` (2); `RunGraphService.BuildFloorGraph(..., onePath)` builds the Calm row alone, no cross-link, with `EnsureEvent`; `RunState.WalkFloor` and `OnLastFloor` give the walk's own count to every floor text, the end of the walk and the save check. The goal `t1_read_event` is met in `ResolveCurrentEventChoice`. |
 
 A walk counts as a run for the class-unlock counters (bosses defeated, gold, items, relics), the run count and the boss
 achievements, never as a win (no Harmony unlock, no win achievements). Saves from before 0.4: pending start gold and
@@ -256,7 +259,7 @@ everyone who plays today") still says nothing about the walk and is the owner's 
 
 ---
 
-## Concept: one path and floors of its own (proposed 2026-10-28, RM-216, not built)
+## One path and floors of its own (concept 0.8, built 0.9, RM-216)
 
 The owner's request (0.3.0 playtest): the Daily Walk on **one path** with **other garden themes than the main game**,
 taking up the idea of building the main game on Floors 1, 3 and 5 (RM-113, GameDesignSpec §14) and giving Floors 2 and
@@ -312,8 +315,12 @@ choice to think over), and it stays short: one path of two floors. The main game
 **Recommendation:** B now (the Daily Walk gets one path and Floors 2 and 4 at once); A when the run-length report of
 the beta round shows the five-floor run is too long. B is a step towards A, nothing of it is thrown away.
 
-**Open for the owner:** A or B; the replacement for `t1_choose_risk` (for example "Clear a cursed tile", "Buy at the
-cart"); whether the Daily Walk's bosses keep their floor (Koi Warden, Stone Patriarch).
+**Owner's answers (2026-10-28):** way **B**; the goal "Take the Risk route" becomes **"Read an event on the path"**,
+so every floor of the walk has one event tile (the Garden Run's routes roll no event tiles). The bosses keep their
+floors (Koi Warden, Stone Patriarch). Built as DAILY-WALK-009 (0.9).
+
+![The walk's first floor](design/layout-proposals/after_daily_walk_path_1.jpg)
+![The walk's second floor](design/layout-proposals/after_daily_walk_path_2.jpg)
 
 ## Scope Boundaries
 

@@ -1,4 +1,6 @@
 ﻿{
+    "InRun.Path.OnePath":  "Ein Weg: <i>{0}</i>",
+    "Challenge.Daily.Goal.t1_read_event.Description":  "Lies ein Ereignis auf dem Weg",
     "SpiritTrials.KeyHint.Keys":  "Pfeile wählen eine Prüfung · Enter weiter zur Klassenwahl · Esc zurück",
     "SpiritTrials.KeyHint":  "◀ ▶ Prüfung wählen · A weiter zur Klassenwahl · B zurück",
     "SpiritTrials.Slip.Body":  "LP {0} · Bleistift {1} · unter {2} fertig für den Zeitbonus. Keine EP, Items oder Relikte; der beste Wert je Stufe bleibt.",
@@ -1025,7 +1027,6 @@
     "Challenge.Daily.Goal.t1_collect_item.Description":  "Sammle einen beliebigen Gegenstand",
     "Challenge.Daily.Goal.t1_use_pencil.Description":  "Nutze Bleistiftmarkierungen in einem Rätsel",
     "Challenge.Daily.Goal.t1_visit_shop.Description":  "Besuche den Kaffee- und Eiswagen",
-    "Challenge.Daily.Goal.t1_choose_risk.Description":  "Nimm auf einer Etage die Risikoroute",
     "Challenge.Daily.Goal.t2_no_mistake.Description":  "Schließe ein Rätsel ohne Fehler ab",
     "Challenge.Daily.Goal.t2_defeat_boss.Description":  "Besiege einen beliebigen Boss",
     "Challenge.Daily.Goal.t2_collect_150g.Description":  "Sammle 150 Gold in einem Run",

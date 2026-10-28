@@ -3,6 +3,7 @@ using SudokuRoguelike.Classes;
 using SudokuRoguelike.Core;
 using SudokuRoguelike.Data;
 using SudokuRoguelike.Run;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -213,12 +214,14 @@ namespace SudokuRoguelike.UI
             var s = run.State;
             if (_pathEyebrow != null)
                 _pathEyebrow.text = LocalizationService.Format("InRun.Path.Eyebrow", "Floor {0} of {1}",
-                    s.CurrentFloor + 1, s.TotalFloors).ToUpperInvariant();
+                    s.WalkFloor, s.TotalFloors).ToUpperInvariant();
             if (_pathTitle != null) _pathTitle.text = FloorThemeData.GetFloorName(s.CurrentFloor);
             if (_pathRouteLine != null)
-                _pathRouteLine.text = LocalizationService.Format("InRun.Path.RouteLine",
-                    "Ink: <i>{0}</i>, calm  ·  <color=#9e2a2b>Vermilion: <i>{1}</i>, risk, more gold</color>",
-                    calmName, riskName);
+                _pathRouteLine.text = s.DailyWalkPath   // [REQ: DAILY-WALK-009] one path, no route to choose
+                    ? LocalizationService.Format("InRun.Path.OnePath", "One path: <i>{0}</i>", calmName)
+                    : LocalizationService.Format("InRun.Path.RouteLine",
+                        "Ink: <i>{0}</i>, calm  ·  <color=#9e2a2b>Vermilion: <i>{1}</i>, risk, more gold</color>",
+                        calmName, riskName);
             RebuildFloorProgressStrip(run);
             RebuildPathLegend(run);
             ApplyPathWashi();
@@ -228,7 +231,7 @@ namespace SudokuRoguelike.UI
         private void RebuildFloorProgressStrip(RunDirector run)
         {
             if (_pathPaper == null || run?.State == null) return;
-            var currentFloor = run.State.CurrentFloor;
+            var currentFloor = run.State.WalkFloor - 1;   // the dots count the walk's floors (DAILY-WALK-009)
             if (currentFloor == _lastBuiltFloorForStrip && _floorProgressStrip != null) return;
             if (_floorProgressStrip != null) Destroy(_floorProgressStrip.gameObject);
 
@@ -255,7 +258,7 @@ namespace SudokuRoguelike.UI
             DestroyNow(_pathLegend);
             var legend = ScrollUiKit.Area(_pathPaper, "PathLegend", new Vector2(0.60f, 0.050f), new Vector2(0.94f, 0.110f));
             _pathLegend = legend.gameObject;
-            var entries = new (string Path, string LabelKey, string ObjectName)[]
+            var entries = new List<(string Path, string LabelKey, string ObjectName)>
             {
                 ("node/icon_puzzle_tile",     "InRun.Path.Node.Puzzle", "Puzzle"),
                 ("node/icon_elite_mask",      "InRun.Path.Node.Elite",  "Elite"),
@@ -264,12 +267,14 @@ namespace SudokuRoguelike.UI
                 ("node/icon_relic_pedestal",  "InRun.Path.Node.Relic",  "Relic"),
                 ("node/icon_moss_trap",       "InRun.Path.Node.Cursed", "Cursed"),
             };
-            for (var i = 0; i < entries.Length; i++)
+            if (run?.State?.DailyWalkPath == true)   // [REQ: DAILY-WALK-009] its path has an event tile
+                entries.Add(("node/icon_event_scroll", "InRun.Path.Node.Event", "Event"));
+            for (var i = 0; i < entries.Count; i++)
             {
                 var (path, key, objectName) = entries[i];
-                var x0 = i / (float)entries.Length;
+                var x0 = i / (float)entries.Count;
                 var entry = ScrollUiKit.Area(legend, $"LegendEntry_{objectName}", new Vector2(x0, 0f),
-                    new Vector2(x0 + 1f / entries.Length, 1f));
+                    new Vector2(x0 + 1f / entries.Count, 1f));
                 ScrollUiKit.Icon(entry, "Icon", path, new Vector2(0f, 0.1f), new Vector2(0.32f, 0.9f), new Color(1f, 0.96f, 0.9f, 1f));
                 ScrollUiKit.Label(entry, "Label", T(key), 15, TextAnchor.MiddleLeft, ScrollUiKit.InkSoft,
                     new Vector2(0.34f, 0f), new Vector2(1f, 1f), 10);

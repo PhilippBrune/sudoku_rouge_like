@@ -14,10 +14,12 @@ namespace SudokuRoguelike.Run
         public const int CurrentGraphVersion = 2;
 
         // [REQ: MAP-STRUCT-002] BuildFloorGraph: single entry point — Shared Start node → Calm/Risk lane nodes → Boss Gate, then edges + cross-links
-        public List<RunNode> BuildFloorGraph(int floorIndex, int seed, int graphVersion = CurrentGraphVersion)
+        // [REQ: DAILY-WALK-009] onePath: the Daily Walk's single row of tiles, no Risk route and no cross-link, with one event.
+        public List<RunNode> BuildFloorGraph(int floorIndex, int seed, int graphVersion = CurrentGraphVersion, bool onePath = false)
         {
             var rng = new Random(seed + floorIndex * 7919);
             GetFloorLengths(floorIndex, rng, out var calmLength, out var riskLength);
+            if (onePath) riskLength = 0;
 
             var nodes = new List<RunNode>();
             var index = 0;
@@ -104,7 +106,8 @@ namespace SudokuRoguelike.Run
                 riskNodes[i].NextNodes.Add(riskNodes[i + 1].Index);
             if (riskNodes.Count > 0) riskNodes[riskNodes.Count - 1].NextNodes.Add(bossNode.Index);
 
-            var bridgePairs = graphVersion >= 2
+            var bridgePairs = onePath ? new List<(RunNode calm, RunNode risk)>()
+                : graphVersion >= 2
                 ? InsertSingleCrossLink(calmNodes, riskNodes)
                 : InsertCrossLinks(calmNodes, riskNodes, floorIndex);
 
@@ -117,6 +120,7 @@ namespace SudokuRoguelike.Run
             // Guarantee at least one Shop per lane so players can always spend gold
             EnsureMinimumShop(calmNodes, rng);
             EnsureMinimumShop(riskNodes, rng);
+            if (onePath) EnsureEvent(calmNodes);
 
             // Assign canvas positions
             AssignCanvasPositions(calmNodes, riskNodes, floorIndex, seed);
@@ -257,6 +261,20 @@ namespace SudokuRoguelike.Run
             }
         }
 
+        /// <summary>[REQ: DAILY-WALK-009] One event tile on the Daily Walk's path, on the puzzle nearest the middle (the goal
+        /// "Read an event" needs one). Event tiles are not rolled on the Garden Run's routes.</summary>
+        private static void EnsureEvent(List<RunNode> lane)
+        {
+            var mid = lane.Count / 2;
+            for (var offset = 0; offset <= mid; offset++)
+                foreach (var idx in new[] { mid + offset, mid - offset })
+                {
+                    if (idx <= 0 || idx >= lane.Count || lane[idx].Type != NodeType.Puzzle) continue;
+                    lane[idx].Type = NodeType.Event;
+                    return;
+                }
+        }
+
         private static bool IsEconomy(NodeType type) =>
             type == NodeType.Shop || type == NodeType.Rest
             || type == NodeType.Relic || type == NodeType.CrossLink;
@@ -356,7 +374,8 @@ namespace SudokuRoguelike.Run
         private static void AssignCanvasPositions(List<RunNode> calm, List<RunNode> risk,
             int floorIndex, int seed)
         {
-            var laneOffset = floorIndex <= 1 ? 0.18f : floorIndex == 2 ? 0.22f : 0.26f;
+            // One path (the Daily Walk) runs along the middle.
+            var laneOffset = risk.Count == 0 ? 0f : floorIndex <= 1 ? 0.18f : floorIndex == 2 ? 0.22f : 0.26f;
             var jitterMax = floorIndex <= 1 ? 0.04f : floorIndex == 2 ? 0.05f : 0.06f;
 
             var totalSlots = Math.Max(calm.Count, risk.Count) + 2;

@@ -1,11 +1,12 @@
 # Daily Goal System
 
-**Version:** 0.7 | **Date:** 2026-10-27 | **Status:** review (the daily walk of two floors and the stamp shop are built)
+**Version:** 0.8 | **Date:** 2026-10-28 | **Status:** review (the daily walk of two floors and the stamp shop are built; the one-path concept is proposed)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 0.8 | 2026-10-28 | review | Concept (RM-216, 0.3.0 playtest): the Daily Walk on one path and on Floors 2 and 4, the Garden Run on Floors 1, 3 and 5 (RM-113); two ways to build it and the open questions. Not built. |
 | 0.7 | 2026-10-27 | review | The older sections (overview, menu, pool, evaluation, streak, ink stamps, data model, files) brought to what is built since 0.4; the stamp gallery idea replaced by the built stamp shop; how long the shop takes (69 stamps). |
 | 0.6 | 2026-10-27 | review | Owner request (2026-10-27): the daily walk concept (v1.1) is merged into "The Daily Walk as a run": the why, the reward table, the owner's answers and the dropped alternatives. Its file is removed. No rule changed. |
 | 0.5 | 2026-10-26 | review | The ink stamp shop built (DAILY-WALK-007, UI-STYLE-029): twelve looks on three shelves, prices from the mockup for playtesting. |
@@ -254,6 +255,65 @@ The Discord walk posts (RUN-WEEK-002) list the new goals and their XP on their o
 everyone who plays today") still says nothing about the walk and is the owner's to change.
 
 ---
+
+## Concept: one path and floors of its own (proposed 2026-10-28, RM-216, not built)
+
+The owner's request (0.3.0 playtest): the Daily Walk on **one path** with **other garden themes than the main game**,
+taking up the idea of building the main game on Floors 1, 3 and 5 (RM-113, GameDesignSpec §14) and giving Floors 2 and
+4 to the Daily Walk.
+
+### Today
+
+| Floor | Theme | Boss | Boards | Rules on the floor |
+|---|---|---|---|---|
+| 1 | Bamboo Courtyard | Grove Spirit | 5×5–6×6 | 0 |
+| 2 | Moss Garden | Koi Warden | 6×6–7×7 | 1 |
+| 3 | Koi Terrace | Shrine Oni | 7×7–8×8 | 1 |
+| 4 | Stone Lantern Walk | Stone Patriarch | 8×8–9×9 | 1 |
+| 5 | Shrine Summit | Demon Mask | 9×9 | 2 |
+
+The Garden Run walks all five on two routes (Calm and Risk, joined by cross-links); the Daily Walk walks Floors 1 and 2
+of the same garden, on both routes.
+
+### The proposal
+
+| | Garden Run | Daily Walk |
+|---|---|---|
+| Floors | 1 Bamboo Courtyard, 3 Koi Terrace, 5 Shrine Summit (three floors, three bosses) | 2 Moss Garden, 4 Stone Lantern Walk (two floors, two bosses) |
+| Path | Calm and Risk routes as now | **one path**: a single row of tiles per floor, no cross-links, no route choice |
+| Boards | 5×5–6×6, 7×7–8×8, 9×9 (each floor takes a step) | 6×6–7×7, 8×8–9×9 |
+| Look | its three paintings, music and bosses | the other two: a Daily Walk never shows a Garden Run garden |
+
+**Why it helps.** The Daily Walk looks and plays different from the main game every day (its own gardens, no route
+choice to think over), and it stays short: one path of two floors. The main game gets the run length RM-113 asks about.
+
+### What it touches (to decide before building)
+
+1. **The main game's length** is the large part. Five floors stay by the owner's decision (GameDesignSpec 1.18), and
+   RM-113 waits for the run-length report of the beta round. Three floors change the XP per run, the gold curve
+   (GoldEconomySystem), the rules per floor (today 0, 1, 1, 1, 2), the Harmony steps, the class unlock conditions and the
+   achievement "Summit in Sight" (reach Floor 5).
+2. **One path.** `RunGraphService` builds a Calm and a Risk route with cross-links; a one-path floor is the Calm route
+   alone with the Risk route's tiles (shop, rest, cursed, relic) mixed into it. The daily goal "Take the Risk route on
+   any floor" (`t1_choose_risk`) can no longer be met and needs a replacement (the Discord walk posts read the pool, so
+   the pool keeps 7 goals per tier).
+3. **The day's board** stays comparable: everyone walks the same single path on the day's seed.
+4. **Saves**: a Daily Walk saved before the change resumes on its old floors (the floors are part of the saved run).
+
+### Two ways to build it
+
+| | A: the owner's idea in full | B: the Daily Walk first |
+|---|---|---|
+| Garden Run | three floors (1, 3, 5) | five floors as now |
+| Daily Walk | Floors 2 and 4, one path | Floors 2 and 4, one path |
+| Size of the change | large (balance, XP, achievements, specs) | small (the Daily Walk's floor list, a one-path graph, one goal) |
+| Risk | the main game's balance | the Daily Walk shows two gardens the Garden Run also has |
+
+**Recommendation:** B now (the Daily Walk gets one path and Floors 2 and 4 at once); A when the run-length report of
+the beta round shows the five-floor run is too long. B is a step towards A, nothing of it is thrown away.
+
+**Open for the owner:** A or B; the replacement for `t1_choose_risk` (for example "Clear a cursed tile", "Buy at the
+cart"); whether the Daily Walk's bosses keep their floor (Koi Warden, Stone Patriarch).
 
 ## Scope Boundaries
 

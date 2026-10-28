@@ -36,16 +36,16 @@ Horizons: **short term** = the next one to three updates, **mid term** = after t
 | ID | Item | What players get | Notes and dependencies | Status |
 |---|---|---|---|---|
 | RM-206 | Puzzle pad layout | LB opens the bag, LT the relics, RB switches Solve and Pencil, Start opens the Options, a tap on Select saves and quits, L3 highlights the digit; the right stick moves the number pad cursor. | Owner, 0.3.0 playtest (docs/review/PLAYTEST_0.3.0.md); built with GAP-077..083 (InputAndProfilesSpec 2.5, INPUT-PAD-004); a real pad still to check. | built |
-| RM-207 | Key hints follow the device | The hints on every screen show pad buttons after a pad press and keys after a key or mouse press. | Owner, 0.3.0 playtest; needs an input-device tracker; about 15 hint texts, five catalogs. | planned |
+| RM-207 | Key hints follow the device | The hints on every screen show pad buttons after a pad press and keys after a key or mouse press. | Owner, 0.3.0 playtest; built for ten hints (INPUT-HINT-001, InputAndProfilesSpec 2.6). | built |
 | RM-208 | Puzzle screen details | Gold shown on the puzzle screen, item and relic explanations readable there, no click sound on the board, a hint for the highlight key. | Owner, 0.3.0 playtest; gold tag and detail slip need a mockup first. | planned |
-| RM-209 | Custom Puzzle: help, seed, save | What the stars and every Board field mean; a seed field and a share code; save and quit a Custom Puzzle without touching the Garden Run save. | Owner, 0.3.0 playtest; the save is a concept first (own save slot). | planned |
+| RM-209 | Custom Puzzle: help, seed, save | What the stars and every Board field mean; a seed field and a share code; save and quit a Custom Puzzle without touching the Garden Run save. | Owner, 0.3.0 playtest; the save is a concept in TutorialModeSystem 1.12 (a pair of its own); help and seed need a mockup. | planned |
 | RM-210 | Drag the option rows | Every value row in the Options can be dragged with the mouse as well as stepped with the arrows. | Owner, 0.3.0 playtest; built (OPT-DRAG-001, GameDesignSpec 1.26). | built |
 | RM-211 | Reroll the floor's rule in the shop | From Floor 2 the shop offers to roll the floor's rule again for gold. | Owner, 0.3.0 playtest; price a first value; additive save field. | planned |
 | RM-212 | Golden Koi line on the reward | The reward tally lists the Golden Koi's extra gold on its own line. | Owner, 0.3.0 playtest; built (REWARD-KOI-001, GoldEconomySystem 2.4). | built |
 | RM-213 | Game Modes without the Garden Run | Start Game starts the Garden Run; Game Modes shows the other modes; Harmony is chosen on Select Class. | Owner, 0.3.0 playtest ("Ja, nur Select Class"); built as UI-STYLE-031 (layout-proposals 3.4). | built |
 | RM-214 | Bigger clue numbers | Text Size also enlarges the small numbers of rules such as Opposite Sums (for handhelds like the Legion Go). | Owner, 0.3.0 playtest on the Legion Go 2; built (ACCESS-FONT-002, AccessibilitySpec 2.5). | built |
 | RM-215 | Title sound | A short sound when the title screen opens. | Owner, 0.3.0 playtest; built: a code-made 8-bit sting, no paid service (AUDIO-TITLE-001, AudioVisualDirection 1.7). | built |
-| RM-216 | Daily Walk paths and themes | Concept: the Daily Walk on one path with its own garden themes; the main game on Floors 1, 3 and 5, the Daily Walk on Floors 2 and 4. | Owner, 0.3.0 playtest; concept first. | concept |
+| RM-216 | Daily Walk paths and themes | Concept: the Daily Walk on one path with its own garden themes; the main game on Floors 1, 3 and 5, the Daily Walk on Floors 2 and 4. | Owner, 0.3.0 playtest; concept in DailyGoalSystem 0.8 (two ways, A or B; recommendation B). | concept |
 | RM-217 | Mockups for four screens | Three main menu proposals, the Monthly Walk, Select Profile and Spirit Trials. | Owner, 0.3.0 playtest; HTML mockups from the game's art for the owner's pick. | planned |
 
 ## Mid term (suggested)

@@ -1,11 +1,12 @@
 # Tutorial Mode System
 
-**Version:** 1.11 | **Date:** 2026-10-27 | **Status:** implemented
+**Version:** 1.12 | **Date:** 2026-10-28 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.12 | 2026-10-28 | implemented | Concept (RM-209, 0.3.0 playtest): save and quit a Custom Puzzle in a pair of its own beside the Garden Run and the Monthly Walk. Not built. |
 | 1.11 | 2026-10-27 | implemented | 0.3.0 playtest: every chosen rule is mandatory for the board, and a rule without room is named on the status line (CUSTOM-RULE-001, GAP-086); Free resources mean no class: no passive shown or applied (CUSTOM-CLASS-001, GAP-087); one timer (HUD-TIMER-001, GAP-088). |
 | 1.10 | 2026-10-21 | implemented | Docs clean-up: completion is stored in the save (`TutorialProgressState.CompletedKeys`, written by `MainMenuController`); there is no `TutorialProgressService`. |
 | 1.9 | 2026-10-07 | implemented | 7★ requires a modifier, as the code enforces (SPEC-CONF-015); dropdown → region variant mapping and why variant 2 is not offered (SPEC-CONF-018); entry named Custom Puzzle, Sudoku Basics separate (SPEC-CONF-033); 7★ uses rule-based validation (SPEC-CONF-003). |
@@ -246,6 +247,50 @@ TutorialProgress (in ProfileService):
 ```
 
 ---
+
+## Concept: save and quit a Custom Puzzle (proposed 2026-10-28, RM-209, not built)
+
+The owner's request (0.3.0 playtest): a Custom Puzzle can be saved and quit, and continued later, without touching the
+Garden Run's save.
+
+### Today
+
+- Custom Puzzles are never saved (`SAVE-TUTO-001`: `RunAutoSaveCoordinator.Save` returns for `TutorialMode`). Save &
+  Quit on a Custom Puzzle ends it.
+- The save file (`SaveFileEnvelope`) holds one Garden Run (`ActiveRunState`, `ActivePuzzle`) and, beside it, one Monthly
+  Walk (`ActiveSeasonalRunState`, `ActiveSeasonalPuzzle`), added so the month's walk does not overwrite a Garden Run.
+  `SaveFileService.Sanitize` drops a pair it cannot resume, so a Custom Puzzle stored in either pair would be lost or
+  offered as a Garden Run.
+
+### The proposal
+
+A third pair for the Custom Puzzle, built like the Monthly Walk's:
+
+1. **Save file:** `ActiveCustomRunState` and `ActiveCustomPuzzle` in `SaveFileEnvelope`; new fields only, so older saves
+   load as before (no custom puzzle).
+2. **Saving:** `RunAutoSaveCoordinator.Save` routes a Custom Puzzle (Tutorial mode, not Sudoku Basics) to that pair
+   after each move, as it does for the Monthly Walk; Sudoku Basics stays unsaved.
+3. **What is saved:** the board (digits, pencil marks, mistakes), the puzzle's setup (size, stars, regions, rules,
+   Free or the class), the seed and the drawn rule marks (`PuzzleSaveState` with `HasLevelConfig` and the overlay, which
+   the Monthly Walk already uses), so the puzzle comes back exactly, without generating it again.
+4. **Loading:** `SaveFileService` gets `IsResumableCustomRunState` and its line in `Sanitize`; `RunResumeService` and
+   `GameBootstrap` a `ResumeCustomPuzzle` like `ResumeSeasonalChallenge`.
+5. **Screens:** the Custom Puzzle book shows **Continue puzzle** (with its size, stars and rules) above Start when a
+   saved one exists; Start with a saved puzzle asks first ("This replaces the saved puzzle"). The main menu's Resume and
+   the "abandon your run" questions only ever mean the Garden Run.
+6. **Ending:** solving or abandoning the puzzle clears its pair; a Garden Run, a Daily Walk or a Monthly Walk never
+   touches it, and it never touches theirs.
+
+### What it touches
+
+- The Save & Quit button of a Custom Puzzle saves instead of ending (today it ends at once, without the two-press
+  confirm, `InRunController.PathScroll.cs`).
+- Tests: a save, quit and continue round trip; a Garden Run saved beside a Custom Puzzle keeps both; an old save without
+  the pair loads.
+- With the seed and the setup in the save, the share code of RM-209 (seed and setup in one code) uses the same fields.
+
+**Open for the owner:** one saved Custom Puzzle per profile (proposed) or several; whether Continue also sits on the
+main menu.
 
 ## 7★ — Empty Grid Rules
 

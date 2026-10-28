@@ -1,11 +1,12 @@
 # Playtest 0.3.0: analysis and fix plan
 
-**Version:** 1.2 | **Date:** 2026-10-28 | **Status:** review (fixes and features built; mockups, concepts and D2 wait for the owner, §6)
+**Version:** 1.3 | **Date:** 2026-10-28 | **Status:** review (all items built or answered; K2, GAP-074 and the event tiles of the Garden Run wait for the owner, §6)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.3 | 2026-10-28 | review | The owner's answers of 2026-10-28 built: D2 (GAP-097), RM-208, RM-209, RM-211, RM-216 (way B, "Read an event"), RM-217 (main menu B and three screens); the review fixes; K1 checked read-only; the K2 list now covers the new screens. |
 | 1.2 | 2026-10-28 | review | Status of every item (§6), a ten-step check list for a real pad (K2), the questions waiting for the owner. GAP-096 found and fixed on the way. |
 | 1.1 | 2026-10-27 | review | Architecture review of the plan (§5) and the owner's answers (§4): GAP-074, GAP-077, GAP-080 and GAP-089 rewritten; change sets regrouped (§3). |
 | 1.0 | 2026-10-27 | review | The owner's playtest of 0.3.0 (desktop 3440×1440 with an Xbox One controller, and a Lenovo Legion Go 2): 45 findings analysed against the code, sorted into defects (GAP-074..095), change requests (RM-206..217), checks, mockups and concepts. |
@@ -53,7 +54,7 @@ The common cause of most pad items: several buttons are read only through the le
 
 | ID | Finding | Kind | Cause (short) | Fix |
 |---|---|---|---|---|
-| D2 | After the title screen the game started on "New Game" | K, D | Not in the desktop logs: both sessions logged `Startup step: MainMenu`. No "New Game" text exists in the game. Candidates: the Legion Go's first start (Profile Select for an empty profile) or a dev build (SAVE-TEST-001 starts every Editor/dev launch empty). | Ask which screen and which device (§4). |
+| D2 / GAP-097 | Fixed: an A press on the title opened Select Class ("New Run"); nothing is chosen under the title now | caf2b79 |
 | GAP-084 | Back on Select Class goes to the main menu after Game Modes → Incense Walk | GAP | `BtnClassBack` is wired to `BackToMainMenu` (`ClassSelect.cs:212`), which clears the screen history; Escape/B already go back one screen. | `BackFromPanel` on Select Class and on every other Back button of the menu flow. |
 | RM-213 | Game Modes without the Garden Run curtain | RM, D | Start Game already starts it. The Garden curtain's slip is the only Harmony selector on Game Modes (UI-STYLE-025 says Harmony is on both screens). | Remove the curtain; Harmony stays on Select Class (owner to confirm, §4). |
 
@@ -71,7 +72,7 @@ The common cause of most pad items: several buttons are read only through the le
 | GAP-086 | A chosen rule can be missing from the puzzle (9×9, 7 stars, Sum Dots: no dots) | GAP | `RunDirector.GetMandatoryModifiers` (`LevelGeneration.cs:1062-1070`) protects only the Garden Run's boss-gate picks; for a Custom Puzzle the retry never runs and `LastGenerationMissingModifiers` is read by nothing. Why the sum dots fail on that board is still to reproduce. | Custom Puzzle rules are mandatory; a test over many seeds for each catalog rule on 9×9 at 7 stars; a status line if a rule still cannot be placed. |
 | GAP-087 | A class passive shows with "Free" resources (no class chosen) | GAP | `TutorialModeService.CreateTutorialRunState` always sets the simulated class (default Number Freak), so the HUD shows its passive and the passive also acts. | Free mode uses the neutral walker (as the Daily Walk does): no passive shown or applied. |
 | GAP-088 | Two timers in a Custom Puzzle | GAP | The run timer is hidden only in Endless Zen (`HudViewController.cs:368`). | Hide it in every single-puzzle mode (Custom Puzzle, Sudoku Basics). |
-| RM-209 | Custom Puzzle: help for the stars and every field of the Board box; a seed and a share code; save & quit | RM, UI, C | No help text; the seed is random (`BuildRuntimeSeed`); Custom Puzzles are never saved (SAVE-TUTO-001). | Help texts from `StarDensityService`'s real numbers; seed field and a share code (seed plus settings); the concept for its own save slot (`ActiveCustomRunState`, additive). |
+| RM-209 | Built: help, seed and share code (UI-STYLE-037); one saved Custom Puzzle per profile with Continue on the screen and the main menu (CUSTOM-SAVE-001) | 5c8eb96, 712f186, 536710f |
 
 ### 2.6 Main game
 
@@ -80,9 +81,9 @@ The common cause of most pad items: several buttons are read only through the le
 | GAP-091 | Clicking next to "Legend" turns the whole grid gold, and it stays | GAP | The rule slip under the Legend pill (`HudViewController.cs:554-571`) calls `HighlightGlobalConstraint` for Nonconsecutive/Antiknight, which marks every pair, i.e. every cell; `ClearGlobalConstraintHighlight` has no caller. | A 3 s pulse like the legend's isolation, cleared on a second tap and on a new puzzle. |
 | GAP-092 | A digit that is already complete on the board can be placed and costs HP | GAP | Only the number pad tile is disabled (`NumpadViewController.cs:44-80`); keys and the pad's A go straight to `EnterNumber`/`PlaceNumber`, which do not count. | `EnterNumber` refuses a complete digit with a status line, no mistake. |
 | GAP-093 | Opposite Sums: "mirror cell" is not explained | GAP | `Boss.Description.OppositeCellsSum` uses "mirror cell", which is also the name of another rule (Mirror Cells). | New text in five catalogs: the two cells opposite each other through the centre. |
-| RM-208 | Puzzle screen: gold shown; item and relic explanations readable; no click sound on the board; a hint for the highlight key | RM, UI | Gold shows only on the path; item/relic texts go to the one status line above the board (hidden by GAP-089 at 21:9); the board click plays `PlayCellSelect`. | Mockup first (gold tag, detail slip); the sound goes now. |
+| RM-208 | Built: gold beside the Pencil, the detail slip for the passive, items and relics (UI-STYLE-036) | ac8c458, 689e718 |
 | RM-210 | Option rows can be dragged with the mouse | RM | `BuildPaperValueRow` has only the arrow buttons. | A drag handler on the bar; the value saves on release. |
-| RM-211 | Shop from Floor 2: reroll the floor's rule for gold | RM, UI | `RollFloorModifiers` is seeded per floor; node configs are frozen at floor entry. | `RerollFloorModifiers` with a salt and a saved counter (additive `RunState` field), node configs and shop offers rebuilt; price as a first value. |
+| RM-211 | Built: 100 gold, once per floor (UI-STYLE-038, SHOP-RULE-001) | 17c0540, 689e718 |
 | RM-212 | Reward screen: the Golden Koi's extra gold as its own line | RM | The Koi gold (`RunDirector.cs:1646-1651`) is added into one gold total. | A transient `LastKoiGold` and a tally row when above 0. |
 | RM-214 | Clue numbers (Opposite Sums and others) are too small on the Legion Go | RM | Text Size scales only the digits and pencil marks; overlay labels use fixed 7–10 px (`DrawOverlayText`). | Overlay labels and their badges scale with Text Size, with a floor. |
 
@@ -90,11 +91,11 @@ The common cause of most pad items: several buttons are read only through the le
 
 | ID | Item | Plan |
 |---|---|---|
-| K1 | Steam client: achievements, the day's and week's boards, cloud | Cloud works (the Legion's save reached the desktop; that is also how GAP-074's resolution came over). Achievements: only after the owner publishes them; then an `[Explicit]` read-only diagnostic asks Steam for all 29 definitions. Boards: a read-only `FindLeaderboard` for the day's and the week's board; no test score is posted (it would show on the public board). |
+| K1 | Checked read-only (2026-10-28): Steam lists all 29 achievements, their API names match the game's 29; four already earned by testers. No public leaderboard yet (the day's and week's boards are made at the first score from a Steam build with them; that needs a check in the Steam client) | |
 | K2 | A real controller | Virtual-pad PlayMode tests for every mapping; the owner checks the real Xbox One pad with a ten-press list after the fixes. |
-| RM-217 | Mockups: three main menus, Monthly Walk, Profile Select, Spirit Trials | HTML mockups from the game's art (`docs/design/layout-proposals/render.ps1`); with the mockups for RM-208 and RM-209. |
+| RM-217 | Built: main menu B (UI-STYLE-032), the Monthly Walk, Select Profile, Spirit Trials (033 to 035) | 536710f, 33cd967 |
 | RM-215 | A title-screen sound | A code-made 8-bit sting (no paid service), played by `SplashScreenController` at Master × SFX; an optional clip id. |
-| RM-216 | Daily Walk concept: one path, its own themes; the main game on Floors 1-3-5, the Daily Walk on Floors 2 and 4 | Concept document. |
+| RM-216 | Built: way B, the Daily Walk on one path over Floors 2 and 4 with an event tile per floor; "Read an event on the path" replaces the Risk route goal (DAILY-WALK-009) | 23d9d7c |
 | C (RM-209) | Custom Puzzle save & quit without touching the Garden Run save | Concept: an additive `ActiveCustomRunState`/`ActiveCustomPuzzle` pair like the Monthly Walk's. |
 
 ## 3. Plan (change sets, after the review in §5)
@@ -152,16 +153,16 @@ Each fix: a failing test first where the code allows it, the fix, the five catal
 | GAP-087, RM-213 | Fixed / built | 714b122 |
 | GAP-096 (new) | Fixed: Spirit Trials showed "???" for the stars | 1f34382 |
 | RM-207 | Built (ten hints; a pad connected at start shows the pad's buttons) | d0188e3 |
-| RM-208 | In part: no click sound on the board (164c36a), the highlight key in the hint (dfcfc4c); gold and the detail slip wait for the pick of UI-STYLE-036 | 97d3115 |
-| RM-209 | Concept for the save (TutorialModeSystem 1.12); help, seed and share code wait for the pick of UI-STYLE-037 | 755b93b, 97d3115 |
+| RM-208 | Built: gold beside the Pencil, the detail slip for the passive, items and relics (UI-STYLE-036) | ac8c458, 689e718 |
+| RM-209 | Built: help, seed and share code (UI-STYLE-037); one saved Custom Puzzle per profile with Continue on the screen and the main menu (CUSTOM-SAVE-001) | 5c8eb96, 712f186, 536710f |
 | RM-210, RM-214 | Built; after the review a drag saves once on release, and the Quadruples and Little Killer clues grow too | 1ece097, d0188e3 |
-| RM-211 | Waits for the pick of UI-STYLE-038 (price, once per market or per floor) | 97d3115 |
+| RM-211 | Built: 100 gold, once per floor (UI-STYLE-038, SHOP-RULE-001) | 17c0540, 689e718 |
 | RM-212 | Built | 4bdbdb3 |
 | RM-215 | Built | ce4ef47 |
-| RM-216 | Concept (DailyGoalSystem 0.8); waits for the owner's answers | 755b93b |
-| RM-217 | Mockups UI-STYLE-032 (main menu A, B, C) to 035; waits for the pick | 97d3115 |
-| D2 | Open question | |
-| K1 | After the owner publishes the achievements | |
+| RM-216 | Built: way B, the Daily Walk on one path over Floors 2 and 4 with an event tile per floor; "Read an event on the path" replaces the Risk route goal (DAILY-WALK-009) | 23d9d7c |
+| RM-217 | Built: main menu B (UI-STYLE-032), the Monthly Walk, Select Profile, Spirit Trials (033 to 035) | 536710f, 33cd967 |
+| D2 / GAP-097 | Fixed: an A press on the title opened Select Class ("New Run"); nothing is chosen under the title now | caf2b79 |
+| K1 | Checked read-only (2026-10-28): Steam lists all 29 achievements, their API names match the game's 29; four already earned by testers. No public leaderboard yet (the day's and week's boards are made at the first score from a Steam build with them; that needs a check in the Steam client) | |
 | K2 | The check list below | |
 
 ### K2: a real pad, ten checks
@@ -180,12 +181,15 @@ On the desktop with the Xbox One pad and on the Legion Go. If a button does noth
 8. Select saves and quits; Start opens Options.
 9. With an input lock set, a digit after a D-pad move waits like one after a click.
 10. The hint under the number pad shows the pad's buttons after a pad press and the keys after a key.
+11. The title screen: press A while it shows; the main menu must follow, not Select Class (GAP-097).
+12. Main menu: the D-pad walks the tablets (and the run card); right on Custom Puzzle reaches Continue when a puzzle is
+    saved; Spirit Trials: left and right choose a stele, A goes on; Select Profile: Delete asks first.
+13. Puzzle: LB into the bag shows the item on the slip at the foot of the left column; LT shows a relic there.
 
 ### Waiting for the owner
 
-1. D2: which screen was "New Game" after the title, and on which device?
-2. The mockups (layout-proposals 3.5): the main menu A, B, C or keep it; the Monthly Walk, Select Profile, Spirit Trials,
-   the puzzle screen's details, Custom Puzzle help and the market's rule roll.
-3. RM-216: way A or B, and the replacement for the goal "Take the Risk route".
-4. RM-209 save: one saved Custom Puzzle per profile or several; Continue also on the main menu?
-5. K1: publish the 29 achievements in Steamworks (then the read-only check runs).
+1. K2 on a build with these fixes (0.3.0 does not have them): a new build needs the owner's word on its version.
+2. GAP-074: the `Player.log` of the next quit the game did not ask for.
+3. Event tiles: the Garden Run's routes have rolled no event tiles since March 2026 (commit 0f538b8 took them out of
+   `RunGraphService.RollNodeType`); only the Daily Walk's path has one now. Bring them back to the Garden Run, or keep
+   it so? (A saved floor is rebuilt from its seed, so the change would come with a new graph version to keep saved floors.)

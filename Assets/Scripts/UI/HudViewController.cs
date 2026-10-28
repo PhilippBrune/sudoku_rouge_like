@@ -1253,6 +1253,35 @@ namespace SudokuRoguelike.UI
             : slot == _selectedBagSlot ? InRunUiFactory.BagHighlightSelected
             : InRunUiFactory.BagSlotBg;
 
+        private int _selectedRelicSlot = -1;
+
+        /// <summary>
+        /// [REQ: INPUT-PAD-004] Controller: move the relic selection by <paramref name="delta"/> (0 keeps it) and show what
+        /// the relic does on the status line; the chosen relic is drawn larger (RM-206).
+        /// </summary>
+        public void ControllerSelectRelicSlot(int delta)
+        {
+            var relics = _map?.Run?.State?.HeldRelics;
+            if (relics == null || relics.Count == 0) return;
+            _selectedRelicSlot = _selectedRelicSlot < 0 ? 0 : Mathf.Clamp(_selectedRelicSlot + delta, 0, relics.Count - 1);
+            ShowRelicSelection();
+            OnBagRelicClicked(_selectedRelicSlot);
+        }
+
+        public void ClearControllerRelicSelection(bool keep)
+        {
+            if (keep) return;
+            _selectedRelicSlot = -1;
+            ShowRelicSelection();
+        }
+
+        private void ShowRelicSelection()
+        {
+            for (var i = 0; i < _bagRelicButtons.Count; i++)
+                if (_bagRelicButtons[i] != null)
+                    _bagRelicButtons[i].transform.localScale = Vector3.one * (i == _selectedRelicSlot ? 1.2f : 1f);
+        }
+
         private void OnBagRelicClicked(int idx = 0)
         {
             var state = _map?.Run?.State;

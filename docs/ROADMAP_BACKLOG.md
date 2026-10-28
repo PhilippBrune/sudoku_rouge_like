@@ -35,7 +35,7 @@ Horizons: **short term** = the next one to three updates, **mid term** = after t
 
 | ID | Item | What players get | Notes and dependencies | Status |
 |---|---|---|---|---|
-| RM-206 | Puzzle pad layout | LB opens the bag, LT the relics, RB switches Solve and Pencil, Start opens the Options, a tap on Select saves and quits, L3 highlights the digit; the right stick moves the number pad cursor. | Owner, 0.3.0 playtest (docs/review/PLAYTEST_0.3.0.md); one change set with GAP-077..083. | in progress |
+| RM-206 | Puzzle pad layout | LB opens the bag, LT the relics, RB switches Solve and Pencil, Start opens the Options, a tap on Select saves and quits, L3 highlights the digit; the right stick moves the number pad cursor. | Owner, 0.3.0 playtest (docs/review/PLAYTEST_0.3.0.md); built with GAP-077..083 (InputAndProfilesSpec 2.5, INPUT-PAD-004); a real pad still to check. | built |
 | RM-207 | Key hints follow the device | The hints on every screen show pad buttons after a pad press and keys after a key or mouse press. | Owner, 0.3.0 playtest; needs an input-device tracker; about 15 hint texts, five catalogs. | planned |
 | RM-208 | Puzzle screen details | Gold shown on the puzzle screen, item and relic explanations readable there, no click sound on the board, a hint for the highlight key. | Owner, 0.3.0 playtest; gold tag and detail slip need a mockup first. | planned |
 | RM-209 | Custom Puzzle: help, seed, save | What the stars and every Board field mean; a seed field and a share code; save and quit a Custom Puzzle without touching the Garden Run save. | Owner, 0.3.0 playtest; the save is a concept first (own save slot). | planned |

@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.24 | **Date:** 2026-10-27 | **Status:** implemented
+**Version:** 1.25 | **Date:** 2026-10-27 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.25 | 2026-10-27 | implemented | 0.3.0 playtest: the input lock also follows a key or pad move (owner: everywhere, GAP-095); a move takes the new cell's digit as the highlight, as a click does (GAP-094). The pad layout is in InputAndProfilesSpec 2.5 (INPUT-PAD-004). |
 | 1.24 | 2026-10-27 | implemented | 0.3.0 playtest, menus: every Back button returns to the screen before, the main menu when there is none (MENU-BACK-001, GAP-084). |
 | 1.23 | 2026-10-27 | implemented | 0.3.0 playtest, puzzle screen: the run keeps a 16:9 height on wide screens (UI-SCALE-001, GAP-089); a complete digit is refused without a mistake (PLACE-RULE-001, GAP-092); a tap on a whole-board rule shows its cells around the chosen cell for 3 s (RULE-TAP-001, GAP-091); single-puzzle modes show one timer (HUD-TIMER-001, GAP-088); no click sound on the board. |
 | 1.22 | 2026-10-27 | implemented | 0.3.0 playtest (GAP-074..076): the display mode and size belong to the PC, not to the profile, and are applied once per start and by the player's changes (DISPLAY-MODE-008); Borderless Fullscreen always uses the display's own size (DISPLAY-MODE-009); Reset gives Borderless Fullscreen; Quit asks for a second press (UI-MENU-QUIT-001). |
@@ -489,7 +490,7 @@ An audit after the 0.2.0 playtest found options that did nothing or less than th
 | OPT-GAME-002 | Auto Pencil Cleanup (on) | A placed digit leaves the pencil marks of its row, column **and box** (the box was missed). Off: every mark stays. Saves from before keep it on. |
 | OPT-GAME-003 | Show Digits Left (on; was "Show Candidate Count") | Each number pad tile shows in its corner how many of its digit the board still needs (nothing on a finished digit). |
 | OPT-GAME-004 | Jump to Next Empty Cell (off; was "Cursor Snap") | After a correct digit the selection moves to the next empty cell in reading order that takes input (locked and pre-solved cells are skipped). The jump does not start the input lock of a chosen cell (OPT-GAME-006), so a quickly typed next digit counts. |
-| OPT-GAME-006 | Input Lock (on) and Input Lock Time (0.25 s) | After a cell is chosen, digits wait for the set time, so a fast key, pad or touch press does not land in the new cell by accident. The time goes from 0.10 to 1.00 s in 0.05 s steps; off, a digit counts at once. Saves from before the option keep the lock with 0.25 s. |
+| OPT-GAME-006 | Input Lock (on) and Input Lock Time (0.25 s) | After a cell is chosen (by a click, a key or the pad; since 1.25 also by keys and the pad, GAP-095), digits wait for the set time, so a fast key, pad or touch press does not land in the new cell by accident. The time goes from 0.10 to 1.00 s in 0.05 s steps; off, a digit counts at once. Saves from before the option keep the lock with 0.25 s. |
 | OPT-GAME-005 | Double-Tap to Confirm (off) | The first press of a digit on a cell asks ("Press 4 again to place it."), the same digit on the same cell within 1.5 s places it. Pencil marks and the Sudoku Basics lesson are never asked for. |
 | OPT-GFX-001 | Screen Shake | Off stops every shake of the board (it stopped only with Reduce Motion). |
 | OPT-AUDIO-001 | Master Volume | Counts once: every sound multiplies it in and the listener stays at full volume (it was applied twice, so 50 % played at 25 %). |

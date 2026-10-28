@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using NUnit.Framework;
 using SudokuRoguelike.Core;
 using SudokuRoguelike.Run;
@@ -143,6 +144,42 @@ namespace SudokuRoguelike.Tests
             ClickButton(host, $"Num_{nextDigit}");
             yield return null;
             Assert.AreEqual(nextDigit, run.CurrentBoard.Cells[next.r, next.c], "without the lock the digit counts at once");
+        }
+
+        // [REQ: OPT-GAME-006] The lock also follows a key or pad move (owner: everywhere, GAP-095), and a move takes the
+        // new cell's digit as the highlight, as a click does (a stale digit coloured cells purple, GAP-094).
+        [UnityTest]
+        [Requirement("OPT-GAME-006")]
+        public IEnumerator AKeyMove_StartsTheLock_AndHighlightsTheNewCellsDigit()
+        {
+            var (host, run) = StartPuzzle(9509);
+            yield return WaitForBoard(host);
+            UseGameplay(host, new GameplaySettings { InputLockEnabled = true, InputLockSeconds = 0.6f });
+            var board = run.CurrentBoard;
+            var controller = host.GetComponentInChildren<InRunController>(true);
+            var move = typeof(InRunController).GetMethod("MoveSelection", BindingFlags.Instance | BindingFlags.NonPublic);
+            var field = typeof(InRunController).GetField("_highlightValue", BindingFlags.Instance | BindingFlags.NonPublic);
+
+            // A filled cell to start from, with an empty cell to its right.
+            int row = -1, col = -1;
+            for (var r = 0; r < board.Size && row < 0; r++)
+            for (var c = 0; c + 1 < board.Size; c++)
+                if (board.Cells[r, c] != 0 && board.Cells[r, c + 1] == 0) { row = r; col = c; break; }
+            Assume.That(row, Is.GreaterThanOrEqualTo(0));
+            FindObject(host, $"C_{row}_{col}").GetComponent<Button>().onClick.Invoke();
+            Assert.AreEqual(board.Cells[row, col], (int)field.GetValue(controller), "the click highlights the digit");
+            yield return new WaitForSecondsRealtime(0.7f);
+
+            move.Invoke(controller, new object[] { 0, 1 });
+            Assert.AreEqual(0, (int)field.GetValue(controller), "moving onto an empty cell clears the old digit");
+            var digit = board.Solution[row, col + 1];
+            ClickButton(host, $"Num_{digit}");
+            yield return null;
+            Assert.AreEqual(0, board.Cells[row, col + 1], "right after the move the lock holds the digit");
+            yield return new WaitForSecondsRealtime(0.7f);
+            ClickButton(host, $"Num_{digit}");
+            yield return null;
+            Assert.AreEqual(digit, board.Cells[row, col + 1], "after the lock it counts");
         }
 
         // [REQ: OPT-GAME-006] The Gameplay page has the switch and the time row (0.10–1.00 s in 0.05 s steps).

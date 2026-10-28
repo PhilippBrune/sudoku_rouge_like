@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -42,6 +43,77 @@ namespace SudokuRoguelike.Core
             var n = xboxButton - KeyCode.JoystickButton0;
             if (n < 0 || n > 15 || Layout == PadLayout.XInput) return xboxButton;
             return DInput[n];
+        }
+
+        /// <summary>
+        /// [REQ: INPUT-PAD-003] Was the Xbox button pressed this frame. A pad the Input System knows as a gamepad is read
+        /// there, by the button's place (A bottom, B right, LB, Start, L3 …) in any mode; other joysticks through the legacy
+        /// numbers and <see cref="Map"/>. Only one of the two is read: both could count one press twice, a frame apart.
+        /// The legacy read alone missed LB/RB in the Options on the owner's Xbox One pad (GAP-077).
+        /// </summary>
+        public static bool Pressed(KeyCode xboxButton) => Read(xboxButton, true);
+
+        /// <summary>Is the Xbox button held (B held clears a cell).</summary>
+        public static bool Held(KeyCode xboxButton) => Read(xboxButton, false);
+
+        private static bool Read(KeyCode xboxButton, bool pressedThisFrame)
+        {
+#if ENABLE_INPUT_SYSTEM
+            var pad = UnityEngine.InputSystem.Gamepad.current;
+            var control = pad == null ? null : (xboxButton - KeyCode.JoystickButton0) switch
+            {
+                0 => pad.buttonSouth, 1 => pad.buttonEast, 2 => pad.buttonWest, 3 => pad.buttonNorth,
+                4 => pad.leftShoulder, 5 => pad.rightShoulder, 6 => pad.selectButton, 7 => pad.startButton,
+                8 => pad.leftStickButton, 9 => pad.rightStickButton,
+                _ => (UnityEngine.InputSystem.Controls.ButtonControl)null
+            };
+            if (control != null)
+            {
+                var on = pressedThisFrame ? control.wasPressedThisFrame : control.isPressed;
+                if (on && pressedThisFrame) LogFirstPress(xboxButton);
+                return on;
+            }
+#endif
+            var key = Map(xboxButton);
+            return pressedThisFrame ? Input.GetKeyDown(key) : Input.GetKey(key);
+        }
+
+        private static readonly HashSet<KeyCode> LoggedPresses = new HashSet<KeyCode>();
+
+        // GAP-077: the first press of each button per start says whether the legacy read saw it too (the real-pad check).
+        private static void LogFirstPress(KeyCode xboxButton)
+        {
+            if (!LoggedPresses.Add(xboxButton)) return;
+            Debug.Log($"[Pad] button {xboxButton - KeyCode.JoystickButton0}: Input System yes, legacy {(Input.GetKey(Map(xboxButton)) ? "yes" : "no")}");
+        }
+
+        /// <summary>
+        /// [REQ: INPUT-PAD-003] The UI module's Submit acts on the chosen control this frame (pad A or Enter through the
+        /// legacy axes). A handler that also clicks the chosen control on A or Enter skips then, so a press acts once: a
+        /// toggle flipped twice and stayed, a button fired twice (C# review of the 0.3.0 playtest fixes).
+        /// </summary>
+        public static bool UiSubmitThisFrame()
+        {
+            var es = EventSystem.current;
+            if (es == null || !es.sendNavigationEvents || es.currentSelectedGameObject == null) return false;
+            var module = es.currentInputModule as StandaloneInputModule;
+            if (module == null) return false;
+            try { return Input.GetButtonDown(module.submitButton); }
+            catch (System.ArgumentException) { return false; }   // an axis the Input Manager lacks
+        }
+
+        /// <summary>A (or <paramref name="alsoKey"/>) pressed, and the UI's Submit does not already handle it.</summary>
+        public static bool ConfirmPressed(KeyCode alsoKey = KeyCode.None) =>
+            (Pressed(KeyCode.JoystickButton0) || (alsoKey != KeyCode.None && Input.GetKeyDown(alsoKey))) && !UiSubmitThisFrame();
+
+        /// <summary>The right stick (the number pad's cursor in a puzzle); the legacy axes only without a gamepad.</summary>
+        public static Vector2 RightStick()
+        {
+#if ENABLE_INPUT_SYSTEM
+            var pad = UnityEngine.InputSystem.Gamepad.current;
+            if (pad != null) return pad.rightStick.ReadValue();
+#endif
+            return new Vector2(Input.GetAxis("RightStickHorizontal"), Input.GetAxis("RightStickVertical"));
         }
 
         /// <summary>D-input reports LT and RT as buttons 6 and 7 (X-input as axes, read through the Input System).</summary>

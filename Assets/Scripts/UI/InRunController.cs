@@ -123,7 +123,6 @@ namespace SudokuRoguelike.UI
         private float _triggerLPrev, _triggerRPrev;
         private float _pathBConfirmTimer;   // retained but unused after MAP-2 rework
         private float _bButtonHoldTime;      // PS-2: tracks how long B is held in puzzle focus
-        private float _selectButtonHoldTime; // tracks how long Select is held for hold-to-save shortcut
         private bool  _pathQuitModalActive;  // MAP-2: true while the path quit-confirm modal is shown
 
         // ── Item state ──
@@ -456,6 +455,7 @@ namespace SudokuRoguelike.UI
                 else
                     InRunUiFactory.SelectFirstInteractable(_inGameOptionsPanel);
             }
+            else RestorePadFocusOnPath();
         }
 
         private void RebuildOptionsFocusCache()
@@ -513,6 +513,7 @@ namespace SudokuRoguelike.UI
         private void ExitItemsFocus()
         {
             _gbControllerInItemsFocus = false;
+            _gbControllerInRelicsFocus = false;
             _numpadView?.HighlightControllerCursor(null);
             SetStatus(T("Puzzle mode  (Tab for items)"));
         }
@@ -635,6 +636,8 @@ namespace SudokuRoguelike.UI
             // Q shortcut works on path overview too (not just inside a puzzle)
             if (_pathPanel != null && _pathPanel.activeSelf && Input.GetKeyDown(KeyCode.Q))
                 SaveAndQuit();
+            else if (_pathPanel != null && _pathPanel.activeSelf && (_sudokuPanel == null || !_sudokuPanel.activeSelf))
+                HandleGamepadOnPath();   // GAP-080
         }
 
         private void LateUpdate()
@@ -696,6 +699,7 @@ namespace SudokuRoguelike.UI
 
         private void ShowSudoku()
         {
+            _gbControllerInItemsFocus = _gbControllerInRelicsFocus = false;   // a puzzle starts on the board (RM-206)
             DismissFloorEntry(false);
             MarkFloorEntered(_map?.Run?.State);   // UI-STYLE-021
             SetActive(_pathPanel, false);
@@ -954,7 +958,7 @@ namespace SudokuRoguelike.UI
                 var hintText = panelRt?.Find("SudokuGameplayHint")?.GetComponent<Text>();
                 if (hintText != null)
                     hintText.text = LocalizationService.Format("InRun.BoardHint",
-                        "Use numpad buttons or keyboard 1-{0}.\nSingle click: select cell\nDouble click filled cell: highlight same numbers",
+                        "Number pad or keys 1-{0}; click or arrows: choose a cell\nEnter or H (pad: L3): highlight its digit\nPad: right stick picks the digit, A places it",
                         board.Size);
             }
 
@@ -1772,12 +1776,19 @@ namespace SudokuRoguelike.UI
             bool anyPendingInteraction = _koiReflectionPending || _templeIncensePending ||
                 _patternScrollPending || _swapMode || _windChimePending;
             if (anyPendingInteraction && _selectedRow >= 0 && _selectedCol >= 0
-                && (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton0))))
+                && (Input.GetKeyDown(KeyCode.Return) || PadButtons.Pressed(KeyCode.JoystickButton0)))
             {
                 OnCellClicked(_selectedRow, _selectedCol);
                 _inputRemap.Tick();
                 return;
             }
+
+            // GAP-082, GAP-083: in a puzzle nothing stays chosen for the UI's Submit, so Enter or A acts once, through the
+            // game's own keys, and the arrows cannot walk onto Options or Save & Quit (a clicked button stayed chosen).
+            var eventSystem = UnityEngine.EventSystems.EventSystem.current;
+            if (eventSystem != null && eventSystem.currentSelectedGameObject != null && !IsShown(_inGameOptionsPanel)
+                && !IsShown(_gameOverPanel) && !TryGetActiveOverlay(out _) && !(_basicsTutorial != null && _basicsTutorial.IsActive))
+                eventSystem.SetSelectedGameObject(null);
 
             // House-choice phase for Wind Chime takes over all digit keys
             if (_windChimeChoosingHouses) { HandleWindChimeHouseChoice(); _inputRemap.Tick(); return; }
@@ -1847,21 +1858,9 @@ namespace SudokuRoguelike.UI
             if (Input.GetKeyDown(KeyCode.LeftControl) || Input.GetKeyDown(KeyCode.RightControl))
                 TogglePencilMode();
 
-            // H: toggle digit highlight on the selected cell (mirrors R3 controller button)
-            if (Input.GetKeyDown(KeyCode.H))
-            {
-                var board = _map?.Run?.CurrentBoard;
-                if (board != null && _selectedRow >= 0 && _selectedCol >= 0)
-                {
-                    var val = board.Cells[_selectedRow, _selectedCol];
-                    if (val > 0)
-                    {
-                        _highlightValue = (_highlightValue == val) ? 0 : val;
-                        RenderBoard();
-                        SetStatus(_highlightValue > 0 ? Tf("Highlighting {0}.", val) : T("Highlight cleared."));
-                    }
-                }
-            }
+            // H or Enter: highlight the chosen cell's digit (L3 on the pad); Enter only worked through the cell's button (GAP-082)
+            if (Input.GetKeyDown(KeyCode.H) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+                ToggleHighlightAtSelection();
 
             if (Input.GetKeyDown(KeyCode.Q))
                 SaveAndQuit();
@@ -1913,11 +1912,11 @@ namespace SudokuRoguelike.UI
                     ?.SetSelectedGameObject(_overlayBtnCache[curIdx].gameObject);
 
             // A (JoystickButton0) = confirm / invoke selected button
-            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton0)))
+            if (PadButtons.Pressed(KeyCode.JoystickButton0))
                 _overlayBtnCache[Mathf.Clamp(curIdx, 0, _overlayBtnCache.Count - 1)].SafeInvoke("OverlayGamepad-A");
 
             // B (JoystickButton1) = invoke skip / abort / cancel button if one exists
-            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton1)))
+            if (PadButtons.Pressed(KeyCode.JoystickButton1))
             {
                 Button skip = null;
                 for (var k = _overlayBtnCache.Count - 1; k >= 0; k--)
@@ -1927,308 +1926,6 @@ namespace SudokuRoguelike.UI
                 }
                 skip?.onClick.Invoke();
             }
-        }
-
-        private void HandleGamepadOptionsFocus()
-        {
-            if (_optionsFocusCache.Count == 0 || OptionsPageChanged()) RebuildOptionsFocusCache();
-            if (_optionsFocusCache.Count == 0) return;
-
-            var es = UnityEngine.EventSystems.EventSystem.current;
-            var curGo = es?.currentSelectedGameObject;
-            var curSel = curGo != null ? curGo.GetComponent<Selectable>() : null;
-            var idx = curSel != null ? _optionsFocusCache.IndexOf(curSel) : 0;
-            if (idx < 0) idx = 0;
-
-            // Up/Down cycles elements; Left/Right adjusts sliders
-            var moveDown = _inputRemap.WasActionPressed(InputAction.MoveDown);
-            var moveUp   = _inputRemap.WasActionPressed(InputAction.MoveUp);
-            if (moveDown) idx = (idx + 1) % _optionsFocusCache.Count;
-            if (moveUp)   idx = (idx + _optionsFocusCache.Count - 1) % _optionsFocusCache.Count;
-            if (moveDown || moveUp)
-                es?.SetSelectedGameObject(_optionsFocusCache[idx].gameObject);
-
-            var moveRight = _inputRemap.WasActionPressed(InputAction.MoveRight);
-            var moveLeft  = _inputRemap.WasActionPressed(InputAction.MoveLeft);
-            if ((moveRight || moveLeft) && _optionsFocusCache[idx] is Slider sl)
-                sl.value = Mathf.Clamp(sl.value + (moveRight ? 0.1f : -0.1f) * (sl.maxValue - sl.minValue),
-                    sl.minValue, sl.maxValue);
-
-            // A: invoke button or flip toggle
-            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton0)))
-            {
-                var sel = _optionsFocusCache[idx];
-                if (sel is Button btn) btn.onClick.Invoke();
-                else if (sel is Toggle tgl) tgl.isOn = !tgl.isOn;
-                else if (sel is Dropdown dd) dd.Show();
-            }
-
-            // B / Start: close options panel
-            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton1)) || Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton7)))
-                ToggleOptionsPanel();
-        }
-
-        private void HandleGamepadTutorialFocus()
-        {
-            if (_basicsTutorial == null) return;
-            var panel = _basicsTutorial.PanelRoot;
-            if (panel == null || !panel.activeSelf) return;
-            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton0)))
-            {
-                var tutBtns = panel.GetComponentsInChildren<Button>(false);
-                for (var k = 0; k < tutBtns.Length; k++)
-                {
-                    if (tutBtns[k].IsInteractable() && tutBtns[k].gameObject.activeSelf)
-                    { tutBtns[k].onClick.Invoke(); break; }
-                }
-            }
-        }
-
-        private void HandleGamepadController()
-        {
-            _inputRemap.Tick();
-
-            // Start (JoystickButton7): open/close in-game options panel (save & quit lives inside)
-            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton7)))
-            {
-                ToggleOptionsPanel();
-                return;
-            }
-
-            // ── Tutorial panel: A advances step, puzzle input suppressed ──────────
-            if (_basicsTutorial != null && _basicsTutorial.IsActive)
-            {
-                HandleGamepadTutorialFocus();
-                return;
-            }
-
-            // ── In-game options panel ─────────────────────────────────────────────
-            if (_inGameOptionsPanel != null && _inGameOptionsPanel.activeSelf)
-            {
-                HandleGamepadOptionsFocus();
-                return;
-            }
-
-            // ── Overlay panels (shop / reward / rest / relic / bag-swap / boss-gate / event) ──
-            if (TryGetActiveOverlay(out var overlayPanel))
-            {
-                HandleGamepadOverlayFocus(overlayPanel);
-                return;
-            }
-
-            // Path panel: left stick / d-pad navigate nodes, A confirm, B quit
-            if (_pathPanel != null && _pathPanel.activeSelf)
-            {
-                HandleGamepadPathFocus();
-                return;
-            }
-
-            // LB (JoystickButton4): toggle Puzzle ↔ Items focus
-            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton4)))
-            {
-                _gbControllerInItemsFocus = !_gbControllerInItemsFocus;
-                if (_gbControllerInItemsFocus)
-                {
-                    _numpadView?.HighlightControllerCursor(null);
-                    _hudView?.ControllerSelectBagSlot(0);
-                }
-                else
-                {
-                    _numpadView?.HighlightControllerCursor(_gbNumpadRow * 3 + _gbNumpadCol);
-                    SetStatus(T("[Controller] Puzzle mode  (LB to switch)"));
-                }
-            }
-
-            if (_gbControllerInItemsFocus)
-                HandleGamepadItemsFocus();
-            else
-                HandleGamepadPuzzleFocus();
-        }
-
-        private void HandleGamepadPathFocus()
-        {
-            if (_gbReachableNodeButtons.Count == 0) return;
-
-            // Left stick / D-Pad: cycle through reachable nodes (right/down = next, left/up = prev)
-            var moveNext = _inputRemap.WasActionPressed(InputAction.MoveRight) ||
-                           _inputRemap.WasActionPressed(InputAction.MoveDown);
-            var movePrev = _inputRemap.WasActionPressed(InputAction.MoveLeft) ||
-                           _inputRemap.WasActionPressed(InputAction.MoveUp);
-
-            if (moveNext) _gbPathCursor = (_gbPathCursor + 1) % _gbReachableNodeButtons.Count;
-            if (movePrev) _gbPathCursor = (_gbPathCursor + _gbReachableNodeButtons.Count - 1) % _gbReachableNodeButtons.Count;
-
-            if (moveNext || movePrev)
-            {
-                var selBtn = _gbReachableNodeButtons[_gbPathCursor];
-                // Scroll the path viewport so the selected node is visible
-                if (_pathScrollRect != null && selBtn != null)
-                    ScrollToNode(_gbReachableNodeIndices[_gbPathCursor],
-                        _pathOverlayRoot?.sizeDelta.x ?? 600f,
-                        _pathViewport?.rect.width ?? 400f);
-                // Highlight via EventSystem selection
-                UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(
-                    selBtn != null ? selBtn.gameObject : null);
-                SetStatus(Tf("[Controller] Node {0}/{1}  —  A to enter", _gbPathCursor + 1, _gbReachableNodeButtons.Count));
-            }
-
-            // LT / RT: free-scroll the path map left/right
-            var lt = InputRemapService.ReadTrigger(left: true);
-            var rt = InputRemapService.ReadTrigger(left: false);
-            if (_pathScrollRect != null)
-            {
-                var scrollDelta = (rt - lt) * Time.unscaledDeltaTime * 1.5f;
-                if (Mathf.Abs(scrollDelta) > 0.001f)
-                    _pathScrollRect.horizontalNormalizedPosition =
-                        Mathf.Clamp01(_pathScrollRect.horizontalNormalizedPosition + scrollDelta);
-            }
-            _triggerLPrev = lt;
-            _triggerRPrev = rt;
-
-            // A (JoystickButton0): enter the currently highlighted node
-            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton0)) && _gbReachableNodeButtons.Count > 0)
-            {
-                var selBtn = _gbReachableNodeButtons[_gbPathCursor];
-                if (selBtn != null && selBtn.interactable)
-                    selBtn.onClick.Invoke();
-            }
-
-            // Start (JoystickButton7): open options panel from path screen
-            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton7)))
-                ToggleOptionsPanel();
-
-            // MAP-2: B (JoystickButton1) shows a quit-confirm modal instead of double-press
-            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton1)) && !_pathQuitModalActive)
-                ExecuteInRunCancelRoute(CancelRouteContract.ResolveInRunGamepadCancel(BuildInRunCancelContext()));
-        }
-
-        private void HandleGamepadPuzzleFocus()
-        {
-            // Start (JoystickButton7): toggle options panel
-            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton7)))
-            { ToggleOptionsPanel(); return; }
-
-            // D-Pad + left stick: move cell selection (gamepad-only — keyboard arrows are handled below
-            // in the direct keyboard section to avoid double-firing the same MoveSelection call).
-            if (_inputRemap.WasGamepadActionPressed(InputAction.MoveUp))    MoveSelection(-1, 0);
-            if (_inputRemap.WasGamepadActionPressed(InputAction.MoveDown))  MoveSelection(1, 0);
-            if (_inputRemap.WasGamepadActionPressed(InputAction.MoveLeft))  MoveSelection(0, -1);
-            if (_inputRemap.WasGamepadActionPressed(InputAction.MoveRight)) MoveSelection(0, 1);
-
-            // PS-5: A (JoystickButton0) exits game-over screen before placing digits
-            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton0)))
-            {
-                if (_gameOverPanel != null && _gameOverPanel.activeSelf)
-                { SaveAndQuit(); return; }
-                // PS-3: A also confirms pending cell-select interactions
-                bool anyPending = _koiReflectionPending || _templeIncensePending ||
-                    _patternScrollPending || _swapMode || _windChimePending;
-                if (anyPending && _selectedRow >= 0 && _selectedCol >= 0)
-                { OnCellClicked(_selectedRow, _selectedCol); return; }
-                // Normal: place digit at numpad cursor position
-                _pendingKeyboardDigit = _gbNumpadRow * 3 + _gbNumpadCol + 1;
-                _numpadView?.HighlightControllerCursor(_gbNumpadRow * 3 + _gbNumpadCol);
-            }
-
-            // B (JoystickButton1): immediate exit when defeat screen is shown (no long-press)
-            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton1)) && _gameOverPanel != null && _gameOverPanel.activeSelf)
-            { SaveAndQuit(); return; }
-
-            // PS-2: B (JoystickButton1) long-press (≥0.4 s) clears cell; short press acts as cancel only
-            if (Input.GetKey(PadButtons.Map(KeyCode.JoystickButton1)))
-                _bButtonHoldTime += Time.unscaledDeltaTime;
-            else
-                _bButtonHoldTime = 0f;
-            if (_bButtonHoldTime >= 0.4f)
-            {
-                _bButtonHoldTime = -1f; // prevent re-trigger while still held
-                ClearCell();
-            }
-
-            // X (JoystickButton2) or RB (JoystickButton5): toggle pencil mode
-            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton2)) || Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton5)))
-                TogglePencilMode();
-
-            // R3 (JoystickButton9): toggle highlight for value at selected cell
-            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton9)))
-            {
-                var board = _map?.Run?.CurrentBoard;
-                if (board != null && _selectedRow >= 0 && _selectedCol >= 0)
-                {
-                    var val = board.Cells[_selectedRow, _selectedCol];
-                    if (val > 0)
-                    {
-                        _highlightValue = (_highlightValue == val) ? 0 : val;
-                        RenderBoard();
-                        SetStatus(_highlightValue > 0 ? Tf("Highlighting {0}.", val) : T("Highlight cleared."));
-                    }
-                }
-            }
-
-            // Select/Back (JoystickButton6): immediate exit from game-over; hold ≥1.5 s to save & quit
-            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton6)) && _gameOverPanel != null && _gameOverPanel.activeSelf)
-            {
-                _selectButtonHoldTime = 0f;
-                SaveAndQuit();
-                return;
-            }
-            if (Input.GetKey(PadButtons.Map(KeyCode.JoystickButton6)))
-                _selectButtonHoldTime += Time.unscaledDeltaTime;
-            else
-                _selectButtonHoldTime = 0f;
-            if (_selectButtonHoldTime >= 1.5f)
-            {
-                _selectButtonHoldTime = -999f;
-                SaveAndQuit();
-            }
-
-            // Right stick: navigate 3×3 numpad cursor
-            HandleRightStickNumpad();
-        }
-
-        private void HandleRightStickNumpad()
-        {
-            float h = 0f, v = 0f;
-            try { h = Input.GetAxis(RightStickH); } catch { }
-            try { v = Input.GetAxis(RightStickV); } catch { }
-
-            var hRight = h >  RightStickThresh && _gbRStickPrevH <=  RightStickThresh;
-            var hLeft  = h < -RightStickThresh && _gbRStickPrevH >= -RightStickThresh;
-            var vUp    = v >  RightStickThresh && _gbRStickPrevV <=  RightStickThresh;
-            var vDown  = v < -RightStickThresh && _gbRStickPrevV >= -RightStickThresh;
-
-            if (hRight) _gbNumpadCol = Mathf.Min(_gbNumpadCol + 1, 2);
-            if (hLeft)  _gbNumpadCol = Mathf.Max(_gbNumpadCol - 1, 0);
-            if (vUp)    _gbNumpadRow = Mathf.Max(_gbNumpadRow - 1, 0);
-            if (vDown)  _gbNumpadRow = Mathf.Min(_gbNumpadRow + 1, 2);
-
-            _gbRStickPrevH = h;
-            _gbRStickPrevV = v;
-
-            // Only highlight the numpad cursor when the stick actually moves;
-            // prevents the phantom "5" highlight for keyboard-only players.
-            if (hRight || hLeft || vUp || vDown)
-                _numpadView?.HighlightControllerCursor(_gbNumpadRow * 3 + _gbNumpadCol);
-        }
-
-        private void HandleGamepadItemsFocus()
-        {
-            // D-Pad up/down or LT/RT: navigate bag item slots
-            if (InputRemapService.WasDpadPressed(InputAction.MoveUp)) _hudView?.ControllerSelectBagSlot(-1);
-            if (InputRemapService.WasDpadPressed(InputAction.MoveDown)) _hudView?.ControllerSelectBagSlot(+1);
-
-            var lt = InputRemapService.ReadTrigger(left: true);
-            var rt = InputRemapService.ReadTrigger(left: false);
-            if (lt > TriggerThresh && _triggerLPrev <= TriggerThresh) _hudView?.ControllerSelectBagSlot(-1);
-            if (rt > TriggerThresh && _triggerRPrev <= TriggerThresh) _hudView?.ControllerSelectBagSlot(+1);
-            _triggerLPrev = lt;
-            _triggerRPrev = rt;
-
-            // A: activate selected item
-            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton0))) _hudView?.ControllerActivateBagSlot();
-
-            // PS-4: L3 (JoystickButton8) inspects the currently selected bag slot
-            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton8))) _hudView?.ControllerInspectBagSlot();
         }
 
         // MAP-2: Shows a 2-button modal (Quit / Stay) on the path panel canvas.
@@ -2290,7 +1987,7 @@ namespace SudokuRoguelike.UI
             stayBtn.navigation = sNav;
 
             quitBtn.onClick.AddListener(() => { Destroy(modal); _pathQuitModalActive = false; SaveAndQuit(); });
-            stayBtn.onClick.AddListener(() => { Destroy(modal); _pathQuitModalActive = false; });
+            stayBtn.onClick.AddListener(() => { Destroy(modal); _pathQuitModalActive = false; RestorePadFocusOnPath(); });
 
             UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(stayBtn.gameObject);
         }
@@ -2561,15 +2258,15 @@ namespace SudokuRoguelike.UI
             static int Count(bool a, bool b, bool c) => (a ? 1 : 0) + (b ? 1 : 0) + (c ? 1 : 0);
 
             if (Input.GetKeyDown(KeyCode.Alpha1) || Input.GetKeyDown(KeyCode.Keypad1) ||
-                Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton3))) // Y button
+                PadButtons.Pressed(KeyCode.JoystickButton3)) // Y button
                 ToggleWindChimeHouseFlag(ref _windChimeFillRow);
 
             if (Input.GetKeyDown(KeyCode.Alpha2) || Input.GetKeyDown(KeyCode.Keypad2) ||
-                Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton1))) // B button
+                PadButtons.Pressed(KeyCode.JoystickButton1)) // B button
                 ToggleWindChimeHouseFlag(ref _windChimeFillCol);
 
             if (Input.GetKeyDown(KeyCode.Alpha3) || Input.GetKeyDown(KeyCode.Keypad3) ||
-                Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton2))) // X button
+                PadButtons.Pressed(KeyCode.JoystickButton2)) // X button
                 ToggleWindChimeHouseFlag(ref _windChimeFillBox);
 
             var selected = Count(_windChimeFillRow, _windChimeFillCol, _windChimeFillBox);
@@ -2617,8 +2314,11 @@ namespace SudokuRoguelike.UI
                 RenderBoard();
                 return;
             }
-            _selectedRow = Mathf.Clamp(_selectedRow + dr, 0, board.Size - 1);
-            _selectedCol = Mathf.Clamp(_selectedCol + dc, 0, board.Size - 1);
+            var (row, col) = (Mathf.Clamp(_selectedRow + dr, 0, board.Size - 1), Mathf.Clamp(_selectedCol + dc, 0, board.Size - 1));
+            // GAP-095 (owner: everywhere): a key or pad move starts the input lock like a click.
+            if (row != _selectedRow || col != _selectedCol) _cellSelectedTime = Time.realtimeSinceStartup;
+            (_selectedRow, _selectedCol) = (row, col);
+            _highlightValue = board.Cells[row, col];   // GAP-094: like a click; a stale digit coloured cells purple
             RenderBoard();
         }
 

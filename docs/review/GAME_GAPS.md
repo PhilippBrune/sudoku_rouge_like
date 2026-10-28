@@ -81,13 +81,13 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-074](#gap-074) | The game closed by itself after minimizing or locking the PC (exclusive fullscreen at the Legion Go's resolution, carried by the cloud save) | FIXED in part (0.3.0 playtest, 2026-10-27): the strongest cause removed, quits logged; the owner's next report decides | HIGH | P1 |
 | [GAP-075](#gap-075) | A profile switch re-applied the display mode (a window could jump to the centre) | FIXED (found 2026-10-27) | LOW | P3 |
 | [GAP-076](#gap-076) | Borderless Fullscreen below the native resolution looked blurry and different | FIXED (0.3.0 playtest, 2026-10-27) | MEDIUM | P2 |
-| [GAP-077](#gap-077) | LB/RB did not turn the Options pages on an Xbox One pad | OPEN (0.3.0 playtest) | MEDIUM | P2 |
-| [GAP-078](#gap-078) | The pad got stuck in the seed field on Select Class | OPEN (0.3.0 playtest) | HIGH | P1 |
-| [GAP-079](#gap-079) | With the pad the path's node tooltip appeared at the bottom left | OPEN (0.3.0 playtest) | LOW | P3 |
-| [GAP-080](#gap-080) | On the path the pad's Start, B and LT/RT did nothing | OPEN (found in the playtest analysis) | MEDIUM | P2 |
-| [GAP-081](#gap-081) | The right stick no longer moved the number pad cursor | OPEN (0.3.0 playtest) | MEDIUM | P2 |
-| [GAP-082](#gap-082) | Highlighting the digit by key worked only by accident; the hint said "double click" | OPEN (0.3.0 playtest) | LOW | P3 |
-| [GAP-083](#gap-083) | Keys and D-pad could walk onto the puzzle's Options and Save & Quit buttons | OPEN (0.3.0 playtest) | LOW | P3 |
+| [GAP-077](#gap-077) | LB/RB did not turn the Options pages on an Xbox One pad | FIXED (0.3.0 playtest, 2026-10-27; a real pad still to check) | MEDIUM | P2 |
+| [GAP-078](#gap-078) | The pad got stuck in the seed field on Select Class | FIXED (0.3.0 playtest, 2026-10-27; a real pad still to check) | HIGH | P1 |
+| [GAP-079](#gap-079) | With the pad the path's node tooltip appeared at the bottom left | FIXED (0.3.0 playtest, 2026-10-27; a real pad still to check) | LOW | P3 |
+| [GAP-080](#gap-080) | On the path the pad's Start, B and LT/RT did nothing | FIXED (0.3.0 playtest, 2026-10-27; a real pad still to check) | MEDIUM | P2 |
+| [GAP-081](#gap-081) | The right stick no longer moved the number pad cursor | FIXED (0.3.0 playtest, 2026-10-27; a real pad still to check) | MEDIUM | P2 |
+| [GAP-082](#gap-082) | Highlighting the digit by key worked only by accident; the hint said "double click" | FIXED (0.3.0 playtest, 2026-10-27; a real pad still to check) | LOW | P3 |
+| [GAP-083](#gap-083) | Keys and D-pad could walk onto the puzzle's Options and Save & Quit buttons | FIXED (0.3.0 playtest, 2026-10-27; a real pad still to check) | LOW | P3 |
 | [GAP-084](#gap-084) | Back on Select Class went to the main menu instead of the screen before | FIXED (0.3.0 playtest, 2026-10-27) | LOW | P3 |
 | [GAP-085](#gap-085) | Incense Walk: the pencil buy button covered the time | FIXED (0.3.0 playtest, 2026-10-27) | MEDIUM | P2 |
 | [GAP-086](#gap-086) | A Custom Puzzle could start without a chosen rule (9×9, 7 stars, Sum Dots) | OPEN (0.3.0 playtest) | MEDIUM | P2 |
@@ -98,8 +98,8 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-091](#gap-091) | Tapping the rule slip turned the whole grid gold, and it stayed | FIXED (0.3.0 playtest, 2026-10-27) | MEDIUM | P2 |
 | [GAP-092](#gap-092) | A digit already complete on the board could be placed and cost HP | FIXED (0.3.0 playtest, 2026-10-27) | MEDIUM | P2 |
 | [GAP-093](#gap-093) | Opposite Sums: "mirror cell" was not explained | FIXED (0.3.0 playtest, 2026-10-27) | LOW | P3 |
-| [GAP-094](#gap-094) | Moving with keys coloured cells purple from a stale highlight | OPEN (0.3.0 playtest) | LOW | P3 |
-| [GAP-095](#gap-095) | The input lock applied after a mouse click but not after a key or pad move | OPEN (0.3.0 playtest; owner: lock everywhere) | LOW | P3 |
+| [GAP-094](#gap-094) | Moving with keys coloured cells purple from a stale highlight | FIXED (0.3.0 playtest, 2026-10-27; a real pad still to check) | LOW | P3 |
+| [GAP-095](#gap-095) | The input lock applied after a mouse click but not after a key or pad move | FIXED (0.3.0 playtest, 2026-10-27; a real pad still to check) | LOW | P3 |
 | [GAP-067](#gap-067) | Moonshade Offering's "+2 starting pencil" did nothing (the run starts at full pencil) | FIXED (2026-10-22) | LOW | P3 |
 | [GAP-064](#gap-064) | Scholar's Burden: no free Ink Well, "+5 pencil" did nothing, "−1 slot" could add a slot | FIXED (as planned, 2026-10-22) | MEDIUM | P3 |
 | [GAP-063](#gap-063) | Class levels 30 and 40 promised rewards the game did not grant (starting items, frames) | FIXED (2026-10-21) | MEDIUM | P2 |
@@ -1094,6 +1094,77 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Problem:** Borderless Fullscreen passed the chosen resolution to `Screen.SetResolution(w, h, FullScreenWindow)`: the window stayed desktop-sized and Windows stretched a smaller picture to it, blurry and through another colour path than exclusive Fullscreen.
 - **Fix:** Borderless always uses the display's own size (`OptionsController.SizeFor`); the Resolution row shows that size and is locked in Borderless; the chosen resolution stays for Fullscreen and windows.
 - **Tests:** `DisplayPerPcTests.Borderless_UsesTheDisplaysOwnSize`. The look itself needs the owner's check at 3440×1440.
+
+## GAP-077
+**LB/RB did not turn the Options pages on an Xbox One pad**
+
+- **Requirement:** INPUT-PAD-003 (InputAndProfilesSpec 2.5)
+- **Status:** FIXED (0.3.0 playtest, 2026-10-27; the owner's real pad still to check) · **Severity:** MEDIUM · **Priority:** P2
+- **Problem:** The Options read LB/RB (and the game Start, Select, the stick presses) only through the legacy joystick numbers. The cause on the owner's pad is not proven; the Input System reads the same pad reliably (GAP-070 had the same pattern for the D-pad).
+- **Fix:** `PadButtons.Pressed/Held` read a gamepad through the Input System by the button's place (one source per press; legacy numbers only for other joysticks), used for every pad button in the game. The first press of each button per start logs whether the legacy read saw it (`[Pad]` in Player.log), for the real-pad check. Found in review: a manual A handler and Unity's Submit could both act on one press (a toggle flipped twice and stayed); a handler now skips when Submit acts (`PadButtons.ConfirmPressed`).
+- **Tests:** `GamepadDpadPlayModeTests.ShoulderStartSelectAndStickPresses_ReadOncePerPress`, `Rb_TurnsTheOptionsPage` (a virtual pad; it never reaches the legacy read, so it failed before).
+
+## GAP-078
+**The pad got stuck in the seed field on Select Class**
+
+- **Requirement:** INPUT-PAD-004
+- **Status:** FIXED · **Severity:** HIGH · **Priority:** P1
+- **Problem:** The seed field was in the pad's navigation; once chosen, a legacy InputField takes every move, Submit and Cancel. A second action from a double A press (GAP-077's review finding) could also move the focus there.
+- **Fix:** The seed field takes no pad or arrow-key focus (`Navigation.None`); a click still types into it, and the week's seed button stays reachable.
+
+## GAP-079
+**With the pad the path's node tooltip appeared at the bottom left**
+
+- **Requirement:** INPUT-PAD-004
+- **Status:** FIXED · **Severity:** LOW · **Priority:** P3
+- **Fix:** `NodeHoverHandler.OnSelect` passes the node's screen point (it passed (0, 0), the screen's corner).
+
+## GAP-080
+**On the path the pad's Start, B and LT/RT did nothing**
+
+- **Requirement:** INPUT-PAD-004
+- **Status:** FIXED · **Severity:** MEDIUM · **Priority:** P2
+- **Problem:** The pad handler ran only inside the puzzle's keyboard handler, so its path part never ran.
+- **Fix:** `HandleGamepadOnPath`: Start opens the Options, B asks to leave (or closes the Options or a scene over the path through its own cancel button), LT/RT scroll, Select saves and quits; nothing under the leave question. A and moving stay with the UI (running the old handler would have made one A press act twice: two nodes, two purchases). After the Options or the leave question close, the focus goes back to a node.
+
+## GAP-081
+**The right stick no longer moved the number pad cursor**
+
+- **Requirement:** INPUT-PAD-004
+- **Status:** FIXED · **Severity:** MEDIUM · **Priority:** P2
+- **Fix:** The right stick comes from the Input System (`PadButtons.RightStick`); the cursor stays on the board's digits (on a 6×6 it never rests on 7–9); a swallowing `try/catch` around the legacy axes is gone.
+- **Tests:** `GamepadDpadPlayModeTests.RightStick_IsRead`.
+
+## GAP-082
+**Highlighting the digit by key worked only by accident; the hint said "double click"**
+
+- **Requirement:** INPUT-PAD-004
+- **Status:** FIXED · **Severity:** LOW · **Priority:** P3
+- **Fix:** Enter and H highlight the chosen cell's digit, L3 (and R3) on the pad (`ToggleHighlightAtSelection`); nothing in a puzzle stays chosen for the UI's Submit, so the press acts once. The hint line on the puzzle screen says so (five catalogs).
+
+## GAP-083
+**Keys and D-pad could walk onto the puzzle's Options and Save & Quit buttons**
+
+- **Requirement:** INPUT-PAD-004
+- **Status:** FIXED · **Severity:** LOW · **Priority:** P3
+- **Fix:** In a puzzle the UI's selection is cleared each frame (not with the Options, a scene, the game-over screen or the Basics lesson open), so the arrows and the D-pad move only the board's cursor; both buttons keep their hotkeys (Q, O/F1, Start, Select) and the mouse.
+
+## GAP-094
+**Moving with keys coloured cells purple from a stale highlight**
+
+- **Requirement:** OPT-GAME-006 (GameDesignSpec 1.25), INPUT-PAD-004
+- **Status:** FIXED · **Severity:** LOW · **Priority:** P3
+- **Problem:** A move kept the highlighted digit of the last clicked cell, and the conflict preview showed where that old digit could not go: purple cells while moving, none after a click.
+- **Fix:** A move takes the new cell's digit as the highlight, as a click does.
+- **Tests:** `GameplayOptionsPlayModeTests.AKeyMove_StartsTheLock_AndHighlightsTheNewCellsDigit`.
+
+## GAP-095
+**The input lock applied after a mouse click but not after a key or pad move**
+
+- **Requirement:** OPT-GAME-006 (GameDesignSpec 1.25)
+- **Status:** FIXED (owner: "Überall") · **Severity:** LOW · **Priority:** P3
+- **Fix:** A key or pad move starts the lock like a click (`MoveSelection`); "Jump to Next Empty Cell" still does not.
+- **Tests:** as GAP-094.
 
 ## GAP-084
 **Back on Select Class went to the main menu instead of the screen before**

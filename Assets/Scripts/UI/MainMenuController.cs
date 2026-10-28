@@ -146,7 +146,7 @@ namespace SudokuRoguelike.UI
 
             if (_firstRunSetupOverlay != null && _firstRunSetupOverlay.activeSelf)
             {
-                if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton0)) || Input.GetKeyDown(KeyCode.Return))
+                if (PadButtons.ConfirmPressed(KeyCode.Return))
                 {
                     var es = EventSystem.current;
                     var sel = es?.currentSelectedGameObject;
@@ -172,8 +172,8 @@ namespace SudokuRoguelike.UI
             if (_sudokuBasicsOverlay != null && _sudokuBasicsOverlay.activeSelf)
             {
                 // MM-5: A/Enter confirms (same action as B/Escape — both dismiss the basics prompt)
-                if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton0)) || Input.GetKeyDown(KeyCode.Return)
-                    || Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton1)) || Input.GetKeyDown(KeyCode.Escape))
+                if (PadButtons.Pressed(KeyCode.JoystickButton0) || Input.GetKeyDown(KeyCode.Return)
+                    || PadButtons.Pressed(KeyCode.JoystickButton1) || Input.GetKeyDown(KeyCode.Escape))
                 {
                     ExecuteMainMenuCancelRoute(CancelRouteAction.DismissSudokuBasicsOverlay);
                     return;
@@ -185,7 +185,7 @@ namespace SudokuRoguelike.UI
                 return;
 
             // A (JoystickButton0) / R3 (JoystickButton9, legacy alias) = confirm selected element (G1-A)
-            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton0)) || Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton9)))
+            if (PadButtons.ConfirmPressed() || PadButtons.Pressed(KeyCode.JoystickButton9))
             {
                 var es = EventSystem.current;
                 var sel = es?.currentSelectedGameObject;
@@ -213,7 +213,7 @@ namespace SudokuRoguelike.UI
 
         private bool TryHandleMainMenuCancelInput()
         {
-            if (!Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton1)) && !Input.GetKeyDown(KeyCode.Escape))
+            if (!PadButtons.Pressed(KeyCode.JoystickButton1) && !Input.GetKeyDown(KeyCode.Escape))
                 return false;
             if (CloseGameModesOverlay()) return true;   // the stamp shop or the waiting XP first
 

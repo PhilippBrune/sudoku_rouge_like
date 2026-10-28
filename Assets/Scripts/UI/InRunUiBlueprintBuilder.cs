@@ -288,7 +288,7 @@ namespace SudokuRoguelike.UI
             EnsureOrGetImage(hintBg.gameObject, new Color(0f, 0f, 0f, 0f)).raycastTarget = false;
 
             var hint = BuildText("SudokuGameplayHint", panel.transform as RectTransform,
-                T("InRun.Blueprint.PuzzleHint", "Use numpad buttons or keyboard 1-9.\nSingle click: select cell\nDouble click filled cell: highlight same numbers"),
+                T("InRun.Blueprint.PuzzleHint", "Number pad or keys 1-9; click or arrows: choose a cell\nEnter or H (pad: L3): highlight its digit\nPad: right stick picks the digit, A places it"),
                 14, TextAnchor.UpperLeft);
             SetRect(hint.rectTransform, new Vector2(0.7716f, 0.02f), new Vector2(0.9710f, 0.105f), Vector2.zero, Vector2.zero);
             hint.color = new Color(0.90f, 0.86f, 0.76f, 0.95f);

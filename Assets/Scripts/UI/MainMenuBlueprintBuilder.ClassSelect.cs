@@ -132,6 +132,9 @@ namespace SudokuRoguelike.UI
             input.placeholder = placeholder;
             input.contentType = InputField.ContentType.IntegerNumber;
             input.characterLimit = 9;
+            // GAP-078: no pad or arrow-key focus: a focused field takes every key and the pad could not leave it. A click
+            // still types into it, and the week's seed button stays reachable.
+            input.navigation = new Navigation { mode = Navigation.Mode.None };
             mc.SetSeedInput(input);
 
             var (_, week) = WeeklySeedService.IsoWeek(DateTime.Today);

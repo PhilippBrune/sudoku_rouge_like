@@ -57,7 +57,8 @@ namespace SudokuRoguelike.UI
         public void OnSelect(BaseEventData e)
         {
             if (_node == null || _node.Visited || _isInvalidFirst || _isHidden) return;
-            _onShow?.Invoke(_node, _config, Vector2.zero);
+            // GAP-079: the pad's focus shows the tooltip at the node (it got the screen's bottom-left corner).
+            _onShow?.Invoke(_node, _config, RectTransformUtility.WorldToScreenPoint(null, transform.position));
         }
 
         public void OnDeselect(BaseEventData e) => _onHide?.Invoke();

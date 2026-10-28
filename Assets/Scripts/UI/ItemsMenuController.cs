@@ -142,10 +142,10 @@ namespace SudokuRoguelike.UI
         private void Update()
         {
             if (_grid == null || !_grid.gameObject.activeInHierarchy) return;
-            var step = Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton5)) || Input.GetKeyDown(KeyCode.PageDown) ? 1
-                : Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton4)) || Input.GetKeyDown(KeyCode.PageUp) ? -1 : 0;
+            var step = PadButtons.Pressed(KeyCode.JoystickButton5) || Input.GetKeyDown(KeyCode.PageDown) ? 1
+                : PadButtons.Pressed(KeyCode.JoystickButton4) || Input.GetKeyDown(KeyCode.PageUp) ? -1 : 0;
             if (step != 0) TurnTab(step);
-            if (Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton3)) || Input.GetKeyDown(KeyCode.F)) CycleFilter();
+            if (PadButtons.Pressed(KeyCode.JoystickButton3) || Input.GetKeyDown(KeyCode.F)) CycleFilter();
             KeepSelectionVisible();
         }
 

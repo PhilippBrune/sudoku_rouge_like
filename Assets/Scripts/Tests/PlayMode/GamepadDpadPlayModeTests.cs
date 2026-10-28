@@ -67,6 +67,60 @@ namespace SudokuRoguelike.Tests
             Assert.Less(InputRemapService.ReadTrigger(left: false), 0.1f, "RT released");
         }
 
+        // [REQ: INPUT-PAD-003] GAP-077: LB/RB, Start, Select and the stick presses come from the Input System, once per press.
+        [UnityTest]
+        [Requirement("INPUT-PAD-003")]
+        public IEnumerator ShoulderStartSelectAndStickPresses_ReadOncePerPress()
+        {
+            InputSystem.QueueStateEvent(_pad, new GamepadState()
+                .WithButton(GamepadButton.LeftShoulder).WithButton(GamepadButton.Start).WithButton(GamepadButton.LeftStick));
+            yield return null;
+            Assert.IsTrue(PadButtons.Pressed(UnityEngine.KeyCode.JoystickButton4), "LB");
+            Assert.IsTrue(PadButtons.Pressed(UnityEngine.KeyCode.JoystickButton7), "Start");
+            Assert.IsTrue(PadButtons.Pressed(UnityEngine.KeyCode.JoystickButton8), "L3");
+            Assert.IsFalse(PadButtons.Pressed(UnityEngine.KeyCode.JoystickButton5), "not RB");
+            Assert.IsFalse(PadButtons.Pressed(UnityEngine.KeyCode.JoystickButton6), "not Select");
+            Assert.IsTrue(PadButtons.Held(UnityEngine.KeyCode.JoystickButton4), "LB held");
+
+            yield return null;
+            Assert.IsFalse(PadButtons.Pressed(UnityEngine.KeyCode.JoystickButton4), "a held LB counts once");
+            Assert.IsTrue(PadButtons.Held(UnityEngine.KeyCode.JoystickButton4), "and is still held");
+        }
+
+        // [REQ: UI-STYLE-017] GAP-077: RB on an Xbox-type pad turns the Options page.
+        [UnityTest]
+        [Requirement("INPUT-PAD-003")]
+        public IEnumerator Rb_TurnsTheOptionsPage()
+        {
+            var card = new UnityEngine.GameObject("PadOptionsCard", typeof(UnityEngine.RectTransform));
+            try
+            {
+                var tabs = OptionsTabSet.On((UnityEngine.RectTransform)card.transform);
+                tabs.Add("TabA", "SectionA", "A");
+                tabs.Add("TabB", "SectionB", "B");
+                tabs.Activate(0);
+                yield return null;
+                InputSystem.QueueStateEvent(_pad, new GamepadState().WithButton(GamepadButton.RightShoulder));
+                yield return null;
+                yield return null;
+                Assert.AreEqual(1, tabs.ActiveIndex, "RB opened the next page");
+            }
+            finally
+            {
+                UnityEngine.Object.Destroy(card);
+            }
+        }
+
+        // [REQ: INPUT-PAD-004] GAP-081: the right stick reaches the game through the Input System.
+        [UnityTest]
+        [Requirement("INPUT-PAD-004")]
+        public IEnumerator RightStick_IsRead()
+        {
+            InputSystem.QueueStateEvent(_pad, new GamepadState { rightStick = new UnityEngine.Vector2(1f, 0f) });
+            yield return null;
+            Assert.Greater(PadButtons.RightStick().x, 0.9f);
+        }
+
         [UnityTest]
         public IEnumerator WithoutAPad_NothingMoves_AndTheTriggersReadZero()
         {

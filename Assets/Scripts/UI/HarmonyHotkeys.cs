@@ -20,9 +20,9 @@ namespace SudokuRoguelike.UI
                 var field = selected.GetComponent<InputField>();
                 if (field != null && field.isFocused) return (0, false);
             }
-            var step = Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton5)) || Input.GetKeyDown(KeyCode.PageDown) ? 1
-                : Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton4)) || Input.GetKeyDown(KeyCode.PageUp) ? -1 : 0;
-            return (step, Input.GetKeyDown(PadButtons.Map(KeyCode.JoystickButton3)) || Input.GetKeyDown(KeyCode.F));
+            var step = PadButtons.Pressed(KeyCode.JoystickButton5) || Input.GetKeyDown(KeyCode.PageDown) ? 1
+                : PadButtons.Pressed(KeyCode.JoystickButton4) || Input.GetKeyDown(KeyCode.PageUp) ? -1 : 0;
+            return (step, PadButtons.Pressed(KeyCode.JoystickButton3) || Input.GetKeyDown(KeyCode.F));
         }
     }
 }

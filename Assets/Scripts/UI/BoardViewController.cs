@@ -842,7 +842,7 @@ namespace SudokuRoguelike.UI
                 UseOverlayGroup(dot.SumValue > 0 ? KropkiSumKey : dot.IsBlack ? KropkiBlackKey : KropkiWhiteKey);
                 if (dot.SumValue > 0)
                 {
-                    DrawCircle(px, py, 12f, GamePalette.OverlayKropkiSum);
+                    DrawBadge(px, py, 12f, GamePalette.OverlayKropkiSum);
                     DrawOverlayText(px, py, dot.SumValue.ToString(), 9, Color.white);
                 }
                 else if (dot.IsBlack)
@@ -1116,8 +1116,16 @@ namespace SudokuRoguelike.UI
             DrawRingAtPos(px, py, radius, color);
         }
 
+        // [REQ: ACCESS-FONT-002] Text Size also enlarges the rules' small numbers and letters on and around the board, and the
+        // badges they sit on (RM-214: Opposite Sums was hard to read on a Legion Go). 1.0 to 1.5, like the digits.
+        private float ClueScale => Mathf.Clamp(_gridFontScale, 1f, 1.5f);
+
+        /// <summary>A labelled badge: a circle that grows with the label it carries (ACCESS-FONT-002).</summary>
+        private void DrawBadge(float x, float y, float radius, Color color) => DrawCircle(x, y, radius * ClueScale, color);
+
         private void DrawOverlayText(float x, float y, string text, int fontSize, Color color)
         {
+            fontSize = Mathf.RoundToInt(fontSize * ClueScale);
             var go = new GameObject("OvTxt", typeof(RectTransform), typeof(Text));
             go.transform.SetParent(OverlayParent, false);
             var rt = go.GetComponent<RectTransform>();

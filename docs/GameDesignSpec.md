@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.25 | **Date:** 2026-10-27 | **Status:** implemented
+**Version:** 1.26 | **Date:** 2026-10-28 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.26 | 2026-10-28 | implemented | 0.3.0 playtest (RM-210): every Options value row can be set by pressing or dragging its bar with the mouse (OPT-DRAG-001). |
 | 1.25 | 2026-10-27 | implemented | 0.3.0 playtest: the input lock also follows a key or pad move (owner: everywhere, GAP-095); a move takes the new cell's digit as the highlight, as a click does (GAP-094). The pad layout is in InputAndProfilesSpec 2.5 (INPUT-PAD-004). |
 | 1.24 | 2026-10-27 | implemented | 0.3.0 playtest, menus: every Back button returns to the screen before, the main menu when there is none (MENU-BACK-001, GAP-084). |
 | 1.23 | 2026-10-27 | implemented | 0.3.0 playtest, puzzle screen: the run keeps a 16:9 height on wide screens (UI-SCALE-001, GAP-089); a complete digit is refused without a mistake (PLACE-RULE-001, GAP-092); a tap on a whole-board rule shows its cells around the chosen cell for 3 s (RULE-TAP-001, GAP-091); single-puzzle modes show one timer (HUD-TIMER-001, GAP-088); no click sound on the board. |
@@ -495,6 +496,7 @@ An audit after the 0.2.0 playtest found options that did nothing or less than th
 | OPT-GFX-001 | Screen Shake | Off stops every shake of the board (it stopped only with Reduce Motion). |
 | OPT-AUDIO-001 | Master Volume | Counts once: every sound multiplies it in and the listener stays at full volume (it was applied twice, so 50 % played at 25 %). |
 | OPT-AUDIO-002 | Volumes (1.21) | The menu music plays Master × Music; in a run the music plays Master × Music and the sound effects Master × SFX, at once while a row changes; Mute all silences both, Mute when unfocused pauses the sound while the window is in the background. There is no UI Volume row: no interface sound plays (owner, 2026-10-27; the clips in `audio/ui` stay unused). |
+| OPT-DRAG-001 | Value rows (1.26) | A press or a drag on a value row's bar (volumes, Particles, Board Brightness and Contrast, Input Lock Time, Text Size) sets the value at that point, in the row's steps; the arrows and the pad work as before, and the bar takes no focus (RM-210). |
 | OPT-LABEL-001 | Names | "Confirm Wrong Placement" is removed: a question asked only before a wrong digit would give the answer away. Brightness and Contrast are **Board** Brightness and **Board** Contrast (they calibrate the puzzle board and now redraw it at once); "Screen Reader" is **Status Captions** (an on-screen caption bar, not speech). |
 | ACCESS-COLOR-003 | Colorblind Mode | Line colours that tell rules apart use the Okabe–Ito palette (German Whispers green, Dutch Whispers orange, Renban purple, Parity blue, Consecutive yellow, Between sky blue, Nabner/Entropic/Modular vermilion). The cells are no longer passed through a colour-blindness simulation, which made them harder to tell apart. |
 | ACCESS-FONT-001 | Text Size | Scales the board's digits and pencil marks too (it changed only the preview and some menus), never past the cell. |

@@ -133,7 +133,7 @@ namespace SudokuRoguelike.UI
                 foreach (var cell in new[] { pair.CellA, pair.CellB })
                 {
                     var p = CellCenter(cell, cW, cH, sX, sY, tW, tH) + new Vector2(cW * 0.30f, cH * 0.30f);
-                    DrawCircle(p.x, p.y, Mathf.Max(8f, Mathf.Min(cW, cH) * 0.15f), GamePalette.OverlayMirror);
+                    DrawBadge(p.x, p.y, Mathf.Max(8f, Mathf.Min(cW, cH) * 0.15f), GamePalette.OverlayMirror);
                     DrawOverlayText(p.x, p.y, label, 10, Color.white);
                 }
             }

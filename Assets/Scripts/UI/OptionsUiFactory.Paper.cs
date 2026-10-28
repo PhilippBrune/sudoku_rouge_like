@@ -175,6 +175,20 @@ namespace SudokuRoguelike.UI
             dec.onClick.AddListener(() => Step(-step));
             inc.onClick.RemoveAllListeners();
             inc.onClick.AddListener(() => Step(step));
+
+            // [REQ: OPT-DRAG-001] The mouse drags the stone along the bar (RM-210); a value is set only when its step changes.
+            var hit = EnsureComponent<Image>(bar.gameObject);
+            hit.color = Color.clear;
+            hit.raycastTarget = true;
+            var drag = EnsureComponent<DragValueBar>(bar.gameObject);
+            drag.OnPoint = t =>
+            {
+                var v = DragValueBar.ValueAt(t, min, max, step);
+                if (Mathf.Approximately(v, current)) return;
+                current = v;
+                setter(current);
+                Show(current);
+            };
             Show(initValue);
             return new ArrowRow(dec, inc, val, v =>
             {

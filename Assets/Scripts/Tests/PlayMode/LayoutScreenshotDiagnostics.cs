@@ -1064,6 +1064,36 @@ namespace SudokuRoguelike.Tests
             _puzzleSize = 6;
         }
 
+        // RM-214: the rules' small numbers at Text Size 100 % and 150 % on the Legion Go's 1920×1200 (Opposite Sums, sum dots,
+        // distance pairs, mirror letters).
+        [UnityTest]
+        public IEnumerator RenderClueSizes()
+        {
+            var camera = CreateCamera();
+            var prefix = Environment.GetEnvironmentVariable("SR_SHOT_PREFIX") ?? "after_";
+            _puzzleSize = 9;
+            try
+            {
+                foreach (var scale in new[] { 1f, 1.5f })
+                {
+                    var save = new SaveFileService(TestSlot);
+                    var envelope = save.HasSaveFile() ? save.Load() : new SaveFileEnvelope();
+                    envelope.PlayerProfile.Options.Accessibility.FontScale = scale;
+                    save.Save(envelope);
+                    SaveFileService.FlushSharedPendingWrites();
+                    var (host, _) = StartRun(7340, true, new[] { BossModifierId.OppositeCellsSum, BossModifierId.SumKropki,
+                        BossModifierId.DistancePair, BossModifierId.MirrorCells });
+                    yield return DismissIntro();
+                    for (var frame = 0; frame < 30 && Find(host, "C_0_0") == null; frame++)
+                        yield return null;
+                    yield return new WaitForSecondsRealtime(0.4f);
+                    yield return Shoot(host, camera, $"{prefix}clues_{Mathf.RoundToInt(scale * 100)}.png", 1920, 1200);
+                    host.SetActive(false);
+                }
+            }
+            finally { _puzzleSize = 6; }
+        }
+
         private static KillerCage Cage(RunDirector run, params (int r, int c)[] cells)
         {
             var cage = new KillerCage();

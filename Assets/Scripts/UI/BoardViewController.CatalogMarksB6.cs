@@ -23,7 +23,7 @@ namespace SudokuRoguelike.UI
         {
             UseOverlayGroup(RatioNKey);
             var mid = (CellCenter(pair.CellA, cW, cH, sX, sY, tW, tH) + CellCenter(pair.CellB, cW, cH, sX, sY, tW, tH)) * 0.5f;
-            DrawCircle(mid.x, mid.y, 11f, GamePalette.OverlayKropkiBlack);
+            DrawBadge(mid.x, mid.y, 11f, GamePalette.OverlayKropkiBlack);
             DrawOverlayText(mid.x, mid.y, RatioNPairRule.N(pair).ToString(), 10, Color.white);
         }
 
@@ -43,7 +43,7 @@ namespace SudokuRoguelike.UI
                     var trim = Mathf.Min(cW, cH) * 0.32f;
                     DrawOverlaySegment(a + dir * trim, b - dir * trim, GamePalette.OverlayDistancePair, 3f);
                     var mid = (a + b) * 0.5f;
-                    DrawCircle(mid.x, mid.y, Mathf.Max(8f, Mathf.Min(cW, cH) * 0.15f), GamePalette.OverlayDistancePair);
+                    DrawBadge(mid.x, mid.y, Mathf.Max(8f, Mathf.Min(cW, cH) * 0.15f), GamePalette.OverlayDistancePair);
                     DrawOverlayText(mid.x, mid.y, pair.Value.ToString(), 10, Color.white);
                 }
                 else if (pair.PairType == CellPairType.OppositeSum)
@@ -52,7 +52,7 @@ namespace SudokuRoguelike.UI
                     foreach (var cell in new[] { pair.CellA, pair.CellB })
                     {
                         var p = CellCenter(cell, cW, cH, sX, sY, tW, tH) + new Vector2(cW * 0.29f, cH * 0.29f);
-                        DrawCircle(p.x, p.y, Mathf.Max(9f, Mathf.Min(cW, cH) * 0.17f), GamePalette.OverlayOppositeSum);
+                        DrawBadge(p.x, p.y, Mathf.Max(9f, Mathf.Min(cW, cH) * 0.17f), GamePalette.OverlayOppositeSum);
                         DrawOverlayText(p.x, p.y, pair.Value.ToString(), 10, Color.white);
                     }
                 }

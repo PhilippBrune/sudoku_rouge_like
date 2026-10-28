@@ -1,13 +1,14 @@
 # Accessibility Specification
 
-**Version:** 2.4  
-**Date:** 2026-10-21  
+**Version:** 2.5  
+**Date:** 2026-10-28  
 **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.5 | 2026-10-28 | implemented | 0.3.0 playtest on a Legion Go (RM-214): Text Size also enlarges the rules' small numbers and letters on and around the board and the badges they sit on (ACCESS-FONT-002). |
 | 2.4 | 2026-10-21 | implemented | Second Options audit (GAP-066): Reduce Motion also stops every scale pulse and pop (path nodes, the boss node, digits, the board-fill wave, combo, reward plaques) and the badge shake (ACCESS-MOTION-002). |
 | 2.3 | 2026-10-21 | implemented | Accessibility is a page of the Options scroll (UI-STYLE-017) with Text Size and the preview board on its slip; the separate panel is gone. |
 | 2.2 | 2026-10-21 | implemented | Options audit (GAP-061): Colorblind Mode uses the Okabe–Ito palette for line colours and no longer simulates colour blindness on the cells (ACCESS-COLOR-003); Text Size scales the board digits and pencil marks (ACCESS-FONT-001); "Screen Reader" is named Status Captions; the gameplay assists act as named (GameDesignSpec 1.15 Options Effects). |
@@ -36,6 +37,7 @@ Primary implementation references:
 | `ReduceMotion` | No screen shake (ACCESS-MOTION-001), no particles, no unroll of the path scroll, no wave ripple; scale pulses and pops (path nodes, the boss node, digits, the board-fill wave, combo, reward plaques) and the badge shake do not play (ACCESS-MOTION-002, `AnimationHelper.MotionReduced`); menu fades run at 30 % of their time. Colour pulses (the haunted cell, chain lines) stay: they carry state, not movement | Live: the next animation reads the setting |
 | `AlternativeConstraintSymbols` | Swaps to alternate constraint symbols where supported | Applied during board rebuild |
 | `FontScale` | Scales the board's digits and pencil marks (within the cell, ACCESS-FONT-001), the preview and accessibility-aware menu text | Stored in `AccessibilitySettings` |
+| `FontScale` (2.5) | **[ACCESS-FONT-002]** Also scales the rules' small numbers and letters on and around the board (sum dots, Opposite Sums, distance pairs, mirror letters, outside clues, line and cage labels) and the badges they sit on, 1.0 to 1.5 (RM-214: too small on a Legion Go's 8.8" screen). Unlabelled dots and cell-sized marks keep their size. At 150 % a corner badge can touch the cell's digit. |
 | `ScreenReaderEnabled` | "Status Captions": an on-screen announcement bar for status updates | A caption bar, not OS speech; renamed from "Screen Reader" (GAP-061) |
 
 ## Announcement Captions

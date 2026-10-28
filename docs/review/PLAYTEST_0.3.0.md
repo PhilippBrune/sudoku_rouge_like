@@ -1,11 +1,12 @@
 # Playtest 0.3.0: analysis and fix plan
 
-**Version:** 1.1 | **Date:** 2026-10-27 | **Status:** review (analysis reviewed; owner decisions in §4; fixes in progress)
+**Version:** 1.2 | **Date:** 2026-10-28 | **Status:** review (fixes and features built; mockups, concepts and D2 wait for the owner, §6)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.2 | 2026-10-28 | review | Status of every item (§6), a ten-step check list for a real pad (K2), the questions waiting for the owner. GAP-096 found and fixed on the way. |
 | 1.1 | 2026-10-27 | review | Architecture review of the plan (§5) and the owner's answers (§4): GAP-074, GAP-077, GAP-080 and GAP-089 rewritten; change sets regrouped (§3). |
 | 1.0 | 2026-10-27 | review | The owner's playtest of 0.3.0 (desktop 3440×1440 with an Xbox One controller, and a Lenovo Legion Go 2): 45 findings analysed against the code, sorted into defects (GAP-074..095), change requests (RM-206..217), checks, mockups and concepts. |
 
@@ -138,3 +139,53 @@ Each fix: a failing test first where the code allows it, the fix, the five catal
 - **Save compatibility.** Only additive fields (RM-211's reroll counter, the custom save slot). Display settings move to PlayerPrefs but are still read from the profile when no per-PC value exists, so nothing is lost.
 - **Spec impact.** RM-213 touches UI-STYLE-025/027 (`docs/design/layout-proposals.md`); GAP-076 changes DISPLAY-MODE rules; RM-206 changes InputAndProfilesSpec's controller table; each edit bumps its spec.
 - **Out of reach for a test here:** a real Xbox pad, the Steam client with published achievements, locking the PC.
+
+## 6. Status (2026-10-28)
+
+| Item | Status | Commit |
+|---|---|---|
+| GAP-074 | In part: the display belongs to the PC, Quit asks twice, every quit request and focus change is logged. Not reproduced; waiting for the Player.log of the next quit. | d8a8dcc |
+| GAP-075, GAP-076 | Fixed | d8a8dcc |
+| GAP-084, GAP-085, GAP-088 to GAP-093, D3 | Fixed (D3: "pencil marks are free" on the Incense slip) | 164c36a |
+| GAP-077 to GAP-083, GAP-094, GAP-095, RM-206 | Fixed with a virtual pad; the real pad is K2 | dfcfc4c |
+| GAP-086 | In part: not reproduced over three region kinds; a missing rule is now named on the status line | 714b122 |
+| GAP-087, RM-213 | Fixed / built | 714b122 |
+| GAP-096 (new) | Fixed: Spirit Trials showed "???" for the stars | 1f34382 |
+| RM-207 | Built (ten hints; a pad connected at start shows the pad's buttons) | d0188e3 |
+| RM-208 | In part: no click sound on the board (164c36a), the highlight key in the hint (dfcfc4c); gold and the detail slip wait for the pick of UI-STYLE-036 | 97d3115 |
+| RM-209 | Concept for the save (TutorialModeSystem 1.12); help, seed and share code wait for the pick of UI-STYLE-037 | 755b93b, 97d3115 |
+| RM-210, RM-214 | Built; after the review a drag saves once on release, and the Quadruples and Little Killer clues grow too | 1ece097, d0188e3 |
+| RM-211 | Waits for the pick of UI-STYLE-038 (price, once per market or per floor) | 97d3115 |
+| RM-212 | Built | 4bdbdb3 |
+| RM-215 | Built | ce4ef47 |
+| RM-216 | Concept (DailyGoalSystem 0.8); waits for the owner's answers | 755b93b |
+| RM-217 | Mockups UI-STYLE-032 (main menu A, B, C) to 035; waits for the pick | 97d3115 |
+| D2 | Open question | |
+| K1 | After the owner publishes the achievements | |
+| K2 | The check list below | |
+
+### K2: a real pad, ten checks
+
+On the desktop with the Xbox One pad and on the Legion Go. If a button does nothing, send the `Player.log`
+(`%USERPROFILE%\AppData\LocalLow\Kratossos\sudoku_rouge_like\Player.log`): each button's first press is logged as a
+`[Pad]` line that says whether the Input System and the old input saw it.
+
+1. Main menu: the D-pad moves, A opens, B goes back from Options.
+2. Options: LB and RB turn the pages, one page per press; left and right change a value.
+3. Select Class: down reaches the seed field, and the D-pad leaves it again.
+4. Garden path: the D-pad chooses a tile and its text appears beside the tile; Start opens Options and B closes them; LT and RT scroll.
+5. Puzzle: the D-pad moves the cell; the right stick moves the number pad cursor and A places the digit; RB switches Solve and Pencil.
+6. L3 highlights the cell's digit; L3 again clears it.
+7. LB opens the bag (with an item in it), A uses, B goes back; LT opens the relics.
+8. Select saves and quits; Start opens Options.
+9. With an input lock set, a digit after a D-pad move waits like one after a click.
+10. The hint under the number pad shows the pad's buttons after a pad press and the keys after a key.
+
+### Waiting for the owner
+
+1. D2: which screen was "New Game" after the title, and on which device?
+2. The mockups (layout-proposals 3.5): the main menu A, B, C or keep it; the Monthly Walk, Select Profile, Spirit Trials,
+   the puzzle screen's details, Custom Puzzle help and the market's rule roll.
+3. RM-216: way A or B, and the replacement for the goal "Take the Risk route".
+4. RM-209 save: one saved Custom Puzzle per profile or several; Continue also on the main menu?
+5. K1: publish the 29 achievements in Steamworks (then the read-only check runs).

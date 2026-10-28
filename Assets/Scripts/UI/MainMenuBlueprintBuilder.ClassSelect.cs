@@ -51,6 +51,7 @@ namespace SudokuRoguelike.UI
             var strip = BuildRunStrip(pr, mc, out var harmonyArea, out var stones, out var perk, out var perkName, out var modeInfo,
                 out var beginLabel);
             var hint = OptionsUiFactory.BuildText("ClassKeyHint", pr, T("ClassSelect.KeyHint"), 17, TextAnchor.MiddleCenter);
+            DeviceHint.Attach(hint, "ClassSelect.KeyHint");   // INPUT-HINT-001
             SetRect(hint.rectTransform, new Vector2(0.2f, 0.03f), new Vector2(0.8f, 0.07f), Vector2.zero, Vector2.zero);
             hint.color = new Color(0.86f, 0.82f, 0.72f, 1f);
 

@@ -63,7 +63,8 @@ namespace SudokuRoguelike.UI
             DrawOverlayText(at.x, at.y, text, Mathf.RoundToInt(font * 0.8f), ink);
             var dir = step.normalized;
             var tip = start - step * 0.42f;
-            DrawOverlaySegment(at + dir * (cH * 0.30f), tip, ink, 2.5f);
+            // ACCESS-FONT-002: the arrow starts clear of the digit, which grows with the clue size.
+            DrawOverlaySegment(at + dir * (cH * 0.30f * ClueScale), tip, ink, 2.5f);
             var side = new Vector2(-dir.y, dir.x) * 5f;
             DrawOverlaySegment(tip, tip - dir * 7f + side, ink, 2.5f);
             DrawOverlaySegment(tip, tip - dir * 7f - side, ink, 2.5f);
@@ -73,7 +74,8 @@ namespace SudokuRoguelike.UI
         {
             if (overlay.Quadruples == null || overlay.Quadruples.Count == 0) return;
             UseOverlayGroup(QuadruplesKey);
-            var r = Mathf.Min(cW, cH) * 0.40f;
+            // ACCESS-FONT-002: the ring and its rows grow with the digits, up to half a cell so the four cells stay readable
+            var r = Mathf.Min(cW, cH) * Mathf.Min(0.40f * ClueScale, 0.5f);
             foreach (var quad in overlay.Quadruples)
             {
                 // Two digits share one row and get a larger size; three or four sit in two rows.

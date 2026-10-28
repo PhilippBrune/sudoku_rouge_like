@@ -55,6 +55,7 @@ namespace SudokuRoguelike.UI
                 T("InRun.Cursed.DeclineNormal"), 24, ScrollUiKit.Gold, new Color(0.45f, 0.33f, 0.14f, 0.95f), ScrollUiKit.PaperText);
             var hint = ScrollUiKit.Label(screen.transform, "CursedHint", T("InRun.Cursed.Hint"), 19, TextAnchor.MiddleCenter,
                 new Color(0.86f, 0.82f, 0.70f, 1f), new Vector2(0.30f, 0.042f), new Vector2(0.70f, 0.072f), 12);
+            DeviceHint.Attach(hint, "InRun.Cursed.Hint");   // INPUT-HINT-001
             Shade(hint);
 
             accept.onClick.AddListener(() =>

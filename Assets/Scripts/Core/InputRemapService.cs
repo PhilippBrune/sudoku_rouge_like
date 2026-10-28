@@ -331,6 +331,7 @@ namespace SudokuRoguelike.Core
         public static void UpdateCursorVisibility()
         {
             PadButtons.SyncUiModule();   // [REQ: INPUT-PAD-002] confirm and cancel on the right buttons for the pad in use
+            InputDeviceTracker.Tick();   // [REQ: INPUT-HINT-001] the key hints follow the device in use
             // Any joystick button pressed this frame?
             var anyGamepad = false;
             for (var k = 0; k < 20 && !anyGamepad; k++)

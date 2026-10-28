@@ -77,6 +77,7 @@ namespace SudokuRoguelike.UI
             _restDrink.onClick.AddListener(() => { if (_selectedRest >= 0) DrinkRest(_selectedRest); });
             var hint = ScrollUiKit.Label(screen.transform, "RestHint", T("InRun.Rest.Hint"), 19, TextAnchor.MiddleCenter,
                 new Color(0.86f, 0.82f, 0.70f, 1f), new Vector2(0.2f, 0.040f), new Vector2(0.8f, 0.070f), 12);
+            DeviceHint.Attach(hint, "InRun.Rest.Hint");   // INPUT-HINT-001
             AddShadow(hint);
 
             for (var i = 0; i < _restBowls.Count; i++)

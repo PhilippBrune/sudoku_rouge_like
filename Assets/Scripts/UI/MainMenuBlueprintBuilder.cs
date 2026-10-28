@@ -679,6 +679,7 @@ namespace SudokuRoguelike.UI
             back.onClick.RemoveAllListeners();
             back.onClick.AddListener(mc.BackFromPanel);   // GAP-084: back to the screen before
             var hint = OptionsUiFactory.BuildText("MetaKeyHint", pr, T("MetaProgression.KeyHint"), 17, TextAnchor.MiddleCenter);
+            DeviceHint.Attach(hint, "MetaProgression.KeyHint");   // INPUT-HINT-001
             SetRect(hint.rectTransform, new Vector2(0.03f, 0.008f), new Vector2(0.553f, 0.045f), Vector2.zero, Vector2.zero);
             hint.color = new Color(0.86f, 0.82f, 0.72f, 1f);
 
@@ -805,6 +806,7 @@ namespace SudokuRoguelike.UI
             back.onClick.AddListener(mc.BackFromPanel);   // GAP-084: back to the screen before
             itemsCtrl.SetBackButton(back);
             var hint = OptionsUiFactory.BuildText("CodexKeyHint", pr, T("Codex.KeyHint"), 17, TextAnchor.MiddleCenter);
+            DeviceHint.Attach(hint, "Codex.KeyHint");   // INPUT-HINT-001
             SetRect(hint.rectTransform, new Vector2(0.2f, 0.03f), new Vector2(0.8f, 0.065f), Vector2.zero, Vector2.zero);
             hint.color = new Color(0.86f, 0.82f, 0.72f, 1f);
 

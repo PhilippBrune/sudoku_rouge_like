@@ -59,8 +59,8 @@ namespace SudokuRoguelike.UI
         private void Update()
         {
             if (_setup == null) return;
-            if (PadButtons.Pressed(KeyCode.JoystickButton4)) StepFamily(-1);
-            if (PadButtons.Pressed(KeyCode.JoystickButton5)) StepFamily(1);
+            if (PadButtons.Pressed(KeyCode.JoystickButton4) || Input.GetKeyDown(KeyCode.PageUp)) StepFamily(-1);
+            if (PadButtons.Pressed(KeyCode.JoystickButton5) || Input.GetKeyDown(KeyCode.PageDown)) StepFamily(1);
         }
 
         private void BuildBook(RectTransform screen)
@@ -216,8 +216,8 @@ namespace SudokuRoguelike.UI
         private void ShowDefaultHint()
         {
             if (_hint == null) return;
-            _hint.text = F("CustomPuzzle.Book.Hint", "Hover or focus a rule to read it · LB / RB switch the family · up to {0} rules",
-                Tutorial.TutorialModeService.CustomModifierLimit);
+            // INPUT-HINT-001: the hint for the device in use (not attached: the line also shows the hovered rule)
+            _hint.text = DeviceHint.For("CustomPuzzle.Book.Hint", Tutorial.TutorialModeService.CustomModifierLimit);
             _hint.color = ScrollUiKit.InkSoft;
         }
     }

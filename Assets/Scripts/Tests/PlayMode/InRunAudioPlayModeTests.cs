@@ -210,9 +210,13 @@ namespace SudokuRoguelike.Tests
                 { position = point };   // an overlay canvas: no camera
             UnityEngine.EventSystems.ExecuteEvents.ExecuteHierarchy(bar.gameObject, press, UnityEngine.EventSystems.ExecuteEvents.pointerDownHandler);
             yield return null;
-
             Assert.AreEqual("25%", Shown("MusicVolumeVal"), "the value where the bar was pressed");
-            Assert.AreEqual(0.25f, OptionsController.LiveAudio.MusicVolume, 0.001f, "and it is the one in use");
+
+            UnityEngine.EventSystems.ExecuteEvents.ExecuteHierarchy(bar.gameObject, press, UnityEngine.EventSystems.ExecuteEvents.pointerUpHandler);
+            yield return null;
+            Assert.AreEqual(0.25f, OptionsController.LiveAudio.MusicVolume, 0.001f, "set on release");
+            Assert.AreEqual(0.25f, new ProfileService(new SaveFileService(TestSlot)).LoadOptions().Audio.MusicVolume, 0.001f,
+                "and saved once");
             Assert.AreEqual(0.35f, DragValueBar.ValueAt(0.33f, 0f, 1f, 0.05f), 0.001f, "rounded to the row's 5 % steps");
             Assert.AreEqual(0.10f, DragValueBar.ValueAt(-1f, 0.10f, 1f, 0.05f), 0.001f, "never under the row's limit");
         }

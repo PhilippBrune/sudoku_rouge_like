@@ -512,6 +512,19 @@ namespace SudokuRoguelike.Tests
                 yield return new WaitForSecondsRealtime(0.5f);
                 yield return Shoot(host, camera, prefix + file + ".png");
             }
+            // RM-217: the screens the new mockups replace (Monthly Walk, Select Profile, Spirit Trials).
+            foreach (var (show, file) in new (Action, string)[]
+                     {
+                         (menu.ShowProfileSelect, "profile_select"), (menu.ShowSpiritTrialsTierSelect, "spirit_trials"),
+                         (menu.ShowMonthlyWalkPanel, "monthly_walk")   // last: its panel stays over the main menu
+                     })
+            {
+                menu.ShowMainMenu();
+                yield return null;
+                show();
+                yield return new WaitForSecondsRealtime(0.5f);
+                yield return Shoot(host, camera, prefix + file + ".png");
+            }
         }
 
         // UI-STYLE-018: the Codex book with a profile about half way through its collections (the mockup's state):

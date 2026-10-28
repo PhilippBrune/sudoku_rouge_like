@@ -41,6 +41,7 @@ namespace SudokuRoguelike.UI
                 mark.color = new Color(0.86f, 0.82f, 0.72f, 1f);
             }
             var hint = BuildText("OptionsKeyHint", backdrop, T("Options.KeyHint"), 17, TextAnchor.MiddleCenter);
+            DeviceHint.Attach(hint, "Options.KeyHint");   // INPUT-HINT-001
             SetRect(hint.rectTransform, new Vector2(0.2f, 0.035f), new Vector2(0.8f, 0.07f));
             hint.color = new Color(0.86f, 0.82f, 0.72f, 1f);
             return paper;
@@ -176,18 +177,25 @@ namespace SudokuRoguelike.UI
             inc.onClick.RemoveAllListeners();
             inc.onClick.AddListener(() => Step(step));
 
-            // [REQ: OPT-DRAG-001] The mouse drags the stone along the bar (RM-210); a value is set only when its step changes.
+            // [REQ: OPT-DRAG-001] The mouse drags the stone along the bar (RM-210); the value is set (and saved) on release.
             var hit = EnsureComponent<Image>(bar.gameObject);
             hit.color = Color.clear;
             hit.raycastTarget = true;
             var drag = EnsureComponent<DragValueBar>(bar.gameObject);
+            var dragged = false;
             drag.OnPoint = t =>
             {
                 var v = DragValueBar.ValueAt(t, min, max, step);
                 if (Mathf.Approximately(v, current)) return;
                 current = v;
-                setter(current);
+                dragged = true;
                 Show(current);
+            };
+            drag.OnRelease = () =>
+            {
+                if (!dragged) return;
+                dragged = false;
+                setter(current);
             };
             Show(initValue);
             return new ArrowRow(dec, inc, val, v =>

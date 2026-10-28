@@ -60,6 +60,7 @@ namespace SudokuRoguelike.UI
             BuildStreakStamp(screen, goals, state.DailyWalkScored);
             var hint = ScrollUiKit.Label(screen, "DailyHint", T("DailyWalk.Result.Hint"), 18, TextAnchor.MiddleCenter,
                 new Color(0.88f, 0.84f, 0.74f, 1f), new Vector2(0.15f, 0.04f), new Vector2(0.85f, 0.09f), 12);
+            DeviceHint.Attach(hint, "DailyWalk.Result.Hint");   // INPUT-HINT-001
             Shade(hint);
 
             // The board of the day the walk began on (a walk past midnight stays on its day).

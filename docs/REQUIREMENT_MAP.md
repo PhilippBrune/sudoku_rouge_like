@@ -25,7 +25,7 @@ Legend: ✅ Implemented and verified | ⚠️ Partial / conflicting | ❌ Not im
 | [XP](#class-xp-progression) | `docs/ClassXpProgressionSystem.md` | ✅ 8 |
 | [ITEM](#items--relics) | `docs/ItemsAndRelicsSystem.md` | ✅ 4 · ◻️ 1 · 🗄️ 1 |
 | [SAVE](#save--load) | `docs/SaveLoadArchitecture.md` | ✅ 8 · ◻️ 2 · 🗄️ 1 |
-| [INPUT](#input--profiles) | `docs/InputAndProfilesSpec.md` | ✅ 5 · ◻️ 3 |
+| [INPUT](#input--profiles) | `docs/InputAndProfilesSpec.md` | ✅ 6 · ◻️ 3 |
 | [ACCESS](#accessibility) | `docs/AccessibilitySpec.md` | ◻️ 5 |
 | [ECON](#gold-economy) | `docs/GoldEconomySystem.md` | ✅ 3 |
 | [SEASON](#seasonal-challenge) | `docs/SeasonalChallengeSpec.md` | ✅ 5 · ◻️ 1 |
@@ -546,6 +546,7 @@ Key requirements (see spec for full list):
 | INPUT-PAD-002 | X-input and D-input: buttons read by position (`PadButtons.Map`), Options → Controls → Controller (Automatic, X-input, D-input), the UI module's confirm and cancel follow | `Assets/Scripts/Core/PadButtons.cs`, `InputRemapService.cs`, `UI/MainMenuBlueprintBuilder.cs`, `ProjectSettings/InputManager.asset` | `Map`, `LayoutFor`, `SyncUiModule`, `SetControllerLayout` | PadButtonsTests | ✅ |
 | INPUT-PAD-003 | Gamepad buttons and the right stick from the Input System, legacy only for other joysticks; one read per press (GAP-077, GAP-081) | `Assets/Scripts/Core/PadButtons.cs` | `Pressed`, `Held`, `RightStick` | GamepadDpadPlayModeTests (`ShoulderStartSelectAndStickPresses_ReadOncePerPress`, `Rb_TurnsTheOptionsPage`, `RightStick_IsRead`) | ✅ |
 | INPUT-PAD-004 | The pad in a puzzle and on the path (RM-206; GAP-078..083, GAP-094, GAP-095) | `Assets/Scripts/UI/InRunController.Gamepad.cs`, `InRunController.cs`, `HudViewController.cs`, `NodeHoverHandler.cs`, `MainMenuBlueprintBuilder.ClassSelect.cs` | `HandleGamepadController`, `HandleGamepadOnPath`, `HandleGamepadRelicsFocus`, `ToggleHighlightAtSelection`, `MoveSelection`, `ControllerSelectRelicSlot` | GameplayOptionsPlayModeTests (`AKeyMove_StartsTheLock_AndHighlightsTheNewCellsDigit`); a real pad: the owner's check list | ✅ |
+| INPUT-HINT-001 | Key hints follow the device in use (RM-207) | `Assets/Scripts/Core/InputDeviceTracker.cs`, `UI/DeviceHint.cs`, the ten hint sites | `Tick`, `DeviceHint.Attach`, `DeviceHint.For` | GamepadDpadPlayModeTests (`APadPress_SwitchesTheHintToThePadsButtons`) | ✅ |
 | INPUT-PROFILE-001 | `MenuScreen.ProfileSelect` — shown on first launch if no files exist | `Assets/Scripts/Bootstrap/GameBootstrap.cs` | `Start` | StartupFlowPlayModeTests | ✅ |
 | INPUT-PROFILE-002 | `SelectProfileSlot(i)`, `DeleteProfileSlot(i)`, `RefreshProfileSelectCards()` | `Assets/Scripts/UI/InRunController.cs` | `MainMenuController` | — | ◻️ |
 

@@ -8,14 +8,35 @@ namespace SudokuRoguelike.UI
     /// [REQ: OPT-DRAG-001] An Options value row's bar follows the mouse: a press or a drag on it sets the value at that point,
     /// in the row's steps (RM-210). The arrows and the pad keep working as before; the bar takes no focus.
     /// </summary>
-    public sealed class DragValueBar : MonoBehaviour, IPointerDownHandler, IDragHandler
+    public sealed class DragValueBar : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
     {
         /// <summary>Gets the point along the bar, 0 (left) to 1 (right).</summary>
         public Action<float> OnPoint;
 
-        public void OnPointerDown(PointerEventData eventData) => Report(eventData);
+        /// <summary>Called once when the press ends, so the value is saved once and not at every step of a drag.</summary>
+        public Action OnRelease;
+
+        private bool _pressed;
+
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            _pressed = true;
+            Report(eventData);
+        }
 
         public void OnDrag(PointerEventData eventData) => Report(eventData);
+
+        public void OnPointerUp(PointerEventData eventData) => Release();
+
+        // A page closed mid-drag (Esc, B) sends no pointer-up; the value shown is still set.
+        private void OnDisable() => Release();
+
+        private void Release()
+        {
+            if (!_pressed) return;
+            _pressed = false;
+            OnRelease?.Invoke();
+        }
 
         private void Report(PointerEventData eventData)
         {

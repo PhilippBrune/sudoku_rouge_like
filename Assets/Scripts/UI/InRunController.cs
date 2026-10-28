@@ -959,11 +959,8 @@ namespace SudokuRoguelike.UI
 
                 ApplyPuzzleScrollFloor(panelRt, run.State);
 
-                var hintText = panelRt?.Find("SudokuGameplayHint")?.GetComponent<Text>();
-                if (hintText != null)
-                    hintText.text = LocalizationService.Format("InRun.BoardHint",
-                        "Number pad or keys 1-{0}; click or arrows: choose a cell\nEnter or H (pad: L3): highlight its digit\nPad: right stick picks the digit, A places it",
-                        board.Size);
+                // INPUT-HINT-001: the board's keys for the device in use
+                DeviceHint.Attach(panelRt?.Find("SudokuGameplayHint")?.GetComponent<Text>(), "InRun.BoardHint", board.Size);
             }
 
             _numpadView.UpdateButtonStates(board.Size, board);

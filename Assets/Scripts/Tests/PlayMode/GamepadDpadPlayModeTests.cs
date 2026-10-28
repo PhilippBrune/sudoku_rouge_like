@@ -121,6 +121,36 @@ namespace SudokuRoguelike.Tests
             Assert.Greater(PadButtons.RightStick().x, 0.9f);
         }
 
+        // [REQ: INPUT-HINT-001] A pad press switches the key hints to the pad's buttons; the keyboard's text comes back with a
+        // key or the mouse (RM-207).
+        [UnityTest]
+        [Requirement("INPUT-HINT-001")]
+        public IEnumerator APadPress_SwitchesTheHintToThePadsButtons()
+        {
+            var go = new UnityEngine.GameObject("HintUnderTest", typeof(UnityEngine.RectTransform), typeof(UnityEngine.UI.Text));
+            try
+            {
+                InputDeviceTracker.Set(false);
+                var text = go.GetComponent<UnityEngine.UI.Text>();
+                DeviceHint.Attach(text, "GameModes.KeyHint");
+                Assert.AreEqual(LocalizationService.T("GameModes.KeyHint.Keys"), text.text, "keyboard first");
+
+                InputSystem.QueueStateEvent(_pad, new GamepadState().WithButton(GamepadButton.South));
+                yield return null;
+                InputDeviceTracker.Tick();
+                Assert.IsTrue(InputDeviceTracker.UsingPad);
+                Assert.AreEqual(LocalizationService.T("GameModes.KeyHint"), text.text, "the pad's buttons after a pad press");
+
+                InputDeviceTracker.Set(false);
+                Assert.AreEqual(LocalizationService.T("GameModes.KeyHint.Keys"), text.text, "and back");
+            }
+            finally
+            {
+                InputDeviceTracker.Set(false);
+                UnityEngine.Object.Destroy(go);
+            }
+        }
+
         [UnityTest]
         public IEnumerator WithoutAPad_NothingMoves_AndTheTriggersReadZero()
         {

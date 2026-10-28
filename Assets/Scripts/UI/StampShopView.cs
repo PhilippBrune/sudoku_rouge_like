@@ -62,8 +62,9 @@ namespace SudokuRoguelike.UI
             view._action = ScrollUiKit.PillButton(screen.transform, "BtnShopAction", new Vector2(0.772f, 0.095f), new Vector2(0.891f, 0.150f),
                 string.Empty, 22, ScrollUiKit.Vermilion, Color.white, 30f);
             view._action.onClick.AddListener(view.Act);
-            ScrollUiKit.Label(screen.transform, "Hint", LocalizationService.T("StampShop.Hint"), 17, TextAnchor.MiddleCenter,
+            var shopHint = ScrollUiKit.Label(screen.transform, "Hint", LocalizationService.T("StampShop.Hint"), 17, TextAnchor.MiddleCenter,
                 new Color(0.86f, 0.82f, 0.72f, 1f), new Vector2(0.2f, 0.03f), new Vector2(0.8f, 0.07f), 11);
+            DeviceHint.Attach(shopHint, "StampShop.Hint");   // INPUT-HINT-001
             view.Choose(view._items[1].Look);
             var events = UnityEngine.EventSystems.EventSystem.current;
             if (events != null) events.SetSelectedGameObject(view._items[1].Button.gameObject);

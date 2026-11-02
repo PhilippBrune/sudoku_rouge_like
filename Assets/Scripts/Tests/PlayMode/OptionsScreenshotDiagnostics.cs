@@ -76,6 +76,23 @@ namespace SudokuRoguelike.Tests
             Find(menuHost, "BtnOptions").GetComponent<Button>().onClick.Invoke();
             yield return null;
             yield return ShootTabs(menuHost, camera, "main", Find(menuHost, "OptionsPanel"));
+            // Language: another language chosen shows the Apply and Cancel row.
+            Find(menuHost, "TabLanguage").GetComponent<Button>().onClick.Invoke();
+            Find(menuHost, "LanguageDropdown").GetComponent<Dropdown>().value = 1;
+            yield return new WaitForSecondsRealtime(0.3f);
+            yield return Shoot(menuHost, camera, Path.Combine(_outDir, "main_language_confirm_1920x1080.png"), Sizes[0]);
+            // An ultrawide screen (the owner's 3440×1440): the canvas is lower, the buttons' rows too.
+            yield return Shoot(menuHost, camera, Path.Combine(_outDir, "main_language_confirm_3440x1440.png"), new Vector2Int(3440, 1440));
+            Find(menuHost, "LanguageDropdown").GetComponent<Dropdown>().value = 0;
+            Find(menuHost, "BtnLangCancel").GetComponent<Button>().onClick.Invoke();
+
+            // ACCESS-PREVIEW-001: every Accessibility switch on, the preview shows each one; then off again.
+            Find(menuHost, "TabAccessibility").GetComponent<Button>().onClick.Invoke();
+            var switches = new[] { "ColorblindToggle", "HighContrastToggle", "AltSymbolsToggle", "ScreenReaderToggle" };
+            foreach (var name in switches) Find(menuHost, name).GetComponent<Toggle>().isOn = true;
+            yield return new WaitForSecondsRealtime(0.3f);
+            yield return Shoot(menuHost, camera, Path.Combine(_outDir, "main_accessibility_all_on_1920x1080.png"), Sizes[0]);
+            foreach (var name in switches) Find(menuHost, name).GetComponent<Toggle>().isOn = false;
             menuHost.SetActive(false);
 
             // In-run Options over a started puzzle (the Run tab shows its seed)

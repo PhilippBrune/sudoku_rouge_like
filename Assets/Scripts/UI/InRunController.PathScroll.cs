@@ -267,7 +267,7 @@ namespace SudokuRoguelike.UI
                 ("node/icon_relic_pedestal",  "InRun.Path.Node.Relic",  "Relic"),
                 ("node/icon_moss_trap",       "InRun.Path.Node.Cursed", "Cursed"),
             };
-            if (run?.State?.DailyWalkPath == true)   // [REQ: DAILY-WALK-009] its path has an event tile
+            if (run?.CurrentFloorGraph?.Exists(n => n.Type == NodeType.Event) == true)   // [REQ: MAP-NODE-EVENT-001]
                 entries.Add(("node/icon_event_scroll", "InRun.Path.Node.Event", "Event"));
             for (var i = 0; i < entries.Count; i++)
             {

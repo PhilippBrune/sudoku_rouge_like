@@ -80,6 +80,25 @@ namespace SudokuRoguelike.Tests
             Assert.AreEqual(2, run.CurrentFloorGraph.Count(n => n.IsCrossLink));
         }
 
+        // [REQ: MAP-NODE-EVENT-001] 0.3.1 playtest (owner): event tiles are back on the Garden Run's routes (graph version 3);
+        // a floor saved under version 2 keeps its tiles, none of them an event.
+        [Test]
+        [Requirement("MAP-NODE-EVENT-001")]
+        public void TheGardenRun_RollsEventTilesAgain_AndASavedFloorKeepsItsTiles()
+        {
+            var service = new RunGraphService();
+            var events = 0;
+            for (var seed = 0; seed < 25; seed++)
+            for (var floor = 0; floor < 5; floor++)
+            {
+                events += service.BuildFloorGraph(floor, 8000 + seed).Count(n => n.Type == NodeType.Event);
+                var saved = service.BuildFloorGraph(floor, 8000 + seed, graphVersion: 2);
+                Assert.AreEqual(0, saved.Count(n => n.Type == NodeType.Event), $"seed {seed} floor {floor + 1}: version 2 rolls no events");
+                Assert.IsTrue(saved.Count(n => n.Type == NodeType.Shop) >= 1, "the version-2 rules still hold");
+            }
+            Assert.Greater(events, 25, "about one event tile in every two to three lanes");
+        }
+
         private static HashSet<int> Reach(List<RunNode> graph, int from)
         {
             var seen = new HashSet<int> { from };

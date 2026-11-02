@@ -98,6 +98,37 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.14f, 0.18f), new Vector2(0.86f, 0.82f), 12);
         }
 
+        /// <summary>[REQ: CUSTOM-FINISH-001] A Custom Puzzle solved or lost (0.3.1 playtest): its numbers on the tally, the
+        /// grade large with the board and the seed, Back to the menu.</summary>
+        private void ShowCustomPuzzleResult(RunDirector run, bool solved)
+        {
+            if (_gameOverPanel != null) _gameOverPanel.SetActive(true);
+            var state = run.State;
+            var level = run.CurrentLevelState;
+            var config = run.CurrentLevelConfig;
+            var mistakes = level?.Mistakes ?? 0;
+            var size = config?.BoardSize ?? 0;
+            var rules = config?.ActiveModifiers?.Count ?? 0;
+            var end = new ModeEndSummary
+            {
+                Painting = "bg_tutorial_setup",
+                Good = solved,
+                Eyebrow = F("InRun.End.Custom.Eyebrow", size, new string('\u2605', System.Math.Max(1, config?.Stars ?? 1))),
+                Title = solved ? T("InRun.End.Custom.Solved") : T("InRun.End.Custom.Lost"),
+                Closing = T("InRun.End.Custom.Closing"),
+                RecordHeader = T("InRun.End.Custom.Grade"),
+                RecordValue = solved ? T("InRun.End.Grade." + RunScoreBreakdown.GradeFor(mistakes)) : "\u2013",
+                RecordLine = F("InRun.End.Custom.Board", size, state.Seed),
+                Again = RunAgain.KindOf(state),
+            };
+            end.Rows.Add((T("InRun.End.Mode.Time"), Clock(state.TotalRunSeconds)));
+            end.Rows.Add((T("InRun.End.Mode.Mistakes"), Number(mistakes)));
+            end.Rows.Add((T("InRun.End.Mode.PencilMarks"), Number(level?.PencilMarksUsed ?? 0)));
+            end.Rows.Add((T("InRun.End.Mode.CellsFilled"), Number(level?.CorrectPlacements ?? 0)));
+            if (rules > 0) end.Rows.Add((T("InRun.End.Mode.Modifiers"), Number(rules)));
+            ShowModeEndScroll(end);
+        }
+
         private static string Clock(float seconds) => $"{(int)(seconds / 60)}:{(int)(seconds % 60):00}";
 
         private static string Number(int value) => value.ToString("N0", Core.LocalizationService.Culture);

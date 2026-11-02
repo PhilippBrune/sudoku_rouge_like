@@ -1,13 +1,14 @@
 # Accessibility Specification
 
-**Version:** 2.5  
-**Date:** 2026-10-28  
+**Version:** 2.6  
+**Date:** 2026-11-02  
 **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.6 | 2026-11-02 | implemented | 0.3.1 playtest (owner: "most items seem to do nothing"): the menu's preview shows every switch (ACCESS-PREVIEW-001, GAP-100); its entered digits were invisible. |
 | 2.5 | 2026-10-28 | implemented | 0.3.0 playtest on a Legion Go (RM-214): Text Size also enlarges the rules' small numbers and letters on and around the board and the badges they sit on (ACCESS-FONT-002). |
 | 2.4 | 2026-10-21 | implemented | Second Options audit (GAP-066): Reduce Motion also stops every scale pulse and pop (path nodes, the boss node, digits, the board-fill wave, combo, reward plaques) and the badge shake (ACCESS-MOTION-002). |
 | 2.3 | 2026-10-21 | implemented | Accessibility is a page of the Options scroll (UI-STYLE-017) with Text Size and the preview board on its slip; the separate panel is gone. |
@@ -39,6 +40,13 @@ Primary implementation references:
 | `FontScale` | Scales the board's digits and pencil marks (within the cell, ACCESS-FONT-001), the preview and accessibility-aware menu text | Stored in `AccessibilitySettings` |
 | `FontScale` (2.5) | **[ACCESS-FONT-002]** Also scales the rules' small numbers and letters on and around the board (sum dots, Opposite Sums, distance pairs, mirror letters, outside clues, line and cage labels) and the badges they sit on, 1.0 to 1.5 (RM-214: too small on a Legion Go's 8.8" screen). Unlabelled dots and cell-sized marks keep their size. At 150 % a corner badge can touch the cell's digit. |
 | `ScreenReaderEnabled` | "Status Captions": an on-screen announcement bar for status updates | A caption bar, not OS speech; renamed from "Screen Reader" (GAP-061) |
+
+**[ACCESS-PREVIEW-001]** (2.6, 0.3.1 playtest, GAP-100) The preview beside the main menu's Accessibility page shows every
+switch on a 4×4 board: High Contrast its cell colours and thicker lines; Colorblind Mode the colours of a German Whispers
+and a Dutch Whispers line; Alt Constraint Symbols the lines' letters and two Kropki dots' letters; Reduce Motion stops
+the shake of the wrong digit (every 2.5 s); Status Captions shows a caption bar; Text Size the three text samples. An
+entered digit is in blue ink, as on the board (it was cream on paper and could not be seen). In a run the board itself
+shows the switches (`AccessibilityPreviewController`).
 
 ## Announcement Captions
 

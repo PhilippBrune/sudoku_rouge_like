@@ -1,0 +1,63 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="scenes.css">
+<style>
+  /* Quit A · The garden at dusk: in the game's own style. The main menu's painting dims to evening, a hanging scroll
+     says goodbye with what waits tomorrow (the day's walk, the streak, the saved run), and the red Kratossos seal sits
+     at its foot. Shown for about 3 s after Quit, any key closes at once; the lantern on the right goes out last. */
+  .bg { background-image:url('../../../../Assets/Resources/background/bg_main_menu.png'); filter:brightness(.42) saturate(.75) hue-rotate(-8deg); }
+  .dusk { position:absolute; inset:0; background:linear-gradient(180deg, rgba(40,22,46,.55) 0, rgba(70,34,20,.25) 55%, rgba(8,6,4,.75) 100%); }
+  .scroll { position:absolute; left:660px; top:70px; width:600px; height:850px; }
+  .rod { position:absolute; left:-26px; right:-26px; height:26px; border-radius:13px; background:linear-gradient(180deg,#6b4423,#3a2412 60%,#24160b);
+         box-shadow:0 6px 14px rgba(0,0,0,.6); }
+  .rod.top { top:0; } .rod.bottom { bottom:0; }
+  .cord { position:absolute; left:50%; top:-70px; width:2px; height:70px; background:#c9a24f; }
+  .paper { position:absolute; left:0; right:0; top:20px; bottom:20px; background:#efe3c6; color:#231e17;
+           box-shadow:0 24px 50px rgba(0,0,0,.65); padding:56px 64px 0; text-align:center; }
+  .paper::before, .paper::after { content:''; position:absolute; left:0; right:0; height:46px;
+           background:repeating-linear-gradient(90deg,#2f4a33 0 10px,#3d5c40 10px 20px); }
+  .paper::before { top:0; } .paper::after { bottom:0; }
+  .eyebrow { margin-top:24px; font-size:18px; letter-spacing:.3em; color:#6b5f4c; }
+  h1 { margin:12px 0 0; font-weight:normal; font-size:58px; line-height:1.05; color:#231e17; }
+  .brush { width:240px; height:6px; margin:20px auto 26px; border-radius:3px; background:linear-gradient(90deg,transparent,#b23a2e 18%,#b23a2e 82%,transparent); }
+  .poem { font-size:24px; line-height:1.6; color:#4d4436; font-style:italic; }
+  .waits { margin:26px 10px 0; text-align:left; font-size:21px; line-height:1.4; }
+  .waits small { display:block; font-size:15px; letter-spacing:.2em; color:#6b5f4c; margin-bottom:10px; }
+  .waits div { display:flex; align-items:center; gap:16px; padding:10px 0; border-top:1px solid rgba(60,45,30,.18); }
+  .waits img { width:40px; height:40px; object-fit:contain; }
+  .waits b { color:#9e2a2b; font-weight:normal; }
+  .seal { position:absolute; left:50%; bottom:58px; transform:translateX(-50%) rotate(-4deg); width:112px; height:112px;
+          background:#b23a2e; color:#fbeee0; border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+          box-shadow:inset 0 0 0 5px #b23a2e, inset 0 0 0 8px #fbeee0; }
+  .seal span { font-size:44px; line-height:1; }
+  .seal em { font-style:normal; font-size:13px; letter-spacing:.18em; margin-top:6px; }
+  .by { position:absolute; left:0; right:0; bottom:186px; font-size:15px; letter-spacing:.26em; color:#6b5f4c; }
+  .lantern { position:absolute; right:250px; top:430px; width:150px; height:150px; border-radius:50%;
+             background:radial-gradient(circle, rgba(244,162,89,.55), rgba(244,162,89,0) 70%); }
+  .lantern img { position:absolute; left:39px; top:30px; width:72px; height:90px; object-fit:contain; }
+  .bar { position:absolute; left:660px; width:600px; top:952px; height:6px; border-radius:3px; background:rgba(243,233,207,.18); }
+  .bar i { display:block; width:62%; height:100%; border-radius:3px; background:#c9a24f; }
+</style></head><body>
+<div class="bg"></div><div class="dusk"></div>
+<div class="lantern"><img src="../../../../Assets/Resources/ui/icon_modes_lantern.png"></div>
+<div class="scroll">
+  <div class="cord"></div>
+  <div class="paper">
+    <div class="eyebrow">THE GATE CLOSES FOR TONIGHT</div>
+    <h1>The garden<br>waits for you</h1>
+    <div class="brush"></div>
+    <div class="poem">The sand is raked, the koi are still.<br>Nine digits rest until you return.</div>
+    <div class="waits">
+      <small>TOMORROW IN THE GARDEN</small>
+      <div><img src="../../../../Assets/Resources/ui/icon_golden_bloom.png"><span>A new Daily Walk · <b>streak day 5</b> if you come</span></div>
+      <div><img src="../../../../Assets/Resources/class/icon_number_freak.png"><span>Your run waits on <b>Floor 3</b>, Koi Terrace</span></div>
+      <div><img src="../../../../Assets/Resources/ui/icon_monthly_lantern.png"><span>The Old Tree Grove · <b>4 days</b> left this month</span></div>
+    </div>
+    <div class="seal"><span>K</span><em>KRATOSSOS</em></div>
+  </div>
+  <div class="rod top"></div><div class="rod bottom"></div>
+</div>
+<div class="bar"><i></i></div>
+<div class="hint" style="top:972px">Any key closes now</div>
+<div class="caption">Quit · A · The garden at dusk (the game's style: a scroll says what waits tomorrow, the Kratossos seal)</div>
+</body></html>

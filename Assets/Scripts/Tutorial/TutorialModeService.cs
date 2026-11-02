@@ -25,6 +25,17 @@ namespace SudokuRoguelike.Tutorial
             return (min, next - 0.01f);
         }
 
+        /// <summary>[REQ: CUSTOM-REGION-001] The region layouts a board size has (SudokuGenerator.BuildRegionMap): boxes on
+        /// 6×6 (2×3), 8×8 (2×4) and 9×9 (3×3); turned boxes only where they differ (6×6 3×2, 8×8 4×2); irregular regions on
+        /// every size, and only those on 5×5 and 7×7. Rules that need boxes (RunDirector.RequiresRectangularRegions) rule
+        /// out irregular regions on 6×6, 8×8 and 9×9, where the generator would use boxes instead.</summary>
+        public static bool SupportsRegionVariant(int boardSize, int variant, IList<BossModifierId> rules) => variant switch
+        {
+            0 => boardSize == 6 || boardSize == 8 || boardSize == 9,
+            1 => boardSize == 6 || boardSize == 8,
+            _ => boardSize == 5 || boardSize == 7 || !Run.RunDirector.RequiresRectangularRegions(rules),
+        };
+
         public static bool CanAddCustomModifier(
             int requestedBoardSize,
             IList<BossModifierId> selectedModifiers,

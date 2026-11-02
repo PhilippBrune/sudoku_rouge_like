@@ -130,10 +130,11 @@ namespace SudokuRoguelike.UI
         private void Update()
         {
             if (Signature() != _linkedSignature) Relink();
-            // [REQ: UI-STYLE-017] LB/RB (PageUp/PageDown on a keyboard) turn the page; the focus moves to its bookmark.
-            if (_tabs.Count < 2) return;
-            var step = PadButtons.Pressed(KeyCode.JoystickButton5) || Input.GetKeyDown(KeyCode.PageDown) ? 1
-                : PadButtons.Pressed(KeyCode.JoystickButton4) || Input.GetKeyDown(KeyCode.PageUp) ? -1 : 0;
+            // [REQ: UI-STYLE-017] [REQ: INPUT-HINT-001] LB/RB (Q/E or PageUp/PageDown on a keyboard) turn the page; the focus
+            // moves to its bookmark.
+            if (_tabs.Count < 2 || KeybindingsPanelController.Listening) return;
+            var step = PadButtons.Pressed(KeyCode.JoystickButton5) || Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.PageDown) ? 1
+                : PadButtons.Pressed(KeyCode.JoystickButton4) || Input.GetKeyDown(KeyCode.Q) || Input.GetKeyDown(KeyCode.PageUp) ? -1 : 0;
             if (step != 0) TurnPage(step);
         }
 

@@ -177,6 +177,52 @@ namespace SudokuRoguelike.Tests
             Assert.IsTrue(garden.CurrentFloorGraph.Any(n => n.Route == RouteType.RiskRoute), "and keeps both routes");
         }
 
+        // [REQ: DAILY-WALK-010] 0.3.1 playtest (owner): the walk's floors are two tiles shorter than the Garden Run's.
+        [Test]
+        [Requirement("DAILY-WALK-010")]
+        public void TheWalksFloors_AreTwoTilesShorter()
+        {
+            var service = new RunGraphService();
+            for (var seed = 0; seed < 20; seed++)
+            foreach (var floor in new[] { 1, 3 })
+            {
+                var garden = service.BuildFloorGraph(floor, 9000 + seed).Count(n => n.Route == RouteType.CalmRoute);
+                var walk = service.BuildFloorGraph(floor, 9000 + seed, onePath: true).Count;
+                var walkBefore = service.BuildFloorGraph(floor, 9000 + seed, graphVersion: 2, onePath: true).Count;
+                Assert.AreEqual(garden - 2, walk, $"seed {seed} floor {floor + 1}: the walk's path");
+                Assert.AreEqual(garden, walkBefore, "a walk saved before keeps its length");
+            }
+        }
+
+        // [REQ: DAILY-WALK-010] 0.3.1 playtest (owner): a saved walk counts only on its own day. The same day it can be
+        // continued; on a later day it ends like an abandoned walk and the slot is free.
+        [Test]
+        [Requirement("DAILY-WALK-010")]
+        public void ASavedWalk_ContinuesTheSameDay_AndEndsOnALaterDay()
+        {
+            var run = new RunDirector();
+            run.StartRun(new LaunchRequest { ClassId = 0, Mode = GameMode.GardenRun, DailyWalk = true }, WalkSeed(Monday));
+            run.State.DailyWalk = true;
+            run.State.TotalFloors = WalkFloors;
+            var save = new SaveFileService(TestSlot);
+            new RunAutoSaveCoordinator(save).Save(run.State, null);
+            var resume = new RunResumeService(save);
+            var profile = new ProfileService(save);
+
+            Assert.IsFalse(SaveFileService.IsWalkOfAnotherDay(save.Load().ActiveRunState, Monday.AddHours(23)));
+            Assert.IsNull(resume.EndWalkOfAnotherDay(profile, Monday), "the same day: the walk waits");
+            Assert.IsTrue(resume.HasActiveRun());
+
+            var ended = resume.EndWalkOfAnotherDay(profile, Monday.AddDays(1));
+            Assert.IsNotNull(ended, "the next day: the walk ends");
+            Assert.IsTrue(ended.DailyWalk);
+            Assert.IsFalse(resume.HasActiveRun(), "and the slot is free");
+
+            var garden = new RunDirector();
+            garden.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, ClassLevel = 1 }, 4242);
+            Assert.IsFalse(SaveFileService.IsWalkOfAnotherDay(garden.State, Monday.AddDays(1)), "a Garden Run never expires");
+        }
+
         private static void AssertOnePathWithAnEvent(RunDirector run)
         {
             var graph = run.CurrentFloorGraph;

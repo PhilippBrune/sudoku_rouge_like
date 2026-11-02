@@ -1,11 +1,12 @@
 # Daily Goal System
 
-**Version:** 0.9 | **Date:** 2026-10-28 | **Status:** implemented (the daily walk on one path over Floors 2 and 4, the stamp shop)
+**Version:** 0.10 | **Date:** 2026-11-02 | **Status:** implemented (the daily walk on one path over Floors 2 and 4, the stamp shop)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 0.10 | 2026-11-02 | implemented | 0.3.1 playtest (owner, RM-219): the walk's floors are two tiles shorter, and a saved walk counts only on its own day: the path says so, the main menu's card says "continue it today", and a walk saved on an earlier day ends like an abandoned walk (DAILY-WALK-010). |
 | 0.9 | 2026-10-28 | implemented | 0.3.0 playtest, owner: way B and "Read an event" (RM-216): the Daily Walk on one path over the gardens of Floors 2 and 4, one event tile per floor, the goal "Read an event on the path" in place of "Take the Risk route" (DAILY-WALK-009). The Garden Run keeps its five floors and two routes. |
 | 0.8 | 2026-10-28 | review | Concept (RM-216, 0.3.0 playtest): the Daily Walk on one path and on Floors 2 and 4, the Garden Run on Floors 1, 3 and 5 (RM-113); two ways to build it and the open questions. Not built. |
 | 0.7 | 2026-10-27 | review | The older sections (overview, menu, pool, evaluation, streak, ink stamps, data model, files) brought to what is built since 0.4; the stamp gallery idea replaced by the built stamp shop; how long the shop takes (69 stamps). |
@@ -230,6 +231,7 @@ walker's HP, Pencil and bag, the goal pool, the weekly scroll) were decided on 2
 | DAILY-WALK-007 | Ink stamps buy looks in a stamp shop (board ink, class seal frames, path seals); looks only, no balance. |
 | DAILY-WALK-008 | The walk's run score goes to a Steam leaderboard of the day; the result shows the place and the friends. |
 | DAILY-WALK-009 | The walk goes on **one path** over the gardens of **Floors 2 and 4** (Moss Garden, Stone Lantern Walk) with their boards, rules and bosses; each floor has one event tile; the player counts the walk's floors 1 and 2. A walk saved before keeps its Floors 1 and 2 and both routes. |
+| DAILY-WALK-010 | The walk's floors are two tiles shorter than the Garden Run's. Save & Quit keeps the walk until midnight: the path says so, the main menu's run card reads "Daily Walk · Floor 1 of 2 · continue it today", and a walk saved on an earlier day ends like an abandoned walk (its boards' XP goes to the XP waiting for a class; the earlier day's goals do not count any more). |
 
 Owner's decisions (2026-10-26): the walker starts with 10 HP, 10 Pencil and 2 bag slots (the class average, the numbers
 of `ClassId` 0 in `ClassCatalog`) and one starting relic from the day's seed. The pool keeps 21 goals, 7 per tier, so
@@ -249,6 +251,7 @@ earned in an ISO week (spent or not) adds 500 XP to the XP waiting for a class.
 | DAILY-WALK-007 | `InkStampShop` (Meta): board ink (sumi black, indigo 5, cinnabar 5, moss 5, gold leaf 12), class seal frames on Select Class (ink, moss 6, vermilion 8, gold 14), path seals on the run end (vermilion, indigo 6, round sumi 8); the first of each shelf is the game's own and free. Owned looks in `UnlockedCosmetics` (shelf × 10 + look), worn ones in `WornBoardInk`, `WornSealFrame`, `WornPathSeal`; the profile's looks are worn when it loads. Under indigo ink the player's own digits turn sumi black, so given and placed digits never look alike. The shop opens from the Daily Walk's slip ("Stamp shop"). |
 | DAILY-WALK-008 | `SteamLeaderboardService.SubmitToBoard` uploads the run score to "DailyWalk_yyyy-MM-dd" (kept best) and reads the top three, the place and the place among friends; without Steam the board says so. |
 | DAILY-WALK-009 | `RunDirector.BeginDailyWalkPath` sets `RunState.DailyWalkPath` and starts on floor index 1; `AdvanceToNextFloor` steps by `FloorStep` (2); `RunGraphService.BuildFloorGraph(..., onePath)` builds the Calm row alone, no cross-link, with `EnsureEvent`; `RunState.WalkFloor` and `OnLastFloor` give the walk's own count to every floor text, the end of the walk and the save check. The goal `t1_read_event` is met in `ResolveCurrentEventChoice`. |
+| DAILY-WALK-010 | `RunGraphService.BuildFloorGraph(..., onePath)` takes two tiles off the Calm row from graph version 3 (a walk saved before keeps its length); `SaveFileService.IsWalkOfAnotherDay` compares the saved seed with `DailyGoalService.WalkSeed(today)`; `RunResumeService.EndWalkOfAnotherDay` (called by the main menu through `GameBootstrap.EndWalkOfAnotherDay`) abandons such a walk and the status line says so (`MainMenu.WalkEnded`); the path's line `InRun.Path.OnePath` and the run card `MainMenu.WalkLine` tell the player. Tests: `DailyWalkRunTests.TheWalksFloors_AreTwoTilesShorter`, `ASavedWalk_ContinuesTheSameDay_AndEndsOnALaterDay`. |
 
 A walk counts as a run for the class-unlock counters (bosses defeated, gold, items, relics), the run count and the boss
 achievements, never as a win (no Harmony unlock, no win achievements). Saves from before 0.4: pending start gold and
@@ -316,7 +319,7 @@ choice to think over), and it stays short: one path of two floors. The main game
 the beta round shows the five-floor run is too long. B is a step towards A, nothing of it is thrown away.
 
 **Owner's answers (2026-10-28):** way **B**; the goal "Take the Risk route" becomes **"Read an event on the path"**,
-so every floor of the walk has one event tile (the Garden Run's routes roll no event tiles). The bosses keep their
+so every floor of the walk has one event tile (the Garden Run's routes rolled no event tiles then; they do again since 0.3.1, MAP-NODE-EVENT-001). The bosses keep their
 floors (Koi Warden, Stone Patriarch). Built as DAILY-WALK-009 (0.9).
 
 ![The walk's first floor](design/layout-proposals/after_daily_walk_path_1.jpg)

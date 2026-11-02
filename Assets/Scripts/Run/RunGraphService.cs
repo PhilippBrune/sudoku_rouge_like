@@ -9,9 +9,10 @@ namespace SudokuRoguelike.Run
         /// <summary>
         /// Graph layout version stored in <c>RunState.FloorGraphVersion</c>. 0/1: legacy layout with floor+1 "Bridge"
         /// tiles (saves from 1.0 keep it until their next floor). 2: one cross-connection per floor between two tiles
-        /// that keep their type (MAP-CROSS-001, SPEC-CONF-010, 2026-10-06).
+        /// that keep their type (MAP-CROSS-001, SPEC-CONF-010, 2026-10-06). 3: the Garden Run's routes roll event tiles
+        /// again and the Daily Walk's path is two tiles shorter (MAP-NODE-EVENT-001, DAILY-WALK-010, 0.3.1).
         /// </summary>
-        public const int CurrentGraphVersion = 2;
+        public const int CurrentGraphVersion = 3;
 
         // [REQ: MAP-STRUCT-002] BuildFloorGraph: single entry point — Shared Start node → Calm/Risk lane nodes → Boss Gate, then edges + cross-links
         // [REQ: DAILY-WALK-009] onePath: the Daily Walk's single row of tiles, no Risk route and no cross-link, with one event.
@@ -20,6 +21,8 @@ namespace SudokuRoguelike.Run
             var rng = new Random(seed + floorIndex * 7919);
             GetFloorLengths(floorIndex, rng, out var calmLength, out var riskLength);
             if (onePath) riskLength = 0;
+            if (onePath && graphVersion >= 3) calmLength = Math.Max(4, calmLength - 2);   // [REQ: DAILY-WALK-010]
+            var events = graphVersion >= 3 && !onePath;   // the walk keeps its one event (EnsureEvent)
 
             var nodes = new List<RunNode>();
             var index = 0;
@@ -44,7 +47,7 @@ namespace SudokuRoguelike.Run
             {
                 var type = step == calmLength - 1
                     ? NodeType.PreBoss
-                    : RollNodeType(step, calmLength, false, rng);
+                    : RollNodeType(step, calmLength, false, rng, 0, events);
 
                 var node = new RunNode
                 {
@@ -65,7 +68,7 @@ namespace SudokuRoguelike.Run
             {
                 var type = step == riskLength - 1
                     ? NodeType.PreBoss
-                    : RollNodeType(step, riskLength, true, rng, 1 + floorIndex / 2);
+                    : RollNodeType(step, riskLength, true, rng, 1 + floorIndex / 2, events);
 
                 var node = new RunNode
                 {
@@ -151,15 +154,19 @@ namespace SudokuRoguelike.Run
 
         // ── Node Type Rolling ──
 
+        // [REQ: MAP-NODE-EVENT-001] events: the Event column of the weight table (graph version 3); 0 before, so a saved
+        // floor keeps its tiles.
         private static NodeType RollNodeType(int step, int branchLength, bool riskPath, Random rng,
-            int riskPressure = 0)
+            int riskPressure = 0, bool events = false)
         {
             if (step <= 0) return NodeType.Puzzle;
 
             var progress = branchLength <= 0 ? 1f : (float)step / branchLength;
+            int Event(int weight) => events ? weight : 0;
 
             if (progress <= 0.30f)
-                return WeightedRoll(rng, (NodeType.Puzzle, 66), (NodeType.Shop, 8), (NodeType.Rest, 16), (NodeType.Relic, 8), (NodeType.Cursed, 2));
+                return WeightedRoll(rng, (NodeType.Puzzle, 66), (NodeType.Shop, 8), (NodeType.Rest, 16), (NodeType.Relic, 8), (NodeType.Cursed, 2),
+                    (NodeType.Event, Event(4)));
 
             if (progress <= 0.70f)
             {
@@ -167,20 +174,20 @@ namespace SudokuRoguelike.Run
                     ? WeightedRoll(rng,
                         (NodeType.Puzzle, Math.Max(16, 36 - riskPressure * 4)),
                         (NodeType.ElitePuzzle, 21 + riskPressure * 4),
-                        (NodeType.Shop, 8), (NodeType.Rest, 16), (NodeType.Relic, 13), (NodeType.Cursed, 6))
+                        (NodeType.Shop, 8), (NodeType.Rest, 16), (NodeType.Relic, 13), (NodeType.Cursed, 6), (NodeType.Event, Event(14)))
                     : WeightedRoll(rng,
                         (NodeType.Puzzle, 50), (NodeType.ElitePuzzle, 10),
-                        (NodeType.Shop, 10), (NodeType.Rest, 16), (NodeType.Relic, 10), (NodeType.Cursed, 4));
+                        (NodeType.Shop, 10), (NodeType.Rest, 16), (NodeType.Relic, 10), (NodeType.Cursed, 4), (NodeType.Event, Event(6)));
             }
 
             return riskPath
                 ? WeightedRoll(rng,
                     (NodeType.Puzzle, Math.Max(10, 30 - riskPressure * 4)),
                     (NodeType.ElitePuzzle, 30 + riskPressure * 4),
-                    (NodeType.Shop, 6), (NodeType.Rest, 12), (NodeType.Relic, 14), (NodeType.Cursed, 8))
+                    (NodeType.Shop, 6), (NodeType.Rest, 12), (NodeType.Relic, 14), (NodeType.Cursed, 8), (NodeType.Event, Event(14)))
                 : WeightedRoll(rng,
                     (NodeType.Puzzle, 44), (NodeType.ElitePuzzle, 14),
-                    (NodeType.Shop, 8), (NodeType.Rest, 16), (NodeType.Relic, 12), (NodeType.Cursed, 6));
+                    (NodeType.Shop, 8), (NodeType.Rest, 16), (NodeType.Relic, 12), (NodeType.Cursed, 6), (NodeType.Event, Event(10)));
         }
 
         private static NodeType WeightedRoll(Random rng, params (NodeType Type, int Weight)[] entries)
@@ -262,7 +269,7 @@ namespace SudokuRoguelike.Run
         }
 
         /// <summary>[REQ: DAILY-WALK-009] One event tile on the Daily Walk's path, on the puzzle nearest the middle (the goal
-        /// "Read an event" needs one). Event tiles are not rolled on the Garden Run's routes.</summary>
+        /// "Read an event" needs one). The walk's path rolls no event tiles; the Garden Run's routes do (graph version 3).</summary>
         private static void EnsureEvent(List<RunNode> lane)
         {
             var mid = lane.Count / 2;

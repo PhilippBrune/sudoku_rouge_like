@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.30 | **Date:** 2026-10-28 | **Status:** implemented
+**Version:** 1.31 | **Date:** 2026-11-02 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.31 | 2026-11-02 | implemented | 0.3.1 playtest (owner): the Options buttons keep their text on every screen (OPT-BUTTON-001, GAP-098); the mouse pointer is a Japanese brush (UI-CURSOR-001). |
 | 1.30 | 2026-10-28 | implemented | 0.3.0 playtest (RM-217, owner's pick): the main menu as the garden path (UI-STYLE-032): New run, a card for the saved run, Continue for a saved Custom Puzzle, the walks as paper tags. |
 | 1.29 | 2026-10-28 | implemented | 0.3.0 playtest (RM-208, owner's pick UI-STYLE-036): the gold beside the Pencil it buys (HUD-GOLD-001); a detail slip at the foot of the left column shows the passive, or the item or relic in focus, instead of the status line above the board (HUD-DETAIL-001). |
 | 1.28 | 2026-10-28 | implemented | 0.3.0 playtest, owner answer to D2 ("New Run"): no main menu button is chosen while the title screen shows, so A or Enter on the title no longer opens Select Class (UI-MENU-TITLE-001, GAP-097). |
@@ -462,6 +463,7 @@ Source of truth: [EndlessZenMode](EndlessZenMode.md) (decided 2026-10-07, SPEC-C
 - **[MENU-BACK-001]** Every Back button and B/Escape return to the screen before (Game Modes → Incense Walk → Select Class → Back is Game Modes); with none, the main menu (1.24, GAP-084)
 - **[UI-MENU-QUIT-001]** Quit closes the game on a second press within 3 s; the first press says so on the status line (1.22, GAP-074: a stray press closed the game)
 - **[UI-MENU-TITLE-001]** While the title screen shows, the main menu behind it has no chosen button and reads no input; it takes the focus when the title ends (1.28, GAP-097: a pad's A on the title opened Select Class)
+- **[UI-CURSOR-001]** The mouse pointer is a Japanese brush (fude): the ink tip is the hot spot, a vermilion ferrule and a bamboo handle run to the lower right, a cream rim keeps it readable on dark scenes and on paper (0.3.1 playtest, `BrushCursor`, drawn in code at start-up).
 - **[UI-STYLE-032]** The main menu is the garden path (1.30, owner's pick of three, RM-217): the title top left, a paper card for the saved Garden Run (hidden without one), the entries as wooden tablets down the left (New run, Game Modes, Custom Puzzle with Continue for a saved one; Meta Progression, Codex; Profiles, Options, Credits, Quit), the Daily and Monthly Walk as paper tags bottom right, the profile top right, the version bottom left (layout-proposals 3.9)
 - **[UI-MENU-VERSION-001]** The game's version ("Version 0.2.0", from the player settings) in the bottom-left corner
 - Daily Walk and Monthly Walk widgets next to the menu, with today's goals, streak, theme and countdown (SPEC-CONF-027, GAP-028)
@@ -503,6 +505,7 @@ An audit after the 0.2.0 playtest found options that did nothing or less than th
 | OPT-AUDIO-001 | Master Volume | Counts once: every sound multiplies it in and the listener stays at full volume (it was applied twice, so 50 % played at 25 %). |
 | OPT-AUDIO-002 | Volumes (1.21) | The menu music plays Master × Music; in a run the music plays Master × Music and the sound effects Master × SFX, at once while a row changes; Mute all silences both, Mute when unfocused pauses the sound while the window is in the background. There is no UI Volume row: no interface sound plays (owner, 2026-10-27; the clips in `audio/ui` stay unused). |
 | OPT-DRAG-001 | Value rows (1.26) | A press or a drag on a value row's bar (volumes, Particles, Board Brightness and Contrast, Input Lock Time, Text Size) shows the value at that point, in the row's steps, and sets and saves it once when the press ends; the arrows and the pad work as before, and the bar takes no focus (RM-210). |
+| OPT-BUTTON-001 | Button text (0.3.1) | A button's label is drawn even when its box is lower than one line of text. On a 3440×1440 screen the canvas is lower, and Apply and Cancel on the Language page showed no text (GAP-098). |
 | OPT-LABEL-001 | Names | "Confirm Wrong Placement" is removed: a question asked only before a wrong digit would give the answer away. Brightness and Contrast are **Board** Brightness and **Board** Contrast (they calibrate the puzzle board and now redraw it at once); "Screen Reader" is **Status Captions** (an on-screen caption bar, not speech). |
 | ACCESS-COLOR-003 | Colorblind Mode | Line colours that tell rules apart use the Okabe–Ito palette (German Whispers green, Dutch Whispers orange, Renban purple, Parity blue, Consecutive yellow, Between sky blue, Nabner/Entropic/Modular vermilion). The cells are no longer passed through a colour-blindness simulation, which made them harder to tell apart. |
 | ACCESS-FONT-001 | Text Size | Scales the board's digits and pencil marks too (it changed only the preview and some menus), never past the cell. |

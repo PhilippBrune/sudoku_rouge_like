@@ -17,6 +17,8 @@ namespace SudokuRoguelike.UI
         private static readonly Color Rim = new Color(0.86f, 0.71f, 0.38f, 1f);
         private static readonly Color SegmentOn = new Color(0.80f, 0.60f, 0.25f, 1f);
         private static readonly Color SegmentOff = new Color(0.97f, 0.94f, 0.86f, 1f);
+        private static readonly Color SegmentOffGreyed = new Color(0.86f, 0.83f, 0.76f, 1f);
+        private static readonly Color SegmentGreyed = new Color(0.55f, 0.52f, 0.47f, 1f);
 
         private TutorialMenuController _setup;
         private Text _sizeValue, _starsValue, _rulesCount, _rulesMessage;
@@ -53,6 +55,14 @@ namespace SudokuRoguelike.UI
             _sizeValue.text = $"{_setup.GetBoardSize()}×{_setup.GetBoardSize()}";
             _starsValue.text = new string('★', Mathf.Clamp(_setup.GetStars(), 1, MaxStars));
             MarkSegments(_regionSegments, _setup.GetRegionIndex());
+            for (var i = 0; i < _regionSegments.Count; i++)   // [REQ: CUSTOM-REGION-001] what this size has not, greyed
+            {
+                var usable = _setup.CanUseRegion(i);
+                _regionSegments[i].GetComponent<Button>().interactable = usable;
+                var label = _regionSegments[i].transform.Find("Label")?.GetComponent<Text>();
+                if (label != null) label.color = usable ? ScrollUiKit.Ink : SegmentGreyed;
+                if (!usable) _regionSegments[i].color = SegmentOffGreyed;
+            }
             MarkSegments(_resourceSegments, _setup.IsClassBased ? 1 : 0);
             RefreshTiles();
             RefreshTray();

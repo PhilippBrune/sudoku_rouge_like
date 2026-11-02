@@ -1,13 +1,14 @@
 # Input, Controller Support & Save Profiles
 
-**Version:** 2.6  
-**Date:** 2026-10-28  
+**Version:** 2.7  
+**Date:** 2026-11-02  
 **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.7 | 2026-11-02 | implemented | 0.3.1 playtest (owner): Enter on an empty cell with pencil marks clears them (INPUT-KEY-001); the Options marks read LB/RB with a pad and Q/E on the keyboard, and Q/E turn the pages (INPUT-HINT-001, GAP-099). |
 | 2.6 | 2026-10-28 | implemented | 0.3.0 playtest (RM-207): the key hints follow the device in use (INPUT-HINT-001); the Custom Puzzle book also turns with PageUp/PageDown. |
 | 2.5 | 2026-10-27 | implemented | 0.3.0 playtest (GAP-077..083, GAP-094, GAP-095, RM-206): a gamepad's buttons and right stick come from the Input System (INPUT-PAD-003); the pad layout in a puzzle and on the path (INPUT-PAD-004); the seed field takes no pad focus; the node tooltip follows the pad's focus. INPUT-PAD-002's chosen mode now applies to joysticks the Input System does not know as a gamepad. |
 | 2.4 | 2026-10-26 | implemented | Owner request: X-input and D-input modes (INPUT-PAD-002). The buttons are read by position; Options → Controls → Controller: Automatic, X-input or D-input. |
@@ -84,7 +85,8 @@ Current implementation split:
 | INPUT-PAD-002 | The game reads its controller buttons by position: A is the bottom face button, B the right, X the left, Y the top, then LB, RB, Back, Start and the stick presses. An X-input pad (Xbox, and every pad Steam Input turns into one) numbers them 0–9 with the D-pad as 12–15 or axes; a D-input pad (a Legion Go with one controller detached, a PlayStation pad without Steam Input, most older PC pads) numbers them X 0, A 1, B 2, Y 3, LB 4, RB 5, LT 6, RT 7, Back 8, Start 9, stick presses 10 and 11, with the D-pad as a hat (`PadButtons.Map`). Options → Controls → Controller chooses Automatic (default: D-input for PlayStation pads and pads the game does not know, X-input for Xbox and Nintendo pads), X-input or D-input; the choice is saved with the profile. The menus' confirm and cancel follow it (`Submit (D-input)`, `Cancel (D-input)` in the Input Manager). |
 | INPUT-PAD-003 | A pad the Input System knows as a gamepad is read there, by the button's place (A bottom, B right, X left, Y top, LB, RB, Back/Select, Start, L3, R3), in any mode; only other joysticks go through the legacy button numbers and INPUT-PAD-002's mode. Only one of the two is read, so a press never counts twice. The legacy read alone missed LB/RB in the Options on an Xbox One pad (GAP-077). The first press of each button per start is logged with whether the legacy read saw it. The right stick comes from the Input System too (GAP-081). |
 | INPUT-PAD-004 | In a puzzle: D-pad and left stick move on the board, the right stick moves the number pad's cursor (only over the board's digits), A places that digit, B held 0.4 s clears the cell, LB opens the bag and LT the relics (again, or B, goes back), RB or X switches Solve and Pencil, L3 or R3 highlights the chosen cell's digit, Start opens the Options, a tap on Select saves and quits (it was a 1.5 s hold). In the bag the D-pad picks an item, A uses it, L3 shows it; among the relics the D-pad picks one and its text shows. On the path: Start opens the Options, B asks to leave, LT/RT scroll, Select saves and quits; A and moving between nodes are the UI's (GAP-080). Nothing in a puzzle stays chosen for the UI, so Enter or A acts once and the arrows cannot reach Options or Save & Quit (GAP-082, GAP-083). The seed field on Select Class takes no pad focus (GAP-078); the path's node tooltip shows at the focused node (GAP-079). |
-| INPUT-HINT-001 | The key hints show the pad's buttons after a pad button or stick and the keys after a key, a click or a mouse move (`InputDeviceTracker`, ticked every frame); a pad connected at start (Steam Deck, Legion Go) shows the pad's buttons first. Each hint's catalog key holds the pad's text and `<key>.Keys` the keyboard's: Options, Game Modes, Select Class, Meta Progression, the Codex, the stamp shop, the Daily Walk result, the Custom Puzzle book, the rest and the puzzle screen (RM-207). |
+| INPUT-HINT-001 | The key hints show the pad's buttons after a pad button or stick and the keys after a key, a click or a mouse move (`InputDeviceTracker`, ticked every frame); a pad connected at start (Steam Deck, Legion Go) shows the pad's buttons first. Each hint's catalog key holds the pad's text and `<key>.Keys` the keyboard's: Options, Game Modes, Select Class, Meta Progression, the Codex, the stamp shop, the Daily Walk result, the Custom Puzzle book, the rest and the puzzle screen (RM-207). The marks beside the Options bookmarks read LB/RB with a pad and Q/E on the keyboard, and Q/E turn the pages as PageUp/PageDown do; in a run Q does not save and quit while the Options are open (0.3.1 playtest, GAP-099). |
+| INPUT-KEY-001 | In a puzzle, Enter on an empty, open cell with pencil marks clears them ("Pencil marks cleared."); on a cell with a digit it highlights that digit as H does (0.3.1 playtest). |
 - `InputRemapService` centralizes keyboard action bindings
 - in-run input logic is handled directly inside `InRunController`
 

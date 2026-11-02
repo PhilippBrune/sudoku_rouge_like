@@ -154,6 +154,11 @@ namespace SudokuRoguelike.Save
             return saved.Seed == expectedSeed;
         }
 
+        /// <summary>[REQ: DAILY-WALK-010] A Daily Walk saved on another day: it can no longer be continued (the walk's seed
+        /// is the day's, DailyGoalService.WalkSeed).</summary>
+        public static bool IsWalkOfAnotherDay(RunState runState, DateTime today) =>
+            runState != null && runState.DailyWalk && runState.Seed != Run.DailyGoalService.WalkSeed(today);
+
         public static bool IsResumableRunState(RunState runState)
         {
             // JsonUtility serializes null custom-class fields as default objects.

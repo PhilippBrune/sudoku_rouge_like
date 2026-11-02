@@ -104,6 +104,18 @@ namespace SudokuRoguelike.UI
         public int GetBoardSize() => _config.BoardSize;
         public int GetStars() => _config.Stars;
         public int GetRegionIndex() => Math.Max(0, Array.IndexOf(RegionVariants, _config.RegionVariant));
+
+        /// <summary>[REQ: CUSTOM-REGION-001] True when the board size and the chosen rules have this Regions choice.</summary>
+        public bool CanUseRegion(int idx) => idx >= 0 && idx < RegionVariants.Length
+            && TutorialModeService.SupportsRegionVariant(_config.BoardSize, RegionVariants[idx], _config.SelectedModifiers);
+
+        // A Regions choice the size or the rules no longer have becomes boxes, or irregular regions where there are none.
+        private void FitRegion()
+        {
+            if (_config.RegionVariant == 2) _config.RegionVariant = 3;   // a typed code's other template: the slip's Irregular
+            if (TutorialModeService.SupportsRegionVariant(_config.BoardSize, _config.RegionVariant, _config.SelectedModifiers)) return;
+            _config.RegionVariant = TutorialModeService.SupportsRegionVariant(_config.BoardSize, 0, _config.SelectedModifiers) ? 0 : 3;
+        }
         public bool IsClassBased => _config.ResourceMode == TutorialResourceMode.Simulation;
         public ClassId SelectedClass => _classIndex < _availableClasses.Count ? _availableClasses[_classIndex] : ClassId.NumberFreak;
         public IReadOnlyList<BossModifierId> SelectedModifiers => _config.SelectedModifiers;
@@ -204,7 +216,8 @@ namespace SudokuRoguelike.UI
 
         public void SetRegionIndex(int idx)
         {
-            _config.RegionVariant = RegionVariants[Mathf.Clamp(idx, 0, RegionVariants.Length - 1)];
+            if (!CanUseRegion(idx)) return;   // greyed on the slip
+            _config.RegionVariant = RegionVariants[idx];
             Changed();
         }
 
@@ -242,6 +255,7 @@ namespace SudokuRoguelike.UI
 
         private void Changed()
         {
+            FitRegion();
             RefreshClassRow();
             UpdateStartButtonState();
             SetupChanged?.Invoke();

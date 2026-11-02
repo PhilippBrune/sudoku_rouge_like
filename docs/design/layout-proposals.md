@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 3.10 | **Date:** 2026-10-28 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; the main menu B (UI-STYLE-032, 2026-10-28); proposals of 2026-10-28 for the main menu, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll wait for the owner's pick)
+**Version:** 3.11 | **Date:** 2026-11-02 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; the main menu B (UI-STYLE-032, 2026-10-28); proposals of 2026-10-28 for the main menu, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll wait for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 3.11 | 2026-11-02 | review | 0.3.1 playtest (owner): three quit screen mockups (RM-224, proposed UI-STYLE-039, pick one); screenshots of the built fixes: the Options language row on 3440×1440 (GAP-098), the Accessibility preview (GAP-100), the Custom Puzzle regions and its finish screen (CUSTOM-REGION-001, CUSTOM-FINISH-001). |
 | 3.10 | 2026-10-28 | review | The Monthly Walk, Select Profile and Spirit Trials built (UI-STYLE-033 to 035, owner's picks). Screenshots below. |
 | 3.9 | 2026-10-28 | review | Main menu B · The garden path built (UI-STYLE-032, owner's pick). Screenshots below. |
 | 3.8 | 2026-10-28 | review | Custom Puzzle help, seed and share code built (UI-STYLE-037, RM-209). Screenshots below. |
@@ -800,3 +801,43 @@ docs/design/layout-proposals/render.ps1 -Only "custom_*"
 ```
 
 The committed images are JPG copies; the PNGs are not committed.
+
+### Quit screen (proposed UI-STYLE-039, pick one of three)
+
+Owner (0.3.1 playtest): a screen when the game ends that says "Kratossos" and makes the player want to come back.
+Each shows for about 3 s after Quit; any key closes at once.
+
+**A · The garden at dusk** (the game's style): the main menu's painting at evening, a hanging scroll "The garden waits
+for you" with what waits tomorrow (the next Daily Walk and the streak, the saved run, the Monthly Walk's days), the red
+Kratossos seal at its foot, a lantern that goes out last.
+
+![Quit A, the garden at dusk](layout-proposals/quit_a_garden_dusk.jpg)
+
+**B · Playful** (apart from the game's look): a bright sky, a 3×3 cube that waves and winks, digits floating like
+bubbles, the Kratossos Gaming wordmark in a fat rounded type, "Come back tomorrow · new Daily Walk".
+
+![Quit B, playful](layout-proposals/quit_b_playful.jpg)
+
+**C · Kratossos, the publisher** (the Japanese garden as the studio's theme): a raked stone garden at night, the crest
+(a brushed ensō around a vermilion torii), the wordmark, "Thank you for walking Run of the Nine", where to follow the
+studio (Steam, Discord) and a seal for the game.
+
+![Quit C, the publisher](layout-proposals/quit_c_publisher_enso.jpg)
+
+### 0.3.1 playtest fixes (built)
+
+Language page at 3440×1440, before and after (GAP-098):
+
+![Language before](layout-proposals/before_options_language_3440.jpg)
+![Language after](layout-proposals/after_options_language_3440.jpg)
+
+Accessibility preview, before, and after with every switch on (GAP-100):
+
+![Accessibility before](layout-proposals/before_options_accessibility.jpg)
+![Accessibility after](layout-proposals/after_options_accessibility_all_on.jpg)
+
+Custom Puzzle at 9×9: Turned is greyed (CUSTOM-REGION-001); a solved Custom Puzzle (CUSTOM-FINISH-001):
+
+![Custom Puzzle before](layout-proposals/before_custom_puzzle_031.jpg)
+![Custom Puzzle after](layout-proposals/after_custom_puzzle_031.jpg)
+![Custom Puzzle result](layout-proposals/after_result_custom_puzzle.jpg)

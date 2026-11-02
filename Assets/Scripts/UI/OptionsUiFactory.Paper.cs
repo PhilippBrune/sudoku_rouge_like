@@ -34,9 +34,10 @@ namespace SudokuRoguelike.UI
             ScrollUiKit.Banner(backdrop, "OptionsBanner", new Vector2(0.318f, 0.882f), new Vector2(0.682f, 0.978f),
                 "OptionsEyebrow", T("Options.Eyebrow"), titleName, T("Options"), 46);
             var paper = ScrollUiKit.HandScroll(backdrop, "OptionsScroll", PaperMin, PaperMax, null, true);
-            foreach (var (name, text, x) in new[] { ("TabHintLb", "LB", 0.045f), ("TabHintRb", "RB", 0.955f) })
+            foreach (var (name, key, x) in new[] { ("TabHintLb", "Options.PageLeft", 0.045f), ("TabHintRb", "Options.PageRight", 0.955f) })
             {
-                var mark = BuildText(name, paper, text, 16, TextAnchor.MiddleCenter);
+                var mark = BuildText(name, paper, string.Empty, 16, TextAnchor.MiddleCenter);
+                DeviceHint.Attach(mark, key);   // [REQ: INPUT-HINT-001] LB/RB with a pad, Q/E on the keyboard
                 SetRect(mark.rectTransform, new Vector2(x - 0.03f, 1.01f), new Vector2(x + 0.03f, 1.07f));
                 mark.color = new Color(0.86f, 0.82f, 0.72f, 1f);
             }

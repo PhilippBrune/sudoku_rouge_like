@@ -34,6 +34,14 @@ namespace SudokuRoguelike.Save
             return result;
         }
 
+        /// <summary>[REQ: DAILY-WALK-010] A walk saved on an earlier day ends as an abandoned walk: recorded like a
+        /// defeat, its boards' XP kept (the day's goals have changed since). Returns its result, or null.</summary>
+        public RunResult EndWalkOfAnotherDay(ProfileService profile, System.DateTime today)
+        {
+            var saved = _saveFile.HasSaveFile() ? _saveFile.Load().ActiveRunState : null;
+            return SaveFileService.IsWalkOfAnotherDay(saved, today) ? AbandonSavedRun(profile) : null;
+        }
+
         public bool HasActiveRun()
         {
             return _saveFile.HasActiveRun();

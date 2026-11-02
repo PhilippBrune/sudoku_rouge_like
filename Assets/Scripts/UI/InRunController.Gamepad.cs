@@ -269,6 +269,19 @@ namespace SudokuRoguelike.UI
             if (node != null) UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(node.gameObject);
         }
 
+        /// <summary>[REQ: INPUT-KEY-001] Enter on an empty, open cell with pencil marks clears them; false when there are none.</summary>
+        private bool ClearPencilMarksAtSelection()
+        {
+            var board = _map?.Run?.CurrentBoard;
+            if (board == null || _selectedRow < 0 || _selectedCol < 0) return false;
+            if (board.Cells[_selectedRow, _selectedCol] > 0 || board.GivenMask[_selectedRow, _selectedCol]) return false;
+            if (board.GetPencilMarks(_selectedRow, _selectedCol).Count == 0) return false;
+            board.ClearPencilMarks(_selectedRow, _selectedCol);
+            RenderBoard();
+            SetStatus(T("InRun.Status.PencilCleared"));
+            return true;
+        }
+
         /// <summary>H, Enter, L3 and R3: highlight every cell with the chosen cell's digit, or clear it (GAP-082).</summary>
         private void ToggleHighlightAtSelection()
         {

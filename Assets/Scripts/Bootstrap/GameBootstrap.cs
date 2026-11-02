@@ -486,6 +486,9 @@ namespace SudokuRoguelike.Bootstrap
             return true;
         }
 
+        /// <summary>[REQ: DAILY-WALK-010] Ends a Daily Walk saved on an earlier day; true when one ended.</summary>
+        public bool EndWalkOfAnotherDay() => _resumeService.EndWalkOfAnotherDay(_profileService, DateTime.Today) != null;
+
         public bool HasResumableSeasonalRun()
         {
             var now = DateTime.Today;

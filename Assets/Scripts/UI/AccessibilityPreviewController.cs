@@ -1,3 +1,4 @@
+using SudokuRoguelike.Boss;
 using SudokuRoguelike.Core;
 using UnityEngine;
 using UnityEngine.UI;
@@ -5,9 +6,11 @@ using UnityEngine.UI;
 namespace SudokuRoguelike.UI
 {
     /// <summary>
-    /// Builds a read-only 4×4 board snapshot inside the Accessibility panel.
-    /// Refreshes cell colours whenever an accessibility toggle changes so the
-    /// player can immediately see the visual effect before entering a run.
+    /// [REQ: ACCESS-PREVIEW-001] A read-only 4×4 board inside the Accessibility page that shows every setting at once
+    /// (0.3.1 playtest: "most items seem to do nothing"): the cells (High Contrast), a green and an orange line (Colorblind
+    /// Mode swaps their colours, High Contrast thickens them), two Kropki dots and the lines' letters (Alt Constraint
+    /// Symbols), a conflict that shakes (not with Reduce Motion), a caption bar (Status Captions) and the text samples
+    /// (Text Size).
     /// </summary>
     public sealed class AccessibilityPreviewController : MonoBehaviour
     {
@@ -32,13 +35,27 @@ namespace SudokuRoguelike.UI
             { CellKind.Entered,  CellKind.Entered,  CellKind.Given,    CellKind.Given    },
         };
 
+        // The sample lines: a German Whispers row across the third row, a Dutch Whispers column on the right (the caption
+        // bar covers the bottom row).
+        private static readonly (LineType Type, int R0, int C0, int R1, int C1)[] Lines =
+        {
+            (LineType.GermanWhispers, 2, 0, 2, 2),
+            (LineType.DutchWhispers,  0, 3, 2, 3),
+        };
+
         private const int Size = 4;
+        private const float CellW = 1f / Size, BoardH = 0.68f, CellH = BoardH / Size, BoardTop = 1f, Pad = 0.01f;
+        private const float LineWidth = 6f, ShakeEvery = 2.5f, ShakeFor = 0.4f;
 
         // ── Cell components ──────────────────────────────────────────────────
 
         private readonly Image[,]  _cellBg      = new Image[Size, Size];
         private readonly Text[,]   _cellText    = new Text[Size, Size];
         private readonly Text[,]   _pencilText  = new Text[Size, Size];
+        private readonly RectTransform[] _lines = new RectTransform[Lines.Length];
+        private readonly Text[] _lineLetters = new Text[Lines.Length];
+        private Text _blackDotLetters, _whiteDotLetters;
+        private GameObject _caption;
 
         private Text _sampleTitle;
         private Text _sampleBody;
@@ -88,6 +105,16 @@ namespace SudokuRoguelike.UI
                 _sampleHint.fontSize = Mathf.RoundToInt(BaseHintSize * scale);
         }
 
+        // Reduce Motion: the conflict's digit shakes for 0.4 s every 2.5 s, as a wrong digit does on the board.
+        private void Update()
+        {
+            var digit = _cellText[1, 3];
+            if (digit == null) return;
+            var t = Time.unscaledTime % ShakeEvery;
+            var x = !AnimationHelper.MotionReduced && t < ShakeFor ? Mathf.Sin(t * 60f) * 4f * (1f - t / ShakeFor) : 0f;
+            digit.rectTransform.anchoredPosition = new Vector2(x, 0f);
+        }
+
         // ── Board construction ───────────────────────────────────────────────
 
         private void BuildBoard(RectTransform container)
@@ -112,70 +139,79 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.04f, 0.24f), new Vector2(0.96f, 0.30f), TextAnchor.MiddleLeft,
                 new Color(0.60f, 0.57f, 0.50f, 1f), font);
 
-            const float cellW    = 1f / Size;
-            const float boardH   = 0.68f; // board occupies top 68% of preview; bottom 32% = text samples
-            const float cellH    = boardH / Size;
-            const float boardTop = 1f;
-            const float pad      = 0.01f;
+            // Cells first, then the lines and dots, then the digits on top (as on the board).
+            for (var r = 0; r < Size; r++)
+            for (var c = 0; c < Size; c++)
+                _cellBg[r, c] = Area(container, $"Cell_{r}_{c}", CellMin(r, c), CellMax(r, c)).gameObject.AddComponent<Image>();
+
+            for (var i = 0; i < Lines.Length; i++)
+            {
+                var (_, r0, c0, r1, c1) = Lines[i];
+                _lines[i] = Area(container, "Line_" + Lines[i].Type, Vector2.Min(Centre(r0, c0), Centre(r1, c1)),
+                    Vector2.Max(Centre(r0, c0), Centre(r1, c1)));
+                _lines[i].gameObject.AddComponent<Image>().raycastTarget = false;
+                _lineLetters[i] = MakeSampleText(container, "LineLetters_" + i, BossService.GetLineTypeAbbreviation(Lines[i].Type), 9,
+                    CellMin(r0, c0), CellMax(r0, c0), TextAnchor.LowerLeft, GamePalette.CellNumberGiven, font);
+            }
+            _blackDotLetters = Dot(container, "BlackDot", 0, 0, GamePalette.OverlayKropkiBlack, "KR", Color.white, font);
+            _whiteDotLetters = Dot(container, "WhiteDot", 0, 1, GamePalette.OverlayKropkiWhite, "KC", GamePalette.OverlayKropkiWhiteRim, font);
 
             for (var r = 0; r < Size; r++)
+            for (var c = 0; c < Size; c++)
             {
-                for (var c = 0; c < Size; c++)
+                var cell = Area(container, $"Digit_{r}_{c}", CellMin(r, c), CellMax(r, c));
+                if (Kinds[r, c] == CellKind.Pencil)
                 {
-                    float xMin = c * cellW;
-                    float yMin = boardTop - (r + 1) * cellH;
-
-                    // ── Cell background ──────────────────────────────────────
-                    var bgGo = new GameObject($"Cell_{r}_{c}",
-                        typeof(RectTransform), typeof(Image));
-                    bgGo.transform.SetParent(container, false);
-                    var bgRt = bgGo.GetComponent<RectTransform>();
-                    bgRt.anchorMin = new Vector2(xMin + pad,      yMin + pad);
-                    bgRt.anchorMax = new Vector2(xMin + cellW - pad, yMin + cellH - pad);
-                    bgRt.offsetMin = Vector2.zero;
-                    bgRt.offsetMax = Vector2.zero;
-                    _cellBg[r, c] = bgGo.GetComponent<Image>();
-
-                    // ── Cell content ─────────────────────────────────────────
-                    if (Kinds[r, c] == CellKind.Pencil)
-                    {
-                        var ptGo = new GameObject("PencilText",
-                            typeof(RectTransform), typeof(Text));
-                        ptGo.transform.SetParent(bgGo.transform, false);
-                        var ptRt = ptGo.GetComponent<RectTransform>();
-                        ptRt.anchorMin = Vector2.zero;
-                        ptRt.anchorMax = Vector2.one;
-                        ptRt.offsetMin = new Vector2(3f, 3f);
-                        ptRt.offsetMax = new Vector2(-3f, -3f);
-                        var pt = ptGo.GetComponent<Text>();
-                        pt.font      = FontAssetService.GetFont();
-                        pt.fontSize  = 9;
-                        pt.alignment = TextAnchor.UpperLeft;
-                        pt.text      = "2  4";
-                        _pencilText[r, c] = pt;
-                    }
-                    else
-                    {
-                        int digit = Digits[r, c];
-                        var txtGo = new GameObject("Digit",
-                            typeof(RectTransform), typeof(Text));
-                        txtGo.transform.SetParent(bgGo.transform, false);
-                        var txtRt = txtGo.GetComponent<RectTransform>();
-                        txtRt.anchorMin = Vector2.zero;
-                        txtRt.anchorMax = Vector2.one;
-                        txtRt.offsetMin = Vector2.zero;
-                        txtRt.offsetMax = Vector2.zero;
-                        var txt = txtGo.GetComponent<Text>();
-                        txt.font      = FontAssetService.GetFont();
-                        txt.fontSize  = 18;
-                        txt.alignment = TextAnchor.MiddleCenter;
-                        txt.fontStyle = Kinds[r, c] == CellKind.Given
-                            ? FontStyle.Bold : FontStyle.Normal;
-                        txt.text = digit > 0 ? digit.ToString() : "";
-                        _cellText[r, c] = txt;
-                    }
+                    var pt = MakeSampleText(cell, "PencilText", "2  4", 9, Vector2.zero, Vector2.one, TextAnchor.UpperLeft,
+                        GamePalette.PencilMarkColor, font);
+                    pt.rectTransform.offsetMin = new Vector2(3f, 3f);
+                    pt.rectTransform.offsetMax = new Vector2(-3f, -3f);
+                    _pencilText[r, c] = pt;
+                    continue;
                 }
+                var txt = MakeSampleText(cell, "Digit", Digits[r, c].ToString(), 18, Vector2.zero, Vector2.one,
+                    TextAnchor.MiddleCenter, Color.black, font);
+                txt.fontStyle = Kinds[r, c] == CellKind.Given ? FontStyle.Bold : FontStyle.Normal;
+                _cellText[r, c] = txt;
             }
+
+            // Status Captions: the bar a run shows at the bottom of the screen.
+            var bar = Area(container, "CaptionBar", new Vector2(0f, BoardTop - BoardH), new Vector2(1f, BoardTop - BoardH + CellH * 0.62f));
+            bar.gameObject.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.82f);
+            MakeSampleText(bar, "Caption", LocalizationService.T("Accessibility.Preview.Caption", "3 is already in this row."), 12,
+                new Vector2(0.04f, 0f), new Vector2(0.96f, 1f), TextAnchor.MiddleLeft, new Color(0.96f, 0.93f, 0.82f, 1f), font);
+            _caption = bar.gameObject;
+        }
+
+        // A Kropki dot on the edge between (r, c) and (r, c + 1), and its Alt Constraint Symbols letters.
+        private static Text Dot(RectTransform parent, string name, int r, int c, Color fill, string letters, Color letterColor, Font font)
+        {
+            var centre = (Centre(r, c) + Centre(r, c + 1)) * 0.5f;
+            var dot = Area(parent, name, centre, centre);
+            dot.sizeDelta = new Vector2(22f, 22f);
+            var image = dot.gameObject.AddComponent<Image>();
+            image.sprite = ScrollUiKit.Disc();
+            image.color = fill;
+            image.raycastTarget = false;
+            dot.gameObject.AddComponent<Outline>().effectColor = GamePalette.OverlayKropkiWhiteRim;
+            var text = MakeSampleText(dot, "Letters", letters, 9, Vector2.zero, Vector2.one, TextAnchor.MiddleCenter, letterColor, font);
+            text.horizontalOverflow = HorizontalWrapMode.Overflow;
+            text.verticalOverflow = VerticalWrapMode.Overflow;
+            return text;
+        }
+
+        private static Vector2 CellMin(int r, int c) => new Vector2(c * CellW + Pad, BoardTop - (r + 1) * CellH + Pad);
+        private static Vector2 CellMax(int r, int c) => new Vector2((c + 1) * CellW - Pad, BoardTop - r * CellH - Pad);
+        private static Vector2 Centre(int r, int c) => new Vector2((c + 0.5f) * CellW, BoardTop - (r + 0.5f) * CellH);
+
+        private static RectTransform Area(RectTransform parent, string name, Vector2 min, Vector2 max)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent, false);
+            var rt = (RectTransform)go.transform;
+            rt.anchorMin = min; rt.anchorMax = max;
+            rt.offsetMin = Vector2.zero; rt.offsetMax = Vector2.zero;
+            return rt;
         }
 
         private static Text MakeSampleText(RectTransform parent, string name, string content,
@@ -198,9 +234,25 @@ namespace SudokuRoguelike.UI
         public void Refresh(AccessibilitySettings acc)
         {
             UpdateScale(acc?.FontScale ?? 1f);
+            acc ??= new AccessibilitySettings();
 
             var accessSvc = new AccessibilityService();
             accessSvc.Refresh(acc, new GraphicsSettingsModel());
+
+            for (var i = 0; i < Lines.Length; i++)
+            {
+                if (_lines[i] == null) continue;
+                var width = LineWidth * accessSvc.GetLineWidthMultiplier();
+                var horizontal = Lines[i].R0 == Lines[i].R1;
+                _lines[i].offsetMin = new Vector2(horizontal ? 0f : -width / 2f, horizontal ? -width / 2f : 0f);
+                _lines[i].offsetMax = new Vector2(horizontal ? 0f : width / 2f, horizontal ? width / 2f : 0f);
+                var color = BoardViewController.LineColorFor(Lines[i].Type, acc.ColorblindMode);
+                _lines[i].GetComponent<Image>().color = new Color(color.r, color.g, color.b, 0.85f);
+                _lineLetters[i].gameObject.SetActive(acc.AlternativeConstraintSymbols);
+            }
+            if (_blackDotLetters != null) _blackDotLetters.gameObject.SetActive(acc.AlternativeConstraintSymbols);
+            if (_whiteDotLetters != null) _whiteDotLetters.gameObject.SetActive(acc.AlternativeConstraintSymbols);
+            if (_caption != null) _caption.SetActive(acc.ScreenReaderEnabled);
 
             // High-contrast mode: use explicit semantic HC colors so that
             // backgrounds and text are guaranteed to be readable against each other.
@@ -238,12 +290,12 @@ namespace SudokuRoguelike.UI
                 return;
             }
 
-            // Normal / colorblind modes: route through AccessibilityService as before.
+            // Normal mode: the board's paper colours; an entered digit in blue ink, as on the board.
             var givenBg    = accessSvc.GetCellColor(GamePalette.CellGiven);
             var emptyBg    = accessSvc.GetCellColor(GamePalette.CellEmpty);
             var conflictBg = accessSvc.GetCellColor(GamePalette.CellConflict);
             var givenText  = accessSvc.GetCellColor(GamePalette.CellNumberGiven);
-            var enteredText = new Color(0.96f, 0.93f, 0.82f, 1f);
+            var enteredText = GamePalette.CellNumberPlaced;
 
             for (var r = 0; r < Size; r++)
             {

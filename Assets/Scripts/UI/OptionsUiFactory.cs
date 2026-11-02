@@ -232,6 +232,8 @@ namespace SudokuRoguelike.UI
             text.fontSize = size;
             text.alignment = TextAnchor.MiddleCenter;
             text.color = OptionsUiStyle.ButtonText;
+            // [REQ: OPT-BUTTON-001] A lower canvas (3440×1440) made the box shorter than one line: Unity then drew nothing.
+            text.verticalOverflow = VerticalWrapMode.Overflow;
 
             lblRect.SetAsLastSibling();
             return btn;

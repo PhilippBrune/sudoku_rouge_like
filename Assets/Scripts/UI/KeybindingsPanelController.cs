@@ -35,8 +35,15 @@ namespace SudokuRoguelike.UI
             _statusText = statusText;
         }
 
+        /// <summary>A rebind waits for its key (true until the frame after it ends): OptionsTabSet then leaves Q/E and
+        /// PageUp/PageDown to it instead of turning the page (0.3.1 review).</summary>
+        public static bool Listening { get; private set; }
+
+        private void OnDisable() => Listening = false;
+
         private void Update()
         {
+            Listening = _listeningAction != null || _pendingConflictAction != null;
             if (_listeningAction == null || _remap == null) return;
 
             var pressed = InputRemapService.GetAnyKeyDown();

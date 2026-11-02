@@ -537,7 +537,7 @@ namespace SudokuRoguelike.Run
                 $"for active modifiers: {string.Join(", ", config.ActiveModifiers)}");
         }
 
-        private static bool RequiresRectangularRegions(IList<BossModifierId> modifiers)
+        internal static bool RequiresRectangularRegions(IList<BossModifierId> modifiers)
         {
             if (modifiers == null) return false;
             for (var i = 0; i < modifiers.Count; i++)

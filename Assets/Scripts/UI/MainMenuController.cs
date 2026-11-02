@@ -844,6 +844,8 @@ namespace SudokuRoguelike.UI
         private void SetupResumeButton()
         {
             if (_resumeButton == null) return;
+            if (_gameBootstrap != null && _gameBootstrap.EndWalkOfAnotherDay())   // [REQ: DAILY-WALK-010]
+                SetStatus(LocalizationService.T("MainMenu.WalkEnded"));
             var save = new SaveFileService(SaveProfileService.ActiveSlot);
             var env = save.HasSaveFile() ? save.Load() : null;
             var rs = env?.ActiveRunState;
@@ -860,8 +862,11 @@ namespace SudokuRoguelike.UI
 
         private static void FillRunCard(Transform runCard, RunState rs)
         {
-            SetText(runCard, "RunLine", LocalizationService.Format("MainMenu.RunLine", "Floor {0} · {1} · {2}",
-                rs.WalkFloor, FloorThemeData.GetFloorName(rs.CurrentFloor), ClassCatalog.DisplayName(rs.ClassId)));
+            SetText(runCard, "RunLine", rs.DailyWalk   // [REQ: DAILY-WALK-010] a saved walk waits until midnight
+                ? LocalizationService.Format("MainMenu.WalkLine", "Daily Walk · Floor {0} of {1} · continue it today",
+                    rs.WalkFloor, rs.TotalFloors)
+                : LocalizationService.Format("MainMenu.RunLine", "Floor {0} · {1} · {2}",
+                    rs.WalkFloor, FloorThemeData.GetFloorName(rs.CurrentFloor), ClassCatalog.DisplayName(rs.ClassId)));
             SetText(runCard, "RunChips", LocalizationService.Format("MainMenu.RunChips", "HP {0}/{1} · Gold {2} · Harmony {3}",
                 rs.CurrentHP, rs.MaxHP, rs.CurrentGold, rs.HarmonyLevel));
             var icon = runCard.Find("ClassDisc/ClassIcon")?.GetComponent<Image>();

@@ -633,12 +633,12 @@ namespace SudokuRoguelike.UI
                 _hudView.Refresh(run.State, run.CurrentLevelConfig);
                 RefreshBuyPencilButton(run);
                 CheckGameOver();
-                if (Input.GetKeyDown(KeyCode.Q)) SaveAndQuit();
+                if (Input.GetKeyDown(KeyCode.Q) && !IsActive(_inGameOptionsPanel)) SaveAndQuit();
                 if (Input.GetKeyDown(KeyCode.O)) ToggleOptionsPanel();
             }
 
             // Q shortcut works on path overview too (not just inside a puzzle)
-            if (_pathPanel != null && _pathPanel.activeSelf && Input.GetKeyDown(KeyCode.Q))
+            if (_pathPanel != null && _pathPanel.activeSelf && Input.GetKeyDown(KeyCode.Q) && !IsActive(_inGameOptionsPanel))
                 SaveAndQuit();
             else if (_pathPanel != null && _pathPanel.activeSelf && (_sudokuPanel == null || !_sudokuPanel.activeSelf))
                 HandleGamepadOnPath();   // GAP-080
@@ -1773,6 +1773,9 @@ namespace SudokuRoguelike.UI
                 return;
             }
 
+            // With the Options over the board the keys are theirs: Enter, digits and Q never reach the cell below (0.3.1 review).
+            if (IsShown(_inGameOptionsPanel)) { _inputRemap.Tick(); return; }
+
             // PS-3: Enter/A confirms pending cell-select item interactions
             bool anyPendingInteraction = _koiReflectionPending || _templeIncensePending ||
                 _patternScrollPending || _swapMode || _windChimePending;
@@ -1859,8 +1862,13 @@ namespace SudokuRoguelike.UI
             if (Input.GetKeyDown(KeyCode.LeftControl) || Input.GetKeyDown(KeyCode.RightControl))
                 TogglePencilMode();
 
-            // H or Enter: highlight the chosen cell's digit (L3 on the pad); Enter only worked through the cell's button (GAP-082)
-            if (Input.GetKeyDown(KeyCode.H) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+            // H or Enter: highlight the chosen cell's digit (L3 on the pad); Enter only worked through the cell's button (GAP-082).
+            // [REQ: INPUT-KEY-001] Enter on an empty cell with pencil marks clears them.
+            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+            {
+                if (!ClearPencilMarksAtSelection()) ToggleHighlightAtSelection();
+            }
+            else if (Input.GetKeyDown(KeyCode.H))
                 ToggleHighlightAtSelection();
 
             if (Input.GetKeyDown(KeyCode.Q))

@@ -1,11 +1,12 @@
 # Tutorial Mode System
 
-**Version:** 1.14 | **Date:** 2026-10-28 | **Status:** implemented
+**Version:** 1.15 | **Date:** 2026-11-02 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.15 | 2026-11-02 | implemented | 0.3.1 playtest (owner): the Regions choices a board size does not have are greyed (CUSTOM-REGION-001); a solved or lost Custom Puzzle ends on its numbers (CUSTOM-FINISH-001). |
 | 1.14 | 2026-10-28 | implemented | 0.3.0 playtest (RM-209, owner: one per profile, Continue also on the main menu): a Custom Puzzle is saved in a pair of its own and continued (CUSTOM-SAVE-001); the 1.12 concept is built. SAVE-TUTO-001 now covers Sudoku Basics only. |
 | 1.13 | 2026-10-28 | implemented | 0.3.0 playtest (RM-209, owner's pick UI-STYLE-037): a "?" beside each Board field explains it (CUSTOM-HELP-001); the puzzle's seed is shown, typed or rolled, and gives the same board (CUSTOM-SEED-001); a share code holds the whole setup with Copy and Paste (CUSTOM-CODE-001). |
 | 1.12 | 2026-10-28 | implemented | Concept (RM-209, 0.3.0 playtest): save and quit a Custom Puzzle in a pair of its own beside the Garden Run and the Monthly Walk. Not built. |
@@ -116,6 +117,17 @@ Multiple modifiers can be combined for advanced practice.
   with a pad the slip follows the focus on the row's controls.
 - **[CUSTOM-SEED-001]** The Seed field under the Board paper holds the puzzle's seed: rolled when the screen opens, typed
   (1 to 999 999 999) or rolled again with Random. The same setup and seed give the same board.
+- **[CUSTOM-REGION-001]** (1.15, 0.3.1 playtest) The Regions choices follow the board size: Boxes on 6×6 (2×3), 8×8 (2×4)
+  and 9×9 (3×3); Turned on 6×6 (3×2) and 8×8 (4×2) only (a turned 3×3 box is the same box); Irregular on every size, and
+  the only choice on 5×5 and 7×7 (their regions are always templates). A rule that needs boxes (Anti-King, Anti-Knight,
+  Nonconsecutive and the other board-shaping rules, Entropy) greys Irregular on 6×6, 8×8 and 9×9, where the generator
+  would use boxes. A greyed choice cannot be taken; a size change, a rule or a share code that leaves the choice without
+  support moves it to Boxes, or to Irregular where there are no boxes (`TutorialModeService.SupportsRegionVariant`,
+  `TutorialMenuController.FitRegion`). 9×9 irregular puzzles exist (two templates) and generate without a fallback.
+- **[CUSTOM-FINISH-001]** (1.15, 0.3.1 playtest) A solved Custom Puzzle, or one lost in Class-Based mode, ends on a result
+  in the mode-result family (UI-STYLE-026): the tally (time, mistakes, pencil marks, cells filled, rules), the grade large
+  (Perfect, Clean, Rough, Messy by mistakes, as the Garden Run's puzzles) with the board and its seed, and Back. The saved
+  puzzle is cleared when it is solved (`EndScreenViewController.ShowCustomPuzzleResult`).
 - **[CUSTOM-CODE-001]** The share code holds the size, stars, regions, resources, class, rules and seed:
   `R1-` and about twenty letters and digits (Crockford base32 in groups of four, a check byte at the end). Copy puts it
   on the clipboard; Paste a code reads the clipboard and sets the screen, or says why not (no code or a typo, a class not

@@ -1356,7 +1356,6 @@ namespace SudokuRoguelike.Core
 
             // Puzzle completion
             { "Puzzle solved! Well done!", "Rätsel gelöst! Gut gemacht!" },
-            { "Tutorial solved!", "Anleitung abgeschlossen!" },
             { "Endless Zen  \u00b7  Depth {0}", "Endloses Zen  \u00b7  Tiefe {0}" },
             { "Garden cleared! Next floor...", "Garten abgeschlossen! Nächste Etage..." },
             { "Puzzle is still loading \u2014 please wait a moment before saving.", "Rätsel wird noch geladen \u2014 bitte vor dem Speichern kurz warten." },

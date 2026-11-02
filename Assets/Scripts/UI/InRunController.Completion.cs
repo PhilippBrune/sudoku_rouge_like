@@ -48,27 +48,16 @@ namespace SudokuRoguelike.UI
                 }
                 else
                 {
-                    SetStatus(T("Tutorial solved!"));
-                    SaveAndQuit();
+                    // [REQ: CUSTOM-FINISH-001] The solved Custom Puzzle ends on its numbers; its save is done with.
+                    new Save.RunAutoSaveCoordinator(new Save.SaveFileService(Save.SaveProfileService.ActiveSlot)).ClearCustomPuzzle();
+                    ShowSolvedResult(run);
                 }
                 return;
             }
 
             if (run.State.IsSeasonalChallenge)
             {
-                // Accumulate this puzzle's elapsed time into the run total before stopping the timer
-                if (run.State != null)
-                    run.State.TotalRunSeconds += _hudView?.GetPuzzleElapsed() ?? 0f;
-                _hudView?.StopPuzzleTimer();
-
-                SetActive(_sudokuPanel, false);
-                SetActive(_pathPanel, false);
-                CloseRunScenes();
-                _audio?.SetContext(RunAudioController.Context.Path);
-                _audio?.PlayPuzzleSolved();
-                RumbleService.PulsePuzzleSolved(this);
-                _boardView?.FlashBoardSolved();
-                _endScreenView.ShowGameOver(run, true);
+                ShowSolvedResult(run);
                 return;
             }
 
@@ -171,6 +160,21 @@ namespace SudokuRoguelike.UI
             }
 
             _rewardView.ShowRewardScreen();
+        }
+
+        // A solved puzzle that ends its mode: the time into the run total, the board away, the stinger, then the result.
+        private void ShowSolvedResult(RunDirector run)
+        {
+            run.State.TotalRunSeconds += _hudView?.GetPuzzleElapsed() ?? 0f;
+            _hudView?.StopPuzzleTimer();
+            SetActive(_sudokuPanel, false);
+            SetActive(_pathPanel, false);
+            CloseRunScenes();
+            _audio?.SetContext(RunAudioController.Context.Path);
+            _audio?.PlayPuzzleSolved();
+            RumbleService.PulsePuzzleSolved(this);
+            _boardView?.FlashBoardSolved();
+            _endScreenView.ShowGameOver(run, true);
         }
 
         private void CheckGameOver()

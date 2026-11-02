@@ -1,11 +1,12 @@
 # Roadmap backlog: Run of the Nine
 
-**Version:** 1.9 | **Date:** 2026-10-28 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
+**Version:** 1.10 | **Date:** 2026-11-02 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.10 | 2026-11-02 | review | RM-218 to RM-224 from the owner's 0.3.1 playtest (2026-11-02): a short-term block; RM-218 to RM-223 built, RM-224 (quit screen) as three mockups for the owner's pick. |
 | 1.9 | 2026-10-28 | review | Mockups for RM-208, RM-209, RM-211 and RM-217 (layout-proposals 3.5, UI-STYLE-032 to 038), waiting for the owner's pick. |
 | 1.8 | 2026-10-27 | review | RM-206 to RM-217 from the owner's 0.3.0 playtest (`docs/review/PLAYTEST_0.3.0.md`): a short-term block "0.3.0 playtest". |
 | 1.7 | 2026-10-27 | review | Owner request (2026-10-27): the concept files are merged into their specs; every roadmap reference now points to the spec section (no roadmap status changed). |
@@ -48,6 +49,18 @@ Horizons: **short term** = the next one to three updates, **mid term** = after t
 | RM-215 | Title sound | A short sound when the title screen opens. | Owner, 0.3.0 playtest; built: a code-made 8-bit sting, no paid service (AUDIO-TITLE-001, AudioVisualDirection 1.7). | built |
 | RM-216 | Daily Walk paths and themes | Concept: the Daily Walk on one path with its own garden themes; the main game on Floors 1, 3 and 5, the Daily Walk on Floors 2 and 4. | Owner, 0.3.0 playtest; way B and "Read an event" built (DAILY-WALK-009, DailyGoalSystem 0.9); way A waits for the run-length report. | built |
 | RM-217 | Mockups for four screens | Three main menu proposals, the Monthly Walk, Select Profile and Spirit Trials. | Owner, 0.3.0 playtest; built: main menu B (UI-STYLE-032), the Monthly Walk (033), Select Profile (034), Spirit Trials (035). | built |
+
+## Short term: 0.3.1 playtest (owner, 2026-11-02)
+
+| ID | Item | What | Source | Status |
+|----|------|------|--------|--------|
+| RM-218 | Event tiles in the Garden Run | Event tiles roll on both routes again. | Owner ("Ereignisfelder im Gartenlauf: ja"); built (MAP-NODE-EVENT-001, PathSystem_GardenOverview 1.10). | built |
+| RM-219 | Daily Walk shorter, saved only for its day | Two tiles fewer per floor; Save & Quit keeps the walk until midnight and the player is told. | Owner; built (DAILY-WALK-010, DailyGoalSystem 0.10). | built |
+| RM-220 | Custom Puzzle finish screen | A solved puzzle shows its time, mistakes, pencil marks, cells and grade. | Owner; built in the mode-result family (CUSTOM-FINISH-001, TutorialModeSystem 1.15). | built |
+| RM-221 | Regions per board size | Regions a size does not have are greyed; 9×9 irregular checked. | Owner; built (CUSTOM-REGION-001). | built |
+| RM-222 | Enter clears pencil marks | Enter on an empty cell with pencil marks clears them. | Owner; built (INPUT-KEY-001, InputAndProfilesSpec 2.7). | built |
+| RM-223 | Brush cursor | The mouse pointer as a Japanese brush. | Owner; built (UI-CURSOR-001, GameDesignSpec). | built |
+| RM-224 | Quit screen | A goodbye screen with Kratossos that makes the player want to come back. | Owner: three mockups (game style, playful, publisher in the garden), layout-proposals 3.11. | waiting for the owner's pick |
 
 ## Mid term (suggested)
 

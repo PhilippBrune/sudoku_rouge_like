@@ -1,0 +1,72 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<style>
+  /* Quit C · Kratossos, the publisher, in the Japanese garden: a dark ink-wash night over a raked stone garden, the
+     studio's crest in the middle (a brushed ensō around a vermilion torii), the wordmark below, Run of
+     the Nine named as one of its games, and where to find the studio. The raked lines draw outwards for about 3 s, any
+     key closes at once. */
+  :root { --ink:#0f0d0b; --sumi:#1b1814; --sand:#d9cfb8; --sand-d:#a89d83; --verm:#b23a2e; --gold:#c9a24f; --mist:rgba(239,227,198,.08); }
+  body { background:radial-gradient(ellipse at 50% 42%, #2a241d 0, #14110e 55%, #0a0907 100%); color:var(--sand); }
+  .mist { position:absolute; inset:0; background:
+          radial-gradient(ellipse 900px 200px at 20% 18%, var(--mist), transparent 70%),
+          radial-gradient(ellipse 700px 160px at 82% 28%, var(--mist), transparent 70%); }
+  /* raked sand: concentric ripples round the crest, straight rakes below */
+  .rake { position:absolute; left:50%; top:430px; width:1500px; height:1500px; transform:translate(-50%,-50%); border-radius:50%;
+          background:repeating-radial-gradient(circle, transparent 0 22px, rgba(217,207,184,.07) 22px 25px);
+          -webkit-mask:radial-gradient(circle, transparent 230px, #000 240px, #000 520px, transparent 760px);
+                  mask:radial-gradient(circle, transparent 230px, #000 240px, #000 520px, transparent 760px); }
+  .lines { position:absolute; left:0; right:0; bottom:0; height:250px;
+           background:repeating-linear-gradient(180deg, transparent 0 18px, rgba(217,207,184,.07) 18px 21px);
+           -webkit-mask:linear-gradient(180deg, transparent, #000 40%); mask:linear-gradient(180deg, transparent, #000 40%); }
+  .stone { position:absolute; border-radius:46% 54% 40% 60% / 60% 50% 50% 40%; background:radial-gradient(circle at 35% 30%, #4a4339, #1f1b16 70%);
+           box-shadow:0 18px 30px rgba(0,0,0,.6); }
+  .moss { position:absolute; border-radius:50%; background:radial-gradient(circle at 40% 35%, #4f6e45, #263820 70%); opacity:.9; }
+  /* crest */
+  .crest { position:absolute; left:50%; top:430px; width:420px; height:420px; transform:translate(-50%,-50%); }
+  .enso { position:absolute; inset:0; border-radius:50%;
+          background:conic-gradient(from 210deg, transparent 0 14deg, var(--sand) 18deg 300deg, rgba(217,207,184,.4) 330deg, transparent 345deg);
+          -webkit-mask:radial-gradient(circle, transparent 172px, #000 176px, #000 198px, transparent 204px);
+                  mask:radial-gradient(circle, transparent 172px, #000 176px, #000 198px, transparent 204px);
+          filter:drop-shadow(0 0 1px rgba(217,207,184,.5)); transform:rotate(-8deg); }
+  .torii { position:absolute; left:50%; top:52%; width:210px; height:200px; transform:translate(-50%,-50%); }
+  .torii .kasagi { position:absolute; left:-14px; right:-14px; top:6px; height:24px; background:var(--verm); border-radius:50% 50% 6px 6px / 90% 90% 6px 6px; }
+  .torii .nuki { position:absolute; left:8px; right:8px; top:58px; height:15px; background:var(--verm); }
+  .torii .post { position:absolute; top:30px; bottom:0; width:24px; background:var(--verm); }
+  .torii .post.l { left:40px; } .torii .post.r { right:40px; transform:skewX(-2deg); }
+  .wordmark { position:absolute; left:0; right:0; top:690px; text-align:center; }
+  .wordmark h1 { margin:0; font-weight:normal; font-size:86px; letter-spacing:.42em; padding-left:.42em; color:var(--sand); }
+  .wordmark small { display:block; margin-top:6px; font-size:22px; letter-spacing:.9em; padding-left:.9em; color:var(--gold); }
+  .rule { width:520px; height:2px; margin:26px auto 22px; background:linear-gradient(90deg, transparent, var(--sand-d), transparent); }
+  .thanks { font-size:28px; color:var(--sand); }
+  .thanks em { font-style:normal; color:var(--gold); }
+  .games { margin-top:12px; font-size:20px; letter-spacing:.14em; color:var(--sand-d); }
+  .hanko { position:absolute; right:150px; bottom:150px; width:96px; height:96px; background:var(--verm); color:#f6e7d2; border-radius:8px;
+           display:flex; align-items:center; justify-content:center; font-size:20px; letter-spacing:.06em; text-align:center; line-height:1.1;
+           transform:rotate(6deg); box-shadow:inset 0 0 0 4px var(--verm), inset 0 0 0 6px #f6e7d2; }
+  .follow { position:absolute; left:150px; bottom:160px; font-size:19px; line-height:1.9; color:var(--sand-d); }
+  .follow b { font-weight:normal; color:var(--sand); }
+  .bar { position:absolute; left:50%; transform:translateX(-50%); bottom:96px; width:300px; height:3px; background:rgba(217,207,184,.15); }
+  .bar i { display:block; width:40%; height:100%; background:var(--gold); }
+</style></head><body>
+<div class="mist"></div>
+<div class="rake"></div><div class="lines"></div>
+<div class="stone" style="left:250px; top:560px; width:190px; height:120px"></div>
+<div class="moss" style="left:220px; top:640px; width:110px; height:46px"></div>
+<div class="stone" style="left:1500px; top:300px; width:150px; height:100px"></div>
+<div class="moss" style="left:1600px; top:372px; width:90px; height:36px"></div>
+<div class="stone" style="left:1380px; top:620px; width:90px; height:60px"></div>
+<div class="crest">
+  <div class="enso"></div>
+  <div class="torii"><div class="kasagi"></div><div class="nuki"></div><div class="post l"></div><div class="post r"></div></div>
+</div>
+<div class="wordmark">
+  <h1>KRATOSSOS</h1><small>GAMING</small>
+  <div class="rule"></div>
+  <div class="thanks">Thank you for walking <em>Run of the Nine</em>. The gate stays open.</div>
+  <div class="games">MORE GARDENS ARE BEING RAKED</div>
+</div>
+<div class="follow"><b>Steam</b> · follow Kratossos for the next update<br><b>Discord</b> · the garden's tea house</div>
+<div class="hanko">九<br>NINE</div>
+<div class="bar"><i></i></div>
+<div class="caption">Quit · C · Kratossos, the publisher (an ensō with a torii as the crest, a raked stone garden, the studio's games)</div>
+</body></html>

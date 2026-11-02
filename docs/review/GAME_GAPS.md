@@ -102,6 +102,9 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-095](#gap-095) | The input lock applied after a mouse click but not after a key or pad move | FIXED (0.3.0 playtest, 2026-10-27; a real pad still to check) | LOW | P3 |
 | [GAP-096](#gap-096) | Spirit Trials tier select showed "???" instead of the stars | FIXED (found making the RM-217 mockups, 2026-10-28) | LOW | P4 |
 | [GAP-097](#gap-097) | A pad's A on the title screen opened Select Class instead of the main menu | FIXED (0.3.0 playtest D2, 2026-10-28) | LOW | P3 |
+| [GAP-098](#gap-098) | Apply and Cancel on the Language page had no text on a 3440×1440 screen | FIXED (0.3.1 playtest, 2026-11-02) | MEDIUM | P3 |
+| [GAP-099](#gap-099) | Options showed LB/RB without a pad | FIXED (0.3.1 playtest, 2026-11-02) | LOW | P4 |
+| [GAP-100](#gap-100) | The Accessibility switches seemed to do nothing in the menu | FIXED (0.3.1 playtest, 2026-11-02) | MEDIUM | P3 |
 | [GAP-067](#gap-067) | Moonshade Offering's "+2 starting pencil" did nothing (the run starts at full pencil) | FIXED (2026-10-22) | LOW | P3 |
 | [GAP-064](#gap-064) | Scholar's Burden: no free Ink Well, "+5 pencil" did nothing, "−1 slot" could add a slot | FIXED (as planned, 2026-10-22) | MEDIUM | P3 |
 | [GAP-063](#gap-063) | Class levels 30 and 40 promised rewards the game did not grant (starting items, frames) | FIXED (2026-10-21) | MEDIUM | P2 |
@@ -1167,6 +1170,35 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Status:** FIXED (owner: "Überall") · **Severity:** LOW · **Priority:** P3
 - **Fix:** A key or pad move starts the lock like a click (`MoveSelection`); "Jump to Next Empty Cell" still does not.
 - **Tests:** as GAP-094.
+
+## GAP-098
+**Apply and Cancel on the Language page had no text on a 3440×1440 screen**
+
+- **Requirement:** OPT-BUTTON-001 (GameDesignSpec)
+- **Status:** FIXED (0.3.1 playtest: "Language → Change Language: the 2 buttons have no text") · **Severity:** MEDIUM · **Priority:** P3
+- **Problem:** The main menu's canvas scales between width and height; on a 21:9 screen it is about 930 units high instead of 1080, so the Language page's confirm row is lower. The buttons' labels sit 8 units inside the button, and their box became lower than one line of text at size 18. Unity then draws nothing.
+- **Fix:** `OptionsUiFactory.BuildButton` lets a label overflow its box vertically, so the text is drawn on every screen.
+- **Tests:** `OptionsScreenshotDiagnostics` shoots the confirm row at 1920×1080 and 3440×1440.
+- **Screenshots:** [before](../design/layout-proposals/before_options_language_3440.jpg), [after](../design/layout-proposals/after_options_language_3440.jpg).
+
+## GAP-099
+**Options showed LB/RB without a pad**
+
+- **Requirement:** INPUT-HINT-001 (InputAndProfilesSpec 2.7)
+- **Status:** FIXED (0.3.1 playtest) · **Severity:** LOW · **Priority:** P4
+- **Problem:** The marks beside the Options bookmarks were fixed texts "LB" and "RB"; with a keyboard the pages turned with PageUp and PageDown, which the marks did not say.
+- **Fix:** The marks follow the device in use (`DeviceHint`): LB/RB with a pad, Q/E on the keyboard; Q and E turn the pages too. In a run Q does not save and quit while the Options are open.
+- **Tests:** `OptionsScreenshotDiagnostics` (the marks on every page).
+
+## GAP-100
+**The Accessibility switches seemed to do nothing in the menu**
+
+- **Requirement:** ACCESS-PREVIEW-001 (AccessibilitySpec 2.6)
+- **Status:** FIXED (0.3.1 playtest: "most menu items feel as if they do nothing") · **Severity:** MEDIUM · **Priority:** P3
+- **Problem:** Every switch works on the board in a run, but the preview beside the page showed only cells and text: no line for Colorblind Mode or High Contrast's thicker lines, no dot or line for the letters, no motion, no caption bar. Its entered digits were cream on paper and could not be seen.
+- **Fix:** The preview has a German Whispers and a Dutch Whispers line, two Kropki dots, a wrong digit that shakes every 2.5 s and a caption bar; each switch changes what it changes on the board. Entered digits are in blue ink.
+- **Tests:** `OptionsScreenshotDiagnostics` (all switches on).
+- **Screenshots:** [before](../design/layout-proposals/before_options_accessibility.jpg), [after](../design/layout-proposals/after_options_accessibility_all_on.jpg).
 
 ## GAP-097
 **A pad's A on the title screen opened Select Class instead of the main menu**

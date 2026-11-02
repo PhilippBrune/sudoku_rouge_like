@@ -1,11 +1,12 @@
 # Path System & Garden Overview
 
-**Version:** 1.9 | **Date:** 2026-10-21 | **Status:** implemented
+**Version:** 1.10 | **Date:** 2026-11-02 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.10 | 2026-11-02 | implemented | 0.3.1 playtest (owner, RM-218): event tiles roll on the Garden Run's routes again (MAP-NODE-EVENT-001, an Event column in the weight table); graph version 3, a floor saved before keeps its tiles. |
 | 1.9 | 2026-10-21 | implemented | Docs clean-up: the player icon is the class marker drawn by `InRunController.PathTiles.AddPlayerMarker` (GAP-022); the planned `PlayerIconController` with its entry slide and edge tween was not built and is marked so. |
 | 1.8 | 2026-10-20 | implemented | Owner's 0.2.0 playtest: the offering table's numbers show the boss fight and the whole floor side by side (mistakes, HP lost, items used, pencil marks; REQ-BOSS-107). |
 | 1.7 | 2026-10-15 | implemented | Floor transition after a non-final boss: the offering table shows the fight's numbers and the relic choice on one screen (layout-proposals.md UI-STYLE-005); taking a relic or leaving them loads the next floor (REQ-BOSS-107). |
@@ -168,13 +169,18 @@ All tiles show:
 
 **Node-type roll weights** (relative weights; `progress` = step / lane length; the first tile after Start is always a Puzzle; `p` = risk pressure = 1 + ⌊floor index / 2⌋, so 1 on Floors 1–2, 2 on Floors 3–4, 3 on Floor 5):
 
-| Segment | Lane | Puzzle | Elite | Shop | Rest | Relic | Cursed |
-|---|---|:-:|:-:|:-:|:-:|:-:|:-:|
-| progress ≤ 0.30 | both | 66 | 0 | 8 | 16 | 8 | 2 |
-| 0.30 < progress ≤ 0.70 | Calm | 50 | 10 | 10 | 16 | 10 | 4 |
-| 0.30 < progress ≤ 0.70 | Risk | max(16, 36 − 4p) | 21 + 4p | 8 | 16 | 13 | 6 |
-| progress > 0.70 | Calm | 44 | 14 | 8 | 16 | 12 | 6 |
-| progress > 0.70 | Risk | max(10, 30 − 4p) | 30 + 4p | 6 | 12 | 14 | 8 |
+| Segment | Lane | Puzzle | Elite | Shop | Rest | Relic | Cursed | Event |
+|---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| progress ≤ 0.30 | both | 66 | 0 | 8 | 16 | 8 | 2 | 4 |
+| 0.30 < progress ≤ 0.70 | Calm | 50 | 10 | 10 | 16 | 10 | 4 | 6 |
+| 0.30 < progress ≤ 0.70 | Risk | max(16, 36 − 4p) | 21 + 4p | 8 | 16 | 13 | 6 | 14 |
+| progress > 0.70 | Calm | 44 | 14 | 8 | 16 | 12 | 6 | 10 |
+| progress > 0.70 | Risk | max(10, 30 − 4p) | 30 + 4p | 6 | 12 | 14 | 8 | 14 |
+
+**[MAP-NODE-EVENT-001]** (1.10, 0.3.1 playtest, RM-218) Event tiles roll on both routes of the Garden Run again with the
+Event column above (the weights the routes had before March 2026). `RunState.FloorGraphVersion` 3 marks the rule: a floor
+saved under version 2 keeps its tiles (no event) until the next floor. The path's legend shows Event when the floor has
+one. The Daily Walk's single path rolls no events; it keeps its one event tile (DAILY-WALK-009).
 
 ---
 

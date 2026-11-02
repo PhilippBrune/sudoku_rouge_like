@@ -269,6 +269,12 @@ namespace SudokuRoguelike.UI
                 ShowIncenseResult(run);
                 return;
             }
+            // [REQ: CUSTOM-FINISH-001] A Custom Puzzle ends on its numbers (Sudoku Basics returns on its own).
+            if (run?.State?.TutorialMode == true && run.State.RunNumber != 0)
+            {
+                ShowCustomPuzzleResult(run, victory);
+                return;
+            }
             // [REQ: UI-STYLE-028] The day's walk ends on its own result: the XP waits there for a class.
             if (run?.State?.DailyWalk == true)
             {

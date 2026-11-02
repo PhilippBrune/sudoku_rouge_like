@@ -1,0 +1,69 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<style>
+  /* Quit B · Playful, apart from the game's look: a bright sky, a little 3×3 cube waving goodbye, digits floating up
+     like bubbles, the Kratossos Gaming wordmark in a fat rounded type and one line that makes you want to come back.
+     Shown about 3 s after Quit; the cube winks once, any key closes at once. */
+  :root { --sky1:#7fd3ff; --sky2:#ffd6ec; --sun:#ffe066; --pink:#ff6fa5; --mint:#5fe0b0; --grape:#7a5cff; --night:#2b2350; }
+  body { background:linear-gradient(160deg, var(--sky1) 0%, #b8e6ff 45%, var(--sky2) 100%); color:var(--night);
+         font-family:'Arial Rounded MT Bold','Segoe UI Black','Segoe UI',sans-serif; }
+  .sun { position:absolute; right:180px; top:90px; width:220px; height:220px; border-radius:50%; background:var(--sun);
+         box-shadow:0 0 0 30px rgba(255,224,102,.35), 0 0 0 64px rgba(255,224,102,.15); }
+  .cloud { position:absolute; height:70px; border-radius:40px; background:#fff; opacity:.9; }
+  .cloud::before, .cloud::after { content:''; position:absolute; background:#fff; border-radius:50%; }
+  .cloud::before { width:90px; height:90px; left:30px; top:-45px; } .cloud::after { width:70px; height:70px; left:100px; top:-30px; }
+  .digit { position:absolute; width:74px; height:74px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+           font-size:40px; color:#fff; box-shadow:inset -6px -8px 0 rgba(0,0,0,.12), 0 8px 18px rgba(43,35,80,.18); }
+  .hill { position:absolute; left:-200px; right:-200px; bottom:-380px; height:560px; border-radius:50%; background:#8be08f; }
+  .hill.b { bottom:-430px; left:600px; right:-400px; background:#6fd07a; }
+  /* the cube */
+  .cube { position:absolute; left:330px; top:400px; width:300px; height:300px; border-radius:46px; background:#fff;
+          box-shadow:0 26px 0 rgba(43,35,80,.12), inset 0 -14px 0 #e8e4ff; transform:rotate(-6deg); }
+  .grid { position:absolute; inset:22px; display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .grid i { border-radius:16px; background:#f1eeff; font-style:normal; font-size:44px; display:flex; align-items:center; justify-content:center; color:var(--grape); }
+  .face { position:absolute; left:50%; top:118px; transform:translateX(-50%); width:200px; height:90px; }
+  .eye { position:absolute; top:6px; width:26px; height:34px; border-radius:50%; background:var(--night); }
+  .eye.l { left:42px; } .eye.r { right:42px; height:8px; top:22px; border-radius:6px; }   /* the wink */
+  .mouth { position:absolute; left:70px; top:48px; width:60px; height:30px; border-radius:0 0 40px 40px; background:var(--pink); }
+  .cheek { position:absolute; top:44px; width:30px; height:16px; border-radius:50%; background:rgba(255,111,165,.4); }
+  .cheek.l { left:10px; } .cheek.r { right:10px; }
+  .arm { position:absolute; right:-70px; top:40px; width:110px; height:34px; border-radius:20px; background:#fff;
+         transform:rotate(-40deg); transform-origin:left center; box-shadow:inset 0 -6px 0 #e8e4ff; }
+  .arm::after { content:''; position:absolute; right:-18px; top:-10px; width:54px; height:54px; border-radius:50%; background:#fff; box-shadow:inset 0 -6px 0 #e8e4ff; }
+  .feet { position:absolute; left:360px; top:700px; width:180px; height:30px; display:flex; justify-content:space-between; }
+  .feet b { width:64px; height:30px; border-radius:20px; background:var(--grape); }
+  .bubble { position:absolute; left:610px; top:270px; padding:26px 40px; border-radius:40px; background:#fff; font-size:48px;
+            color:var(--night); box-shadow:0 14px 0 rgba(43,35,80,.1); transform:rotate(3deg); }
+  .bubble::after { content:''; position:absolute; left:40px; bottom:-34px; border:22px solid transparent; border-top:30px solid #fff; border-left:10px solid transparent; }
+  /* wordmark */
+  .brand { position:absolute; left:1000px; top:420px; transform:rotate(-3deg); }
+  .brand h1 { margin:0; font-size:132px; line-height:.9; letter-spacing:-.02em; color:#fff;
+              text-shadow:0 8px 0 var(--grape), 0 14px 0 var(--night), 0 20px 24px rgba(43,35,80,.35); }
+  .brand h2 { margin:20px 0 0 8px; font-size:58px; color:var(--pink); letter-spacing:.24em; text-shadow:0 5px 0 #fff; }
+  .lines { position:absolute; left:1010px; top:700px; font-size:34px; line-height:1.45; color:var(--night); }
+  .lines b { color:var(--grape); }
+  .chip { display:inline-block; margin-top:22px; padding:14px 30px; border-radius:999px; background:var(--night); color:#fff; font-size:26px; }
+  .chip span { color:var(--sun); }
+</style></head><body>
+<div class="sun"></div>
+<div class="cloud" style="left:160px; top:120px; width:220px"></div>
+<div class="cloud" style="left:1100px; top:200px; width:260px; opacity:.75"></div>
+<div class="hill"></div><div class="hill b"></div>
+<div class="digit" style="left:150px; top:330px; background:var(--pink)">3</div>
+<div class="digit" style="left:250px; top:210px; background:var(--mint); width:56px; height:56px; font-size:30px">7</div>
+<div class="digit" style="left:820px; top:150px; background:var(--grape)">9</div>
+<div class="digit" style="left:900px; top:560px; background:#ffb84d; width:60px; height:60px; font-size:32px">1</div>
+<div class="digit" style="left:1580px; top:380px; background:var(--mint)">5</div>
+<div class="digit" style="left:1740px; top:600px; background:var(--pink); width:56px; height:56px; font-size:30px">4</div>
+<div class="bubble">See you soon!</div>
+<div class="cube">
+  <div class="grid"><i>1</i><i></i><i>9</i><i></i><i></i><i></i><i>4</i><i></i><i>6</i></div>
+  <div class="face"><span class="eye l"></span><span class="eye r"></span><span class="cheek l"></span><span class="cheek r"></span><span class="mouth"></span></div>
+  <div class="arm"></div>
+</div>
+<div class="feet"><b></b><b></b></div>
+<div class="brand"><h1>KRATOSSOS</h1><h2>GAMING</h2></div>
+<div class="lines">Thanks for playing!<br>Your next puzzle is <b>already warming up</b>.
+  <br><span class="chip">Come back tomorrow · <span>new Daily Walk</span></span></div>
+<div class="caption">Quit · B · Playful (apart from the game's look: a waving 3×3 cube, the Kratossos Gaming wordmark)</div>
+</body></html>

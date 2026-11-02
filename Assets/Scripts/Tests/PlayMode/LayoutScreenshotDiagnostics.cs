@@ -920,6 +920,30 @@ namespace SudokuRoguelike.Tests
             yield return Shoot(host, camera, prefix + "result_monthly_walk.png");
         }
 
+        // CUSTOM-FINISH-001 (0.3.1 playtest): a solved Custom Puzzle ends on its numbers, in the UI-STYLE-026 family.
+        [UnityTest]
+        public IEnumerator RenderCustomPuzzleResult()
+        {
+            var prefix = Environment.GetEnvironmentVariable("SR_SHOT_PREFIX");
+            if (string.IsNullOrEmpty(prefix)) prefix = "after_";
+            var camera = CreateCamera();
+            var (host, run) = StartRun(7322, true);
+            yield return DismissIntro();
+            var end = host.GetComponentInChildren<EndScreenViewController>(true);
+            var level = run.CurrentLevelState;
+            level.CorrectPlacements = 47;
+            level.Mistakes = 1;
+            level.PencilMarksUsed = 23;
+            run.State.TotalRunSeconds = 612f;
+            run.State.TutorialMode = true;
+            run.State.RunNumber = 1;
+            yield return null;   // the in-run controller opens a tutorial's board once; let it, then end on the result
+            yield return null;
+            end.ShowGameOver(run, true);
+            yield return new WaitForSecondsRealtime(0.8f);
+            yield return Shoot(host, camera, prefix + "result_custom_puzzle.png");
+        }
+
         // UI-STYLE-028: the Daily Walk's result as the mockup has it: both floors walked, two of three goals, streak day 4,
         // the walk's XP waiting for one of four unlocked classes.
         [UnityTest]

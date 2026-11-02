@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.3.1: test build (2026-11-02)
+
+A local build for the owner's playtest. Not uploaded.
+
+### New
+
+- **Event tiles are back in the Garden Run.** Both routes roll them again; a floor saved before keeps its tiles.
+- **The Custom Puzzle ends on a result:** time, mistakes, pencil marks, cells filled, rules and the grade, with the board and its seed.
+- **The mouse pointer is a Japanese brush.**
+- **Enter clears pencil marks:** Enter on an empty cell with notes removes them; on a digit it still highlights it.
+
+### Changed
+
+- The Daily Walk's floors are two tiles shorter. A saved walk waits until midnight; the path and the main menu say so, and a walk from an earlier day ends like an abandoned walk.
+- Custom Puzzle: Regions a board size does not have are greyed (no turned boxes on 9×9, only irregular regions on 5×5 and 7×7), and Irregular is greyed when a rule needs boxes.
+- Options: the page marks show LB/RB with a controller and Q/E on the keyboard; Q and E turn the pages.
+- The Accessibility preview shows every switch: line colours, thicker lines, letters on dots and lines, the shake of a wrong digit, the caption bar.
+
+### Fixed
+
+- Apply and Cancel on the Language page had no text on ultrawide screens.
+- In a run, Enter, digits and Q no longer reach the board while the Options are open.
+
+
 ## 0.3.0: 9th iteration (2026-10-27)
 
 Two short ways to play: the Daily Walk is now a run of two floors, and the Incense Walk is a time attack against a

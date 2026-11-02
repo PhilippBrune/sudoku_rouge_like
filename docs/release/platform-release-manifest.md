@@ -1,6 +1,6 @@
-# Platform Release Manifest: 0.3.0
+# Platform Release Manifest: 0.3.1
 
-**Release:** 0.3.0 (Steam build "v0.3.0 (9th iteration)" for `default`; built 2026-10-27, not uploaded; the 0.2.2 beta was never uploaded and is folded in) · **Updated:** 2026-10-27 · **Owner:** Philipp Brune
+**Release:** 0.3.1 (local test build of the 0.3.1 playtest fixes, built 2026-11-02, not uploaded; before it 0.3.0, Steam build "v0.3.0 (9th iteration)", built 2026-10-27, not uploaded) · **Updated:** 2026-11-02 · **Owner:** Philipp Brune
 
 This manifest lists every release gate with its state, exit criteria and the repository evidence. States:
 

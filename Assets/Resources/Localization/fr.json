@@ -1,4 +1,5 @@
 {
+    "ProfileSelect.DeleteSure":  "Sûr ?",
     "InRun.Path.OnePath":  "Un seul chemin : <i>{0}</i>",
     "Challenge.Daily.Goal.t1_read_event.Description":  "Lire un événement sur le chemin",
     "SpiritTrials.KeyHint.Keys":  "Flèches : choisir une épreuve · Entrée vers le choix de classe · Échap retour",
@@ -15,7 +16,6 @@
     "SpiritTrials.Choose":  "Choisissez une épreuve",
     "ProfileSelect.KeyHint.Keys":  "Flèches : choisir · Entrée joue · Supprimer demande d'abord · Échap retour",
     "ProfileSelect.KeyHint":  "Croix : choisir · A joue · Supprimer demande d'abord · B retour",
-    "ProfileSelect.Status.ConfirmDelete":  "Appuyez encore sur Supprimer pour effacer définitivement le profil {0}.",
     "ProfileSelect.Active":  "Actif",
     "ProfileSelect.Create":  "Créer",
     "ProfileSelect.Play":  "Jouer",

@@ -27,20 +27,14 @@ namespace SudokuRoguelike.UI
             ScrollUiKit.Banner(pr, "TrialsBanner", new Vector2(0.318f, 0.844f), new Vector2(0.682f, 0.957f),
                 "TrialsEyebrow", T("Spirit Trials").ToUpperInvariant(), "Title", T("SpiritTrials.Choose"), 46);
 
-            // HP, Pencil and par per tier (SpiritTrialsMode tier table); stars and rules from SpiritTrialsService.
-            var tiers = new[]
+            // HP, Pencil and par from SpiritTrialsTierSelectController.Terms; stars and rules from SpiritTrialsService.
+            var terms = SpiritTrialsTierSelectController.Terms;
+            var steles = new Button[terms.Length];
+            var bests = new Text[terms.Length];
+            for (var i = 0; i < terms.Length; i++)
             {
-                (SpiritTrialsTier.Apprentice,  "SpiritTrials.Tier.Apprentice",  5, 15, "5:00"),
-                (SpiritTrialsTier.Adept,       "SpiritTrials.Tier.Adept",       4, 12, "7:00"),
-                (SpiritTrialsTier.Master,      "SpiritTrials.Tier.Master",      3, 10, "9:00"),
-                (SpiritTrialsTier.Grandmaster, "SpiritTrials.Tier.Grandmaster", 2,  8, "12:00"),
-            };
-            var steles = new Button[tiers.Length];
-            var bests = new Text[tiers.Length];
-            for (var i = 0; i < tiers.Length; i++)
-            {
-                var (tier, nameKey, hp, pencil, par) = tiers[i];
-                (steles[i], bests[i]) = BuildStele(pr, i, tier, T(nameKey), hp, pencil, par, mc);
+                var tier = (SpiritTrialsTier)i;
+                (steles[i], bests[i]) = BuildStele(pr, i, tier, T("SpiritTrials.Tier." + tier), terms[i].Hp, terms[i].Pencil, terms[i].Par, mc);
             }
 
             var slip = ScrollUiKit.Fill(pr, "TrialsSlip", new Vector2(0.1875f, 0.169f), new Vector2(0.8125f, 0.278f), ScrollUiKit.Paper);
@@ -72,7 +66,7 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.30f, 0.045f), new Vector2(0.70f, 0.078f), 11);
             DeviceHint.Attach(hint, "SpiritTrials.KeyHint");   // INPUT-HINT-001
 
-            trialsCtrl.Configure(steles, bests, slipTitle, slipBody, tiers.Length);
+            trialsCtrl.Configure(steles, bests, slipTitle, slipBody, terms.Length);
             pr.gameObject.SetActive(false);
             return pr.gameObject;
         }

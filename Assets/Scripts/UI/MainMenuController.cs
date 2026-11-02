@@ -710,15 +710,20 @@ namespace SudokuRoguelike.UI
         private int _deleteAskedSlot = -1;
         private float _deleteAskedAt = float.NegativeInfinity;
 
-        // [REQ: UI-STYLE-034] Delete asks first: the first press says so on the status line, a second within 3 s deletes.
+        // [REQ: UI-STYLE-034] Delete asks first, on its own button ("Sure?"), which reads Delete again after 3 s; a second
+        // press within them deletes.
         public void DeleteProfileSlot(int slot)
         {
             if (_deleteAskedSlot != slot || Time.unscaledTime - _deleteAskedAt > DeleteConfirmSeconds)
             {
                 _deleteAskedSlot = slot;
                 _deleteAskedAt = Time.unscaledTime;
-                SetStatus(LocalizationService.Format("ProfileSelect.Status.ConfirmDelete",
-                    "Press Delete again to remove Profile {0} for good.", slot + 1));
+                var label = _profileSelectPanel?.transform.Find($"Content/SlotCard_{slot}/BtnDelete_{slot}/Label")?.GetComponent<Text>();
+                if (label != null)
+                {
+                    label.text = LocalizationService.T("ProfileSelect.DeleteSure", "Sure?");
+                    StartCoroutine(ResetDeleteLabel(label, slot));
+                }
                 return;
             }
             _deleteAskedSlot = -1;
@@ -732,6 +737,13 @@ namespace SudokuRoguelike.UI
 
             RefreshProfileSelectCards();
             SetStatus(LocalizationService.Format("ProfileSelect.Status.Deleted", "Profile {0} deleted.", slot + 1));
+        }
+
+        private System.Collections.IEnumerator ResetDeleteLabel(Text label, int slot)
+        {
+            yield return new WaitForSecondsRealtime(DeleteConfirmSeconds);
+            if (label != null && _deleteAskedSlot == slot) label.text = LocalizationService.T("Delete");
+            if (_deleteAskedSlot == slot) _deleteAskedSlot = -1;
         }
 
         // [REQ: UI-STYLE-034] Each ema: the class last walked with its level, the record and a seal for a saved run, or the
@@ -763,9 +775,10 @@ namespace SudokuRoguelike.UI
                 card.Find("ClassDisc/Plus")?.gameObject.SetActive(s.IsEmpty);
                 SetText(card, "Who", s.IsEmpty ? LocalizationService.T("Profile.EmptySlot")
                     : LocalizationService.Format("ProfileSelect.Who", "{0} · Lv {1}", ClassCatalog.DisplayName(s.LastPlayedClass), s.ClassLevel));
-                var lastPlayed = string.IsNullOrEmpty(s.LastPlayedUtc) ? LocalizationService.T("Never")
-                    : DateTime.Parse(s.LastPlayedUtc, null, System.Globalization.DateTimeStyles.RoundtripKind)
-                        .ToString("d MMM", LocalizationService.Culture);
+                // A hand-edited or broken time reads as "Never" rather than stopping the menu; shown in local time.
+                var lastPlayed = DateTime.TryParse(s.LastPlayedUtc, null, System.Globalization.DateTimeStyles.RoundtripKind, out var played)
+                    ? played.ToLocalTime().ToString("d MMM", LocalizationService.Culture)
+                    : LocalizationService.T("Never");
                 SetText(card, $"SlotInfo_{i}", s.IsEmpty ? LocalizationService.T("ProfileSelect.NewGarden")
                     : LocalizationService.T("ProfileSelect.Rows"));
                 SetText(card, "Numbers", s.IsEmpty ? string.Empty
@@ -778,8 +791,34 @@ namespace SudokuRoguelike.UI
                     SetText(card, "RunSeal/Text", LocalizationService.Format("ProfileSelect.RunSeal", "Run in progress · Floor {0}", s.RunFloor)
                         .ToUpper(LocalizationService.Culture));
                 SetText(card, $"BtnLoad_{i}/Label", s.IsEmpty ? LocalizationService.T("ProfileSelect.Create") : LocalizationService.T("ProfileSelect.Play"));
+                SetText(card, $"BtnDelete_{i}/Label", LocalizationService.T("Delete"));
                 card.Find($"BtnDelete_{i}")?.gameObject.SetActive(!s.IsEmpty);
             }
+            WireProfileNavigation(content, summaries.Length);
+        }
+
+        // [REQ: INPUT-NAV-001] Left and right walk the shown buttons across the plaques (an empty plaque has no Delete), down
+        // goes to Back.
+        private static void WireProfileNavigation(Transform content, int slots)
+        {
+            var row = new List<Selectable>();
+            for (var i = 0; i < slots; i++)
+                foreach (var name in new[] { $"SlotCard_{i}/BtnLoad_{i}", $"SlotCard_{i}/BtnDelete_{i}" })
+                {
+                    var button = content.Find(name)?.GetComponent<Selectable>();
+                    if (button != null && button.gameObject.activeSelf) row.Add(button);
+                }
+            var back = content.Find("BtnProfileBack")?.GetComponent<Selectable>();
+            for (var i = 0; i < row.Count; i++)
+                row[i].navigation = new Navigation
+                {
+                    mode = Navigation.Mode.Explicit,
+                    selectOnLeft = i > 0 ? row[i - 1] : null,
+                    selectOnRight = i < row.Count - 1 ? row[i + 1] : null,
+                    selectOnDown = back,
+                };
+            if (back != null && row.Count > 0)
+                back.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnUp = row[Math.Min(row.Count - 1, 2)] };
         }
 
         // ── Resume ──

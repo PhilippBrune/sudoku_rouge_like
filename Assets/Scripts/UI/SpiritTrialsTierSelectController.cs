@@ -13,7 +13,8 @@ namespace SudokuRoguelike.UI
     /// </summary>
     public sealed class SpiritTrialsTierSelectController : MonoBehaviour
     {
-        private static readonly (int Hp, int Pencil, string Par)[] Terms = { (5, 15, "5:00"), (4, 12, "7:00"), (3, 10, "9:00"), (2, 8, "12:00") };
+        /// <summary>[REQ: TRIAL-TIER-001] HP, Pencil and par per tier (SpiritTrialsMode tier table), for the steles and the slip.</summary>
+        internal static readonly (int Hp, int Pencil, string Par)[] Terms = { (5, 15, "5:00"), (4, 12, "7:00"), (3, 10, "9:00"), (2, 8, "12:00") };
 
         private Button[] _steles = new Button[0];
         private Text[] _bests = new Text[0];

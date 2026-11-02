@@ -117,6 +117,39 @@ namespace SudokuRoguelike.Tests
             }
         }
 
+        // [REQ: UI-STYLE-034] [REQ: INPUT-NAV-001] Select Profile: an empty plaque hides its Delete, and the pad's left and
+        // right still walk every shown button (review: a link to the hidden Delete stopped the pad at an empty plaque).
+        [Test]
+        [Requirement("UI-STYLE-034", "INPUT-NAV-001")]
+        public void ProfileSelect_PadLinksNeverPointAtAHiddenButton()
+        {
+            var hadEventSystem = Object.FindAnyObjectByType<EventSystem>() != null;
+            var host = new GameObject("ProfileNavHost");
+            try
+            {
+                BuildMenu(host).ShowMainMenu();   // fills the plaques for the profiles on this PC; this test's slot is empty
+                var shown = new List<Button>();
+                for (var i = 0; i < SaveFileService.MaxSlots; i++)
+                    foreach (var name in new[] { $"BtnLoad_{i}", $"BtnDelete_{i}" })
+                    {
+                        var button = FindButton(host, name);
+                        if (button.gameObject.activeSelf) shown.Add(button);
+                    }
+                Assert.IsFalse(FindButton(host, $"BtnDelete_{TestSlot}").gameObject.activeSelf, "an empty plaque has no Delete");
+                for (var i = 0; i < shown.Count; i++)
+                {
+                    var nav = shown[i].navigation;
+                    Assert.AreEqual(i > 0 ? shown[i - 1] : null, nav.selectOnLeft, $"{shown[i].name}: left");
+                    Assert.AreEqual(i < shown.Count - 1 ? shown[i + 1] : null, nav.selectOnRight, $"{shown[i].name}: right");
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+                DestroyGeneratedEventSystemIfNeeded(hadEventSystem);
+            }
+        }
+
         private static MainMenuController BuildMenu(GameObject host)
         {
             var builder = host.AddComponent<MainMenuBlueprintBuilder>();

@@ -1,4 +1,5 @@
 {
+    "ProfileSelect.DeleteSure":  "Certeza?",
     "InRun.Path.OnePath":  "Um só caminho: <i>{0}</i>",
     "Challenge.Daily.Goal.t1_read_event.Description":  "Ler um evento no caminho",
     "SpiritTrials.KeyHint.Keys":  "Setas escolhem uma prova · Enter para escolher a classe · Esc voltar",
@@ -15,7 +16,6 @@
     "SpiritTrials.Choose":  "Escolha uma prova",
     "ProfileSelect.KeyHint.Keys":  "Setas escolhem · Enter joga · Excluir pergunta antes · Esc voltar",
     "ProfileSelect.KeyHint":  "Direcional escolhe · A joga · Excluir pergunta antes · B voltar",
-    "ProfileSelect.Status.ConfirmDelete":  "Aperte Excluir de novo para apagar o perfil {0} de vez.",
     "ProfileSelect.Active":  "Ativo",
     "ProfileSelect.Create":  "Criar",
     "ProfileSelect.Play":  "Jogar",

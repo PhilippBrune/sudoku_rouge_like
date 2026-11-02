@@ -148,7 +148,7 @@ namespace SudokuRoguelike.UI
             {
                 var x = 0.5f + (f - (floors - 1) * 0.5f) * step;
                 var cleared = victory || f < state.WalkFloor - 1;
-                var lost = !victory && f == state.CurrentFloor;
+                var lost = !victory && f == state.WalkFloor - 1;
                 if (cleared)
                 {
                     // [REQ: DAILY-WALK-007] The path seal worn from the stamp shop: its colour, round or square.

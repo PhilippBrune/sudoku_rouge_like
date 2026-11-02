@@ -1,4 +1,5 @@
 ﻿{
+    "ProfileSelect.DeleteSure":  "Sure?",
     "InRun.Path.OnePath":  "One path: <i>{0}</i>",
     "Challenge.Daily.Goal.t1_read_event.Description":  "Read an event on the path",
     "SpiritTrials.KeyHint.Keys":  "Arrows choose a trial · Enter on to Select Class · Esc back",
@@ -15,7 +16,6 @@
     "SpiritTrials.Choose":  "Choose a trial",
     "ProfileSelect.KeyHint.Keys":  "Arrows choose · Enter plays · Delete asks first · Esc back",
     "ProfileSelect.KeyHint":  "D-pad chooses · A plays · Delete asks first · B back",
-    "ProfileSelect.Status.ConfirmDelete":  "Press Delete again to remove Profile {0} for good.",
     "ProfileSelect.Active":  "Active",
     "ProfileSelect.Create":  "Create",
     "ProfileSelect.Play":  "Play",

@@ -36,6 +36,7 @@ namespace SudokuRoguelike.UI
             public readonly List<ItemRarity> Rarities = new List<ItemRarity>();
             public List<(string Label, string Value)> Facts = new List<(string, string)>();
             public string LockedHint;   // what an entry not found yet says instead of "Not yet discovered"
+            public Action Watch;        // a found chapter's scene (STORY-SCENE-001)
         }
 
         private static readonly Color TileFound = new Color(0.97f, 0.94f, 0.86f, 1f);
@@ -144,7 +145,14 @@ namespace SudokuRoguelike.UI
 
         private void Update()
         {
-            if (_grid == null || !_grid.gameObject.activeInHierarchy) return;
+            if (_grid == null || !_grid.gameObject.activeInHierarchy || StoryScene.Blocking) return;
+            // [REQ: STORY-SCENE-001] X (V) plays the chosen chapter's scene again.
+            if (_shown != null && _shown.Found && _shown.Watch != null
+                && (PadButtons.Pressed(KeyCode.JoystickButton2) || Input.GetKeyDown(KeyCode.V)))
+            {
+                _shown.Watch();
+                return;
+            }
             var step = PadButtons.Pressed(KeyCode.JoystickButton5) || Input.GetKeyDown(KeyCode.PageDown) ? 1
                 : PadButtons.Pressed(KeyCode.JoystickButton4) || Input.GetKeyDown(KeyCode.PageUp) ? -1 : 0;
             if (step != 0) TurnTab(step);
@@ -253,6 +261,8 @@ namespace SudokuRoguelike.UI
                     entry.Facts.Add((T("Codex.Tales.Keeper", "Keeper"), ClassCatalog.DisplayName(keeper)));
                     entry.Facts.Add((T("Codex.Tales.Chapter", "Chapter"), F("Codex.Tales.Of", "{0} of {1}", chapter, StoryService.Chapters)));
                     entry.Facts.Add((T("Codex.Tales.Opened", "Opened with"), StoryService.MilestoneName(chapter)));
+                    var (k, c) = (keeper, chapter);
+                    entry.Watch = () => StoryScene.Show(k, c);
                     _entries.Add(entry);
                 }
             }
@@ -260,6 +270,7 @@ namespace SudokuRoguelike.UI
             ninth.Description = StoryService.NinthText;
             ninth.LockedHint = F("Codex.Tales.Locked", "Opens with {0}.", T("Story.Milestone.Ninth", "a win with every keeper"));
             ninth.Facts.Add((T("Codex.Tales.Opened", "Opened with"), T("Story.Milestone.Ninth", "a win with every keeper")));
+            ninth.Watch = () => StoryScene.ShowNinth();
             _entries.Add(ninth);
         }
 
@@ -587,6 +598,13 @@ namespace SudokuRoguelike.UI
                     var y = (crowded ? 0.47f : 0.46f) - i * step;
                     ScrollUiKit.ValueRow(_detail, $"CodexFact_{i}", new Vector2(0.05f, y - step * 0.46f), new Vector2(0.95f, y + step * 0.46f),
                         entry.Facts[i].Label, entry.Facts[i].Value, crowded ? 18 : 20, OptionsUiStyle.PaperInk);
+                }
+                if (entry.Watch != null)
+                {
+                    var watch = ScrollUiKit.PillButton(_detail, "BtnCodexWatchScene", new Vector2(0.05f, 0.19f), new Vector2(0.50f, 0.255f),
+                        string.Empty, 20, OptionsUiStyle.PaperVermilion, new Color(0.99f, 0.93f, 0.85f, 1f));
+                    DeviceHint.Attach(watch.GetComponentInChildren<Text>(), "Story.Scene.Watch");
+                    watch.onClick.AddListener(() => entry.Watch());
                 }
             }
             BuildGoal();

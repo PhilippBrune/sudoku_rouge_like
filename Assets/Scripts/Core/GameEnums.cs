@@ -447,7 +447,8 @@ namespace SudokuRoguelike.Core
         Keybindings,     // keyboard + controller rebinding panel
         Accessibility,   // per-toggle descriptions + visual preview board
         SpiritTrialsTierSelect, // tier selection before a Spirit Trials run
-        EndlessZenLeaderboard   // personal best depth + records for Endless Zen
+        EndlessZenLeaderboard,  // personal best depth + records for Endless Zen
+        MonthlyWalk             // the Monthly Walk's tree (UI-STYLE-033), in the history since 0.3.3
     }
 
     public enum AppScreen

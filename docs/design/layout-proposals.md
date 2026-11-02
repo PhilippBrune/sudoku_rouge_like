@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 3.12 | **Date:** 2026-11-02 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; the main menu B (UI-STYLE-032, 2026-10-28); proposals of 2026-10-28 for the main menu, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll wait for the owner's pick)
+**Version:** 3.13 | **Date:** 2026-11-02 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; the main menu B (UI-STYLE-032, 2026-10-28); proposals of 2026-10-28 for the main menu, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll wait for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 3.13 | 2026-11-02 | review | Owner's picks (0.3.1 playtest): Story A built (UI-STYLE-040), XP B built (UI-STYLE-041), the legend A built (UI-STYLE-042); the XP and legend mockups added; before and after shots of the fixes (OPT-TABS-001, TRIAL-HUD-001). |
 | 3.12 | 2026-11-02 | review | Owner (2026-11-02): Quit A built (UI-STYLE-039); the story of the Nine on the floor entry, the boss gate, the offering table and the Codex's Tales (STORY-*); three mockups for the story's conversation scenes (RM-225, proposed UI-STYLE-040, pick one). |
 | 3.11 | 2026-11-02 | review | 0.3.1 playtest (owner): three quit screen mockups (RM-224, proposed UI-STYLE-039, pick one); screenshots of the built fixes: the Options language row on 3440×1440 (GAP-098), the Accessibility preview (GAP-100), the Custom Puzzle regions and its finish screen (CUSTOM-REGION-001, CUSTOM-FINISH-001). |
 | 3.10 | 2026-10-28 | review | The Monthly Walk, Select Profile and Spirit Trials built (UI-STYLE-033 to 035, owner's picks). Screenshots below. |
@@ -878,3 +879,54 @@ scroll (older lines fade), the voice in gold on the painting between them.
 brush lines on the paper, the voice as the lantern's line at the foot.
 
 ![Story C, shadow play](layout-proposals/story_c_shadow_play.jpg)
+
+### XP animation (UI-STYLE-041, owner's pick B of three)
+
+Owner (0.3.1 playtest): "XP should feel like something is added; the animation can be skipped." Three proposals on the
+run-end scroll: **A** ink drops fall into the bar, **B** a brush paints the gold in (picked), **C** lanterns light up.
+
+![XP A, ink drops](layout-proposals/xp_a_ink_drops.jpg)
+![XP B, brush stroke](layout-proposals/xp_b_brush_stroke.jpg)
+![XP C, lanterns](layout-proposals/xp_c_lanterns.jpg)
+
+Built: the brush paints from where the class stood before the run, a red seal per new level, 2.4 s, skippable.
+
+![XP brush, early](layout-proposals/after_xp_brush_early.jpg)
+![XP brush, halfway](layout-proposals/after_xp_brush_half.jpg)
+![XP brush, the end](layout-proposals/after_xp_brush_end.jpg)
+
+### The legend (UI-STYLE-042, owner's pick A of three)
+
+Owner (0.3.1 playtest): "the legend opens at a random place". **A** the legend in the rule slip (picked), **B** a
+paper card under the Legend tag at a fixed place, **C** chips under the board on the puzzle paper.
+
+![Legend A, in the rule slip](layout-proposals/legend_a.jpg)
+![Legend B, a card under the tag](layout-proposals/legend_b.jpg)
+![Legend C, chips under the board](layout-proposals/legend_c.jpg)
+
+Before (0.3.2, the floating box after the Legend button) and after:
+
+![Before, the legend box](layout-proposals/before_legend.jpg)
+![After, the rule slip](layout-proposals/after_legend.jpg)
+
+### Story scenes built (UI-STYLE-040, owner's pick A)
+
+One scene per chapter, once at the first floor of the next Garden Run with that keeper, again from the Codex's Tales.
+It replaces the chapter slip of 0.3.2.
+
+![Before, the chapter slip](layout-proposals/before_floor_entry_floor1.jpg)
+![After, the scene on the floor's entry](layout-proposals/after_floor_entry_story_scene.jpg)
+![A warden speaks](layout-proposals/after_story_scene_warden.jpg)
+![The keeper alone](layout-proposals/after_story_scene_keeper.jpg)
+![The voice](layout-proposals/after_story_scene_voice.jpg)
+![The ninth keeper](layout-proposals/after_story_scene_ninth.jpg)
+
+### 0.3.1 playtest fixes
+
+The in-run Options without the empty Language page (OPT-TABS-001), and a Spirit Trial's puzzle without the bag and the
+relics (TRIAL-HUD-001).
+
+![Before, in-run Options](layout-proposals/before_inrun_options.jpg)
+![After, in-run Options](layout-proposals/after_inrun_options.jpg)
+![Before, Spirit Trial](layout-proposals/before_trials_puzzle.jpg)
+![After, Spirit Trial](layout-proposals/after_trials_puzzle.jpg)

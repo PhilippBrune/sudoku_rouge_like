@@ -13,13 +13,49 @@ namespace SudokuRoguelike.UI
     /// </summary>
     public static class MenuDpad
     {
-        /// <summary>The D-pad direction pressed this frame, or None (read as in a run, INPUT-PAD-001).</summary>
+        /// <summary>The D-pad direction pressed this frame, or a step of the left stick, or None (read as in a run,
+        /// INPUT-PAD-001).</summary>
         public static MoveDirection ReadPressed()
         {
             if (Core.InputRemapService.WasDpadPressed(Core.InputAction.MoveUp)) return MoveDirection.Up;
             if (Core.InputRemapService.WasDpadPressed(Core.InputAction.MoveDown)) return MoveDirection.Down;
             if (Core.InputRemapService.WasDpadPressed(Core.InputAction.MoveLeft)) return MoveDirection.Left;
-            return Core.InputRemapService.WasDpadPressed(Core.InputAction.MoveRight) ? MoveDirection.Right : MoveDirection.None;
+            return Core.InputRemapService.WasDpadPressed(Core.InputAction.MoveRight) ? MoveDirection.Right : ReadStick();
+        }
+
+        private const float StickOn = 0.6f, StickOff = 0.3f, FirstRepeat = 0.4f, Repeat = 0.14f;
+        private static int _stickFrame = -1;
+        private static MoveDirection _stickStep = MoveDirection.None, _stickHeld = MoveDirection.None;
+        private static float _repeatAt;
+
+        /// <summary>[REQ: INPUT-PAD-005] The left stick as menu steps (0.3.1 playtest): one step when it is pushed, then
+        /// again after 0.4 s and every 0.14 s while it is held. Read through the Input System, once per frame.</summary>
+        public static MoveDirection ReadStick()
+        {
+            if (_stickFrame == Time.frameCount) return _stickStep;
+            _stickFrame = Time.frameCount;
+            _stickStep = MoveDirection.None;
+#if ENABLE_INPUT_SYSTEM
+            var pad = UnityEngine.InputSystem.Gamepad.current;
+            var v = pad != null ? pad.leftStick.ReadValue() : Vector2.zero;
+            var strength = Mathf.Max(Mathf.Abs(v.x), Mathf.Abs(v.y));
+            if (strength < StickOff) { _stickHeld = MoveDirection.None; return _stickStep; }
+            var dir = Mathf.Abs(v.x) > Mathf.Abs(v.y) ? (v.x > 0 ? MoveDirection.Right : MoveDirection.Left)
+                : (v.y > 0 ? MoveDirection.Up : MoveDirection.Down);
+            if (dir != _stickHeld)
+            {
+                if (strength < StickOn) return _stickStep;
+                _stickHeld = dir;
+                _repeatAt = Time.unscaledTime + FirstRepeat;
+                _stickStep = dir;
+            }
+            else if (Time.unscaledTime >= _repeatAt)
+            {
+                _repeatAt = Time.unscaledTime + Repeat;
+                _stickStep = dir;
+            }
+#endif
+            return _stickStep;
         }
 
         /// <summary>The control one step from <paramref name="current"/> in <paramref name="direction"/>, or null when

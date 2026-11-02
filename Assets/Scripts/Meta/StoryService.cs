@@ -82,6 +82,54 @@ namespace SudokuRoguelike.Meta
             return opened;
         }
 
+        public enum Speaker { Keeper, Warden, Voice }
+
+        /// <summary>[REQ: STORY-SCENE-001] The warden who speaks in a chapter's scene (2: Take, 3: Kagami, 4: Kasumi), as
+        /// the floor it guards; -1 for chapters 1 and 5, where the keeper speaks alone.</summary>
+        public static int SceneWardenFloor(int chapter) => chapter switch { 2 => 0, 3 => 2, 4 => 4, _ => -1 };
+
+        /// <summary>A chapter's scene, line by line as catalog keys: the keeper, the warden and the keeper again (chapters
+        /// 2 to 4), then the voice tells the chapter.</summary>
+        public static List<(Speaker Speaker, string Key)> SceneLines(ClassId keeper, int chapter)
+        {
+            var prefix = $"Story.Scene.{keeper}.{chapter}.";
+            var lines = new List<(Speaker, string)> { (Speaker.Keeper, prefix + "K1") };
+            if (SceneWardenFloor(chapter) >= 0)
+            {
+                lines.Add((Speaker.Warden, prefix + "W"));
+                lines.Add((Speaker.Keeper, prefix + "K2"));
+            }
+            lines.Add((Speaker.Voice, TextKey(keeper, chapter)));
+            return lines;
+        }
+
+        /// <summary>The keeper's newest chapter when its scene has not played yet, else 0. It plays once, at the first
+        /// floor of the next Garden Run with that keeper (a save from before 0.3.3 plays the chapter it stands at).</summary>
+        public static int SceneDue(MetaProgressionState meta, ClassId keeper)
+        {
+            var chapter = ChapterOf(meta, keeper);
+            return chapter > SceneSeen(meta, keeper) ? chapter : 0;
+        }
+
+        public static bool NinthSceneDue(MetaProgressionState meta) => NinthOpened(meta) && meta.StoryNinthSceneSeen != true;
+
+        public static void MarkSceneSeen(MetaProgressionState meta, ClassId keeper, int chapter)
+        {
+            if (meta == null) return;
+            meta.StoryScenesSeen ??= new List<StoryChapterEntry>();
+            var entry = meta.StoryScenesSeen.Find(e => e.ClassId == keeper);
+            if (entry == null) meta.StoryScenesSeen.Add(new StoryChapterEntry { ClassId = keeper, Chapter = chapter });
+            else entry.Chapter = System.Math.Max(entry.Chapter, chapter);
+        }
+
+        private static int SceneSeen(MetaProgressionState meta, ClassId keeper)
+        {
+            if (meta?.StoryScenesSeen != null)
+                foreach (var entry in meta.StoryScenesSeen)
+                    if (entry.ClassId == keeper) return entry.Chapter;
+            return 0;
+        }
+
         public static string Title(ClassId keeper, int chapter) => LocalizationService.T(TitleKey(keeper, chapter));
         public static string Text(ClassId keeper, int chapter) => LocalizationService.T(TextKey(keeper, chapter));
         public static string NinthTitle => LocalizationService.T("Story.Ninth.Title");
@@ -114,6 +162,13 @@ namespace SudokuRoguelike.Meta
             }
             for (var chapter = 1; chapter <= Chapters; chapter++) yield return "Story.Milestone." + chapter;
             yield return "Story.Milestone.Ninth";
+            foreach (var keeper in Keepers)
+                for (var chapter = 1; chapter <= Chapters; chapter++)
+                    foreach (var (speaker, key) in SceneLines(keeper, chapter))
+                        if (speaker != Speaker.Voice) yield return key;   // the voice's line is the chapter's text
+            yield return "Story.Scene.Voice";
+            yield return "Story.Scene.Hint";
+            yield return "Story.Scene.Watch";
         }
 
         private static string TitleKey(ClassId keeper, int chapter) => $"Story.{keeper}.{chapter}.Title";

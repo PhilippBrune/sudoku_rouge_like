@@ -24,7 +24,7 @@ namespace SudokuRoguelike.Tests
     // OptionsScreenshotDiagnostics for the command line). Output: SR_SHOT_DIR or %TEMP%\sr_layout_shots.
     [TestFixture]
     [Explicit("Writes screenshots; run on demand with graphics")]
-    public sealed class LayoutScreenshotDiagnostics
+    public sealed partial class LayoutScreenshotDiagnostics
     {
         private const int TestSlot = SaveFileService.MaxSlots - 1;
         private readonly List<GameObject> _createdRoots = new List<GameObject>();
@@ -929,6 +929,48 @@ namespace SudokuRoguelike.Tests
             end.ShowGameOver(run, true);
             yield return new WaitForSecondsRealtime(0.8f);
             yield return Shoot(host, camera, prefix + "result_monthly_walk.png");
+        }
+
+        // 0.3.1 playtest findings (0.3.3): the rule slip with three rules (the legend, UI-STYLE-042; 0.3.2 opened it with a
+        // button), the in-run options (OPT-TABS-001) and a Spirit Trial's puzzle (TRIAL-HUD-001). Runs on 0.3.2 too, for the
+        // before shots. File names start with SR_SHOT_PREFIX.
+        [UnityTest]
+        public IEnumerator RenderPlaytestFindings()
+        {
+            var prefix = Environment.GetEnvironmentVariable("SR_SHOT_PREFIX");
+            if (string.IsNullOrEmpty(prefix)) prefix = "after_";
+            var camera = CreateCamera();
+            _puzzleSize = 7;
+            try
+            {
+                var (host, _) = StartRun(7361, true, BossModifierId.KillerCages, BossModifierId.DifferenceKropki, BossModifierId.Nonconsecutive);
+                yield return DismissIntro();
+                for (var frame = 0; frame < 30 && Find(host, "C_0_0") == null; frame++)
+                    yield return null;
+                var legendButton = Find(host, "BtnModifierLegend");
+                if (legendButton != null) legendButton.GetComponent<Button>().onClick.Invoke();
+                yield return new WaitForSecondsRealtime(0.6f);
+                yield return Shoot(host, camera, prefix + "legend.png");
+
+                Find(host, "BtnSudokuOptions").GetComponent<Button>().onClick.Invoke();
+                yield return new WaitForSecondsRealtime(0.6f);
+                yield return Shoot(host, camera, prefix + "inrun_options.png");
+                host.SetActive(false);
+
+                _beforeBind = run => run.State.Mode = GameMode.SpiritTrials;
+                var (trials, _) = StartRun(7362, true, BossModifierId.KillerCages);
+                _beforeBind = null;
+                yield return DismissIntro();
+                for (var frame = 0; frame < 30 && Find(trials, "C_0_0") == null; frame++)
+                    yield return null;
+                yield return new WaitForSecondsRealtime(0.6f);
+                yield return Shoot(trials, camera, prefix + "trials_puzzle.png");
+            }
+            finally
+            {
+                _puzzleSize = 6;
+                _beforeBind = null;
+            }
         }
 
         // UI-STYLE-039 (0.3.1 playtest, owner's pick A): the goodbye when the game closes, with a saved run on Floor 3 and

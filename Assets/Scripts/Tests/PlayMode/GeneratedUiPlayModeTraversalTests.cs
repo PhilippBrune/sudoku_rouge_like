@@ -199,21 +199,20 @@ namespace SudokuRoguelike.Tests
             Assert.IsNotEmpty(FindObject(FindObject(host, "DailyWidget"), "WidgetInfo").GetComponent<Text>().text);
             Assert.IsNotEmpty(FindObject(FindObject(host, "MonthlyWidget"), "WidgetInfo").GetComponent<Text>().text);
 
+            // UI-STYLE-027 (0.3.1 playtest): the Daily Walk tag opens the walk's curtain on Game Modes, not the old panel.
             ClickButton(host, "BtnDailyWidget");
             yield return null;
-            AssertPanelActive(host, "DailyWalkPanel");
-            ClickButton(host, "BtnDailyBack");
-            yield return null;
+            AssertPanelActive(host, "GameModesPanel");
+            Assert.AreEqual(GameModesScreen.Mode.Daily, host.GetComponentInChildren<GameModesScreen>(true).Shown);
             ClickButton(host, "BtnModesBack");
             yield return null;
             AssertPanelActive(host, "MenuCard");
 
+            // MENU-BACK-001 (0.3.1 playtest): Back goes to the screen the walk was opened from, here the main menu.
             ClickButton(host, "BtnMonthlyWidget");
             yield return null;
             AssertPanelActive(host, "MonthlyWalkPanel");
             ClickButton(host, "BtnMonthlyBack");
-            yield return null;
-            ClickButton(host, "BtnModesBack");
             yield return null;
             AssertPanelActive(host, "MenuCard");
 
@@ -358,9 +357,8 @@ namespace SudokuRoguelike.Tests
             AssertOpenListShowsAllItems(displayModeDropdown);
             displayModeDropdown.Hide();
             yield return new WaitForSecondsRealtime(0.3f);
-            ClickButton(host, "IGTabLanguage");   // UI-STYLE-017: Language is its own page
-            yield return null;
-            AssertPanelActive(host, "IGLangHint");
+            // OPT-TABS-001: a run's Options have no Language page (nothing could be changed there).
+            Assert.IsFalse(host.GetComponentsInChildren<Transform>(true).Any(t => t.name == "IGTabLanguage"));
 
             // Gameplay
             ClickButton(host, "IGTabGame");
@@ -428,7 +426,7 @@ namespace SudokuRoguelike.Tests
             }
             Assert.Greater(checkedCount, 25, "the comparison found the main Options controls");
 
-            foreach (var tab in new[] { "IGTabAudio", "IGTabDisplay", "IGTabGame", "IGTabAccessibility", "IGTabLanguage", "IGTabRun" })
+            foreach (var tab in new[] { "IGTabAudio", "IGTabDisplay", "IGTabGame", "IGTabAccessibility", "IGTabRun" })
                 FindComponent<Button>(runHost, tab);
             Assert.NotNull(FindObject(menuHost, "OptionsPanel").GetComponentInChildren<OptionsTabSet>(true));
             Assert.NotNull(FindObject(runHost, "InGameOptionsPanel").GetComponentInChildren<OptionsTabSet>(true));

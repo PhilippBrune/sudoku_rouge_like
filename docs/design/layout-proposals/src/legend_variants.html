@@ -1,0 +1,65 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<style>
+  /* The puzzle's rule legend (REQ-BOSS-104), three places for it; ?v=a|b|c. Today it is a dark box whose size and place
+     follow the number of rules (top right, over Save & Quit and the number pad). Every variant has a fixed place, the
+     rule's colour swatch and its icon, a 20 px name, and tapping a rule still shows only its lines for 3 s. */
+  .shot { position:absolute; inset:0; background:url('../after_lines_dutch_thermo_consecutive.jpg') center/cover; }
+  .cover { position:absolute; background:#f0e6d0; }
+  .sw { display:inline-block; width:34px; height:10px; border-radius:5px; margin-right:12px; vertical-align:middle; }
+  .ic { display:inline-block; width:30px; height:30px; margin-right:10px; vertical-align:middle; object-fit:contain; }
+  .hot { box-shadow:0 0 0 2px #c9a24f inset; background:rgba(201,162,79,.16); border-radius:8px; }
+  .hint { position:absolute; font:16px 'Main','Segoe UI'; color:#6b5f4c; }
+  /* A: inside the rule slip */
+  .a { display:none; position:absolute; left:1452px; top:686px; width:358px; height:245px; background:#f3ead6; color:#231e17; padding:14px 14px 0; font-family:'Main','Segoe UI'; }
+  .a .r { padding:6px 8px; margin-bottom:6px; }
+  .a .t { font-size:20px; color:#9e2a2b; } .a .d { font-size:15px; color:#3a3328; margin-top:2px; }
+  /* B: a paper card under the Legend tag */
+  .b { display:none; position:absolute; left:1450px; top:684px; width:360px; background:#f3ead6; color:#231e17; padding:16px 16px 10px;
+       box-shadow:0 14px 28px rgba(0,0,0,.5); border-top:4px solid #9e2a2b; font-family:'Main','Segoe UI'; }
+  .b small { display:block; font-size:14px; letter-spacing:.16em; color:#6b5f4c; margin-bottom:8px; }
+  .b .r { display:flex; align-items:center; font-size:20px; padding:9px 8px; border-bottom:1px solid rgba(60,45,30,.14); }
+  /* C: chips under the board, on the puzzle paper */
+  .c { display:none; position:absolute; left:650px; top:852px; width:620px; font-family:'Main','Segoe UI'; }
+  .c small { display:block; font-size:14px; letter-spacing:.16em; color:#6b5f4c; margin-bottom:8px; }
+  .c .chips { display:flex; flex-wrap:wrap; gap:10px; }
+  .c .chip { display:flex; align-items:center; padding:8px 14px; border-radius:999px; background:#f6efdd; box-shadow:0 0 0 1.5px rgba(60,45,30,.25) inset; font-size:19px; color:#231e17; }
+  body.va .a, body.vb .b, body.vc .c { display:block; }
+  .legendbtn { display:none; } body.va .legendbtn { display:block; }
+</style></head><body>
+<div class="shot"></div>
+<!-- A: the slip shows the rules with swatches; the Legend button goes away -->
+<div class="cover legendbtn" style="left:1448px; top:642px; width:364px; height:40px; background:#2c3424"></div>
+<div class="a">
+  <div class="r hot"><div class="t"><span class="sw" style="background:#f48c40"></span>Dutch Whispers</div><div class="d">Adjacent cells on orange lines differ by 4 or more.</div></div>
+  <div class="r"><div class="t"><span class="sw" style="background:#9a9a9a"></span>Thermometer</div><div class="d">Digits rise from the bulb to the tip.</div></div>
+  <div class="r"><div class="t"><span class="sw" style="background:#efe342"></span>Consecutive Line</div><div class="d">Neighbours on gold lines differ by exactly 1.</div></div>
+  <div class="hint" style="left:16px; bottom:-26px">Tap a rule to see only its lines</div>
+</div>
+<!-- B: a card that drops from the Legend tag over the slip -->
+<div class="b">
+  <small>RULES ON THIS BOARD</small>
+  <div class="r hot"><span class="sw" style="background:#f48c40"></span><img class="ic" src="../../../../Assets/Resources/modifier/icon_dutch_whisper.png">Dutch Whispers</div>
+  <div class="r"><span class="sw" style="background:#9a9a9a"></span><img class="ic" src="../../../../Assets/Resources/modifier/icon_thermo_line.png">Thermometer</div>
+  <div class="r"><span class="sw" style="background:#efe342"></span><img class="ic" src="../../../../Assets/Resources/modifier/icon_consecutive_line.png">Consecutive Line</div>
+  <div class="hint" style="position:static; margin-top:10px">Tap one to see only its lines · closes after 5 s</div>
+</div>
+<!-- C: chips under the board -->
+<div class="c">
+  <small>RULES ON THIS BOARD · TAP ONE TO SEE ONLY ITS LINES</small>
+  <div class="chips">
+    <div class="chip hot"><span class="sw" style="background:#f48c40"></span>Dutch Whispers</div>
+    <div class="chip"><span class="sw" style="background:#9a9a9a"></span>Thermometer</div>
+    <div class="chip"><span class="sw" style="background:#efe342"></span>Consecutive Line</div>
+  </div>
+</div>
+<div class="caption" id="cap"></div>
+<script>
+  var v = (location.search.match(/v=([abc])/) || [0, 'a'])[1];
+  document.body.classList.add('v' + v);
+  document.getElementById('cap').textContent = {
+    a: 'Legend A · In the rule slip (each rule with its colour; tap a rule to see only its lines; no Legend button)',
+    b: 'Legend B · A paper card under the Legend tag (fixed width and place, swatch, icon, name)',
+    c: 'Legend C · Chips under the board on the puzzle paper (always visible, tap to see only its lines)'}[v];
+</script>
+</body></html>

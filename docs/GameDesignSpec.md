@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.32 | **Date:** 2026-11-02 | **Status:** implemented
+**Version:** 1.33 | **Date:** 2026-11-02 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.33 | 2026-11-02 | implemented | 0.3.1 playtest (owner): Back from the Monthly Walk returns to where it was opened, and the Daily Walk widget opens the Daily Walk in Game Modes (MENU-BACK-001, GAP-109, GAP-110); the in-run Options show only pages with something to change (OPT-TABS-001, GAP-111); the legend is the rule slip (UI-STYLE-042, owner's pick A); the XP is painted into the bar by a brush (UI-STYLE-041, owner's pick B); the story scenes (UI-STYLE-040, owner's pick A, narrative-direction 1.3). |
 | 1.32 | 2026-11-02 | implemented | Owner's pick (0.3.1 playtest): Quit · A · The garden at dusk (UI-STYLE-039); the Kratossos seal (the owner's online name). |
 | 1.31 | 2026-11-02 | implemented | 0.3.1 playtest (owner): the Options buttons keep their text on every screen (OPT-BUTTON-001, GAP-098); the mouse pointer is a Japanese brush (UI-CURSOR-001). |
 | 1.30 | 2026-10-28 | implemented | 0.3.0 playtest (RM-217, owner's pick): the main menu as the garden path (UI-STYLE-032): New run, a card for the saved run, Continue for a saved Custom Puzzle, the walks as paper tags. |
@@ -415,7 +416,7 @@ See [BossMechanicsSystem](BossMechanicsSystem.md) for the full modifier pool, el
 
 - Boss puzzles have **floor modifiers + boss-chosen modifiers** active simultaneously
 - Intensity scales with run number: Low (runs 1–2) → VeryHigh (runs 9+)
-- Modifier legend panel with tap-to-isolate for visual clarity
+- **[UI-STYLE-042]** The legend is the rule slip beside the board (owner's pick A of three, 0.3.1 playtest: "the legend opens at a random place"): one row per rule with its overlay colour, its name and what it asks; a tap on a row shows only that rule's lines for 3 s (again: all), a whole-board rule marks the chosen cell's ties (RULE-TAP-001). The Legend button and its floating box are gone
 - Puzzles are not required to be logically solvable — items and relics compensate
 
 ---
@@ -461,11 +462,12 @@ Source of truth: [EndlessZenMode](EndlessZenMode.md) (decided 2026-10-07, SPEC-C
 - Items & Relic Codex
 - Custom Puzzle (sandbox, formerly "Tutorial"; SPEC-CONF-033)
 - Profiles, Options, Credits, Quit
-- **[MENU-BACK-001]** Every Back button and B/Escape return to the screen before (Game Modes → Incense Walk → Select Class → Back is Game Modes); with none, the main menu (1.24, GAP-084)
+- **[MENU-BACK-001]** Every Back button and B/Escape return to the screen before (Game Modes → Incense Walk → Select Class → Back is Game Modes); with none, the main menu (1.24, GAP-084). The Monthly Walk too: main menu → Monthly Walk → Back is the main menu, Game Modes → Monthly Walk → Back is Game Modes (1.33, GAP-109). The main menu's Daily Walk widget opens Game Modes on the Daily Walk, not the old Daily Walk panel (GAP-110)
 - **[UI-MENU-QUIT-001]** Quit closes the game on a second press within 3 s; the first press says so on the status line (1.22, GAP-074: a stray press closed the game)
 - **[UI-MENU-TITLE-001]** While the title screen shows, the main menu behind it has no chosen button and reads no input; it takes the focus when the title ends (1.28, GAP-097: a pad's A on the title opened Select Class)
 - **[UI-CURSOR-001]** The mouse pointer is a Japanese brush (fude): the ink tip is the hot spot, a vermilion ferrule and a bamboo handle run to the lower right, a cream rim keeps it readable on dark scenes and on paper (0.3.1 playtest, `BrushCursor`, drawn in code at start-up).
 - **[UI-STYLE-039]** When the game closes (Quit pressed twice, or the window closed), a goodbye shows for 3 s: the main menu's painting at dusk, a hanging scroll "The garden waits for you" with what waits tomorrow (the next Daily Walk and its streak, the saved run or today's walk, the Monthly Walk and its days), the red Kratossos seal at its foot and a lantern that goes out; any key, click or button closes at once (`QuitScreen`; owner's pick A of three, layout-proposals 3.11).
+- **[UI-STYLE-041]** XP B · Brush stroke (owner's pick of three, 0.3.1 playtest: "XP should feel like something is added, and the animation can be skipped"): on the run-end scroll a brush paints the run's XP in gold into the bar, from where the class stood before the run; the count rises with it, gold flecks trail the brush, and at each new level a red seal with the level is pressed on the bar's end before the brush starts again from the left. 2.4 s, eased out; any key, click or pad button shows the end at once; Reduce Motion shows only the end (`XpBrushAnimator`).
 - **[UI-STYLE-032]** The main menu is the garden path (1.30, owner's pick of three, RM-217): the title top left, a paper card for the saved Garden Run (hidden without one), the entries as wooden tablets down the left (New run, Game Modes, Custom Puzzle with Continue for a saved one; Meta Progression, Codex; Profiles, Options, Credits, Quit), the Daily and Monthly Walk as paper tags bottom right, the profile top right, the version bottom left (layout-proposals 3.9)
 - **[UI-MENU-VERSION-001]** The game's version ("Version 0.2.0", from the player settings) in the bottom-left corner
 - Daily Walk and Monthly Walk widgets next to the menu, with today's goals, streak, theme and countdown (SPEC-CONF-027, GAP-028)
@@ -508,6 +510,7 @@ An audit after the 0.2.0 playtest found options that did nothing or less than th
 | OPT-AUDIO-002 | Volumes (1.21) | The menu music plays Master × Music; in a run the music plays Master × Music and the sound effects Master × SFX, at once while a row changes; Mute all silences both, Mute when unfocused pauses the sound while the window is in the background. There is no UI Volume row: no interface sound plays (owner, 2026-10-27; the clips in `audio/ui` stay unused). |
 | OPT-DRAG-001 | Value rows (1.26) | A press or a drag on a value row's bar (volumes, Particles, Board Brightness and Contrast, Input Lock Time, Text Size) shows the value at that point, in the row's steps, and sets and saves it once when the press ends; the arrows and the pad work as before, and the bar takes no focus (RM-210). |
 | OPT-BUTTON-001 | Button text (0.3.1) | A button's label is drawn even when its box is lower than one line of text. On a 3440×1440 screen the canvas is lower, and Apply and Cancel on the Language page showed no text (GAP-098). |
+| OPT-TABS-001 | Pages in a run (0.3.3) | The Options in a run show only the pages with something to change there: no Language page, which was empty in a run (0.3.1 playtest, GAP-111). |
 | OPT-LABEL-001 | Names | "Confirm Wrong Placement" is removed: a question asked only before a wrong digit would give the answer away. Brightness and Contrast are **Board** Brightness and **Board** Contrast (they calibrate the puzzle board and now redraw it at once); "Screen Reader" is **Status Captions** (an on-screen caption bar, not speech). |
 | ACCESS-COLOR-003 | Colorblind Mode | Line colours that tell rules apart use the Okabe–Ito palette (German Whispers green, Dutch Whispers orange, Renban purple, Parity blue, Consecutive yellow, Between sky blue, Nabner/Entropic/Modular vermilion). The cells are no longer passed through a colour-blindness simulation, which made them harder to tell apart. |
 | ACCESS-FONT-001 | Text Size | Scales the board's digits and pencil marks too (it changed only the preview and some menus), never past the cell. |

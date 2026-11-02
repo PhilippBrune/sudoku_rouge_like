@@ -1,11 +1,12 @@
 # Achievements
 
-**Version:** 1.2 | **Date:** 2026-10-27 | **Status:** implemented (game side; the 21 new achievements and all 29 in four more languages are saved in Steamworks, not published yet)
+**Version:** 1.3 | **Date:** 2026-11-02 | **Status:** implemented (game side; 29 achievements saved in Steamworks, not published; the 10 story achievements of 0.3.3 not entered yet)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.3 | 2026-11-02 | implemented (game side; the 10 story achievements are not in Steamworks yet) | Owner (0.3.1 playtest): "Story-Erfolge ... füge den hinzu", answer "Zehn". Ten story achievements (ACHIEVE-STORY-001): a second chapter of any keeper, all five chapters of each keeper (8), the ninth keeper's chapter. Icons by `tools/steam/achievement_icons.py`. They still need entering in Steamworks (§4), then publishing with the owner's OK. |
 | 1.2 | 2026-10-27 | implemented | §5 has the eight Harmony achievements too. All 29 achievements are entered in German, French, Spanish (Spain) and Portuguese (Brazil) on the Achievement Localization page (files by `tools/steam/achievement_loc_vdf.py`); saved, not published. |
 | 1.1 | 2026-10-27 | implemented | Owner: "Lade die neuen Achievements ... hoch". The 21 new achievements are created in Steamworks (App 4858470) with name, description and both icons, saved, not published (Publish waits for the owner's OK). The other four languages (§5) are not entered yet. The Daily Walk streak is checked at the end of a Daily Walk too (it is a Garden Run of two floors since DailyGoalSystem 0.4). |
 | 1.0 | 2026-10-26 | implemented | Owner request: "Review the current achievements and add more to the game." Review of the eight Harmony achievements; 21 new achievements for the first hours, the classes, the other modes and the collection (ACHIEVE-RUN-001, ACHIEVE-CLASS-001, ACHIEVE-MODE-001, ACHIEVE-COLLECT-001). |
@@ -80,6 +81,21 @@ Counted for Garden Runs only (not tutorials, custom puzzles or the other modes).
 | `codex_half` | Half the Collection | Find half of everything in the Codex. | Items, Relics, Rules and Curses together: found ≥ half |
 | `codex_all` | The Complete Codex | Find everything in the Codex. | every Codex page complete |
 
+### The story (ACHIEVE-STORY-001, since 0.3.3)
+
+| API name | Name | Description | Condition in the game |
+|---|---|---|---|
+| `story_new_page` | A New Page | Open a second chapter of any keeper's tale. | `StoryService.ChapterOf` ≥ 2 for any keeper |
+| `story_tale_number_freak` | The Number Freak's Tale | Open all five chapters of the Number Freak's tale. | `ChapterOf(NumberFreak)` = 5 |
+| `story_tale_garden_monk` | The Garden Monk's Tale | Open all five chapters of the Garden Monk's tale. | `ChapterOf(GardenMonk)` = 5 |
+| `story_tale_shrine_archivist` | The Shrine Archivist's Tale | Open all five chapters of the Shrine Archivist's tale. | `ChapterOf(ShrineArchivist)` = 5 |
+| `story_tale_koi_gambler` | The Koi Gambler's Tale | Open all five chapters of the Koi Gambler's tale. | `ChapterOf(KoiGambler)` = 5 |
+| `story_tale_stone_gardener` | The Stone Gardener's Tale | Open all five chapters of the Stone Gardener's tale. | `ChapterOf(StoneGardener)` = 5 |
+| `story_tale_lantern_seer` | The Lantern Seer's Tale | Open all five chapters of the Lantern Seer's tale. | `ChapterOf(LanternSeer)` = 5 |
+| `story_tale_reed_duelist` | The Reed Duelist's Tale | Open all five chapters of the Reed Duelist's tale. | `ChapterOf(ReedDuelist)` = 5 |
+| `story_tale_quiet_cartographer` | The Quiet Cartographer's Tale | Open all five chapters of the Quiet Cartographer's tale. | `ChapterOf(QuietCartographer)` = 5 |
+| `story_ninth_keeper` | The Ninth Keeper | Open the last chapter of the story of the Nine. | `StoryNinthOpened` |
+
 ## 3. Requirements
 
 | ID | Requirement |
@@ -88,6 +104,7 @@ Counted for Garden Runs only (not tutorials, custom puzzles or the other modes).
 | ACHIEVE-CLASS-001 | At the same point the class achievements of §2 are checked; a won Garden Run adds its class to `ClassesWithAWin` (old saves start empty). |
 | ACHIEVE-MODE-001 | The results of Endless Zen, Spirit Trials and the Monthly Walk check their achievement before they save (`EndScreenViewController`); a new achievement is saved even when the result is not a new best. |
 | ACHIEVE-COLLECT-001 | The Daily Walk streak and the Codex achievements are checked at every Garden Run's end, the Daily Walk's included. |
+| ACHIEVE-STORY-001 | The story achievements are checked at the same point, after `StoryService.Record` has opened this run's chapters; an old save that already holds chapters gets them at its next Garden Run's end. |
 
 Every grant is kept in the profile (`MasteryAchievementState.UnlockedAchievements`) and sent to Steam when Steam runs; unlocks made without Steam are sent at the next start with Steam (`SyncUnlockedAchievements`). An API name Steamworks does not know yet fails quietly (a warning in the log) and is sent again later.
 
@@ -132,3 +149,13 @@ Name and description, separated by the colon; the mode and screen names are the 
 | `daily_streak_7` | Sieben Morgen: Halte eine Tagesgang-Serie sieben Tage lang. | Sept aubes : gardez une série de Promenades quotidiennes pendant 7 jours. | Siete amaneceres: mantén una racha del Paseo diario durante 7 días. | Sete alvoradas: mantenha uma sequência da Caminhada diária por 7 dias. |
 | `codex_half` | Die halbe Sammlung: Finde die Hälfte von allem im Kodex. | La moitié de la collection : trouvez la moitié de tout le Codex. | La mitad de la colección: encuentra la mitad de todo el Códice. | Metade da coleção: encontre metade de tudo no Códice. |
 | `codex_all` | Der vollständige Kodex: Finde alles im Kodex. | Le Codex complet : trouvez tout dans le Codex. | El Códice completo: encuentra todo en el Códice. | O Códice completo: encontre tudo no Códice. |
+| `story_new_page` | Eine neue Seite: Öffne ein zweites Kapitel der Geschichte eines Hüters. | Une nouvelle page : ouvrez un deuxième chapitre du récit d'un gardien. | Una página nueva: abre un segundo capítulo del relato de un guardián. | Uma nova página: abra um segundo capítulo do conto de um guardião. |
+| `story_tale_number_freak` | Die ganze Geschichte (Zahlen-Freak): Öffne alle fünf Kapitel des Hüters Zahlen-Freak. | Le récit complet (Maniaque des chiffres) : ouvrez les cinq chapitres du gardien Maniaque des chiffres. | El relato completo (Maniático de los números): abre los cinco capítulos del guardián Maniático de los números. | O conto completo (Maníaco dos números): abra os cinco capítulos do guardião Maníaco dos números. |
+| `story_tale_garden_monk` | Die ganze Geschichte (Gartenmönch): Öffne alle fünf Kapitel des Hüters Gartenmönch. | Le récit complet (Moine du jardin) : ouvrez les cinq chapitres du gardien Moine du jardin. | El relato completo (Monje del jardín): abre los cinco capítulos del guardián Monje del jardín. | O conto completo (Monge do jardim): abra os cinco capítulos do guardião Monge do jardim. |
+| `story_tale_shrine_archivist` | Die ganze Geschichte (Schrein-Archivar): Öffne alle fünf Kapitel des Hüters Schrein-Archivar. | Le récit complet (Archiviste du sanctuaire) : ouvrez les cinq chapitres du gardien Archiviste du sanctuaire. | El relato completo (Archivista del santuario): abre los cinco capítulos del guardián Archivista del santuario. | O conto completo (Arquivista do santuário): abra os cinco capítulos do guardião Arquivista do santuário. |
+| `story_tale_koi_gambler` | Die ganze Geschichte (Koi-Spieler): Öffne alle fünf Kapitel des Hüters Koi-Spieler. | Le récit complet (Joueur de koï) : ouvrez les cinq chapitres du gardien Joueur de koï. | El relato completo (Jugador de koi): abre los cinco capítulos del guardián Jugador de koi. | O conto completo (Jogador de koi): abra os cinco capítulos do guardião Jogador de koi. |
+| `story_tale_stone_gardener` | Die ganze Geschichte (Steingärtner): Öffne alle fünf Kapitel des Hüters Steingärtner. | Le récit complet (Jardinier de pierre) : ouvrez les cinq chapitres du gardien Jardinier de pierre. | El relato completo (Jardinero de piedra): abre los cinco capítulos del guardián Jardinero de piedra. | O conto completo (Jardineiro de pedra): abra os cinco capítulos do guardião Jardineiro de pedra. |
+| `story_tale_lantern_seer` | Die ganze Geschichte (Laternenseher): Öffne alle fünf Kapitel des Hüters Laternenseher. | Le récit complet (Voyant de la lanterne) : ouvrez les cinq chapitres du gardien Voyant de la lanterne. | El relato completo (Vidente del farol): abre los cinco capítulos del guardián Vidente del farol. | O conto completo (Vidente da lanterna): abra os cinco capítulos do guardião Vidente da lanterna. |
+| `story_tale_reed_duelist` | Die ganze Geschichte (Schilfduellant): Öffne alle fünf Kapitel des Hüters Schilfduellant. | Le récit complet (Duelliste du roseau) : ouvrez les cinq chapitres du gardien Duelliste du roseau. | El relato completo (Duelista de caña): abre los cinco capítulos del guardián Duelista de caña. | O conto completo (Duelista do junco): abra os cinco capítulos do guardião Duelista do junco. |
+| `story_tale_quiet_cartographer` | Die ganze Geschichte (Stiller Kartograf): Öffne alle fünf Kapitel des Hüters Stiller Kartograf. | Le récit complet (Cartographe silencieux) : ouvrez les cinq chapitres du gardien Cartographe silencieux. | El relato completo (Cartógrafo silencioso): abre los cinco capítulos del guardián Cartógrafo silencioso. | O conto completo (Cartógrafo silencioso): abra os cinco capítulos do guardião Cartógrafo silencioso. |
+| `story_ninth_keeper` | Der neunte Hüter: Öffne das letzte Kapitel der Geschichte der Neun. | Le neuvième gardien : ouvrez le dernier chapitre du récit des Neuf. | El noveno guardián: abre el último capítulo del relato de los Nueve. | O nono guardião: abra o último capítulo do conto dos Nove. |

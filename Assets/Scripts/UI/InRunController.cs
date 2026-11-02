@@ -555,6 +555,13 @@ namespace SudokuRoguelike.UI
             if (!_resumeApplied) { ApplyResumeState(); return; }
             TickIncense(run);   // [REQ: INCENSE-CLOCK-004]
 
+            // [REQ: STORY-SCENE-001] A story scene takes every press until it ends.
+            if (StoryScene.Blocking)
+            {
+                _inputRemap.Tick();
+                return;
+            }
+
             // UI-STYLE-021: a click or any key skips the floor's painting; nothing behind it reacts meanwhile.
             if (IsFloorEntryShowing)
             {
@@ -1908,6 +1915,10 @@ namespace SudokuRoguelike.UI
                 ?.currentSelectedGameObject?.GetComponent<Button>();
             var curIdx = _overlayBtnCache.IndexOf(curSel);
             if (curIdx < 0) curIdx = 0;
+            // A chosen control behind the scene would take A (PadUiBridge): the focus starts on its first button.
+            var chosenGo = UnityEngine.EventSystems.EventSystem.current?.currentSelectedGameObject;
+            if (chosenGo == null || !chosenGo.activeInHierarchy || !chosenGo.transform.IsChildOf(panel.transform))
+                UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(_overlayBtnCache[curIdx].gameObject);
 
             var moveNext = _inputRemap.WasActionPressed(InputAction.MoveRight)
                         || _inputRemap.WasActionPressed(InputAction.MoveDown);

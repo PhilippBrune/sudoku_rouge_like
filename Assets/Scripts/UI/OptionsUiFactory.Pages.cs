@@ -217,24 +217,17 @@ namespace SudokuRoguelike.UI
             };
         }
 
-        // The Language page: the language row where the UI can rebuild itself (main menu); a run says where to change it.
+        // The Language page: the language row where the UI can rebuild itself (main menu). [REQ: OPT-TABS-001] A run has
+        // no Language page: nothing on it could be changed there (0.3.1 playtest: "show only pages where I can do something").
         private static Action BuildLanguagePage(OptionsTabSet tabs, OptionsController optCtrl, Setup setup, string p)
         {
+            if (setup.OnLanguageApplied == null) return () => { };
             var opts = optCtrl.GetOptions();
             var langIdx = tabs.Count;
             var langSec = tabs.Add(p + "TabLanguage", p + "LanguageSection", T("Language"));
             SectionHeader(p + "LanguageHdr", langSec, T("Language"));
             PageSubtitle(p + "LanguageSub", langSec, T("Options.Sub.Language"));
             PageSlip(p + "LanguageSlip", langSec, T("Options.Slip.Tip"), T("Options.Tip.Language"));
-
-            if (setup.OnLanguageApplied == null)
-            {
-                var hint = BuildText(p + "LangHint", langSec, T("Options.LanguageInMainMenu"), 19, TextAnchor.MiddleLeft);
-                SetRect(hint.rectTransform, LineMin(0), LineMax(1));
-                hint.color = OptionsUiStyle.PaperInkSoft;
-                tabs.SetRows(langIdx);
-                return () => { };
-            }
 
             LineLabel(p + "LangLabel", langSec, 0, T("Language"));
             var langDrop = BuildDropdown(p + "LanguageDropdown", langSec);

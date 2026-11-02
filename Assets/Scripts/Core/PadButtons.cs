@@ -56,8 +56,44 @@ namespace SudokuRoguelike.Core
         /// <summary>Is the Xbox button held (B held clears a cell).</summary>
         public static bool Held(KeyCode xboxButton) => Read(xboxButton, false);
 
+        private static int _submitUsedFrame = -1;
+
+        /// <summary>[REQ: INPUT-PAD-005] PadUiBridge submitted the chosen control with this frame's A: other readers of A
+        /// skip it, so one press acts once.</summary>
+        public static void UseSubmit() => _submitUsedFrame = Time.frameCount;
+
+        /// <summary>[REQ: INPUT-PAD-005] Any pad button pressed this frame, read through the Input System (the legacy
+        /// "any key" never sees the owner's pad).</summary>
+        public static bool AnyPressed()
+        {
+#if ENABLE_INPUT_SYSTEM
+            var pad = UnityEngine.InputSystem.Gamepad.current;
+            if (pad != null)
+                foreach (var control in pad.allControls)
+                    if (control is UnityEngine.InputSystem.Controls.ButtonControl button && !button.synthetic && button.wasPressedThisFrame)
+                        return true;
+#endif
+            for (var k = 0; k < 20; k++)
+                if (Input.GetKeyDown(KeyCode.JoystickButton0 + k)) return true;
+            return false;
+        }
+
+        /// <summary>A pad the Input System reads is connected (its buttons and sticks are read there).</summary>
+        public static bool InputSystemPad
+        {
+            get
+            {
+#if ENABLE_INPUT_SYSTEM
+                return UnityEngine.InputSystem.Gamepad.current != null;
+#else
+                return false;
+#endif
+            }
+        }
+
         private static bool Read(KeyCode xboxButton, bool pressedThisFrame)
         {
+            if (pressedThisFrame && xboxButton == KeyCode.JoystickButton0 && _submitUsedFrame == Time.frameCount) return false;
 #if ENABLE_INPUT_SYSTEM
             var pad = UnityEngine.InputSystem.Gamepad.current;
             var control = pad == null ? null : (xboxButton - KeyCode.JoystickButton0) switch
@@ -124,14 +160,21 @@ namespace SudokuRoguelike.Core
         public static (string Submit, string Cancel) UiAxes(PadLayout layout) =>
             layout == PadLayout.DInput ? ("Submit (D-input)", "Cancel (D-input)") : ("Submit", "Cancel");
 
-        /// <summary>Points the UI input module's confirm and cancel at the pad in use; called every frame by the menus.</summary>
+        /// <summary>Points the UI input module's confirm, cancel and move axes at the pad in use; called every frame by
+        /// PadUiBridge. [REQ: INPUT-PAD-005] With a pad the Input System reads, the module keeps the keyboard only: the pad's
+        /// A, B, D-pad and stick are read through the Input System (PadUiBridge, MenuDpad), so a pad the legacy input also
+        /// sees does not move or confirm twice.</summary>
         public static void SyncUiModule()
         {
             var module = EventSystem.current != null ? EventSystem.current.currentInputModule as StandaloneInputModule : null;
             if (module == null) return;
-            var (submit, cancel) = UiAxes(Layout);
+            var keysOnly = InputSystemPad;
+            var (submit, cancel) = keysOnly ? ("Submit (keys)", "Cancel (keys)") : UiAxes(Layout);
+            var (horizontal, vertical) = keysOnly ? ("Horizontal (keys)", "Vertical (keys)") : ("Horizontal", "Vertical");
             if (module.submitButton != submit) module.submitButton = submit;
             if (module.cancelButton != cancel) module.cancelButton = cancel;
+            if (module.horizontalAxis != horizontal) module.horizontalAxis = horizontal;
+            if (module.verticalAxis != vertical) module.verticalAxis = vertical;
         }
     }
 }

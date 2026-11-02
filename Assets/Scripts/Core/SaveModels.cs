@@ -181,6 +181,9 @@ namespace SudokuRoguelike.Core
         // whether the last chapter is open. Saves from before 0.3.2 start at chapter 1.
         public List<StoryChapterEntry> StoryChapters = new List<StoryChapterEntry>();
         public bool StoryNinthOpened;
+        // [REQ: STORY-SCENE-001] The highest chapter whose scene each keeper has played, and the ninth's (since 0.3.3).
+        public List<StoryChapterEntry> StoryScenesSeen = new List<StoryChapterEntry>();
+        public bool StoryNinthSceneSeen;
     }
 
     [Serializable]

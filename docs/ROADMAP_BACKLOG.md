@@ -1,11 +1,12 @@
 # Roadmap backlog: Run of the Nine
 
-**Version:** 1.11 | **Date:** 2026-11-02 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
+**Version:** 1.12 | **Date:** 2026-11-02 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.12 | 2026-11-02 | review | Owner (0.3.1 playtest): RM-225 built as pick A; RM-227 (XP animation, pick B), RM-228 (legend, pick A) and RM-229 (story achievements) built. |
 | 1.11 | 2026-11-02 | review | Owner (2026-11-02): RM-224 built as pick A; RM-125 built (the story of the Nine); RM-226 irregular regions on every size; RM-225 conversation scenes as three mockups for the pick. |
 | 1.10 | 2026-11-02 | review | RM-218 to RM-224 from the owner's 0.3.1 playtest (2026-11-02): a short-term block; RM-218 to RM-223 built, RM-224 (quit screen) as three mockups for the owner's pick. |
 | 1.9 | 2026-10-28 | review | Mockups for RM-208, RM-209, RM-211 and RM-217 (layout-proposals 3.5, UI-STYLE-032 to 038), waiting for the owner's pick. |
@@ -62,8 +63,11 @@ Horizons: **short term** = the next one to three updates, **mid term** = after t
 | RM-222 | Enter clears pencil marks | Enter on an empty cell with pencil marks clears them. | Owner; built (INPUT-KEY-001, InputAndProfilesSpec 2.7). | built |
 | RM-223 | Brush cursor | The mouse pointer as a Japanese brush. | Owner; built (UI-CURSOR-001, GameDesignSpec). | built |
 | RM-224 | Quit screen | A goodbye screen with Kratossos that makes the player want to come back. | Owner's pick A, the garden at dusk; built (UI-STYLE-039). | built |
-| RM-225 | Conversation scenes for the story | Dedicated scenes where keeper and warden talk, at the floor entry, the boss gate and the offering table. | Owner (2026-11-02): three mockups (painted dialogue, facing scrolls, shadow play), layout-proposals 3.12. | waiting for the owner's pick |
+| RM-225 | Conversation scenes for the story | Dedicated scenes where keeper and warden talk. | Owner's pick A, the painted dialogue, one scene per chapter at the first floor's entry, again in the Codex; built (STORY-SCENE-001, UI-STYLE-040). | built |
 | RM-226 | Irregular regions on every size | 6×6, 8×8 and 9×9 irregular puzzles in both templates, like 5×5 and 7×7. | Owner (2026-11-02); built (CUSTOM-REGION-002). | built |
+| RM-227 | XP animation | XP is painted into the bar so it feels added; skippable. | Owner's pick B, the brush stroke; built (UI-STYLE-041). | built |
+| RM-228 | The legend's place and layout | The legend opened at a different place each time. | Owner's pick A, the legend in the rule slip; built (UI-STYLE-042). | built |
+| RM-229 | Story achievements | New Steam achievements for the story. | Owner ("Zehn"); built (ACHIEVE-STORY-001); they need entering in Steamworks. | built |
 
 ## Mid term (suggested)
 

@@ -1,0 +1,35 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css"><link rel="stylesheet" href="xp_common.css">
+<style>
+  /* XP A · Ink drops: each ledger row lights up in turn and sheds gold ink drops that arc up into the bar; every drop
+     that lands pushes the fill and the count. A full bar flashes, the ensō stamp presses "Level up", the bar starts
+     again from the left. About 2.5 s; any key or A shows the end at once. */
+  .row-hot { background:rgba(219,181,97,.28); border-radius:6px; }
+  .drop { position:absolute; width:16px; height:22px; border-radius:50% 50% 50% 50% / 60% 60% 40% 40%; background:radial-gradient(circle at 35% 30%, #fff3c4, #dbb561 55%, #a57a22);
+          box-shadow:0 0 12px rgba(255,214,120,.8); opacity:0; }
+  body.f1 .fill { width:62%; } body.f2 .fill { width:100%; box-shadow:0 0 22px 6px rgba(255,220,130,.75); } body.f3 .fill { width:38%; }
+  body.f1 .d1, body.f2 .d2, body.f2 .d3, body.f2 .d4 { opacity:1; }
+  .splash { position:absolute; right:30px; top:-14px; width:60px; height:60px; border-radius:50%; background:radial-gradient(circle, rgba(255,240,190,.95), rgba(255,200,90,0) 70%); opacity:0; }
+  body.f2 .splash { opacity:1; }
+</style></head><body>
+<div class="bg"></div>
+<div class="panel">
+  <div class="hdr">CLASS XP THIS RUN</div><div class="gain" data-count></div>
+  <div class="track"><div class="fill"></div><div class="splash"></div></div>
+  <div class="lvl">Number Freak · Lv <span class="lv">5</span></div><div class="next">38 / 100 XP to Lv 7</div>
+  <div class="stamp">Level up<br>1 → 6</div>
+</div>
+<div class="drop d1" style="left:1150px; top:690px"></div>
+<div class="drop d2" style="left:1010px; top:560px"></div>
+<div class="drop d3" style="left:1120px; top:520px; transform:scale(.8)"></div>
+<div class="drop d4" style="left:1210px; top:480px; transform:scale(.6)"></div>
+<div class="skip">Any key or A shows it at once</div>
+<div class="ledger">
+  <div style="top:40px" class="row-hot"><span>Base XP</span><span>388</span></div>
+  <div style="top:85px"><span>Perfect puzzles ×4 (+20%)</span><span style="color:#2f6a37">+78</span></div>
+  <div style="top:130px"><span>Victory bonus (+25%)</span><span style="color:#2f6a37">+97</span></div>
+</div>
+<div class="frame"></div>
+<script src="xp_anim.js"></script>
+<script>document.querySelector('.frame').textContent = {f1:'0.3 s',f2:'1.2 s',f3:'2.6 s'}[document.body.className.match(/f\d/)[0]];</script>
+</body></html>

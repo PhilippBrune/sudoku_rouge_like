@@ -105,6 +105,18 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-098](#gap-098) | Apply and Cancel on the Language page had no text on a 3440×1440 screen | FIXED (0.3.1 playtest, 2026-11-02) | MEDIUM | P3 |
 | [GAP-099](#gap-099) | Options showed LB/RB without a pad | FIXED (0.3.1 playtest, 2026-11-02) | LOW | P4 |
 | [GAP-100](#gap-100) | The Accessibility switches seemed to do nothing in the menu | FIXED (0.3.1 playtest, 2026-11-02) | MEDIUM | P3 |
+| [GAP-101](#gap-101) | A on the pad confirmed only now and then | FIXED (0.3.1 playtest, 2026-11-02) | HIGH | P2 |
+| [GAP-102](#gap-102) | B on the pad went back only sometimes; in the Options it moved through the menu | FIXED (0.3.1 playtest, 2026-11-02) | HIGH | P2 |
+| [GAP-103](#gap-103) | The left stick did not move in the main menu | FIXED (0.3.1 playtest, 2026-11-02) | MEDIUM | P3 |
+| [GAP-104](#gap-104) | On Select Class, A on a class did not go on to Begin | FIXED (0.3.1 playtest, 2026-11-02) | MEDIUM | P3 |
+| [GAP-105](#gap-105) | The mouse pointer stayed visible and moved while the pad was used | FIXED (0.3.1 playtest, 2026-11-02) | MEDIUM | P3 |
+| [GAP-106](#gap-106) | Start opened the Options but did not close them | FIXED (0.3.1 playtest, 2026-11-02) | LOW | P4 |
+| [GAP-107](#gap-107) | The controller hint flickered when something was chosen | FIXED (0.3.1 playtest, 2026-11-02) | MEDIUM | P3 |
+| [GAP-108](#gap-108) | In a puzzle the D-pad placed a digit, and the right stick moved the pointer | OPEN (Steam Input settings, the owner checks) | MEDIUM | P3 |
+| [GAP-109](#gap-109) | Back from the Monthly Walk always went to the main menu | FIXED (0.3.1 playtest, 2026-11-02) | MEDIUM | P3 |
+| [GAP-110](#gap-110) | The Daily Walk widget opened the old Daily Walk screen | FIXED (0.3.1 playtest, 2026-11-02) | MEDIUM | P3 |
+| [GAP-111](#gap-111) | The in-run Options showed an empty Language page | FIXED (0.3.1 playtest, 2026-11-02) | LOW | P4 |
+| [GAP-112](#gap-112) | A Spirit Trial's puzzle showed the bag and relic slots | FIXED (0.3.1 playtest, 2026-11-02) | LOW | P4 |
 | [GAP-067](#gap-067) | Moonshade Offering's "+2 starting pencil" did nothing (the run starts at full pencil) | FIXED (2026-10-22) | LOW | P3 |
 | [GAP-064](#gap-064) | Scholar's Burden: no free Ink Well, "+5 pencil" did nothing, "−1 slot" could add a slot | FIXED (as planned, 2026-10-22) | MEDIUM | P3 |
 | [GAP-063](#gap-063) | Class levels 30 and 40 promised rewards the game did not grant (starting items, frames) | FIXED (2026-10-21) | MEDIUM | P2 |
@@ -1170,6 +1182,114 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Status:** FIXED (owner: "Überall") · **Severity:** LOW · **Priority:** P3
 - **Fix:** A key or pad move starts the lock like a click (`MoveSelection`); "Jump to Next Empty Cell" still does not.
 - **Tests:** as GAP-094.
+
+## GAP-101
+**A on the pad confirmed only now and then**
+
+- **Requirement:** INPUT-PAD-005
+- **Status:** FIXED (0.3.1 playtest, built in 0.3.3) · **Severity:** HIGH · **Priority:** P2
+- **Problem:** The owner's pad reaches the Input System only; the player log said "legacy no" for every button. The UI module reads A through the legacy axes, so a button chosen with the pad was pressed only where a screen read A itself.
+- **Fix:** `PadUiBridge` submits the chosen control on A through the Input System, once per press; with such a pad the UI module keeps only the keys.
+- **Tests:** GamepadDpadPlayModeTests (`A_PressesTheChosenButtonOnce`).
+
+## GAP-102
+**B on the pad went back only sometimes; in the Options it moved through the menu**
+
+- **Requirement:** INPUT-PAD-005
+- **Status:** FIXED (0.3.1 playtest, built in 0.3.3) · **Severity:** HIGH · **Priority:** P2
+- **Problem:** As GAP-101 for Cancel: the module's legacy Cancel never fired, and its Horizontal/Vertical axes took the pad's input as moves.
+- **Fix:** B is read through the Input System on every screen (`PadButtons`); with an Input System pad the module's axes are the keyboard's only. In the Options B closes them.
+- **Tests:** GamepadDpadPlayModeTests; the owner's next playtest.
+
+## GAP-103
+**The left stick did not move in the main menu**
+
+- **Requirement:** INPUT-PAD-005
+- **Status:** FIXED (0.3.1 playtest, built in 0.3.3) · **Severity:** MEDIUM · **Priority:** P3
+- **Problem:** The menus read only the D-pad.
+- **Fix:** `MenuDpad.ReadStick`: the stick steps like the D-pad, with a first repeat after 0.4 s and then every 0.14 s; the path's nodes too.
+- **Tests:** GamepadDpadPlayModeTests (`LeftStick_StepsTheMenusLikeTheDpad`).
+
+## GAP-104
+**On Select Class, A on a class did not go on to Begin**
+
+- **Requirement:** INPUT-PAD-005
+- **Status:** FIXED (0.3.1 playtest, built in 0.3.3) · **Severity:** MEDIUM · **Priority:** P3
+- **Problem:** A on a class seal chose the class but left the focus on the seal; the player had to walk down to Begin.
+- **Fix:** A on a class seal chooses it and moves the focus to Begin (or Abandon & Begin) when that button can be pressed (`MainMenuController.ChooseClass`).
+- **Tests:** ModeScreensPlayModeTests (`SelectClass_AOnASeal_ChoosesItAndGoesToBegin`).
+
+## GAP-105
+**The mouse pointer stayed visible and moved while the pad was used**
+
+- **Requirement:** INPUT-PAD-006
+- **Status:** FIXED (0.3.1 playtest, built in 0.3.3) · **Severity:** MEDIUM · **Priority:** P3
+- **Problem:** The pointer showed over the screens while the player used the pad, and the right stick moved it.
+- **Fix:** While a pad is in use the pointer is hidden (not locked, so the click that switches back is not lost); it comes back with a click, a key or a mouse move after the pad rested. The game never moves the pointer with a stick: see GAP-108 for the stick.
+- **Tests:** The owner's next playtest (the cursor cannot be checked in batch mode).
+
+## GAP-106
+**Start opened the Options but did not close them**
+
+- **Requirement:** INPUT-PAD-005
+- **Status:** FIXED (0.3.1 playtest, built in 0.3.3) · **Severity:** LOW · **Priority:** P4
+- **Problem:** In the main menu Start opened the Options; a second Start did nothing.
+- **Fix:** Start opens the Options and closes them again, in the main menu and in a run.
+- **Tests:** The owner's next playtest.
+
+## GAP-107
+**The controller hint flickered when something was chosen**
+
+- **Requirement:** INPUT-HINT-002
+- **Status:** FIXED (0.3.1 playtest, built in 0.3.3) · **Severity:** MEDIUM · **Priority:** P3
+- **Problem:** A stick that also moves the mouse (a Steam Input template) counted as mouse motion every frame, so the hints switched between the pad and the keys each frame.
+- **Fix:** A mouse move switches to the keys only after the pad has rested 2 s; clicks and keys switch at once.
+- **Tests:** The owner's next playtest.
+
+## GAP-108
+**In a puzzle the D-pad placed a digit, and the right stick moved the pointer**
+
+- **Requirement:** INPUT-PAD-004, INPUT-PAD-006
+- **Status:** OPEN (Steam Input settings) · **Severity:** MEDIUM · **Priority:** P3
+- **Problem:** The game reads the D-pad as moves only and never moves the pointer. Both match a Steam Input template that maps the D-pad to the keys 1 to 4 and the right stick to the mouse.
+- **Fix:** Open: check Steamworks → Steam Input → the default configuration (it should be "Gamepad" with no keyboard keys), or in Steam the game's controller settings (Steam Input off, or the "Gamepad" template). GAP-105 and GAP-107 keep the game calm meanwhile.
+- **Tests:** The owner's check in Steam.
+
+## GAP-109
+**Back from the Monthly Walk always went to the main menu**
+
+- **Requirement:** MENU-BACK-001
+- **Status:** FIXED (0.3.1 playtest, built in 0.3.3) · **Severity:** MEDIUM · **Priority:** P3
+- **Problem:** Game Modes → Monthly Walk → Back went to the main menu instead of Game Modes.
+- **Fix:** The Monthly Walk is a screen of the menu's history (`MenuScreen.MonthlyWalk`): Back returns to where it was opened.
+- **Tests:** GeneratedUiPlayModeTraversalTests (Monthly Back).
+
+## GAP-110
+**The Daily Walk widget opened the old Daily Walk screen**
+
+- **Requirement:** MENU-BACK-001
+- **Status:** FIXED (0.3.1 playtest, built in 0.3.3) · **Severity:** MEDIUM · **Priority:** P3
+- **Problem:** The main menu's Daily Walk widget opened the panel from before RM-216.
+- **Fix:** It opens Game Modes on the Daily Walk (`OpenDailyWalk`). The old panel is still built but no button reaches it.
+- **Tests:** GeneratedUiPlayModeTraversalTests (the widget opens Game Modes with the Daily Walk).
+
+## GAP-111
+**The in-run Options showed an empty Language page**
+
+- **Requirement:** OPT-TABS-001
+- **Status:** FIXED (0.3.1 playtest, built in 0.3.3) · **Severity:** LOW · **Priority:** P4
+- **Problem:** The language can be changed only in the main menu, so in a run the page was empty.
+- **Fix:** In a run the Options have no Language page.
+- **Tests:** GeneratedUiPlayModeTraversalTests (no `IGTabLanguage`).
+
+## GAP-112
+**A Spirit Trial's puzzle showed the bag and relic slots**
+
+- **Requirement:** TRIAL-HUD-001
+- **Status:** FIXED (0.3.1 playtest, built in 0.3.3) · **Severity:** LOW · **Priority:** P4
+- **Problem:** The trial says "no XP, items or relics", but its puzzle showed their empty slots.
+- **Fix:** The puzzle of a Spirit Trial shows no bag and no relics.
+- **Tests:** InRunUiPlayModeTests (`SpiritTrial_ShowsNoBagAndNoRelics`).
 
 ## GAP-098
 **Apply and Cancel on the Language page had no text on a 3440×1440 screen**

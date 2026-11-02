@@ -1,13 +1,14 @@
 # Spirit Trials Mode
 
-**Version:** 2.2  
-**Date:** 2026-10-28  
+**Version:** 2.3  
+**Date:** 2026-11-02  
 **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.3 | 2026-11-02 | implemented | 0.3.1 playtest (owner): the trial's puzzle shows no bag and no relic slots (TRIAL-HUD-001, GAP-112). |
 | 2.2 | 2026-10-28 | implemented | 0.3.0 playtest (RM-217, owner's pick UI-STYLE-035): the tier select as four steles with the chosen tier's slip; stars and rules per tier come from `SpiritTrialsService.StarsFor` and `RulesFor`. |
 | 2.1 | 2026-10-07 | implemented | Unlock rule confirmed as the single source: first boss defeat (SPEC-CONF-007); modifier pool limited to generatable modifiers (GAP-007). |
 
@@ -53,6 +54,7 @@ Like Endless Zen, Spirit Trials goes straight to the puzzle view rather than the
 | Gold | `0` |
 | Items | `ItemSlots = 0` |
 | Relics | None |
+| Puzzle screen | **[TRIAL-HUD-001]** No bag and no relic slots: the trial says "no XP, items or relics" and the screen showed their empty slots (0.3.1 playtest, GAP-112) |
 | XP / meta rewards | Disabled via `DisableProgressionRewards = true` |
 | Save & Resume | Disabled |
 | Harmony | Forced to base config (`HarmonyLevel = 0`) |

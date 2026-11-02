@@ -57,22 +57,39 @@ namespace SudokuRoguelike.Tests
 
         // ── Legend (GAP-025) ──
 
+        // [REQ: TRIAL-HUD-001] A Spirit Trial gives no items or relics, so its puzzle shows no bag and no relic slots (0.3.1
+        // playtest: "Spirit Trial says no XP, items or relics, but the puzzle shows their slots").
         [UnityTest]
+        [Requirement("TRIAL-HUD-001")]
+        public IEnumerator SpiritTrial_ShowsNoBagAndNoRelics()
+        {
+            var h = StartPuzzle(8616);
+            yield return null;
+            yield return null;
+            Assert.IsTrue(FindObject(h.Host, "BagPanel").activeInHierarchy, "a Garden Run shows its bag");
+
+            h.Run.State.Mode = GameMode.SpiritTrials;
+            h.Host.GetComponentInChildren<HudViewController>(true).Refresh(h.Run.State, h.Run.CurrentLevelConfig);
+            yield return null;
+            Assert.IsFalse(FindObject(h.Host, "BagPanel").activeInHierarchy, "a Spirit Trial shows no bag and no relics");
+        }
+
+        [UnityTest]
+        [Requirement("UI-STYLE-042")]
         public IEnumerator Legend_ListsTheModifiers_AndTapIsolatesOneLayer()
         {
             var h = StartPuzzle(8601, BossModifierId.GermanWhispers, BossModifierId.KillerCages);
             yield return null;
             yield return null;
 
-            var legendButton = FindObject(h.Host, "BtnModifierLegend");
-            Assert.IsTrue(legendButton.activeInHierarchy, "legend button is shown for a puzzle with modifiers");
-            legendButton.GetComponent<Button>().onClick.Invoke();
-            yield return null;
-
-            var panel = FindObject(h.Host, "ModifierLegendPanel");
+            // UI-STYLE-042 (owner's pick A): the legend is the rule slip; no Legend button and no box of its own.
+            Assert.IsNull(FindObjectOrNull(h.Host, "BtnModifierLegend"));
+            var panel = FindObject(h.Host, "ModInfoBox");
             Assert.IsTrue(panel.activeInHierarchy);
             Assert.NotNull(FindObjectOrNull(panel, "LegendEntry_GermanWhispers"));
             Assert.NotNull(FindObjectOrNull(panel, "LegendEntry_KillerCages"));
+            Assert.AreEqual(BossService.GetModifierName(BossModifierId.GermanWhispers),
+                FindObject(FindObject(panel, "LegendEntry_GermanWhispers"), "Name").GetComponent<Text>().text);
 
             var board = h.Host.GetComponentInChildren<BoardViewController>(true);
             Assert.AreEqual(1f, board.GetOverlayGroupAlpha("Line.GermanWhispers"), "whisper lines were drawn into their layer");
@@ -641,6 +658,8 @@ namespace SudokuRoguelike.Tests
         [Requirement("UI-STYLE-021")]
         public IEnumerator FloorEntry_ShowsThePaintingAndName_ThenThePathUnrolls_OncePerFloor()
         {
+            new SaveFileService(TestSlot).Save(new SaveFileEnvelope { MetaProgress = new MetaProgressionState() });
+            SaveFileService.FlushSharedPendingWrites();
             var h = StartPathMap(8614);
             yield return null;
             yield return null;
@@ -655,10 +674,23 @@ namespace SudokuRoguelike.Tests
             StringAssert.Contains("1", FindObject(entry, "FloorEntryEyebrow").GetComponent<Text>().text);
             Assert.NotNull(FindObject(entry, "Backdrop").GetComponent<RawImage>().texture, "the floor's painting");
             Assert.IsTrue(entry.GetComponent<Image>().raycastTarget, "the path behind the painting takes no clicks");
-            // [REQ: STORY-SHOW-001] The first floor of a Garden Run tells the keeper's current chapter, so it stays longer.
-            StringAssert.Contains(Meta.StoryService.Text(h.Run.State.ClassId, 1), FindObject(entry, "ChapterText").GetComponent<Text>().text);
+            // [REQ: STORY-SHOW-001] [REQ: STORY-SCENE-001] A new keeper's first floor plays chapter 1's scene over the painting:
+            // the keeper's line, then the voice tells the chapter. The painting waits for it, and a press goes to the scene.
+            var scene = StoryScene.Current;
+            Assert.NotNull(scene, "chapter 1's scene plays");
+            Assert.AreEqual(2, scene.LineCount);
+            StringAssert.Contains(LocalizationService.T($"Story.Scene.{h.Run.State.ClassId}.1.K1"), FindObject(entry, "Line").GetComponent<Text>().text);
+            scene.Next();
+            Assert.AreEqual(Meta.StoryService.Text(h.Run.State.ClassId, 1), FindObject(entry, "Line").GetComponent<Text>().text);
+            yield return new WaitForSecondsRealtime(InRunController.FloorEntrySeconds + 0.5f);
+            Assert.IsTrue(controller.IsFloorEntryShowing, "the painting waits while the scene plays");
+            scene.Next();
+            Assert.IsNull(StoryScene.Current, "the last line ends the scene");
+            SaveFileService.FlushSharedPendingWrites();
+            Assert.AreEqual(0, Meta.StoryService.SceneDue(new SaveFileService(TestSlot).Load().MetaProgress, h.Run.State.ClassId),
+                "the scene is saved as seen");
 
-            yield return new WaitForSecondsRealtime(InRunController.FloorEntryStorySeconds + 0.8f);
+            yield return new WaitForSecondsRealtime(InRunController.FloorEntrySeconds + 0.8f);
             Assert.IsFalse(controller.IsFloorEntryShowing);
             Assert.IsNull(FindObjectOrNull(h.Host, "FloorEntry"), "the painting is gone");
             Assert.AreEqual(Vector3.one, FindObject(h.Host, "PathScroll").transform.localScale, "the scroll is fully open");

@@ -33,7 +33,7 @@ namespace SudokuRoguelike.UI
         private Button _pathSaveQuitButton;
         private Button _pathOptionsButton;
 
-        private static string PathBackgroundName(int floor) => floor switch
+        internal static string PathBackgroundName(int floor) => floor switch
         {
             1 => "bg_koi_garden",
             2 => "bg_koi_terrace",

@@ -126,7 +126,7 @@ namespace SudokuRoguelike.UI
 
             var back = ScrollUiKit.RimButton(pr, "BtnMonthlyBack", new Vector2(0.406f, 0.206f), new Vector2(0.468f, 0.259f),
                 T("Back"), 22, ScrollUiKit.Gold, new Color(0.45f, 0.33f, 0.14f, 0.95f), ScrollUiKit.PaperText);
-            back.onClick.AddListener(mc.ShowGameModes);
+            back.onClick.AddListener(mc.BackFromPanel);   // MENU-BACK-001: the screen it was opened from
             var begin = ScrollUiKit.PillButton(pr, "BtnBeginMonthly", new Vector2(0.483f, 0.206f), new Vector2(0.594f, 0.259f),
                 T("Monthly.Begin"), 22, ScrollUiKit.Vermilion, Color.white, 26f);
             begin.onClick.AddListener(mc.LaunchSeasonalChallenge);

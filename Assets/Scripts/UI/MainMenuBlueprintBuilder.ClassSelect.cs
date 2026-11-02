@@ -104,7 +104,7 @@ namespace SudokuRoguelike.UI
             colors.selectedColor = new Color(1f, 0.93f, 0.80f, 1f);
             colors.disabledColor = Color.white;
             button.colors = colors;
-            button.onClick.AddListener(() => mc.SetSelectedClass(id));
+            button.onClick.AddListener(() => mc.ChooseClass(id));   // INPUT-PAD-005: on to Begin
             disc.gameObject.AddComponent<FocusNotifier>().OnFocus = () => { if (button.interactable) mc.SetSelectedClass(id); };
             mc.RegisterClassButton(id, button);
             mc.RegisterLockOverlay(id, lockOverlay.gameObject);

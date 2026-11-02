@@ -15,8 +15,6 @@ namespace SudokuRoguelike.UI
     public sealed partial class InRunController
     {
         public const float FloorEntrySeconds = 2f;
-        public const float FloorEntryStorySeconds = 7f;   // [REQ: STORY-SHOW-001] time to read the chapter (any key skips)
-        private float _floorEntryHold = FloorEntrySeconds;
         private const float FloorEntryFadeSeconds = 0.3f;
         private const float PathUnrollSeconds = 0.45f;
 
@@ -37,8 +35,10 @@ namespace SudokuRoguelike.UI
             if (state != null && state.Mode == GameMode.GardenRun) _floorEntryShownFor = state.CurrentFloor;
         }
 
-        // The click or key that closed the class card must not also skip the floor's painting in the same frame.
-        private bool FloorEntrySkipPressed() => Input.anyKeyDown && Time.frameCount > _floorEntryBuiltFrame;
+        // The click or key that closed the class card must not also skip the floor's painting in the same frame, and a
+        // story scene's presses belong to the scene (STORY-SCENE-001).
+        private bool FloorEntrySkipPressed() => (Input.anyKeyDown || PadButtons.AnyPressed()) && Time.frameCount > _floorEntryBuiltFrame
+            && !StoryScene.Blocking;
 
         // Each floor of a Garden Run is entered once; the tutorial, the Monthly Walk and the other modes have no path.
         private void ShowFloorEntryIfNew(RunState state)
@@ -99,8 +99,6 @@ namespace SudokuRoguelike.UI
                 warningShadow.effectDistance = new Vector2(2f, -2f);
             }
 
-            _floorEntryHold = BuildChapterSlip(screen.transform, state) ? FloorEntryStorySeconds : FloorEntrySeconds;
-
             // The path, still rolled up, lies along the bottom.
             var rolled = ScrollUiKit.Fill(screen.transform, "RolledPath", new Vector2(0.1875f, 0.065f),
                 new Vector2(0.8125f, 0.124f), ScrollUiKit.Paper, ScrollUiKit.Rounded(30f));
@@ -116,34 +114,39 @@ namespace SudokuRoguelike.UI
 
             // A controller's Submit lands on the skip button, not on a path tile under the painting.
             EventSystem.current?.SetSelectedGameObject(_floorEntry);
+            PlayDueStoryScene(screen.transform, state);
         }
 
-        // [REQ: STORY-SHOW-001] The first floor of a Garden Run opens on the keeper's current chapter (narrative-direction.md):
-        // a paper slip on the painting with "Chapter 2 of 5 · title" and the chapter told by the voice. False when none shows.
-        private static bool BuildChapterSlip(Transform screen, RunState state)
+        // [REQ: STORY-SHOW-001] [REQ: STORY-SCENE-001] The first floor of a Garden Run plays the keeper's newest chapter as a
+        // scene over the painting when it has not played yet (the last chapter's when every keeper's has), once: it is
+        // marked seen as it starts, so a skip or a closed game does not bring it back.
+        private static void PlayDueStoryScene(Transform screen, RunState state)
         {
-            if (state.CurrentFloor != 0 || !Meta.StoryService.Tells(state)) return false;
+            if (state.CurrentFloor != 0 || !Meta.StoryService.Tells(state)) return;
             var save = new Save.SaveFileService(Save.SaveProfileService.ActiveSlot);
-            var meta = save.HasSaveFile() ? save.Load().MetaProgress : null;
-            var chapter = Meta.StoryService.ChapterOf(meta, state.ClassId);
-            var slip = ScrollUiKit.Fill(screen, "ChapterSlip", new Vector2(0.075f, 0.63f), new Vector2(0.455f, 0.86f), ScrollUiKit.Paper);
-            var shadow = slip.gameObject.AddComponent<Shadow>();
-            shadow.effectColor = new Color(0f, 0f, 0f, 0.55f);
-            shadow.effectDistance = new Vector2(0f, -10f);
-            ScrollUiKit.Line(slip.transform, "Thread", new Vector2(0.5f, 1f), new Vector2(0.5f, 1.12f), ScrollUiKit.Gold, 2f);
-            ScrollUiKit.Label(slip.transform, "ChapterEyebrow", LocalizationService.Format("Story.Chapter", "Chapter {0} of {1} · {2}",
-                    chapter, Meta.StoryService.Chapters, Meta.StoryService.Title(state.ClassId, chapter)).ToUpperInvariant(),
-                18, TextAnchor.MiddleLeft, ScrollUiKit.Vermilion, new Vector2(0.06f, 0.80f), new Vector2(0.94f, 0.92f), 11);
-            ScrollUiKit.Label(slip.transform, "ChapterText", Meta.StoryService.Text(state.ClassId, chapter), 23, TextAnchor.UpperLeft,
-                ScrollUiKit.Ink, new Vector2(0.06f, 0.16f), new Vector2(0.94f, 0.77f), 13, FontStyle.Italic).lineSpacing = 1.15f;
-            ScrollUiKit.Label(slip.transform, "ChapterVoice", LocalizationService.T("Codex.Tales.Voice", "told by a voice"), 15,
-                TextAnchor.MiddleRight, ScrollUiKit.InkSoft, new Vector2(0.06f, 0.04f), new Vector2(0.94f, 0.14f), 10);
-            return true;
+            if (!save.HasSaveFile()) return;
+            var envelope = save.Load();
+            var meta = envelope.MetaProgress;
+            if (meta == null) return;
+            var chapter = Meta.StoryService.SceneDue(meta, state.ClassId);
+            if (chapter > 0)
+            {
+                Meta.StoryService.MarkSceneSeen(meta, state.ClassId, chapter);
+                StoryScene.Show(state.ClassId, chapter, screen);
+            }
+            else if (Meta.StoryService.NinthSceneDue(meta))
+            {
+                meta.StoryNinthSceneSeen = true;
+                StoryScene.ShowNinth(screen);
+            }
+            else return;
+            save.Save(envelope);
         }
 
         private IEnumerator FloorEntryTimer()
         {
-            yield return new WaitForSecondsRealtime(_floorEntryHold);
+            while (StoryScene.Current != null) yield return null;   // the painting's two seconds start after the scene
+            yield return new WaitForSecondsRealtime(FloorEntrySeconds);
             _floorEntryRoutine = null;
             DismissFloorEntry(true);
         }

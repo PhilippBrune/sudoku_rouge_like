@@ -1,11 +1,12 @@
 # Narrative Direction
 
-**Version:** 1.2 | **Date:** 2026-11-02 | **Status:** implemented (the story of the Nine; conversation scenes wait for the owner's pick)
+**Version:** 1.3 | **Date:** 2026-11-02 | **Status:** implemented (the story of the Nine with its scenes)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.3 | 2026-11-02 | implemented | Owner's pick (0.3.1 playtest): Story A, the painted dialogue, one scene per chapter (40 and the last one), played once at the first floor of the next Garden Run with that keeper; it replaces the chapter slip and can be watched again in the Codex (STORY-SCENE-001, UI-STYLE-040, RM-225). Ten story achievements (ACHIEVE-STORY-001, Achievements.md 1.3). |
 | 1.2 | 2026-11-02 | implemented | Owner's answers (2026-11-02): the premise yes; warden names as proposed (name + title); chapters by class milestones; the Codex's Tales page; a secret voice tells it (the voice is the ninth keeper). Built as STORY-CHAPTER-001, STORY-SAVE-001, STORY-SHOW-001, STORY-WARDEN-001, STORY-NINTH-001, STORY-TALES-001; three mockups for conversation scenes (layout-proposals 3.12, RM-225). |
 | 1.1 | 2026-10-27 | new | Owner request (2026-10-27): the story concept (v1.0, 2026-10-25; its file is removed) is merged as the section "Proposal: the story of the Nine". A proposal for the owner's pick (RM-125): nothing built, no requirement IDs yet. The text above has no version before 1.1 and is unchanged. |
 
@@ -139,9 +140,15 @@ Effort: M for the code, plus the writing. Requirement IDs: STORY-CHAPTER-001 to 
 |----|----------|
 | STORY-CHAPTER-001 | `Meta/StoryService`: five chapters per keeper (the eight classes); chapter 1 is open from the start, 2 opens with a warden defeated, 3 with Floor 3 reached, 4 with a win, 5 with a win at Harmony III. Only a Garden Run with a class counts (no Daily Walk, Custom Puzzle or other mode). Texts `Story.<Class>.<n>.Title/Text`. |
 | STORY-SAVE-001 | `MetaProgressionState.StoryChapters` (highest chapter per keeper) and `StoryNinthOpened`, set at the run's end in `ProfileService.RecordRunAndGetNewUnlocks` (`StoryService.Record`); chapters never close; saves from before 0.3.2 start at chapter 1. |
-| STORY-SHOW-001 | The first floor's entry painting shows the keeper's current chapter on a paper slip ("Chapter 2 of 5 · title", the text, "told by a voice"; 7 s, any key skips); the run end lists a chapter the run opened first under "This run" (`RunEndInsights.Moved`). |
+| STORY-SHOW-001 | The first floor's entry plays the keeper's newest chapter as a scene when it has not played yet (STORY-SCENE-001; 1.2 showed a paper slip with the chapter for 7 s); the run end lists a chapter the run opened first under "This run" (`RunEndInsights.Moved`). |
 | STORY-WARDEN-001 | Under the boss gate's scroll the warden's name and its line to this keeper (`Story.Warden.<floor>.<Class>`); on the offering table its parting line under the mask (`Story.Warden.<floor>.Parting`). |
 | STORY-NINTH-001 | After a win with every keeper the last chapter opens ("The ninth keeper"): the run end says so and the Codex shows it. |
 | STORY-TALES-001 | The Codex's fifth bookmark, Tales: 41 entries (eight keepers × five chapters and the last one) with the keeper's icon; an open chapter shows its text, the keeper, the chapter and what opened it; a closed one says what opens it. |
 
-Achievements for the story ("first chapter", "the ninth keeper") are not built: they need new Steamworks entries (owner).
+### As built (1.3)
+
+| ID | As built |
+|----|----------|
+| STORY-SCENE-001 | One scene per chapter (`UI/StoryScene`, `StoryService.SceneLines`): the keeper speaks, in chapters 2, 3 and 4 the warden answers (Take, Kagami, Kasumi) and the keeper again, last the voice tells the chapter (its text). The ninth chapter is the voice alone. Texts `Story.Scene.<Class>.<n>.K1/W/K2` (88 lines). It plays once over the first floor's entry painting of the next Garden Run with that keeper: the newest chapter not yet played (`MetaProgressionState.StoryScenesSeen`, `StoryNinthSceneSeen`, saved as it starts, so a skip or a closed game does not bring it back; a save from before 0.3.3 plays the chapter it stands at). The painting's two seconds start after it. The Codex's Tales page plays a found chapter's scene again (X or V, or the button under its facts). |
+| UI-STYLE-040 | Story A · The painted dialogue (owner's pick of three): the painting of the warden's floor (the shrine garden for chapter 5, the victory painting for the last), the keeper's seal on the left in gold, the warden's on the right in vermilion, the one not speaking dimmed; the chapter's tag top left; the talk on a paper band with wooden rods along the bottom, the speaker in vermilion, the voice in italics; dots for the lines; A, Enter or a click: the next line; B or Esc: skip. |
+| ACHIEVE-STORY-001 | Ten achievements (Achievements.md 1.3): a second chapter of any keeper, all five chapters of each keeper, the ninth keeper's chapter. They need entering in Steamworks. |

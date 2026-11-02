@@ -100,6 +100,23 @@ namespace SudokuRoguelike.Tests
             StringAssert.StartsWith("Locked", Find<Text>(panel, "ChosenClassSub").text);
         }
 
+        // [REQ: INPUT-PAD-005] GAP-104 (0.3.1 playtest): A on a class seal chooses the class and moves the focus to Begin.
+        [UnityTest]
+        [Requirement("INPUT-PAD-005")]
+        public IEnumerator SelectClass_AOnASeal_ChoosesItAndGoesToBegin()
+        {
+            var (host, menu) = OpenMenu();
+            menu.StartGame();
+            yield return null;
+
+            var panel = Panel(host, "ClassSelectPanel");
+            EventSystem.current.SetSelectedGameObject(Find<Button>(panel, "BtnClassNumberFreak").gameObject);
+            Click(panel, "BtnClassNumberFreak");
+            yield return null;
+            var chosen = EventSystem.current.currentSelectedGameObject;
+            Assert.AreEqual("BtnConfirmClass", chosen != null ? chosen.name : "nothing");
+        }
+
         [UnityTest]
         [Requirement("UI-STYLE-024", "REQ-RUN-100")]
         public IEnumerator SelectClass_TheStripHoldsTheRunSettings_AndThereIsNoConfirmationWindow()

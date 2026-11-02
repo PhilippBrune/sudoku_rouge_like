@@ -289,6 +289,16 @@ namespace SudokuRoguelike.Core
 
             _currH = Input.GetAxis(AxisHorizontal);
             _currV = Input.GetAxis(AxisVertical);
+#if ENABLE_INPUT_SYSTEM
+            // [REQ: INPUT-PAD-005] The left stick, read where the owner's pad is seen; the stronger of the two counts.
+            var pad = UnityEngine.InputSystem.Gamepad.current;
+            if (pad != null)
+            {
+                var stick = pad.leftStick.ReadValue();
+                if (Mathf.Abs(stick.x) > Mathf.Abs(_currH)) _currH = stick.x;
+                if (Mathf.Abs(stick.y) > Mathf.Abs(_currV)) _currV = stick.y;
+            }
+#endif
 
             _axisLeftConsumed  = _currH < -AxisThreshold && _prevH >= -AxisThreshold ? false : _axisLeftConsumed;
             _axisRightConsumed = _currH >  AxisThreshold && _prevH <=  AxisThreshold ? false : _axisRightConsumed;
@@ -326,32 +336,16 @@ namespace SudokuRoguelike.Core
 
         /// <summary>
         /// Call once per frame (e.g. at the top of a MonoBehaviour.Update).
-        /// Hides the cursor when gamepad input is detected; shows it when the mouse moves.
+        /// [REQ: INPUT-PAD-006] While the pad is in use the mouse pointer is hidden; a click, a key or the mouse after the
+        /// pad has rested brings it back (InputDeviceTracker). It is not locked: a locked pointer sits in the screen's
+        /// middle, so the click that switches back would be lost or land there.
         /// </summary>
         public static void UpdateCursorVisibility()
         {
             PadButtons.SyncUiModule();   // [REQ: INPUT-PAD-002] confirm and cancel on the right buttons for the pad in use
             InputDeviceTracker.Tick();   // [REQ: INPUT-HINT-001] the key hints follow the device in use
-            // Any joystick button pressed this frame?
-            var anyGamepad = false;
-            for (var k = 0; k < 20 && !anyGamepad; k++)
-                anyGamepad = Input.GetKeyDown(KeyCode.JoystickButton0 + k);
-
-            // Any analogue stick above threshold?
-            if (!anyGamepad)
-                anyGamepad = Mathf.Abs(Input.GetAxis("Horizontal")) > AxisThreshold
-                          || Mathf.Abs(Input.GetAxis("Vertical"))   > AxisThreshold;
-
-            if (anyGamepad)
-            {
-                Cursor.visible = false;
-                return;
-            }
-
-            // Mouse moved or clicked → restore cursor
-            if (Input.GetAxis("Mouse X") != 0f || Input.GetAxis("Mouse Y") != 0f
-                || Input.GetMouseButton(0) || Input.GetMouseButton(1))
-                Cursor.visible = true;
+            var pad = InputDeviceTracker.UsingPad;
+            if (Cursor.visible == pad) Cursor.visible = !pad;
         }
 
         public string GetDisplayName(InputAction action)

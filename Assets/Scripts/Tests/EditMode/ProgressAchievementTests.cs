@@ -165,6 +165,39 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
+        [Requirement("ACHIEVE-STORY-001")]
+        public void TheStory_GivesANewPage_AKeepersWholeTale_AndTheNinthKeeper()
+        {
+            var meta = new MetaProgressionState
+            {
+                StoryChapters = new List<StoryChapterEntry>
+                {
+                    new StoryChapterEntry { ClassId = ClassId.GardenMonk, Chapter = 2 },
+                    new StoryChapterEntry { ClassId = ClassId.ReedDuelist, Chapter = 5 },
+                }
+            };
+
+            var got = Evaluate(Run(victory: false), meta: meta);
+
+            CollectionAssert.Contains(got, "story_new_page");
+            CollectionAssert.Contains(got, "story_tale_reed_duelist");
+            CollectionAssert.DoesNotContain(got, "story_tale_garden_monk", "chapter 2 of 5 is not the whole tale");
+            CollectionAssert.DoesNotContain(got, "story_ninth_keeper");
+            meta.StoryNinthOpened = true;
+            CollectionAssert.Contains(Evaluate(Run(victory: false), meta: meta), "story_ninth_keeper");
+            CollectionAssert.IsSubsetOf(new[] { "story_new_page", "story_tale_reed_duelist", "story_ninth_keeper" },
+                SteamAchievementService.AllAchievementIds);
+        }
+
+        [Test]
+        public void AFreshProfile_HasNoStoryAchievement()
+        {
+            var got = Evaluate(Run(victory: false));
+
+            CollectionAssert.IsEmpty(got.FindAll(id => id.StartsWith("story_")), "chapter 1 is open from the start");
+        }
+
+        [Test]
         public void EveryAchievementId_HasAnEntryInTheSpec()
         {
             var spec = System.IO.File.ReadAllText("docs/Achievements.md");

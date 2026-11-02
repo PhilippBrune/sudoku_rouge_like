@@ -351,6 +351,8 @@ namespace SudokuRoguelike.UI
                 ShowRunEndScroll(new RunEndSummary
                 {
                     Victory = victory, State = run.State, Result = result, PreLevel = preLevel, PostLevel = postLevel,
+                    PreXpInto = preXp - XpTable.CumulativeXpForLevel(preLevel),
+                    PreXpToNext = preLevel < MaxClassLevel ? XpTable.XpToNextLevel(preLevel) : 0,
                     XpInto = postXpInto, XpToNext = postXpToNext, NewUnlocks = newUnlocks,
                     Unlocked = postEnvelope?.MetaProgress?.UnlockedClasses,
                     SoClose = RunEndInsights.SoClose(victory, floorReached, run.CurrentLevelConfig?.IsBoss == true, CellsLeft(run),

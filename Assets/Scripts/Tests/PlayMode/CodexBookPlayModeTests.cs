@@ -94,6 +94,30 @@ namespace SudokuRoguelike.Tests
             Assert.IsNull(FindOrNull(host, "CodexFact_0_Label"), "an unknown entry keeps its facts hidden");
         }
 
+        // [REQ: STORY-SCENE-001] A found chapter on the Tales page plays its scene again; B ends it and the Codex stays.
+        [UnityTest]
+        [Requirement("STORY-SCENE-001")]
+        public IEnumerator TalesPage_AFoundChapter_PlaysItsSceneAgain()
+        {
+            var host = OpenCodex();
+            yield return null;
+            Click(host, "BtnCodexTales");
+            Click(host, "BtnCodexFilterFound");
+            yield return null;
+
+            Click(host, "BtnCodexWatchScene");
+            yield return null;
+            var scene = StoryScene.Current;
+            Assert.NotNull(scene, "the scene plays over the Codex");
+            _createdRoots.Add(scene.gameObject);
+            Assert.AreEqual(LocalizationService.T($"Story.Scene.{Meta.StoryService.Keepers[0]}.1.K1"), Find<Text>(scene.gameObject, "Line").text,
+                "the first found chapter: the first keeper's chapter 1");
+            scene.Close();
+            yield return null;
+            Assert.IsNull(StoryScene.Current);
+            Assert.IsTrue(Find<Transform>(host, "ItemsPanel").gameObject.activeInHierarchy, "the Codex stays open");
+        }
+
         [UnityTest]
         public IEnumerator ItemsPage_NamesTheClassTheCollectionUnlocks()
         {

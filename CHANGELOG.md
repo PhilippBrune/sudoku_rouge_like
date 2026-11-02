@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.3.3: test build (2026-11-02)
+
+A local build for the owner's playtest. Not uploaded.
+
+### New
+
+- **Story scenes.** Each chapter of the story of the Nine now plays as a scene: the keeper and the warden face each other on the floor's painting and talk, one line at a time, and the voice tells the rest. A new chapter plays once at the start of your next run with that keeper. The Codex's Tales page plays any found chapter again.
+- **Ten story achievements:** a new page, the whole tale of each keeper, and the ninth keeper.
+- **XP is painted in.** At the end of a run a brush paints the XP into the bar, and every new level gets a red seal. Any key or button skips it.
+
+### Changed
+
+- The legend is now the rule slip beside the board: each rule has its colour, its name and what it asks. Tap a rule to see only its lines.
+- A Spirit Trial's puzzle no longer shows the bag and the relics.
+- The Options in a run no longer show the empty Language page.
+- The Daily Walk widget in the main menu opens the Daily Walk in Game Modes.
+- Back from the Monthly Walk returns to where you opened it.
+
+### Controller
+
+- A confirms and B goes back on every screen, read the same way everywhere.
+- The left stick moves through the menus like the D-pad.
+- Start opens and closes the Options, in the menu and in a run.
+- On Select Class, A on a class picks it and jumps to Begin.
+- The mouse pointer hides while you play with the controller, and the button hints no longer flicker.
+
+
 ## 0.3.2: test build (2026-11-02)
 
 A local build for the owner's playtest. Not uploaded.

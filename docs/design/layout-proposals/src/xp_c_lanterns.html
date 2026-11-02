@@ -1,0 +1,48 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css"><link rel="stylesheet" href="xp_common.css">
+<style>
+  /* XP C · Rising lanterns: each ledger row lets small paper lanterns rise to the bar; where one touches the bar it
+     opens as a segment of light, so the bar fills in glowing pieces (one per row). At a level the segments flare into a
+     ring of light and the ensō stamp appears. About 2.5 s; any key or A shows the end at once. */
+  .seg { position:absolute; top:0; bottom:0; background:#dbb561; box-shadow:0 0 14px rgba(255,214,120,.55); }
+  .seg.new { background:#fbe3a0; box-shadow:0 0 22px 6px rgba(255,214,120,.85); }
+  .lan { position:absolute; width:26px; height:34px; border-radius:46%; background:radial-gradient(circle at 50% 40%, #fff1c4, #f0a948 60%, #b5571f);
+         box-shadow:0 0 18px 6px rgba(255,180,90,.6); opacity:0; }
+  .lan::before, .lan::after { content:''; position:absolute; left:6px; width:14px; height:4px; background:#3a2412; }
+  .lan::before { top:-2px; } .lan::after { bottom:-2px; }
+  .ring { position:absolute; left:50%; top:50%; width:620px; height:120px; transform:translate(-50%,-50%); border-radius:50%;
+          border:3px solid rgba(255,220,140,.8); box-shadow:0 0 30px rgba(255,220,140,.6); opacity:0; }
+  body.f1 .l1, body.f2 .l2, body.f2 .l3 { opacity:1; }
+  body.f2 .ring { opacity:1; }
+  body.f1 .s2, body.f1 .s3, body.f1 .s4 { display:none; }
+  body.f3 .s1, body.f3 .s2, body.f3 .s3, body.f3 .s4 { display:none; }
+  body.f3 .final { display:block; }
+  .final { display:none; left:0; width:38%; }
+</style></head><body>
+<div class="bg"></div>
+<div class="panel">
+  <div class="hdr">CLASS XP THIS RUN</div><div class="gain" data-count></div>
+  <div class="track">
+    <div class="seg s1" style="left:0; width:40%; border-radius:16px 0 0 16px"></div>
+    <div class="seg s2" style="left:40%; width:24%"></div>
+    <div class="seg s3 new" style="left:64%; width:20%"></div>
+    <div class="seg s4 new" style="left:84%; width:16%; border-radius:0 16px 16px 0"></div>
+    <div class="seg final" style="border-radius:16px"></div>
+    <div class="ring"></div>
+  </div>
+  <div class="lvl">Number Freak · Lv 6</div><div class="next">38 / 100 XP to Lv 7</div>
+  <div class="stamp">Level up<br>1 → 6</div>
+</div>
+<div class="lan l1" style="left:1050px; top:600px"></div>
+<div class="lan l2" style="left:1180px; top:540px"></div>
+<div class="lan l3" style="left:1250px; top:600px; transform:scale(.8)"></div>
+<div class="skip">Any key or A shows it at once</div>
+<div class="ledger">
+  <div style="top:40px"><span>Base XP</span><span>388</span></div>
+  <div style="top:85px"><span>Perfect puzzles ×4 (+20%)</span><span style="color:#2f6a37">+78</span></div>
+  <div style="top:130px"><span>Victory bonus (+25%)</span><span style="color:#2f6a37">+97</span></div>
+</div>
+<div class="frame"></div>
+<script src="xp_anim.js"></script>
+<script>document.querySelector('.frame').textContent = {f1:'0.3 s',f2:'1.2 s',f3:'2.6 s'}[document.body.className.match(/f\d/)[0]];</script>
+</body></html>

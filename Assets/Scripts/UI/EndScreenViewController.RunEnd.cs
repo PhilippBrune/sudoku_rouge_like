@@ -24,6 +24,7 @@ namespace SudokuRoguelike.UI
             public RunState State;
             public RunResult Result;
             public int PreLevel, PostLevel, XpInto, XpToNext;
+            public int PreXpInto, PreXpToNext;   // where the class stood before the run (UI-STYLE-041)
             public List<ClassId> NewUnlocks;
             public List<ClassId> Unlocked;
             public List<string> SoClose;   // RM-111
@@ -292,20 +293,30 @@ namespace SudokuRoguelike.UI
             var fill = maxed ? 1f : Mathf.Clamp01(run.XpInto / (float)run.XpToNext);
             var track = ScrollUiKit.Fill(t, "XpTrack", new Vector2(0.0625f, 0.444f), new Vector2(0.934f, 0.559f),
                 new Color(1f, 1f, 1f, 0.12f), ScrollUiKit.Rounded(16f));
-            if (fill > 0f)
-                ScrollUiKit.Fill(track.transform, "XpFill", Vector2.zero, new Vector2(Mathf.Max(fill, 0.06f), 1f), ScrollUiKit.Gold,
-                    ScrollUiKit.Rounded(16f));
-            ScrollUiKit.Label(t, "XpLevel", F("InRun.End.Scroll.ClassLevel", className, run.PostLevel), 20, TextAnchor.MiddleLeft,
+            var bar = ScrollUiKit.Fill(track.transform, "XpFill", Vector2.zero, new Vector2(Mathf.Max(fill, 0.06f), 1f), ScrollUiKit.Gold,
+                ScrollUiKit.Rounded(16f));
+            bar.enabled = fill > 0f;
+            var gain = t.Find("XpGain")?.GetComponent<Text>();
+            var level = ScrollUiKit.Label(t, "XpLevel", F("InRun.End.Scroll.ClassLevel", className, run.PostLevel), 20, TextAnchor.MiddleLeft,
                 ScrollUiKit.PaperText, new Vector2(0.0625f, 0.33f), new Vector2(0.55f, 0.40f), 12);
-            ScrollUiKit.Label(t, "XpToNext", maxed ? T("InRun.End.Scroll.MaxLevel") : F("InRun.End.Scroll.XpToNext", run.XpInto, run.XpToNext,
+            var toNext = ScrollUiKit.Label(t, "XpToNext", maxed ? T("InRun.End.Scroll.MaxLevel") : F("InRun.End.Scroll.XpToNext", run.XpInto, run.XpToNext,
                     run.PostLevel + 1), 20, TextAnchor.MiddleRight, ScrollUiKit.PaperText, new Vector2(0.45f, 0.33f), new Vector2(0.934f, 0.40f), 12);
 
-            if (run.PostLevel <= run.PreLevel) return;
-            var stamp = ScrollUiKit.Spot(t, "LevelUpStamp", new Vector2(0.852f, 0.712f), new Vector2(122f, 122f), ScrollUiKit.Gold,
-                ScrollUiKit.Enso());
-            stamp.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 12f);
-            ScrollUiKit.Label(stamp.transform, "Text", F("InRun.End.Scroll.LevelUp", run.PreLevel, run.PostLevel), 22, TextAnchor.MiddleCenter,
-                ScrollUiKit.Gold, new Vector2(0.12f, 0.15f), new Vector2(0.88f, 0.85f), 12);
+            GameObject stampGo = null;
+            if (run.PostLevel > run.PreLevel)
+            {
+                var stamp = ScrollUiKit.Spot(t, "LevelUpStamp", new Vector2(0.852f, 0.712f), new Vector2(122f, 122f), ScrollUiKit.Gold,
+                    ScrollUiKit.Enso());
+                stamp.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 12f);
+                ScrollUiKit.Label(stamp.transform, "Text", F("InRun.End.Scroll.LevelUp", run.PreLevel, run.PostLevel), 22, TextAnchor.MiddleCenter,
+                    ScrollUiKit.Gold, new Vector2(0.12f, 0.15f), new Vector2(0.88f, 0.85f), 12);
+                stampGo = stamp.gameObject;
+            }
+
+            // [REQ: UI-STYLE-041] The brush paints this run's XP into the bar (skippable); the end shows the values above.
+            var preFrac = run.PreXpToNext > 0 ? Mathf.Clamp01(run.PreXpInto / (float)run.PreXpToNext) : 0f;
+            panel.gameObject.AddComponent<XpBrushAnimator>().Play(track.rectTransform, bar, gain, level, toNext, stampGo, className,
+                run.Result?.XpEarned ?? 0, run.PreLevel, preFrac, run.PostLevel, fill);
         }
 
         // The run score as a ledger: base XP, each bonus and the mistake penalty, then the final score.

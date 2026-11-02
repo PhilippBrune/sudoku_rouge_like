@@ -80,7 +80,7 @@ namespace SudokuRoguelike.UI
             if (_bar != null) _bar.rectTransform.anchorMax = new Vector2(t, 1f);
             if (_lanternGlow != null && !AnimationHelper.MotionReduced)   // the lantern goes out last
                 _lanternGlow.color = new Color(1f, 0.64f, 0.35f, 0.55f * (1f - t * t));
-            var skip = Time.unscaledTime - _startedAt > 0.25f && (Input.anyKeyDown || PadButtons.UiSubmitThisFrame());
+            var skip = Time.unscaledTime - _startedAt > 0.25f && (Input.anyKeyDown || PadButtons.AnyPressed());
             if (t < 1f && !skip) return;
             var quit = _quit;
             _quit = null;

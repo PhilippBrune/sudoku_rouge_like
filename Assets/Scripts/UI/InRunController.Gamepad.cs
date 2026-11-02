@@ -140,11 +140,13 @@ namespace SudokuRoguelike.UI
             if (_inGameOptionsPanel != null && _inGameOptionsPanel.activeSelf)
             {
                 if (PadButtons.Pressed(KeyCode.JoystickButton1)) ToggleOptionsPanel();
+                else StepPadFocus(_inGameOptionsPanel);
                 return;
             }
             if (TryGetActiveOverlay(out var overlay))
             {
                 if (PadButtons.Pressed(KeyCode.JoystickButton1)) InvokeOverlayCancel(overlay);
+                else StepPadFocus(overlay);
                 return;
             }
             if (PadButtons.Pressed(KeyCode.JoystickButton1))
@@ -153,6 +155,20 @@ namespace SudokuRoguelike.UI
                 return;
             }
             if (PadButtons.Pressed(KeyCode.JoystickButton6)) { SaveAndQuit(); return; }
+
+            // [REQ: INPUT-PAD-005] The D-pad and the left stick step between the path's nodes (the UI module never saw them).
+            var step = MenuDpad.ReadPressed();
+            if (step != UnityEngine.EventSystems.MoveDirection.None)
+            {
+                var es = UnityEngine.EventSystems.EventSystem.current;
+                var current = es != null && es.currentSelectedGameObject != null ? es.currentSelectedGameObject.GetComponent<Selectable>() : null;
+                if (current == null || !current.gameObject.activeInHierarchy) RestorePadFocusOnPath();
+                else
+                {
+                    var next = MenuDpad.Step(current, step);
+                    if (next != null) es.SetSelectedGameObject(next.gameObject);
+                }
+            }
 
             var lt = InputRemapService.ReadTrigger(left: true);
             var rt = InputRemapService.ReadTrigger(left: false);
@@ -251,6 +267,27 @@ namespace SudokuRoguelike.UI
         private static bool IsShown(GameObject panel) => panel != null && panel.activeSelf;
 
         // B on a scene over the path: its own skip, leave or cancel button (GAP-080).
+        // [REQ: INPUT-PAD-005] The pad's D-pad and left stick move between the controls of a panel over the path (the UI
+        // module keeps only the keys, which move there by themselves); the focus starts inside the panel, so A never
+        // presses a control behind it.
+        private static void StepPadFocus(GameObject panel)
+        {
+            var es = UnityEngine.EventSystems.EventSystem.current;
+            if (es == null) return;
+            var chosen = es.currentSelectedGameObject;
+            var current = chosen != null ? chosen.GetComponent<Selectable>() : null;
+            if (current == null || !current.gameObject.activeInHierarchy || !current.transform.IsChildOf(panel.transform))
+            {
+                foreach (var selectable in panel.GetComponentsInChildren<Selectable>(false))
+                    if (selectable.IsInteractable()) { es.SetSelectedGameObject(selectable.gameObject); return; }
+                return;
+            }
+            var step = MenuDpad.ReadPressed();
+            if (step == UnityEngine.EventSystems.MoveDirection.None) return;
+            var next = MenuDpad.Step(current, step);
+            if (next != null) es.SetSelectedGameObject(next.gameObject);
+        }
+
         private static void InvokeOverlayCancel(GameObject overlay)
         {
             var buttons = overlay.GetComponentsInChildren<Button>(false);

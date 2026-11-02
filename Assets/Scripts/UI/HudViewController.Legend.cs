@@ -7,118 +7,60 @@ using SudokuRoguelike.Core;
 
 namespace SudokuRoguelike.UI
 {
-    // [REQ: REQ-BOSS-104] Modifier legend (GAP-025, BossMechanicsSystem §Modifier Legend Panel): a collapsible list of
-    // the puzzle's modifiers with their overlay colour. Tapping an entry isolates that modifier's geometry for 3 s;
-    // tapping it again restores all layers. The panel collapses after 5 s without interaction.
+    // [REQ: REQ-BOSS-104] [REQ: UI-STYLE-042] The legend is the rule slip itself (owner's pick A, 0.3.1 playtest: the
+    // legend box opened at a different place for every number of rules): each rule is a row with its overlay colour, its
+    // name and what it asks. Tapping a row shows only that rule's geometry for 3 s; tapping it again shows all again.
     public sealed partial class HudViewController
     {
-        public const float LegendAutoCollapseSeconds = 5f;
-        private static readonly Color LegendPanelBg = new Color(0.05f, 0.05f, 0.08f, 0.85f);
         private static readonly Color NoGeometrySwatch = new Color(0.55f, 0.55f, 0.55f, 0.9f);
 
-        private Button _legendButton;
-        private GameObject _legendPanel;
-        private List<BossModifierId> _legendModsRef;
         private BossModifierId? _legendIsolated;
-        private Coroutine _legendCollapse;
         private readonly List<(BossModifierId Id, Outline Highlight)> _legendEntries = new List<(BossModifierId, Outline)>();
 
-        private void EnsureModifierLegend()
+        // One row per rule on the slip, from the top; the slip keeps its place and size.
+        private void BuildRuleRows(IReadOnlyList<BossModifierId> mods)
         {
-            var run = _map?.Run;
-            var mods = run?.CurrentLevelConfig?.ActiveModifiers;
-            var sealedEyes = run?.State != null && run.CurrentLevelConfig != null && run.CurrentLevelConfig.IsBoss
-                             && SudokuRoguelike.Run.CurseService.IsActive(run.State, "sealed_eyes");
-            if (_sudokuPanel == null || mods == null || mods.Count == 0 || sealedEyes)
-            {
-                if (_legendButton != null) _legendButton.gameObject.SetActive(false);
-                if (_legendPanel != null) _legendPanel.SetActive(false);
-                return;
-            }
-
-            if (_legendButton == null)
-            {
-                // UI-STYLE-002: a small paper tag above the rule slip.
-                _legendButton = ScrollUiKit.PillButton(_sudokuPanel.transform, "BtnModifierLegend",
-                    new Vector2(0.7716f, 0.362f), new Vector2(0.9710f, 0.398f), T("Legend"), 17,
-                    new Color(0.95f, 0.91f, 0.81f, 0.96f), ScrollUiKit.Ink, 14f);
-                _legendButton.navigation = new Navigation { mode = Navigation.Mode.Automatic };
-                _legendButton.onClick.AddListener(ToggleLegend);
-            }
-            _legendButton.gameObject.SetActive(true);
-
-            if (!ReferenceEquals(mods, _legendModsRef))
-            {
-                _legendModsRef = mods;
-                _legendIsolated = null;
-                if (_legendPanel != null) Destroy(_legendPanel);
-                _legendPanel = null;
-                _legendEntries.Clear();
-            }
-        }
-
-        private void ToggleLegend()
-        {
-            if (_legendPanel != null && _legendPanel.activeSelf)
-            {
-                CollapseLegend();
-                return;
-            }
-            if (_legendPanel == null) BuildLegendPanel();
-            if (_legendPanel == null) return;
-            _legendPanel.SetActive(true);
-            RestartLegendCollapse();
-        }
-
-        private void BuildLegendPanel()
-        {
-            var mods = _legendModsRef;
-            if (_sudokuPanel == null || mods == null) return;
-
-            _legendPanel = new GameObject("ModifierLegendPanel", typeof(RectTransform), typeof(Image));
-            _legendPanel.transform.SetParent(_sudokuPanel.transform, false);
-            var rt = (RectTransform)_legendPanel.transform;
-            const float rowHeight = 0.055f;
-            rt.anchorMin = new Vector2(0.74f, Mathf.Max(0.42f, 0.845f - rowHeight * mods.Count - 0.01f));
-            rt.anchorMax = new Vector2(0.93f, 0.845f);
-            rt.offsetMin = rt.offsetMax = Vector2.zero;
-            _legendPanel.GetComponent<Image>().color = LegendPanelBg;
-
-            var rows = mods.Count;
-            for (var i = 0; i < rows; i++)
+            ScrollUiKit.DestroyChildrenNow(_modifierInfoBox.transform, "LegendEntry_");
+            _legendEntries.Clear();
+            _legendIsolated = null;
+            GetComponent<BoardViewController>()?.IsolateModifier(null);
+            var area = ScrollUiKit.Area(_modifierInfoBox.transform, "LegendEntry_Area", Vector2.zero, Vector2.one);
+            area.offsetMin = new Vector2(12f, 10f);
+            area.offsetMax = new Vector2(-10f, -16f);
+            for (var i = 0; i < mods.Count; i++)
             {
                 var id = mods[i];
                 var row = new GameObject("LegendEntry_" + id, typeof(RectTransform), typeof(Image), typeof(Button), typeof(Outline));
-                row.transform.SetParent(_legendPanel.transform, false);
+                row.transform.SetParent(area, false);
                 var rowRt = (RectTransform)row.transform;
-                rowRt.anchorMin = new Vector2(0.03f, 1f - (i + 1f) / rows + 0.01f);
-                rowRt.anchorMax = new Vector2(0.97f, 1f - (float)i / rows - 0.01f);
-                rowRt.offsetMin = rowRt.offsetMax = Vector2.zero;
-                row.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.04f);
+                rowRt.anchorMin = new Vector2(0f, 1f - (i + 1f) / mods.Count);
+                rowRt.anchorMax = new Vector2(1f, 1f - (float)i / mods.Count);
+                rowRt.offsetMin = new Vector2(0f, 2f);
+                rowRt.offsetMax = new Vector2(0f, -2f);
+                var bg = row.GetComponent<Image>();
+                bg.color = new Color(1f, 1f, 1f, 0f);   // a hit area; the paper shows through
+                var button = row.GetComponent<Button>();
+                button.targetGraphic = bg;
+                button.transition = Selectable.Transition.None;
                 var highlight = row.GetComponent<Outline>();
-                highlight.effectColor = InRunUiFactory.AccentGold;
-                highlight.effectDistance = new Vector2(1.5f, -1.5f);
+                highlight.effectColor = ScrollUiKit.Gold;
+                highlight.effectDistance = new Vector2(2f, -2f);
                 highlight.enabled = false;
 
-                var swatch = new GameObject("Swatch", typeof(RectTransform), typeof(Image));
-                swatch.transform.SetParent(row.transform, false);
-                var swRt = (RectTransform)swatch.transform;
-                swRt.anchorMin = new Vector2(0.03f, 0.25f);
-                swRt.anchorMax = new Vector2(0.13f, 0.75f);
-                swRt.offsetMin = swRt.offsetMax = Vector2.zero;
-                var swatchImage = swatch.GetComponent<Image>();
-                swatchImage.color = BoardViewController.TryGetLegendColor(id, out var color) ? color : NoGeometrySwatch;
-                swatchImage.raycastTarget = false;
+                var swatch = ScrollUiKit.Fill(row.transform, "Swatch", new Vector2(0f, 0.70f), new Vector2(0.11f, 0.86f),
+                    BoardViewController.TryGetLegendColor(id, out var color) ? color : NoGeometrySwatch, ScrollUiKit.Rounded(6f));
+                swatch.raycastTarget = false;
+                ScrollUiKit.Label(row.transform, "Name", BossService.GetModifierName(id), 17, TextAnchor.MiddleLeft, ScrollUiKit.Vermilion,
+                    new Vector2(0.14f, 0.58f), new Vector2(1f, 1f), 10);
+                ScrollUiKit.Label(row.transform, "Rule", BossService.GetModifierDescription(id), 14, TextAnchor.UpperLeft, ScrollUiKit.Ink,
+                    new Vector2(0f, 0f), new Vector2(1f, 0.58f), 9);
 
-                var label = InRunUiFactory.CreateText(row.transform, "Name", BossService.GetModifierName(id), 11,
-                    TextAnchor.MiddleLeft, InRunUiFactory.TextColor);
-                label.rectTransform.anchorMin = new Vector2(0.17f, 0f);
-                label.rectTransform.anchorMax = new Vector2(0.98f, 1f);
-                label.rectTransform.offsetMin = label.rectTransform.offsetMax = Vector2.zero;
-                label.horizontalOverflow = HorizontalWrapMode.Overflow;
-                label.raycastTarget = false;
-
-                row.GetComponent<Button>().onClick.AddListener(() => OnLegendEntryTapped(id));
+                button.onClick.AddListener(() =>
+                {
+                    OnLegendEntryTapped(id);
+                    // GAP-091: the rules that have no lines show their effect around the chosen cell instead.
+                    if (id == BossModifierId.Nonconsecutive || id == BossModifierId.Antiknight) OnModifierTapped?.Invoke(id);
+                });
                 _legendEntries.Add((id, highlight));
             }
         }
@@ -131,7 +73,6 @@ namespace SudokuRoguelike.UI
             foreach (var (entryId, highlight) in _legendEntries)
                 if (highlight != null) highlight.enabled = _legendIsolated == entryId;
             if (_legendIsolated.HasValue) StartCoroutine(ClearLegendHighlightAfter(_legendIsolated.Value));
-            RestartLegendCollapse();
         }
 
         private IEnumerator ClearLegendHighlightAfter(BossModifierId id)
@@ -141,26 +82,6 @@ namespace SudokuRoguelike.UI
             _legendIsolated = null;
             foreach (var (_, highlight) in _legendEntries)
                 if (highlight != null) highlight.enabled = false;
-        }
-
-        private void RestartLegendCollapse()
-        {
-            if (_legendCollapse != null) StopCoroutine(_legendCollapse);
-            _legendCollapse = StartCoroutine(CollapseLegendAfter(LegendAutoCollapseSeconds));
-        }
-
-        private IEnumerator CollapseLegendAfter(float seconds)
-        {
-            yield return new WaitForSeconds(seconds);
-            _legendCollapse = null;
-            if (_legendPanel != null) _legendPanel.SetActive(false);
-        }
-
-        private void CollapseLegend()
-        {
-            if (_legendCollapse != null) StopCoroutine(_legendCollapse);
-            _legendCollapse = null;
-            if (_legendPanel != null) _legendPanel.SetActive(false);
         }
     }
 }

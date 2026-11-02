@@ -139,7 +139,8 @@ namespace SudokuRoguelike.UI
             }
 
             InputRemapService.UpdateCursorVisibility();
-
+            // [REQ: STORY-SCENE-001] A story scene from the Codex takes A, B and Start until it ends.
+            if (StoryScene.Blocking) return;
 
             // MM-2/MM-6: axis-driven scroll for scrollable panels (runs every frame, before anyKeyDown guard)
             ScrollActivePanelIfNeeded();
@@ -150,7 +151,8 @@ namespace SudokuRoguelike.UI
             EnsureControllerSelection();
             HandleMenuGamepadNavigation();
 
-            if (!Input.anyKeyDown) return;
+            // [REQ: INPUT-PAD-005] The owner's pad is never a legacy "any key": its presses pass here too.
+            if (!Input.anyKeyDown && !PadButtons.AnyPressed()) return;
 
             if (_firstRunSetupOverlay != null && _firstRunSetupOverlay.activeSelf)
             {
@@ -186,6 +188,15 @@ namespace SudokuRoguelike.UI
                     ExecuteMainMenuCancelRoute(CancelRouteAction.DismissSudokuBasicsOverlay);
                     return;
                 }
+            }
+
+            // [REQ: INPUT-PAD-005] Start opens the Options and closes them again (back to the screen before); not while a
+            // key binding waits for its button.
+            if (PadButtons.Pressed(KeyCode.JoystickButton7) && !KeybindingsPanelController.Listening)
+            {
+                if (_menu.CurrentScreen == MenuScreen.Options) BackFromPanel();
+                else OpenOptions();
+                return;
             }
 
             // B button / Escape = back/cancel  (X-1: Escape now handles class select + all panels)
@@ -363,6 +374,7 @@ namespace SudokuRoguelike.UI
             _menu.RegisterPanel(MenuScreen.MainMenu, mainMenuPanel);
             _menu.RegisterPanel(MenuScreen.ClassSelect, classSelectPanel);
             _menu.RegisterPanel(MenuScreen.Options, optionsPanel);
+            if (monthlyWalkPanel != null) _menu.RegisterPanel(MenuScreen.MonthlyWalk, monthlyWalkPanel);   // MENU-BACK-001
             _menu.RegisterPanel(MenuScreen.Credits, creditsPanel);
             _menu.RegisterPanel(MenuScreen.TutorialSetup, tutorialSetupPanel);
             _menu.RegisterPanel(MenuScreen.MetaProgression, metaProgressionPanel);
@@ -483,14 +495,36 @@ namespace SudokuRoguelike.UI
             }
         }
 
+        // [REQ: MENU-BACK-001] A screen of the menu's history (0.3.1 playtest): Back returns to the main menu or to Game
+        // Modes, wherever the walk was opened from.
         public void ShowMonthlyWalkPanel()
         {
-            HideAllPanels();
-            if (_monthlyWalkPanel != null)
-            {
-                _monthlyWalkPanel.SetActive(true);
-                RefreshMonthlyWalkPanel();
-            }
+            if (_monthlyWalkPanel == null) return;
+            DropGameModesOverlays();
+            _menu.Show(MenuScreen.MonthlyWalk);
+            RefreshMonthlyWalkPanel();
+        }
+
+        /// <summary>[REQ: UI-STYLE-027] The main menu's Daily Walk tag opens the walk's curtain on Game Modes (0.3.1
+        /// playtest: it opened the old goals panel).</summary>
+        public void OpenDailyWalk()
+        {
+            ShowGameModes();
+            if (_gameModesScreen != null) _gameModesScreen.Show(GameModesScreen.Mode.Daily);
+        }
+
+        /// <summary>[REQ: INPUT-PAD-005] A (or a click) on a class's seal chooses it and puts the focus on Begin
+        /// (Abandon &amp; Begin), so a second A starts the run (0.3.1 playtest).</summary>
+        public void ChooseClass(ClassId classId)
+        {
+            SetSelectedClass(classId);
+            var begin = _classSelectPanel != null ? _classSelectPanel.transform.Find("ClassScroll/BtnConfirmClass") : null;
+            if (begin == null && _classSelectPanel != null)
+                foreach (var b in _classSelectPanel.GetComponentsInChildren<Button>(false))
+                    if (b.name == "BtnConfirmClass") { begin = b.transform; break; }
+            var button = begin != null ? begin.GetComponent<Button>() : null;
+            if (button != null && button.interactable && button.gameObject.activeInHierarchy)
+                EventSystem.current?.SetSelectedGameObject(button.gameObject);
         }
 
         public void LaunchSeasonalChallenge()

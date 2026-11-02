@@ -41,6 +41,16 @@ ICONS = {
     'daily_streak_7': ('background/bg_daily_walk', 'meta/icon_petal_hourglass', '7 Dawns'),
     'codex_half': ('background/bg_items_menu', 'ui/icon_items_codex', 'Half'),
     'codex_all': ('background/bg_items_menu', 'items/icon_golden_kintsugi_jar', 'Complete'),
+    'story_new_page': ('background/bg_shrine_garden', 'ui/icon_credits_scroll', 'New Page'),
+    'story_tale_number_freak': ('background/bg_puzzle_board', 'class/icon_number_freak', 'Whole Tale'),
+    'story_tale_garden_monk': ('background/bg_garden_grove', 'class/icon_garden_monk', 'Whole Tale'),
+    'story_tale_shrine_archivist': ('background/bg_shrine_garden', 'class/icon_shrine_archivist', 'Whole Tale'),
+    'story_tale_koi_gambler': ('background/bg_koi_garden', 'class/icon_koi_gambler', 'Whole Tale'),
+    'story_tale_stone_gardener': ('background/bg_demon_summit', 'class/icon_stone_gardener', 'Whole Tale'),
+    'story_tale_lantern_seer': ('background/bg_event', 'class/icon_lantern_seer', 'Whole Tale'),
+    'story_tale_reed_duelist': ('background/bg_koi_terrace', 'class/icon_reed_duelist', 'Whole Tale'),
+    'story_tale_quiet_cartographer': ('background/bg_game_modes', 'class/icon_quiet_cartographer', 'Whole Tale'),
+    'story_ninth_keeper': ('background/bg_victory', 'meta/icon_full_sakura', 'The Ninth'),
 }
 
 

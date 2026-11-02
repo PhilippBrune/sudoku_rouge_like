@@ -38,7 +38,6 @@ namespace SudokuRoguelike.UI
         private GameObject _floorModBanner;
         private Text _floorModText;
         private GameObject _modifierInfoBox;
-        private Text _modifierInfoText;
 
         // ── Combo / Passive ──
         private GameObject _comboBox;
@@ -91,7 +90,6 @@ namespace SudokuRoguelike.UI
         private bool   _cachedFloorModIsSpecial;
         // Modifier info box cache: mod list and listener are constant for the duration of a puzzle
         private object _cachedModInfoModsRef;
-        private string _cachedModInfoText;
 
 
         public float GetPuzzleElapsed() =>
@@ -417,7 +415,6 @@ namespace SudokuRoguelike.UI
 
             EnsureFloorModBanner();
             EnsureModifierInfoBox();
-            EnsureModifierLegend();
             EnsureComboCounter();
             EnsurePassiveLabel();
             EnsureClassBadge();
@@ -515,59 +512,14 @@ namespace SudokuRoguelike.UI
                 rt.offsetMin = Vector2.zero;
                 rt.offsetMax = Vector2.zero;
                 ScrollUiKit.MakeSlip(_modifierInfoBox.GetComponent<Image>(), 1.2f);
-
-                _modifierInfoText = InRunUiFactory.CreateText(_modifierInfoBox.transform, "ModInfoText", "",
-                    16, TextAnchor.UpperLeft, ScrollUiKit.Ink);
-                _modifierInfoText.rectTransform.anchorMin = Vector2.zero;
-                _modifierInfoText.rectTransform.anchorMax = Vector2.one;
-                _modifierInfoText.rectTransform.offsetMin = new Vector2(14, 10);
-                _modifierInfoText.rectTransform.offsetMax = new Vector2(-12, -18);
-                _modifierInfoText.resizeTextForBestFit = true;
-                _modifierInfoText.resizeTextMinSize = 10;
-                _modifierInfoText.resizeTextMaxSize = 16;
-                _modifierInfoText.supportRichText = true;
             }
 
-            if (_modifierInfoBox != null) _modifierInfoBox.SetActive(true);
-
-            if (_modifierInfoText != null)
-            {
-                // Only rebuild text and re-wire the listener when the mod list reference changes
-                if (!ReferenceEquals(activeMods, _cachedModInfoModsRef) || _cachedModInfoText == null)
-                {
-                    _cachedModInfoModsRef = activeMods;
-                    var sb = new StringBuilder();
-                    for (var i = 0; i < activeMods.Count; i++)
-                    {
-                        if (i > 0) sb.Append('\n');
-                        sb.Append("<color=#9e2a2b>").Append(BossService.GetModifierName(activeMods[i])).Append("</color>\n");
-                        sb.Append(BossService.GetModifierDescription(activeMods[i]));
-                    }
-                    _cachedModInfoText = sb.ToString();
-
-                    // Re-register listener only when the mod list changes
-                    if (_modifierInfoBox != null && OnModifierTapped != null)
-                    {
-                        var btn = _modifierInfoBox.GetComponent<UnityEngine.UI.Button>()
-                               ?? _modifierInfoBox.AddComponent<UnityEngine.UI.Button>();
-                        btn.onClick.RemoveAllListeners();
-                        var mods = activeMods;
-                        btn.onClick.AddListener(() =>
-                        {
-                            for (var j = 0; j < mods.Count; j++)
-                            {
-                                if (mods[j] == BossModifierId.Nonconsecutive
-                                 || mods[j] == BossModifierId.Antiknight)
-                                {
-                                    OnModifierTapped?.Invoke(mods[j]);
-                                    return;
-                                }
-                            }
-                        });
-                    }
-                }
-                _modifierInfoText.text = _cachedModInfoText;
-            }
+            if (_modifierInfoBox == null) return;
+            _modifierInfoBox.SetActive(true);
+            // [REQ: UI-STYLE-042] One row per rule with its colour (the legend); rebuilt only when the rules change.
+            if (ReferenceEquals(activeMods, _cachedModInfoModsRef)) return;
+            _cachedModInfoModsRef = activeMods;
+            BuildRuleRows(activeMods);
         }
 
         private void EnsureComboCounter()
@@ -734,7 +686,8 @@ namespace SudokuRoguelike.UI
             var state = _map?.Run?.State;
 
             // Bag is irrelevant in Tutorial and Seasonal Challenge — hide and bail out.
-            if (state?.Mode == GameMode.Tutorial || state?.Mode == GameMode.SeasonalChallenge || state?.Mode == GameMode.IncenseWalk)
+            if (state?.Mode == GameMode.Tutorial || state?.Mode == GameMode.SeasonalChallenge || state?.Mode == GameMode.IncenseWalk
+                || state?.Mode == GameMode.SpiritTrials)   // [REQ: TRIAL-HUD-001] "No XP, items or relics"
             {
                 if (_bagPanel != null) _bagPanel.SetActive(false);
                 return;

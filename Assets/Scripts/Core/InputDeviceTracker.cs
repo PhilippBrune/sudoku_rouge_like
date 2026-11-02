@@ -11,7 +11,11 @@ namespace SudokuRoguelike.Core
     {
         private const float StickThreshold = 0.5f;
         private const float MouseThreshold = 0.3f;
+        // [REQ: INPUT-HINT-002] Mouse motion counts only after the pad has rested this long: a stick that moves the mouse
+        // (a Steam Input template) flipped the hints between pad and keys every frame (0.3.1 playtest: "the hint flickers").
+        private const float PadRestSeconds = 2f;
         private static int _frame = -1;
+        private static float _lastPadAt = -100f;
 
         public static bool UsingPad { get; private set; }
 
@@ -24,9 +28,11 @@ namespace SudokuRoguelike.Core
             var first = _frame < 0;
             _frame = Time.frameCount;
             // A pad connected at start (Steam Deck, Legion Go) shows its buttons until a key or the mouse is used.
+            var padActive = PadActive();
+            if (padActive) _lastPadAt = Time.unscaledTime;
             if (first && PadConnected()) Set(true);
-            else if (!UsingPad && PadActive()) Set(true);
-            else if (UsingPad && KeyboardOrMouseActive()) Set(false);
+            else if (!UsingPad && padActive) Set(true);
+            else if (UsingPad && !padActive && KeyboardOrMouseActive(Time.unscaledTime - _lastPadAt > PadRestSeconds)) Set(false);
         }
 
         /// <summary>Sets the device directly (tests).</summary>
@@ -65,10 +71,11 @@ namespace SudokuRoguelike.Core
             return false;
         }
 
-        private static bool KeyboardOrMouseActive()
+        private static bool KeyboardOrMouseActive(bool padRested)
         {
             if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1)) return true;
-            if (Mathf.Abs(Input.GetAxis("Mouse X")) > MouseThreshold || Mathf.Abs(Input.GetAxis("Mouse Y")) > MouseThreshold) return true;
+            if (padRested && (Mathf.Abs(Input.GetAxis("Mouse X")) > MouseThreshold || Mathf.Abs(Input.GetAxis("Mouse Y")) > MouseThreshold))
+                return true;
             if (!Input.anyKeyDown) return false;
             for (var k = 0; k < 20; k++)
                 if (Input.GetKeyDown(KeyCode.JoystickButton0 + k)) return false;   // a pad button also counts as "any key"

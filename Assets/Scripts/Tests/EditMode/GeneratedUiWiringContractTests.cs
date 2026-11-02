@@ -98,7 +98,7 @@ namespace SudokuRoguelike.Tests
             Button("Credits", MainMenuPath, "BtnCredBack", "mc.BackFromPanel"),
             Button("DailyWalk", ChallengePanelsPath, "BtnDailyBack", "mc.ShowGameModes"),
             Button("MonthlyWalk", ChallengePanelsPath, "BtnBeginMonthly", "mc.LaunchSeasonalChallenge"),
-            Button("MonthlyWalk", ChallengePanelsPath, "BtnMonthlyBack", "mc.ShowGameModes"),
+            Button("MonthlyWalk", ChallengePanelsPath, "BtnMonthlyBack", "mc.BackFromPanel"),
             Button("SpiritTrials", MainMenuPath, "BtnTierStart_", "mc.StartSpiritTrials"),
             Button("SpiritTrials", MainMenuPath, "BtnTrialsSelectBack", "mc.BackFromPanel"),
             Button("EndlessZen", MainMenuPath, "BtnZenStart", "mc.StartEndlessZen"),

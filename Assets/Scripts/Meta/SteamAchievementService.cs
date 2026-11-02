@@ -1,3 +1,4 @@
+using SudokuRoguelike.Classes;
 using SudokuRoguelike.Core;
 using SudokuRoguelike.Platform;
 
@@ -79,7 +80,10 @@ namespace SudokuRoguelike.Meta
             "cursed_three", "nine_by_nine", "five_stars",
             "class_second", "class_all", "class_level_10", "class_level_40", "win_every_class",
             "endless_25", "trials_grandmaster", "monthly_walk",
-            "daily_streak_7", "codex_half", "codex_all"
+            "daily_streak_7", "codex_half", "codex_all",
+            "story_new_page", "story_tale_number_freak", "story_tale_garden_monk", "story_tale_shrine_archivist",
+            "story_tale_koi_gambler", "story_tale_stone_gardener", "story_tale_lantern_seer", "story_tale_reed_duelist",
+            "story_tale_quiet_cartographer", "story_ninth_keeper"
         };
 
         public const int EndlessDepthGoal = 25;
@@ -135,6 +139,15 @@ namespace SudokuRoguelike.Meta
             foreach (var count in codex) { found += count.Found; total += count.Total; }
             if (CodexHalf(found, total)) GrantAchievement(mastery, "codex_half");
             if (total > 0 && found >= total) GrantAchievement(mastery, "codex_all");
+
+            // [REQ: ACHIEVE-STORY-001] A second chapter of any keeper, all five of one keeper, the ninth keeper's chapter.
+            foreach (var keeper in StoryService.Keepers)
+            {
+                var chapter = StoryService.ChapterOf(meta, keeper);
+                if (chapter >= 2) GrantAchievement(mastery, "story_new_page");
+                if (chapter >= StoryService.Chapters) GrantAchievement(mastery, "story_tale_" + ClassCatalog.GetIconName(keeper));
+            }
+            if (StoryService.NinthOpened(meta)) GrantAchievement(mastery, "story_ninth_keeper");
         }
 
         /// <summary>[REQ: ACHIEVE-MODE-001] At the end of an Endless Zen session, a Spirit Trial or a Monthly Walk.</summary>

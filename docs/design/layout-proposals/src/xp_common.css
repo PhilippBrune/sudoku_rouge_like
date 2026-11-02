@@ -1,0 +1,17 @@
+/* The run-end scroll behind the XP animation mockups, and the XP panel as built (UI-STYLE-016). */
+.bg { position:absolute; inset:0; background:url('../after_run_end_victory.jpg') center/cover; }
+.panel { position:absolute; left:660px; top:330px; width:640px; height:287px; border-radius:14px; background:rgba(26,20,15,.96);
+         box-shadow:0 0 0 1.5px rgba(219,181,97,.35); color:#f3e9cf; }
+.panel .hdr { position:absolute; left:40px; top:32px; font-size:17px; letter-spacing:.06em; color:#dbd1b8; }
+.panel .gain { position:absolute; left:40px; top:60px; font-size:44px; color:#dbb561; }
+.track { position:absolute; left:40px; right:42px; top:127px; height:33px; border-radius:16px; background:rgba(255,255,255,.12); overflow:visible; }
+.fill { position:absolute; left:0; top:0; bottom:0; border-radius:16px; background:#dbb561; }
+.lvl { position:absolute; left:40px; top:172px; font-size:20px; }
+.next { position:absolute; right:42px; top:172px; font-size:20px; }
+.ledger { position:absolute; left:660px; top:650px; width:640px; height:300px; background:#efe3c6; color:#231e17; }
+.ledger div { position:absolute; left:40px; right:42px; font-size:21px; display:flex; justify-content:space-between; }
+.skip { position:absolute; left:660px; width:640px; top:625px; text-align:center; font-size:17px; color:#f3e9cf; text-shadow:0 2px 6px #000; }
+.stamp { position:absolute; right:40px; top:22px; width:112px; height:112px; border-radius:50%; border:7px solid #dbb561; border-right-color:transparent;
+         transform:rotate(12deg); color:#dbb561; font-size:21px; display:flex; align-items:center; justify-content:center; text-align:center; line-height:1.1; opacity:0; }
+body.f3 .stamp { opacity:1; }
+.frame { position:absolute; left:24px; top:24px; padding:6px 16px; border-radius:999px; background:rgba(0,0,0,.7); color:#fff; font:600 18px 'Segoe UI'; }

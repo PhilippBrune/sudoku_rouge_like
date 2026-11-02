@@ -151,6 +151,66 @@ namespace SudokuRoguelike.Tests
             }
         }
 
+        // [REQ: INPUT-PAD-005] 0.3.1 playtest: "A should always confirm; it works only now and then". A pad the Input System
+        // reads confirms the chosen button once per press (PadUiBridge); the UI module keeps only the keys, so a pad the
+        // legacy input sees too does not press it a second time.
+        [UnityTest]
+        [Requirement("INPUT-PAD-005")]
+        public IEnumerator A_PressesTheChosenButtonOnce()
+        {
+            var es = new UnityEngine.GameObject("PadTestEventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+            var go = new UnityEngine.GameObject("PadTestButton", typeof(UnityEngine.RectTransform), typeof(UnityEngine.UI.Image),
+                typeof(UnityEngine.UI.Button));
+            try
+            {
+                yield return null;
+                var clicks = 0;
+                go.GetComponent<UnityEngine.UI.Button>().onClick.AddListener(() => clicks++);
+                EventSystem.current.SetSelectedGameObject(go);
+
+                InputSystem.QueueStateEvent(_pad, new GamepadState().WithButton(GamepadButton.South));
+                yield return null;
+                yield return null;
+                Assert.AreEqual(1, clicks, "A pressed the chosen button once");
+                Assert.AreEqual("Submit (keys)", es.GetComponent<StandaloneInputModule>().submitButton, "the module keeps the keys only");
+
+                InputSystem.QueueStateEvent(_pad, new GamepadState());
+                yield return null;
+                Assert.AreEqual(1, clicks, "letting go presses nothing");
+            }
+            finally
+            {
+                UnityEngine.Object.Destroy(go);
+                UnityEngine.Object.Destroy(es);
+            }
+        }
+
+        // [REQ: INPUT-PAD-005] 0.3.1 playtest: "move in the main menu with the left stick and the D-pad". The stick steps once
+        // when pushed past 0.6, then repeats after 0.4 s while held, and steps again only after it came back under 0.3.
+        [UnityTest]
+        [Requirement("INPUT-PAD-005")]
+        public IEnumerator LeftStick_StepsTheMenusLikeTheDpad()
+        {
+            InputSystem.QueueStateEvent(_pad, new GamepadState { leftStick = new UnityEngine.Vector2(0f, -0.9f) });
+            yield return null;
+            Assert.AreEqual(MoveDirection.Down, MenuDpad.ReadPressed(), "a push steps once");
+            yield return null;
+            Assert.AreEqual(MoveDirection.None, MenuDpad.ReadPressed(), "held: no step until the repeat");
+
+            InputSystem.QueueStateEvent(_pad, new GamepadState { leftStick = new UnityEngine.Vector2(0f, -0.4f) });
+            yield return null;
+            Assert.AreEqual(MoveDirection.None, MenuDpad.ReadPressed(), "between 0.3 and 0.6 nothing new");
+            InputSystem.QueueStateEvent(_pad, new GamepadState());
+            yield return null;
+            MenuDpad.ReadPressed();
+            InputSystem.QueueStateEvent(_pad, new GamepadState { leftStick = new UnityEngine.Vector2(0.9f, 0f) });
+            yield return null;
+            Assert.AreEqual(MoveDirection.Right, MenuDpad.ReadPressed(), "after letting go the next push steps again");
+            InputSystem.QueueStateEvent(_pad, new GamepadState());
+            yield return null;
+            MenuDpad.ReadPressed();   // the stick is let go, so the next test starts from rest
+        }
+
         [UnityTest]
         public IEnumerator WithoutAPad_NothingMoves_AndTheTriggersReadZero()
         {

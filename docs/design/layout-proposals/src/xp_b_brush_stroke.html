@@ -1,0 +1,39 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css"><link rel="stylesheet" href="xp_common.css">
+<style>
+  /* XP B · Brush stroke: a calligraphy brush paints the gold into the bar from left to right, leaving a rough wet edge
+     and flecks of gold leaf; the count rises under the brush. At a level the brush lifts, a red seal is pressed on the
+     bar's end ("Lv 6"), and the brush paints on from the left. About 2.5 s; any key or A shows the end at once. */
+  .fill { border-radius:16px 4px 4px 16px; background:linear-gradient(90deg,#c99a3b,#e8c56d 80%,#f6dc96); }
+  .fill::after { content:''; position:absolute; right:-14px; top:-4px; bottom:-4px; width:28px; border-radius:50%;
+                 background:radial-gradient(ellipse at 30% 50%, #f6dc96 0, #e0b75b 50%, rgba(219,181,97,0) 72%); }
+  .brush { position:absolute; top:-74px; width:30px; height:110px; transform:rotate(28deg); transform-origin:bottom center; }
+  .brush i { position:absolute; left:9px; top:0; width:12px; height:64px; border-radius:6px; background:linear-gradient(#e4cc9c,#b98c4a); }
+  .brush b { position:absolute; left:8px; top:60px; width:14px; height:8px; background:#9e2a2b; }
+  .brush s { position:absolute; left:5px; top:66px; width:20px; height:44px; border-radius:50% 50% 50% 50% / 30% 30% 70% 70%; background:#2a1d10; }
+  .leaf { position:absolute; width:7px; height:7px; background:#f2d27f; transform:rotate(30deg); opacity:0; }
+  body.f2 .leaf { opacity:.9; }
+  .seal { position:absolute; right:-18px; top:-26px; width:84px; height:84px; border-radius:8px; background:#b23a2e; color:#fbeee0; font-size:24px;
+          display:flex; align-items:center; justify-content:center; transform:rotate(-8deg); box-shadow:0 6px 14px rgba(0,0,0,.5); opacity:0; }
+  body.f1 .fill { width:24%; } body.f1 .brush { left:calc(24% - 18px); }
+  body.f2 .fill { width:97%; } body.f2 .brush { left:calc(97% - 18px); }
+  body.f3 .fill { width:38%; } body.f3 .brush { left:calc(38% - 18px); opacity:.0; } body.f3 .seal { opacity:1; }
+</style></head><body>
+<div class="bg"></div>
+<div class="panel">
+  <div class="hdr">CLASS XP THIS RUN</div><div class="gain" data-count></div>
+  <div class="track"><div class="fill"></div><div class="brush"><i></i><b></b><s></s></div><div class="seal">Lv 6</div>
+    <span class="leaf" style="left:70%; top:-18px"></span><span class="leaf" style="left:80%; top:38px"></span><span class="leaf" style="left:88%; top:-8px"></span></div>
+  <div class="lvl">Number Freak · Lv 6</div><div class="next">38 / 100 XP to Lv 7</div>
+  <div class="stamp">Level up<br>1 → 6</div>
+</div>
+<div class="skip">Any key or A shows it at once</div>
+<div class="ledger">
+  <div style="top:40px"><span>Base XP</span><span>388</span></div>
+  <div style="top:85px"><span>Perfect puzzles ×4 (+20%)</span><span style="color:#2f6a37">+78</span></div>
+  <div style="top:130px"><span>Victory bonus (+25%)</span><span style="color:#2f6a37">+97</span></div>
+</div>
+<div class="frame"></div>
+<script src="xp_anim.js"></script>
+<script>document.querySelector('.frame').textContent = {f1:'0.3 s',f2:'1.2 s',f3:'2.6 s'}[document.body.className.match(/f\d/)[0]];</script>
+</body></html>

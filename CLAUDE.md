@@ -15,6 +15,7 @@
 - Spec edits: bump the version, add a Change History row and set the status in the header.
 - `docs/review/GAME_GAPS.md` is the fix backlog. Cite the gap ID (`GAP-NNN`) and requirement IDs in commit messages for fixes.
 - Do not resolve specification contradictions (`docs/review/SPECIFICATION_ISSUES.md`, `SPEC-CONF-*`) without asking the user.
+- When a request is unclear or open to more than one reading, ask the owner questions first (with concrete options) until it is clear, instead of guessing.
 - `docs/ROADMAP_BACKLOG.md` is the feature backlog (`RM-NNN`); bugs stay in `GAME_GAPS.md`.
 
 ## Release, Steam, Discord and money

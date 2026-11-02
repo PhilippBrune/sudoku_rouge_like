@@ -13,11 +13,11 @@ using UnityEngine.UI;
 
 namespace SudokuRoguelike.UI
 {
-    public enum CodexTabId { Items, Relics, Modes, Curses }
+    public enum CodexTabId { Items, Relics, Modes, Curses, Tales }
 
     /// <summary>
     /// [REQ: UI-STYLE-018] The Codex as a collector's book (layout-proposals.md, owner pick 2026-10-20): bookmarks for
-    /// Items, Relics, Rules and Curses with their counts; the left page shows every entry as a tile (found ones in colour,
+    /// Items, Relics, Rules, Curses and Tales (STORY-TALES-001) with their counts; the left page shows every entry as a tile (found ones in colour,
     /// the rest as ink silhouettes) with an All / Found / Not yet found filter; the right page shows the chosen entry with
     /// its icon, kinds, rule, where it comes from and when it was found, the goal of the collection and a "found" stamp.
     /// LB/RB (PageUp/PageDown) change the collection, Y (F) the filter.
@@ -35,6 +35,7 @@ namespace SudokuRoguelike.UI
             public List<(string Label, Color Color)> Pills = new List<(string, Color)>();
             public readonly List<ItemRarity> Rarities = new List<ItemRarity>();
             public List<(string Label, string Value)> Facts = new List<(string, string)>();
+            public string LockedHint;   // what an entry not found yet says instead of "Not yet discovered"
         }
 
         private static readonly Color TileFound = new Color(0.97f, 0.94f, 0.86f, 1f);
@@ -52,7 +53,7 @@ namespace SudokuRoguelike.UI
         private readonly List<Entry> _entries = new List<Entry>();
         private readonly List<Button> _tiles = new List<Button>();
 
-        private Button _tabItems, _tabRelics, _tabModes, _tabCurses;
+        private Button _tabItems, _tabRelics, _tabModes, _tabCurses, _tabTales;
         private Button[] _filterButtons = Array.Empty<Button>();
         private Button _back;
         private Entry _shown;
@@ -69,12 +70,13 @@ namespace SudokuRoguelike.UI
         /// <summary>The right page, filled with the chosen entry.</summary>
         public void ConfigureDetail(RectTransform page) => _detail = page;
 
-        public void SetTabButtons(Button items, Button relics, Button modes, Button curses = null)
+        public void SetTabButtons(Button items, Button relics, Button modes, Button curses = null, Button tales = null)
         {
             _tabItems = items;
             _tabRelics = relics;
             _tabModes = modes;
             _tabCurses = curses;
+            _tabTales = tales;
         }
 
         /// <summary>Back under the book: the D-pad reaches it from the last row of tiles.</summary>
@@ -131,6 +133,7 @@ namespace SudokuRoguelike.UI
                 case CodexTabId.Items: AddItems(meta); break;
                 case CodexTabId.Relics: AddRelics(meta); break;
                 case CodexTabId.Modes: AddRules(meta); break;
+                case CodexTabId.Tales: AddTales(meta); break;
                 default: AddCurses(meta); break;
             }
             BuildTiles();
@@ -152,7 +155,8 @@ namespace SudokuRoguelike.UI
         /// <summary>LB/RB (PageUp/PageDown): the previous or next collection, with the focus on its first tile.</summary>
         public void TurnTab(int step)
         {
-            ShowTab((CodexTabId)(((int)_currentTab + step % 4 + 4) % 4));
+            var tabs = _tabTales != null ? 5 : 4;
+            ShowTab((CodexTabId)(((int)_currentTab + step % tabs + tabs) % tabs));
             FocusFirst();
         }
 
@@ -232,6 +236,31 @@ namespace SudokuRoguelike.UI
                 entry.Facts.Add((T("Codex.FromFloor", "From floor"), (curse.MinFloor + 1).ToString()));
                 _entries.Add(entry);
             }
+        }
+
+        // [REQ: STORY-TALES-001] The keepers' chapters, in order, and the last chapter; a closed one says what opens it.
+        private void AddTales(MetaProgressionState meta)
+        {
+            foreach (var keeper in StoryService.Keepers)
+            {
+                var opened = StoryService.ChapterOf(meta, keeper);
+                var icon = "class/icon_" + ClassCatalog.GetIconName(keeper);
+                for (var chapter = 1; chapter <= StoryService.Chapters; chapter++)
+                {
+                    var entry = NewEntry(chapter <= opened, StoryService.Title(keeper, chapter), icon);
+                    entry.Description = StoryService.Text(keeper, chapter);
+                    entry.LockedHint = F("Codex.Tales.Locked", "Opens with {0}.", StoryService.MilestoneName(chapter));
+                    entry.Facts.Add((T("Codex.Tales.Keeper", "Keeper"), ClassCatalog.DisplayName(keeper)));
+                    entry.Facts.Add((T("Codex.Tales.Chapter", "Chapter"), F("Codex.Tales.Of", "{0} of {1}", chapter, StoryService.Chapters)));
+                    entry.Facts.Add((T("Codex.Tales.Opened", "Opened with"), StoryService.MilestoneName(chapter)));
+                    _entries.Add(entry);
+                }
+            }
+            var ninth = NewEntry(StoryService.NinthOpened(meta), StoryService.NinthTitle, "ui/icon_golden_bloom");
+            ninth.Description = StoryService.NinthText;
+            ninth.LockedHint = F("Codex.Tales.Locked", "Opens with {0}.", T("Story.Milestone.Ninth", "a win with every keeper"));
+            ninth.Facts.Add((T("Codex.Tales.Opened", "Opened with"), T("Story.Milestone.Ninth", "a win with every keeper")));
+            _entries.Add(ninth);
         }
 
         private static Entry NewEntry(bool found, string name, string icon) =>
@@ -356,7 +385,7 @@ namespace SudokuRoguelike.UI
             var layout = _grid.GetComponent<GridLayoutGroup>();
             var columns = layout != null && layout.constraintCount > 0 ? layout.constraintCount : 5;
             var bookmarks = new List<Button>();
-            foreach (var tab in new[] { _tabItems, _tabRelics, _tabModes, _tabCurses })
+            foreach (var tab in new[] { _tabItems, _tabRelics, _tabModes, _tabCurses, _tabTales })
                 if (tab != null) bookmarks.Add(tab);
             var activeTab = TabButton(_currentTab);
             var filters = new List<Button>();
@@ -394,6 +423,7 @@ namespace SudokuRoguelike.UI
             CodexTabId.Items => _tabItems,
             CodexTabId.Relics => _tabRelics,
             CodexTabId.Modes => _tabModes,
+            CodexTabId.Tales => _tabTales,
             _ => _tabCurses
         };
 
@@ -483,6 +513,10 @@ namespace SudokuRoguelike.UI
             SetTab(_tabRelics, F("Codex.Tab.Relics", "Relics {0}/{1}", relics.Found, relics.Total), _currentTab == CodexTabId.Relics);
             SetTab(_tabModes, F("Codex.Tab.Rules", "Rules {0}/{1}", rules.Found, rules.Total), _currentTab == CodexTabId.Modes);
             SetTab(_tabCurses, F("Codex.Tab.Curses", "Curses {0}/{1}", curses.Found, curses.Total), _currentTab == CodexTabId.Curses);
+            var tales = 1 + StoryService.Chapters * StoryService.Keepers.Length;
+            var talesFound = (StoryService.NinthOpened(meta) ? 1 : 0);
+            foreach (var keeper in StoryService.Keepers) talesFound += StoryService.ChapterOf(meta, keeper);
+            SetTab(_tabTales, F("Codex.Tab.Tales", "Tales {0}/{1}", talesFound, tales), _currentTab == CodexTabId.Tales);
         }
 
         private static void SetTab(Button tab, string label, bool active)
@@ -539,7 +573,7 @@ namespace SudokuRoguelike.UI
             }
 
             var rule = ScrollUiKit.Label(_detail, "CodexRule",
-                entry.Found ? entry.Description : T("Codex.NotYetDiscovered", "Not yet discovered"), 22, TextAnchor.UpperLeft,
+                entry.Found ? entry.Description : entry.LockedHint ?? T("Codex.NotYetDiscovered", "Not yet discovered"), 22, TextAnchor.UpperLeft,
                 OptionsUiStyle.PaperInk, new Vector2(0.05f, 0.50f), new Vector2(0.95f, 0.645f), 13);   // under the icon disc
             rule.verticalOverflow = VerticalWrapMode.Truncate;
 

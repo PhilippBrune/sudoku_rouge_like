@@ -1,6 +1,6 @@
-# Platform Release Manifest: 0.3.1
+# Platform Release Manifest: 0.3.2
 
-**Release:** 0.3.1 (local test build of the 0.3.1 playtest fixes, built 2026-11-02, not uploaded; before it 0.3.0, Steam build "v0.3.0 (9th iteration)", built 2026-10-27, not uploaded) · **Updated:** 2026-11-02 · **Owner:** Philipp Brune
+**Release:** 0.3.2 (local test build: the story of the Nine, the quit screen, irregular regions on every size; built 2026-11-02, not uploaded; before it 0.3.1, a local test build of the 0.3.1 playtest fixes; before it 0.3.0, Steam build "v0.3.0 (9th iteration)", built 2026-10-27, not uploaded) · **Updated:** 2026-11-02 · **Owner:** Philipp Brune
 
 This manifest lists every release gate with its state, exit criteria and the repository evidence. States:
 

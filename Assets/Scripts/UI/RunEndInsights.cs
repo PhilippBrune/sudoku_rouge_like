@@ -44,6 +44,17 @@ namespace SudokuRoguelike.UI
             var lines = new List<string>();
             if (before == null || after == null) return lines;
 
+            // [REQ: STORY-SHOW-001] The keeper's newest chapter, and the last chapter, when this run opened them.
+            if (StoryService.Tells(run))
+            {
+                var chapter = StoryService.ChapterOf(after, run.ClassId);
+                if (chapter > StoryService.ChapterOf(before, run.ClassId))
+                    lines.Add(LocalizationService.Format("Story.Moved.Chapter", "New chapter for the {0}: {1}",
+                        ClassCatalog.DisplayName(run.ClassId), StoryService.Title(run.ClassId, chapter)));
+                if (StoryService.NinthOpened(after) && !StoryService.NinthOpened(before))
+                    lines.Add(LocalizationService.Format("Story.Moved.Ninth", "The last chapter has opened: {0}", StoryService.NinthTitle));
+            }
+
             var harmony = HarmonyLine(before, after, run, out var harmonyOpened);
             if (harmonyOpened) lines.Add(harmony);
 

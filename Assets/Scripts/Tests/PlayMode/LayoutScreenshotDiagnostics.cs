@@ -648,6 +648,9 @@ namespace SudokuRoguelike.Tests
             meta.DiscoveredRelics = ((RelicId[])Enum.GetValues(typeof(RelicId))).Where((_, i) => i % 4 == 0).ToList();
             meta.DiscoveredBossModifiers = ModifierFamilies.All().Where((_, i) => i % 3 != 1).ToList();
             meta.DiscoveredCurses = CurseService.All.Where((_, i) => i % 3 == 0).Select(c => c.Id).ToList();
+            // STORY-TALES-001: the Number Freak on chapter 3, the Garden Monk on 2.
+            meta.StoryChapters.Add(new StoryChapterEntry { ClassId = ClassId.NumberFreak, Chapter = 3 });
+            meta.StoryChapters.Add(new StoryChapterEntry { ClassId = ClassId.GardenMonk, Chapter = 2 });
             new SaveFileService(TestSlot).Save(new SaveFileEnvelope { MetaProgress = meta });
             SaveFileService.FlushSharedPendingWrites();
 
@@ -676,6 +679,14 @@ namespace SudokuRoguelike.Tests
             EventSystem.current.SetSelectedGameObject(Find(host, "CodexTile_0"));   // the entry the right page shows
             yield return new WaitForSecondsRealtime(0.3f);
             yield return Shoot(host, camera, "after_codex_curses.png");
+
+            // STORY-TALES-001: the Tales page, the Number Freak's second chapter on the right, the fourth still closed.
+            Find(host, "BtnCodexTales").GetComponent<Button>().onClick.Invoke();
+            yield return null;
+            Find(host, "CodexTile_1").GetComponent<Button>().onClick.Invoke();
+            EventSystem.current.SetSelectedGameObject(Find(host, "CodexTile_1"));
+            yield return new WaitForSecondsRealtime(0.3f);
+            yield return Shoot(host, camera, "after_codex_tales.png");
 
             // META-CODEX-010: the Items page filtered to Rare, the Meditation Stone with "Best paired with".
             Find(host, "BtnCodexItems").GetComponent<Button>().onClick.Invoke();
@@ -918,6 +929,27 @@ namespace SudokuRoguelike.Tests
             end.ShowGameOver(run, true);
             yield return new WaitForSecondsRealtime(0.8f);
             yield return Shoot(host, camera, prefix + "result_monthly_walk.png");
+        }
+
+        // UI-STYLE-039 (0.3.1 playtest, owner's pick A): the goodbye when the game closes, with a saved run on Floor 3 and
+        // a streak of 4.
+        [UnityTest]
+        public IEnumerator RenderQuitScreen()
+        {
+            var prefix = Environment.GetEnvironmentVariable("SR_SHOT_PREFIX");
+            if (string.IsNullOrEmpty(prefix)) prefix = "after_";
+            var saved = new RunDirector();
+            saved.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, ClassLevel = 3 }, 4711);
+            saved.State.CurrentFloor = 2;
+            var envelope = new SaveFileEnvelope { ActiveRunState = saved.State };
+            envelope.DailyGoals = new DailyGoalState { CurrentStreak = 4 };
+            new SaveFileService(TestSlot).Save(envelope);
+            SaveFileService.FlushSharedPendingWrites();
+            var camera = CreateCamera();
+            var screen = QuitScreen.Show(() => { });
+            _createdRoots.Add(screen.gameObject);
+            yield return new WaitForSecondsRealtime(1.2f);
+            yield return Shoot(screen.gameObject, camera, prefix + "quit_screen.png");
         }
 
         // CUSTOM-FINISH-001 (0.3.1 playtest): a solved Custom Puzzle ends on its numbers, in the UI-STYLE-026 family.

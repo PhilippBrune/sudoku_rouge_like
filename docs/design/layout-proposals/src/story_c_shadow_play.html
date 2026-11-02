@@ -1,0 +1,41 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<style>
+  /* Story C · Shadow play: a shoji screen fills the view, lit from behind by a lantern; the keeper and the warden are
+     shadows on the paper, the speaking one comes closer to the light (sharper, larger). Their words appear as brush
+     lines on the paper next to them; the secret voice is the lantern's own line at the foot of the screen. The lantern
+     flickers when the voice speaks (not with Reduce Motion). A / Enter: next line, B / Esc: skip. */
+  body { background:#0b0907; }
+  .room { position:absolute; inset:0; background:radial-gradient(ellipse at 50% 55%, #2c2117 0, #0b0907 70%); }
+  .shoji { position:absolute; left:160px; right:160px; top:90px; bottom:150px; background:radial-gradient(ellipse at 50% 60%, #f6e2b6 0, #e8cf9c 35%, #b99a69 75%, #6b5236 100%);
+           box-shadow:0 0 0 18px #3a2614, 0 0 0 22px #1c120a, 0 30px 60px rgba(0,0,0,.8); overflow:hidden; }
+  .grid { position:absolute; inset:0; background:
+          repeating-linear-gradient(90deg, transparent 0 196px, rgba(58,38,20,.85) 196px 204px),
+          repeating-linear-gradient(180deg, transparent 0 196px, rgba(58,38,20,.85) 196px 204px); }
+  .shadow { position:absolute; bottom:0; filter:brightness(0) opacity(.78); }
+  .shadow.keeper { left:180px; width:420px; height:520px; filter:brightness(0) opacity(.55) blur(3px); }
+  .shadow.warden { right:150px; width:520px; height:600px; }
+  .shadow img { width:100%; height:100%; object-fit:contain; object-position:bottom; }
+  .say { position:absolute; font-size:36px; line-height:1.3; color:#231a10; font-style:italic; text-shadow:0 0 10px #f6e2b6, 0 0 18px #f6e2b6; }
+  .say small { display:block; font-style:normal; font-size:18px; letter-spacing:.24em; color:#6b4a2a; margin-bottom:6px; }
+  .say.old { opacity:.38; font-size:28px; }
+  .stroke { display:block; width:210px; height:6px; margin-top:12px; border-radius:3px; background:linear-gradient(90deg,#231a10,transparent); }
+  .voice { position:absolute; left:0; right:0; bottom:58px; text-align:center; color:#f2c46b; font-size:28px; font-style:italic;
+           text-shadow:0 0 18px rgba(242,196,107,.5); }
+  .lantern { position:absolute; left:50%; bottom:20px; transform:translateX(-50%); width:70px; height:70px; border-radius:50%;
+             background:radial-gradient(circle, rgba(255,214,140,.95), rgba(255,170,80,.0) 70%); }
+  .chapter { position:absolute; left:0; right:0; top:34px; text-align:center; color:#d8c9a8; font-size:19px; letter-spacing:.3em; }
+</style></head><body>
+<div class="room"></div>
+<div class="chapter">CHAPTER 3 OF 5 · FOOTPRINTS</div>
+<div class="shoji">
+  <div class="shadow keeper"><img src="../../../../Assets/Resources/class/icon_number_freak.png"></div>
+  <div class="shadow warden"><img src="../../../../Assets/Resources/boss/icon_shrine_oni.png"></div>
+  <div class="grid"></div>
+  <div class="say old" style="left:120px; top:90px; width:560px"><small>NUMBER FREAK</small>Eight keepers. Always one short.</div>
+  <div class="say" style="left:760px; top:150px; width:640px"><small>KAGAMI, THE SHRINE ONI</small>Count your reflections, keeper.<br>There is always one more.<span class="stroke"></span></div>
+</div>
+<div class="voice">The footprints lead up, not away. The ninth did not flee the garden.</div>
+<div class="lantern"></div>
+<div class="caption">Story C · Shadow play (keeper and warden as shadows on a lit shoji screen, the voice is the lantern's line)</div>
+</body></html>

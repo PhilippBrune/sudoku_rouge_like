@@ -173,7 +173,7 @@ namespace SudokuRoguelike.Bootstrap
         private static bool LogQuitRequest()
         {
             Debug.Log($"[Quit] Quit requested (focused={Application.isFocused}, {UnityEngine.Screen.fullScreenMode} {UnityEngine.Screen.width}x{UnityEngine.Screen.height}).");
-            return true;
+            return UI.QuitScreen.AllowQuit();   // [REQ: UI-STYLE-039] the window's close shows the goodbye first
         }
 
         private void OnApplicationPause(bool paused) =>

@@ -1,6 +1,6 @@
-# Release Readiness Status: 0.3.1
+# Release Readiness Status: 0.3.2
 
-Updated 2026-11-02 · Milestone: **Steam build v0.3.1**, a local test build for the owner (the 0.3.1 playtest fixes: event tiles in the Garden Run, the Daily Walk shorter and saved for its day, the Custom Puzzle result and regions, the Options and Accessibility fixes, the brush cursor; not uploaded); before it **Steam build v0.3.0 (9th iteration)** for `default` (the Daily Walk as a run, the Incense Walk, the stamp shop, class relics and keystones, 21 achievements, the Options test; the 0.2.2 beta is folded in, it was never uploaded); the previous milestones were Steam build v0.2.2 beta (8th iteration) and v0.2.1 (7th iteration)
+Updated 2026-11-02 · Milestone: **Steam build v0.3.2**, a local test build for the owner (the story of the Nine, the quit screen, irregular regions on every Custom Puzzle size; not uploaded); before it **Steam build v0.3.1**, a local test build (the 0.3.1 playtest fixes: event tiles in the Garden Run, the Daily Walk shorter and saved for its day, the Custom Puzzle result and regions, the Options and Accessibility fixes, the brush cursor; not uploaded); before it **Steam build v0.3.0 (9th iteration)** for `default` (the Daily Walk as a run, the Incense Walk, the stamp shop, class relics and keystones, 21 achievements, the Options test; the 0.2.2 beta is folded in, it was never uploaded); the previous milestones were Steam build v0.2.2 beta (8th iteration) and v0.2.1 (7th iteration)
 
 ## Evidence
 
@@ -10,8 +10,8 @@ Updated 2026-11-02 · Milestone: **Steam build v0.3.1**, a local test build for 
 
 | Suite | Total | Passed | Failed | Skipped | Date |
 |-------|------:|-------:|-------:|--------:|------|
-| EditMode | 817 | 789 | 0 | 28 (`[Explicit]` review diagnostics and the translation export) | 2026-11-02 |
-| PlayMode | 133 | 105 | 0 | 28 (`[Explicit]` screenshot diagnostics) | 2026-11-02 |
+| EditMode | 827 | 798 | 0 | 29 (`[Explicit]` review diagnostics, the irregular-region probe and the translation export) | 2026-11-02 |
+| PlayMode | 135 | 106 | 0 | 29 (`[Explicit]` screenshot diagnostics) | 2026-11-02 |
 
 Windows x64 player build 0.3.1 (local test build): built 2026-11-02 from a fresh `Library` into `Builds/RunOfTheNine_0.3.1` (with `Licenses/`, build log without a missing script) and smoke-tested ("Version 0.3.1" on the main menu after 30 s, no exception in the player log; it ended a Daily Walk saved on an earlier day in the owner's profile as DAILY-WALK-010 says; saves and PlayerPrefs restored afterwards). Before it: Windows x64 player build 0.3.0: built 2026-10-27 from a fresh `Library` (B34, with `Licenses/`, no missing script) and smoke-tested (B35: "Version 0.3.0" on the main menu after 30 s, no exception in the player log; saves and PlayerPrefs restored), `docs/review/E2E_TEST_REPORT.md` §14. Before it: Windows x64 player build 0.2.2 beta: built 2026-10-25 (B32, with `Licenses/`) and smoke-tested (B33: "Version 0.2.2" on the main menu, no exception in the player log; one of two starts ended with a D3D12 present error after Steam started, not reproduced; saves and PlayerPrefs restored), `docs/review/E2E_TEST_REPORT.md` §13. Before it: 0.2.1 B30/B31 (§12), 0.2.0 beta B28/B29 (§11).
 

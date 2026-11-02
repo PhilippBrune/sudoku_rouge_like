@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.2: test build (2026-11-02)
+
+A local build for the owner's playtest. Not uploaded.
+
+### New
+
+- **The story of the Nine.** The eight classes are the eight keepers who stayed when the ninth left the garden. A voice tells each keeper's five chapters: the first floor shows the current one, a warden speaks to the keeper at the boss gate and leaves a parting line at the offering table, and a run that opens a chapter says so at its end. Chapters open with a warden defeated, Floor 3, a win and a win at Harmony III; the last chapter opens after a win with every keeper.
+- **The Codex's Tales page** holds every chapter; a closed one says what opens it.
+- **A goodbye when the game closes:** the garden at dusk, what waits tomorrow and the Kratossos seal, for three seconds.
+- **Irregular regions on every Custom Puzzle size,** 6×6, 8×8 and 9×9 in both of their shapes.
+
+
 ## 0.3.1: test build (2026-11-02)
 
 A local build for the owner's playtest. Not uploaded.

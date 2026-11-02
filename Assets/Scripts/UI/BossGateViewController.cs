@@ -108,6 +108,14 @@ namespace SudokuRoguelike.UI
             BuildGateHeader(scroll, run, floor, bossName);
             BuildTrialCards(scroll, run);
             BuildGateFooter(scroll, run, bossName);
+            if (Meta.StoryService.Tells(run?.State))   // [REQ: STORY-WARDEN-001] the warden speaks to this keeper
+            {
+                var line = ScrollUiKit.Label(_bossGatePanel.transform, "WardenLine", LocalizationService.Format("Story.Gate", "{0}: \u201c{1}\u201d",
+                        Meta.StoryService.WardenName(floor), Meta.StoryService.WardenLine(floor, run.State.ClassId)), 23,
+                    TextAnchor.MiddleCenter, new Color(0.95f, 0.91f, 0.82f, 1f), new Vector2(0.12f, 0.06f), new Vector2(0.88f, 0.13f), 14,
+                    FontStyle.Italic);
+                line.gameObject.AddComponent<Shadow>().effectColor = new Color(0f, 0f, 0f, 0.85f);
+            }
             WireGateNavigation();
             RefreshTrialMarks();
 

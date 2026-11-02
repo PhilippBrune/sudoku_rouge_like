@@ -51,6 +51,7 @@ namespace SudokuRoguelike.Tests
             Button("ItemsCodex", MainMenuPath, "BtnCodexRelics", "CodexTabId.Relics"),
             Button("ItemsCodex", MainMenuPath, "BtnCodexModifiers", "CodexTabId.Modes"),
             Button("ItemsCodex", MainMenuPath, "BtnCodexCurses", "CodexTabId.Curses"),
+            Button("ItemsCodex", MainMenuPath, "BtnCodexTales", "CodexTabId.Tales"),
             Button("ItemsCodex", MainMenuPath, "BtnItemsBack", "mc.BackFromPanel"),
 
             Button("ClassSelect", MainMenuPath, "BtnConfirmClass", "mc.BeginRunFromSelect"),
@@ -651,7 +652,8 @@ namespace SudokuRoguelike.Tests
             StringAssert.Contains("BtnCodexRelics", menuSource);
             StringAssert.Contains("BtnCodexModifiers", menuSource);
             StringAssert.Contains("BtnCodexCurses", menuSource);
-            StringAssert.Contains("itemsCtrl.SetTabButtons(tabItems, tabRelics, tabModifiers, tabCurses)", menuSource);
+            StringAssert.Contains("itemsCtrl.SetTabButtons(tabItems, tabRelics, tabModifiers, tabCurses, tabTales)", menuSource);
+            StringAssert.Contains("itemsCtrl.ShowTab(CodexTabId.Tales)", menuSource);   // STORY-TALES-001
             StringAssert.Contains("itemsCtrl.ShowTab(CodexTabId.Relics)", menuSource);
             StringAssert.Contains("itemsCtrl.ShowTab(CodexTabId.Modes)", menuSource);
             StringAssert.Contains("itemsCtrl.ShowTab(CodexTabId.Curses)", menuSource);

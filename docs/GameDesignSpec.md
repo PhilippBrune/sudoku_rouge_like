@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.31 | **Date:** 2026-11-02 | **Status:** implemented
+**Version:** 1.32 | **Date:** 2026-11-02 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.32 | 2026-11-02 | implemented | Owner's pick (0.3.1 playtest): Quit · A · The garden at dusk (UI-STYLE-039); the Kratossos seal (the owner's online name). |
 | 1.31 | 2026-11-02 | implemented | 0.3.1 playtest (owner): the Options buttons keep their text on every screen (OPT-BUTTON-001, GAP-098); the mouse pointer is a Japanese brush (UI-CURSOR-001). |
 | 1.30 | 2026-10-28 | implemented | 0.3.0 playtest (RM-217, owner's pick): the main menu as the garden path (UI-STYLE-032): New run, a card for the saved run, Continue for a saved Custom Puzzle, the walks as paper tags. |
 | 1.29 | 2026-10-28 | implemented | 0.3.0 playtest (RM-208, owner's pick UI-STYLE-036): the gold beside the Pencil it buys (HUD-GOLD-001); a detail slip at the foot of the left column shows the passive, or the item or relic in focus, instead of the status line above the board (HUD-DETAIL-001). |
@@ -464,6 +465,7 @@ Source of truth: [EndlessZenMode](EndlessZenMode.md) (decided 2026-10-07, SPEC-C
 - **[UI-MENU-QUIT-001]** Quit closes the game on a second press within 3 s; the first press says so on the status line (1.22, GAP-074: a stray press closed the game)
 - **[UI-MENU-TITLE-001]** While the title screen shows, the main menu behind it has no chosen button and reads no input; it takes the focus when the title ends (1.28, GAP-097: a pad's A on the title opened Select Class)
 - **[UI-CURSOR-001]** The mouse pointer is a Japanese brush (fude): the ink tip is the hot spot, a vermilion ferrule and a bamboo handle run to the lower right, a cream rim keeps it readable on dark scenes and on paper (0.3.1 playtest, `BrushCursor`, drawn in code at start-up).
+- **[UI-STYLE-039]** When the game closes (Quit pressed twice, or the window closed), a goodbye shows for 3 s: the main menu's painting at dusk, a hanging scroll "The garden waits for you" with what waits tomorrow (the next Daily Walk and its streak, the saved run or today's walk, the Monthly Walk and its days), the red Kratossos seal at its foot and a lantern that goes out; any key, click or button closes at once (`QuitScreen`; owner's pick A of three, layout-proposals 3.11).
 - **[UI-STYLE-032]** The main menu is the garden path (1.30, owner's pick of three, RM-217): the title top left, a paper card for the saved Garden Run (hidden without one), the entries as wooden tablets down the left (New run, Game Modes, Custom Puzzle with Continue for a saved one; Meta Progression, Codex; Profiles, Options, Credits, Quit), the Daily and Monthly Walk as paper tags bottom right, the profile top right, the version bottom left (layout-proposals 3.9)
 - **[UI-MENU-VERSION-001]** The game's version ("Version 0.2.0", from the player settings) in the bottom-left corner
 - Daily Walk and Monthly Walk widgets next to the menu, with today's goals, streak, theme and countdown (SPEC-CONF-027, GAP-028)

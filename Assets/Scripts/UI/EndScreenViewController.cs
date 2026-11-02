@@ -87,6 +87,10 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.839f, 0.634f), new Vector2(0.898f, 0.755f), new Color(0.50f, 0.50f, 0.52f, 1f));
             ScrollUiKit.Label(screen.transform, "MaskCaption", T("InRun.BossDefeated.MaskStill"), 18,
                 TextAnchor.MiddleCenter, new Color(0.92f, 0.89f, 0.82f, 1f), new Vector2(0.78f, 0.590f), new Vector2(0.96f, 0.624f), 12);
+            if (SudokuRoguelike.Meta.StoryService.Tells(state))   // [REQ: STORY-WARDEN-001] the warden's parting line
+                ScrollUiKit.Label(screen.transform, "WardenParting", SudokuRoguelike.Meta.StoryService.WardenParting(floor), 17,
+                    TextAnchor.UpperCenter, new Color(0.92f, 0.89f, 0.82f, 1f), new Vector2(0.75f, 0.505f), new Vector2(0.985f, 0.585f), 11,
+                    FontStyle.Italic);
 
             var hasOfferings = offerings != null && offerings.Count > 0;
             ScrollUiKit.Label(screen.transform, "OfferingPrompt",

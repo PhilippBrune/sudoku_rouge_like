@@ -1,0 +1,45 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="scenes.css">
+<style>
+  /* Story B · Facing scrolls: the keeper's scroll hangs on the left, the warden's on the right, each line written down
+     its own scroll as the two speak; the newest line is in ink, the older ones fade to grey. The secret voice writes in
+     the middle, on the painting itself, in gold. Calm and slow: A / Enter writes the next line, B / Esc skips. */
+  .bg { background-image:url('../../../../Assets/Resources/background/bg_boss_gate.png'); filter:brightness(.38) saturate(.7); }
+  .scroll { position:absolute; top:70px; width:430px; height:820px; }
+  .scroll.left { left:150px; } .scroll.right { right:150px; }
+  .rod { position:absolute; left:-24px; right:-24px; height:24px; border-radius:12px; background:linear-gradient(180deg,#b07a45,#6b4423 70%,#3a2412); box-shadow:0 6px 12px rgba(0,0,0,.6); }
+  .rod.top { top:0; } .rod.bottom { bottom:0; }
+  .paper { position:absolute; left:0; right:0; top:18px; bottom:18px; background:#efe3c6; color:#231e17; box-shadow:0 22px 46px rgba(0,0,0,.65); }
+  .paper::before, .paper::after { content:''; position:absolute; left:0; right:0; height:40px; background:repeating-linear-gradient(90deg,#2f4a33 0 10px,#3d5c40 10px 20px); }
+  .paper::before { top:0; } .paper::after { bottom:0; }
+  .seal { position:absolute; top:62px; left:50%; transform:translateX(-50%); width:120px; height:120px; border-radius:12px; padding:12px; }
+  .seal img { width:100%; height:100%; object-fit:contain; }
+  .left .seal { background:#f6eedc; border:4px solid #c9a24f; } .right .seal { background:#b23a2e; border:4px solid #f3e9cf; }
+  .who { position:absolute; top:196px; left:0; right:0; text-align:center; font-size:19px; letter-spacing:.16em; color:#6b5f4c; }
+  .lines { position:absolute; top:250px; bottom:70px; left:44px; right:44px; display:flex; flex-direction:row-reverse; gap:26px; justify-content:flex-start; }
+  .v { writing-mode:vertical-rl; font-size:28px; line-height:1.25; letter-spacing:.04em; }
+  .v.old { color:#a59a86; font-size:24px; }
+  .voice { position:absolute; left:640px; right:640px; top:330px; text-align:center; color:#e9c46a; font-size:30px; line-height:1.5;
+           font-style:italic; text-shadow:0 3px 10px #000; }
+  .voice small { display:block; margin-bottom:18px; font-size:17px; letter-spacing:.3em; color:#d8c9a8; font-style:normal; }
+  .chapter { position:absolute; left:0; right:0; top:120px; text-align:center; color:#f3e9cf; font-size:20px; letter-spacing:.3em; text-shadow:0 2px 6px #000; }
+</style></head><body>
+<div class="bg"></div>
+<div class="chapter">CHAPTER 3 OF 5 · FOOTPRINTS</div>
+<div class="scroll left">
+  <div class="paper"><div class="seal"><img src="../../../../Assets/Resources/class/icon_number_freak.png"></div>
+    <div class="who">NUMBER FREAK</div>
+    <div class="lines"><div class="v old">Eight keepers. One short.</div><div class="v">Then who made the footprints on the bridge?</div></div></div>
+  <div class="rod top"></div><div class="rod bottom"></div>
+</div>
+<div class="scroll right">
+  <div class="paper"><div class="seal"><img src="../../../../Assets/Resources/boss/icon_shrine_oni.png"></div>
+    <div class="who">KAGAMI, THE SHRINE ONI</div>
+    <div class="lines"><div class="v old">Count your reflections. There is always one more.</div><div class="v">Ask the one who walks behind you.</div></div></div>
+  <div class="rod top"></div><div class="rod bottom"></div>
+</div>
+<div class="voice"><small>THE VOICE</small>They lead up, not away.<br>The ninth did not flee the garden.</div>
+<div class="hint" style="top:960px"><span class="key">A</span> next line · <span class="key">B</span> skip the scene</div>
+<div class="caption">Story B · Facing scrolls (keeper and warden each write on a hanging scroll, the voice in gold between them)</div>
+</body></html>

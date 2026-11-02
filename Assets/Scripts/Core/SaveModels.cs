@@ -177,6 +177,17 @@ namespace SudokuRoguelike.Core
         public List<ClassId> HarmonyV5PlusWins = new List<ClassId>();
         // [ACHIEVE-CLASS-001] Classes that have won a Garden Run at any Harmony (from 0.2.2 on; for "Eight Ways Through").
         public List<ClassId> ClassesWithAWin = new List<ClassId>();
+        // [REQ: STORY-SAVE-001] The story of the Nine: the highest chapter each keeper opened (none listed = chapter 1) and
+        // whether the last chapter is open. Saves from before 0.3.2 start at chapter 1.
+        public List<StoryChapterEntry> StoryChapters = new List<StoryChapterEntry>();
+        public bool StoryNinthOpened;
+    }
+
+    [Serializable]
+    public sealed class StoryChapterEntry
+    {
+        public ClassId ClassId;
+        public int Chapter;
     }
 
     [Serializable]

@@ -655,8 +655,10 @@ namespace SudokuRoguelike.Tests
             StringAssert.Contains("1", FindObject(entry, "FloorEntryEyebrow").GetComponent<Text>().text);
             Assert.NotNull(FindObject(entry, "Backdrop").GetComponent<RawImage>().texture, "the floor's painting");
             Assert.IsTrue(entry.GetComponent<Image>().raycastTarget, "the path behind the painting takes no clicks");
+            // [REQ: STORY-SHOW-001] The first floor of a Garden Run tells the keeper's current chapter, so it stays longer.
+            StringAssert.Contains(Meta.StoryService.Text(h.Run.State.ClassId, 1), FindObject(entry, "ChapterText").GetComponent<Text>().text);
 
-            yield return new WaitForSecondsRealtime(InRunController.FloorEntrySeconds + 0.8f);
+            yield return new WaitForSecondsRealtime(InRunController.FloorEntryStorySeconds + 0.8f);
             Assert.IsFalse(controller.IsFloorEntryShowing);
             Assert.IsNull(FindObjectOrNull(h.Host, "FloorEntry"), "the painting is gone");
             Assert.AreEqual(Vector3.one, FindObject(h.Host, "PathScroll").transform.localScale, "the scroll is fully open");

@@ -1,6 +1,6 @@
 # Platform Readiness Checklist — 0.1.5
 
-Status: **release candidate (owner actions open)** · Updated 2026-10-14
+Status: **release candidate (owner actions open)** · Updated 2026-11-02
 
 Gate states and evidence: `docs/release/platform-release-manifest.md`.
 
@@ -61,7 +61,7 @@ Live values read from the Steamworks partner site (`partner.steamgames.com/apps/
 21 more achievements are in the game since 2026-10-26 (after 0.2.2 beta): create them before the build that carries them goes live, with the API names, names, descriptions and translations of `docs/Achievements.md` §2 and §5 and the icons `steam_assets/achievements/achieved_<api name>.jpg` / `unachieved_<api name>.jpg` (made by `tools/steam/achievement_icons.py`).
 
 **Stats & Achievements → Leaderboards**
-- `Harmony_RunScore`: sort method Descending, display type Numeric, writes by the game (score = XP of a won run, best kept).
+- `Harmony_RunScore`: sort method Descending, display type Numeric, writes by the game (score = XP of a won run, best kept). Owner (2026-11-02): created with the community name "Run Score", so it shows on the Steam Community page. The daily and weekly boards (`DailyWalk_<date>`, `IncenseWalk_<week>`) are made by the game and need no community name to work in the game.
 
 **Steam Cloud** (PRG-CLOUD-SAVE): Auto-Cloud root `WinAppDataLocalLow`, subdirectory `Kratossos/sudoku_rouge_like/`, pattern `save_profile_*.json`, OS Windows; quota 100 MB and 100 files.
 

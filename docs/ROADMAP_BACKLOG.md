@@ -1,11 +1,12 @@
 # Roadmap backlog: Run of the Nine
 
-**Version:** 1.10 | **Date:** 2026-11-02 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
+**Version:** 1.11 | **Date:** 2026-11-02 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.11 | 2026-11-02 | review | Owner (2026-11-02): RM-224 built as pick A; RM-125 built (the story of the Nine); RM-226 irregular regions on every size; RM-225 conversation scenes as three mockups for the pick. |
 | 1.10 | 2026-11-02 | review | RM-218 to RM-224 from the owner's 0.3.1 playtest (2026-11-02): a short-term block; RM-218 to RM-223 built, RM-224 (quit screen) as three mockups for the owner's pick. |
 | 1.9 | 2026-10-28 | review | Mockups for RM-208, RM-209, RM-211 and RM-217 (layout-proposals 3.5, UI-STYLE-032 to 038), waiting for the owner's pick. |
 | 1.8 | 2026-10-27 | review | RM-206 to RM-217 from the owner's 0.3.0 playtest (`docs/review/PLAYTEST_0.3.0.md`): a short-term block "0.3.0 playtest". |
@@ -60,7 +61,9 @@ Horizons: **short term** = the next one to three updates, **mid term** = after t
 | RM-221 | Regions per board size | Regions a size does not have are greyed; 9×9 irregular checked. | Owner; built (CUSTOM-REGION-001). | built |
 | RM-222 | Enter clears pencil marks | Enter on an empty cell with pencil marks clears them. | Owner; built (INPUT-KEY-001, InputAndProfilesSpec 2.7). | built |
 | RM-223 | Brush cursor | The mouse pointer as a Japanese brush. | Owner; built (UI-CURSOR-001, GameDesignSpec). | built |
-| RM-224 | Quit screen | A goodbye screen with Kratossos that makes the player want to come back. | Owner: three mockups (game style, playful, publisher in the garden), layout-proposals 3.11. | waiting for the owner's pick |
+| RM-224 | Quit screen | A goodbye screen with Kratossos that makes the player want to come back. | Owner's pick A, the garden at dusk; built (UI-STYLE-039). | built |
+| RM-225 | Conversation scenes for the story | Dedicated scenes where keeper and warden talk, at the floor entry, the boss gate and the offering table. | Owner (2026-11-02): three mockups (painted dialogue, facing scrolls, shadow play), layout-proposals 3.12. | waiting for the owner's pick |
+| RM-226 | Irregular regions on every size | 6×6, 8×8 and 9×9 irregular puzzles in both templates, like 5×5 and 7×7. | Owner (2026-11-02); built (CUSTOM-REGION-002). | built |
 
 ## Mid term (suggested)
 
@@ -81,7 +84,7 @@ Horizons: **short term** = the next one to three updates, **mid term** = after t
 | RM-122 | A quick run every day | The Daily Walk as one floor of its own (three puzzles and a boss, about 15 minutes), the same seed for everyone, paid in class XP with a streak bonus instead of gold. | Spec: DailyGoalSystem.md, "The Daily Walk as a run". | M |
 | RM-123 | The Incense Walk (time attack) | A clock instead of HP: start with 8 minutes, each solved puzzle adds time, mistakes cost time, over at 0:00. | Spec: IncenseWalkMode.md. | M–L |
 | RM-124 | Class relic sets | A signature relic per class from Level 1 next to the existing Level 30 exclusive. | Built 2026-10-26 (ItemsAndRelicsSystem 2.4; the concept is merged in 2.5). | done |
-| RM-125 | The story of the Nine | The eight classes as the keepers who stayed, five wardens, chapters told on the floor entry, the boss gate and the run end, a Tales page in the Codex. | Proposal: narrative-direction.md. | M |
+| RM-125 | The story of the Nine | The eight classes as the keepers who stayed, five wardens, chapters told on the floor entry, the boss gate and the run end, a Tales page in the Codex. | Owner's answers 2026-11-02: built (STORY-CHAPTER-001 to STORY-TALES-001, narrative-direction.md 1.2); conversation scenes are RM-225. | built |
 
 ## Long term (suggested)
 

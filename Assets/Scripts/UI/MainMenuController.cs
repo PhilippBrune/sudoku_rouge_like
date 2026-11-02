@@ -1178,11 +1178,7 @@ namespace SudokuRoguelike.UI
                 return;
             }
             Debug.Log("[Quit] Quit button pressed twice.");
-#if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
-#else
-            Application.Quit();
-#endif
+            QuitScreen.Show();   // [REQ: UI-STYLE-039] the garden at dusk, then the game closes
         }
 
         // ── Status ──

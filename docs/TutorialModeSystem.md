@@ -1,11 +1,12 @@
 # Tutorial Mode System
 
-**Version:** 1.15 | **Date:** 2026-11-02 | **Status:** implemented
+**Version:** 1.16 | **Date:** 2026-11-02 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.16 | 2026-11-02 | implemented | Owner (2026-11-02): irregular regions on every board size, 6×6, 8×8 and 9×9 too, in both of their templates (CUSTOM-REGION-002). |
 | 1.15 | 2026-11-02 | implemented | 0.3.1 playtest (owner): the Regions choices a board size does not have are greyed (CUSTOM-REGION-001); a solved or lost Custom Puzzle ends on its numbers (CUSTOM-FINISH-001). |
 | 1.14 | 2026-10-28 | implemented | 0.3.0 playtest (RM-209, owner: one per profile, Continue also on the main menu): a Custom Puzzle is saved in a pair of its own and continued (CUSTOM-SAVE-001); the 1.12 concept is built. SAVE-TUTO-001 now covers Sudoku Basics only. |
 | 1.13 | 2026-10-28 | implemented | 0.3.0 playtest (RM-209, owner's pick UI-STYLE-037): a "?" beside each Board field explains it (CUSTOM-HELP-001); the puzzle's seed is shown, typed or rolled, and gives the same board (CUSTOM-SEED-001); a share code holds the whole setup with Copy and Paste (CUSTOM-CODE-001). |
@@ -124,6 +125,11 @@ Multiple modifiers can be combined for advanced practice.
   would use boxes. A greyed choice cannot be taken; a size change, a rule or a share code that leaves the choice without
   support moves it to Boxes, or to Irregular where there are no boxes (`TutorialModeService.SupportsRegionVariant`,
   `TutorialMenuController.FitRegion`). 9×9 irregular puzzles exist (two templates) and generate without a fallback.
+- **[CUSTOM-REGION-002]** (1.16) Irregular regions exist on every size, 5×5 to 9×9, each with two templates; the seed
+  picks one (`TutorialModeService.RegionFor`: variant 2 or 3 on 6×6, 8×8 and 9×9, template 0 or 1 on 5×5 and 7×7), so a
+  seed or a share code lays the same board again and both shapes appear. Measured on 155 boards (6×6, 8×8, 9×9, no rule
+  and six common rules): none fell back to boxes; a 9×9 irregular board takes about 0.1 s. A share code made with a test
+  build before 0.3.2 (irregular regions) may lay the size's other template; a saved Custom Puzzle keeps its board.
 - **[CUSTOM-FINISH-001]** (1.15, 0.3.1 playtest) A solved Custom Puzzle, or one lost in Class-Based mode, ends on a result
   in the mode-result family (UI-STYLE-026): the tally (time, mistakes, pencil marks, cells filled, rules), the grade large
   (Perfect, Clean, Rough, Messy by mistakes, as the Garden Run's puzzles) with the board and its seed, and Back. The saved

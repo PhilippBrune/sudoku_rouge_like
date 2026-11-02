@@ -656,10 +656,12 @@ namespace SudokuRoguelike.UI
                 }
                 return tab;
             }
+            // Each bookmark is an OptionsUiFactory.BuildButton (Bookmark above); Tales is the story's page [REQ: STORY-TALES-001].
             var tabItems = Bookmark("BtnCodexItems", 0);
             var tabRelics = Bookmark("BtnCodexRelics", 1);
             var tabModifiers = Bookmark("BtnCodexModifiers", 2);
             var tabCurses = Bookmark("BtnCodexCurses", 3);
+            var tabTales = Bookmark("BtnCodexTales", 4);
 
             // Filter on the left page: All · Found · Not yet found (Y switches).
             Button FilterButton(string name, string label, float x0, float x1)
@@ -705,12 +707,13 @@ namespace SudokuRoguelike.UI
 
             itemsCtrl.Configure(grid);
             itemsCtrl.ConfigureDetail(detail);
-            itemsCtrl.SetTabButtons(tabItems, tabRelics, tabModifiers, tabCurses);
+            itemsCtrl.SetTabButtons(tabItems, tabRelics, tabModifiers, tabCurses, tabTales);
             itemsCtrl.SetFilterButtons(filterAll, filterFound, filterUnknown);
             tabItems.onClick.AddListener(() => itemsCtrl.ShowTab(CodexTabId.Items));
             tabRelics.onClick.AddListener(() => itemsCtrl.ShowTab(CodexTabId.Relics));
             tabModifiers.onClick.AddListener(() => itemsCtrl.ShowTab(CodexTabId.Modes));
             tabCurses.onClick.AddListener(() => itemsCtrl.ShowTab(CodexTabId.Curses));
+            tabTales.onClick.AddListener(() => itemsCtrl.ShowTab(CodexTabId.Tales));
             // [REQ: META-CODEX-010] The Items page also filters by rarity (Every rarity · Normal · Rare · Epic).
             itemsCtrl.SetRarityButton(FilterButton("BtnCodexRarity", T("Codex.Rarity.Every"), 0.71f, 0.99f));
 

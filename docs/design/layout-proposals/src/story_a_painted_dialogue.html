@@ -1,0 +1,48 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="scenes.css">
+<style>
+  /* Story A · The painted dialogue: before the boss gate opens, a scene of its own. The floor's painting, the keeper on
+     the left and the warden on the right as large seals, the conversation on a paper band along the bottom, one line at
+     a time (A / Enter: next line, B / Esc: skip the scene). The secret voice speaks without a seal, in italics. Four to
+     six lines per scene; the chapter's title on a small tag top left. */
+  .bg { background-image:url('../../../../Assets/Resources/background/bg_koi_terrace.png'); filter:brightness(.62) saturate(.9); }
+  .shade { background: linear-gradient(180deg, rgba(0,0,0,.25) 0, rgba(0,0,0,0) 30%, rgba(0,0,0,.65) 100%); }
+  .tag { left:70px; top:60px; width:420px; padding:16px 22px; line-height:1.4; }
+  .tag::before { display:none; }
+  .tag b { display:block; font-weight:normal; font-size:26px; color:#231e17; }
+  .portrait { position:absolute; bottom:340px; width:330px; height:330px; border-radius:18px; padding:26px;
+              box-shadow:0 18px 36px rgba(0,0,0,.6); }
+  .portrait img { width:100%; height:100%; object-fit:contain; }
+  .keeper { left:150px; background:#efe3c6; border:6px solid #c9a24f; transform:rotate(-2deg); }
+  .warden { right:150px; background:#b23a2e; border:6px solid #f3e9cf; transform:rotate(3deg); }
+  .dim { filter:brightness(.55) saturate(.6); }
+  .name { position:absolute; bottom:296px; font-size:22px; letter-spacing:.14em; color:#f3e9cf; text-shadow:0 2px 6px #000; }
+  .band { position:absolute; left:110px; right:110px; bottom:70px; height:200px; background:#efe3c6; color:#231e17;
+          box-shadow:0 18px 40px rgba(0,0,0,.65); padding:28px 56px; }
+  .band::before, .band::after { content:''; position:absolute; top:-10px; bottom:-10px; width:22px; border-radius:11px;
+          background:linear-gradient(90deg,#6b4423,#b07a45,#6b4423); }
+  .band::before { left:-14px; } .band::after { right:-14px; }
+  .speaker { font-size:20px; letter-spacing:.18em; color:#9e2a2b; }
+  .line { margin-top:10px; font-size:34px; line-height:1.35; }
+  .voice { font-style:italic; color:#4d4436; font-size:24px; margin-top:14px; }
+  .next { position:absolute; right:40px; bottom:22px; font-size:18px; color:#6b5f4c; }
+  .dots { position:absolute; left:56px; bottom:24px; }
+  .dots i { display:inline-block; width:12px; height:12px; margin-right:8px; border-radius:50%; background:rgba(60,45,30,.25); }
+  .dots i.on { background:#b23a2e; }
+</style></head><body>
+<div class="bg"></div><div class="shade"></div>
+<div class="tag"><small>CHAPTER 3 OF 5 · NUMBER FREAK</small><b>Footprints</b></div>
+<div class="portrait keeper dim"><img src="../../../../Assets/Resources/class/icon_number_freak.png"></div>
+<div class="name" style="left:205px">NUMBER FREAK</div>
+<div class="portrait warden"><img src="../../../../Assets/Resources/boss/icon_shrine_oni.png"></div>
+<div class="name" style="right:190px">KAGAMI, THE SHRINE ONI</div>
+<div class="band">
+  <div class="speaker">KAGAMI</div>
+  <div class="line">Count your reflections, keeper. There is always one more.</div>
+  <div class="voice">The Number Freak counts them twice. Nine. I do not say whose the ninth is.</div>
+  <div class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+  <div class="next"><span class="key">A</span> next line · <span class="key">B</span> skip</div>
+</div>
+<div class="caption">Story A · The painted dialogue (keeper and warden as seals, the talk on a paper band, the voice in italics)</div>
+</body></html>

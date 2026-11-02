@@ -36,6 +36,16 @@ namespace SudokuRoguelike.Tutorial
             _ => boardSize == 5 || boardSize == 7 || !Run.RunDirector.RequiresRectangularRegions(rules),
         };
 
+        /// <summary>[REQ: CUSTOM-REGION-002] Irregular regions take one of the size's two templates by the seed (6×6, 8×8, 9×9:
+        /// variants 2 and 3; 5×5 and 7×7: their templates 0 and 1), so a seed or a share code lays the same board again and
+        /// both shapes appear. Boxes and turned boxes stay as chosen.</summary>
+        public static int RegionFor(int boardSize, int chosen, int seed)
+        {
+            if (chosen < 2) return chosen;
+            var second = (seed & 1) == 1;
+            return boardSize == 5 || boardSize == 7 ? (second ? 1 : 0) : (second ? 3 : 2);
+        }
+
         public static bool CanAddCustomModifier(
             int requestedBoardSize,
             IList<BossModifierId> selectedModifiers,
@@ -179,7 +189,7 @@ namespace SudokuRoguelike.Tutorial
                 BoardSize = boardSize,
                 Stars = stars,
                 MissingPercent = missingPercent,
-                RegionVariant = setup.RegionVariant,
+                RegionVariant = RegionFor(boardSize, setup.RegionVariant, seed),
                 IsBoss = selectedModifiers.Count > 0,
                 Seed = seed,
                 Difficulty = DifficultyTier.Diff1

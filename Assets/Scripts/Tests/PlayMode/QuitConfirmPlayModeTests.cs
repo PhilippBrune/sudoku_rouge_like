@@ -69,6 +69,26 @@ namespace SudokuRoguelike.Tests
             Assert.AreEqual(LocalizationService.T("MainMenu.Status.QuitConfirm"), Find("StatusText").GetComponent<Text>().text);
         }
 
+        // [REQ: UI-STYLE-039] 0.3.1 playtest (owner's pick A): the goodbye scroll with the Kratossos seal and what waits
+        // tomorrow; it ends on its own after its seconds (here the game is not closed: the test passes its own end).
+        [UnityTest]
+        [Requirement("UI-STYLE-039")]
+        public IEnumerator TheQuitScreen_ShowsTheGardenAtDusk_ThenEnds()
+        {
+            var ended = false;
+            var screen = QuitScreen.Show(() => ended = true);
+            yield return null;
+            Assert.AreSame(screen, QuitScreen.Show(), "shown once");
+            Assert.IsNotNull(Find("QuitScroll"));
+            Assert.AreEqual("KRATOSSOS", Find("KratossosSeal/Studio")?.GetComponent<Text>()?.text ?? Find("Studio")?.GetComponent<Text>()?.text);
+            Assert.IsNotNull(Find("TomorrowLine_0"), "the day's walk");
+            Assert.IsNotNull(Find("TomorrowLine_1"), "the Monthly Walk (no saved run here)");
+            Assert.IsFalse(ended);
+            yield return new WaitForSecondsRealtime(QuitScreen.Seconds + 0.3f);
+            Assert.IsTrue(ended, "it ends on its own");
+            Object.Destroy(screen.gameObject);
+        }
+
         private static GameObject Find(string name)
         {
             foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))

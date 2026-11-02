@@ -118,7 +118,7 @@ namespace SudokuRoguelike.Tests
             Canvas.ForceUpdateCanvases();
 
             var reached = Reachable(Find<Button>(host, "BtnCodexRelics"));
-            foreach (var name in new[] { "BtnCodexItems", "BtnCodexModifiers", "BtnCodexCurses", "BtnCodexFilterFound",
+            foreach (var name in new[] { "BtnCodexItems", "BtnCodexModifiers", "BtnCodexCurses", "BtnCodexTales", "BtnCodexFilterFound",
                          "CodexTile_0", "BtnItemsBack" })
                 Assert.IsTrue(reached.Any(s => s.name == name), $"{name} cannot be reached from the Relics bookmark");
         }
@@ -251,7 +251,7 @@ namespace SudokuRoguelike.Tests
                 var host = OpenCodex();
                 yield return null;
                 Canvas.ForceUpdateCanvases();
-                foreach (var name in new[] { "BtnCodexItems", "BtnCodexRelics", "BtnCodexModifiers", "BtnCodexCurses" })
+                foreach (var name in new[] { "BtnCodexItems", "BtnCodexRelics", "BtnCodexModifiers", "BtnCodexCurses", "BtnCodexTales" })
                 {
                     var label = Find<Button>(host, name).GetComponentInChildren<Text>();
                     var settings = label.GetGenerationSettings(label.rectTransform.rect.size);

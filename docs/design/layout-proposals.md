@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 3.11 | **Date:** 2026-11-02 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; the main menu B (UI-STYLE-032, 2026-10-28); proposals of 2026-10-28 for the main menu, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll wait for the owner's pick)
+**Version:** 3.12 | **Date:** 2026-11-02 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; the main menu B (UI-STYLE-032, 2026-10-28); proposals of 2026-10-28 for the main menu, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll wait for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 3.12 | 2026-11-02 | review | Owner (2026-11-02): Quit A built (UI-STYLE-039); the story of the Nine on the floor entry, the boss gate, the offering table and the Codex's Tales (STORY-*); three mockups for the story's conversation scenes (RM-225, proposed UI-STYLE-040, pick one). |
 | 3.11 | 2026-11-02 | review | 0.3.1 playtest (owner): three quit screen mockups (RM-224, proposed UI-STYLE-039, pick one); screenshots of the built fixes: the Options language row on 3440×1440 (GAP-098), the Accessibility preview (GAP-100), the Custom Puzzle regions and its finish screen (CUSTOM-REGION-001, CUSTOM-FINISH-001). |
 | 3.10 | 2026-10-28 | review | The Monthly Walk, Select Profile and Spirit Trials built (UI-STYLE-033 to 035, owner's picks). Screenshots below. |
 | 3.9 | 2026-10-28 | review | Main menu B · The garden path built (UI-STYLE-032, owner's pick). Screenshots below. |
@@ -841,3 +842,39 @@ Custom Puzzle at 9×9: Turned is greyed (CUSTOM-REGION-001); a solved Custom Puz
 ![Custom Puzzle before](layout-proposals/before_custom_puzzle_031.jpg)
 ![Custom Puzzle after](layout-proposals/after_custom_puzzle_031.jpg)
 ![Custom Puzzle result](layout-proposals/after_result_custom_puzzle.jpg)
+
+### Quit screen built (UI-STYLE-039, owner's pick A)
+
+![Quit, the garden at dusk](layout-proposals/after_quit_screen.jpg)
+
+### The story of the Nine (built, narrative-direction.md 1.2)
+
+The first floor's entry with the keeper's chapter; the warden's line under the gate; its parting line at the offering
+table; the Codex's Tales page.
+
+![Floor entry with the chapter](layout-proposals/after_floor_entry_floor1_story.jpg)
+![The warden at the gate](layout-proposals/after_boss_gate_story.jpg)
+![The warden's parting line](layout-proposals/after_boss_defeated_story.jpg)
+![Codex, Tales](layout-proposals/after_codex_tales_story.jpg)
+
+### Story conversation scenes (proposed UI-STYLE-040, pick one of three)
+
+Owner (2026-11-02): extra scenes for the story's conversations, inside the Garden Run. Each opens before the floor
+entry, the boss gate or the offering table when a scene is due, plays four to six lines one at a time (A / Enter: next
+line, B / Esc: skip the scene) and is reread in the Codex's Tales. The keeper and the warden speak; the secret voice
+speaks between them.
+
+**A · The painted dialogue:** the floor's painting, the keeper and the warden as large seals left and right, the line on
+a paper band at the bottom, the voice in italics under it.
+
+![Story A, the painted dialogue](layout-proposals/story_a_painted_dialogue.jpg)
+
+**B · Facing scrolls:** the keeper's and the warden's hanging scrolls face each other, each line written down its own
+scroll (older lines fade), the voice in gold on the painting between them.
+
+![Story B, facing scrolls](layout-proposals/story_b_facing_scrolls.jpg)
+
+**C · Shadow play:** a shoji screen lit by a lantern, keeper and warden as shadows (the speaker sharper), their words as
+brush lines on the paper, the voice as the lantern's line at the foot.
+
+![Story C, shadow play](layout-proposals/story_c_shadow_play.jpg)

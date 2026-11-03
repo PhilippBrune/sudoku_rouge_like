@@ -1,13 +1,14 @@
 # Spirit Trials Mode
 
-**Version:** 2.3  
-**Date:** 2026-11-02  
+**Version:** 2.4  
+**Date:** 2026-11-03  
 **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.4 | 2026-11-03 | implemented | Owner (2026-11-03): "if the requirement gives a starting item, there must be a slot for it". TRIAL-SESSION-001 promised one starting item while the code gave `ItemSlots = 0`: a trial now starts with one item in one slot, Normal on Apprentice and Adept, Rare on Master and Grandmaster (the 0.1 spec's table), and the bag shows that slot without the relic part (TRIAL-HUD-001, GAP-113). The 0.1 spec's "Solver Start" choice is not built. |
 | 2.3 | 2026-11-02 | implemented | 0.3.1 playtest (owner): the trial's puzzle shows no bag and no relic slots (TRIAL-HUD-001, GAP-112). |
 | 2.2 | 2026-10-28 | implemented | 0.3.0 playtest (RM-217, owner's pick UI-STYLE-035): the tier select as four steles with the chosen tier's slip; stars and rules per tier come from `SpiritTrialsService.StarsFor` and `RulesFor`. |
 | 2.1 | 2026-10-07 | implemented | Unlock rule confirmed as the single source: first boss defeat (SPEC-CONF-007); modifier pool limited to generatable modifiers (GAP-007). |
@@ -52,9 +53,9 @@ Like Endless Zen, Spirit Trials goes straight to the puzzle view rather than the
 | Board size | Always `9x9` |
 | Puzzle count | Exactly 1 |
 | Gold | `0` |
-| Items | `ItemSlots = 0` |
+| Items | **[TRIAL-SESSION-001]** `ItemSlots = 1` with one starting item: Normal on Apprentice and Adept, Rare on Master and Grandmaster. The seed picks it from Solver, Finder, Ink Well, Meditation Stone, Wind Chime and Koi Reflection (items that help in any one puzzle; no path, gold, fog or rule-zone items). `SpiritTrialsService.StartingItem` |
 | Relics | None |
-| Puzzle screen | **[TRIAL-HUD-001]** No bag and no relic slots: the trial says "no XP, items or relics" and the screen showed their empty slots (0.3.1 playtest, GAP-112) |
+| Puzzle screen | **[TRIAL-HUD-001]** The bag shows the item's one slot and no relic part (0.3.1 playtest, GAP-112: the screen showed empty item and relic slots; owner 2026-11-03, GAP-113: the starting item gets its slot) |
 | XP / meta rewards | Disabled via `DisableProgressionRewards = true` |
 | Save & Resume | Disabled |
 | Harmony | Forced to base config (`HarmonyLevel = 0`) |

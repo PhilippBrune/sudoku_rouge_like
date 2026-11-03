@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 3.13 | **Date:** 2026-11-02 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; the main menu B (UI-STYLE-032, 2026-10-28); proposals of 2026-10-28 for the main menu, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll wait for the owner's pick)
+**Version:** 3.14 | **Date:** 2026-11-03 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; the main menu B (UI-STYLE-032, 2026-10-28); proposals of 2026-10-28 for the main menu, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll wait for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 3.14 | 2026-11-03 | review | The Spirit Trial's starting item (TRIAL-SESSION-001, GAP-113): before and after shots of the bag with its one slot. |
 | 3.13 | 2026-11-02 | review | Owner's picks (0.3.1 playtest): Story A built (UI-STYLE-040), XP B built (UI-STYLE-041), the legend A built (UI-STYLE-042); the XP and legend mockups added; before and after shots of the fixes (OPT-TABS-001, TRIAL-HUD-001). |
 | 3.12 | 2026-11-02 | review | Owner (2026-11-02): Quit A built (UI-STYLE-039); the story of the Nine on the floor entry, the boss gate, the offering table and the Codex's Tales (STORY-*); three mockups for the story's conversation scenes (RM-225, proposed UI-STYLE-040, pick one). |
 | 3.11 | 2026-11-02 | review | 0.3.1 playtest (owner): three quit screen mockups (RM-224, proposed UI-STYLE-039, pick one); screenshots of the built fixes: the Options language row on 3440×1440 (GAP-098), the Accessibility preview (GAP-100), the Custom Puzzle regions and its finish screen (CUSTOM-REGION-001, CUSTOM-FINISH-001). |
@@ -930,3 +931,11 @@ relics (TRIAL-HUD-001).
 ![After, in-run Options](layout-proposals/after_inrun_options.jpg)
 ![Before, Spirit Trial](layout-proposals/before_trials_puzzle.jpg)
 ![After, Spirit Trial](layout-proposals/after_trials_puzzle.jpg)
+
+### The Spirit Trial's starting item (TRIAL-SESSION-001, GAP-113)
+
+Owner (2026-11-03): "if the requirement gives a starting item, there must be a slot for it". Before (0.3.3, no bag) and
+after (0.4.0: the bag with the item's one slot, no relic part):
+
+![Before, no bag](layout-proposals/after_trials_puzzle.jpg)
+![After, the starting item's slot](layout-proposals/after_trials_item_slot.jpg)

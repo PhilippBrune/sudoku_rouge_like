@@ -957,7 +957,15 @@ namespace SudokuRoguelike.Tests
                 yield return Shoot(host, camera, prefix + "inrun_options.png");
                 host.SetActive(false);
 
-                _beforeBind = run => run.State.Mode = GameMode.SpiritTrials;
+                _beforeBind = run =>
+                {
+                    // A trial's own state (TRIAL-SESSION-001): one slot with its starting item, no relics.
+                    var trialState = SpiritTrialsService.CreateTrialRunState(run.State.ClassId, SpiritTrialsTier.Master, 7362, false);
+                    run.State.Mode = GameMode.SpiritTrials;
+                    run.State.ItemSlots = trialState.ItemSlots;
+                    run.State.HeldItems = trialState.HeldItems;
+                    run.State.HeldRelics.Clear();
+                };
                 var (trials, _) = StartRun(7362, true, BossModifierId.KillerCages);
                 _beforeBind = null;
                 yield return DismissIntro();

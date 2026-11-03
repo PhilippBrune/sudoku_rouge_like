@@ -154,7 +154,6 @@ namespace SudokuRoguelike.UI
             var itemsPanel     = BuildItemsPanel(root, mc, itemsCtrl);
             var profilePanel   = BuildProfileSelectPanel(root, mc);
             var keybindPanel   = BuildKeybindingsPanel(root, mc, keybindCtrl);
-            var dailyPanel     = BuildDailyWalkPanel(root, mc);
             var monthlyPanel   = BuildMonthlyWalkPanel(root, mc);
 
             var trialsSelectCtrl  = EnsureComponent<SpiritTrialsTierSelectController>(gameObject);
@@ -168,7 +167,7 @@ namespace SudokuRoguelike.UI
                 card.gameObject, classPanel, optPanel, credPanel,
                 tutPanel, metaPanel, modesPanel, itemsPanel, profilePanel, keybindPanel,
                 optCtrl, tutCtrl, metaCtrl, modesCtrl, itemsCtrl, keybindCtrl,
-                status, btnResume, dailyPanel, monthlyPanel, null,   // no Accessibility panel: it is a page of the Options (UI-STYLE-017)
+                status, btnResume, monthlyPanel, null,   // no Accessibility panel: it is a page of the Options (UI-STYLE-017)
                 trialsSelectPanel, zenLeaderboardPanel,
                 trialsSelectCtrl, zenLeaderboardCtrl);
 

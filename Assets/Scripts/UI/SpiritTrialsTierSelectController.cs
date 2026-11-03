@@ -77,7 +77,7 @@ namespace SudokuRoguelike.UI
                     name, stars, rules);
             if (_slipBody != null)
                 _slipBody.text = LocalizationService.Format("SpiritTrials.Slip.Body",
-                    "HP {0} · Pencil {1} · finish under {2} for the time bonus. No XP, items or relics; the best score per tier is kept.",
+                    "HP {0} · Pencil {1} · finish under {2} for the time bonus. One starting item (Rare from Master), no XP or relics; the best score per tier is kept.",
                     Terms[index].Hp, Terms[index].Pencil, Terms[index].Par);
         }
     }

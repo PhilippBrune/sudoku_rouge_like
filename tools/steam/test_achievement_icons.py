@@ -44,12 +44,14 @@ class AchievementLocalizationTests(unittest.TestCase):
         import achievement_loc_vdf as loc
         source = open(SERVICE, encoding='utf-8-sig').read()
         listed = re.search(r'AllAchievementIds\s*=\s*\{(.*?)\};', source, re.S).group(1)
-        self.assertEqual(set(re.findall(r'"(\w+)"', listed)), set(loc.TOKEN_ORDER))
+        self.assertEqual(set(re.findall(r'"(\w+)"', listed)), set(loc.TOKENS))
+        self.assertEqual(len(loc.FIRST_SERIES) + len(loc.FIFTH_SERIES), len(loc.TOKENS), 'an API name twice')
+        self.assertEqual(len(set(loc.TOKENS.values())), len(loc.TOKENS), 'a Steam token twice')
         _, others = loc.read_spec()
-        for api in loc.TOKEN_ORDER:
+        for api in loc.TOKENS:
             self.assertEqual(len(others.get(api, [])), len(loc.STEAM_LANGUAGES), api)
-        german = loc.vdf('german', {api: others[api][0] for api in loc.TOKEN_ORDER})
-        self.assertEqual(german.count('_NAME"'), len(loc.TOKEN_ORDER))
+        german = loc.vdf('german', {api: others[api][0] for api in loc.TOKENS})
+        self.assertEqual(german.count('_NAME"'), len(loc.TOKENS))
 
 
 if __name__ == '__main__':

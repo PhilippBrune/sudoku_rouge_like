@@ -117,6 +117,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-110](#gap-110) | The Daily Walk widget opened the old Daily Walk screen | FIXED (0.3.1 playtest, 2026-11-02) | MEDIUM | P3 |
 | [GAP-111](#gap-111) | The in-run Options showed an empty Language page | FIXED (0.3.1 playtest, 2026-11-02) | LOW | P4 |
 | [GAP-112](#gap-112) | A Spirit Trial's puzzle showed the bag and relic slots | FIXED (0.3.1 playtest, 2026-11-02) | LOW | P4 |
+| [GAP-113](#gap-113) | A Spirit Trial gave no starting item although TRIAL-SESSION-001 promised one | FIXED (owner, 2026-11-03) | LOW | P3 |
 | [GAP-067](#gap-067) | Moonshade Offering's "+2 starting pencil" did nothing (the run starts at full pencil) | FIXED (2026-10-22) | LOW | P3 |
 | [GAP-064](#gap-064) | Scholar's Burden: no free Ink Well, "+5 pencil" did nothing, "−1 slot" could add a slot | FIXED (as planned, 2026-10-22) | MEDIUM | P3 |
 | [GAP-063](#gap-063) | Class levels 30 and 40 promised rewards the game did not grant (starting items, frames) | FIXED (2026-10-21) | MEDIUM | P2 |
@@ -1270,7 +1271,7 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Requirement:** MENU-BACK-001
 - **Status:** FIXED (0.3.1 playtest, built in 0.3.3) · **Severity:** MEDIUM · **Priority:** P3
 - **Problem:** The main menu's Daily Walk widget opened the panel from before RM-216.
-- **Fix:** It opens Game Modes on the Daily Walk (`OpenDailyWalk`). The old panel is still built but no button reaches it.
+- **Fix:** It opens Game Modes on the Daily Walk (`OpenDailyWalk`). The old panel and its texts are removed (owner, 2026-11-03).
 - **Tests:** GeneratedUiPlayModeTraversalTests (the widget opens Game Modes with the Daily Walk).
 
 ## GAP-111
@@ -1289,7 +1290,21 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Status:** FIXED (0.3.1 playtest, built in 0.3.3) · **Severity:** LOW · **Priority:** P4
 - **Problem:** The trial says "no XP, items or relics", but its puzzle showed their empty slots.
 - **Fix:** The puzzle of a Spirit Trial shows no bag and no relics.
-- **Tests:** InRunUiPlayModeTests (`SpiritTrial_ShowsNoBagAndNoRelics`).
+- **Tests:** InRunUiPlayModeTests (`SpiritTrial_ShowsItsItemSlot_AndNoRelics`; since GAP-113 the bag shows the starting item's slot).
+
+## GAP-113
+**A Spirit Trial gave no starting item although TRIAL-SESSION-001 promised one**
+
+- **Requirement:** TRIAL-SESSION-001, TRIAL-HUD-001
+- **Status:** FIXED (owner, 2026-11-03) · **Severity:** LOW · **Priority:** P3
+- **Problem:** The requirement map said "1 starting item" (the 0.1 spec: Normal on Apprentice and Adept, Rare on Master and
+  Grandmaster), the mode spec and the code said `ItemSlots = 0`. The owner: if the requirement gives a starting item, there
+  must be a slot for it.
+- **Fix:** `SpiritTrialsService.CreateTrialRunState` gives one slot and `StartingItem` (the seed picks one of six puzzle
+  items, the tier its rarity); the bag shows that slot without the relic part; the tier slip says "One starting item (Rare
+  from Master), no XP or relics".
+- **Tests:** GenerationReliabilityTests (`SpiritTrials_StartWithOneItemInItsSlot`), InRunUiPlayModeTests
+  (`SpiritTrial_ShowsItsItemSlot_AndNoRelics`).
 
 ## GAP-098
 **Apply and Cancel on the Language page had no text on a 3440×1440 screen**

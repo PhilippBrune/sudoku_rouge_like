@@ -1,11 +1,12 @@
 # Achievements
 
-**Version:** 1.3 | **Date:** 2026-11-02 | **Status:** implemented (game side; 29 achievements saved in Steamworks, not published; the 10 story achievements of 0.3.3 not entered yet)
+**Version:** 1.4 | **Date:** 2026-11-03 | **Status:** implemented (39 achievements saved in Steamworks in five languages; the 10 story achievements not published yet)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.4 | 2026-11-03 | implemented (39 in Steamworks, the story ones not published) | Owner (2026-11-03): "füge die hier hinzu ... ich erlaube dir das". The ten story achievements are created in Steamworks (App 4858470) with name, description and both icons, and entered in German, French, Spanish and Brazilian Portuguese: the page shows 39 achievements, every language fully localized. Saved, not published (Publish waits for the owner). Steamworks starts a new token series after a reload of the achievements page, so the last seven story achievements have the tokens `NEW_ACHIEVEMENT_5_0` to `_6`; `achievement_loc_vdf.py` keeps each achievement's real token. |
 | 1.3 | 2026-11-02 | implemented (game side; the 10 story achievements are not in Steamworks yet) | Owner (0.3.1 playtest): "Story-Erfolge ... füge den hinzu", answer "Zehn". Ten story achievements (ACHIEVE-STORY-001): a second chapter of any keeper, all five chapters of each keeper (8), the ninth keeper's chapter. Icons by `tools/steam/achievement_icons.py`. They still need entering in Steamworks (§4), then publishing with the owner's OK. |
 | 1.2 | 2026-10-27 | implemented | §5 has the eight Harmony achievements too. All 29 achievements are entered in German, French, Spanish (Spain) and Portuguese (Brazil) on the Achievement Localization page (files by `tools/steam/achievement_loc_vdf.py`); saved, not published. |
 | 1.1 | 2026-10-27 | implemented | Owner: "Lade die neuen Achievements ... hoch". The 21 new achievements are created in Steamworks (App 4858470) with name, description and both icons, saved, not published (Publish waits for the owner's OK). The other four languages (§5) are not entered yet. The Daily Walk streak is checked at the end of a Daily Walk too (it is a Garden Run of two floors since DailyGoalSystem 0.4). |
@@ -108,9 +109,9 @@ Counted for Garden Runs only (not tutorials, custom puzzles or the other modes).
 
 Every grant is kept in the profile (`MasteryAchievementState.UnlockedAchievements`) and sent to Steam when Steam runs; unlocks made without Steam are sent at the next start with Steam (`SyncUnlockedAchievements`). An API name Steamworks does not know yet fails quietly (a warning in the log) and is sent again later.
 
-## 4. Steamworks (created 2026-10-27; publishing waits for the owner)
+## 4. Steamworks (created 2026-10-27, the story achievements 2026-11-03; publishing waits for the owner)
 
-Steamworks → App 4858470 → Stats & Achievements → Achievements: one new achievement per row of §2 with the API name, name, description, hidden = no, and the two icons (`steam_assets/achievements/achieved_<api name>.jpg` and `unachieved_<api name>.jpg`, 256×256). Then publish (stop and check before the Publish button, as always). The texts in the other four languages (§5) go in on Stats & Achievements → Achievement Localization: `tools/steam/achievement_loc_vdf.py` writes one Key/Values file per language from §5 into `steam_assets/achievements/localization/`, and each file is uploaded there (entered 2026-10-27 for all 29).
+Steamworks → App 4858470 → Stats & Achievements → Achievements: one new achievement per row of §2 with the API name, name, description, hidden = no, and the two icons (`steam_assets/achievements/achieved_<api name>.jpg` and `unachieved_<api name>.jpg`, 256×256). Then publish (stop and check before the Publish button, as always). The texts in the other four languages (§5) go in on Stats & Achievements → Achievement Localization: `tools/steam/achievement_loc_vdf.py` writes one Key/Values file per language from §5 into `steam_assets/achievements/localization/`, and each file is uploaded there (entered 2026-10-27 for all 29, 2026-11-03 for all 39). The tokens follow the order the achievements were created in, and a reload of the achievements page starts a new series (`NEW_ACHIEVEMENT_5_<n>` for the last seven story achievements): download the English localization file first when adding more.
 
 For entering them: `steam_assets/achievements/steamworks_entry.html` lists the 21 new achievements with both icons and every text in five languages (a click copies a field), and `new_achievements_overview.jpg` shows all icons at once (both made by `tools/steam/achievement_sheet.py` from this page).
 

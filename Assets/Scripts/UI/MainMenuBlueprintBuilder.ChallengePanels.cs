@@ -5,59 +5,6 @@ namespace SudokuRoguelike.UI
 {
     public sealed partial class MainMenuBlueprintBuilder
     {
-        private GameObject BuildDailyWalkPanel(RectTransform root, MainMenuController mc)
-        {
-            var panel = MakePanel("DailyWalkPanel", root,
-                new Vector2(0.24f, 0.14f), new Vector2(0.76f, 0.86f));
-            var pr = GetPanelContent(panel);
-
-            var title = BuildText("Title", pr, T("Challenge.Daily.Title"), 28, TextAnchor.UpperCenter);
-            SetRect(title.rectTransform,
-                new Vector2(0.08f, 0.88f), new Vector2(0.92f, 0.97f), Vector2.zero, Vector2.zero);
-
-            var streakLabel = BuildText("StreakLabel", pr, T("Challenge.Daily.StreakPlaceholder"), 18, TextAnchor.MiddleCenter);
-            SetRect(streakLabel.rectTransform,
-                new Vector2(0.08f, 0.80f), new Vector2(0.92f, 0.87f), Vector2.zero, Vector2.zero);
-            streakLabel.name = "StreakLabel";
-
-            var goal0 = BuildText("Goal0", pr, T("Challenge.Daily.Goal1Placeholder"), 15, TextAnchor.MiddleLeft);
-            SetRect(goal0.rectTransform,
-                new Vector2(0.06f, 0.62f), new Vector2(0.94f, 0.69f), Vector2.zero, Vector2.zero);
-
-            var goal1 = BuildText("Goal1", pr, T("Challenge.Daily.Goal2Placeholder"), 15, TextAnchor.MiddleLeft);
-            SetRect(goal1.rectTransform,
-                new Vector2(0.06f, 0.54f), new Vector2(0.94f, 0.61f), Vector2.zero, Vector2.zero);
-
-            var goal2 = BuildText("Goal2", pr, T("Challenge.Daily.Goal3Placeholder"), 15, TextAnchor.MiddleLeft);
-            SetRect(goal2.rectTransform,
-                new Vector2(0.06f, 0.46f), new Vector2(0.94f, 0.53f), Vector2.zero, Vector2.zero);
-
-            var stamps = BuildText("StampsLabel", pr, T("Challenge.Daily.InkStampsPlaceholder"), 16, TextAnchor.MiddleCenter);
-            SetRect(stamps.rectTransform,
-                new Vector2(0.08f, 0.37f), new Vector2(0.92f, 0.44f), Vector2.zero, Vector2.zero);
-            stamps.name = "StampsLabel";
-
-            var back = BuildButton("BtnDailyBack", pr, T("Back"), 18);
-            SetRect(back.GetComponent<RectTransform>(),
-                new Vector2(0.54f, 0.01f), new Vector2(0.90f, 0.09f), Vector2.zero, Vector2.zero);
-            back.onClick.RemoveAllListeners();
-            back.onClick.AddListener(mc.ShowGameModes);
-            ApplyMenuButtonIcon(back, "ui/icon_back_leaf");
-
-            if (ApplyPanelBackground(panel.GetComponent<Image>(), "background/bg_daily_walk"))
-            {
-                var contentImg = pr.GetComponent<Image>();
-                if (contentImg != null) contentImg.color = ContentScrimColor;
-                var contentOutline = pr.GetComponent<Outline>();
-                if (contentOutline != null) contentOutline.effectColor = Color.clear;
-                foreach (var btn in pr.GetComponentsInChildren<Button>(true))
-                    StyleButtonForBackground(btn);
-            }
-
-            panel.SetActive(false);
-            return panel;
-        }
-
         // [REQ: UI-STYLE-033] [REQ: SEASON-UI-001] Monthly Walk · Under the old tree (owner's pick, RM-217): the month's painting,
         // a banner with the month and the garden; a slip with the board, its rules and how the score is counted; the month's
         // best on a dark panel with its grade; the days of the month as ink marks; Back and Begin. MainMenuController

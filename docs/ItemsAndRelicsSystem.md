@@ -1,13 +1,14 @@
 # Items & Relics System
 
-**Version:** 2.5  
-**Date:** 2026-10-27  
+**Version:** 2.6  
+**Date:** 2026-11-03  
 **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.6 | 2026-11-03 | implemented | Spirit Trials start with one item in one slot (TRIAL-SESSION-001, owner 2026-11-03, GAP-113); Endless Zen keeps `ItemSlots = 0`. |
 | 2.5 | 2026-10-27 | implemented | Owner request (2026-10-27): the concept files are merged into their specs. The class relic concept (v1.1) is in "Class relics: why and the owner's answers": the reason, the per-class table, the owner's answers and what is still open. The item part of the gold and items concept (why the counter items) is in "Counter Items". Its lever L3 is named in GoldEconomySystem 2.3. No rule changed. |
 | 2.4 | 2026-10-26 | implemented | Owner picks (2026-10-25): a signature relic per class from Level 1 with a higher chance in offerings (RELIC-SIG-001/002, Single Stroke for the Reed Duelist), and four keystones offered after a Garden Run's first boss that bend a rule of the puzzle (RELIC-KEY-001/002, RM-114, the owner's answer: a relic may bend Sudoku's rules). |
 | 2.3 | 2026-10-21 | implemented | Counter items, one per modifier family (ITEM-COUNTER-001..006), and shops that lean toward the counters of the board's rules (ITEM-COUNTER-007); lever L3 of GoldEconomySystem 2.3. |
@@ -91,7 +92,8 @@ count toward the "every item discovered" codex unlock (`ProfileService`).
 
 ### No-Progression Modes
 
-Endless Zen and Spirit Trials set `ItemSlots = 0` and skip progression rewards, so the item reward/shop loop does not apply there.
+Endless Zen sets `ItemSlots = 0`; a Spirit Trial has one slot with its starting item (TRIAL-SESSION-001,
+[SpiritTrialsMode](SpiritTrialsMode.md)). Both skip progression rewards, so the item reward/shop loop does not apply there.
 
 ## Relics
 

@@ -57,21 +57,36 @@ namespace SudokuRoguelike.Tests
 
         // ── Legend (GAP-025) ──
 
-        // [REQ: TRIAL-HUD-001] A Spirit Trial gives no items or relics, so its puzzle shows no bag and no relic slots (0.3.1
-        // playtest: "Spirit Trial says no XP, items or relics, but the puzzle shows their slots").
+        // [REQ: TRIAL-HUD-001] [REQ: TRIAL-SESSION-001] A Spirit Trial starts with one item and no relics: the bag shows that
+        // one slot and no relic part (0.3.1 playtest; the owner, 2026-11-03: a starting item needs its slot).
         [UnityTest]
-        [Requirement("TRIAL-HUD-001")]
-        public IEnumerator SpiritTrial_ShowsNoBagAndNoRelics()
+        [Requirement("TRIAL-HUD-001", "TRIAL-SESSION-001")]
+        public IEnumerator SpiritTrial_ShowsItsItemSlot_AndNoRelics()
         {
             var h = StartPuzzle(8616);
             yield return null;
             yield return null;
             Assert.IsTrue(FindObject(h.Host, "BagPanel").activeInHierarchy, "a Garden Run shows its bag");
 
+            var trial = SpiritTrialsService.CreateTrialRunState(h.Run.State.ClassId, SpiritTrialsTier.Master, 8616, false);
             h.Run.State.Mode = GameMode.SpiritTrials;
+            h.Run.State.ItemSlots = trial.ItemSlots;
+            h.Run.State.HeldItems = trial.HeldItems;
+            h.Run.State.HeldRelics.Clear();
             h.Host.GetComponentInChildren<HudViewController>(true).Refresh(h.Run.State, h.Run.CurrentLevelConfig);
             yield return null;
-            Assert.IsFalse(FindObject(h.Host, "BagPanel").activeInHierarchy, "a Spirit Trial shows no bag and no relics");
+            var bag = FindObject(h.Host, "BagPanel");
+            Assert.IsTrue(bag.activeInHierarchy, "TRIAL-SESSION-001: the starting item has its slot");
+            Assert.NotNull(FindObjectOrNull(bag, "BagSlot_0"));
+            Assert.IsNull(FindObjectOrNull(bag, "BagSlot_1"), "one slot");
+            Assert.IsFalse(FindObject(bag, "RelicTitle").activeInHierarchy, "TRIAL-HUD-001: no relics");
+            Assert.IsNull(FindObjectOrNull(bag, "RelicSlot_0"));
+
+            // The same HUD in the next Garden Run shows the relic part again.
+            h.Run.State.Mode = GameMode.GardenRun;
+            h.Host.GetComponentInChildren<HudViewController>(true).Refresh(h.Run.State, h.Run.CurrentLevelConfig);
+            yield return null;
+            Assert.IsTrue(FindObject(bag, "RelicTitle").activeInHierarchy, "a Garden Run shows its relics again");
         }
 
         [UnityTest]

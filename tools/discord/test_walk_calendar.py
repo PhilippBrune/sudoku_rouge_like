@@ -9,6 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import walk_calendar as w  # noqa: E402
+import walk_posts as wp  # noqa: E402
 
 
 class WalkCalendarTests(unittest.TestCase):
@@ -20,6 +21,15 @@ class WalkCalendarTests(unittest.TestCase):
         for (y, m, d), ids in {(2026, 10, 15): [5, 12, 20], (2026, 1, 1): [2, 11, 14], (2027, 1, 1): [4, 12, 20]}.items():
             self.assertEqual(ids, w.daily_goal_ids(dt.date(y, m, d)))
         self.assertEqual(21, len(w.all_goals()))
+
+    def test_daily_post_describes_the_walk_after_walk_live(self):
+        day = dt.date(2026, 11, 3)
+        before, after = wp.daily_text(day), wp.daily_text(day, walk_live=True)
+        self.assertIn('keep your streak', before)
+        self.assertIn('two floors with a boss on each', after)
+        for goal in w.daily_goals(day):
+            self.assertIn(f'{goal.description}: {goal.reward}', after)
+        self.assertNotIn('\u2014', after)   # no em dash in a new player text
 
     def test_seed_of_the_week(self):
         for (y, m, d), (iy, iw, seed) in {(2026, 10, 15): (2026, 42, 390609), (2026, 1, 1): (2026, 1, 160412),

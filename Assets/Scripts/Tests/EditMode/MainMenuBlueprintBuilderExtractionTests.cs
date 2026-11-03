@@ -20,16 +20,9 @@ namespace SudokuRoguelike.Tests
                 mainBuilder,
                 "Main menu builder must remain partial so focused panel slices can be owned in smaller files.");
             StringAssert.DoesNotContain(
-                "private GameObject BuildDailyWalkPanel",
-                mainBuilder,
-                "Daily Walk panel should stay out of the main generated builder file.");
-            StringAssert.DoesNotContain(
                 "private GameObject BuildMonthlyWalkPanel",
                 mainBuilder,
                 "Monthly Walk panel should stay out of the main generated builder file.");
-            StringAssert.Contains(
-                "private GameObject BuildDailyWalkPanel",
-                challengePanels);
             StringAssert.Contains(
                 "private GameObject BuildMonthlyWalkPanel",
                 challengePanels);

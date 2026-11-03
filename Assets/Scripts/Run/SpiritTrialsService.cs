@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using SudokuRoguelike.Boss;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Items;
 
 namespace SudokuRoguelike.Run
 {
@@ -90,12 +91,34 @@ namespace SudokuRoguelike.Run
                 CurrentPencil = pencil,
                 MaxPencil = pencil,
                 CurrentGold = 0,
-                ItemSlots = 0,
+                ItemSlots = 1,
+                HeldItems = { StartingItem(tier, seed) },
                 TotalFloors = 1,
                 DisableProgressionRewards = true,
                 SpiritTrialsTier = tier,
                 AllowIrregularPuzzles = allowIrregularPuzzles,
                 HarmonyConfig = HarmonyDifficultyService.BuildConfig(0)
+            };
+        }
+
+        // Items that help in any one puzzle (no path, gold, fog or rule-zone items).
+        private static readonly ItemType[] StartingItemPool =
+        {
+            ItemType.Solver, ItemType.Finder, ItemType.InkWell, ItemType.MeditationStone, ItemType.WindChime, ItemType.KoiReflection
+        };
+
+        /// <summary>[REQ: TRIAL-SESSION-001] The trial's one starting item and its slot (owner, 2026-11-03): Normal on
+        /// Apprentice and Adept, Rare on Master and Grandmaster (SpiritTrialsMode 0.1); the seed picks it, so the same seed
+        /// starts with the same item.</summary>
+        public static ItemInstance StartingItem(SpiritTrialsTier tier, int seed)
+        {
+            var type = StartingItemPool[new Random(seed).Next(StartingItemPool.Length)];
+            return new ItemInstance
+            {
+                Id = "trial-start",
+                Type = type,
+                Rarity = tier >= SpiritTrialsTier.Master ? ItemRarity.Rare : ItemRarity.Normal,
+                Charges = ItemService.GetDefaultCharges(type)
             };
         }
 

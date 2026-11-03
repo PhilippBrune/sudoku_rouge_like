@@ -686,8 +686,7 @@ namespace SudokuRoguelike.UI
             var state = _map?.Run?.State;
 
             // Bag is irrelevant in Tutorial and Seasonal Challenge — hide and bail out.
-            if (state?.Mode == GameMode.Tutorial || state?.Mode == GameMode.SeasonalChallenge || state?.Mode == GameMode.IncenseWalk
-                || state?.Mode == GameMode.SpiritTrials)   // [REQ: TRIAL-HUD-001] "No XP, items or relics"
+            if (state?.Mode == GameMode.Tutorial || state?.Mode == GameMode.SeasonalChallenge || state?.Mode == GameMode.IncenseWalk)
             {
                 if (_bagPanel != null) _bagPanel.SetActive(false);
                 return;
@@ -747,6 +746,11 @@ namespace SudokuRoguelike.UI
             }
 
             if (_bagPanel == null) return;
+
+            // [REQ: TRIAL-HUD-001] A Spirit Trial carries its starting item and no relics: no relic part in the bag.
+            var relics = state?.Mode != GameMode.SpiritTrials;
+            _bagPanel.transform.Find("BagDivider")?.gameObject.SetActive(relics);
+            _bagPanel.transform.Find("RelicTitle")?.gameObject.SetActive(relics);
 
             if (slotCount != _builtForSlotCount)
                 RebuildBagSlots(slotCount);

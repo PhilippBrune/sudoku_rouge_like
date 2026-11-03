@@ -1,11 +1,12 @@
 # Daily Goal System
 
-**Version:** 0.10 | **Date:** 2026-11-02 | **Status:** implemented (the daily walk on one path over Floors 2 and 4, the stamp shop)
+**Version:** 0.11 | **Date:** 2026-11-03 | **Status:** implemented (the daily walk on one path over Floors 2 and 4, the stamp shop)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 0.11 | 2026-11-03 | implemented | The old goal panel of the main menu (unreachable since 0.3.3, GAP-110) is removed with its texts; the widget's button opens the walk's curtain on Game Modes (DAILY-GOAL-004, owner 2026-11-03). |
 | 0.10 | 2026-11-02 | implemented | 0.3.1 playtest (owner, RM-219): the walk's floors are two tiles shorter, and a saved walk counts only on its own day: the path says so, the main menu's card says "continue it today", and a walk saved on an earlier day ends like an abandoned walk (DAILY-WALK-010). |
 | 0.9 | 2026-10-28 | implemented | 0.3.0 playtest, owner: way B and "Read an event" (RM-216): the Daily Walk on one path over the gardens of Floors 2 and 4, one event tile per floor, the goal "Read an event on the path" in place of "Take the Risk route" (DAILY-WALK-009). The Garden Run keeps its five floors and two routes. |
 | 0.8 | 2026-10-28 | review | Concept (RM-216, 0.3.0 playtest): the Daily Walk on one path and on Floors 2 and 4, the Garden Run on Floors 1, 3 and 5 (RM-113); two ways to build it and the open questions. Not built. |
@@ -35,7 +36,7 @@ Its buttons: Back, Stamp shop, and "Walk today's garden" ("Give … XP" while XP
 saved run would end).
 
 The compact widget on the main menu stays (1.1, SPEC-CONF-027, GAP-028): today's goals met and the streak, and an Open
-button to the goal panel with the list, stamps and the time to the next goals.
+button to the walk's curtain on Game Modes (DAILY-GOAL-004; the old goal panel is removed, GAP-110).
 
 ---
 

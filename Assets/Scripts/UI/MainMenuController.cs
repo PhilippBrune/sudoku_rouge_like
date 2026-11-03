@@ -26,7 +26,6 @@ namespace SudokuRoguelike.UI
         private GameObject _itemsPanel;
         private GameObject _profileSelectPanel;
         private GameObject _keybindingsPanel;
-        private GameObject _dailyWalkPanel;
         private GameObject _monthlyWalkPanel;
         private GameObject _spiritTrialsTierSelectPanel;
         private GameObject _zenLeaderboardPanel;
@@ -336,7 +335,7 @@ namespace SudokuRoguelike.UI
             MetaProgressionPanelController metaCtrl, GameModesPanelController modesCtrl,
             ItemsMenuController itemsCtrl, KeybindingsPanelController keybindCtrl,
             Text statusText, Button resumeButton,
-            GameObject dailyWalkPanel = null, GameObject monthlyWalkPanel = null,
+            GameObject monthlyWalkPanel = null,
             GameObject accessibilityPanel = null,
             GameObject spiritTrialsTierSelectPanel = null, GameObject zenLeaderboardPanel = null,
             SpiritTrialsTierSelectController trialsSelectCtrl = null,
@@ -354,7 +353,6 @@ namespace SudokuRoguelike.UI
             _itemsPanel = itemsPanel;
             _profileSelectPanel = profileSelectPanel;
             _keybindingsPanel = keybindingsPanel;
-            _dailyWalkPanel = dailyWalkPanel;
             _monthlyWalkPanel = monthlyWalkPanel;
             _spiritTrialsTierSelectPanel = spiritTrialsTierSelectPanel;
             _zenLeaderboardPanel = zenLeaderboardPanel;
@@ -467,7 +465,6 @@ namespace SudokuRoguelike.UI
         public void OpenGameModes()    => ShowGameModes();
         public void ShowGameModes()
         {
-            if (_dailyWalkPanel   != null) _dailyWalkPanel.SetActive(false);
             if (_monthlyWalkPanel != null) _monthlyWalkPanel.SetActive(false);
             DropGameModesOverlays();
             RefreshGameModesPanel();
@@ -484,17 +481,6 @@ namespace SudokuRoguelike.UI
         public void BackToMainMenu() => _menu.ShowMainMenu();
         public void BackFromPanel() => _menu.Back();
 
-        // [REQ: DAILY-GOAL-004] Daily Walk widget: shows today's 3 goals, streak, InkStamp count, reset countdown
-        public void ShowDailyWalkPanel()
-        {
-            HideAllPanels();
-            if (_dailyWalkPanel != null)
-            {
-                _dailyWalkPanel.SetActive(true);
-                RefreshDailyWalkPanel();
-            }
-        }
-
         // [REQ: MENU-BACK-001] A screen of the menu's history (0.3.1 playtest): Back returns to the main menu or to Game
         // Modes, wherever the walk was opened from.
         public void ShowMonthlyWalkPanel()
@@ -505,7 +491,7 @@ namespace SudokuRoguelike.UI
             RefreshMonthlyWalkPanel();
         }
 
-        /// <summary>[REQ: UI-STYLE-027] The main menu's Daily Walk tag opens the walk's curtain on Game Modes (0.3.1
+        /// <summary>[REQ: DAILY-GOAL-004] [REQ: UI-STYLE-027] The main menu's Daily Walk tag opens the walk's curtain on Game Modes (0.3.1
         /// playtest: it opened the old goals panel).</summary>
         public void OpenDailyWalk()
         {
@@ -535,74 +521,6 @@ namespace SudokuRoguelike.UI
                 SetStatus(LocalizationService.T(
                     "Seasonal.Status.GenerationFailed",
                     "This month's puzzle could not be prepared. Please try again."));
-            }
-        }
-
-        private void HideAllPanels()
-        {
-            DropGameModesOverlays();
-            if (_mainMenuPanel != null) _mainMenuPanel.SetActive(false);
-            if (_classSelectPanel != null) _classSelectPanel.SetActive(false);
-            if (_gameModesPanel != null) _gameModesPanel.SetActive(false);
-            if (_dailyWalkPanel != null) _dailyWalkPanel.SetActive(false);
-            if (_monthlyWalkPanel != null) _monthlyWalkPanel.SetActive(false);
-        }
-
-        private void RefreshDailyWalkPanel()
-        {
-            if (_dailyWalkPanel == null) return;
-            var envelope = _save.HasSaveFile() ? _save.Load() : new SaveFileEnvelope();
-            var goals = envelope.DailyGoals ?? new DailyGoalState();
-
-            // Ensure goals are up-to-date for today before displaying
-            DailyGoalService.RefreshIfNewDay(goals, DateTime.Today);
-
-            var defs = DailyGoalService.GetTodayGoals(goals);
-            var completedCount = 0;
-            for (var i = 0; i < 3; i++) if (goals.TodayGoalCompleted[i]) completedCount++;
-
-            var tomorrow = DateTime.Today.AddDays(1);
-            var resetIn = tomorrow - DateTime.Now;
-            var resetLabel = LocalizationService.Format(
-                "Challenge.Daily.ResetIn",
-                "Resets in {0:D2}:{1:D2}",
-                (int)resetIn.TotalHours,
-                resetIn.Minutes);
-
-            FindAndSetText(_dailyWalkPanel, "StreakLabel",
-                LocalizationService.FormatPlural(
-                    goals.CurrentStreak,
-                    "Challenge.Daily.Streak.One",
-                    "Challenge.Daily.Streak.Many",
-                    "Streak: {0} day",
-                    "Streak: {0} days"));
-            FindAndSetText(_dailyWalkPanel, "StampsLabel",
-                LocalizationService.Format(
-                    "Challenge.Daily.StampsSummary",
-                    "Ink Stamps: {0}  -  {1}/3 today  -  {2}",
-                    goals.TotalInkStamps,
-                    completedCount,
-                    resetLabel));
-
-            for (var i = 0; i < 3; i++)
-            {
-                var done = goals.TodayGoalCompleted[i];
-                var tierTag = defs[i].Tier switch
-                {
-                    DailyGoalService.GoalTier.Easy   => LocalizationService.T("Challenge.Daily.Tier.Easy", "[Easy]   "),
-                    DailyGoalService.GoalTier.Medium => LocalizationService.T("Challenge.Daily.Tier.Medium", "[Medium] "),
-                    DailyGoalService.GoalTier.Hard   => LocalizationService.T("Challenge.Daily.Tier.Hard", "[Hard]   "),
-                    _                                => ""
-                };
-                var statusMark = done ? "\u2713 " : "\u25cb ";
-                var rewardPart = done
-                    ? ""
-                    : LocalizationService.Format(
-                        "Challenge.Daily.GoalRewardSuffix",
-                        "  -> {0}",
-                        DailyGoalService.GetRewardDescription(defs[i]));
-                FindAndSetText(_dailyWalkPanel, $"Goal{i}",
-                    $"{statusMark}{tierTag}{DailyGoalService.GetGoalDescription(defs[i])}{rewardPart}");
             }
         }
 

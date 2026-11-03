@@ -252,6 +252,32 @@ namespace SudokuRoguelike.Tests
             Assert.IsEmpty(failures);
         }
 
+        // [REQ: TRIAL-SESSION-001] One starting item and its slot (owner, 2026-11-03): Normal on Apprentice and Adept, Rare
+        // from Master; the seed picks it, and no relics.
+        [Test]
+        [Requirement("TRIAL-SESSION-001")]
+        public void SpiritTrials_StartWithOneItemInItsSlot()
+        {
+            foreach (SpiritTrialsTier tier in Enum.GetValues(typeof(SpiritTrialsTier)))
+            {
+                var trial = new RunDirector();
+                trial.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.SpiritTrials, SelectedTier = tier }, 52100);
+                Assert.AreEqual(1, trial.State.ItemSlots, tier.ToString());
+                Assert.AreEqual(1, trial.State.HeldItems.Count, tier.ToString());
+                var item = trial.State.HeldItems[0];
+                Assert.AreEqual(tier >= SpiritTrialsTier.Master ? ItemRarity.Rare : ItemRarity.Normal, item.Rarity, tier.ToString());
+                Assert.AreEqual(SpiritTrialsService.StartingItem(tier, 52100).Type, item.Type, "the seed picks the item");
+                Assert.Greater(item.Charges, 0, tier.ToString());
+                Assert.IsEmpty(trial.State.HeldRelics, tier.ToString());
+            }
+
+            // The seed picks from the six puzzle items only, and reaches all of them.
+            var pool = new[] { ItemType.Solver, ItemType.Finder, ItemType.InkWell, ItemType.MeditationStone, ItemType.WindChime, ItemType.KoiReflection };
+            var seen = new HashSet<ItemType>();
+            for (var seed = 0; seed < 200; seed++) seen.Add(SpiritTrialsService.StartingItem(SpiritTrialsTier.Adept, seed).Type);
+            CollectionAssert.AreEquivalent(pool, seen);
+        }
+
         private static RunDirector StartGardenRun(int seed)
         {
             var run = new RunDirector();

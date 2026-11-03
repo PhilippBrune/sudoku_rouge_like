@@ -1,11 +1,13 @@
 """Posts the game's date-based challenges to #rotn-seeds-and-walks (RUN-WEEK-002, discord-server-setup.md §12).
 
-- every day: the Daily Walk's three goals (the same for everyone playing that day)
+- every day: the Daily Walk's three goals (the same for everyone playing that day); after `walk-live` the post
+  describes the walk itself (the two-floor run of 0.3.x) with its goals
 - every week (Monday): the Seed of the week, a Discord Event for the week, @Events ping
 - every month (1st): the Monthly Walk board, a Discord Event for the month, @Events ping
 Each post opens a thread for results. The content comes from walk_calendar.py, which computes it like the game does.
 
     python tools/discord/walk_posts.py preview                 # all three to #release-drafts (no ping, no event)
+    python tools/discord/walk_posts.py walk-live [off]         # after the upload: the daily post describes the walk
     python tools/discord/walk_posts.py run                     # post what is due (scheduled task, every 30 min)
     python tools/discord/walk_posts.py champion <member name>  # give the Seed Champion role
     python tools/discord/walk_posts.py champion --reset        # take it from everyone
@@ -50,12 +52,25 @@ def save_state(state: dict) -> None:
 
 # --- texts -------------------------------------------------------------------------------------------------------------
 
-def daily_text(day: dt.date) -> str:
+def daily_text(day: dt.date, walk_live: bool = False) -> str:
+    goals = wc.daily_goals(day)
+    if not walk_live:
+        lines = [f'**🌿 Daily Walk · {day:%A, %d %B}**',
+                 'Today\'s goals, the same for everyone who plays today:']
+        for i, g in enumerate(goals, 1):
+            lines.append(f'{i}. {g.description} — {g.reward}')
+        lines.append('Finish all three to keep your streak. How did it go? Tell us in the thread.')
+        return '\n'.join(lines)
+    # The walk as the game has it since 0.3.x (DailyGoalSystem, DAILY-WALK-001..006 and 008). The goals come from the
+    # game's source, so they match the live build once the owner switched with `walk-live` after the upload.
     lines = [f'**🌿 Daily Walk · {day:%A, %d %B}**',
-             'Today\'s goals, the same for everyone who plays today:']
-    for i, g in enumerate(wc.daily_goals(day), 1):
-        lines.append(f'{i}. {g.description} — {g.reward}')
-    lines.append('Finish all three to keep your streak. How did it go? Tell us in the thread.')
+             'Today\'s garden is the same for everyone: two floors with a boss on each, walked by one walker for all '
+             '(10 HP, 10 Pencil, 2 item slots). Game Modes, then Daily Walk.',
+             'Today\'s goals:']
+    for i, g in enumerate(goals, 1):
+        lines.append(f'{i}. {g.description}: {g.reward}')
+    lines.append('All three earn an ink stamp. Your first walk of the day counts for XP and the day\'s leaderboard. '
+                 'Post your score in the thread.')
     return '\n'.join(lines)
 
 
@@ -135,7 +150,8 @@ def cmd_run(layout: dict) -> None:
     week_key, month_key = f'{year}-W{week:02d}', f'{today:%Y-%m}'
 
     if state.get('daily') != today.isoformat():
-        post(s, CHANNEL, daily_text(today), ping=False, thread=f'Daily Walk · {today:%d %b}')
+        post(s, CHANNEL, daily_text(today, state.get('walk_live', False)), ping=False,
+             thread=f'Daily Walk · {today:%d %b}')
         state['daily'] = today.isoformat()
         save_state(state)
         log(f'daily walk posted for {today}')
@@ -163,7 +179,7 @@ def cmd_run(layout: dict) -> None:
 def cmd_preview(layout: dict) -> None:
     today = dt.date.today()
     s = da.State(da.guild_id(layout))
-    for text in (daily_text(today), weekly_text(today), monthly_text(today)):
+    for text in (daily_text(today, walk_live=True), weekly_text(today), monthly_text(today)):
         post(s, 'release-drafts', '**PREVIEW (walk posts)**\n' + text, ping=False, thread=None)
     print('Posted 3 previews to #release-drafts')
 
@@ -206,6 +222,10 @@ def main(argv: list) -> None:
             cmd_run(layout)
         elif cmd == 'preview':
             cmd_preview(layout)
+        elif cmd == 'walk-live' and rest in ([], ['off']):
+            save_state({**load_state(), 'walk_live': not rest})
+            print('The daily post describes the walk from the next post on.' if not rest else
+                  'The daily post lists the goals only again.')
         elif cmd == 'champion' and rest:
             cmd_champion(layout, ' '.join(rest))
         elif cmd == 'install-task':

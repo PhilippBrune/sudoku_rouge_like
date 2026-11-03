@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.4.0: 10th iteration (2026-11-03)
+
+The first public build since 0.3.0. It carries the three test builds below (0.3.1 to 0.3.3: the story of the Nine and
+its scenes, ten story achievements, the XP brush, the legend in the rule slip, event tiles, the Custom Puzzle result and
+the controller fixes) and these changes:
+
+### New
+
+- **A Spirit Trial starts with one item** in its own slot: a Normal item on Apprentice and Adept, a Rare one on Master and
+  Grandmaster. The bag shows that slot; there are still no relics.
+
+### Changed
+
+- The Spirit Trials slip says what you take in: one starting item, no XP or relics.
+- The old Daily Walk goal panel is gone; the Daily Walk lives on Game Modes.
+
 ## 0.3.3: test build (2026-11-02)
 
 A local build for the owner's playtest. Not uploaded.

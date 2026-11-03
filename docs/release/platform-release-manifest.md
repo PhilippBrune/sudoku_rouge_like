@@ -1,6 +1,6 @@
-# Platform Release Manifest: 0.3.2
+# Platform Release Manifest: 0.4.0
 
-**Release:** 0.3.2 (local test build: the story of the Nine, the quit screen, irregular regions on every size; built 2026-11-02, not uploaded; before it 0.3.1, a local test build of the 0.3.1 playtest fixes; before it 0.3.0, Steam build "v0.3.0 (9th iteration)", built 2026-10-27, not uploaded) · **Updated:** 2026-11-02 · **Owner:** Philipp Brune
+**Release:** 0.4.0 (Steam build "v0.4.0 (10th iteration)" for `default`; built 2026-11-03, not uploaded; it carries the local test builds 0.3.1 to 0.3.3: the story of the Nine and its scenes, ten story achievements, the XP brush, the legend in the rule slip, the controller fixes, the Spirit Trials starting item; before it 0.3.0, Steam build "v0.3.0 (9th iteration)", live since 2026-10-27) · **Updated:** 2026-11-03 · **Owner:** Philipp Brune
 
 This manifest lists every release gate with its state, exit criteria and the repository evidence. States:
 

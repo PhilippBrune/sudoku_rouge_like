@@ -203,6 +203,9 @@ namespace SudokuRoguelike.Save
         /// Returns list of newly unlocked class IDs.
         /// </summary>
         // [REQ: META-UNLOCK-002] [REQ: META-XP-004] RecordRunAndGetNewUnlocks: XP committed at run end only (no mid-run leveling); evaluates all 8 class unlock conditions
+        /// <summary>[REQ: RUN-EARLY-002] What the last recorded Garden Run end may show of the early garden.</summary>
+        public List<EarlyGarden.Entry> LastEarlyGardenNew { get; private set; } = new List<EarlyGarden.Entry>();
+
         public List<ClassId> RecordRunAndGetNewUnlocks(RunResult result, RunState liveRunState = null)
         {
             var newUnlocks = new List<ClassId>();
@@ -216,6 +219,8 @@ namespace SudokuRoguelike.Save
             ModifierDiscoveryService.SanitizeMetaProgress(meta);
 
             // 1. Update stats
+            // [REQ: RUN-EARLY-002] A profile that had all ten before this version has nothing to show.
+            if (stats.TotalRunsStarted >= EarlyGarden.Count) meta.EarlyGardenShown = EarlyGarden.Count;
             // [REQ: INCENSE-XP-001] An Incense Walk is no run toward the 10 that open Endless Zen (owner 2026-10-27).
             if (result.Mode != GameMode.IncenseWalk) stats.TotalRunsStarted++;
             if (result.Victory) stats.TotalRunsCompleted++;
@@ -229,6 +234,9 @@ namespace SudokuRoguelike.Save
             stats.TotalPuzzlesSolved += result.TileXpEntries?.Count ?? 0;
 
             stats.TotalBossesDefeated += result.BossesDefeatedThisRun;
+
+            // [REQ: CLASS-CHALLENGE-002] The class challenges this run met (RM-116).
+            SudokuRoguelike.Meta.ClassChallenges.Record(meta, result, liveRunState, DateTime.Today);
 
             // 2. Update class unlock progress
             var progress = meta.ClassUnlocks ?? new ClassUnlockProgress();
@@ -330,6 +338,17 @@ namespace SudokuRoguelike.Save
                     $"[ModifierDiscovery] End-of-run meta merge: added={discoveryAdded}, " +
                     $"runSeen={ModifierDiscoveryService.Describe(liveRunState.SeenBossModifiers)}, " +
                     $"metaNow={ModifierDiscoveryService.Describe(meta.DiscoveredBossModifiers)}");
+            }
+
+            // [REQ: RUN-EARLY-002] A Garden Run's end (its scroll) shows what opened since the last shown, beside any new class
+            // (two plaques in all); what does not fit waits for the next run end.
+            LastEarlyGardenNew = new List<EarlyGarden.Entry>();
+            if (result.Mode == GameMode.GardenRun && !result.TutorialMode)
+            {
+                var room = Math.Max(0, 2 - newUnlocks.Count);
+                foreach (var entry in EarlyGarden.NewSince(meta.EarlyGardenShown, EarlyGarden.Opened(stats.TotalRunsStarted)))
+                    if (LastEarlyGardenNew.Count < room) LastEarlyGardenNew.Add(entry);
+                meta.EarlyGardenShown += LastEarlyGardenNew.Count;
             }
 
             // 10. Save — also clear active run state here so no second save races against this one

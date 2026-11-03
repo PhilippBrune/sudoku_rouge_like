@@ -189,6 +189,17 @@ namespace SudokuRoguelike.Core
         // [REQ: STORY-SCENE-001] The highest chapter whose scene each keeper has played, and the ninth's (since 0.3.3).
         public List<StoryChapterEntry> StoryScenesSeen = new List<StoryChapterEntry>();
         public bool StoryNinthSceneSeen;
+        // [REQ: CLASS-CHALLENGE-002] The class challenges met, with the day (since 0.4.1).
+        public List<ClassChallengeEntry> ClassChallenges = new List<ClassChallengeEntry>();
+        // [REQ: RUN-EARLY-002] How many early garden things a run end has shown (since 0.4.1).
+        public int EarlyGardenShown;
+    }
+
+    [Serializable]
+    public sealed class ClassChallengeEntry
+    {
+        public string Id;     // "number_freak_1" (ClassChallenges.Id)
+        public string Date;   // yyyy-MM-dd
     }
 
     [Serializable]

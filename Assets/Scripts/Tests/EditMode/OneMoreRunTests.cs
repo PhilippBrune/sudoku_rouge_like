@@ -4,6 +4,8 @@ using NUnit.Framework;
 using SudokuRoguelike.Classes;
 using SudokuRoguelike.Core;
 using SudokuRoguelike.Economy;
+using SudokuRoguelike.Boss;
+using SudokuRoguelike.Meta;
 using SudokuRoguelike.Run;
 using SudokuRoguelike.Save;
 using SudokuRoguelike.UI;
@@ -72,6 +74,63 @@ namespace SudokuRoguelike.Tests
             RunLengthLog.Tick(state, 0.5f);
             RunLengthLog.OnPathChoice(state);
             Assert.AreEqual(0.75f, state.SecondsToFirstChoice, 1e-4, "the first choice only");
+        }
+
+        // [REQ: RUN-EARLY-001] RM-118 (owner's pick "behutsam öffnen"): a new profile's Garden Run holds back what its
+        // finished runs have not opened; the Daily Walk and other modes hold nothing back.
+        [Test]
+        [Requirement("RUN-EARLY-001")]
+        public void EarlyGarden_HoldsBackWhatTheRunsHaveNotOpened_InAGardenRunOnly()
+        {
+            var state = new RunState { Mode = GameMode.GardenRun, GardenOpened = 3 };
+            Assert.IsFalse(EarlyGarden.IsHeld(state, EarlyGarden.Kind.Relic, nameof(RelicId.PhoenixFeather)), "opened by run 1");
+            Assert.IsFalse(EarlyGarden.IsHeld(state, EarlyGarden.Kind.Rule, nameof(BossModifierId.Skyscrapers)), "opened by run 3");
+            Assert.IsTrue(EarlyGarden.IsHeld(state, EarlyGarden.Kind.Relic, nameof(RelicId.ShiftingGarden)), "run 4's");
+            Assert.IsTrue(EarlyGarden.IsHeld(state, EarlyGarden.Kind.Event, "tempting_shrine"));
+            Assert.IsFalse(EarlyGarden.IsHeld(state, EarlyGarden.Kind.Relic, nameof(RelicId.GoldenRoot)), "never held");
+            Assert.IsFalse(EarlyGarden.IsHeld(new RunState { Mode = GameMode.GardenRun, GardenOpened = 3, DailyWalk = true },
+                EarlyGarden.Kind.Relic, nameof(RelicId.DragonsEye)), "the Daily Walk is the same for everyone");
+            Assert.IsFalse(EarlyGarden.IsHeld(new RunState { Mode = GameMode.EndlessZen, GardenOpened = 0 },
+                EarlyGarden.Kind.Rule, nameof(BossModifierId.Sandwich)));
+            Assert.IsFalse(EarlyGarden.IsHeld(new RunState { Mode = GameMode.GardenRun }, EarlyGarden.Kind.Relic,
+                nameof(RelicId.DragonsEye)), "an older save opens everything");
+            Assert.AreEqual(10, EarlyGarden.Opened(37));
+            CollectionAssert.AreEqual(new[] { EarlyGarden.Entries[3] }, EarlyGarden.NewSince(EarlyGarden.Opened(3), EarlyGarden.Opened(4)));
+            Assert.IsEmpty(EarlyGarden.NewSince(EarlyGarden.Opened(30), EarlyGarden.Opened(31)), "nothing after the tenth run");
+            foreach (var entry in EarlyGarden.Entries)
+                Assert.IsNotEmpty(EarlyGarden.Name(entry), entry.Id);
+        }
+
+        // [REQ: RUN-EARLY-001] A first run's relic offerings, floor rules and events never show what it holds back.
+        [Test]
+        [Requirement("RUN-EARLY-001")]
+        public void AFirstGardenRun_NeverOffersWhatItHoldsBack()
+        {
+            var heldRelics = new[] { RelicId.PhoenixFeather, RelicId.ShiftingGarden, RelicId.EternalLotus, RelicId.DragonsEye };
+            var heldRules = new[] { BossModifierId.Skyscrapers, BossModifierId.Sandwich, BossModifierId.LittleKiller };
+            var offeredRelics = new System.Collections.Generic.HashSet<RelicId>();
+            for (var seed = 0; seed < 40; seed++)
+            {
+                var run = new RunDirector();
+                run.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, GardenOpened = 0 }, 9100 + seed);
+                for (var floor = 0; floor < 4; floor++)
+                {
+                    foreach (var relic in run.RollRelicChoices(3)) offeredRelics.Add(relic.Id);
+                    run.AdvanceToNextFloor();
+                    foreach (var rule in heldRules)
+                        Assert.IsFalse(run.State.ActiveFloorModifiers.Contains(rule), $"seed {seed}, floor {floor + 2}: {rule}");
+                }
+            }
+            Assert.IsFalse(offeredRelics.Overlaps(heldRelics), "a held relic was offered");
+            Assert.IsTrue(offeredRelics.Contains(RelicId.GoldenRoot) || offeredRelics.Contains(RelicId.SilentGrid), "the other legendaries still come");
+
+            var events = new RunEventService(77) { Held = key => key == "wishing_fountain" || key == "tempting_shrine" };
+            for (var i = 0; i < 300; i++)
+            {
+                var e = events.BuildEvent(4, i);
+                Assert.AreNotEqual("wishing_fountain", e.Key);
+                Assert.AreNotEqual("tempting_shrine", e.Key);
+            }
         }
 
         // [REQ: RUN-FIRST-001] RM-120: the tiles the player can pick first are baked first, the boss last.

@@ -4,6 +4,11 @@
 
 ### New
 
+- **Class challenges:** every class has three challenges in the garden of classes, its own, a win in under 40 minutes
+  and a win on Harmony VI. Each met one turns a seal on the class's plaque red and is a Steam achievement (24 new).
+- **The garden opens up:** a new profile starts with four relics, three events and three boss rules held back; each of
+  your first ten runs opens one, and the run end shows it.
+
 - **Steam Deck:** no text is smaller than 9 pixels at 1280×800 any more; on the Deck and in Big Picture, A on a seed field
   opens Steam's keyboard; the hints name the Deck's buttons L1/R1 and L2/R2.
 - **The first tile is ready sooner:** the boards of the tiles you can pick first are made first, while the floor's name

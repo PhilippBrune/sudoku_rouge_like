@@ -730,6 +730,10 @@ namespace SudokuRoguelike.Tests
                 { ClassId = ClassId.GardenMonk, TotalXp = Economy.XpTable.CumulativeXpForLevel(9), GardenRuns = 6, BestFloor = 3 });
             meta.GardenProgression.ClassEntries.Add(new ClassGardenProgressEntry
                 { ClassId = ClassId.ShrineArchivist, TotalXp = Economy.XpTable.CumulativeXpForLevel(4), GardenRuns = 2, BestFloor = 2 });
+            // UI-STYLE-043: two of the Number Freak's challenges met, one of the Garden Monk's.
+            meta.ClassChallenges.Add(new ClassChallengeEntry { Id = "number_freak_1", Date = "2026-10-14" });
+            meta.ClassChallenges.Add(new ClassChallengeEntry { Id = "number_freak_2", Date = "2026-10-29" });
+            meta.ClassChallenges.Add(new ClassChallengeEntry { Id = "garden_monk_2", Date = "2026-11-01" });
             new SaveFileService(TestSlot).Save(new SaveFileEnvelope { MetaProgress = meta });
             SaveFileService.FlushSharedPendingWrites();
 
@@ -754,6 +758,13 @@ namespace SudokuRoguelike.Tests
             EventSystem.current.SetSelectedGameObject(Find(host, "ClassPlaque_KoiGambler"));
             yield return new WaitForSecondsRealtime(0.3f);
             yield return Shoot(host, camera, "after_meta_progression_locked.png");
+            if (host.GetComponentInChildren<MetaProgressionPanelController>(true) is { } garden && garden.GetType().GetMethod("TogglePage") != null)
+            {
+                Find(host, "ClassPlaque_NumberFreak").GetComponent<Button>().onClick.Invoke();
+                garden.GetType().GetMethod("TogglePage").Invoke(garden, null);   // by name: the before mirror has no challenges
+                yield return new WaitForSecondsRealtime(0.3f);
+                yield return Shoot(host, camera, "after_class_challenges.png");
+            }
             foreach (var module in inputModules) if (module != null) module.enabled = true;
             new SaveFileService(TestSlot).Save(new SaveFileEnvelope());
             SaveFileService.FlushSharedPendingWrites();

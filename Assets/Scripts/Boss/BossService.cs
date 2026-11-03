@@ -368,6 +368,9 @@ namespace SudokuRoguelike.Boss
             return DrawDistinct(pool, shown);
         }
 
+        /// <summary>[REQ: RUN-EARLY-001] Rules the run holds back; set by RunDirector.</summary>
+        public Func<BossModifierId, bool> Held;
+
         // [REQ: BOSS-FLOOR-002] BuildEligiblePool: boss choice pool excludes active floor modifiers (passed as exclude); prevents duplicate modifier stacking
         private List<BossModifierId> BuildEligiblePool(List<BossModifierId> exclude, int minBoardSize)
         {
@@ -388,6 +391,8 @@ namespace SudokuRoguelike.Boss
 
                 if (exclude != null && exclude.Contains(pair.Key))
                     continue;
+
+                if (Held?.Invoke(pair.Key) == true) continue;
 
                 if (!CanCombineModifiers(exclude, pair.Key))
                     continue;

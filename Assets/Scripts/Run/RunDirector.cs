@@ -138,6 +138,7 @@ namespace SudokuRoguelike.Run
             State = RunArchetypeService.CreateRunState(request.ClassId, seed, request.AllowIrregularPuzzles, request.ClassLevel,
                 request.HarmonyLevel, request.HarmonyPerk, request.ClassPrestigeTier);
             State.Mode = request.Mode;
+            State.GardenOpened = request.GardenOpened;   // [REQ: RUN-EARLY-001] before the starting relics are drawn
             if (request.DailyWalk) BeginDailyWalkPath();   // [REQ: DAILY-WALK-009] before the first floor is built
 
             // Roll floor modifiers for the initial floor (Floor 1 = 0 modifiers)
@@ -248,6 +249,7 @@ namespace SudokuRoguelike.Run
             _routeService = new RouteService();
             _endlessZenService = new EndlessZenService(seed + 7);
             _spiritTrialsService = new SpiritTrialsService(seed + 8);
+            AttachEarlyGarden();
         }
 
         // ── Floor / Graph ──
@@ -1696,6 +1698,7 @@ namespace SudokuRoguelike.Run
 
             TileXpLog.Add(xpEntry);
             _analytics?.RecordPuzzleSolved(level.Mistakes, goldBase, State.CurrentFloor);
+            Meta.ClassChallenges.OnPuzzleSolved(State, level, config);   // [REQ: CLASS-CHALLENGE-001]
             _analytics?.RecordTileXp(xpEntry);
 
             if (config.IsBoss && !State.IsSeasonalChallenge)
@@ -2422,11 +2425,11 @@ namespace SudokuRoguelike.Run
                 return false;
 
             _routeService.MarkVisited(CurrentFloorGraph, nodeIndex);
+            State.RouteHistory.Add((int)CurrentFloorGraph[nodeIndex].Route);   // [REQ: CLASS-CHALLENGE-001] trimmed on a rollback
             State.CurrentNodeIndex = nodeIndex;
             State.NodePath.Add(nodeIndex);
             State.Depth++;
-            RunLengthLog.OnPathChoice(State);   // [REQ: RUN-LENGTH-001]
-            if (GetCurrentNode()?.Type == NodeType.Shop) RunLengthLog.OnShopVisit(State);   // [REQ: RUN-BALANCE-001]
+            RunLengthLog.OnPathChoice(State, GetCurrentNode());   // [REQ: RUN-LENGTH-001] [REQ: RUN-BALANCE-001]
 
             // Daily goal: node-type triggers
             if (DailyGoals != null && !State.IsSeasonalChallenge)

@@ -48,8 +48,8 @@ came of them:
 | **GAP-073** 25 silent sounds | Listening page `docs/audio-sfx-listening.html` | Pick keep or drop per sound, paste the list; then I wire them | Owner, then me |
 | **Steam Deck** (RM-102) | Built: no text under 9 px at 1280×800 (DECK-TEXT-001), Steam's gamepad keyboard on the seed fields (DECK-KEYBOARD-001), L1/R1 and L2/R2 in the hints (DECK-BUTTONS-001) | A start on a Deck, then the compatibility review in Steamworks | Owner |
 | **RM-120** faster first choice | Built: the reachable tiles' boards are baked first (RUN-FIRST-001); the first tile has the focus | – | – |
-| **RM-118** something new in each of the first ten runs | Picked first; the run end's "NEW" column shows it | Owner's pick: hold content back and open it run by run, or only spotlight it | Owner picks, then me |
-| **RM-116** class challenges | Picked second; mockups A (a page of the scroll) and B (slips under the plaques) in layout-proposals.md | Owner's pick of the layout and the challenge list | Owner picks, then me |
+| **RM-118** something new in each of the first ten runs | Built ("behutsam öffnen"): ten things held back in a new profile's Garden Runs, one opens per finished run, shown in the run end's "New" column (RUN-EARLY-001/002) | Your feel at the next playtest with a fresh profile | Owner plays |
+| **RM-116** class challenges | Built (layout A, the proposed list): 24 challenges, seals on the plaques, the scroll's second page, 24 Steam achievements (CLASS-CHALLENGE-001/002, UI-STYLE-043) | Publish the achievements in Steamworks (63 saved, five languages) | Owner |
 | **RM-119, RM-121** | Later (owner's order) | – | – |
 | **RM-104** more relics, items and events | Not picked this round | – | – |
 | **Modifier catalog, steps 3 and 5** | Built: `ModifierCatalog` (BOSS-MOD-005) and golden geometry snapshots (BOSS-MOD-007) | – | – |

@@ -38,10 +38,11 @@ namespace SudokuRoguelike.Run
             state.ActiveSeconds += Mathf.Clamp(unscaledDeltaTime, 0f, MaxFrameSeconds);
         }
 
-        /// <summary>The first path choice of the run stamps its time.</summary>
-        public static void OnPathChoice(RunState state)
+        /// <summary>The first path choice of the run stamps its time; a shop tile counts as a shop visit (RUN-BALANCE-001).</summary>
+        public static void OnPathChoice(RunState state, RunNode node = null)
         {
             if (state != null && state.SecondsToFirstChoice < 0f) state.SecondsToFirstChoice = state.ActiveSeconds;
+            if (node?.Type == NodeType.Shop) OnShopVisit(state);
         }
 
         /// <summary>[REQ: RUN-BALANCE-001] A shop tile entered.</summary>

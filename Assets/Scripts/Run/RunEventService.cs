@@ -29,6 +29,9 @@ namespace SudokuRoguelike.Run
             ("tempting_shrine", 2)
         };
 
+        /// <summary>[REQ: RUN-EARLY-001] Events the run holds back (by key); set by RunDirector.</summary>
+        public Func<string, bool> Held;
+
         public RunEventService(int seed)
         {
             _random = new Random(seed);
@@ -159,7 +162,7 @@ namespace SudokuRoguelike.Run
             var all = BuildFullEventPool();
             var filtered = new List<RunEvent>();
             foreach (var e in all)
-                if (e.MinFloor <= floorIndex) filtered.Add(e);
+                if (e.MinFloor <= floorIndex && Held?.Invoke(e.Key) != true) filtered.Add(e);
             return filtered.Count > 0 ? filtered : all; // fallback: full pool if nothing qualifies
         }
 
@@ -176,6 +179,7 @@ namespace SudokuRoguelike.Run
                 // ── Park bench (rest) ──
                 new RunEvent
                 {
+                    Key = "quiet_bench",
                     Title = T(EventTitleKey("quiet_bench"), "A Quiet Bench"),
                     Description = T(EventDescriptionKey("quiet_bench"), "A weathered wooden bench sits in a sunny patch. You could sit for a moment."),
                     Options = new List<EventOption>
@@ -188,6 +192,7 @@ namespace SudokuRoguelike.Run
                 // ── Street vendor / ice cream stand ──
                 new RunEvent
                 {
+                    Key = "ice_cream_cart",
                     Title = T(EventTitleKey("ice_cream_cart"), "Ice Cream Cart"),
                     Description = T(EventDescriptionKey("ice_cream_cart"), "A colourful cart hums with a small freezer. The vendor waves you over."),
                     Options = new List<EventOption>
@@ -200,6 +205,7 @@ namespace SudokuRoguelike.Run
                 // ── Fallen ink pot → pencil ──
                 new RunEvent
                 {
+                    Key = "spilled_ink_bottle",
                     Title = T(EventTitleKey("spilled_ink_bottle"), "Spilled Ink Bottle"),
                     Description = T(EventDescriptionKey("spilled_ink_bottle"), "An artist's ink bottle has tipped over near a park path. Still mostly full."),
                     Options = new List<EventOption>
@@ -212,6 +218,7 @@ namespace SudokuRoguelike.Run
                 // ── Lost wallet ──
                 new RunEvent
                 {
+                    Key = "lost_wallet",
                     Title = T(EventTitleKey("lost_wallet"), "Lost Wallet"),
                     Description = T(EventDescriptionKey("lost_wallet"), "A worn leather wallet lies on the path. Someone's name is inside."),
                     Options = new List<EventOption>
@@ -225,6 +232,7 @@ namespace SudokuRoguelike.Run
                 // ── Coin fountain ──
                 new RunEvent
                 {
+                    Key = "wishing_fountain",
                     Title = T(EventTitleKey("wishing_fountain"), "Wishing Fountain"),
                     Description = T(EventDescriptionKey("wishing_fountain"), "A small fountain glints with dropped coins. A sign reads: 'Wishes: 10g'."),
                     Options = new List<EventOption>
@@ -237,6 +245,7 @@ namespace SudokuRoguelike.Run
                 // ── Stray dog ──
                 new RunEvent
                 {
+                    Key = "friendly_stray",
                     Title = T(EventTitleKey("friendly_stray"), "Friendly Stray"),
                     Description = T(EventDescriptionKey("friendly_stray"), "A friendly stray trots up and drops something at your feet - an old item bag."),
                     Options = new List<EventOption>
@@ -249,6 +258,7 @@ namespace SudokuRoguelike.Run
                 // ── Street musician ──
                 new RunEvent
                 {
+                    Key = "street_musician",
                     Title = T(EventTitleKey("street_musician"), "Street Musician"),
                     Description = T(EventDescriptionKey("street_musician"), "A busker plays a calm tune. A small crowd has gathered."),
                     Options = new List<EventOption>
@@ -262,6 +272,7 @@ namespace SudokuRoguelike.Run
                 // ── Park supply chest ──
                 new RunEvent
                 {
+                    Key = "maintenance_shed",
                     Title = T(EventTitleKey("maintenance_shed"), "Maintenance Shed"),
                     Description = T(EventDescriptionKey("maintenance_shed"), "The park maintenance shed is unlocked and a window is open. Useful supplies inside."),
                     Options = new List<EventOption>
@@ -274,6 +285,7 @@ namespace SudokuRoguelike.Run
                 // ── Ink peddler (curse trade) ──
                 new RunEvent
                 {
+                    Key = "ink_peddler",
                     Title = T(EventTitleKey("ink_peddler"), "The Ink Peddler"),
                     Description = T(EventDescriptionKey("ink_peddler"), "A shady vendor offers to swap your pencil reserves for a fat coin purse. The ink smells strange. He calls it a 'binding deal'."),
                     Options = new List<EventOption>
@@ -289,6 +301,7 @@ namespace SudokuRoguelike.Run
                 // ── Rare flower ──
                 new RunEvent
                 {
+                    Key = "rare_flower_patch",
                     Title = T(EventTitleKey("rare_flower_patch"), "Rare Flower Patch"),
                     Description = T(EventDescriptionKey("rare_flower_patch"), "A cluster of unusual flowers blooms in a sheltered corner."),
                     Options = new List<EventOption>
@@ -302,6 +315,7 @@ namespace SudokuRoguelike.Run
                 // ── Tempting Shrine (Floor 3+, curse trade) ──
                 new RunEvent
                 {
+                    Key = "tempting_shrine",
                     Title = T(EventTitleKey("tempting_shrine"), "The Tempting Shrine"),
                     MinFloor = 2, // floor index 2 = floor 3
                     Description = T(EventDescriptionKey("tempting_shrine"), "A small stone shrine sits off the path. Moss-covered and old. Something about it feels like a bargain."),

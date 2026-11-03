@@ -133,6 +133,14 @@ namespace SudokuRoguelike.Run
             return _relicService.RollRelic(State.CurrentFloor, tierBonus);
         }
 
+        // [REQ: RUN-EARLY-001] The pools ask the run (resumed runs too) what it holds back.
+        private void AttachEarlyGarden()
+        {
+            _relicService.Held = id => Meta.EarlyGarden.IsHeld(State, Meta.EarlyGarden.Kind.Relic, id.ToString());
+            _bossService.Held = id => Meta.EarlyGarden.IsHeld(State, Meta.EarlyGarden.Kind.Rule, id.ToString());
+            _eventService.Held = key => Meta.EarlyGarden.IsHeld(State, Meta.EarlyGarden.Kind.Event, key);
+        }
+
         /// <summary>Roll distinct choices for this panel; copies may still be acquired across different nodes.</summary>
         public List<RelicInstance> RollRelicChoices(int count = 3)
         {

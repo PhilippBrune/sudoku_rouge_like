@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 3.15 | **Date:** 2026-11-03 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; the main menu B (UI-STYLE-032, 2026-10-28); proposals of 2026-10-28 for the main menu, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll wait for the owner's pick)
+**Version:** 3.16 | **Date:** 2026-11-03 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; the main menu B (UI-STYLE-032, 2026-10-28); proposals of 2026-10-28 for the main menu, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll wait for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 3.16 | 2026-11-03 | review | RM-116 built as A (UI-STYLE-043) and RM-118's plaque on the run end (RUN-EARLY-002), with the after shots. |
 | 3.15 | 2026-11-03 | review | RM-116 class challenges: proposals A (a page of the scroll) and B (slips under the plaques), for the owner's pick. |
 | 3.14 | 2026-11-03 | review | The Spirit Trial's starting item (TRIAL-SESSION-001, GAP-113): before and after shots of the bag with its one slot. |
 | 3.13 | 2026-11-02 | review | Owner's picks (0.3.1 playtest): Story A built (UI-STYLE-040), XP B built (UI-STYLE-041), the legend A built (UI-STYLE-042); the XP and legend mockups added; before and after shots of the fixes (OPT-TABS-001, TRIAL-HUD-001). |
@@ -949,6 +950,20 @@ met) and a Steam achievement. **A** the chosen class's challenges as a second pa
 
 ![RM-116 A, a page of the scroll](layout-proposals/class_challenges_a.jpg)
 ![RM-116 B, slips under the plaques](layout-proposals/class_challenges_b.jpg)
+
+**Built: A** (owner, 2026-11-03; UI-STYLE-043). Before, the garden with the level path (left of the pair in the session's
+check); after, the seals on the plaques and the challenges page, turned with Y (F) or the tabs:
+
+![Before, the garden of classes](layout-proposals/after_meta_progression.jpg)
+![After, the challenges page](layout-proposals/after_class_challenges.jpg)
+
+### The early garden on the run end (RUN-EARLY-002, RM-118)
+
+A new profile's first run opens the Phoenix Feather: the run end's "New" column shows it as a plaque next to a class the
+run unlocked. Before, the column said "Nothing new this time":
+
+![Before, nothing new](layout-proposals/after_run_end_victory.jpg)
+![After, the early garden's plaque](layout-proposals/after_run_end_early_garden.jpg)
 
 ### Steam Deck text (DECK-TEXT-001)
 

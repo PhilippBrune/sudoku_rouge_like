@@ -65,6 +65,7 @@ namespace SudokuRoguelike.Tests
                 },
                 MaxUnlockedHarmonyLevel = 4
             };
+            meta.ClassChallenges.Add(new ClassChallengeEntry { Id = "number_freak_2", Date = "2026-10-14" });
             meta.UnlockedClasses.Add(ClassId.GardenMonk);
             meta.GardenProgression.ClassEntries.Add(new ClassGardenProgressEntry
             {
@@ -89,7 +90,7 @@ namespace SudokuRoguelike.Tests
             Assert.AreEqual("Collect 10 relics · 9/10", PlaqueText(host, ClassId.KoiGambler, "Level"));
             var koiIcon = Find<Transform>(host, "ClassPlaque_KoiGambler").Find("Icon").GetComponent<Image>();
             Assert.Less(koiIcon.color.a, 1f, "a locked class is a silhouette");
-            Assert.AreEqual("★", PlaqueText(host, ClassId.NumberFreak, "Stars"));
+            StringAssert.Contains("★", PlaqueText(host, ClassId.NumberFreak, "Level"), "the prestige star sits by the level (UI-STYLE-043)");
 
             var totals = Find<Transform>(host, "MetaTotals");
             Assert.AreEqual("2 / 8", totals.Find("Total_0/Value").GetComponent<Text>().text);
@@ -227,6 +228,39 @@ namespace SudokuRoguelike.Tests
             menu.OpenMetaProgression();
             Assert.IsTrue(Find<Transform>(host, "MetaProgressionPanel").gameObject.activeInHierarchy, "the garden opens");
             return host;
+        }
+
+        // [REQ: UI-STYLE-043] [REQ: CLASS-CHALLENGE-002] RM-116 (owner's pick A): three seals on every plaque, red when met,
+        // and the class's challenges as the scroll's second page, turned with Y or the tabs.
+        [UnityTest]
+        [Requirement("UI-STYLE-043", "CLASS-CHALLENGE-002")]
+        public IEnumerator Challenges_SealsOnThePlaques_AndASecondPageOfTheScroll()
+        {
+            var host = OpenGarden();
+            yield return null;
+
+            var plaque = Find<Transform>(host, "ClassPlaque_NumberFreak");
+            var met = plaque.Find("Seal_1").GetComponent<Image>();
+            Assert.AreNotEqual(met.sprite, plaque.Find("Seal_0").GetComponent<Image>().sprite, "a met seal is a disc, an open one a ring");
+            Assert.AreEqual(met.sprite, plaque.Find("Seal_1").GetComponent<Image>().sprite);
+            Assert.Greater(met.color.r, met.color.b * 2f, "the met seal is red");
+            Assert.IsNull(Find<Transform>(host, "ClassPlaque_KoiGambler").Find("Seal_0"), "a locked class has no seals yet");
+
+            var garden = host.GetComponentInChildren<MetaProgressionPanelController>(true);
+            Click(host, "TabChallenges");
+            yield return null;
+            Assert.IsTrue(garden.ShowingChallenges);
+            Assert.AreEqual("Challenges · 1 of 3 seals", Find<Text>(host, "ClassSub").text);
+            var row = Find<Transform>(host, "Challenge_1");
+            Assert.AreEqual(ClassChallenges.Name(ClassId.NumberFreak, 1), row.Find("Name").GetComponent<Text>().text);
+            StringAssert.Contains("14 October 2026", row.Find("State").GetComponent<Text>().text);
+            Assert.AreEqual("Not yet", Find<Transform>(host, "Challenge_0").Find("State").GetComponent<Text>().text);
+            Assert.IsNull(FindOrNull(host, "ClassPath"), "the level path is on the other page");
+
+            garden.TogglePage();
+            yield return null;
+            Assert.IsFalse(garden.ShowingChallenges);
+            Assert.NotNull(FindOrNull(host, "ClassPath"));
         }
 
         private static string PlaqueText(GameObject host, ClassId id, string part)

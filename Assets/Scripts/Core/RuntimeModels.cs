@@ -74,7 +74,7 @@ namespace SudokuRoguelike.Core
         public List<RelicInstance> HeldRelics = new List<RelicInstance>(); // [REQ: RELIC-SLOT-002] multi-relic list (future-proof; currently max 1 entry)
 
         // Path
-        public List<int> RouteHistory = new List<int>();
+        public List<int> RouteHistory = new List<int>();   // the RouteType of each tile taken (CLASS-CHALLENGE-001)
         public List<int> NodePath = new List<int>();
 
         // [REQ: REQ-SUD-101] Level seeds whose generation failed (one entry per failure). A retry of the
@@ -166,6 +166,14 @@ namespace SudokuRoguelike.Core
         public float SecondsToFirstChoice = -1f;
         public float SecondsSincePreviousRun = -1f;
         [System.NonSerialized] public bool RunLengthRecorded;
+        // [REQ: CLASS-CHALLENGE-001] For the class challenges: the most player rules a defeated boss brought, floors cleared
+        // without a pencil mark or HP lost, and whether this floor has had either yet (the risk tiles are in RouteHistory).
+        public int MostBossRulesCleared;
+        public int CleanFloors;
+        public bool FloorMarked;
+        // [REQ: RUN-EARLY-001] How many of the early garden's ten things this run has open (EarlyGarden); 10 = all, the
+        // default for older saves and every mode but the Garden Run.
+        public int GardenOpened = 10;
         // [REQ: RUN-BALANCE-001] The balance check of RM-108: shop tiles entered, and how many of those visits bought
         // something (ShopPurchaseVisit is the visit that last counted).
         public int ShopVisits;
@@ -521,6 +529,7 @@ namespace SudokuRoguelike.Core
     public sealed class RunEvent
     {
         public string Id;
+        public string Key;   // the event's catalog id ("wishing_fountain"), the same in every language
         public string Title;
         public string Description;
         public List<EventOption> Options = new List<EventOption>();
@@ -588,6 +597,7 @@ namespace SudokuRoguelike.Core
         public int Seed;
         /// <summary>[REQ: DAILY-WALK-001] The day's walk (Mode stays GardenRun, ClassId stays 0: the neutral walker).</summary>
         public bool DailyWalk;
+        public int GardenOpened = 10;   // [REQ: RUN-EARLY-001] filled from the profile for a Garden Run
     }
 
     [Serializable]

@@ -1,11 +1,12 @@
 # Meta Progression System
 
-**Version:** 1.15 | **Date:** 2026-10-22 | **Status:** implemented
+**Version:** 1.16 | **Date:** 2026-11-03 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.16 | 2026-11-03 | implemented | Owner's pick (2026-11-03): class challenges (RM-116, CLASS-CHALLENGE-001/002, UI-STYLE-043). |
 | 1.15 | 2026-10-22 | implemented | The Codex's Items page as in the mockup (owner: "implement UI-STYLE-017 to 026 if not done"): the rarity filter and "Best paired with" (META-CODEX-010). |
 | 1.14 | 2026-10-21 | implemented | Docs clean-up: the file table no longer lists `AscensionService.cs` (removed with Ascension, GAP-017); the monthly seed lives in `SeasonalChallengeService.BuildSeed`. |
 | 1.13 | 2026-10-21 | implemented | GAP-063 fixed (owner request 2026-10-21: "analyze, plan and fix"): META-XP-007 (the Level 30 starting item) and META-XP-008 (the Level 40 frame) are granted; SPEC-CONF-041 decided for the XP stroke on the Meta Progression screen. |
@@ -71,6 +72,34 @@ Typical unlock order based on natural play progression:
 **[META-UNLOCK-006]** Each locked class shows its unlock goal with its progress, on its plaque and on the scroll: bosses defeated (2 or 10), items used (15), relics collected (10), gold collected (50,000), items found (the Codex without the counter items, META-CODEX-006), or "a run with no mistakes" (done or not). The progress never shows more than the goal. Goals and progress come from `ClassUnlockService` (`GetProgress`, the same thresholds `CheckNewUnlocks` uses).
 
 ---
+
+## Class challenges (RM-116, since 0.4.1)
+
+Three challenges per class, each a seal at the foot of the class's plaque (red when met) and a Steam achievement
+(`challenge_<class>_<n>`, docs/Achievements.md). A Garden Run with the class meets them; the Daily Walk meets none.
+The chosen class's challenges are the hanging scroll's second page: Y (F on the keyboard) or the tabs above the scroll
+turn between the level path and the challenges; each row shows the seal, the name, the rule and "Met on <day>" or
+"Not yet". The prestige stars moved from the plaque's foot to its level line.
+
+| Class | 1: its own | 2 | 3 |
+|---|---|---|---|
+| Number Freak | Ten Clean Counts: win with 10 perfect puzzles | The Swift Path: win in under 40 minutes | The High Path: win on Harmony VI or higher |
+| Garden Monk | Empty Hands, Full Heart: win without using an item | the same | the same |
+| Shrine Archivist | The Archive of Four: end a run holding 4 relics | the same | the same |
+| Koi Gambler | Three Curses Bet: win with 3 cursed puzzles finished | the same | the same |
+| Stone Gardener | The Busy Rake: win using 8 items | the same | the same |
+| Lantern Seer | Three Lights at Once: defeat a boss that brings 3 rules | the same | the same |
+| Reed Duelist | A Quiet Floor: clear a floor without a pencil mark and without losing HP | the same | the same |
+| Quiet Cartographer | Six Steps of Risk: win taking 6 tiles of the risk path | the same | the same |
+
+"Under 40 minutes" is the time the run was open in the game (RUN-LENGTH-001). A met challenge is kept with its day
+(`MetaProgressionState.ClassChallenges`) and is never lost.
+
+| ID | Requirement |
+|---|---|
+| CLASS-CHALLENGE-001 | The three challenges per class above; a Garden Run with the class, not the Daily Walk. |
+| CLASS-CHALLENGE-002 | A met challenge is kept with its day and grants its own Steam achievement. |
+| UI-STYLE-043 | The seals on the plaques and the challenges page of the scroll (owner's pick A of two, layout-proposals.md). |
 
 ## Class XP & Leveling
 

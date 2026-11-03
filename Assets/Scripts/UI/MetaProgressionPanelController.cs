@@ -77,6 +77,8 @@ namespace SudokuRoguelike.UI
         private void Update()
         {
             if (_garden == null || !_garden.gameObject.activeInHierarchy) return;
+            // [REQ: UI-STYLE-043] Y (F) turns the scroll between the level path and the class's challenges.
+            if (PadButtons.Pressed(KeyCode.JoystickButton3) || Input.GetKeyDown(KeyCode.F)) TogglePage();
             // X: prestige the chosen class when it is ready (the same two presses as its button), only while the focus is on
             // that class or its button, so a press on Back or another class never prestiges (review).
             if (!PadButtons.Pressed(KeyCode.JoystickButton2) || _prestigeButton == null || !_prestigeButton.gameObject.activeInHierarchy)
@@ -139,11 +141,10 @@ namespace SudokuRoguelike.UI
             var line = unlocked
                 ? F("MetaProgression.Plaque.Level", "Lv {0}", _progression.GetLevel(_meta, id))
                 : GoalText(id, progress);
+            if (unlocked && tier > 0) line += " <color=#9E2A2B>" + new string('★', tier) + "</color>";   // the seals take the foot
             ScrollUiKit.Label(board.transform, "Level", line, unlocked ? 17 : 15, TextAnchor.UpperCenter,
                 unlocked ? LevelInk : GoalAmber, new Vector2(0.06f, 0.15f), new Vector2(0.94f, 0.31f), 10);
-            if (unlocked && tier > 0)
-                ScrollUiKit.Label(board.transform, "Stars", new string('★', tier), 18, TextAnchor.MiddleCenter, ScrollUiKit.Vermilion,
-                    new Vector2(0.05f, 0.03f), new Vector2(0.95f, 0.14f), 10);
+            if (unlocked) BuildSeals(board.transform, id);   // [REQ: UI-STYLE-043] a locked class has no challenges yet
 
             var button = board.gameObject.AddComponent<Button>();
             button.targetGraphic = board;

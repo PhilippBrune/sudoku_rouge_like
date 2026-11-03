@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 using SudokuRoguelike.Core;
 using SudokuRoguelike.Meta;
@@ -218,6 +219,55 @@ namespace SudokuRoguelike.Tests
                 UnlockedIds.Add(achievementId);
                 return true;
             }
+        }
+
+        // [REQ: CLASS-CHALLENGE-001] [REQ: CLASS-CHALLENGE-002] RM-116: a Garden Run with the class meets its challenges once,
+        // keeps the day, and each met one grants its own achievement; the Daily Walk meets none.
+        [Test]
+        [Requirement("CLASS-CHALLENGE-001", "CLASS-CHALLENGE-002")]
+        public void ClassChallenges_AreMetOnce_KeptWithTheDay_AndGrantTheirAchievements()
+        {
+            var meta = new MetaProgressionState();
+            var state = new RunState { ActiveSeconds = 35 * 60f, MostBossRulesCleared = 3, CleanFloors = 1 };
+            for (var i = 0; i < 7; i++) state.RouteHistory.Add((int)RouteType.RiskRoute);
+            state.RouteHistory.Add((int)RouteType.CalmRoute);
+            var win = new RunResult { PlayedClassId = ClassId.QuietCartographer, Mode = GameMode.GardenRun, Victory = true, HarmonyLevel = 6 };
+            var met = SudokuRoguelike.Meta.ClassChallenges.Record(meta, win, state, new System.DateTime(2026, 11, 3));
+            CollectionAssert.AreEqual(new[] { 0, 1, 2 }, met, "six risk tiles, under 40 minutes, Harmony VI");
+            Assert.AreEqual("2026-11-03", SudokuRoguelike.Meta.ClassChallenges.MetOn(meta, ClassId.QuietCartographer, 1));
+            Assert.IsEmpty(SudokuRoguelike.Meta.ClassChallenges.Record(meta, win, state, new System.DateTime(2026, 11, 4)), "once");
+            Assert.AreEqual("2026-11-03", SudokuRoguelike.Meta.ClassChallenges.MetOn(meta, ClassId.QuietCartographer, 1), "the first day stays");
+
+            var slow = new RunState { ActiveSeconds = 41 * 60f };
+            Assert.IsFalse(SudokuRoguelike.Meta.ClassChallenges.Meets(ClassId.GardenMonk, 1,
+                new RunResult { PlayedClassId = ClassId.GardenMonk, Mode = GameMode.GardenRun, Victory = true }, slow), "41 minutes");
+            Assert.IsFalse(SudokuRoguelike.Meta.ClassChallenges.Meets(ClassId.GardenMonk, 0,
+                new RunResult { PlayedClassId = ClassId.GardenMonk, Mode = GameMode.GardenRun, Victory = true, DailyWalk = true }, state),
+                "the Daily Walk meets no challenge");
+            Assert.IsTrue(SudokuRoguelike.Meta.ClassChallenges.Meets(ClassId.LanternSeer, 0,
+                new RunResult { PlayedClassId = ClassId.LanternSeer, Mode = GameMode.GardenRun }, state), "a boss with three rules, won or not");
+            Assert.IsFalse(SudokuRoguelike.Meta.ClassChallenges.Meets(ClassId.LanternSeer, 0,
+                new RunResult { PlayedClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun }, state), "only with the class");
+
+            Assert.IsFalse(SudokuRoguelike.Meta.ClassChallenges.Meets(ClassId.QuietCartographer, 0, win,
+                new RunState { RouteHistory = { (int)RouteType.RiskRoute, (int)RouteType.CalmRoute } }), "one risk tile is not six");
+
+            // A Quiet Floor: a pencil mark or HP lost on any puzzle of the floor spoils it, a later heal does not undo it.
+            var floor = new RunState();
+            var boss = new LevelConfig { IsBoss = true };
+            SudokuRoguelike.Meta.ClassChallenges.OnPuzzleSolved(floor, new LevelState { HpLost = 1 }, new LevelConfig());
+            SudokuRoguelike.Meta.ClassChallenges.OnPuzzleSolved(floor, new LevelState(), boss);
+            Assert.AreEqual(0, floor.CleanFloors, "HP lost on the floor");
+            SudokuRoguelike.Meta.ClassChallenges.OnPuzzleSolved(floor, new LevelState(), new LevelConfig());
+            SudokuRoguelike.Meta.ClassChallenges.OnPuzzleSolved(floor, new LevelState(), boss);
+            Assert.AreEqual(1, floor.CleanFloors, "the next floor starts clean");
+
+            var mastery = new MasteryAchievementState();
+            SteamAchievementService.EvaluateProgressAchievements(meta, new ProfileStats(), mastery, win, 5, 1, 0);
+            for (var i = 0; i < 3; i++)
+                CollectionAssert.Contains(mastery.UnlockedAchievements, "challenge_quiet_cartographer_" + (i + 1));
+            CollectionAssert.DoesNotContain(mastery.UnlockedAchievements, "challenge_number_freak_1");
+            CollectionAssert.IsSubsetOf(SudokuRoguelike.Meta.ClassChallenges.AllAchievementIds().ToList(), SteamAchievementService.AllAchievementIds);
         }
     }
 }

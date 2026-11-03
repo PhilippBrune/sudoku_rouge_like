@@ -124,12 +124,30 @@ namespace SudokuRoguelike.Economy
             _random = new Random(seed);
         }
 
+        /// <summary>[REQ: RUN-EARLY-001] Relics the run holds back; set by RunDirector.</summary>
+        public Func<RelicId, bool> Held;
+
+        // The harmony pool without the held-back relics (a tier never runs empty: the early garden holds back at most three
+        // of a tier's relics).
+        private Dictionary<RelicTier, RelicId[]> ActivePool(int harmonyLevel)
+        {
+            var pool = BuildHarmonyPool(harmonyLevel);
+            if (Held == null) return pool;
+            var filtered = new Dictionary<RelicTier, RelicId[]>();
+            foreach (var pair in pool)
+            {
+                var kept = Array.FindAll(pair.Value, id => !Held(id));
+                filtered[pair.Key] = kept.Length > 0 ? kept : pair.Value;
+            }
+            return filtered;
+        }
+
         // [REQ: RELIC-ROLL-001] Relic tier weights: floor-based 5×5 table; tierBonus shifts weights up (risk route)
         // [HARMONY] harmonyLevel gates which relics are available.
         public RelicInstance RollRelic(int floorIndex, int tierBonus = 0, int harmonyLevel = 0)
         {
             var tier = RollTier(floorIndex + tierBonus);
-            var pool = BuildHarmonyPool(harmonyLevel)[tier];
+            var pool = ActivePool(harmonyLevel)[tier];
             var id = pool[_random.Next(pool.Length)];
 
             return new RelicInstance
@@ -172,7 +190,7 @@ namespace SudokuRoguelike.Economy
                 }
             }
 
-            var activePool = BuildHarmonyPool(harmonyLevel);
+            var activePool = ActivePool(harmonyLevel);
             var availableByTier = new Dictionary<RelicTier, List<RelicId>>();
             var availableCount = 0;
             foreach (var pair in activePool)

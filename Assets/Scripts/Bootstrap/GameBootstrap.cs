@@ -256,6 +256,10 @@ namespace SudokuRoguelike.Bootstrap
             request.ClassLevel = garden.GetLevel(meta, request.ClassId);
             // [REQ: META-PRESTIGE-005] The prestige gold belongs to Garden Runs only.
             request.ClassPrestigeTier = request.Mode == GameMode.GardenRun ? garden.GetPrestigeTier(meta, request.ClassId) : 0;
+            // [REQ: RUN-EARLY-001] A Garden Run opens the early garden by the runs finished; the Daily Walk and a run on a
+            // typed seed are the same for every player.
+            request.GardenOpened = request.Mode == GameMode.GardenRun && !request.DailyWalk && !request.HasSeed
+                ? Meta.EarlyGarden.Opened(_profileService.LoadStats()?.TotalRunsStarted ?? 0) : Meta.EarlyGarden.Count;
 
             _autoSave.ClearActiveRun();
             _run.StartRun(request, runtimeSeed);

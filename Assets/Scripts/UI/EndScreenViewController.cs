@@ -354,6 +354,7 @@ namespace SudokuRoguelike.UI
                     PreXpInto = preXp - XpTable.CumulativeXpForLevel(preLevel),
                     PreXpToNext = preLevel < MaxClassLevel ? XpTable.XpToNextLevel(preLevel) : 0,
                     XpInto = postXpInto, XpToNext = postXpToNext, NewUnlocks = newUnlocks,
+                    GardenNew = _lastGardenNew,   // [REQ: RUN-EARLY-002]
                     Unlocked = postEnvelope?.MetaProgress?.UnlockedClasses,
                     SoClose = RunEndInsights.SoClose(victory, floorReached, run.CurrentLevelConfig?.IsBoss == true, CellsLeft(run),
                         preBestFloor, ClassLabel(classId)),
@@ -688,6 +689,8 @@ namespace SudokuRoguelike.UI
             return 0;
         }
 
+        private List<SudokuRoguelike.Meta.EarlyGarden.Entry> _lastGardenNew = new List<SudokuRoguelike.Meta.EarlyGarden.Entry>();
+
         private List<ClassId> PersistResult(RunResult result, RunDirector run)
         {
             if (result == null || result.TutorialMode) return null;
@@ -707,6 +710,7 @@ namespace SudokuRoguelike.UI
             var save = new SaveFileService(SaveProfileService.ActiveSlot);
             var profile = new ProfileService(save);
             var newUnlocks = profile.RecordRunAndGetNewUnlocks(result, run?.State);
+            _lastGardenNew = profile.LastEarlyGardenNew;
             // ActiveRunState is cleared inside RecordRunAndGetNewUnlocks to avoid a race condition
             // where a second async save would overwrite the meta progress from the first save.
 

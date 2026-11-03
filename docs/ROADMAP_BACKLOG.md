@@ -1,11 +1,12 @@
 # Roadmap backlog: Run of the Nine
 
-**Version:** 1.13 | **Date:** 2026-11-03 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
+**Version:** 1.14 | **Date:** 2026-11-03 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.14 | 2026-11-03 | review | RM-118 and RM-116 built (owner's picks 2026-11-03: "behutsam öffnen"; layout A, the proposed list, 24 achievements). |
 | 1.13 | 2026-11-03 | review | Owner (2026-11-03), on the proposals of OPEN_POINTS 2.0: RM-102 Deck work built (left: a Deck start and the review), RM-108 balance numbers recorded, RM-113 closed, RM-120 built, RM-118 and RM-116 picked (in that order). |
 | 1.12 | 2026-11-02 | review | Owner (0.3.1 playtest): RM-225 built as pick A; RM-227 (XP animation, pick B), RM-228 (legend, pick A) and RM-229 (story achievements) built. |
 | 1.11 | 2026-11-02 | review | Owner (2026-11-02): RM-224 built as pick A; RM-125 built (the story of the Nine); RM-226 irregular regions on every size; RM-225 conversation scenes as three mockups for the pick. |
@@ -85,7 +86,7 @@ Horizons: **short term** = the next one to three updates, **mid term** = after t
 | RM-106 | More accessibility | Colour-blind safe colours for every overlay, a text size setting for all screens, a dyslexia-friendly font option. | Sudoku players skew older; accessibility widens the audience. | M |
 | RM-110, RM-111, RM-112, RM-115 | One more run, first slice | Built 2026-10-22: Walk again, So close, What this run moved, the stakes in numbers; the run length is measured in the game (RM-113 decided from it). | GameDesignSpec.md §14 (End Screens) | done |
 | RM-114 | Keystone relics | After the first boss, one of three keystones that shape the run; a keystone may bend Sudoku's own rules. | Built 2026-10-26 with the class signature relics (RM-124): Gilded Box, Open Margin, Steady Hand, Cage Whisper (ItemsAndRelicsSystem 2.4). | done |
-| RM-113, RM-116 to RM-121 | One more run | A short walk, class challenges, a daily garden, early unlocks, pacts, a faster first choice, a rival run. | Roguelike pull after each run; details and effort in GameDesignSpec.md §14. Owner 2026-11-03: RM-113 closed (the Daily Walk is the short run), RM-120 built (RUN-FIRST-001), RM-118 then RM-116 picked; RM-119 and RM-121 later. | S to L each |
+| RM-113, RM-116 to RM-121 | One more run | A short walk, class challenges, a daily garden, early unlocks, pacts, a faster first choice, a rival run. | Roguelike pull after each run; details and effort in GameDesignSpec.md §14. Owner 2026-11-03: RM-113 closed (the Daily Walk is the short run); RM-120 (RUN-FIRST-001), RM-118 (RUN-EARLY-001/002) and RM-116 (CLASS-CHALLENGE-001/002) built; RM-119 and RM-121 later. | S to L each |
 | RM-122 | A quick run every day | The Daily Walk as one floor of its own (three puzzles and a boss, about 15 minutes), the same seed for everyone, paid in class XP with a streak bonus instead of gold. | Spec: DailyGoalSystem.md, "The Daily Walk as a run". | M |
 | RM-123 | The Incense Walk (time attack) | A clock instead of HP: start with 8 minutes, each solved puzzle adds time, mistakes cost time, over at 0:00. | Spec: IncenseWalkMode.md. | M–L |
 | RM-124 | Class relic sets | A signature relic per class from Level 1 next to the existing Level 30 exclusive. | Built 2026-10-26 (ItemsAndRelicsSystem 2.4; the concept is merged in 2.5). | done |

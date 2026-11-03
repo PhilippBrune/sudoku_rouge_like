@@ -237,7 +237,10 @@ namespace SudokuRoguelike.Tests
             Assert.NotNull(FindObjectOrNull(FindObject(scroll, "FloorSeal_1"), "CrossA"), "the lost floor is crossed out");
             Assert.IsNull(FindObjectOrNull(FindObject(scroll, "FloorSeal_2"), "Mask"));
             Assert.IsFalse(FindObject(panel, "GameOverDetails").activeSelf, "the text layout is hidden");
-            Assert.NotNull(FindObjectOrNull(scroll, "NothingNew"));
+            // RUN-EARLY-002: a fresh profile's first run opens the early garden's first thing, shown as a plaque.
+            Assert.NotNull(FindObjectOrNull(scroll, "UnlockEma_0"), "the first run's new relic");
+            Assert.AreEqual(Meta.EarlyGarden.Name(Meta.EarlyGarden.Entries[0]),
+                FindObject(FindObject(scroll, "UnlockEma_0"), "Name").GetComponent<Text>().text);
 
             // [REQ: RUN-AGAIN-001] Walk again comes first and has the focus; [REQ: RUN-END-MOVED-001] "This run" names
             // what opens the next Harmony; [REQ: RUN-LENGTH-001] the eyebrow names the run's length.

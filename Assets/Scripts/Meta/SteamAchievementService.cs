@@ -83,7 +83,13 @@ namespace SudokuRoguelike.Meta
             "daily_streak_7", "codex_half", "codex_all",
             "story_new_page", "story_tale_number_freak", "story_tale_garden_monk", "story_tale_shrine_archivist",
             "story_tale_koi_gambler", "story_tale_stone_gardener", "story_tale_lantern_seer", "story_tale_reed_duelist",
-            "story_tale_quiet_cartographer", "story_ninth_keeper"
+            "story_tale_quiet_cartographer", "story_ninth_keeper",
+            "challenge_number_freak_1", "challenge_number_freak_2", "challenge_number_freak_3", "challenge_garden_monk_1",
+            "challenge_garden_monk_2", "challenge_garden_monk_3", "challenge_shrine_archivist_1", "challenge_shrine_archivist_2",
+            "challenge_shrine_archivist_3", "challenge_koi_gambler_1", "challenge_koi_gambler_2", "challenge_koi_gambler_3",
+            "challenge_stone_gardener_1", "challenge_stone_gardener_2", "challenge_stone_gardener_3", "challenge_lantern_seer_1",
+            "challenge_lantern_seer_2", "challenge_lantern_seer_3", "challenge_reed_duelist_1", "challenge_reed_duelist_2",
+            "challenge_reed_duelist_3", "challenge_quiet_cartographer_1", "challenge_quiet_cartographer_2", "challenge_quiet_cartographer_3"
         };
 
         public const int EndlessDepthGoal = 25;
@@ -148,6 +154,11 @@ namespace SudokuRoguelike.Meta
                 if (chapter >= StoryService.Chapters) GrantAchievement(mastery, "story_tale_" + ClassCatalog.GetIconName(keeper));
             }
             if (StoryService.NinthOpened(meta)) GrantAchievement(mastery, "story_ninth_keeper");
+
+            // [REQ: CLASS-CHALLENGE-002] Each class challenge met is its own achievement (RM-116, owner: 24).
+            foreach (ClassId classId in System.Enum.GetValues(typeof(ClassId)))
+                for (var i = 0; i < ClassChallenges.PerClass; i++)
+                    if (ClassChallenges.IsMet(meta, classId, i)) GrantAchievement(mastery, ClassChallenges.AchievementId(classId, i));
         }
 
         /// <summary>[REQ: ACHIEVE-MODE-001] At the end of an Endless Zen session, a Spirit Trial or a Monthly Walk.</summary>

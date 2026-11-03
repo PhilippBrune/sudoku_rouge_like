@@ -32,6 +32,13 @@ namespace SudokuRoguelike.UI
             _prestigeButton = null;
             _prestigeLabel = null;
             var page = ScrollUiKit.Area(_scroll, "ClassPage", new Vector2(0.07f, 0.03f), new Vector2(0.93f, 0.955f));
+            BuildPageTabs();
+            if (_challengesPage)   // [REQ: UI-STYLE-043] the second page
+            {
+                BuildChallengesPage(page, id);
+                WireNavigation();
+                return;
+            }
             var def = ClassCatalog.GetDefinition(id);
             var progress = ClassUnlockService.GetProgress(_meta, id);
             var level = progress.Unlocked ? _progression.GetLevel(_meta, id) : 0;

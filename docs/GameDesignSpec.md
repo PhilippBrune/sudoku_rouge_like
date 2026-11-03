@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.34 | **Date:** 2026-11-03 | **Status:** implemented
+**Version:** 1.35 | **Date:** 2026-11-03 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.35 | 2026-11-03 | implemented | Owner's picks (2026-11-03): RM-118 built as "behutsam öffnen" (RUN-EARLY-001/002) and RM-116 as proposal A with the proposed list and 24 achievements (CLASS-CHALLENGE-001/002, UI-STYLE-043). |
 | 1.34 | 2026-11-03 | implemented | Owner (2026-11-03), on the proposals of OPEN_POINTS 2.0: RM-113 closed (the Daily Walk is the short run); RM-120 built (RUN-FIRST-001); the balance check of RM-108 recorded in the run history (RUN-BALANCE-001); RM-118 and RM-116 picked, in that order, their proposals wait for the owner's pick. |
 | 1.33 | 2026-11-02 | implemented | 0.3.1 playtest (owner): Back from the Monthly Walk returns to where it was opened, and the Daily Walk widget opens the Daily Walk in Game Modes (MENU-BACK-001, GAP-109, GAP-110); the in-run Options show only pages with something to change (OPT-TABS-001, GAP-111); the legend is the rule slip (UI-STYLE-042, owner's pick A); the XP is painted into the bar by a brush (UI-STYLE-041, owner's pick B); the story scenes (UI-STYLE-040, owner's pick A, narrative-direction 1.3). |
 | 1.32 | 2026-11-02 | implemented | Owner's pick (0.3.1 playtest): Quit · A · The garden at dusk (UI-STYLE-039); the Kratossos seal (the owner's online name). |
@@ -605,6 +606,8 @@ As built (1.1, GAP-020; Run tab since 1.9, UI-OPT-002): the in-run Options panel
 | RUN-LENGTH-001 | The game measures its runs on the player's PC only (no telemetry): how long a run was open (path, puzzles, shops; resumed runs go on counting), the time to its first path choice, and the gap since the previous run's end in the same session. The Garden Run scroll names the run's length in its eyebrow. The last 200 runs are kept in the save (`RunHistory`); `tools/playtest/run_length_report.py` reads them and says whether RM-113 (a short walk) is needed (a won Harmony 0 run over 45 minutes). The number of floors does not change (owner). |
 | RUN-BALANCE-001 | The run history also keeps the balance check of RM-108 (GoldEconomySystem): gold left at the end, shop tiles entered and how many of them bought something, items used. The report prints them for won Garden Runs against the targets (under 80 gold left, 70 % of visits with a purchase, 4 items). |
 | RUN-FIRST-001 | Faster first choice (RM-120): the boards of the tiles the player can pick first are baked first, while the floor entry plays, so the first pick opens a ready board; the path's first tile has the focus (existing). |
+| RUN-EARLY-001 | **The early garden (RM-118, owner's pick "behutsam öffnen").** A Garden Run holds back ten things until the profile's finished runs open them, one per run, in this order: Phoenix Feather (relic), Wishing Fountain (event), Skyscrapers (rule), Shifting Garden, Rare Flower Patch, Sandwich, Eternal Lotus, The Tempting Shrine, Little Killer, Dragon's Eye. A finished run is any run the profile records (the count that opens Endless Zen, `TotalRunsStarted`); a profile with ten has everything. The Daily Walk and a run on a typed seed (the seed of the week too) hold nothing back, so they stay the same for every player; nor do the other modes. |
+| RUN-EARLY-002 | The Garden Run scroll's "New" column shows what opened since the last plaques (a run of another mode opens things too) as ema plaques (icon, name, "A relic joins the garden" / "An event on the path" / "A rule for the bosses"), after any class it unlocked; two plaques at most, the rest at the next run end (`MetaProgressionState.EarlyGardenShown`). |
 
 **Why one more run (the one-more-run concept, merged in 1.20).** The strongest pulls of the classic roguelikes are a short
 way back in and the near miss ("so close"). Run of the Nine had five screens between a run's end and the first choice of
@@ -621,9 +624,9 @@ minutes (else RM-113); more than half of the sessions with two or more runs; run
 | RM-113 | A short walk: three floors (1, 3, 5) with their bosses, half the XP, its own Harmony track | Closed (owner, 2026-11-03): the Daily Walk is the short run. Reopen if the report shows won Harmony 0 runs over 45 minutes. |
 | RM-114 | Keystone relics | Built: ItemsAndRelicsSystem 2.4 (RELIC-KEY-001/002) |
 | RM-115 | Wagers you can feel | Built: STAKES-001 |
-| RM-116 | Class challenges: three per class on the garden of classes, each with a seal and a Steam achievement | Picked (owner, 2026-11-03), second; proposals A and B in layout-proposals.md wait for the pick |
+| RM-116 | Class challenges: three per class on the garden of classes, each with a seal and a Steam achievement | Built: CLASS-CHALLENGE-001/002, UI-STYLE-043 (MetaProgressionSystem "Class challenges") |
 | RM-117 | The daily garden | Built in its short form as the Daily Walk (DailyGoalSystem, DAILY-WALK-001..008, RM-122) |
-| RM-118 | Something new opens in each of the first ten runs (a relic, an event, a rule in the Codex, the next class) | Picked (owner, 2026-11-03), first; its proposal waits for the pick |
+| RM-118 | Something new opens in each of the first ten runs (a relic, an event, a rule in the Codex, the next class) | Built: RUN-EARLY-001/002 |
 | RM-119 | Pacts instead of a fixed ladder: from Harmony 4, pacts worth Harmony points | Open |
 | RM-120 | Faster first choice: the first puzzle's board ready behind the floor entry | Built: RUN-FIRST-001 |
 | RM-121 | A rival run: a friend's result as a ghost line on the end scroll | Open (needs seed sharing, RM-003, RM-204) |

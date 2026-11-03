@@ -26,6 +26,7 @@ namespace SudokuRoguelike.UI
             public int PreLevel, PostLevel, XpInto, XpToNext;
             public int PreXpInto, PreXpToNext;   // where the class stood before the run (UI-STYLE-041)
             public List<ClassId> NewUnlocks;
+            public List<SudokuRoguelike.Meta.EarlyGarden.Entry> GardenNew;   // RM-118, RUN-EARLY-002
             public List<ClassId> Unlocked;
             public List<string> SoClose;   // RM-111
             public List<string> Moved;     // RM-112
@@ -371,18 +372,21 @@ namespace SudokuRoguelike.UI
 
         private static string Points(int points) => points < 0 ? $"\u2212{-points}" : $"+{points}";
 
-        // New classes as ema plaques; without one, "Nothing new this time" and the next class to unlock.
+        // New classes as ema plaques, then what the run opened in the early garden (RUN-EARLY-002); without either, "Nothing
+        // new this time" and the next class to unlock.
         private static void BuildUnlocks(Transform screen, RunEndSummary run)
         {
             var header = ScrollUiKit.Label(screen, "UnlocksHeader", T("InRun.End.Scroll.New").ToUpperInvariant(), 18, TextAnchor.MiddleLeft,
                 ScrollUiKit.Gold, new Vector2(0.7135f, 0.672f), new Vector2(0.80f, 0.698f), 12);
             Shade(header);
-            if (run.NewUnlocks != null && run.NewUnlocks.Count > 0)
-            {
-                for (var i = 0; i < run.NewUnlocks.Count && i < 2; i++)
-                    BuildUnlockEma(screen, i, run.NewUnlocks[i]);
-                return;
-            }
+            var plaques = 0;
+            for (var i = 0; run.NewUnlocks != null && i < run.NewUnlocks.Count && plaques < 2; i++)
+                BuildUnlockEma(screen, plaques++, "class/icon_" + ClassCatalog.GetIconName(run.NewUnlocks[i]),
+                    ClassLabel(run.NewUnlocks[i]), T("InRun.End.Scroll.ClassUnlocked"));
+            for (var i = 0; run.GardenNew != null && i < run.GardenNew.Count && plaques < 2; i++)
+                BuildUnlockEma(screen, plaques++, SudokuRoguelike.Meta.EarlyGarden.IconPath(run.GardenNew[i]),
+                    SudokuRoguelike.Meta.EarlyGarden.Name(run.GardenNew[i]), SudokuRoguelike.Meta.EarlyGarden.Caption(run.GardenNew[i]));
+            if (plaques > 0) return;
             // Without saved progress there is no next goal to name.
             var text = T("InRun.End.Scroll.NothingNew");
             if (run.Unlocked != null)
@@ -398,7 +402,7 @@ namespace SudokuRoguelike.UI
             Shade(line);
         }
 
-        private static void BuildUnlockEma(Transform screen, int index, ClassId classId)
+        private static void BuildUnlockEma(Transform screen, int index, string icon, string name, string what)
         {
             var x = 0.7708f + index * 0.105f;
             var ema = ScrollUiKit.Fill(screen, $"UnlockEma_{index}", new Vector2(x, 0.45f), new Vector2(x + 0.0938f, 0.662f),
@@ -406,12 +410,11 @@ namespace SudokuRoguelike.UI
             var shadow = ema.gameObject.AddComponent<Shadow>();
             shadow.effectColor = new Color(0f, 0f, 0f, 0.5f);
             shadow.effectDistance = new Vector2(0f, -8f);
-            ScrollUiKit.Icon(ema.transform, "Icon", "class/icon_" + ClassCatalog.GetIconName(classId),
-                new Vector2(0.27f, 0.36f), new Vector2(0.73f, 0.73f), Color.white);
-            ScrollUiKit.Label(ema.transform, "Name", ClassLabel(classId), 22, TextAnchor.MiddleCenter, ScrollUiKit.Ink,
+            ScrollUiKit.Icon(ema.transform, "Icon", icon, new Vector2(0.27f, 0.36f), new Vector2(0.73f, 0.73f), Color.white);
+            ScrollUiKit.Label(ema.transform, "Name", name, 22, TextAnchor.MiddleCenter, ScrollUiKit.Ink,
                 new Vector2(0.05f, 0.14f), new Vector2(0.95f, 0.30f), 13);
-            ScrollUiKit.Label(ema.transform, "What", T("InRun.End.Scroll.ClassUnlocked"), 15, TextAnchor.MiddleCenter, ScrollUiKit.InkSoft,
-                new Vector2(0.05f, 0.04f), new Vector2(0.95f, 0.15f), 10);
+            ScrollUiKit.Label(ema.transform, "What", what, 15, TextAnchor.MiddleCenter, ScrollUiKit.InkSoft,
+                new Vector2(0.05f, 0.04f), new Vector2(0.95f, 0.15f), 13);   // DECK-TEXT-001
         }
 
         // The next class in catalog order (the order the class select shows) that is still locked.

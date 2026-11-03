@@ -34,6 +34,22 @@ class SummaryTests(unittest.TestCase):
         self.assertEqual({}, summary['garden_end_floors'])
 
 
+class BalanceTests(unittest.TestCase):
+    def test_balance_of_won_garden_runs_with_numbers_only(self):
+        won = dict(run(40), GoldLeft=60, ShopVisits=4, ShopVisitsWithPurchase=3, ItemsUsed=5)
+        won2 = dict(run(40), GoldLeft=100, ShopVisits=2, ShopVisitsWithPurchase=1, ItemsUsed=3)
+        lost = dict(run(10, victory=False, floor=2), GoldLeft=500, ShopVisits=1, ShopVisitsWithPurchase=0, ItemsUsed=0)
+        summary = report.summarize([won, won2, lost, run(40)])   # the last one: recorded before 0.4.1
+        self.assertEqual(2, summary['balance_runs'])
+        self.assertEqual(80, summary['gold_left_mean'])
+        self.assertAlmostEqual(4 / 6, summary['shop_purchase_share'])
+        self.assertEqual(4, summary['items_used_mean'])
+        self.assertIn('gold left 80', report.format_report(summary))
+
+    def test_no_numbers_yet(self):
+        self.assertIn('no won Garden Run with the numbers', report.balance_line(report.summarize([run(40)])))
+
+
 class VerdictTests(unittest.TestCase):
     def test_too_few_runs(self):
         self.assertIn('Not enough', report.verdict(report.summarize([run(80), run(80)])))

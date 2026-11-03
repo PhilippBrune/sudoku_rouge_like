@@ -352,6 +352,7 @@ namespace SudokuRoguelike.UI
             // Configs built at floor entry are saved with the run, so a resume shows and plays the same puzzles (GAP-018).
             var saved = _run.GetSavedNodeConfigs();
             var built = new List<LevelConfig>(_run.CurrentFloorGraph.Count);
+            var bakes = new Dictionary<int, Action>();
             for (var i = 0; i < _run.CurrentFloorGraph.Count; i++)
             {
                 var node = _run.CurrentFloorGraph[i];
@@ -367,7 +368,7 @@ namespace SudokuRoguelike.UI
                     // StartLevelAsync reads volatile _preBakedBossBoard; falls back to sync if not ready.
                     var bakeConfig = config.Clone();
                     var token = _preBakeCancel.Token;
-                    QueuePreBake(() => _run.BakeBossBoard(bakeConfig, token), token, $"boss node {i}");
+                    bakes[i] = () => _run.BakeBossBoard(bakeConfig, token);
                 }
 
                 _fixedNodeConfigs[i] = config.Clone();
@@ -379,15 +380,47 @@ namespace SudokuRoguelike.UI
                     var capturedConfig = config.Clone();
                     var capturedIndex  = i;
                     var token          = _preBakeCancel.Token;
-                    QueuePreBake(
-                        () => _run.BakeNodePuzzle(capturedConfig, capturedIndex, token),
-                        token,
-                        $"node {capturedIndex}");
+                    bakes[i] = () => _run.BakeNodePuzzle(capturedConfig, capturedIndex, token);
                 }
             }
 
+            // [REQ: RUN-FIRST-001] The tiles the player can pick next are baked first, while the floor entry plays, so the
+            // first choice opens a ready board (RM-120); the rest follow in path order, the boss last. Two workers take the
+            // jobs in that order (each job used to be its own task, and the gate let them in at random).
+            var jobs = new System.Collections.Concurrent.ConcurrentQueue<(int Index, Action Bake)>();
+            foreach (var index in PreBakeOrder(_run.CurrentFloorGraph, _run.GetReachableNodes()))
+                if (bakes.TryGetValue(index, out var bake)) jobs.Enqueue((index, bake));
+            var floorToken = _preBakeCancel.Token;
+            for (var worker = 0; worker < PreBakeWorkers; worker++)
+                QueuePreBake(() =>
+                {
+                    while (!floorToken.IsCancellationRequested && jobs.TryDequeue(out var job))
+                    {
+                        try { job.Bake(); }
+                        catch (OperationCanceledException) { return; }
+                        catch (Exception ex) { Debug.LogWarning($"[RunMapController] Pre-bake failed for node {job.Index}: {ex.Message}"); }
+                    }
+                }, floorToken, "floor boards");
+
             if (saved == null)
                 _run.SaveNodeConfigs(built);
+        }
+
+        private const int PreBakeWorkers = 2;   // the gate's size
+
+        /// <summary>[REQ: RUN-FIRST-001] The order the floor's boards are baked in: the reachable tiles, then the others in
+        /// path order, the boss last.</summary>
+        public static List<int> PreBakeOrder(IReadOnlyList<RunNode> graph, ICollection<int> reachable)
+        {
+            var order = new List<int>();
+            if (graph == null) return order;
+            for (var i = 0; i < graph.Count; i++)
+                if (reachable != null && reachable.Contains(i)) order.Add(i);
+            for (var i = 0; i < graph.Count; i++)
+                if (!order.Contains(i) && graph[i]?.Type != NodeType.Boss) order.Add(i);
+            for (var i = 0; i < graph.Count; i++)
+                if (!order.Contains(i)) order.Add(i);
+            return order;
         }
 
         private void QueuePreBake(Action action, CancellationToken token, string label)

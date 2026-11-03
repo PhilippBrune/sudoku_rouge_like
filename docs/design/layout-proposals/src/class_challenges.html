@@ -1,0 +1,103 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="scenes.css">
+<style>
+  /* RM-116 class challenges on the garden of classes: three seals at the foot of every plaque (red when met), and the
+     chosen class's three challenges either as a second page of the hanging scroll (?v=a, Y turns it) or as a strip of
+     three slips under the plaques (?v=b). */
+  .bg { background-image:url('../../../../Assets/Resources/background/bg_class_select.png'); filter:brightness(.5) saturate(.85); }
+  .cord { position:absolute; left:90px; width:940px; height:3px; background:#b23a2e; }
+  .ema { position:absolute; width:200px; height:250px; clip-path: polygon(50% 0, 100% 18%, 100% 100%, 0 100%, 0 18%);
+         background:linear-gradient(180deg,#e9b878,#c88a4c); color:#2a1a10; text-align:center; }
+  .ema img { width:96px; height:96px; margin-top:40px; object-fit:contain; }
+  .ema .n { font-size:21px; margin-top:4px; padding:0 8px; line-height:1.1; }
+  .ema .lv { font-size:17px; color:#6b3a14; margin-top:4px; }
+  .ema .seals { position:absolute; left:0; right:0; bottom:12px; display:flex; justify-content:center; gap:10px; }
+  .seal { width:24px; height:24px; border-radius:50%; border:2.5px solid #7a2a20; box-sizing:border-box; }
+  .seal.done { background:radial-gradient(circle at 40% 35%,#d4574a,#9e2a2b); border-color:#9e2a2b; box-shadow:0 0 0 2px rgba(255,240,210,.5) inset; }
+  .ema.locked { background:linear-gradient(180deg,#5a4a3a,#3e3226); color:#cdbf9f; }
+  .ema.locked img { filter:brightness(0) opacity(.45); }
+  .ema.locked .lv { color:#e0a24a; font-size:15px; padding:0 10px; }
+  .ema.locked .seal { border-color:#8a7a62; }
+  .ema.sel { outline:4px solid #f4e3b5; box-shadow:0 0 40px rgba(244,200,120,.6); }
+  .scroll { position:absolute; left:1110px; top:120px; width:690px; height:800px; background:linear-gradient(180deg,#f2e7cc,#e7d7b2);
+            box-shadow:0 30px 60px rgba(0,0,0,.6); color:#231e17; padding:40px 48px; box-sizing:border-box; }
+  .scroll::before, .scroll::after { content:''; position:absolute; left:-22px; right:-22px; height:26px; border-radius:13px;
+            background:linear-gradient(180deg,#3a2414,#c08a52 50%,#3a2414); }
+  .scroll::before { top:-14px; } .scroll::after { bottom:-14px; }
+  .scroll h2 { margin:0; font-weight:normal; font-size:44px; } .scroll .sub { color:#5b5244; font-size:19px; }
+  .tabs { position:absolute; top:-58px; right:30px; display:flex; gap:8px; }
+  .tabs span { background:#4a3a28; color:#e8dcc0; padding:8px 18px 12px; font-size:18px; border-radius:8px 8px 0 0; }
+  .tabs span.on { background:#f2e7cc; color:#231e17; }
+  .tabs small { align-self:center; color:#d8ccb2; font-size:16px; margin-right:6px; }
+  .ch { display:flex; gap:20px; align-items:flex-start; padding:22px 0; border-bottom:1px solid rgba(60,45,30,.2); }
+  .ch .seal { width:54px; height:54px; flex:none; border-width:4px; }
+  .ch b { display:block; font-size:24px; font-weight:normal; }
+  .ch .how { font-size:18px; color:#5b5244; margin-top:4px; line-height:1.35; }
+  .ch .state { font-size:17px; color:#9e2a2b; margin-top:6px; }
+  .ch .ach { font-size:15px; color:#6b5f4c; margin-top:4px; letter-spacing:.04em; }
+  .xp { position:relative; height:26px; margin:22px 0 8px; border-radius:13px; background:rgba(60,45,30,.16); }
+  .xp div { position:absolute; inset:0 38% 0 0; border-radius:13px; background:linear-gradient(90deg,#b8892b,#e9c46a); }
+  .path { position:relative; margin:24px 0 0 14px; padding-left:34px; border-left:3px solid #2a241c; }
+  .step { position:relative; font-size:20px; line-height:1.4; padding-bottom:16px; }
+  .step::before { content:''; position:absolute; left:-46px; top:2px; width:20px; height:20px; border-radius:50%; background:#f2e7cc; border:3px solid #2a241c; }
+  .step.done::before { background:#b23a2e; border-color:#b23a2e; }
+  .step b { color:#9e2a2b; font-weight:normal; }
+  .strip { position:absolute; left:90px; top:840px; width:940px; display:flex; gap:14px; }
+  .slip { flex:1; background:linear-gradient(180deg,#f2e7cc,#e7d7b2); color:#231e17; padding:14px 16px; box-shadow:0 12px 24px rgba(0,0,0,.5);
+          display:flex; gap:12px; align-items:flex-start; transform:rotate(-.6deg); }
+  .slip:nth-child(2) { transform:rotate(.5deg); } .slip:nth-child(3) { transform:rotate(-.3deg); }
+  .slip .seal { width:34px; height:34px; flex:none; border-width:3px; }
+  .slip b { display:block; font-size:19px; font-weight:normal; } .slip span { font-size:15px; color:#5b5244; }
+  .strip-title { position:absolute; left:90px; top:804px; color:#e8dcc0; font-size:16px; letter-spacing:.14em; }
+</style></head><body>
+<div class="bg"></div><div class="shade"></div>
+<div class="banner" style="top:18px;left:300px;width:560px;height:100px"><small>Your garden</small><h1>Meta Progression</h1></div>
+<div class="cord" style="top:178px"></div><div class="cord" style="top:500px"></div>
+<div id="emas"></div>
+<div id="side"></div>
+<div class="hint" id="hint" style="top:1000px;left:90px;width:940px"></div>
+<div class="caption" id="caption"></div>
+<script>
+  const R = '../../../../Assets/Resources/';
+  const v = new URLSearchParams(location.search).get('v') || 'a';
+  const classes = [
+    ['number_freak','Number Freak','Lv 23',2,'sel'], ['garden_monk','Garden Monk','Lv 9',1,''], ['shrine_archivist','Shrine Archivist','Lv 4',0,''],
+    ['koi_gambler','Koi Gambler','Collect 10 relics · 9/10',0,'locked'], ['stone_gardener','Stone Gardener','Defeat 10 bosses · 6/10',0,'locked'],
+    ['lantern_seer','Lantern Seer','Collect 50 000 gold · 12 400',0,'locked'], ['reed_duelist','Reed Duelist','Find every item · 18/31',0,'locked'],
+    ['quiet_cartographer','Quiet Cartographer','A run with no mistakes',0,'locked']];
+  const seals = n => [0,1,2].map(i => `<div class="seal ${i < n ? 'done' : ''}"></div>`).join('');
+  document.getElementById('emas').innerHTML = classes.map(([icon, name, lv, done, cls], i) => {
+    const x = 100 + (i % 4) * 235, y = (i < 4 ? 214 : 536);
+    return `<div class="ema ${cls}" style="left:${x}px;top:${y}px"><img src="${R}class/icon_${icon}.png"><div class="n">${name}</div>
+      <div class="lv">${lv}</div><div class="seals">${seals(done)}</div></div>`;
+  }).join('');
+  const challenges = [
+    ['Flawless garden', 'Win a run with no mistake on Floors 1 to 3.', 'Met on 14 Oct', true],
+    ['Twelve tokens', 'Earn 12 reroll tokens in one run.', 'Met on 29 Oct', true],
+    ['The high path', 'Win at Harmony VI.', 'Best: a win at Harmony IV', false]];
+  if (v === 'a') {
+    document.getElementById('side').innerHTML = `<div class="scroll">
+      <div class="tabs"><small>Y</small><span>Path</span><span class="on">Challenges</span></div>
+      <h2>Number Freak</h2><div class="sub">Challenges · 2 of 3 seals</div>
+      ${challenges.map(([t, how, state, done]) => `<div class="ch"><div class="seal ${done ? 'done' : ''}"></div><div><b>${t}</b>
+        <div class="how">${how}</div><div class="state">${state}</div><div class="ach">STEAM ACHIEVEMENT</div></div></div>`).join('')}
+    </div>`;
+    document.getElementById('hint').textContent = 'D-pad chooses a class · Y path / challenges · X prestige when ready · B back';
+    document.getElementById('caption').textContent = 'RM-116 · Proposal A · Challenges as a page of the scroll';
+  } else {
+    document.getElementById('side').innerHTML = `<div class="scroll">
+      <h2>Number Freak</h2><div class="sub">Level 23 of 40 · 41 runs · best floor 5</div>
+      <div class="xp"><div></div></div>
+      <div class="path">
+        <div class="step done">Lv 5 · <b>+1 HP</b></div><div class="step done">Lv 15 · exclusive item <b>Loaded Coin</b></div>
+        <div class="step">Lv 25 · <b>+2 HP, +2 Pencil</b></div><div class="step">Lv 30 · exclusive relic <b>???</b></div>
+        <div class="step">Lv 40 · <b>Prestige</b></div></div></div>
+      <div class="strip-title">NUMBER FREAK · CHALLENGES</div>
+      <div class="strip">${challenges.map(([t, how, state, done]) => `<div class="slip"><div class="seal ${done ? 'done' : ''}"></div>
+        <div><b>${t}</b><span>${how}<br>${state}</span></div></div>`).join('')}</div>`;
+    document.getElementById('hint').textContent = 'D-pad chooses a class · X prestige when ready · B back';
+    document.getElementById('caption').textContent = 'RM-116 · Proposal B · Challenges as slips under the plaques';
+  }
+</script>
+</body></html>

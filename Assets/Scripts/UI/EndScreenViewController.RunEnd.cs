@@ -226,7 +226,9 @@ namespace SudokuRoguelike.UI
         private const float TallyWidthPx = 440f, TallyHeightPx = 620f;
         private const float StampLeftPx = 0.10f * TallyWidthPx, StampRightPx = 0.90f * TallyWidthPx;
         private const int MaxStampLines = 3;
-        private static readonly float[] StampSizes = { 20f, 16f, 12f, 9f };
+        // [REQ: DECK-TEXT-001] The stamps stay big enough for a size-13 letter (9 px on the Steam Deck).
+        private static readonly float[] StampSizes = { 20f, 16f };
+        private const int StampMarkSize = 13;
 
         // How many lines the stamps take at one size (gap and floor gap scale with it).
         private static int StampLines(List<(PuzzleGrade Grade, int Floor)> entries, float size)
@@ -264,8 +266,8 @@ namespace SudokuRoguelike.UI
                 var stamp = ScrollUiKit.Spot(tally, $"GradeStamp_{i}", centre, new Vector2(size, size),
                     RunGradeStamps.ColorOf(grade), ScrollUiKit.Rounded(4f));
                 stamp.rectTransform.localRotation = Quaternion.Euler(0f, 0f, i % 3 == 0 ? -4f : i % 3 == 1 ? 3f : 0f);
-                ScrollUiKit.Label(stamp.transform, "Mark", RunGradeStamps.MarkOf(grade), Mathf.RoundToInt(size * 0.65f),
-                    TextAnchor.MiddleCenter, ScrollUiKit.PaperText, Vector2.zero, Vector2.one, 6, FontStyle.Bold);
+                ScrollUiKit.Label(stamp.transform, "Mark", RunGradeStamps.MarkOf(grade), StampMarkSize,
+                    TextAnchor.MiddleCenter, ScrollUiKit.PaperText, Vector2.zero, Vector2.one, 0, FontStyle.Bold);
                 x += size + gap;
             }
             var legendTop = (top - (line + 1) * lineStep - 2f) / TallyHeightPx;

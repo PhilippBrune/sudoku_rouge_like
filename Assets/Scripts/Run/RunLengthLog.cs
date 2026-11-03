@@ -44,6 +44,20 @@ namespace SudokuRoguelike.Run
             if (state != null && state.SecondsToFirstChoice < 0f) state.SecondsToFirstChoice = state.ActiveSeconds;
         }
 
+        /// <summary>[REQ: RUN-BALANCE-001] A shop tile entered.</summary>
+        public static void OnShopVisit(RunState state)
+        {
+            if (state != null) state.ShopVisits++;
+        }
+
+        /// <summary>[REQ: RUN-BALANCE-001] A purchase in the shop: its visit counts once as a visit that bought something.</summary>
+        public static void OnShopPurchase(RunState state)
+        {
+            if (state == null || state.ShopVisits == 0 || state.ShopPurchaseVisit == state.ShopVisits) return;
+            state.ShopPurchaseVisit = state.ShopVisits;
+            state.ShopVisitsWithPurchase++;
+        }
+
         public static RunHistoryEntry Entry(RunState state, bool victory, int floorReached, DateTime utcNow) => new RunHistoryEntry
         {
             EndedUtc = utcNow.ToString("o", CultureInfo.InvariantCulture),
@@ -56,7 +70,11 @@ namespace SudokuRoguelike.Run
             ActiveSeconds = Mathf.RoundToInt(state.ActiveSeconds),
             PuzzleSeconds = Mathf.RoundToInt(state.TotalRunSeconds),
             SecondsToFirstChoice = state.SecondsToFirstChoice < 0f ? -1 : Mathf.RoundToInt(state.SecondsToFirstChoice),
-            SecondsSincePreviousRun = state.SecondsSincePreviousRun < 0f ? -1 : Mathf.RoundToInt(state.SecondsSincePreviousRun)
+            SecondsSincePreviousRun = state.SecondsSincePreviousRun < 0f ? -1 : Mathf.RoundToInt(state.SecondsSincePreviousRun),
+            GoldLeft = state.CurrentGold,
+            ShopVisits = state.ShopVisits,
+            ShopVisitsWithPurchase = state.ShopVisitsWithPurchase,
+            ItemsUsed = state.ItemsUsedThisRun
         };
 
         /// <summary>Adds the entry and drops the oldest beyond <see cref="MaxEntries"/>.</summary>

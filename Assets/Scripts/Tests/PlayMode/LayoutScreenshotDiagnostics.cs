@@ -1429,6 +1429,7 @@ namespace SudokuRoguelike.Tests
                 foreach (var text in host.GetComponentsInChildren<Text>()) text.SetAllDirty();
             }
             Canvas.ForceUpdateCanvases();
+            if (Environment.GetEnvironmentVariable("SR_DECK_AUDIT") == "1") AuditTextSizes(host, file, _outDir);
             camera.Render();
             var previous = RenderTexture.active;
             RenderTexture.active = rt;
@@ -1441,6 +1442,32 @@ namespace SudokuRoguelike.Tests
             Object.Destroy(tex);
             rt.Release();
             Object.Destroy(rt);
+        }
+
+        // [REQ: DECK-TEXT-001] Steam Deck text audit (RM-102): with SR_DECK_AUDIT=1 (and SR_SHOT_SIZE=1280x800) every shot lists
+        // the visible texts drawn smaller than Valve's 9 px floor in deck_text_audit.txt, with the size actually used after
+        // best fit.
+        private const float DeckMinPixels = 9f;
+
+        public static void AuditTextSizes(GameObject host, string file, string outDir)
+        {
+            var lines = new List<string>();
+            foreach (var text in host.GetComponentsInChildren<Text>())
+            {
+                if (!text.enabled || string.IsNullOrWhiteSpace(text.text) || text.canvas == null) continue;
+                if (text.color.a < 0.05f) continue;
+                var scale = text.canvas.scaleFactor;
+                // The generator works in pixels (font size × the canvas scale); best fit reports the size it settled on.
+                var used = text.resizeTextForBestFit ? text.cachedTextGenerator.fontSizeUsedForBestFit : Mathf.RoundToInt(text.fontSize * scale);
+                if (used <= 0) continue;
+                if (Environment.GetEnvironmentVariable("SR_DECK_AUDIT_ALL") != "1" && used >= DeckMinPixels) continue;
+                var path = text.transform.name;
+                for (var t = text.transform.parent; t != null && t != host.transform; t = t.parent) path = t.name + "/" + path;
+                var sample = text.text.Replace("\n", " ").Replace("\t", " ");
+                if (sample.Length > 40) sample = sample.Substring(0, 40);
+                lines.Add($"{file}\t{used}px\tscale {scale:0.###}\tsize {text.fontSize}{(text.resizeTextForBestFit ? $" (best fit {text.resizeTextMinSize}-{text.resizeTextMaxSize})" : "")}\t{path}\t{sample}");
+            }
+            File.AppendAllLines(Path.Combine(outDir, "deck_text_audit.txt"), lines);
         }
 
         private static GameObject Find(GameObject root, string name) =>

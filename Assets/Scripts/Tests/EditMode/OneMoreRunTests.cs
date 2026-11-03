@@ -74,6 +74,51 @@ namespace SudokuRoguelike.Tests
             Assert.AreEqual(0.75f, state.SecondsToFirstChoice, 1e-4, "the first choice only");
         }
 
+        // [REQ: RUN-FIRST-001] RM-120: the tiles the player can pick first are baked first, the boss last.
+        [Test]
+        [Requirement("RUN-FIRST-001")]
+        public void FloorBoards_BakeTheReachableTilesFirst_AndTheBossLast()
+        {
+            var graph = new System.Collections.Generic.List<RunNode>
+            {
+                new RunNode { Index = 0, Type = NodeType.Boss },
+                new RunNode { Index = 1, Type = NodeType.Puzzle },
+                new RunNode { Index = 2, Type = NodeType.Shop },
+                new RunNode { Index = 3, Type = NodeType.Puzzle },
+                new RunNode { Index = 4, Type = NodeType.ElitePuzzle },
+            };
+            CollectionAssert.AreEqual(new[] { 3, 4, 1, 2, 0 }, SudokuRoguelike.UI.RunMapController.PreBakeOrder(graph, new[] { 3, 4 }));
+
+            var run = new RunDirector();
+            run.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun }, 120);
+            var order = SudokuRoguelike.UI.RunMapController.PreBakeOrder(run.CurrentFloorGraph, run.GetReachableNodes());
+            CollectionAssert.AreEquivalent(Enumerable.Range(0, run.CurrentFloorGraph.Count), order, "every tile once");
+            CollectionAssert.AreEquivalent(run.GetReachableNodes(), order.Take(run.GetReachableNodes().Count));
+            Assert.AreEqual(NodeType.Boss, run.CurrentFloorGraph[order[order.Count - 1]].Type);
+        }
+
+        // [REQ: RUN-BALANCE-001] RM-108's balance check: gold left, shop visits with a purchase, items used.
+        [Test]
+        [Requirement("RUN-BALANCE-001")]
+        public void RunHistory_KeepsTheBalanceCheck()
+        {
+            var state = new RunState { Mode = GameMode.GardenRun, CurrentGold = 63, ItemsUsedThisRun = 5 };
+            RunLengthLog.OnShopPurchase(state);   // no shop visited: nothing counts
+            RunLengthLog.OnShopVisit(state);
+            RunLengthLog.OnShopPurchase(state);
+            RunLengthLog.OnShopPurchase(state);   // a second purchase in the same visit
+            RunLengthLog.OnShopVisit(state);      // a visit without a purchase
+            RunLengthLog.OnShopVisit(state);
+            RunLengthLog.OnShopPurchase(state);
+
+            var entry = RunLengthLog.Entry(state, true, 5, new DateTime(2026, 11, 3, 20, 0, 0, DateTimeKind.Utc));
+            Assert.AreEqual(63, entry.GoldLeft);
+            Assert.AreEqual(3, entry.ShopVisits);
+            Assert.AreEqual(2, entry.ShopVisitsWithPurchase);
+            Assert.AreEqual(5, entry.ItemsUsed);
+            Assert.AreEqual(-1, new RunHistoryEntry().GoldLeft, "an older entry reads as unknown");
+        }
+
         [Test]
         [Requirement("RUN-LENGTH-001")]
         public void RunHistory_KeepsTheLastRuns_WithTheirLengths()

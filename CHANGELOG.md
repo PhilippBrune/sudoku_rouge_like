@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+### New
+
+- **Steam Deck:** no text is smaller than 9 pixels at 1280×800 any more; on the Deck and in Big Picture, A on a seed field
+  opens Steam's keyboard; the hints name the Deck's buttons L1/R1 and L2/R2.
+- **The first tile is ready sooner:** the boards of the tiles you can pick first are made first, while the floor's name
+  shows.
+
+### Changed
+
+- The Pattern Scroll lists every rule piece on the board by the rule's name, in your language: marked cells, cell pairs,
+  outside clues and quadruples too.
+- The letters on a Palindrome line read PL, as at the boss gate.
+
 ## 0.4.0: 10th iteration (2026-11-03)
 
 The first public build since 0.3.0. It carries the three test builds below (0.3.1 to 0.3.3: the story of the Nine and

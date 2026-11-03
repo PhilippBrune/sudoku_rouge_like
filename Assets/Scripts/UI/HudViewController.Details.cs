@@ -27,14 +27,15 @@ namespace SudokuRoguelike.UI
             _detailSlip.raycastTarget = false;
             var band = ScrollUiKit.Fill(_detailSlip.transform, "Band", new Vector2(0f, 0.95f), Vector2.one, ScrollUiKit.Moss);
             band.raycastTarget = false;
-            _detailEyebrow = ScrollUiKit.Label(_detailSlip.transform, "DetailEyebrow", "", 13, TextAnchor.MiddleLeft, ScrollUiKit.InkSoft,
-                new Vector2(0.05f, 0.76f), new Vector2(0.96f, 0.93f), 9);
+            // [REQ: DECK-TEXT-001] The run's canvas scales by 0.667 on the Steam Deck's 1280×800: size 14 is its 9 px.
+            _detailEyebrow = ScrollUiKit.Label(_detailSlip.transform, "DetailEyebrow", "", 14, TextAnchor.MiddleLeft, ScrollUiKit.InkSoft,
+                new Vector2(0.05f, 0.76f), new Vector2(0.96f, 0.93f), 14);
             _detailTitle = ScrollUiKit.Label(_detailSlip.transform, "DetailTitle", "", 22, TextAnchor.MiddleLeft, ScrollUiKit.Vermilion,
                 new Vector2(0.05f, 0.55f), new Vector2(0.96f, 0.77f), 13);
             _detailBody = ScrollUiKit.Label(_detailSlip.transform, "DetailBody", "", 16, TextAnchor.UpperLeft, ScrollUiKit.Ink,
-                new Vector2(0.05f, 0.17f), new Vector2(0.96f, 0.55f), 10);
-            _detailFoot = ScrollUiKit.Label(_detailSlip.transform, "DetailFoot", "", 12, TextAnchor.MiddleLeft, ScrollUiKit.InkSoft,
-                new Vector2(0.05f, 0.02f), new Vector2(0.96f, 0.16f), 9);
+                new Vector2(0.05f, 0.21f), new Vector2(0.96f, 0.55f), 10);
+            _detailFoot = ScrollUiKit.Label(_detailSlip.transform, "DetailFoot", "", 14, TextAnchor.MiddleLeft, ScrollUiKit.InkSoft,
+                new Vector2(0.05f, 0.02f), new Vector2(0.96f, 0.21f), 14);   // two lines for the longest hint (German)
         }
 
         /// <summary>Per HUD refresh (every frame): rebuilds the slip only when what it shows has changed.</summary>

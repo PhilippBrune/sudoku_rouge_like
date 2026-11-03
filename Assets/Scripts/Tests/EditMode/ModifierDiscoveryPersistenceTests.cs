@@ -1028,26 +1028,6 @@ namespace SudokuRoguelike.Tests
                 "EndlessZen.TotalSessions",
                 "Harmony.Readout",
                 "MainMenu.Perks.UnlockHint",
-                "Class.LevelShort",
-                "Class.XpLine",
-                "Class.XpMaxLine",
-                "Class.SummaryLine",
-                "Class.LevelUnlocksHeader",
-                "Class.LevelUnlocksPreviewHeader",
-                "Class.ExclusiveUnlocksHeader",
-                "Class.UnlocksAtLevel15Unknown",
-                "Class.UnlocksAtLevel30Unknown",
-                "Class.LockedHeader",
-                "Class.UnlockConditionLine",
-                "Class.UnlockProgress.Bosses2",
-                "Class.UnlockProgress.Items15",
-                "Class.UnlockProgress.Relics10",
-                "Class.UnlockProgress.Bosses10",
-                "Class.UnlockProgress.Gold50000",
-                "Class.UnlockProgress.ItemCodexComplete",
-                "Class.UnlockProgress.ItemCodexIncomplete",
-                "Class.UnlockProgress.PerfectRunComplete",
-                "Class.UnlockProgress.PerfectRunIncomplete",
                 "Harmony.Name.0",
                 "Harmony.Name.1",
                 "Harmony.Name.2",
@@ -1233,9 +1213,11 @@ namespace SudokuRoguelike.Tests
         }
     }
 
+    // [REQ: META-UNLOCK-003] [REQ: META-UNLOCK-006] [REQ: META-XP-006] A locked class's goal and a class's level schedule in the
+    // player's language, as Select Class and the garden of classes show them (the old confirmation window's text is gone).
     [TestFixture]
-    [Requirement("META-UNLOCK-003")]
-    public class MainMenuClassInfoPresenterTests
+    [Requirement("META-UNLOCK-003", "META-UNLOCK-006", "META-XP-006")]
+    public class ClassUnlockTextTests
     {
         [TearDown]
         public void TearDown()
@@ -1245,32 +1227,18 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
-        public void Build_LockedGermanClassInfo_IncludesLocalizedProgressAndCopy()
+        public void Goal_OfALockedClass_IsInThePlayersLanguage_WithItsProgress()
         {
             LocalizationService.SetLanguage(LanguageOption.German);
-            var meta = new MetaProgressionState();
-            meta.ClassUnlocks.BossesDefeated = 1;
-
-            var view = MainMenuClassInfoPresenter.Build(ClassId.GardenMonk, meta, false);
-
-            StringAssert.Contains("GESPERRT", view.Text);
-            StringAssert.Contains("Bosse besiegt: 1/2", view.Text);
-            StringAssert.Contains("Stufenfreischaltungen", view.Text);
-            Assert.AreEqual(new Color(0.80f, 0.55f, 0.35f, 1f), view.Color);
+            var goal = ClassUnlockText.Goal(ClassId.GardenMonk, new SudokuRoguelike.Classes.ClassUnlockService.UnlockProgress(1, 2, false));
+            Assert.AreEqual("Besiege 2 Bosse · 1/2", goal);
         }
 
         [Test]
-        public void Build_UnlockedGermanClassInfo_IncludesLocalizedSummary()
+        public void LevelSchedule_TranslatesTheStatBonuses()
         {
             LocalizationService.SetLanguage(LanguageOption.German);
-            var meta = new MetaProgressionState();
-
-            var view = MainMenuClassInfoPresenter.Build(ClassId.NumberFreak, meta, true);
-
-            StringAssert.Contains("Stufe", view.Text);
-            StringAssert.Contains("LP:10", view.Text);
-            StringAssert.Contains("Neuwurf-Marke", view.Text);
-            Assert.AreEqual(new Color(0.96f, 0.93f, 0.82f, 1f), view.Color);
+            StringAssert.Contains("+2 LP", ClassUnlockText.Localize("+2 Pencil, +2 HP"));
         }
     }
 }

@@ -1,11 +1,12 @@
 ﻿# Boss Mechanics System
 
-**Version:** 2.13 | **Date:** 2026-10-27 | **Status:** implemented
+**Version:** 2.14 | **Date:** 2026-11-03 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.14 | 2026-11-03 | implemented | Owner (2026-11-03), on the proposals of OPEN_POINTS 2.0: Phase 0 step 3 built (`ModifierCatalog`: name, abbreviation and rule text as one entry per modifier; the letters on a line are its modifier's abbreviation, so the Palindrome line reads PL as at its gate, not PA) and step 5 as golden geometry snapshots (BOSS-MOD-007). |
 | 2.13 | 2026-10-27 | implemented | Owner request (2026-10-27): the modifier catalog plan (v1.5, 2026-10-19; its file is removed) is merged into the new section "Modifier catalog": the Phase 0 steps with their state, the verdicts, the owner's decisions and what is open. Steps 3 and 5 stay open; the spec contradictions the plan found are listed there and not resolved. No rule changed. |
 | 2.12 | 2026-10-19 | implemented | Owner request: catalog batch B5 goes live: X-Sudoku (30), Hyper Sudoku (31), Disjoint Groups (32), Extra Region (53) and Magic Square (68). X-Sudoku, Hyper, Disjoint Groups and the magic square shape the solution (the generator fills the grid with them; givens stay chosen under the base rules, owner decision) and count as board-shaping rules (rectangular regions, 7×7 raised to 8×8). Hyper, Disjoint Groups and the magic square need the 3×3 boxes of a 9×9; a magic 3×3 square needs the digits 1–9, so Magic Square is 9×9 only (the library said 7×7). Blocked pairs from the pair benchmark (`SolutionShapePairBenchmark`): X-Sudoku with Nonconsecutive, Anti-Knight, Nonconsec. Diagonal or Entropy; Hyper with Nonconsecutive, Nonconsec. Diagonal or Entropy; Disjoint Groups + Entropy (no such grid); Magic Square with Nonconsecutive or Nonconsec. Diagonal (its digits break them). A pre-baked boss board is reused only when every solution-shaping rule matches, Entropy included (GAP-051). With this batch every modifier of the catalog plan is built: 71 player modifiers, 70 clearable. |
 | 2.11 | 2026-10-19 | implemented | Owner request: catalog batch B4 goes live: Quadruples (79, 9×9 as the library says), Skyscrapers (81), Sandwich (82), X-Sums (83) and Little Killer (84). Owner decision (2026-10-19): a board with outside clues is drawn about 12 % smaller and the clues stand in a ring round it (UI-STYLE-010); boards without them keep their size. One kind of outside clue per board (the four are blocked pairs among each other), so every number in the ring means the same thing. 66 player modifiers, 65 clearable. |
@@ -226,9 +227,9 @@ Nothing goes live from Phase 0 by itself; the `ModifierData` entry is the releas
 |---|---|---|
 | 1 | Presence check per type: one check for lines, cages, arrows, markers and pairs; unknown IDs are not present (BOSS-MOD-004, fixes GAP-047) | built |
 | 2 | Subtype filters in the plain Killer and Arrow rules (plain Sum only; existing data defaults to Sum) | built |
-| 3 | One catalog entry per ID (name, description, abbreviation, localization IDs, overlay group, legend colour, Custom Puzzle list) with a contract test (BOSS-MOD-005) | **open**: the name and abbreviation switches still stand |
+| 3 | One catalog entry per ID (name, description, abbreviation, localization IDs, overlay group, legend colour, Custom Puzzle list) with a contract test (BOSS-MOD-005) | built 2026-11-03: `Boss/ModifierCatalog.cs` holds name, abbreviation and rule text (85 entries); the localization keys stay `Boss.Name.*`/`Boss.Description.*`, the overlay groups and legend colours stay in `BoardViewController.OverlayGroups` |
 | 4 | Structural rule set replacing the generator's seven flags: extra houses and a prefilled box (`SolutionShape`, GEN-SOLVE-002/003) | built |
-| 5 | Geometry helpers: a shared path grower with a per-type check, `MarkOverlayCellsUsed` for regions, cell pairs and corners. The plan's status line and OPEN_POINTS call the open part "golden geometry snapshots", which the plan's table lists under step 5 too. | **open**: golden geometry snapshots (which part of step 5 is meant is not settled) |
+| 5 | Geometry helpers: a shared path grower with a per-type check, `MarkOverlayCellsUsed` for regions, cell pairs and corners. The plan's status line and OPEN_POINTS call the open part "golden geometry snapshots", which the plan's table lists under step 5 too. | built 2026-11-03 as golden geometry snapshots (BOSS-MOD-007): each player modifier on a fixed 9×9 board and seed against `TestData/geometry_golden.txt` (60 draw geometry; the 10 global rules and whole-board houses draw none) |
 | 6 | Rendering: clue ring outside the grid, corner circles, region outlines, labels, paper-safe colours | built as UI-STYLE-010 and 011 (the plan's status line does not list it) |
 | 7 | Soundness harness (EditMode): seeds × sizes × region variants; the rules accept the solution, uniqueness, time (p95 under 1 s, max under 4 s); every new modifier is paired with every live one to find blocked pairs (`SolutionShapePairBenchmark`, [Explicit]) | built |
 
@@ -258,7 +259,6 @@ The plan gave each ID a verdict: ship (28), ship later (12), rework (2), drop (2
 
 ### Open
 
-- Phase 0 steps 3 and 5 (table above).
 - Spec contradictions the plan found. They are not resolved here and not yet filed as SPEC-CONF items; the owner decides
   when filed. **Ambiguous Thermo** (52): the enum comment (`GameEnums.cs:84`) and this spec differ. **Thermo Loop** (50,
   dropped): the spec says strictly increasing and unsatisfiable, the enum comment says ≥.

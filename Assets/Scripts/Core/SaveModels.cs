@@ -47,6 +47,11 @@ namespace SudokuRoguelike.Core
         public int PuzzleSeconds;               // time spent in puzzles
         public int SecondsToFirstChoice = -1;   // from the run's start to its first path choice
         public int SecondsSincePreviousRun = -1;// from the previous run's end (same session) to this run's start
+        // [REQ: RUN-BALANCE-001] The balance check (RM-108); -1 in runs recorded before 0.4.1.
+        public int GoldLeft = -1;
+        public int ShopVisits = -1;
+        public int ShopVisitsWithPurchase = -1;
+        public int ItemsUsed = -1;
     }
 
     [Serializable]

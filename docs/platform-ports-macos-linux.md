@@ -1,11 +1,12 @@
 # Plan: Run of the Nine on macOS and Linux / SteamOS
 
-**Version:** 1.3 | **Date:** 2026-10-26 | **Status:** review (decision 3 taken: Steam Input; the Steam Deck runs the Windows build; Legion Go checked, X-input and D-input built; no build settings changed yet)
+**Version:** 1.4 | **Date:** 2026-11-03 | **Status:** review (decision 3 taken: Steam Input; the Steam Deck runs the Windows build; Legion Go checked, X-input and D-input built; no build settings changed yet)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.4 | 2026-11-03 | review | Owner (2026-11-03), on the proposals of OPEN_POINTS 2.0: the Deck work of RM-102 is built: text size (DECK-TEXT-001), Steam's gamepad keyboard for the seed fields (DECK-KEYBOARD-001), L1/R1 and L2/R2 in the hints (DECK-BUTTONS-001). The Steam Input default is already "Generic Gamepad" (checked in Steamworks). Left: a start on a Deck and the compatibility review. |
 | 1.3 | 2026-10-26 | review | X-input and D-input modes built (INPUT-PAD-002): the Legion Go's D-input mode and PlayStation pads without Steam Input press the right buttons. |
 | 1.2 | 2026-10-25 | review | Owner question: does the controller work on a Lenovo Legion? Section "Lenovo Legion Go" added. The check found GAP-070 (in a run the D-pad and LT/RT did nothing on any Xbox pad, the Deck and the Legion Go included), fixed the same day. |
 | 1.1 | 2026-10-22 | review | Owner decision 3: **Steam Input** (a default layout in Steamworks), not the Input System rewrite, and the Steam Deck as the next target. The Deck needs no build of its own: it runs the Windows build through Proton (section "Steam Deck"). Phase 1 shrinks to Steamworks settings and the Deck checks; the button work moves to the native Linux and macOS builds. |
@@ -47,10 +48,10 @@ What the Deck still needs (owner steps in Steamworks, then a check on a Deck):
 
 | Step | Where | Notes |
 |---|---|---|
-| Default controller layout | Steamworks → Application → Steam Input | "Gamepad" template for the Deck. Opting PlayStation, Switch and generic pads into Steam Input makes them Xbox pads on Windows too, which the legacy button numbers expect. |
-| Text size | The game at 1280×800 | Valve's floor is 9 px (12 px recommended). The UI scales from 1920×1080 by about 0.70 at 1280×800, so text below size 13 falls under 9 px: a few labels at 10–12 (curse panel, shield badge, licence texts) and best-fit minimums of 10–12. Part of RM-102. |
-| On-screen keyboard | Seed field (start run, Custom Puzzle) | For "Verified" the keyboard opens by itself when a text field is chosen with the controller (`SteamUtils.ShowFloatingGamepadTextInput`); until then Steam + X opens it. Part of RM-102. |
-| Button names | Controller hints | The Deck's shoulders read L1/R1 where the game says LB/RB. Part of RM-102. |
+| Default controller layout | Steamworks → Application → Steam Input | **Set**: "Generic Gamepad", all controller types opted in (checked 2026-11-03). "Gamepad" template for the Deck. Opting PlayStation, Switch and generic pads into Steam Input makes them Xbox pads on Windows too, which the legacy button numbers expect. |
+| Text size | The game at 1280×800 | **Built** (DECK-TEXT-001): an audit of every screen diagnostic at 1280×800 (`SR_DECK_AUDIT=1`) found the detail slip, the grade stamps, the Class Select perk caption, the stamp shop's tags, the node tooltip, the licence texts and the Accessibility preview's hint under 9 px; they are size 13 (menus) or 14 (the run's canvas scales by 0.667). Left under 9 px on purpose: the Accessibility preview's board marks (pencil digits, letters on lines and dots), which scale with the cell like the board's. Valve's floor is 9 px (12 px recommended). The UI scales from 1920×1080 by about 0.70 at 1280×800, so text below size 13 falls under 9 px: a few labels at 10–12 (curse panel, shield badge, licence texts) and best-fit minimums of 10–12. Part of RM-102. |
+| On-screen keyboard | Seed field (start run, Custom Puzzle) | **Built** (DECK-KEYBOARD-001): on the Deck and in Big Picture, A on a seed field opens Steam's gamepad keyboard (`ShowGamepadTextInput`), and the pad can reach the field; not checked on a Deck yet. For "Verified" the keyboard opens by itself when a text field is chosen with the controller (`SteamUtils.ShowFloatingGamepadTextInput`); until then Steam + X opens it. Part of RM-102. |
+| Button names | Controller hints | **Built** (DECK-BUTTONS-001): on the Deck the hints say L1/R1 and L2/R2 where the game says LB/RB and LT/RT. |
 | Compatibility review | Steamworks → Steam Deck Compatibility | Ask for it once the steps above are done; a password beta branch can be tested on a Deck before. |
 
 ## Lenovo Legion Go (checked 2026-10-25)

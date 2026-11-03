@@ -119,7 +119,7 @@ namespace SudokuRoguelike.UI
             var paper = ScrollUiKit.PaperTag(screen, "CustomSeedPaper", new Vector2(0.0458f, 0.165f), new Vector2(0.2354f, 0.415f), -0.6f).transform;
             Header(paper, "SeedHeader", "CustomPuzzle.Seed", "Seed", 0.905f);
 
-            var go = new GameObject("CustomSeedInput", typeof(RectTransform), typeof(Image), typeof(InputField));
+            var go = new GameObject("CustomSeedInput", typeof(RectTransform), typeof(Image), typeof(GamepadKeyboardInputField));   // DECK-KEYBOARD-001
             go.transform.SetParent(paper, false);
             var rt = (RectTransform)go.transform;
             rt.anchorMin = new Vector2(0.08f, 0.66f);

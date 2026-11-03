@@ -68,7 +68,7 @@ namespace SudokuRoguelike.UI
         {
             var pill = Fill(parent, name, min, max, fill, Rounded(12f));
             Label(pill.transform, "Text", text.ToUpperInvariant(), size, TextAnchor.MiddleCenter, textColor,
-                Vector2.zero, Vector2.one, 10);
+                Vector2.zero, Vector2.one, Mathf.Min(size, 13));   // DECK-TEXT-001: 9 px on the Steam Deck
             return pill;
         }
 

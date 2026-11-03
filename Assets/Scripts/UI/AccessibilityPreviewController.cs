@@ -62,7 +62,7 @@ namespace SudokuRoguelike.UI
         private Text _sampleHint;
         private const int BaseTitleSize = 20;
         private const int BaseBodySize  = 13;
-        private const int BaseHintSize  = 10;
+        private const int BaseHintSize  = 13;   // DECK-TEXT-001
 
         private OptionsController _optCtrl;
 
@@ -178,7 +178,7 @@ namespace SudokuRoguelike.UI
             // Status Captions: the bar a run shows at the bottom of the screen.
             var bar = Area(container, "CaptionBar", new Vector2(0f, BoardTop - BoardH), new Vector2(1f, BoardTop - BoardH + CellH * 0.62f));
             bar.gameObject.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.82f);
-            MakeSampleText(bar, "Caption", LocalizationService.T("Accessibility.Preview.Caption", "3 is already in this row."), 12,
+            MakeSampleText(bar, "Caption", LocalizationService.T("Accessibility.Preview.Caption", "3 is already in this row."), 13,
                 new Vector2(0.04f, 0f), new Vector2(0.96f, 1f), TextAnchor.MiddleLeft, new Color(0.96f, 0.93f, 0.82f, 1f), font);
             _caption = bar.gameObject;
         }

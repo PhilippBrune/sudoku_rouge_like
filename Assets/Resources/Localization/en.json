@@ -1,4 +1,5 @@
 ﻿{
+    "InRun.PatternScroll.Entry":  "{0} #{1} · {2} cells",
     "Story.Scene.Watch.Keys":  "V: watch the scene",
     "InRun.End.Scroll.SealLevel":  "Lv {0}",
     "Story.Scene.Watch":  "X: watch the scene",
@@ -1097,10 +1098,6 @@
     "RunConfirm.WeeklySeed":  "Week {0} seed",
     "InRun.Options.RunTab":  "Run",
     "DisplayMode.FramelessWindow":  "Frameless Window",
-    "Class.UnlockProgress.PerfectRunIncomplete":  "Perfect run (0 mistakes, all 5 floors): not yet",
-    "Class.UnlockProgress.PerfectRunComplete":  "Perfect run (0 mistakes, all 5 floors): done!",
-    "Class.UnlockProgress.ItemCodexIncomplete":  "Item codex: not complete yet",
-    "Class.UnlockProgress.ItemCodexComplete":  "Item codex: complete!",
     "Profile.EmptySlot":  "Empty",
     "InRun.PathStats.Relics":  "  ·  Relics {0}",
     "InRun.PathStats":  "{0}  ·  HP <color={1}>{2}/{3}</color>  ·  Pencil {4}/{5}",

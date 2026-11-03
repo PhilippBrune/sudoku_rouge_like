@@ -1,11 +1,12 @@
 # Open points
 
-**Version:** 2.0 | **Date:** 2026-11-03 | **Status:** review (a living list; update it whenever an item closes or a new one opens)
+**Version:** 2.1 | **Date:** 2026-11-03 | **Status:** review (a living list; update it whenever an item closes or a new one opens)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.1 | 2026-11-03 | review | The owner's answers to 2.0 (2026-11-03) and what was done the same day: GAP-108 checked in Steamworks, RM-113 closed, RM-108 recorded, the Deck work, RM-120, catalog steps 3 and 5, the Pattern Scroll, the class presenter removed, the content survey draft and the trademark look. Open: the listening page, RM-118 and RM-116 picks, a Deck start. |
 | 2.0 | 2026-11-03 | review | Owner (2026-11-03): "Which points are still open? Make proposals to fix them." Every point checked against the code, the roadmap and the gaps: what closed since 1.9 is listed at the end; every open point has a proposal. The 0.2.0 playtest list is replaced by what to check in 0.4.0. |
 | 1.9 | 2026-10-27 | review | Owner request (2026-10-27): the concept files are merged into their specs; the references of the open points point to the spec sections. No open point changed. |
 | 1.8 | 2026-10-22 | review | The owner signed off SPEC-CONF-008 and SPEC-PROC-007, chose Steam Input with the Steam Deck next (the Deck runs the Windows build), asked for a playtest build on the password beta branch with the content survey, and picked keystone relics that may bend Sudoku's rules (RM-114 with RM-104). |
@@ -36,27 +37,32 @@ fixed except GAP-108. These are new in 0.4.0 or could only be checked by hand:
 
 ## 2. Open, with a proposal
 
-| Point | State | Proposal | Who |
+The owner's answers of 2026-11-03 ("ok", "schließen", "ja machen", "genau so implementieren", "machen", "okay") and what
+came of them:
+
+| Point | State | Next | Who |
 |---|---|---|---|
-| **GAP-108** The D-pad placed digits and the right stick moved the pointer | Open. The game reads the D-pad as moves only; the pattern matches a Steam Input template with keys and a mouse stick | Steamworks → Steam Input: set the default configuration to the "Gamepad" template (no keyboard keys, no mouse stick). I can set it in the Steamworks window and stop before Publish with screenshots. Then a test with Steam Input on and off. | Owner's OK, then me |
-| **RM-113** run length | Not enough data: this PC has 3 runs recorded, none a won Harmony 0 Garden Run (`run_length_report.py`, 2026-11-03) | Close RM-113 without a fourth mode: the Daily Walk already is the short run (two floors, RM-117). If the report later shows won H0 runs over 45 min, open it again. | Owner decides |
-| **RM-108** balance check (gold left, purchases, items used) | Open since 0.2.0; nobody noted the numbers by hand | Write them into the run history the game already keeps (RUN-LENGTH-001) and let `run_length_report.py` print them: no manual notes, and testers' saves give the numbers too. About half a day. | Me, on a yes |
-| **GAP-073** 25 of 35 sound effects never play | Open | A listening page with the 25 clips (HTML, play buttons); the owner ticks the wanted ones; I call each from its event (shop reroll, item use, reward, rest, relic, boss gate, level up, gold gain first). | Owner listens, then me |
-| **Steam Deck** (RM-102): text size, on-screen keyboard, Deck button names | Open; the Deck runs the Windows build | (1) A diagnostic that renders every main screen at 1280×800 and lists text under 13 px, then fix those; (2) the seed fields open Steam's floating keyboard on a Deck (`SteamUtils.IsSteamRunningOnSteamDeck`, `ShowFloatingGamepadTextInput`); (3) the Deck uses Xbox letters, so only View/Menu need names. About two days. The compatibility review stays in Steamworks (owner). | Me; review: owner |
-| **RM-104** more relics, items and events | Open (RM-114 keystones are built) | A short concept with 6 relics, 4 items and 4 events, each tied to a rule family, for the owner's pick, like the modifier catalog. | Me (concept), owner picks |
-| **RM-116, RM-118 to RM-121** one more run | Open for the owner's pick | My order: RM-118 (something new in each of the first ten runs; helps new players most), then RM-116 (class challenges, three per class with an achievement), then RM-120 (first board ready behind the floor entry). RM-119 pacts and RM-121 rival run later (RM-121 needs seed sharing). | Owner picks |
-| **Spirit Trials "Solver Start"** | The 0.1 spec let the player choose a random item or a Rare Solver; 0.4.0 has the random one only (GAP-113) | Leave it out unless the owner wants the choice; it would be one toggle on the tier slip. | Owner decides |
-| **Modifier catalog, Phase 0 step 3** | Open: name and abbreviation switches still stand | One `ModifierInfo` entry per ID (name key, abbreviation, overlay group, legend colour, Custom Puzzle list) in place of the switch statements, with the contract test BOSS-MOD-005. A refactor of about a day with no player-visible change; best before RM-104 adds rules. | Me, on a yes |
-| **Modifier catalog, Phase 0 step 5** | Open: golden geometry snapshots | EditMode snapshots of the geometry helpers (seed → overlay as JSON) for each rule family, so a generator change that moves lines or cages shows up in a test. Half a day. | Me, on a yes |
-| **Pattern Scroll list** | Open: internal names ("GermanWhispers #1"), English only, no cell markers or outside clues | Name entries with `BossService.GetModifierName` and one localized pattern ("{0} #{1}, {2} cells"), add markers and outside clues; five catalogs. Small. | Me, on a yes |
-| **`MainMenuClassInfoPresenter`** | No caller since the confirmation window went; only its tests use it | Move its two unlock-text tests to `ClassUnlockText` and delete the class. Small. | Me, on a yes |
+| **GAP-108** The D-pad placed digits | Steamworks default checked: already "Generic Gamepad", all pads opted in; nothing changed | Your own layout in Steam: Library → Run of the Nine → Controller → "Gamepad" (or revert to default) | Owner |
+| **RM-113** run length | Closed: the Daily Walk is the short run | Reopen only if the report shows won H0 runs over 45 min | – |
+| **RM-108** balance check | Built: every run records gold left, shop visits with a purchase, items used (RUN-BALANCE-001); `run_length_report.py` prints them | Read at the next playtest | Owner plays |
+| **GAP-073** 25 silent sounds | Listening page `docs/audio-sfx-listening.html` | Pick keep or drop per sound, paste the list; then I wire them | Owner, then me |
+| **Steam Deck** (RM-102) | Built: no text under 9 px at 1280×800 (DECK-TEXT-001), Steam's gamepad keyboard on the seed fields (DECK-KEYBOARD-001), L1/R1 and L2/R2 in the hints (DECK-BUTTONS-001) | A start on a Deck, then the compatibility review in Steamworks | Owner |
+| **RM-120** faster first choice | Built: the reachable tiles' boards are baked first (RUN-FIRST-001); the first tile has the focus | – | – |
+| **RM-118** something new in each of the first ten runs | Picked first; the run end's "NEW" column shows it | Owner's pick: hold content back and open it run by run, or only spotlight it | Owner picks, then me |
+| **RM-116** class challenges | Picked second; mockups A (a page of the scroll) and B (slips under the plaques) in layout-proposals.md | Owner's pick of the layout and the challenge list | Owner picks, then me |
+| **RM-119, RM-121** | Later (owner's order) | – | – |
+| **RM-104** more relics, items and events | Not picked this round | – | – |
+| **Modifier catalog, steps 3 and 5** | Built: `ModifierCatalog` (BOSS-MOD-005) and golden geometry snapshots (BOSS-MOD-007) | – | – |
+| **Pattern Scroll list** | Built: every drawn piece, by its rule's name, in five languages (ITEM-SCROLL-001) | – | – |
+| **`MainMenuClassInfoPresenter`** | Removed with its 20 orphaned texts; its tests now cover `ClassUnlockText` | – | – |
+| **Spirit Trials "Solver Start"** | Not built (random item only) | Only if you want the choice | Owner |
 
 ## 3. Waiting for the owner
 
 | Decision | Why it matters | Proposal |
 |---|---|---|
 | **Upload 0.4.0** | The story, the scenes, the story achievements and the fixes since 0.3.0 are local (`steam_assets/ReleaseNotes_v0.4.0.md`) | First publish the achievements (39, five languages), then upload and set live, then the announcement. After the upload: `walk_posts.py walk-live`, `discord_admin.py replace how-to-play`, `discord_admin.py apply` (channel topic). |
-| **Legal check** (content survey, DSA trader status, trademark, Impressum, tax) | Store and business duties (`docs/legal/legal-check-2026-10.md`) | I fill the content survey in Steamworks (AI content: art, text, music; simulated gambling) and stop before Save with screenshots; I run a trademark search for "Run of the Nine" (DPMA, EUIPO, USPTO) and report. Trader status, Impressum and tax stay with the owner (personal data, adviser). |
+| **Legal check** (content survey, DSA trader status, trademark, Impressum, tax) | Store and business duties (`docs/legal/legal-check-2026-10.md` 1.2) | Content survey: a draft adds "simulated gambling" to the June answers, not saved; you press "Save and Continue" and publish the ratings. Trademark: no US hit; the German and EU registers could not be searched online, so a paid DPMA/EUIPO search is the next step. Trader status, Impressum and tax stay with you. |
 | **Apple Developer account** (99 USD a year) | Without it macOS warns about or blocks the game | Postpone the Mac until the Deck is Verified; the Deck and Linux run the Windows build through Proton. |
 | **A Steam Deck for a first start** | A system the game never ran on should not be promised | Borrow or buy one before the Deck review; until then Steam's "Unknown" rating stays. |
 | **The 8-bit soundtrack set** | Optional; the 6-second loops stay otherwise | The same listening page as GAP-073 with the eight loops; keep or drop in one go. |

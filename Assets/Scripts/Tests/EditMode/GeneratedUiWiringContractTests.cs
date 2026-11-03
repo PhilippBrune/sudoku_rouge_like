@@ -24,6 +24,7 @@ namespace SudokuRoguelike.Tests
         private const string OptionsTabSetPath = "Assets/Scripts/UI/OptionsTabSet.cs";
         private const string GamePalettePath = "Assets/Scripts/UI/GamePalette.cs";
         private const string BossServicePath = "Assets/Scripts/Boss/BossService.cs";
+        private const string ModifierCatalogPath = "Assets/Scripts/Boss/ModifierCatalog.cs";
         private const string BoardViewControllerPath = "Assets/Scripts/UI/BoardViewController.cs";
         private const string BossGateViewControllerPath = "Assets/Scripts/UI/BossGateViewController.cs";
         private const string HudViewControllerPath = "Assets/Scripts/UI/HudViewController.cs";
@@ -440,7 +441,7 @@ namespace SudokuRoguelike.Tests
             StringAssert.Contains("\"DetailSlip\", new Vector2(0.035f, 0.015f)", source);
             StringAssert.Contains("new Vector2(0.25f, 0.175f)", source);
             StringAssert.Contains("\"DetailBody\", \"\", 16, TextAnchor.UpperLeft", source);
-            StringAssert.Contains("new Vector2(0.05f, 0.17f), new Vector2(0.96f, 0.55f), 10);", source);
+            StringAssert.Contains("new Vector2(0.05f, 0.21f), new Vector2(0.96f, 0.55f), 10);", source);
             StringAssert.Contains("private void EnsurePassiveLabel() => RefreshDetailIfChanged();", ReadSource(HudViewControllerPath));
         }
 
@@ -679,8 +680,8 @@ namespace SudokuRoguelike.Tests
         public void RenbanLines_RenderPinkToMatchRuleText()
         {
             var paletteSource = ReadSource(GamePalettePath);
-            // The rule text comes from BossService; the Custom Puzzle tooltip shows the same text (GAP-048).
-            var bossSource = ReadSource(BossServicePath);
+            // The rule text comes from the modifier catalog; the Custom Puzzle tooltip shows the same text (GAP-048).
+            var bossSource = ReadSource(ModifierCatalogPath);
             var customSource = ReadSource(CustomPuzzleScreenPath);
 
             StringAssert.Contains("LineRenbanLine      = new(0.93f, 0.50f, 0.76f, 1f); // pink", paletteSource);

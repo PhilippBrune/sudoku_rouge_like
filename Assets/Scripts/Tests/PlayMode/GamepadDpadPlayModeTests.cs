@@ -151,6 +151,56 @@ namespace SudokuRoguelike.Tests
             }
         }
 
+        // [REQ: DECK-BUTTONS-001] On the Steam Deck the pad hints name the shoulders L1/R1 and the triggers L2/R2 (RM-102);
+        // the keyboard's hints and other pads keep their names.
+        [Test]
+        [Requirement("DECK-BUTTONS-001")]
+        public void OnTheSteamDeck_TheHintsNameItsShoulderButtons()
+        {
+            try
+            {
+                SudokuRoguelike.Platform.SteamDeck.Override = true;
+                Assert.AreEqual("L1 / R1 turn the page · L2: the relics · R2", DeviceHint.DeckButtons("LB / RB turn the page · LT: the relics · RT"));
+                Assert.AreEqual("LBX and RBI stay", DeviceHint.DeckButtons("LBX and RBI stay"), "whole words only");
+                InputDeviceTracker.Set(true);
+                StringAssert.Contains("L1", DeviceHint.For("Options.PageLeft"));
+                InputDeviceTracker.Set(false);
+                Assert.AreEqual(LocalizationService.T("Options.PageLeft.Keys"), DeviceHint.For("Options.PageLeft"), "the keyboard's keys");
+                SudokuRoguelike.Platform.SteamDeck.Override = false;
+                InputDeviceTracker.Set(true);
+                Assert.AreEqual(LocalizationService.T("Options.PageLeft"), DeviceHint.For("Options.PageLeft"), "LB off the Deck");
+            }
+            finally
+            {
+                SudokuRoguelike.Platform.SteamDeck.Override = null;
+                InputDeviceTracker.Set(false);
+            }
+        }
+
+        // [REQ: DECK-KEYBOARD-001] Off the Deck and Big Picture (no Steam keyboard) a seed field stays out of the pad's way
+        // (GAP-078) and A types into it as before.
+        [UnityTest]
+        [Requirement("DECK-KEYBOARD-001")]
+        public IEnumerator WithoutSteamsKeyboard_TheSeedFieldStaysAPlainField()
+        {
+            var go = new UnityEngine.GameObject("SeedUnderTest", typeof(UnityEngine.RectTransform), typeof(UnityEngine.UI.Image),
+                typeof(GamepadKeyboardInputField));
+            try
+            {
+                SudokuRoguelike.Platform.SteamDeck.Override = false;
+                var field = go.GetComponent<GamepadKeyboardInputField>();
+                field.navigation = new UnityEngine.UI.Navigation { mode = UnityEngine.UI.Navigation.Mode.None };
+                yield return null;
+                Assert.AreEqual(UnityEngine.UI.Navigation.Mode.None, field.navigation.mode);
+                Assert.IsFalse(SudokuRoguelike.Platform.SteamDeck.KeyboardAvailable);
+            }
+            finally
+            {
+                SudokuRoguelike.Platform.SteamDeck.Override = null;
+                UnityEngine.Object.Destroy(go);
+            }
+        }
+
         // [REQ: INPUT-PAD-005] 0.3.1 playtest: "A should always confirm; it works only now and then". A pad the Input System
         // reads confirms the chosen button once per press (PadUiBridge); the UI module keeps only the keys, so a pad the
         // legacy input sees too does not press it a second time.

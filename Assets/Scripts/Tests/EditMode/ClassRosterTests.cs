@@ -56,13 +56,13 @@ namespace SudokuRoguelike.Tests
         [Test]
         public void ClassScreen_ShowsBaseAndLevelBonus()
         {
-            var def = ClassCatalog.GetDefinition(ClassId.NumberFreak);
-            var line = MainMenuClassInfoPresenter.BuildStatsLine(def, 10);
-            StringAssert.Contains("10 (+4)", line, "HP 10 base, +2 at L7 and L10");
-            StringAssert.Contains("10 (+3)", line, "Pencil 10 base, +1 at L3, +2 at L10");
+            // Select Class shows "base (+bonus)" from these numbers (ClassSelectScreen.BuildStats).
+            var bonus = RunArchetypeService.GetLevelBonuses(ClassId.NumberFreak, 10);
+            Assert.AreEqual(4, bonus.Hp, "HP 10 base, +2 at L7 and L10");
+            Assert.AreEqual(3, bonus.Pencil, "Pencil 10 base, +1 at L3, +2 at L10");
 
-            var level1 = MainMenuClassInfoPresenter.BuildStatsLine(def, 1);
-            Assert.That(level1, Does.Not.Contain("(+"), "no bonus at level 1");
+            var level1 = RunArchetypeService.GetLevelBonuses(ClassId.NumberFreak, 1);
+            Assert.AreEqual((0, 0), (level1.Hp, level1.Pencil), "no bonus at level 1");
         }
     }
 }

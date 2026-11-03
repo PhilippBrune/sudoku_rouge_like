@@ -596,6 +596,38 @@ namespace SudokuRoguelike.Tests
 
         // ── catalog completeness ──
 
+        // [REQ: ITEM-SCROLL-001] The Pattern Scroll lists a piece for every modifier that draws one, named by the modifier.
+        [Test]
+        [Requirement("ITEM-SCROLL-001")]
+        public void EveryDrawnModifier_GivesThePatternScrollItsPieces()
+        {
+            var noPieces = new HashSet<BossModifierId>
+                { BossModifierId.FogOfWar, BossModifierId.XSudoku, BossModifierId.HyperSudoku, BossModifierId.DisjointGroups };
+            var failures = new List<string>();
+            foreach (var mod in BossService.GetGeneratablePlayerModifiers(9))
+            {
+                if (noPieces.Contains(mod) || ModifierPresence.IsPresent(mod, new ModifierOverlayData())) continue;   // global rules
+                var run = StartLevel(mod, 9, 4400 + (int)mod);
+                if (run.CurrentBoard == null) { failures.Add($"{mod}: no board"); continue; }
+                var pieces = ModifierPresence.Pieces(mod, run.CurrentOverlay, 9);
+                if (pieces.Count == 0) failures.Add($"{mod}: no piece");
+                if (pieces.Exists(p => p.Count == 0 || p.Exists(c => c.Row < 0 || c.Col < 0 || c.Row >= 9 || c.Col >= 9)))
+                    failures.Add($"{mod}: a piece with no cells or a cell off the board");
+            }
+            Assert.IsEmpty(failures);
+
+            var line = new ModifierOverlayData();
+            line.Lines.Add(new ModifierLine { Type = LineType.GermanWhispers, Cells = { new CellCoord(0, 0), new CellCoord(0, 1) } });
+            var entries = SudokuRoguelike.UI.InRunController.BuildPatternScrollMechanics(line,
+                new[] { BossModifierId.GermanWhispers, BossModifierId.Antiknight }, 9);
+            Assert.AreEqual(1, entries.Count, "the anti-knight rule draws nothing");
+            line.KropkiDots.Add(new KropkiDot { CellA = new CellCoord(1, 0), CellB = new CellCoord(1, 1) });
+            var shared = SudokuRoguelike.UI.InRunController.BuildPatternScrollMechanics(line,
+                new[] { BossModifierId.DifferenceKropki, BossModifierId.FullWhiteKropki }, 9);
+            Assert.AreEqual(1, shared.Count, "a white dot two rules share is listed once");
+            Assert.AreEqual(BossService.GetModifierName(BossModifierId.GermanWhispers) + " #1 · 2 cells", entries[0].label);
+        }
+
         [Test]
         public void EveryPlayableModifier_HasNameRuleAbbreviationIconAndLegend()
         {

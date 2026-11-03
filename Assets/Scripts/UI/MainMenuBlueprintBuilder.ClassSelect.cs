@@ -114,7 +114,7 @@ namespace SudokuRoguelike.UI
         // [REQ: REQ-RUN-100] [REQ: RUN-WEEK-001] The optional seed and the seed of the week, at the foot of the class scroll.
         private void BuildSeedRow(RectTransform scroll, MainMenuController mc)
         {
-            var go = new GameObject("SeedInput", typeof(RectTransform), typeof(Image), typeof(InputField));
+            var go = new GameObject("SeedInput", typeof(RectTransform), typeof(Image), typeof(GamepadKeyboardInputField));   // DECK-KEYBOARD-001
             go.transform.SetParent(scroll, false);
             SetRect((RectTransform)go.transform, new Vector2(0.07f, 0.035f), new Vector2(0.56f, 0.105f), Vector2.zero, Vector2.zero);
             var box = go.GetComponent<Image>();
@@ -195,7 +195,7 @@ namespace SudokuRoguelike.UI
             perk.onClick.AddListener(() => mc.CyclePerkOnClassSelect());
             var perkLabel = perk.GetComponentInChildren<Text>();
             perkLabel.text = string.Empty;
-            ScrollUiKit.Label(perk.transform, "PerkCaption", T("ClassSelect.Perk"), 12, TextAnchor.LowerCenter, ScrollUiKit.InkSoft,
+            ScrollUiKit.Label(perk.transform, "PerkCaption", T("ClassSelect.Perk"), 13, TextAnchor.LowerCenter, ScrollUiKit.InkSoft,   // DECK-TEXT-001
                 new Vector2(0f, 0.55f), new Vector2(1f, 0.95f));
             perkName = ScrollUiKit.Label(perk.transform, "PerkName", string.Empty, 17, TextAnchor.UpperCenter, ScrollUiKit.Ink,
                 new Vector2(0.04f, 0.05f), new Vector2(0.96f, 0.55f), 11);

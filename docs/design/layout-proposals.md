@@ -1,11 +1,12 @@
 # Layout proposals: garden path, puzzle screen and boss screens
 
-**Version:** 3.14 | **Date:** 2026-11-03 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; the main menu B (UI-STYLE-032, 2026-10-28); proposals of 2026-10-28 for the main menu, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll wait for the owner's pick)
+**Version:** 3.15 | **Date:** 2026-11-03 | **Status:** review (built: every Garden Run screen, Custom Puzzle, the floor entry and the washi window on the path, Pencil mode in indigo, the Options scroll, the Codex book, the garden of classes, Select Class, Game Modes with the Daily Walk's slip, the Daily Walk's result and the results of Endless Zen, Spirit Trials and the Monthly Walk; the six curtains, the Incense Walk's puzzle screen and result, the stamp shop; the main menu B (UI-STYLE-032, 2026-10-28); proposals of 2026-10-28 for the main menu, the Monthly Walk, Select Profile, Spirit Trials, the puzzle screen's details, Custom Puzzle help and the market's rule roll wait for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 3.15 | 2026-11-03 | review | RM-116 class challenges: proposals A (a page of the scroll) and B (slips under the plaques), for the owner's pick. |
 | 3.14 | 2026-11-03 | review | The Spirit Trial's starting item (TRIAL-SESSION-001, GAP-113): before and after shots of the bag with its one slot. |
 | 3.13 | 2026-11-02 | review | Owner's picks (0.3.1 playtest): Story A built (UI-STYLE-040), XP B built (UI-STYLE-041), the legend A built (UI-STYLE-042); the XP and legend mockups added; before and after shots of the fixes (OPT-TABS-001, TRIAL-HUD-001). |
 | 3.12 | 2026-11-02 | review | Owner (2026-11-02): Quit A built (UI-STYLE-039); the story of the Nine on the floor entry, the boss gate, the offering table and the Codex's Tales (STORY-*); three mockups for the story's conversation scenes (RM-225, proposed UI-STYLE-040, pick one). |
@@ -939,3 +940,20 @@ after (0.4.0: the bag with the item's one slot, no relic part):
 
 ![Before, no bag](layout-proposals/after_trials_puzzle.jpg)
 ![After, the starting item's slot](layout-proposals/after_trials_item_slot.jpg)
+
+### Class challenges (RM-116, owner's pick open)
+
+Owner (2026-11-03): RM-118 first, then RM-116. Three challenges per class, each with a seal on the class's plaque (red when
+met) and a Steam achievement. **A** the chosen class's challenges as a second page of the hanging scroll (Y turns it),
+**B** as three slips under the plaques, the scroll keeping the level path.
+
+![RM-116 A, a page of the scroll](layout-proposals/class_challenges_a.jpg)
+![RM-116 B, slips under the plaques](layout-proposals/class_challenges_b.jpg)
+
+### Steam Deck text (DECK-TEXT-001)
+
+At the Deck's 1280×800, before (left) and after (right): the puzzle's detail slip (its eyebrow and hint were 8 px) and the
+run end's grade stamps (their letters were 8 px, the stamps now stay 16 px or larger).
+
+![Deck, the detail slip](layout-proposals/deck_detail_slip_before_after.jpg)
+![Deck, the run end](layout-proposals/deck_run_end_before_after.jpg)

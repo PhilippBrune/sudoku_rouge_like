@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using SudokuRoguelike.Core;
 using UnityEngine;
 using UnityEngine.UI;
@@ -31,8 +32,17 @@ namespace SudokuRoguelike.UI
         {
             var keys = key + ".Keys";
             var useKeys = !InputDeviceTracker.UsingPad && LocalizationService.HasExternalCatalogEntry(LocalizationService.Current, keys);
-            return LocalizationService.Format(useKeys ? keys : key, LocalizationService.T(key), args);
+            var text = LocalizationService.Format(useKeys ? keys : key, LocalizationService.T(key), args);
+            return useKeys ? text : DeckButtons(text);
         }
+
+        private static readonly Regex Shoulders = new Regex(@"\b(LB|RB|LT|RT)\b", RegexOptions.Compiled);
+
+        /// <summary>[REQ: DECK-BUTTONS-001] The Steam Deck names its shoulder buttons L1/R1 and its triggers L2/R2 (RM-102);
+        /// elsewhere the text keeps the Xbox names.</summary>
+        public static string DeckButtons(string text) =>
+            string.IsNullOrEmpty(text) || !SudokuRoguelike.Platform.SteamDeck.Running ? text
+                : Shoulders.Replace(text, m => m.Value == "LB" ? "L1" : m.Value == "RB" ? "R1" : m.Value == "LT" ? "L2" : "R2");
 
         private void OnEnable()
         {

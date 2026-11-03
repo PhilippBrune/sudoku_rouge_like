@@ -5,7 +5,9 @@ profile kept (RUN-LENGTH-001: `RunHistory` in the save, the last 200 runs, on th
     python tools/playtest/run_length_report.py <save.json> ...  # given save files (e.g. sent by a playtester)
 
 It prints the length of won Garden Runs at Harmony 0 (RM-113 "A short walk" is meant for runs over 45 minutes), the time
-from the end of a run to the first choice of the next, the share of sessions with two or more runs and where runs end.
+from the end of a run to the first choice of the next, the share of sessions with two or more runs and where runs end, and
+the balance check of RM-108 for won Garden Runs (RUN-BALANCE-001, GoldEconomySystem "Why and the levers"): gold left,
+shop visits that bought something, items used. Runs recorded before 0.4.1 have no balance numbers and are left out.
 """
 import glob
 import json
@@ -18,6 +20,9 @@ GARDEN_RUN = 0                     # Core.GameMode as JsonUtility writes it
 SHORT_WALK_THRESHOLD_MIN = 45      # GameDesignSpec §14, one more run: a won H0 run should take under 45 minutes
 WAY_BACK_TARGET_S = 30             # GameDesignSpec §14, one more run: end of a run to the next first choice
 MIN_RUNS = 3                       # fewer won H0 runs than this say nothing yet
+GOLD_LEFT_TARGET = 80              # GoldEconomySystem: average gold left at the end of a won run under 80
+SHOP_PURCHASE_TARGET = 0.70        # at least 70 % of shop visits end with a purchase
+ITEMS_USED_TARGET = 4              # at least 4 items used per run
 
 
 def default_saves():
@@ -39,7 +44,13 @@ def summarize(entries):
     way_back = [e['SecondsSincePreviousRun'] + e['SecondsToFirstChoice'] for e in entries
                 if e.get('SecondsSincePreviousRun', -1) >= 0 and e.get('SecondsToFirstChoice', -1) >= 0]
     sessions = Counter(e.get('SessionId') for e in entries if e.get('SessionId'))
+    balanced = [e for e in garden if e.get('Victory') and e.get('GoldLeft', -1) >= 0]
+    visits = sum(e.get('ShopVisits', 0) for e in balanced)
     return {
+        'balance_runs': len(balanced),
+        'gold_left_mean': statistics.mean(e['GoldLeft'] for e in balanced) if balanced else None,
+        'shop_purchase_share': sum(e.get('ShopVisitsWithPurchase', 0) for e in balanced) / visits if visits else None,
+        'items_used_mean': statistics.mean(e.get('ItemsUsed', 0) for e in balanced) if balanced else None,
         'runs': len(entries),
         'garden_runs': len(garden),
         'won_h0_count': len(won_h0),
@@ -60,6 +71,16 @@ def verdict(summary):
     return f'A won run takes under {SHORT_WALK_THRESHOLD_MIN} min: five floors are short enough, RM-113 is not needed.'
 
 
+def balance_line(summary):
+    if not summary['balance_runs']:
+        return 'Balance check (RM-108): no won Garden Run with the numbers yet (recorded from 0.4.1 on).'
+    share = summary['shop_purchase_share']
+    return (f'Balance check (RM-108, {summary["balance_runs"]} won runs): gold left {summary["gold_left_mean"]:.0f} '
+            f'(target under {GOLD_LEFT_TARGET}), shop visits with a purchase '
+            f'{"-" if share is None else f"{share:.0%}"} (target {SHOP_PURCHASE_TARGET:.0%} or more), items used '
+            f'{summary["items_used_mean"]:.1f} (target {ITEMS_USED_TARGET} or more)')
+
+
 def format_report(summary):
     def minutes(v):
         return '-' if v is None else f'{v:.0f} min'
@@ -78,6 +99,7 @@ def format_report(summary):
         'Where lost Garden Runs end (floor: runs): '
         + (', '.join(f'{floor}: {n}' for floor, n in summary['garden_end_floors'].items()) or '-'),
         'Verdict: ' + verdict(summary),
+        balance_line(summary),
     ]
     return '\n'.join(lines)
 

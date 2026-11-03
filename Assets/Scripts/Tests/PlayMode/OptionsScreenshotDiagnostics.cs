@@ -26,7 +26,10 @@ namespace SudokuRoguelike.Tests
     public sealed class OptionsScreenshotDiagnostics
     {
         private const int TestSlot = SaveFileService.MaxSlots - 1;
-        private static readonly Vector2Int[] Sizes = { new Vector2Int(1920, 1080), new Vector2Int(1280, 720) };
+        // With SR_DECK_AUDIT=1 the pages are shot at the Steam Deck's 1280×800 only, and their small texts listed (DECK-TEXT-001).
+        private static Vector2Int[] Sizes => Environment.GetEnvironmentVariable("SR_DECK_AUDIT") == "1"
+            ? new[] { new Vector2Int(1280, 800) }
+            : new[] { new Vector2Int(1920, 1080), new Vector2Int(1280, 720) };
 
         private readonly List<GameObject> _createdRoots = new List<GameObject>();
         private int _originalActiveSlot;
@@ -145,6 +148,8 @@ namespace SudokuRoguelike.Tests
             yield return null; // CanvasScaler and layout pick up the new size
             yield return null;
             Canvas.ForceUpdateCanvases();
+            if (Environment.GetEnvironmentVariable("SR_DECK_AUDIT") == "1")
+                LayoutScreenshotDiagnostics.AuditTextSizes(host, Path.GetFileName(path), Path.GetDirectoryName(path));
             camera.Render();
 
             var previous = RenderTexture.active;

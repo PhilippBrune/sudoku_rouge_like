@@ -115,6 +115,7 @@ namespace SudokuRoguelike.Run
                     DailyGoalService.EvaluateInRun(DailyGoals, State, CurrentLevelState, DailyGoalService.TriggerSpentGold50);
             }
             offer.IsSold = true;
+            RunLengthLog.OnShopPurchase(State);   // [REQ: RUN-BALANCE-001]
             if (needsSlot)
                 ReplaceItemInInventory(replaceSlot, offer.Item);
             else

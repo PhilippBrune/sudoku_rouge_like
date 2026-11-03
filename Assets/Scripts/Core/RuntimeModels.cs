@@ -166,6 +166,11 @@ namespace SudokuRoguelike.Core
         public float SecondsToFirstChoice = -1f;
         public float SecondsSincePreviousRun = -1f;
         [System.NonSerialized] public bool RunLengthRecorded;
+        // [REQ: RUN-BALANCE-001] The balance check of RM-108: shop tiles entered, and how many of those visits bought
+        // something (ShopPurchaseVisit is the visit that last counted).
+        public int ShopVisits;
+        public int ShopVisitsWithPurchase;
+        public int ShopPurchaseVisit;
 
         // Per-floor snapshot — HP at the moment the current floor's first puzzle started
         public int HpAtFloorStart;

@@ -2426,6 +2426,7 @@ namespace SudokuRoguelike.Run
             State.NodePath.Add(nodeIndex);
             State.Depth++;
             RunLengthLog.OnPathChoice(State);   // [REQ: RUN-LENGTH-001]
+            if (GetCurrentNode()?.Type == NodeType.Shop) RunLengthLog.OnShopVisit(State);   // [REQ: RUN-BALANCE-001]
 
             // Daily goal: node-type triggers
             if (DailyGoals != null && !State.IsSeasonalChallenge)

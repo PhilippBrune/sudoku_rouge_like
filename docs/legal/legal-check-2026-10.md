@@ -1,11 +1,12 @@
 # Legal check: Run of the Nine (October 2026)
 
-**Version:** 1.1 | **Date:** 2026-10-22 | **Status:** review (owner's request: "Check if the game violates any laws")
+**Version:** 1.2 | **Date:** 2026-11-03 | **Status:** review (owner's request: "Check if the game violates any laws")
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.2 | 2026-11-03 | review | Owner (2026-11-03), on the proposals of OPEN_POINTS 2.0: content survey draft (simulated gambling ticked, not saved) and a first trademark look (US only; German, EU and international registers not reachable). |
 | 1.1 | 2026-10-22 | review | GAP-068 completed (owner: "implement GAP-068"): every standalone build gets the `Licenses` folder from an editor build step, and the Credits show the texts (LEGAL-LICENSE-001). The game shows a clean Roboto attribution (`Roboto-ATTRIBUTION.txt`); `Roboto-NOTICE.md` stays the internal note. |
 | 1.0 | 2026-10-21 | review | First check of the game, the repository and the release setup against the laws and platform rules that apply to a German developer selling a PC game on Steam worldwide. |
 
@@ -72,7 +73,17 @@ full (bundled in `Resources/Legal`, kept equal to `docs/legal/third-party` by `T
 ## Actions for the owner
 
 1. Steamworks, App 4858470: content survey (AI-generated content: art, text, any music; simulated gambling), trader
-   status (DSA), and, if offered, an IARC/USK rating. Screenshots before saving, as usual.
+   status (DSA), and, if offered, an IARC/USK rating. Screenshots before saving, as usual. **2026-11-03:** the survey was
+   published on 16 June 2026 with the AI section filled (Fooocus art, AI-assisted audio and code, no AI while playing) and
+   no general topic. A draft copies those answers and adds **"Interaction with games that simulate real-world
+   gambling-like mechanics and chance-based outcomes"** (the Koi Gambler and Double or Quits stake gold or HP on chance;
+   no real money). It is **not saved**: "Save and Continue", then publishing the ratings, is the owner's step.
 2. Before the full release: trademark search for "Run of the Nine"; an Impressum on any website or public page.
+   **First look (2026-11-03, not legal advice):** no US mark "Run of the Nine", "Run of Nine" or "Of the Nine"
+   (Trademarkia mirror of the USPTO); closest: KNIGHTS OF THE NINE (ZeniMax, US Reg. 3256206, classes 9 and 41, live),
+   which shares only "of the Nine". No other game, book, film or app with the title; Steam has close titles (Race of the
+   Nine Worlds, Dwellink: War of the Nine). The DPMA, EUIPO/TMview and WIPO searches could not be reached (JavaScript
+   forms, a CAPTCHA), so the German and EU side is open: a paid DPMA/EUIPO search or a lawyer should check classes 9, 28
+   and 41 there, and whether ZeniMax holds an EU mark. Risk read: low, provisional.
 3. Tax adviser: business registration and the tax side of Steam income.
 4. Nothing to do for the licence texts any more: every build carries them (since 1.1).

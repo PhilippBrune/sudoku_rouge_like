@@ -1,6 +1,6 @@
 # Items & Relics System
 
-**Version:** 2.6  
+**Version:** 2.7  
 **Date:** 2026-11-03  
 **Status:** implemented
 
@@ -8,6 +8,7 @@
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.7 | 2026-11-03 | implemented | Owner (2026-11-03), on the proposals of OPEN_POINTS 2.0: the Pattern Scroll lists every drawn piece by its rule's name in the player's language, cell markers, cell pairs, outside clues, quadruples and extra regions included (ITEM-SCROLL-001). |
 | 2.6 | 2026-11-03 | implemented | Spirit Trials start with one item in one slot (TRIAL-SESSION-001, owner 2026-11-03, GAP-113); Endless Zen keeps `ItemSlots = 0`. |
 | 2.5 | 2026-10-27 | implemented | Owner request (2026-10-27): the concept files are merged into their specs. The class relic concept (v1.1) is in "Class relics: why and the owner's answers": the reason, the per-class table, the owner's answers and what is still open. The item part of the gold and items concept (why the counter items) is in "Counter Items". Its lever L3 is named in GoldEconomySystem 2.3. No rule changed. |
 | 2.4 | 2026-10-26 | implemented | Owner picks (2026-10-25): a signature relic per class from Level 1 with a higher chance in offerings (RELIC-SIG-001/002, Single Stroke for the Reed Duelist), and four keystones offered after a Garden Run's first boss that bend a rule of the puzzle (RELIC-KEY-001/002, RM-114, the owner's answer: a relic may bend Sudoku's rules). |
@@ -227,7 +228,7 @@ Base shop price by rarity: Normal 40 gold, Rare 75 gold, Epic 150 gold (×2.5 si
 | Ink Well | `InkWell` | Normal / Rare / Epic | 1 | Restore {0} pencil marks. |
 | Meditation Stone | `MeditationStone` | Normal / Rare / Epic | 1 | Restore {0} HP. |
 | Wind Chime | `WindChime` | Normal / Rare / Epic | 1 | Click a cell to fill its row + column + box. / Choose any 2 of row/column/box, then click a cell to fill them. / Choose row, column, OR box, then click a cell to fill it. |
-| Pattern Scroll | `PatternScroll` | Normal / Rare / Epic | 1 | Select {0} mechanic instance(s) to solve using the solution. ESC cancels. |
+| Pattern Scroll | `PatternScroll` | Normal / Rare / Epic | 1 | Select {0} mechanic instance(s) to solve using the solution. ESC cancels. The list names each piece by its rule, "German Whispers #1 · 4 cells", in the player's language (ITEM-SCROLL-001). |
 | Koi Reflection | `KoiReflection` | Normal / Rare / Epic | 1 | Reveal candidates for every unsolved cell in the board's most ambiguous zone (row/column/box with most open cells). / Click {0} empty cell(s) to reveal their candidates. |
 | Lantern of Clarity | `LanternOfClarity` | Normal / Rare / Epic | 1 | Disable fog for {0} moves. |
 | Garden Rake | `GardenRake` | Normal | 1 | Clear all pencil marks in the selected row and column. |

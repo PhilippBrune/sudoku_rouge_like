@@ -1,13 +1,14 @@
 # Gold Economy System
 
-**Version:** 2.5  
-**Date:** 2026-10-28  
+**Version:** 2.6  
+**Date:** 2026-11-03  
 **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.6 | 2026-11-03 | implemented | Owner (2026-11-03), on the proposals of OPEN_POINTS 2.0: the balance check is recorded in the run history (RUN-BALANCE-001) and printed by `run_length_report.py`, so it needs no notes by hand. |
 | 2.5 | 2026-10-28 | implemented | 0.3.0 playtest (RM-211, owner: 100 gold, once per floor): from Floor 2 the market rolls the floor's rule again (SHOP-RULE-001). |
 | 2.4 | 2026-10-28 | implemented | 0.3.0 playtest (RM-212): the reward tally lists the Golden Koi's gold on its own line (REWARD-KOI-001). |
 | 2.3 | 2026-10-27 | implemented | Owner request (2026-10-27): the gold and items concept (v1.2) is merged here: "Why and the levers" with the playtest numbers, the lever status (L1 to L6), the owner's picks and the open balance check. Its item part is in ItemsAndRelicsSystem (Counter Items). No rule changed. Its file is removed. |
@@ -78,7 +79,9 @@ prices and the market with a counter item (`docs/design/layout-proposals/after_b
 **Open.**
 
 - **L4** is not picked. It stays a lever with the numbers above.
-- **Balance check** (waits for the next playtest). An EditMode balance test with seeded runs and scripted shopping
+- **Balance check** (waits for the next playtest). Since 2026-11-03 every run records gold left, shop visits with a
+  purchase and items used (RUN-BALANCE-001, GameDesignSpec §14); `python tools/playtest/run_length_report.py` prints them
+  for won Garden Runs against the targets, from a tester's save too. An EditMode balance test with seeded runs and scripted shopping
   reports the targets: average gold left at the end of a won run under 80 (today several hundred); at least 70 % of
   shop visits end with a purchase; at least 4 items used per run. The owner's playtests confirm the feel.
 

@@ -342,7 +342,7 @@ namespace SudokuRoguelike.UI
             OptionsUiFactory.LineRule(section, 0);
             OptionsUiFactory.LineRule(section, 1);
             OptionsUiFactory.LineRule(section, 2);
-            OptionsUiFactory.PageSlip("ControlsSlip", section, T("Options.Slip.Tip"), T("Options.Tip.Controls"));
+            OptionsUiFactory.PageSlip("ControlsSlip", section, T("Options.Slip.Tip"), DeviceHint.For("Options.Tip.Controls"));
 
             tabs.SetRows(index, new Selectable[] { btnKeybinds }, new Selectable[] { btnBasicsTut }, new Selectable[] { btnLayout });
         }
@@ -537,7 +537,7 @@ namespace SudokuRoguelike.UI
             {
                 AddSpacer(6f);
                 AddRole(T(license.RoleKey));
-                AddBody(ThirdPartyLicenses.Load(license)).fontSize = 11;
+                AddBody(ThirdPartyLicenses.Load(license)).fontSize = 13;   // DECK-TEXT-001: 9 px on the Steam Deck
             }
             AddSpacer(16f);
 

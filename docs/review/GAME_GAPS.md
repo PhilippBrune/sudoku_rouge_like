@@ -77,7 +77,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-070](#gap-070) | In a run the D-pad and LT/RT did nothing on an Xbox pad (Steam Deck and Legion Go too) | FIXED (found in the Legion Go check, 2026-10-25) | HIGH | P1 |
 | [GAP-071](#gap-071) | A volume set in the main menu came back undone in a run (two copies of the Options) | FIXED (Options test before 0.3.0, 2026-10-27) | MEDIUM | P2 |
 | [GAP-072](#gap-072) | UI Volume set nothing: no interface sound has ever played | FIXED (row removed, owner, 2026-10-27) | LOW | P3 |
-| [GAP-073](#gap-073) | 25 of the game's 35 sound effects are never played | OPEN (found in the Options test, 2026-10-27) | LOW | P3 |
+| [GAP-073](#gap-073) | 25 of the game's 35 sound effects are never played | OPEN (listening page ready, 2026-11-03: the owner picks) | LOW | P3 |
 | [GAP-074](#gap-074) | The game closed by itself after minimizing or locking the PC (exclusive fullscreen at the Legion Go's resolution, carried by the cloud save) | FIXED in part (0.3.0 playtest, 2026-10-27): the strongest cause removed, quits logged; the owner's next report decides | HIGH | P1 |
 | [GAP-075](#gap-075) | A profile switch re-applied the display mode (a window could jump to the centre) | FIXED (found 2026-10-27) | LOW | P3 |
 | [GAP-076](#gap-076) | Borderless Fullscreen below the native resolution looked blurry and different | FIXED (0.3.0 playtest, 2026-10-27) | MEDIUM | P2 |
@@ -112,7 +112,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-105](#gap-105) | The mouse pointer stayed visible and moved while the pad was used | FIXED (0.3.1 playtest, 2026-11-02) | MEDIUM | P3 |
 | [GAP-106](#gap-106) | Start opened the Options but did not close them | FIXED (0.3.1 playtest, 2026-11-02) | LOW | P4 |
 | [GAP-107](#gap-107) | The controller hint flickered when something was chosen | FIXED (0.3.1 playtest, 2026-11-02) | MEDIUM | P3 |
-| [GAP-108](#gap-108) | In a puzzle the D-pad placed a digit, and the right stick moved the pointer | OPEN (Steam Input settings, the owner checks) | MEDIUM | P3 |
+| [GAP-108](#gap-108) | In a puzzle the D-pad placed a digit, and the right stick moved the pointer | OPEN (the Steamworks default is right; the owner's own layout in Steam is next) | MEDIUM | P3 |
 | [GAP-109](#gap-109) | Back from the Monthly Walk always went to the main menu | FIXED (0.3.1 playtest, 2026-11-02) | MEDIUM | P3 |
 | [GAP-110](#gap-110) | The Daily Walk widget opened the old Daily Walk screen | FIXED (0.3.1 playtest, 2026-11-02) | MEDIUM | P3 |
 | [GAP-111](#gap-111) | The in-run Options showed an empty Language page | FIXED (0.3.1 playtest, 2026-11-02) | LOW | P4 |
@@ -1254,6 +1254,11 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Status:** OPEN (Steam Input settings) · **Severity:** MEDIUM · **Priority:** P3
 - **Problem:** The game reads the D-pad as moves only and never moves the pointer. Both match a Steam Input template that maps the D-pad to the keys 1 to 4 and the right stick to the mouse.
 - **Fix:** Open: check Steamworks → Steam Input → the default configuration (it should be "Gamepad" with no keyboard keys), or in Steam the game's controller settings (Steam Input off, or the "Gamepad" template). GAP-105 and GAP-107 keep the game calm meanwhile.
+- **Checked 2026-11-03 (owner's OK):** Steamworks → Steam Input already has "Generic Gamepad" as the default
+  configuration, with Xbox, PlayStation, Switch, generic and future pads opted in; nothing to change there. A player's own
+  layout overrides the default, so the remaining cause is the owner's layout for the game: Steam → Library → Run of the
+  Nine → Controller (the controller icon) → the layout in use should be "Gamepad"; "Revert to default" or "Disable Steam
+  Input" for this game also clears a keyboard template.
 - **Tests:** The owner's check in Steam.
 
 ## GAP-109
@@ -1469,6 +1474,8 @@ Found in the owner's 0.3.0 playtest (2026-10-27). Analysis, causes with file and
 - **Requirement:** AudioVisualDirection (sound list), audio-asset-pipeline (manual check "all UI feedback sounds play")
 - **Status:** OPEN (found in the Options test, 2026-10-27) · **Severity:** LOW (the game is quieter than planned; nothing breaks) · **Priority:** P3
 - **Problem:** `RunAudioController` loads 35 effect and interface clips, but only 10 play methods have a caller: wrong and correct placement, puzzle solved, shop purchase, path advance, cell select, pencil toggle, game over, HP loss and the run victory fanfare. Never played: shop reroll, item use, reward claim, rest heal, relic pickup, combo 5/10 and combo break, HP critical, pencil depleted, gold gain, fog reveal, modifier activate, boss gate open, floor transition, level up, achievement, XP bar fill, victory stinger, and the six interface sounds (GAP-072).
+- **Listening page (2026-11-03):** `docs/audio-sfx-listening.html` plays the 25 sounds next to the event each would mark,
+  with "keep" or "drop" per sound; its "copy" button gives the list to wire.
 - **Suggested fix:** Decide per sound whether it is wanted (listening check), then call the play method where the event happens (for example `RunDirector` gold changes, the boss gate, the floor entry). The SFX Volume row already sets their volume.
 - **Affected Files:** `Assets/Scripts/UI/RunAudioController.cs` and the screens where the events happen.
 

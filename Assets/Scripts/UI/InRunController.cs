@@ -1574,7 +1574,7 @@ namespace SudokuRoguelike.UI
             tooltipOutline.effectColor    = new Color(1f, 1f, 1f, 0.12f);
             tooltipOutline.effectDistance = new Vector2(1f, -1f);
             _nodeTooltipText = InRunUiFactory.CreateText(_nodeTooltipPanel.transform, "TooltipText", "",
-                11, TextAnchor.UpperLeft, InRunUiFactory.TextColor);
+                13, TextAnchor.UpperLeft, InRunUiFactory.TextColor);   // DECK-TEXT-001
             var tooltipTextShadow = _nodeTooltipText.gameObject.AddComponent<Shadow>();
             tooltipTextShadow.effectColor    = new Color(0f, 0f, 0f, 0.50f);
             tooltipTextShadow.effectDistance = new Vector2(1f, -1f);
@@ -2053,60 +2053,26 @@ namespace SudokuRoguelike.UI
         }
 
         // ── Pattern Scroll: build stable instance list from current overlay ──
-        private static List<(string label, List<CellCoord> cells)> BuildPatternScrollMechanics(
-            ModifierOverlayData ov)
+        // [REQ: ITEM-SCROLL-001] One entry per piece a rule of this puzzle drew (lines, cages, arrows, dots, marked cells, cell
+        // pairs, outside clues, quadruples), named by the rule in the player's language: "German Whispers #1 · 4 cells".
+        public static List<(string label, List<CellCoord> cells)> BuildPatternScrollMechanics(
+            ModifierOverlayData ov, IReadOnlyList<BossModifierId> modifiers, int size)
         {
             var list = new List<(string, List<CellCoord>)>();
-            var lineIdx = new Dictionary<LineType, int>();
-            foreach (var line in ov.Lines)
+            if (modifiers == null) return list;
+            var listed = new HashSet<string>();   // a dot two rules share (Difference and Full White Kropki) is listed once
+            foreach (var modifier in modifiers)
             {
-                if (!lineIdx.TryGetValue(line.Type, out var n)) n = 0;
-                lineIdx[line.Type] = n + 1;
-                list.Add(($"{line.Type} #{n + 1} ({line.Cells.Count} cells)",
-                    new List<CellCoord>(line.Cells)));
-            }
-            for (var i = 0; i < ov.KropkiDots.Count; i++)
-            {
-                var d = ov.KropkiDots[i];
-                list.Add(($"Kropki {(d.IsBlack ? "Black" : "White")} dot #{i + 1}",
-                    new List<CellCoord> { d.CellA, d.CellB }));
-            }
-            for (var i = 0; i < ov.PairConstraints.Count; i++)
-            {
-                var p = ov.PairConstraints[i];
-                list.Add(($"{p.Type} pair #{i + 1}",
-                    new List<CellCoord> { p.CellA, p.CellB }));
-            }
-            for (var i = 0; i < ov.KillerCages.Count; i++)
-            {
-                var c = ov.KillerCages[i];
-                // Other cage kinds show the label drawn on the board, so a hidden sum stays hidden.
-                var title = c.CageType == KillerCageType.Sum
-                    ? $"Killer Cage #{i + 1} (sum={c.Sum}, {c.Cells.Count} cells)"
-                    : $"{BossService.GetModifierName(CageModifier(c.CageType))} #{i + 1} ({BoardViewController.CageLabel(c)}, {c.Cells.Count} cells)";
-                list.Add((title, new List<CellCoord>(c.Cells)));
-            }
-            for (var i = 0; i < ov.Arrows.Count; i++)
-            {
-                var a = ov.Arrows[i];
-                var cells = new List<CellCoord> { a.CircleCell };
-                if (a.ArrowType == ArrowType.DoubleEndpoint || a.ArrowType == ArrowType.Pill) cells.Add(a.SecondCircle);
-                cells.AddRange(a.ArrowCells);
-                list.Add(($"Arrow #{i + 1} ({cells.Count} cells)", cells));
+                var number = 0;
+                foreach (var piece in Sudoku.ModifierPresence.Pieces(modifier, ov, size))
+                {
+                    if (!listed.Add(string.Join(";", piece))) continue;
+                    list.Add((LocalizationService.Format("InRun.PatternScroll.Entry", "{0} #{1} · {2} cells",
+                        BossService.GetModifierName(modifier), ++number, piece.Count), piece));
+                }
             }
             return list;
         }
-
-        private static BossModifierId CageModifier(KillerCageType type) => type switch
-        {
-            KillerCageType.HiddenSum => BossModifierId.KillerHiddenSum,
-            KillerCageType.Product => BossModifierId.CageProduct,
-            KillerCageType.Difference => BossModifierId.CageDifference,
-            KillerCageType.Ratio => BossModifierId.CageRatio,
-            KillerCageType.RenbanSet => BossModifierId.RenbanCage,
-            KillerCageType.MagicSquare => BossModifierId.MagicSquareRegion,
-            _ => BossModifierId.KillerCages
-        };
 
         private void ShowPatternScrollOverlay()
         {
@@ -2120,7 +2086,8 @@ namespace SudokuRoguelike.UI
             // remain stable across selection rounds (Rare=2 picks, Epic=4 picks).
             if (_patternScrollMechanics == null)
             {
-                _patternScrollMechanics  = BuildPatternScrollMechanics(ov);
+                _patternScrollMechanics  = BuildPatternScrollMechanics(ov, _map.Run.CurrentLevelConfig?.ActiveModifiers,
+                    _map.Run.CurrentBoard?.Size ?? 9);
                 _patternScrollSolvedIds  = new HashSet<int>();
                 _patternScrollStagedIndex = -1;
             }

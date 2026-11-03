@@ -114,7 +114,7 @@ namespace SudokuRoguelike.UI
             ScrollUiKit.Label(paper.transform, "Price", string.Empty, 16, TextAnchor.MiddleCenter, ScrollUiKit.Vermilion,
                 new Vector2(0.04f, 0.03f), new Vector2(0.96f, 0.18f), 10);
             var owned = ScrollUiKit.Pill(paper.transform, "Owned", new Vector2(0.66f, 0.80f), new Vector2(0.98f, 0.93f),
-                LocalizationService.T("StampShop.Owned"), new Color(0f, 0f, 0f, 0f), Green, 12);
+                LocalizationService.T("StampShop.Owned"), new Color(0f, 0f, 0f, 0f), Green, 13);   // DECK-TEXT-001
             owned.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 8f);
             ScrollUiKit.InkFrame(owned.transform, Green, 2f);
             var worn = ScrollUiKit.Fill(paper.transform, "Worn", Vector2.zero, Vector2.one, Color.clear);

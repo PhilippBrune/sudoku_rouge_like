@@ -1,11 +1,12 @@
 # Open points
 
-**Version:** 2.1 | **Date:** 2026-11-03 | **Status:** review (a living list; update it whenever an item closes or a new one opens)
+**Version:** 2.2 | **Date:** 2026-11-04 | **Status:** review (a living list; update it whenever an item closes or a new one opens)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.2 | 2026-11-04 | review | 0.4.0 is live (build 26400103); the upload row becomes the announcement and the Discord posts. |
 | 2.1 | 2026-11-03 | review | The owner's answers to 2.0 (2026-11-03) and what was done the same day: GAP-108 checked in Steamworks, RM-113 closed, RM-108 recorded, the Deck work, RM-120, catalog steps 3 and 5, the Pattern Scroll, the class presenter removed, the content survey draft and the trademark look. Open: the listening page, RM-118 and RM-116 picks, a Deck start. |
 | 2.0 | 2026-11-03 | review | Owner (2026-11-03): "Which points are still open? Make proposals to fix them." Every point checked against the code, the roadmap and the gaps: what closed since 1.9 is listed at the end; every open point has a proposal. The 0.2.0 playtest list is replaced by what to check in 0.4.0. |
 | 1.9 | 2026-10-27 | review | Owner request (2026-10-27): the concept files are merged into their specs; the references of the open points point to the spec sections. No open point changed. |
@@ -61,7 +62,7 @@ came of them:
 
 | Decision | Why it matters | Proposal |
 |---|---|---|
-| **Upload 0.4.0** | The story, the scenes, the story achievements and the fixes since 0.3.0 are local (`steam_assets/ReleaseNotes_v0.4.0.md`) | First publish the achievements (39, five languages), then upload and set live, then the announcement. After the upload: `walk_posts.py walk-live`, `discord_admin.py replace how-to-play`, `discord_admin.py apply` (channel topic). |
+| **0.4.0 announcement** | 0.4.0 is live on default (SteamPipe build 26400103), the 63 achievements are public; Steam news still ends at v0.3.0 | Publish the Steam announcement (`steam_assets/ReleaseNotes_v0.4.0.md`); the news mirror then posts it to #rotn-news. Discord: `discord_admin.py replace how-to-play`, `replace known-issues`, `apply` (channel topic); my attempt was stopped by the permission check, so the owner allows it or runs them | Owner |
 | **Legal check** (content survey, DSA trader status, trademark, Impressum, tax) | Store and business duties (`docs/legal/legal-check-2026-10.md` 1.2) | Content survey: a draft adds "simulated gambling" to the June answers, not saved; you press "Save and Continue" and publish the ratings. Trademark: no US hit; the German and EU registers could not be searched online, so a paid DPMA/EUIPO search is the next step. Trader status, Impressum and tax stay with you. |
 | **Apple Developer account** (99 USD a year) | Without it macOS warns about or blocks the game | Postpone the Mac until the Deck is Verified; the Deck and Linux run the Windows build through Proton. |
 | **A Steam Deck for a first start** | A system the game never ran on should not be promised | Borrow or buy one before the Deck review; until then Steam's "Unknown" rating stays. |

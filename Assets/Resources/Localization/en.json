@@ -1875,5 +1875,13 @@
     "RunEvent.ghost_merchant.Option1.Label":  "Sell 6 pencil marks",
     "RunEvent.ghost_merchant.Option1.Effect":  "-6 pencil marks, +40 gold",
     "RunEvent.ghost_merchant.Option2.Label":  "Walk on",
-    "RunEvent.ghost_merchant.Option2.Effect":  "Nothing happens"
+    "RunEvent.ghost_merchant.Option2.Effect":  "Nothing happens",
+    "Board.Tab.All":  "All",
+    "Board.Tab.Friends":  "Friends",
+    "Board.Friends.Title":  "Among friends",
+    "Board.Friends.Header":  "Among friends · {0} on the board",
+    "Board.Friends.None":  "No friend is on this board yet.",
+    "Board.Header.Week":  "The week's board · {0} players",
+    "Board.Header.Month":  "The month's board · {0} walkers",
+    "Board.Header.Incense":  "The week's incense board · {0} walkers"
 }

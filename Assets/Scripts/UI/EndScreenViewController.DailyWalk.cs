@@ -13,7 +13,7 @@ namespace SudokuRoguelike.UI
     // has no class, so its XP goes to the class the player gives it to; Back leaves it waiting.
     public sealed partial class EndScreenViewController
     {
-        private Text _dailyBoard;
+        private BoardSlip _dailyBoard;
 
         private void ShowDailyWalkResult(RunDirector run, bool victory)
         {
@@ -134,44 +134,17 @@ namespace SudokuRoguelike.UI
         }
 
         // [REQ: DAILY-WALK-008] The day's board: filled when Steam answers (ShowDailyStanding).
-        private void BuildDailyBoard(Transform screen)
-        {
-            var paper = ScrollUiKit.Fill(screen, "DailyBoard", new Vector2(0.693f, 0.426f), new Vector2(0.922f, 0.815f), ScrollUiKit.Paper);
-            var shadow = paper.gameObject.AddComponent<Shadow>();
-            shadow.effectColor = new Color(0f, 0f, 0f, 0.5f);
-            shadow.effectDistance = new Vector2(0f, -10f);
-            _dailyBoard = ScrollUiKit.Label(paper.transform, "BoardText", T("DailyWalk.Board.Loading"), 19, TextAnchor.UpperLeft,
-                ScrollUiKit.Ink, new Vector2(0.08f, 0.06f), new Vector2(0.92f, 0.93f), 12);
-            _dailyBoard.supportRichText = true;
-        }
+        // [REQ: SEED-BOARD-003] Its tabs sit above the paper, so the slip starts lower than the old board did.
+        private void BuildDailyBoard(Transform screen) =>
+            _dailyBoard = BoardSlip.Build(screen, "DailyBoard", new Vector2(0.693f, 0.426f), new Vector2(0.922f, 0.785f), "DailyWalk.Board.Header");
 
         private void ShowDailyStanding(BoardStanding standing)
         {
-            if (_dailyBoard == null) return;   // the result was closed before Steam answered
-            _dailyBoard.text = DailyBoardText(standing);
+            if (_dailyBoard != null) _dailyBoard.Show(standing);   // null: the result was closed before Steam answered
         }
 
-        /// <summary>The board's text: the header with the walkers, the place (and among friends), the top three and the
-        /// player's own row when it is not among them; without Steam a line that says so.</summary>
-        public static string DailyBoardText(BoardStanding standing)
-        {
-            const string soft = "<size=16><color=#6B5F4C>{0}</color></size>";
-            if (standing == null)
-                return string.Format(soft, T("GameModes.Daily.BoardHeader").ToUpperInvariant()) + "\n\n" + T("DailyWalk.Board.Offline");
-            var header = string.Format(soft, F("DailyWalk.Board.Header", standing.Entries).ToUpperInvariant());
-            var lines = new System.Collections.Generic.List<string> { header };
-            if (standing.Rank > 0)
-            {
-                lines.Add($"<size=40>{F("DailyWalk.Board.Place", standing.Rank, standing.Entries)}</size>");
-                if (standing.Friends > 1) lines.Add(F("DailyWalk.Board.Friends", standing.FriendRank, standing.Friends));
-            }
-            else lines.Add(T("DailyWalk.Board.NotOnIt"));
-            for (var i = 0; i < standing.Top.Count; i++)
-                lines.Add($"{i + 1}. {standing.Top[i].Name}  <color=#3A3228>{Number(standing.Top[i].Score)}</color>");
-            if (standing.Rank > standing.Top.Count)
-                lines.Add($"<color=#9E2A2B>{standing.Rank}. {T("DailyWalk.Board.You")}</color>");
-            return string.Join("\n", lines);
-        }
+        /// <summary>The board's All side (BoardSlip.AllText with the day's header).</summary>
+        public static string DailyBoardText(BoardStanding standing) => BoardSlip.AllText(standing, "DailyWalk.Board.Header");
 
         // The streak as a vermilion stamp: the day of the streak, its XP bonus, the ink stamp of all three goals.
         private static void BuildStreakStamp(Transform screen, DailyGoalState goals, bool scored)

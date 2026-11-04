@@ -30,6 +30,7 @@ namespace SudokuRoguelike.UI
             public List<ClassId> Unlocked;
             public List<string> SoClose;   // RM-111
             public List<string> Moved;     // RM-112
+            public bool WeekBoard;         // [REQ: SEED-BOARD-003] a run on the seed of the week shows the week's board
         }
 
         private const int MaxClassLevel = 40;
@@ -97,7 +98,14 @@ namespace SudokuRoguelike.UI
             BuildXpPanel(screen, run);
             BuildScoreLedger(screen, run.Result);
             BuildUnlocks(screen, run);
-            BuildThisRun(screen, run);
+            // [REQ: SEED-BOARD-003] The week's board takes "This run"'s place; its lines move up under "New" when no plaque
+            // is there (two plaques fill that space, then the board wins).
+            var plaques = (run.NewUnlocks?.Count ?? 0) + (run.GardenNew?.Count ?? 0);
+            _weekSlip = run.WeekBoard
+                ? BoardSlip.Build(screen, "WeekBoard", new Vector2(0.7135f, 0.272f), new Vector2(0.9219f, 0.395f), "Board.Header.Week", 1)
+                : null;
+            if (!run.WeekBoard) BuildThisRun(screen, run, 0.43f, 0.272f);
+            else if (plaques == 0) BuildThisRun(screen, run, 0.555f, 0.44f);
             BuildEndButtons(screen, "BtnRunEndBack", new Vector2(0.7135f, 0.1407f), new Vector2(0.9219f, 0.1944f), RunAgain.KindOf(state));
         }
 
@@ -123,19 +131,22 @@ namespace SudokuRoguelike.UI
         }
 
         // [REQ: RUN-END-NEAR-001] [REQ: RUN-END-MOVED-001] "This run": how close a lost run came, then what it moved.
-        private static void BuildThisRun(Transform screen, RunEndSummary run)
+        private BoardSlip _weekSlip;
+
+        // "This run" from `top` down to `bottom` (the header takes the top 0.025).
+        private static void BuildThisRun(Transform screen, RunEndSummary run, float top, float bottom)
         {
             var near = run.SoClose ?? new List<string>();
             var moved = run.Moved ?? new List<string>();
             if (near.Count == 0 && moved.Count == 0) return;
             var header = ScrollUiKit.Label(screen, "ThisRunHeader", T("InRun.End.ThisRun").ToUpperInvariant(), 18, TextAnchor.MiddleLeft,
-                ScrollUiKit.Gold, new Vector2(0.7135f, 0.405f), new Vector2(0.96f, 0.43f), 12);
+                ScrollUiKit.Gold, new Vector2(0.7135f, top - 0.025f), new Vector2(0.96f, top), 12);
             Shade(header);
             var lines = new List<string>();
             foreach (var line in near) lines.Add("<color=#E2B866>" + line + "</color>");
             lines.AddRange(moved);
             var text = ScrollUiKit.Label(screen, "ThisRunLines", string.Join("\n", lines), 18, TextAnchor.UpperLeft,
-                new Color(0.88f, 0.84f, 0.74f, 1f), new Vector2(0.7135f, 0.272f), new Vector2(0.97f, 0.40f), 11);
+                new Color(0.88f, 0.84f, 0.74f, 1f), new Vector2(0.7135f, bottom), new Vector2(0.97f, top - 0.03f), 11);
             text.supportRichText = true;
             Shade(text);
         }

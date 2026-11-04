@@ -23,6 +23,7 @@ namespace SudokuRoguelike.UI
             public bool NewBest;
             public readonly List<string> Notes = new List<string>();
             public RunAgain.Kind Again;
+            public string BoardHeaderKey;   // [REQ: SEED-BOARD-003] set: a board slip in the notes' place, the notes go to the record
         }
 
         private void ShowModeEndScroll(ModeEndSummary end)
@@ -36,7 +37,19 @@ namespace SudokuRoguelike.UI
             ScrollUiKit.Banner(screen, "ModeEndBanner", new Vector2(0.3177f, 0.8444f), new Vector2(0.6823f, 0.9574f),
                 "ModeEndEyebrow", end.Eyebrow, "ModeEndTitle", end.Title);
             BuildModeTally(screen, end);
+            if (end.BoardHeaderKey != null && end.Notes.Count > 0)
+            {
+                end.RecordLine += "\n" + string.Join("\n", end.Notes);
+                end.Notes.Clear();
+            }
             BuildModeRecord(screen, end);
+            _modeBoard = null;
+            if (end.BoardHeaderKey != null)
+            {
+                // The record box gets shorter, so the board and its bookmarks fit above the buttons.
+                if (screen.Find("ModeEndRecord") is RectTransform record) record.anchorMin = new Vector2(record.anchorMin.x, 0.555f);
+                _modeBoard = BoardSlip.Build(screen, "ModeEndBoard", new Vector2(0.53f, 0.285f), new Vector2(0.84f, 0.51f), end.BoardHeaderKey, 2);
+            }
             if (end.Notes.Count > 0)
             {
                 var slip = ScrollUiKit.Fill(screen, "ModeEndNotes", new Vector2(0.53f, 0.27f), new Vector2(0.84f, 0.435f), ScrollUiKit.Paper);
@@ -132,5 +145,6 @@ namespace SudokuRoguelike.UI
         private static string Clock(float seconds) => $"{(int)(seconds / 60)}:{(int)(seconds % 60):00}";
 
         private static string Number(int value) => value.ToString("N0", Core.LocalizationService.Culture);
+        private BoardSlip _modeBoard;
     }
 }

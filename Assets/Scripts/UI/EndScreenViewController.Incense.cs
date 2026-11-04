@@ -17,8 +17,6 @@ namespace SudokuRoguelike.UI
         public static string IncenseBoard(DateTime day) =>
             $"IncenseWalk_{ISOWeek.GetYear(day):0000}-W{ISOWeek.GetWeekOfYear(day):00}";
 
-        private Text _incenseNotes;
-        private string _incenseNotesBase;
 
         public void ShowIncenseResult(RunDirector run)
         {
@@ -66,20 +64,12 @@ namespace SudokuRoguelike.UI
             end.Rows.Add((T("Incense.Result.Largest"), largest > 0 ? $"{largest}×{largest}" : "–"));
             end.Rows.Add((T("InRun.End.Mode.Mistakes"), Number(run.GetAnalytics()?.TotalMistakes ?? 0)));
             end.Rows.Add((T("Incense.Result.Xp"), F("InRun.End.Scroll.XpGain", result?.XpEarned ?? 0)));
-            _incenseNotesBase = weekly ? T("DailyWalk.Board.Loading") : T("Incense.Result.Practice");
-            end.Notes.Add(_incenseNotesBase);
+            // [REQ: SEED-BOARD-003] The week's walk shows its board with All and Friends; a practice walk says it has none.
+            if (weekly) end.BoardHeaderKey = "Board.Header.Incense";
+            else end.Notes.Add(T("Incense.Result.Practice"));
             ShowModeEndScroll(end);
-            _incenseNotes = _runEndScroll != null ? _runEndScroll.transform.Find("ModeEndNotes/Text")?.GetComponent<Text>() : null;
-            if (weekly) SteamLeaderboardService.SubmitToBoard(IncenseBoard(DateTime.Today), score, ShowIncenseStanding);
-        }
-
-        private void ShowIncenseStanding(BoardStanding standing)
-        {
-            if (_incenseNotes == null) return;   // the result was closed before Steam answered
-            _incenseNotes.text = standing == null
-                ? T("DailyWalk.Board.Offline")
-                : F("Incense.Result.Board", F("DailyWalk.Board.Place", standing.Rank, standing.Entries),
-                    standing.Top.Count > 0 ? Number(standing.Top[0].Score) : "–");
+            var slip = _modeBoard;
+            if (weekly) SteamLeaderboardService.SubmitToBoard(IncenseBoard(DateTime.Today), score, standing => { if (slip != null) slip.Show(standing); });
         }
     }
 }

@@ -550,9 +550,13 @@ namespace SudokuRoguelike.Tests
             // [REQ: SCORE-TIME-001] The same win on the seed of the week, in 38 minutes: the ledger's time row.
             run.State.WeeklySeedRun = true;
             run.State.ActiveSeconds = 38 * 60;
+            var seedBefore = run.State.Seed;
+            run.State.Seed = WeeklySeedService.SeedFor(DateTime.Today);   // the week's board needs the week's seed (SEED-BOARD-001)
             end.ShowGameOver(run, true);
             yield return new WaitForSecondsRealtime(0.8f);
             yield return Shoot(host, camera, prefix + "run_end_weekly.png");
+            yield return ShootBoards(host, camera, prefix + "run_end_weekly");
+            run.State.Seed = seedBefore;
             run.State.WeeklySeedRun = false;
             run.State.CurrentHP = 0;
             end.ShowGameOver(run, false);
@@ -940,6 +944,28 @@ namespace SudokuRoguelike.Tests
             end.ShowGameOver(run, true);
             yield return new WaitForSecondsRealtime(0.8f);
             yield return Shoot(host, camera, prefix + "result_monthly_walk.png");
+            yield return ShootBoards(host, camera, prefix + "result_monthly_walk");
+        }
+
+        // [REQ: SEED-BOARD-003] Without Steam a board says so; these shots fill every slip on screen with a made-up board
+        // and show both bookmarks.
+        private IEnumerator ShootBoards(GameObject host, Camera camera, string name)
+        {
+            var standing = new SudokuRoguelike.Meta.BoardStanding { Entries = 128, Rank = 12, Friends = 5, FriendRank = 2 };
+            standing.Top.Add(("Hanako", 9640));
+            standing.Top.Add(("kintsugi_kai", 9410));
+            standing.Top.Add(("Moritz", 9180));
+            standing.FriendTop.Add(("Moritz", 9180));
+            standing.FriendTop.Add((null, 8000));
+            standing.FriendTop.Add(("Lea", 7240));
+            standing.FriendTop.Add(("tomo", 6900));
+            var slips = host.GetComponentsInChildren<BoardSlip>(true);
+            foreach (var slip in slips) slip.Show(standing);
+            yield return null;
+            yield return Shoot(host, camera, name + "_board_all.png");
+            foreach (var slip in slips) slip.ShowFriends(true);
+            yield return null;
+            yield return Shoot(host, camera, name + "_board_friends.png");
         }
 
         // 0.3.1 playtest findings (0.3.3): the rule slip with three rules (the legend, UI-STYLE-042; 0.3.2 opened it with a
@@ -1077,6 +1103,7 @@ namespace SudokuRoguelike.Tests
             host.GetComponentInChildren<EndScreenViewController>(true).ShowGameOver(run, true);
             yield return new WaitForSecondsRealtime(0.8f);
             yield return Shoot(host, camera, "after_daily_walk_result.png");
+            yield return ShootBoards(host, camera, "after_daily_walk_result");
         }
 
         // GAP-089, GAP-090: a 9×9 puzzle on Floor 5 at seven screen shapes: 21:9 (3440×1440, 2560×1080), 32:9, 16:10 (the

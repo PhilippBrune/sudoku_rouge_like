@@ -333,7 +333,17 @@ are scored as before.
 A Garden Run started with the seed of the week puts its run score on the week's Steam board, "WeeklySeed_<year>-W<week>"
 (the best score stays). The board is the week of the seed, so a run that ends in the next week stays on its own week; a
 run finished two or more weeks later goes on no board. The standing (the top three, the player's place, the friends) is
-shown with RM-101's panel, which waits for the owner's pick of the mockup.
+shown on the run end in the right column, on a slip with the All and Friends bookmarks (SEED-BOARD-003).
+
+### Board slips with All and Friends (SEED-BOARD-003)
+
+The owner's pick A of `docs/design/layout-proposals/src/seed_board.html` (2026-11-04): every board in the game sits on a
+paper slip with two bookmarks on its top edge, All and Friends. A click, Y on the pad or F on the keyboard turns it (the
+bookmark names the key of the device in use). All shows the players on the board, the place, the top rows and the
+player's own row when it is not among them; Friends shows how many friends are on the board, the place among them and
+their rows, the player's in vermilion. The slips: the Daily Walk's result, the Monthly Walk's result (the month's board;
+its notes move into the grade's box), the Incense Walk's result on the week's seed, and the Garden Run's end on the seed
+of the week (a short slip with one row). The Game Modes slips keep their one-line standing.
 
 ### Score Formula
 

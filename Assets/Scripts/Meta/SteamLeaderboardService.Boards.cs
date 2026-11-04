@@ -15,6 +15,8 @@ namespace SudokuRoguelike.Meta
         public int FriendRank;   // the place among friends (the player counted), 0 when not on the board
         public int Friends;      // friends on the board, the player counted
         public readonly List<(string Name, int Score)> Top = new List<(string, int)>();
+        /// <summary>[REQ: SEED-BOARD-003] The friends on the board in their order; the player's own row has a null name.</summary>
+        public readonly List<(string Name, int Score)> FriendTop = new List<(string, int)>();
     }
 
     // [REQ: DAILY-WALK-008] [REQ: INCENSE-BOARD-001] Boards by name (one per day, one per week): found or created, the
@@ -128,6 +130,9 @@ namespace SudokuRoguelike.Meta
                         var me = SteamUser.GetSteamID();
                         request.Standing.Friends = friends.Count;
                         request.Standing.FriendRank = friends.FindIndex(e => e.m_steamIDUser == me) + 1;
+                        foreach (var entry in friends)
+                            request.Standing.FriendTop.Add((entry.m_steamIDUser == me ? null
+                                : PlainName(SteamFriends.GetFriendPersonaName(entry.m_steamIDUser)), entry.m_nScore));
                         Finish(request, true);
                     });
                 });

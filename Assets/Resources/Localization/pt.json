@@ -2368,5 +2368,13 @@
     "RunEvent.ghost_merchant.Option1.Label":  "Vender 6 marcas de lápis",
     "RunEvent.ghost_merchant.Option1.Effect":  "-6 marcas de lápis, +40 de ouro",
     "RunEvent.ghost_merchant.Option2.Label":  "Seguir caminho",
-    "RunEvent.ghost_merchant.Option2.Effect":  "Nada acontece"
+    "RunEvent.ghost_merchant.Option2.Effect":  "Nada acontece",
+    "Board.Tab.All":  "Todos",
+    "Board.Tab.Friends":  "Amigos",
+    "Board.Friends.Title":  "Entre amigos",
+    "Board.Friends.Header":  "Entre amigos · {0} no placar",
+    "Board.Friends.None":  "Ainda não há amigos neste placar.",
+    "Board.Header.Week":  "Placar da semana · {0} jogadores",
+    "Board.Header.Month":  "Placar do mês · {0} jogadores",
+    "Board.Header.Incense":  "Placar de incenso da semana · {0} jogadores"
 }

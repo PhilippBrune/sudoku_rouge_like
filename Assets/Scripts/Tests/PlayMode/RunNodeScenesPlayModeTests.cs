@@ -340,8 +340,10 @@ namespace SudokuRoguelike.Tests
             yield return null;
             scroll = FindObject(panel, "ModeEndScroll");
             Assert.AreEqual("\u2014", FindObject(scroll, "RecordValue").GetComponent<Text>().text, "an unfinished walk has no grade");
+            // [REQ: SEED-BOARD-003] The month's board takes the notes' place; the countdown moves into the record box.
             StringAssert.Contains(SudokuRoguelike.Run.SeasonalChallengeService.GetCountdownLabel(System.DateTime.Today),
-                FindObject(FindObject(scroll, "ModeEndNotes"), "Text").GetComponent<Text>().text, "the month's countdown");
+                FindObject(scroll, "RecordLine").GetComponent<Text>().text, "the month's countdown");
+            Assert.IsNotNull(FindObject(scroll, "ModeEndBoard").GetComponent<BoardSlip>(), "the month's board with All and Friends");
 
             run.State.IsSeasonalChallenge = false;
             run.State.Mode = GameMode.EndlessZen;

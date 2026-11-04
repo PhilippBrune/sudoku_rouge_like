@@ -1,11 +1,12 @@
 # Roadmap backlog: Run of the Nine
 
-**Version:** 1.18 | **Date:** 2026-11-04 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
+**Version:** 1.19 | **Date:** 2026-11-04 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.19 | 2026-11-04 | review | RM-101 done (owner's pick A, 2026-11-04): the slips with All and Friends (SEED-BOARD-003). RM-104 done: 7 relics, 4 items, 7 events (owner's ticks, with trades). |
 | 1.18 | 2026-11-04 | review | RM-101 started (owner 2026-11-04, "week and month"): the boards of the seed of the week and the Monthly Walk are filled (SEED-BOARD-001/002); the standing panel with the friends filter waits for the mockup pick. RM-104: proposals `docs/design/rm104-content-proposals.html` wait for the owner. |
 | 1.17 | 2026-11-04 | review | RM-106 done (owner 2026-11-04): Text Size on every screen (ACCESS-FONT-003) and OpenDyslexic (ACCESS-FONT-004). |
 | 1.16 | 2026-11-04 | review | Owner (2026-11-04): the sound work of RM-004 is done (GAP-073 round 2, AUDIO-SFX-001; the 8-bit soundtrack stays optional); RM-102 closed by the owner (the game's Deck work is built, a Deck start and the review are the owner's); RM-101, RM-104 and RM-106 are next. |
@@ -79,10 +80,10 @@ Horizons: **short term** = the next one to three updates, **mid term** = after t
 
 | ID | Item | What players get | Why | Effort |
 |---|---|---|---|---|
-| RM-101 | Seed leaderboards | A leaderboard for every Seed of the week and Monthly Walk, with a friends filter. | Makes seed sharing (RM-003) competitive; Steam leaderboards already exist in the game (`SteamLeaderboardService`). | in progress: the boards of the seed of the week and the Monthly Walk are filled (SEED-BOARD-001/002); the standing panel with the friends filter waits for the mockup pick |
+| RM-101 | Seed leaderboards | A leaderboard for every Seed of the week and Monthly Walk, with a friends filter. | Makes seed sharing (RM-003) competitive; Steam leaderboards already exist in the game (`SteamLeaderboardService`). | done: the seed of the week and the Monthly Walk have boards (SEED-BOARD-001/002); every board on a slip with All and Friends (SEED-BOARD-003) |
 | RM-102 | Steam Deck Verified | Readable at 1280×800, the on-screen keyboard for the seed field, Deck button glyphs. | Owner pick 2026-10-22: next, with Steam Input; the Deck runs the Windows build through Proton, no build of its own (`docs/platform-ports-macos-linux.md` 1.1). Built 2026-11-03: text size, the gamepad keyboard, L1/R1 names (DECK-TEXT-001, DECK-KEYBOARD-001, DECK-BUTTONS-001); left: a start on a Deck and the compatibility review. | closed by the owner (2026-11-04): the Deck work is built (DECK-TEXT-001, DECK-KEYBOARD-001, DECK-BUTTONS-001); a Deck start and the review are the owner's |
 | RM-103 | A signature rule per boss | Each of the five bosses brings its own rule on top of the chosen trials (for example, the Koi Warden moves one given digit). | Bosses feel different, not only harder. | L |
-| RM-104 | More relics, items and events | A content pack: new relics with build-defining effects, new events with choices that matter. | Owner pick 2026-10-22: together with the keystone relics (RM-114). | in progress: the proposals (6 relics, 4 items, 4 events) wait for the owner's ticks (`docs/design/rm104-content-proposals.html`) |
+| RM-104 | More relics, items and events | A content pack: new relics with build-defining effects, new events with choices that matter. | Owner pick 2026-10-22: together with the keystone relics (RM-114). | done: 7 relics, 4 items, 7 events, the trades among them (RELIC-PACK-001, RELIC-TRADE-001, ITEM-PACK-001, ITEM-TRADE-001, EVENT-PACK-001, EVENT-TRADE-001) |
 | RM-105 | Custom puzzle codes | Share a Custom Puzzle as a code; a "community puzzle of the week" on Discord. | Uses the same code idea as RM-003; gives the community something to make. | done: the Custom Puzzle share code (CUSTOM-CODE-001, RM-209); Workshop sharing stays RM-203 |
 | RM-107 | macOS and Linux / SteamOS | The game on Mac (Intel and Apple Silicon) and Linux, Steam Deck included, with one cloud save on every system. | Plan: `docs/platform-ports-macos-linux.md`. First step: controller input that is the same on every OS (also RM-102). | M |
 | RM-108 | Gold and items that matter | Fewer but meaningful purchases: prices against income, gold to shape the boss, items that answer the floor's rules, leftover gold in the score. | Concept, now GoldEconomySystem.md "Why and the levers"; the owner picks the levers. | L1, L2, L3, L5, L6 built (GoldEconomySystem 2.2, ItemsAndRelicsSystem 2.3); balance check recorded in every run since 2026-11-03 (RUN-BALANCE-001), read at the next playtest |

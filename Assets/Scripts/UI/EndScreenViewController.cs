@@ -337,8 +337,6 @@ namespace SudokuRoguelike.UI
             // [REQ: SEED-BOARD-001] A Garden Run on the seed of the week puts its score on the week's board (the best one stays).
             var weekBoard = run.State.WeeklySeedRun && result?.Mode == SudokuRoguelike.Core.GameMode.GardenRun
                 ? SudokuRoguelike.Meta.SteamLeaderboardService.WeeklySeedBoard(run.State.Seed, DateTime.Today) : null;
-            if (weekBoard != null && result.RunScore > 0)
-                SudokuRoguelike.Meta.SteamLeaderboardService.SubmitToBoard(weekBoard, result.RunScore, null);
 
             // Load updated XP after persist; fallback to in-memory calculation
             var postSave = new SaveFileService(SaveProfileService.ActiveSlot);
@@ -364,8 +362,12 @@ namespace SudokuRoguelike.UI
                     Unlocked = postEnvelope?.MetaProgress?.UnlockedClasses,
                     SoClose = RunEndInsights.SoClose(victory, floorReached, run.CurrentLevelConfig?.IsBoss == true, CellsLeft(run),
                         preBestFloor, ClassLabel(classId)),
-                    Moved = RunEndInsights.Moved(preMeta, postEnvelope?.MetaProgress, run.State, victory)
+                    Moved = RunEndInsights.Moved(preMeta, postEnvelope?.MetaProgress, run.State, victory),
+                    WeekBoard = weekBoard != null
                 });
+                var weekSlip = _weekSlip;
+                if (weekBoard != null && weekSlip != null)   // [REQ: SEED-BOARD-001] the best score stays; 0 only reads
+                    SudokuRoguelike.Meta.SteamLeaderboardService.SubmitToBoard(weekBoard, Math.Max(0, result.RunScore), weekSlip.Show);
                 return;
             }
 
@@ -453,10 +455,6 @@ namespace SudokuRoguelike.UI
             var timeSeconds = Mathf.RoundToInt(state.TotalRunSeconds);
             if (completed)
                 envelope.SeasonalChallenge.SetBest(now.Year, now.Month, score, hpRemaining, pencilUsed, timeSeconds);
-            // [REQ: SEED-BOARD-002] A finished Monthly Walk puts its score on the month's board (the best one stays).
-            if (completed && score > 0)
-                SudokuRoguelike.Meta.SteamLeaderboardService.SubmitToBoard(
-                    SudokuRoguelike.Meta.SteamLeaderboardService.MonthlyWalkBoard(now), score, null);
 
             // Award Ink Stamps: +2 for S grade, +1 for first-ever monthly completion (regardless of grade).
             // [REQ: SEASONAL-STAMP-001]
@@ -495,10 +493,15 @@ namespace SudokuRoguelike.UI
             end.Rows.Add((T("InRun.End.Mode.PencilLeft"), $"{pencilLeft} / {state.MaxPencil}"));
             end.Rows.Add((T("InRun.End.Mode.Time"), Clock(timeSeconds)));
             if (!completed) AddNearMiss(end, run);
+            end.BoardHeaderKey = "Board.Header.Month";   // [REQ: SEED-BOARD-003]
             if (completed && prevBest == 0) end.Notes.Add(T("InRun.End.Mode.Monthly.StampFirst"));
             if (completed && grade == "S") end.Notes.Add(T("InRun.End.Mode.Monthly.StampS"));
             end.Notes.Add(SeasonalChallengeService.GetCountdownLabel(DateTime.Today));
             ShowModeEndScroll(end);
+            // [REQ: SEED-BOARD-002] A finished walk puts its score on the month's board (the best one stays); an unfinished one reads it.
+            var monthSlip = _modeBoard;
+            SudokuRoguelike.Meta.SteamLeaderboardService.SubmitToBoard(SudokuRoguelike.Meta.SteamLeaderboardService.MonthlyWalkBoard(now),
+                completed ? score : 0, standing => { if (monthSlip != null) monthSlip.Show(standing); });
         }
 
         public void ShowSpiritTrialsResult(RunDirector run, bool completed)

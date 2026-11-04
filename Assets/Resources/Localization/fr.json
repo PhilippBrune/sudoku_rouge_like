@@ -2368,5 +2368,13 @@
     "RunEvent.ghost_merchant.Option1.Label":  "Vendre 6 marques de crayon",
     "RunEvent.ghost_merchant.Option1.Effect":  "-6 marques de crayon, +40 or",
     "RunEvent.ghost_merchant.Option2.Label":  "Passer votre chemin",
-    "RunEvent.ghost_merchant.Option2.Effect":  "Rien ne se passe"
+    "RunEvent.ghost_merchant.Option2.Effect":  "Rien ne se passe",
+    "Board.Tab.All":  "Tous",
+    "Board.Tab.Friends":  "Amis",
+    "Board.Friends.Title":  "Entre amis",
+    "Board.Friends.Header":  "Entre amis · {0} au classement",
+    "Board.Friends.None":  "Aucun ami dans ce classement pour l'instant.",
+    "Board.Header.Week":  "Classement de la semaine · {0} joueurs",
+    "Board.Header.Month":  "Classement du mois · {0} joueurs",
+    "Board.Header.Incense":  "Classement d'encens de la semaine · {0} joueurs"
 }

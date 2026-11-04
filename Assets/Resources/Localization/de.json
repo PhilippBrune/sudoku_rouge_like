@@ -2367,5 +2367,13 @@
     "RunEvent.ghost_merchant.Option1.Label":  "6 Bleistiftmarken verkaufen",
     "RunEvent.ghost_merchant.Option1.Effect":  "-6 Bleistiftmarken, +40 Gold",
     "RunEvent.ghost_merchant.Option2.Label":  "Weitergehen",
-    "RunEvent.ghost_merchant.Option2.Effect":  "Nichts passiert"
+    "RunEvent.ghost_merchant.Option2.Effect":  "Nichts passiert",
+    "Board.Tab.All":  "Alle",
+    "Board.Tab.Friends":  "Freunde",
+    "Board.Friends.Title":  "Unter Freunden",
+    "Board.Friends.Header":  "Unter Freunden · {0} auf der Liste",
+    "Board.Friends.None":  "Noch kein Freund auf dieser Liste.",
+    "Board.Header.Week":  "Liste der Woche · {0} Spieler",
+    "Board.Header.Month":  "Liste des Monats · {0} Spieler",
+    "Board.Header.Incense":  "Räucherliste der Woche · {0} Spieler"
 }

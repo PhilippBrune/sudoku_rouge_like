@@ -56,6 +56,7 @@ namespace SudokuRoguelike.UI
             button.onClick.AddListener(() => ShowFriends(friends));
             var label = ScrollUiKit.Label(tab.transform, "Label", LocalizationService.T(key), 18, TextAnchor.MiddleCenter, ScrollUiKit.Ink,
                 Vector2.zero, Vector2.one, 11);
+            label.supportRichText = true;   // the key's hint is smaller
             return (tab, label);
         }
 
@@ -82,7 +83,6 @@ namespace SudokuRoguelike.UI
             if (_text == null) return;
             var keyHint = InputDeviceTracker.UsingPad ? "Y" : "F";
             _friendsLabel.text = $"{LocalizationService.T("Board.Tab.Friends")}  <size=14>{keyHint}</size>";
-            _friendsLabel.supportRichText = true;
             Paint(_allTab, _allLabel, !_friends);
             Paint(_friendsTab, _friendsLabel, _friends);
             _text.text = !_answered ? LocalizationService.T("DailyWalk.Board.Loading")

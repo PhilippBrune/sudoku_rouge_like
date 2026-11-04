@@ -22,7 +22,12 @@ namespace SudokuRoguelike.UI
             switch (item.Type)
             {
                 case ItemType.SeedPouch:
-                    run.PlantSeedPouch();
+                    if (!run.PlantSeedPouch())
+                    {
+                        SetStatus(LocalizationService.Format("Item.Status.SeedPouchFull", "{0} Seed Pouches are already growing.",
+                            RunDirector.SeedPouchesAtOnce));
+                        return true;
+                    }
                     run.TryUseItem(slotIndex);
                     SetStatus(LocalizationService.Format("Item.Status.SeedPouch", "Seed Pouch planted: a Rare item after {0} solved puzzles.",
                         RunDirector.SeedPouchPuzzles));
@@ -82,12 +87,12 @@ namespace SudokuRoguelike.UI
                 if (!board.GivenMask[r, c] && board.Cells[r, c] == 0) open.Add((r, c));
             var rng = new Random(run.State.Seed ^ (run.State.Depth * 7919) ^ (open.Count * 104729));
             var filled = 0;
-            for (; filled < count && open.Count > 0; filled++)
+            while (filled < count && open.Count > 0)
             {
                 var pick = rng.Next(open.Count);
                 var (row, col) = open[pick];
                 open.RemoveAt(pick);
-                run.PlaceNumber(row, col, board.Solution[row, col]);
+                if (run.PlaceNumber(row, col, board.Solution[row, col]) == PlaceResult.Correct) filled++;   // a locked cell is skipped
             }
             return filled;
         }

@@ -2376,5 +2376,10 @@
     "Board.Friends.None":  "Ainda não há amigos neste placar.",
     "Board.Header.Week":  "Placar da semana · {0} jogadores",
     "Board.Header.Month":  "Placar do mês · {0} jogadores",
-    "Board.Header.Incense":  "Placar de incenso da semana · {0} jogadores"
+    "Board.Header.Incense":  "Placar de incenso da semana · {0} jogadores",
+    "InRun.Event.NeedHp":  "Precisa de mais de {0} PV (você tem {1})",
+    "InRun.Event.BagFull":  "Sua bolsa está cheia",
+    "InRun.Event.NothingToRaise":  "Todos os itens da bolsa já são épicos",
+    "Item.Status.SeedPouchFull":  "Já há {0} sacos de sementes crescendo.",
+    "Item.Status.Returned":  "{0} voltou para a sua bolsa."
 }

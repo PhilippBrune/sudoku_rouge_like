@@ -1,6 +1,6 @@
-# Platform Release Manifest: 0.4.0
+# Platform Release Manifest: 0.4.2
 
-**Release:** 0.4.0 (Steam build "v0.4.0 (10th iteration)" for `default`; built 2026-11-03, not uploaded; it carries the local test builds 0.3.1 to 0.3.3: the story of the Nine and its scenes, ten story achievements, the XP brush, the legend in the rule slip, the controller fixes, the Spirit Trials starting item; before it 0.3.0, Steam build "v0.3.0 (9th iteration)", live since 2026-10-27) · **Updated:** 2026-11-03 · **Owner:** Philipp Brune
+**Release:** 0.4.2 (Steam build "v0.4.2" for `default`; built 2026-11-04, not uploaded; RM-104 relics, items and events with trades, the All/Friends boards (RM-101), the run sounds (GAP-073), Text Size everywhere and OpenDyslexic (RM-106); before it 0.4.1, built, uploaded and announced by the owner on 2026-11-04 (its menu still read 0.4.0), and 0.4.0, Steam build "v0.4.0 (10th iteration)", built 2026-11-03, live since 2026-11-02; it carries the local test builds 0.3.1 to 0.3.3: the story of the Nine and its scenes, ten story achievements, the XP brush, the legend in the rule slip, the controller fixes, the Spirit Trials starting item; before it 0.3.0, Steam build "v0.3.0 (9th iteration)", live since 2026-10-27) · **Updated:** 2026-11-03 · **Owner:** Philipp Brune
 
 This manifest lists every release gate with its state, exit criteria and the repository evidence. States:
 

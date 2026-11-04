@@ -411,7 +411,7 @@ namespace SudokuRoguelike.Tests
             var runHost = BuildInRunHarness();
             yield return null;
 
-            var mainOnly = new HashSet<string> { "LanguageDropdown", "BtnLangApply", "BtnLangCancel", "FontScaleDec", "FontScaleInc" };
+            var mainOnly = new HashSet<string> { "LanguageDropdown", "BtnLangApply", "BtnLangCancel" };   // Text Size is in both (GAP-118)
             var checkedCount = 0;
             foreach (var container in new[] { "AudioSection", "DisplaySection", "GameSection", "AccessibilitySection" })
             {

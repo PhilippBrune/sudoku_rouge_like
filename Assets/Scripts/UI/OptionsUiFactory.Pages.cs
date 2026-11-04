@@ -308,14 +308,14 @@ namespace SudokuRoguelike.UI
                 opts.Accessibility.DyslexiaFont, optCtrl.SetDyslexiaFont, T("Options.Note.DyslexiaFont"));
             var lines = 6;
 
-            ArrowRow? textSize = null;
+            // [REQ: ACCESS-FONT-001] [REQ: ACCESS-FONT-003] Text Size (80–150 %) on both Options; GAP-118: a run's had none, so
+            // the legend could not be enlarged during a run (0.4.1 on a Legion Go). The preview board stays in the main menu.
+            ArrowRow? textSize = BuildPaperValueRow(p + "FontScale", T("Options.TextSize"), section, LineMin(6), LineMax(6),
+                opts.Accessibility.FontScale, 0.8f, 1.5f, 0.05f, optCtrl.SetFontScale);
+            lines = 7;
             AccessibilityPreviewController preview = null;
             if (withPreview)
             {
-                // [REQ: ACCESS-FONT-001] Text Size (80–150 %) and the preview board that shows the chosen settings.
-                textSize = BuildPaperValueRow(p + "FontScale", T("Options.TextSize"), section, LineMin(6), LineMax(6),
-                    opts.Accessibility.FontScale, 0.8f, 1.5f, 0.05f, optCtrl.SetFontScale);
-                lines = 7;
                 var slip = PageSlip(p + "AccSlip", section, T("Accessibility.Preview"), null, 0.30f);
                 var previewRt = EnsureRect("AccessPreview", slip, new Vector2(0.07f, 0.06f), new Vector2(0.93f, 0.82f),
                     Vector2.zero, Vector2.zero);

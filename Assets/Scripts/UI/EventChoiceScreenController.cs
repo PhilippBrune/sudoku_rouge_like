@@ -226,7 +226,8 @@ namespace SudokuRoguelike.UI
             if (option.PencilCost > state.CurrentPencil)
                 return F("InRun.Event.NeedPencil", option.PencilCost, state.CurrentPencil);
             var pack = RunEventService.PackBlockKey(option, state);   // RM-104: Max HP, a curse, an item to trade
-            return pack == null ? null : F(pack, option.MaxHpCost, state.MaxHP);
+            if (pack == null) return null;
+            return pack == "InRun.Event.NeedHp" ? F(pack, option.HpCost, state.CurrentHP) : F(pack, option.MaxHpCost, state.MaxHP);
         }
 
         private static string CostText(EventOption option)

@@ -563,6 +563,7 @@ namespace SudokuRoguelike.Core
         public int RemoveCurses;     // -1 = every curse; blocks the option without a curse
         public int WagerGold;        // half and half: +WagerGold or nothing (the choice's seed decides)
         public bool UpgradeItem;     // the bag's weakest item becomes a random one a rarity higher; blocks with an empty bag
+        public bool HpCostBlocks;    // RM-104's trades: the HP must be there (the older events stop at 1 HP instead)
         // Curse trade
         public string CurseId; // if set, applying this option grants this curse
     }

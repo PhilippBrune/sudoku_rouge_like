@@ -121,6 +121,32 @@ namespace SudokuRoguelike.Tests
             Assert.AreEqual(1, continued);
         }
 
+        // [REQ: INPUT-PAD-007] GAP-116 (0.4.1 on a Legion Go): the D-pad steps between the offerings; A takes the chosen one.
+        [UnityTest]
+        [Requirement("INPUT-PAD-007")]
+        public IEnumerator BossDefeated_TheDpadStepsBetweenTheOfferings()
+        {
+            var pad = UnityEngine.InputSystem.InputSystem.AddDevice<UnityEngine.InputSystem.Gamepad>();
+            try
+            {
+                var flow = new Flow();
+                yield return SolveFirstBoss(flow);
+                yield return null;
+                var es = UnityEngine.EventSystems.EventSystem.current;
+                var first = es.currentSelectedGameObject;
+                Assert.NotNull(first, "an offering is chosen");
+                UnityEngine.InputSystem.InputSystem.QueueStateEvent(pad, new UnityEngine.InputSystem.LowLevel.GamepadState()
+                    .WithButton(UnityEngine.InputSystem.LowLevel.GamepadButton.DpadLeft));
+                yield return null;
+                yield return null;
+                Assert.AreNotSame(first, es.currentSelectedGameObject, "D-pad left moved to another offering");
+                StringAssert.StartsWith("OfferingTake_", es.currentSelectedGameObject.name);
+                UnityEngine.InputSystem.InputSystem.QueueStateEvent(pad, new UnityEngine.InputSystem.LowLevel.GamepadState());
+                yield return null;
+            }
+            finally { UnityEngine.InputSystem.InputSystem.RemoveDevice(pad); }
+        }
+
         private sealed class Flow
         {
             public GameObject Host;

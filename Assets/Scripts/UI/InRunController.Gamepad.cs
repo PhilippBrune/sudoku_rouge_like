@@ -13,43 +13,13 @@ namespace SudokuRoguelike.UI
     {
         private bool _gbControllerInRelicsFocus;
 
+        // [REQ: INPUT-PAD-007] GAP-115 (0.4.1 on a Legion Go): the Options over a puzzle took no D-pad (it was read through the
+        // legacy axes, which an Xbox pad does not send) and walked a flat list. Now as on the path: the D-pad and the left
+        // stick step through the page (MenuDpad, the Input System), A presses through PadUiBridge, B closes.
         private void HandleGamepadOptionsFocus()
         {
-            if (_optionsFocusCache.Count == 0 || OptionsPageChanged()) RebuildOptionsFocusCache();
-            if (_optionsFocusCache.Count == 0) return;
-
-            var es = UnityEngine.EventSystems.EventSystem.current;
-            var curGo = es?.currentSelectedGameObject;
-            var curSel = curGo != null ? curGo.GetComponent<Selectable>() : null;
-            var idx = curSel != null ? _optionsFocusCache.IndexOf(curSel) : 0;
-            if (idx < 0) idx = 0;
-
-            // Up/Down cycles elements; Left/Right adjusts sliders
-            var moveDown = _inputRemap.WasActionPressed(InputAction.MoveDown);
-            var moveUp   = _inputRemap.WasActionPressed(InputAction.MoveUp);
-            if (moveDown) idx = (idx + 1) % _optionsFocusCache.Count;
-            if (moveUp)   idx = (idx + _optionsFocusCache.Count - 1) % _optionsFocusCache.Count;
-            if (moveDown || moveUp)
-                es?.SetSelectedGameObject(_optionsFocusCache[idx].gameObject);
-
-            var moveRight = _inputRemap.WasActionPressed(InputAction.MoveRight);
-            var moveLeft  = _inputRemap.WasActionPressed(InputAction.MoveLeft);
-            if ((moveRight || moveLeft) && _optionsFocusCache[idx] is Slider sl)
-                sl.value = Mathf.Clamp(sl.value + (moveRight ? 0.1f : -0.1f) * (sl.maxValue - sl.minValue),
-                    sl.minValue, sl.maxValue);
-
-            // A: invoke button or flip toggle (unless the UI's Submit does it this frame)
-            if (PadButtons.ConfirmPressed())
-            {
-                var sel = _optionsFocusCache[idx];
-                if (sel is Button btn) btn.onClick.Invoke();
-                else if (sel is Toggle tgl) tgl.isOn = !tgl.isOn;
-                else if (sel is Dropdown dd) dd.Show();
-            }
-
-            // B: close options panel (Start toggles it in HandleGamepadController)
-            if (PadButtons.Pressed(KeyCode.JoystickButton1))
-                ToggleOptionsPanel();
+            if (PadButtons.Pressed(KeyCode.JoystickButton1)) ToggleOptionsPanel();
+            else StepPadFocus(_inGameOptionsPanel);
         }
 
         private void HandleGamepadTutorialFocus()

@@ -1883,5 +1883,10 @@
     "Board.Friends.None":  "No friend is on this board yet.",
     "Board.Header.Week":  "The week's board · {0} players",
     "Board.Header.Month":  "The month's board · {0} walkers",
-    "Board.Header.Incense":  "The week's incense board · {0} walkers"
+    "Board.Header.Incense":  "The week's incense board · {0} walkers",
+    "InRun.Event.NeedHp":  "Needs more than {0} HP (you have {1})",
+    "InRun.Event.BagFull":  "Your bag is full",
+    "InRun.Event.NothingToRaise":  "Every item in the bag is already Epic",
+    "Item.Status.SeedPouchFull":  "{0} Seed Pouches are already growing.",
+    "Item.Status.Returned":  "{0} is back in your bag."
 }

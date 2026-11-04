@@ -437,7 +437,7 @@ namespace SudokuRoguelike.Run
                 }
                 // Fog placement (lantern active): treat normally, no deferred logic.
 
-                RelicService.OnCorrectPlacement(State);
+                RelicService.OnCorrectPlacement(State, comboUp: !cellIsFogged);
                 RelicService.OnDigitPlaced(State, CurrentBoard, row, col, value);   // [REQ: RELIC-SIG-002] [REQ: RELIC-KEY-002]
                 Incense?.OnCorrectDigit(hadMarks);
 

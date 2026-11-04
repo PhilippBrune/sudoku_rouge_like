@@ -39,12 +39,22 @@ namespace SudokuRoguelike.Run
             HarvestSeedPouches();
         }
 
-        /// <summary>[REQ: ITEM-PACK-001] Plants a Seed Pouch: a Rare item after the next two solved puzzles.</summary>
-        public void PlantSeedPouch() => (State.SeedPouchTimers ??= new List<int>()).Add(SeedPouchPuzzles);
+        public const int SeedPouchesAtOnce = 3;
+
+        /// <summary>[REQ: ITEM-PACK-001] Plants a Seed Pouch: a Rare item after the next two solved puzzles. At most three grow
+        /// at once (an item that is never used up could plant one after another); false when the garden is full.</summary>
+        public bool PlantSeedPouch()
+        {
+            State.SeedPouchTimers ??= new List<int>();
+            if (State.SeedPouchTimers.Count >= SeedPouchesAtOnce) return false;
+            State.SeedPouchTimers.Add(SeedPouchPuzzles);
+            return true;
+        }
 
         // A ripe pouch waits in the ground while the bag is full.
         private void HarvestSeedPouches()
         {
+            LastHarvest = null;   // only this puzzle's harvest is named
             var timers = State.SeedPouchTimers;
             if (timers == null) return;
             for (var i = timers.Count - 1; i >= 0; i--)
@@ -64,11 +74,28 @@ namespace SudokuRoguelike.Run
         /// <summary>The item the last Seed Pouch gave (for the puzzle's status line); null when none ripened.</summary>
         public ItemInstance LastHarvest { get; set; }
 
+        /// <summary>[REQ: ITEM-REFUND-001] GAP-117: an item that waited for cells and was left before anything happened comes
+        /// back as it was: its charge, or into its bag slot when the use had emptied it; the use is not counted.</summary>
+        public void RefundItem(int slotIndex, ItemInstance item, int charges)
+        {
+            if (item == null) return;
+            item.Charges = charges;
+            if (!State.HeldItems.Contains(item))
+                State.HeldItems.Insert(Math.Min(Math.Max(0, slotIndex), State.HeldItems.Count), item);
+            State.ItemsUsedThisRun = Math.Max(0, State.ItemsUsedThisRun - 1);
+            if (CurrentLevelState != null)
+                CurrentLevelState.ItemsUsedThisLevel = Math.Max(0, CurrentLevelState.ItemsUsedThisLevel - 1);
+            var types = State.ItemTypesUsedThisRun;
+            if (types != null && types.Count > 0) types.RemoveAt(types.Count - 1);
+        }
+
         /// <summary>[REQ: ITEM-TRADE-001] [REQ: EVENT-PACK-001] A random relic of the floor's pool, taken at once (the Red
         /// Thread, the Fallen Lantern, the Bone Carver).</summary>
         public RelicInstance TakeRandomRelic()
         {
-            var relic = RollRelicReward();
+            // Salted with the relics held, so a second Red Thread in the same puzzle rolls again (stable across a resume).
+            _relicService.ReseedForDecision(DecisionSeed(DecisionPurpose.RelicReward, 1 + (State.HeldRelics?.Count ?? 0)));
+            var relic = _relicService.RollRelic(State.CurrentFloor, RelicService.GetRelicNodeTierBonus(State));
             if (relic != null) AcceptRelic(relic);
             return relic;
         }

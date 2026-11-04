@@ -104,6 +104,8 @@ namespace SudokuRoguelike.Tests
             s.ComboStreak = 5;
             RelicService.OnCorrectPlacement(s);
             Assert.AreEqual(6, s.CurrentHP);
+            RelicService.OnCorrectPlacement(s, comboUp: false);
+            Assert.AreEqual(6, s.CurrentHP, "a fogged digit leaves the combo at 5: no second heal");
         }
 
         [Test]
@@ -246,6 +248,67 @@ namespace SudokuRoguelike.Tests
             CollectionAssert.DoesNotContain(keys, "blood_lantern");
             Assert.IsTrue(seenWithCurse);
             CollectionAssert.IsSubsetOf(new[] { "koi_pond_wager", "fallen_lantern", "wandering_monk", "bone_carver", "ink_spring", "ghost_merchant" }, keys);
+        }
+
+        [Test]
+        [Requirement("EVENT-TRADE-001")]
+        public void Trades_AreBlockedWhenTheyCannotBePaidInFull()
+        {
+            var s = State();
+            s.CurrentHP = 2;
+
+            Assert.AreEqual("InRun.Event.NeedHp", RunEventService.PackBlockKey(new EventOption { HpCost = 2, HpCostBlocks = true }, s));
+            Assert.IsNull(RunEventService.PackBlockKey(new EventOption { HpCost = 2 }, s), "the older events still stop at 1 HP");
+            s.CurrentHP = 10;
+            for (var i = 0; i < s.ItemSlots; i++) s.HeldItems.Add(Item(ItemType.SilkFan, ItemRarity.Epic));
+            Assert.AreEqual("InRun.Event.BagFull", RunEventService.PackBlockKey(new EventOption { MaxHpCost = 1, GrantRareItem = true }, s));
+            Assert.AreEqual("InRun.Event.NothingToRaise", RunEventService.PackBlockKey(new EventOption { UpgradeItem = true }, s));
+            foreach (var key in new[] { "ghost_merchant", "blood_lantern", "ink_spring", "fallen_lantern" })
+                for (var seed = 0; seed < 400; seed++)
+                {
+                    var built = new RunEventService(seed).BuildEvent(2, 3, State());
+                    if (built.Key != key) continue;
+                    Assert.IsTrue(built.Options.Where(o => o.HpCost > 0).All(o => o.HpCostBlocks), key + ": an HP trade is paid in full");
+                    break;
+                }
+        }
+
+        [Test]
+        [Requirement("ITEM-REFUND-001")]
+        public void RefundItem_PutsTheItemBack_AndDoesNotCountTheUse()
+        {
+            var run = new RunDirector();
+            run.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, AllowIrregularPuzzles = false, ClassLevel = 1 }, 9001);
+            run.State.HeldRelics.Clear();
+            run.State.HeldItems.Clear();
+            var incense = Item(ItemType.TempleIncense, ItemRarity.Rare);
+            var well = Item(ItemType.InkWell, ItemRarity.Normal);
+            run.State.HeldItems.Add(well);
+            run.State.HeldItems.Add(incense);
+            var usedBefore = run.State.ItemsUsedThisRun;
+            Assert.IsTrue(run.TryUseItem(1));
+            CollectionAssert.DoesNotContain(run.State.HeldItems, incense, "a single charge empties the slot");
+            run.RefundItem(1, incense, 1);
+            Assert.AreSame(incense, run.State.HeldItems[1], "back in its slot");
+            Assert.AreEqual(1, incense.Charges);
+            Assert.AreEqual(usedBefore, run.State.ItemsUsedThisRun, "the use is not counted");
+
+            incense.Charges = 2;
+            Assert.IsTrue(run.TryUseItem(1));
+            run.RefundItem(1, incense, 2);
+            Assert.AreEqual(2, run.State.HeldItems.Count, "an item with charges left is not added twice");
+            Assert.AreEqual(2, incense.Charges);
+        }
+
+        [Test]
+        [Requirement("ITEM-PACK-001")]
+        public void SeedPouch_AtMostThreeGrowAtOnce()
+        {
+            var run = new RunDirector();
+            run.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, AllowIrregularPuzzles = false, ClassLevel = 1 }, 9001);
+            Assert.IsTrue(run.PlantSeedPouch() && run.PlantSeedPouch() && run.PlantSeedPouch());
+            Assert.IsFalse(run.PlantSeedPouch(), "an item that is never used up cannot plant without end");
+            Assert.AreEqual(RunDirector.SeedPouchesAtOnce, run.State.SeedPouchTimers.Count);
         }
 
         [Test]

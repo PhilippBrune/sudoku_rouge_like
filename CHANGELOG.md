@@ -1,9 +1,19 @@
 # Changelog
 
-## Unreleased
+## 0.4.2 (2026-11-04)
 
 ### New
 
+- **Seven new relics:** the Cracked Bell (less Max HP now, more after every boss), Twin Koi (every item has one more
+  charge), the Gold Leaf Brush (a combo of 10 makes the next reward rarer), the Lantern of Daring (more gold on the Risk
+  route, less on the Calm one), and three pacts that cost you to make you stronger: the Oni Pact, Smouldering Incense and
+  the Dry Inkstone.
+- **Four new items:** the Seed Pouch grows into a Rare item after two puzzles; Blood Ink, the Ink Pact and the Red Thread
+  cost HP, pencil marks or Max HP and give a lot for it.
+- **Seven new events:** the Koi Pond Wager, the Fallen Lantern, the Wandering Monk, the Bone Carver, the Ink Spring, the
+  Blood Lantern (only while you carry a curse) and the Ghost Merchant.
+- **All or Friends:** every leaderboard in the game sits on a slip with two bookmarks; Y on the controller or F on the
+  keyboard shows your friends' places.
 - **Sound for the run's moments:** using an item, taking a reward or a relic, healing at the rest, a combo of 5 and 10 and
   its break, low HP, the last pencil mark, gold, lifting fog, the boss's rules and its gate, a new floor, a defeated boss,
   the XP brush, a new level and an achievement each have a sound in the garden's voice, and choosing a cell ticks softly.
@@ -13,6 +23,14 @@
 - **Dyslexia-Friendly Font:** a new switch under Accessibility sets every text in OpenDyslexic.
 - **Boards for the seed of the week and the Monthly Walk:** a Garden Run on the seed of the week and a finished Monthly
   Walk now put their score on a Steam board of their week or month.
+
+### Fixed
+
+- With a controller, the D-pad and the stick now move through the Options you open from a puzzle (Legion Go, Steam Deck).
+- The relic offerings after a boss can be chosen with the D-pad, not only the middle one.
+- An item that asks you to pick cells (Koi Reflection, Temple Incense, Wind Chime, Pattern Scroll) is no longer lost when
+  you cancel it, open the Options or Save & Quit before picking a cell; it goes back into your bag.
+- Text Size can be changed during a run too, and it now enlarges the legend beside the board.
 
 ## 0.4.1 (2026-11-04)
 

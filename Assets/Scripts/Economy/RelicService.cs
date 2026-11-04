@@ -544,7 +544,8 @@ namespace SudokuRoguelike.Economy
         public static void OnRunVictory(RunState state) { }
 
         /// <summary>Called after each correct placement: apply streak-based relic rewards.</summary>
-        public static void OnCorrectPlacement(RunState state)
+        /// <param name="comboUp">False for a fogged cell: the combo stayed, so its every-5 rewards do not fire again.</param>
+        public static void OnCorrectPlacement(RunState state, bool comboUp = true)
         {
             if (state.HeldRelics == null || state.HeldRelics.Count == 0) return;
             foreach (var relic in state.HeldRelics)
@@ -552,7 +553,7 @@ namespace SudokuRoguelike.Economy
                 switch (relic.Id)
                 {
                     case RelicId.DryInkstone:   // [REQ: RELIC-TRADE-001] every 5-digit combo heals 1 HP
-                        if (state.ComboStreak > 0 && state.ComboStreak % 5 == 0)
+                        if (comboUp && state.ComboStreak > 0 && state.ComboStreak % 5 == 0)
                             state.CurrentHP = Math.Min(state.MaxHP, state.CurrentHP + 1);
                         break;
                     case RelicId.GoldLeafBrush:   // [REQ: RELIC-PACK-001] once per puzzle, at a combo of 10
@@ -561,7 +562,7 @@ namespace SudokuRoguelike.Economy
                         break;
                     case RelicId.MonkCharm:
                         // [REDESIGN] Every 5-combo: +5 gold AND +1 Pencil (was +2 gold only)
-                        if (state.ComboStreak > 0 && state.ComboStreak % 5 == 0)
+                        if (comboUp && state.ComboStreak > 0 && state.ComboStreak % 5 == 0)
                         {
                             state.GainGold(5);
                             state.CurrentPencil = Math.Min(state.MaxPencil, state.CurrentPencil + 1);
@@ -575,7 +576,7 @@ namespace SudokuRoguelike.Economy
                             state.RerollTokens++;
                             state.FortunesLedgerCounter = 0;
                         }
-                        if (state.ComboStreak > 0 && state.ComboStreak % 5 == 0)
+                        if (comboUp && state.ComboStreak > 0 && state.ComboStreak % 5 == 0)
                             state.RerollTokens += 2;
                         break;
                 }

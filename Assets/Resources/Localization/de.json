@@ -2375,5 +2375,10 @@
     "Board.Friends.None":  "Noch kein Freund auf dieser Liste.",
     "Board.Header.Week":  "Liste der Woche · {0} Spieler",
     "Board.Header.Month":  "Liste des Monats · {0} Spieler",
-    "Board.Header.Incense":  "Räucherliste der Woche · {0} Spieler"
+    "Board.Header.Incense":  "Räucherliste der Woche · {0} Spieler",
+    "InRun.Event.NeedHp":  "Braucht mehr als {0} LP (du hast {1})",
+    "InRun.Event.BagFull":  "Deine Tasche ist voll",
+    "InRun.Event.NothingToRaise":  "Jeder Gegenstand in der Tasche ist schon episch",
+    "Item.Status.SeedPouchFull":  "Es wachsen schon {0} Samenbeutel.",
+    "Item.Status.Returned":  "{0} ist wieder in deiner Tasche."
 }

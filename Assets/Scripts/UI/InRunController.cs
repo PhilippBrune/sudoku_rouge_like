@@ -652,6 +652,8 @@ namespace SudokuRoguelike.UI
                 SaveAndQuit();
             else if (_pathPanel != null && _pathPanel.activeSelf && (_sudokuPanel == null || !_sudokuPanel.activeSelf))
                 HandleGamepadOnPath();   // GAP-080
+            else if (_endScreenView != null && _endScreenView.IsBossClearedShown)
+                StepPadFocus(_endScreenView.BossClearedScreen);   // [REQ: INPUT-PAD-007] GAP-116: the offerings take the D-pad
         }
 
         private void LateUpdate()
@@ -2037,6 +2039,7 @@ namespace SudokuRoguelike.UI
 
         private void CancelPendingItemInteraction(bool showStatus = true)
         {
+            RefundUntouchedPendingItem();   // GAP-117 (InRunController.PendingItems.cs)
             _windChimeChoosingHouses = false;
             _windChimePending        = false;
             _windChimeFillRow = _windChimeFillCol = _windChimeFillBox = false;
@@ -2545,6 +2548,7 @@ namespace SudokuRoguelike.UI
         private bool TrySaveAndQuit()
         {
             Time.timeScale = 1f;
+            CancelPendingItemInteraction(false);   // GAP-117: an item still waiting for its cells goes back into the bag first
 
             // Guard: if the puzzle panel is visible but the board hasn't finished loading yet
             // (async generation still in flight), saving would capture an incomplete state.
@@ -3015,6 +3019,7 @@ namespace SudokuRoguelike.UI
                 case ItemType.PatternScroll:
                 {
                     if (board == null) { SetStatus(T("No active board.")); return; }
+                    RememberPendingItem(slotIndex, item, ItemService.GetPatternScrollZones(item.Rarity));   // GAP-117
                     run.TryUseItem(slotIndex);
                     _patternScrollPending     = true;
                     _patternScrollChargesLeft = ItemService.GetPatternScrollZones(item.Rarity);
@@ -3031,6 +3036,7 @@ namespace SudokuRoguelike.UI
                 {
                     if (board == null) { SetStatus(T("No active board.")); return; }
                     var count = ItemService.GetKoiReflectionCells(item.Rarity);
+                    RememberPendingItem(slotIndex, item, count);   // GAP-117
                     run.TryUseItem(slotIndex);
                     _koiReflectionPending = true;
                     _koiReflectionChargesLeft = count;
@@ -3148,6 +3154,7 @@ namespace SudokuRoguelike.UI
                 {
                     if (board == null) { SetStatus(T("No active board.")); return; }
                     var count = item.Rarity == ItemRarity.Epic ? 6 : item.Rarity == ItemRarity.Rare ? 4 : 2;
+                    RememberPendingItem(slotIndex, item, count);   // GAP-117
                     run.TryUseItem(slotIndex);
                     _templeIncensePending = true;
                     _templeIncenseChargesLeft = count;
@@ -3250,6 +3257,7 @@ namespace SudokuRoguelike.UI
                 case ItemType.WindChime:
                 {
                     if (board == null) { SetStatus(T("No active board.")); return; }
+                    RememberPendingItem(slotIndex, item, 1);   // GAP-117
                     run.TryUseItem(slotIndex);
                     _windChimeRarity = item.Rarity;
                     _windChimeFillRow = _windChimeFillCol = _windChimeFillBox = false;

@@ -76,7 +76,7 @@ The Accessibility page of the Options scroll (UI-STYLE-017, `OptionsUiFactory.Bu
 - Text Size (80–150 %, main menu only; listed above)
 - Reset this page
 
-`AccessibilityPreviewController` renders a read-only preview board on the page's slip (main menu) so visual changes can be inspected immediately. The run's Options have the same page without Text Size and the preview.
+`AccessibilityPreviewController` renders a read-only preview board on the page's slip (main menu) so visual changes can be inspected immediately. The run's Options have the same page with Text Size (GAP-118, 2.7) and without the preview.
 
 ## Related Gameplay Assist Settings
 

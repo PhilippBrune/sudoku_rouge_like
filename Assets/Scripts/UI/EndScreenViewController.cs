@@ -138,6 +138,7 @@ namespace SudokuRoguelike.UI
         }
 
         public bool IsBossClearedShown => _bossDefeatedScreen != null && _bossDefeatedScreen.activeSelf;
+        public GameObject BossClearedScreen => _bossDefeatedScreen;
 
         private static readonly Color OfferingFocus = ScrollUiKit.OfferingFocus;
         private static readonly Color OfferingText = ScrollUiKit.OfferingText;

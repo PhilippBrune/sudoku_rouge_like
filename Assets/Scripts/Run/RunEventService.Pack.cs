@@ -30,6 +30,7 @@ namespace SudokuRoguelike.Run
 
         private static EventOption Option(string id, int index, string label, string effect, EventOption template)
         {
+            template.HpCostBlocks = template.HpCost > 0;   // a trade is paid in full
             template.Label = T(EventOptionLabelKey(id, index), label);
             template.EffectDescription = T(EventOptionEffectKey(id, index), effect);
             return template;
@@ -84,6 +85,9 @@ namespace SudokuRoguelike.Run
             if (option.MaxHpCost > 0 && state.MaxHP <= option.MaxHpCost) return "InRun.Event.NeedMaxHp";
             if (option.RemoveCurses != 0 && (state.ActiveCurseIds == null || state.ActiveCurseIds.Count == 0)) return "InRun.Event.NoCurse";
             if (option.UpgradeItem && (state.HeldItems == null || state.HeldItems.Count == 0)) return "InRun.Event.NoItem";
+            if (option.UpgradeItem && !state.HeldItems.Exists(i => i != null && i.Rarity != ItemRarity.Epic)) return "InRun.Event.NothingToRaise";
+            if (option.GrantRareItem && state.HeldItems.Count >= state.ItemSlots) return "InRun.Event.BagFull";
+            if (option.HpCostBlocks && state.CurrentHP <= option.HpCost) return "InRun.Event.NeedHp";
             return null;
         }
 
@@ -125,7 +129,8 @@ namespace SudokuRoguelike.Run
                     if (state.HeldItems[i] != null && (state.HeldItems[weakest] == null || state.HeldItems[i].Rarity < state.HeldItems[weakest].Rarity))
                         weakest = i;
                 var before = state.HeldItems[weakest];
-                var after = RelicService.OnItemReceived(state, _itemService.OneTierUp(before, 1));
+                var raised = _itemService.OneTierUp(before, 1);
+                var after = raised == before ? before : RelicService.OnItemReceived(state, raised);   // Twin Koi only for a new item
                 state.HeldItems[weakest] = after;
                 if (before != null && after != null)
                     parts.Add(LocalizationService.Format("RunEvent.Result.ItemUpgraded", "{0} became {1}",

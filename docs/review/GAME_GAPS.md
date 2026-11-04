@@ -119,6 +119,10 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-112](#gap-112) | A Spirit Trial's puzzle showed the bag and relic slots | FIXED (0.3.1 playtest, 2026-11-02) | LOW | P4 |
 | [GAP-113](#gap-113) | A Spirit Trial gave no starting item although TRIAL-SESSION-001 promised one | FIXED (owner, 2026-11-03) | LOW | P3 |
 | [GAP-114](#gap-114) | The wrong-digit and HP-loss sounds lie under 300 Hz: laptop and handheld speakers barely play them | FIXED (2026-11-04, the owner's round 2 picks) | MEDIUM | P3 |
+| [GAP-115](#gap-115) | The Options over a puzzle took no D-pad on a Legion Go | FIXED (0.4.1 playtest on a Legion Go, 2026-11-04) | HIGH | P1 |
+| [GAP-116](#gap-116) | The relic choice after a boss took no D-pad | FIXED (0.4.1 playtest on a Legion Go, 2026-11-04) | HIGH | P1 |
+| [GAP-117](#gap-117) | An item waiting for its cells was lost on Esc, the Options or Save & Quit | FIXED (0.4.1 playtest on a Legion Go, 2026-11-04) | HIGH | P1 |
+| [GAP-118](#gap-118) | Text Size did not enlarge the legend, and a run's Options had no Text Size | FIXED (0.4.1 playtest on a Legion Go, 2026-11-04) | MEDIUM | P2 |
 | [GAP-067](#gap-067) | Moonshade Offering's "+2 starting pencil" did nothing (the run starts at full pencil) | FIXED (2026-10-22) | LOW | P3 |
 | [GAP-064](#gap-064) | Scholar's Burden: no free Ink Well, "+5 pencil" did nothing, "−1 slot" could add a slot | FIXED (as planned, 2026-10-22) | MEDIUM | P3 |
 | [GAP-063](#gap-063) | Class levels 30 and 40 promised rewards the game did not grant (starting items, frames) | FIXED (2026-10-21) | MEDIUM | P2 |
@@ -1297,6 +1301,42 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Problem:** The trial says "no XP, items or relics", but its puzzle showed their empty slots.
 - **Fix:** The puzzle of a Spirit Trial shows no bag and no relics.
 - **Tests:** InRunUiPlayModeTests (`SpiritTrial_ShowsItsItemSlot_AndNoRelics`; since GAP-113 the bag shows the starting item's slot).
+
+## GAP-115
+**The Options over a puzzle took no D-pad on a Legion Go**
+
+- **Requirement:** InputAndProfilesSpec §Controller Support, INPUT-PAD-007
+- **Status:** FIXED (found in the owner's 0.4.1 playtest on a Lenovo Legion Go, 2026-11-04; fixed for 0.4.2) · **Severity:** HIGH · **Priority:** P1
+- **Problem:** The puzzle's own pad code walked the in-run Options as one flat list and read the D-pad through the legacy axes, which an Xbox-type pad (the Legion Go, the Steam Deck through Steam Input) does not send; the path's Options worked because they step through `MenuDpad`.
+- **Fix:** `HandleGamepadOptionsFocus` uses the path's handling: the D-pad and the left stick step through the page (`StepPadFocus`, the Input System), A presses through PadUiBridge, B closes. The unused `OptionsPageChanged` is gone (`StepPadFocus` falls back to the first visible control after a page turn).
+- **Tests:** GamepadDpadPlayModeTests (the D-pad reader); the Options' controls are covered by GeneratedUiPlayModeTraversalTests.
+
+## GAP-116
+**The relic choice after a boss took no D-pad**
+
+- **Requirement:** UI-STYLE-005, REQ-BOSS-107, INPUT-PAD-007
+- **Status:** FIXED (found in the owner's 0.4.1 playtest on a Lenovo Legion Go, 2026-11-04; fixed for 0.4.2) · **Severity:** HIGH · **Priority:** P1
+- **Problem:** While the boss's offering table is open the board is hidden and the path not yet shown, so neither pad handler ran: the middle offering was chosen and A took it, but the D-pad could not reach the others.
+- **Fix:** `InRunController.Update` steps the offering table's buttons while it is shown (`StepPadFocus(_endScreenView.BossClearedScreen)`).
+- **Tests:** `BossClearedFlowPlayModeTests.BossDefeated_TheDpadStepsBetweenTheOfferings` with a virtual pad.
+
+## GAP-117
+**An item waiting for its cells was lost on Esc, the Options or Save & Quit**
+
+- **Requirement:** ITEM-REFUND-001, REQ-SAVE-101
+- **Status:** FIXED (found in the owner's 0.4.1 playtest on a Lenovo Legion Go, 2026-11-04; fixed for 0.4.2) · **Severity:** HIGH · **Priority:** P1
+- **Problem:** Koi Reflection, Temple Incense, Wind Chime and the Pattern Scroll are used up when picked, before their cells are chosen. Esc ("Cancelled"), opening the Options, a new puzzle or Save & Quit ended the choice and the item was gone without its effect.
+- **Fix:** The item is remembered when picked; a choice left before any cell took effect gives it back (its charge, or its bag slot) and the use is not counted (`InRunController.PendingItems.cs`, `RunDirector.RefundItem`). Save & Quit ends a pending choice first, so the saved run has the item. Once a cell took effect, the use stands.
+- **Tests:** `Rm104ContentTests.RefundItem_PutsTheItemBack_AndDoesNotCountTheUse`.
+
+## GAP-118
+**Text Size did not enlarge the legend, and a run's Options had no Text Size**
+
+- **Requirement:** ACCESS-FONT-003
+- **Status:** FIXED (found in the owner's 0.4.1 playtest on a Lenovo Legion Go, 2026-11-04; fixed for 0.4.2) · **Severity:** MEDIUM · **Priority:** P2
+- **Problem:** Up to 0.4.1 Text Size scaled only the board's digits and clues; the rule slip's legend kept its size. The row was in the main menu's Options only, so during a run on a Legion Go it could not be changed at all.
+- **Fix:** 0.4.2: Text Size applies to every screen, the legend included (ACCESS-FONT-003, RM-106), and the run's Accessibility page has the row too (without the preview board).
+- **Tests:** TextSizeAndFontPlayModeTests, GeneratedUiPlayModeTraversalTests (the in-run twin of the Text Size row).
 
 ## GAP-114
 **The wrong-digit and HP-loss sounds lie under 300 Hz: laptop and handheld speakers barely play them**

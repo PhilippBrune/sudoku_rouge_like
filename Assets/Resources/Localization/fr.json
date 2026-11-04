@@ -2376,5 +2376,10 @@
     "Board.Friends.None":  "Aucun ami dans ce classement pour l'instant.",
     "Board.Header.Week":  "Classement de la semaine · {0} joueurs",
     "Board.Header.Month":  "Classement du mois · {0} joueurs",
-    "Board.Header.Incense":  "Classement d'encens de la semaine · {0} joueurs"
+    "Board.Header.Incense":  "Classement d'encens de la semaine · {0} joueurs",
+    "InRun.Event.NeedHp":  "Demande plus de {0} PV (vous en avez {1})",
+    "InRun.Event.BagFull":  "Votre sac est plein",
+    "InRun.Event.NothingToRaise":  "Tous les objets du sac sont déjà épiques",
+    "Item.Status.SeedPouchFull":  "{0} sachets de graines poussent déjà.",
+    "Item.Status.Returned":  "{0} est de retour dans votre sac."
 }

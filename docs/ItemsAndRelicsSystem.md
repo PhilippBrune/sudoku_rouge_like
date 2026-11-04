@@ -204,6 +204,10 @@ temple bell, the Red Thread the jade amulet on its cord; the Seed Pouch, Blood I
 the scroll stamp and the trade coin in `Resources/items`). The early garden (RUN-EARLY-001) keeps its ten entries; the
 new content is open from the first run.
 
+| ID | Requirement |
+|---|---|
+| ITEM-REFUND-001 | GAP-117: Koi Reflection, Temple Incense, Wind Chime and the Pattern Scroll are used up when picked; a choice left before any cell took effect (Esc, the Options, Save & Quit, a new puzzle) gives the item back, its charge or its slot, and the use is not counted. |
+
 ### HUD
 
 `HudViewController` renders relics from `HeldRelics`, including multiple relic buttons when the player has more than one.

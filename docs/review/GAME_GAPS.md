@@ -77,7 +77,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-070](#gap-070) | In a run the D-pad and LT/RT did nothing on an Xbox pad (Steam Deck and Legion Go too) | FIXED (found in the Legion Go check, 2026-10-25) | HIGH | P1 |
 | [GAP-071](#gap-071) | A volume set in the main menu came back undone in a run (two copies of the Options) | FIXED (Options test before 0.3.0, 2026-10-27) | MEDIUM | P2 |
 | [GAP-072](#gap-072) | UI Volume set nothing: no interface sound has ever played | FIXED (row removed, owner, 2026-10-27) | LOW | P3 |
-| [GAP-073](#gap-073) | 25 of the game's 35 sound effects are never played | OPEN (listening page ready, 2026-11-03: the owner picks) | LOW | P3 |
+| [GAP-073](#gap-073) | 25 of the game's 35 sound effects are never played | OPEN (round 1: five kept and wired; round 2 proposals for the other 21 wait for the owner) | LOW | P3 |
 | [GAP-074](#gap-074) | The game closed by itself after minimizing or locking the PC (exclusive fullscreen at the Legion Go's resolution, carried by the cloud save) | FIXED in part (0.3.0 playtest, 2026-10-27): the strongest cause removed, quits logged; the owner's next report decides | HIGH | P1 |
 | [GAP-075](#gap-075) | A profile switch re-applied the display mode (a window could jump to the centre) | FIXED (found 2026-10-27) | LOW | P3 |
 | [GAP-076](#gap-076) | Borderless Fullscreen below the native resolution looked blurry and different | FIXED (0.3.0 playtest, 2026-10-27) | MEDIUM | P2 |
@@ -118,6 +118,7 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-111](#gap-111) | The in-run Options showed an empty Language page | FIXED (0.3.1 playtest, 2026-11-02) | LOW | P4 |
 | [GAP-112](#gap-112) | A Spirit Trial's puzzle showed the bag and relic slots | FIXED (0.3.1 playtest, 2026-11-02) | LOW | P4 |
 | [GAP-113](#gap-113) | A Spirit Trial gave no starting item although TRIAL-SESSION-001 promised one | FIXED (owner, 2026-11-03) | LOW | P3 |
+| [GAP-114](#gap-114) | The wrong-digit and HP-loss sounds lie under 300 Hz: laptop and handheld speakers barely play them | OPEN (proposals in GAP-073 round 2) | MEDIUM | P3 |
 | [GAP-067](#gap-067) | Moonshade Offering's "+2 starting pencil" did nothing (the run starts at full pencil) | FIXED (2026-10-22) | LOW | P3 |
 | [GAP-064](#gap-064) | Scholar's Burden: no free Ink Well, "+5 pencil" did nothing, "−1 slot" could add a slot | FIXED (as planned, 2026-10-22) | MEDIUM | P3 |
 | [GAP-063](#gap-063) | Class levels 30 and 40 promised rewards the game did not grant (starting items, frames) | FIXED (2026-10-21) | MEDIUM | P2 |
@@ -1297,6 +1298,20 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Fix:** The puzzle of a Spirit Trial shows no bag and no relics.
 - **Tests:** InRunUiPlayModeTests (`SpiritTrial_ShowsItsItemSlot_AndNoRelics`; since GAP-113 the bag shows the starting item's slot).
 
+## GAP-114
+**The wrong-digit and HP-loss sounds lie under 300 Hz: laptop and handheld speakers barely play them**
+
+- **Requirement:** AudioVisualDirection (SFX palette), AUDIO-UI-001 round 2
+- **Status:** OPEN (found 2026-11-03 while making GAP-073's round 2) · **Severity:** MEDIUM · **Priority:** P3
+- **Problem:** `sfx/wrong_placement.wav` (about 89 Hz) and `sfx/hp_loss.wav` (about 90 Hz) carry no energy above 300 Hz;
+  `shop_purchase` (16 %), `game_over` (9 %), `pencil_depleted` and `combo_break` are low too. Small speakers start at
+  roughly 200 to 300 Hz, so the most important feedback, a mistake, is close to silent on a laptop, the Steam Deck or the
+  Legion Go. This may be why the owner heard "no sound" for several effects.
+- **Suggested fix:** Proposals A and B for both in round 2 (koto and wood, 60 % of the energy above 300 Hz); the owner
+  picks, then the files are replaced.
+- **Tests:** `tools/audio/test_garden_sfx.py` checks every proposal for the 300 Hz share.
+
+
 ## GAP-113
 **A Spirit Trial gave no starting item although TRIAL-SESSION-001 promised one**
 
@@ -1476,6 +1491,10 @@ Found in the owner's 0.3.0 playtest (2026-10-27). Analysis, causes with file and
 - **Problem:** `RunAudioController` loads 35 effect and interface clips, but only 10 play methods have a caller: wrong and correct placement, puzzle solved, shop purchase, path advance, cell select, pencil toggle, game over, HP loss and the run victory fanfare. Never played: shop reroll, item use, reward claim, rest heal, relic pickup, combo 5/10 and combo break, HP critical, pencil depleted, gold gain, fog reveal, modifier activate, boss gate open, floor transition, level up, achievement, XP bar fill, victory stinger, and the six interface sounds (GAP-072).
 - **Listening page (2026-11-03):** `docs/audio-sfx-listening.html` plays the 25 sounds next to the event each would mark,
   with "keep" or "drop" per sound; its "copy" button gives the list to wire.
+- **Round 1 (owner, 2026-11-03):** kept shop_reroll, button_hover, button_click, menu_open, menu_close (wired:
+  AUDIO-UI-001); dropped the other 21, because most "played no sound" for the owner, while still wanting feedback by
+  sound. **Round 2:** `tools/audio/garden_sfx.py` makes proposals A and B per dropped event in a garden voice, C is the
+  8-bit set, on `steam_assets/audio_proposals/round2/sfx_round2.html` (the sounds inside the page).
 - **Suggested fix:** Decide per sound whether it is wanted (listening check), then call the play method where the event happens (for example `RunDirector` gold changes, the boss gate, the floor entry). The SFX Volume row already sets their volume.
 - **Affected Files:** `Assets/Scripts/UI/RunAudioController.cs` and the screens where the events happen.
 

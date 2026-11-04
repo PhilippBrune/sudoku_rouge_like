@@ -151,6 +151,73 @@ namespace SudokuRoguelike.Tests
             }
         }
 
+        // [REQ: AUDIO-UI-001] GAP-073 (owner kept five sounds): the focus moving to a button ticks, A on it clicks; a board cell
+        // stays quiet, and a menu screen opening sounds once.
+        [UnityTest]
+        [Requirement("AUDIO-UI-001")]
+        public IEnumerator UiSounds_TickOnFocus_ClickOnA_AndTheBoardStaysQuiet()
+        {
+            var es = new UnityEngine.GameObject("SoundTestEventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+            var watcher = new UnityEngine.GameObject("SoundWatcher", typeof(UiSounds));
+            var a = new UnityEngine.GameObject("BtnA", typeof(UnityEngine.RectTransform), typeof(UnityEngine.UI.Image), typeof(UnityEngine.UI.Button));
+            var b = new UnityEngine.GameObject("BtnB", typeof(UnityEngine.RectTransform), typeof(UnityEngine.UI.Image), typeof(UnityEngine.UI.Button));
+            var cell = new UnityEngine.GameObject("C_0_0", typeof(UnityEngine.RectTransform), typeof(UnityEngine.UI.Image), typeof(UnityEngine.UI.Button));
+            var heard = new List<UiSounds.Sound>();
+            void Hear(UiSounds.Sound s) => heard.Add(s);
+            UiSounds.Played += Hear;
+            try
+            {
+                yield return null;
+                EventSystem.current.SetSelectedGameObject(a);
+                yield return null;
+                yield return null;
+                heard.Clear();
+                EventSystem.current.SetSelectedGameObject(b);
+                yield return null;
+                Assert.IsEmpty(heard, "focus the game sets by itself stays quiet");
+
+                InputSystem.QueueStateEvent(_pad, new GamepadState().WithButton(GamepadButton.DpadRight));
+                yield return null;
+                EventSystem.current.SetSelectedGameObject(a);
+                yield return null;
+                CollectionAssert.AreEqual(new[] { UiSounds.Sound.Hover }, heard, "the D-pad moved the focus to a button");
+                InputSystem.QueueStateEvent(_pad, new GamepadState());
+                yield return null;
+
+                heard.Clear();
+                InputSystem.QueueStateEvent(_pad, new GamepadState().WithButton(GamepadButton.DpadLeft));
+                yield return null;
+                EventSystem.current.SetSelectedGameObject(cell);
+                yield return null;
+                Assert.IsEmpty(heard, "a board cell makes no sound");
+                InputSystem.QueueStateEvent(_pad, new GamepadState());
+                yield return null;
+
+                EventSystem.current.SetSelectedGameObject(b);
+                yield return null;
+                heard.Clear();
+                InputSystem.QueueStateEvent(_pad, new GamepadState().WithButton(GamepadButton.South));
+                yield return null;
+                yield return null;
+                CollectionAssert.Contains(heard, UiSounds.Sound.Click, "A on the chosen button clicks");
+                InputSystem.QueueStateEvent(_pad, new GamepadState());
+                yield return null;
+
+                heard.Clear();
+                var flow = new MenuFlowService();
+                flow.Back();
+                Assert.IsEmpty(heard, "Back on the main menu changes nothing and stays quiet");
+                flow.Show(MenuScreen.Options);
+                flow.Back();
+                CollectionAssert.AreEqual(new[] { UiSounds.Sound.MenuOpen, UiSounds.Sound.MenuClose }, heard);
+            }
+            finally
+            {
+                UiSounds.Played -= Hear;
+                foreach (var go in new[] { es, watcher, a, b, cell }) UnityEngine.Object.Destroy(go);
+            }
+        }
+
         // [REQ: DECK-BUTTONS-001] On the Steam Deck the pad hints name the shoulders L1/R1 and the triggers L2/R2 (RM-102);
         // the keyboard's hints and other pads keep their names.
         [Test]

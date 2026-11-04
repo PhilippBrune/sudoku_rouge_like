@@ -1,11 +1,12 @@
 # Audio & Visual Direction
 
-**Version:** 1.7 | **Date:** 2026-10-28 | **Status:** implemented
+**Version:** 1.8 | **Date:** 2026-11-03 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.8 | 2026-11-03 | implemented | Owner (2026-11-03), GAP-073 round 1: five interface sounds kept and wired (AUDIO-UI-001: focus tick, click, menu open and close, shop reroll); they follow the SFX volume. The other 21 got two garden-style proposals each for round 2 (`tools/audio/garden_sfx.py`); the wrong-digit and HP-loss sounds are found too low for small speakers (GAP-114). |
 | 1.7 | 2026-10-28 | implemented | 0.3.0 playtest (RM-215): a title sound plays when the title screen opens (AUDIO-TITLE-001); the menu music starts after the title. |
 | 1.6 | 2026-10-14 | implemented | Owner decision: all music and sound effects move to an 8-bit (chiptune) set made with an AI tool; prompts and delivery rules in docs/audio-8bit-prompts.md (AUDIO-MUSIC-001/002). The boss puzzle now plays the floor's boss track instead of the floor track (AUDIO-MUSIC-003; the additive boss layer was never started, GAP-045). Optional tracks for Daily/Monthly Walk, Endless Zen, Spirit Trials, custom puzzles, credits and the victory/defeat end screens (AUDIO-MUSIC-005..007); until a file exists the current music plays. |
 | 1.5 | 2026-10-07 | implemented | Clip-per-context table generated from AudioAssetService with testable rules (SPEC-AMB-011, SPEC-MAC-007); clip load logging and PlayMode clip test (GAP-030); 6 s mono music loops recorded as an asset limitation; SPICE table archived (SPEC-OBS-001). |
@@ -236,6 +237,22 @@ Testable rules:
 - Volume sliders: Master sets `AudioListener.volume`; Music, SFX and UI scale their sources; Mute silences all; "Mute when unfocused" pauses `AudioListener` while the window has no focus (`GameBootstrap.OnApplicationFocus`).
 - Listening is still a manual release check: menu, each floor, puzzle, boss layer, stingers, volume sliders, mute, mute-when-unfocused (release checklist).
 - **Known asset limitation (2026-10-07):** every music loop is 6.0 s of mono audio (44.1 kHz), so music repeats very often. Longer stereo loops are an asset task, not a code task.
+
+### Interface sounds (AUDIO-UI-001, since 0.4.1)
+
+The owner's pick of the first listening round (GAP-073): a soft tick when a button gets the focus (the pad, the keys, or
+the pointer moving onto it), a click when it is pressed (the mouse, Enter, Space, or the pad's A through PadUiBridge), a
+sound when a menu screen or the in-run Options open and close, and the shop's reroll (offers and the floor's rule). The
+board's cells make no sound. They play on the UI channel at Master × SFX volume (the UI Volume row is gone, OPT-AUDIO-002).
+
+| ID | Requirement |
+|---|---|
+| AUDIO-UI-001 | The five interface sounds above, played by `UiSounds` (on the run audio object, which lives across scenes). |
+
+Round 2 (`tools/audio/garden_sfx.py`): for each of the 21 events the owner dropped, proposals A and B in a garden voice
+(koto, temple bell, singing bowl, wood block, water drop, wind, taiko, gong) and C from the code-made 8-bit set, on one
+listening page with the sounds inside it (`steam_assets/audio_proposals/round2/sfx_round2.html`, not in git). Every
+proposal keeps 60 % of its energy above 300 Hz, so laptop and handheld speakers play it (GAP-114).
 
 ### Audio Mixing
 

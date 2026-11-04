@@ -26,7 +26,10 @@ namespace SudokuRoguelike.UI
         public void Show(MenuScreen screen)
         {
             if (CurrentScreen != screen)
+            {
                 _history.Push(CurrentScreen);
+                UiSounds.Play(UiSounds.Sound.MenuOpen);   // [REQ: AUDIO-UI-001]
+            }
 
             SetActive(CurrentScreen, false);
             CurrentScreen = screen;
@@ -39,9 +42,12 @@ namespace SudokuRoguelike.UI
         {
             if (_history.Count == 0)
             {
-                if (CurrentScreen != MenuScreen.MainMenu) ShowMainMenu();
+                if (CurrentScreen == MenuScreen.MainMenu) return;
+                UiSounds.Play(UiSounds.Sound.MenuClose);   // [REQ: AUDIO-UI-001]
+                ShowMainMenu();
                 return;
             }
+            UiSounds.Play(UiSounds.Sound.MenuClose);   // [REQ: AUDIO-UI-001]
 
             SetActive(CurrentScreen, false);
             CurrentScreen = _history.Pop();

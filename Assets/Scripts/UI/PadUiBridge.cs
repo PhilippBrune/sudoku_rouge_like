@@ -34,6 +34,7 @@ namespace SudokuRoguelike.UI
             var chosen = es != null && es.sendNavigationEvents ? es.currentSelectedGameObject : null;
             if (chosen == null || !chosen.activeInHierarchy) return;
             PadButtons.UseSubmit();
+            UiSounds.OnSubmit(chosen);   // [REQ: AUDIO-UI-001] the press is used up here, so the click sounds here
             ExecuteEvents.Execute(chosen, new BaseEventData(es), ExecuteEvents.submitHandler);
         }
     }

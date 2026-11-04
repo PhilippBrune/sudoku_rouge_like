@@ -1,13 +1,10 @@
 # Known issues
 
-**Run of the Nine — current build (v0.1.5)**
-• Music tracks are short loops. A full 8-bit soundtrack is in the works.
-• French, Spanish and Brazilian Portuguese: item, relic, boss, class and story texts are still in English. *Fixed in the next update.*
-• The in-game Options panel keeps its older look. *Fixed in the next update.*
-• On irregular boards, the region borders could show the previous puzzle's regions, so a board looked unsolvable. *Fixed in the next update.*
-• Boss puzzles played the stage music instead of the boss music. *Fixed in the next update.*
-• Pressing Q (or A on a controller) on the "Boss Defeated!" screen could end the run instead of continuing. Until the update, use the Continue button with the mouse. *Fixed in the next update.*
-• A Killer Cage's dashed border had small gaps at the joins between its cells. *Fixed in the next update.*
+**Run of the Nine, current build (v0.4.0)**
+• With a controller through Steam Input, the D-pad can place digits and the right stick can move the mouse pointer. That comes from a keyboard layout in Steam, not from the game: in your Steam Library, open Run of the Nine, then the controller settings, and pick the "Gamepad" layout (or turn Steam Input off for the game).
+• The sound for a wrong digit and for losing HP is very deep, so laptop and handheld speakers barely play it. Headphones help until it is fixed.
+• Fewer sound effects than planned: many actions are silent for now. More sounds come with the next updates.
+• Music tracks are short loops.
 
 **Corebound**
 Not released yet; known issues will be listed here from the first public build.

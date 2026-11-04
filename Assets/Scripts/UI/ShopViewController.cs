@@ -372,6 +372,7 @@ namespace SudokuRoguelike.UI
             var run = _map?.Run;
             if (run == null) return;
             if (!run.RerollShop()) { OnStatusChanged?.Invoke(T("InRun.Shop.NotEnoughGold")); return; }
+            UiSounds.Play(UiSounds.Sound.ShopReroll);   // [REQ: AUDIO-UI-001] GAP-073
             _shopOffers.Clear();
             _shopOffers.AddRange(run.CurrentShopOffers);
             RebuildGoods();
@@ -384,6 +385,7 @@ namespace SudokuRoguelike.UI
                 OnStatusChanged?.Invoke(T("InRun.Shop.FloorRule.NoOther"));
                 return;
             }
+            UiSounds.Play(UiSounds.Sound.ShopReroll);   // [REQ: AUDIO-UI-001] the floor's rule rolled again
             var names = _map.Run.State.ActiveFloorModifiers.ConvertAll(Boss.BossService.GetModifierName);
             OnStatusChanged?.Invoke(F("InRun.Shop.FloorRule.Rolled", string.Join(", ", names)));
             RefreshPurse();

@@ -149,3 +149,5 @@ docs/design/layout-proposals/*.png
 
 # graphify code graph (local, rebuilt with `graphify update .`)
 graphify-out/
+# Sound proposals for listening (tools/audio/garden_sfx.py, deterministic)
+steam_assets/audio_proposals/

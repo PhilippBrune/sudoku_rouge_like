@@ -17,6 +17,9 @@ namespace SudokuRoguelike.UI
             Defeat
         }
 
+        /// <summary>The one run audio (it lives across scenes).</summary>
+        public static RunAudioController Current { get; private set; }
+
         private AudioSource _musicSource;
         private AudioSource _sfxSource;
         private AudioSource _uiSource;
@@ -91,6 +94,8 @@ namespace SudokuRoguelike.UI
                 return;
             }
             DontDestroyOnLoad(gameObject);
+            Current = this;
+            if (GetComponent<UiSounds>() == null) gameObject.AddComponent<UiSounds>();   // [REQ: AUDIO-UI-001]
 
         }
 
@@ -215,7 +220,8 @@ namespace SudokuRoguelike.UI
             _uiSource.mute = muted;
             _musicSource.volume = musicVol * duckMul * pathMul;
             _sfxSource.volume = baseVolume * Mathf.Clamp01(audio.SfxVolume) * 0.55f;
-            _uiSource.volume = baseVolume * Mathf.Clamp01(audio.UiVolume) * 0.65f;
+            // [REQ: AUDIO-UI-001] The interface sounds follow the SFX volume (the UI Volume row is gone, OPT-AUDIO-002).
+            _uiSource.volume = baseVolume * Mathf.Clamp01(audio.SfxVolume) * 0.5f;
 
             if ((_context == Context.Puzzle || _context == Context.Path) && !_musicSource.mute)
             {

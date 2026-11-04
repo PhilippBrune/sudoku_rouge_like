@@ -445,6 +445,7 @@ namespace SudokuRoguelike.UI
             if (_inGameOptionsPanel == null) return;
             var nowActive = !_inGameOptionsPanel.activeSelf;
             _inGameOptionsPanel.SetActive(nowActive);
+            UiSounds.Play(nowActive ? UiSounds.Sound.MenuOpen : UiSounds.Sound.MenuClose);   // [REQ: AUDIO-UI-001]
             if (nowActive)
             {
                 RefreshRunMenu();

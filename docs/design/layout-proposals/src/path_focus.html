@@ -1,0 +1,49 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<style>
+  /* 0.4.1 playtest (Legion Go): the tile the controller has chosen on the garden path is hard to see. Three proposals,
+     drawn over the game's Floor 1 (after_path_floor1.jpg); the chosen tile is the 5×5 puzzle. ?v=a|b|c */
+  .shot { position:absolute; inset:0; background:url('../after_path_floor1.jpg') center/cover; }
+  .dim { position:absolute; inset:0; background: radial-gradient(circle at 455px 432px, transparent 0 95px, rgba(20,14,8,.42) 220px); }
+  .ring { position:absolute; left:455px; top:432px; width:128px; height:128px; margin:-64px 0 0 -64px; border-radius:50%;
+          border:7px solid #b23a2e; box-shadow:0 0 0 3px rgba(239,227,198,.9), 0 0 26px rgba(178,58,46,.65); transform:rotate(-8deg); }
+  .ring::after { content:''; position:absolute; right:-10px; top:6px; width:18px; height:18px; border-radius:50%; background:#b23a2e; }
+  .marker { position:absolute; left:425px; top:318px; width:60px; height:60px; border-radius:50%; background:#efe3c6;
+            box-shadow:0 6px 12px rgba(0,0,0,.45); border:3px solid #b23a2e; }
+  .marker img { width:46px; height:46px; margin:4px; }
+  .marker::after { content:''; position:absolute; left:23px; top:58px; border:8px solid transparent; border-top:10px solid #b23a2e; }
+  .gold { position:absolute; left:455px; top:432px; width:150px; height:150px; margin:-75px 0 0 -75px; border-radius:50%;
+          border:5px solid #e9c46a; box-shadow:0 0 40px 10px rgba(244,200,120,.75), inset 0 0 18px rgba(244,200,120,.6); }
+  .label { position:absolute; left:455px; top:470px; transform:translateX(-50%); padding:6px 16px; border-radius:999px;
+           background:#b23a2e; color:#fff; font-size:22px; white-space:nowrap; box-shadow:0 4px 10px rgba(0,0,0,.4); }
+  .key { display:inline-flex; width:28px; height:28px; border-radius:50%; background:#2a1a10; color:#f3e9cf; font-size:16px;
+         align-items:center; justify-content:center; margin-right:8px; vertical-align:middle; }
+  .slip { position:absolute; left:360px; top:520px; width:300px; padding:16px 20px; background:#efe3c6; color:#231e17;
+          box-shadow:0 12px 26px rgba(0,0,0,.5); font-size:19px; line-height:1.6; border-top:6px solid #b23a2e; }
+  .slip::before { content:''; position:absolute; left:94px; top:-34px; width:2px; height:28px; background:#c9a24f; }
+  .slip b { font-weight:normal; font-size:24px; display:block; }
+  .slip small { color:#6b5f4c; font-size:16px; }
+  .label-tag { position:absolute; left:40px; bottom:96px; padding:8px 18px; border-radius:999px; background:rgba(0,0,0,.72); color:#fff;
+               font:600 20px 'Segoe UI', sans-serif; }
+  .cover { position:absolute; left:400px; top:470px; width:120px; height:50px; background:linear-gradient(#e8dcc3, #e6d9c0); }
+</style></head><body>
+<div class="shot"></div>
+<div id="extra"></div>
+<div id="tag" class="label-tag"></div>
+<script>
+const v = new URLSearchParams(location.search).get('v') || 'a';
+const extra = document.getElementById('extra'), tag = document.getElementById('tag');
+const icon = '<img src="../../../../Assets/Resources/class/icon_number_freak.png">';
+if (v === 'a') {
+  extra.innerHTML = `<div class="ring"></div><div class="marker">${icon}</div>`;
+  tag.textContent = 'A · a vermilion brush ring and the class marker above the chosen tile';
+} else if (v === 'b') {
+  extra.innerHTML = `<div class="dim"></div><div class="gold"></div><div class="cover"></div><div class="label"><span class="key">A</span>Puzzle 5×5 ★</div>`;
+  tag.textContent = 'B · lantern light: the scroll dims around the chosen tile, its name on a red label with the key';
+} else {
+  extra.innerHTML = `<div class="ring" style="border-color:#e9c46a;box-shadow:0 0 0 3px rgba(239,227,198,.9),0 0 26px rgba(233,196,106,.8)"></div>
+    <div class="slip"><b>Puzzle 5×5 ★</b>Gold 18 · XP 30<br><small>Calm route · next: Puzzle, then Shop</small><br><span class="key">A</span>walk here</div>`;
+  tag.textContent = 'C · a gold ring and a paper slip under the chosen tile with what it gives';
+}
+</script>
+</body></html>

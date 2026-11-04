@@ -1,11 +1,12 @@
 # Open points
 
-**Version:** 2.3 | **Date:** 2026-11-04 | **Status:** review (a living list; update it whenever an item closes or a new one opens)
+**Version:** 2.4 | **Date:** 2026-11-04 | **Status:** review (a living list; update it whenever an item closes or a new one opens)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.4 | 2026-11-04 | review | Owner's 0.4.1 playtest on a Legion Go (2026-11-04): four bugs fixed in 0.4.2 (GAP-115 to GAP-118); six decisions wait on `docs/design/playtest-041-proposals.html` (the path's controller focus, the bag-full screen, three floors, the fog items and the item review, the Garden Monk, every class passive). 0.4.2 built and tagged, not uploaded. |
 | 2.3 | 2026-11-04 | review | Owner (2026-11-04): GAP-073 round 2 picked and built (AUDIO-SFX-001, GAP-114); the Steam Deck and the legal check closed ("Schließe"); the 0.4.1 announcement published by the owner, mirrored to #rotn-news, how-to-play, known-issues and the channel topic posted; RM-101, RM-104 and RM-106 are next. |
 | 2.2 | 2026-11-04 | review | 0.4.0 is live (build 26400103); the upload row becomes the announcement and the Discord posts. |
 | 2.1 | 2026-11-03 | review | The owner's answers to 2.0 (2026-11-03) and what was done the same day: GAP-108 checked in Steamworks, RM-113 closed, RM-108 recorded, the Deck work, RM-120, catalog steps 3 and 5, the Pattern Scroll, the class presenter removed, the content survey draft and the trademark look. Open: the listening page, RM-118 and RM-116 picks, a Deck start. |
@@ -38,6 +39,19 @@ fixed except GAP-108. These are new in 0.4.0 or could only be checked by hand:
 | Story achievements (ACHIEVE-STORY-001) | Open a second chapter | They unlock only after the owner publishes the achievements in Steamworks (section 3). |
 
 ## 2. Open, with a proposal
+
+**0.4.1 playtest on a Legion Go (owner, 2026-11-04):** pick per section on `docs/design/playtest-041-proposals.html`
+(mockups in `docs/design/layout-proposals/path_focus_*.png` and `bag_swap_*.png`), copy the choice into the chat:
+
+| Point | Proposal | Owner |
+|---|---|---|
+| The path's controller focus is hard to see | A brush ring + class marker (recommended), B lantern light, C gold ring + slip | Owner picks |
+| The bag-full screen is outdated | A ema plaques (recommended), B two cards, C list on a scroll | Owner picks |
+| The main game on Floors 1, 3 and 5 | T1 three dense gardens (recommended), T2 short start, T3 floors with two halves; story, achievements, scores and saves follow | Owner picks (spec change) |
+| Fog items useless; item review | F1 one lantern that always helps (recommended), F2 only with fog, F3 into the shop | Owner picks |
+| The Garden Monk heals too much | M1 combo of 10 heals 1, max 2 (recommended), M2 perfect puzzle heals 2, M3 first mistake free, M4 weaker as today | Owner picks |
+| Every class passive | Number Freak, Shrine Archivist, Lantern Seer, Reed Duelist, Quiet Cartographer get proposals; Koi Gambler and Stone Gardener stay | Owner ticks |
+| Upload 0.4.2 | `Builds/RunOfTheNine_0.4.2_win64.zip`, steps and patch notes in `steam_assets/ReleaseNotes_v0.4.2.md` | Owner |
 
 The owner's answers of 2026-11-03 ("ok", "schließen", "ja machen", "genau so implementieren", "machen", "okay") and what
 came of them:

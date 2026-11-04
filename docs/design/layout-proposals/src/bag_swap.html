@@ -1,0 +1,101 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<style>
+  /* 0.4.1 playtest: the bag-full screen (BagSwapPanel) predates the ink-and-paper look. Three proposals in the reward's
+     family (UI-STYLE-007): the new item and the bag's items, which one goes. ?v=a|b|c */
+  .bg { position:absolute; inset:0; background:url('../../../../Assets/Resources/background/bg_reward.png') center/cover; filter:brightness(.38) saturate(.8); }
+  .banner { position:absolute; left:610px; width:700px; top:40px; height:116px; background:#efe3c6; text-align:center; color:#231e17;
+            box-shadow:0 14px 28px rgba(0,0,0,.5); }
+  .banner::before, .banner::after { content:''; position:absolute; top:0; bottom:0; width:18px; background:#b23a2e; }
+  .banner::before { left:0; } .banner::after { right:0; }
+  .banner small { display:block; padding-top:18px; font-size:17px; letter-spacing:.16em; color:#5b5244; }
+  .banner h1 { margin:4px 0 0; font-weight:normal; font-size:42px; }
+  .ema { position:absolute; width:260px; }
+  .ema .knot { position:absolute; left:50%; top:-6px; width:3px; height:40px; background:#b23a2e; }
+  .ema .wood { position:relative; margin-top:34px; height:380px; padding:64px 20px 20px; text-align:center; color:#2a1a10;
+               clip-path: polygon(50% 0, 100% 15%, 100% 100%, 0 100%, 0 15%); background: linear-gradient(180deg, #d8ab72, #a8743f); }
+  .ema.new .wood { background: linear-gradient(180deg, #f0c98a, #c68e4e); }
+  .ema.sel { transform: translateY(-14px); filter: drop-shadow(0 0 22px rgba(255,214,140,.6)); }
+  .ema.sel .wood { background: linear-gradient(180deg, #e9b4a2, #b8695a); }
+  .ema img { width:96px; height:96px; object-fit:contain; display:block; margin:0 auto; }
+  .ema h3 { margin:10px 0 6px; font-weight:normal; font-size:25px; }
+  .rar { display:inline-block; padding:2px 12px; border-radius:999px; font-size:14px; letter-spacing:.08em; color:#fff; }
+  .rar.n { background:#6b5f4c; } .rar.r { background:#2f4b8f; } .rar.e { background:#b8892b; }
+  .ema p { font-size:17px; line-height:1.3; margin:12px 0 0; }
+  .cord { position:absolute; height:4px; background:#b23a2e; border-radius:2px; }
+  .cap { position:absolute; color:#f3e9cf; font-size:20px; letter-spacing:.12em; text-shadow:0 2px 6px rgba(0,0,0,.6); }
+  .arrow { position:absolute; color:#e9c46a; font-size:70px; text-shadow:0 2px 10px rgba(0,0,0,.6); }
+  .x { position:absolute; left:50%; top:110px; transform:translateX(-50%) rotate(-12deg); color:#b23a2e; font-size:30px; border:4px solid #b23a2e;
+       border-radius:50%; width:120px; height:120px; display:flex; align-items:center; justify-content:center; background:rgba(239,227,198,.6); }
+  .foot { position:absolute; left:0; right:0; bottom:70px; display:flex; gap:22px; justify-content:center; }
+  .btn { padding:14px 30px; border-radius:999px; font-size:22px; border:2px solid #c9a24f; color:#f6e7c6; background:rgba(20,16,10,.75); }
+  .btn.main { background:#b23a2e; border-color:#b23a2e; color:#fff; }
+  .hint { position:absolute; left:0; right:0; bottom:26px; text-align:center; color:#d8c9a8; font-size:19px; }
+  .card { position:absolute; top:220px; width:520px; height:560px; padding:36px 40px; background:#efe3c6; color:#231e17;
+          box-shadow:0 20px 40px rgba(0,0,0,.6); }
+  .card small { font-size:16px; letter-spacing:.14em; color:#6b5f4c; }
+  .card img { width:130px; height:130px; display:block; margin:18px auto; }
+  .card h2 { margin:0; font-weight:normal; font-size:36px; text-align:center; }
+  .card p { font-size:21px; line-height:1.4; text-align:center; }
+  .strip { position:absolute; left:340px; right:340px; top:820px; display:flex; gap:16px; justify-content:center; }
+  .chip { width:110px; height:110px; border-radius:12px; background:#d8ab72; display:flex; align-items:center; justify-content:center; }
+  .chip.sel { outline:5px solid #b23a2e; background:#e9b4a2; }
+  .chip img { width:76px; height:76px; }
+  .scroll { position:absolute; left:460px; top:200px; width:1000px; height:640px; padding:34px 50px; background:linear-gradient(180deg,#f3e9cf,#e8d8b2);
+            box-shadow:0 30px 60px rgba(0,0,0,.6); color:#231e17; }
+  .scroll::before, .scroll::after { content:''; position:absolute; left:0; right:0; height:18px;
+            background: repeating-linear-gradient(90deg, #2c4632 0 16px, #33523a 16px 32px); border-top:2px solid #c9a24f; border-bottom:2px solid #c9a24f; }
+  .scroll::before { top:0; } .scroll::after { bottom:0; }
+  .row { display:grid; grid-template-columns: 70px 260px 110px 1fr; align-items:center; gap:14px; padding:12px 14px; border-bottom:1px solid #d3c3a0; font-size:20px; }
+  .row img { width:56px; height:56px; } .row.newrow { background:rgba(233,196,106,.35); }
+  .row.sel { background:rgba(178,58,46,.18); outline:3px solid #b23a2e; }
+  .label-tag { position:absolute; left:40px; bottom:96px; padding:8px 18px; border-radius:999px; background:rgba(0,0,0,.72); color:#fff; font:600 20px 'Segoe UI', sans-serif; }
+</style></head><body>
+<div class="bg"></div>
+<div class="banner"><small>YOUR BAG IS FULL · 3 OF 3</small><h1>Make room for Blood Ink?</h1></div>
+<div id="main"></div>
+<div id="tag" class="label-tag"></div>
+<script>
+const v = new URLSearchParams(location.search).get('v') || 'a';
+const I = n => `../../../../Assets/Resources/items/icon_${n}.png`;
+const NEW = { n:'blood_ink', name:'Blood Ink', rar:'r', R:'RARE', text:'Costs 2 HP: writes the correct digit in 3 random empty cells.' };
+const BAG = [
+  { n:'ink_well', name:'Ink Well', rar:'n', R:'NORMAL', text:'Restore 10 pencil marks.' },
+  { n:'ginkgo_leaf', name:'Ginkgo Leaf', rar:'r', R:'RARE', text:'Undo the last mistake and its HP.' },
+  { n:'lantern_of_clarity', name:'Lantern of Clarity', rar:'n', R:'NORMAL', text:'Disable fog for 10 moves.' },
+];
+const ema = (it, x, cls = '') => `<div class="ema ${cls}" style="left:${x}px;top:250px"><div class="knot"></div><div class="wood">
+  <img src="${I(it.n)}"><h3>${it.name}</h3><span class="rar ${it.rar}">${it.R}</span><p>${it.text}</p></div></div>`;
+const main = document.getElementById('main'), tag = document.getElementById('tag');
+if (v === 'a') {
+  main.innerHTML = `<div class="cap" style="left:150px;top:205px">NEW</div><div class="cord" style="left:120px;width:320px;top:250px"></div>
+    ${ema(NEW, 150, 'new')}<div class="arrow" style="left:470px;top:400px">⇄</div>
+    <div class="cap" style="left:620px;top:205px">YOUR BAG · CHOOSE THE ONE THAT GOES</div><div class="cord" style="left:590px;right:120px;top:250px"></div>
+    ${ema(BAG[0], 620)}${ema(BAG[1], 930)}${ema(BAG[2], 1240, 'sel')}
+    <div class="x" style="left:1470px;top:300px;width:96px;height:96px;font-size:24px">goes</div>
+    <div class="foot"><span class="btn main">Swap Lantern of Clarity for Blood Ink</span><span class="btn">Keep my bag</span></div>
+    <div class="hint">D-pad chooses · A swaps · B keeps the bag</div>`;
+  tag.textContent = 'A · ema plaques: the new item on its own cord, the bag beside it; the chosen one is marked "goes"';
+} else if (v === 'b') {
+  const it = BAG[2];
+  main.innerHTML = `<div class="card" style="left:300px"><small>NEW</small><img src="${I(NEW.n)}"><h2>${NEW.name}</h2>
+      <p><span class="rar ${NEW.rar}">${NEW.R}</span></p><p>${NEW.text}</p></div>
+    <div class="arrow" style="left:900px;top:430px">⇄</div>
+    <div class="card" style="left:1100px"><small>FROM YOUR BAG · 3 OF 3</small><img src="${I(it.n)}"><h2>${it.name}</h2>
+      <p><span class="rar ${it.rar}">${it.R}</span></p><p>${it.text}</p></div>
+    <div class="strip">${BAG.map((b, i) => `<div class="chip ${i === 2 ? 'sel' : ''}"><img src="${I(b.n)}"></div>`).join('')}</div>
+    <div class="foot" style="bottom:40px"><span class="btn main">Swap</span><span class="btn">Keep my bag</span></div>
+    <div class="hint" style="bottom:8px">LB / RB or ← → choose the bag's item · A swaps · B keeps the bag</div>`;
+  tag.textContent = 'B · two cards side by side: the new item against the chosen one from the bag';
+} else {
+  main.innerHTML = `<div class="scroll">
+      <div class="row newrow"><img src="${I(NEW.n)}"><span>${NEW.name}</span><span class="rar ${NEW.rar}">${NEW.R}</span><span>${NEW.text}</span></div>
+      <div style="padding:16px 14px 6px;font-size:16px;letter-spacing:.14em;color:#6b5f4c">YOUR BAG · CHOOSE THE ONE THAT GOES</div>
+      ${BAG.map((b, i) => `<div class="row ${i === 2 ? 'sel' : ''}"><img src="${I(b.n)}"><span>${b.name}</span><span class="rar ${b.rar}">${b.R}</span><span>${b.text}</span></div>`).join('')}
+    </div>
+    <div class="foot"><span class="btn main">Swap</span><span class="btn">Keep my bag</span></div>
+    <div class="hint">D-pad chooses a row · A swaps · B keeps the bag</div>`;
+  tag.textContent = 'C · a list on a scroll: the new item on top, the bag below as rows with their effect';
+}
+</script>
+</body></html>

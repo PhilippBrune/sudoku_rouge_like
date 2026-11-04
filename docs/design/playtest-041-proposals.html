@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Playtest 0.4.1 Vorschläge</title>
+<style>
+  :root { --bg: #f4efe4; --paper: #fbf7ee; --ink: #2b2620; --soft: #6b6155; --line: #d9cfbd; --red: #9e2a2b; --moss: #4f6b3a; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #1d1a16; --paper: #26221d; --ink: #eee6d6; --soft: #b3a894; --line: #3d362d; --red: #d9655f; --moss: #93b06f; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, "Segoe UI", sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 24px 16px 140px; }
+  h1 { font-size: 26px; margin: 0 0 6px; }
+  h2 { font-size: 20px; margin: 34px 0 6px; }
+  p.lead, p.why { color: var(--soft); margin: 0 0 10px; }
+  img.mock { width: 100%; border: 1px solid var(--line); border-radius: 8px; margin: 6px 0; }
+  .shots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  label.opt { display: grid; grid-template-columns: 26px 1fr; gap: 8px; background: var(--paper); border: 1px solid var(--line);
+              border-radius: 10px; padding: 10px 12px; margin: 6px 0; cursor: pointer; }
+  label.opt:has(input:checked) { border-color: var(--moss); box-shadow: inset 4px 0 0 var(--moss); }
+  input { accent-color: var(--moss); margin-top: 4px; }
+  .rec { color: var(--moss); font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; background: var(--paper); font-size: 15px; }
+  th, td { border-bottom: 1px solid var(--line); padding: 8px; text-align: left; vertical-align: top; }
+  th { color: var(--soft); font-weight: 600; }
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--bg); border-top: 1px solid var(--line); padding: 10px 16px;
+         display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  button { background: var(--red); color: #fff; border: 0; border-radius: 999px; padding: 9px 18px; font-size: 15px; cursor: pointer; }
+  textarea { flex: 1; min-width: 200px; height: 46px; background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: 8px;
+             font: 12px ui-monospace, Consolas, monospace; }
+  @media (max-width: 760px) { .shots { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Playtest 0.4.1 (Legion Go): Vorschläge zum Auswählen</h1>
+  <p class="lead">Behoben in 0.4.2: Controller in den Optionen aus dem Rätsel (GAP-115), Relikt-Auswahl nach dem Boss
+    (GAP-116), Gegenstand weg bei Speichern und Beenden (GAP-117), Textgröße in der Legende und im Lauf (GAP-118).
+    Hier die Punkte, die deine Entscheidung brauchen. Wähle pro Abschnitt, dann "Auswahl kopieren".</p>
+
+  <h2>1. Garden Path: welches Feld der Controller gewählt hat</h2>
+  <p class="why">Heute: nur ein schwacher Schein um das Feld, auf dem Legion Go kaum zu sehen.</p>
+  <div class="shots"><img class="mock" src="layout-proposals/path_focus_a.png"><img class="mock" src="layout-proposals/path_focus_b.png"><img class="mock" src="layout-proposals/path_focus_c.png"></div>
+  <label class="opt"><input type="radio" name="path" value="A"><div><b>A Pinselring + Klassen-Marker</b> <span class="rec">(Empf.)</span><br>Roter Pinselring um das Feld, der Marker deiner Klasse schwebt darüber. Klar, passt zum Tusche-Stil, verdeckt nichts.</div></label>
+  <label class="opt"><input type="radio" name="path" value="B"><div><b>B Laternenlicht</b><br>Die Rolle dunkelt sich um das Feld ab, sein Name steht auf einem roten Schild mit der A-Taste. Am auffälligsten, aber der Rest des Weges ist dunkler.</div></label>
+  <label class="opt"><input type="radio" name="path" value="C"><div><b>C Goldring + Zettel</b><br>Ein Zettel unter dem Feld zeigt, was es bringt (Gold, XP, was danach kommt). Am meisten Information, braucht Platz unter den Feldern.</div></label>
+
+  <h2>2. Tasche voll: neues Menü</h2>
+  <p class="why">Heute: eine dunkle Karte mit 13-Pixel-Schrift und Knöpfen ohne Beschreibung.</p>
+  <div class="shots"><img class="mock" src="layout-proposals/bag_swap_a.png"><img class="mock" src="layout-proposals/bag_swap_b.png"><img class="mock" src="layout-proposals/bag_swap_c.png"></div>
+  <label class="opt"><input type="radio" name="swap" value="A"><div><b>A Ema-Tafeln</b> <span class="rec">(Empf.)</span><br>Wie der Belohnungs-Bildschirm: das neue Item an eigener Schnur, daneben deine Tasche; das gewählte wird "goes" gestempelt. Jede Tafel mit Wirkung.</div></label>
+  <label class="opt"><input type="radio" name="swap" value="B"><div><b>B Zwei Karten nebeneinander</b><br>Neu gegen Alt im direkten Vergleich, darunter die Tasche als kleine Symbole zum Durchschalten (LB/RB).</div></label>
+  <label class="opt"><input type="radio" name="swap" value="C"><div><b>C Liste auf der Rolle</b><br>Neues Item oben, die Tasche als Zeilen mit Wirkung. Am kompaktesten, wirkt weniger wie ein Fund.</div></label>
+
+  <h2>3. Hauptspiel mit drei Etagen (1, 3, 5)</h2>
+  <p class="why">Heute: 5 Etagen; Etage 1 hat 5 bis 8 Felder mit 5×5 bis 6×6 und fühlt sich zu lang und zu leicht an. Es bleiben
+    Bambushof, Koi-Terrasse und Schreingipfel mit ihren Bossen. Folgen in jeder Variante: Story-Kapitel "Etage 3 erreichen" wird
+    "Etage 2", "Sieg unter 40 Minuten" wird kürzer, XP und Punkte pro Lauf werden neu gewichtet, laufende 5-Etagen-Läufe dürfen
+    zu Ende gespielt werden. Moosgarten und Steinlaternenweg verschwinden nicht ganz: ihre Bosse werden Elite-Wächter in der Mitte.</p>
+  <label class="opt"><input type="radio" name="floors" value="T1"><div><b>T1 Drei dichte Gärten</b> <span class="rec">(Empf.)</span><br>
+    Etage 1: 4 bis 5 Felder, Bretter 6×6 bis 7×7, ein Shop, dann Boss. Etage 2 (Koi-Terrasse): 6 bis 7 Felder, 7×7 bis 9×9, in der Mitte
+    der Moosgarten-Wächter als Elite mit Relikt. Etage 3 (Schreingipfel): 7 bis 8 Felder, 9×9, in der Mitte der Steinlaternen-Wächter.
+    Jedes Feld zählt mehr: mehr Gold pro Rätsel, nach jedem Boss eine Relikt-Wahl und ein Shop. Lauf etwa 25 statt 40 Minuten.</div></label>
+  <label class="opt"><input type="radio" name="floors" value="T2"><div><b>T2 Kurzer Auftakt, lange Gipfel</b><br>
+    Etage 1 ist nur 3 Felder plus Boss (ein schneller Einstieg, gleich ein Relikt). Etage 2 und 3 behalten ihre heutige Länge
+    (7 bis 12 Felder) und ziehen die Bretter von Etage 2 und 4 mit hinein. Lauf etwa 30 Minuten.</div></label>
+  <label class="opt"><input type="radio" name="floors" value="T3"><div><b>T3 Etagen mit zwei Hälften</b><br>
+    Jede Etage hat einen Zwischenboss an der Hälfte (mit eigener Prüfungswahl am Tor) und den Etagen-Boss am Ende. Etage 1: 3 + 3 Felder.
+    Fühlt sich wie 6 kleine Akte an, mehr Spannungsspitzen, aber mehr Boss-Bretter.</div></label>
+
+  <h2>4. Nebel-Gegenstände und Item-Review</h2>
+  <p class="why">"Nebel entfernen" ist nutzlos, weil Laterne der Klarheit (10 Züge) und Gartenlaterne (15 Sekunden) auch auf Brettern
+    ohne Nebel fallen. Weitere schwache Items im Review: Gartenrechen (Bleistift löschen), Zen-Sandsieb (Zellen mit 2 Kandidaten
+    markieren), Bambusrolle (Sterne auf dem Weg zeigen). Stark und gut: Tempelweihrauch, Koi-Drachenschuppe, Ginkgoblatt, Seidenfächer.</p>
+  <label class="opt"><input type="radio" name="fog" value="F1"><div><b>F1 Eine Laterne, die immer hilft</b> <span class="rec">(Empf.)</span><br>
+    Laterne der Klarheit und Gartenlaterne werden eine "Laterne": hebt den Nebel für das ganze Rätsel; ohne Nebel zeigt sie stattdessen die
+    Kandidaten von 3 Zellen. Gartenrechen, Zen-Sandsieb und Bambusrolle bekommen je einen kleinen Zusatz (z. B. Rechen: +3 Bleistift).</div></label>
+  <label class="opt"><input type="radio" name="fog" value="F2"><div><b>F2 Nur wenn Nebel kommt</b><br>
+    Die Nebel-Items fallen nur noch, wenn die Etage oder ihr Boss eine Nebel-Regel hat; sonst ändert sich nichts.</div></label>
+  <label class="opt"><input type="radio" name="fog" value="F3"><div><b>F3 In den Laden</b><br>
+    Nebel-Items fallen nicht mehr als Belohnung, sondern stehen wie die Zähler-Items im Laden, wenn du sie brauchst.</div></label>
+
+  <h2>5. Garden Monk: Heilung zu stark</h2>
+  <p class="why">Heute: +1 LP alle 5 richtigen Ziffern (ab Stufe 15 alle 4). Ein 9×9 hat etwa 50 leere Zellen: bis zu +10 LP pro Rätsel,
+    Fehler werden fast egal.</p>
+  <label class="opt"><input type="radio" name="monk" value="M1"><div><b>M1 Ruhiger Atem</b> <span class="rec">(Empf.)</span><br>Jede Kombo von 10 heilt 1 LP, höchstens 2 pro Rätsel. Belohnt sauberes Spiel statt Masse; ein Fehler bricht die Kombo.</div></label>
+  <label class="opt"><input type="radio" name="monk" value="M2"><div><b>M2 Meditation</b><br>Ein Rätsel ohne Fehler heilt 2 LP (ab Stufe 15: 3). Einfach zu verstehen, belohnt nur perfekte Rätsel.</div></label>
+  <label class="opt"><input type="radio" name="monk" value="M3"><div><b>M3 Gelassenheit</b><br>Keine Heilung im Rätsel; dafür kostet der erste Fehler jedes Rätsels keine LP, und die Rast heilt +2 mehr.</div></label>
+  <label class="opt"><input type="radio" name="monk" value="M4"><div><b>M4 Abgeschwächt</b><br>Wie heute, aber alle 10 Ziffern (ab Stufe 15 alle 8), höchstens 3 LP pro Rätsel.</div></label>
+
+  <h2>6. Passives aller Klassen</h2>
+  <p class="why">Einschätzung aus Code und Werten; hake die Vorschläge an, die gebaut werden sollen.</p>
+  <table>
+    <tr><th></th><th>Klasse</th><th>Heute</th><th>Einschätzung</th><th>Vorschlag</th></tr>
+    <tr><td><input type="checkbox" value="P-NF"></td><td>Zahlen-Freak (10 LP, 10 Bleistift)</td><td>Rätsel ohne Fehler: +1 Neuwurf-Marke</td><td>schwach, kaum spürbar</td><td>zusätzlich +10 Gold pro fehlerfreiem Rätsel</td></tr>
+    <tr><td></td><td>Gartenmönch (14 LP)</td><td>+1 LP alle 5 Ziffern</td><td>zu stark</td><td>siehe Abschnitt 5</td></tr>
+    <tr><td><input type="checkbox" value="P-SA"></td><td>Schrein-Archivar (8 LP, 15 Bleistift)</td><td>jede Bleistiftmarke: 25 % Chance, die Ziffer aufzudecken</td><td>stark und zufällig, lädt zum Bleistift-Spammen ein</td><td>jede 5. Bleistiftmarke deckt eine Ziffer auf (planbar)</td></tr>
+    <tr><td></td><td>Koi-Spieler (9 LP, 2 Relikte)</td><td>33 %: Fehler kostet nichts; 33 %: richtige Ziffer +3 Gold</td><td>stark, aber passt zum Glücksspiel</td><td>so lassen</td></tr>
+    <tr><td></td><td>Steingärtner (11 LP, 3 Plätze)</td><td>erstes Item pro Rätsel wird nicht verbraucht</td><td>gut, stark mit guten Items</td><td>so lassen</td></tr>
+    <tr><td><input type="checkbox" value="P-LS"></td><td>Laternenseher (7 LP)</td><td>Boss-Regeln 30 % schwächer, Vorschau und ein freier Neuwurf am Tor</td><td>wirkt nur am Boss, auf der Etage nichts</td><td>zusätzlich: Nebel hebt sich auf jedem Brett um 1 Feld pro richtiger Ziffer</td></tr>
+    <tr><td><input type="checkbox" value="P-RD"></td><td>Schilfduellant (9 LP)</td><td>Rätsel ohne Bleistift: +2 Bleistift; alle 5 davon +1 LP</td><td>widersprüchlich (Bleistift als Lohn fürs Nicht-Benutzen), schwach</td><td>Rätsel ohne Bleistift: +50 % Gold und +1 LP</td></tr>
+    <tr><td><input type="checkbox" value="P-QC"></td><td>Stiller Kartograf (12 LP)</td><td>nach perfektem Feld: Vorschau des nächsten, ½ Stern leichter</td><td>kaum sichtbar</td><td>sieht immer alle Felder der Etage; das nächste Rätsel nach einem perfekten ist ½ Stern leichter</td></tr>
+  </table>
+</main>
+<div class="bar"><button id="copy">Auswahl kopieren</button><textarea id="out" readonly></textarea></div>
+<script>
+document.getElementById('copy').addEventListener('click', async () => {
+  const pick = n => (document.querySelector(`input[name="${n}"]:checked`) || {}).value || '-';
+  const passives = [...document.querySelectorAll('input[type=checkbox]:checked')].map(i => i.value).join(', ') || '-';
+  const text = `Playtest 0.4.1 Auswahl\nPfad: ${pick('path')}\nTasche voll: ${pick('swap')}\nDrei Etagen: ${pick('floors')}\nNebel/Items: ${pick('fog')}\nMönch: ${pick('monk')}\nPassives bauen: ${passives}`;
+  const out = document.getElementById('out'); out.value = text;
+  try { await navigator.clipboard.writeText(text); } catch (e) { out.select(); }
+});
+</script>
+</body>
+</html>

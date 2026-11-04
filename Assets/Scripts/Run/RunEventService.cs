@@ -5,7 +5,7 @@ using SudokuRoguelike.Items;
 
 namespace SudokuRoguelike.Run
 {
-    public sealed class RunEventService
+    public sealed partial class RunEventService
     {
         private Random _random;
 
@@ -38,9 +38,12 @@ namespace SudokuRoguelike.Run
             _itemService = new ItemService(seed ^ 0xE4E5);
         }
 
-        public RunEvent BuildEvent(int floorIndex, int depth)
+        public RunEvent BuildEvent(int floorIndex, int depth, RunState state = null)
         {
             var events = GetEventPool(floorIndex);
+            // The Blood Lantern only comes while a curse is active (RM-104).
+            if (state != null && (state.ActiveCurseIds == null || state.ActiveCurseIds.Count == 0) && events.Exists(e => !e.NeedsCurse))
+                events.RemoveAll(e => e.NeedsCurse);
             var picked = events[_random.Next(events.Count)];
             picked.Id = $"evt_{floorIndex}_{depth}_{_random.Next(10000)}";
             return picked;
@@ -61,10 +64,12 @@ namespace SudokuRoguelike.Run
             yield return "RunEvent.Result.Done";
             yield return "RunEvent.Result.Separator";
             yield return "RunEvent.OptionLabelWithEffect";
-
-            for (var i = 0; i < EventLocalizationSpecs.Length; i++)
+            foreach (var key in PackResultKeys) yield return key;
+            var specs = new List<(string id, int optionCount)>(EventLocalizationSpecs);
+            specs.AddRange(PackLocalizationSpecs);
+            for (var i = 0; i < specs.Count; i++)
             {
-                var spec = EventLocalizationSpecs[i];
+                var spec = specs[i];
                 yield return EventTitleKey(spec.id);
                 yield return EventDescriptionKey(spec.id);
                 for (var optionIndex = 0; optionIndex < spec.optionCount; optionIndex++)
@@ -131,10 +136,7 @@ namespace SudokuRoguelike.Run
                 ItemInstance granted = null;
                 for (var i = 0; i < slots.Count; i++) { if (slots[i] != null) { granted = slots[i]; break; } }
                 if (granted != null && state.HeldItems.Count < state.ItemSlots)
-                {
-                    state.HeldItems.Add(granted);
-                    parts.Add(LocalizationService.Format("RunEvent.Result.ItemGain", "+{0}", ItemService.GetItemName(granted.Type)));
-                }
+                    AddToBag(state, granted, parts);
             }
 
             if (!string.IsNullOrEmpty(option.CurseId))
@@ -150,6 +152,7 @@ namespace SudokuRoguelike.Run
                 }
             }
 
+            ResolvePackOption(state, option, parts);   // RM-104 (RunEventService.Pack.cs)
             return parts.Count > 0
                 ? string.Join(LocalizationService.T("RunEvent.Result.Separator", ", "), parts)
                 : LocalizationService.T("RunEvent.Result.NothingHappened", "Nothing happened.");
@@ -174,7 +177,7 @@ namespace SudokuRoguelike.Run
 
         private List<RunEvent> BuildFullEventPool()
         {
-            return new List<RunEvent>
+            var pool = new List<RunEvent>
             {
                 // ── Park bench (rest) ──
                 new RunEvent
@@ -329,6 +332,8 @@ namespace SudokuRoguelike.Run
                     }
                 }
             };
+            pool.AddRange(BuildPackEvents());   // RM-104 (RunEventService.Pack.cs)
+            return pool;
         }
     }
 }

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Run;
 using SudokuRoguelike.Data;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -224,7 +225,8 @@ namespace SudokuRoguelike.UI
                 return F("InRun.Event.NeedGold", option.GoldCost, state.CurrentGold);
             if (option.PencilCost > state.CurrentPencil)
                 return F("InRun.Event.NeedPencil", option.PencilCost, state.CurrentPencil);
-            return null;
+            var pack = RunEventService.PackBlockKey(option, state);   // RM-104: Max HP, a curse, an item to trade
+            return pack == null ? null : F(pack, option.MaxHpCost, state.MaxHP);
         }
 
         private static string CostText(EventOption option)
@@ -233,6 +235,7 @@ namespace SudokuRoguelike.UI
             if (option.GoldCost > 0) parts.Add(F("RunEvent.Result.GoldCost", option.GoldCost));
             if (option.HpCost > 0) parts.Add(F("RunEvent.Result.HpCost", option.HpCost));
             if (option.PencilCost > 0) parts.Add(F("RunEvent.Result.PencilCost", option.PencilCost));
+            if (option.MaxHpCost > 0) parts.Add(F("RunEvent.Result.MaxHpCost", option.MaxHpCost));
             return parts.Count > 0 ? string.Join(" ", parts) : T("InRun.Event.Free", "free");
         }
 
@@ -240,7 +243,9 @@ namespace SudokuRoguelike.UI
         private static Color GainColor(EventOption option)
         {
             if (!string.IsNullOrEmpty(option.CurseId)) return ScrollUiKit.Vermilion;
-            var gains = option.GoldGain > 0 || option.HpGain > 0 || option.PencilGain > 0 || option.MaxHpGain > 0 || option.GrantRandomItem;
+            var gains = option.GoldGain > 0 || option.HpGain > 0 || option.PencilGain > 0 || option.MaxHpGain > 0 || option.GrantRandomItem
+                        || option.MaxPencilGain > 0 || option.GrantRandomRelic || option.GrantRareItem || option.RemoveCurses != 0
+                        || option.WagerGold > 0 || option.UpgradeItem;
             return gains ? new Color(0.18f, 0.42f, 0.23f, 1f) : ScrollUiKit.InkSoft;
         }
 

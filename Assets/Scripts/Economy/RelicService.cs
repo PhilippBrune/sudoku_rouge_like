@@ -26,9 +26,12 @@ namespace SudokuRoguelike.Economy
 
         // Base pools (always available at H0).
         private static readonly RelicId[] BaseT1Pool = { RelicId.SmoothPebble, RelicId.CrackedTeacup, RelicId.WoodenComb, RelicId.MossToken };
-        private static readonly RelicId[] BaseT2Pool = { RelicId.KoiReflectionRelic, RelicId.MonkCharm, RelicId.CopperTortoise, RelicId.JadeHairpin, RelicId.StoneSundial };
-        private static readonly RelicId[] BaseT3Pool = { RelicId.SakuraSeal, RelicId.CrimsonFan, RelicId.WisteriaBranch, RelicId.PaperCrane, RelicId.PorcelainMask };
-        private static readonly RelicId[] BaseT4Pool = { RelicId.TransmutedSigil, RelicId.PhoenixFeather, RelicId.SpiritLantern, RelicId.MoonstoneCompass };
+        private static readonly RelicId[] BaseT2Pool = { RelicId.KoiReflectionRelic, RelicId.MonkCharm, RelicId.CopperTortoise, RelicId.JadeHairpin, RelicId.StoneSundial,
+            RelicId.CrackedBell, RelicId.LanternOfDaring, RelicId.DryInkstone };   // RM-104
+        private static readonly RelicId[] BaseT3Pool = { RelicId.SakuraSeal, RelicId.CrimsonFan, RelicId.WisteriaBranch, RelicId.PaperCrane, RelicId.PorcelainMask,
+            RelicId.TwinKoi, RelicId.GoldLeafBrush, RelicId.SmoulderingIncense };   // RM-104
+        private static readonly RelicId[] BaseT4Pool = { RelicId.TransmutedSigil, RelicId.PhoenixFeather, RelicId.SpiritLantern, RelicId.MoonstoneCompass,
+            RelicId.OniPact };   // RM-104
         private static readonly RelicId[] BaseLegPool = { RelicId.GoldenRoot, RelicId.SilentGrid, RelicId.ShiftingGarden, RelicId.EternalLotus, RelicId.DragonsEye };
 
         // [HARMONY] Harmony-gated relic entries: (RelicId, Tier, MinHarmonyLevel)
@@ -389,7 +392,7 @@ namespace SudokuRoguelike.Economy
             (float)Math.Pow(0.80f, CountRelicsOfType(state, RelicId.SpiritLantern));
 
         public static int GetBonusRewardSlots(RunState state) =>
-            CountRelicsOfType(state, RelicId.StoneSundial);
+            CountRelicsOfType(state, RelicId.StoneSundial) + CountRelicsOfType(state, RelicId.OniPact);
 
         public static int GetRelicNodeTierBonus(RunState state) =>
             CountRelicsOfType(state, RelicId.MoonstoneCompass);
@@ -421,6 +424,9 @@ namespace SudokuRoguelike.Economy
                 case RelicId.LanternOfVoid:
                     state.BossModifiersAlwaysHidden = true;
                     break;
+                default:
+                    ApplyTradePickup(state, relic.Id);   // RM-104, RelicService.Trade.cs
+                    break;
             }
         }
 
@@ -446,8 +452,13 @@ namespace SudokuRoguelike.Economy
                     case RelicId.TempleVow:
                         state.TempleVowReady = true;
                         break;
+                    case RelicId.SmoulderingIncense:   // [REQ: RELIC-TRADE-001]
+                        state.CurrentHP = Math.Max(1, state.CurrentHP - 1);
+                        SolveOneBox(board, state.Seed ^ state.CurrentFloor ^ 0x1C3E);
+                        break;
                 }
             }
+            state.GoldLeafUsedThisPuzzle = false;
             // [C1-B] Reset per-puzzle CrackedStone mistake counter
             state.CrackedStoneMistakesThisPuzzle = 0;
         }
@@ -519,6 +530,12 @@ namespace SudokuRoguelike.Economy
                         // [REQ: RELIC-SIG-002] Exactly one mistake: the puzzle's gold doubles.
                         if (level.Mistakes == 1) gold *= 2;
                         break;
+                    case RelicId.OniPact:   // [REQ: RELIC-TRADE-001]
+                        gold = (int)Math.Round(gold * 1.5f, MidpointRounding.AwayFromZero);
+                        break;
+                    case RelicId.LanternOfDaring:   // [REQ: RELIC-PACK-001] the route of the tile just solved
+                        gold = LanternOfDaringGold(state, gold);
+                        break;
                 }
             }
         }
@@ -534,6 +551,14 @@ namespace SudokuRoguelike.Economy
             {
                 switch (relic.Id)
                 {
+                    case RelicId.DryInkstone:   // [REQ: RELIC-TRADE-001] every 5-digit combo heals 1 HP
+                        if (state.ComboStreak > 0 && state.ComboStreak % 5 == 0)
+                            state.CurrentHP = Math.Min(state.MaxHP, state.CurrentHP + 1);
+                        break;
+                    case RelicId.GoldLeafBrush:   // [REQ: RELIC-PACK-001] once per puzzle, at a combo of 10
+                        if (state.ComboStreak >= 10 && !state.GoldLeafUsedThisPuzzle)
+                            state.GoldLeafReady = state.GoldLeafUsedThisPuzzle = true;
+                        break;
                     case RelicId.MonkCharm:
                         // [REDESIGN] Every 5-combo: +5 gold AND +1 Pencil (was +2 gold only)
                         if (state.ComboStreak > 0 && state.ComboStreak % 5 == 0)
@@ -762,6 +787,13 @@ namespace SudokuRoguelike.Economy
                 RelicId.WisteriaBranch => "Wisteria Branch",
                 RelicId.PaperCrane => "Paper Crane",
                 RelicId.PorcelainMask => "Porcelain Mask",
+                RelicId.CrackedBell => "Cracked Bell",
+                RelicId.TwinKoi => "Twin Koi",
+                RelicId.GoldLeafBrush => "Gold Leaf Brush",
+                RelicId.LanternOfDaring => "Lantern of Daring",
+                RelicId.OniPact => "Oni Pact",
+                RelicId.SmoulderingIncense => "Smouldering Incense",
+                RelicId.DryInkstone => "Dry Inkstone",
                 RelicId.TransmutedSigil => "Transmuted Sigil",
                 RelicId.PhoenixFeather => "Phoenix Feather",
                 RelicId.SpiritLantern => "Spirit Lantern",
@@ -856,6 +888,13 @@ namespace SudokuRoguelike.Economy
                 RelicId.OpenMargin        => "infinity_stone",
                 RelicId.SteadyHand        => "temple_bell",
                 RelicId.CageWhisper       => "torii_lock",
+                RelicId.CrackedBell       => "sacred_bell",
+                RelicId.TwinKoi           => "dual_mask",
+                RelicId.GoldLeafBrush     => "golden_bloom",
+                RelicId.LanternOfDaring   => "flow_ribbon",
+                RelicId.OniPact           => "shattered_mask",
+                RelicId.SmoulderingIncense => "flame_stone",
+                RelicId.DryInkstone       => "corrupted_path",
                 _ => ""
             };
         }
@@ -865,7 +904,11 @@ namespace SudokuRoguelike.Economy
             RelicId.GoldenRoot or RelicId.SilentGrid or RelicId.ShiftingGarden or
             RelicId.EternalLotus or RelicId.DragonsEye or
             RelicId.LanternOfVoid => "legendary",  // [HARMONY] legendary-tier harmony relic
-            RelicId.CountingBeads or RelicId.SecondWick or RelicId.OpenMargin => "meta",
+            RelicId.CountingBeads or RelicId.SecondWick or RelicId.OpenMargin
+                or RelicId.TwinKoi or RelicId.DryInkstone => "meta",
+            RelicId.CrackedBell => "items",
+            RelicId.GoldLeafBrush or RelicId.LanternOfDaring or RelicId.SmoulderingIncense => "ui",
+            RelicId.OniPact => "economy",
             RelicId.PrayerBeads or RelicId.InkStone or RelicId.SingleStroke or RelicId.CompassNeedle
                 or RelicId.SteadyHand or RelicId.CageWhisper => "ui",
             RelicId.LuckyScale or RelicId.MossPouch or RelicId.GildedBox => "economy",
@@ -890,6 +933,13 @@ namespace SudokuRoguelike.Economy
                 RelicId.WisteriaBranch => "Heal 2 HP at the start of each floor.",
                 RelicId.PaperCrane => "First item use each puzzle is free (no charge cost).",
                 RelicId.PorcelainMask => "Elite reward rarity upgraded by one tier.",
+                RelicId.CrackedBell => "−2 Max HP now. Every boss you defeat gives +2 Max HP.",
+                RelicId.TwinKoi => "Every item you receive has one more charge.",
+                RelicId.GoldLeafBrush => "A combo of 10 raises the rarity of the next reward by one step (once per puzzle).",
+                RelicId.LanternOfDaring => "Puzzles on the Risk route pay +50 % gold, on the Calm route −20 %.",
+                RelicId.OniPact => "Every mistake costs 1 HP more. Every puzzle pays +50 % gold and shows one more reward.",
+                RelicId.SmoulderingIncense => "Each puzzle start costs 1 HP (never below 1). Each puzzle starts with one box solved.",
+                RelicId.DryInkstone => "−5 max pencil now. Every combo of 5 heals 1 HP.",
                 RelicId.TransmutedSigil => "+25% gold from puzzle completion.",
                 RelicId.PhoenixFeather => "Prevent death once per run (heal to 1 HP).",
                 RelicId.SpiritLantern => "Shop prices reduced by 20%.",

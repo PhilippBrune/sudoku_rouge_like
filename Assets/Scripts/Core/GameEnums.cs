@@ -294,7 +294,12 @@ namespace SudokuRoguelike.Core
         RiceBowl,          // Rare, cages and arrows: up to 3 cells of one cage or arrow
         MossStone,         // Normal, cells: 2 marked, paired or fogged cells
         CompassOfOrder,    // Rare, whole board: the 2 most constrained cells of the extra houses
-        SunMedallion       // Rare, outside clues: the first 2 cells one clue reads
+        SunMedallion,      // Rare, outside clues: the first 2 cells one clue reads
+        // [REQ: ITEM-PACK-001] [REQ: ITEM-TRADE-001] RM-104 (owner's picks 2026-11-04)
+        SeedPouch,         // Rare: after the next 2 solved puzzles, a random Rare item
+        BloodInk,          // Rare: costs 2 HP, fills 3 random empty cells
+        InkPact,           // Rare: costs 6 pencil marks, completes the most-filled row, column or box
+        RedThread          // Rare: costs 1 Max HP, a random relic
     }
 
     public enum RelicId
@@ -349,7 +354,15 @@ namespace SudokuRoguelike.Core
         GildedBox,         // every finished box pays 1 gold
         OpenMargin,        // pencil marks cost nothing on boards up to 6×6
         SteadyHand,        // the first mistake of each puzzle costs no HP
-        CageWhisper        // cages with a hidden sum show its last digit
+        CageWhisper,       // cages with a hidden sum show its last digit
+        // [REQ: RELIC-PACK-001] [REQ: RELIC-TRADE-001] RM-104 (owner's picks 2026-11-04)
+        CrackedBell,       // −2 Max HP at once, +2 Max HP for every boss defeated
+        TwinKoi,           // every item you receive has one more charge
+        GoldLeafBrush,     // a combo of 10 raises the next reward's rarity (once per puzzle)
+        LanternOfDaring,   // Risk route puzzles +50 % gold, Calm route −20 %
+        OniPact,           // mistakes cost 1 HP more; puzzles +50 % gold and one more reward plaque
+        SmoulderingIncense,// each puzzle start costs 1 HP (never below 1); each puzzle starts with a box solved
+        DryInkstone        // −5 max pencil at once; every 5-digit combo heals 1 HP
     }
 
     public enum RelicTier

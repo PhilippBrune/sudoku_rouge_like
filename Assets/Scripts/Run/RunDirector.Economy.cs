@@ -237,7 +237,7 @@ namespace SudokuRoguelike.Run
             for (var i = 0; i < RolledItemSlots.Count; i++)
                 if (RolledItemSlots[i] != null)
                     RolledItemSlots[i] = _itemService.RollOneItem(stars, GetCurrentClassLevel(), classId);
-            ApplyEmptyCanvas();
+            ApplyRewardRarity();
             return RolledItemSlots;
         }
 

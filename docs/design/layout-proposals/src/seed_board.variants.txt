@@ -1,0 +1,4 @@
+a|v=a
+a_friends|v=a&tab=friends
+b_friends|v=b&tab=friends
+c|v=c

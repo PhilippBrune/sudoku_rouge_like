@@ -164,6 +164,12 @@ namespace SudokuRoguelike.UI
                 ("InRun.Reward.Row.Pencil", $"{state.CurrentPencil} / {state.MaxPencil}", ScrollUiKit.Ink, "ui/icon_ink_save")
             };
             if (koi > 0) gains.Insert(1, ("InRun.Reward.Row.GoldenKoi", "+" + koi, ScrollUiKit.Vermilion, "items/icon_golden_koi"));
+            // [REQ: ITEM-PACK-001] A Seed Pouch that ripened with this puzzle names its item.
+            if (run.LastHarvest != null)
+            {
+                gains.Add(("InRun.Reward.Row.SeedPouch", ItemService.GetItemName(run.LastHarvest.Type), ScrollUiKit.Vermilion, "items/icon_seed_pouch"));
+                run.LastHarvest = null;
+            }
             var step = gains.Count > 4 ? 0.062f : 0.0757f;
             for (var k = 0; k < gains.Count; k++)
             {

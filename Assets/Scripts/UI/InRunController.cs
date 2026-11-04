@@ -2943,6 +2943,8 @@ namespace SudokuRoguelike.UI
                 return;
             }
 
+            if (UseTradeItem(slotIndex, item, run)) { _hudView.Refresh(run.State, run.CurrentLevelConfig); return; }   // RM-104
+
             switch (item.Type)
             {
                 // ── Ink Well: restore pencil marks ──

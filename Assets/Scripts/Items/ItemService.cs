@@ -198,6 +198,19 @@ namespace SudokuRoguelike.Items
             return new ItemInstance { Id = item.Id, Type = type, Rarity = rarity, Charges = GetDefaultCharges(type) };
         }
 
+        /// <summary>[REQ: RELIC-PACK-001] [REQ: EVENT-PACK-001] The item one rarity higher (Gold Leaf Brush, the Wandering
+        /// Monk): Normal becomes Rare as Empty Canvas does; a tiered Rare item turns Epic, a fixed-rarity one becomes a random
+        /// Epic item; an Epic item stays as it is.</summary>
+        public ItemInstance OneTierUp(ItemInstance item, int classLevel, ClassId classId = (ClassId)0,
+            Func<ItemType, bool> taken = null)
+        {
+            if (item == null || item.Rarity == ItemRarity.Epic) return item;
+            if (item.Rarity == ItemRarity.Normal) return AtLeastRare(item, classLevel, classId, taken);
+            var epics = new[] { ItemType.KoiDragonScale, ItemType.GoldenKintsugiJar, ItemType.SilkFan };
+            var type = IsTiered(item.Type) ? item.Type : epics[_random.Next(epics.Length)];
+            return new ItemInstance { Id = item.Id, Type = type, Rarity = ItemRarity.Epic, Charges = GetDefaultCharges(type) };
+        }
+
         // ── Rarity & Type ──
 
         private ItemRarity RollItemRarity(int stars, int classLevel)
@@ -239,7 +252,8 @@ namespace SudokuRoguelike.Items
 
             if (rarity == ItemRarity.Rare && _random.NextDouble() < 0.30)
             {
-                var rares = new[] { ItemType.GinkgoLeaf, ItemType.RicePaperUmbrella, ItemType.TempleIncense, ItemType.GoldenKoi, ItemType.TempleStamp };
+                var rares = new[] { ItemType.GinkgoLeaf, ItemType.RicePaperUmbrella, ItemType.TempleIncense, ItemType.GoldenKoi, ItemType.TempleStamp,
+                    ItemType.SeedPouch, ItemType.BloodInk, ItemType.InkPact, ItemType.RedThread };   // RM-104
                 return rares[_random.Next(rares.Length)];
             }
 
@@ -284,6 +298,8 @@ namespace SudokuRoguelike.Items
                 // General-pool items: BambooScroll + GardenLantern are Normal; GoldenKoi + TempleStamp are Rare
                 ItemType.BambooScroll or ItemType.GardenLantern => ItemRarity.Normal,
                 ItemType.GoldenKoi or ItemType.TempleStamp => ItemRarity.Rare,
+                // [REQ: ITEM-PACK-001] [REQ: ITEM-TRADE-001] RM-104
+                ItemType.SeedPouch or ItemType.BloodInk or ItemType.InkPact or ItemType.RedThread => ItemRarity.Rare,
                 // [REQ: ITEM-COUNTER-001..006] Counter items: the two smaller ones Normal, the rest Rare.
                 ItemType.TwinPebbles or ItemType.MossStone => ItemRarity.Normal,
                 ItemType.WaterBasin or ItemType.RiceBowl or ItemType.CompassOfOrder or ItemType.SunMedallion => ItemRarity.Rare,
@@ -424,6 +440,10 @@ namespace SudokuRoguelike.Items
                 ItemType.MossStone      => "Moss Stone",
                 ItemType.CompassOfOrder => "Compass of Order",
                 ItemType.SunMedallion   => "Sun Medallion",
+                ItemType.SeedPouch      => "Seed Pouch",
+                ItemType.BloodInk       => "Blood Ink",
+                ItemType.InkPact        => "Ink Pact",
+                ItemType.RedThread      => "Red Thread",
                 _ => type.ToString()
             };
             return LocalizationService.T(ItemNameKey(type), fallback);
@@ -474,6 +494,10 @@ namespace SudokuRoguelike.Items
                 ItemType.MossStone         => "moss_stone",
                 ItemType.CompassOfOrder    => "compass_of_order",
                 ItemType.SunMedallion      => "sun_medallion",
+                ItemType.SeedPouch => "seed_pouch",
+                ItemType.BloodInk => "blood_ink",
+                ItemType.InkPact => "ink_pact",
+                ItemType.RedThread => "jade_amulet",
                 _ => ""
             };
         }
@@ -547,6 +571,10 @@ namespace SudokuRoguelike.Items
                 ItemType.MossStone      => LocalizationService.T(ItemDescriptionKey(type, rarity), "Cells: writes the correct digit in 2 marked, paired or fogged cells, the selected one first."),
                 ItemType.CompassOfOrder => LocalizationService.T(ItemDescriptionKey(type, rarity), "Whole board: writes the correct digit in the 2 empty cells with the fewest possible digits - on the diagonals, windows and extra regions; under rules like Anti-Knight anywhere."),
                 ItemType.SunMedallion   => LocalizationService.T(ItemDescriptionKey(type, rarity), "Outside clues: writes the correct digit in the first 2 empty cells one clue reads - the selected cell's clue first."),
+                ItemType.SeedPouch      => LocalizationService.T(ItemDescriptionKey(type, rarity), "Plant it: after the next 2 solved puzzles you get a random Rare item."),
+                ItemType.BloodInk       => LocalizationService.T(ItemDescriptionKey(type, rarity), "Costs 2 HP: writes the correct digit in 3 random empty cells."),
+                ItemType.InkPact        => LocalizationService.T(ItemDescriptionKey(type, rarity), "Costs 6 pencil marks: completes the most-filled row, column or box."),
+                ItemType.RedThread      => LocalizationService.T(ItemDescriptionKey(type, rarity), "Costs 1 Max HP: you get a random relic."),
                 _ => ""
             };
         }

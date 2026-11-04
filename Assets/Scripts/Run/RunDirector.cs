@@ -681,7 +681,7 @@ namespace SudokuRoguelike.Run
             // (GoldEconomySystem lever L6): healing and shield items become survival tools late in a run.
             damage = Math.Max(damage, LateFloorMistakeHpCost(State));
             if (IsDebuffActive(BossModifierId.DoublePenalty)) damage *= 2;
-            damage = Math.Max(damage, CurseService.GetMistakeDamage(State)); // phantom_pain
+            damage = RelicService.MistakeDamage(State, Math.Max(damage, CurseService.GetMistakeDamage(State))); // phantom_pain, Oni Pact
             ApplyMistakePenalty(damage);
 
             // [REQ: HARMONY-FLAG-003] H7+: every mistake also costs 1 pencil.
@@ -1698,12 +1698,12 @@ namespace SudokuRoguelike.Run
 
             TileXpLog.Add(xpEntry);
             _analytics?.RecordPuzzleSolved(level.Mistakes, goldBase, State.CurrentFloor);
-            Meta.ClassChallenges.OnPuzzleSolved(State, level, config);   // [REQ: CLASS-CHALLENGE-001]
+            OnPuzzleSolvedContent(level, config);   // class challenges, Seed Pouches (RunDirector.Content.cs)
             _analytics?.RecordTileXp(xpEntry);
 
             if (config.IsBoss && !State.IsSeasonalChallenge)
             {
-                State.BossesDefeatedThisRun++;
+                RelicService.OnBossDefeated(State);   // counts the boss; Cracked Bell (RM-104)
                 // [REQ: META-COMPLETE-001] Player modifiers of a defeated boss count toward completion (GAP-009).
                 State.ClearedBossModifiersThisRun ??= new List<BossModifierId>();
                 foreach (var mod in config.ActiveModifiers)
@@ -1809,22 +1809,8 @@ namespace SudokuRoguelike.Run
             // goes when that reward is taken or left (ResolveRewardRoll), so a resume on the reward screen pays it again.
             if (State.MoonshadeOfferingActive && RolledItemSlots.Count > 0)
                 RolledItemSlots[0] = null;
-            ApplyEmptyCanvas();
+            ApplyRewardRarity();   // Empty Canvas, Gold Leaf Brush (RunDirector.Content.cs)
             return RolledItemSlots;
-        }
-
-        // [REQ: HARMONY-PERK-005] Empty Canvas: every item in a reward is Rare or better (GAP-069).
-        private void ApplyEmptyCanvas()
-        {
-            if (!State.EmptyCanvasActive || RolledItemSlots == null) return;
-            var classId = State.IsSeasonalChallenge ? (ClassId)0 : State.ClassId;
-            for (var i = 0; i < RolledItemSlots.Count; i++)
-            {
-                if (RolledItemSlots[i] == null) continue;
-                var index = i;
-                RolledItemSlots[i] = _itemService.AtLeastRare(RolledItemSlots[i], GetCurrentClassLevel(), classId,
-                    type => RolledItemSlots.Exists(other => other != null && other != RolledItemSlots[index] && other.Type == type));
-            }
         }
 
         public void PickRewardItem(int slotIndex)
@@ -1840,7 +1826,7 @@ namespace SudokuRoguelike.Run
         // The rolled reward is taken, swapped in or left: Moonshade Offering's first-reward price is paid.
         private void ResolveRewardRoll()
         {
-            if (RolledItemSlots != null) State.MoonshadeOfferingActive = false;
+            if (RolledItemSlots != null) State.MoonshadeOfferingActive = State.GoldLeafReady = false;
             RolledItemSlots = null;
         }
 
@@ -1848,7 +1834,7 @@ namespace SudokuRoguelike.Run
         {
             if (State.HeldItems.Count < State.ItemSlots)
             {
-                State.HeldItems.Add(item);
+                State.HeldItems.Add(RelicService.OnItemReceived(State, item));   // Twin Koi
                 if (DailyGoals != null && !State.IsSeasonalChallenge)
                     DailyGoalService.EvaluateInRun(DailyGoals, State, CurrentLevelState, DailyGoalService.TriggerItemCollected);
             }
@@ -1860,7 +1846,7 @@ namespace SudokuRoguelike.Run
         public void ReplaceItemInInventory(int slotIndex, ItemInstance newItem)
         {
             if (slotIndex < 0 || slotIndex >= State.HeldItems.Count) return;
-            State.HeldItems[slotIndex] = newItem;
+            State.HeldItems[slotIndex] = RelicService.OnItemReceived(State, newItem);   // Twin Koi
             ResolveRewardRoll();
             if (DailyGoals != null && !State.IsSeasonalChallenge)
                 DailyGoalService.EvaluateInRun(DailyGoals, State, CurrentLevelState, DailyGoalService.TriggerItemCollected);

@@ -1,13 +1,14 @@
 # Items & Relics System
 
-**Version:** 2.7  
-**Date:** 2026-11-03  
+**Version:** 2.8  
+**Date:** 2026-11-04  
 **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.8 | 2026-11-04 | implemented | RM-104 (owner's ticks 2026-11-04, list `docs/design/rm104-content-proposals.html` and the trade round): 7 relics (RELIC-PACK-001, RELIC-TRADE-001), 4 items (ITEM-PACK-001, ITEM-TRADE-001) and 7 events (EVENT-PACK-001, EVENT-TRADE-001). The trades pay with HP, Max HP or pencil marks for a strong effect (the owner's wish). |
 | 2.7 | 2026-11-03 | implemented | Owner (2026-11-03), on the proposals of OPEN_POINTS 2.0: the Pattern Scroll lists every drawn piece by its rule's name in the player's language, cell markers, cell pairs, outside clues, quadruples and extra regions included (ITEM-SCROLL-001). |
 | 2.6 | 2026-11-03 | implemented | Spirit Trials start with one item in one slot (TRIAL-SESSION-001, owner 2026-11-03, GAP-113); Endless Zen keeps `ItemSlots = 0`. |
 | 2.5 | 2026-10-27 | implemented | Owner request (2026-10-27): the concept files are merged into their specs. The class relic concept (v1.1) is in "Class relics: why and the owner's answers": the reason, the per-class table, the owner's answers and what is still open. The item part of the gold and items concept (why the counter items) is in "Counter Items". Its lever L3 is named in GoldEconomySystem 2.3. No rule changed. |
@@ -185,6 +186,23 @@ playtest.
 | Cage Whisper | Cages with a hidden sum (the Hidden Killer rule) show its last digit: "?7". |
 
 Icons: the twelve borrow existing game icons (`RelicService.GetIconFolder`) until they have art of their own.
+
+### The RM-104 content (2.8)
+
+The owner ticked R3 to R6, I3 and E2 to E4 from the first list and asked for trades: pay HP, Max HP or pencil marks
+for a strong effect; of those they took three relics, three items and all four events (2026-11-04).
+
+| ID | Requirement |
+|---|---|
+| RELIC-PACK-001 | **Cracked Bell** (Tier 2): −2 Max HP when taken (never below 1); every boss defeated gives +2 Max HP and heals 2. **Twin Koi** (Tier 3): every item that goes into the bag (reward, swap, shop, event, Seed Pouch) has one more charge. **Gold Leaf Brush** (Tier 3): a combo of 10 readies the next reward, once per puzzle; every item of it is one rarity higher (`ItemService.OneTierUp`: Normal to Rare as Empty Canvas, a tiered Rare item to Epic, a fixed Rare one to a random Epic; Epic stays); a reroll keeps the raise, taking or leaving the reward ends it. **Lantern of Daring** (Tier 2): a puzzle on the Risk route pays +50 % gold, on the Calm route −20 % (the route of the tile just solved). |
+| RELIC-TRADE-001 | **Oni Pact** (Tier 4): every mistake costs 1 HP more; every puzzle pays +50 % gold and the reward shows one more plaque. **Smouldering Incense** (Tier 3): each puzzle start costs 1 HP (never below 1) and solves one box. **Dry Inkstone** (Tier 2): −5 max pencil when taken (never below 1); every combo of 5 heals 1 HP. |
+| ITEM-PACK-001 | **Seed Pouch** (Rare): planted when used; after the next two solved puzzles a random Rare item goes into the bag (it waits while the bag is full), and the reward's tally names it. |
+| ITEM-TRADE-001 | **Blood Ink** (Rare): costs 2 HP (needs more than 2), writes the correct digit in 3 random empty cells. **Ink Pact** (Rare): costs 6 pencil marks, completes the most-filled row, column or box (as the Koi Dragon Scale). **Red Thread** (Rare): costs 1 Max HP (needs more than 1), a random relic of the floor's pool. An item whose price cannot be paid stays in the bag. |
+
+All four items are in the Rare reward pool. Icons borrow game art like the signature relics (the Cracked Bell the
+temple bell, the Red Thread the jade amulet on its cord; the Seed Pouch, Blood Ink and Ink Pact got copies of the bud,
+the scroll stamp and the trade coin in `Resources/items`). The early garden (RUN-EARLY-001) keeps its ten entries; the
+new content is open from the first run.
 
 ### HUD
 

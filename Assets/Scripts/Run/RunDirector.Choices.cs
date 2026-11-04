@@ -107,7 +107,7 @@ namespace SudokuRoguelike.Run
         public RunEvent BuildCurrentEvent()
         {
             _eventService.ReseedForDecision(DecisionSeed(DecisionPurpose.Event));
-            CurrentEvent = _eventService.BuildEvent(State.CurrentFloor, State.Depth);
+            CurrentEvent = _eventService.BuildEvent(State.CurrentFloor, State.Depth, State);
             return CurrentEvent;
         }
 
@@ -117,6 +117,14 @@ namespace SudokuRoguelike.Run
             if (CurrentEvent == null) return string.Empty;
             _eventService.ReseedForDecision(DecisionSeed(DecisionPurpose.EventChoice, optionIndex));
             var summary = _eventService.ResolveChoice(State, CurrentEvent, optionIndex);
+            // [REQ: EVENT-PACK-001] [REQ: EVENT-TRADE-001] A relic from an event comes from the run's relic pool.
+            if (optionIndex >= 0 && optionIndex < CurrentEvent.Options.Count && CurrentEvent.Options[optionIndex].GrantRandomRelic)
+            {
+                var relic = TakeRandomRelic();
+                if (relic != null)
+                    summary += LocalizationService.T("RunEvent.Result.Separator", ", ")
+                               + LocalizationService.Format("RunEvent.Result.RelicGain", "+{0} (relic)", RelicService.GetRelicName(relic.Id));
+            }
             CurrentEvent = null;
             // [REQ: DAILY-WALK-009] The easy goal of the Daily Walk's path (owner's pick for the Risk route goal).
             if (DailyGoals != null)

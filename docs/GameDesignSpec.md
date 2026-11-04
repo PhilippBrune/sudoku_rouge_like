@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.36 | **Date:** 2026-11-04 | **Status:** implemented
+**Version:** 1.37 | **Date:** 2026-11-04 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.37 | 2026-11-04 | implemented | RM-104 events (owner 2026-11-04): seven events, three new choices and four trades (EVENT-PACK-001, EVENT-TRADE-001). |
 | 1.36 | 2026-11-04 | implemented | RM-101 (owner 2026-11-04, "week and month"): a Garden Run on the seed of the week puts its score on the week's Steam board (SEED-BOARD-001). |
 | 1.35 | 2026-11-03 | implemented | Owner's picks (2026-11-03): RM-118 built as "behutsam öffnen" (RUN-EARLY-001/002) and RM-116 as proposal A with the proposed list and 24 achievements (CLASS-CHALLENGE-001/002, UI-STYLE-043). |
 | 1.34 | 2026-11-03 | implemented | Owner (2026-11-03), on the proposals of OPEN_POINTS 2.0: RM-113 closed (the Daily Walk is the short run); RM-120 built (RUN-FIRST-001); the balance check of RM-108 recorded in the run history (RUN-BALANCE-001); RM-118 and RM-116 picked, in that order, their proposals wait for the owner's pick. |
@@ -615,6 +616,8 @@ As built (1.1, GAP-020; Run tab since 1.9, UI-OPT-002): the in-run Options panel
 | RUN-BALANCE-001 | The run history also keeps the balance check of RM-108 (GoldEconomySystem): gold left at the end, shop tiles entered and how many of them bought something, items used. The report prints them for won Garden Runs against the targets (under 80 gold left, 70 % of visits with a purchase, 4 items). |
 | RUN-FIRST-001 | Faster first choice (RM-120): the boards of the tiles the player can pick first are baked first, while the floor entry plays, so the first pick opens a ready board; the path's first tile has the focus (existing). |
 | RUN-EARLY-001 | **The early garden (RM-118, owner's pick "behutsam öffnen").** A Garden Run holds back ten things until the profile's finished runs open them, one per run, in this order: Phoenix Feather (relic), Wishing Fountain (event), Skyscrapers (rule), Shifting Garden, Rare Flower Patch, Sandwich, Eternal Lotus, The Tempting Shrine, Little Killer, Dragon's Eye. A finished run is any run the profile records (the count that opens Endless Zen, `TotalRunsStarted`); a profile with ten has everything. The Daily Walk and a run on a typed seed (the seed of the week too) hold nothing back, so they stay the same for every player; nor do the other modes. |
+| EVENT-PACK-001 | **RM-104 events.** The Koi Pond Wager: bet 20 gold, half and half +50 gold or nothing (the choice's seed decides), or feed the koi (10 gold, +1 HP). The Fallen Lantern (Floor 2+): set it upright (−1 HP, a random relic) or take the oil (+10 pencil marks, the Inkblot curse). The Wandering Monk: the bag's weakest item becomes a random one a rarity higher (blocked with an empty bag), or meditate (+2 HP, −5 pencil marks). Every event can be walked past. |
+| EVENT-TRADE-001 | **RM-104 trade events.** The Bone Carver (Floor 2+): −2 Max HP for a random relic, or −1 Max HP for a random Rare item (blocked when Max HP would reach 0). The Ink Spring: −2 HP for +10 pencil marks and +2 max pencil, or −8 pencil marks for +1 Max HP. The Blood Lantern, offered only while a curse is active: −3 HP lifts every curse, −1 HP lifts one. The Ghost Merchant: −2 HP for 60 gold, or −6 pencil marks for 40 gold. |
 | RUN-EARLY-002 | The Garden Run scroll's "New" column shows what opened since the last plaques (a run of another mode opens things too) as ema plaques (icon, name, "A relic joins the garden" / "An event on the path" / "A rule for the bosses"), after any class it unlocked; two plaques at most, the rest at the next run end (`MetaProgressionState.EarlyGardenShown`). |
 
 **Why one more run (the one-more-run concept, merged in 1.20).** The strongest pulls of the classic roguelikes are a short

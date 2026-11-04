@@ -94,6 +94,9 @@ namespace SudokuRoguelike.Core
 
         // Combo
         public int ComboStreak;
+        public bool GoldLeafReady;            // [REQ: RELIC-PACK-001] Gold Leaf Brush: the next reward is one rarity higher
+        public bool GoldLeafUsedThisPuzzle;
+        public List<int> SeedPouchTimers = new List<int>();   // [REQ: ITEM-PACK-001] puzzles left per planted Seed Pouch
         public int PeakComboThisRun;
         public int PerfectPuzzleStreak; // used by SakuraSeal relic
 
@@ -534,6 +537,7 @@ namespace SudokuRoguelike.Core
         public string Description;
         public List<EventOption> Options = new List<EventOption>();
         public int MinFloor; // 0 = any floor, 1 = floor 2+, 2 = floor 3+, etc. (0-indexed)
+        public bool NeedsCurse;   // only offered while a curse is active (the Blood Lantern)
     }
 
     [Serializable]
@@ -551,6 +555,14 @@ namespace SudokuRoguelike.Core
         public int PencilGain;
         public int MaxHpGain;
         public bool GrantRandomItem;
+        // [REQ: EVENT-PACK-001] [REQ: EVENT-TRADE-001] RM-104 (owner's picks 2026-11-04)
+        public int MaxHpCost;        // never below 1 Max HP; blocks the option when it would
+        public int MaxPencilGain;
+        public bool GrantRandomRelic;
+        public bool GrantRareItem;
+        public int RemoveCurses;     // -1 = every curse; blocks the option without a curse
+        public int WagerGold;        // half and half: +WagerGold or nothing (the choice's seed decides)
+        public bool UpgradeItem;     // the bag's weakest item becomes a random one a rarity higher; blocks with an empty bag
         // Curse trade
         public string CurseId; // if set, applying this option grants this curse
     }

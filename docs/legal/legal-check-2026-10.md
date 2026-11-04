@@ -1,11 +1,12 @@
 # Legal check: Run of the Nine (October 2026)
 
-**Version:** 1.2 | **Date:** 2026-11-03 | **Status:** review (owner's request: "Check if the game violates any laws")
+**Version:** 1.3 | **Date:** 2026-11-04 | **Status:** review (owner's request: "Check if the game violates any laws")
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.3 | 2026-11-04 | review | OpenDyslexic Regular (SIL OFL 1.1) bundled as the optional dyslexia-friendly font (ACCESS-FONT-004, RM-106); its licence travels in `Licenses/` and on the Credits. |
 | 1.2 | 2026-11-03 | review | Owner (2026-11-03), on the proposals of OPEN_POINTS 2.0: content survey draft (simulated gambling ticked, not saved) and a first trademark look (US only; German, EU and international registers not reachable). |
 | 1.1 | 2026-10-22 | review | GAP-068 completed (owner: "implement GAP-068"): every standalone build gets the `Licenses` folder from an editor build step, and the Credits show the texts (LEGAL-LICENSE-001). The game shows a clean Roboto attribution (`Roboto-ATTRIBUTION.txt`); `Roboto-NOTICE.md` stays the internal note. |
 | 1.0 | 2026-10-21 | review | First check of the game, the repository and the release setup against the laws and platform rules that apply to a German developer selling a PC game on Steam worldwide. |
@@ -53,6 +54,7 @@ texts were not in the build). The open points are about the store and the busine
 | Component | Licence | Duty | 0.2.1 |
 |---|---|---|---|
 | Roboto Regular (`Assets/Resources/Fonts/MainFont.ttf`) | Apache 2.0 | Give recipients a copy of the licence and keep the attribution | `Licenses/APACHE-2.0.txt`, `Licenses/Roboto-ATTRIBUTION.txt` (0.2.1 shipped the internal `Roboto-NOTICE.md` instead) |
+| OpenDyslexic Regular (`Assets/Resources/Fonts/OpenDyslexic.otf`, Abbie Gonzalez) | SIL OFL 1.1, Reserved Font Name OpenDyslexic | Ship the licence with the font, do not sell the font on its own, keep the name only for the unmodified font | `Licenses/OpenDyslexic-OFL.txt` and the Credits (since 0.4.2) |
 | Steamworks.NET (compiled into the game) | MIT | Include the copyright and permission notice with copies | `Licenses/Steamworks.NET-LICENSE.md` |
 | Steamworks API (`steam_api64.dll`) | Steamworks SDK Access Agreement | Redistribution allowed for Steam games | nothing to add |
 | Google Mobile Dependency Resolver | Apache 2.0 | Editor-only, not in the build | nothing to add |

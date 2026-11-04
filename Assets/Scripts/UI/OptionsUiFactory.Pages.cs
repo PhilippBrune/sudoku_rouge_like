@@ -303,16 +303,19 @@ namespace SudokuRoguelike.UI
                 opts.Accessibility.AlternativeConstraintSymbols, optCtrl.SetAltSymbols, T("Options.Note.AltSymbols"));
             var tScreenReader = BuildOptionToggle(section, p + "ScreenReader", T("Options.StatusCaptions"), LineMin(4), LineMax(4),
                 opts.Accessibility.ScreenReaderEnabled, optCtrl.SetScreenReaderEnabled, T("Options.Note.StatusCaptions"));
-            var lines = 5;
+            // [REQ: ACCESS-FONT-004] OpenDyslexic for every text (RM-106).
+            var tDyslexia = BuildOptionToggle(section, p + "DyslexiaFont", T("Options.DyslexiaFont"), LineMin(5), LineMax(5),
+                opts.Accessibility.DyslexiaFont, optCtrl.SetDyslexiaFont, T("Options.Note.DyslexiaFont"));
+            var lines = 6;
 
             ArrowRow? textSize = null;
             AccessibilityPreviewController preview = null;
             if (withPreview)
             {
                 // [REQ: ACCESS-FONT-001] Text Size (80–150 %) and the preview board that shows the chosen settings.
-                textSize = BuildPaperValueRow(p + "FontScale", T("Options.TextSize"), section, LineMin(5), LineMax(5),
+                textSize = BuildPaperValueRow(p + "FontScale", T("Options.TextSize"), section, LineMin(6), LineMax(6),
                     opts.Accessibility.FontScale, 0.8f, 1.5f, 0.05f, optCtrl.SetFontScale);
-                lines = 6;
+                lines = 7;
                 var slip = PageSlip(p + "AccSlip", section, T("Accessibility.Preview"), null, 0.30f);
                 var previewRt = EnsureRect("AccessPreview", slip, new Vector2(0.07f, 0.06f), new Vector2(0.93f, 0.82f),
                     Vector2.zero, Vector2.zero);
@@ -325,7 +328,7 @@ namespace SudokuRoguelike.UI
 
             var rows = new List<Selectable[]>
             {
-                Row(tColorblind), Row(tHighContrast), Row(tReduceMotion), Row(tAltSymbols), Row(tScreenReader)
+                Row(tColorblind), Row(tHighContrast), Row(tReduceMotion), Row(tAltSymbols), Row(tScreenReader), Row(tDyslexia)
             };
             if (textSize.HasValue) rows.Add(Row(textSize.Value.Dec, textSize.Value.Inc));
             rows.Add(Row(btnReset));
@@ -339,6 +342,7 @@ namespace SudokuRoguelike.UI
                 tReduceMotion.SetIsOnWithoutNotify(o.Accessibility.ReduceMotion);
                 tAltSymbols.SetIsOnWithoutNotify(o.Accessibility.AlternativeConstraintSymbols);
                 tScreenReader.SetIsOnWithoutNotify(o.Accessibility.ScreenReaderEnabled);
+                tDyslexia.SetIsOnWithoutNotify(o.Accessibility.DyslexiaFont);
                 textSize?.Refresh(o.Accessibility.FontScale);
                 if (preview != null) preview.Refresh(o.Accessibility);
             };

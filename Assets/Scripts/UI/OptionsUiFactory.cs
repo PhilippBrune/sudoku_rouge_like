@@ -188,6 +188,7 @@ namespace SudokuRoguelike.UI
         {
             var rect = EnsureRect(name, parent, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             var text = EnsureComponent<Text>(rect.gameObject);
+            TextSizeFit.Follow(text);   // [REQ: ACCESS-FONT-003]
             text.text = value;
             text.font = InRunUiFactory.GetFont();
             text.fontSize = size;
@@ -227,6 +228,7 @@ namespace SudokuRoguelike.UI
             var lblRect = EnsureRect("Label", rect, Vector2.zero, Vector2.one,
                 new Vector2(10f, 8f), new Vector2(-10f, -8f));
             var text = EnsureComponent<Text>(lblRect.gameObject);
+            TextSizeFit.Follow(text);   // [REQ: ACCESS-FONT-003]
             text.text = label;
             text.font = InRunUiFactory.GetFont();
             text.fontSize = size;
@@ -297,6 +299,7 @@ namespace SudokuRoguelike.UI
             var arrowRect = EnsureRect("Arrow", rect,
                 new Vector2(0.82f, 0.15f), new Vector2(0.96f, 0.85f), Vector2.zero, Vector2.zero);
             var arrowText = EnsureComponent<Text>(arrowRect.gameObject);
+            TextSizeFit.Follow(arrowText);   // [REQ: ACCESS-FONT-003]
             arrowText.font = InRunUiFactory.GetFont();
             arrowText.text = "▼";
             arrowText.alignment = TextAnchor.MiddleCenter;

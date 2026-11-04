@@ -24,6 +24,19 @@ namespace SudokuRoguelike.Meta
         public const int TopEntries = 3;
         private const int MaxNameLength = 20;
 
+        /// <summary>[REQ: SEED-BOARD-001] The board of the week whose seed a Garden Run was started with, "WeeklySeed_2026-W45";
+        /// null for any other seed. A run that began on the seed of the week and ends in the next week stays on its week.</summary>
+        public static string WeeklySeedBoard(int seed, DateTime today)
+        {
+            foreach (var day in new[] { today, today.AddDays(-7) })
+                if (seed == SudokuRoguelike.Run.WeeklySeedService.SeedFor(day))
+                    return $"WeeklySeed_{System.Globalization.ISOWeek.GetYear(day):0000}-W{System.Globalization.ISOWeek.GetWeekOfYear(day):00}";
+            return null;
+        }
+
+        /// <summary>[REQ: SEED-BOARD-002] The Monthly Walk's board of the month, "MonthlyWalk_2026-11".</summary>
+        public static string MonthlyWalkBoard(DateTime day) => "MonthlyWalk_" + day.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture);
+
         /// <summary>The day's walk board, "DailyWalk_2026-10-26".</summary>
         public static string DailyWalkBoard(DateTime day) => "DailyWalk_" + day.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
 

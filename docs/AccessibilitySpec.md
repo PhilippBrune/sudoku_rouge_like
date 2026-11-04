@@ -1,13 +1,14 @@
 # Accessibility Specification
 
-**Version:** 2.6  
-**Date:** 2026-11-02  
+**Version:** 2.7  
+**Date:** 2026-11-04  
 **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.7 | 2026-11-04 | implemented | RM-106 (owner 2026-11-04: "the same setting", "OpenDyslexic"): Text Size applies to every screen (ACCESS-FONT-003) and a Dyslexia-Friendly Font switch sets every text in OpenDyslexic (ACCESS-FONT-004). |
 | 2.6 | 2026-11-02 | implemented | 0.3.1 playtest (owner: "most items seem to do nothing"): the menu's preview shows every switch (ACCESS-PREVIEW-001, GAP-100); its entered digits were invisible. |
 | 2.5 | 2026-10-28 | implemented | 0.3.0 playtest on a Legion Go (RM-214): Text Size also enlarges the rules' small numbers and letters on and around the board and the badges they sit on (ACCESS-FONT-002). |
 | 2.4 | 2026-10-21 | implemented | Second Options audit (GAP-066): Reduce Motion also stops every scale pulse and pop (path nodes, the boss node, digits, the board-fill wave, combo, reward plaques) and the badge shake (ACCESS-MOTION-002). |
@@ -39,7 +40,9 @@ Primary implementation references:
 | `AlternativeConstraintSymbols` | Swaps to alternate constraint symbols where supported | Applied during board rebuild |
 | `FontScale` | Scales the board's digits and pencil marks (within the cell, ACCESS-FONT-001), the preview and accessibility-aware menu text | Stored in `AccessibilitySettings` |
 | `FontScale` (2.5) | **[ACCESS-FONT-002]** Also scales the rules' small numbers and letters on and around the board (sum dots, Opposite Sums, distance pairs, mirror letters, outside clues, line and cage labels) and the badges they sit on, 1.0 to 1.5 (RM-214: too small on a Legion Go's 8.8" screen). Unlabelled dots and cell-sized marks keep their size. At 150 % a corner badge can touch the cell's digit. |
+| `FontScale` (2.7) | **[ACCESS-FONT-003]** Applies to every screen (RM-106): each text built through `InRunUiFactory.CreateText` grows to its size × Text Size and back down where its box is too small, never below the size it was built with (`TextSizeFit`); below 100 % it shrinks; a text that shrinks to fit grows its upper size. The board's digits, pencil marks, badges and clues keep their own scaling (ACCESS-FONT-001/002). A change shows at once on every screen. | `TextSizeFit.SetScale` from `OptionsController` |
 | `ScreenReaderEnabled` | "Status Captions": an on-screen announcement bar for status updates | A caption bar, not OS speech; renamed from "Screen Reader" (GAP-061) |
+| `DyslexiaFont` (2.7) | **[ACCESS-FONT-004]** Every text in OpenDyslexic Regular (SIL Open Font License 1.1, `Resources/Fonts/OpenDyslexic.otf`; a missing glyph falls back to Roboto). The font is about 45 % wider than Roboto, so in it a text may shrink to 75 % of its built size where its box is too small (`TextSizeFit`). The switch changes every text on screen at once; off by default. The licence travels in `Licenses/` and on the Credits (LEGAL-LICENSE-001). | `FontAssetService.SetDyslexiaFont` |
 
 **[ACCESS-PREVIEW-001]** (2.6, 0.3.1 playtest, GAP-100) The preview beside the main menu's Accessibility page shows every
 switch on a 4×4 board: High Contrast its cell colours and thicker lines; Colorblind Mode the colours of a German Whispers
@@ -69,6 +72,8 @@ The Accessibility page of the Options scroll (UI-STYLE-017, `OptionsUiFactory.Bu
 - Alternative Symbols
 - Text Size (80–150 %)
 - Status Captions
+- Dyslexia-Friendly Font (2.7)
+- Text Size (80–150 %, main menu only; listed above)
 - Reset this page
 
 `AccessibilityPreviewController` renders a read-only preview board on the page's slip (main menu) so visual changes can be inspected immediately. The run's Options have the same page without Text Size and the preview.

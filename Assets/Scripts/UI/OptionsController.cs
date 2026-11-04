@@ -71,6 +71,7 @@ namespace SudokuRoguelike.UI
             _options = new ProfileService(new SaveFileService(_optionsSlot)).LoadOptions();
             LiveAudio = _options.Audio;
             LiveAccessibility = _options.Accessibility ?? new AccessibilitySettings();
+            ApplyTextSettings();
             AccessibilityAnnouncementOverlay.SetEnabled(LiveAccessibility.ScreenReaderEnabled);
             RumbleService.Enabled = _options.Gameplay.ControllerRumbleEnabled;
             PadButtons.Mode = _options.Gameplay.ControllerLayout;
@@ -231,6 +232,21 @@ namespace SudokuRoguelike.UI
             LiveAccessibility = GetOptions().Accessibility;
             SaveOptions();
             NotifyAccessibilityChanged();
+        }
+
+        public void SetDyslexiaFont(bool on)
+        {
+            GetOptions().Accessibility.DyslexiaFont = on;
+            LiveAccessibility = GetOptions().Accessibility;
+            SaveOptions();
+            NotifyAccessibilityChanged();
+        }
+
+        // [REQ: ACCESS-FONT-003] [REQ: ACCESS-FONT-004] Text Size and the font apply to every text on screen at once.
+        private static void ApplyTextSettings()
+        {
+            TextSizeFit.SetScale(LiveAccessibility.FontScale);
+            FontAssetService.SetDyslexiaFont(LiveAccessibility.DyslexiaFont);
         }
 
         public void SetScreenReaderEnabled(bool on)
@@ -477,6 +493,7 @@ namespace SudokuRoguelike.UI
             acc.ReduceMotion                   = defaults.ReduceMotion;
             acc.AlternativeConstraintSymbols   = defaults.AlternativeConstraintSymbols;
             acc.FontScale                      = defaults.FontScale;
+            acc.DyslexiaFont                   = defaults.DyslexiaFont;
             acc.ScreenReaderEnabled            = defaults.ScreenReaderEnabled;
             LiveAccessibility                  = acc;
             SaveOptions();
@@ -506,6 +523,7 @@ namespace SudokuRoguelike.UI
 
         private void NotifyAccessibilityChanged()
         {
+            ApplyTextSettings();
             AccessibilityAnnouncementOverlay.SetEnabled(LiveAccessibility.ScreenReaderEnabled);
             OnAccessibilityChanged?.Invoke();
             var runScreen = FindFirstObjectByType<InRunController>();

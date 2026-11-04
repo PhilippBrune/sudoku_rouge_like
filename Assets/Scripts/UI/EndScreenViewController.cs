@@ -334,6 +334,11 @@ namespace SudokuRoguelike.UI
 
             if (victory && result?.Mode == SudokuRoguelike.Core.GameMode.GardenRun && result.XpEarned > 0)
                 SudokuRoguelike.Meta.SteamLeaderboardService.SubmitRunScore(result.XpEarned);
+            // [REQ: SEED-BOARD-001] A Garden Run on the seed of the week puts its score on the week's board (the best one stays).
+            var weekBoard = run.State.WeeklySeedRun && result?.Mode == SudokuRoguelike.Core.GameMode.GardenRun
+                ? SudokuRoguelike.Meta.SteamLeaderboardService.WeeklySeedBoard(run.State.Seed, DateTime.Today) : null;
+            if (weekBoard != null && result.RunScore > 0)
+                SudokuRoguelike.Meta.SteamLeaderboardService.SubmitToBoard(weekBoard, result.RunScore, null);
 
             // Load updated XP after persist; fallback to in-memory calculation
             var postSave = new SaveFileService(SaveProfileService.ActiveSlot);
@@ -448,6 +453,10 @@ namespace SudokuRoguelike.UI
             var timeSeconds = Mathf.RoundToInt(state.TotalRunSeconds);
             if (completed)
                 envelope.SeasonalChallenge.SetBest(now.Year, now.Month, score, hpRemaining, pencilUsed, timeSeconds);
+            // [REQ: SEED-BOARD-002] A finished Monthly Walk puts its score on the month's board (the best one stays).
+            if (completed && score > 0)
+                SudokuRoguelike.Meta.SteamLeaderboardService.SubmitToBoard(
+                    SudokuRoguelike.Meta.SteamLeaderboardService.MonthlyWalkBoard(now), score, null);
 
             // Award Ink Stamps: +2 for S grade, +1 for first-ever monthly completion (regardless of grade).
             // [REQ: SEASONAL-STAMP-001]

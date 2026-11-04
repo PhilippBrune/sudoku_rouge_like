@@ -34,7 +34,8 @@ namespace SudokuRoguelike.Core
         {
             new Entry("Credits.Role.License.RobotoNotice", "Legal/Roboto-ATTRIBUTION", "Roboto-ATTRIBUTION.txt"),
             new Entry("Credits.Role.License.Apache", "Legal/APACHE-2.0", "APACHE-2.0.txt"),
-            new Entry("Credits.Role.License.Steamworks", "Legal/Steamworks.NET-LICENSE", "Steamworks.NET-LICENSE.md")
+            new Entry("Credits.Role.License.Steamworks", "Legal/Steamworks.NET-LICENSE", "Steamworks.NET-LICENSE.md"),
+            new Entry("Credits.Role.License.OpenDyslexic", "Legal/OpenDyslexic-OFL", "OpenDyslexic-OFL.txt")   // ACCESS-FONT-004
         };
 
         /// <summary>The licence text bundled with the game, or an empty string when the resource is missing.</summary>

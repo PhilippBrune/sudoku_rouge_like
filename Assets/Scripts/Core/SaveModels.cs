@@ -115,6 +115,7 @@ namespace SudokuRoguelike.Core
         public bool ReduceMotion;
         public bool AlternativeConstraintSymbols;
         public bool ScreenReaderEnabled;
+        public bool DyslexiaFont;   // [REQ: ACCESS-FONT-004] every text in OpenDyslexic
     }
 
     [Serializable]

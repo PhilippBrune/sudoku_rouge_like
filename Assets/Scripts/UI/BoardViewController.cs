@@ -551,11 +551,11 @@ namespace SudokuRoguelike.UI
                 numGo.transform.SetParent(_gridNumberRoot, false);
                 // [REQ: ACCESS-FONT-001] Text Size scales the digits and pencil marks, never past the cell.
                 var fs = Mathf.Min(Mathf.RoundToInt(cellPx * 0.8f), Mathf.Clamp(Mathf.RoundToInt(cellPx * 0.50f * _gridFontScale), 18, 80));
-                var valText = InRunUiFactory.CreateText(numGo.transform, "Val", "", fs, TextAnchor.MiddleCenter, Color.white);
+                var valText = InRunUiFactory.CreateText(numGo.transform, "Val", "", fs, TextAnchor.MiddleCenter, Color.white, false);
                 InRunUiFactory.StretchFill(valText.rectTransform);
                 valText.raycastTarget = false;
                 var pencilFs = Mathf.Min(Mathf.RoundToInt(cellPx * 0.30f), Mathf.Clamp(Mathf.RoundToInt(cellPx * 0.19f * _gridFontScale), 11, 30));
-                var pencilText = InRunUiFactory.CreateText(numGo.transform, "Pencil", "", pencilFs, TextAnchor.UpperLeft, GamePalette.PencilMarkColor);
+                var pencilText = InRunUiFactory.CreateText(numGo.transform, "Pencil", "", pencilFs, TextAnchor.UpperLeft, GamePalette.PencilMarkColor, false);
                 pencilText.rectTransform.anchorMin = new Vector2(0.08f, 0.08f);
                 pencilText.rectTransform.anchorMax = new Vector2(0.92f, 0.92f);
                 pencilText.rectTransform.offsetMin = Vector2.zero;
@@ -566,7 +566,7 @@ namespace SudokuRoguelike.UI
                 // Pressure mechanic badge — top-right corner count-down number
                 var badgeFs = size <= 6 ? 11 : 9;
                 var badgeText = InRunUiFactory.CreateText(numGo.transform, "Badge", "",
-                    badgeFs, TextAnchor.UpperRight, Color.white);
+                    badgeFs, TextAnchor.UpperRight, Color.white, false);
                 badgeText.rectTransform.anchorMin = new Vector2(0.50f, 0.52f);
                 badgeText.rectTransform.anchorMax = new Vector2(0.96f, 0.96f);
                 badgeText.rectTransform.offsetMin = Vector2.zero;
@@ -1274,7 +1274,7 @@ namespace SudokuRoguelike.UI
 
             // The sum grows with the cell so it stays readable on 9×9 and on large screens alike.
             var fontSize = Mathf.Max(12, Mathf.RoundToInt(cH * 0.22f));
-            var txt = InRunUiFactory.CreateText(bg.transform, "Sum", label, fontSize, TextAnchor.MiddleCenter, color);
+            var txt = InRunUiFactory.CreateText(bg.transform, "Sum", label, fontSize, TextAnchor.MiddleCenter, color, false);
             txt.fontStyle = FontStyle.Bold;
             InRunUiFactory.StretchFill(txt.rectTransform);
             txt.raycastTarget = false;

@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.35 | **Date:** 2026-11-03 | **Status:** implemented
+**Version:** 1.36 | **Date:** 2026-11-04 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.36 | 2026-11-04 | implemented | RM-101 (owner 2026-11-04, "week and month"): a Garden Run on the seed of the week puts its score on the week's Steam board (SEED-BOARD-001). |
 | 1.35 | 2026-11-03 | implemented | Owner's picks (2026-11-03): RM-118 built as "behutsam öffnen" (RUN-EARLY-001/002) and RM-116 as proposal A with the proposed list and 24 achievements (CLASS-CHALLENGE-001/002, UI-STYLE-043). |
 | 1.34 | 2026-11-03 | implemented | Owner (2026-11-03), on the proposals of OPEN_POINTS 2.0: RM-113 closed (the Daily Walk is the short run); RM-120 built (RUN-FIRST-001); the balance check of RM-108 recorded in the run history (RUN-BALANCE-001); RM-118 and RM-116 picked, in that order, their proposals wait for the owner's pick. |
 | 1.33 | 2026-11-02 | implemented | 0.3.1 playtest (owner): Back from the Monthly Walk returns to where it was opened, and the Daily Walk widget opens the Daily Walk in Game Modes (MENU-BACK-001, GAP-109, GAP-110); the in-run Options show only pages with something to change (OPT-TABS-001, GAP-111); the legend is the rule slip (UI-STYLE-042, owner's pick A); the XP is painted into the bar by a brush (UI-STYLE-041, owner's pick B); the story scenes (UI-STYLE-040, owner's pick A, narrative-direction 1.3). |
@@ -325,6 +326,13 @@ week keeps it) scores its pace when it is won: +1 % of BaseScore for every minut
 win: +22 %). The minutes are the run's active time (RUN-LENGTH-001: path, puzzles and shops, resumed runs go on
 counting; a started minute counts as a whole one). A lost run gets no time row, so a quick loss never pays. Other runs
 are scored as before.
+
+### The week's board (SEED-BOARD-001)
+
+A Garden Run started with the seed of the week puts its run score on the week's Steam board, "WeeklySeed_<year>-W<week>"
+(the best score stays). The board is the week of the seed, so a run that ends in the next week stays on its own week; a
+run finished two or more weeks later goes on no board. The standing (the top three, the player's place, the friends) is
+shown with RM-101's panel, which waits for the owner's pick of the mockup.
 
 ### Score Formula
 

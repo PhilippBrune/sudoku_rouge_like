@@ -1124,6 +1124,7 @@ namespace SudokuRoguelike.UI
 
             var textRect = EnsureRect("GlyphText", badge, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             var txt = EnsureComponent<Text>(textRect.gameObject);
+            TextSizeFit.Follow(txt);   // [REQ: ACCESS-FONT-003]
             txt.text = glyph;
             txt.font = GetBuiltInFont();
             txt.fontSize = glyph.Length > 1 ? 9 : 16;

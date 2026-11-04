@@ -137,6 +137,7 @@ namespace SudokuRoguelike.Tests
 
         private static IEnumerator Shoot(GameObject host, Camera camera, string path, Vector2Int size)
         {
+            LayoutScreenshotDiagnostics.ApplyShotText();
             var rt = new RenderTexture(size.x, size.y, 24);
             camera.targetTexture = rt;
             foreach (var canvas in host.GetComponentsInChildren<Canvas>(true).Where(c => c.isRootCanvas))

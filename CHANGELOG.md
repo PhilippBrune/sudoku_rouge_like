@@ -8,6 +8,11 @@
   its break, low HP, the last pencil mark, gold, lifting fog, the boss's rules and its gate, a new floor, a defeated boss,
   the XP brush, a new level and an achievement each have a sound in the garden's voice, and choosing a cell ticks softly.
 - The sounds for a wrong digit and for losing HP are higher now, so laptop and handheld speakers play them.
+- **Text Size on every screen:** the setting under Accessibility now enlarges the text of the menus and of every run
+  screen too, as far as each box has room.
+- **Dyslexia-Friendly Font:** a new switch under Accessibility sets every text in OpenDyslexic.
+- **Boards for the seed of the week and the Monthly Walk:** a Garden Run on the seed of the week and a finished Monthly
+  Walk now put their score on a Steam board of their week or month.
 
 ## 0.4.1 (2026-11-04)
 

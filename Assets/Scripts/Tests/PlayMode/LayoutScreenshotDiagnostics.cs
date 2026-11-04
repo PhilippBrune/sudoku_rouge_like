@@ -1418,9 +1418,19 @@ namespace SudokuRoguelike.Tests
                 ? (w, h) : (1920, 1080);
         }
 
+        // SR_SHOT_TEXT ("150,dyslexia"): the shots at another Text Size and in OpenDyslexic (ACCESS-FONT-003/004, RM-106).
+        internal static void ApplyShotText()
+        {
+            var parts = (Environment.GetEnvironmentVariable("SR_SHOT_TEXT") ?? "").Split(',');
+            if (float.TryParse(parts[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var percent))
+                TextSizeFit.SetScale(percent / 100f);
+            FontAssetService.SetDyslexiaFont(parts.Contains("dyslexia"));
+        }
+
         // GAP-089: the canvas scaler follows the render target, so a size other than 1920×1080 shows that screen's shape.
         private IEnumerator Shoot(GameObject host, Camera camera, string file, int width = 0, int height = 0)
         {
+            ApplyShotText();
             if (width <= 0) (width, height) = ShotSize();
             var rt = new RenderTexture(width, height, 24);
             camera.targetTexture = rt;

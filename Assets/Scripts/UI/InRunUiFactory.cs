@@ -89,8 +89,9 @@ namespace SudokuRoguelike.UI
         internal static Font GetFont() => FontAssetService.GetFont();
 
         // ── Text ──
+        /// <param name="followTextSize">False for text that sizes itself to the Text Size (the board, ACCESS-FONT-001).</param>
         internal static Text CreateText(Transform parent, string name, string content,
-            int fontSize, TextAnchor alignment, Color color)
+            int fontSize, TextAnchor alignment, Color color, bool followTextSize = true)
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(Text));
             go.transform.SetParent(parent, false);
@@ -100,6 +101,7 @@ namespace SudokuRoguelike.UI
             t.fontSize = fontSize;
             t.alignment = alignment;
             t.color = color;
+            if (followTextSize) TextSizeFit.Follow(t);   // [REQ: ACCESS-FONT-003]
             return t;
         }
 

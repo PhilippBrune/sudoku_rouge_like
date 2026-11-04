@@ -4,6 +4,17 @@
 
 ### New
 
+- **Sound for the run's moments:** using an item, taking a reward or a relic, healing at the rest, a combo of 5 and 10 and
+  its break, low HP, the last pencil mark, gold, lifting fog, the boss's rules and its gate, a new floor, a defeated boss,
+  the XP brush, a new level and an achievement each have a sound in the garden's voice, and choosing a cell ticks softly.
+- The sounds for a wrong digit and for losing HP are higher now, so laptop and handheld speakers play them.
+
+## 0.4.1 (2026-11-04)
+
+### New
+
+- **Interface sounds:** a soft tick when you move to a button, a click when you press it, a sound when a menu opens and
+  closes, and one for the shop's reroll. They follow the SFX volume.
 - **Class challenges:** every class has three challenges in the garden of classes, its own, a win in under 40 minutes
   and a win on Harmony VI. Each met one turns a seal on the class's plaque red and is a Steam achievement (24 new).
 - **The garden opens up:** a new profile starts with four relics, three events and three boss rules held back; each of

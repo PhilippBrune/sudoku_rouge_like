@@ -63,6 +63,7 @@ namespace SudokuRoguelike.UI
             ActivePanel = _rewardPanel;
             FadeInPanel(_rewardPanel);
             RevealPlaques();
+            if (_rewardSlots.Exists(s => s != null)) RunAudioController.Current?.PlayItemReward();   // [REQ: AUDIO-SFX-001]
         }
 
         /// <summary>RW-1: keys 1–9 choose a plaque; the same key again takes it.</summary>
@@ -406,6 +407,7 @@ namespace SudokuRoguelike.UI
         {
             if (!_awaitingReward) return;
             _awaitingReward = false;
+            RunAudioController.Current?.PlayRewardClaim();   // [REQ: AUDIO-SFX-001]
             _rewardSlots.Clear();
             CloseRewardScene();
             OnPostRewardReady?.Invoke();

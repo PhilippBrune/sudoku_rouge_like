@@ -82,6 +82,7 @@ namespace SudokuRoguelike.UI
             _confirming = false;
             _striking = false;
             BuildBossGatePanel(fadeIn: true);
+            RunAudioController.Current?.PlayModifierActivate();   // [REQ: AUDIO-SFX-001] the boss's rules appear
         }
 
         // The cursed-tile scene (UI-STYLE-015) is in BossGateViewController.Cursed.cs.
@@ -367,6 +368,7 @@ namespace SudokuRoguelike.UI
         {
             if (_confirming || !_awaitingBossGate) return;
             _confirming = true;
+            RunAudioController.Current?.PlayBossGateOpen();   // [REQ: AUDIO-SFX-001]
             for (var i = 0; i < _trialCards.Count; i++) _trialCards[i].Button.interactable = false;
             foreach (var button in _headerButtons) button.interactable = false;
             if (_confirmBtn != null && isActiveAndEnabled)

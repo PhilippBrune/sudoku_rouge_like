@@ -105,6 +105,49 @@ namespace SudokuRoguelike.Tests
             Assert.IsFalse(menuSource.isPlaying && menuSource.isActiveAndEnabled, "the menu music stays off");
         }
 
+        // [REQ: AUDIO-SFX-001] GAP-073 round 2: in a puzzle, choosing a cell, gold coming in and a combo of five sound, with
+        // the owner's clips. The run state is changed directly; RunSoundCuesTests covers each cue's rule.
+        [UnityTest]
+        [Requirement("AUDIO-SFX-001")]
+        public IEnumerator InAPuzzle_ACell_Gold_AndACombo_Sound()
+        {
+            var bootstrap = new GameObject("AudioBootstrapUnderTest").AddComponent<GameBootstrap>();
+            for (var i = 0; i < 5; i++) yield return null;
+            Object.FindAnyObjectByType<MainMenuController>().SelectProfileSlot(TestSlot);
+            for (var i = 0; i < 3; i++) yield return null;
+            Find("BtnContinueFirstRun")?.GetComponent<Button>().onClick.Invoke();
+            for (var i = 0; i < 3; i++) yield return null;
+            bootstrap.LaunchRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun });
+            for (var i = 0; i < 10; i++) yield return null;
+            var tile = Object.FindObjectsByType<Button>(FindObjectsInactive.Exclude, FindObjectsSortMode.None)
+                .FirstOrDefault(b => b.name.StartsWith("Node_Puzzle_") && b.interactable);
+            Assert.NotNull(tile, "a puzzle tile to enter");
+            tile.onClick.Invoke();
+            for (var waited = 0f; waited < 8f && !(Find("SudokuGameplayPanel")?.activeInHierarchy ?? false); waited += Time.unscaledDeltaTime)
+                yield return null;
+            Assert.IsTrue(Find("SudokuGameplayPanel").activeInHierarchy, "the puzzle opened");
+            for (var i = 0; i < 5; i++) yield return null;
+
+            var heard = new List<string>();
+            void Hear(string clip) => heard.Add(clip);
+            RunAudioController.Played += Hear;
+            try
+            {
+                Find("C_0_0").GetComponent<Button>().onClick.Invoke();
+                Find("C_1_1").GetComponent<Button>().onClick.Invoke();
+                yield return null;
+                CollectionAssert.Contains(heard, "cell_select", "choosing another cell");
+
+                var state = bootstrap.Run.State;
+                heard.Clear();
+                state.CurrentGold += 5;
+                state.ComboStreak = 5;
+                for (var i = 0; i < 2; i++) yield return null;
+                CollectionAssert.IsSubsetOf(new[] { "gold_gain", "combo_05" }, heard, string.Join(", ", heard));
+            }
+            finally { RunAudioController.Played -= Hear; }
+        }
+
         // [REQ: OPT-AUDIO-002] Every volume row changes what is heard: the menu music plays Master × Music, the run's music
         // and effects follow Master × Music / SFX, and Mute all silences them. No UI Volume row (no interface sound plays).
         // [REQ: UI-OPT-004] The run's Options show and keep what was set in the main menu's Options.

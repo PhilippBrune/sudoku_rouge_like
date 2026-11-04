@@ -17,6 +17,9 @@ namespace SudokuRoguelike.Meta
         public static bool PlatformBridgeAvailable => _platformBridge?.IsAvailable ?? false;
         public static string LastPlatformError { get; private set; }
 
+        /// <summary>A new achievement for this profile (its sound, AUDIO-SFX-001).</summary>
+        public static event System.Action<string> Granted;
+
         public static PlatformCapabilityReport GetPlatformAchievementReport()
         {
             if (PlatformBridgeAvailable)
@@ -187,6 +190,8 @@ namespace SudokuRoguelike.Meta
             mastery.UnlockedAchievements.Add(achievementId);
             UnityEngine.Debug.Log($"[Achievement] {achievementId}");
             ForwardToPlatform(achievementId);
+            try { Granted?.Invoke(achievementId); }
+            catch (System.Exception e) { UnityEngine.Debug.LogException(e); }   // a listener never stops the grants
         }
 
         public static int SyncUnlockedAchievements(MasteryAchievementState mastery)

@@ -1,11 +1,12 @@
 # Audio & Visual Direction
 
-**Version:** 1.8 | **Date:** 2026-11-03 | **Status:** implemented
+**Version:** 1.9 | **Date:** 2026-11-04 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.9 | 2026-11-04 | implemented | Owner (2026-11-04), GAP-073 round 2: the 23 picks (A or B per event) replace the game's clips and every one plays (AUDIO-SFX-001); the wrong-digit and HP-loss sounds are audible on small speakers now (GAP-114). |
 | 1.8 | 2026-11-03 | implemented | Owner (2026-11-03), GAP-073 round 1: five interface sounds kept and wired (AUDIO-UI-001: focus tick, click, menu open and close, shop reroll); they follow the SFX volume. The other 21 got two garden-style proposals each for round 2 (`tools/audio/garden_sfx.py`); the wrong-digit and HP-loss sounds are found too low for small speakers (GAP-114). |
 | 1.7 | 2026-10-28 | implemented | 0.3.0 playtest (RM-215): a title sound plays when the title screen opens (AUDIO-TITLE-001); the menu music starts after the title. |
 | 1.6 | 2026-10-14 | implemented | Owner decision: all music and sound effects move to an 8-bit (chiptune) set made with an AI tool; prompts and delivery rules in docs/audio-8bit-prompts.md (AUDIO-MUSIC-001/002). The boss puzzle now plays the floor's boss track instead of the floor track (AUDIO-MUSIC-003; the additive boss layer was never started, GAP-045). Optional tracks for Daily/Monthly Walk, Endless Zen, Spirit Trials, custom puzzles, credits and the victory/defeat end screens (AUDIO-MUSIC-005..007); until a file exists the current music plays. |
@@ -253,6 +254,15 @@ Round 2 (`tools/audio/garden_sfx.py`): for each of the 21 events the owner dropp
 (koto, temple bell, singing bowl, wood block, water drop, wind, taiko, gong) and C from the code-made 8-bit set, on one
 listening page with the sounds inside it (`steam_assets/audio_proposals/round2/sfx_round2.html`, not in git). Every
 proposal keeps 60 % of its energy above 300 Hz, so laptop and handheld speakers play it (GAP-114).
+
+The owner's picks (2026-11-04, `PICKS` in the tool; `garden_sfx.py install` writes them over `Assets/Resources/audio`):
+A for item use, reward claim, cell select, rest heal, relic pickup, combo break, pencil depleted, fog reveal, level up,
+wrong digit and HP loss; B for combo 5 and 10, HP critical, gold gain, the boss's rules, the boss gate, the floor
+change, achievement, XP fill, the boss victory, the reward's item and the shrine's relic.
+
+| ID | Requirement |
+|---|---|
+| AUDIO-SFX-001 | Each of these sounds plays at its event. Events with many causes are read from the run state once a frame (`RunSoundCues`): an item used, a relic gained, the last pencil mark, HP falling to a quarter or less, every fifth digit of a combo (5 and 10 have their clips), a combo of 5 or more broken, gold gained, fog lifting on the same board, a new floor; the first look at a run only records it, and a mistake adds at most one cue (critical HP before the combo break). The others are called where they happen: choosing another cell, the reward's item plaques and taking a reward, healing at the rest, the shrine's relics, the boss's rules at the gate and the gate's confirm, the boss defeated, the XP brush and each new level's seal, and a new achievement (one sound per frame). |
 
 ### Audio Mixing
 

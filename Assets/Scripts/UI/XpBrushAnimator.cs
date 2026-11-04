@@ -42,6 +42,7 @@ namespace SudokuRoguelike.UI
             if (_stamp != null) _stamp.SetActive(false);
             if (_toNext != null) _toNext.text = string.Empty;
             Apply(0f);
+            if (xp > 0) RunAudioController.Current?.PlayXpBarFill();   // [REQ: AUDIO-SFX-001]
             if (AnimationHelper.MotionReduced) Finish();
         }
 
@@ -109,6 +110,7 @@ namespace SudokuRoguelike.UI
                 _seal.gameObject.SetActive(true);
                 _sealText.text = LocalizationService.Format("InRun.End.Scroll.SealLevel", "Lv {0}", level);
                 _sealAt = Time.unscaledTime;
+                RunAudioController.Current?.PlayLevelUp();
             }
         }
 

@@ -37,7 +37,8 @@ namespace SudokuRoguelike.Tests
 
                 if (clip.loadState != AudioDataLoadState.Loaded)
                     problems.Add($"{info.Id}: audio data state {clip.loadState}");
-                if (clip.length <= 0.05f || clip.samples <= 0)
+                // The cell tick is 50 ms by design (GAP-073 round 2); every other clip is longer.
+                if (clip.length <= (info.Id == AudioClipId.SfxCellSelect ? 0.03f : 0.05f) || clip.samples <= 0)
                     problems.Add($"{info.Id}: empty clip ({clip.length:F2} s)");
                 if (info.Loop && clip.length < 5f)
                     problems.Add($"{info.Id}: music loop only {clip.length:F1} s");

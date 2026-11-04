@@ -112,7 +112,8 @@ namespace SudokuRoguelike.UI
             {
                 Title = T("InRun.Rest.Choice.Heal"), Text = F("InRun.Rest.Choice.HealText", heal),
                 After = F("InRun.Rest.After.Hp", state.CurrentHP, Math.Min(state.MaxHP, state.CurrentHP + heal)),
-                Icon = "ui/icon_petal_orb", Status = F("InRun.Rest.Status.Healed", heal), Apply = run.AcceptRestHeal
+                Icon = "ui/icon_petal_orb", Status = F("InRun.Rest.Status.Healed", heal),
+                Apply = () => { run.AcceptRestHeal(); RunAudioController.Current?.PlayRestHeal(); }   // [REQ: AUDIO-SFX-001]
             });
             _restChoices.Add(new RestChoice
             {

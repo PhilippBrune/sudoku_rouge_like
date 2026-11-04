@@ -1,11 +1,12 @@
 # Open points
 
-**Version:** 2.2 | **Date:** 2026-11-04 | **Status:** review (a living list; update it whenever an item closes or a new one opens)
+**Version:** 2.3 | **Date:** 2026-11-04 | **Status:** review (a living list; update it whenever an item closes or a new one opens)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.3 | 2026-11-04 | review | Owner (2026-11-04): GAP-073 round 2 picked and built (AUDIO-SFX-001, GAP-114); the Steam Deck and the legal check closed ("Schließe"); the 0.4.1 announcement published by the owner, mirrored to #rotn-news, how-to-play, known-issues and the channel topic posted; RM-101, RM-104 and RM-106 are next. |
 | 2.2 | 2026-11-04 | review | 0.4.0 is live (build 26400103); the upload row becomes the announcement and the Discord posts. |
 | 2.1 | 2026-11-03 | review | The owner's answers to 2.0 (2026-11-03) and what was done the same day: GAP-108 checked in Steamworks, RM-113 closed, RM-108 recorded, the Deck work, RM-120, catalog steps 3 and 5, the Pattern Scroll, the class presenter removed, the content survey draft and the trademark look. Open: the listening page, RM-118 and RM-116 picks, a Deck start. |
 | 2.0 | 2026-11-03 | review | Owner (2026-11-03): "Which points are still open? Make proposals to fix them." Every point checked against the code, the roadmap and the gaps: what closed since 1.9 is listed at the end; every open point has a proposal. The 0.2.0 playtest list is replaced by what to check in 0.4.0. |
@@ -46,8 +47,6 @@ came of them:
 | **GAP-108** The D-pad placed digits | Steamworks default checked: already "Generic Gamepad", all pads opted in; nothing changed | Your own layout in Steam: Library → Run of the Nine → Controller → "Gamepad" (or revert to default) | Owner |
 | **RM-113** run length | Closed: the Daily Walk is the short run | Reopen only if the report shows won H0 runs over 45 min | – |
 | **RM-108** balance check | Built: every run records gold left, shop visits with a purchase, items used (RUN-BALANCE-001); `run_length_report.py` prints them | Read at the next playtest | Owner plays |
-| **GAP-073** 25 silent sounds | Round 1: five kept and wired (AUDIO-UI-001). Round 2: A and B (garden) and C (8-bit) for the other 21 and for the two too-low sounds (GAP-114) on `steam_assets/audio_proposals/round2/sfx_round2.html` | Pick A, B, C or none per event, paste the list; then I wire them | Owner, then me |
-| **Steam Deck** (RM-102) | Built: no text under 9 px at 1280×800 (DECK-TEXT-001), Steam's gamepad keyboard on the seed fields (DECK-KEYBOARD-001), L1/R1 and L2/R2 in the hints (DECK-BUTTONS-001) | A start on a Deck, then the compatibility review in Steamworks | Owner |
 | **RM-120** faster first choice | Built: the reachable tiles' boards are baked first (RUN-FIRST-001); the first tile has the focus | – | – |
 | **RM-118** something new in each of the first ten runs | Built ("behutsam öffnen"): ten things held back in a new profile's Garden Runs, one opens per finished run, shown in the run end's "New" column (RUN-EARLY-001/002) | Your feel at the next playtest with a fresh profile | Owner plays |
 | **RM-116** class challenges | Built (layout A, the proposed list): 24 challenges, seals on the plaques, the scroll's second page, 24 Steam achievements (CLASS-CHALLENGE-001/002, UI-STYLE-043) | Publish the achievements in Steamworks (63 saved, five languages) | Owner |
@@ -62,10 +61,7 @@ came of them:
 
 | Decision | Why it matters | Proposal |
 |---|---|---|
-| **0.4.0 announcement** | 0.4.0 is live on default (SteamPipe build 26400103), the 63 achievements are public; Steam news still ends at v0.3.0 | Publish the Steam announcement (`steam_assets/ReleaseNotes_v0.4.0.md`); the news mirror then posts it to #rotn-news. Discord: `discord_admin.py replace how-to-play`, `replace known-issues`, `apply` (channel topic); my attempt was stopped by the permission check, so the owner allows it or runs them | Owner |
-| **Legal check** (content survey, DSA trader status, trademark, Impressum, tax) | Store and business duties (`docs/legal/legal-check-2026-10.md` 1.2) | Content survey: a draft adds "simulated gambling" to the June answers, not saved; you press "Save and Continue" and publish the ratings. Trademark: no US hit; the German and EU registers could not be searched online, so a paid DPMA/EUIPO search is the next step. Trader status, Impressum and tax stay with you. |
 | **Apple Developer account** (99 USD a year) | Without it macOS warns about or blocks the game | Postpone the Mac until the Deck is Verified; the Deck and Linux run the Windows build through Proton. |
-| **A Steam Deck for a first start** | A system the game never ran on should not be promised | Borrow or buy one before the Deck review; until then Steam's "Unknown" rating stays. |
 | **The 8-bit soundtrack set** | Optional; the 6-second loops stay otherwise | The same listening page as GAP-073 with the eight loops; keep or drop in one go. |
 
 ## 4. Known technical leftovers
@@ -75,6 +71,10 @@ came of them:
 
 ## 5. Closed since 1.9
 
+- **GAP-073 and GAP-114, the sounds:** round 2 picked by the owner and built (AUDIO-SFX-001, 2026-11-04).
+- **Steam Deck (RM-102) and a Deck for a first start:** closed by the owner (2026-11-04); the game's Deck work is built (DECK-TEXT-001, DECK-KEYBOARD-001, DECK-BUTTONS-001), a Deck start and Valve's review are the owner's.
+- **Legal check:** closed by the owner (2026-11-04): the content survey, trader status, Impressum, tax and the trademark search are the owner's (`docs/legal/legal-check-2026-10.md` 1.2).
+- **0.4.0 and 0.4.1:** 0.4.0 live 2026-11-02 (build 26400103); 0.4.1 built and uploaded by the owner, announced on Steam 2026-11-04 ("Update v0.4.1: the story of the Nine"), mirrored to #rotn-news; how-to-play, known-issues and the #rotn-seeds-and-walks topic posted.
 - **Upload of 0.2.1 and the build after it:** 0.3.0 is live since 2026-10-27 (Steam announcement "Update v0.3.0").
 - **Playtest build 0.2.2 on the beta branch:** dropped by the owner; 0.3.0 carried it.
 - **Keystone relics (RM-114):** built 2026-10-26 (RELIC-KEY-001/002).

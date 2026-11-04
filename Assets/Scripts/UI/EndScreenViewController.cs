@@ -69,6 +69,7 @@ namespace SudokuRoguelike.UI
             Action<RelicInstance> onTake, Action onContinue)
         {
             HideBossCleared();
+            RunAudioController.Current?.PlayVictory();   // [REQ: AUDIO-SFX-001] the boss is defeated
             var root = _gameOverPanel != null ? _gameOverPanel.transform.parent : transform;
             var state = run?.State;
             var floor = state?.CurrentFloor ?? 0;

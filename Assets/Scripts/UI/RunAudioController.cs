@@ -20,6 +20,9 @@ namespace SudokuRoguelike.UI
         /// <summary>The one run audio (it lives across scenes).</summary>
         public static RunAudioController Current { get; private set; }
 
+        /// <summary>The name of every effect or interface clip played, for tests.</summary>
+        public static event System.Action<string> Played;
+
         private AudioSource _musicSource;
         private AudioSource _sfxSource;
         private AudioSource _uiSource;
@@ -96,6 +99,7 @@ namespace SudokuRoguelike.UI
             DontDestroyOnLoad(gameObject);
             Current = this;
             if (GetComponent<UiSounds>() == null) gameObject.AddComponent<UiSounds>();   // [REQ: AUDIO-UI-001]
+            SudokuRoguelike.Meta.SteamAchievementService.Granted += OnAchievementGranted;   // [REQ: AUDIO-SFX-001]
 
         }
 
@@ -472,14 +476,34 @@ namespace SudokuRoguelike.UI
             _crossfadeCoroutine = null;
         }
 
+        private int _achievementFrame = -1;
+
+        // Several achievements can open at once at a run's end: one sound.
+        private void OnAchievementGranted(string id)
+        {
+            if (_achievementFrame == Time.frameCount) return;
+            _achievementFrame = Time.frameCount;
+            PlayAchievement();
+        }
+
+        private void OnDestroy()
+        {
+            SudokuRoguelike.Meta.SteamAchievementService.Granted -= OnAchievementGranted;
+            if (Current == this) Current = null;
+        }
+
         private void PlaySfx(AudioClip clip, float volume)
         {
-            if (clip != null) _sfxSource.PlayOneShot(clip, volume);
+            if (clip == null) return;
+            _sfxSource.PlayOneShot(clip, volume);
+            Played?.Invoke(clip.name);
         }
 
         private void PlayUi(AudioClip clip, float volume)
         {
-            if (clip != null) _uiSource.PlayOneShot(clip, volume);
+            if (clip == null) return;
+            _uiSource.PlayOneShot(clip, volume);
+            Played?.Invoke(clip.name);
         }
     }
 }

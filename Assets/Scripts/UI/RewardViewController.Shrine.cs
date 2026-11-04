@@ -24,6 +24,7 @@ namespace SudokuRoguelike.UI
             var state = run.State;
             CloseRelicShrine();
             _relicChosen = false;
+            RunAudioController.Current?.PlayRelicReveal();   // [REQ: AUDIO-SFX-001]
 
             var screen = ScrollUiKit.Scene(_pathPanel, "RelicChoicePanel", "bg_relic", new Color(0.62f, 0.60f, 0.56f, 1f));
             _relicShrine = screen.gameObject;

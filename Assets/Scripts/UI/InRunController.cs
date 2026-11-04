@@ -202,6 +202,7 @@ namespace SudokuRoguelike.UI
 
         // ── Systems ──
         private RunAudioController _audio;
+        private readonly RunSoundCues _soundCues = new RunSoundCues();   // [REQ: AUDIO-SFX-001]
         private AccessibilityService _accessibility = new AccessibilityService();
         private readonly ControllerIndicatorPoller _controllerIndicatorPoller = new ControllerIndicatorPoller();
         private readonly AsyncLevelCompletionPresenter _asyncLevelCompletionPresenter = new AsyncLevelCompletionPresenter();
@@ -531,6 +532,7 @@ namespace SudokuRoguelike.UI
             if (_map == null) return;
             var run = _map.Run;
             if (_gameOverPanel == null || !_gameOverPanel.activeSelf) RunLengthLog.Tick(run?.State, Time.unscaledDeltaTime);
+            RunSoundCues.Play(_audio, _soundCues.Tick(run?.State, run?.CurrentOverlay), run?.State?.ComboStreak ?? 0);
 
             // GAP-029: gold granted by rewards, events or the shop shows at once, not only on the next path refresh.
             if (_goldLabel != null && run?.State != null && _shownGold != run.State.CurrentGold)
@@ -2304,7 +2306,7 @@ namespace SudokuRoguelike.UI
             }
             var (row, col) = (Mathf.Clamp(_selectedRow + dr, 0, board.Size - 1), Mathf.Clamp(_selectedCol + dc, 0, board.Size - 1));
             // GAP-095 (owner: everywhere): a key or pad move starts the input lock like a click.
-            if (row != _selectedRow || col != _selectedCol) _cellSelectedTime = Time.realtimeSinceStartup;
+            if (row != _selectedRow || col != _selectedCol) { _cellSelectedTime = Time.realtimeSinceStartup; _audio?.PlayCellSelect(); }
             (_selectedRow, _selectedCol) = (row, col);
             _highlightValue = board.Cells[row, col];   // GAP-094: like a click; a stale digit coloured cells purple
             RenderBoard();
@@ -2350,7 +2352,10 @@ namespace SudokuRoguelike.UI
                 _highlightValue = 0;
             // Stamp selection time when the active edit cell changes (input safety window)
             if (r != _selectedRow || c != _selectedCol)
+            {
                 _cellSelectedTime = Time.realtimeSinceStartup;
+                _audio?.PlayCellSelect();   // [REQ: AUDIO-SFX-001]
+            }
             _selectedRow = r;
             _selectedCol = c;
             RenderBoard();

@@ -34,6 +34,19 @@ class GardenSfxTests(unittest.TestCase):
             self.assertNotEqual(a, b)
             self.assertEqual((a, b), g.render(event))
 
+    def test_install_writes_each_pick_over_its_clip(self):
+        import os, tempfile
+        self.assertEqual(set(g.EVENTS), set(g.PICKS), 'one pick per event')
+        with tempfile.TemporaryDirectory() as root:
+            for folder in ('sfx', 'ui'):
+                os.makedirs(os.path.join(root, folder))
+            paths = g.install(root)
+            self.assertEqual(23, len(paths))
+            with open(os.path.join(root, 'sfx', 'combo_05.wav'), 'rb') as f:
+                self.assertEqual(g.render('sfx/combo_05')[1], f.read(), 'combo_05 is pick B')
+            with open(os.path.join(root, 'ui', 'item_reward.wav'), 'rb') as f:
+                self.assertEqual(g.render('ui/item_reward')[1], f.read())
+
     def test_a_low_sound_is_named_low(self):
         low = g.wav_bytes(0.5 * np.sin(2 * np.pi * 90 * np.arange(g.SR // 4) / g.SR))
         self.assertTrue(g.low_only(low))

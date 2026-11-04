@@ -6,6 +6,7 @@ event gets proposal A and B here, made from soft "garden" voices (koto, bell, si
 taiko, gong). The code-made 8-bit set (steam_assets/audio_8bit/synth) is proposal C. Everything is deterministic.
 
     python tools/audio/garden_sfx.py            # WAVs and the listening page in steam_assets/audio_proposals/round2
+    python tools/audio/garden_sfx.py install    # the owner's picks (PICKS) over the game's clips in Assets/Resources/audio
 """
 from __future__ import annotations
 
@@ -232,6 +233,16 @@ def _events():
 
 EVENTS = _events()
 
+# The owner's picks of round 2 (2026-11-04).
+PICKS = {
+    'sfx/item_use': 'A', 'sfx/reward_claim': 'A', 'sfx/cell_select': 'A', 'sfx/rest_heal': 'A', 'sfx/relic_pickup': 'A',
+    'sfx/combo_05': 'B', 'sfx/combo_10': 'B', 'sfx/combo_break': 'A', 'sfx/hp_critical': 'B', 'sfx/pencil_depleted': 'A',
+    'sfx/gold_gain': 'B', 'sfx/fog_reveal': 'A', 'sfx/modifier_activate': 'B', 'sfx/boss_gate_open': 'B',
+    'sfx/floor_transition': 'B', 'sfx/level_up': 'A', 'sfx/achievement': 'B', 'sfx/xp_bar_fill': 'B', 'sfx/victory': 'B',
+    'sfx/wrong_placement': 'A', 'sfx/hp_loss': 'A', 'ui/item_reward': 'B', 'ui/relic_reveal': 'B',
+}
+GAME_AUDIO = os.path.join(ROOT, 'Assets', 'Resources', 'audio')
+
 
 def normalize(x: np.ndarray, peak_db: float) -> np.ndarray:
     peak = np.max(np.abs(x))
@@ -305,7 +316,22 @@ oder "none", dann "Auswahl kopieren" und den Text in den Chat. Die Klänge steck
 const text='GAP-073 Runde 2\\n'+lines.join('\\n');document.getElementById('out').value=text;try{await navigator.clipboard.writeText(text)}catch(e){document.getElementById('out').select()}};</script></body></html>"""
 
 
+def install(root: str = GAME_AUDIO) -> list:
+    """Writes each picked proposal over the game's clip of that event (the .meta files stay); returns the paths."""
+    written = []
+    for event, pick in PICKS.items():
+        path = os.path.join(root, *event.split('/')) + '.wav'
+        with open(path, 'wb') as f:
+            f.write(render(event)['AB'.index(pick)])
+        written.append(path)
+    return written
+
+
 def main(argv) -> int:
+    if argv[:1] == ['install']:
+        for path in install():
+            print(path)
+        return 0
     os.makedirs(OUT, exist_ok=True)
     sounds = {}
     for event in EVENTS:

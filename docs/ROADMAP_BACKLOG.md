@@ -1,11 +1,12 @@
 # Roadmap backlog: Run of the Nine
 
-**Version:** 1.15 | **Date:** 2026-11-03 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
+**Version:** 1.16 | **Date:** 2026-11-04 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.16 | 2026-11-04 | review | Owner (2026-11-04): the sound work of RM-004 is done (GAP-073 round 2, AUDIO-SFX-001; the 8-bit soundtrack stays optional); RM-102 closed by the owner (the game's Deck work is built, a Deck start and the review are the owner's); RM-101, RM-104 and RM-106 are next. |
 | 1.15 | 2026-11-03 | review | Rows brought to the code (owner's question 2026-11-03, "what is still open"): RM-001 (catalog B1 to B6, 71 player modifiers), RM-006, RM-105 (the Custom Puzzle share code), RM-122 (the Daily Walk) and RM-123 (the Incense Walk) are built; RM-004 keeps the sound work (GAP-073 round 2) and the optional 8-bit soundtrack; RM-106 keeps the text size for every screen and a dyslexia-friendly font. |
 | 1.14 | 2026-11-03 | review | RM-118 and RM-116 built (owner's picks 2026-11-03: "behutsam öffnen"; layout A, the proposed list, 24 achievements). |
 | 1.13 | 2026-11-03 | review | Owner (2026-11-03), on the proposals of OPEN_POINTS 2.0: RM-102 Deck work built (left: a Deck start and the review), RM-108 balance numbers recorded, RM-113 closed, RM-120 built, RM-118 and RM-116 picked (in that order). |
@@ -36,7 +37,7 @@ Horizons: **short term** = the next one to three updates, **mid term** = after t
 | RM-003 | Seed sharing | Share a run as a short code (seed, class, mode, Harmony). Paste it to play the same run; the end screen shows the code and a Copy button. The Seed of the week (RUN-WEEK-001) uses the same code. | Builds on the start-run seed field. A code format with a version number keeps old codes readable. | planned |
 | RM-005 | 0.2.0 playtest wishes | The version on the main menu, a Random button for Custom Puzzle rules (with a count), the boss screen shows the whole floor's numbers, a placed digit is highlighted, digits are taken sooner after choosing a cell. | Built 2026-10-20 with the playtest bugs GAP-055..059 (`layout-proposals.md` 1.9). | done (next build) |
 | RM-006 | Menus in the new look | Options, Codex and Meta Progression as scroll, collector's book and garden of classes; the garden painting back on the path; Pencil mode in its own colour. | Owner picks 2026-10-20 (`docs/design/layout-proposals.md` 2.0): Pencil mode in indigo ink (UI-STYLE-020) and the floor entry (UI-STYLE-021) are built; Options, Codex and Meta Progression (UI-STYLE-017 to 019) are being built. | done: Options, Codex, Meta Progression and every menu in the new look (UI-STYLE-017 to 043) |
-| RM-004 | Visual and sound improvements | The whole run in the new ink-and-paper look: garden path as a hand scroll, puzzle on a hanging scroll, then reward, relic and shop screens. A full 8-bit soundtrack and new sound effects. | Boss gate and boss reward are done (UI-STYLE-004/005). Path and puzzle: UI-STYLE-001/002. Music: `steam_assets/audio_8bit/synth`, waiting for the owner's listening. | in progress: the look is done; sound: GAP-073 round 2 and GAP-114 wait for the owner's pick, the 8-bit soundtrack is optional |
+| RM-004 | Visual and sound improvements | The whole run in the new ink-and-paper look: garden path as a hand scroll, puzzle on a hanging scroll, then reward, relic and shop screens. A full 8-bit soundtrack and new sound effects. | Boss gate and boss reward are done (UI-STYLE-004/005). Path and puzzle: UI-STYLE-001/002. Music: `steam_assets/audio_8bit/synth`, waiting for the owner's listening. | done: the look (UI-STYLE-*) and the sound effects (GAP-073, AUDIO-UI-001, AUDIO-SFX-001); the 8-bit soundtrack stays optional |
 
 ## Short term: 0.3.0 playtest (owner, 2026-10-27)
 
@@ -77,7 +78,7 @@ Horizons: **short term** = the next one to three updates, **mid term** = after t
 | ID | Item | What players get | Why | Effort |
 |---|---|---|---|---|
 | RM-101 | Seed leaderboards | A leaderboard for every Seed of the week and Monthly Walk, with a friends filter. | Makes seed sharing (RM-003) competitive; Steam leaderboards already exist in the game (`SteamLeaderboardService`). | M |
-| RM-102 | Steam Deck Verified | Readable at 1280×800, the on-screen keyboard for the seed field, Deck button glyphs. | Owner pick 2026-10-22: next, with Steam Input; the Deck runs the Windows build through Proton, no build of its own (`docs/platform-ports-macos-linux.md` 1.1). Built 2026-11-03: text size, the gamepad keyboard, L1/R1 names (DECK-TEXT-001, DECK-KEYBOARD-001, DECK-BUTTONS-001); left: a start on a Deck and the compatibility review. | M |
+| RM-102 | Steam Deck Verified | Readable at 1280×800, the on-screen keyboard for the seed field, Deck button glyphs. | Owner pick 2026-10-22: next, with Steam Input; the Deck runs the Windows build through Proton, no build of its own (`docs/platform-ports-macos-linux.md` 1.1). Built 2026-11-03: text size, the gamepad keyboard, L1/R1 names (DECK-TEXT-001, DECK-KEYBOARD-001, DECK-BUTTONS-001); left: a start on a Deck and the compatibility review. | closed by the owner (2026-11-04): the Deck work is built (DECK-TEXT-001, DECK-KEYBOARD-001, DECK-BUTTONS-001); a Deck start and the review are the owner's |
 | RM-103 | A signature rule per boss | Each of the five bosses brings its own rule on top of the chosen trials (for example, the Koi Warden moves one given digit). | Bosses feel different, not only harder. | L |
 | RM-104 | More relics, items and events | A content pack: new relics with build-defining effects, new events with choices that matter. | Owner pick 2026-10-22: together with the keystone relics (RM-114). | M |
 | RM-105 | Custom puzzle codes | Share a Custom Puzzle as a code; a "community puzzle of the week" on Discord. | Uses the same code idea as RM-003; gives the community something to make. | done: the Custom Puzzle share code (CUSTOM-CODE-001, RM-209); Workshop sharing stays RM-203 |

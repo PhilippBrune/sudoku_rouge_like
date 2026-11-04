@@ -31,8 +31,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import discord_admin as da  # noqa: E402
 
+# t= changes every call: Steam serves a cached answer per URL, which still lacked v0.4.1 after it was published (2026-11-04).
 NEWS_API = ('https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/'
-            '?appid={app}&count=10&maxlength=0&feeds=steam_community_announcements')
+            '?appid={app}&count=10&maxlength=0&feeds=steam_community_announcements&t={stamp}')
 CLAN_IMAGES = 'https://clan.akamai.steamstatic.com/images/'
 STATE_DIR = Path(os.environ.get('DISCORD_STATE_DIR') or Path.home() / '.claude' / 'channels' / 'discord')
 STATE = STATE_DIR / 'steam_news_state.json'
@@ -51,7 +52,7 @@ class NotPublic(Exception):
 def fetch_news(app_id: int) -> list[dict]:
     """Published community announcements, newest first."""
     try:
-        with urllib.request.urlopen(NEWS_API.format(app=app_id), timeout=30) as response:
+        with urllib.request.urlopen(NEWS_API.format(app=app_id, stamp=int(dt.datetime.now().timestamp())), timeout=30) as response:
             data = json.load(response)
     except urllib.error.HTTPError as e:
         if e.code in (403, 404):

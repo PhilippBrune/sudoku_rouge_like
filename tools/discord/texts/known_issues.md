@@ -1,6 +1,6 @@
 # Known issues
 
-**Run of the Nine, current build (v0.4.0)**
+**Run of the Nine, current build (v0.4.1)**
 • With a controller through Steam Input, the D-pad can place digits and the right stick can move the mouse pointer. That comes from a keyboard layout in Steam, not from the game: in your Steam Library, open Run of the Nine, then the controller settings, and pick the "Gamepad" layout (or turn Steam Input off for the game).
 • The sound for a wrong digit and for losing HP is very deep, so laptop and handheld speakers barely play it. Headphones help until it is fixed.
 • Fewer sound effects than planned: many actions are silent for now. More sounds come with the next updates.

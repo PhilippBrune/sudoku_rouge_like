@@ -2,6 +2,20 @@
 
 ## 0.4.3 (2026-11-07)
 
+### New
+
+- **Send feedback from inside the game:** F8, or Options › Run › Send feedback. The screen is captured first; you write
+  what happened, pick Bug, Idea, Balance or Text and tick what goes with it: the screenshot, the run's seed and board,
+  the log, your save. Nothing goes without a tick, and no name or Steam ID is sent.
+- **A card for each new rule:** the first time a puzzle brings a rule you have not met, a card explains it before the
+  clock starts, and the board shows only that rule's marks.
+- **The Daily Walk has its own save:** starting or finishing a walk no longer ends a saved Garden Run. Game Modes ›
+  Daily Walk continues today's walk.
+- **The Lantern Seer** follows a light through every puzzle: the right digit under it gives +1 HP, +8 gold or +2 pencil,
+  at random, every third light writes a digit too, and the light lifts the fog around it.
+- **The Shrine Archivist:** the first pencil mark in a cell is free (two at Level 20), and a cell narrowed to two notes
+  with the right one among them has a 30 % chance to write itself.
+
 ### Changed
 
 - **The Garden Run is three floors:** the Bamboo Courtyard, the Koi Terrace and the Shrine Summit. Each floor is shorter
@@ -21,8 +35,27 @@
   every tile's size and stars from the start of a floor, and after a perfect puzzle the next one is half a star easier
   (a whole star at Level 15).
 
+- **Items:** the Golden Kintsugi Jar turns your next 3 mistakes in a puzzle into the right digit. The Koi Dragon Scale
+  completes the two most-filled units. The Garden Rake removes every note the board already rules out (+1 pencil for
+  every 3), the Zen Sand Sifter writes the two possible digits into up to 4 cells, the Bamboo Scroll shows every tile of
+  the floor, the Finder marks 2 and 4 cells. The Pattern Scroll is offered only on floors with rules. The Bamboo Compass,
+  which nobody could find, is gone.
+- **Class items** do what their text says: Monk's Beads heal with your next 5 digits, Double or Quits doubles the
+  puzzle's gold or costs 1 HP when it ends, Survey Notes make the next puzzle a star easier, and the Loaded Coin works
+  from your bag. The Reed Duelist's codex goal counts only items every class can find.
+- **The chosen cell** wears a red frame, so it stands out among highlighted digits.
+- **Events** show what happened: the result and every number it changed.
+- **The shop stays open** after a purchase; a sold good is stamped.
+
 ### Fixed
 
+- The class items did nothing when used, and the Reed Duelist could not be unlocked.
+- The Lantern Seer's and the Shrine Archivist's old passives never worked.
+- The Solver never completed a box.
+- After a rest the path still showed the old HP.
+- A solved board could keep some fog.
+- At a large Text Size, words broke in the middle ("comb / o x11!").
+- Giving the Daily Walk's XP to a class now paints it into the bar like at a run's end.
 - The Number Freak's token, the Reed Duelist's HP and the Quiet Cartographer's preview were on the class screen but
   never happened.
 - Countdown, Haunted Cell, Crumbling Region and Pressure Wave showed their code name and no rule on the rule slip.

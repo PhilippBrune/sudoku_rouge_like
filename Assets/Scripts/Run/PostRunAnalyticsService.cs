@@ -93,7 +93,8 @@ namespace SudokuRoguelike.Run
         /// The run's analytics and score. <paramref name="goldLeft"/> is the gold still held (SCORE-GOLD-001);
         /// <paramref name="lostPuzzleFloor"/> is the floor of the unsolved puzzle that ended the run, or -1 (SCORE-GRADE-002).
         /// </summary>
-        public PostRunAnalytics Build(int goldLeft = 0, int lostPuzzleFloor = -1, int lostPuzzleMistakes = 0, int weeklySeconds = -1)
+        public PostRunAnalytics Build(int goldLeft = 0, int lostPuzzleFloor = -1, int lostPuzzleMistakes = 0, int weeklySeconds = -1,
+            int weeklyParMinutes = RunScoreBreakdown.TimeParMinutes)
         {
             var result = new PostRunAnalytics
             {
@@ -123,9 +124,10 @@ namespace SudokuRoguelike.Run
             result.RunCompleted = RunCompleted;
             result.GoldLeft = System.Math.Max(0, goldLeft);
             result.WeeklySeconds = weeklySeconds;
+            result.WeeklyParMinutes = weeklyParMinutes;
             result.PuzzleGrades = BuildPuzzleGrades(lostPuzzleFloor, lostPuzzleMistakes);
             result.RunScore = RunScoreBreakdown.Calculate(result.BaseXp, RunScoreBreakdown.GradesOf(result.PuzzleGrades),
-                CursedPuzzlesCompleted, RunCompleted, result.GoldLeft, weeklySeconds).Total;
+                CursedPuzzlesCompleted, RunCompleted, result.GoldLeft, weeklySeconds, weeklyParMinutes).Total;
 
             if (TotalMistakes > 5)
                 result.ImprovementSuggestions.Add("Try using pencil marks to reduce mistakes.");

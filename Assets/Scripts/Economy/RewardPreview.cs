@@ -24,10 +24,13 @@ namespace SudokuRoguelike.Economy
             return gold;
         }
 
-        public static int PuzzleXp(int boardSize, int stars, float cursedMultiplier = 1f)
+        public static int PuzzleXp(RunState state, int boardSize, int stars, float cursedMultiplier = 1f)
         {
             var xp = XpService.CalculateTile(boardSize, stars, 0, false, false).TotalXp;
-            return cursedMultiplier != 1f ? (int)(xp * cursedMultiplier) : xp;
+            if (cursedMultiplier != 1f) xp = (int)(xp * cursedMultiplier);
+            // [REQ: RUN-FLOORS-001] the three-floor run's ×1.5, rounded as RunDirector.ScaleThreeFloorXp does
+            return state != null && state.ThreeFloors
+                ? (int)Math.Round(xp * Run.RunDirector.ThreeFloorXp, MidpointRounding.AwayFromZero) : xp;
         }
     }
 }

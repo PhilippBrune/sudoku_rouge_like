@@ -15,6 +15,7 @@ namespace SudokuRoguelike.Meta
     {
         public const int PerClass = 3;
         public const float SwiftSeconds = 40 * 60f;
+        public const float SwiftSecondsThreeFloors = 25 * 60f;   // [REQ: RUN-FLOORS-001]
         public const int HighHarmony = 6;
 
         /// <summary>The challenge's id: the class's icon name and 1 to 3 ("number_freak_1").</summary>
@@ -36,7 +37,8 @@ namespace SudokuRoguelike.Meta
                 || result.PlayedClassId != classId) return false;
             switch (index)
             {
-                case 1: return result.Victory && state != null && state.ActiveSeconds > 0f && state.ActiveSeconds < SwiftSeconds;
+                case 1: return result.Victory && state != null && state.ActiveSeconds > 0f
+                    && state.ActiveSeconds < (state.ThreeFloors ? SwiftSecondsThreeFloors : SwiftSeconds);
                 case 2: return result.Victory && result.HarmonyLevel >= HighHarmony;
             }
             return classId switch
@@ -134,7 +136,7 @@ namespace SudokuRoguelike.Meta
         };
 
         private static string FallbackDescription(ClassId classId, int index) =>
-            index == 1 ? "Win a Garden Run in under 40 minutes." : index == 2 ? "Win a Garden Run on Harmony VI or higher." : classId switch
+            index == 1 ? "Win a Garden Run in under 25 minutes." : index == 2 ? "Win a Garden Run on Harmony VI or higher." : classId switch
             {
                 ClassId.NumberFreak => "Win a Garden Run with 10 perfect puzzles.",
                 ClassId.GardenMonk => "Win a Garden Run without using an item.",

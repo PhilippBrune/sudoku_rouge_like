@@ -147,15 +147,17 @@ namespace SudokuRoguelike.Tests
 
         // [REQ: REQ-BOSS-101] [REQ: REQ-SUD-101] [REQ: REQ-PERF-100] Promoted from review diagnostic D18:
         // every boss generates through the async UI path with all chosen modifiers active.
-        [Test]
-        [Requirement("REQ-BOSS-101", "REQ-SUD-101", "REQ-PERF-100")]
-        public void BossPuzzles_AllFloors_GenerateWithChosenModifiers()
+        // [REQ: RUN-FLOORS-001] Both layouts: the three floors of a run from 0.4.3 and the five of a run saved before.
+        [TestCase(true)]
+        [TestCase(false)]
+        [Requirement("REQ-BOSS-101", "REQ-SUD-101", "REQ-PERF-100", "RUN-FLOORS-001")]
+        public void BossPuzzles_AllFloors_GenerateWithChosenModifiers(bool fiveFloors)
         {
             var failures = new List<string>();
             foreach (var seed in new[] { 1001, 3003, 5005 })
             {
-                var run = StartGardenRun(seed);
-                for (var floor = 0; floor < 5; floor++)
+                var run = StartGardenRun(seed, fiveFloors);
+                for (var floor = 0; floor < run.State.TotalFloors; floor++)
                 {
                     if (floor > 0) run.AdvanceToNextFloor();
                     var choices = run.RollBossModifierChoices();
@@ -176,7 +178,12 @@ namespace SudokuRoguelike.Tests
                         if (!run.CurrentLevelConfig.ActiveModifiers.Contains(mod))
                             failures.Add($"seed {seed} F{floor + 1}: chosen {mod} dropped");
                         if (run.LastGenerationMissingModifiers.Contains(mod))
-                            failures.Add($"seed {seed} F{floor + 1}: chosen {mod} has no overlay");
+                        {
+                            var m = run.LastGenerationMetrics;
+                            failures.Add($"seed {seed} F{floor + 1}: chosen {mod} has no overlay ({config.BoardSize}x{config.BoardSize}, " +
+                                $"{string.Join("+", run.CurrentLevelConfig.ActiveModifiers)}; budget {m?.BudgetExceeded}, {m?.ElapsedMilliseconds} ms, " +
+                                $"overlay fails {m?.OverlayGenerationFailures}, boards {m?.BoardRetriesAttempted}, {m?.LastError})");
+                        }
                     }
                     if (elapsed > 15000)
                         failures.Add($"seed {seed} F{floor + 1}: took {elapsed} ms");
@@ -278,13 +285,13 @@ namespace SudokuRoguelike.Tests
             CollectionAssert.AreEquivalent(pool, seen);
         }
 
-        private static RunDirector StartGardenRun(int seed)
+        private static RunDirector StartGardenRun(int seed, bool fiveFloors = true)
         {
             var run = new RunDirector();
             run.StartRun(new LaunchRequest
             {
                 ClassId = ClassId.NumberFreak,
-                Mode = GameMode.GardenRun,
+                Mode = GameMode.GardenRun, FiveFloors = fiveFloors,
                 AllowIrregularPuzzles = true,
                 ClassLevel = 1
             }, seed);

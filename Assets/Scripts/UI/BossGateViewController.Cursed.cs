@@ -142,8 +142,8 @@ namespace SudokuRoguelike.UI
                 // [REQ: STAKES-001] The stake in numbers (RM-115): what the puzzle pays played normally and cursed.
                 var gold = RewardPreview.PuzzleGold(state, config.BoardSize, config.Stars);
                 var cursedGold = RewardPreview.PuzzleGold(state, config.BoardSize, config.Stars, config.CursedGoldMult);
-                var xp = RewardPreview.PuzzleXp(config.BoardSize, config.Stars);
-                var cursedXp = RewardPreview.PuzzleXp(config.BoardSize, config.Stars, config.CursedXpMult);
+                var xp = RewardPreview.PuzzleXp(state, config.BoardSize, config.Stars);
+                var cursedXp = RewardPreview.PuzzleXp(state, config.BoardSize, config.Stars, config.CursedXpMult);
                 ScrollUiKit.Label(t, "Gold", F("InRun.Cursed.GoldStake", gold, cursedGold, goldBonus), 30, TextAnchor.MiddleLeft, green,
                     new Vector2(0.07f, 0.60f), new Vector2(0.93f, 0.80f), 16);
                 ScrollUiKit.Label(t, "Xp", F("InRun.Cursed.XpStake", xp, cursedXp, xpBonus), 30, TextAnchor.MiddleLeft, green,

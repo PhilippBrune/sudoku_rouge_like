@@ -594,7 +594,8 @@ namespace SudokuRoguelike.Boss
             BossModifierId.CellLock, BossModifierId.PencilBlind, BossModifierId.RadiusWipe,
             BossModifierId.PencilScramble, BossModifierId.GivenReveal, BossModifierId.RevealCost,
             BossModifierId.CellBlur, BossModifierId.BoxWipe, BossModifierId.CrossWipe,
-            BossModifierId.PencilDrain, BossModifierId.GoldFine
+            BossModifierId.PencilDrain, BossModifierId.GoldFine,
+            BossModifierId.CountdownFill, BossModifierId.HauntedCell, BossModifierId.CrumblingRegion, BossModifierId.PressureWave
         };
 
         private static readonly BossModifierId[] LocalizedDescriptionIds =
@@ -618,7 +619,8 @@ namespace SudokuRoguelike.Boss
             BossModifierId.CellLock, BossModifierId.PencilBlind, BossModifierId.BoxWipe,
             BossModifierId.CrossWipe, BossModifierId.RadiusWipe, BossModifierId.PencilDrain,
             BossModifierId.GoldFine, BossModifierId.PencilScramble, BossModifierId.GivenReveal,
-            BossModifierId.RevealCost, BossModifierId.CellBlur
+            BossModifierId.RevealCost, BossModifierId.CellBlur,
+            BossModifierId.CountdownFill, BossModifierId.HauntedCell, BossModifierId.CrumblingRegion, BossModifierId.PressureWave
         };
 
         private static string BossNameKey(BossModifierId id) => $"Boss.Name.{id}";

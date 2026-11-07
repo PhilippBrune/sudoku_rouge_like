@@ -23,14 +23,14 @@ namespace SudokuRoguelike.Classes
             {
                 Id = ClassId.NumberFreak, Name = "Number Freak",
                 BaseHP = 10, BasePencil = 10, BaseItemSlots = 2,
-                PassiveDescription = "After completing a puzzle with zero mistakes: +1 Reroll Token.",
+                PassiveDescription = "After a puzzle with no mistakes: +1 Reroll Token and +10 gold.",
                 UnlockCondition = "Default (always unlocked)"
             },
             new ClassDefinition
             {
                 Id = ClassId.GardenMonk, Name = "Garden Monk",
                 BaseHP = 14, BasePencil = 5, BaseItemSlots = 1,
-                PassiveDescription = "Every 5 correct placements: +1 HP. Level 15+: every 4.",
+                PassiveDescription = "A puzzle with no mistakes heals 2 HP. Level 15+: 3 HP.",
                 UnlockCondition = "Defeat 2 bosses"
             },
             new ClassDefinition
@@ -65,14 +65,14 @@ namespace SudokuRoguelike.Classes
             {
                 Id = ClassId.ReedDuelist, Name = "Reed Duelist",
                 BaseHP = 9, BasePencil = 9, BaseItemSlots = 2,
-                PassiveDescription = "Perfect no-pencil puzzle: +2 Pencil. Every 5 such puzzles in a run: +1 HP.",
+                PassiveDescription = "A puzzle solved without pencil marks: +50 % of its gold and +1 HP (Level 15+: +2 HP).",
                 UnlockCondition = "Find every unique item"
             },
             new ClassDefinition
             {
                 Id = ClassId.QuietCartographer, Name = "Quiet Cartographer",
                 BaseHP = 12, BasePencil = 6, BaseItemSlots = 1,
-                PassiveDescription = "Preview next node's star & board size after a perfect tile. If you then choose that node, its difficulty is reduced by \u00bd star (min 1\u2605).",
+                PassiveDescription = "Sees the size and stars of every tile on the floor. After a perfect puzzle the next one is half a star easier (Level 15+: a whole star).",
                 UnlockCondition = "Complete a full run (all 5 floors + boss) with zero mistakes"
             }
         };
@@ -106,7 +106,7 @@ namespace SudokuRoguelike.Classes
                     (25,"+2 HP, +2 Pencil"),(30,"Start: Rare Solver"),(35,"+1 Reroll Token"),(40,"Cosmetic: Golden Number frame") },
             // GardenMonk
             new[] { (3,"+1 Pencil"),(5,"+2 HP"),(7,"+10 Starting Gold"),(10,"+1 Item Slot"),
-                    (13,"+2 HP"),(15,"Passive: heal every 4 placements (was 5)"),(18,"+1 Pencil"),(20,"+2 HP, +1 Reroll Token, +1 Starting Relic"),
+                    (13,"+2 HP"),(15,"Passive: a mistake-free puzzle heals 3 HP"),(18,"+1 Pencil"),(20,"+2 HP, +1 Reroll Token, +1 Starting Relic"),
                     (25,"+1 Pencil"),(30,"Start: Meditation Stone"),(35,"+2 HP"),(40,"Cosmetic: Blooming Monk frame") },
             // ShrineArchivist
             new[] { (3,"+2 Pencil"),(5,"+1 HP"),(7,"+10 Starting Gold"),(10,"+1 Reroll Token, +1 Starting Relic"),
@@ -126,11 +126,11 @@ namespace SudokuRoguelike.Classes
                     (25,"Passive: modifiers 40% weaker"),(30,"Start: Lantern of Clarity"),(35,"+2 Pencil, +1 HP"),(40,"Cosmetic: Spirit Lantern frame") },
             // ReedDuelist
             new[] { (3,"+1 Pencil"),(5,"+1 HP"),(7,"+1 Reroll Token"),(10,"+10 Starting Gold"),
-                    (13,"+2 Pencil"),(15,"Passive: perfect no-pencil → +3 Pencil"),(18,"+1 HP"),(20,"+1 Item Slot, +1 Starting Relic"),
+                    (13,"+2 Pencil"),(15,"Passive: a no-pencil puzzle heals 2 HP"),(18,"+1 HP"),(20,"+1 Item Slot, +1 Starting Relic"),
                     (25,"+2 HP, +1 Pencil"),(30,"Start: Temple Incense"),(35,"+1 Reroll Token"),(40,"Cosmetic: Cutting Reed frame") },
             // QuietCartographer
             new[] { (3,"+1 Pencil"),(5,"+10 Starting Gold"),(7,"+1 HP"),(10,"+1 Reroll Token, +1 Starting Relic"),
-                    (13,"+1 Pencil, +1 HP"),(15,"Passive: preview always active"),(18,"+10 Starting Gold"),(20,"+1 Item Slot"),
+                    (13,"+1 Pencil, +1 HP"),(15,"Passive: the eased puzzle is a whole star easier"),(18,"+10 Starting Gold"),(20,"+1 Item Slot"),
                     (25,"+2 Pencil, +1 HP"),(30,"Start: Compass of Order"),(35,"+2 HP"),(40,"Cosmetic: Ink Map frame") },
         };
 

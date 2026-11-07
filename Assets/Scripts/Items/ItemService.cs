@@ -257,11 +257,11 @@ namespace SudokuRoguelike.Items
                 return rares[_random.Next(rares.Length)];
             }
 
+            // [REQ: ITEM-FOG-001] The fog lanterns are sold where there is fog (CounterItems.FogItems), never rolled here.
             var tiered = new[]
             {
                 ItemType.Solver, ItemType.Finder, ItemType.InkWell, ItemType.MeditationStone,
-                ItemType.WindChime, ItemType.PatternScroll, ItemType.KoiReflection, ItemType.LanternOfClarity,
-                ItemType.BambooScroll, ItemType.GardenLantern
+                ItemType.WindChime, ItemType.PatternScroll, ItemType.KoiReflection, ItemType.BambooScroll
             };
             return tiered[_random.Next(tiered.Length)];
         }

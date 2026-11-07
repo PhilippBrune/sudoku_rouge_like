@@ -36,8 +36,7 @@ namespace SudokuRoguelike.Run
                 SanitizeGeneratedModifierList(State.ChosenBossModifiers, "saved boss modifiers");
 
             var floor = State.CurrentFloor;
-            var minSize = FloorThemeData.GetMinBoardSize(floor);
-            var maxSize = FloorThemeData.GetMaxBoardSize(floor);
+            var (minSize, maxSize) = BoardSizesFor(floor, State.ThreeFloors);   // [REQ: RUN-FLOORS-001]
             var rng = new System.Random(State.Seed + State.Depth * 31 + floor * 997 + nodeIndex * 13);
             // Pre-compute minimum board size from the modifiers that will be active so the rolled
             // size already satisfies constraints — avoids post-hoc board-size bumps that misalign
@@ -169,13 +168,15 @@ namespace SudokuRoguelike.Run
                 config.Difficulty = (DifficultyTier)Math.Clamp((int)config.Difficulty + 1, (int)DifficultyTier.Diff1, (int)DifficultyTier.Diff5);
                 config.Stars = Math.Min(Math.Max(config.Stars, 5), config.Stars + 1); // +1 up to 5★; a rolled 6★ stays 6★
                 config.MissingPercent = StarDensityService.MissingPercentForStars(config.Stars);
-                var floorMax = FloorThemeData.GetMaxBoardSize(State.CurrentFloor);
+                var floorMax = BoardSizesFor(State.CurrentFloor, State.ThreeFloors).max;
                 config.BoardSize = Math.Min(Math.Max(config.BoardSize, Math.Min(config.BoardSize + 1, floorMax)), 9);
                 // A structural modifier cannot run on the irregular 7×7 layouts; keep the bump consistent with that rule.
                 if (config.BoardSize == 7 && HasBoardShapingModifier(config.ActiveModifiers))
                     config.BoardSize = 8;
                 EnsureBoardSizeSupportsActiveModifiers(config);
             }
+            // [REQ: CLASS-PASSIVE-002] The Quiet Cartographer's puzzle after a perfect one is easier (the flag follows each solve).
+            config.MissingPercent = ClassPassiveService.EasedMissingPercent(State, config.Stars, config.MissingPercent);
             return config;
         }
 

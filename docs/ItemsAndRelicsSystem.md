@@ -1,13 +1,14 @@
 # Items & Relics System
 
-**Version:** 2.8  
-**Date:** 2026-11-04  
+**Version:** 2.9  
+**Date:** 2026-11-07  
 **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.9 | 2026-11-07 | implemented | Owner's picks after the 0.4.1 playtest on a Legion Go (2026-11-05) (F3): the fog lanterns are no reward any more; the market sells them where there is fog (ITEM-FOG-001). |
 | 2.8 | 2026-11-04 | implemented | RM-104 (owner's ticks 2026-11-04, list `docs/design/rm104-content-proposals.html` and the trade round): 7 relics (RELIC-PACK-001, RELIC-TRADE-001), 4 items (ITEM-PACK-001, ITEM-TRADE-001) and 7 events (EVENT-PACK-001, EVENT-TRADE-001). The trades pay with HP, Max HP or pencil marks for a strong effect (the owner's wish). |
 | 2.7 | 2026-11-03 | implemented | Owner (2026-11-03), on the proposals of OPEN_POINTS 2.0: the Pattern Scroll lists every drawn piece by its rule's name in the player's language, cell markers, cell pairs, outside clues, quadruples and extra regions included (ITEM-SCROLL-001). |
 | 2.6 | 2026-11-03 | implemented | Spirit Trials start with one item in one slot (TRIAL-SESSION-001, owner 2026-11-03, GAP-113); Endless Zen keeps `ItemSlots = 0`. |
@@ -68,6 +69,12 @@ Offers per shop: 2 on Floors 1–2, 3 on Floors 3–4, 4 on Floor 5 (`ShopServic
 chosen, the boss's trials. Each slot offers one of those counters with a chance of 50 % (`ShopService.CounterItemChance`),
 each counter at most once per shop, at its fixed rarity and that rarity's price. Floor 1 has no floor modifiers, so its
 shops roll as before.
+
+### Fog lanterns (ITEM-FOG-001, 0.4.3)
+
+| ID | Requirement |
+|---|---|
+| ITEM-FOG-001 | The Lantern of Clarity and the Garden Lantern are never rolled as rewards (on a board without fog they did nothing). The market offers them like the counter items, each at `CounterItemChance`, when the floor's or the boss's rules include Fog of War or an Inkblot or Fog of Memory curse is active (`CounterItems.FogAhead`, `FogItems`). |
 
 ### Counter Items (2.3, ITEM-COUNTER-001..006)
 

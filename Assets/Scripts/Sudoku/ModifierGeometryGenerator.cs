@@ -129,8 +129,7 @@ namespace SudokuRoguelike.Sudoku
                         GenerateUniqueSetLines(board, overlay, rng, scale);
                         break;
                     case BossModifierId.FullKropki:
-                        GenerateFullKropki(board, overlay);
-                        break;
+                        break;   // after the loop (GAP-121)
                     case BossModifierId.SumKropki:
                         GenerateSumKropkiDots(board, overlay, rng, scale);
                         break;
@@ -266,6 +265,8 @@ namespace SudokuRoguelike.Sudoku
             }
 
             // Complete dot sets come last and claim no cells, so they never crowd out the other geometry.
+            // [REQ: REQ-BOSS-101] GAP-121: Full Kropki claimed nearly every cell, so the lines and circles after it found no room.
+            if (modifiers.Contains(BossModifierId.FullKropki)) GenerateFullKropki(board, overlay);
             if (modifiers.Contains(BossModifierId.FullWhiteKropki)) GenerateFullKropkiSet(board, overlay, black: false);
             if (modifiers.Contains(BossModifierId.FullBlackKropki)) GenerateFullKropkiSet(board, overlay, black: true);
 

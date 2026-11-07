@@ -18,14 +18,6 @@ namespace SudokuRoguelike.Classes
         {
             switch (state.ClassId)
             {
-                case ClassId.GardenMonk:
-                    var healInterval = GetGardenMonkHealInterval(state);
-                    if (level.CorrectPlacements > 0
-                        && level.CorrectPlacements % healInterval == 0
-                        && state.CurrentHP < state.MaxHP)
-                        state.CurrentHP = Math.Min(state.MaxHP, state.CurrentHP + 1);
-                    break;
-
                 case ClassId.KoiGambler:
                     // GildedKoiScale: raises proc chance to 40% and gold grant to +5
                     var hasScale = RelicService.HasRelicOfType(state, RelicId.GildedKoiScale);
@@ -38,9 +30,6 @@ namespace SudokuRoguelike.Classes
                     }
                     break;
 
-                case ClassId.ReedDuelist:
-                    // Perfect + no pencil tile → +2 Pencil (checked at level end, not here)
-                    break;
             }
             return 0;
         }
@@ -93,30 +82,46 @@ namespace SudokuRoguelike.Classes
         // ── On level complete ────────────────────────────────────────────────────
 
         /// <summary>
-        /// Called by RunDirector at the end of each completed level.
-        /// Returns pencil gained (ReedDuelist passive).
+        /// [REQ: CLASS-PASSIVE-002] Called by RunDirector at the end of each completed level, after the puzzle's gold.
+        /// Playtest 0.4.1 (owner's picks M2, P-NF, P-RD, P-QC, 2026-11-05); GAP-120: three of these did nothing before.
         /// </summary>
-        public static int OnLevelComplete(RunState state, LevelState level)
+        public static void OnLevelComplete(RunState state, LevelState level, int puzzleGold)
         {
+            var clean = level.Mistakes == 0;
             switch (state.ClassId)
             {
-                case ClassId.ReedDuelist:
-                    // Perfect + no pencil → +2 Pencil (L15: +3 Pencil)
-                    if (level.PerfectSoFar && level.NoPencilUsed)
-                    {
-                        var bonus = ReedDuelistPencilBonus(state);
-                        state.CurrentPencil = Math.Min(state.MaxPencil, state.CurrentPencil + bonus);
-                        return bonus;
-                    }
+                case ClassId.NumberFreak:   // no mistake: +1 Reroll Token and +10 gold
+                    if (!clean) break;
+                    state.RerollTokens++;
+                    state.GainGold(NumberFreakGold);
                     break;
-
-                case ClassId.StoneGardener:
-                    // Reset "first item used" flag each level (tracked via LevelState.ItemsUsedThisLevel)
-                    // The actual free-use logic lives in UseItem
+                case ClassId.GardenMonk:    // no mistake: +2 HP (Level 15: +3)
+                    if (clean) state.CurrentHP = Math.Min(state.MaxHP, state.CurrentHP + GardenMonkHeal(state));
+                    break;
+                case ClassId.ReedDuelist:   // no pencil mark: +50 % of the puzzle's gold and +1 HP (Level 15: +2)
+                    if (!level.NoPencilUsed) break;
+                    state.GainGold(puzzleGold / 2);
+                    state.CurrentHP = Math.Min(state.MaxHP, state.CurrentHP + (GetClassLevel(state) >= 15 ? 2 : 1));
+                    break;
+                case ClassId.QuietCartographer:   // a perfect puzzle eases the next one
+                    state.CartographerEase = level.PerfectSoFar && clean;
                     break;
             }
-            return 0;
         }
+
+        public const int NumberFreakGold = 10;
+
+        /// <summary>[REQ: CLASS-PASSIVE-002] The Quiet Cartographer's eased puzzle: its share of empty cells lies half a star
+        /// (Level 15: a whole star) lower; nothing for any other class or puzzle.</summary>
+        public static float EasedMissingPercent(RunState state, int stars, float missingPercent)
+        {
+            if (state?.ClassId != ClassId.QuietCartographer || !state.CartographerEase || stars <= 1) return missingPercent;
+            var easier = StarDensityService.MissingPercentForStars(stars - 1);
+            return GetClassLevel(state) >= 15 ? easier : (missingPercent + easier) / 2f;
+        }
+
+        /// <summary>The Quiet Cartographer sees every tile's size and stars from the floor's start.</summary>
+        public static bool RevealsFloor(RunState state) => state?.ClassId == ClassId.QuietCartographer;
 
         // ── On item use ──────────────────────────────────────────────────────────
 
@@ -150,24 +155,9 @@ namespace SudokuRoguelike.Classes
             return LanternSeerWeakenFactor(state);
         }
 
-        // ── QuietCartographer: next-tile preview ─────────────────────────────────
-
-        /// <summary>Returns true if the next-tile preview should be shown on the HUD.</summary>
-        public static bool ShouldShowNextTilePreview(RunState state, LevelState level)
-        {
-            if (state.ClassId != ClassId.QuietCartographer) return false;
-            // Show after a perfect tile; L15 upgrade: always show
-            var alwaysShow = QuietCartographerAlwaysPreview(state);
-            return alwaysShow || level.PerfectSoFar;
-        }
-
         // ── Helpers: level-scaled thresholds ────────────────────────────────────
 
-        public static int GetGardenMonkHealInterval(RunState state)
-        {
-            var level = GetClassLevel(state);
-            return level >= 15 ? 4 : 5;
-        }
+        public static int GardenMonkHeal(RunState state) => GetClassLevel(state) >= 15 ? 3 : 2;
 
         private static double KoiGoldChance(RunState state)
         {
@@ -191,12 +181,6 @@ namespace SudokuRoguelike.Classes
             return level >= 20 ? 2 : 1;
         }
 
-        private static int ReedDuelistPencilBonus(RunState state)
-        {
-            var level = GetClassLevel(state);
-            return level >= 15 ? 3 : 2;
-        }
-
         private static int StoneGardenerFreeItems(RunState state)
         {
             var level = GetClassLevel(state);
@@ -210,11 +194,6 @@ namespace SudokuRoguelike.Classes
             if (level >= 25) return 0.40f;
             if (level >= 10) return 0.35f;
             return 0.30f;
-        }
-
-        private static bool QuietCartographerAlwaysPreview(RunState state)
-        {
-            return GetClassLevel(state) >= 15;
         }
 
         private static int GetClassLevel(RunState state)

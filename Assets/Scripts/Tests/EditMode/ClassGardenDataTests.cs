@@ -162,7 +162,7 @@ namespace SudokuRoguelike.Tests
         public void RunResultFactory_RecordsTheFloorTheRunEndedOn()
         {
             var run = new RunDirector();
-            run.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, ClassLevel = 1 }, 4401);
+            run.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, FiveFloors = true, ClassLevel = 1 }, 4401);
             run.State.CurrentFloor = 2;
 
             Assert.AreEqual(3, RunResultFactory.Build(run, false, 0, 1).FloorReached, "floor index 2 is the third floor");

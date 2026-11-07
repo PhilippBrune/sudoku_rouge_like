@@ -9,6 +9,8 @@ namespace SudokuRoguelike.Run
     /// </summary>
     public static class RunResultFactory
     {
+        public const int ThreeFloorParMinutes = 36;   // [REQ: RUN-FLOORS-001] the week's pace on three floors (60 × 3/5)
+
         public static RunResult Build(RunDirector run, bool victory, int bossPhaseReached, int secondsPlayed)
         {
             if (run?.State == null) return null;
@@ -20,6 +22,7 @@ namespace SudokuRoguelike.Run
                 Mode = state.Mode,
                 Victory = victory && !state.DailyWalk,   // [REQ: DAILY-WALK-003] two floors are no Garden Run win
                 DailyWalk = state.DailyWalk,
+                ThreeFloors = state.ThreeFloors,
                 GardenDepthReached = state.Depth,
                 FloorReached = Mathf.Clamp(state.WalkFloor, 1, Mathf.Max(1, state.TotalFloors)),
                 // [REQ: REQ-ECON-101] Gold collected during the run, not gold still held at the end (GAP-027).
@@ -49,7 +52,8 @@ namespace SudokuRoguelike.Run
                 var lostInPuzzle = gardenRun && !victory && run.CurrentBoard != null && run.CurrentLevelState != null
                     && !run.IsLevelComplete;
                 result.Analytics = analytics.Build(state.CurrentGold, lostInPuzzle ? state.CurrentFloor : -1,
-                    lostInPuzzle ? run.CurrentLevelState.Mistakes : 0, state.WeeklySeedRun ? (int)state.ActiveSeconds : -1);
+                    lostInPuzzle ? run.CurrentLevelState.Mistakes : 0, state.WeeklySeedRun ? (int)state.ActiveSeconds : -1,
+                    state.ThreeFloors ? ThreeFloorParMinutes : RunScoreBreakdown.TimeParMinutes);
                 result.ItemsUsedThisRun = analytics.TotalItemsUsed;
                 // [REQ: MAP-NODE-CURSED-004] Cursed puzzles accepted and completed (GameDesignSpec §9c); perfect puzzles (GAP-054).
                 result.CursedPuzzlesAccepted = analytics.CursedPuzzlesCompleted;

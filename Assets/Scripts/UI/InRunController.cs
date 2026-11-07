@@ -1735,7 +1735,7 @@ namespace SudokuRoguelike.UI
             _                    => ""
         };
 
-        private static string GetNodeLabelShort(RunNode node) => node.Type switch
+        private static string GetNodeLabelShort(RunNode node) => node.IsWarden ? T("InRun.Path.Node.Warden") : node.Type switch
         {
             NodeType.Start       => T("InRun.Path.Node.Start"),
             NodeType.Puzzle      => T("InRun.Path.Node.Puzzle"),

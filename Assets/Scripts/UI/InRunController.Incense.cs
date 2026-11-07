@@ -20,7 +20,7 @@ namespace SudokuRoguelike.UI
             return run.State.Mode == GameMode.IncenseWalk
                 ? LocalizationService.Format("Incense.Hud.Header", "Incense Walk · puzzle {0}  {1}×{1}  {2}★", run.State.Depth + 1, board.Size, stars)
                 : LocalizationService.Format("InRun.LevelInfo", "Floor {0}  Depth {1}  {2}×{2}  {3}★",
-                    run.State.CurrentFloor + 1, run.State.Depth, board.Size, stars);
+                    run.State.WalkFloor, run.State.Depth, board.Size, stars);   // [REQ: RUN-FLOORS-001] 2 of 3, not garden 3
         }
 
         private void TickIncense(RunDirector run)

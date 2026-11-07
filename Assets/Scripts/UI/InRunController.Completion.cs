@@ -253,6 +253,12 @@ namespace SudokuRoguelike.UI
             }
             ShowPath();
             _completedRingArmed = false;
+            // [REQ: RUN-FLOORS-002] The warden of a skipped garden leaves a relic to choose.
+            if (node != null && node.IsWarden)
+            {
+                var choices = _map.Run.RollRelicChoices(3);
+                if (choices != null && choices.Count > 0) _rewardView.ShowRelicChoicePanel(choices);
+            }
         }
 
         /// <summary>

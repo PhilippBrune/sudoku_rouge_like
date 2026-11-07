@@ -337,7 +337,7 @@ namespace SudokuRoguelike.Tests
             run.StartRun(new LaunchRequest
             {
                 ClassId = ClassId.NumberFreak,
-                Mode = GameMode.GardenRun,
+                Mode = GameMode.GardenRun, FiveFloors = true,
                 AllowIrregularPuzzles = false,
                 ClassLevel = 1
             }, seed);

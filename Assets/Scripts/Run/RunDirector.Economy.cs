@@ -25,8 +25,10 @@ namespace SudokuRoguelike.Run
             var rules = new List<BossModifierId>();
             if (State.ActiveFloorModifiers != null) rules.AddRange(State.ActiveFloorModifiers);
             if (State.ChosenBossModifiers != null) rules.AddRange(State.ChosenBossModifiers);
+            var counters = Items.CounterItems.ForRules(rules);
+            if (Items.CounterItems.FogAhead(rules, State.ActiveCurseIds)) counters.AddRange(Items.CounterItems.FogItems);   // ITEM-FOG-001
             CurrentShopOffers = _shopService.BuildOffers(State.CurrentFloor, classLevel, priceMultiplier, State.HarmonyConfig.ShopSurcharge,
-                shopClassId, Items.CounterItems.ForRules(rules));
+                shopClassId, counters);
             return CurrentShopOffers;
         }
 

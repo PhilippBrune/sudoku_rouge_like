@@ -172,7 +172,7 @@ namespace SudokuRoguelike.UI
                     var shadow = seal.gameObject.AddComponent<Shadow>();
                     shadow.effectColor = new Color(0f, 0f, 0f, 0.5f);
                     shadow.effectDistance = new Vector2(2f, -4f);
-                    ScrollUiKit.Icon(seal.transform, "Mask", "boss/icon_" + FloorThemeData.GetBossKey(f),
+                    ScrollUiKit.Icon(seal.transform, "Mask", "boss/icon_" + FloorThemeData.GetBossKey(state.GardenOf(f)),
                         new Vector2(0.14f, 0.14f), new Vector2(0.86f, 0.86f), Color.white);
                 }
                 else
@@ -188,7 +188,7 @@ namespace SudokuRoguelike.UI
                             bar.rectTransform.localRotation = Quaternion.Euler(0f, 0f, angle);
                         }
                 }
-                var name = ScrollUiKit.Label(screen, $"FloorName_{f}", FloorThemeData.GetFloorName(f), 17, TextAnchor.UpperCenter,
+                var name = ScrollUiKit.Label(screen, $"FloorName_{f}", FloorThemeData.GetFloorName(state.GardenOf(f)), 17, TextAnchor.UpperCenter,
                     ScrollUiKit.PaperText, new Vector2(x - 0.04f, 0.70f), new Vector2(x + 0.04f, 0.745f), 11);
                 Shade(name);
             }

@@ -81,7 +81,7 @@ namespace SudokuRoguelike.Tests
             yield return null;
 
             Assert.AreEqual(flow.RelicsBefore + 1, flow.Run.State.HeldRelics.Count, "exactly one offering is taken");
-            Assert.AreEqual(1, flow.Run.State.CurrentFloor, "run must advance to floor 2");
+            Assert.AreEqual(2, flow.Run.State.WalkFloor, "run must advance to floor 2");
             Assert.IsNull(FindObjectOrNull(host, "BossDefeatedScreen"), "the offering table closes");
             Assert.IsTrue(FindObject(host, "PathOverviewPanel").activeInHierarchy, "path overview of the new floor");
         }
@@ -97,7 +97,7 @@ namespace SudokuRoguelike.Tests
             yield return null;
 
             Assert.AreEqual(flow.RelicsBefore, flow.Run.State.HeldRelics.Count);
-            Assert.AreEqual(1, flow.Run.State.CurrentFloor);
+            Assert.AreEqual(2, flow.Run.State.WalkFloor);
             Assert.IsTrue(FindObject(flow.Host, "PathOverviewPanel").activeInHierarchy);
         }
 

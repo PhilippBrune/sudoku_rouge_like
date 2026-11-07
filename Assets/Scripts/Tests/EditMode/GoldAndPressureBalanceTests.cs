@@ -75,7 +75,7 @@ namespace SudokuRoguelike.Tests
         private static RunDirector StartRun(int seed)
         {
             var run = new RunDirector();
-            run.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, ClassLevel = 1 }, seed);
+            run.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, FiveFloors = true, ClassLevel = 1 }, seed);
             run.State.HeldRelics.Clear();
             run.State.HasPositiveFloorEffect = false;
             return run;

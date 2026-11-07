@@ -51,7 +51,7 @@ namespace SudokuRoguelike.Meta
         {
             if (result.Victory && result.HarmonyLevel >= HarmonyForLastChapter) return 5;
             if (result.Victory) return 4;
-            if (result.FloorReached >= 3) return 3;
+            if (result.FloorReached >= (result.ThreeFloors ? 2 : 3)) return 3;   // [REQ: RUN-FLOORS-001] the middle floor
             return result.BossesDefeatedThisRun >= 1 ? 2 : 1;
         }
 

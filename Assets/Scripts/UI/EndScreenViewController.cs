@@ -82,7 +82,7 @@ namespace SudokuRoguelike.UI
             ScrollUiKit.Painting(screen.transform, "Backdrop", "bg_boss_cleared", new Color(0.62f, 0.60f, 0.56f, 1f));
             ScrollUiKit.Fill(screen.transform, "FloorShade", Vector2.zero, new Vector2(1f, 0.45f), new Color(0f, 0f, 0f, 0.35f));
 
-            BuildDefeatBanner(screen.transform, floor, state?.TotalFloors ?? 5);
+            BuildDefeatBanner(screen.transform, floor, state?.WalkFloor ?? floor + 1, state?.TotalFloors ?? 5);
             BuildStatsTag(screen.transform, run);
             ScrollUiKit.Icon(screen.transform, "BossMask", "boss/icon_" + FloorThemeData.GetBossKey(floor),
                 new Vector2(0.839f, 0.634f), new Vector2(0.898f, 0.755f), new Color(0.50f, 0.50f, 0.52f, 1f));
@@ -118,7 +118,7 @@ namespace SudokuRoguelike.UI
             }
 
             ScrollUiKit.Label(screen.transform, "BossDefeatedNext",
-                F("InRun.BossDefeated.Next", FloorThemeData.GetFloorName(floor + 1)), 18, TextAnchor.MiddleCenter,
+                F("InRun.BossDefeated.Next", FloorThemeData.GetFloorName(floor + (state?.FloorStep ?? 1))), 18, TextAnchor.MiddleCenter,
                 new Color(0.80f, 0.74f, 0.62f, 1f), new Vector2(0.15f, 0.058f), new Vector2(0.85f, 0.086f), 12);
             var leave = ScrollUiKit.RimButton(screen.transform, "BtnLeaveOfferings", new Vector2(0.45f, 0.010f),
                 new Vector2(0.55f, 0.048f), T("InRun.BossDefeated.Leave"), 16, new Color(0.62f, 0.55f, 0.42f, 1f),
@@ -144,10 +144,11 @@ namespace SudokuRoguelike.UI
         private static readonly Color OfferingText = ScrollUiKit.OfferingText;
         private const string BossDefeatedScreenName = "BossDefeatedScreen";
 
-        private void BuildDefeatBanner(Transform screen, int floor, int totalFloors)
+        // [REQ: RUN-FLOORS-001] floor is the garden (CurrentFloor), walkFloor the number the player walks (2 of 3).
+        private void BuildDefeatBanner(Transform screen, int floor, int walkFloor, int totalFloors)
         {
             ScrollUiKit.Banner(screen, "BossDefeatedBanner", new Vector2(0.318f, 0.844f), new Vector2(0.682f, 0.958f),
-                "BossDefeatedEyebrow", F("InRun.BossDefeated.Eyebrow", floor + 1, totalFloors, FloorThemeData.GetFloorName(floor)),
+                "BossDefeatedEyebrow", F("InRun.BossDefeated.Eyebrow", walkFloor, totalFloors, FloorThemeData.GetFloorName(floor)),
                 "BossDefeatedTitle", F("InRun.BossDefeated.Title", FloorThemeData.GetBossName(floor)));
         }
 

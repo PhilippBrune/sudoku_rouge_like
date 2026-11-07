@@ -382,6 +382,8 @@ namespace SudokuRoguelike.UI
                 colorMultiplier = 1f,
                 fadeDuration = 0.08f
             };
+            if (node.Type != NodeType.Start)   // [REQ: UI-PATH-FOCUS-001] the ring and the class marker on the chosen tile
+                PathFocusMark.Attach(btn, _map?.Run?.State?.ClassId ?? ClassId.NumberFreak, size);
 
             var risk = node.Route == RouteType.RiskRoute || node.Type == NodeType.Start;
             var routeColor = risk ? PathVermilion : PathInk;

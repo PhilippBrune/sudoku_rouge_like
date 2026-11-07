@@ -117,7 +117,7 @@ namespace SudokuRoguelike.Tests
         private static RunDirector StartPuzzle(int seed, ClassId classId)
         {
             var run = new RunDirector();
-            run.StartRun(new LaunchRequest { ClassId = classId, Mode = GameMode.GardenRun, ClassLevel = 1 }, seed);
+            run.StartRun(new LaunchRequest { ClassId = classId, Mode = GameMode.GardenRun, FiveFloors = true, ClassLevel = 1 }, seed);
             run.StartLevel(new LevelConfig { BoardSize = 6, Stars = 2, Seed = seed,
                 MissingPercent = StarDensityService.MissingPercentForStars(2) });
             Assert.NotNull(run.CurrentBoard);

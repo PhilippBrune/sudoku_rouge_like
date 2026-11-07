@@ -140,6 +140,7 @@ namespace SudokuRoguelike.Run
             State.Mode = request.Mode;
             State.GardenOpened = request.GardenOpened;   // [REQ: RUN-EARLY-001] before the starting relics are drawn
             if (request.DailyWalk) BeginDailyWalkPath();   // [REQ: DAILY-WALK-009] before the first floor is built
+            else if (request.Mode == GameMode.GardenRun && !request.FiveFloors) BeginThreeFloors();   // [REQ: RUN-FLOORS-001]
 
             // Roll floor modifiers for the initial floor (Floor 1 = 0 modifiers)
             var startingRelicCount = RunArchetypeService.GetStartingRelicCount(request.ClassId, request.ClassLevel);
@@ -257,7 +258,8 @@ namespace SudokuRoguelike.Run
         // [REQ: MAP-CROSS-001] The floor graph is rebuilt from the seed with the layout version the floor started with.
         public void RebuildFloorGraph()
         {
-            CurrentFloorGraph = _graphService.BuildFloorGraph(State.CurrentFloor, State.Seed, State.FloorGraphVersion, State.DailyWalkPath);
+            CurrentFloorGraph = _graphService.BuildFloorGraph(State.CurrentFloor, State.Seed, State.FloorGraphVersion, State.DailyWalkPath,
+                State.ThreeFloors);
             State.CurrentNodeIndex = 0;
         }
 
@@ -283,7 +285,7 @@ namespace SudokuRoguelike.Run
             State.ShopRerollCount = 0;
 
             // Survey Notes reveals tile details for one floor; Accurate Map sets it again below (OnFloorStart).
-            State.AllNodesRevealed = false;
+            State.AllNodesRevealed = ClassPassiveService.RevealsFloor(State);   // the Quiet Cartographer sees the floor
             // Relic: floor-start effects (WisteriaBranch heal, GoldenRoot interest, AccurateMap)
             RelicService.OnFloorStart(State);
             // [REQ: CURSE-INT-004] fraying_thread curse: -1 MaxHP at start of each new floor
@@ -1690,7 +1692,7 @@ namespace SudokuRoguelike.Run
             }
 
             // Class passive level-complete hook (e.g. ReedDuelist pencil bonus)
-            ClassPassiveService.OnLevelComplete(State, level);
+            ClassPassiveService.OnLevelComplete(State, level, goldBase);
 
             // Curse: restless_inventory drain + auto-cleanse on perfect
             _curseService.ReseedForDecision(DecisionSeed(DecisionPurpose.PuzzleCurse));

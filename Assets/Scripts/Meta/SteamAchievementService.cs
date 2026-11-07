@@ -112,7 +112,7 @@ namespace SudokuRoguelike.Meta
 
             if (result != null && result.Mode == GameMode.GardenRun && !result.TutorialMode && !result.DisableProgressionRewards)
             {
-                if (result.FloorReached >= 5) GrantAchievement(mastery, "floor_5");
+                if (result.FloorReached >= (result.ThreeFloors ? 3 : 5)) GrantAchievement(mastery, "floor_5");   // the summit
                 if (result.CursedPuzzlesAccepted >= 3) GrantAchievement(mastery, "cursed_three");
                 foreach (var tile in result.TileXpEntries ?? new System.Collections.Generic.List<TileXpEntry>())
                 {

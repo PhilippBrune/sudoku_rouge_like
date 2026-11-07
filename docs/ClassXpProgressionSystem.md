@@ -1,11 +1,12 @@
 # Class XP & Level Progression System
 
-**Version:** 1.7 | **Date:** 2026-10-22 | **Status:** implemented
+**Version:** 1.8 | **Date:** 2026-11-07 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.8 | 2026-11-07 | implemented | Owner's picks after the 0.4.1 playtest on a Legion Go (2026-11-05): new passives for the Garden Monk (M2), the Number Freak, the Reed Duelist and the Quiet Cartographer (CLASS-PASSIVE-002); three of the old ones did nothing in the code (GAP-120). |
 | 1.7 | 2026-10-22 | implemented | Owner sign-off of the class balance values (SPEC-CONF-008): the base stats, passives, unlock conditions and level schedules in this document stand as documented. No value changed. |
 | 1.6 | 2026-10-21 | implemented | GAP-063 fixed (owner request 2026-10-21: "analyze, plan and fix"): the Level 30 starting item is given at run start (META-XP-007) and the Level 40 frame is shown (META-XP-008, kept after prestige). Three Level 30 items that did not exist are replaced by existing items that fit the class: Koi Gambler **Golden Koi** (was "Lucky Charm"), Stone Gardener **Rice Paper Umbrella** (was "Harmony Charm"), Reed Duelist **Temple Incense** (was "Tea of Focus"). §UI Placement describes the garden of classes (SPEC-CONF-041 decided: the XP stroke and the totals, no "Most Progressed Class" line). |
 | 1.5 | 2026-10-21 | implemented | Schedule texts follow the code (SPEC-CONF-008: the code is the source): Koi Gambler L10 "correct gold chance 35%", L20 "no-HP-loss chance 35%"; Lantern Seer L10 "modifiers 35% weaker", L25 "40% weaker" (`ClassPassiveService`). The L30 starting items and L40 frames are listed but not granted (GAP-063). The Meta Progression screen's XP stroke (UI-STYLE-019) differs from "UI Placement" below: SPEC-CONF-041. |
@@ -559,3 +560,12 @@ class ClassProgressionEntry {
 **Status:** Needs playtesting
 **Description:** The base XP values (30 / 45 / 60 / 90 / 120 per board size), star multipliers, and bonus values are initial estimates targeting ~80 runs to Level 40. They have not been validated against actual run lengths or the level curve. These values must be tuned during playtesting and may need iteration.
 **Action needed:** Playtest pass with XP logging before locking formula.
+
+## Passives changed in 0.4.3 (CLASS-PASSIVE-002)
+
+| ID | Requirement |
+|---|---|
+| CLASS-PASSIVE-002 | Applied when a puzzle is solved (`ClassPassiveService.OnLevelComplete`, after its gold). **Number Freak:** no mistake: +1 Reroll Token and +10 gold. **Garden Monk:** no mistake: +2 HP (Level 15: +3); the digits heal nothing any more (it was +1 HP every 5, Level 15 every 4). **Reed Duelist:** no pencil mark: +50 % of the puzzle's gold and +1 HP (Level 15: +2). **Quiet Cartographer:** sees every tile's size and stars from the floor's start; after a perfect puzzle the next is half a star easier (its empty-cell share halfway to one star less; Level 15: a whole star). |
+
+Found while building them (GAP-120): the Number Freak's token, the Reed Duelist's "every 5 → +1 HP" and the Quiet
+Cartographer's preview and half star had no code; only the Reed Duelist's +2 pencil worked.

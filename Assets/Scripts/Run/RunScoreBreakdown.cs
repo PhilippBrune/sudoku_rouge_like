@@ -86,7 +86,7 @@ namespace SudokuRoguelike.Run
         }
 
         public static RunScoreBreakdown Calculate(int baseXp, IReadOnlyList<PuzzleGrade> grades, int cursedCompleted,
-            bool victory, int goldLeft, int weeklySeconds = -1)
+            bool victory, int goldLeft, int weeklySeconds = -1, int parMinutes = TimeParMinutes)
         {
             baseXp = Math.Max(0, baseXp);
             grades ??= Array.Empty<PuzzleGrade>();
@@ -128,7 +128,7 @@ namespace SudokuRoguelike.Run
             if (victory && weeklySeconds >= 0)
             {
                 var minutes = (weeklySeconds + 59) / 60;
-                Add(RunScoreLineKind.Time, minutes, Math.Min(MaxTimePercent, Math.Max(0, TimeParMinutes - minutes)));
+                Add(RunScoreLineKind.Time, minutes, Math.Min(MaxTimePercent, Math.Max(0, parMinutes - minutes)));
             }
 
             var total = baseXp;
@@ -146,7 +146,8 @@ namespace SudokuRoguelike.Run
             // Analytics built by the run carry the base XP and the grades; one without them (made elsewhere, or older) is
             // rebuilt from the result, which knows only how many puzzles were perfect.
             if (a != null && (a.BaseXp > 0 || baseXp == 0))
-                return Calculate(a.BaseXp, GradesOf(a), a.CursedPuzzlesCompleted, a.RunCompleted, a.GoldLeft, a.WeeklySeconds);
+                return Calculate(a.BaseXp, GradesOf(a), a.CursedPuzzlesCompleted, a.RunCompleted, a.GoldLeft, a.WeeklySeconds,
+                    a.WeeklyParMinutes > 0 ? a.WeeklyParMinutes : TimeParMinutes);
             return Calculate(baseXp, PerfectOnly(result.PerfectPuzzleCount), result.CursedPuzzlesAccepted, result.Victory, 0);
         }
 

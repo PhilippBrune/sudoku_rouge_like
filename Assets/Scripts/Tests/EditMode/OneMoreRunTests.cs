@@ -112,7 +112,7 @@ namespace SudokuRoguelike.Tests
             for (var seed = 0; seed < 40; seed++)
             {
                 var run = new RunDirector();
-                run.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, GardenOpened = 0 }, 9100 + seed);
+                run.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, FiveFloors = true, GardenOpened = 0 }, 9100 + seed);
                 for (var floor = 0; floor < 4; floor++)
                 {
                     foreach (var relic in run.RollRelicChoices(3)) offeredRelics.Add(relic.Id);
@@ -149,7 +149,7 @@ namespace SudokuRoguelike.Tests
             CollectionAssert.AreEqual(new[] { 3, 4, 1, 2, 0 }, SudokuRoguelike.UI.RunMapController.PreBakeOrder(graph, new[] { 3, 4 }));
 
             var run = new RunDirector();
-            run.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun }, 120);
+            run.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, FiveFloors = true }, 120);
             var order = SudokuRoguelike.UI.RunMapController.PreBakeOrder(run.CurrentFloorGraph, run.GetReachableNodes());
             CollectionAssert.AreEquivalent(Enumerable.Range(0, run.CurrentFloorGraph.Count), order, "every tile once");
             CollectionAssert.AreEquivalent(run.GetReachableNodes(), order.Take(run.GetReachableNodes().Count));
@@ -259,7 +259,8 @@ namespace SudokuRoguelike.Tests
         public void RewardPreview_IsWhatThePuzzlePays()
         {
             var run = new RunDirector();
-            run.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, AllowIrregularPuzzles = false,
+            // A class without a puzzle passive (the Number Freak's +10 gold is a one-off the preview leaves out).
+            run.StartRun(new LaunchRequest { ClassId = ClassId.StoneGardener, Mode = GameMode.GardenRun, FiveFloors = true, AllowIrregularPuzzles = false,
                 ClassLevel = 1, HarmonyLevel = 3 }, 4120);
             run.State.HeldRelics.Clear();
             run.State.HasPositiveFloorEffect = false;
@@ -275,8 +276,11 @@ namespace SudokuRoguelike.Tests
             var entry = run.CompleteLevelAndGrantRewards();
 
             Assert.AreEqual(preview, run.State.CurrentGold - gold, "gold");
-            Assert.AreEqual(RewardPreview.PuzzleXp(6, 2) + XpTable.PerfectBonus, entry.TotalXp, "XP (a perfect solve adds its bonus)");
+            Assert.AreEqual(RewardPreview.PuzzleXp(run.State, 6, 2) + XpTable.PerfectBonus, entry.TotalXp, "XP (a perfect solve adds its bonus)");
             Assert.Greater(RewardPreview.PuzzleGold(run.State, 6, 2, 1.5f), preview, "the cursed stake is higher");
+            run.State.ThreeFloors = true;
+            Assert.AreEqual((int)System.Math.Round(RewardPreview.PuzzleXp(null, 6, 2) * RunDirector.ThreeFloorXp, System.MidpointRounding.AwayFromZero),
+                RewardPreview.PuzzleXp(run.State, 6, 2), "a three-floor run's XP (RUN-FLOORS-001)");
         }
     }
 }

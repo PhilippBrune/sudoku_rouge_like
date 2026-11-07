@@ -30,6 +30,25 @@ namespace SudokuRoguelike.Items
 
         public static bool IsCounterItem(ItemType type) => ByFamily.ContainsValue(type);
 
+        /// <summary>[REQ: ITEM-FOG-001] Playtest 0.4.1 (owner's pick F3): the fog lanterns are no reward any more (on a board
+        /// without fog they did nothing); the market sells them where there is fog.</summary>
+        public static readonly ItemType[] FogItems = { ItemType.LanternOfClarity, ItemType.GardenLantern };
+
+        /// <summary>True when the floor's or the boss's rules or a curse bring fog.</summary>
+        public static bool FogAhead(IEnumerable<BossModifierId> rules, IReadOnlyList<string> curses)
+        {
+            if (rules != null)
+                foreach (var id in rules)
+                    if (id == BossModifierId.FogOfWar) return true;
+            return curses != null && (Contains(curses, "inkblot") || Contains(curses, "fog_of_memory"));
+        }
+
+        private static bool Contains(IReadOnlyList<string> list, string value)
+        {
+            for (var i = 0; i < list.Count; i++) if (list[i] == value) return true;
+            return false;
+        }
+
         public static ItemType For(ModifierFamily family) => ByFamily[family];
 
         /// <summary>The counter items for the families of <paramref name="rules"/>, in family order, each once.</summary>

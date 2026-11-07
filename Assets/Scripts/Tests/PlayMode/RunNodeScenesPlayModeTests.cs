@@ -216,7 +216,8 @@ namespace SudokuRoguelike.Tests
         [Requirement("UI-STYLE-016", "SCORE-GRADE-003")]
         public IEnumerator RunEnd_GardenRunDefeat_SealsAndCrossesTheFloors_OtherModesKeepTheTextLayout()
         {
-            var (host, run) = StartRun(5153);
+            // Five floors: on three, Floor 2 opens the story's third chapter, whose line comes before the Harmony line.
+            var (host, run) = StartRun(5153, fiveFloors: true);
             yield return null;
             run.AdvanceToNextFloor();
             run.State.CurrentHP = 0;
@@ -371,7 +372,7 @@ namespace SudokuRoguelike.Tests
             return -1;
         }
 
-        private (GameObject host, RunDirector run) StartRun(int seed)
+        private (GameObject host, RunDirector run) StartRun(int seed, bool fiveFloors = false)
         {
             if (Object.FindFirstObjectByType<Camera>() == null)
             {
@@ -386,7 +387,9 @@ namespace SudokuRoguelike.Tests
             host.AddComponent<InRunUiBlueprintBuilder>().BuildBlueprint();
 
             var run = new RunDirector();
-            run.StartRun(Request(), seed);
+            var request = Request();
+            request.FiveFloors = fiveFloors;
+            run.StartRun(request, seed);
             host.GetComponentInChildren<RunMapController>(true).BindRun(run, new SaveFileService(TestSlot));
             host.GetComponentInChildren<InRunController>(true).NotifyRunStarted();
             return (host, run);

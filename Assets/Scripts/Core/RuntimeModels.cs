@@ -39,14 +39,22 @@ namespace SudokuRoguelike.Core
         // garden's floor (1, then 3). False for walks saved before, which keep Floors 1 and 2 and both routes.
         public bool DailyWalkPath;
 
-        /// <summary>The floor as the player counts it: the walk's own 1 and 2 on the Daily Walk's path, else CurrentFloor + 1.</summary>
-        public int WalkFloor => DailyWalkPath ? (CurrentFloor >= 3 ? 2 : 1) : CurrentFloor + 1;
+        // [REQ: RUN-FLOORS-001] Playtest 0.4.1 (owner's pick T1, 2026-11-05): a Garden Run walks the gardens of Floors 1, 3 and
+        // 5 (CurrentFloor 0, 2, 4). False for runs saved before, which keep their five floors.
+        public bool ThreeFloors;
+
+        /// <summary>The floor as the player counts it: the walk's own 1 and 2 on the Daily Walk's path, 1 to 3 on a three-floor
+        /// run, else CurrentFloor + 1.</summary>
+        public int WalkFloor => DailyWalkPath ? (CurrentFloor >= 3 ? 2 : 1) : ThreeFloors ? CurrentFloor / 2 + 1 : CurrentFloor + 1;
+
+        /// <summary>The garden (0-based CurrentFloor) of the walk's floor <paramref name="walkFloorIndex"/> (0-based).</summary>
+        public int GardenOf(int walkFloorIndex) => DailyWalkPath ? 1 + 2 * walkFloorIndex : ThreeFloors ? 2 * walkFloorIndex : walkFloorIndex;
 
         /// <summary>The run's last floor (its boss ends the run).</summary>
         public bool OnLastFloor => WalkFloor >= TotalFloors;
 
         /// <summary>The garden floors a run walks: 2 and 4 on the Daily Walk's path, else every floor.</summary>
-        public int FloorStep => DailyWalkPath ? 2 : 1;
+        public int FloorStep => DailyWalkPath || ThreeFloors ? 2 : 1;
         public int Depth;
         public int CurrentFloor;
         public int TotalFloors = 5;
@@ -94,6 +102,7 @@ namespace SudokuRoguelike.Core
 
         // Combo
         public int ComboStreak;
+        public bool CartographerEase;         // [REQ: CLASS-PASSIVE-002] the Quiet Cartographer's next puzzle is easier
         public bool GoldLeafReady;            // [REQ: RELIC-PACK-001] Gold Leaf Brush: the next reward is one rarity higher
         public bool GoldLeafUsedThisPuzzle;
         public List<int> SeedPouchTimers = new List<int>();   // [REQ: ITEM-PACK-001] puzzles left per planted Seed Pouch
@@ -494,6 +503,7 @@ namespace SudokuRoguelike.Core
         public bool Visited;
         public bool Reachable;
         public bool IsCrossLink;  // true for nodes that act as a lane-crossing anchor
+        public bool IsWarden;     // [REQ: RUN-FLOORS-002] the warden of a skipped garden: an elite with a relic choice after it
     }
 
     [Serializable]
@@ -610,6 +620,8 @@ namespace SudokuRoguelike.Core
         public int Seed;
         /// <summary>[REQ: DAILY-WALK-001] The day's walk (Mode stays GardenRun, ClassId stays 0: the neutral walker).</summary>
         public bool DailyWalk;
+        /// <summary>[REQ: RUN-FLOORS-001] The five-floor layout of runs before 0.4.3; the tests of the per-garden rules use it.</summary>
+        public bool FiveFloors;
         public int GardenOpened = 10;   // [REQ: RUN-EARLY-001] filled from the profile for a Garden Run
     }
 
@@ -627,6 +639,7 @@ namespace SudokuRoguelike.Core
         public GameMode Mode;
         public bool Victory;
         public bool DailyWalk;   // [REQ: DAILY-WALK-003] its XP waits for a class; it is never a Garden Run win
+        public bool ThreeFloors; // [REQ: RUN-FLOORS-001] the run was three floors (story, the summit and the pace follow it)
         public int GardenDepthReached;
         /// <summary>[REQ: META-STATS-001] The floor the run ended on, 1 to TotalFloors.</summary>
         public int FloorReached;
@@ -707,6 +720,7 @@ namespace SudokuRoguelike.Core
         /// <summary>[REQ: SCORE-GOLD-001] Gold still held when the run ended.</summary>
         public int GoldLeft;
         public int WeeklySeconds = -1;   // [REQ: SCORE-TIME-001] the run's length when it was the seed of the week, else -1
+        public int WeeklyParMinutes = 60;   // [REQ: RUN-FLOORS-001] 36 on a three-floor run
     }
 
     /// <summary>[REQ: SCORE-GRADE-001] A puzzle's grade from its own mistakes (GameDesignSpec §9c).</summary>

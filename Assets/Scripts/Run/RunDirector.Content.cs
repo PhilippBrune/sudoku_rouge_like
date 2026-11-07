@@ -36,6 +36,7 @@ namespace SudokuRoguelike.Run
         private void OnPuzzleSolvedContent(LevelState level, LevelConfig config)
         {
             Meta.ClassChallenges.OnPuzzleSolved(State, level, config);   // [REQ: CLASS-CHALLENGE-001]
+            ScaleThreeFloorXp();   // [REQ: RUN-FLOORS-001]
             HarvestSeedPouches();
         }
 

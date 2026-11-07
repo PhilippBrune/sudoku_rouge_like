@@ -54,7 +54,7 @@ namespace SudokuRoguelike.Tests
         private static RunDirector RunOnFloor(int floorNumber)
         {
             var run = new RunDirector();
-            run.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, ClassLevel = 1 }, 31337);
+            run.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, FiveFloors = true, ClassLevel = 1 }, 31337);
             for (var f = 1; f < floorNumber; f++) run.AdvanceToNextFloor();
             Assert.AreEqual(floorNumber - 1, run.State.CurrentFloor);
             return run;

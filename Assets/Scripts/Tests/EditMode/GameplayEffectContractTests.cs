@@ -19,7 +19,8 @@ namespace SudokuRoguelike.Tests
         {
             var run = StartPuzzleRun(93001);
             var stars = run.CurrentLevelConfig.Stars;
-            var expectedGold = GoldTable.CalculatePuzzleGold(run.CurrentLevelConfig.BoardSize, stars) + stars * 10;
+            var expectedGold = GoldTable.CalculatePuzzleGold(run.CurrentLevelConfig.BoardSize, stars) + stars * 10
+                + ClassPassiveService.NumberFreakGold;   // CLASS-PASSIVE-002: the Number Freak's mistake-free +10
 
             run.State.HeldItems.Add(BuildItem(ItemType.GoldenKoi, ItemRarity.Rare));
 
@@ -165,41 +166,100 @@ namespace SudokuRoguelike.Tests
                 "Starting relic assignment should allow duplicate copies when more relics are awarded than the tier pool contains.");
         }
 
+        // [REQ: CLASS-PASSIVE-002] Playtest 0.4.1 (owner's pick M2): a puzzle with no mistakes heals 2 HP, from Level 15 3 HP;
+        // the digits themselves heal nothing any more.
         [Test]
-        [Requirement("REQ-CLASS-103")]
-        public void GardenMonk_Level1HealsOnFifthCorrectPlacement()
+        [Requirement("REQ-CLASS-103", "CLASS-PASSIVE-002")]
+        public void GardenMonk_AMistakeFreePuzzleHealsTwo_FromLevel15Three()
         {
-            var run = StartPuzzleRun(93004, ClassId.GardenMonk, classLevel: 1);
-            ClearPlacementHealInterference(run);
-            run.State.MaxHP = 20;
-            run.State.CurrentHP = 19;
-
-            Assert.AreEqual(5, ClassPassiveService.GetGardenMonkHealInterval(run.State));
-
-            PlaceCorrectNumbers(run, 4);
-            Assert.AreEqual(19, run.State.CurrentHP);
-
-            PlaceCorrectNumbers(run, 1);
-            Assert.AreEqual(20, run.State.CurrentHP);
+            foreach (var (classLevel, heal) in new[] { (1, 2), (24, 3) })
+            {
+                var run = StartPuzzleRun(93004, ClassId.GardenMonk, classLevel);
+                ClearPlacementHealInterference(run);
+                run.State.MaxHP = 20;
+                run.State.CurrentHP = 10;
+                PlaceCorrectNumbers(run, 5);
+                Assert.AreEqual(10, run.State.CurrentHP, "the digits heal nothing");
+                SolveCurrentBoard(run);
+                run.CompleteLevelAndGrantRewards();
+                Assert.AreEqual(10 + heal, run.State.CurrentHP, $"Level {classLevel}");
+            }
         }
 
         [Test]
-        [Requirement("REQ-CLASS-103")]
-        public void GardenMonk_Level24HealsOnFourthCorrectPlacementFromClassLevel()
+        [Requirement("CLASS-PASSIVE-002")]
+        public void GardenMonk_APuzzleWithAMistakeHealsNothing()
         {
-            var run = StartPuzzleRun(93005, ClassId.GardenMonk, classLevel: 24);
+            var run = StartPuzzleRun(93005, ClassId.GardenMonk, classLevel: 1);
             ClearPlacementHealInterference(run);
-            run.State.RunNumber = 0;
             run.State.MaxHP = 20;
-            run.State.CurrentHP = 19;
+            run.State.CurrentHP = 10;
+            run.CurrentLevelState.Mistakes = 1;
+            SolveCurrentBoard(run);
+            run.CompleteLevelAndGrantRewards();
+            Assert.AreEqual(10, run.State.CurrentHP);
+        }
 
-            Assert.AreEqual(4, ClassPassiveService.GetGardenMonkHealInterval(run.State));
+        // [REQ: CLASS-PASSIVE-002] GAP-120: the Number Freak's token was never given; now token and +10 gold.
+        [Test]
+        [Requirement("CLASS-PASSIVE-002")]
+        public void NumberFreak_AMistakeFreePuzzleGivesATokenAndTenGold()
+        {
+            var run = StartPuzzleRun(93008, ClassId.NumberFreak, classLevel: 1);
+            ClearPlacementHealInterference(run);
+            var tokens = run.State.RerollTokens;
+            SolveCurrentBoard(run);
+            var goldBefore = run.State.CurrentGold;
+            run.CompleteLevelAndGrantRewards();
+            Assert.AreEqual(tokens + 1, run.State.RerollTokens);
+            var plain = StartPuzzleRun(93008, ClassId.StoneGardener, classLevel: 1);
+            ClearPlacementHealInterference(plain);
+            SolveCurrentBoard(plain);
+            var plainBefore = plain.State.CurrentGold;
+            plain.CompleteLevelAndGrantRewards();
+            Assert.AreEqual((plain.State.CurrentGold - plainBefore) + ClassPassiveService.NumberFreakGold,
+                run.State.CurrentGold - goldBefore, "the same puzzle pays 10 gold more");
+        }
 
-            PlaceCorrectNumbers(run, 3);
-            Assert.AreEqual(19, run.State.CurrentHP);
+        [Test]
+        [Requirement("CLASS-PASSIVE-002")]
+        public void ReedDuelist_ANoPencilPuzzlePaysHalfAgain_AndHeals()
+        {
+            var run = StartPuzzleRun(93009, ClassId.ReedDuelist, classLevel: 1);
+            ClearPlacementHealInterference(run);
+            run.State.MaxHP = 20;
+            run.State.CurrentHP = 10;
+            SolveCurrentBoard(run);
+            var goldBefore = run.State.CurrentGold;
+            run.CompleteLevelAndGrantRewards();
+            var plain = StartPuzzleRun(93009, ClassId.StoneGardener, classLevel: 1);
+            ClearPlacementHealInterference(plain);
+            SolveCurrentBoard(plain);
+            var plainBefore = plain.State.CurrentGold;
+            plain.CompleteLevelAndGrantRewards();
+            var plainGold = plain.State.CurrentGold - plainBefore;
+            Assert.AreEqual(plainGold + plainGold / 2, run.State.CurrentGold - goldBefore, "+50 % of the puzzle's gold");
+            Assert.AreEqual(11, run.State.CurrentHP);
+        }
 
-            PlaceCorrectNumbers(run, 1);
-            Assert.AreEqual(20, run.State.CurrentHP);
+        [Test]
+        [Requirement("CLASS-PASSIVE-002")]
+        public void QuietCartographer_SeesTheFloor_AndAPerfectPuzzleEasesTheNext()
+        {
+            var run = StartPuzzleRun(93010, ClassId.QuietCartographer, classLevel: 1, fiveFloors: false);
+            Assert.IsTrue(run.State.AllNodesRevealed, "every tile's size and stars from the floor's start");
+            Assert.IsTrue(ClassPassiveService.RevealsFloor(run.State));
+            SolveCurrentBoard(run);
+            run.CompleteLevelAndGrantRewards();
+            Assert.IsTrue(run.State.CartographerEase);
+            var full = StarDensityService.MissingPercentForStars(3);
+            Assert.AreEqual((full + StarDensityService.MissingPercentForStars(2)) / 2f,
+                ClassPassiveService.EasedMissingPercent(run.State, 3, full), 1e-4f, "half a star easier");
+            run.State.ClassLevel = 15;
+            Assert.AreEqual(StarDensityService.MissingPercentForStars(2), ClassPassiveService.EasedMissingPercent(run.State, 3, full), 1e-4f,
+                "Level 15: a whole star");
+            run.State.CartographerEase = false;
+            Assert.AreEqual(full, ClassPassiveService.EasedMissingPercent(run.State, 3, full));
         }
 
         [Test]
@@ -211,7 +271,8 @@ namespace SudokuRoguelike.Tests
             run.State.MaxHP = 20;
             run.State.CurrentHP = 20;
 
-            PlaceCorrectNumbers(run, 5);
+            SolveCurrentBoard(run);
+            run.CompleteLevelAndGrantRewards();
 
             Assert.AreEqual(20, run.State.CurrentHP);
         }
@@ -274,7 +335,7 @@ namespace SudokuRoguelike.Tests
         }
 
         private static RunDirector StartPuzzleRun(int seed, ClassId classId = ClassId.NumberFreak,
-            int classLevel = 1)
+            int classLevel = 1, bool fiveFloors = true)
         {
             var run = new RunDirector();
             run.StartRun(
@@ -283,7 +344,8 @@ namespace SudokuRoguelike.Tests
                     ClassId = classId,
                     Mode = GameMode.GardenRun,
                     AllowIrregularPuzzles = false,
-                    ClassLevel = classLevel
+                    ClassLevel = classLevel,
+                    FiveFloors = fiveFloors
                 },
                 seed);
             run.State.HasPositiveFloorEffect = false;

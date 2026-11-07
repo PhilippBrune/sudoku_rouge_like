@@ -123,6 +123,12 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-116](#gap-116) | The relic choice after a boss took no D-pad | FIXED (0.4.1 playtest on a Legion Go, 2026-11-04) | HIGH | P1 |
 | [GAP-117](#gap-117) | An item waiting for its cells was lost on Esc, the Options or Save & Quit | FIXED (0.4.1 playtest on a Legion Go, 2026-11-04) | HIGH | P1 |
 | [GAP-118](#gap-118) | Text Size did not enlarge the legend, and a run's Options had no Text Size | FIXED (0.4.1 playtest on a Legion Go, 2026-11-04) | MEDIUM | P2 |
+| [GAP-119](#gap-119) | The four pressure rules showed their code name and no rule in the legend ("HauntedCell") | FIXED (Paul's playtest, 2026-11-05) | MEDIUM | P2 |
+| [GAP-120](#gap-120) | Three class passives did nothing (Number Freak, Reed Duelist's HP, Quiet Cartographer) | FIXED (found building CLASS-PASSIVE-002, 2026-11-07) | HIGH | P1 |
+| [GAP-121](#gap-121) | Full Kropki left no room for the rules after it (a boss without its chosen lines and circles) | FIXED (three-floor boss test, 2026-11-07) | HIGH | P1 |
+| [GAP-122](#gap-122) | The Lantern Seer's passive and the Shrine Archivist's 25 % reveal do nothing | OPEN (found 2026-11-07, waits for the owner's pick of new passives) | HIGH | P1 |
+| [GAP-123](#gap-123) | The Reed Duelist cannot be unlocked: the item codex it needs holds an item nobody can find and the Duelist's own item | OPEN (found 2026-11-07, waits for the owner's pick) | HIGH | P1 |
+| [GAP-124](#gap-124) | The upper route of the later floors is cut off at the top of the path scroll; a chosen tile can sit under the title card | OPEN (0.4.3 screenshots, 2026-11-07) | MEDIUM | P2 |
 | [GAP-067](#gap-067) | Moonshade Offering's "+2 starting pencil" did nothing (the run starts at full pencil) | FIXED (2026-10-22) | LOW | P3 |
 | [GAP-064](#gap-064) | Scholar's Burden: no free Ink Well, "+5 pencil" did nothing, "−1 slot" could add a slot | FIXED (as planned, 2026-10-22) | MEDIUM | P3 |
 | [GAP-063](#gap-063) | Class levels 30 and 40 promised rewards the game did not grant (starting items, frames) | FIXED (2026-10-21) | MEDIUM | P2 |
@@ -1337,6 +1343,57 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Problem:** Up to 0.4.1 Text Size scaled only the board's digits and clues; the rule slip's legend kept its size. The row was in the main menu's Options only, so during a run on a Legion Go it could not be changed at all.
 - **Fix:** 0.4.2: Text Size applies to every screen, the legend included (ACCESS-FONT-003, RM-106), and the run's Accessibility page has the row too (without the preview board).
 - **Tests:** TextSizeAndFontPlayModeTests, GeneratedUiPlayModeTraversalTests (the in-run twin of the Text Size row).
+
+## GAP-119
+**The four pressure rules showed their code name and no rule in the legend**
+
+- **Requirement:** PressureMechanicsSpec, RULE-SLIP (the legend)
+- **Status:** FIXED (a player's playtest, Paul, 2026-11-05: a photo of the rule slip showing "HauntedCell") · **Severity:** MEDIUM · **Priority:** P2
+- **Problem:** Countdown, Haunted Cell, Crumbling Region and Pressure Wave had no entry in `ModifierCatalog`, so their name fell back to the enum and their rule was empty, in every language.
+- **Fix:** catalog entries with name and rule, and `Boss.Name`/`Boss.Description` keys in the five catalogs (`BossService.LocalizedNameIds`).
+- **Tests:** LocalizationParityTests (the new keys in every catalog).
+
+## GAP-120
+**Three class passives did nothing**
+
+- **Requirement:** ClassXpProgressionSystem (passives), CLASS-PASSIVE-002
+- **Status:** FIXED (found while building the owner's passive picks, 2026-11-07) · **Severity:** HIGH · **Priority:** P1
+- **Problem:** The Number Freak's "+1 Reroll Token after a puzzle without mistakes", the Reed Duelist's "every 5 such puzzles +1 HP" and the Quiet Cartographer's preview and half star were described on the class screen but had no code (`ShouldShowNextTilePreview` had no caller).
+- **Fix:** CLASS-PASSIVE-002 with the owner's new passives, applied in `ClassPassiveService.OnLevelComplete`, `EasedMissingPercent` and `RevealsFloor`.
+- **Tests:** GameplayEffectContractTests (one per passive).
+
+## GAP-121
+**Full Kropki left no room for the rules after it: a boss showed rules the board did not have**
+
+- **Requirement:** REQ-BOSS-101 (every chosen boss modifier is on the board), RUN-FLOORS-001
+- **Status:** FIXED (found by the three-floor variant of `BossPuzzles_AllFloors_GenerateWithChosenModifiers`, 2026-11-07) · **Severity:** HIGH · **Priority:** P1
+- **Problem:** `ModifierGeometryGenerator` built the rules in list order and marked every cell a dot touched as taken. Full Kropki puts a dot on nearly every pair, so a line, circle or thermo rule after it found no free cell. Seed 1001's summit boss (Nabner Line, Full Kropki, X-Sudoku, Consecutive Line, Killer Cages, Counting Circles, Slow Thermo) started without Consecutive Line, Counting Circles and Slow Thermo, while the legend listed them. Any run could draw this; the five-floor test seeds never did.
+- **Fix:** Full Kropki is drawn after the loop and claims no cells, like the Full White and Full Black sets already were.
+- **Tests:** LineCrossingTests (`FullKropki_LeavesRoomForTheRulesAfterIt`), GenerationReliabilityTests (`BossPuzzles_AllFloors_GenerateWithChosenModifiers`, now on three and five floors).
+
+## GAP-122
+**The Lantern Seer's passive and the Shrine Archivist's 25 % reveal do nothing**
+
+- **Requirement:** ClassXpProgressionSystem (passives of the Lantern Seer and the Shrine Archivist)
+- **Status:** OPEN (found 2026-11-07 while writing the passive proposals; the owner picks new passives first, `docs/design/playtest-042-proposals.html`) · **Severity:** HIGH · **Priority:** P1
+- **Problem:** `ClassPassiveService.GetModifierWeakeningFactor` (Lantern Seer: boss rules 30/35/40 % weaker) and `TryArchivistReveal` (Shrine Archivist: 25 % per pencil mark) have no caller; the Lantern Seer's gate preview and free reroll have no code either. The class screen promises all three. Only the Archivist's free first mark per cell works (`IsPencilFree`), which the class screen does not mention.
+- **Fix:** open.
+
+## GAP-123
+**The Reed Duelist cannot be unlocked**
+
+- **Requirement:** ClassUnlockService (Reed Duelist: complete the item codex), META-CODEX
+- **Status:** OPEN (found 2026-11-07 in the item review) · **Severity:** HIGH · **Priority:** P1
+- **Problem:** `CodexProgress.RequiredItems` counts every `ItemType` but the counter items. Two of them cannot be found before the Reed Duelist is unlocked: the Bamboo Compass is in no roll pool and has no effect code (only a Harmony 3 flag and a codex line), and the Reed Pledge is rolled only for the Reed Duelist at class Level 15. The codex never completes, so the Reed Duelist never unlocks.
+- **Fix:** open (options on the proposals page: count only the items every class can find, and build or drop the Bamboo Compass).
+
+## GAP-124
+**The upper route of the later floors is cut off at the top of the path scroll**
+
+- **Requirement:** UI-STYLE-001 (the path as a hand scroll), UI-PATH-FOCUS-001
+- **Status:** OPEN (seen in the 0.4.3 before/after shots `LayoutScreenshotDiagnostics.RenderPathFocusOnEveryFloor`, 2026-11-07) · **Severity:** MEDIUM · **Priority:** P2
+- **Problem:** `RunGraphService.AssignCanvasPositions` spreads the two routes wider from the third garden on (lane offset 0.22 and 0.26, jitter up to 0.06). In the path scroll the highest tiles of the upper (Calm) route are cut flat at the top of `PathScrollArea`, a cross-link tile's label above it is cut off (the Warden on Floors 2 and 3), and the first tile of the upper route can lie under the floor's title card, so the brush ring of a chosen tile there is hidden; the class marker above a chosen tile of the upper route is cut off by the same edge. 0.4.2 shows the same on Floors 3 to 5; three-floor runs use those gardens for Floors 2 and 3.
+- **Fix:** open (keep the upper tiles and their labels inside the scroll area, and clear of the title card).
 
 ## GAP-114
 **The wrong-digit and HP-loss sounds lie under 300 Hz: laptop and handheld speakers barely play them**

@@ -195,7 +195,7 @@ namespace SudokuRoguelike.Tests
             run.StartRun(new LaunchRequest
             {
                 ClassId = ClassId.NumberFreak,
-                Mode = GameMode.GardenRun,
+                Mode = GameMode.GardenRun, FiveFloors = true,
                 AllowIrregularPuzzles = false,
                 ClassLevel = 1,
                 HarmonyLevel = harmony
@@ -235,7 +235,7 @@ namespace SudokuRoguelike.Tests
             Assert.IsTrue(run.IsLevelComplete);
             var before = run.State.CurrentGold;
             run.CompleteLevelAndGrantRewards();
-            return run.State.CurrentGold - before;
+            return run.State.CurrentGold - before - Classes.ClassPassiveService.NumberFreakGold;   // the Number Freak's flat +10 is not scaled
         }
 
         private static double NothingRate(int harmony, out int emptyRewards)

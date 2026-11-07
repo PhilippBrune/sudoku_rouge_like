@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.37 | **Date:** 2026-11-04 | **Status:** implemented
+**Version:** 1.38 | **Date:** 2026-11-07 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.38 | 2026-11-07 | implemented | Owner's picks after the 0.4.1 playtest on a Legion Go (2026-11-05): the Garden Run is three floors, the gardens of Floors 1, 3 and 5 (RUN-FLOORS-001), with the skipped gardens' wardens and a shop after each boss (RUN-FLOORS-002). |
 | 1.37 | 2026-11-04 | implemented | RM-104 events (owner 2026-11-04): seven events, three new choices and four trades (EVENT-PACK-001, EVENT-TRADE-001). |
 | 1.36 | 2026-11-04 | implemented | RM-101 (owner 2026-11-04, "week and month"): a Garden Run on the seed of the week puts its score on the week's Steam board (SEED-BOARD-001). |
 | 1.35 | 2026-11-03 | implemented | Owner's picks (2026-11-03): RM-118 built as "behutsam öffnen" (RUN-EARLY-001/002) and RM-116 as proposal A with the proposed list and 24 achievements (CLASS-CHALLENGE-001/002, UI-STYLE-043). |
@@ -390,11 +391,18 @@ Run Score Breakdown
 
 ---
 
-## 10) Run Structure — 5-Floor Garden
+## 10) Run Structure — 3-Floor Garden (since 0.4.3)
 
 See [PathSystem_GardenOverview](PathSystem_GardenOverview.md) for full path routing, floor themes, and layout algorithm.
 
-### Summary
+### Three floors (RUN-FLOORS-001, RUN-FLOORS-002)
+
+| ID | Requirement |
+|---|---|
+| RUN-FLOORS-001 | A Garden Run started from 0.4.3 walks three floors, the gardens of Floors 1, 3 and 5 (the Bamboo Courtyard, the Koi Terrace, the Shrine Summit; `RunState.ThreeFloors`, `CurrentFloor` 0, 2, 4, `WalkFloor` 1 to 3). Calm routes are 4–5, 6–7 and 7–8 tiles (the Risk route 1–2 shorter, at least 3); boards are 6×6–7×7, 7×7–9×9 and 9×9. Puzzles pay ×1.4 gold (`GlobalGoldMultiplier`) and ×1.5 XP (each tile). What counted floors follows the run's length: the story's third chapter opens on Floor 2 (Floor 3 of five), `floor_5` is the last floor, the Swift Path challenge is under 25 minutes (40 of five), the week's pace counts minutes under 36 (60 of five). A run saved before 0.4.3 keeps its five floors; the Daily Walk keeps its two. |
+| RUN-FLOORS-002 | On Floors 2 and 3 the two tiles of the cross-link in the middle are the skipped garden's warden (the Moss Garden's, the Stone Lantern Walk's): an Elite puzzle labelled "Warden", after which a relic is chosen (three offered). The Calm route of those floors opens with a shop, right after the boss. |
+
+### Summary (five floors, runs before 0.4.3)
 
 - 5 floors per run, each with a Japanese garden theme
 - Dual-path routing: Calm (longer, safer) and Risk (shorter, harder, better rewards)

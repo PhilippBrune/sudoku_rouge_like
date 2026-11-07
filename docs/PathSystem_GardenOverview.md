@@ -1,11 +1,12 @@
 # Path System & Garden Overview
 
-**Version:** 1.10 | **Date:** 2026-11-02 | **Status:** implemented
+**Version:** 1.11 | **Date:** 2026-11-07 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.11 | 2026-11-07 | implemented | Owner's picks after the 0.4.1 playtest on a Legion Go (2026-11-05): three-floor runs (RUN-FLOORS-001/002): shorter routes 4–5, 6–7, 7–8 on the gardens of Floors 1, 3 and 5, a warden at the middle cross-link of Floors 2 and 3, a shop first on their Calm route; the chosen tile wears a vermilion brush ring and the class marker (UI-PATH-FOCUS-001). |
 | 1.10 | 2026-11-02 | implemented | 0.3.1 playtest (owner, RM-218): event tiles roll on the Garden Run's routes again (MAP-NODE-EVENT-001, an Event column in the weight table); graph version 3, a floor saved before keeps its tiles. |
 | 1.9 | 2026-10-21 | implemented | Docs clean-up: the player icon is the class marker drawn by `InRunController.PathTiles.AddPlayerMarker` (GAP-022); the planned `PlayerIconController` with its entry slide and edge tween was not built and is marked so. |
 | 1.8 | 2026-10-20 | implemented | Owner's 0.2.0 playtest: the offering table's numbers show the boss fight and the whole floor side by side (mistakes, HP lost, items used, pencil marks; REQ-BOSS-107). |
@@ -79,6 +80,17 @@ Each floor graph contains:
 - **Fully visible to the player from floor entry — no hidden tiles.**
   As built (1.1, SPEC-CONF-030): every tile shows its type from floor entry; puzzle details (board size, stars) show on reachable and visited tiles, and on every tile once Survey Notes or the Accurate Map relic is used.
 - Visually on the **lower half** of the canvas (Y > 0.5).
+
+### Three-floor runs (since 0.4.3)
+
+`RunGraphService.BuildFloorGraph(..., threeFloors: true)`: Calm route 4–5 tiles on the Bamboo Courtyard, 6–7 on the Koi
+Terrace, 7–8 on the Shrine Summit (`ThreeFloorLengths`); on the Koi Terrace and the Shrine Summit the cross-link's two
+tiles become the skipped garden's warden (Elite, `RunNode.IsWarden`) and the Calm route's first tile a shop
+(`PlaceWardensAndShop`). See GameDesignSpec RUN-FLOORS-001/002.
+
+| ID | Requirement |
+|---|---|
+| UI-PATH-FOCUS-001 | The tile the pad or the keys have chosen wears a vermilion brush ring with a dot and the class's marker above it (`PathFocusMark`; the owner's pick A of `layout-proposals/src/path_focus.html`, 0.4.1 playtest on a Legion Go). |
 
 ### Mid-Path Connection (Cross-Link Tiles)
 **[MAP-CROSS-001]** Each floor has exactly **one cross-connection** linking one tile on the Calm Route to one tile on the Risk Route.

@@ -718,7 +718,7 @@ namespace SudokuRoguelike.Tests
             h.Run.AdvanceToNextFloor();
             showPath.Invoke(controller, null);
             Assert.IsTrue(controller.IsFloorEntryShowing, "the next floor is entered");
-            Assert.AreEqual(FloorThemeData.GetFloorName(1),
+            Assert.AreEqual(FloorThemeData.GetFloorName(h.Run.State.CurrentFloor),   // the Koi Terrace on three floors (RUN-FLOORS-001)
                 FindObject(FindObject(h.Host, "FloorEntry"), "FloorEntryName").GetComponent<Text>().text);
             FindObject(h.Host, "FloorEntry").GetComponent<Button>().onClick.Invoke();
             Assert.IsFalse(controller.IsFloorEntryShowing, "a click skips it");

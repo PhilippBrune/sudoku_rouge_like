@@ -64,7 +64,7 @@ namespace SudokuRoguelike.Tests
             Assert.Greater(legacy.Count(n => n.Type == NodeType.CrossLink), 0, "1.0 layout: bridge tiles of type CrossLink");
 
             var run = new RunDirector();
-            run.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, ClassLevel = 1 }, 7001);
+            run.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, FiveFloors = true, ClassLevel = 1 }, 7001);
             Assert.AreEqual(RunGraphService.CurrentGraphVersion, run.State.FloorGraphVersion, "new runs use the current layout");
             run.State.CurrentFloor = 2;
             run.State.FloorGraphVersion = 0;             // as loaded from a 1.0 save

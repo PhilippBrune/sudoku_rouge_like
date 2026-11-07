@@ -16,10 +16,14 @@ namespace SudokuRoguelike.Run
 
         // [REQ: MAP-STRUCT-002] BuildFloorGraph: single entry point — Shared Start node → Calm/Risk lane nodes → Boss Gate, then edges + cross-links
         // [REQ: DAILY-WALK-009] onePath: the Daily Walk's single row of tiles, no Risk route and no cross-link, with one event.
-        public List<RunNode> BuildFloorGraph(int floorIndex, int seed, int graphVersion = CurrentGraphVersion, bool onePath = false)
+        // [REQ: RUN-FLOORS-001] threeFloors: the Garden Run's gardens 1, 3 and 5 are shorter and denser (ThreeFloorLengths).
+        public List<RunNode> BuildFloorGraph(int floorIndex, int seed, int graphVersion = CurrentGraphVersion, bool onePath = false,
+            bool threeFloors = false)
         {
             var rng = new Random(seed + floorIndex * 7919);
-            GetFloorLengths(floorIndex, rng, out var calmLength, out var riskLength);
+            int calmLength, riskLength;
+            if (threeFloors) ThreeFloorLengths(floorIndex, rng, out calmLength, out riskLength);
+            else GetFloorLengths(floorIndex, rng, out calmLength, out riskLength);
             if (onePath) riskLength = 0;
             if (onePath && graphVersion >= 3) calmLength = Math.Max(4, calmLength - 2);   // [REQ: DAILY-WALK-010]
             var events = graphVersion >= 3 && !onePath;   // the walk keeps its one event (EnsureEvent)
@@ -125,6 +129,12 @@ namespace SudokuRoguelike.Run
             EnsureMinimumShop(riskNodes, rng);
             if (onePath) EnsureEvent(calmNodes);
 
+            if (threeFloors && !onePath)
+            {
+                PlaceWardensAndShop(floorIndex, calmNodes, riskNodes, bridgePairs);
+                EnsureMinimumShop(riskNodes, rng);   // a warden may have taken the Risk route's only shop
+            }
+
             // Assign canvas positions
             AssignCanvasPositions(calmNodes, riskNodes, floorIndex, seed);
 
@@ -132,6 +142,27 @@ namespace SudokuRoguelike.Run
             AlignBridgeCanvasX(bridgePairs);
 
             return nodes;
+        }
+
+        /// <summary>[REQ: RUN-FLOORS-001] Calm route lengths of a three-floor run: 4–5, 6–7 and 7–8 tiles; the Risk route 1–2
+        /// tiles shorter (at least 3).</summary>
+        public static void ThreeFloorLengths(int floorIndex, Random rng, out int calmLength, out int riskLength)
+        {
+            var (min, max) = floorIndex <= 0 ? (4, 5) : floorIndex <= 2 ? (6, 7) : (7, 8);
+            calmLength = rng.Next(min, max + 1);
+            riskLength = Math.Max(3, calmLength - rng.Next(1, 3));
+        }
+
+        /// <summary>[REQ: RUN-FLOORS-002] On the gardens of Floors 3 and 5 the lane anchors in the middle are the skipped
+        /// garden's warden (an elite with a relic choice after it), and the Calm route opens with a shop after the boss.</summary>
+        private static void PlaceWardensAndShop(int floorIndex, List<RunNode> calm, List<RunNode> risk,
+            List<(RunNode calm, RunNode risk)> anchors)
+        {
+            if (floorIndex < 2) return;
+            foreach (var (c, r) in anchors)
+                foreach (var node in new[] { c, r })
+                    if (node != null && node.Type != NodeType.PreBoss) { node.Type = NodeType.ElitePuzzle; node.IsWarden = true; }
+            if (calm.Count > 1 && !calm[0].IsWarden) calm[0].Type = NodeType.Shop;
         }
 
         // ── Floor Lengths ──
@@ -258,7 +289,7 @@ namespace SudokuRoguelike.Run
                 foreach (var idx in new[] { mid - offset, mid + offset })
                 {
                     if (idx < 0 || idx >= lane.Count) continue;
-                    if (lane[idx].Type == NodeType.PreBoss || lane[idx].Type == NodeType.Boss) continue;
+                    if (lane[idx].Type == NodeType.PreBoss || lane[idx].Type == NodeType.Boss || lane[idx].IsWarden) continue;
                     var prevEcon = idx > 0 && IsEconomy(lane[idx - 1].Type);
                     var nextEcon = idx < lane.Count - 1 && IsEconomy(lane[idx + 1].Type);
                     if (prevEcon || nextEcon) continue;

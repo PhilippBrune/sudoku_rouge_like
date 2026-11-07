@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vorschläge nach 0.4.2</title>
+<style>
+  :root { --bg: #f4efe4; --paper: #fbf7ee; --ink: #2b2620; --soft: #6b6155; --line: #d9cfbd; --red: #9e2a2b; --moss: #4f6b3a; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #1d1a16; --paper: #26221d; --ink: #eee6d6; --soft: #b3a894; --line: #3d362d; --red: #d9655f; --moss: #93b06f; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, "Segoe UI", sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 24px 16px 140px; }
+  h1 { font-size: 26px; margin: 0 0 6px; }
+  h2 { font-size: 20px; margin: 34px 0 6px; }
+  h3 { font-size: 16px; margin: 18px 0 4px; }
+  p.lead, p.why { color: var(--soft); margin: 0 0 10px; }
+  img.photo { max-width: 100%; max-height: 360px; border: 1px solid var(--line); border-radius: 8px; margin: 6px 0; }
+  .shots { display: flex; gap: 10px; flex-wrap: wrap; }
+  label.opt { display: grid; grid-template-columns: 26px 1fr; gap: 8px; background: var(--paper); border: 1px solid var(--line);
+              border-radius: 10px; padding: 10px 12px; margin: 6px 0; cursor: pointer; }
+  label.opt:has(input:checked) { border-color: var(--moss); box-shadow: inset 4px 0 0 var(--moss); }
+  input { accent-color: var(--moss); margin-top: 4px; }
+  .rec { color: var(--moss); font-size: 13px; }
+  .bug { color: var(--red); font-weight: 600; }
+  .wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; background: var(--paper); font-size: 15px; }
+  th, td { border-bottom: 1px solid var(--line); padding: 8px; text-align: left; vertical-align: top; }
+  th { color: var(--soft); font-weight: 600; }
+  ul { margin: 4px 0 10px; padding-left: 22px; }
+  .box { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin: 8px 0; }
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--bg); border-top: 1px solid var(--line); padding: 10px 16px;
+         display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  button { background: var(--red); color: #fff; border: 0; border-radius: 999px; padding: 9px 18px; font-size: 15px; cursor: pointer; }
+  textarea { flex: 1; min-width: 200px; height: 46px; background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: 8px;
+             font: 12px ui-monospace, Consolas, monospace; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Vorschläge nach 0.4.2: Klassen, Items, Pauls Feedback, Feedback aus dem Spiel</h1>
+  <p class="lead">In 0.4.3 schon eingebaut: deine Auswahl aus dem Legion-Go-Test (Pfad A, Tasche voll B, drei Etagen T1, Nebel F3,
+    Mönch M2, neue Passiven für Zahlenfreak, Schilfduellant und Kartograf), "HauntedCell" ohne Namen und Regel (GAP-119) und ein
+    Generator-Fehler, bei dem ein Boss Regeln auf dem Zettel hatte, die auf dem Brett fehlten (GAP-121). Hier steht, was deine
+    Entscheidung braucht. Wähle pro Abschnitt, dann "Auswahl kopieren".</p>
+
+  <h2>1. Laternenseher (7 LP, 12 Bleistift)</h2>
+  <p class="why"><span class="bug">Befund (GAP-122):</span> Die Passive tut heute nichts. "Boss-Regeln 30 % schwächer" und "freier
+    Neuwurf am Tor" haben keinen Code; die Vorschau der Regeln am Tor hat jede Klasse. Mit drei Etagen gäbe es ohnehin nur noch
+    drei Bosse pro Lauf. Alle drei Vorschläge wirken auf jedem Rätsel und leben vom Zufall.</p>
+  <label class="opt"><input type="radio" name="ls" value="LS1"><div><b>LS1 Irrlicht</b> <span class="rec">(Empf.)</span><br>
+    In jedem Rätsel schwebt ein Licht über einer zufälligen leeren Zelle. Schreibst du dort die richtige Ziffer, bekommst du zufällig
+    +1 LP, +8 Gold oder +2 Bleistift, und das Licht springt weiter. Jedes dritte gefangene Licht deckt eine zufällige Ziffer auf.
+    Bei Nebel hebt das Licht den Nebel um sich. Stufe 15: zwei Lichter.</div></label>
+  <label class="opt"><input type="radio" name="ls" value="LS2"><div><b>LS2 Laternenpfad</b><br>
+    Zu Beginn jeder Etage leuchten zwei zufällige Felder des Pfads als Laternen. Wer ein Laternenfeld löst, zieht einen zufälligen
+    Segen: ein Item, ein Relikt zur Wahl aus zwei, volle Bleistifte oder +3 LP. Auf dem Brett selbst passiert nichts.</div></label>
+  <label class="opt"><input type="radio" name="ls" value="LS3"><div><b>LS3 Seherglück</b><br>
+    Vor jedem Rätsel zieht der Seher ein Omen für dieses Rätsel (eine kleine Karte am Rand): der erste Fehler kostet nichts,
+    +50 % Gold, alle 10 richtigen Ziffern eine aufgedeckt, oder Bleistift kostenlos. Stufe 15: zwei Omen, du wählst eins.</div></label>
+
+  <h2>2. Schrein-Archivar (8 LP, 15 Bleistift)</h2>
+  <p class="why"><span class="bug">Befund (GAP-122):</span> Der 25-%-Fund pro Bleistiftmarke hat keinen Code. Was wirklich wirkt,
+    steht nirgends: die erste Marke pro Zelle kostet keinen Bleistift (Stufe 20 soll 2 freie Marken geben, der Code gibt weiter 1).
+    Der Zufall bleibt in allen drei Vorschlägen; sie belohnen aber echtes Eingrenzen statt alle Ziffern in jede Zelle zu schreiben.</p>
+  <label class="opt"><input type="radio" name="sa" value="SA1"><div><b>SA1 Archivfund</b> <span class="rec">(Empf.)</span><br>
+    Engst du eine Zelle auf höchstens zwei Notizen ein und eine davon ist richtig, deckt sich die Ziffer mit 30 % auf. Mehr Notizen
+    in der Zelle: keine Chance. Erste Marke pro Zelle bleibt frei (Stufe 20: zwei). Wer sauber notiert, bekommt den Zufall öfter.</div></label>
+  <label class="opt"><input type="radio" name="sa" value="SA2"><div><b>SA2 Schriftrollen sammeln</b><br>
+    Jede Bleistiftmarke hat 20 % Chance auf ein Schriftzeichen. Bei 5 Zeichen öffnet sich eine zufällige Rolle: eine Ziffer
+    aufdecken, +2 LP, +5 Bleistift oder eine Musterrolle in die Tasche. Die Zeichen zählen über den ganzen Lauf.</div></label>
+  <label class="opt"><input type="radio" name="sa" value="SA3"><div><b>SA3 Archiv der Fehler</b><br>
+    Ein Fehler wird mit 50 % ins Archiv geschrieben: er kostet 3 Bleistift statt LP. Dazu bleibt der 25-%-Fund pro Marke wie
+    beschrieben, jetzt mit Code. Passt zur Klasse mit wenig LP und vielen Bleistiften.</div></label>
+
+  <h2>3. Schilfduellant freischalten</h2>
+  <p class="why"><span class="bug">Befund (GAP-123):</span> Der Schilfduellant braucht den vollen Item-Kodex. Der enthält den
+    Bambuskompass, den das Spiel nie vergibt, und das Schilf-Gelöbnis, das nur der Schilfduellant selbst ab Stufe 15 finden kann.
+    Damit ist die Klasse heute nicht freischaltbar.</p>
+  <label class="opt"><input type="radio" name="unlock" value="U1"><div><b>U1 Nur zählen, was jede Klasse finden kann</b> <span class="rec">(Empf.)</span><br>
+    Der Kodex für die Freischaltung zählt keine Klassen-Items und keine Items, die nicht im Spiel vergeben werden. Die Anzeige
+    "x von y gefunden" zeigt dieselbe Zahl.</div></label>
+  <label class="opt"><input type="radio" name="unlock" value="U2"><div><b>U2 Neue Bedingung</b><br>
+    "Benutze 40 verschiedene Items" (über alle Läufe). Der Kodex bleibt eine reine Sammlung.</div></label>
+
+  <h2>4. Item-Review</h2>
+  <p class="why">Alle 41 Items gegen den Code geprüft. Gut und passend zur heutigen Fassung: Solver, Tintenfass, Meditationsstein, Windspiel, Koi-Spiegel, Opferschale, Schnittschere, Ginkgoblatt, Reispapierschirm, Tempelweihrauch,
+    Seidenfächer, Goldener Koi, Tempelstempel, die sechs Gegen-Items und die vier Tausch-Items aus 0.4.2. Hake an, was gebaut werden soll.</p>
+  <h3>Text sagt etwas anderes als der Code</h3>
+  <div class="wrap"><table>
+    <tr><th></th><th>Item</th><th>Text heute</th><th>Was der Code tut</th><th>Vorschlag</th></tr>
+    <tr><td><input type="checkbox" name="item" value="I-KJ"></td><td>Goldene Kintsugi-Schale (Episch)</td><td>behebt alle Fehler und deckt die Ziffern auf</td>
+      <td>sucht falsche Ziffern auf dem Brett; die bleiben aber nie stehen, also findet sie immer 0</td>
+      <td><b>Goldene Naht:</b> die nächsten 3 Fehler in diesem Rätsel schreiben die richtige Ziffer statt LP zu kosten, die Kombo bleibt</td></tr>
+    <tr><td><input type="checkbox" name="item" value="I-BC"></td><td>Bambuskompass</td><td>markiert 2 Zellen, in denen die nächste Ziffer eine Regel bricht</td>
+      <td>wird nie vergeben, hat keine Wirkung (siehe 3.)</td><td>streichen (aus Kodex und Spiel)</td></tr>
+    <tr><td><input type="checkbox" name="item" value="I-LC"></td><td>Gezinkte Münze (Zahlenfreak 15)</td><td>+1 Neuwurf-Marke</td>
+      <td>füllt bei der nächsten Belohnung alle "Nichts"-Plätze, solange sie in der Tasche liegt</td><td>Text an den Code (der Zahlenfreak bekommt Marken jetzt über seine Passive)</td></tr>
+    <tr><td><input type="checkbox" name="item" value="I-MB"></td><td>Mönchsperlen (Mönch 15)</td><td>die nächsten 9 Ziffern kosten keinen Bleistift</td>
+      <td>die nächsten 5 richtigen Ziffern heilen je 1 LP</td><td>Text an den Code (seit M2 heilt der Mönch nicht mehr pro Ziffer, die Perlen schließen die Lücke)</td></tr>
+    <tr><td><input type="checkbox" name="item" value="I-DL"></td><td>Trübe Laterne (Laternenseher 15)</td><td>hebt den Nebel von 3 Zellen</td>
+      <td>zeigt die Boss-Regeln dieser Etage auf der Karte</td><td>Text an den Code (Regeln früh sehen passt zum Seher)</td></tr>
+    <tr><td><input type="checkbox" name="item" value="I-RP"></td><td>Schilf-Gelöbnis (Schilfduellant 15)</td><td>Rätsel ohne Bleistift: +2 LP</td>
+      <td>ohne Bleistift: +4 Bleistift, +30 Gold, +25 XP; jede Marke kostet 1 LP und bricht das Gelöbnis</td><td>Text an den Code</td></tr>
+    <tr><td><input type="checkbox" name="item" value="I-DQ"></td><td>Doppelt oder nichts (Koi-Spieler 15)</td><td>Gold dieses Rätsels doppelt, sonst −1 LP</td>
+      <td>50 %: dein <i>ganzes</i> Gold verdoppelt oder halbiert</td><td>den Text bauen: Gold dieses Rätsels ×2, sonst −1 LP (das Halbieren von allem trifft zu hart)</td></tr>
+    <tr><td><input type="checkbox" name="item" value="I-AF"></td><td>Kommentiertes Folio (Archivar 15)</td><td>alle Kandidaten eines Kastens</td>
+      <td>schreibt auf dem ganzen Brett die Notizen in alle Zellen mit genau 2 Kandidaten</td><td>Text an den Code</td></tr>
+    <tr><td><input type="checkbox" name="item" value="I-WC"></td><td>Abgenutzter Meißel (Steingärtner 15)</td><td>30 % im nächsten Shop</td>
+      <td>30 % in allen Shops dieser Etage</td><td>Text an den Code</td></tr>
+  </table></div>
+  <h3>Nichts mehr wert, seit sich etwas geändert hat</h3>
+  <div class="wrap"><table>
+    <tr><th></th><th>Item</th><th>Wirkung</th><th>Problem</th><th>Vorschlag</th></tr>
+    <tr><td><input type="checkbox" name="item" value="I-SN"></td><td>Vermessungsnotizen (Kartograf 15)</td><td>zeigt Größe und Sterne aller Felder der Etage</td>
+      <td>das kann der Kartograf seit 0.4.3 von selbst</td><td>das nächste Rätsel ist einen Stern leichter</td></tr>
+    <tr><td><input type="checkbox" name="item" value="I-BS"></td><td>Bambusrolle</td><td>zeigt die Sterne der erreichbaren Felder</td>
+      <td>die zeigt der Pfad schon</td><td>deckt alle Felder der Etage auf (wie die Genaue Karte)</td></tr>
+    <tr><td><input type="checkbox" name="item" value="I-KD"></td><td>Koi-Drachenschuppe (Episch)</td><td>füllt die vollste Zeile, Spalte oder Box</td>
+      <td>genau das macht der Tusche-Pakt (Selten, für 6 Bleistift)</td><td>füllt die <i>zwei</i> vollsten Einheiten</td></tr>
+    <tr><td><input type="checkbox" name="item" value="I-PS"></td><td>Musterrolle</td><td>löst 1 bis 3 Regel-Stücke</td>
+      <td>auf Etage 1 gibt es keine Regeln, der Shop bietet sie trotzdem an</td><td>nur auf Brettern und Etagen mit Regeln anbieten (wie die Nebel-Laternen)</td></tr>
+  </table></div>
+  <h3>Schwach</h3>
+  <div class="wrap"><table>
+    <tr><th></th><th>Item</th><th>Wirkung</th><th>Problem</th><th>Vorschlag</th></tr>
+    <tr><td><input type="checkbox" name="item" value="I-GR"></td><td>Gartenrechen</td><td>löscht alle Notizen in Zeile und Spalte</td>
+      <td>bringt nichts, eher Schaden; das automatische Aufräumen macht es besser</td><td>löscht alle falschen Notizen des Bretts, +1 Bleistift je 3 gelöschte</td></tr>
+    <tr><td><input type="checkbox" name="item" value="I-ZS"></td><td>Zen-Sandsieb</td><td>hebt 6 s die Zellen mit 2 Kandidaten hervor</td>
+      <td>das Folio schreibt sie gleich hin</td><td>schreibt die zwei Kandidaten in bis zu 4 solcher Zellen</td></tr>
+    <tr><td><input type="checkbox" name="item" value="I-FN"></td><td>Finder (Normal/Selten)</td><td>hebt 1 bzw. 3 Zellen einer Ziffer hervor</td>
+      <td>Normal ist kaum spürbar</td><td>Normal 2, Selten 4 (Episch bleibt: alle)</td></tr>
+  </table></div>
+
+  <h2>5. Pauls Feedback</h2>
+  <p class="why">Er mag die unregelmäßigen Blöcke und die Zusatzregeln als Hinweise. Seine Punkte, mit Vorschlag:</p>
+  <div class="shots"><img class="photo" src="../../Feedback_playtest/Paul/bild1.jpeg" alt="Pauls Foto: die gewählte Zelle mit der 6 sieht aus wie die anderen grünen Sechsen">
+    <img class="photo" src="../../Feedback_playtest/Paul/bild2.jpeg" alt="Pauls Foto: der Regelzettel zeigt HauntedCell ohne Text"></div>
+  <label class="opt"><input type="checkbox" name="fb" value="FB1"><div><b>FB1 Neue Regel zuerst erklären</b> <span class="rec">(Empf.)</span><br>
+    "Vielleicht vor Spielbeginn die Anweisung dafür zeigen." Trifft ein Rätsel eine Regel, die du noch nie gesehen hast, öffnet sich
+    vor dem Start eine Regelkarte: Name, ein Satz, ein kleines Beispiel aus dem Brett. Die Zeit läuft erst danach. Bekannte Regeln
+    bleiben nur auf dem Zettel.</div></label>
+  <label class="opt"><input type="checkbox" name="fb" value="FB2"><div><b>FB2 Ruhiger Einstieg</b><br>
+    "Es wirkt anfangs sehr überwältigend." Im ersten Lauf erscheinen Tasche, Relikte, Kombo und Etagen-Bonus erst, wenn das erste
+    davon im Spiel auftaucht; oben steht eine Zeile "Ziel: fülle das Brett".</div></label>
+  <label class="opt"><input type="checkbox" name="fb" value="FB3"><div><b>FB3 Einführung überarbeiten</b><br>
+    "Die Anweisungen ein wenig verwirrend." Ich frage Paul, an welchen Schritten es hing; danach hat jeder der 11 Schritte genau eine
+    Aufgabe und zeigt die Taste des Geräts, mit dem gespielt wird.</div></label>
+  <label class="opt"><input type="checkbox" name="fb" value="FB4"><div><b>FB4 Tagesgang mit eigenem Speicherplatz</b> <span class="rec">(Empf.)</span><br>
+    "Entweder den Lauf oder den Tagesgang." Heute teilen sich beide einen Speicherplatz, und "Abbrechen &amp; laufen" löscht den Lauf
+    (der ist dann weg, auch bei Paul). Neu: Tagesgang und Monatsgang speichern getrennt; der Lauf wartet, bis du zurückkommst.</div></label>
+  <label class="opt"><input type="checkbox" name="fb" value="FB5"><div><b>FB5 Gewählte Zelle immer erkennbar</b> <span class="rec">(Empf.)</span><br>
+    "Schwer ersichtlich, wo man ist, vor allem auf einer Zelle mit Zahl." Auf dem Foto sieht die gewählte 6 aus wie die anderen
+    grünen Sechsen. Die gewählte Zelle bekommt einen dicken zinnoberroten Tusche-Rahmen, unabhängig von den Hervorhebungen.
+    Mockup aus der Spielgrafik kommt, sobald du den Punkt wählst.</div></label>
+
+  <h2>6. Feedback direkt aus dem Spiel</h2>
+  <div class="box">
+    <b>So sieht es für Spieler aus</b>
+    <ul>
+      <li>F8, im Pausenmenü "Feedback senden" und auf dem Lauf-Ende-Bildschirm. Am Controller: im Pausenmenü.</li>
+      <li>Das Spiel nimmt den Bildschirm auf, <i>bevor</i> das Formular aufgeht; das Formular zeigt ihn als kleines Bild.</li>
+      <li>Formular: Art (Fehler, Idee, Balance, Text/Übersetzung) als Knöpfe, ein Textfeld, optional dein Discord-Name. Auf Steam Deck
+        und Legion Go tippt man über Steams Bildschirmtastatur; ohne Text geht es auch.</li>
+      <li>Haken pro Teil, alle sichtbar: Screenshot, Lauf-Infos, Log, Spielstand. Unten "Das wird gesendet" zum Aufklappen.</li>
+    </ul>
+    <b>Was im Bericht steht</b>
+    <ul>
+      <li>Version, Gerät (Windows, Steam Deck, Legion Go), Sprache, Steuerung (Tastatur oder Controller)</li>
+      <li>Modus, Klasse und Stufe, Harmonie, Etage und Feld, <b>Lauf-Seed</b>, <b>Brett-Code</b> (derselbe Code wie auf dem Brett-Zettel,
+        damit ich genau dieses Brett laden kann), die Regeln des Bretts</li>
+      <li>LP, Gold, Bleistift, Items, Relikte, Spielzeit</li>
+      <li>die letzten 200 Zeilen des Logs, der Windows-Benutzername im Pfad durch %USERPROFILE% ersetzt</li>
+      <li>optional die Spielstand-Datei: damit lade ich den Lauf genau dort, wo er war</li>
+    </ul>
+    <b>Bei mir</b>: ein privater Kanal #player-feedback. Pro Bericht eine Nachricht, Titel wie
+    "[Fehler] 0.4.3 · Zahlenfreak · Etage 2 · Seed 482913", Screenshot und Bericht als Anhang. Daraus wird bei Bedarf eine GAP-Zeile.
+  </div>
+  <label class="opt"><input type="radio" name="fbk" value="K1"><div><b>K1 Nur lokal</b><br>
+    "Senden" schreibt eine ZIP-Datei (Screenshot, Bericht, Log, Spielstand) in den Spielordner, öffnet den Ordner und kopiert den Seed.
+    Der Spieler lädt die Datei selbst in #bug-reports hoch. Kein Server, nichts verlässt den Rechner von allein.</div></label>
+  <label class="opt"><input type="radio" name="fbk" value="K2"><div><b>K2 Direkt in deinen Discord</b><br>
+    "Senden" schickt den Bericht über einen kleinen Cloudflare Worker (kostenloser Plan reicht) an einen Discord-Webhook. Der Webhook
+    steckt nur im Worker, nie im Spiel; sonst könnte ihn jeder aus der Spieldatei lesen und deinen Kanal zuspammen. Der Worker
+    nimmt höchstens 5 Berichte pro Stunde und Installation an und höchstens 2 MB.</div></label>
+  <label class="opt"><input type="radio" name="fbk" value="K3"><div><b>K3 K2, und ohne Internet K1</b> <span class="rec">(Empf.)</span><br>
+    Wie K2. Wenn das Senden scheitert (offline, Worker nicht erreichbar), speichert das Spiel die ZIP-Datei wie in K1 und sagt das.
+    Reihenfolge: zuerst K1 bauen (ein Release), dann den Worker davorsetzen.</div></label>
+  <p class="why">Datenschutz in jeder Variante: gesendet wird nur, was angehakt ist; keine Steam-ID, nur eine zufällige ID pro
+    Installation (für die Grenze und um Berichte derselben Person zu bündeln); ein Absatz dazu kommt in die Datenschutzerklärung.
+    Alle Texte gehen in die fünf Kataloge. Den Worker richtest du in deinem Cloudflare-Konto ein; ich schreibe ihn und die Anleitung.</p>
+
+  <h2>7. Discord: warum du #known-issues nicht siehst</h2>
+  <p class="why">Das Onboarding des Servers bestimmt, welche Kanäle in der Seitenleiste stehen, und zwar für alle, auch für Admins.
+    Sichtbar sind nur die Standardkanäle und die Kanäle der Antworten, die man im Onboarding gewählt hat. Die Kategorie Info
+    (#how-to-play, #known-issues) steht in keiner der beiden Listen. Der Kanal ist da: "Kanäle durchsuchen" oben in der Kanalliste
+    oder Rechtsklick auf den Servernamen, "Alle Kanäle anzeigen".</p>
+  <p class="why">Und nein: die Run-of-the-Nine-Kanäle sind nicht an die Rolle gebunden, jeder darf sie lesen. Die Rolle legt sie
+    nur in die Seitenleiste. Gesperrt nach Rolle sind nur Playtest, Übersetzung und Staff.</p>
+  <label class="opt"><input type="checkbox" name="dc" value="D1"><div><b>D1 Info-Kanäle für alle in die Seitenleiste</b> <span class="rec">(Empf.)</span><br>
+    #how-to-play und #known-issues kommen in die Standardkanäle des Onboardings (tools/discord/community.py). Ändert nur, was alle
+    in der Seitenleiste sehen; keine Rechte.</div></label>
+</main>
+<div class="bar"><button id="copy">Auswahl kopieren</button><textarea id="out" readonly></textarea></div>
+<script>
+document.getElementById('copy').addEventListener('click', async () => {
+  const pick = n => (document.querySelector(`input[name="${n}"]:checked`) || {}).value || '-';
+  const all = n => [...document.querySelectorAll(`input[name="${n}"]:checked`)].map(i => i.value).join(', ') || '-';
+  const text = `Vorschläge nach 0.4.2 Auswahl\nLaternenseher: ${pick('ls')}\nSchrein-Archivar: ${pick('sa')}\nSchilfduellant: ${pick('unlock')}\nItems: ${all('item')}\nPauls Feedback: ${all('fb')}\nFeedback aus dem Spiel: ${pick('fbk')}\nDiscord: ${all('dc')}`;
+  const out = document.getElementById('out'); out.value = text;
+  try { await navigator.clipboard.writeText(text); } catch (e) { out.select(); }
+});
+</script>
+</body>
+</html>

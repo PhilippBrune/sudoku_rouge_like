@@ -55,6 +55,22 @@ namespace SudokuRoguelike.Tests
             Assert.IsEmpty(failures);
         }
 
+        // [REQ: REQ-BOSS-101] GAP-121: Full Kropki first in the list claimed nearly every cell; the lines and circles after it
+        // found no room (a summit boss with Full Kropki, Consecutive Line, Counting Circles and Slow Thermo had none of the three).
+        [Test]
+        [Requirement("REQ-BOSS-101")]
+        public void FullKropki_LeavesRoomForTheRulesAfterIt()
+        {
+            var mods = new List<BossModifierId> { BossModifierId.FullKropki, BossModifierId.ConsecutiveLine,
+                BossModifierId.CountingCircles, BossModifierId.SlowThermo };
+            for (var seed = 1; seed <= 6; seed++)
+            {
+                var board = SudokuGenerator.CreatePuzzleWithUniquenessCheck(9, 0.5f, seed * 41, regionVariant: 0);
+                var overlay = ModifierGeometryGenerator.Generate(board, mods, seed);
+                CollectionAssert.IsEmpty(PuzzleGenerationService.FindMissingModifiers(mods, overlay), $"seed {seed}");
+            }
+        }
+
         private static IEnumerable<(string Name, List<CellCoord> Cells)> Paths(ModifierOverlayData overlay)
         {
             foreach (var line in overlay.Lines) yield return (line.Type + " line", line.Cells);

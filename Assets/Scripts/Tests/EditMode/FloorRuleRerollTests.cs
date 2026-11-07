@@ -14,7 +14,7 @@ namespace SudokuRoguelike.Tests
         private static RunDirector StartRun(int floorIndex, int gold)
         {
             var run = new RunDirector();
-            run.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, ClassLevel = 1 }, 9130);
+            run.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, FiveFloors = true, ClassLevel = 1 }, 9130);
             for (var f = 0; f < floorIndex; f++) run.AdvanceToNextFloor();
             run.State.CurrentGold = gold;
             return run;

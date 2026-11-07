@@ -300,6 +300,20 @@ namespace SudokuRoguelike.Tests
             Assert.AreEqual(2, incense.Charges);
         }
 
+        // Playtest 0.4.1 (owner's pick F3): the fog lanterns are sold where there is fog, never rolled as rewards.
+        [Test]
+        [Requirement("ITEM-FOG-001")]
+        public void FogLanterns_AreSoldWhereThereIsFog()
+        {
+            Assert.IsTrue(CounterItems.FogAhead(new[] { BossModifierId.FogOfWar }, null));
+            Assert.IsTrue(CounterItems.FogAhead(null, new List<string> { "inkblot" }));
+            Assert.IsFalse(CounterItems.FogAhead(new[] { BossModifierId.KillerCages }, new List<string> { "misfortune" }));
+            for (var seed = 0; seed < 60; seed++)
+                foreach (var item in new ItemService(seed).RollSlots(3, 20))
+                    if (item != null)
+                        CollectionAssert.DoesNotContain(CounterItems.FogItems, item.Type, $"seed {seed}: a lantern rolled as a reward");
+        }
+
         [Test]
         [Requirement("ITEM-PACK-001")]
         public void SeedPouch_AtMostThreeGrowAtOnce()

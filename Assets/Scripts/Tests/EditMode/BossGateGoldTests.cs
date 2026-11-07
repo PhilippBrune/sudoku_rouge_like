@@ -16,7 +16,7 @@ namespace SudokuRoguelike.Tests
         private static RunDirector StartRun(int floorIndex, int gold, int runNumber = 1)
         {
             var run = new RunDirector();
-            run.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, ClassLevel = 1 }, 9120);
+            run.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, FiveFloors = true, ClassLevel = 1 }, 9120);
             for (var f = 0; f < floorIndex; f++) run.AdvanceToNextFloor();
             run.State.CurrentGold = gold;
             run.State.RunNumber = runNumber;
@@ -117,7 +117,7 @@ namespace SudokuRoguelike.Tests
                          "WardingFlameOnFloor", "WardingFlameTrial" })
                 json = System.Text.RegularExpressions.Regex.Replace(json, "\"" + field + "\":[^,}]*,?", string.Empty);
             var resumed = new RunDirector();
-            resumed.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, ClassLevel = 1 }, 9120);
+            resumed.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, FiveFloors = true, ClassLevel = 1 }, 9120);
             resumed.RestoreState(JsonUtility.FromJson<RunState>(json));
 
             Assert.IsNull(resumed.StruckBossTrial);
@@ -135,7 +135,7 @@ namespace SudokuRoguelike.Tests
             Assert.IsTrue(run.TryStrikeBossTrial(offered[1]));
 
             var resumed = new RunDirector();
-            resumed.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, ClassLevel = 1 }, 9120);
+            resumed.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, FiveFloors = true, ClassLevel = 1 }, 9120);
             resumed.RestoreState(JsonUtility.FromJson<RunState>(JsonUtility.ToJson(run.State)));
             var shown = resumed.RollBossModifierChoices();
             resumed.ApplyGateRemovals(shown);
@@ -165,7 +165,7 @@ namespace SudokuRoguelike.Tests
             run.TryLowerBossIntensity();
 
             var resumed = new RunDirector();
-            resumed.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, ClassLevel = 1 }, 9120);
+            resumed.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, FiveFloors = true, ClassLevel = 1 }, 9120);
             resumed.RestoreState(JsonUtility.FromJson<RunState>(JsonUtility.ToJson(run.State)));
 
             Assert.AreEqual(trial, resumed.StruckBossTrial);

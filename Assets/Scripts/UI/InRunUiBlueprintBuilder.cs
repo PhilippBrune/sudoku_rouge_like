@@ -428,10 +428,14 @@ namespace SudokuRoguelike.UI
             if (runScreen != null)
                 saveQuitBtn.onClick.AddListener(runScreen.SaveAndQuitPublic);
             var abandonBtn = RunButton("BtnInGameOptionsAbandon", 3, T("Abandon Run", "Abandon Run"));
-            for (var line = 0; line < 4; line++) OptionsUiFactory.LineRule(runSec, line);
+            // [REQ: FEEDBACK-001] The pad's way to the feedback form (F8 on a keyboard).
+            var feedbackBtn = RunButton("BtnInGameOptionsFeedback", 4, T("Feedback.Open", "Send feedback (F8)"));
+            feedbackBtn.onClick.AddListener(FeedbackScreen.Open);
+            for (var line = 0; line < 5; line++) OptionsUiFactory.LineRule(runSec, line);
             OptionsUiFactory.PageSlip("IGRunSlip", runSec, T("Options.Slip.Tip", "Tip"),
                 T("Options.Tip.Run", "Save & Quit keeps the run; Abandon Run ends it and records it as a defeat."));
-            tabs.SetRows(runIndex, new Selectable[] { modsBtn }, new Selectable[] { saveQuitBtn }, new Selectable[] { abandonBtn });
+            tabs.SetRows(runIndex, new Selectable[] { modsBtn }, new Selectable[] { saveQuitBtn }, new Selectable[] { abandonBtn },
+                new Selectable[] { feedbackBtn });
 
             // ── Back, always visible ──
             var closeBtn = OptionsUiFactory.BuildBackPill("BtnInGameOptionsClose", card, T("Back", "Back"));

@@ -1,0 +1,100 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css"><script src="common.js"></script>
+<style>
+  /* Playtest 0.4.2 (owner): a run history with the last 5 runs and their seeds, and for a lost run the very board with the
+     last wrong digit. Three places for it. ?v=a|b|c */
+  .bg { position:absolute; inset:0; background-size:cover; background-position:center; filter:brightness(.55) saturate(.85); }
+  .paper { position:absolute; background:#f3ead6; color:#231e17; font-family:'Main','Segoe UI'; box-shadow:0 18px 36px rgba(0,0,0,.55); }
+  .paper small { display:block; font-size:15px; letter-spacing:.16em; color:#6b5f4c; }
+  .paper h2 { margin:6px 0 10px; font-weight:normal; font-size:36px; }
+  .band { position:absolute; left:0; right:0; top:0; height:6px; background:#b23a2e; }
+  .run { display:grid; grid-template-columns:54px 1fr auto; gap:12px; align-items:center; padding:10px 12px; border-bottom:1px solid rgba(60,45,30,.15); font-size:20px; }
+  .run img { width:48px; height:48px; } .run .meta { font-size:16px; color:#6b5f4c; } .run .res { font-size:18px; }
+  .run.sel { background:rgba(233,196,106,.35); box-shadow:inset 4px 0 0 #b23a2e; }
+  .res.lost { color:#9e2a2b; } .res.won { color:#2f6b3a; }
+  .board { position:absolute; background:#2b241c; }
+  .cell { position:absolute; display:flex; align-items:center; justify-content:center; background:#f3ead6; font:28px 'Main'; color:#231e17; }
+  .cell.given { font-weight:bold; } .cell.parity { background:#e8dcbf; }
+  .cell.mistake { background:#f2c7bb; color:#9e2a2b; }
+  .ring { position:absolute; border:4px solid #b23a2e; border-radius:50%; }
+  .note { position:absolute; background:#b23a2e; color:#fff; font:18px 'Main'; padding:8px 14px; border-radius:8px; box-shadow:0 6px 14px rgba(0,0,0,.45); }
+  .btn { display:inline-block; padding:10px 22px; border-radius:999px; font-size:20px; margin-right:10px; }
+  .btn.main { background:#b23a2e; color:#fff; } .btn.soft { border:2px solid #8f6a3a; color:#4b3a25; }
+  .seed { font:20px 'Main'; padding:4px 12px; border-radius:6px; background:#e2d5b6; }
+  .ema { position:absolute; width:250px; height:300px; padding:60px 18px 16px; text-align:center; color:#2a1a10; font-family:'Main';
+         clip-path: polygon(50% 0, 100% 14%, 100% 100%, 0 100%, 0 14%); background:linear-gradient(180deg,#d8ab72,#a8743f); }
+  .ema img { width:64px; height:64px; } .ema h3 { margin:8px 0 4px; font-weight:normal; font-size:22px; } .ema p { margin:4px 0; font-size:16px; }
+  .ema.sel { background:linear-gradient(180deg,#e9b4a2,#b8695a); transform:translateY(-12px); }
+</style></head><body>
+<div class="bg" id="bg"></div>
+<div id="main"></div>
+<div class="caption" id="cap"></div>
+<script>
+const v = PARAMS.get('v') || 'a';
+const main = document.getElementById('main');
+const add = h => main.insertAdjacentHTML('beforeend', h);
+const C = n => `${R}class/icon_${n}.png`;
+const runs = [
+  { cls:'number_freak', name:'Number Freak', when:'today 21:40', mode:'Garden Run · H2', res:'Lost on Floor 2', lost:true, seed:482913, time:'31 min' },
+  { cls:'garden_monk', name:'Garden Monk', when:'today 19:05', mode:'Garden Run · H2', res:'Won', lost:false, seed:120577, time:'28 min' },
+  { cls:'lantern_seer', name:'Daily Walk', when:'today 08:12', mode:'Daily Walk', res:'Lost on Floor 1', lost:true, seed:907211, time:'14 min' },
+  { cls:'reed_duelist', name:'Reed Duelist', when:'yesterday', mode:'Garden Run · H1', res:'Won', lost:false, seed:66310, time:'34 min' },
+  { cls:'koi_gambler', name:'Koi Gambler', when:'5 Nov', mode:'Garden Run · H1', res:'Lost on Floor 3', lost:true, seed:771045, time:'39 min' },
+];
+// The last board of the first run: 6×6 from common.js, the wrong 5 at r3c4 (the 3 was right).
+function lastBoard(left, top, cell) {
+  const B = BOARD6, gap = 3, w = B.n * cell + (B.n + 1) * gap;
+  add(`<div class="board" style="left:${left}px;top:${top}px;width:${w}px;height:${w}px"></div>`);
+  for (let r = 0; r < B.n; r++) for (let c = 0; c < B.n; c++) {
+    const box = Math.floor(r / B.boxR) * 2 + Math.floor(c / B.boxC);
+    const mistake = r === 3 && c === 4;
+    const v = mistake ? 5 : (B.given[r][c] || B.player[`${r},${c}`] ? B.sol[r][c] : '');
+    add(`<div class="cell ${B.given[r][c] ? 'given' : ''} ${box % 2 ? 'parity' : ''} ${mistake ? 'mistake' : ''}"
+         style="left:${left + gap + c * (cell + gap)}px;top:${top + gap + r * (cell + gap)}px;width:${cell}px;height:${cell}px">${v}</div>`);
+  }
+  const x = left + gap + 4 * (cell + gap), y = top + gap + 3 * (cell + gap);
+  add(`<div class="ring" style="left:${x - 8}px;top:${y - 8}px;width:${cell + 16}px;height:${cell + 16}px"></div>`);
+  const below = left < 400;   // B: the ema stand to the right of the board
+  add(`<div class="note" style="left:${below ? left : x + cell + 18}px;top:${below ? top + w + 10 : y + 6}px">The last mistake: a 5, it was 3 · it cost the last HP</div>`);
+}
+const list = (sel) => runs.map((r, i) => `<div class="run ${i === sel ? 'sel' : ''}"><img src="${C(r.cls)}">
+  <div>${r.name}<div class="meta">${r.when} · ${r.mode} · ${r.time}</div></div>
+  <div style="text-align:right"><div class="res ${r.lost ? 'lost' : 'won'}">${r.res}</div><span class="seed">${r.seed}</span></div></div>`).join('');
+
+if (v === 'a') {
+  // A: a page "Recent runs" in the Codex book: the list left, the chosen run's last board right.
+  document.getElementById('bg').style.backgroundImage = `url('${R}background/bg_items_menu.png')`;
+  add(`<div class="paper" style="left:120px;top:110px;width:760px;height:860px;padding:30px 30px"><div class="band"></div>
+    <small>CODEX · RECENT RUNS</small><h2>Your last five runs</h2>${list(0)}
+    <p style="font-size:17px;color:#6b5f4c;margin-top:16px">A seed starts the same garden again: the same paths, boards and rewards.</p></div>`);
+  add(`<div class="paper" style="left:940px;top:110px;width:860px;height:860px;padding:30px 34px"><div class="band"></div>
+    <small>NUMBER FREAK · LOST ON FLOOR 2 · KOI TERRACE · TILE 6</small><h2>The last board</h2></div>`);
+  lastBoard(1010, 260, 82);
+  add(`<div style="position:absolute;left:974px;top:860px;font-family:'Main'"><span class="btn main">Walk seed 482913 again</span><span class="btn soft">Copy the seed</span></div>`);
+  document.getElementById('cap').textContent = 'A · Codex-Seite "Letzte Läufe": Liste links, rechts das letzte Brett mit dem letzten Fehler und "Seed nochmal laufen"';
+} else if (v === 'b') {
+  // B: on the defeat scroll: the last board beside the run's numbers; the history from the main menu as five ema.
+  document.getElementById('bg').style.backgroundImage = `url('${R}background/bg_defeat.png')`;
+  add(`<div class="paper" style="left:120px;top:150px;width:620px;height:760px;padding:30px 30px"><div class="band"></div>
+    <small>THE RUN ENDS · FLOOR 2 OF 3</small><h2>The last board</h2>
+    <p style="font-size:19px">Koi Terrace, tile 6, 6×6 ★★ with Killer Cages.</p></div>`);
+  lastBoard(190, 320, 70);
+  add(`<div style="position:absolute;left:150px;top:850px;font-family:'Main'"><span class="btn main">Walk this seed again</span><span class="btn soft">Seed 482913</span></div>`);
+  runs.forEach((r, i) => add(`<div class="ema ${i === 0 ? 'sel' : ''}" style="left:${800 + (i % 3) * 270}px;top:${150 + Math.floor(i / 3) * 360}px">
+    <img src="${C(r.cls)}"><h3>${r.name}</h3><p class="${r.lost ? 'lost' : 'won'}" style="color:${r.lost ? '#7a1f1f' : '#1f4a28'}">${r.res}</p>
+    <p>${r.when}</p><p><span class="seed">${r.seed}</span></p></div>`));
+  document.getElementById('cap').textContent = 'B · Auf dem Niederlage-Bildschirm das letzte Brett mit dem Fehler; die fünf Läufe als Ema-Tafeln (Hauptmenü "Läufe")';
+} else {
+  // C: the main menu: a slip "Recent runs" under the run card; choosing one opens its card with the board.
+  document.getElementById('bg').style.backgroundImage = `url('${R}background/bg_main_menu.png')`;
+  add(`<div class="paper" style="left:110px;top:520px;width:600px;height:500px;padding:24px 24px"><div class="band"></div>
+    <small>RECENT RUNS</small>${list(0)}</div>`);
+  add(`<div class="paper" style="left:780px;top:160px;width:1020px;height:760px;padding:30px 34px"><div class="band"></div>
+    <small>TODAY 21:40 · NUMBER FREAK · GARDEN RUN H2 · 31 MIN</small><h2>Lost on Floor 2: the last board</h2>
+    <p style="font-size:19px;width:420px;position:absolute;right:40px;top:150px">Koi Terrace, tile 6, a 6×6 ★★ with Killer Cages.
+    Items: Ink Well, Ginkgo Leaf. Relics: Smooth Pebble.<br><br>The seed walks the same garden again, with any class.</p></div>`);
+  lastBoard(830, 300, 76);
+  add(`<div style="position:absolute;left:1240px;top:820px;font-family:'Main'"><span class="btn main">Walk seed 482913</span><span class="btn soft">Close (B)</span></div>`);
+  document.getElementById('cap').textContent = 'C · Hauptmenü: Zettel "Letzte Läufe" unter der Lauf-Karte, ein Lauf öffnet seine Karte mit dem letzten Brett';
+}
+</script></body></html>

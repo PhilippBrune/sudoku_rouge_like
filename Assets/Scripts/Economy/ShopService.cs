@@ -18,6 +18,9 @@ namespace SudokuRoguelike.Economy
             _random = new Random(seed);
         }
 
+        /// <summary>[REQ: ITEM-REWORK-001] Whether the floor has rules (the Pattern Scroll is sold only then).</summary>
+        public Func<bool> RulesAhead;
+
         // [REQ: ECON-SHOP-001] Shop: 2/3/4 items by floor (GetShopSlotCount), no relic (SPEC-CONF-005)
         // [REQ: SHOP-PRICE-001] [REQ: ECON-SHOP-002] Price: BasePrice × (1 + FloorIndex × 0.5) × priceMultiplier × harmonySurcharge
         // [HARMONY-ECON-002] harmonySurcharge (1.00–1.50) applies the Harmony difficulty shop penalty on top of all other multipliers.
@@ -104,11 +107,12 @@ namespace SudokuRoguelike.Economy
                     return exclusive.Value;
             }
 
-            var resourceTypes = new[]
+            var resourceTypes = new List<ItemType>
             {
                 ItemType.InkWell, ItemType.MeditationStone, ItemType.WindChime,
                 ItemType.Solver, ItemType.Finder, ItemType.PatternScroll
             };
+            if (RulesAhead != null && !RulesAhead()) resourceTypes.Remove(ItemType.PatternScroll);   // [REQ: ITEM-REWORK-001]
 
             if (rarity == ItemRarity.Epic && _random.NextDouble() < 0.40)
             {
@@ -122,7 +126,7 @@ namespace SudokuRoguelike.Economy
                 return rares[_random.Next(rares.Length)];
             }
 
-            return resourceTypes[_random.Next(resourceTypes.Length)];
+            return resourceTypes[_random.Next(resourceTypes.Count)];
         }
     }
 }

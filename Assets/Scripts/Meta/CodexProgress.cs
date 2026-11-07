@@ -31,8 +31,9 @@ namespace SudokuRoguelike.Meta
         public static Count Items(MetaProgressionState meta) => CountItems(meta, includeCounterItems: true);
 
         /// <summary>The items the Reed Duelist unlock asks for: every item except the counter items, which only shops sell
-        /// and only for the floor's rules (ITEM-COUNTER-007).</summary>
-        public static Count RequiredItems(MetaProgressionState meta) => CountItems(meta, includeCounterItems: false);
+        /// and only for the floor's rules (ITEM-COUNTER-007), and except the class items, which only their class finds
+        /// (the owner's pick U1, 2026-11-07; GAP-123: the Reed Duelist's own item made the unlock impossible).</summary>
+        public static Count RequiredItems(MetaProgressionState meta) => CountItems(meta, includeCounterItems: false, includeClassItems: false);
 
         public static Count Relics(MetaProgressionState meta)
         {
@@ -77,18 +78,20 @@ namespace SudokuRoguelike.Meta
             return total == 0 ? 0 : (items.Found + relics.Found + rules.Found + curses.Found) * 100 / total;
         }
 
-        private static Count CountItems(MetaProgressionState meta, bool includeCounterItems)
+        private static Count CountItems(MetaProgressionState meta, bool includeCounterItems, bool includeClassItems = true)
         {
+            bool Counts(ItemType type) => !ItemService.IsRetired(type) && (includeCounterItems || !CounterItems.IsCounterItem(type))
+                                          && (includeClassItems || !ItemService.IsClassExclusive(type));
             var found = new HashSet<ItemType>();
             if (meta?.ItemCodex?.Entries != null)
                 foreach (var entry in meta.ItemCodex.Entries)
                     if (entry != null && entry.Discovered && Enum.TryParse(entry.ItemId, out ItemType type)
-                        && Enum.IsDefined(typeof(ItemType), type) && (includeCounterItems || !CounterItems.IsCounterItem(type)))
+                        && Enum.IsDefined(typeof(ItemType), type) && Counts(type))
                         found.Add(type);
 
             var total = 0;
             foreach (ItemType type in Enum.GetValues(typeof(ItemType)))
-                if (includeCounterItems || !CounterItems.IsCounterItem(type)) total++;
+                if (Counts(type)) total++;
             return new Count(found.Count, total);
         }
     }

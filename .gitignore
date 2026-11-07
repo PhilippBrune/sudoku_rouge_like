@@ -151,3 +151,8 @@ docs/design/layout-proposals/*.png
 graphify-out/
 # Sound proposals for listening (tools/audio/garden_sfx.py, deterministic)
 steam_assets/audio_proposals/
+
+# Feedback relay (Cloudflare Worker): local secrets and build output
+tools/feedback-worker/.dev.vars
+tools/feedback-worker/.wrangler/
+tools/feedback-worker/node_modules/

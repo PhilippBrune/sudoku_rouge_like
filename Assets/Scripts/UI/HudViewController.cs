@@ -541,6 +541,9 @@ namespace SudokuRoguelike.UI
                 go.GetComponent<Image>().raycastTarget = false;
                 _comboText = InRunUiFactory.CreateText(go.transform, "ComboText", "", 22, TextAnchor.MiddleCenter,
                     ScrollUiKit.Vermilion);
+                // [REQ: ACCESS-FONT-005] The text fills its box on one line; it had a small default box and broke "Combo x11!".
+                InRunUiFactory.StretchFill(_comboText.rectTransform);
+                _comboText.horizontalOverflow = HorizontalWrapMode.Overflow;
             }
 
             var streak = run.State.ComboStreak;

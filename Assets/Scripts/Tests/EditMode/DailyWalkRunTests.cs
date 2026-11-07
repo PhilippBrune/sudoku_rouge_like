@@ -209,14 +209,15 @@ namespace SudokuRoguelike.Tests
             var resume = new RunResumeService(save);
             var profile = new ProfileService(save);
 
-            Assert.IsFalse(SaveFileService.IsWalkOfAnotherDay(save.Load().ActiveRunState, Monday.AddHours(23)));
+            Assert.IsFalse(SaveFileService.IsWalkOfAnotherDay(save.Load().ActiveDailyRunState, Monday.AddHours(23)));
             Assert.IsNull(resume.EndWalkOfAnotherDay(profile, Monday), "the same day: the walk waits");
-            Assert.IsTrue(resume.HasActiveRun());
+            Assert.IsTrue(save.HasActiveDailyWalk(Monday));
+            Assert.IsFalse(resume.HasActiveRun(), "the walk has its own slot (SAVE-DAILY-001)");
 
             var ended = resume.EndWalkOfAnotherDay(profile, Monday.AddDays(1));
             Assert.IsNotNull(ended, "the next day: the walk ends");
             Assert.IsTrue(ended.DailyWalk);
-            Assert.IsFalse(resume.HasActiveRun(), "and the slot is free");
+            Assert.IsNull(save.Load().ActiveDailyRunState, "and the slot is free");
 
             var garden = new RunDirector();
             garden.StartRun(new LaunchRequest { ClassId = ClassId.NumberFreak, Mode = GameMode.GardenRun, ClassLevel = 1 }, 4242);

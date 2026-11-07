@@ -130,6 +130,7 @@ namespace SudokuRoguelike.UI
         // left-stick / d-pad → navigate via EventSystem
         private void Update()
         {
+            if (FeedbackScreen.IsOpen) return;   // [REQ: FEEDBACK-001] keys go to the feedback form
             // [REQ: UI-MENU-TITLE-001] GAP-097: nothing is chosen under the title screen, so A or Enter there presses nothing.
             if (SudokuRoguelike.Bootstrap.SplashScreenController.Showing)
             {

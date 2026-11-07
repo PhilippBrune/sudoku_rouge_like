@@ -147,6 +147,7 @@ namespace SudokuRoguelike.Run
             _relicService.Held = id => Meta.EarlyGarden.IsHeld(State, Meta.EarlyGarden.Kind.Relic, id.ToString());
             _bossService.Held = id => Meta.EarlyGarden.IsHeld(State, Meta.EarlyGarden.Kind.Rule, id.ToString());
             _eventService.Held = key => Meta.EarlyGarden.IsHeld(State, Meta.EarlyGarden.Kind.Event, key);
+            _itemService.RulesAhead = _shopService.RulesAhead = () => State?.ActiveFloorModifiers?.Count > 0;   // ITEM-REWORK-001
         }
 
         /// <summary>Roll distinct choices for this panel; copies may still be acquired across different nodes.</summary>

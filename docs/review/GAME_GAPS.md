@@ -126,9 +126,17 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-119](#gap-119) | The four pressure rules showed their code name and no rule in the legend ("HauntedCell") | FIXED (Paul's playtest, 2026-11-05) | MEDIUM | P2 |
 | [GAP-120](#gap-120) | Three class passives did nothing (Number Freak, Reed Duelist's HP, Quiet Cartographer) | FIXED (found building CLASS-PASSIVE-002, 2026-11-07) | HIGH | P1 |
 | [GAP-121](#gap-121) | Full Kropki left no room for the rules after it (a boss without its chosen lines and circles) | FIXED (three-floor boss test, 2026-11-07) | HIGH | P1 |
-| [GAP-122](#gap-122) | The Lantern Seer's passive and the Shrine Archivist's 25 % reveal do nothing | OPEN (found 2026-11-07, waits for the owner's pick of new passives) | HIGH | P1 |
-| [GAP-123](#gap-123) | The Reed Duelist cannot be unlocked: the item codex it needs holds an item nobody can find and the Duelist's own item | OPEN (found 2026-11-07, waits for the owner's pick) | HIGH | P1 |
+| [GAP-122](#gap-122) | The Lantern Seer's passive and the Shrine Archivist's 25 % reveal do nothing | FIXED (owner's picks LS1 and SA1, CLASS-PASSIVE-003, 2026-11-07) | HIGH | P1 |
+| [GAP-123](#gap-123) | The Reed Duelist cannot be unlocked: the item codex it needs holds an item nobody can find and the Duelist's own item | FIXED (owner's pick U1, ITEM-REWORK-001, 2026-11-07) | HIGH | P1 |
 | [GAP-124](#gap-124) | The upper route of the later floors is cut off at the top of the path scroll; a chosen tile can sit under the title card | OPEN (0.4.3 screenshots, 2026-11-07) | MEDIUM | P2 |
+| [GAP-125](#gap-125) | The class items did nothing when used from the bag | FIXED (item review, 2026-11-07) | HIGH | P1 |
+| [GAP-126](#gap-126) | The Solver filled the cell's neighbours and never a box (an irregular 8×8 got no box solved) | FIXED (owner's playtest of 0.4.2, 2026-11-07) | MEDIUM | P2 |
+| [GAP-127](#gap-127) | The shop closed after the first purchase | FIXED (owner's playtest of 0.4.2, 2026-11-07) | MEDIUM | P2 |
+| [GAP-128](#gap-128) | After a rest the path's stats tag kept the old HP | FIXED (owner's playtest of 0.4.2, 2026-11-07) | LOW | P3 |
+| [GAP-129](#gap-129) | Fog stayed on a solved board | FIXED (owner's playtest of 0.4.2, 2026-11-07) | LOW | P3 |
+| [GAP-130](#gap-130) | At 150 % Text Size words broke inside themselves ("comb / o x11!") | FIXED (owner's playtest of 0.4.2, 2026-11-07) | MEDIUM | P2 |
+| [GAP-131](#gap-131) | An event's result was one small line (the Koi Pond Wager seemed to do nothing) | FIXED (owner's playtest of 0.4.2, 2026-11-07) | MEDIUM | P2 |
+| [GAP-132](#gap-132) | Starting a Daily Walk abandoned the saved Garden Run | FIXED (Paul's playtest of 0.4.2, owner's pick FB4, 2026-11-07) | HIGH | P1 |
 | [GAP-067](#gap-067) | Moonshade Offering's "+2 starting pencil" did nothing (the run starts at full pencil) | FIXED (2026-10-22) | LOW | P3 |
 | [GAP-064](#gap-064) | Scholar's Burden: no free Ink Well, "+5 pencil" did nothing, "−1 slot" could add a slot | FIXED (as planned, 2026-10-22) | MEDIUM | P3 |
 | [GAP-063](#gap-063) | Class levels 30 and 40 promised rewards the game did not grant (starting items, frames) | FIXED (2026-10-21) | MEDIUM | P2 |
@@ -1375,17 +1383,17 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 **The Lantern Seer's passive and the Shrine Archivist's 25 % reveal do nothing**
 
 - **Requirement:** ClassXpProgressionSystem (passives of the Lantern Seer and the Shrine Archivist)
-- **Status:** OPEN (found 2026-11-07 while writing the passive proposals; the owner picks new passives first, `docs/design/playtest-042-proposals.html`) · **Severity:** HIGH · **Priority:** P1
+- **Status:** FIXED 2026-11-07, was OPEN (found 2026-11-07 while writing the passive proposals; the owner picks new passives first, `docs/design/playtest-042-proposals.html`) · **Severity:** HIGH · **Priority:** P1
 - **Problem:** `ClassPassiveService.GetModifierWeakeningFactor` (Lantern Seer: boss rules 30/35/40 % weaker) and `TryArchivistReveal` (Shrine Archivist: 25 % per pencil mark) have no caller; the Lantern Seer's gate preview and free reroll have no code either. The class screen promises all three. Only the Archivist's free first mark per cell works (`IsPencilFree`), which the class screen does not mention.
-- **Fix:** open.
+- **Fix:** CLASS-PASSIVE-003 (the owner's picks LS1, the lights, and SA1, the archive find).
 
 ## GAP-123
 **The Reed Duelist cannot be unlocked**
 
 - **Requirement:** ClassUnlockService (Reed Duelist: complete the item codex), META-CODEX
-- **Status:** OPEN (found 2026-11-07 in the item review) · **Severity:** HIGH · **Priority:** P1
+- **Status:** FIXED 2026-11-07, was OPEN (found 2026-11-07 in the item review) · **Severity:** HIGH · **Priority:** P1
 - **Problem:** `CodexProgress.RequiredItems` counts every `ItemType` but the counter items. Two of them cannot be found before the Reed Duelist is unlocked: the Bamboo Compass is in no roll pool and has no effect code (only a Harmony 3 flag and a codex line), and the Reed Pledge is rolled only for the Reed Duelist at class Level 15. The codex never completes, so the Reed Duelist never unlocks.
-- **Fix:** open (options on the proposals page: count only the items every class can find, and build or drop the Bamboo Compass).
+- **Fix:** U1: `CodexProgress.RequiredItems` counts no class items and no retired item; the Bamboo Compass is retired (ITEM-REWORK-001).
 
 ## GAP-124
 **The upper route of the later floors is cut off at the top of the path scroll**
@@ -1394,6 +1402,78 @@ Repository clean-up and release preparation for 1.1.0 are recorded in `CHANGELOG
 - **Status:** OPEN (seen in the 0.4.3 before/after shots `LayoutScreenshotDiagnostics.RenderPathFocusOnEveryFloor`, 2026-11-07) · **Severity:** MEDIUM · **Priority:** P2
 - **Problem:** `RunGraphService.AssignCanvasPositions` spreads the two routes wider from the third garden on (lane offset 0.22 and 0.26, jitter up to 0.06). In the path scroll the highest tiles of the upper (Calm) route are cut flat at the top of `PathScrollArea`, a cross-link tile's label above it is cut off (the Warden on Floors 2 and 3), and the first tile of the upper route can lie under the floor's title card, so the brush ring of a chosen tile there is hidden; the class marker above a chosen tile of the upper route is cut off by the same edge. 0.4.2 shows the same on Floors 3 to 5; three-floor runs use those gardens for Floors 2 and 3.
 - **Fix:** open (keep the upper tiles and their labels inside the scroll area, and clear of the title card).
+
+## GAP-125
+**The class items did nothing when used from the bag**
+
+- **Requirement:** ITEM-REWORK-001
+- **Status:** FIXED (item review, 2026-11-07) · **Severity:** HIGH · **Priority:** P1
+- **Problem:** The UI's item switch had no case for the eight class items (Loaded Coin, Monk's Beads, Annotated Folio, Double or Quits, Worn Chisel, Dim Lantern, Reed Pledge, Survey Notes): they fell to "Used" and were spent with no effect. Their effects sat in `RunDirector.ApplyItemEffect`, which no button called for them.
+- **Fix:** `ApplyClassItem` from the UI; the Loaded Coin is not spent by using it.
+- **Tests:** Playtest042PicksTests (`ClassItems_DoWhatTheirTextSays`)
+
+## GAP-126
+**The Solver filled the cell's neighbours and never a box (an irregular 8×8 got no box solved)**
+
+- **Requirement:** ITEM-REWORK-001
+- **Status:** FIXED (owner's playtest of 0.4.2, 2026-11-07) · **Severity:** MEDIUM · **Priority:** P2
+- **Problem:** `SolveCells` wrote the chosen cell and up to 4 orthogonal neighbours; Rare and Epic promise a box.
+- **Fix:** By the cell's box from `RegionMap`: Normal the cell and 2 more of its box, Rare the box, Epic box, row and column.
+- **Tests:** Playtest042PlayModeTests
+
+## GAP-127
+**The shop closed after the first purchase**
+
+- **Requirement:** SHOP-MULTI-001
+- **Status:** FIXED (owner's playtest of 0.4.2, 2026-11-07) · **Severity:** MEDIUM · **Priority:** P2
+- **Problem:** `TryBuySelectedOffer` called `CloseShop` after every purchase.
+- **Fix:** The stall stays open; a sold good is stamped "Sold".
+- **Tests:** Playtest042PlayModeTests
+
+## GAP-128
+**After a rest the path's stats tag kept the old HP**
+
+- **Requirement:** REST-REFRESH-001
+- **Status:** FIXED (owner's playtest of 0.4.2, 2026-11-07) · **Severity:** LOW · **Priority:** P3
+- **Problem:** The path was redrawn before the rest scene opened and not after the choice.
+- **Fix:** `OnRestDone` refreshes the path overview.
+- **Tests:** Playtest042PlayModeTests
+
+## GAP-129
+**Fog stayed on a solved board**
+
+- **Requirement:** FOG-SOLVED-001
+- **Status:** FIXED (owner's playtest of 0.4.2, 2026-11-07) · **Severity:** LOW · **Priority:** P3
+- **Problem:** A digit written into fog (with a lantern) kept its cell fogged, and the board could be complete with fog left.
+- **Fix:** `LiftRemainingFog` when the puzzle is solved.
+- **Tests:** Playtest042PlayModeTests
+
+## GAP-130
+**At 150 % Text Size words broke inside themselves ("comb / o x11!")**
+
+- **Requirement:** ACCESS-FONT-005
+- **Status:** FIXED (owner's playtest of 0.4.2, 2026-11-07) · **Severity:** MEDIUM · **Priority:** P2
+- **Problem:** `TextSizeFit` counted lines only, and Unity breaks a word wider than its box inside itself; the combo label had a small default box.
+- **Fix:** A size whose widest word does not fit is too big; the combo label fills its box on one line.
+- **Tests:** Playtest042PlayModeTests
+
+## GAP-131
+**An event's result was one small line (the Koi Pond Wager seemed to do nothing)**
+
+- **Requirement:** EVENT-OUTCOME-001
+- **Status:** FIXED (owner's playtest of 0.4.2, 2026-11-07) · **Severity:** MEDIUM · **Priority:** P2
+- **Problem:** The result was one 22 px line at the foot of the scroll ("another fish rose first") and the purse kept the old gold.
+- **Fix:** A "What happened" slip with every changed number; the purse updates.
+- **Tests:** Playtest042PlayModeTests
+
+## GAP-132
+**Starting a Daily Walk abandoned the saved Garden Run**
+
+- **Requirement:** SAVE-DAILY-001
+- **Status:** FIXED (Paul's playtest of 0.4.2, owner's pick FB4, 2026-11-07) · **Severity:** HIGH · **Priority:** P1
+- **Problem:** The Daily Walk and the Garden Run shared `ActiveRunState`; entering the walk abandoned the saved run ("Abandon & walk").
+- **Fix:** The walk's own slot; old saves move over.
+- **Tests:** Playtest042PicksTests, DailyWalkRunTests
 
 ## GAP-114
 **The wrong-digit and HP-loss sounds lie under 300 Hz: laptop and handheld speakers barely play them**

@@ -22,6 +22,19 @@ namespace SudokuRoguelike.Core
         public RunState ActiveCustomRunState;
         public PuzzleSaveState ActiveCustomPuzzle;
 
+        // [REQ: SAVE-DAILY-001] The Daily Walk has a slot of its own (Paul's playtest of 0.4.2, the owner's pick FB4): a walk
+        // no longer replaces a saved Garden Run. Before 0.4.3 the walk was saved in ActiveRunState; a save from then is moved
+        // here when it loads (SaveFileService).
+        public RunState ActiveDailyRunState;
+        public PuzzleSaveState ActiveDailyPuzzle;
+
+        /// <summary>Drops the saved Garden Run, or the saved Daily Walk.</summary>
+        public void ClearRun(bool dailyWalk)
+        {
+            if (dailyWalk) { ActiveDailyRunState = null; ActiveDailyPuzzle = null; }
+            else { ActiveRunState = null; ActivePuzzle = null; }
+        }
+
         public TutorialProgressState TutorialProgress = new TutorialProgressState();
         public ProfileStats Statistics = new ProfileStats();
         public MasteryAchievementState Mastery = new MasteryAchievementState();
@@ -171,6 +184,9 @@ namespace SudokuRoguelike.Core
         public bool SpiritTrialsUnlocked;
         public bool HiddenDualModifierBossUnlocked;
         public List<BossModifierId> DiscoveredBossModifiers = new List<BossModifierId>();
+        // [REQ: RULE-CARD-001] The rules a card has explained; the rules met before 0.4.3 are added once (Seeded).
+        public List<BossModifierId> RulesExplained = new List<BossModifierId>();
+        public bool RulesExplainedSeeded;
         // [REQ: META-CODEX-008] Curses met in any run (the Codex's Curses page, UI-STYLE-018).
         public List<string> DiscoveredCurses = new List<string>();
         // [HARMONY-UNLOCK-001] Global Harmony difficulty level progression (0–10).

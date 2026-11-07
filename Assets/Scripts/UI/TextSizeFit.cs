@@ -127,7 +127,20 @@ namespace SudokuRoguelike.UI
             if (generator.GetPreferredHeight(_text.text, settings) / ppu > box.y + 0.5f) return false;
             if (_text.horizontalOverflow != HorizontalWrapMode.Wrap
                 && generator.GetPreferredWidth(_text.text, settings) / ppu > box.x + 0.5f) return false;
+            if (_text.horizontalOverflow == HorizontalWrapMode.Wrap && WidestWord(generator, settings) / ppu > box.x + 0.5f) return false;
             return Lines(settings) <= lines;
         }
+
+        // [REQ: ACCESS-FONT-005] A word wider than its box is broken inside itself ("comb / o x11!" at 150 %, playtest 0.4.2);
+        // such a size does not fit, the text stays a size smaller.
+        private float WidestWord(TextGenerator generator, TextGenerationSettings settings)
+        {
+            var widest = 0f;
+            foreach (var word in _text.text.Split(WordBreaks, System.StringSplitOptions.RemoveEmptyEntries))
+                widest = Mathf.Max(widest, generator.GetPreferredWidth(word, settings));
+            return widest;
+        }
+
+        private static readonly char[] WordBreaks = { ' ', '\n', '\t' };
     }
 }

@@ -177,6 +177,7 @@ namespace SudokuRoguelike.Run
             }
             // [REQ: CLASS-PASSIVE-002] The Quiet Cartographer's puzzle after a perfect one is easier (the flag follows each solve).
             config.MissingPercent = ClassPassiveService.EasedMissingPercent(State, config.Stars, config.MissingPercent);
+            config.MissingPercent = SurveyEasedMissingPercent(State, config.Stars, config.MissingPercent);   // [REQ: ITEM-REWORK-001]
             return config;
         }
 
@@ -742,6 +743,7 @@ namespace SudokuRoguelike.Run
 
             var pressureRng = new System.Random(config.Seed ^ 0x50A4B3C2);
             InitializePressureMechanics(config, CurrentBoard, CurrentLevelState, pressureRng);
+            StartLevelPassives();   // [REQ: CLASS-PASSIVE-003]
         }
 
         /// <summary>
@@ -942,6 +944,7 @@ namespace SudokuRoguelike.Run
 
             var pressureRng = new System.Random(config.Seed ^ 0x50A4B3C2);
             InitializePressureMechanics(config, CurrentBoard, CurrentLevelState, pressureRng);
+            StartLevelPassives();   // [REQ: CLASS-PASSIVE-003]
 
             _pendingOverlayTask = null;
             _pendingLevelConfig = null;
@@ -1226,6 +1229,7 @@ namespace SudokuRoguelike.Run
             // [REQ: PRESSURE-SAVE-002] InitializePressureMechanics is called at the end of every StartLevel path (floor-gated; no-op in tutorial)
             var pressureRng = new System.Random(config.Seed ^ 0x50A4B3C2);
             InitializePressureMechanics(config, CurrentBoard, CurrentLevelState, pressureRng);
+            StartLevelPassives();   // [REQ: CLASS-PASSIVE-003]
         }
     }
 }

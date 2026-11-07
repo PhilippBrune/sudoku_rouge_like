@@ -8,6 +8,7 @@ Each post opens a thread for results. The content comes from walk_calendar.py, w
 
     python tools/discord/walk_posts.py preview                 # all three to #release-drafts (no ping, no event)
     python tools/discord/walk_posts.py walk-live [off]         # after the upload: the daily post describes the walk
+    python tools/discord/walk_posts.py prune-daily [off]       # only today's daily post stays (older ones are deleted)
     python tools/discord/walk_posts.py run                     # post what is due (scheduled task, every 30 min)
     python tools/discord/walk_posts.py champion <member name>  # give the Seed Champion role
     python tools/discord/walk_posts.py champion --reset        # take it from everyone
@@ -140,6 +141,30 @@ def _local_midnight(day: dt.date) -> dt.datetime:
     return dt.datetime.combine(day, dt.time()).astimezone()
 
 
+DAILY_PREFIX = '**🌿 Daily Walk'
+
+
+def old_daily_posts(messages: list, bot_id: str, keep_id: str | None) -> list:
+    """The bot's own daily posts other than the one to keep (the owner's report after 0.4.2: the channel kept showing
+    the days before)."""
+    return [m for m in messages
+            if m.get('author', {}).get('id') == bot_id and m.get('content', '').startswith(DAILY_PREFIX) and m['id'] != keep_id]
+
+
+def prune_daily(state_obj, keep_id: str | None = None) -> int:
+    """Deletes the bot's older daily posts in the channel (their threads stay); returns how many."""
+    channel = state_obj.channel(CHANNEL)
+    messages = da.api('GET', f'/channels/{channel["id"]}/messages?limit=100')
+    if keep_id is None:
+        dailies = [m for m in messages if m.get('content', '').startswith(DAILY_PREFIX)]
+        keep_id = dailies[0]['id'] if dailies else None   # the newest
+    old = old_daily_posts(messages, state_obj.me['id'], keep_id)
+    for m in old:
+        da.api('DELETE', f'/channels/{channel["id"]}/messages/{m["id"]}', None, 'older daily walk post')
+    log(f'pruned {len(old)} older daily post(s)')
+    return len(old)
+
+
 # --- commands ----------------------------------------------------------------------------------------------------------
 
 def cmd_run(layout: dict) -> None:
@@ -150,11 +175,13 @@ def cmd_run(layout: dict) -> None:
     week_key, month_key = f'{year}-W{week:02d}', f'{today:%Y-%m}'
 
     if state.get('daily') != today.isoformat():
-        post(s, CHANNEL, daily_text(today, state.get('walk_live', False)), ping=False,
-             thread=f'Daily Walk · {today:%d %b}')
+        new = post(s, CHANNEL, daily_text(today, state.get('walk_live', False)), ping=False,
+                   thread=f'Daily Walk · {today:%d %b}')
         state['daily'] = today.isoformat()
         save_state(state)
         log(f'daily walk posted for {today}')
+        if state.get('prune_daily'):
+            prune_daily(s, keep_id=new['id'])
     if state.get('weekly') != week_key:
         start = wc.week_start(today)
         seed = wc.weekly_seed(year, week)
@@ -226,6 +253,12 @@ def main(argv: list) -> None:
             save_state({**load_state(), 'walk_live': not rest})
             print('The daily post describes the walk from the next post on.' if not rest else
                   'The daily post lists the goals only again.')
+        elif cmd == 'prune-daily' and rest in ([], ['off']):
+            save_state({**load_state(), 'prune_daily': not rest})
+            if not rest:
+                print(f'Deleted {prune_daily(da.State(da.guild_id(layout)))} older daily post(s); from now on each new one replaces the last.')
+            else:
+                print('Older daily posts stay from now on.')
         elif cmd == 'champion' and rest:
             cmd_champion(layout, ' '.join(rest))
         elif cmd == 'install-task':

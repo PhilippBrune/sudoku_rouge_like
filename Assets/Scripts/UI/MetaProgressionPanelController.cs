@@ -76,6 +76,7 @@ namespace SudokuRoguelike.UI
 
         private void Update()
         {
+            if (FeedbackScreen.IsOpen) return;   // [REQ: FEEDBACK-001] keys go to the feedback form
             if (_garden == null || !_garden.gameObject.activeInHierarchy) return;
             // [REQ: UI-STYLE-043] Y (F) turns the scroll between the level path and the class's challenges.
             if (PadButtons.Pressed(KeyCode.JoystickButton3) || Input.GetKeyDown(KeyCode.F)) TogglePage();

@@ -32,6 +32,9 @@ namespace SudokuRoguelike.UI
             if (_completionHandled) return;
             if (run.State == null) { _completionHandled = false; return; }
             _completionHandled = true;
+            // [REQ: FOG-SOLVED-001] A digit written into fog left its cell fogged; the solved board shows no fog.
+            run.LiftRemainingFog();
+            RenderBoard();
 
             if (run.State.TutorialMode)
             {

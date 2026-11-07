@@ -261,7 +261,7 @@ namespace SudokuRoguelike.Bootstrap
             request.GardenOpened = request.Mode == GameMode.GardenRun && !request.DailyWalk && !request.HasSeed
                 ? Meta.EarlyGarden.Opened(_profileService.LoadStats()?.TotalRunsStarted ?? 0) : Meta.EarlyGarden.Count;
 
-            _autoSave.ClearActiveRun();
+            _autoSave.ClearActiveRun(request.DailyWalk);   // [REQ: SAVE-DAILY-001] a walk leaves the saved Garden Run alone
             _run.StartRun(request, runtimeSeed);
             // [REQ: SCORE-TIME-001] A Garden Run on the seed of the week also scores its pace.
             // [REQ: INCENSE-BOARD-001] An Incense Walk on the week's seed is the week's scored walk.
@@ -406,9 +406,9 @@ namespace SudokuRoguelike.Bootstrap
             return true;
         }
 
-        public bool LaunchResume()
+        public bool LaunchResume(bool dailyWalk = false)
         {
-            if (!_resumeService.TryResumeFromSave(out var runState, out var puzzleState))
+            if (!_resumeService.TryResumeFromSave(out var runState, out var puzzleState, dailyWalk))
                 return false;
 
             _menuMusic.Stop();
@@ -490,6 +490,9 @@ namespace SudokuRoguelike.Bootstrap
             return true;
         }
 
+        /// <summary>[REQ: SAVE-DAILY-001] Today's Daily Walk, saved in its own slot, can be continued.</summary>
+        public bool HasResumableDailyWalk() => _saveFileService.HasActiveDailyWalk(DateTime.Today);
+
         /// <summary>[REQ: DAILY-WALK-010] Ends a Daily Walk saved on an earlier day; true when one ended.</summary>
         public bool EndWalkOfAnotherDay() => _resumeService.EndWalkOfAnotherDay(_profileService, DateTime.Today) != null;
 
@@ -556,6 +559,7 @@ namespace SudokuRoguelike.Bootstrap
             if (gameBuilder == null)
                 gameBuilder = gameGroup.AddComponent<InRunUiBlueprintBuilder>();
             gameBuilder.BuildBlueprint();
+            if (GetComponent<FeedbackScreen>() == null) gameObject.AddComponent<FeedbackScreen>();   // [REQ: FEEDBACK-001] F8
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (gameGroup.GetComponent<DebugHotkeys>() == null)
                 gameGroup.AddComponent<DebugHotkeys>();

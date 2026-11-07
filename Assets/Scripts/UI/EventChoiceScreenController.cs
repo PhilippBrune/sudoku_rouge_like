@@ -15,7 +15,7 @@ namespace SudokuRoguelike.UI
     // shows what happened and the button becomes Continue (click, A, or keys 1–3 a moment later), which closes the scene.
     // If no choice can be paid, the button offers to walk on without one.
     // GAP-052: the old event panel was built under the full-screen path, so events opened invisibly.
-    public sealed class EventChoiceScreenController : MonoBehaviour
+    public sealed partial class EventChoiceScreenController : MonoBehaviour
     {
         private RunMapController _runMap;
         private GameObject _pathPanel;
@@ -91,6 +91,7 @@ namespace SudokuRoguelike.UI
 
             var paper = ScrollUiKit.HandScroll(screen.transform, "EventScroll", new Vector2(0.091f, 0.176f), new Vector2(0.909f, 0.843f),
                 "bg_event", true);
+            _paper = paper;
             ScrollUiKit.Label(paper, "EventEyebrow", T("InRun.Event.Eyebrow", "AN ENCOUNTER ON THE PATH").ToUpperInvariant(), 17,
                 TextAnchor.MiddleLeft, ScrollUiKit.InkSoft, new Vector2(0.05f, 0.86f), new Vector2(0.46f, 0.90f), 12);
             ScrollUiKit.Label(paper, "EventTitle", _currentEvent.Title, 58, TextAnchor.MiddleLeft, ScrollUiKit.Ink,
@@ -277,6 +278,8 @@ namespace SudokuRoguelike.UI
             _chosen = true;
             _chosenAt = Time.unscaledTime;
             string summary;
+            var state = _runMap.Run?.State;
+            var before = state != null ? new Snapshot(state) : default;
             try
             {
                 summary = _runMap.ChooseEventOption(index);
@@ -290,6 +293,7 @@ namespace SudokuRoguelike.UI
             if (_resultText != null)
                 _resultText.text = string.IsNullOrEmpty(summary) ? T("RunEvent.Result.Done", "Done.") : summary;
             foreach (var strip in _strips) strip.interactable = false;
+            ShowOutcome(summary, before, state);   // [REQ: EVENT-OUTCOME-001] EventChoiceScreenController.Outcome.cs
             SetMainLabel(T("InRun.Event.Continue", "Continue"));
             _mainButton.interactable = true;
             EventSystem.current?.SetSelectedGameObject(_mainButton.gameObject);

@@ -17,6 +17,10 @@ namespace SudokuRoguelike.Items
             _random = new Random(seed);
         }
 
+        /// <summary>[REQ: ITEM-REWORK-001] Whether the floor has rules: the Pattern Scroll is offered only then (RunDirector
+        /// sets it; without it every floor counts as having rules).</summary>
+        public Func<bool> RulesAhead;
+
         // ── Class-Exclusive Definitions ── [REQ: CLASS-EXCL-001] [REQ: CLASS-EXCL-002] [REQ: CLASS-EXCL-003]
         // 8 class-exclusive items (L15), one per class; UnlockLevel = 15
 
@@ -48,6 +52,10 @@ namespace SudokuRoguelike.Items
         }
 
         public static bool IsClassExclusive(ItemType type) => ClassExclusiveItems.ContainsKey(type);
+
+        /// <summary>[REQ: ITEM-REWORK-001] Kept for old saves but out of the game and the Codex (the Bamboo Compass was never
+        /// handed out and had no effect; GAP-123).</summary>
+        public static bool IsRetired(ItemType type) => type == ItemType.BambooCompass;
 
         public static ClassId GetExclusiveClass(ItemType type) =>
             ClassExclusiveItems.TryGetValue(type, out var d) ? d.ClassId : (ClassId)0;
@@ -258,12 +266,14 @@ namespace SudokuRoguelike.Items
             }
 
             // [REQ: ITEM-FOG-001] The fog lanterns are sold where there is fog (CounterItems.FogItems), never rolled here.
-            var tiered = new[]
+            // [REQ: ITEM-REWORK-001] The Pattern Scroll only where the floor has rules (on Floor 1 it had nothing to solve).
+            var tiered = new List<ItemType>
             {
                 ItemType.Solver, ItemType.Finder, ItemType.InkWell, ItemType.MeditationStone,
                 ItemType.WindChime, ItemType.PatternScroll, ItemType.KoiReflection, ItemType.BambooScroll
             };
-            return tiered[_random.Next(tiered.Length)];
+            if (RulesAhead != null && !RulesAhead()) tiered.Remove(ItemType.PatternScroll);
+            return tiered[_random.Next(tiered.Count)];
         }
 
         // ── Item Classification ──
@@ -324,7 +334,7 @@ namespace SudokuRoguelike.Items
 
         // [REDESIGN] Finder: Epic tier reveals ALL cells of the same digit on the board.
         public static int GetFinderHighlightCount(ItemRarity rarity) =>
-            rarity == ItemRarity.Epic ? int.MaxValue : rarity == ItemRarity.Rare ? 3 : 1;
+            rarity == ItemRarity.Epic ? int.MaxValue : rarity == ItemRarity.Rare ? 4 : 2;   // [REQ: ITEM-REWORK-001] was 3 and 1
 
         // Convenience: true when FinderHighlightCount means “reveal all matching cells”.
         public static bool IsFinderRevealAll(ItemRarity rarity) => rarity == ItemRarity.Epic;
@@ -512,10 +522,10 @@ namespace SudokuRoguelike.Items
                 // Rare:   fill selected cell + auto-complete its entire box
                 // Epic:   auto-complete the best (most-filled) row, column, OR box (player chooses zone)
                 ItemType.Solver => rarity == ItemRarity.Epic
-                    ? LocalizationService.T(ItemDescriptionKey(type, rarity), "Click a zone (row/column/box) to auto-complete it.")
+                    ? LocalizationService.T(ItemDescriptionKey(type, rarity), "Fill a cell with its correct digit and complete its box, its row and its column.")
                     : rarity == ItemRarity.Rare
                         ? LocalizationService.T(ItemDescriptionKey(type, rarity), "Fill a cell with its correct digit and auto-complete its box.")
-                        : LocalizationService.T(ItemDescriptionKey(type, rarity), "Fill a cell with its correct digit and highlight remaining candidates in its box."),
+                        : LocalizationService.T(ItemDescriptionKey(type, rarity), "Fill a cell with its correct digit and 2 more empty cells of its box."),
 
                 // [REDESIGN] Finder tiers:
                 // Normal: highlight 1 matching cell, Rare: highlight 3, Epic: reveal ALL cells of that digit
@@ -535,32 +545,32 @@ namespace SudokuRoguelike.Items
                     ? LocalizationService.T(ItemDescriptionKey(type, rarity), "Reveal candidates for every unsolved cell in the board's most ambiguous zone (row/column/box with most open cells).")
                     : LocalizationService.Format(ItemDescriptionKey(type, rarity), "Click {0} empty cell(s) to reveal their candidates.", GetKoiReflectionCells(rarity)),
                 ItemType.LanternOfClarity => LocalizationService.Format(ItemDescriptionKey(type, rarity), "Disable fog for {0} moves.", GetLanternOfClarityMoves(rarity)),
-                ItemType.GardenRake => LocalizationService.T(ItemDescriptionKey(type, rarity), "Clear all pencil marks in the selected row and column."),
+                ItemType.GardenRake => LocalizationService.T(ItemDescriptionKey(type, rarity), "Removes every note the digits on the board already rule out; +1 pencil for every 3 removed."),
                 ItemType.OfferingBowl => LocalizationService.T(ItemDescriptionKey(type, rarity), "Sacrifice 1 HP to gain 30 gold."),
                 // [REDESIGN] Pruning Shears: remove ALL invalid candidates from a cell (not just one).
                 ItemType.PruningShears => LocalizationService.T(ItemDescriptionKey(type, rarity), "Remove all invalid candidates from a cell, leaving only valid possibilities."),
-                ItemType.ZenSandSifter => LocalizationService.T(ItemDescriptionKey(type, rarity), "Highlight all cells with exactly two candidates."),
+                ItemType.ZenSandSifter => LocalizationService.T(ItemDescriptionKey(type, rarity), "Writes the two possible digits as notes into up to 4 cells that have exactly two."),
                 ItemType.GinkgoLeaf => LocalizationService.T(ItemDescriptionKey(type, rarity), "Undo the last mistake, restore the lost HP, and recover your combo."),
                 ItemType.RicePaperUmbrella => LocalizationService.T(ItemDescriptionKey(type, rarity), "Block the next mistake penalty (2 charges)."),
                 ItemType.TempleIncense => LocalizationService.Format(ItemDescriptionKey(type, rarity), "Click {0} empty cell(s) to fill their correct answer.", rarity == ItemRarity.Epic ? 6 : rarity == ItemRarity.Rare ? 4 : 2),
-                ItemType.KoiDragonScale => LocalizationService.T(ItemDescriptionKey(type, rarity), "Complete the most-filled row, column, or box."),
+                ItemType.KoiDragonScale => LocalizationService.T(ItemDescriptionKey(type, rarity), "Completes the two most-filled rows, columns or boxes."),
                 // [REDESIGN] Golden Kintsugi Jar: fix all current mistakes AND reveal correct digits.
-                ItemType.GoldenKintsugiJar => LocalizationService.T(ItemDescriptionKey(type, rarity), "Fix all current mistakes on the board and reveal the correct digits for all affected cells."),
+                ItemType.GoldenKintsugiJar => LocalizationService.T(ItemDescriptionKey(type, rarity), "Your next 3 mistakes in this puzzle write the right digit instead: no HP lost, the combo stays."),
                 // [REDESIGN] Silk Fan: generate 5 Shield. Absorbs HP damage before health bar.
                 // While shielded, mistakes don't break your combo. Shield resets each puzzle.
                 ItemType.SilkFan => LocalizationService.Format(ItemDescriptionKey(type, rarity), "Generate {0} Shield. Shield absorbs HP damage before your health bar. While shielded, mistakes don't break your combo. Resets each puzzle.", GetSilkFanShieldAmount()),
                 // Class-exclusive items (L15)
-                ItemType.LoadedCoin     => LocalizationService.T(ItemDescriptionKey(type, rarity), "Gain 1 Reroll Token. (NumberFreak exclusive)"),
-                ItemType.MonksBeads     => LocalizationService.T(ItemDescriptionKey(type, rarity), "Your next 9 placements cost no pencil marks. (GardenMonk exclusive)"),
-                ItemType.AnnotatedFolio => LocalizationService.T(ItemDescriptionKey(type, rarity), "Reveal all candidates in a selected box. (ShrineArchivist exclusive)"),
-                ItemType.DoubleOrQuits  => LocalizationService.T(ItemDescriptionKey(type, rarity), "Double gold from this puzzle or lose 1 HP. (KoiGambler exclusive)"),
-                ItemType.WornChisel     => LocalizationService.T(ItemDescriptionKey(type, rarity), "30% discount at the next shop. (StoneGardener exclusive)"),
-                ItemType.DimLantern     => LocalizationService.T(ItemDescriptionKey(type, rarity), "Remove fog from 3 random hidden cells permanently. (LanternSeer exclusive)"),
-                ItemType.ReedPledge     => LocalizationService.T(ItemDescriptionKey(type, rarity), "Complete this puzzle using zero pencil marks for +2 HP. (ReedDuelist exclusive)"),
-                ItemType.SurveyNotes    => LocalizationService.T(ItemDescriptionKey(type, rarity), "Shows the board size and stars of every tile on this floor. (QuietCartographer exclusive)"),
+                ItemType.LoadedCoin     => LocalizationService.T(ItemDescriptionKey(type, rarity), "While in your bag: the next reward fills every Nothing slot with an item, then the coin is spent. (Number Freak)"),
+                ItemType.MonksBeads     => LocalizationService.T(ItemDescriptionKey(type, rarity), "Your next 5 correct digits each heal 1 HP; a mistake ends it. (Garden Monk)"),
+                ItemType.AnnotatedFolio => LocalizationService.T(ItemDescriptionKey(type, rarity), "Writes the notes into every cell of the board that has exactly two possible digits. (Shrine Archivist)"),
+                ItemType.DoubleOrQuits  => LocalizationService.T(ItemDescriptionKey(type, rarity), "When this puzzle ends: 50 % its gold doubles, else you lose 1 HP. (Koi Gambler)"),
+                ItemType.WornChisel     => LocalizationService.T(ItemDescriptionKey(type, rarity), "30 % off in every shop of this floor. (Stone Gardener)"),
+                ItemType.DimLantern     => LocalizationService.T(ItemDescriptionKey(type, rarity), "Shows this floor's boss rules on the map. (Lantern Seer)"),
+                ItemType.ReedPledge     => LocalizationService.T(ItemDescriptionKey(type, rarity), "Pledge to solve this puzzle without pencil marks: +4 pencil, +30 gold, +25 XP. Each pencil mark costs 1 HP and breaks the pledge. (Reed Duelist)"),
+                ItemType.SurveyNotes    => LocalizationService.T(ItemDescriptionKey(type, rarity), "Your next puzzle is a whole star easier. (Quiet Cartographer)"),
                 ItemType.BambooCompass  => LocalizationService.T(ItemDescriptionKey(type, rarity), "Highlight 2 cells where the next placement would likely violate an active constraint."),
                 // General-pool items
-                ItemType.BambooScroll   => LocalizationService.T(ItemDescriptionKey(type, rarity), "Reveal the star rating of all upcoming path nodes."),
+                ItemType.BambooScroll   => LocalizationService.T(ItemDescriptionKey(type, rarity), "Every tile of this floor shows its board size and stars."),
                 ItemType.GardenLantern  => LocalizationService.T(ItemDescriptionKey(type, rarity), "Lift fog from the entire board for 15 seconds, then re-fog."),
                 ItemType.GoldenKoi      => LocalizationService.Format(ItemDescriptionKey(type, rarity), "Grant +{0}g per star rating when this puzzle ends.", 10 * 1),
                 ItemType.TempleStamp    => LocalizationService.T(ItemDescriptionKey(type, rarity), "Protect your HP this puzzle - all wrong placements deal 0 damage. Consumed on completion."),

@@ -156,14 +156,18 @@ namespace SudokuRoguelike.UI
             var xp = run.TileXpLog != null && run.TileXpLog.Count > 0 ? run.TileXpLog[run.TileXpLog.Count - 1].TotalXp : 0;
             // [REQ: REWARD-KOI-001] The Golden Koi's gold on its own line under the puzzle's (RM-212); the rows close up for it.
             var koi = Mathf.Clamp(run.LastKoiGold, 0, gold);
+            var doubled = Mathf.Clamp(run.LastDoubleOrQuits, 0, gold - koi);   // [REQ: ITEM-REWORK-001] Double or Quits on its own line
             var gains = new List<(string key, string value, Color color, string icon)>
             {
-                ("InRun.Reward.Row.Gold", "+" + (gold - koi), ScrollUiKit.Vermilion, "economy/icon_sakura_coin"),
+                ("InRun.Reward.Row.Gold", "+" + (gold - koi - doubled), ScrollUiKit.Vermilion, "economy/icon_sakura_coin"),
                 ("InRun.Reward.Row.Xp", "+" + xp, ScrollUiKit.Vermilion, "ui/icon_golden_bloom"),
                 ("InRun.Reward.Row.Hp", $"{state.CurrentHP} / {state.MaxHP}", ScrollUiKit.Ink, "ui/icon_petal_orb"),
                 ("InRun.Reward.Row.Pencil", $"{state.CurrentPencil} / {state.MaxPencil}", ScrollUiKit.Ink, "ui/icon_ink_save")
             };
             if (koi > 0) gains.Insert(1, ("InRun.Reward.Row.GoldenKoi", "+" + koi, ScrollUiKit.Vermilion, "items/icon_golden_koi"));
+            if (run.LastDoubleOrQuits != 0)
+                gains.Insert(1, ("InRun.Reward.Row.DoubleOrQuits", doubled > 0 ? "+" + doubled : T("InRun.Reward.DoubleOrQuits.Lost"),
+                    ScrollUiKit.Vermilion, "items/icon_" + ItemService.GetIconName(ItemType.DoubleOrQuits)));
             // [REQ: ITEM-PACK-001] A Seed Pouch that ripened with this puzzle names its item.
             if (run.LastHarvest != null)
             {

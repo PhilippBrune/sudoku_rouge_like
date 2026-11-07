@@ -358,10 +358,7 @@ namespace SudokuRoguelike.Save
             envelope.Completion = completion;
             envelope.TimestampUtc = System.DateTime.UtcNow.ToString("o");
             if (!result.TutorialMode)
-            {
-                envelope.ActiveRunState = null;
-                envelope.ActivePuzzle = null;
-            }
+                envelope.ClearRun(result.DailyWalk);   // [REQ: SAVE-DAILY-001] a finished walk leaves the saved Garden Run alone
             _saveFile.Save(envelope);
 
             return newUnlocks;

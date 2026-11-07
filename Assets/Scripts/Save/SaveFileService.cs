@@ -139,6 +139,14 @@ namespace SudokuRoguelike.Save
             return IsResumableRunState(envelope.ActiveRunState);
         }
 
+        /// <summary>[REQ: SAVE-DAILY-001] A Daily Walk saved today that can be continued.</summary>
+        public bool HasActiveDailyWalk(DateTime today)
+        {
+            if (!HasSaveFile()) return false;
+            var walk = Load().ActiveDailyRunState;
+            return IsResumableRunState(walk) && !IsWalkOfAnotherDay(walk, today);
+        }
+
         /// <summary>
         /// Returns true when a Seasonal Challenge puzzle was saved mid-attempt
         /// and the saved month matches the current calendar month.
@@ -322,10 +330,23 @@ namespace SudokuRoguelike.Save
             if (meta.HarmonyV5PlusWins == null)
                 meta.HarmonyV5PlusWins = new System.Collections.Generic.List<ClassId>();
 
-            if (!IsResumableRunState(envelope.ActiveRunState))
+            // [REQ: SAVE-DAILY-001] A walk saved before 0.4.3 moves to the walk's own slot (JsonUtility writes an empty
+            // slot as a default RunState, so "empty" is "not resumable", not null).
+            if (envelope.ActiveRunState != null && envelope.ActiveRunState.DailyWalk && !IsResumableRunState(envelope.ActiveDailyRunState))
+            {
+                envelope.ActiveDailyRunState = envelope.ActiveRunState;
+                envelope.ActiveDailyPuzzle = envelope.ActivePuzzle;
+                envelope.ActiveRunState = null;
+                envelope.ActivePuzzle = null;
+            }
+            if (!IsResumableRunState(envelope.ActiveRunState) || envelope.ActiveRunState.DailyWalk)
                 envelope.ActiveRunState = null;
             if (!IsUsablePuzzleSave(envelope.ActivePuzzle))
                 envelope.ActivePuzzle = null;
+            if (!IsResumableRunState(envelope.ActiveDailyRunState) || !envelope.ActiveDailyRunState.DailyWalk)
+                envelope.ActiveDailyRunState = null;
+            if (!IsUsablePuzzleSave(envelope.ActiveDailyPuzzle))
+                envelope.ActiveDailyPuzzle = null;
 
             if (!IsResumableSeasonalRunState(envelope.ActiveSeasonalRunState))
                 envelope.ActiveSeasonalRunState = null;

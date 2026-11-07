@@ -142,9 +142,10 @@ namespace SudokuRoguelike.UI
             RefreshReroll();
             RefreshSlip();
             WireNavigation();
-            var first = _offerButtons.Count > 0 ? _offerButtons[0] : _leaveButton;
+            var forSale = _shopOffers.FindIndex(o => o != null && !o.IsSold);
+            var first = forSale >= 0 && forSale < _offerButtons.Count ? _offerButtons[forSale] : _leaveButton;
             EventSystem.current?.SetSelectedGameObject(first.gameObject);
-            if (_offerButtons.Count > 0) SelectShopOffer(0);
+            if (forSale >= 0 && forSale < _offerButtons.Count) SelectShopOffer(forSale);
         }
 
         // One good on the counter: a dark wooden box with the item, a price tag, the name and rarity below it.
@@ -187,6 +188,15 @@ namespace SudokuRoguelike.UI
                 AddTextShadow(ScrollUiKit.Label(_goods, $"OfferRarity_{index}", RarityLabel(item.Rarity).ToUpperInvariant(), 15,
                     TextAnchor.MiddleCenter, RarityOnWood(item.Rarity), new Vector2(centre - 0.10f, 0.4290f),
                     new Vector2(centre + 0.10f, 0.4485f), 10));
+
+            if (offer.IsSold)
+            {
+                // [REQ: SHOP-MULTI-001] A sold good stays on the counter, dimmed, with a red stamp.
+                box.color = new Color(0.45f, 0.45f, 0.45f, 1f);
+                var sold = ScrollUiKit.Label(box.transform, "Sold", T("InRun.Shop.Sold").ToUpperInvariant(), 30, TextAnchor.MiddleCenter,
+                    ScrollUiKit.Vermilion, new Vector2(0f, 0.35f), new Vector2(1f, 0.65f), 16, FontStyle.Bold);
+                sold.rectTransform.localRotation = Quaternion.Euler(0f, 0f, -12f);
+            }
 
             var idx = index;
             button.onClick.AddListener(() => SelectShopOffer(idx));
@@ -234,14 +244,14 @@ namespace SudokuRoguelike.UI
                 ScrollUiKit.Label(_slip.transform, "Rule", ItemService.GetItemDescription(item.Type, item.Rarity), 20, TextAnchor.UpperLeft,
                     ScrollUiKit.Ink, new Vector2(0.05f, 0.36f), new Vector2(0.96f, 0.61f), 13);
 
-            var canAfford = offer != null && state.CurrentGold >= offer.Price;
+            var canAfford = offer != null && !offer.IsSold && state.CurrentGold >= offer.Price;
             _shopBuyButton = ScrollUiKit.PillButton(_slip.transform, "ShopBuyBtn", new Vector2(0.055f, 0.08f), new Vector2(0.40f, 0.30f),
                 offer != null ? F("InRun.Shop.BuyFor", offer.Price) : T("InRun.Shop.Buy"), 22, ScrollUiKit.Vermilion, Color.white, 24f);
             _shopBuyButton.interactable = item != null && canAfford;
             _shopBuyButton.onClick.AddListener(TryBuySelectedOffer);
             if (offer != null)
                 ScrollUiKit.Label(_slip.transform, "After",
-                    canAfford ? F("InRun.Shop.GoldAfter", state.CurrentGold, state.CurrentGold - offer.Price) : T("InRun.Shop.NotEnoughGold"),
+                    offer.IsSold ? T("InRun.Shop.Sold") : canAfford ? F("InRun.Shop.GoldAfter", state.CurrentGold, state.CurrentGold - offer.Price) : T("InRun.Shop.NotEnoughGold"),
                     18, TextAnchor.MiddleLeft, canAfford ? ScrollUiKit.InkSoft : ScrollUiKit.Vermilion,
                     new Vector2(0.43f, 0.08f), new Vector2(0.97f, 0.30f), 12);
             WireNavigation();
@@ -401,7 +411,7 @@ namespace SudokuRoguelike.UI
             var run = _map?.Run;
             if (run == null || _selectedShopOffer < 0 || _selectedShopOffer >= _shopOffers.Count) return;
             var offer = _shopOffers[_selectedShopOffer];
-            if (offer?.Item == null) return;
+            if (offer?.Item == null || offer.IsSold) return;
 
             if (run.State.CurrentGold < offer.Price) { OnStatusChanged?.Invoke(T("InRun.Shop.NotEnoughGold")); return; }
 
@@ -422,8 +432,7 @@ namespace SudokuRoguelike.UI
                             OnStatusChanged?.Invoke(T("InRun.Shop.NotEnoughGold"));
                             return;
                         }
-                        RecordItem(offer.Item);
-                        CloseShop();
+                        AfterPurchase(offer.Item);
                     },
                     () =>
                     {
@@ -435,8 +444,16 @@ namespace SudokuRoguelike.UI
             }
 
             if (!run.TryPurchaseShopOffer(_selectedShopOffer)) { OnStatusChanged?.Invoke(T("InRun.Shop.NotEnoughGold")); return; }
-            RecordItem(offer.Item);
-            CloseShop();
+            AfterPurchase(offer.Item);
+        }
+
+        // [REQ: SHOP-MULTI-001] The stall stays open after a purchase (playtest 0.4.2: it closed after the first): the good
+        // is marked sold, the purse and the bag update, and the focus goes to the next good still for sale.
+        private void AfterPurchase(ItemInstance item)
+        {
+            RecordItem(item);
+            OnStatusChanged?.Invoke(F("InRun.Shop.Bought", ItemService.GetItemName(item.Type)));
+            RebuildGoods();
         }
 
         private static void RecordItem(ItemInstance item) =>

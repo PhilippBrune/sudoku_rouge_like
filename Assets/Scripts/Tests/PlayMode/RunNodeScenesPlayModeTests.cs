@@ -94,7 +94,7 @@ namespace SudokuRoguelike.Tests
             Assert.IsTrue(FindObject(scene, "BtnEventMain").GetComponent<Button>().interactable);
             Assert.IsEmpty(FindObject(scene, "EventResult").GetComponent<Text>().text, "choosing alone changes nothing");
             flow.EventChoiceScreen.SelectChoiceByIndex(free);   // take
-            Assert.IsNotEmpty(FindObject(scene, "EventResult").GetComponent<Text>().text, "the result is shown");
+            Assert.IsNotEmpty(FindObject(scene, "EventOutcomeText").GetComponent<Text>().text, "the result is shown (EVENT-OUTCOME-001)");
             Assert.AreEqual(gold, run.State.CurrentGold, "a free choice costs no gold");
             Assert.IsTrue(Enumerable.Range(0, options.Count)
                 .All(i => !FindObject(scene, $"EventOption_{i}").GetComponent<Button>().interactable), "one choice only");

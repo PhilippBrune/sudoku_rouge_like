@@ -159,15 +159,15 @@ namespace SudokuRoguelike.UI
             lines.Add(("ui/icon_golden_bloom", streak > 0
                 ? LocalizationService.Format("Quit.Daily.Streak", "A new Daily Walk · <color=#9e2a2b>streak day {0}</color> if you come", streak + 1)
                 : T("Quit.Daily", "A new Daily Walk waits")));
+            // [REQ: SAVE-DAILY-001] The saved Garden Run and today's walk each get their line.
             var run = envelope.ActiveRunState;
-            if (SaveFileService.IsResumableRunState(run) && !SaveFileService.IsWalkOfAnotherDay(run, today))
-            {
-                var icon = ClassCatalog.IsClass(run.ClassId) ? "class/icon_" + ClassCatalog.GetIconName(run.ClassId) : "ui/icon_golden_bloom";
-                lines.Add((icon, run.DailyWalk
-                    ? T("Quit.Walk", "Today's walk waits until midnight")
-                    : LocalizationService.Format("Quit.Run", "Your run waits on <color=#9e2a2b>Floor {0}</color>, {1}",
+            if (SaveFileService.IsResumableRunState(run))
+                lines.Add((ClassCatalog.IsClass(run.ClassId) ? "class/icon_" + ClassCatalog.GetIconName(run.ClassId) : "ui/icon_golden_bloom",
+                    LocalizationService.Format("Quit.Run", "Your run waits on <color=#9e2a2b>Floor {0}</color>, {1}",
                         run.WalkFloor, FloorThemeData.GetFloorName(run.CurrentFloor))));
-            }
+            var walk = envelope.ActiveDailyRunState;
+            if (SaveFileService.IsResumableRunState(walk) && !SaveFileService.IsWalkOfAnotherDay(walk, today))
+                lines.Add(("ui/icon_golden_bloom", T("Quit.Walk", "Today's walk waits until midnight")));
             lines.Add(("ui/icon_monthly_lantern", LocalizationService.Format("Quit.Monthly", "{0} · {1}",
                 SeasonalChallengeService.GetThemeName(today.Year, today.Month), SeasonalChallengeService.GetCountdownLabel(today))));
             return lines;

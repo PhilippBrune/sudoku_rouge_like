@@ -103,6 +103,10 @@ namespace SudokuRoguelike.Core
         // Combo
         public int ComboStreak;
         public bool CartographerEase;         // [REQ: CLASS-PASSIVE-002] the Quiet Cartographer's next puzzle is easier
+        public int LanternCaught;             // [REQ: CLASS-PASSIVE-003] the Lantern Seer's lights caught in this puzzle
+        public int KintsugiCharges;           // [REQ: ITEM-REWORK-001] the Golden Kintsugi Jar's mended mistakes left
+        public bool DoubleOrQuitsActive;      // [REQ: ITEM-REWORK-001] Double or Quits waits for this puzzle's end
+        public int SurveyEase;                // [REQ: ITEM-REWORK-001] Survey Notes: 2 = used this puzzle, 1 = the next one is easier
         public bool GoldLeafReady;            // [REQ: RELIC-PACK-001] Gold Leaf Brush: the next reward is one rarity higher
         public bool GoldLeafUsedThisPuzzle;
         public List<int> SeedPouchTimers = new List<int>();   // [REQ: ITEM-PACK-001] puzzles left per planted Seed Pouch
@@ -368,6 +372,10 @@ namespace SudokuRoguelike.Core
         // Correctness is deferred until the fog is removed from that cell.
         [System.NonSerialized]
         public HashSet<(int row, int col)> FogPendingCells = new HashSet<(int, int)>();
+
+        // [REQ: CLASS-PASSIVE-003] The Shrine Archivist's cells that have rolled their find (once each per puzzle).
+        [System.NonSerialized]
+        public HashSet<(int row, int col)> ArchiveRolled = new HashSet<(int, int)>();
 
         // ── Digit completion tracking ─────────────────────────────────────────
         // Index 1..boardSize: how many of each digit have been correctly placed.

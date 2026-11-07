@@ -220,8 +220,8 @@ namespace SudokuRoguelike.Tests
 
         [TestCase(ClassId.KoiGambler, 10, "35%")]
         [TestCase(ClassId.KoiGambler, 20, "35%")]
-        [TestCase(ClassId.LanternSeer, 10, "35%")]
-        [TestCase(ClassId.LanternSeer, 25, "40%")]
+        [TestCase(ClassId.LanternSeer, 15, "two lights")]   // CLASS-PASSIVE-003 replaced the "weaker" steps
+        [TestCase(ClassId.LanternSeer, 25, "every second light")]
         [Requirement("META-XP-006")]
         public void ScheduleTexts_NameThePassiveValuesTheGameUses(ClassId id, int level, string value)
         {

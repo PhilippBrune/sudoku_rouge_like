@@ -165,6 +165,19 @@ namespace SudokuRoguelike.UI
                 : Fr("DailyWalk.Give.LevelSame", ClassName(_chosen), level);
         }
 
+        private void PaintGiven(int totalBefore)
+        {
+            var level = XpTable.DeriveLevel(totalBefore);
+            var after = XpTable.DeriveLevel(totalBefore + _xp);
+            float Share(int total, int at) => at >= XpTable.MaxLevel ? 1f
+                : Mathf.Clamp01((total - XpTable.CumulativeXpForLevel(at)) / (float)XpTable.XpToNextLevel(at));
+            _add.gameObject.SetActive(false);
+            SetFill(_was, 0f, 0f);
+            var fill = _was.GetComponent<Image>();
+            gameObject.AddComponent<XpBrushAnimator>().Play((RectTransform)_was.parent, fill, _xpText, null, _line, null,
+                ClassName(_chosen), _xp, level, Share(totalBefore, level), after, Share(totalBefore + _xp, after));
+        }
+
         private static void SetFill(RectTransform fill, float from, float to)
         {
             fill.anchorMin = new Vector2(from, 0f);
@@ -179,9 +192,12 @@ namespace SudokuRoguelike.UI
                 _back?.Invoke();
                 return;
             }
+            // [REQ: DAILY-WALK-011] The XP brush paints the walk's XP into the chosen class's bar, as on a run's end.
+            var total = _garden.GetTotalXp(_meta, _chosen);
             if (_xp <= 0 || _give == null || !_give(_chosen)) return;
             _given = true;
             ShowStroke();
+            PaintGiven(total);
             _sum.text = Fr("DailyWalk.Give.Given", _xp, ClassName(_chosen));
             _xpText.text = Fr("DailyWalk.Give.Xp", _xp);
             foreach (var seal in _seals.Values) seal.interactable = false;

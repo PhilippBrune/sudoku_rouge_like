@@ -63,6 +63,11 @@ namespace SudokuRoguelike.Save
                 envelope.ActiveSeasonalRunState = runState;
                 envelope.ActiveSeasonalPuzzle = puzzleState;
             }
+            else if (runState.DailyWalk)   // [REQ: SAVE-DAILY-001]
+            {
+                envelope.ActiveDailyRunState = runState;
+                envelope.ActiveDailyPuzzle = puzzleState;
+            }
             else
             {
                 envelope.ActiveRunState = runState;
@@ -91,11 +96,11 @@ namespace SudokuRoguelike.Save
             // so the threats start fresh after a Save & Quit (PRESSURE-SAVE-002).
         }
 
-        public void ClearActiveRun()
+        /// <summary>Drops the saved Garden Run, or with <paramref name="dailyWalk"/> the saved Daily Walk (SAVE-DAILY-001).</summary>
+        public void ClearActiveRun(bool dailyWalk = false)
         {
             var envelope = _saveFile.Load();
-            envelope.ActiveRunState = null;
-            envelope.ActivePuzzle = null;
+            envelope.ClearRun(dailyWalk);
             _saveFile.Save(envelope);
         }
 

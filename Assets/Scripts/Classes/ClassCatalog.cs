@@ -37,7 +37,7 @@ namespace SudokuRoguelike.Classes
             {
                 Id = ClassId.ShrineArchivist, Name = "Shrine Archivist",
                 BaseHP = 8, BasePencil = 15, BaseItemSlots = 2,
-                PassiveDescription = "Each pencil mark placed has a 25% chance to auto-reveal the correct digit for that cell.",
+                PassiveDescription = "The first pencil mark in a cell is free (Level 20: two). Narrow a cell to two notes or fewer with the right one among them: 30 % chance it writes itself.",
                 UnlockCondition = "Use 15 items"
             },
             new ClassDefinition
@@ -58,7 +58,7 @@ namespace SudokuRoguelike.Classes
             {
                 Id = ClassId.LanternSeer, Name = "Lantern Seer",
                 BaseHP = 7, BasePencil = 12, BaseItemSlots = 2,
-                PassiveDescription = "Boss modifiers are 30% weaker. Before each boss puzzle, preview all active modifiers and reroll one for free.",
+                PassiveDescription = "A light floats over an empty cell in every puzzle. The right digit there catches it: +1 HP, +8 gold or +2 pencil, at random, and it moves on. Every third light caught writes a digit; it lifts the fog around it.",
                 UnlockCondition = "Collect 50,000 gold"
             },
             new ClassDefinition
@@ -121,9 +121,9 @@ namespace SudokuRoguelike.Classes
                     (13,"+2 Pencil"),(15,"+1 HP, +1 Reroll Token"),(18,"+1 Item Slot"),(20,"Passive: 2 free items/level, +1 Starting Relic"),
                     (25,"+2 HP"),(30,"Start: Rice Paper Umbrella"),(35,"+1 Pencil, +1 HP"),(40,"Cosmetic: Mossy Stone frame") },
             // LanternSeer
-            new[] { (3,"+1 Pencil"),(5,"+1 HP"),(7,"+10 Starting Gold"),(10,"Passive: modifiers 35% weaker"),
-                    (13,"+2 Pencil"),(15,"+1 HP, +1 Reroll Token"),(18,"+1 Item Slot"),(20,"+2 HP, +1 Starting Relic"),
-                    (25,"Passive: modifiers 40% weaker"),(30,"Start: Lantern of Clarity"),(35,"+2 Pencil, +1 HP"),(40,"Cosmetic: Spirit Lantern frame") },
+            new[] { (3,"+1 Pencil"),(5,"+1 HP"),(7,"+10 Starting Gold"),(10,"+1 Reroll Token"),
+                    (13,"+2 Pencil"),(15,"Passive: two lights, +1 HP"),(18,"+1 Item Slot"),(20,"+2 HP, +1 Starting Relic"),
+                    (25,"Passive: every second light writes a digit"),(30,"Start: Lantern of Clarity"),(35,"+2 Pencil, +1 HP"),(40,"Cosmetic: Spirit Lantern frame") },
             // ReedDuelist
             new[] { (3,"+1 Pencil"),(5,"+1 HP"),(7,"+1 Reroll Token"),(10,"+10 Starting Gold"),
                     (13,"+2 Pencil"),(15,"Passive: a no-pencil puzzle heals 2 HP"),(18,"+1 HP"),(20,"+1 Item Slot, +1 Starting Relic"),

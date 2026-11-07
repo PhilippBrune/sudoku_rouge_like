@@ -119,8 +119,8 @@ namespace SudokuRoguelike.UI
             string enter = null;
             if (goals.PendingWalkXp > 0)
                 enter = LocalizationService.Format("GameModes.Daily.Give", "Give {0} XP", goals.PendingWalkXp);
-            else if (_gameBootstrap != null && _gameBootstrap.HasResumableRun())
-                enter = LocalizationService.T("GameModes.Daily.AbandonWalk");
+            else if (_gameBootstrap != null && _gameBootstrap.HasResumableDailyWalk())
+                enter = LocalizationService.T("GameModes.Daily.ContinueWalk");   // [REQ: SAVE-DAILY-001]
             return new GameModesScreen.ModeView(true, state, body, enter, _dailySide + "\n" + LocalizationService.T("DailyWalk.Board.Loading"));
         }
 
@@ -207,7 +207,8 @@ namespace SudokuRoguelike.UI
             _gameModesScreen.SetSide(GameModesScreen.Mode.Daily, _dailySide + "\n" + line);
         }
 
-        /// <summary>The Daily Walk's way in: XP still waiting is given first; then the day's walk (a saved run is abandoned).</summary>
+        /// <summary>The Daily Walk's way in: XP still waiting is given first; then today's saved walk, or a new one. A saved
+        /// Garden Run waits in its own slot (SAVE-DAILY-001).</summary>
         public void EnterDailyWalk()
         {
             var envelope = _save.HasSaveFile() ? _save.Load() : new SaveFileEnvelope();
@@ -217,7 +218,7 @@ namespace SudokuRoguelike.UI
                 return;
             }
             if (_gameBootstrap == null) return;
-            if (_gameBootstrap.HasResumableRun()) _gameBootstrap.AbandonSavedRun();
+            if (_gameBootstrap.HasResumableDailyWalk() && _gameBootstrap.LaunchResume(dailyWalk: true)) return;
             ClearSeed();
             _gameBootstrap.LaunchRun(new LaunchRequest
             {

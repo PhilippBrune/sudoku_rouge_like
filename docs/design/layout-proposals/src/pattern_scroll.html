@@ -1,0 +1,93 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css"><script src="common.js"></script>
+<style>
+  /* Playtest 0.4.2 (owner): the Pattern Scroll still opens its old dark list over the left half ("Pattern Scroll (2 remaining)
+     / Select a mechanic instance") with one grey button per rule piece; the player cannot see where on the board a piece
+     is or what it will write. Three proposals on a real puzzle (Dutch Whispers, Thermometer, Consecutive Line). ?v=a|b|c */
+  .shot { position:absolute; inset:0; background:url('../after_lines_dutch_thermo_consecutive.jpg') center/cover; }
+  .dim { position:absolute; left:651px; top:216px; width:617px; height:617px; background:rgba(20,16,10,.38); }
+  .hole { position:absolute; width:66px; height:66px; background:rgba(250,240,215,.62); box-shadow:0 0 0 3px #e9c46a, 0 0 22px 6px rgba(233,196,106,.55); border-radius:4px; }
+  .ghost { position:absolute; width:66px; height:66px; display:flex; align-items:center; justify-content:center;
+           font:36px 'Main'; color:rgba(178,58,46,.75); }
+  .seal { position:absolute; width:40px; height:40px; border-radius:50%; background:#b23a2e; color:#fff; font:22px 'Main';
+          display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(0,0,0,.5); border:2px solid #f3e9cf; }
+  .seal.off { background:#6b5f4c; }
+  .slip { position:absolute; background:#f3ead6; color:#231e17; font-family:'Main','Segoe UI'; box-shadow:0 14px 28px rgba(0,0,0,.55); }
+  .slip small { display:block; font-size:15px; letter-spacing:.16em; color:#6b5f4c; }
+  .slip h2 { margin:6px 0 4px; font-weight:normal; font-size:34px; color:#9e2a2b; }
+  .slip p { margin:6px 0; font-size:20px; line-height:1.35; }
+  .band { position:absolute; left:0; right:0; top:0; height:6px; background:#b23a2e; }
+  .btn { display:inline-block; padding:10px 22px; border-radius:999px; font-size:20px; margin-right:10px; }
+  .btn.main { background:#b23a2e; color:#fff; } .btn.soft { border:2px solid #8f6a3a; color:#4b3a25; }
+  .row { display:flex; align-items:center; gap:12px; padding:10px 12px; font-size:21px; border-bottom:1px solid rgba(60,45,30,.15); }
+  .row .sw { width:30px; height:10px; border-radius:5px; } .row .n { margin-left:auto; color:#6b5f4c; font-size:17px; }
+  .row.sel { background:rgba(233,196,106,.35); box-shadow:inset 4px 0 0 #b23a2e; }
+  .row.done { opacity:.45; text-decoration:line-through; }
+  .chip { display:inline-flex; align-items:center; gap:10px; padding:10px 18px; border-radius:999px; background:#f6efdd; color:#231e17;
+          font:20px 'Main'; margin:0 8px 8px 0; box-shadow:0 0 0 1.5px rgba(60,45,30,.25) inset; }
+  .chip.sel { background:#e9c46a; box-shadow:0 0 0 3px #b23a2e inset; }
+  .chip .sw { width:26px; height:9px; border-radius:5px; }
+  .caption { bottom:18px; }
+  .cover { position:absolute; background:#0f140f; }
+</style></head><body>
+<div class="shot"></div>
+<div id="main"></div>
+<div class="caption" id="cap"></div>
+<script>
+const v = PARAMS.get('v') || 'a';
+const X = c => 651 + 2 + c * 68.5, Y = r => 216 + 2 + r * 68.5;
+const main = document.getElementById('main');
+const add = (html) => main.insertAdjacentHTML('beforeend', html);
+// The chosen piece: the lower Dutch Whispers line (r7c3, r8c4, r7c5, r8c6); the digits it would write.
+const chosen = [[7,3,1],[8,4,6],[7,5,2],[8,6,null]];
+const pieces = [
+  { name:'Dutch Whispers', sw:'#f08a3c', cells:'3 cells', at:[0,4] },
+  { name:'Dutch Whispers', sw:'#f08a3c', cells:'3 empty of 4', at:[7,3], sel:true },
+  { name:'Thermometer', sw:'#9a9a9a', cells:'2 empty of 4', at:[5,4] },
+  { name:'Consecutive Line', sw:'#e3b52a', cells:'4 empty of 5', at:[2,1] },
+  { name:'Consecutive Line', sw:'#e3b52a', cells:'2 empty of 5', at:[2,6], done:true },
+];
+function boardFocus() {
+  add('<div class="dim"></div>');
+  for (const [r,c,d] of chosen) {
+    add(`<div class="hole" style="left:${X(c)}px;top:${Y(r)}px"></div>`);
+    if (d) add(`<div class="ghost" style="left:${X(c)}px;top:${Y(r)}px">${d}</div>`);
+  }
+}
+function coverLeft() { add('<div class="cover" style="left:100px;top:470px;width:420px;height:560px"></div>'); }
+
+if (v === 'a') {
+  // A: the board chooses. Every piece wears a numbered seal on its first cell; LB/RB or a tap moves between them.
+  boardFocus();
+  pieces.forEach((p, i) => add(`<div class="seal ${p.sel ? '' : 'off'}" style="left:${X(p.at[1]) - 12}px;top:${Y(p.at[0]) - 12}px">${i + 1}</div>`));
+  coverLeft();
+  add(`<div class="slip" style="left:110px;top:480px;width:400px;height:520px;padding:26px 26px"><div class="band"></div>
+    <small>PATTERN SCROLL · 2 OF 2 LEFT</small><h2>Dutch Whispers</h2>
+    <p>Neighbours on the orange line differ by 4 or more.</p>
+    <p style="color:#9e2a2b">Writes 3 digits: the gold cells on the board.</p>
+    <p style="font-size:17px;color:#6b5f4c">Piece 2 of 5 · LB / RB or a tap on a seal: another piece</p>
+    <div style="margin-top:22px"><span class="btn main">Solve this (A)</span><span class="btn soft">Cancel (B)</span></div></div>`);
+  document.getElementById('cap').textContent = 'A · Siegel auf dem Brett: jedes Regel-Stück hat eine Nummer, das gewählte leuchtet golden und zeigt die Ziffern, die es schreibt';
+} else if (v === 'b') {
+  // B: a list on a slip, the board previews the focused row.
+  boardFocus();
+  coverLeft();
+  const rows = pieces.map((p, i) => `<div class="row ${p.sel ? 'sel' : ''} ${p.done ? 'done' : ''}"><span class="sw" style="background:${p.sw}"></span>${i + 1}. ${p.name}<span class="n">${p.done ? 'solved' : p.cells}</span></div>`).join('');
+  add(`<div class="slip" style="left:110px;top:480px;width:400px;height:520px;padding:22px 18px"><div class="band"></div>
+    <small>PATTERN SCROLL · 2 OF 2 LEFT</small><div style="margin-top:10px">${rows}</div>
+    <p style="font-size:17px;color:#6b5f4c;margin-top:14px">The gold cells show what the chosen piece writes.</p>
+    <div style="margin-top:12px"><span class="btn main">Solve (A)</span><span class="btn soft">Cancel (B)</span></div></div>`);
+  document.getElementById('cap').textContent = 'B · Liste auf einem Zettel: die gewählte Zeile hebt ihre Felder auf dem Brett hervor, mit den Ziffern als Vorschau; gelöste Stücke sind durchgestrichen';
+} else {
+  // C: chips under the board, the rule slip names the chosen piece.
+  boardFocus();
+  add('<div class="cover" style="left:600px;top:842px;width:720px;height:150px;background:#e9dfc8"></div>');
+  const chips = pieces.map((p, i) => `<span class="chip ${p.sel ? 'sel' : ''}" style="${p.done ? 'opacity:.45' : ''}"><span class="sw" style="background:${p.sw}"></span>${i + 1} ${p.name}</span>`).join('');
+  add(`<div style="position:absolute;left:615px;top:850px;width:700px;font-family:'Main'"><div style="font-size:15px;letter-spacing:.16em;color:#6b5f4c;margin-bottom:8px">PATTERN SCROLL · CHOOSE A PIECE TO SOLVE · 2 OF 2 LEFT</div>${chips}</div>`);
+  add(`<div class="slip" style="left:1452px;top:686px;width:358px;height:245px;padding:18px 18px"><div class="band"></div>
+    <small>WRITES 3 DIGITS</small><h2 style="font-size:28px">Dutch Whispers</h2>
+    <p style="font-size:18px">Neighbours on the orange line differ by 4 or more.</p>
+    <div style="margin-top:12px"><span class="btn main" style="font-size:18px">Solve (A)</span><span class="btn soft" style="font-size:18px">Cancel (B)</span></div></div>`);
+  document.getElementById('cap').textContent = 'C · Chips unter dem Brett, Regelzettel rechts nennt das gewählte Stück; das Brett zeigt Felder und Ziffern';
+}
+</script></body></html>

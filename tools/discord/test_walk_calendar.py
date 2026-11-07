@@ -22,6 +22,14 @@ class WalkCalendarTests(unittest.TestCase):
             self.assertEqual(ids, w.daily_goal_ids(dt.date(y, m, d)))
         self.assertEqual(21, len(w.all_goals()))
 
+    def test_old_daily_posts_are_the_bots_other_dailies(self):
+        import walk_posts as wp
+        msgs = [{'id': '3', 'author': {'id': 'bot'}, 'content': '**🌿 Daily Walk · today'},
+                {'id': '2', 'author': {'id': 'bot'}, 'content': '**🌱 Seed of the week'},
+                {'id': '1', 'author': {'id': 'bot'}, 'content': '**🌿 Daily Walk · yesterday'},
+                {'id': '0', 'author': {'id': 'someone'}, 'content': '**🌿 Daily Walk · a member quoting it'}]
+        self.assertEqual(['1'], [m['id'] for m in wp.old_daily_posts(msgs, 'bot', '3')])
+
     def test_daily_post_describes_the_walk_after_walk_live(self):
         day = dt.date(2026, 11, 3)
         before, after = wp.daily_text(day), wp.daily_text(day, walk_live=True)

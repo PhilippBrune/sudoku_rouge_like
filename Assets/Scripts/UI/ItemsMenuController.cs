@@ -145,6 +145,7 @@ namespace SudokuRoguelike.UI
 
         private void Update()
         {
+            if (FeedbackScreen.IsOpen) return;   // [REQ: FEEDBACK-001] keys go to the feedback form
             if (_grid == null || !_grid.gameObject.activeInHierarchy || StoryScene.Blocking) return;
             // [REQ: STORY-SCENE-001] X (V) plays the chosen chapter's scene again.
             if (_shown != null && _shown.Found && _shown.Watch != null
@@ -182,6 +183,7 @@ namespace SudokuRoguelike.UI
         {
             foreach (ItemType type in Enum.GetValues(typeof(ItemType)))
             {
+                if (ItemService.IsRetired(type)) continue;   // [REQ: ITEM-REWORK-001]
                 var entry = NewEntry(IsItemFound(meta, type, out var date), ItemService.GetItemName(type),
                     "items/icon_" + ItemService.GetIconName(type));
                 var rarities = ItemService.IsTiered(type)

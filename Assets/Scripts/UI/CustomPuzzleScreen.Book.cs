@@ -58,6 +58,7 @@ namespace SudokuRoguelike.UI
 
         private void Update()
         {
+            if (FeedbackScreen.IsOpen) return;   // [REQ: FEEDBACK-001] keys go to the feedback form
             if (_setup == null) return;
             if (PadButtons.Pressed(KeyCode.JoystickButton4) || Input.GetKeyDown(KeyCode.PageUp)) StepFamily(-1);
             if (PadButtons.Pressed(KeyCode.JoystickButton5) || Input.GetKeyDown(KeyCode.PageDown)) StepFamily(1);

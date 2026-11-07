@@ -30,6 +30,8 @@ namespace SudokuRoguelike.UI
 
         public Action<string> OnStatusChanged;
         public Action OnPostRewardReady;
+        /// <summary>[REQ: REST-REFRESH-001] A rest choice was taken (the path's stats tag shows the new HP or pencil).</summary>
+        public Action OnRestDone;
 
         /// <summary>Non-null and active while any overlay panel is open; used by InRunController for controller focus.</summary>
         public GameObject ActivePanel { get; private set; }

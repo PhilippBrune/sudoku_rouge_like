@@ -22,9 +22,9 @@ namespace SudokuRoguelike.Save
         /// the save is cleared. Returns the recorded result, or null when there is no saved run (GAP-032).
         /// </summary>
         // [REQ: REQ-RUN-101] Abandoning a run records its result like any other defeat.
-        public RunResult AbandonSavedRun(ProfileService profile)
+        public RunResult AbandonSavedRun(ProfileService profile, bool dailyWalk = false)
         {
-            if (profile == null || !TryResumeFromSave(out var runState, out var puzzleState)) return null;
+            if (profile == null || !TryResumeFromSave(out var runState, out var puzzleState, dailyWalk)) return null;
             var abandoned = new RunDirector();
             // The open puzzle is restored too, so a run left inside it grades that puzzle Messy (SCORE-GRADE-002).
             ApplyToRunDirector(abandoned, runState, puzzleState);
@@ -38,8 +38,8 @@ namespace SudokuRoguelike.Save
         /// defeat, its boards' XP kept (the day's goals have changed since). Returns its result, or null.</summary>
         public RunResult EndWalkOfAnotherDay(ProfileService profile, System.DateTime today)
         {
-            var saved = _saveFile.HasSaveFile() ? _saveFile.Load().ActiveRunState : null;
-            return SaveFileService.IsWalkOfAnotherDay(saved, today) ? AbandonSavedRun(profile) : null;
+            var saved = _saveFile.HasSaveFile() ? _saveFile.Load().ActiveDailyRunState : null;   // [REQ: SAVE-DAILY-001]
+            return SaveFileService.IsWalkOfAnotherDay(saved, today) ? AbandonSavedRun(profile, dailyWalk: true) : null;
         }
 
         public bool HasActiveRun()
@@ -89,7 +89,7 @@ namespace SudokuRoguelike.Save
         }
 
         // [REQ: SAVE-RESUME-001] Restores full run state including boss modifier, AllowIrregularPuzzles
-        public bool TryResumeFromSave(out RunState runState, out PuzzleSaveState puzzleState)
+        public bool TryResumeFromSave(out RunState runState, out PuzzleSaveState puzzleState, bool dailyWalk = false)
         {
             runState = null;
             puzzleState = null;
@@ -97,12 +97,13 @@ namespace SudokuRoguelike.Save
             if (!_saveFile.HasSaveFile()) return false;
 
             var envelope = _saveFile.Load();
-            if (!SaveFileService.IsResumableRunState(envelope.ActiveRunState)) return false;
+            // [REQ: SAVE-DAILY-001] The Daily Walk and the Garden Run each have their own slot.
+            var saved = dailyWalk ? envelope.ActiveDailyRunState : envelope.ActiveRunState;
+            var puzzle = dailyWalk ? envelope.ActiveDailyPuzzle : envelope.ActivePuzzle;
+            if (!SaveFileService.IsResumableRunState(saved)) return false;
 
-            runState = envelope.ActiveRunState;
-            puzzleState = SaveFileService.IsUsablePuzzleSave(envelope.ActivePuzzle)
-                ? envelope.ActivePuzzle
-                : null;
+            runState = saved;
+            puzzleState = SaveFileService.IsUsablePuzzleSave(puzzle) ? puzzle : null;
 
             RestoreTransientState(runState);
             return true;

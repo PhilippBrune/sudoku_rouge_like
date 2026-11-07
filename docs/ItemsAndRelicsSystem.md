@@ -1,6 +1,6 @@
 # Items & Relics System
 
-**Version:** 2.9  
+**Version:** 2.10  
 **Date:** 2026-11-07  
 **Status:** implemented
 
@@ -8,6 +8,7 @@
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.10 | 2026-11-07 | implemented | Owner's picks after the 0.4.2 playtests (2026-11-07): the item review (ITEM-REWORK-001); the class items worked only in code no button reached (GAP-125), the Solver never completed a box (GAP-126), the Reed Duelist could not be unlocked (GAP-123). |
 | 2.9 | 2026-11-07 | implemented | Owner's picks after the 0.4.1 playtest on a Legion Go (2026-11-05) (F3): the fog lanterns are no reward any more; the market sells them where there is fog (ITEM-FOG-001). |
 | 2.8 | 2026-11-04 | implemented | RM-104 (owner's ticks 2026-11-04, list `docs/design/rm104-content-proposals.html` and the trade round): 7 relics (RELIC-PACK-001, RELIC-TRADE-001), 4 items (ITEM-PACK-001, ITEM-TRADE-001) and 7 events (EVENT-PACK-001, EVENT-TRADE-001). The trades pay with HP, Max HP or pencil marks for a strong effect (the owner's wish). |
 | 2.7 | 2026-11-03 | implemented | Owner (2026-11-03), on the proposals of OPEN_POINTS 2.0: the Pattern Scroll lists every drawn piece by its rule's name in the player's language, cell markers, cell pairs, outside clues, quadruples and extra regions included (ITEM-SCROLL-001). |
@@ -69,6 +70,12 @@ Offers per shop: 2 on Floors 1–2, 3 on Floors 3–4, 4 on Floor 5 (`ShopServic
 chosen, the boss's trials. Each slot offers one of those counters with a chance of 50 % (`ShopService.CounterItemChance`),
 each counter at most once per shop, at its fixed rarity and that rarity's price. Floor 1 has no floor modifiers, so its
 shops roll as before.
+
+### Item review (ITEM-REWORK-001, 0.4.3)
+
+| ID | Requirement |
+|---|---|
+| ITEM-REWORK-001 | **Golden Kintsugi Jar:** the next 3 mistakes of the puzzle write the right digit instead (no HP lost, the combo stays). **Bamboo Compass:** out of the game and the Codex (kept in the enum for old saves; `ItemService.IsRetired`). **Loaded Coin:** works from the bag (the next reward fills every Nothing slot, then it is spent); using it does nothing else. **Monk's Beads:** the next 5 correct digits heal 1 HP each. **Dim Lantern:** shows the floor's boss rules on the map. **Reed Pledge:** no pencil mark in the puzzle: +4 pencil, +30 gold, +25 XP; each mark costs 1 HP and breaks it. **Double or Quits:** at the puzzle's end 50 % its gold again, else -1 HP (never below 1), on its own line in the reward. **Annotated Folio:** notes in every cell with exactly two possible digits. **Worn Chisel:** 30 % off in every shop of the floor. **Survey Notes:** the next puzzle is a whole star easier. **Bamboo Scroll:** every tile of the floor shows its size and stars. **Koi Dragon Scale:** the two most-filled rows, columns or boxes. **Pattern Scroll:** rolled and sold only on floors with rules. **Garden Rake:** removes every note the board's digits rule out, +1 pencil per 3. **Zen Sand Sifter:** writes the two possible digits into up to 4 cells that have exactly two. **Finder:** Normal 2 cells, Rare 4. **Solver:** by the cell's box as drawn (`RegionMap`): Normal the cell and 2 more of its box, Rare the whole box, Epic its box, row and column. The Reed Duelist's Codex goal counts no class items and no retired item (U1). |
 
 ### Fog lanterns (ITEM-FOG-001, 0.4.3)
 

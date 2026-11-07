@@ -479,6 +479,8 @@ namespace SudokuRoguelike.UI
                 }
             }
 
+            RenderCellMarks(selectedRow, selectedCol);   // UI-CELL-FOCUS-001, CLASS-PASSIVE-003 (BoardViewController.CellMarks.cs)
+
             // [REQ: PRESSURE-UI-010,011] Dynamic pressure overlays (region strips, chain lines)
             if (pressure.HasValue)
                 RenderPressureThreatOverlays(pressure.Value);

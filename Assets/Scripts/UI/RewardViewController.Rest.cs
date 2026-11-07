@@ -282,6 +282,7 @@ namespace SudokuRoguelike.UI
             }
             OnStatusChanged?.Invoke(choice.Status);
             CloseRestScene();
+            OnRestDone?.Invoke();
         }
     }
 }

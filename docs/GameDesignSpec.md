@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.38 | **Date:** 2026-11-07 | **Status:** implemented
+**Version:** 1.39 | **Date:** 2026-11-07 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.39 | 2026-11-07 | implemented | Owner's picks after the 0.4.2 playtests (2026-11-07): feedback from inside the game (FEEDBACK-001/002, K3), a card for each new rule (RULE-CARD-001, FB1), the Daily Walk in its own save slot (SAVE-DAILY-001, FB4), the chosen cell framed (UI-CELL-FOCUS-001, FB5) and the fixes of the owner's Daily Walk playtest (EVENT-OUTCOME-001, SHOP-MULTI-001, REST-REFRESH-001, FOG-SOLVED-001, ACCESS-FONT-005, DAILY-WALK-011). |
 | 1.38 | 2026-11-07 | implemented | Owner's picks after the 0.4.1 playtest on a Legion Go (2026-11-05): the Garden Run is three floors, the gardens of Floors 1, 3 and 5 (RUN-FLOORS-001), with the skipped gardens' wardens and a shop after each boss (RUN-FLOORS-002). |
 | 1.37 | 2026-11-04 | implemented | RM-104 events (owner 2026-11-04): seven events, three new choices and four trades (EVENT-PACK-001, EVENT-TRADE-001). |
 | 1.36 | 2026-11-04 | implemented | RM-101 (owner 2026-11-04, "week and month"): a Garden Run on the seed of the week puts its score on the week's Steam board (SEED-BOARD-001). |
@@ -710,6 +711,27 @@ All of these must be data-driven, not hard-coded:
 | Unity Implementation | [UnityImplementationSpec](UnityImplementationSpec.md) |
 
 ---
+
+## 18) Feedback from inside the game (since 0.4.3)
+
+| ID | Requirement |
+|---|---|
+| FEEDBACK-001 | F8 anywhere, or Options › Run › "Send feedback", opens a form over the game. The screen is captured before the form opens and shown on it. The player picks Bug, Idea, Balance or Text, writes a note (Steam's keyboard on a Steam Deck) and may add a Discord name. Ticks choose what goes with it: the screenshot, the run (seed, board code, class, Harmony, floor, tile, rules, HP, gold, pencil, items, relics, curses, time), the last 200 lines of the log with the Windows user's folder and name replaced, and the save file (unticked at first). "What is sent" shows the report. No name and no Steam ID are sent; a random ID per installation is. Keys typed into the form never reach the board or the menus (`FeedbackScreen`, `FeedbackReport`). |
+| FEEDBACK-002 | The report goes to a Cloudflare Worker (`tools/feedback-worker`), which holds the Discord webhook as a secret and posts one message per report to a private channel: 2 MB at most, 5 an hour per installation, mentions off. Without the Worker's address (`FeedbackSender.Endpoint`), offline or when it fails, the report is saved as a ZIP in the game's data folder (`Feedback/`), the folder opens and the run seed is copied; the player posts it on Discord. One report a minute. |
+
+## 19) Playtests of 0.4.2 (owner's picks FB1, FB4, FB5 and fixes)
+
+| ID | Requirement |
+|---|---|
+| RULE-CARD-001 | A puzzle with a rule this profile has never been shown opens with a card per new rule (its name, what it asks, "the board shows where it applies"); the board shows only that rule's marks while the card is up and the puzzle's clock starts after the last card. The rules met before 0.4.3 count as known once (`MetaProgressionState.RulesExplained`, `RulesExplainedSeeded`). Not in the Sudoku Basics or a Custom Puzzle, nor under the "sealed eyes" curse at a boss. |
+| SAVE-DAILY-001 | The Daily Walk is saved in a slot of its own (`ActiveDailyRunState`, `ActiveDailyPuzzle`); starting or finishing a walk leaves a saved Garden Run alone. Game Modes › Daily Walk continues today's saved walk ("Continue today's walk"); a walk of an earlier day still ends as an abandoned walk (DAILY-WALK-010). A walk saved before 0.4.3 in the run's slot moves to the walk's slot when the save loads. |
+| UI-CELL-FOCUS-001 | The chosen cell wears a thick vermilion ink frame over every highlight, so it stands out among highlighted cells of the same digit. |
+| EVENT-OUTCOME-001 | After an event choice its strips give way to "What happened": the result in the event's words and every number that changed (gold, HP, Max HP, pencil, items in the bag, relics, curses) as before → after, or "Nothing else changed"; the purse above the scroll shows the new numbers. |
+| SHOP-MULTI-001 | The shop stays open after a purchase: the good is stamped "Sold", the purse and the bag update and the focus goes to the next good for sale. Leave closes it. |
+| REST-REFRESH-001 | After a rest choice the path's stats tag shows the new HP or pencil at once. |
+| FOG-SOLVED-001 | A solved puzzle shows no fog: fog over cells written while fogged lifts when the last digit is placed. |
+| ACCESS-FONT-005 | Text Size never breaks a word inside itself: a size at which a word is wider than its box does not fit (`TextSizeFit`). The combo line under the board fills its box on one line. |
+| DAILY-WALK-011 | Giving the Daily Walk's XP to a class paints it into that class's bar with the XP brush, as on a run's end (UI-STYLE-041). |
 
 ## Open Issues
 

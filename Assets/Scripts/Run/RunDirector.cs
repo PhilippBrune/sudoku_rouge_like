@@ -382,6 +382,7 @@ namespace SudokuRoguelike.Run
             // Re-entering the digit a cell already holds changes nothing: no placement, combo or penalty.
             if (CurrentBoard.Cells[row, col] == value)
                 return PlaceResult.Unchanged;
+            value = KintsugiMend(row, col, value);   // [REQ: ITEM-REWORK-001] RunDirector.ClassPassives.cs
 
             // Fog of War: when a cell is actively fogged, defer correctness evaluation
             // until the fog is removed from that cell.
@@ -455,6 +456,7 @@ namespace SudokuRoguelike.Run
                             CurrentBoard.RemovePencilMark(pr, pc, value);
                 }
 
+                OnLanternPlacement(row, col);   // [REQ: CLASS-PASSIVE-003]
                 return PlaceResult.Correct;
             }
 
@@ -577,10 +579,10 @@ namespace SudokuRoguelike.Run
         {
             if (CurrentBoard.IsGiven(row, col)) return false;
             var isRemoving = CurrentBoard.GetPencilMarks(row, col).Contains(value);
-            var cellAlreadyHasMark = CurrentBoard.HasAnyPencilMark(row, col);
+            var marksInCell = CurrentBoard.GetPencilMarks(row, col).Count;
             var free = isRemoving
                 || State.Mode == GameMode.Tutorial
-                || ClassPassiveService.IsPencilFree(State, CurrentLevelState, row, col, cellAlreadyHasMark)
+                || ClassPassiveService.IsPencilFree(State, CurrentLevelState, row, col, marksInCell)
                 || RelicService.HasEndlessArchive(State)
                 || RelicService.PencilFreeOnBoard(State, CurrentBoard.Size)   // [REQ: RELIC-KEY-002] Open Margin
                 || State.Mode == GameMode.IncenseWalk;   // [REQ: INCENSE-CLOCK-001] only the clock counts
@@ -605,6 +607,7 @@ namespace SudokuRoguelike.Run
                     DailyGoalService.EvaluateInRun(DailyGoals, State, CurrentLevelState, DailyGoalService.TriggerPencilMarkUsed);
             }
             else if (!isRemoving && State.Mode == GameMode.IncenseWalk) CurrentLevelState.PencilMarksUsed++;   // [REQ: INCENSE-CLASS-001]
+            TryArchiveFind(row, col);   // [REQ: CLASS-PASSIVE-003]
             return true;
         }
 
@@ -1693,6 +1696,7 @@ namespace SudokuRoguelike.Run
 
             // Class passive level-complete hook (e.g. ReedDuelist pencil bonus)
             ClassPassiveService.OnLevelComplete(State, level, goldBase);
+            ResolvePuzzleItems(goldBase);   // [REQ: ITEM-REWORK-001]
 
             // Curse: restless_inventory drain + auto-cleanse on perfect
             _curseService.ReseedForDecision(DecisionSeed(DecisionPurpose.PuzzleCurse));
@@ -2103,70 +2107,9 @@ namespace SudokuRoguelike.Run
                     return ItemEffectResult.Highlights(mistakes, $"Found {mistakes.Count} mistake(s).");
                 }
 
-                // ── Class-exclusive items (L15) ──
-
-                case ItemType.LoadedCoin:
-                    return ItemEffectResult.Message("Next item reward screen: all Nothing slots replaced with real items.");
-
-                case ItemType.MonksBeads:
-                {
-                    State.MonksBeadsCountdown = 5;
-                    return ItemEffectResult.Message("Next 5 correct placements each restore 1 HP.");
-                }
-
-                case ItemType.AnnotatedFolio:
-                {
-                    var markedCount = 0;
-                    for (var r = 0; r < size; r++)
-                    for (var c = 0; c < size; c++)
-                    {
-                        if (CurrentBoard.Cells[r, c] != 0 || CurrentBoard.IsGiven(r, c)) continue;
-                        var cands = GetValidCandidates(r, c);
-                        if (cands.Count == 2)
-                        {
-                            CurrentBoard.AddPencilMark(r, c, cands[0]);
-                            CurrentBoard.AddPencilMark(r, c, cands[1]);
-                            markedCount++;
-                        }
-                    }
-                    return ItemEffectResult.Message($"Auto-marked {markedCount} cell(s) with 2 candidates.");
-                }
-
-                case ItemType.DoubleOrQuits:
-                {
-                    var rng = new System.Random(State.Seed + State.Depth * 13 + State.CurrentGold);
-                    if (rng.NextDouble() < 0.5)
-                    {
-                        State.CurrentGold *= 2;
-                        return ItemEffectResult.Message($"Lucky! Gold doubled → {State.CurrentGold}g.");
-                    }
-                    State.CurrentGold /= 2;
-                    return ItemEffectResult.Message($"Unlucky. Gold halved → {State.CurrentGold}g.");
-                }
-
-                case ItemType.WornChisel:
-                {
-                    State.WornChiselActive = true;
-                    return ItemEffectResult.Message("30% shop discount active this floor.");
-                }
-
-                case ItemType.DimLantern:
-                {
-                    State.DimLanternUsed = true;
-                    return ItemEffectResult.Message("Boss modifier list revealed on the map.");
-                }
-
-                case ItemType.ReedPledge:
-                {
-                    State.PledgeActive = true;
-                    return ItemEffectResult.Message("Pledge active: no pencil marks → +4 Pencil, +30 Gold, +25 XP. Any pencil use: -1 HP.");
-                }
-
-                case ItemType.SurveyNotes:
-                {
-                    State.AllNodesRevealed = true;
-                    return ItemEffectResult.Message(LocalizationService.T("Item.Effect.SurveyNotes", "Board size and stars shown for every tile on this floor."));
-                }
+                // [REQ: ITEM-REWORK-001] Class-exclusive items (L15): RunDirector.ClassPassives.cs
+                case var _ when ItemService.IsClassExclusive(item.Type):
+                    return ItemEffectResult.Message(ApplyClassItem(item));
 
                 // [REQ: ITEM-COUNTER-001..006] Counter items (RunDirector.CounterItems.cs)
                 case ItemType.WaterBasin:

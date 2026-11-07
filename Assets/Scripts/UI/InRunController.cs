@@ -334,6 +334,7 @@ namespace SudokuRoguelike.UI
 
             _rewardView.OnStatusChanged   = msg => SetStatus(msg);
             _rewardView.OnPostRewardReady = OnPostRewardReady;
+            _rewardView.OnRestDone        = RefreshPathOverview;   // [REQ: REST-REFRESH-001]
             _rewardView.PuzzleSeconds     = () => _hudView != null ? _hudView.LastPuzzleSeconds : 0f; // the reward tally's time (GAP-055)
             _shopView.OnStatusChanged     = msg => SetStatus(msg);
             _shopView.OnShopClosed        = ShowPath;
@@ -527,6 +528,7 @@ namespace SudokuRoguelike.UI
 
         private void Update()
         {
+            if (FeedbackScreen.IsOpen) return;   // [REQ: FEEDBACK-001] typed text never reaches the board
             InputRemapService.UpdateCursorVisibility();
 
             if (_map == null) return;
@@ -638,13 +640,13 @@ namespace SudokuRoguelike.UI
 
             if (_sudokuPanel != null && _sudokuPanel.activeSelf)
             {
-                HandleKeyboard();
+                if (!IsRuleCardOpen) HandleKeyboard();   // [REQ: RULE-CARD-001] the card's button takes Enter and A
                 HandleCompletion();
                 _hudView.Refresh(run.State, run.CurrentLevelConfig);
                 RefreshBuyPencilButton(run);
                 CheckGameOver();
-                if (Input.GetKeyDown(KeyCode.Q) && !IsActive(_inGameOptionsPanel)) SaveAndQuit();
-                if (Input.GetKeyDown(KeyCode.O)) ToggleOptionsPanel();
+                if (Input.GetKeyDown(KeyCode.Q) && !IsActive(_inGameOptionsPanel) && !IsRuleCardOpen) SaveAndQuit();
+                if (Input.GetKeyDown(KeyCode.O) && !IsRuleCardOpen) ToggleOptionsPanel();
             }
 
             // Q shortcut works on path overview too (not just inside a puzzle)
@@ -739,6 +741,7 @@ namespace SudokuRoguelike.UI
             }
 
             _hudView?.StartPuzzleTimer();
+            ShowNewRuleCards();   // [REQ: RULE-CARD-001] InRunController.RuleCard.cs
         }
 
         // [REQ: TRIAL-SESSION-002] Timer starts on first cell interaction via EnsureSpiritTrialsTimerStarted
@@ -2399,6 +2402,7 @@ namespace SudokuRoguelike.UI
                 else
                 {
                     SetStatus(Tf("Pencil: {0}", value));
+                    ShowPassiveNews(run);   // [REQ: CLASS-PASSIVE-003] an archive find
                     run.GetAnalytics()?.RecordPencilPlaced();
                     _basicsTutorial?.OnPlayerAddedPencilMark(_selectedRow, _selectedCol, value);
                     if (SudokuRoguelike.Run.CurseService.IsActive(run.State, "blurred_sight")) // [REQ: CURSE-INT-009] blurred_sight: hide pencil marks 1.5 s after placement
@@ -2427,6 +2431,8 @@ namespace SudokuRoguelike.UI
 
             if (result == PlaceResult.Correct)
             {
+                var typed = value;
+                if (board.Cells[_selectedRow, _selectedCol] > 0) value = board.Cells[_selectedRow, _selectedCol];   // a mended digit
                 // GameDesignSpec 4.1: a placed digit highlights every cell with that digit, as clicking a filled cell does.
                 _highlightValue = value;
                 _audio?.PlayCorrectPlacement();
@@ -2434,6 +2440,8 @@ namespace SudokuRoguelike.UI
                 RumbleService.PulseCorrect(this);
                 _map?.SaveNow();
                 SetStatus(Tf("Placed {0}.", value));
+                ShowKintsugiMend(typed, value);   // [REQ: ITEM-REWORK-001]
+                ShowPassiveNews(run);   // [REQ: CLASS-PASSIVE-003] a caught light
                 JumpToNextEmptyCellIfOn(board);   // OPT-GAME-004
             }
             else if (result == PlaceResult.Unchanged || result == PlaceResult.TakenBack)
@@ -2547,6 +2555,7 @@ namespace SudokuRoguelike.UI
 
         private bool TrySaveAndQuit()
         {
+            CloseRuleCard();   // [REQ: RULE-CARD-001] its rule is shown again next time
             Time.timeScale = 1f;
             CancelPendingItemInteraction(false);   // GAP-117: an item still waiting for its cells goes back into the bag first
 
@@ -2602,10 +2611,11 @@ namespace SudokuRoguelike.UI
                 // the profile card never shows "(run in progress)" for a finished run.
                 var safeSave = new Save.SaveFileService(Save.SaveProfileService.ActiveSlot);
                 var safeEnv = safeSave.Load();
-                if (safeEnv.ActiveRunState != null && !safeEnv.ActiveRunState.TutorialMode)
+                var walk = _map?.Run?.State?.DailyWalk == true;   // [REQ: SAVE-DAILY-001] a finished walk keeps the saved run
+                var slot = walk ? safeEnv.ActiveDailyRunState : safeEnv.ActiveRunState;
+                if (slot != null && !slot.TutorialMode)
                 {
-                    safeEnv.ActiveRunState = null;
-                    safeEnv.ActivePuzzle = null;
+                    safeEnv.ClearRun(walk);
                     safeSave.Save(safeEnv);
                 }
             }
@@ -3059,14 +3069,12 @@ namespace SudokuRoguelike.UI
                 // ── Garden Rake: clear pencil marks in selected row + column ──
                 case ItemType.GardenRake:
                 {
-                    if (board == null || _selectedRow < 0) { SetStatus(T("Select a cell first.")); return; }
-                    for (var i2 = 0; i2 < board.Size; i2++)
-                    {
-                        board.ClearPencilMarks(_selectedRow, i2);
-                        board.ClearPencilMarks(i2, _selectedCol);
-                    }
+                    // [REQ: ITEM-REWORK-001] Every note the digits on the board rule out goes; 1 pencil for every 3.
+                    if (board == null) { SetStatus(T("No active board.")); return; }
+                    var raked = run.RakeImpossibleNotes();
                     run.TryUseItem(slotIndex);
-                    SetStatus(Tf("Garden Rake: cleared row {0} and col {1}.", _selectedRow + 1, _selectedCol + 1));
+                    SetStatus(LocalizationService.Format("Item.Status.GardenRake", "Garden Rake: {0} impossible note(s) removed, +{1} pencil.",
+                        raked, raked / 3));
                     RenderBoard();
                     break;
                 }
@@ -3093,26 +3101,12 @@ namespace SudokuRoguelike.UI
                 // ── Zen Sand Sifter: highlight cells with exactly two candidates ──
                 case ItemType.ZenSandSifter:
                 {
+                    // [REQ: ITEM-REWORK-001] Writes the two possible digits into up to 4 cells that have exactly two.
                     if (board == null) { SetStatus(T("No active board.")); return; }
-                    _bagHighlightCells.Clear();
-                    for (var r = 0; r < board.Size; r++)
-                    for (var c = 0; c < board.Size; c++)
-                    {
-                        if (board.GivenMask[r, c] || board.Cells[r, c] != 0) continue;
-                        var usedMask = 0;
-                        for (var rr = 0; rr < board.Size; rr++) if (board.Cells[rr, c] > 0) usedMask |= 1 << board.Cells[rr, c];
-                        for (var cc = 0; cc < board.Size; cc++) if (board.Cells[r, cc] > 0) usedMask |= 1 << board.Cells[r, cc];
-                        var reg = board.RegionMap[r, c];
-                        for (var rr = 0; rr < board.Size; rr++)
-                        for (var cc = 0; cc < board.Size; cc++)
-                            if (board.RegionMap[rr, cc] == reg && board.Cells[rr, cc] > 0) usedMask |= 1 << board.Cells[rr, cc];
-                        var cands = 0;
-                        for (var v = 1; v <= board.Size; v++) if ((usedMask & (1 << v)) == 0) cands++;
-                        if (cands == 2) _bagHighlightCells.Add((r, c));
-                    }
+                    var sifted = run.WriteTwinCandidates(4);
+                    if (sifted == 0) { SetStatus(LocalizationService.T("Item.Status.ZenSandSifterNone", "No cell has exactly two possible digits.")); return; }
                     run.TryUseItem(slotIndex);
-                    _bagHighlightEndTime = Time.time + 5f;
-                    SetStatus(Tf("Zen Sand Sifter: {0} cells with exactly 2 candidates.", _bagHighlightCells.Count));
+                    SetStatus(LocalizationService.Format("Item.Status.ZenSandSifter", "Zen Sand Sifter: notes written in {0} cell(s).", sifted));
                     RenderBoard();
                     break;
                 }
@@ -3166,10 +3160,12 @@ namespace SudokuRoguelike.UI
                 case ItemType.KoiDragonScale:
                 {
                     if (board == null) { SetStatus(T("No active board.")); return; }
+                    // [REQ: ITEM-REWORK-001] The two most-filled rows, columns or boxes (one is what the Ink Pact does).
                     var count = FillMostCompleteUnit(board, run);
                     if (count == 0) { SetStatus(T("No incomplete unit found.")); return; }
+                    count += FillMostCompleteUnit(board, run);
                     run.TryUseItem(slotIndex);
-                    SetStatus(Tf("Koi Dragon Scale: filled {0} cell(s) in the most-complete unit.", count));
+                    SetStatus(LocalizationService.Format("Item.Status.KoiDragonScale", "Koi Dragon Scale: {0} cell(s) written in two units.", count));
                     RenderBoard();
                     break;
                 }
@@ -3177,19 +3173,12 @@ namespace SudokuRoguelike.UI
                 // ── Golden Kintsugi Jar: highlight all mistakes ──
                 case ItemType.GoldenKintsugiJar:
                 {
+                    // [REQ: ITEM-REWORK-001] Wrong digits never stay, so it found nothing; now it mends the next mistakes.
                     if (board == null) { SetStatus(T("No active board.")); return; }
-                    _bagHighlightCells.Clear();
-                    for (var r = 0; r < board.Size; r++)
-                    for (var c = 0; c < board.Size; c++)
-                    {
-                        if (board.Cells[r, c] == 0 || board.GivenMask[r, c]) continue;
-                        if (board.Cells[r, c] != board.Solution[r, c])
-                            _bagHighlightCells.Add((r, c));
-                    }
+                    s.KintsugiCharges = RunDirector.KintsugiMends;
                     run.TryUseItem(slotIndex);
-                    _bagHighlightEndTime = Time.time + 6f;
-                    SetStatus(Tf("Golden Kintsugi Jar: found {0} mistake(s).", _bagHighlightCells.Count));
-                    RenderBoard();
+                    SetStatus(LocalizationService.Format("Item.Status.GoldenKintsugiJar",
+                        "Golden Kintsugi Jar: your next {0} mistakes in this puzzle write the right digit instead.", RunDirector.KintsugiMends));
                     break;
                 }
 
@@ -3207,20 +3196,10 @@ namespace SudokuRoguelike.UI
                 // ── Bamboo Scroll: reveal star ratings of reachable next nodes ──
                 case ItemType.BambooScroll:
                 {
-                    var reachableIdx = run.GetReachableNodes();
-                    if (reachableIdx.Count == 0) { SetStatus(T("Bamboo Scroll: no upcoming nodes found.")); break; }
-                    var parts = new System.Text.StringBuilder("Bamboo Scroll — next nodes: ");
-                    var graph = run.CurrentFloorGraph;
-                    for (var i = 0; i < reachableIdx.Count; i++)
-                    {
-                        var node = graph[reachableIdx[i]];
-                        var cfg = _map.GetFixedLevelConfig(node);
-                        var stars = cfg != null ? cfg.Stars : 0;
-                        if (i > 0) parts.Append(" | ");
-                        parts.Append(stars > 0 ? new string('★', stars) : node.Type.ToString());
-                    }
+                    // [REQ: ITEM-REWORK-001] Every tile of the floor shows its size and stars (the path showed the next ones).
+                    s.AllNodesRevealed = true;
                     run.TryUseItem(slotIndex);
-                    SetStatus(parts.ToString());
+                    SetStatus(LocalizationService.T("Item.Status.BambooScroll", "Bamboo Scroll: every tile of this floor shows its size and stars."));
                     break;
                 }
 
@@ -3281,6 +3260,17 @@ namespace SudokuRoguelike.UI
                     UseCounterItem(slotIndex, item);
                     break;
 
+                // [REQ: ITEM-REWORK-001] GAP-125: the class items fell through to "Used" and did nothing.
+                case var _ when ItemService.IsClassExclusive(item.Type):
+                {
+                    if (board == null) { SetStatus(T("No active board.")); return; }
+                    var said = run.ApplyClassItem(item);
+                    if (item.Type != ItemType.LoadedCoin) run.TryUseItem(slotIndex);   // the coin works from the bag
+                    SetStatus(said);
+                    RenderBoard();
+                    break;
+                }
+
                 default:
                     SetStatus(Tf("Used {0}.", ItemService.GetItemName(item.Type)));
                     run.TryUseItem(slotIndex);
@@ -3290,28 +3280,30 @@ namespace SudokuRoguelike.UI
             _hudView.Refresh(run?.State, run?.CurrentLevelConfig);
         }
 
-        private int SolveCells(SudokuBoard board, RunDirector run, int row, int col, int neighborCount)
+        // [REQ: ITEM-REWORK-001] GAP-126: the Solver wrote the cell's four neighbours and never a box (a player saw no box
+        // solved on an irregular 8x8). Now by its box as the board draws it (RegionMap): Normal the cell and 2 more of its
+        // box, Rare its whole box, Epic its box, row and column.
+        private static int SolveCells(SudokuBoard board, RunDirector run, int row, int col, int tier)
         {
-            var filled = 0;
-            if (!board.GivenMask[row, col] && board.Cells[row, col] != board.Solution[row, col])
-            {
-                run.PlaceNumber(row, col, board.Solution[row, col]);
-                filled++;
-            }
-            if (neighborCount <= 0) return filled;
-            var dirs  = new[] { (-1, 0), (1, 0), (0, -1), (0, 1) };
-            var added = 0;
-            foreach (var (dr, dc) in dirs)
-            {
-                var nr = row + dr; var nc = col + dc;
-                if (nr < 0 || nr >= board.Size || nc < 0 || nc >= board.Size) continue;
-                if (!board.GivenMask[nr, nc] && board.Cells[nr, nc] != board.Solution[nr, nc])
+            var cells = new List<(int r, int c)> { (row, col) };
+            var seen = new HashSet<(int, int)> { (row, col) };
+            for (var r = 0; r < board.Size; r++)
+            for (var c = 0; c < board.Size; c++)
+                if (board.RegionMap[r, c] == board.RegionMap[row, col] && seen.Add((r, c))) cells.Add((r, c));
+            if (tier >= 4)
+                for (var i = 0; i < board.Size; i++)
                 {
-                    run.PlaceNumber(nr, nc, board.Solution[nr, nc]);
-                    filled++;
-                    added++;
-                    if (added >= neighborCount) break;
+                    if (seen.Add((row, i))) cells.Add((row, i));
+                    if (seen.Add((i, col))) cells.Add((i, col));
                 }
+            var budget = tier <= 2 ? 3 : int.MaxValue;
+            var filled = 0;
+            foreach (var (r, c) in cells)
+            {
+                if (filled >= budget) break;
+                if (board.GivenMask[r, c] || board.Cells[r, c] == board.Solution[r, c]) continue;
+                run.PlaceNumber(r, c, board.Solution[r, c]);
+                filled++;
             }
             return filled;
         }

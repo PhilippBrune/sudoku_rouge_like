@@ -1,11 +1,12 @@
 # Class XP & Level Progression System
 
-**Version:** 1.8 | **Date:** 2026-11-07 | **Status:** implemented
+**Version:** 1.9 | **Date:** 2026-11-07 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.9 | 2026-11-07 | implemented | Owner's picks after the 0.4.2 playtests (2026-11-07): the Lantern Seer (LS1) and the Shrine Archivist (SA1) get new passives (CLASS-PASSIVE-003); the old ones had no code (GAP-122). |
 | 1.8 | 2026-11-07 | implemented | Owner's picks after the 0.4.1 playtest on a Legion Go (2026-11-05): new passives for the Garden Monk (M2), the Number Freak, the Reed Duelist and the Quiet Cartographer (CLASS-PASSIVE-002); three of the old ones did nothing in the code (GAP-120). |
 | 1.7 | 2026-10-22 | implemented | Owner sign-off of the class balance values (SPEC-CONF-008): the base stats, passives, unlock conditions and level schedules in this document stand as documented. No value changed. |
 | 1.6 | 2026-10-21 | implemented | GAP-063 fixed (owner request 2026-10-21: "analyze, plan and fix"): the Level 30 starting item is given at run start (META-XP-007) and the Level 40 frame is shown (META-XP-008, kept after prestige). Three Level 30 items that did not exist are replaced by existing items that fit the class: Koi Gambler **Golden Koi** (was "Lucky Charm"), Stone Gardener **Rice Paper Umbrella** (was "Harmony Charm"), Reed Duelist **Temple Incense** (was "Tea of Focus"). §UI Placement describes the garden of classes (SPEC-CONF-041 decided: the XP stroke and the totals, no "Most Progressed Class" line). |
@@ -569,3 +570,12 @@ class ClassProgressionEntry {
 
 Found while building them (GAP-120): the Number Freak's token, the Reed Duelist's "every 5 → +1 HP" and the Quiet
 Cartographer's preview and half star had no code; only the Reed Duelist's +2 pencil worked.
+
+## Passives changed in 0.4.3, second round (CLASS-PASSIVE-003)
+
+| ID | Requirement |
+|---|---|
+| CLASS-PASSIVE-003 | **Lantern Seer (LS1):** a light floats over an empty cell in every puzzle (Level 15: two). Its cells are the first empty ones in the puzzle's own shuffled order of cells (seeded by the level, so a Save & Quit keeps them). The right digit there catches it: at random +1 HP, +8 gold or +2 pencil, and the light moves on; every third catch (Level 25: every second) also writes a random empty cell's digit. A light lifts the fog around itself. Level 10: +1 Reroll Token; Level 15: two lights and +1 HP; Level 25: every second light writes a digit (the "modifiers weaker" lines are gone). **Shrine Archivist (SA1):** the first pencil mark in a cell costs nothing (Level 20: the first two; the upgrade had no code). A cell narrowed to one or two notes with the right one among them rolls once per puzzle: 30 % that its digit writes itself (as a correct digit). |
+
+Found while writing the proposals (GAP-122): the Lantern Seer's "boss rules 30 % weaker", gate preview and free reroll and the
+Archivist's "25 % per mark" had no caller.

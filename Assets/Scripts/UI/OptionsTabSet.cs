@@ -129,6 +129,7 @@ namespace SudokuRoguelike.UI
 
         private void Update()
         {
+            if (FeedbackScreen.IsOpen) return;   // [REQ: FEEDBACK-001] keys go to the feedback form
             if (Signature() != _linkedSignature) Relink();
             // [REQ: UI-STYLE-017] [REQ: INPUT-HINT-001] LB/RB (Q/E or PageUp/PageDown on a keyboard) turn the page; the focus
             // moves to its bookmark.

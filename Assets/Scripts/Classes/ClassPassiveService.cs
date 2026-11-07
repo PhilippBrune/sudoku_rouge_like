@@ -60,24 +60,26 @@ namespace SudokuRoguelike.Classes
         /// <summary>
         /// Returns true if the pencil mark should cost 0 (ShrineArchivist: first mark per cell free).
         /// </summary>
-        public static bool IsPencilFree(RunState state, LevelState level, int row, int col, bool cellAlreadyHasMark)
+        public static bool IsPencilFree(RunState state, LevelState level, int row, int col, int marksInCell)
         {
-            if (state.ClassId != ClassId.ShrineArchivist) return false;
-            // Free on first mark per cell; upgrades at L20 → first 2 marks per cell free
-            var freeMarks = ShrineArchivistFreeMarks(state);
-            return !cellAlreadyHasMark; // first mark is always free; L20 upgrade tracked separately
+            // [REQ: CLASS-PASSIVE-003] The first mark of a cell is free, at Level 20 the first two (the upgrade had no code).
+            return state.ClassId == ClassId.ShrineArchivist && marksInCell < ShrineArchivistFreeMarks(state);
         }
 
-        /// <summary>
-        /// [REDESIGN] ShrineArchivist: each pencil mark has a 25% chance to auto-reveal the correct digit.
-        /// Call after a pencil mark is placed. Returns true if the cell should be auto-filled with its solution value.
-        /// </summary>
-        public static bool TryArchivistReveal(RunState state, LevelState level, int row, int col)
-        {
-            if (state.ClassId != ClassId.ShrineArchivist) return false;
-            // 25% chance; seeded so reveals are deterministic on resume
-            return new Random(state.Seed ^ row * 100 + col ^ level.PencilMarksUsed).NextDouble() < 0.25;
-        }
+        // [REQ: CLASS-PASSIVE-003] The owner's picks SA1 and LS1 after 0.4.2 (2026-11-07; GAP-122: the old passives had no code).
+
+        /// <summary>The Shrine Archivist's find: a cell narrowed to two notes or fewer, the right one among them, writes
+        /// itself with this chance (once per cell and puzzle; RunDirector.ClassPassives.cs).</summary>
+        public const double ArchiveChance = 0.30;
+
+        /// <summary>The Lantern Seer's lights in each puzzle: one, two from Level 15.</summary>
+        public static int LanternLights(RunState state) =>
+            state?.ClassId != ClassId.LanternSeer ? 0 : GetClassLevel(state) >= 15 ? 2 : 1;
+
+        /// <summary>Every third caught light writes a digit, every second from Level 25.</summary>
+        public static int LanternRevealEvery(RunState state) => GetClassLevel(state) >= 25 ? 2 : 3;
+
+        public const int LanternGold = 8, LanternPencil = 2, LanternHp = 1;
 
         // ── On level complete ────────────────────────────────────────────────────
 
@@ -145,16 +147,6 @@ namespace SudokuRoguelike.Classes
         public static bool CanBuyPencilMidLevel(RunState state)
             => state.ClassId != ClassId.GardenMonk;
 
-        // ── LanternSeer: modifier weakening ─────────────────────────────────────
-
-        /// <summary>Returns the modifier intensity reduction factor for LanternSeer (0 = no reduction).</summary>
-        public static float GetModifierWeakeningFactor(RunState state)
-        {
-            if (state.ClassId != ClassId.LanternSeer) return 0f;
-            // L10: 25%, L25: 30%
-            return LanternSeerWeakenFactor(state);
-        }
-
         // ── Helpers: level-scaled thresholds ────────────────────────────────────
 
         public static int GardenMonkHeal(RunState state) => GetClassLevel(state) >= 15 ? 3 : 2;
@@ -185,15 +177,6 @@ namespace SudokuRoguelike.Classes
         {
             var level = GetClassLevel(state);
             return level >= 20 ? 2 : 1;
-        }
-
-        private static float LanternSeerWeakenFactor(RunState state)
-        {
-            var level = GetClassLevel(state);
-            // [REDESIGN] Base 30% (was 20%); L10: 35%; L25: 40%
-            if (level >= 25) return 0.40f;
-            if (level >= 10) return 0.35f;
-            return 0.30f;
         }
 
         private static int GetClassLevel(RunState state)

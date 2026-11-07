@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.4.3 (2026-11-07)
+
+### Changed
+
+- **The Garden Run is three floors:** the Bamboo Courtyard, the Koi Terrace and the Shrine Summit. Each floor is shorter
+  and denser: boards of 6×6 to 7×7, 7×7 to 9×9 and 9×9, 40 % more gold and 50 % more XP per puzzle, a shop right after
+  each boss, and in the middle of Floors 2 and 3 the warden of the skipped garden (the Moss Garden's, the Stone Lantern
+  Walk's): an Elite puzzle after which you choose a relic. A run you saved before keeps its five floors.
+- What counted floors follows the shorter run: the story's third chapter opens on Floor 2, Summit in Sight asks for the
+  last floor, and the Swift Path challenge is a win in under 25 minutes.
+- **The chosen path tile** wears a vermilion brush ring and your class's marker, so you see on a handheld where the pad is.
+- **A full bag** shows the new item and the one you would give up on two cards side by side, with your bag as a row of
+  chips below.
+- **Fog lanterns:** the Lantern of Clarity and the Garden Lantern are no longer rewards (without fog they did nothing).
+  The market sells them when the floor or the boss brings fog, or a fog curse is active.
+- **Class passives:** the Garden Monk heals 2 HP after a puzzle without mistakes (3 at Level 15) instead of 1 HP for
+  every few digits. The Number Freak gets a reroll token and 10 gold for a puzzle without mistakes. The Reed Duelist gets
+  half the puzzle's gold again and 1 HP (2 at Level 15) for a puzzle without pencil marks. The Quiet Cartographer sees
+  every tile's size and stars from the start of a floor, and after a perfect puzzle the next one is half a star easier
+  (a whole star at Level 15).
+
+### Fixed
+
+- The Number Freak's token, the Reed Duelist's HP and the Quiet Cartographer's preview were on the class screen but
+  never happened.
+- Countdown, Haunted Cell, Crumbling Region and Pressure Wave showed their code name and no rule on the rule slip.
+- A boss with Full Kropki could start without some of its chosen lines, circles or thermos while the slip listed them.
+
 ## 0.4.2 (2026-11-04)
 
 ### New

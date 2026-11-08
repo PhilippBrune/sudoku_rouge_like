@@ -82,6 +82,8 @@ namespace SudokuRoguelike.UI
         // ── Global constraint highlight ──
         private HashSet<(int, int)> _globalConstraintHighlight = new HashSet<(int, int)>();
         private static readonly Color GlobalConstraintHighlightColor = new Color(0.90f, 0.70f, 0.10f, 0.35f);
+        private readonly HashSet<(int, int)> _previewPieceCells = new HashSet<(int, int)>();
+        private static readonly Color PreviewPieceColor = new Color(0.95f, 0.74f, 0.22f, 1f);
 
         // ── Tutorial highlight colors ──
         private static readonly Color TutorialFocusColor    = new Color(0.20f, 0.85f, 0.70f, 0.45f); // teal  — row/col/box
@@ -134,6 +136,13 @@ namespace SudokuRoguelike.UI
         }
 
         public void ClearGlobalConstraintHighlight() => _globalConstraintHighlight.Clear();
+
+        /// <summary>[REQ: ITEM-SCROLL-002] Paints the cells of the Pattern Scroll's chosen piece gold; null clears them.</summary>
+        public void PreviewPiece(IEnumerable<(int, int)> cells)
+        {
+            _previewPieceCells.Clear();
+            if (cells != null) _previewPieceCells.UnionWith(cells);
+        }
 
         private void RebuildForbiddenEmptyCells(SudokuBoard board, int value)
         {
@@ -389,6 +398,9 @@ namespace SudokuRoguelike.UI
                     if (val != 0) cell.Label.color = GamePalette.CellNumberOnFog; // ink would vanish on the blot
                     if (cell.LastPencilText != "") { cell.PencilLabel.text = ""; cell.LastPencilText = ""; }
                 }
+
+                if (_previewPieceCells.Contains((cell.Row, cell.Col)))   // [REQ: ITEM-SCROLL-002]
+                    c = Color.Lerp(c, PreviewPieceColor, 0.65f);
 
                 if (highlightErrors && !given && _conflictCellsCache.Contains((cell.Row, cell.Col)))
                 {

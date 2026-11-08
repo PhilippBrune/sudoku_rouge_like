@@ -1,0 +1,25 @@
+"lang"
+{
+	"Language"	"english"
+	"Tokens"
+	{
+		"NEW_ACHIEVEMENT_1_10_NAME"	"Summit in Sight"
+		"NEW_ACHIEVEMENT_1_10_DESC"	"Reach the last floor of a Garden Run."
+		"NEW_ACHIEVEMENT_5_8_NAME"	"The Swift Path (Number Freak)"
+		"NEW_ACHIEVEMENT_5_8_DESC"	"Win a Garden Run in under 25 minutes."
+		"NEW_ACHIEVEMENT_5_11_NAME"	"The Swift Path (Garden Monk)"
+		"NEW_ACHIEVEMENT_5_11_DESC"	"Win a Garden Run in under 25 minutes."
+		"NEW_ACHIEVEMENT_5_14_NAME"	"The Swift Path (Shrine Archivist)"
+		"NEW_ACHIEVEMENT_5_14_DESC"	"Win a Garden Run in under 25 minutes."
+		"NEW_ACHIEVEMENT_5_17_NAME"	"The Swift Path (Koi Gambler)"
+		"NEW_ACHIEVEMENT_5_17_DESC"	"Win a Garden Run in under 25 minutes."
+		"NEW_ACHIEVEMENT_5_20_NAME"	"The Swift Path (Stone Gardener)"
+		"NEW_ACHIEVEMENT_5_20_DESC"	"Win a Garden Run in under 25 minutes."
+		"NEW_ACHIEVEMENT_5_23_NAME"	"The Swift Path (Lantern Seer)"
+		"NEW_ACHIEVEMENT_5_23_DESC"	"Win a Garden Run in under 25 minutes."
+		"NEW_ACHIEVEMENT_5_26_NAME"	"The Swift Path (Reed Duelist)"
+		"NEW_ACHIEVEMENT_5_26_DESC"	"Win a Garden Run in under 25 minutes."
+		"NEW_ACHIEVEMENT_5_29_NAME"	"The Swift Path (Quiet Cartographer)"
+		"NEW_ACHIEVEMENT_5_29_DESC"	"Win a Garden Run in under 25 minutes."
+	}
+}

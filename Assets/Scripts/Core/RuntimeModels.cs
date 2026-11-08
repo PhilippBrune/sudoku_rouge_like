@@ -159,6 +159,8 @@ namespace SudokuRoguelike.Core
         public int LastComboBeforeMistake;  // GinkgoLeaf: combo streak before last mistake (for restoration)
         public int LastMistakeRow = -1;     // GinkgoLeaf: last wrong non-given placement row
         public int LastMistakeCol = -1;     // GinkgoLeaf: last wrong non-given placement column
+        // [REQ: RUN-HISTORY-001] The open puzzle's last wrong digit, for the run's card (Ginkgo Leaf's undo clears the two above).
+        public int LastWrongRow = -1, LastWrongCol = -1, LastWrongDigit;
         // Shield system (Silk Fan item):
         // Absorbs incoming HP damage before CurrentHP is reduced. Resets at each puzzle start.
         // Distinct from MistakeShieldCharges (which absorbs full mistake events at 0 HP cost).

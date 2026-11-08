@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neues Profil</title>
+<style>
+  :root { --bg: #f4efe4; --paper: #fbf7ee; --ink: #2b2620; --soft: #6b6155; --line: #d9cfbd; --red: #9e2a2b; --moss: #4f6b3a; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #1d1a16; --paper: #26221d; --ink: #eee6d6; --soft: #b3a894; --line: #3d362d; --red: #d9655f; --moss: #93b06f; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, "Segoe UI", sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 140px; }
+  h1 { font-size: 26px; margin: 0 0 6px; }
+  h2 { font-size: 20px; margin: 34px 0 6px; }
+  p.lead, p.why { color: var(--soft); margin: 0 0 10px; }
+  img.mock { width: 100%; border: 1px solid var(--line); border-radius: 8px; margin: 6px 0; }
+  label.opt { display: grid; grid-template-columns: 26px 1fr; gap: 8px; background: var(--paper); border: 1px solid var(--line);
+              border-radius: 10px; padding: 10px 12px; margin: 10px 0; cursor: pointer; }
+  label.opt:has(input:checked) { border-color: var(--moss); box-shadow: inset 4px 0 0 var(--moss); }
+  input { accent-color: var(--moss); margin-top: 4px; }
+  .rec { color: var(--moss); font-size: 13px; }
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--bg); border-top: 1px solid var(--line); padding: 10px 16px;
+         display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  button { background: var(--red); color: #fff; border: 0; border-radius: 999px; padding: 9px 18px; font-size: 15px; cursor: pointer; }
+  textarea { flex: 1; min-width: 200px; height: 46px; background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: 8px;
+             font: 12px ui-monospace, Consolas, monospace; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Neues Profil: Vorschläge zum Auswählen</h1>
+  <p class="lead">Ein ganz neues Profil zeigt noch das alte dunkle Fenster mit gelben und blauen Knöpfen. Die Mockups sind aus der
+    Spielgrafik, gebaut ist noch nichts. Wähle eine Variante, dann "Auswahl kopieren".</p>
+
+  <h2>Heute</h2>
+  <p class="why">Erst die Einrichtung (Sprache, Barrierefreiheit, Rechtliches), danach die Frage nach den Sudoku-Grundlagen.</p>
+  <img class="mock" src="layout-proposals/before_first_run_setup.jpg" alt="Heutige Einrichtung für ein neues Profil">
+  <img class="mock" src="layout-proposals/before_first_run_basics.jpg" alt="Heutige Frage nach den Sudoku-Grundlagen">
+
+  <h2>Vorschläge (RM-233)</h2>
+  <p class="why">Alle Varianten behalten die fünf Sprachen, die vier Barrierefreiheits-Schalter, den Rechtshinweis und die Steuerung mit Controller.</p>
+  <label class="opt"><input type="radio" name="fr" value="A"><div><b>A Hängerolle und Ema-Tafeln</b><br>
+    Alles auf einer Seite: Sprache als fünf Siegel, Komfort, dazu neu die Textgröße mit Vorschau. Danach die Grundlagen-Frage als zwei
+    Ema-Tafeln an einer roten Schnur, wie die Belohnungen im Lauf. Am schnellsten durch, aber am meisten auf einmal.
+    <img class="mock" src="layout-proposals/first_run_a.png" alt="Variante A, Einrichtung">
+    <img class="mock" src="layout-proposals/first_run_a2.png" alt="Variante A, Grundlagen"></div></label>
+  <label class="opt"><input type="radio" name="fr" value="B"><div><b>B Drei kurze Schritte</b> <span class="rec">(Empf.)</span><br>
+    Immer nur eine Frage auf demselben Papier: 1 Sprache, 2 Komfort, 3 Grundlagen ja oder nein, mit Zurück. Passt zu Pauls Rückmeldung,
+    dass der Anfang überwältigend wirkt. Ein paar Klicks mehr. Gezeigt sind Schritt 1 und 3.
+    <img class="mock" src="layout-proposals/first_run_b.png" alt="Variante B, Schritt 1">
+    <img class="mock" src="layout-proposals/first_run_b2.png" alt="Variante B, Schritt 3"></div></label>
+  <label class="opt"><input type="radio" name="fr" value="C"><div><b>C Willkommen im Garten</b><br>
+    Ein einziger Bildschirm: Banner oben, links ein Zettel mit Sprache und Komfort, rechts die zwei Wege als Ema-Tafeln. Am wenigsten
+    Schritte. Der Hintergrund bleibt das helle Hauptmenü-Bild.
+    <img class="mock" src="layout-proposals/first_run_c.png" alt="Variante C"></div></label>
+</main>
+<div class="bar"><button id="copy">Auswahl kopieren</button><textarea id="out" readonly></textarea></div>
+<script>
+document.getElementById('copy').addEventListener('click', async () => {
+  const pick = (document.querySelector('input[name="fr"]:checked') || {}).value || '-';
+  const text = `Neues Profil Auswahl\nVariante: ${pick}`;
+  const out = document.getElementById('out'); out.value = text;
+  try { await navigator.clipboard.writeText(text); } catch (e) { out.select(); }
+});
+</script>
+</body>
+</html>

@@ -466,6 +466,7 @@ namespace SudokuRoguelike.Run
             State.LastComboBeforeMistake = State.ComboStreak;
             State.LastMistakeRow = row;
             State.LastMistakeCol = col;
+            (State.LastWrongRow, State.LastWrongCol, State.LastWrongDigit) = (row, col, value);   // [REQ: RUN-HISTORY-001]
             CurrentLevelState.Mistakes++;
             _analytics?.RecordMistake();   // GAP-059: counted when it happens
             CurrentLevelState.PerfectSoFar = false;
@@ -523,6 +524,7 @@ namespace SudokuRoguelike.Run
             State.LastMistakeCol = -1;
             State.LastMistakeHpLost = 0;
             State.LastComboBeforeMistake = 0;
+            State.LastWrongRow = State.LastWrongCol = -1;   // [REQ: RUN-HISTORY-001]
             // [REQ: HARMONY-SURV-003] Combo decay (H7+): the combo carried into a new puzzle is halved
             // (SPEC-AMB resolution 2026-10-06; the "8 placements without a bonus" wording could never trigger).
             if (State.ComboDecayEnabled)
@@ -567,6 +569,7 @@ namespace SudokuRoguelike.Run
                     State.LastComboBeforeMistake = State.ComboStreak;
                     State.LastMistakeRow = r;
                     State.LastMistakeCol = c;
+                    (State.LastWrongRow, State.LastWrongCol, State.LastWrongDigit) = (r, c, placed);   // [REQ: RUN-HISTORY-001]
                     ApplyMistakePenalty(r, c);
                     // Wrong digits never stay on the board (SPEC-CONF-003); this one was hidden until now.
                     if (!CurrentBoard.IsGiven(r, c))
@@ -975,7 +978,7 @@ namespace SudokuRoguelike.Run
         private void InitializePressureMechanics(LevelConfig config, SudokuBoard board,
             LevelState levelState, System.Random rng)
         {
-            if (State.TutorialMode) return;
+            if (State.RunNumber == 0) return;   // [REQ: CUSTOM-RULE-003] Sudoku Basics; a Custom Puzzle has what its player chose
             if (board == null || levelState == null) return;
 
             foreach (var mod in config.ActiveModifiers)

@@ -107,7 +107,7 @@ namespace SudokuRoguelike.UI
         private int        _patternScrollChargesLeft;
         private GameObject _patternScrollOverlay;
         // Stable mechanic list built once per activation; solved indices excluded from subsequent rounds
-        private List<(string label, List<CellCoord> cells)> _patternScrollMechanics;
+        private List<(BossModifierId modifier, string label, List<CellCoord> cells)> _patternScrollMechanics;
         private HashSet<int> _patternScrollSolvedIds;
         private int          _patternScrollStagedIndex = -1; // -1 = nothing staged
 
@@ -1791,6 +1791,8 @@ namespace SudokuRoguelike.UI
             // With the Options over the board the keys are theirs: Enter, digits and Q never reach the cell below (0.3.1 review).
             if (IsShown(_inGameOptionsPanel)) { _inputRemap.Tick(); return; }
 
+            if (_patternScrollOverlay != null) { HandlePatternScrollKeys(); return; }   // [REQ: ITEM-SCROLL-002]
+
             // PS-3: Enter/A confirms pending cell-select item interactions
             bool anyPendingInteraction = _koiReflectionPending || _templeIncensePending ||
                 _patternScrollPending || _swapMode || _windChimePending;
@@ -2055,147 +2057,10 @@ namespace SudokuRoguelike.UI
             _patternScrollMechanics    = null;
             _patternScrollSolvedIds    = null;
             _patternScrollStagedIndex  = -1;
-            if (_patternScrollOverlay != null) { UnityEngine.Object.Destroy(_patternScrollOverlay); _patternScrollOverlay = null; }
+            ClosePatternScrollSlip();
             _swapMode = false;
             _swapRow1 = -1; _swapCol1 = -1;
             if (showStatus) SetStatus(T("Cancelled."));
-        }
-
-        // ── Pattern Scroll: build stable instance list from current overlay ──
-        // [REQ: ITEM-SCROLL-001] One entry per piece a rule of this puzzle drew (lines, cages, arrows, dots, marked cells, cell
-        // pairs, outside clues, quadruples), named by the rule in the player's language: "German Whispers #1 · 4 cells".
-        public static List<(string label, List<CellCoord> cells)> BuildPatternScrollMechanics(
-            ModifierOverlayData ov, IReadOnlyList<BossModifierId> modifiers, int size)
-        {
-            var list = new List<(string, List<CellCoord>)>();
-            if (modifiers == null) return list;
-            var listed = new HashSet<string>();   // a dot two rules share (Difference and Full White Kropki) is listed once
-            foreach (var modifier in modifiers)
-            {
-                var number = 0;
-                foreach (var piece in Sudoku.ModifierPresence.Pieces(modifier, ov, size))
-                {
-                    if (!listed.Add(string.Join(";", piece))) continue;
-                    list.Add((LocalizationService.Format("InRun.PatternScroll.Entry", "{0} #{1} · {2} cells",
-                        BossService.GetModifierName(modifier), ++number, piece.Count), piece));
-                }
-            }
-            return list;
-        }
-
-        private void ShowPatternScrollOverlay()
-        {
-            if (_patternScrollOverlay != null) UnityEngine.Object.Destroy(_patternScrollOverlay);
-            if (_sudokuPanel == null) return;
-
-            var ov = _map?.Run?.CurrentOverlay;
-            if (ov == null) return;
-
-            // Build the mechanic list exactly once per scroll activation so indices
-            // remain stable across selection rounds (Rare=2 picks, Epic=4 picks).
-            if (_patternScrollMechanics == null)
-            {
-                _patternScrollMechanics  = BuildPatternScrollMechanics(ov, _map.Run.CurrentLevelConfig?.ActiveModifiers,
-                    _map.Run.CurrentBoard?.Size ?? 9);
-                _patternScrollSolvedIds  = new HashSet<int>();
-                _patternScrollStagedIndex = -1;
-            }
-
-            var overlay = new GameObject("PatternScrollOverlay", typeof(RectTransform));
-            overlay.transform.SetParent(_sudokuPanel.transform, false);
-            var rt = overlay.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0f, 0f);
-            rt.anchorMax = new Vector2(0.44f, 1f);
-            rt.offsetMin = rt.offsetMax = Vector2.zero;
-            overlay.AddComponent<Image>().color = new Color(0.04f, 0.06f, 0.05f, 0.93f);
-            _patternScrollOverlay = overlay;
-
-            // ── Title (visible during Selecting state only — hidden in Idle/Applied) ──
-            var titleGo = InRunUiFactory.CreateText(overlay.transform, "Title",
-                LocalizationService.Format(
-                    "InRun.PatternScroll.Title",
-                    "Pattern Scroll  ({0} remaining)\nSelect a mechanic instance \u2014 Press ESC to cancel",
-                    _patternScrollChargesLeft),
-                11, TextAnchor.UpperCenter, GamePalette.AccentGold);
-            titleGo.rectTransform.anchorMin = new Vector2(0.02f, 0.91f);
-            titleGo.rectTransform.anchorMax = new Vector2(0.98f, 1.00f);
-            titleGo.rectTransform.offsetMin = titleGo.rectTransform.offsetMax = Vector2.zero;
-            titleGo.lineSpacing = 1.15f;
-
-            var mechanics = _patternScrollMechanics;
-            if (mechanics.Count == 0)
-            {
-                var none = InRunUiFactory.CreateText(overlay.transform, "None",
-                    T("InRun.PatternScroll.Empty"), 11,
-                    TextAnchor.MiddleCenter, GamePalette.TextPrimary);
-                none.rectTransform.anchorMin = new Vector2(0.04f, 0.12f);
-                none.rectTransform.anchorMax = new Vector2(0.96f, 0.88f);
-                none.rectTransform.offsetMin = none.rectTransform.offsetMax = Vector2.zero;
-                return;
-            }
-
-            // ── Mechanic buttons (built before confirmBtn so listeners can reference it) ──
-            var count    = mechanics.Count;
-            var slotH    = 0.84f / count;
-            var mechBtns = new Button[count];
-            for (var i = 0; i < count; i++)
-            {
-                var yMax = 0.89f - i * slotH;
-                var yMin = yMax - slotH + 0.004f;
-                mechBtns[i] = InRunUiFactory.CreatePanelButton(overlay.transform, $"MechBtn_{i}",
-                    new Vector2(0.03f, yMin), new Vector2(0.97f, yMax), mechanics[i].label);
-                InRunUiFactory.SetButtonIcon(mechBtns[i], "pattern_scroll", false, "items");
-                if (_patternScrollSolvedIds.Contains(i))
-                {
-                    // Already resolved in this activation – show greyed out, non-interactive
-                    mechBtns[i].interactable = false;
-                    var dimg = mechBtns[i].GetComponent<Image>();
-                    if (dimg != null) dimg.color = new Color(0.18f, 0.18f, 0.16f, 0.50f);
-                }
-            }
-
-            // ── Confirm button (Confirmed state) – hidden until a mechanic is staged ──
-            var confirmBtn = InRunUiFactory.CreateActionButton(overlay.transform, "BtnConfirmScroll",
-                new Vector2(0.10f, 0.01f), new Vector2(0.90f, 0.08f), T("InRun.PatternScroll.ConfirmSelection"), UiAction.Confirm);
-            confirmBtn.GetComponent<Image>().color = new Color(0.25f, 0.60f, 0.28f, 0.93f);
-            confirmBtn.gameObject.SetActive(_patternScrollStagedIndex >= 0);
-            confirmBtn.onClick.AddListener(PatternScrollConfirmSelection);
-
-            // ── Wire mechanic-button listeners (now that confirmBtn exists) ──
-            for (var i = 0; i < count; i++)
-            {
-                if (_patternScrollSolvedIds.Contains(i)) continue;
-                var idx = i;
-                mechBtns[i].onClick.AddListener(() =>
-                    PatternScrollStageSelection(idx, mechBtns, confirmBtn));
-            }
-
-            // Restore gold highlight on previously staged button (re-entering from a refresh)
-            if (_patternScrollStagedIndex >= 0 && _patternScrollStagedIndex < count)
-            {
-                var img = mechBtns[_patternScrollStagedIndex].GetComponent<Image>();
-                if (img != null) img.color = new Color(0.95f, 0.80f, 0.25f, 0.95f);
-            }
-        }
-
-        // ── Selecting → Confirmed: stage a mechanic choice ──
-        private void PatternScrollStageSelection(int index, Button[] mechBtns, Button confirmBtn)
-        {
-            // Un-highlight previously staged button
-            if (_patternScrollStagedIndex >= 0 && _patternScrollStagedIndex < mechBtns.Length)
-            {
-                var prev = mechBtns[_patternScrollStagedIndex].GetComponent<Image>();
-                if (prev != null) prev.color = InRunUiFactory.BtnColor;
-            }
-
-            _patternScrollStagedIndex = index;
-
-            // Highlight newly staged button gold
-            var img = mechBtns[index].GetComponent<Image>();
-            if (img != null) img.color = new Color(0.95f, 0.80f, 0.25f, 0.95f);
-
-            confirmBtn.gameObject.SetActive(true);
-            SetStatus(Tf("Pattern Scroll: '{0}' staged. Click Confirm to apply — ESC cancels.", _patternScrollMechanics[index].label));
         }
 
         // ── Confirmed → Applied: fill cells and advance or finish ──
@@ -2208,7 +2073,7 @@ namespace SudokuRoguelike.UI
             var board = run?.CurrentBoard;
             if (board == null) return;
 
-            var (label, cells) = _patternScrollMechanics[_patternScrollStagedIndex];
+            var (_, label, cells) = _patternScrollMechanics[_patternScrollStagedIndex];
             var filled = 0;
             foreach (var coord in cells)
             {
@@ -2232,15 +2097,14 @@ namespace SudokuRoguelike.UI
                 _patternScrollPending   = false;
                 _patternScrollMechanics = null;
                 _patternScrollSolvedIds = null;
-                if (_patternScrollOverlay != null)
-                { UnityEngine.Object.Destroy(_patternScrollOverlay); _patternScrollOverlay = null; }
+                ClosePatternScrollSlip();
                 SetStatus(Tf("Pattern Scroll: solved '{0}', filled {1} cell(s). Done.", label, filled));
             }
             else
             {
                 // Back to Selecting with updated solved set
                 SetStatus(Tf("Pattern Scroll: solved '{0}' (+{1} cells). {2} selection(s) left — Press ESC to cancel.", label, filled, _patternScrollChargesLeft));
-                ShowPatternScrollOverlay();
+                ShowPatternScrollSlip();
             }
         }
 
@@ -3033,11 +2897,11 @@ namespace SudokuRoguelike.UI
                     run.TryUseItem(slotIndex);
                     _patternScrollPending     = true;
                     _patternScrollChargesLeft = ItemService.GetPatternScrollZones(item.Rarity);
-                    _patternScrollMechanics   = null;   // will be built fresh in ShowPatternScrollOverlay
+                    _patternScrollMechanics   = null;   // will be built fresh in ShowPatternScrollSlip
                     _patternScrollSolvedIds   = null;
                     _patternScrollStagedIndex = -1;
                     SetStatus(Tf("Pattern Scroll: select {0} mechanic(s) to solve. Press ESC to cancel.", _patternScrollChargesLeft));
-                    ShowPatternScrollOverlay();
+                    ShowPatternScrollSlip();
                     break;
                 }
 

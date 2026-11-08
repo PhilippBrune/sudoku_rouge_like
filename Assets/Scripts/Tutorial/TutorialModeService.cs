@@ -9,7 +9,9 @@ namespace SudokuRoguelike.Tutorial
 {
     public sealed class TutorialModeService
     {
-        public const int CustomModifierLimit = 5;
+        // [REQ: CUSTOM-RULE-002] Seven (RM-232): measured up to 7 every size builds in under 1.4 s with nearly every rule on the
+        // board, from 8 boards took up to 8 s; CustomPuzzleCode's three count bits also end at 7.
+        public const int CustomModifierLimit = 7;
 
         /// <summary>
         /// Returns missing percent range for a given star rating.

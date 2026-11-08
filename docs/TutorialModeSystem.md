@@ -1,11 +1,12 @@
 # Tutorial Mode System
 
-**Version:** 1.16 | **Date:** 2026-11-02 | **Status:** implemented
+**Version:** 1.17 | **Date:** 2026-11-08 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.17 | 2026-11-08 | implemented | RM-232 (owner: analyse, plan and build): a Custom Puzzle takes up to seven rules (CUSTOM-RULE-002) and the four pressure rules (CUSTOM-RULE-003). |
 | 1.16 | 2026-11-02 | implemented | Owner (2026-11-02): irregular regions on every board size, 6×6, 8×8 and 9×9 too, in both of their templates (CUSTOM-REGION-002). |
 | 1.15 | 2026-11-02 | implemented | 0.3.1 playtest (owner): the Regions choices a board size does not have are greyed (CUSTOM-REGION-001); a solved or lost Custom Puzzle ends on its numbers (CUSTOM-FINISH-001). |
 | 1.14 | 2026-10-28 | implemented | 0.3.0 playtest (RM-209, owner: one per profile, Continue also on the main menu): a Custom Puzzle is saved in a pair of its own and continued (CUSTOM-SAVE-001); the 1.12 concept is built. SAVE-TUTO-001 now covers Sudoku Basics only. |
@@ -109,6 +110,10 @@ All **15 modifiers** are available as individual toggles in the tutorial setup p
 Multiple modifiers can be combined for advanced practice.
 
 **[CUSTOM-RULE-001]** Every chosen rule must be on the board: generation retries with other boards until each one has its marks, as for the boss gate's picks. If a rule still finds no room, the puzzle starts and the status line names it ("No room on this board for: …"); a rule is never dropped silently (GAP-086, 0.3.0 playtest: a 9×9 at 7 stars with Sum Dot showed no dots).
+
+**[CUSTOM-RULE-002]** (1.17, RM-232) A Custom Puzzle takes up to seven rules (`CustomModifierLimit`). Measured with `CustomRuleCountDiagnostics` (12 random sets per size and count, 2026-11-08): up to seven rules every size builds in at most 1.4 s and at most one board in 12 lacks a rule (it is named on the status line, CUSTOM-RULE-001); from eight rules 9×9 and 8×8 boards took up to 8 s and up to two boards in 12 lacked a rule. The share code's three count bits end at seven, so older codes stay valid.
+
+**[CUSTOM-RULE-003]** (1.17, RM-232) The four pressure rules (Countdown, Haunted Cell, Crumbling Region, Pressure Wave) are a seventh tab of the rule book. They are chosen like any rule, count toward the seven, combine freely and are never drawn by Random. They work as in a run, at the lowest intensity. Sudoku Basics has none.
 
 ### Help, seed and share code (1.13, RM-209)
 

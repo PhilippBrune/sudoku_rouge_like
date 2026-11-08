@@ -1,0 +1,116 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css"><script src="common.js"></script>
+<style>
+  /* A brand-new profile (owner, 2026-11-08): the first-time setup and the "Welcome" prompt still wear the dark modal with
+     yellow and blue buttons. Three proposals in the paper-and-ink look; ?v=a|a2|b|b2|c */
+  .bg { position:absolute; inset:0; background:url('../../../../Assets/Resources/background/bg_main_menu.png') center/cover; filter:brightness(.45) saturate(.85); }
+  .scroll { position:absolute; background:linear-gradient(180deg,#f3e9cf,#e8d8b2); color:#231e17; box-shadow:0 30px 60px rgba(0,0,0,.6); font-family:'Main','Segoe UI'; }
+  .scroll::before, .scroll::after { content:''; position:absolute; left:0; right:0; height:20px;
+     background: repeating-linear-gradient(90deg, #2c4632 0 16px, #33523a 16px 32px); border-top:2px solid #c9a24f; border-bottom:2px solid #c9a24f; }
+  .scroll::before { top:0; } .scroll::after { bottom:0; }
+  .rod { position:absolute; height:26px; border-radius:13px; background:linear-gradient(180deg,#d39a5f,#8a5a2e); box-shadow:0 6px 12px rgba(0,0,0,.5); }
+  small.eye { display:block; font-size:16px; letter-spacing:.18em; color:#6b5f4c; }
+  h1 { margin:6px 0 4px; font-weight:normal; font-size:46px; } h2 { margin:0 0 10px; font-weight:normal; font-size:24px; color:#9e2a2b; }
+  p { font-size:20px; line-height:1.4; margin:6px 0; }
+  .langs { display:flex; gap:16px; margin:10px 0 6px; }
+  .seal { width:150px; height:118px; border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+          background:#f6efdd; box-shadow:0 0 0 2px rgba(60,45,30,.25) inset; font-size:22px; }
+  .seal b { font-weight:normal; font-size:15px; color:#6b5f4c; letter-spacing:.1em; }
+  .seal.on { background:#b23a2e; color:#fff; box-shadow:0 0 0 4px #e9c46a inset, 0 10px 20px rgba(0,0,0,.35); transform:rotate(-2deg); }
+  .seal.on b { color:#f6dcc8; }
+  .tick { display:flex; align-items:center; gap:14px; font-size:21px; padding:9px 0; }
+  .box { width:30px; height:30px; border:2px solid #231e17; background:#fbf6ea; position:relative; }
+  .box.on::after { content:''; position:absolute; inset:5px; background:#b23a2e; }
+  .note { font-size:16px; color:#6b5f4c; }
+  .pill { display:inline-block; padding:14px 34px; border-radius:999px; font-size:24px; }
+  .pill.main { background:#b23a2e; color:#fff; } .pill.soft { border:2px solid #8f6a3a; color:#4b3a25; }
+  .preview { padding:12px 16px; background:#fbf6ea; box-shadow:0 0 0 1.5px rgba(60,45,30,.25) inset; border-radius:8px; }
+  .steps { display:flex; gap:10px; align-items:center; font-size:17px; color:#6b5f4c; }
+  .dot { width:26px; height:26px; border:2px solid #9e2a2b; } .dot.on { background:#9e2a2b; } .dot.done { background:#9e2a2b; opacity:.45; }
+  .ema { position:absolute; width:360px; height:330px; padding:72px 26px 20px; text-align:center; color:#2a1a10;
+         clip-path: polygon(50% 0, 100% 14%, 100% 100%, 0 100%, 0 14%); background:linear-gradient(180deg,#e9c48a,#b07c44); font-family:'Main'; }
+  .ema.on { background:linear-gradient(180deg,#e9b4a2,#b8695a); transform:translateY(-14px); filter:drop-shadow(0 0 22px rgba(255,214,140,.55)); }
+  .ema img { width:96px; height:96px; } .ema h3 { margin:10px 0 6px; font-weight:normal; font-size:28px; } .ema p { font-size:18px; }
+  .cord { position:absolute; height:4px; background:#b23a2e; border-radius:2px; }
+  .banner { position:absolute; background:#efe3c6; color:#231e17; text-align:center; box-shadow:0 14px 28px rgba(0,0,0,.5); font-family:'Main'; }
+  .banner::before, .banner::after { content:''; position:absolute; top:0; bottom:0; width:20px; background:#b23a2e; }
+  .banner::before { left:0; } .banner::after { right:0; }
+  .tab { padding:12px 22px; font-size:22px; color:#f3e9cf; background:linear-gradient(180deg,#4a3826,#2f2418); border-radius:10px 10px 0 0; }
+  .tab.on { background:#efe3c6; color:#9e2a2b; }
+  .slip { position:absolute; background:#f3ead6; color:#231e17; padding:22px 26px; font-family:'Main'; box-shadow:0 14px 28px rgba(0,0,0,.55); }
+</style></head><body>
+<div class="bg"></div>
+<div id="main"></div>
+<div class="caption" id="cap"></div>
+<script>
+const v = PARAMS.get('v') || 'a';
+const main = document.getElementById('main');
+const add = h => main.insertAdjacentHTML('beforeend', h);
+const ui = n => `${R}ui/${n}.png`;
+const langs = [['English','EN'],['Deutsch','DE'],['Français','FR'],['Español','ES'],['Português','PT-BR']];
+const seals = on => langs.map((l, i) => `<div class="seal ${i === on ? 'on' : ''}">${l[0]}<b>${l[1]}</b></div>`).join('');
+const ticks = (items) => items.map(([t, on]) => `<div class="tick"><div class="box ${on ? 'on' : ''}"></div>${t}</div>`).join('');
+const access = ticks([['Colour-blind palette', false], ['High contrast', false], ['Reduce motion', true], ['Screen reader captions', false]]);
+
+if (v === 'a' || v === 'a2') {
+  // A: a hanging scroll, everything on one page; the welcome is two ema tablets.
+  if (v === 'a') {
+    add('<div class="rod" style="left:330px;width:1260px;top:70px"></div><div class="rod" style="left:330px;width:1260px;top:1000px"></div>');
+    add(`<div class="scroll" style="left:360px;top:90px;width:1200px;height:915px;padding:48px 70px">
+      <small class="eye">A NEW PROFILE · PROFILE 3</small><h1>Before the garden</h1>
+      <p style="color:#4b4035">Choose how the game speaks and looks. Everything can be changed later in Options.</p>
+      <h2 style="margin-top:22px">Language</h2><div class="langs">${seals(1)}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:18px">
+        <div><h2>Comfort</h2>${access}</div>
+        <div><h2>Text size</h2><div class="preview"><p style="font-size:22px;margin:0">Aa · The gate opens at dawn.</p>
+          <div style="margin-top:10px;font-size:18px">90 % · <b style="color:#9e2a2b">100 %</b> · 120 % · 150 %</div></div>
+          <p class="note" style="margin-top:14px">By continuing you accept the notices under Credits (licences, trademarks, AI help, privacy).</p></div>
+      </div>
+      <div style="position:absolute;left:0;right:0;bottom:56px;text-align:center"><span class="pill main">Enter the garden (A)</span></div></div>`);
+    document.getElementById('cap').textContent = 'A · Hängerolle: Sprache als fünf Siegel, Komfort und Textgröße mit Vorschau, eine Seite, roter Knopf';
+  } else {
+    add(`<div class="banner" style="left:560px;width:800px;top:120px;height:150px;padding-top:26px"><small class="eye">WELCOME TO RUN OF THE NINE</small>
+      <div style="font-size:44px;margin-top:6px">Learn the basics first?</div></div>`);
+    add('<div class="cord" style="left:600px;width:720px;top:340px"></div>');
+    add(`<div class="ema on" style="left:590px;top:360px"><img src="${ui('icon_scroll_stamp')}"><h3>Show me</h3><p>Sudoku in a few steps, on a small board. About 2 minutes.</p></div>`);
+    add(`<div class="ema" style="left:970px;top:360px"><img src="${ui('icon_confirm_seal')}"><h3>Into the garden</h3><p>I know Sudoku. The basics stay in Options.</p></div>`);
+    add('<div style="position:absolute;left:0;right:0;bottom:90px;text-align:center;color:#e8dcc4;font:20px Main">A or a click takes a tablet · B skips</div>');
+    document.getElementById('cap').textContent = 'A · Willkommen: zwei Ema-Tafeln an einer roten Schnur, wie die Belohnungen im Lauf';
+  }
+} else if (v === 'b' || v === 'b2') {
+  // B: three short steps on a paper card (language, comfort, welcome); less at once for a new player (Paul's playtest).
+  const step = v === 'b' ? 1 : 3;
+  const dots = [1, 2, 3].map(i => `<div class="dot ${i === step ? 'on' : i < step ? 'done' : ''}"></div>`).join('');
+  add('<div class="rod" style="left:530px;width:860px;top:120px"></div><div class="rod" style="left:530px;width:860px;top:930px"></div>');
+  if (v === 'b') {
+    add(`<div class="scroll" style="left:560px;top:140px;width:800px;height:795px;padding:50px 60px">
+      <div class="steps">${dots}<span style="margin-left:10px">STEP 1 OF 3 · LANGUAGE</span></div>
+      <h1 style="margin-top:22px">Which language?</h1><p style="color:#4b4035">The garden's voice. You can change it in Options.</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:26px">${seals(1).replace(/width:150px/g,'')}</div>
+      <div style="position:absolute;left:60px;right:60px;bottom:58px;display:flex;justify-content:space-between;align-items:center">
+        <span class="note">Step 2: comfort · Step 3: the basics</span><span class="pill main">Next (A)</span></div></div>`);
+    document.getElementById('cap').textContent = 'B · Drei kurze Schritte: 1 Sprache, 2 Komfort und Textgröße, 3 Grundlagen ja/nein; immer nur eine Frage';
+  } else {
+    add(`<div class="scroll" style="left:560px;top:140px;width:800px;height:795px;padding:50px 60px">
+      <div class="steps">${dots}<span style="margin-left:10px">STEP 3 OF 3 · THE BASICS</span></div>
+      <h1 style="margin-top:22px">New to Sudoku?</h1><p style="color:#4b4035">A short walk through the rules on a small board, about 2 minutes. You can replay it in Options any time.</p>
+      <div style="display:flex;gap:22px;margin-top:40px">
+        <div class="preview" style="flex:1;text-align:center;padding:26px;box-shadow:0 0 0 4px #b23a2e inset"><img src="${ui('icon_scroll_stamp')}" style="width:84px"><p style="font-size:24px">Show me the basics</p></div>
+        <div class="preview" style="flex:1;text-align:center;padding:26px"><img src="${ui('icon_confirm_seal')}" style="width:84px"><p style="font-size:24px">Enter the garden</p></div></div>
+      <div style="position:absolute;left:60px;right:60px;bottom:58px;display:flex;justify-content:space-between;align-items:center">
+        <span class="pill soft">Back (B)</span><span class="pill main">Start (A)</span></div></div>`);
+    document.getElementById('cap').textContent = 'B · Schritt 3: die Grundlagen-Frage als zwei Karten auf demselben Papier, Zurück geht zu Schritt 2';
+  }
+} else {
+  // C: the welcome itself: a banner over the garden, the questions on one slip beside two big choices.
+  add(`<div class="banner" style="left:460px;width:1000px;top:90px;height:160px;padding-top:28px"><small class="eye">A NEW PROFILE · PROFILE 3</small>
+    <div style="font-size:52px;margin-top:6px">Welcome to the garden</div></div>`);
+  add(`<div class="slip" style="left:200px;top:320px;width:640px;height:600px">
+    <small class="eye">LANGUAGE</small><div class="langs" style="flex-wrap:wrap;gap:10px">${seals(1).replace(/width:150px;height:118px/g,'')}</div>
+    <small class="eye" style="margin-top:22px">COMFORT</small>${access}
+    <p class="note" style="margin-top:10px">Text size and more in Options. Continuing accepts the notices under Credits.</p></div>`);
+  add(`<div class="ema on" style="left:960px;top:330px"><img src="${ui('icon_scroll_stamp')}"><h3>Learn the basics</h3><p>2 minutes on a small board, then the garden.</p></div>`);
+  add(`<div class="ema" style="left:1360px;top:330px"><img src="${ui('icon_confirm_seal')}"><h3>Enter the garden</h3><p>Straight to the main menu.</p></div>`);
+  document.getElementById('cap').textContent = 'C · Ein Bildschirm: Banner "Willkommen", links ein Zettel mit Sprache und Komfort, rechts die zwei Wege als Ema-Tafeln';
+}
+</script></body></html>

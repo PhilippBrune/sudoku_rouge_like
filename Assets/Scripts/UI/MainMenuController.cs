@@ -150,6 +150,7 @@ namespace SudokuRoguelike.UI
             // Run every frame so D-pad axis input can navigate without a button press first.
             EnsureControllerSelection();
             HandleMenuGamepadNavigation();
+            if (RecentRunsSlip.CardOpen) return;   // [REQ: RUN-HISTORY-002] the card takes A, B and Esc itself
 
             // [REQ: INPUT-PAD-005] The owner's pad is never a legacy "any key": its presses pass here too.
             if (!Input.anyKeyDown && !PadButtons.AnyPressed()) return;

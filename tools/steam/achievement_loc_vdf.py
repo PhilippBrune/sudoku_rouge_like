@@ -1,10 +1,14 @@
-"""Writes the Steamworks achievement localization files (Key/Values, UTF-8) for German, French, Spanish and Brazilian
-Portuguese from section 5 of docs/Achievements.md, for the upload on Stats & Achievements -> Achievement Localization.
+"""Writes the Steamworks achievement localization files (Key/Values, UTF-8) for English from the section 2 tables and for
+German, French, Spanish and Brazilian Portuguese from section 5 of docs/Achievements.md, for the upload on Stats &
+Achievements -> Achievement Localization. English is entered by hand in Steamworks; when a spec text changes, an English
+file for just those achievements updates them (0.4.3: floor_5 and the Swift Path challenges).
 
-Usage: python tools/steam/achievement_loc_vdf.py
+Usage: python tools/steam/achievement_loc_vdf.py                    the four languages
+       python tools/steam/achievement_loc_vdf.py --english api ...  English for these achievements only
 Writes steam_assets/achievements/localization/4858470_loc_<language>.vdf.
 """
 import os
+import sys
 
 import achievement_icons as icons
 from achievement_sheet import read_spec
@@ -38,17 +42,28 @@ TOKENS = {**{api: f'NEW_ACHIEVEMENT_1_{n}' for n, api in enumerate(FIRST_SERIES)
 def vdf(language, texts):
     lines = ['"lang"', '{', f'\t"Language"\t"{language}"', '\t"Tokens"', '\t{']
     for api, token in TOKENS.items():
+        if api not in texts:
+            continue
         for suffix, value in zip(('NAME', 'DESC'), texts[api]):
             assert not any(c in value for c in '"\\\t\n'), f'{api}: Key/Values would read a quote or escape here'
             lines.append(f'\t\t"{token}_{suffix}"\t"{value}"')
     return '\n'.join(lines + ['\t}', '}', ''])
 
 
-def main():
-    _, others = read_spec()
+def main(argv):
+    english, others = read_spec()
+    os.makedirs(OUT, exist_ok=True)
+    if argv[:1] == ['--english']:
+        chosen = argv[1:]
+        unknown = [api for api in chosen if api not in TOKENS or api not in english]
+        assert chosen and not unknown, f'not an achievement with a token and an English row: {unknown or "none given"}'
+        path = os.path.join(OUT, '4858470_loc_english.vdf')
+        with open(path, 'w', encoding='utf-8', newline='\n') as file:
+            file.write(vdf('english', {api: english[api] for api in chosen}))
+        print(path)
+        return
     missing = [api for api in TOKENS if len(others.get(api, [])) != len(STEAM_LANGUAGES)]
     assert not missing, f'section 5 lacks a row or a language for {missing}'
-    os.makedirs(OUT, exist_ok=True)
     for column, language in enumerate(STEAM_LANGUAGES):
         path = os.path.join(OUT, f'4858470_loc_{language}.vdf')
         with open(path, 'w', encoding='utf-8', newline='\n') as file:
@@ -57,4 +72,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])

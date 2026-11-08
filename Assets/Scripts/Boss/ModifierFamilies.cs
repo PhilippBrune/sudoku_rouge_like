@@ -11,7 +11,8 @@ namespace SudokuRoguelike.Boss
         CagesAndArrows,
         Cells,
         WholeBoard,
-        OutsideClues
+        OutsideClues,
+        Pressure    // [REQ: CUSTOM-RULE-003] only in the Custom Puzzle rule book (BookOrder), not a player modifier family
     }
 
     /// <summary>
@@ -27,6 +28,18 @@ namespace SudokuRoguelike.Boss
         {
             ModifierFamily.Lines, ModifierFamily.DotsAndPairs, ModifierFamily.CagesAndArrows,
             ModifierFamily.Cells, ModifierFamily.WholeBoard, ModifierFamily.OutsideClues
+        };
+
+        /// <summary>[REQ: CUSTOM-RULE-003] The rule book's tabs: the six families and the pressure rules (RM-232).</summary>
+        public static readonly ModifierFamily[] BookOrder =
+        {
+            ModifierFamily.Lines, ModifierFamily.DotsAndPairs, ModifierFamily.CagesAndArrows,
+            ModifierFamily.Cells, ModifierFamily.WholeBoard, ModifierFamily.OutsideClues, ModifierFamily.Pressure
+        };
+
+        private static readonly BossModifierId[] PressureRules =
+        {
+            BossModifierId.CountdownFill, BossModifierId.HauntedCell, BossModifierId.CrumblingRegion, BossModifierId.PressureWave
         };
 
         private static readonly Dictionary<ModifierFamily, BossModifierId[]> Members = new Dictionary<ModifierFamily, BossModifierId[]>
@@ -72,7 +85,8 @@ namespace SudokuRoguelike.Boss
             }
         };
 
-        public static IReadOnlyList<BossModifierId> Get(ModifierFamily family) => Members[family];
+        public static IReadOnlyList<BossModifierId> Get(ModifierFamily family) =>
+            family == ModifierFamily.Pressure ? PressureRules : Members[family];
 
         public static ModifierFamily FamilyOf(BossModifierId id) =>
             TryGetFamily(id, out var family)
@@ -109,6 +123,7 @@ namespace SudokuRoguelike.Boss
             ModifierFamily.CagesAndArrows => LocalizationService.T("CustomPuzzle.Family.CagesAndArrows", "Cages & arrows"),
             ModifierFamily.Cells => LocalizationService.T("CustomPuzzle.Family.Cells", "Cells"),
             ModifierFamily.WholeBoard => LocalizationService.T("CustomPuzzle.Family.WholeBoard", "Whole board"),
+            ModifierFamily.Pressure => LocalizationService.T("CustomPuzzle.Family.Pressure", "Pressure"),
             _ => LocalizationService.T("CustomPuzzle.Family.OutsideClues", "Outside clues")
         };
     }

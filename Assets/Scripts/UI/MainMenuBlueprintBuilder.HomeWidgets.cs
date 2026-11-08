@@ -15,6 +15,8 @@ namespace SudokuRoguelike.UI
             var column = ScrollUiKit.Area(card, "HomeWidgets", Vector2.zero, Vector2.one);
             var daily = BuildWalkTag(column, "DailyWidget", dMin, dMax, -1f, T("Daily Walk"), "BtnDailyWidget", mc.OpenDailyWalk);
             var monthly = BuildWalkTag(column, "MonthlyWidget", mMin, mMax, 1.2f, T("Monthly Walk"), "BtnMonthlyWidget", mc.ShowMonthlyWalkPanel);
+            var (rMin, rMax) = OnCard(0.325f, 0.135f, 0.585f, 0.445f);
+            RecentRunsSlip.Build(column, mc, rMin, rMax);   // [REQ: RUN-HISTORY-002]
             EnsureComponent<MainMenuHomeWidgetsController>(column.gameObject);
             daily.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnLeft = firstTablet, selectOnRight = monthly };
             monthly.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnLeft = daily };

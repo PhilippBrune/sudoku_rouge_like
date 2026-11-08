@@ -1,13 +1,14 @@
 # Items & Relics System
 
-**Version:** 2.10  
-**Date:** 2026-11-07  
+**Version:** 2.11  
+**Date:** 2026-11-08  
 **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.11 | 2026-11-08 | implemented | Owner's pick B after the 0.4.2 playtest (RM-231): the Pattern Scroll on a paper slip with a row per piece; the chosen piece's cells are gold on the board (ITEM-SCROLL-002). |
 | 2.10 | 2026-11-07 | implemented | Owner's picks after the 0.4.2 playtests (2026-11-07): the item review (ITEM-REWORK-001); the class items worked only in code no button reached (GAP-125), the Solver never completed a box (GAP-126), the Reed Duelist could not be unlocked (GAP-123). |
 | 2.9 | 2026-11-07 | implemented | Owner's picks after the 0.4.1 playtest on a Legion Go (2026-11-05) (F3): the fog lanterns are no reward any more; the market sells them where there is fog (ITEM-FOG-001). |
 | 2.8 | 2026-11-04 | implemented | RM-104 (owner's ticks 2026-11-04, list `docs/design/rm104-content-proposals.html` and the trade round): 7 relics (RELIC-PACK-001, RELIC-TRADE-001), 4 items (ITEM-PACK-001, ITEM-TRADE-001) and 7 events (EVENT-PACK-001, EVENT-TRADE-001). The trades pay with HP, Max HP or pencil marks for a strong effect (the owner's wish). |
@@ -264,7 +265,7 @@ Base shop price by rarity: Normal 40 gold, Rare 75 gold, Epic 150 gold (×2.5 si
 | Ink Well | `InkWell` | Normal / Rare / Epic | 1 | Restore {0} pencil marks. |
 | Meditation Stone | `MeditationStone` | Normal / Rare / Epic | 1 | Restore {0} HP. |
 | Wind Chime | `WindChime` | Normal / Rare / Epic | 1 | Click a cell to fill its row + column + box. / Choose any 2 of row/column/box, then click a cell to fill them. / Choose row, column, OR box, then click a cell to fill it. |
-| Pattern Scroll | `PatternScroll` | Normal / Rare / Epic | 1 | Select {0} mechanic instance(s) to solve using the solution. ESC cancels. The list names each piece by its rule, "German Whispers #1 · 4 cells", in the player's language (ITEM-SCROLL-001). |
+| Pattern Scroll | `PatternScroll` | Normal / Rare / Epic | 1 | Select {0} mechanic instance(s) to solve using the solution. ESC cancels. The list names each piece by its rule, "German Whispers #1 · 4 cells", in the player's language (ITEM-SCROLL-001). A paper slip beside the board has one row per piece with its rule's colour and "3 empty of 4"; solved pieces are struck through and the chosen piece's cells are gold on the board. A click, the mouse wheel, the arrows or the D-pad choose; Solve, Enter or A writes it; B or Esc cancels. The digits are not shown beforehand: a cancelled scroll comes back (ITEM-REFUND-001), so a preview would be a free look at every solution (ITEM-SCROLL-002). |
 | Koi Reflection | `KoiReflection` | Normal / Rare / Epic | 1 | Reveal candidates for every unsolved cell in the board's most ambiguous zone (row/column/box with most open cells). / Click {0} empty cell(s) to reveal their candidates. |
 | Lantern of Clarity | `LanternOfClarity` | Normal / Rare / Epic | 1 | Disable fog for {0} moves. |
 | Garden Rake | `GardenRake` | Normal | 1 | Clear all pencil marks in the selected row and column. |

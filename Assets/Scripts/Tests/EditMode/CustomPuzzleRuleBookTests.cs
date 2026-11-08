@@ -41,21 +41,21 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
-        public void Setup_TakesFiveRulesAtMost_AndSaysWhyNotASixth()
+        public void Setup_TakesSevenRulesAtMost_AndSaysWhyNotAnEighth()
         {
             var setup = NewSetup(9);
             var picks = new[]
             {
                 BossModifierId.DutchWhispers, BossModifierId.KillerCages, BossModifierId.Skyscrapers,
-                BossModifierId.EvenOdd, BossModifierId.XVPairs
+                BossModifierId.EvenOdd, BossModifierId.XVPairs, BossModifierId.Quadruples, BossModifierId.PrimeCells
             };
             foreach (var id in picks) Assert.IsTrue(setup.ToggleModifier(id), $"{id} can be added");
 
             CollectionAssert.AreEqual(picks, setup.SelectedModifiers, "the rules keep the player's order");
-            Assert.IsFalse(setup.ToggleModifier(BossModifierId.Thermo), "a sixth rule is refused");
+            Assert.IsFalse(setup.ToggleModifier(BossModifierId.Thermo), "an eighth rule is refused");
             Assert.IsFalse(setup.CanSelect(BossModifierId.Thermo, out var reason));
-            StringAssert.Contains("5", reason);
-            Assert.IsNull(setup.ValidationMessage, "five fitting rules are a valid setup");
+            StringAssert.Contains("7", reason);
+            Assert.IsNull(setup.ValidationMessage, "seven fitting rules are a valid setup");
 
             Assert.IsTrue(setup.ToggleModifier(BossModifierId.KillerCages), "choosing a chosen rule takes it out");
             Assert.IsFalse(setup.IsSelected(BossModifierId.KillerCages));
@@ -112,7 +112,7 @@ namespace SudokuRoguelike.Tests
             CollectionAssert.AreNotEqual(first, setup.SelectedModifiers.ToList(), "rolling again gives other rules");
 
             for (var i = 0; i < 10; i++) setup.StepRandomRuleCount(+1);
-            Assert.AreEqual(5, setup.RandomRuleCount, "at most five");
+            Assert.AreEqual(7, setup.RandomRuleCount, "at most seven");
 
             var small = NewSetup(5);
             small.StepRandomRuleCount(+2);

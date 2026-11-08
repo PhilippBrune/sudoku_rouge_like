@@ -1,11 +1,12 @@
 # Pressure Mechanics System
 
-**Version:** 0.8 | **Date:** 2026-10-07 | **Status:** implemented
+**Version:** 0.9 | **Date:** 2026-11-08 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 0.9 | 2026-11-08 | implemented | RM-232: a Custom Puzzle may choose pressure rules (CUSTOM-RULE-003, TutorialModeSystem 1.17). PRESSURE-ROLL-001 still keeps the roll out of tutorial mode; only Sudoku Basics (`RunNumber == 0`) skips `InitializePressureMechanics` now. |
 | 0.8 | 2026-10-07 | implemented | Verified PRESSURE-UI-001..011 on the rendered board with InRunUiPlayModeTests (SPEC-CONF-020); statuses ✅ confirmed by evidence; two rendering defects found and fixed (GAP-039: refreshes dropped pressure visuals and consumed one-shot flashes); flash colours/durations recorded as built; pressure rolls one floor earlier fixed in 1.1 (GAP-014). |
 | 0.7 | 2026-04-15 | implemented | PRESSURE-UI-004 implemented: badge shake on expiry (`BoardViewController.ShakeBadgeCells`). All requirements now ✅. |
 | 0.6 | 2026-04-15 | review | Audited implementation against codebase. Corrected 8 requirement statuses from ❌/⚠️ to ✅. One remaining gap: PRESSURE-UI-004 badge shake (flash exists, shake missing). |
@@ -80,7 +81,7 @@ The **intensity** governs per-mechanic severity (counter lengths, fragility valu
 
 **[PRESSURE-ROLL-001]** ✅ Implemented
 No pressure mechanic may activate on floor 1 (`floor < 2`) or when `RunState.TutorialMode == true`.
-> `RunDirector.RollPressureMechanic` — first two guard lines.
+> `RunDirector.RollPressureMechanic` — first two guard lines. This is the roll; a Custom Puzzle's own choice is not rolled (CUSTOM-RULE-003).
 
 **[PRESSURE-ROLL-002]** ✅ Implemented
 A pressure mechanic may only roll when the puzzle node is elite, pre-boss, or boss (`LevelConfig.IsElite || IsPreBoss || IsBoss`).

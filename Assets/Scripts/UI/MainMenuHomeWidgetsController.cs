@@ -21,6 +21,7 @@ namespace SudokuRoguelike.UI
             var envelope = save.HasSaveFile() ? save.Load() : new SaveFileEnvelope();
             SetText("DailyWidget/WidgetInfo", BuildDailyLine(envelope.DailyGoals ?? new DailyGoalState(), DateTime.Today));
             SetText("MonthlyWidget/WidgetInfo", BuildMonthlyLine(DateTime.Today));
+            GetComponentInChildren<RecentRunsSlip>(true)?.Refresh(envelope);   // [REQ: RUN-HISTORY-002]
         }
 
         /// <summary>Today's completed goals and the streak, as the Daily Walk panel would show them.</summary>

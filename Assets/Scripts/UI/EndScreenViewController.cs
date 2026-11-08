@@ -353,7 +353,7 @@ namespace SudokuRoguelike.UI
             if (run.State.Mode == GameMode.GardenRun && !run.State.TutorialMode)
             {
                 var floorReached = victory ? run.State.TotalFloors : run.State.WalkFloor;
-                RunLengthLog.Record(postSave, run.State, victory, floorReached, Time.realtimeSinceStartup);
+                RunLengthLog.Record(postSave, run.State, victory, floorReached, Time.realtimeSinceStartup, run);
                 ShowRunEndScroll(new RunEndSummary
                 {
                     Victory = victory, State = run.State, Result = result, PreLevel = preLevel, PostLevel = postLevel,

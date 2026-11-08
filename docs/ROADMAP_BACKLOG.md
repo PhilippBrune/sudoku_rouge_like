@@ -1,11 +1,12 @@
 # Roadmap backlog: Run of the Nine
 
-**Version:** 1.20 | **Date:** 2026-11-07 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
+**Version:** 1.21 | **Date:** 2026-11-08 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.21 | 2026-11-08 | review | Owner's picks: RM-230 C and RM-231 B built; RM-232 built (seven rules, the pressure rules); RM-233 the new-profile screens as mockups for the pick. |
 | 1.20 | 2026-11-07 | review | Owner's Daily Walk playtest of 0.4.2 (2026-11-07): the run history (RM-230, mockups A to C wait for the pick), the Pattern Scroll's screen (RM-231, mockups A to C) and Custom Puzzles with more rules and pressure rules (RM-232, a question). |
 | 1.19 | 2026-11-04 | review | RM-101 done (owner's pick A, 2026-11-04): the slips with All and Friends (SEED-BOARD-003). RM-104 done: 7 relics, 4 items, 7 events (owner's ticks, with trades). |
 | 1.18 | 2026-11-04 | review | RM-101 started (owner 2026-11-04, "week and month"): the boards of the seed of the week and the Monthly Walk are filled (SEED-BOARD-001/002); the standing panel with the friends filter waits for the mockup pick. RM-104: proposals `docs/design/rm104-content-proposals.html` wait for the owner. |
@@ -76,9 +77,10 @@ Horizons: **short term** = the next one to three updates, **mid term** = after t
 | RM-227 | XP animation | XP is painted into the bar so it feels added; skippable. | Owner's pick B, the brush stroke; built (UI-STYLE-041). | built |
 | RM-228 | The legend's place and layout | The legend opened at a different place each time. | Owner's pick A, the legend in the rule slip; built (UI-STYLE-042). | built |
 | RM-229 | Story achievements | New Steam achievements for the story. | Owner ("Zehn"); built (ACHIEVE-STORY-001); they need entering in Steamworks. | built |
-| RM-230 | Run history | The last five runs with their seeds, to walk a seed again; a lost run shows its last board with the last wrong digit. | Owner's playtest of 0.4.2; mockups `layout-proposals/run_history_a/b/c.png` (Codex page, defeat scroll and ema, main-menu slip) wait for the pick. Needs the last board and mistake kept per run (save). | proposed |
-| RM-231 | The Pattern Scroll's screen | Still the old dark list; the player should see where and which rule piece is solved. | Owner's playtest of 0.4.2; mockups `layout-proposals/pattern_scroll_a/b/c.png` (seals on the board, a list with preview, chips under the board) wait for the pick. | proposed |
-| RM-232 | Custom Puzzle: more rules and pressure rules | The owner asked whether a Custom Puzzle takes more than five rules and the pressure rules. Today: at most five (`CustomModifierLimit`) and no pressure rules. | Question from the 0.4.2 playtest; open: limit and which pressure rules. | question |
+| RM-230 | Run history | The last five runs with their seeds, to walk a seed again; a lost run shows its last board with the last wrong digit. | Owner's playtest of 0.4.2; pick C, the slip in the main menu, built (RUN-HISTORY-001/002). It sits beside the menu column: the place under the run card holds the tablets. | built |
+| RM-231 | The Pattern Scroll's screen | Still the old dark list; the player should see where and which rule piece is solved. | Owner's playtest of 0.4.2; pick B, the list with preview, built (ITEM-SCROLL-002). The cells show gold, without the mockup's pale digits: a cancelled scroll comes back, so the digits would be free to read. | built |
+| RM-232 | Custom Puzzle: more rules and pressure rules | The owner asked whether a Custom Puzzle takes more than five rules and the pressure rules. Now seven rules and all four pressure rules. | Owner: analyse, plan, build; measured and built (CUSTOM-RULE-002/003). | built |
+| RM-233 | The new-profile screens in the new look | First-time setup and the Basics prompt still wear the dark modal. | Owner (2026-11-08); mockups in `docs/design/first-run-proposals.html` (A one hanging scroll, B three short steps, C welcome with ema) wait for the pick. | proposed |
 
 ## Mid term (suggested)
 

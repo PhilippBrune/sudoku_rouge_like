@@ -1,11 +1,12 @@
 # Achievements
 
-**Version:** 1.6 | **Date:** 2026-11-03 | **Status:** implemented (63 achievements saved in Steamworks in five languages; the 34 newest not published yet)
+**Version:** 1.7 | **Date:** 2026-11-08 | **Status:** implemented (63 achievements saved in Steamworks in five languages; the 34 newest not published yet)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.7 | 2026-11-08 | implemented | floor_5: the English description is the player text only ("Reach the last floor of a Garden Run."); the floors are in the condition column. English for floor_5 and the eight Swift Path challenges goes to Steamworks as a localization file (`achievement_loc_vdf.py --english`). |
 | 1.6 | 2026-11-03 | implemented (63 in Steamworks, the 34 newest not published) | The 24 class challenge achievements are created in Steamworks with both icons and entered in German, French, Spanish and Brazilian Portuguese: the page shows 63 achievements, every language fully localized. They continue the token series `NEW_ACHIEVEMENT_5_7` to `_30`. Saved, not published. |
 | 1.5 | 2026-11-03 | implemented (game side; the 24 challenge achievements are not in Steamworks yet) | Owner (2026-11-03): RM-116 with 24 achievements, one per class challenge (CLASS-CHALLENGE-002): three per class, the class's own, a win in under 40 minutes and a win at Harmony VI. Icons by `tools/steam/achievement_icons.py`. |
 | 1.4 | 2026-11-03 | implemented (39 in Steamworks, the story ones not published) | Owner (2026-11-03): "füge die hier hinzu ... ich erlaube dir das". The ten story achievements are created in Steamworks (App 4858470) with name, description and both icons, and entered in German, French, Spanish and Brazilian Portuguese: the page shows 39 achievements, every language fully localized. Saved, not published (Publish waits for the owner). Steamworks starts a new token series after a reload of the achievements page, so the last seven story achievements have the tokens `NEW_ACHIEVEMENT_5_0` to `_6`; `achievement_loc_vdf.py` keeps each achievement's real token. |
@@ -49,7 +50,7 @@ Counted for Garden Runs only (not tutorials, custom puzzles or the other modes).
 |---|---|---|---|
 | `first_puzzle` | First Stone | Solve your first puzzle. | `ProfileStats.TotalPuzzlesSolved` ≥ 1 |
 | `first_boss` | The Gate Opens | Defeat your first boss. | `ProfileStats.TotalBossesDefeated` ≥ 1 |
-| `floor_5` | Summit in Sight | Reach the last floor of a Garden Run (Floor 3, the Shrine Summit; Floor 5 in a run saved before 0.4.3). | `FloorReached` ≥ 3 on a three-floor run, else ≥ 5 (RUN-FLOORS-001) |
+| `floor_5` | Summit in Sight | Reach the last floor of a Garden Run. | `FloorReached` ≥ 3 on a three-floor run, else ≥ 5 (RUN-FLOORS-001) |
 | `first_win` | Through the Garden | Win a Garden Run. | a won Garden Run, any Harmony |
 | `perfect_run` | Clean Ink | Win a Garden Run without a single mistake. | won, `MistakesMade` = 0 |
 | `no_items_win` | Empty Hands | Win a Garden Run without using an item. | won, `ItemsUsedThisRun` = 0 |

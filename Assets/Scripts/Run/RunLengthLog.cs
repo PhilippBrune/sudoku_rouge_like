@@ -89,12 +89,15 @@ namespace SudokuRoguelike.Run
         }
 
         /// <summary>Records a finished run once (tutorial runs are not counted) and starts the clock for the gap to the next.</summary>
-        public static void Record(SaveFileService save, RunState state, bool victory, int floorReached, float realtimeNow)
+        /// <param name="recentRun">The run itself when it belongs on the Recent Runs slip (a Garden Run or a walk).</param>
+        public static void Record(SaveFileService save, RunState state, bool victory, int floorReached, float realtimeNow,
+            RunDirector recentRun = null)
         {
             if (save == null || state == null || state.TutorialMode || state.RunLengthRecorded) return;
             state.RunLengthRecorded = true;
             var envelope = save.HasSaveFile() ? save.Load() : new SaveFileEnvelope();
             Append(envelope, Entry(state, victory, floorReached, DateTime.UtcNow));
+            if (recentRun != null) RecentRuns.Add(envelope, RecentRuns.Capture(recentRun, victory, floorReached, DateTime.UtcNow));
             save.Save(envelope);
             _lastRunEnd = realtimeNow;
         }

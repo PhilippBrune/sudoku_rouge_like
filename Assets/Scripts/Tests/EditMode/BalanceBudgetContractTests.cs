@@ -223,7 +223,7 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
-        public void CustomPuzzleValidation_AllowsAtMostFiveModifiers()
+        public void CustomPuzzleValidation_AllowsAtMostSevenModifiers()
         {
             var setup = new TutorialSetupConfig { BoardSize = 9, Stars = 3 };
             setup.SelectedModifiers.AddRange(new[]
@@ -232,14 +232,16 @@ namespace SudokuRoguelike.Tests
                 BossModifierId.ParityLines,
                 BossModifierId.RenbanLines,
                 BossModifierId.DifferenceKropki,
-                BossModifierId.PrimeCells
+                BossModifierId.PrimeCells,
+                BossModifierId.KillerCages,
+                BossModifierId.Quadruples
             });
 
             Assert.IsTrue(TutorialModeService.TryValidateCustomSetup(setup, out _));
 
             setup.SelectedModifiers.Add(BossModifierId.FogOfWar);
             Assert.IsFalse(TutorialModeService.TryValidateCustomSetup(setup, out var failureMessage));
-            StringAssert.Contains("5", failureMessage);
+            StringAssert.Contains("7", failureMessage);
         }
 
         private static void AssertWeightBudget(float[] weights, string label)

@@ -41,7 +41,7 @@ namespace SudokuRoguelike.Tests
             var screen = panel.GetComponent<CustomPuzzleScreen>();
             var setup = host.GetComponentInChildren<TutorialMenuController>(true);
 
-            foreach (var family in ModifierFamilies.Order)
+            foreach (var family in ModifierFamilies.BookOrder)
                 Assert.NotNull(FindObjectOrNull(panel, $"FamilyTab_{family}"), $"a tab for {family}");
             foreach (var id in ModifierFamilies.Get(ModifierFamily.Lines))
                 Assert.NotNull(FindObjectOrNull(panel, $"RuleTile_{id}"), $"the Lines page shows {id}");
@@ -66,7 +66,10 @@ namespace SudokuRoguelike.Tests
             Assert.AreEqual(ModifierFamily.OutsideClues, screen.CurrentFamily);
             Assert.IsNull(FindObjectOrNull(panel, $"RuleTile_{BossModifierId.DutchWhispers}"), "one family at a time");
             ClickButton(panel, $"RuleTile_{BossModifierId.Skyscrapers}");
-            screen.StepFamily(1);   // RB from the last tab wraps to Lines
+            screen.StepFamily(1);   // RB goes on to the pressure rules (CUSTOM-RULE-003)
+            yield return null;
+            Assert.AreEqual(ModifierFamily.Pressure, screen.CurrentFamily);
+            screen.StepFamily(1);   // and from the last tab wraps to Lines
             yield return null;
             Assert.AreEqual(ModifierFamily.Lines, screen.CurrentFamily);
 

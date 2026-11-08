@@ -43,6 +43,34 @@ namespace SudokuRoguelike.Core
         public SeasonalChallengeState SeasonalChallenge = new SeasonalChallengeState(); // [REQ: SEASON-SCORE-001]
         // [REQ: RUN-LENGTH-001] The last runs' lengths, kept on this PC only (GameDesignSpec §14, RUN-LENGTH-001).
         public List<RunHistoryEntry> RunHistory = new List<RunHistoryEntry>();
+        // [REQ: RUN-HISTORY-001] The last five finished Garden Runs and walks, newest first, each with its last board (RM-230).
+        public List<RecentRun> RecentRuns = new List<RecentRun>();
+    }
+
+    /// <summary>[REQ: RUN-HISTORY-001] One run of the main menu's Recent Runs slip, with the board it ended on.</summary>
+    [Serializable]
+    public sealed class RecentRun
+    {
+        public string EndedUtc;                 // ISO 8601
+        public ClassId ClassId;
+        public bool DailyWalk;
+        public bool MonthlyWalk;
+        public int HarmonyLevel;
+        public bool Victory;
+        public int FloorReached;
+        public int ActiveSeconds;
+        public int Seed;
+        public int Garden = -1;                 // FloorThemeData's index of the floor it ended on
+        public int Tile;
+        public int BoardSize;                   // 0: no board was open when the run ended
+        public int Stars;
+        public string Digits;                   // row by row, one digit per cell, '0' empty
+        public string Givens;                   // one '0' or '1' per cell
+        public string Regions;                  // one character per cell, '0' + the region
+        public int WrongRow = -1, WrongCol = -1, WrongDigit, RightDigit;   // the last wrong digit on that board
+        public List<BossModifierId> Rules = new List<BossModifierId>();
+        public List<ItemType> Items = new List<ItemType>();
+        public List<RelicId> Relics = new List<RelicId>();
     }
 
     /// <summary>[REQ: RUN-LENGTH-001] One finished run, for the run-length measures of the one-more-run concept (GameDesignSpec §14).</summary>

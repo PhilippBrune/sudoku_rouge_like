@@ -51,6 +51,13 @@ namespace SudokuRoguelike.UI
             ConfirmClassAndStart();
         }
 
+        /// <summary>[REQ: RUN-HISTORY-002] "Walk seed" on a recent run: Select Class with the seed in its field, any class.</summary>
+        public void WalkSeed(int seed)
+        {
+            StartGame();
+            if (_seedInput != null) _seedInput.text = seed.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
         /// <summary>The perk button on Select Class (and Y): the next perk of the chosen Harmony level.</summary>
         public void CyclePerkOnClassSelect()
         {

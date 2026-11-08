@@ -154,12 +154,12 @@ namespace SudokuRoguelike.Tests
 
             // The rule book lists every family's rules; the controller decides what can be chosen.
             StringAssert.Contains("EnsureComponent<CustomPuzzleScreen>(panel).Build(screen, tutCtrl, startBtn)", blueprintSource);
-            StringAssert.Contains("foreach (var family in ModifierFamilies.Order)", screenSource);
+            StringAssert.Contains("foreach (var family in ModifierFamilies.BookOrder)", screenSource);
             StringAssert.Contains("var available = _setup.CanSelect(tile.Id, out _);", screenSource);
             StringAssert.Contains("_rulesMessage.text = _setup.ValidationMessage ?? string.Empty;", screenSource);
             StringAssert.Contains("TutorialModeService.CanAddCustomModifier(_config.BoardSize, _config.SelectedModifiers, id, out reason)", customSource);
             StringAssert.Contains("DropRulesThatNoLongerFit();", customSource);
-            StringAssert.Contains("CustomModifierLimit = 5", serviceSource);
+            StringAssert.Contains("CustomModifierLimit = 7", serviceSource);
             StringAssert.Contains("TryValidateCustomSetup(setup", menuSource);
         }
 

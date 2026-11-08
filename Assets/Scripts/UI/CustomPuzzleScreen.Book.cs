@@ -50,7 +50,7 @@ namespace SudokuRoguelike.UI
         /// <summary>LB / RB: the previous or next family (wraps).</summary>
         public void StepFamily(int delta)
         {
-            var order = ModifierFamilies.Order;
+            var order = ModifierFamilies.BookOrder;
             var i = System.Array.IndexOf(order, _family);
             ShowFamily(order[(i + delta + order.Length) % order.Length]);
             if (_tiles.Count > 0) EventSystem.current?.SetSelectedGameObject(_tiles[0].Paper.gameObject);
@@ -90,7 +90,7 @@ namespace SudokuRoguelike.UI
         private void BuildTabs(RectTransform screen)
         {
             var x = 0.2708f;
-            foreach (var family in ModifierFamilies.Order)
+            foreach (var family in ModifierFamilies.BookOrder)
             {
                 var label = $"{ModifierFamilies.LocalizedName(family)} <size=15>{ModifierFamilies.Get(family).Count}</size>";
                 var tab = ScrollUiKit.Fill(screen, $"FamilyTab_{family}", new Vector2(x, 0.9065f), new Vector2(x, 0.9519f), TabWood,

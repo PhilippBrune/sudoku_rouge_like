@@ -10,7 +10,7 @@ namespace SudokuRoguelike.UI
     // [REQ: UI-STYLE-012] Custom Puzzle as a rule book (layout-proposals.md, "Custom Puzzle · A"): the settings on a
     // paper slip, the 71 rules in a book with one tab per family (LB/RB switch tabs), the chosen rules as chips in the
     // tray under the book with the Start button. A rule's text shows on hover or focus; a rule that does not fit says
-    // why. Up to five rules (TutorialModeService.CustomModifierLimit).
+    // why. Up to seven rules (TutorialModeService.CustomModifierLimit).
     public sealed partial class CustomPuzzleScreen : MonoBehaviour
     {
         private const int MaxStars = 7, MinSize = 5, MaxSize = 9;
@@ -213,8 +213,10 @@ namespace SudokuRoguelike.UI
             if (randomLabel != null) randomLabel.text = F("CustomPuzzle.Book.Random", "Random: {0}", _setup.RandomRuleCount);
         }
 
-        private static Vector2 ChipMin(int i) => new Vector2(0.022f + i * 0.153f, 0.20f);
-        private static Vector2 ChipMax(int i) => new Vector2(0.022f + i * 0.153f + 0.146f, 0.58f);
+        // The row ends before the Start button; every chip of the limit fits on it.
+        private static float ChipStep => 0.765f / Tutorial.TutorialModeService.CustomModifierLimit;
+        private static Vector2 ChipMin(int i) => new Vector2(0.022f + i * ChipStep, 0.20f);
+        private static Vector2 ChipMax(int i) => new Vector2(0.022f + (i + 1) * ChipStep - 0.007f, 0.58f);
 
         // A chosen rule: icon and name on a paper pill; clicking it takes the rule out again.
         private GameObject BuildChip(int index, BossModifierId id)
@@ -226,9 +228,9 @@ namespace SudokuRoguelike.UI
             button.targetGraphic = chip;
             button.colors = ScrollUiKit.StateColors(Color.white);
             ScrollUiKit.Icon(chip.transform, "Icon", IconPath(id), new Vector2(0.04f, 0.12f), new Vector2(0.24f, 0.88f), Color.white);
-            // One line: the rect is too low for two, so a long name shrinks instead of wrapping.
-            ScrollUiKit.Label(chip.transform, "Name", BossService.GetModifierName(id), 18, TextAnchor.MiddleLeft, ScrollUiKit.Ink,
-                new Vector2(0.26f, 0.18f), new Vector2(0.96f, 0.82f), 11);
+            // Seven chips share the row: a long name takes two lines and shrinks rather than losing its end.
+            ScrollUiKit.Label(chip.transform, "Name", BossService.GetModifierName(id), 16, TextAnchor.MiddleLeft, ScrollUiKit.Ink,
+                new Vector2(0.27f, 0.04f), new Vector2(0.97f, 0.96f), 10);
             button.onClick.AddListener(() => _setup.ToggleModifier(id));
             AddHover(chip.gameObject, id);
             return chip.gameObject;

@@ -1,6 +1,6 @@
 # Items & Relics System
 
-**Version:** 2.11  
+**Version:** 2.12  
 **Date:** 2026-11-08  
 **Status:** implemented
 
@@ -8,6 +8,7 @@
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.12 | 2026-11-08 | implemented | Owner's 0.4.3 playtest: the Cracked Teacup keeps the combo (RELIC-TEACUP-001); the five-relic row (HUD-RELIC-001). |
 | 2.11 | 2026-11-08 | implemented | Owner's pick B after the 0.4.2 playtest (RM-231): the Pattern Scroll on a paper slip with a row per piece; the chosen piece's cells are gold on the board (ITEM-SCROLL-002). |
 | 2.10 | 2026-11-07 | implemented | Owner's picks after the 0.4.2 playtests (2026-11-07): the item review (ITEM-REWORK-001); the class items worked only in code no button reached (GAP-125), the Solver never completed a box (GAP-126), the Reed Duelist could not be unlocked (GAP-123). |
 | 2.9 | 2026-11-07 | implemented | Owner's picks after the 0.4.1 playtest on a Legion Go (2026-11-05) (F3): the fog lanterns are no reward any more; the market sells them where there is fog (ITEM-FOG-001). |
@@ -297,7 +298,7 @@ Base shop price by rarity: Normal 40 gold, Rare 75 gold, Epic 150 gold (×2.5 si
 | Relic | Id | Tier | Effect |
 |-------|----|------|--------|
 | Smooth Pebble | `SmoothPebble` | Tier 1 | Start each puzzle with +2 pencil marks. |
-| Cracked Teacup | `CrackedTeacup` | Tier 1 | Absorb the first mistake each puzzle (no HP loss). |
+| Cracked Teacup | `CrackedTeacup` | Tier 1 | Absorb the first mistake each puzzle: no HP lost and the combo holds (RELIC-TEACUP-001). |
 | Wooden Comb | `WoodenComb` | Tier 1 | +1 Max HP. |
 | Moss Token | `MossToken` | Tier 1 | Shop rerolls cost 25% less. |
 | Koi Reflection | `KoiReflectionRelic` | Tier 2 | Reveal the correct candidates for 5 random empty cells at puzzle start (no auto-fill). |

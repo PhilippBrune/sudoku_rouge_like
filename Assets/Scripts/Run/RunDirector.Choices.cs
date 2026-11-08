@@ -108,6 +108,7 @@ namespace SudokuRoguelike.Run
         {
             _eventService.ReseedForDecision(DecisionSeed(DecisionPurpose.Event));
             CurrentEvent = _eventService.BuildEvent(State.CurrentFloor, State.Depth, State);
+            FillChallengeTerms(CurrentEvent);   // [REQ: EVENT-CHALLENGE-001]
             return CurrentEvent;
         }
 
@@ -117,6 +118,8 @@ namespace SudokuRoguelike.Run
             if (CurrentEvent == null) return string.Empty;
             _eventService.ReseedForDecision(DecisionSeed(DecisionPurpose.EventChoice, optionIndex));
             var summary = _eventService.ResolveChoice(State, CurrentEvent, optionIndex);
+            if (optionIndex >= 0 && optionIndex < CurrentEvent.Options.Count && CurrentEvent.Options[optionIndex].Challenge != 0)
+                PrepareChallenge(CurrentEvent.Options[optionIndex].Challenge);   // [REQ: EVENT-CHALLENGE-001]
             // [REQ: EVENT-PACK-001] [REQ: EVENT-TRADE-001] A relic from an event comes from the run's relic pool.
             if (optionIndex >= 0 && optionIndex < CurrentEvent.Options.Count && CurrentEvent.Options[optionIndex].GrantRandomRelic)
             {

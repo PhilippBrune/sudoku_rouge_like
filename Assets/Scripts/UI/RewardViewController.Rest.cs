@@ -77,7 +77,7 @@ namespace SudokuRoguelike.UI
             _restDrink.onClick.AddListener(() => { if (_selectedRest >= 0) DrinkRest(_selectedRest); });
             var hint = ScrollUiKit.Label(screen.transform, "RestHint", T("InRun.Rest.Hint"), 19, TextAnchor.MiddleCenter,
                 new Color(0.86f, 0.82f, 0.70f, 1f), new Vector2(0.2f, 0.040f), new Vector2(0.8f, 0.070f), 12);
-            DeviceHint.Attach(hint, "InRun.Rest.Hint");   // INPUT-HINT-001
+            DeviceHint.Attach(hint, "InRun.Rest.Hint", KeyRange(_restChoices.Count));   // INPUT-HINT-001
             AddShadow(hint);
 
             for (var i = 0; i < _restBowls.Count; i++)
@@ -102,6 +102,9 @@ namespace SudokuRoguelike.UI
             EventSystem.current?.SetSelectedGameObject(_restBowls[index].gameObject);
             OnBowlClicked(index);
         }
+
+        /// <summary>"1–3" for the number keys of a scene with three choices, "1" for one.</summary>
+        internal static string KeyRange(int count) => count > 1 ? $"1–{count}" : "1";
 
         private void BuildRestChoices(RunDirector run)
         {
@@ -179,6 +182,7 @@ namespace SudokuRoguelike.UI
 
             var idx = index;
             button.onClick.AddListener(() => OnBowlClicked(idx));
+            MenuDpad.ChooseOnMove(button.gameObject, () => ChooseBowl(idx));   // [REQ: INPUT-KEY-002]
             slot.SetAsLastSibling();   // above the slip and bowl, so the whole slot takes the click
             return button;
         }
@@ -235,11 +239,13 @@ namespace SudokuRoguelike.UI
         private void OnBowlClicked(int index)
         {
             if (_restTaken || index < 0 || index >= _restChoices.Count) return;
-            if (_selectedRest == index)
-            {
-                DrinkRest(index);
-                return;
-            }
+            if (_selectedRest == index) DrinkRest(index);
+            else ChooseBowl(index);
+        }
+
+        private void ChooseBowl(int index)
+        {
+            if (_restTaken || index < 0 || index >= _restChoices.Count) return;
             _selectedRest = index;
             for (var i = 0; i < _restChoices.Count; i++)
             {

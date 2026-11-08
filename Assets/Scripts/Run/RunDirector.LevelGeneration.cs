@@ -72,8 +72,8 @@ namespace SudokuRoguelike.Run
                 Difficulty = MapDifficulty(floor, stars)
             };
 
-            // Floor modifiers apply to non-boss puzzles only (all puzzles on floors 2–5).
-            // Boss nodes have their own chosen modifier set and should be a clean slate.
+            // Floor modifiers apply to every puzzle on the floor, the boss too; its chosen rules and debuff come on top
+            // (BossMechanicsSystem, BOSS-FLOOR-001).
             if (State.ActiveFloorModifiers != null)
             {
                 for (var i = 0; i < State.ActiveFloorModifiers.Count; i++)

@@ -45,6 +45,7 @@ namespace SudokuRoguelike.Core
         public List<RunHistoryEntry> RunHistory = new List<RunHistoryEntry>();
         // [REQ: RUN-HISTORY-001] The last five finished Garden Runs and walks, newest first, each with its last board (RM-230).
         public List<RecentRun> RecentRuns = new List<RecentRun>();
+        public string ProfileName;   // [REQ: PROFILE-NAME-001] empty: "Profile 1"
     }
 
     /// <summary>[REQ: RUN-HISTORY-001] One run of the main menu's Recent Runs slip, with the board it ended on.</summary>
@@ -571,6 +572,7 @@ namespace SudokuRoguelike.Core
         public int SlotIndex;          // 0, 1, or 2
         public bool IsEmpty;
         public string DisplayName;     // e.g. "Profile 1"
+        public string CustomName;      // [REQ: PROFILE-NAME-001] the name the player gave it, null without one
         public ClassId LastPlayedClass;
         public int TotalRunsStarted;
         public int TotalRunsCompleted;

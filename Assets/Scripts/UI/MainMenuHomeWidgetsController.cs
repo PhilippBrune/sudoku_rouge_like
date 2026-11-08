@@ -21,6 +21,8 @@ namespace SudokuRoguelike.UI
             var envelope = save.HasSaveFile() ? save.Load() : new SaveFileEnvelope();
             SetText("DailyWidget/WidgetInfo", BuildDailyLine(envelope.DailyGoals ?? new DailyGoalState(), DateTime.Today));
             SetText("MonthlyWidget/WidgetInfo", BuildMonthlyLine(DateTime.Today));
+            SetText("DailyWidget/BtnDailyWidget/Label", LocalizationService.T(
+                save.HasActiveDailyWalk(DateTime.Today) ? "GameModes.Daily.ContinueWalk" : "MainMenu.Widget.Open"));   // [REQ: SAVE-DAILY-002]
             GetComponentInChildren<RecentRunsSlip>(true)?.Refresh(envelope);   // [REQ: RUN-HISTORY-002]
         }
 

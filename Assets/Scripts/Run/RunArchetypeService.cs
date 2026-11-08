@@ -141,7 +141,7 @@ namespace SudokuRoguelike.Run
                 Id = "start-" + type,
                 Type = type,
                 Rarity = ItemService.IsTiered(type) ? rarity : ItemService.GetFixedRarity(type),
-                Charges = ItemService.GetDefaultCharges(type)
+                Charges = Math.Max(ItemService.GetDefaultCharges(type), Classes.ClassPassiveService.ItemUses(state))
             });
         }
 
@@ -199,7 +199,7 @@ namespace SudokuRoguelike.Run
                     Id = "perk-inkwell-" + i,
                     Type = ItemType.InkWell,
                     Rarity = ItemRarity.Rare,
-                    Charges = ItemService.GetDefaultCharges(ItemType.InkWell)
+                    Charges = Math.Max(ItemService.GetDefaultCharges(ItemType.InkWell), Classes.ClassPassiveService.ItemUses(state))
                 });
         }
     }

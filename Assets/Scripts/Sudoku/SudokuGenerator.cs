@@ -11,7 +11,7 @@ namespace SudokuRoguelike.Sudoku
             bool antiking = false, bool distanceGe2 = false, bool entropy = false)
         {
             var random = new Random(seed);
-            var regionMap = BuildRegionMap(size, regionVariant);
+            var regionMap = RegionMapFor(size, regionVariant, seed);
             var solution = GenerateSolvedBoard(size, regionMap, random, nonconsecutive, antiknight,
                 nonconsecDiagonal, antibishop, antiking, distanceGe2, entropy);
             var puzzle = (int[,])solution.Clone();
@@ -53,7 +53,7 @@ namespace SudokuRoguelike.Sudoku
         {
             deadline.ThrowIfExceeded();
             var random = new Random(seed);
-            var regionMap = BuildRegionMap(size, regionVariant);
+            var regionMap = RegionMapFor(size, regionVariant, seed);
             var solution = GenerateSolvedBoard(size, regionMap, random, nonconsecutive, antiknight,
                 nonconsecDiagonal, antibishop, antiking, distanceGe2, entropy, deadline, shape);
 
@@ -397,6 +397,24 @@ namespace SudokuRoguelike.Sudoku
 
         // [REQ: GEN-REGION-001] BuildRegionMap: 4 layout variants per board size (rectangular × 2 + template × 2); used by both CreatePuzzle paths
         // [REQ: GEN-REGION-002] Each region contains exactly `size` cells and is spatially contiguous (guaranteed by templates and FillRectangular)
+        /// <summary>[REQ: GEN-REGION-004] An irregular layout turns by a quarter per step of the seed (owner, 0.4.3 playtest: the
+        /// 8×8's long box always lay bottom left), so each template gives four boards. Boxes stay as they are.</summary>
+        public static int[,] RegionMapFor(int size, int variant, int seed)
+        {
+            var map = BuildRegionMap(size, variant);
+            var irregular = size == 5 || size == 7 || variant >= 2;
+            var turns = irregular ? (seed >> 4) & 3 : 0;
+            for (var t = 0; t < turns; t++)
+            {
+                var turned = new int[size, size];
+                for (var r = 0; r < size; r++)
+                for (var c = 0; c < size; c++)
+                    turned[c, size - 1 - r] = map[r, c];
+                map = turned;
+            }
+            return map;
+        }
+
         internal static int[,] BuildRegionMap(int size, int variant = 0)
         {
             var regionMap = new int[size, size];

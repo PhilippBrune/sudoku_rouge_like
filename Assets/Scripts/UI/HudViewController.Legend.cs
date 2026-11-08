@@ -52,7 +52,7 @@ namespace SudokuRoguelike.UI
                 swatch.raycastTarget = false;
                 ScrollUiKit.Label(row.transform, "Name", BossService.GetModifierName(id), 17, TextAnchor.MiddleLeft, ScrollUiKit.Vermilion,
                     new Vector2(0.14f, 0.58f), new Vector2(1f, 1f), 10);
-                ScrollUiKit.Label(row.transform, "Rule", BossService.GetModifierDescription(id), 14, TextAnchor.UpperLeft, ScrollUiKit.Ink,
+                ScrollUiKit.Label(row.transform, "Rule", BossService.GetModifierDescription(id, _map?.Run?.CurrentBoard?.Size ?? 9), 14, TextAnchor.UpperLeft, ScrollUiKit.Ink,
                     new Vector2(0f, 0f), new Vector2(1f, 0.58f), 9);
 
                 button.onClick.AddListener(() =>

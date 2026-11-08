@@ -119,7 +119,7 @@ namespace SudokuRoguelike.UI
             void Add(BossModifierId id)
             {
                 sb.Append("<b>").Append(BossService.GetModifierName(id)).Append("</b>  ");
-                sb.AppendLine(BossService.GetModifierDescription(id));
+                sb.AppendLine(BossService.GetModifierDescription(id, run?.CurrentBoard?.Size ?? 9));
             }
 
             var floorMods = run?.State?.ActiveFloorModifiers;

@@ -93,7 +93,7 @@ namespace SudokuRoguelike.Tests
             ClickButton(host, "BtnLanguageGerman");
             yield return null;
 
-            Assert.AreEqual("Weiter", GetButtonLabel(host, "BtnContinueFirstRun"));
+            Assert.AreEqual("In den Garten", GetButtonLabel(host, "BtnContinueFirstRun"));
 
             SetToggle(host, "ToggleColorblind", true);
             SetToggle(host, "ToggleContrast", true);
@@ -105,7 +105,7 @@ namespace SudokuRoguelike.Tests
             yield return null;
 
             Assert.IsTrue(callbackCompleted, "First-run completion callback was not invoked.");
-            AssertPanelActive(host, "SudokuBasicsPrompt");
+            Assert.IsNull(GameObject.Find("SudokuBasicsPrompt"), "Enter the garden replaces the Basics prompt (UI-STYLE-045)");
 
             var envelope = new SaveFileService(TestSlot).Load();
             var options = envelope.PlayerProfile.Options;

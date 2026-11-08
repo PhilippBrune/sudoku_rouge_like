@@ -40,6 +40,49 @@ namespace SudokuRoguelike.UI
 
         private void Awake() => _instance = this;
 
+        // [REQ: CRASH-REPORT-001] Offered once after a game that did not close properly, when the menu is up. Only the player's
+        // Send lets a report leave; before that the form shows exactly what it holds.
+        private bool _crashReport;
+
+        private IEnumerator Start()
+        {
+            if (!SudokuRoguelike.Platform.SessionGuard.LastSessionCrashed) yield break;
+            while (SudokuRoguelike.Bootstrap.SplashScreenController.Showing
+                   || FindAnyObjectByType<FirstRunSetupModalController>() != null) yield return null;
+            yield return new WaitForSecondsRealtime(0.5f);
+            if (!IsOpen) ShowCrashPrompt();
+        }
+
+        private void ShowCrashPrompt()
+        {
+            _open = true;
+            EnsureCanvas();
+            var layer = ScrollUiKit.Fill(_canvas.transform, "CrashPromptLayer", Vector2.zero, Vector2.one, new Color(0.04f, 0.03f, 0.02f, 0.80f));
+            layer.raycastTarget = true;
+            _root = layer.gameObject;
+            var paper = ScrollUiKit.Fill(layer.transform, "CrashPromptPaper", new Vector2(0.28f, 0.32f), new Vector2(0.72f, 0.68f), ScrollUiKit.Paper).transform;
+            ScrollUiKit.Fill(paper, "Band", new Vector2(0f, 0.975f), Vector2.one, ScrollUiKit.Vermilion);
+            ScrollUiKit.Label(paper, "Title", T("Feedback.Crash.Title", "The game did not close properly"), 34, TextAnchor.MiddleLeft, ScrollUiKit.Ink,
+                new Vector2(0.06f, 0.70f), new Vector2(0.94f, 0.92f), 20);
+            ScrollUiKit.Label(paper, "Body", T("Feedback.Crash.Body", "A report helps to find the cause. You see all of it first, and nothing leaves your PC unless you press Send."),
+                22, TextAnchor.UpperLeft, ScrollUiKit.InkSoft, new Vector2(0.06f, 0.30f), new Vector2(0.94f, 0.68f), 14);
+            var look = ScrollUiKit.PillButton(paper, "BtnCrashLook", new Vector2(0.06f, 0.07f), new Vector2(0.56f, 0.25f),
+                T("Feedback.Crash.Look", "Look at the report"), 22, ScrollUiKit.Vermilion, Color.white, 22f);
+            look.onClick.AddListener(() =>
+            {
+                ScrollUiKit.DestroyNow(_root);
+                _root = null;
+                _crashReport = true;
+                Build();
+            });
+            var later = ScrollUiKit.PillButton(paper, "BtnCrashLater", new Vector2(0.60f, 0.07f), new Vector2(0.94f, 0.25f),
+                T("Feedback.Crash.Later", "Not now"), 22, ScrollUiKit.Wood, ScrollUiKit.PaperText, 22f);
+            later.onClick.AddListener(Close);
+            look.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnRight = later };
+            later.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnLeft = look };
+            UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(look.gameObject);
+        }
+
         private void Update()
         {
             if (!IsOpen && Input.GetKeyDown(KeyCode.F8)) Open();
@@ -102,20 +145,23 @@ namespace SudokuRoguelike.UI
             return map != null && map.isActiveAndEnabled && map.gameObject.activeInHierarchy ? map.Run : null;
         }
 
+        private void EnsureCanvas()
+        {
+            if (_canvas != null) return;
+            var go = new GameObject("FeedbackCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            go.transform.SetParent(transform, false);
+            _canvas = go.GetComponent<Canvas>();
+            _canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            _canvas.sortingOrder = 900;
+            var scaler = go.GetComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            scaler.matchWidthOrHeight = 0.5f;
+        }
+
         private void Build()
         {
-            if (_canvas == null)
-            {
-                var go = new GameObject("FeedbackCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-                go.transform.SetParent(transform, false);
-                _canvas = go.GetComponent<Canvas>();
-                _canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                _canvas.sortingOrder = 900;
-                var scaler = go.GetComponent<CanvasScaler>();
-                scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-                scaler.referenceResolution = new Vector2(1920f, 1080f);
-                scaler.matchWidthOrHeight = 0.5f;
-            }
+            EnsureCanvas();
             var layer = ScrollUiKit.Fill(_canvas.transform, "FeedbackLayer", Vector2.zero, Vector2.one, new Color(0.04f, 0.03f, 0.02f, 0.80f));
             layer.raycastTarget = true;
             _root = layer.gameObject;
@@ -139,6 +185,7 @@ namespace SudokuRoguelike.UI
 
             _text = Field(p, "FeedbackText", new Vector2(0.04f, 0.42f), new Vector2(0.60f, 0.75f), 22,
                 T("Feedback.Placeholder", "What happened? What did you expect?"), FeedbackReport.MaxTextLength, true);
+            if (_crashReport) _text.text = T("Feedback.Crash.Text", "The game did not close properly the last time. What was I doing:");
             _discord = Field(p, "FeedbackDiscord", new Vector2(0.04f, 0.34f), new Vector2(0.60f, 0.40f), 20,
                 T("Feedback.Discord", "Your Discord name (optional), so I can answer"), 40, false);
 
@@ -157,8 +204,8 @@ namespace SudokuRoguelike.UI
 
             ScrollUiKit.Label(p, "WithHeader", T("Feedback.With", "SEND WITH IT").ToUpperInvariant(), 16, TextAnchor.MiddleLeft,
                 ScrollUiKit.InkSoft, new Vector2(0.63f, 0.53f), new Vector2(0.96f, 0.57f), 10);
-            _withShot = Tick(p, "WithShot", 0.47f, T("Feedback.With.Shot", "The screenshot"), true);
-            _withRun = Tick(p, "WithRun", 0.41f, T("Feedback.With.Run", "The run: seed, board, class, floor"), CurrentRun() != null);
+            _withShot = Tick(p, "WithShot", 0.47f, T("Feedback.With.Shot", "The screenshot"), !_crashReport);
+            _withRun = Tick(p, "WithRun", 0.41f, T("Feedback.With.Run", "The run: seed, board, class, floor"), !_crashReport && CurrentRun() != null);
             _withLog = Tick(p, "WithLog", 0.35f, T("Feedback.With.Log", "The game's log (last 200 lines)"), true);
             _withSave = Tick(p, "WithSave", 0.29f, T("Feedback.With.Save", "My save file, to load the run"), false);
 
@@ -226,7 +273,7 @@ namespace SudokuRoguelike.UI
                 Title = FeedbackReport.Title(_kind, "v" + Application.version, _withRun.isOn ? run : null),
                 Text = ReportText(run),
                 Screenshot = _withShot.isOn ? _shot : null,
-                Log = _withLog.isOn ? FeedbackReport.LogTail(Application.consoleLogPath) : null,
+                Log = _withLog.isOn ? FeedbackReport.LogTail(_crashReport ? SudokuRoguelike.Platform.SessionGuard.PreviousLogPath : Application.consoleLogPath) : null,
                 Save = _withSave.isOn ? ReadSave() : null
             };
             _sending = true;
@@ -269,6 +316,7 @@ namespace SudokuRoguelike.UI
             _shotTexture = null;
             _shot = null;
             _kindPills.Clear();
+            _crashReport = false;
             _open = false;
             _closedFrame = Time.frameCount;
         }

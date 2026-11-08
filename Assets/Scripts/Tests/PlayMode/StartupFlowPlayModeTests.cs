@@ -77,7 +77,7 @@ namespace SudokuRoguelike.Tests
             for (var i = 0; i < 3; i++) yield return null;
 
             Assert.IsNull(Find("FirstRunSetupModal"), "setup closes after Continue");
-            Assert.NotNull(Find("SudokuBasicsPrompt"), "the Sudoku basics prompt follows the setup");
+            Assert.IsNull(Find("SudokuBasicsPrompt"), "Enter the garden replaces the Basics prompt (UI-STYLE-045)");
             Assert.IsTrue(StartupFlowController.IsFirstRunSetupComplete(new SaveFileService(TestSlot).Load()));
         }
 

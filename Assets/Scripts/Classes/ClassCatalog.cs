@@ -51,7 +51,7 @@ namespace SudokuRoguelike.Classes
             {
                 Id = ClassId.StoneGardener, Name = "Stone Gardener",
                 BaseHP = 11, BasePencil = 8, BaseItemSlots = 3,
-                PassiveDescription = "First item used each puzzle node is not consumed.",
+                PassiveDescription = "Items have 2 uses (3 from level 20).",
                 UnlockCondition = "Defeat 10 bosses"
             },
             new ClassDefinition
@@ -118,7 +118,7 @@ namespace SudokuRoguelike.Classes
                     (25,"+2 Pencil, +1 HP"),(30,"Start: Golden Koi"),(35,"+1 Reroll Token"),(40,"Cosmetic: Golden Koi frame") },
             // StoneGardener
             new[] { (3,"+1 Pencil"),(5,"+1 HP"),(7,"+1 Item Slot"),(10,"+10 Starting Gold, +1 Starting Relic"),
-                    (13,"+2 Pencil"),(15,"+1 HP, +1 Reroll Token"),(18,"+1 Item Slot"),(20,"Passive: 2 free items/level, +1 Starting Relic"),
+                    (13,"+2 Pencil"),(15,"+1 HP, +1 Reroll Token"),(18,"+1 Item Slot"),(20,"Passive: items have 3 uses, +1 Starting Relic"),
                     (25,"+2 HP"),(30,"Start: Rice Paper Umbrella"),(35,"+1 Pencil, +1 HP"),(40,"Cosmetic: Mossy Stone frame") },
             // LanternSeer
             new[] { (3,"+1 Pencil"),(5,"+1 HP"),(7,"+10 Starting Gold"),(10,"+1 Reroll Token"),

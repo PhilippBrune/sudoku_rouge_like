@@ -42,7 +42,7 @@ namespace SudokuRoguelike.Tests
             var item = state.HeldItems[0];
             Assert.AreEqual(type, item.Type);
             Assert.AreEqual(ItemService.IsTiered(type) ? rarity : ItemService.GetFixedRarity(type), item.Rarity);
-            Assert.AreEqual(ItemService.GetDefaultCharges(type), item.Charges);
+            Assert.AreEqual(System.Math.Max(ItemService.GetDefaultCharges(type), SudokuRoguelike.Classes.ClassPassiveService.ItemUses(state)), item.Charges);
             Assert.IsFalse(string.IsNullOrEmpty(item.Id));
         }
 

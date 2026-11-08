@@ -28,7 +28,7 @@ namespace SudokuRoguelike.Run
             var counters = Items.CounterItems.ForRules(rules);
             if (Items.CounterItems.FogAhead(rules, State.ActiveCurseIds)) counters.AddRange(Items.CounterItems.FogItems);   // ITEM-FOG-001
             CurrentShopOffers = _shopService.BuildOffers(State.CurrentFloor, classLevel, priceMultiplier, State.HarmonyConfig.ShopSurcharge,
-                shopClassId, counters);
+                shopClassId, counters, State.DailyWalkPath ? State.WalkFloor - 1 : (int?)null);   // [REQ: ECON-SHOP-003]
             return CurrentShopOffers;
         }
 

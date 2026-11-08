@@ -8,302 +8,222 @@ using UnityEngine.UI;
 
 namespace SudokuRoguelike.UI
 {
+    /// <summary>
+    /// [REQ: UI-STYLE-045] A new profile's first screen (RM-233, the owner's pick C): a banner over the garden, language and
+    /// comfort on one slip, and the two ways on as ema tablets. "Learn the basics" starts Sudoku Basics, "Enter the garden" goes
+    /// to the main menu. Both accept the setup, so no second prompt follows.
+    /// </summary>
     public sealed class FirstRunSetupModalController : MonoBehaviour
     {
-        private SaveFileService _saveFile;
-        private Action _onCompleted;
-        private LanguageOption _selectedLanguage;
-        private AccessibilitySettings _accessibility;
+        private static readonly Color SealPaper = new Color(0.96f, 0.93f, 0.85f, 1f);
+        private static readonly Color EmaWood = new Color(0.86f, 0.66f, 0.42f, 1f);
+        private static readonly Color EmaFocus = new Color(0.91f, 0.62f, 0.56f, 1f);
 
-        private Text _title;
-        private Text _body;
-        private Text _languageHeader;
-        private Text _accessibilityHeader;
-        private Text _legalHeader;
-        private Text _legalBody;
-        private Text _moreOptionsHint;
-        private Text _continueLabel;
-        private Text _colorblindLabel;
-        private Text _contrastLabel;
-        private Text _motionLabel;
-        private Text _readerLabel;
         // [REQ: REQ-UI-101] SPEC-CONF-032: every shipped catalog is offered (GAP-019).
         private static readonly LanguageOption[] Languages =
         {
             LanguageOption.English, LanguageOption.German, LanguageOption.French,
             LanguageOption.Spanish, LanguageOption.BrazilianPortuguese
         };
+
+        private SaveFileService _saveFile;
+        private Action _onCompleted, _onLearnBasics;
+        private LanguageOption _selectedLanguage;
+        private AccessibilitySettings _accessibility;
         private readonly Button[] _languageButtons = new Button[Languages.Length];
         private readonly Text[] _languageLabels = new Text[Languages.Length];
-        private Text _gamepadHintText;
+        private Text _eyebrow, _welcome, _languageHeader, _comfortHeader, _note, _enterTitle, _enterText, _learnTitle, _learnText;
+        private Text _colorblindLabel, _contrastLabel, _motionLabel, _readerLabel, _gamepadHint;
 
         public GameObject Root => gameObject;
 
-        public static FirstRunSetupModalController Show(
-            Canvas canvas,
-            SaveFileService saveFile,
-            Action onCompleted)
+        public static FirstRunSetupModalController Show(Canvas canvas, SaveFileService saveFile, Action onCompleted, Action onLearnBasics = null)
         {
-            if (canvas == null)
-                return null;
-
-            var shell = InRunUiFactory.CreateThemedModalShell(
-                canvas.transform,
-                "FirstRunSetupModal",
-                new Vector2(0.16f, 0.12f),
-                new Vector2(0.84f, 0.88f),
-                "bg_tutorial_setup",
-                0.12f);
-
-            var controller = shell.Root.AddComponent<FirstRunSetupModalController>();
-            controller.Build(shell.Panel, saveFile ?? new SaveFileService(SaveProfileService.ActiveSlot), onCompleted);
+            if (canvas == null) return null;
+            var root = ScrollUiKit.Fill(canvas.transform, "FirstRunSetupModal", Vector2.zero, Vector2.one, Color.black);
+            root.raycastTarget = true;   // nothing under it reacts
+            var controller = root.gameObject.AddComponent<FirstRunSetupModalController>();
+            controller.Build(root.rectTransform, saveFile ?? new SaveFileService(SaveProfileService.ActiveSlot), onCompleted, onLearnBasics);
             return controller;
         }
 
-        private void Build(RectTransform panel, SaveFileService saveFile, Action onCompleted)
+        private void Build(RectTransform screen, SaveFileService saveFile, Action onCompleted, Action onLearnBasics)
         {
             _saveFile = saveFile;
             _onCompleted = onCompleted;
-
+            _onLearnBasics = onLearnBasics;
             var envelope = _saveFile.Load();
             var options = envelope.PlayerProfile?.Options ?? new OptionsState();
             _selectedLanguage = options.Language;
             _accessibility = CopyAccessibility(options.Accessibility ?? new AccessibilitySettings());
             LocalizationService.SetLanguage(_selectedLanguage);
 
-            _title = CreateText(panel, "Title", 24, TextAnchor.UpperCenter, GamePalette.AccentGold,
-                new Vector2(0.06f, 0.88f), new Vector2(0.94f, 0.97f));
-            _body = CreateText(panel, "Body", 13, TextAnchor.UpperCenter, GamePalette.TextPrimary,
-                new Vector2(0.08f, 0.75f), new Vector2(0.92f, 0.87f));
+            ScrollUiKit.Painting(screen, "FirstRunPainting", "bg_main_menu", new Color(0.66f, 0.62f, 0.62f, 1f));
+            var banner = ScrollUiKit.Banner(screen, "FirstRunBanner", new Vector2(0.2396f, 0.7685f), new Vector2(0.7604f, 0.9167f),
+                "FirstRunEyebrow", string.Empty, "FirstRunTitle", string.Empty);
+            _eyebrow = banner.GetComponentsInChildren<Text>(true).FirstNamed("FirstRunEyebrow");
+            _welcome = banner.GetComponentsInChildren<Text>(true).FirstNamed("FirstRunTitle");
 
-            _languageHeader = CreateText(panel, "LanguageHeader", 16, TextAnchor.MiddleLeft, GamePalette.AccentGold,
-                new Vector2(0.08f, 0.66f), new Vector2(0.92f, 0.72f));
-            const float rowMin = 0.08f, rowMax = 0.92f, gap = 0.01f;
-            var width = (rowMax - rowMin - gap * (Languages.Length - 1)) / Languages.Length;
-            for (var i = 0; i < Languages.Length; i++)
-            {
-                var language = Languages[i];
-                var xMin = rowMin + i * (width + gap);
-                _languageButtons[i] = InRunUiFactory.CreateActionButton(panel, "BtnLanguage" + language,
-                    new Vector2(xMin, 0.57f), new Vector2(xMin + width, 0.65f), "", UiAction.Confirm);
-                _languageLabels[i] = GetButtonLabel(_languageButtons[i]);
-                _languageButtons[i].onClick.AddListener(() => SelectLanguage(language));
-            }
+            var slip = ScrollUiKit.Fill(screen, "FirstRunSlip", new Vector2(0.1042f, 0.0926f), new Vector2(0.4375f, 0.7037f), ScrollUiKit.Paper);
+            slip.raycastTarget = true;
+            var shadow = slip.gameObject.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0f, 0f, 0f, 0.55f);
+            shadow.effectDistance = new Vector2(0f, -10f);
+            var t = slip.transform;
+            _languageHeader = ScrollUiKit.Label(t, "LanguageHeader", string.Empty, 16, TextAnchor.MiddleLeft, ScrollUiKit.InkSoft, new Vector2(0.04f, 0.93f), new Vector2(0.96f, 0.98f), 11);
+            for (var i = 0; i < Languages.Length; i++) BuildSeal(t, i);
+            _comfortHeader = ScrollUiKit.Label(t, "AccessibilityHeader", string.Empty, 16, TextAnchor.MiddleLeft, ScrollUiKit.InkSoft, new Vector2(0.04f, 0.47f), new Vector2(0.96f, 0.52f), 11);
+            _colorblindLabel = BuildTick(t, "ToggleColorblind", 0, _accessibility.ColorblindMode, v => _accessibility.ColorblindMode = v);
+            _contrastLabel = BuildTick(t, "ToggleContrast", 1, _accessibility.HighContrastMode, v => _accessibility.HighContrastMode = v);
+            _motionLabel = BuildTick(t, "ToggleMotion", 2, _accessibility.ReduceMotion, v => _accessibility.ReduceMotion = v);
+            _readerLabel = BuildTick(t, "ToggleScreenReader", 3, _accessibility.ScreenReaderEnabled, v => _accessibility.ScreenReaderEnabled = v);
+            _note = ScrollUiKit.Label(t, "LegalBody", string.Empty, 15, TextAnchor.UpperLeft, ScrollUiKit.InkSoft, new Vector2(0.04f, 0.015f), new Vector2(0.96f, 0.145f), 10);
 
-            _accessibilityHeader = CreateText(panel, "AccessibilityHeader", 16, TextAnchor.MiddleLeft, GamePalette.AccentGold,
-                new Vector2(0.08f, 0.48f), new Vector2(0.92f, 0.54f));
-            _colorblindLabel = CreateToggle(panel, "ToggleColorblind",
-                new Vector2(0.08f, 0.41f), new Vector2(0.48f, 0.47f),
-                _accessibility.ColorblindMode, value => _accessibility.ColorblindMode = value);
-            _contrastLabel = CreateToggle(panel, "ToggleContrast",
-                new Vector2(0.52f, 0.41f), new Vector2(0.92f, 0.47f),
-                _accessibility.HighContrastMode, value => _accessibility.HighContrastMode = value);
-            _motionLabel = CreateToggle(panel, "ToggleMotion",
-                new Vector2(0.08f, 0.34f), new Vector2(0.48f, 0.40f),
-                _accessibility.ReduceMotion, value => _accessibility.ReduceMotion = value);
-            _readerLabel = CreateToggle(panel, "ToggleScreenReader",
-                new Vector2(0.52f, 0.34f), new Vector2(0.92f, 0.40f),
-                _accessibility.ScreenReaderEnabled, value => _accessibility.ScreenReaderEnabled = value);
-            _moreOptionsHint = CreateText(panel, "MoreOptionsHint", 11, TextAnchor.UpperLeft, GamePalette.TextMuted,
-                new Vector2(0.08f, 0.28f), new Vector2(0.92f, 0.33f));
+            var learn = BuildEma(screen, "BtnLearnBasicsFirstRun", new Vector2(0.50f, 0.3889f), new Vector2(0.6875f, 0.6944f), "ui/icon_scroll_stamp", out _learnTitle, out _learnText);
+            learn.onClick.AddListener(() => CompleteSetup(_onLearnBasics ?? _onCompleted));
+            var enter = BuildEma(screen, "BtnContinueFirstRun", new Vector2(0.7083f, 0.3889f), new Vector2(0.8958f, 0.6944f), "ui/icon_confirm_seal", out _enterTitle, out _enterText);
+            enter.onClick.AddListener(() => CompleteSetup(_onCompleted));
 
-            _legalHeader = CreateText(panel, "LegalHeader", 16, TextAnchor.MiddleLeft, GamePalette.AccentGold,
-                new Vector2(0.08f, 0.21f), new Vector2(0.92f, 0.27f));
-            _legalBody = CreateText(panel, "LegalBody", 11, TextAnchor.UpperLeft, GamePalette.TextPrimary,
-                new Vector2(0.08f, 0.09f), new Vector2(0.92f, 0.21f));
-
-            var continueButton = InRunUiFactory.CreateActionButton(panel, "BtnContinueFirstRun",
-                new Vector2(0.30f, 0.02f), new Vector2(0.70f, 0.08f), "", UiAction.Accept);
-            MainMenuController.ConfigureModalActionLabel(continueButton);
-            _continueLabel = GetButtonLabel(continueButton);
-            continueButton.onClick.AddListener(CompleteSetup);
-
-            _gamepadHintText = CreateText(panel, "GamepadHint", 9, TextAnchor.MiddleRight, GamePalette.TextMuted,
-                new Vector2(0.55f, 0.90f), new Vector2(0.98f, 0.96f));
+            _gamepadHint = ScrollUiKit.Label(screen, "GamepadHint", string.Empty, 18, TextAnchor.MiddleCenter, new Color(0.93f, 0.89f, 0.80f, 1f), new Vector2(0.5f, 0.32f), new Vector2(0.9f, 0.37f), 12);
 
             RefreshLocalizedText();
-            UpdateLanguageButtonState();
-            EventSystem.current?.SetSelectedGameObject(continueButton.gameObject);
+            PaintSeals();
+            EventSystem.current?.SetSelectedGameObject(learn.gameObject);
         }
 
-        private static AccessibilitySettings CopyAccessibility(AccessibilitySettings source)
+        private void BuildSeal(Transform slip, int index)
         {
-            return new AccessibilitySettings
-            {
-                ColorblindMode = source.ColorblindMode,
-                HighContrastMode = source.HighContrastMode,
-                FontScale = source.FontScale,
-                ReduceMotion = source.ReduceMotion,
-                AlternativeConstraintSymbols = source.AlternativeConstraintSymbols,
-                ScreenReaderEnabled = source.ScreenReaderEnabled
-            };
+            const float left = 0.04f, width = 0.30f, gap = 0.01f, top = 0.915f, height = 0.19f, rowGap = 0.02f;
+            var col = index % 3;
+            var row = index / 3;
+            var x = left + col * (width + gap);
+            var y = top - row * (height + rowGap);
+            var language = Languages[index];
+            var seal = ScrollUiKit.Fill(slip, "BtnLanguage" + language, new Vector2(x, y - height), new Vector2(x + width, y), SealPaper, ScrollUiKit.Rounded(10f));
+            seal.raycastTarget = true;
+            seal.gameObject.AddComponent<Outline>().effectDistance = new Vector2(2f, -2f);
+            var button = seal.gameObject.AddComponent<Button>();
+            button.targetGraphic = seal;
+            button.transition = Selectable.Transition.None;
+            button.onClick.AddListener(() => SelectLanguage(language));
+            _languageLabels[index] = ScrollUiKit.Label(seal.transform, "Label", string.Empty, 24, TextAnchor.MiddleCenter, ScrollUiKit.Ink, new Vector2(0.05f, 0.1f), new Vector2(0.95f, 0.9f), 13);
+            _languageButtons[index] = button;
         }
+
+        private static Text BuildTick(Transform slip, string name, int index, bool value, Action<bool> changed)
+        {
+            var top = 0.46f - index * 0.078f;
+            var row = ScrollUiKit.Fill(slip, name, new Vector2(0.04f, top - 0.072f), new Vector2(0.96f, top), new Color(1f, 1f, 1f, 0f));
+            row.raycastTarget = true;
+            var toggle = row.gameObject.AddComponent<Toggle>();
+            toggle.targetGraphic = row;
+            var colors = ScrollUiKit.StateColors(new Color(1f, 1f, 1f, 0f));
+            colors.highlightedColor = colors.selectedColor = new Color(0.91f, 0.77f, 0.42f, 0.38f);
+            toggle.colors = colors;
+            var box = ScrollUiKit.Fill(row.transform, "Box", new Vector2(0.01f, 0.12f), new Vector2(0.075f, 0.88f), new Color(0.98f, 0.96f, 0.90f, 1f));
+            ScrollUiKit.InkFrame(box.transform, ScrollUiKit.Ink, 1.5f);
+            toggle.graphic = ScrollUiKit.Fill(box.transform, "Checkmark", new Vector2(0.2f, 0.2f), new Vector2(0.8f, 0.8f), ScrollUiKit.Vermilion);
+            toggle.SetIsOnWithoutNotify(value);
+            toggle.onValueChanged.AddListener(v => changed(v));
+            return ScrollUiKit.Label(row.transform, "Label", string.Empty, 22, TextAnchor.MiddleLeft, ScrollUiKit.Ink, new Vector2(0.11f, 0f), new Vector2(0.99f, 1f), 13);
+        }
+
+        private static Button BuildEma(RectTransform screen, string name, Vector2 min, Vector2 max, string icon, out Text title, out Text text)
+        {
+            var ema = ScrollUiKit.Fill(screen, name, min, max, Color.white, ScrollUiKit.Ema());
+            ema.raycastTarget = true;
+            var button = ema.gameObject.AddComponent<Button>();
+            button.targetGraphic = ema;
+            var colors = ScrollUiKit.StateColors(EmaWood);
+            colors.highlightedColor = colors.selectedColor = EmaFocus;
+            button.colors = colors;
+            ScrollUiKit.Icon(ema.transform, "Icon", icon, new Vector2(0.34f, 0.55f), new Vector2(0.66f, 0.84f), Color.white);
+            title = ScrollUiKit.Label(ema.transform, "Label", string.Empty, 30, TextAnchor.MiddleCenter, ScrollUiKit.Ink, new Vector2(0.06f, 0.36f), new Vector2(0.94f, 0.54f), 18);
+            text = ScrollUiKit.Label(ema.transform, "Text", string.Empty, 19, TextAnchor.UpperCenter, ScrollUiKit.Ink, new Vector2(0.10f, 0.07f), new Vector2(0.90f, 0.35f), 12);
+            return button;
+        }
+
+        private static AccessibilitySettings CopyAccessibility(AccessibilitySettings source) => new AccessibilitySettings
+        {
+            ColorblindMode = source.ColorblindMode,
+            HighContrastMode = source.HighContrastMode,
+            FontScale = source.FontScale,
+            ReduceMotion = source.ReduceMotion,
+            AlternativeConstraintSymbols = source.AlternativeConstraintSymbols,
+            ScreenReaderEnabled = source.ScreenReaderEnabled
+        };
 
         private void SelectLanguage(LanguageOption language)
         {
             _selectedLanguage = language;
             LocalizationService.SetLanguage(language);
             RefreshLocalizedText();
-            UpdateLanguageButtonState();
+            PaintSeals();
         }
 
-        private void CompleteSetup()
+        private void CompleteSetup(Action next)
         {
             var envelope = _saveFile.Load();
-            var options = StartupFlowController.EnsureFirstRunState(envelope) != null
-                ? envelope.PlayerProfile.Options
-                : new OptionsState();
-
+            var options = StartupFlowController.EnsureFirstRunState(envelope) != null ? envelope.PlayerProfile.Options : new OptionsState();
             options.Language = _selectedLanguage;
             options.Accessibility = _accessibility;
             StartupFlowController.MarkFirstRunSetupComplete(envelope);
             envelope.TimestampUtc = DateTime.UtcNow.ToString("o");
-
             _saveFile.Save(envelope);
             LocalizationService.SetLanguage(_selectedLanguage);
-
-            var optionsController = FindFirstObjectByType<OptionsController>();
-            optionsController?.LoadOptions();
-
-            var completed = _onCompleted;
-            Destroy(gameObject);
-            completed?.Invoke();
+            FindFirstObjectByType<OptionsController>()?.LoadOptions();
+            ScrollUiKit.DestroyNow(gameObject);
+            next?.Invoke();
         }
 
         private void Update()
         {
-            if (_gamepadHintText == null) return;
-            var platform = ControllerGlyphService.Detect();
-            if (platform == ControllerPlatform.None)
-            {
-                _gamepadHintText.text = string.Empty;
-                return;
-            }
+            if (_gamepadHint == null) return;
+            if (ControllerGlyphService.Detect() == ControllerPlatform.None) { _gamepadHint.text = string.Empty; return; }
             var (confirm, _, _, _) = ControllerGlyphService.GetFaceLabels();
-            _gamepadHintText.text = LocalizationService.Format("FirstRun.GamepadHint", "[{0}] Confirm  ·  D-Pad", confirm);
+            _gamepadHint.text = LocalizationService.Format("FirstRun.GamepadHint", "[{0}] Confirm  ·  D-Pad", confirm);
         }
 
         private void RefreshLocalizedText()
         {
-            SetText(_title, "FirstRun.Title");
-            SetText(_body, "FirstRun.Body");
-            SetText(_languageHeader, "FirstRun.LanguageHeader");
-            SetText(_accessibilityHeader, "FirstRun.AccessibilityHeader");
-            SetText(_legalHeader, "FirstRun.LegalHeader");
-            SetText(_legalBody, "FirstRun.LegalBody");
-            SetText(_moreOptionsHint, "FirstRun.MoreOptionsHint");
+            Set(_eyebrow, LocalizationService.Format("FirstRun.Eyebrow", "A new profile · Profile {0}", SaveProfileService.ActiveSlot + 1).ToUpperInvariant());
+            Set(_welcome, LocalizationService.T("FirstRun.Welcome"));
+            Set(_languageHeader, LocalizationService.T("FirstRun.LanguageHeader").ToUpperInvariant());
+            Set(_comfortHeader, LocalizationService.T("FirstRun.AccessibilityHeader").ToUpperInvariant());
+            Set(_note, LocalizationService.T("FirstRun.MoreOptionsHint") + " " + LocalizationService.T("FirstRun.LegalBody"));
+            for (var i = 0; i < Languages.Length; i++) Set(_languageLabels[i], LocalizationService.T("FirstRun.Language." + Languages[i]));
+            Set(_colorblindLabel, LocalizationService.T("FirstRun.Accessibility.Colorblind"));
+            Set(_contrastLabel, LocalizationService.T("FirstRun.Accessibility.HighContrast"));
+            Set(_motionLabel, LocalizationService.T("FirstRun.Accessibility.ReduceMotion"));
+            Set(_readerLabel, LocalizationService.T("FirstRun.Accessibility.ScreenReader"));
+            Set(_learnTitle, LocalizationService.T("FirstRun.LearnBasics"));
+            Set(_learnText, LocalizationService.T("FirstRun.LearnBasicsText"));
+            Set(_enterTitle, LocalizationService.T("FirstRun.EnterGarden"));
+            Set(_enterText, LocalizationService.T("FirstRun.EnterGardenText"));
+        }
+
+        private static void Set(Text text, string value)
+        {
+            if (text != null) text.text = value;
+        }
+
+        // The chosen language is a red seal, slightly turned, the others paper.
+        private void PaintSeals()
+        {
             for (var i = 0; i < Languages.Length; i++)
-                SetText(_languageLabels[i], "FirstRun.Language." + Languages[i]);
-            SetText(_continueLabel, "FirstRun.Continue");
-            SetText(_colorblindLabel, "FirstRun.Accessibility.Colorblind");
-            SetText(_contrastLabel, "FirstRun.Accessibility.HighContrast");
-            SetText(_motionLabel, "FirstRun.Accessibility.ReduceMotion");
-            SetText(_readerLabel, "FirstRun.Accessibility.ScreenReader");
+            {
+                var chosen = Languages[i] == _selectedLanguage;
+                var seal = (Image)_languageButtons[i].targetGraphic;
+                seal.color = chosen ? ScrollUiKit.Vermilion : SealPaper;
+                seal.rectTransform.localRotation = Quaternion.Euler(0f, 0f, chosen ? -2f : 0f);
+                seal.GetComponent<Outline>().effectColor = chosen ? ScrollUiKit.Gold : new Color(0.33f, 0.29f, 0.24f, 0.35f);
+                _languageLabels[i].color = chosen ? Color.white : ScrollUiKit.Ink;
+            }
         }
+    }
 
-        private static void SetText(Text text, string key)
-        {
-            if (text != null)
-                text.text = LocalizationService.T(key);
-        }
-
-        private void UpdateLanguageButtonState()
-        {
-            for (var i = 0; i < Languages.Length; i++)
-                SetSelected(_languageButtons[i], _selectedLanguage == Languages[i]);
-        }
-
-        private static void SetSelected(Button button, bool selected)
-        {
-            if (button == null) return;
-            var img = button.GetComponent<Image>();
-            if (img != null)
-                img.color = selected ? GamePalette.AccentGold : InRunUiFactory.BtnColor;
-            var label = GetButtonLabel(button);
-            if (label != null)
-                label.color = selected ? Color.black : GamePalette.AccentGold;
-        }
-
-        private static Text CreateText(
-            Transform parent,
-            string name,
-            int size,
-            TextAnchor anchor,
-            Color color,
-            Vector2 min,
-            Vector2 max)
-        {
-            var text = InRunUiFactory.CreateText(parent, name, "", size, anchor, color);
-            text.rectTransform.anchorMin = min;
-            text.rectTransform.anchorMax = max;
-            text.rectTransform.offsetMin = Vector2.zero;
-            text.rectTransform.offsetMax = Vector2.zero;
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Overflow;
-            return text;
-        }
-
-        private static Text CreateToggle(
-            Transform parent,
-            string name,
-            Vector2 min,
-            Vector2 max,
-            bool initialValue,
-            Action<bool> changed)
-        {
-            var row = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Toggle));
-            row.transform.SetParent(parent, false);
-            var rt = row.GetComponent<RectTransform>();
-            rt.anchorMin = min;
-            rt.anchorMax = max;
-            rt.offsetMin = Vector2.zero;
-            rt.offsetMax = Vector2.zero;
-
-            var bg = row.GetComponent<Image>();
-            bg.color = new Color(0.08f, 0.06f, 0.04f, 0.70f);
-
-            var toggle = row.GetComponent<Toggle>();
-            toggle.targetGraphic = bg;
-
-            // GAP-029: an always-visible box, so "off" reads as an empty box and "on" as a filled one.
-            var box = new GameObject("Box", typeof(RectTransform), typeof(Image), typeof(Outline));
-            box.transform.SetParent(row.transform, false);
-            var boxRt = box.GetComponent<RectTransform>();
-            boxRt.anchorMin = new Vector2(0.02f, 0.14f);
-            boxRt.anchorMax = new Vector2(0.10f, 0.86f);
-            boxRt.offsetMin = boxRt.offsetMax = Vector2.zero;
-            box.GetComponent<Image>().color = new Color(0.02f, 0.02f, 0.02f, 0.90f);
-            box.GetComponent<Image>().raycastTarget = false;
-            box.GetComponent<Outline>().effectColor = GamePalette.AccentGold;
-            box.GetComponent<Outline>().effectDistance = new Vector2(1.5f, -1.5f);
-
-            var check = new GameObject("Checkmark", typeof(RectTransform), typeof(Image));
-            check.transform.SetParent(box.transform, false);
-            var checkRt = check.GetComponent<RectTransform>();
-            checkRt.anchorMin = new Vector2(0.18f, 0.18f);
-            checkRt.anchorMax = new Vector2(0.82f, 0.82f);
-            checkRt.offsetMin = Vector2.zero;
-            checkRt.offsetMax = Vector2.zero;
-            var checkImg = check.GetComponent<Image>();
-            checkImg.color = GamePalette.AccentGold;
-            toggle.graphic = checkImg;
-
-            var label = InRunUiFactory.CreateText(row.transform, "Label", "", 12,
-                TextAnchor.MiddleLeft, GamePalette.AccentGold);
-            label.rectTransform.anchorMin = new Vector2(0.14f, 0f);
-            label.rectTransform.anchorMax = new Vector2(0.98f, 1f);
-            label.rectTransform.offsetMin = Vector2.zero;
-            label.rectTransform.offsetMax = Vector2.zero;
-            label.horizontalOverflow = HorizontalWrapMode.Wrap;
-
-            toggle.SetIsOnWithoutNotify(initialValue);
-            toggle.onValueChanged.AddListener(value => changed?.Invoke(value));
-            return label;
-        }
-
-        private static Text GetButtonLabel(Button button)
-        {
-            return button == null ? null : button.transform.Find("Label")?.GetComponent<Text>();
-        }
+    internal static class FirstRunTextLookup
+    {
+        internal static Text FirstNamed(this Text[] texts, string name) => Array.Find(texts, t => t.name == name);
     }
 }

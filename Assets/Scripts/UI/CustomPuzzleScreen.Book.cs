@@ -208,7 +208,7 @@ namespace SudokuRoguelike.UI
             if (_hint == null) return;
             var available = _setup.CanSelect(id, out var reason);
             _hint.text = available
-                ? $"<b>{BossService.GetModifierName(id)}</b> · {BossService.GetModifierDescription(id)}"
+                ? $"<b>{BossService.GetModifierName(id)}</b> · {BossService.GetModifierDescription(id, _setup.GetBoardSize())}"
                 : reason;
             _hint.supportRichText = true;
             _hint.color = available ? ScrollUiKit.Ink : ScrollUiKit.Vermilion;

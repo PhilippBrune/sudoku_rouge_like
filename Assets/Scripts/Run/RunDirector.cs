@@ -315,11 +315,14 @@ namespace SudokuRoguelike.Run
             StartLevel(CurrentLevelConfig);
         }
 
+        private const int PlainFirstFloorRuns = 3;   // [REQ: BOSS-FLOOR-004]
+
         private void RollFloorModifiers()
         {
             var minSize = FloorThemeData.GetMinBoardSize(State.CurrentFloor);
             _bossService.ReseedForDecision(DecisionSeed(DecisionPurpose.FloorModifiers));
-            State.ActiveFloorModifiers = _bossService.RollFloorModifiers(State.CurrentFloor, minSize, State.HarmonyLevel);
+            State.ActiveFloorModifiers = _bossService.RollFloorModifiers(State.CurrentFloor, minSize, State.HarmonyLevel,
+                State.GardenOpened < PlainFirstFloorRuns && !State.DailyWalk);
 
             // Add floor modifiers to seen set for "???" reveal tracking
             for (var i = 0; i < State.ActiveFloorModifiers.Count; i++)
@@ -525,6 +528,7 @@ namespace SudokuRoguelike.Run
             State.LastMistakeHpLost = 0;
             State.LastComboBeforeMistake = 0;
             State.LastWrongRow = State.LastWrongCol = -1;   // [REQ: RUN-HISTORY-001]
+            State.PuzzleClockSeconds = 0f;   // [REQ: SAVE-TIMER-001]
             // [REQ: HARMONY-SURV-003] Combo decay (H7+): the combo carried into a new puzzle is halved
             // (SPEC-AMB resolution 2026-10-06; the "8 placements without a bonus" wording could never trigger).
             if (State.ComboDecayEnabled)
@@ -625,7 +629,7 @@ namespace SudokuRoguelike.Run
 
             if (State.MistakeShieldCharges > 0) { State.MistakeShieldCharges--; State.LastMistakeHpLost = 0; return; }
             if (ClassPassiveService.OnMistake(State)) { State.LastMistakeHpLost = 0; return; } // class passive absorbs
-            if (RelicService.TryAbsorbMistake(State)) { State.LastMistakeHpLost = 0; return; }
+            if (RelicService.TryAbsorbMistake(State)) { State.LastMistakeHpLost = 0; State.LastMistakeShieldAbsorbed = true; return; }   // [REQ: RELIC-TEACUP-001] the combo holds
             if (RelicService.TryFirstMistakeShield(State)) { State.LastMistakeHpLost = 0; return; }   // [REQ: RELIC-SIG-002] [REQ: RELIC-KEY-002]
             State.MonksBeadsCountdown = 0; // any mistake cancels MonksBeads streak
 
@@ -1873,8 +1877,7 @@ namespace SudokuRoguelike.Run
             // [REQ: DEBUFF-DEF-015] RevealCost: item use is blocked while the counter is active
             if (CurrentLevelState?.ItemUseBlockedMoves > 0) return false;
 
-            var free = ClassPassiveService.IsItemUseFree(State, CurrentLevelState)
-                || RelicService.HasInfiniteItems(State)
+            var free = RelicService.HasInfiniteItems(State)
                 || RelicService.HasFirstItemFreeRelic(State, CurrentLevelState);
 
             switch (item.Type)

@@ -82,17 +82,17 @@ namespace SudokuRoguelike.Tests
 
             foreach (var key in new[]
             {
-                "FirstRun.Title",
-                "FirstRun.Body",
+                "FirstRun.Welcome",
+                "FirstRun.Eyebrow",
                 "FirstRun.LanguageHeader",
                 "FirstRun.AccessibilityHeader",
                 "FirstRun.Accessibility.Colorblind",
                 "FirstRun.Accessibility.HighContrast",
                 "FirstRun.Accessibility.ReduceMotion",
                 "FirstRun.Accessibility.ScreenReader",
-                "FirstRun.LegalHeader",
                 "FirstRun.LegalBody",
-                "FirstRun.Continue"
+                "FirstRun.EnterGarden",
+                "FirstRun.LearnBasics"
             })
             {
                 Assert.That(controller, Does.Contain(key), $"{key} is not wired into the first-run modal.");

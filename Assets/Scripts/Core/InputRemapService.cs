@@ -344,9 +344,20 @@ namespace SudokuRoguelike.Core
         {
             PadButtons.SyncUiModule();   // [REQ: INPUT-PAD-002] confirm and cancel on the right buttons for the pad in use
             InputDeviceTracker.Tick();   // [REQ: INPUT-HINT-001] the key hints follow the device in use
-            var pad = InputDeviceTracker.UsingPad;
-            if (Cursor.visible == pad) Cursor.visible = !pad;
+            // [REQ: UI-CURSOR-002] Keys hide the pointer as the pad does; moving the mouse or clicking brings it back.
+            var mouse = Input.mousePosition;
+            if (mouse != _lastMousePosition || Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1) || Input.GetMouseButtonDown(2))
+            {
+                _lastMousePosition = mouse;
+                _hiddenByKeys = false;
+            }
+            else if (Input.anyKeyDown) _hiddenByKeys = true;
+            var show = !InputDeviceTracker.UsingPad && !_hiddenByKeys;
+            if (Cursor.visible != show) Cursor.visible = show;
         }
+
+        private static Vector3 _lastMousePosition;
+        private static bool _hiddenByKeys;
 
         public string GetDisplayName(InputAction action)
         {

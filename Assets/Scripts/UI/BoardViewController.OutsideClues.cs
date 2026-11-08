@@ -1,6 +1,7 @@
 using SudokuRoguelike.Core;
 using SudokuRoguelike.Sudoku;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace SudokuRoguelike.UI
 {
@@ -26,28 +27,57 @@ namespace SudokuRoguelike.UI
             var font = Mathf.Clamp(Mathf.RoundToInt(cH * 0.36f), 14, 30);
             var gap = cH * 0.42f;
             var ink = GamePalette.OverlayOutsideClue;
+            _xSumLabels.Clear();
             foreach (var clue in overlay.OutsideClues)
             {
                 UseOverlayGroup(OutsideClueKey(clue.Type));
                 var text = clue.Value.ToString();
+                Text label = null;
                 switch (clue.Edge)
                 {
                     case OutsideClueEdge.Top:
-                        DrawOverlayText(CellCenter(new CellCoord(0, clue.Index), cW, cH, sX, sY, tW, tH).x, tH * 0.5f + gap, text, font, ink);
+                        label = DrawOverlayText(CellCenter(new CellCoord(0, clue.Index), cW, cH, sX, sY, tW, tH).x, tH * 0.5f + gap, text, font, ink);
                         break;
                     case OutsideClueEdge.Bottom:
-                        DrawOverlayText(CellCenter(new CellCoord(0, clue.Index), cW, cH, sX, sY, tW, tH).x, -tH * 0.5f - gap, text, font, ink);
+                        label = DrawOverlayText(CellCenter(new CellCoord(0, clue.Index), cW, cH, sX, sY, tW, tH).x, -tH * 0.5f - gap, text, font, ink);
                         break;
                     case OutsideClueEdge.Left:
-                        DrawOverlayText(-tW * 0.5f - gap, CellCenter(new CellCoord(clue.Index, 0), cW, cH, sX, sY, tW, tH).y, text, font, ink);
+                        label = DrawOverlayText(-tW * 0.5f - gap, CellCenter(new CellCoord(clue.Index, 0), cW, cH, sX, sY, tW, tH).y, text, font, ink);
                         break;
                     case OutsideClueEdge.Right:
-                        DrawOverlayText(tW * 0.5f + gap, CellCenter(new CellCoord(clue.Index, 0), cW, cH, sX, sY, tW, tH).y, text, font, ink);
+                        label = DrawOverlayText(tW * 0.5f + gap, CellCenter(new CellCoord(clue.Index, 0), cW, cH, sX, sY, tW, tH).y, text, font, ink);
                         break;
                     default:
                         DrawLittleKiller(clue, text, font, ink, cW, cH, sX, sY, tW, tH);
                         break;
                 }
+                if (label != null && clue.Type == OutsideClueType.XSums) _xSumLabels.Add((clue, label, BuildStrike(label, ink)));
+            }
+        }
+
+        // [REQ: BOSS-XSUM-001] A fulfilled X-Sum clue is struck through and fades, so the open ones stand out.
+        private readonly System.Collections.Generic.List<(OutsideClue Clue, Text Label, GameObject Strike)> _xSumLabels =
+            new System.Collections.Generic.List<(OutsideClue, Text, GameObject)>();
+
+        private static GameObject BuildStrike(Text label, Color ink)
+        {
+            var width = label.preferredWidth + label.fontSize * 0.5f;
+            var strike = ScrollUiKit.Spot(label.transform, "Strike", new Vector2(0.5f, 0.5f), new Vector2(width, 3f), ink);
+            strike.rectTransform.localRotation = Quaternion.Euler(0f, 0f, -18f);
+            strike.gameObject.SetActive(false);
+            return strike.gameObject;
+        }
+
+        private void StrikeFulfilledXSums(SudokuBoard board)
+        {
+            foreach (var (clue, label, strike) in _xSumLabels)
+            {
+                if (label == null) continue;
+                var done = OutsideClueGeometry.IsXSumFulfilled(clue, board.Cells, board.Size);
+                if (strike.activeSelf == done) continue;
+                strike.SetActive(done);
+                var c = label.color;
+                label.color = new Color(c.r, c.g, c.b, done ? 0.5f : 1f);
             }
         }
 

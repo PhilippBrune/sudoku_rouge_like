@@ -43,7 +43,8 @@ namespace SudokuRoguelike.Economy
         /// <summary>The item as it goes into the bag: one more charge for every Twin Koi.</summary>
         public static ItemInstance OnItemReceived(RunState state, ItemInstance item)
         {
-            if (item != null) item.Charges = Math.Max(1, item.Charges) + CountRelicsOfType(state, RelicId.TwinKoi);
+            if (item != null)
+                item.Charges = Math.Max(Math.Max(1, item.Charges), Classes.ClassPassiveService.ItemUses(state)) + CountRelicsOfType(state, RelicId.TwinKoi);
             return item;
         }
 

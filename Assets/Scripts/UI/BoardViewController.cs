@@ -399,6 +399,8 @@ namespace SudokuRoguelike.UI
                     if (cell.LastPencilText != "") { cell.PencilLabel.text = ""; cell.LastPencilText = ""; }
                 }
 
+                if (i == 0) StrikeFulfilledXSums(board);   // [REQ: BOSS-XSUM-001]
+
                 if (_previewPieceCells.Contains((cell.Row, cell.Col)))   // [REQ: ITEM-SCROLL-002]
                     c = Color.Lerp(c, PreviewPieceColor, 0.65f);
 
@@ -1137,7 +1139,7 @@ namespace SudokuRoguelike.UI
         /// <summary>A labelled badge: a circle that grows with the label it carries (ACCESS-FONT-002).</summary>
         private void DrawBadge(float x, float y, float radius, Color color) => DrawCircle(x, y, radius * ClueScale, color);
 
-        private void DrawOverlayText(float x, float y, string text, int fontSize, Color color)
+        private Text DrawOverlayText(float x, float y, string text, int fontSize, Color color)
         {
             fontSize = Mathf.RoundToInt(fontSize * ClueScale);
             var go = new GameObject("OvTxt", typeof(RectTransform), typeof(Text));
@@ -1160,6 +1162,7 @@ namespace SudokuRoguelike.UI
             t.verticalOverflow   = VerticalWrapMode.Overflow;
             t.raycastTarget = false;
             _overlayObjects.Add(go);
+            return t;
         }
 
         private void DrawRingAtPos(float x, float y, float radius, Color color)

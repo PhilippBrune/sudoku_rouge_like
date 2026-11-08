@@ -30,7 +30,7 @@ namespace SudokuRoguelike.Economy
         public const double CounterItemChance = 0.5;
 
         public List<ShopOffer> BuildOffers(int floorIndex, int classLevel, float priceMultiplier, float harmonySurcharge,
-            ClassId classId = (ClassId)0, IReadOnlyList<ItemType> counterItems = null)
+            ClassId classId = (ClassId)0, IReadOnlyList<ItemType> counterItems = null, int? priceFloor = null)
         {
             var offers = new List<ShopOffer>();
             var slotCount = GetShopSlotCount(floorIndex);
@@ -49,7 +49,7 @@ namespace SudokuRoguelike.Economy
                 else
                     type = RollShopItemType(rarity, classId, classLevel);
                 var basePrice = GoldTable.BaseItemPrice(rarity);
-                var scaledPrice = (int)Math.Round(basePrice * GoldTable.FloorPriceFactor(floorIndex) * priceMultiplier * harmonySurcharge);
+                var scaledPrice = (int)Math.Round(basePrice * GoldTable.FloorPriceFactor(priceFloor ?? floorIndex) * priceMultiplier * harmonySurcharge);
 
                 offers.Add(new ShopOffer
                 {

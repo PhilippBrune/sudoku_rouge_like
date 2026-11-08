@@ -341,6 +341,7 @@ namespace SudokuRoguelike.UI
             _bossGateView.OnModsConfirmed = OnBossModsConfirmed;
             _endScreenView.OnReturnToMenuPressed = SaveAndQuit;
             _endScreenView.OnWalkAgainPressed = WalkAgain;
+            _map.OnChallengeChosen = StartChallengePuzzle;   // [REQ: EVENT-CHALLENGE-001]
 
             // ── Controller feedback overlays ──
             _uiRoot = uiRoot;
@@ -526,6 +527,15 @@ namespace SudokuRoguelike.UI
         public void SetInGameOptionsPanel(GameObject panel) => _inGameOptionsPanel = panel;
         public void SaveAndQuitPublic() => SaveAndQuit();
 
+        // [REQ: DEVICE-RESUME-001] Before Windows locks or the device sleeps the run is on disk, so whatever happens next costs nothing.
+        private void OnApplicationFocus(bool hasFocus)
+        {
+            var state = _map?.Run?.State;
+            if (hasFocus || state == null || state.TutorialMode || state.CurrentHP <= 0 || IsShown(_gameOverPanel)) return;
+            try { _map.SaveNow(); }
+            catch (System.Exception e) { Debug.LogWarning("[Window] Saving on focus loss failed: " + e.Message); }
+        }
+
         private void Update()
         {
             if (FeedbackScreen.IsOpen) return;   // [REQ: FEEDBACK-001] typed text never reaches the board
@@ -641,6 +651,9 @@ namespace SudokuRoguelike.UI
             if (_sudokuPanel != null && _sudokuPanel.activeSelf)
             {
                 if (!IsRuleCardOpen) HandleKeyboard();   // [REQ: RULE-CARD-001] the card's button takes Enter and A
+                TickChallenge(run);   // [REQ: EVENT-CHALLENGE-001]
+                var clock = _hudView.GetPuzzleElapsed();   // [REQ: SAVE-TIMER-001] an autosave carries the clock too
+                if (clock > 0f && run.State != null) run.State.PuzzleClockSeconds = clock;
                 HandleCompletion();
                 _hudView.Refresh(run.State, run.CurrentLevelConfig);
                 RefreshBuyPencilButton(run);
@@ -740,7 +753,7 @@ namespace SudokuRoguelike.UI
                 return;
             }
 
-            _hudView?.StartPuzzleTimer();
+            _hudView?.StartPuzzleTimer(state?.PuzzleClockSeconds ?? 0f);   // [REQ: SAVE-TIMER-001]
             ShowNewRuleCards();   // [REQ: RULE-CARD-001] InRunController.RuleCard.cs
         }
 
@@ -1782,6 +1795,13 @@ namespace SudokuRoguelike.UI
                 return;
             }
 
+            if (Input.GetKeyDown(KeyCode.Escape) && _gbControllerInRelicsFocus)
+            {
+                SetPadFocus(false, false);
+                _inputRemap.Tick();
+                return;
+            }
+
             if (Input.GetKeyDown(KeyCode.Escape))
             {
                 ExecuteInRunCancelRoute(CancelRouteContract.ResolveInRunKeyboardCancel(BuildInRunCancelContext()));
@@ -1815,29 +1835,13 @@ namespace SudokuRoguelike.UI
             if (_windChimeChoosingHouses) { HandleWindChimeHouseChoice(); _inputRemap.Tick(); return; }
             HandleGamepadController();
             var sz = _map?.Run?.CurrentBoard?.Size ?? 9;
-            if (Input.GetKeyDown(KeyCode.UpArrow)    || Input.GetKeyDown(KeyCode.W)) MoveSelection(-1, 0);
-            if (Input.GetKeyDown(KeyCode.DownArrow)  || Input.GetKeyDown(KeyCode.S)) MoveSelection(1, 0);
-            if (Input.GetKeyDown(KeyCode.LeftArrow)  || Input.GetKeyDown(KeyCode.A)) MoveSelection(0, -1);
-            if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D)) MoveSelection(0, 1);
-
-            // ── Bag navigation: Tab / Shift+Tab ──
-            // When items focus is active Tab cycles slots; when puzzle focus is active Tab switches to items focus.
-            if (Input.GetKeyDown(KeyCode.Tab))
+            if (HandleBagAndRelicKeys()) { _inputRemap.Tick(); return; }   // [REQ: INPUT-KEY-002]
+            if (!_gbControllerInItemsFocus && !_gbControllerInRelicsFocus)
             {
-                var shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
-                if (_gbControllerInItemsFocus)
-                {
-                    _hudView?.ControllerSelectBagSlot(shift ? -1 : +1);
-                }
-                else
-                {
-                    // Switch to items focus and select first slot
-                    _gbControllerInItemsFocus = true;
-                    _hudView?.ControllerSelectBagSlot(0);
-                    SetStatus(T("Items focus  (Tab to cycle, Enter to use, Esc or Tab back)"));
-                }
-                _inputRemap.Tick();
-                return;
+                if (Input.GetKeyDown(KeyCode.UpArrow)    || Input.GetKeyDown(KeyCode.W)) MoveSelection(-1, 0);
+                if (Input.GetKeyDown(KeyCode.DownArrow)  || Input.GetKeyDown(KeyCode.S)) MoveSelection(1, 0);
+                if (Input.GetKeyDown(KeyCode.LeftArrow)  || Input.GetKeyDown(KeyCode.A)) MoveSelection(0, -1);
+                if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D)) MoveSelection(0, 1);
             }
 
             // ── Use selected item: Enter / Space while items-focus is active ──
@@ -2445,11 +2449,8 @@ namespace SudokuRoguelike.UI
 
             if (decision.PersistenceAction == InRunSaveQuitPersistenceAction.SaveResumeState)
             {
-                // Accumulate current puzzle's elapsed time into the run total before saving,
-                // so the run timer persists correctly across Save & Quit / Resume cycles.
-                var runState = run?.State;
-                if (runState != null)
-                    runState.TotalRunSeconds += _hudView?.GetPuzzleElapsed() ?? 0f;
+                // [REQ: SAVE-TIMER-001] The puzzle's clock is saved and goes on after a resume; the run total takes it when the puzzle ends.
+                if (run?.State != null && _hudView != null) run.State.PuzzleClockSeconds = _hudView.GetPuzzleElapsed();
                 _map?.SaveNow();
             }
             else if (decision.PersistenceAction == InRunSaveQuitPersistenceAction.ClearCustomPuzzle)

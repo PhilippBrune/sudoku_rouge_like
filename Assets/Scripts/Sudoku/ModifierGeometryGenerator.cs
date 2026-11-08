@@ -270,6 +270,7 @@ namespace SudokuRoguelike.Sudoku
             if (modifiers.Contains(BossModifierId.FullWhiteKropki)) GenerateFullKropkiSet(board, overlay, black: false);
             if (modifiers.Contains(BossModifierId.FullBlackKropki)) GenerateFullKropkiSet(board, overlay, black: true);
 
+            DropPiecesWithoutGain(board, overlay);
             return overlay;
         }
 
@@ -366,7 +367,7 @@ namespace SudokuRoguelike.Sudoku
             var line = new ModifierLine();
             line.Cells.Add(new CellCoord(startRow, startCol));
 
-            var targetLen = rng.Next(4, 7);
+            var targetLen = LineLength(rng, 4, size);
 
             for (var step = 1; step < targetLen; step++)
             {
@@ -423,7 +424,7 @@ namespace SudokuRoguelike.Sudoku
             var line = new ModifierLine { Type = LineType.ParityLine };
             line.Cells.Add(new CellCoord(startRow, startCol));
 
-            var targetLen = rng.Next(4, 7);
+            var targetLen = LineLength(rng, 4, size);
 
             for (var step = 1; step < targetLen; step++)
             {
@@ -481,7 +482,7 @@ namespace SudokuRoguelike.Sudoku
             line.Cells.Add(new CellCoord(startRow, startCol));
             var values = new List<int> { board.Solution[startRow, startCol] };
 
-            var targetLen = rng.Next(4, 6);
+            var targetLen = Math.Min(LineLength(rng, 4, size), 7);
 
             for (var step = 1; step < targetLen; step++)
             {
@@ -554,7 +555,7 @@ namespace SudokuRoguelike.Sudoku
 
             var left = new List<CellCoord> { centre };
             var right = new List<CellCoord> { centre };
-            var maxHalf = rng.Next(2, 4);      // 5 or 7 cells
+            var maxHalf = rng.Next(2, size >= 8 ? 5 : 4);      // 5 or 7 cells, 9 on the large boards
             var pairs = new List<(CellCoord A, CellCoord B)>();
             for (var half = 0; half < maxHalf; half++)
             {
@@ -622,7 +623,7 @@ namespace SudokuRoguelike.Sudoku
             var line = new ModifierLine { Type = LineType.Thermo };
             line.Cells.Add(new CellCoord(startRow, startCol));
 
-            var targetLen = rng.Next(4, 7);
+            var targetLen = LineLength(rng, 4, size);
 
             for (var step = 1; step < targetLen; step++)
             {
@@ -677,7 +678,7 @@ namespace SudokuRoguelike.Sudoku
             if (!IsCellFree(startRow, startCol, used)) return null;
 
             var cells = new List<CellCoord> { new CellCoord(startRow, startCol) };
-            var targetLen = rng.Next(4, 6);
+            var targetLen = LineLength(rng, 4, size);
 
             for (var step = 1; step < targetLen; step++)
             {
@@ -986,7 +987,7 @@ namespace SudokuRoguelike.Sudoku
 
             var line = new ModifierLine { Type = LineType.ConsecutiveLine };
             line.Cells.Add(new CellCoord(startRow, startCol));
-            var targetLen = rng.Next(3, 6);
+            var targetLen = LineLength(rng, 3, size);
 
             for (var step = 1; step < targetLen; step++)
             {
@@ -1041,7 +1042,7 @@ namespace SudokuRoguelike.Sudoku
 
             var line = new ModifierLine { Type = LineType.SlowThermo };
             line.Cells.Add(new CellCoord(startRow, startCol));
-            var targetLen = rng.Next(3, 6);
+            var targetLen = LineLength(rng, 3, size);
 
             for (var step = 1; step < targetLen; step++)
             {
@@ -1097,7 +1098,7 @@ namespace SudokuRoguelike.Sudoku
             var line = new ModifierLine { Type = LineType.UniqueSetLine };
             line.Cells.Add(new CellCoord(startRow, startCol));
             var seenVals = new System.Collections.Generic.HashSet<int> { board.Solution[startRow, startCol] };
-            var targetLen = rng.Next(4, 6);
+            var targetLen = LineLength(rng, 4, size);
 
             for (var step = 1; step < targetLen; step++)
             {
@@ -1122,7 +1123,7 @@ namespace SudokuRoguelike.Sudoku
                 seenVals.Add(board.Solution[pick.Row, pick.Col]);
             }
 
-            return line.Cells.Count >= 4 ? line : null;
+            return line.Cells.Count >= 4 && SaysMoreThanTheHouses(board, line.Cells) ? line : null;
         }
 
         // ── Full Kropki ──

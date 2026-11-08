@@ -44,6 +44,23 @@ namespace SudokuRoguelike.Sudoku
             return cells;
         }
 
+        /// <summary>[REQ: BOSS-XSUM-001] The X-Sum clue is fulfilled: X and the first X digits from its side are placed and add up.</summary>
+        public static bool IsXSumFulfilled(OutsideClue clue, int[,] cells, int size)
+        {
+            var line = Cells(clue, size);
+            if (line.Count == 0) return false;
+            var x = cells[line[0].Row, line[0].Col];
+            if (x <= 0 || x > line.Count) return false;
+            var sum = 0;
+            for (var i = 0; i < x; i++)
+            {
+                var digit = cells[line[i].Row, line[i].Col];
+                if (digit <= 0) return false;
+                sum += digit;
+            }
+            return sum == clue.Value;
+        }
+
         /// <summary>Whether the clue reads (row, col), without building its cell list.</summary>
         public static bool Reads(OutsideClue clue, int row, int col, int size)
         {

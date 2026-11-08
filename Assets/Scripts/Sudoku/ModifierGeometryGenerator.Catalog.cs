@@ -21,11 +21,11 @@ namespace SudokuRoguelike.Sudoku
             switch (modifier)
             {
                 case BossModifierId.NonconsecLine:
-                    GrowLineSet(board, overlay, rng, scale, LineType.NonconsecLine, BaseCount(size, 2, 3, 4), 4, 6,
+                    GrowLineSet(board, overlay, rng, scale, LineType.NonconsecLine, BaseCount(size, 2, 3, 4), 4, LongestLine(size),
                         (path, next) => Math.Abs(S(board, next) - S(board, path[path.Count - 1])) != 1);
                     break;
                 case BossModifierId.HighLowAlternating:
-                    GrowLineSet(board, overlay, rng, scale, LineType.HighLowAlternating, BaseCount(size, 2, 3, 3), 4, 6,
+                    GrowLineSet(board, overlay, rng, scale, LineType.HighLowAlternating, BaseCount(size, 2, 3, 3), 4, LongestLine(size),
                         (path, next) => HighLowLineRule.IsLow(S(board, next), size) != HighLowLineRule.IsLow(S(board, path[path.Count - 1]), size));
                     break;
                 case BossModifierId.NabnerLine:
@@ -35,7 +35,7 @@ namespace SudokuRoguelike.Sudoku
                 case BossModifierId.EntropicLine:
                 case BossModifierId.ModularLine:
                     var type = modifier == BossModifierId.EntropicLine ? LineType.EntropicLine : LineType.ModularLine;
-                    GrowLineSet(board, overlay, rng, scale, type, BaseCount(size, 2, 3, 3), 4, 6, (path, next) =>
+                    GrowLineSet(board, overlay, rng, scale, type, BaseCount(size, 2, 3, 3), 4, LongestLine(size), (path, next) =>
                     {
                         var g = TriadLineRule.Group(type, S(board, next));
                         if (g == TriadLineRule.Group(type, S(board, path[path.Count - 1]))) return false;
@@ -51,7 +51,7 @@ namespace SudokuRoguelike.Sudoku
                 case BossModifierId.AmbiguousThermo:
                     // Built rising from the low end, then turned round half of the time: the line shows no bulb, and
                     // the first cell (where the alt-symbol label sits) must not give the direction away.
-                    GrowLineSet(board, overlay, rng, scale, LineType.AmbiguousThermo, BaseCount(size, 2, 3, 3), 4, 6,
+                    GrowLineSet(board, overlay, rng, scale, LineType.AmbiguousThermo, BaseCount(size, 2, 3, 3), 4, LongestLine(size),
                         (path, next) => S(board, next) > S(board, path[path.Count - 1]),
                         line => { if (rng.Next(2) == 0) line.Cells.Reverse(); });
                     break;

@@ -72,6 +72,27 @@ namespace SudokuRoguelike.Save
         // ── Slot summaries ───────────────────────────────────────────────────────
 
         /// <summary>Returns one summary per slot (always MaxSlots entries).</summary>
+        public const int MaxProfileNameLength = 20;
+
+        /// <summary>[REQ: PROFILE-NAME-001] Names a profile; only the name changes, the save's runs and statistics stay. Empty clears it.</summary>
+        public static bool RenameSlot(int slot, string name)
+        {
+            var svc = new SaveFileService(slot);
+            if (!svc.HasSaveFile()) return false;
+            var envelope = svc.Load();
+            envelope.ProfileName = CleanProfileName(name);
+            svc.Save(envelope);
+            SaveFileService.FlushSharedPendingWrites();
+            return true;
+        }
+
+        /// <summary>No rich-text tags, no line breaks, at most 20 characters.</summary>
+        public static string CleanProfileName(string name)
+        {
+            var clean = (name ?? string.Empty).Replace('<', ' ').Replace('>', ' ').Replace('\n', ' ').Replace('\r', ' ').Trim();
+            return clean.Length <= MaxProfileNameLength ? clean : clean.Substring(0, MaxProfileNameLength).TrimEnd();
+        }
+
         public ProfileSlotSummary[] GetAllSlotSummaries()
         {
             var summaries = new ProfileSlotSummary[SaveFileService.MaxSlots];
@@ -100,7 +121,8 @@ namespace SudokuRoguelike.Save
             {
                 SlotIndex    = slot,
                 IsEmpty      = false,
-                DisplayName  = $"Profile {slot + 1}",
+                DisplayName  = string.IsNullOrWhiteSpace(env.ProfileName) ? $"Profile {slot + 1}" : env.ProfileName,
+                CustomName   = string.IsNullOrWhiteSpace(env.ProfileName) ? null : env.ProfileName,
                 LastPlayedClass    = lastClass,
                 TotalRunsStarted   = env.Statistics?.TotalRunsStarted   ?? 0,
                 TotalRunsCompleted = env.Statistics?.TotalRunsCompleted  ?? 0,

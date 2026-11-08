@@ -51,6 +51,8 @@ namespace SudokuRoguelike.UI
         {
             if (_sudokuPanel == null || _ruleCardQueue.Count == 0) return;
             var id = _ruleCardQueue[0];
+            // The bag and the relics are built on the first refresh of a puzzle: done now, or they would lie over the card.
+            if (_map?.Run != null) _hudView?.Refresh(_map.Run.State, _map.Run.CurrentLevelConfig);
             var layer = ScrollUiKit.Fill(_sudokuPanel.transform, "RuleCardLayer", Vector2.zero, Vector2.one, new Color(0.04f, 0.03f, 0.02f, 0.45f));
             layer.raycastTarget = true;   // the board waits under the card
             _ruleCard = layer.gameObject;
@@ -68,7 +70,7 @@ namespace SudokuRoguelike.UI
                 BoardViewController.TryGetLegendColor(id, out var colour) ? colour : new Color(0.55f, 0.55f, 0.55f, 0.9f), ScrollUiKit.Rounded(6f));
             ScrollUiKit.Label(t, "Name", BossService.GetModifierName(id), 40, TextAnchor.MiddleLeft, ScrollUiKit.Vermilion,
                 new Vector2(0.19f, 0.73f), new Vector2(0.95f, 0.85f), 22);
-            ScrollUiKit.Label(t, "Rule", BossService.GetModifierDescription(id), 26, TextAnchor.UpperLeft, ScrollUiKit.Ink,
+            ScrollUiKit.Label(t, "Rule", BossService.GetModifierDescription(id, _map?.Run?.CurrentBoard?.Size ?? 9), 26, TextAnchor.UpperLeft, ScrollUiKit.Ink,
                 new Vector2(0.08f, 0.36f), new Vector2(0.92f, 0.71f), 15);
             ScrollUiKit.Label(t, "Hint", LocalizationService.T("InRun.RuleCard.Hint", "The board shows where it applies. The rule stays on the slip beside it."),
                 19, TextAnchor.UpperLeft, ScrollUiKit.InkSoft, new Vector2(0.08f, 0.20f), new Vector2(0.92f, 0.34f), 12);
@@ -92,7 +94,7 @@ namespace SudokuRoguelike.UI
             }
             if (_ruleCardQueue.Count > 0) { BuildRuleCard(); return; }
             _boardView?.IsolateModifier(null);
-            _hudView?.StartPuzzleTimer();   // the puzzle's clock starts after the cards
+            _hudView?.StartPuzzleTimer(_map?.Run?.State?.PuzzleClockSeconds ?? 0f);   // the puzzle's clock starts after the cards
         }
 
         private static void MarkRuleExplained(BossModifierId id)

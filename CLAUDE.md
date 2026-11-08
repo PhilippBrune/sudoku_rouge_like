@@ -43,10 +43,19 @@ Installed user-wide: the plugins `ponytail` (DietrichGebert/ponytail 5.3.2) and 
 
 - `ponytail` is on in every session (its hooks): the smallest complete change. "Complete" includes what this file asks for: tests, requirement IDs, the five catalogs, spec bumps, screenshots.
 - ECC stays the workflow above. From `agent-skills` take single skills where they add something (`doubt-driven-development` for risky changes, `constraint-driven-development`, `shipping-and-launch` before a release), not its `/spec` `/plan` `/build` `/ship` as a second pipeline.
-- `graphify`: the code graph is in `graphify-out/` (ignored, local, code only, no model calls). Ask it first for "where is X used, how does A reach B" (`graphify query`, `explain`, `path`); refresh with `graphify update .` after larger changes. `/graphify .` over docs and images spends model tokens: only on request.
+- `graphify`: see "Code graph (graphify)" below.
 - Vague or long requests: `grill-me` (the owner starts it) or `prompt-master`; no idea where to start: `how-to`.
 - Public texts (tester notes, Discord drafts, Steam announcements, release notes, store text): `personal-voice`, then `anti-ai`, before the draft goes to `#release-drafts` or `steam_assets/`.
 - Prompts for other models or agents: `48` (Opus) or `fable`.
 - A workflow done twice (release build, upload preparation): `write-a-skill` into `.claude/skills`.
 - A long session ends or switches topic: `handoff`.
 - Hooks: ponytail's three local hooks (SessionStart, SubagentStart, UserPromptSubmit; no webhook set) are the one exception to "hooks stay off". graphify's hooks are not installed.
+
+## Code graph (graphify)
+
+Graphify (Graphify-Labs/graphify 0.9.95) turns the code into a queryable graph: 13 500 nodes over `Assets/Scripts`, `tools` and `docs`. It costs no model calls for code.
+
+- **Install:** the CLI is `~/.local/bin/graphify.exe` (`pip install graphifyy` or the release binary), the skill is in `~/.claude/skills/graphify` (`graphify install --platform claude`). Output goes to `graphify-out/` (git-ignored, local).
+- **Ask:** before a wide Grep, for "where is X used, how does A reach B, what does this touch": `graphify query "<question>"`, `graphify explain "<Symbol>"`, `graphify path "<A>" "<B>"`. Add `--budget N` when the answer says it was cut. Exact identifiers are faster with Grep.
+- **Keep it fresh:** `graphify update .` after a larger change or a merge (seconds, code only, no model calls). `/graphify .` over docs and images spends model tokens: only on request.
+- **Workflow:** feature or bug fix: ask the graph first, change the code, `graphify update .` before the review, so reviewers and the next session see the new symbols. Its git hooks stay off (see the hook rule above); the update is a manual step.

@@ -70,7 +70,7 @@ namespace SudokuRoguelike.Tests
                 foreach (var region in map) key.Append(region).Append(',');
                 shapes.Add(key.ToString());
             }
-            Assert.AreEqual(2, shapes.Count, "both irregular templates appear");
+            Assert.GreaterOrEqual(shapes.Count, 2, "both irregular templates appear, turned by the seed (GEN-REGION-004)");
         }
 
         // True when the map is the size's boxes, upright or turned (5×5 and 7×7 have none).

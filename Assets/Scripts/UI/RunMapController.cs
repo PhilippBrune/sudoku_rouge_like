@@ -219,6 +219,9 @@ namespace SudokuRoguelike.UI
             return _run?.BuildCurrentEvent();
         }
 
+        /// <summary>[REQ: EVENT-CHALLENGE-001] A challenge option was taken: the run screen starts its puzzle.</summary>
+        public System.Action OnChallengeChosen;
+
         public string ChooseEventOption(int optionIndex)
         {
             return _run?.ResolveCurrentEventChoice(optionIndex) ?? string.Empty;

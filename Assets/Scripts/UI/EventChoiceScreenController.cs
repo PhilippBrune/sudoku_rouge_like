@@ -85,7 +85,10 @@ namespace SudokuRoguelike.UI
 
         private void BuildScene(RunState state)
         {
-            var screen = ScrollUiKit.Scene(_pathPanel, "EventScene", "bg_event", new Color(0.55f, 0.55f, 0.52f, 1f));
+            // [REQ: EVENT-ART-001] An event with its own painting (background/event_<key>) shows it; the others keep the shared one.
+            var painting = _currentEvent?.Key != null && Resources.Load<Texture2D>("background/event_" + _currentEvent.Key) != null
+                ? "event_" + _currentEvent.Key : "bg_event";
+            var screen = ScrollUiKit.Scene(_pathPanel, "EventScene", painting, new Color(0.55f, 0.55f, 0.52f, 1f));
             _scene = screen.gameObject;
             if (state != null) BuildPurse(screen.transform, state);
 
@@ -114,8 +117,9 @@ namespace SudokuRoguelike.UI
             _mainButton = ScrollUiKit.PillButton(screen.transform, "BtnEventMain", new Vector2(0.43f, 0.06f), new Vector2(0.62f, 0.115f),
                 T("InRun.Event.PickOne", "Choose what to do"), 24, ScrollUiKit.Vermilion, Color.white, 24f);
             _mainButton.interactable = false;
-            ScrollUiKit.Label(screen.transform, "EventHint", T("InRun.Event.Hint", "1–3 to choose · the same key again takes it"), 17,
+            var keyHint = ScrollUiKit.Label(screen.transform, "EventHint", string.Empty, 17,
                 TextAnchor.MiddleCenter, ScrollUiKit.PaperText, new Vector2(0.30f, 0.015f), new Vector2(0.70f, 0.05f), 11);
+            DeviceHint.Attach(keyHint, "InRun.Event.Hint", RewardViewController.KeyRange(_strips.Count));   // [REQ: INPUT-KEY-002]
             _mainButton.onClick.AddListener(() =>
             {
                 if (_chosen) Continue();
@@ -215,6 +219,7 @@ namespace SudokuRoguelike.UI
             }
             var idx = index;
             button.onClick.AddListener(() => OnStripClicked(idx));
+            MenuDpad.ChooseOnMove(button.gameObject, () => ChooseStrip(idx));   // [REQ: INPUT-KEY-002]
             return button;
         }
 
@@ -254,11 +259,13 @@ namespace SudokuRoguelike.UI
         private void OnStripClicked(int index)
         {
             if (_chosen || index < 0 || index >= _strips.Count || !_affordable[index]) return;
-            if (_selected == index)
-            {
-                Take(index);
-                return;
-            }
+            if (_selected == index) Take(index);
+            else ChooseStrip(index);
+        }
+
+        private void ChooseStrip(int index)
+        {
+            if (_chosen || index < 0 || index >= _strips.Count || !_affordable[index]) return;
             _selected = index;
             for (var i = 0; i < _strips.Count; i++)
             {
@@ -292,6 +299,12 @@ namespace SudokuRoguelike.UI
             }
             if (_resultText != null)
                 _resultText.text = string.IsNullOrEmpty(summary) ? T("RunEvent.Result.Done", "Done.") : summary;
+            if (state != null && state.ChallengeKind != 0)   // [REQ: EVENT-CHALLENGE-001] the challenge begins at once
+            {
+                Continue();
+                _runMap.OnChallengeChosen?.Invoke();
+                return;
+            }
             foreach (var strip in _strips) strip.interactable = false;
             ShowOutcome(summary, before, state);   // [REQ: EVENT-OUTCOME-001] EventChoiceScreenController.Outcome.cs
             SetMainLabel(T("InRun.Event.Continue", "Continue"));

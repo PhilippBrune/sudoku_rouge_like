@@ -1,11 +1,12 @@
 # Class XP & Level Progression System
 
-**Version:** 1.9 | **Date:** 2026-11-07 | **Status:** implemented
+**Version:** 1.10 | **Date:** 2026-11-08 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.10 | 2026-11-08 | implemented | Owner's 0.4.3 playtest: the Stone Gardener's items have 2 uses, 3 from level 20 (CLASS-PASSIVE-004), so the passive no longer overlaps with the Eternal Lotus. |
 | 1.9 | 2026-11-07 | implemented | Owner's picks after the 0.4.2 playtests (2026-11-07): the Lantern Seer (LS1) and the Shrine Archivist (SA1) get new passives (CLASS-PASSIVE-003); the old ones had no code (GAP-122). |
 | 1.8 | 2026-11-07 | implemented | Owner's picks after the 0.4.1 playtest on a Legion Go (2026-11-05): new passives for the Garden Monk (M2), the Number Freak, the Reed Duelist and the Quiet Cartographer (CLASS-PASSIVE-002); three of the old ones did nothing in the code (GAP-120). |
 | 1.7 | 2026-10-22 | implemented | Owner sign-off of the class balance values (SPEC-CONF-008): the base stats, passives, unlock conditions and level schedules in this document stand as documented. No value changed. |
@@ -293,7 +294,7 @@ Fix in 1.1: Number Freak's L3 entry read "+ 1 Pencil" and was never applied; Num
 | Garden Monk | 14 | 5 | 1 | 1 | Every 5 correct placements: +1 HP. Level 15+: every 4. | Defeat 2 bosses |
 | Shrine Archivist | 8 | 15 | 2 | 1 | Each pencil mark placed has a 25% chance to auto-reveal the correct digit for that cell. | Use 15 items |
 | Koi Gambler | 9 | 8 | 2 | 2 | 33% wrong costs 0 HP; 33% correct grants +3 Gold. | Collect 10 relics |
-| Stone Gardener | 11 | 8 | 3 | 1 | First item used each puzzle node is not consumed. | Defeat 10 bosses |
+| Stone Gardener | 11 | 8 | 3 | 1 | Items have 2 uses (3 from level 20). | Defeat 10 bosses |
 | Lantern Seer | 7 | 12 | 2 | 1 | Boss modifiers are 30% weaker. Before each boss puzzle, preview all active modifiers and reroll one for free. | Collect 50,000 gold |
 | Reed Duelist | 9 | 9 | 2 | 1 | Perfect no-pencil puzzle: +2 Pencil. Every 5 such puzzles in a run: +1 HP. | Find every unique item |
 | Quiet Cartographer | 12 | 6 | 1 | 1 | Preview next node's star & board size after a perfect tile. If you then choose that node, its difficulty is reduced by ½ star (min 1★). | Complete a full run (all 5 floors + boss) with zero mistakes |
@@ -389,7 +390,7 @@ Fix in 1.1: Number Freak's L3 entry read "+ 1 Pencil" and was never applied; Num
 ### 5. Stone Gardener (Item Synergy)
 
 **Base Stats:** HP 11 / Pencil 8 / Item Slots 3 / Starting Relics 1  
-**Passive:** First item used each puzzle node is not consumed.
+**Passive:** Items have 2 uses (3 from level 20).
 
 | Level | Unlock |
 |:---:|--------|
@@ -400,7 +401,7 @@ Fix in 1.1: Number Freak's L3 entry read "+ 1 Pencil" and was never applied; Num
 | 13 | +2 Pencil |
 | 15 | +1 HP, +1 Reroll Token |
 | 18 | +1 Item Slot |
-| 20 | Passive: 2 free items/level, +1 Starting Relic |
+| 20 | Passive: items have 3 uses, +1 Starting Relic |
 | 25 | +2 HP |
 | 30 | Start: Rice Paper Umbrella |
 | 35 | +1 Pencil, +1 HP |

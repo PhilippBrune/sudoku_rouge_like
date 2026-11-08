@@ -131,6 +131,7 @@ namespace SudokuRoguelike.UI
         private void Update()
         {
             if (FeedbackScreen.IsOpen) return;   // [REQ: FEEDBACK-001] keys go to the feedback form
+            if (_renameField != null) return;   // [REQ: PROFILE-NAME-001] typed keys belong to the name
             // [REQ: UI-MENU-TITLE-001] GAP-097: nothing is chosen under the title screen, so A or Enter there presses nothing.
             if (SudokuRoguelike.Bootstrap.SplashScreenController.Showing)
             {
@@ -289,7 +290,7 @@ namespace SudokuRoguelike.UI
             var direction = MenuDpad.ReadPressed();
             if (direction == MoveDirection.None) direction = MenuDpad.ReadRemapped(_inputRemap);
             if (direction == MoveDirection.None) return;
-            var panel = _menu?.CurrentPanel;
+            var panel = _firstRunSetupOverlay != null && _firstRunSetupOverlay.activeSelf ? _firstRunSetupOverlay : _menu?.CurrentPanel;
             var es = EventSystem.current;
             if (panel == null || es == null) return;
 
@@ -308,7 +309,7 @@ namespace SudokuRoguelike.UI
         {
             var es = UnityEngine.EventSystems.EventSystem.current;
             if (es == null || es.currentSelectedGameObject != null) return;
-            SelectFirstInPanel(_menu.CurrentPanel);
+            SelectFirstInPanel(_firstRunSetupOverlay != null && _firstRunSetupOverlay.activeSelf ? _firstRunSetupOverlay : _menu.CurrentPanel);
         }
 
         private static void SelectFirstInPanel(GameObject panel)
@@ -715,6 +716,8 @@ namespace SudokuRoguelike.UI
                 var card = content.Find($"SlotCard_{i}");
                 if (card == null) continue;
                 var active = i == SaveProfileService.ActiveSlot && !s.IsEmpty;
+                SetText(card, $"SlotLabel_{i}", s.CustomName ?? LocalizationService.Format("ProfileSelect.SlotLabel", "Profile {0}", i + 1));   // [REQ: PROFILE-NAME-001]
+                card.Find($"BtnRename_{i}")?.gameObject.SetActive(!s.IsEmpty);
                 content.Find($"SlotFrame_{i}")?.gameObject.SetActive(active);
                 content.Find($"SlotGlow_{i}")?.gameObject.SetActive(active);
                 content.Find($"SlotActive_{i}")?.gameObject.SetActive(active);
@@ -785,7 +788,7 @@ namespace SudokuRoguelike.UI
             {
                 _gameBootstrap.LaunchResume();
             }
-            else
+            else if (!_gameBootstrap.HasResumableDailyWalk() || !_gameBootstrap.LaunchResume(dailyWalk: true))   // [REQ: SAVE-DAILY-002]
             {
                 SetStatus(LocalizationService.T(
                     "MainMenu.Status.NoRunToResume",
@@ -804,9 +807,11 @@ namespace SudokuRoguelike.UI
             var env = save.HasSaveFile() ? save.Load() : null;
             var rs = env?.ActiveRunState;
             var hasRun = save.HasActiveRun() && rs != null;   // the slot's own file, as the bootstrap's resume reads it
-            _resumeButton.interactable = hasRun;
-            _resumeButton.gameObject.SetActive(hasRun);
-            if (hasRun) FillRunCard(_resumeButton.transform, rs);
+            // [REQ: SAVE-DAILY-002] Without a saved Garden Run the card offers the saved Daily Walk (its tag says Continue either way).
+            var shown = hasRun ? rs : save.HasActiveDailyWalk(DateTime.Today) ? env?.ActiveDailyRunState : null;
+            _resumeButton.interactable = shown != null;
+            _resumeButton.gameObject.SetActive(shown != null);
+            if (shown != null) FillRunCard(_resumeButton.transform, shown);
 
             var card = _resumeButton.transform.parent;
             RefreshHomeProfile(card, env);
@@ -841,10 +846,10 @@ namespace SudokuRoguelike.UI
             if (classId == 0 && meta != null)
                 foreach (ClassId id in Enum.GetValues(typeof(ClassId)))
                     if (classId == 0 || garden.GetLevel(meta, id) > garden.GetLevel(meta, classId)) classId = id;
-            SetText(card, "HomeProfile/HomeProfileText", classId == 0 || meta == null
-                ? LocalizationService.Format("MainMenu.ProfileTagEmpty", "Profile {0}", slot)
-                : LocalizationService.Format("MainMenu.ProfileTag", "Profile {0} · {1} Lv {2}", slot, ClassCatalog.DisplayName(classId),
-                    garden.GetLevel(meta, classId)));
+            var named = env?.ProfileName;   // [REQ: PROFILE-NAME-001]
+            var who = !string.IsNullOrWhiteSpace(named) ? named : LocalizationService.Format("MainMenu.ProfileTagEmpty", "Profile {0}", slot);
+            SetText(card, "HomeProfile/HomeProfileText", classId == 0 || meta == null ? who
+                : $"{who} · {LocalizationService.Format("MainMenu.ProfileTagClass", "{0} Lv {1}", ClassCatalog.DisplayName(classId), garden.GetLevel(meta, classId))}");
         }
 
         // [REQ: CUSTOM-SAVE-001] Continue on the Custom Puzzle tablet with the saved board (owner, RM-209).
@@ -1182,10 +1187,19 @@ namespace SudokuRoguelike.UI
                 return;
             }
 
+            // [REQ: UI-STYLE-045] The two ways on replace the Basics prompt, so neither shows it afterwards.
             var modal = FirstRunSetupModalController.Show(canvas, _save, () =>
             {
                 _firstRunSetupOverlay = null;
+                MarkSudokuBasicsComplete();
                 onCompleted?.Invoke();
+            }, () =>
+            {
+                _firstRunSetupOverlay = null;
+                MarkSudokuBasicsComplete();
+                var bootstrap = _gameBootstrap;   // onCompleted may rebuild this menu for the chosen language
+                onCompleted?.Invoke();
+                if (bootstrap != null) bootstrap.LaunchSudokuBasicsTutorial();
             });
 
             _firstRunSetupOverlay = modal != null ? modal.Root : null;

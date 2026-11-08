@@ -1,11 +1,12 @@
 # Sudoku Generation Pipeline
 
-**Version:** 1.7 | **Date:** 2026-10-14 | **Status:** implemented
+**Version:** 1.8 | **Date:** 2026-11-08 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.8 | 2026-11-08 | implemented | Owner's 0.4.3 playtest: irregular regions turn by a quarter per step of the seed, four boards from each template (GEN-REGION-004). |
 | 1.7 | 2026-10-14 | implemented | Region display: the board always shows the regions of the puzzle on screen (GEN-REGION-004, GAP-044). |
 | 1.6 | 2026-10-07 | implemented | 1.1 review decisions (2026-10-07): solution-based validation, rejected wrong digits, 7★ rule-based (SPEC-CONF-003); in-game puzzles are unique (SPEC-AMB-003 correction); structural-modifier region rule (SPEC-AMB-014); Entropy 9×9 and pointer to the eligibility table, Anti-Bishop range 2 (SPEC-CONF-012/013/038); 7★ requires a modifier (SPEC-CONF-015); entered seeds, determinism scope across resume (SPEC-MAC-010, GAP-018/020); generation failure handling (SPEC-AMB-004); SPICE table archived (SPEC-OBS-001). |
 | 1.5 | 2026-04-14 | implemented | Added requirement IDs (GEN-REGION, GEN-SOLVE, GEN-REMOVE, GEN-MOD, GEN-VALID). |

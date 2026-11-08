@@ -1,11 +1,12 @@
 # Roadmap backlog: Run of the Nine
 
-**Version:** 1.21 | **Date:** 2026-11-08 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
+**Version:** 1.22 | **Date:** 2026-11-08 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.22 | 2026-11-08 | review | Owner's playtest of 0.4.3: RM-233 pick C built; RM-234 the View Modifiers screen, RM-235 item and relic replacements and the combo relic as proposals; RM-236 event paintings; RM-237 the feedback relay stays open. |
 | 1.21 | 2026-11-08 | review | Owner's picks: RM-230 C and RM-231 B built; RM-232 built (seven rules, the pressure rules); RM-233 the new-profile screens as mockups for the pick. |
 | 1.20 | 2026-11-07 | review | Owner's Daily Walk playtest of 0.4.2 (2026-11-07): the run history (RM-230, mockups A to C wait for the pick), the Pattern Scroll's screen (RM-231, mockups A to C) and Custom Puzzles with more rules and pressure rules (RM-232, a question). |
 | 1.19 | 2026-11-04 | review | RM-101 done (owner's pick A, 2026-11-04): the slips with All and Friends (SEED-BOARD-003). RM-104 done: 7 relics, 4 items, 7 events (owner's ticks, with trades). |
@@ -80,7 +81,11 @@ Horizons: **short term** = the next one to three updates, **mid term** = after t
 | RM-230 | Run history | The last five runs with their seeds, to walk a seed again; a lost run shows its last board with the last wrong digit. | Owner's playtest of 0.4.2; pick C, the slip in the main menu, built (RUN-HISTORY-001/002). It sits beside the menu column: the place under the run card holds the tablets. | built |
 | RM-231 | The Pattern Scroll's screen | Still the old dark list; the player should see where and which rule piece is solved. | Owner's playtest of 0.4.2; pick B, the list with preview, built (ITEM-SCROLL-002). The cells show gold, without the mockup's pale digits: a cancelled scroll comes back, so the digits would be free to read. | built |
 | RM-232 | Custom Puzzle: more rules and pressure rules | The owner asked whether a Custom Puzzle takes more than five rules and the pressure rules. Now seven rules and all four pressure rules. | Owner: analyse, plan, build; measured and built (CUSTOM-RULE-002/003). | built |
-| RM-233 | The new-profile screens in the new look | First-time setup and the Basics prompt still wear the dark modal. | Owner (2026-11-08); mockups in `docs/design/first-run-proposals.html` (A one hanging scroll, B three short steps, C welcome with ema) wait for the pick. | proposed |
+| RM-233 | The new-profile screens in the new look | First-time setup and the Basics prompt still wear the dark modal. | Owner (2026-11-08); mockups in `docs/design/first-run-proposals.html` (A one hanging scroll, B three short steps, C welcome with ema); pick C built (UI-STYLE-045). | built |
+| RM-234 | The View Modifiers screen in the new look | Options › Run › View Modifiers is still a dark list. | Owner's 0.4.3 playtest; mockups in `docs/design/playtest-043b-proposals.html` wait for the pick. | proposed |
+| RM-235 | Item and relic overlaps, a combo relic | Replacements for items and relics with the same effect, and a relic that plays on the combo. | Owner's 0.4.3 playtest; proposals in `docs/design/playtest-043b-proposals.html` wait for the pick. | proposed |
+| RM-236 | Paintings for the events | Each event its own painting, the Ice Cream Cart first. | Owner's 0.4.3 playtest; the game shows `background/event_<key>` when it exists (EVENT-ART-001); the paintings need Fooocus running. | open |
+| RM-237 | Feedback to Discord | Reports from the game arrive on Discord instead of as a ZIP. | Built (FEEDBACK-001/002); open: the owner's Worker setup (`tools/feedback-worker/README.md`), then its address in `FeedbackSender.Endpoint`. Owner (2026-11-08): keep as an open point. | open |
 
 ## Mid term (suggested)
 

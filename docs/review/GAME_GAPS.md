@@ -137,6 +137,16 @@ Priority scale: **P0** game cannot be completed · **P1** major gameplay system 
 | [GAP-130](#gap-130) | At 150 % Text Size words broke inside themselves ("comb / o x11!") | FIXED (owner's playtest of 0.4.2, 2026-11-07) | MEDIUM | P2 |
 | [GAP-131](#gap-131) | An event's result was one small line (the Koi Pond Wager seemed to do nothing) | FIXED (owner's playtest of 0.4.2, 2026-11-07) | MEDIUM | P2 |
 | [GAP-132](#gap-132) | Starting a Daily Walk abandoned the saved Garden Run | FIXED (Paul's playtest of 0.4.2, owner's pick FB4, 2026-11-07) | HIGH | P1 |
+| [GAP-133](#gap-133) | The rest and event scenes: the arrows moved a focus nothing showed, and the hints named keys that did not exist | FIXED (owner's 0.4.3 playtest, 2026-11-08) | HIGH | P2 |
+| [GAP-134](#gap-134) | A bag of four or more slots was invisible (the Stone Gardener's) | FIXED (owner's 0.4.3 playtest, 2026-11-08) | HIGH | P1 |
+| [GAP-135](#gap-135) | From six relics on the relic icons overlapped | FIXED (owner's 0.4.3 playtest, 2026-11-08) | MEDIUM | P2 |
+| [GAP-136](#gap-136) | A resumed puzzle's clock started at 0:00 | FIXED (owner's 0.4.3 playtest, 2026-11-08) | MEDIUM | P2 |
+| [GAP-137](#gap-137) | After an event the arrows did nothing on the path | FIXED (owner's 0.4.3 playtest, 2026-11-08) | HIGH | P2 |
+| [GAP-138](#gap-138) | Tab went into the bag but not back out | FIXED (owner's 0.4.3 playtest, 2026-11-08) | MEDIUM | P2 |
+| [GAP-139](#gap-139) | The Cracked Teacup absorbed a mistake but ended the combo | FIXED (owner's 0.4.3 playtest, 2026-11-08) | MEDIUM | P3 |
+| [GAP-140](#gap-140) | Prime Cells named a 7 on boards without one | FIXED (owner's 0.4.3 playtest, 2026-11-08) | LOW | P3 |
+| [GAP-141](#gap-141) | A no-repeat line inside one box told the player nothing | FIXED (owner's 0.4.3 playtest, 2026-11-08) | MEDIUM | P3 |
+| [GAP-142](#gap-142) | The rule card lay under the bag and relics | FIXED (owner's 0.4.3 playtest, 2026-11-08) | MEDIUM | P2 |
 | [GAP-067](#gap-067) | Moonshade Offering's "+2 starting pencil" did nothing (the run starts at full pencil) | FIXED (2026-10-22) | LOW | P3 |
 | [GAP-064](#gap-064) | Scholar's Burden: no free Ink Well, "+5 pencil" did nothing, "−1 slot" could add a slot | FIXED (as planned, 2026-10-22) | MEDIUM | P3 |
 | [GAP-063](#gap-063) | Class levels 30 and 40 promised rewards the game did not grant (starting items, frames) | FIXED (2026-10-21) | MEDIUM | P2 |
@@ -1729,3 +1739,82 @@ Found in the owner's 0.3.0 playtest (2026-10-27). Analysis, causes with file and
 - **Fix:** `AnimationHelper.MotionReduced` reads the live setting; `PulseScale` sets the base scale and ends at once, and the node reveal and the badge shake do not start. A change takes effect on the next animation, also mid-run.
 - **Tests:** `ReduceMotionTests` (a pulse with Reduce Motion ends at once at its base scale; without it, it runs).
 
+## GAP-133
+**The rest and event scenes: the arrows moved a focus nothing showed, and the hints named keys that did not exist**
+
+- **Requirement:** INPUT-KEY-002
+- **Status:** FIXED (owner's 0.4.3 playtest, 2026-11-08) · **Severity:** HIGH · **Priority:** P2
+- **Problem:** The bowls and strips paint no focus, so the arrows seemed dead; "1–4" stood under three bowls and "1–3" under two options.
+- **Fix:** A focus reached by a move key chooses the bowl or strip (`MenuDpad.ChooseOnMove`); the hints count the choices.
+
+## GAP-134
+**A bag of four or more slots was invisible (the Stone Gardener's)**
+
+- **Requirement:** REQ-UI
+- **Status:** FIXED (owner's 0.4.3 playtest, 2026-11-08) · **Severity:** HIGH · **Priority:** P1
+- **Problem:** The scrolling bag clipped its slots with a Mask over a fully transparent Image, which hides everything; Tab and the items still worked.
+- **Fix:** RectMask2D (`HudViewController.BuildScrollableSlots`).
+
+## GAP-135
+**From six relics on the relic icons overlapped**
+
+- **Requirement:** HUD-RELIC-001
+- **Status:** FIXED (owner's 0.4.3 playtest, 2026-11-08) · **Severity:** MEDIUM · **Priority:** P2
+- **Problem:** Rows were squeezed into the area while the slots stayed square.
+- **Fix:** A fixed first row of five, a second row that alone scrolls.
+
+## GAP-136
+**A resumed puzzle's clock started at 0:00**
+
+- **Requirement:** SAVE-TIMER-001
+- **Status:** FIXED (owner's 0.4.3 playtest, 2026-11-08) · **Severity:** MEDIUM · **Priority:** P2
+- **Problem:** The time went into the run total on Save & Quit and the clock began anew.
+- **Fix:** `RunState.PuzzleClockSeconds` is saved and the clock goes on.
+
+## GAP-137
+**After an event the arrows did nothing on the path**
+
+- **Requirement:** INPUT-KEY-002
+- **Status:** FIXED (owner's 0.4.3 playtest, 2026-11-08) · **Severity:** HIGH · **Priority:** P2
+- **Problem:** Closing the scene left nothing chosen and the UI module moves only from a chosen control.
+- **Fix:** The first arrow key picks the path's cursor again.
+
+## GAP-138
+**Tab went into the bag but not back out**
+
+- **Requirement:** INPUT-KEY-002
+- **Status:** FIXED (owner's 0.4.3 playtest, 2026-11-08) · **Severity:** MEDIUM · **Priority:** P2
+- **Problem:** Tab cycled the slots once inside.
+- **Fix:** Tab toggles, R does the same for the relics, the arrows step inside.
+
+## GAP-139
+**The Cracked Teacup absorbed a mistake but ended the combo**
+
+- **Requirement:** RELIC-TEACUP-001
+- **Status:** FIXED (owner's 0.4.3 playtest, 2026-11-08) · **Severity:** MEDIUM · **Priority:** P3
+- **Problem:** Only shields set the "absorbed" flag the combo looks at.
+- **Fix:** The teacup sets it too.
+
+## GAP-140
+**Prime Cells named a 7 on boards without one**
+
+- **Requirement:** BOSS-TEXT-001
+- **Status:** FIXED (owner's 0.4.3 playtest, 2026-11-08) · **Severity:** LOW · **Priority:** P3
+- **Problem:** The rule text was fixed.
+- **Fix:** The text lists the primes of the board.
+
+## GAP-141
+**A no-repeat line inside one box told the player nothing**
+
+- **Requirement:** BOSS-MOD-008
+- **Status:** FIXED (owner's 0.4.3 playtest, 2026-11-08) · **Severity:** MEDIUM · **Priority:** P3
+- **Problem:** The box already forbids repeats.
+- **Fix:** The generator refuses such a line and drops pieces that touch only givens.
+
+## GAP-142
+**The rule card lay under the bag and relics**
+
+- **Requirement:** RULE-CARD-001
+- **Status:** FIXED (owner's 0.4.3 playtest, 2026-11-08) · **Severity:** MEDIUM · **Priority:** P2
+- **Problem:** The bag is built on the puzzle's first refresh, after the card.
+- **Fix:** The HUD is built before the card.

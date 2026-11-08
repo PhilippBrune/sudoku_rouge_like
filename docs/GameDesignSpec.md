@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.40 | **Date:** 2026-11-08 | **Status:** implemented
+**Version:** 1.41 | **Date:** 2026-11-08 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.41 | 2026-11-08 | implemented | Owner's 0.4.3 playtest: keys on the scenes and in the bag, the puzzle clock saved, the saved Daily Walk on the main menu, the relic rows, the puzzle challenge, profile names, crash reports with consent, the new-profile screen (requirements below RUN-HISTORY-002). |
 | 1.40 | 2026-11-08 | implemented | Owner's pick C after the 0.4.2 playtest (RM-230): the last five runs on a slip in the main menu, each with its last board and seed (RUN-HISTORY-001/002). |
 | 1.39 | 2026-11-07 | implemented | Owner's picks after the 0.4.2 playtests (2026-11-07): feedback from inside the game (FEEDBACK-001/002, K3), a card for each new rule (RULE-CARD-001, FB1), the Daily Walk in its own save slot (SAVE-DAILY-001, FB4), the chosen cell framed (UI-CELL-FOCUS-001, FB5) and the fixes of the owner's Daily Walk playtest (EVENT-OUTCOME-001, SHOP-MULTI-001, REST-REFRESH-001, FOG-SOLVED-001, ACCESS-FONT-005, DAILY-WALK-011). |
 | 1.38 | 2026-11-07 | implemented | Owner's picks after the 0.4.1 playtest on a Legion Go (2026-11-05): the Garden Run is three floors, the gardens of Floors 1, 3 and 5 (RUN-FLOORS-001), with the skipped gardens' wardens and a shop after each boss (RUN-FLOORS-002). |
@@ -635,6 +636,21 @@ As built (1.1, GAP-020; Run tab since 1.9, UI-OPT-002): the in-run Options panel
 | RUN-LENGTH-001 | The game measures its runs on the player's PC only (no telemetry): how long a run was open (path, puzzles, shops; resumed runs go on counting), the time to its first path choice, and the gap since the previous run's end in the same session. The Garden Run scroll names the run's length in its eyebrow. The last 200 runs are kept in the save (`RunHistory`); `tools/playtest/run_length_report.py` reads them and says whether RM-113 (a short walk) is needed (a won Harmony 0 run over 45 minutes). The number of floors does not change (owner). |
 | RUN-HISTORY-001 | The save keeps the last five finished Garden Runs and walks, newest first (`RecentRuns`): class, result, time, seed, items, relics and the board the run ended on with its last wrong digit. Only these five carry a board; a save from before has an empty list. A run given up from the menu is not listed. |
 | RUN-HISTORY-002 | The main menu shows them on a Recent Runs slip on the path beside the menu column (the owner's pick C, RM-230; the mockup's place under the run card holds the menu tablets). A row opens the run's card: the last board with the last wrong digit ringed, where it ended, its rules, items and relics, and Walk seed, which opens Select Class with the seed filled in, for any class. A Monthly Walk has no Walk seed. Without a finished run the slip is hidden. |
+| INPUT-KEY-002 | Keyboard only: the arrows choose on the rest and event scenes, and the hints count the choices that are there; the first arrow key after a scene closes picks the path's cursor again; Tab goes into the bag and back, R into the relics and back, the arrows step inside (GAP-133, GAP-137, GAP-138). |
+| UI-CURSOR-002 | A keyboard key hides the pointer as the pad does; moving the mouse or clicking brings it back. |
+| SAVE-TIMER-001 | The open puzzle's clock is saved with the run and goes on after a resume; the run total takes it when the puzzle ends (GAP-136). |
+| SAVE-DAILY-002 | A saved Daily Walk shows on the main menu's run card when no Garden Run waits, and its tag says Continue. |
+| HUD-RELIC-001 | Five relics in a first row that always shows; from the sixth on a second row, which alone scrolls; ten relics fit without scrolling and nothing overlaps (GAP-135). |
+| RELIC-TEACUP-001 | The Cracked Teacup keeps the combo when it absorbs a mistake (GAP-139). |
+| ECON-SHOP-003 | Daily Walk prices follow the walk's floor, not the garden it lies on: 40/75/150 on its first floor, half again on its second. A Daily Walk starts with no gold and earned 84 by its first shop, where a Rare item cost 112. |
+| SEED-BOARD-004 | The Monthly Walk's board keeps the walk's time beside its score and shows it on each row. |
+| DEVICE-RESUME-001 | When the window loses focus (Windows locked, the device asleep) the run is saved first. The Windows build uses Direct3D 11. |
+| CRASH-REPORT-001 | After a game that did not close properly the next start offers a report with the last session's log. The player sees all of it first; only Send lets it leave, through the feedback relay. Without the relay it is a ZIP on the player's PC. |
+| PROFILE-NAME-001 | A profile can be named on Select Profile (20 characters, plain text). Only the name changes; its runs and statistics stay. |
+| UI-STYLE-045 | A new profile's first screen (RM-233, the owner's pick C): banner, language and comfort on one slip, Learn the basics and Enter the garden as ema. |
+| EVENT-CHALLENGE-001 | The Hourglass Master: a rule-free timed puzzle for an item (the floor's smallest board, 2 or 3 stars, 2.5 s plus 1 s per star for each cell) or a relic (one size more, one star more, 2 s plus 1 s per star for each cell), or walk on. Out of time ends the puzzle: back on the path, no prize, no further cost. |
+| EVENT-ART-001 | An event with its own painting (`background/event_<key>`) shows it; the others keep the shared one. |
+| UI-PATH-FLOORS-001 | The path's floor marks are as many as the walk has floors and stand side by side. |
 | RUN-BALANCE-001 | The run history also keeps the balance check of RM-108 (GoldEconomySystem): gold left at the end, shop tiles entered and how many of them bought something, items used. The report prints them for won Garden Runs against the targets (under 80 gold left, 70 % of visits with a purchase, 4 items). |
 | RUN-FIRST-001 | Faster first choice (RM-120): the boards of the tiles the player can pick first are baked first, while the floor entry plays, so the first pick opens a ready board; the path's first tile has the focus (existing). |
 | RUN-EARLY-001 | **The early garden (RM-118, owner's pick "behutsam öffnen").** A Garden Run holds back ten things until the profile's finished runs open them, one per run, in this order: Phoenix Feather (relic), Wishing Fountain (event), Skyscrapers (rule), Shifting Garden, Rare Flower Patch, Sandwich, Eternal Lotus, The Tempting Shrine, Little Killer, Dragon's Eye. A finished run is any run the profile records (the count that opens Endless Zen, `TotalRunsStarted`); a profile with ten has everything. The Daily Walk and a run on a typed seed (the seed of the week too) hold nothing back, so they stay the same for every player; nor do the other modes. |

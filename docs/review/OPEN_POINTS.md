@@ -1,11 +1,12 @@
 # Open points
 
-**Version:** 2.4 | **Date:** 2026-11-04 | **Status:** review (a living list; update it whenever an item closes or a new one opens)
+**Version:** 2.5 | **Date:** 2026-11-08 | **Status:** review (a living list; update it whenever an item closes or a new one opens)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.5 | 2026-11-08 | review | Owner (2026-11-08): the feedback relay to Discord stays an open point (RM-237); the English Steamworks texts wait for an upload. |
 | 2.4 | 2026-11-04 | review | Owner's 0.4.1 playtest on a Legion Go (2026-11-04): four bugs fixed in 0.4.2 (GAP-115 to GAP-118); six decisions wait on `docs/design/playtest-041-proposals.html` (the path's controller focus, the bag-full screen, three floors, the fog items and the item review, the Garden Monk, every class passive). 0.4.2 built and tagged, not uploaded. |
 | 2.3 | 2026-11-04 | review | Owner (2026-11-04): GAP-073 round 2 picked and built (AUDIO-SFX-001, GAP-114); the Steam Deck and the legal check closed ("Schließe"); the 0.4.1 announcement published by the owner, mirrored to #rotn-news, how-to-play, known-issues and the channel topic posted; RM-101, RM-104 and RM-106 are next. |
 | 2.2 | 2026-11-04 | review | 0.4.0 is live (build 26400103); the upload row becomes the announcement and the Discord posts. |
@@ -72,6 +73,10 @@ came of them:
 | **Spirit Trials "Solver Start"** | Not built (random item only) | Only if you want the choice | Owner |
 
 ## 3. Waiting for the owner
+
+- **Feedback to Discord (RM-237):** the form is in the game and writes a ZIP. Open: a private Discord channel with a webhook, the Cloudflare Worker (`tools/feedback-worker/README.md`, about 15 minutes), then its address in `FeedbackSender.Endpoint` and a new build. Crash reports (CRASH-REPORT-001) use the same way.
+- **Steamworks texts:** `steam_assets/achievements/localization/4858470_loc_english.vdf` (floor_5, eight Swift Path challenges) waits for the upload.
+- **Legion Go crash after locking Windows:** hardened (DEVICE-RESUME-001) but not reproduced here. The next crash offers a report with the log.
 
 | Decision | Why it matters | Proposal |
 |---|---|---|

@@ -86,6 +86,28 @@ namespace SudokuRoguelike.UI
             _ => Vector3.right
         };
 
+        /// <summary>A move key held, or a D-pad or stick step, this frame. A focus change from it is a choice on the rest and
+        /// event scenes; one from a click or from a scene opening is not.</summary>
+        public static bool MovedThisFrame =>
+            Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.RightArrow)
+            || Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.D)
+            || ReadPressed() != MoveDirection.None;
+
+        /// <summary>An arrow or W/A/S/D key went down this frame.</summary>
+        public static bool MoveKeyDown =>
+            Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.RightArrow)
+            || Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.D);
+
+        /// <summary>[REQ: INPUT-KEY-002] Runs <paramref name="choose"/> when the focus reaches <paramref name="target"/> by a move
+        /// key, the D-pad or the stick, so the arrows visibly choose on a scene whose controls paint no focus of their own.</summary>
+        public static void ChooseOnMove(GameObject target, System.Action choose)
+        {
+            var trigger = target.AddComponent<EventTrigger>();
+            var entry = new EventTrigger.Entry { eventID = EventTriggerType.Select };
+            entry.callback.AddListener(_ => { if (MovedThisFrame) choose(); });
+            trigger.triggers.Add(entry);
+        }
+
         /// <summary>A movement key the player bound in Keybindings, when it is one the UI input module does not read
         /// (arrow keys and W/A/S/D move through the module already).</summary>
         public static MoveDirection ReadRemapped(Core.InputRemapService remap)

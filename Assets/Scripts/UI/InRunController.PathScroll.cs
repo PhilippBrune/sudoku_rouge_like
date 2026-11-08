@@ -235,14 +235,17 @@ namespace SudokuRoguelike.UI
             if (currentFloor == _lastBuiltFloorForStrip && _floorProgressStrip != null) return;
             if (_floorProgressStrip != null) Destroy(_floorProgressStrip.gameObject);
 
-            _floorProgressStrip = ScrollUiKit.Area(_pathPaper, "FloorProgressBar", new Vector2(0.775f, 0.870f),
+            // UI-PATH-FLOORS-001: the slip is as wide as the walk has floors, so two marks stand side by side (owner, 0.4.3 playtest).
+            const float WordWidth = 0.050f, MarkStep = 0.024f;
+            var total = Mathf.Max(1, run.State.TotalFloors);
+            var width = WordWidth + total * MarkStep + 0.006f;
+            _floorProgressStrip = ScrollUiKit.Area(_pathPaper, "FloorProgressBar", new Vector2(0.934f - width, 0.870f),
                 new Vector2(0.934f, 0.918f));
             ScrollUiKit.Label(_floorProgressStrip, "FloorWord", T("InRun.Path.FloorMarks"), 16, TextAnchor.MiddleRight,
-                ScrollUiKit.InkSoft, new Vector2(0f, 0f), new Vector2(0.24f, 1f), 11);
-            var total = Mathf.Max(1, run.State.TotalFloors);
+                ScrollUiKit.InkSoft, new Vector2(0f, 0f), new Vector2((WordWidth - 0.006f) / width, 1f), 11);
             for (var fi = 0; fi < total; fi++)
             {
-                var center = new Vector2(0.32f + fi * (0.66f / Mathf.Max(1, total - 1)) * 0.98f, 0.5f);
+                var center = new Vector2((WordWidth + (fi + 0.5f) * MarkStep) / width, 0.5f);
                 var mark = ScrollUiKit.Spot(_floorProgressStrip, $"FloorDot_{fi}", center, new Vector2(26f, 26f),
                     fi < currentFloor ? PathInk : fi == currentFloor ? PathVermilion : Color.clear, ScrollUiKit.Rounded(4f));
                 if (fi > currentFloor)

@@ -14,7 +14,7 @@ namespace SudokuRoguelike.Run
         private static readonly (string id, int optionCount)[] PackLocalizationSpecs =
         {
             ("koi_pond_wager", 3), ("fallen_lantern", 3), ("wandering_monk", 3),
-            ("bone_carver", 3), ("ink_spring", 3), ("blood_lantern", 3), ("ghost_merchant", 3)
+            ("bone_carver", 3), ("ink_spring", 3), ("blood_lantern", 3), ("ghost_merchant", 3), (RunDirector.ChallengeEventKey, 3)
         };
 
         private static readonly string[] PackResultKeys =
@@ -47,6 +47,10 @@ namespace SudokuRoguelike.Run
 
         private static IEnumerable<RunEvent> BuildPackEvents()
         {
+            yield return Event(RunDirector.ChallengeEventKey, "The Hourglass Master",
+                "A master sets a board on a flat stone and turns an hourglass. Solve it before the sand runs out, and a prize is yours.", 0,
+                Option(RunDirector.ChallengeEventKey, 0, "Play for an item", string.Empty, new EventOption { Challenge = RunDirector.ChallengeItem }),
+                Option(RunDirector.ChallengeEventKey, 1, "Play for a relic", string.Empty, new EventOption { Challenge = RunDirector.ChallengeRelic }));
             yield return Event("koi_pond_wager", "The Koi Pond Wager",
                 "An old man feeds the koi and offers a bet: which fish rises first?", 0,
                 Option("koi_pond_wager", 0, "Bet 20 gold", "Half and half: +50 gold or nothing", new EventOption { GoldCost = 20, WagerGold = 50 }),

@@ -179,10 +179,11 @@ namespace SudokuRoguelike.UI
             iconImg.raycastTarget = false;
         }
 
-        public void StartPuzzleTimer()
+        /// <param name="alreadyElapsed">[REQ: SAVE-TIMER-001] The seconds this puzzle had when it was saved.</param>
+        public void StartPuzzleTimer(float alreadyElapsed = 0f)
         {
             _lastPuzzleSeconds = 0f;
-            _puzzleStartTime = Time.realtimeSinceStartup;
+            _puzzleStartTime = Time.realtimeSinceStartup - Mathf.Max(0f, alreadyElapsed);
             _classBadgeCacheValid = false; // re-read level/prestige at puzzle start
         }
 
@@ -813,59 +814,76 @@ namespace SudokuRoguelike.UI
                 return;
             }
 
-            // Relic area: 0.02-0.43 (bottom half of bag, below divider).
-            // Pack up to 4 mini-icons per row (5 from five relics, so two rows fit the bag under RM-208's slip); each slot is
-            // square, with width controlling height.
-            var perRow = relicCount <= 4 ? 4 : 5;
-            const float relicAreaBottom = 0.02f;
-            const float relicAreaTop    = 0.40f;   // clear of the RELICS label (RM-208)
-            const float relicAreaH = relicAreaTop - relicAreaBottom;
-            var rows   = Mathf.CeilToInt(relicCount / (float)perRow);
-            var slotH  = rows > 0 ? relicAreaH / rows : relicAreaH;
-            var slotW  = 1f / perRow;
-
-            for (var i = 0; i < relicCount; i++)
-            {
-                var row = i / perRow;
-                var col = i % perRow;
-                var xMin = col * slotW + 0.01f;
-                var xMax = xMin + slotW - 0.02f;
-                var yMax = relicAreaTop - row * slotH;
-                var yMin = yMax - slotH + 0.01f;
-
-                var go = new GameObject($"RelicSlot_{i}", typeof(RectTransform), typeof(Image), typeof(Button));
-                go.transform.SetParent(_bagPanel.transform, false);
-                var rt = go.GetComponent<RectTransform>();
-                rt.anchorMin = new Vector2(xMin, yMin);
-                rt.anchorMax = new Vector2(xMax, yMax);
-                rt.offsetMin = Vector2.zero;
-                rt.offsetMax = Vector2.zero;
-                var aspect = go.AddComponent<AspectRatioFitter>();
-                aspect.aspectMode = AspectRatioFitter.AspectMode.WidthControlsHeight;
-                aspect.aspectRatio = 1f;
-                var relicImg = go.GetComponent<Image>();
-                relicImg.sprite = ScrollUiKit.Rounded(8f);
-                relicImg.type = Image.Type.Sliced;
-                relicImg.color = InRunUiFactory.BagSlotBg;
-
-                // Icon fills the slot (no text — compact 25% size)
-                var iconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
-                iconGo.transform.SetParent(go.transform, false);
-                var iconRt = iconGo.GetComponent<RectTransform>();
-                iconRt.anchorMin = new Vector2(0.05f, 0.15f);
-                iconRt.anchorMax = new Vector2(0.95f, 0.85f);
-                iconRt.offsetMin = Vector2.zero;
-                iconRt.offsetMax = Vector2.zero;
-                iconGo.GetComponent<Image>().raycastTarget = false;
-
-                var btn = go.GetComponent<Button>();
-                var idx = i;
-                btn.onClick.AddListener(() => OnBagRelicClicked(idx));
-                WatchForDetail(btn, idx, relic: true);
-                _bagRelicButtons.Add(btn);
-            }
-
+            // [REQ: HUD-RELIC-001] Five relics in a first row that always shows; from the sixth on a second row, which alone
+            // scrolls. The slots keep one size and never overlap (they did from six relics on).
+            var rowH = (RelicAreaTop - RelicAreaBottom) * 0.5f;
+            for (var i = 0; i < Mathf.Min(relicCount, RelicsPerRow); i++)
+                BuildRelicSlot(_bagPanel.transform, i, new Vector2((float)i / RelicsPerRow, RelicAreaTop - rowH),
+                    new Vector2((i + 1f) / RelicsPerRow, RelicAreaTop));
+            if (relicCount > RelicsPerRow) BuildRelicScroll(relicCount, rowH);
             _builtForRelicCount = relicCount;
+        }
+
+        private const int RelicsPerRow = 5;
+        private const float RelicAreaBottom = 0.02f, RelicAreaTop = 0.40f;   // clear of the RELICS label (RM-208)
+        private ScrollRect _relicScroll;
+
+        private void BuildRelicScroll(int relicCount, float rowH)
+        {
+            var container = ScrollUiKit.Area(_bagPanel.transform, "RelicScroll", new Vector2(0f, RelicAreaBottom), new Vector2(1f, RelicAreaBottom + rowH));
+            container.gameObject.AddComponent<Image>().color = Color.clear;   // takes the wheel between the slots
+            _bagRelicScrollContainer = container.gameObject;
+            var viewport = ScrollUiKit.Area(container, "Viewport", Vector2.zero, Vector2.one);
+            viewport.gameObject.AddComponent<RectMask2D>();
+            var extraRows = Mathf.CeilToInt((relicCount - RelicsPerRow) / (float)RelicsPerRow);
+            var content = ScrollUiKit.Area(viewport, "Content", new Vector2(0f, 1f - extraRows), Vector2.one);   // one row is the viewport's height
+            content.pivot = new Vector2(0.5f, 1f);
+            for (var i = RelicsPerRow; i < relicCount; i++)
+            {
+                var row = (i - RelicsPerRow) / RelicsPerRow;
+                var col = i % RelicsPerRow;
+                BuildRelicSlot(content, i, new Vector2((float)col / RelicsPerRow, 1f - (row + 1f) / extraRows),
+                    new Vector2((col + 1f) / RelicsPerRow, 1f - (float)row / extraRows));
+            }
+            _relicScroll = container.gameObject.AddComponent<ScrollRect>();
+            _relicScroll.viewport = viewport;
+            _relicScroll.content = content;
+            _relicScroll.horizontal = false;
+            _relicScroll.vertical = extraRows > 1;
+            _relicScroll.scrollSensitivity = 20f;
+            _relicScroll.movementType = ScrollRect.MovementType.Clamped;
+        }
+
+        private void BuildRelicSlot(Transform parent, int index, Vector2 min, Vector2 max)
+        {
+            var go = new GameObject($"RelicSlot_{index}", typeof(RectTransform), typeof(Image), typeof(Button));
+            go.transform.SetParent(parent, false);
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = min;
+            rt.anchorMax = max;
+            rt.offsetMin = new Vector2(3f, 3f);
+            rt.offsetMax = new Vector2(-3f, -3f);
+            var aspect = go.AddComponent<AspectRatioFitter>();
+            aspect.aspectMode = AspectRatioFitter.AspectMode.HeightControlsWidth;
+            aspect.aspectRatio = 1f;
+            var relicImg = go.GetComponent<Image>();
+            relicImg.sprite = ScrollUiKit.Rounded(8f);
+            relicImg.type = Image.Type.Sliced;
+            relicImg.color = InRunUiFactory.BagSlotBg;
+
+            var iconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+            iconGo.transform.SetParent(go.transform, false);
+            var iconRt = iconGo.GetComponent<RectTransform>();
+            iconRt.anchorMin = new Vector2(0.05f, 0.15f);
+            iconRt.anchorMax = new Vector2(0.95f, 0.85f);
+            iconRt.offsetMin = Vector2.zero;
+            iconRt.offsetMax = Vector2.zero;
+            iconGo.GetComponent<Image>().raycastTarget = false;
+
+            var btn = go.GetComponent<Button>();
+            btn.onClick.AddListener(() => OnBagRelicClicked(index));
+            WatchForDetail(btn, index, relic: true);
+            _bagRelicButtons.Add(btn);
         }
 
         // Item area within the bag panel (local Y, between divider and title).
@@ -908,16 +926,14 @@ namespace SudokuRoguelike.UI
             _bagScrollContainer = containerGo;
 
             // Viewport with Mask so clipping works.
-            var viewportGo = new GameObject("Viewport", typeof(RectTransform), typeof(Image));
+            // GAP-134: a Mask over a transparent Image hid every slot of a bag with four or more (the Stone Gardener's).
+            var viewportGo = new GameObject("Viewport", typeof(RectTransform), typeof(RectMask2D));
             viewportGo.transform.SetParent(containerGo.transform, false);
             var viewportRt = viewportGo.GetComponent<RectTransform>();
             viewportRt.anchorMin = Vector2.zero;
             viewportRt.anchorMax = Vector2.one;
             viewportRt.offsetMin = Vector2.zero;
             viewportRt.offsetMax = Vector2.zero;
-            viewportGo.GetComponent<Image>().color = Color.clear;
-            var mask = viewportGo.AddComponent<Mask>();
-            mask.showMaskGraphic = false;
 
             // Content: top-anchored, expands downward as buttons are added.
             var contentGo = new GameObject("Content", typeof(RectTransform));
@@ -1202,6 +1218,10 @@ namespace SudokuRoguelike.UI
 
         private void ShowRelicSelection()
         {
+            // [REQ: HUD-RELIC-001] The keys and the pad reach the rows below the visible one.
+            var extraRows = Mathf.CeilToInt((_bagRelicButtons.Count - RelicsPerRow) / (float)RelicsPerRow);
+            if (_relicScroll != null && extraRows > 1 && _selectedRelicSlot >= RelicsPerRow)
+                _relicScroll.verticalNormalizedPosition = 1f - (float)((_selectedRelicSlot - RelicsPerRow) / RelicsPerRow) / (extraRows - 1);
             for (var i = 0; i < _bagRelicButtons.Count; i++)
                 if (_bagRelicButtons[i] != null)
                     _bagRelicButtons[i].transform.localScale = Vector3.one * (i == _selectedRelicSlot ? 1.2f : 1f);

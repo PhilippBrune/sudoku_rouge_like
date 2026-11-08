@@ -14,6 +14,8 @@ namespace SudokuRoguelike.Meta
         public int Rank;         // the player's place, 0 when not on the board
         public int FriendRank;   // the place among friends (the player counted), 0 when not on the board
         public int Friends;      // friends on the board, the player counted
+        /// <summary>[REQ: SEED-BOARD-004] The seconds a row's walk took (0: not recorded), one per entry of Top and FriendTop.</summary>
+        public readonly List<int> TopSeconds = new List<int>(), FriendTopSeconds = new List<int>();
         public readonly List<(string Name, int Score)> Top = new List<(string, int)>();
         /// <summary>[REQ: SEED-BOARD-003] The friends on the board in their order; the player's own row has a null name.</summary>
         public readonly List<(string Name, int Score)> FriendTop = new List<(string, int)>();
@@ -58,6 +60,8 @@ namespace SudokuRoguelike.Meta
         {
             public string Name;
             public int Score;
+            public int Seconds;   // [REQ: SEED-BOARD-004] kept with the score, shown beside it
+            public readonly Dictionary<ulong, int> SecondsOf = new Dictionary<ulong, int>();
             public Action<BoardStanding> Done;
             public SteamLeaderboard_t Board;
             public readonly BoardStanding Standing = new BoardStanding();
@@ -73,7 +77,7 @@ namespace SudokuRoguelike.Meta
             new Dictionary<string, (float, BoardStanding)>();
 
         /// <summary>Uploads the score (0: only reads) and calls back with the standing, or null without Steam.</summary>
-        public static void SubmitToBoard(string board, int score, Action<BoardStanding> done)
+        public static void SubmitToBoard(string board, int score, Action<BoardStanding> done, int seconds = 0)
         {
             if (!SudokuRoguelike.Platform.PlatformServiceRegistry.SteamworksCallsEnabled || !SteamManager.Initialized)
             {
@@ -85,7 +89,7 @@ namespace SudokuRoguelike.Meta
                 done?.Invoke(cached.Standing);
                 return;
             }
-            var request = new BoardRequest { Name = board, Score = score, Done = done };
+            var request = new BoardRequest { Name = board, Score = score, Seconds = seconds, Done = done };
             try
             {
                 request.Find = CallResult<LeaderboardFindResult_t>.Create((found, failed) => Guard(request, () => OnBoardFound(request, found, failed)));
@@ -113,7 +117,8 @@ namespace SudokuRoguelike.Meta
                 DownloadTop(request);
             }));
             request.Upload.Set(SteamUserStats.UploadLeaderboardScore(request.Board,
-                ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodKeepBest, request.Score, null, 0));
+                ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodKeepBest, request.Score,
+                request.Seconds > 0 ? new[] { request.Seconds } : null, request.Seconds > 0 ? 1 : 0));
         }
 
         // The top three, then the player's own place, then the friends: three downloads, one after the other.
@@ -121,7 +126,10 @@ namespace SudokuRoguelike.Meta
             Download(request, ELeaderboardDataRequest.k_ELeaderboardDataRequestGlobal, 1, TopEntries, entries =>
             {
                 foreach (var entry in entries)
+                {
                     request.Standing.Top.Add((PlainName(SteamFriends.GetFriendPersonaName(entry.m_steamIDUser)), entry.m_nScore));
+                    request.Standing.TopSeconds.Add(request.SecondsOf.TryGetValue(entry.m_steamIDUser.m_SteamID, out var s) ? s : 0);
+                }
                 Download(request, ELeaderboardDataRequest.k_ELeaderboardDataRequestGlobalAroundUser, 0, 0, own =>
                 {
                     if (own.Count > 0) request.Standing.Rank = own[0].m_nGlobalRank;
@@ -131,8 +139,11 @@ namespace SudokuRoguelike.Meta
                         request.Standing.Friends = friends.Count;
                         request.Standing.FriendRank = friends.FindIndex(e => e.m_steamIDUser == me) + 1;
                         foreach (var entry in friends)
+                        {
                             request.Standing.FriendTop.Add((entry.m_steamIDUser == me ? null
                                 : PlainName(SteamFriends.GetFriendPersonaName(entry.m_steamIDUser)), entry.m_nScore));
+                            request.Standing.FriendTopSeconds.Add(request.SecondsOf.TryGetValue(entry.m_steamIDUser.m_SteamID, out var s) ? s : 0);
+                        }
                         Finish(request, true);
                     });
                 });
@@ -145,9 +156,13 @@ namespace SudokuRoguelike.Meta
             {
                 if (failed) { Finish(request, false); return; }
                 var entries = new List<LeaderboardEntry_t>();
+                var details = new int[1];
                 for (var i = 0; i < downloaded.m_cEntryCount; i++)
-                    if (SteamUserStats.GetDownloadedLeaderboardEntry(downloaded.m_hSteamLeaderboardEntries, i, out var entry, null, 0))
+                    if (SteamUserStats.GetDownloadedLeaderboardEntry(downloaded.m_hSteamLeaderboardEntries, i, out var entry, details, 1))
+                    {
                         entries.Add(entry);
+                        request.SecondsOf[entry.m_steamIDUser.m_SteamID] = entry.m_cDetails > 0 ? details[0] : 0;
+                    }
                 next(entries);
             }));
             request.Download.Set(SteamUserStats.DownloadLeaderboardEntries(request.Board, kind, start, end));
@@ -172,7 +187,7 @@ namespace SudokuRoguelike.Meta
             catch (Exception ex) { Debug.LogWarning($"[SteamLeaderboard] board callback failed: {ex.Message}"); }
         }
 #else
-        public static void SubmitToBoard(string board, int score, Action<BoardStanding> done) => done?.Invoke(null);
+        public static void SubmitToBoard(string board, int score, Action<BoardStanding> done, int seconds = 0) => done?.Invoke(null);
 #endif
     }
 }

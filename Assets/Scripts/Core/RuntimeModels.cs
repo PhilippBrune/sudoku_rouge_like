@@ -161,6 +161,9 @@ namespace SudokuRoguelike.Core
         public int LastMistakeCol = -1;     // GinkgoLeaf: last wrong non-given placement column
         // [REQ: RUN-HISTORY-001] The open puzzle's last wrong digit, for the run's card (Ginkgo Leaf's undo clears the two above).
         public int LastWrongRow = -1, LastWrongCol = -1, LastWrongDigit;
+        public float PuzzleClockSeconds;    // [REQ: SAVE-TIMER-001] the open puzzle's time, so a resume goes on from it
+        public int ChallengeKind;           // [REQ: EVENT-CHALLENGE-001] 0 none, 1 for an item, 2 for a relic
+        public float ChallengeSecondsLeft;
         // Shield system (Silk Fan item):
         // Absorbs incoming HP damage before CurrentHP is reduced. Resets at each puzzle start.
         // Distinct from MistakeShieldCharges (which absorbs full mistake events at 0 HP cost).
@@ -583,6 +586,7 @@ namespace SudokuRoguelike.Core
         public int RemoveCurses;     // -1 = every curse; blocks the option without a curse
         public int WagerGold;        // half and half: +WagerGold or nothing (the choice's seed decides)
         public bool UpgradeItem;     // the bag's weakest item becomes a random one a rarity higher; blocks with an empty bag
+        public int Challenge;        // [REQ: EVENT-CHALLENGE-001] 1 or 2: starts a timed puzzle instead of paying out
         public bool HpCostBlocks;    // RM-104's trades: the HP must be there (the older events stop at 1 HP instead)
         // Curse trade
         public string CurseId; // if set, applying this option grants this curse

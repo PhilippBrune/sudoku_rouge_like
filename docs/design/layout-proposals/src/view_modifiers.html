@@ -1,0 +1,49 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css"><script src="common.js"></script>
+<style>
+  /* Options > Run > View Modifiers is still a dark text list (owner, 0.4.3 playtest). Two proposals in the paper look; ?v=a|b */
+  .bg { position:absolute; inset:0; background:url('../../../../Assets/Resources/background/bg_menu_pause.png') center/cover; filter:brightness(.5) saturate(.85); }
+  .paper { position:absolute; background:#f3ead6; color:#231e17; font-family:'Main','Segoe UI'; box-shadow:0 18px 36px rgba(0,0,0,.55); }
+  .band { position:absolute; left:0; right:0; top:0; height:6px; background:#b23a2e; }
+  small.eye { display:block; font-size:16px; letter-spacing:.16em; color:#6b5f4c; }
+  h1 { margin:6px 0 14px; font-weight:normal; font-size:42px; }
+  h2 { margin:22px 0 8px; font-weight:normal; font-size:20px; letter-spacing:.14em; color:#9e2a2b; }
+  .rule { display:grid; grid-template-columns:44px 1fr; gap:14px; padding:10px 0; border-bottom:1px solid rgba(60,45,30,.15); }
+  .sw { width:44px; height:12px; border-radius:6px; margin-top:12px; }
+  .rule b { font-weight:normal; font-size:25px; } .rule p { margin:2px 0 0; font-size:19px; color:#4b4035; line-height:1.3; }
+  .pill { display:inline-block; padding:12px 30px; border-radius:999px; font-size:22px; background:#b07c44; color:#fbf6ea; }
+  .page { position:absolute; top:0; bottom:0; width:50%; padding:40px 44px; }
+  .spine { position:absolute; left:50%; top:0; bottom:0; width:3px; background:#b8a27f; }
+  .tile { display:grid; grid-template-columns:70px 1fr; gap:14px; margin:14px 0; }
+  .tile img { width:64px; height:64px; }
+  .tag { position:absolute; right:30px; top:30px; font-size:17px; color:#6b5f4c; }
+</style></head><body>
+<div class="bg"></div><div id="main"></div><div class="caption" id="cap"></div>
+<script>
+const v = PARAMS.get('v') || 'a';
+const main = document.getElementById('main');
+const add = h => main.insertAdjacentHTML('beforeend', h);
+const rules = [
+  ['Dutch Whispers', '#f08a3c', 'Adjacent cells on orange lines must differ by 4 or more.', 'dutch_whispers'],
+  ['Thermometer', '#a7a7b0', 'Digits increase along thermometers from bulb to tip.', 'thermo'],
+  ['Consecutive Line', '#d8ad22', 'Adjacent cells on gold lines must differ by exactly 1.', 'consecutive_line'],
+  ['Countdown', '#b23a2e', 'Marked cells must be filled within the shown number of placements.', 'countdown_fill'],
+];
+const row = r => `<div class="rule"><div class="sw" style="background:${r[1]}"></div><div><b>${r[0]}</b><p>${r[2]}</p></div></div>`;
+if (v === 'a') {
+  add(`<div class="paper" style="left:460px;top:90px;width:1000px;height:880px;padding:36px 50px"><div class="band"></div>
+    <small class="eye">OPTIONS · RUN</small><h1>The rules of this walk</h1>
+    <h2>THIS FLOOR</h2>${row(rules[0])}${row(rules[1])}
+    <h2>THIS PUZZLE</h2>${row(rules[2])}
+    <h2>THE BOSS</h2>${row(rules[3])}
+    <div style="position:absolute;left:0;right:0;bottom:30px;text-align:center"><span class="pill">Back (B)</span></div></div>`);
+  document.getElementById('cap').textContent = 'A · Ein Zettel wie die Legende: Farbe, Name, Regel, gruppiert nach Etage, Rätsel und Boss';
+} else {
+  const tile = r => `<div class="tile"><img src="${R}modifier/icon_${r[3]}.png"><div><b style="font-weight:normal;font-size:25px">${r[0]}</b><p style="margin:2px 0 0;font-size:19px;color:#4b4035">${r[2]}</p></div></div>`;
+  add(`<div class="paper" style="left:300px;top:110px;width:1320px;height:800px"><div class="band"></div><div class="spine"></div>
+    <div class="page" style="left:0"><small class="eye">OPTIONS · RUN</small><h1>This floor</h1>${tile(rules[0])}${tile(rules[1])}</div>
+    <div class="page" style="left:50%"><small class="eye">THIS PUZZLE AND THE BOSS</small><h1>Ahead</h1>${tile(rules[2])}${tile(rules[3])}</div>
+    <div style="position:absolute;left:0;right:0;bottom:26px;text-align:center"><span class="pill">Back (B)</span></div></div>`);
+  document.getElementById('cap').textContent = 'B · Ein aufgeschlagenes Buch mit den Regel-Symbolen, links die Etage, rechts Rätsel und Boss';
+}
+</script></body></html>

@@ -503,7 +503,7 @@ namespace SudokuRoguelike.UI
             // [REQ: SEED-BOARD-002] A finished walk puts its score on the month's board (the best one stays); an unfinished one reads it.
             var monthSlip = _modeBoard;
             SudokuRoguelike.Meta.SteamLeaderboardService.SubmitToBoard(SudokuRoguelike.Meta.SteamLeaderboardService.MonthlyWalkBoard(now),
-                completed ? score : 0, standing => { if (monthSlip != null) monthSlip.Show(standing); });
+                completed ? score : 0, standing => { if (monthSlip != null) monthSlip.Show(standing); }, Mathf.RoundToInt(timeSeconds));   // [REQ: SEED-BOARD-004]
         }
 
         public void ShowSpiritTrialsResult(RunDirector run, bool completed)

@@ -161,7 +161,7 @@ When Class-Based is selected, the player chooses from their **unlocked classes**
 | Garden Monk | 14 | 5 | 1 | Every 5 correct placements → +1 HP |
 | Shrine Archivist | 8 | 15 | 2 | First pencil use per cell is free |
 | Koi Gambler | 9 | 8 | 2 | 25% chance wrong placement costs 0 HP; 25% chance correct placement grants +1 Gold |
-| Stone Gardener | 11 | 8 | 3 | First item used each level is not consumed |
+| Stone Gardener | 11 | 8 | 3 | Items have 2 uses (3 from level 20) |
 | Lantern Seer | 7 | 12 | 2 | Boss modifiers are 20% weaker |
 | Reed Duelist | 8 | 7 | 2 | Perfect no-pencil puzzle grants +2 Pencil |
 | Quiet Cartographer | 9 | 10 | 2 | Perfect tile completion previews adjacent tiles |

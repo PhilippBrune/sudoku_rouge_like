@@ -36,6 +36,8 @@ namespace SudokuRoguelike.UI
             run.LiftRemainingFog();
             RenderBoard();
 
+            if (run.State.ChallengeKind != 0) { EndChallenge(run, true); return; }   // [REQ: EVENT-CHALLENGE-001]
+
             if (run.State.TutorialMode)
             {
                 run.CompleteLevelAndGrantRewards();

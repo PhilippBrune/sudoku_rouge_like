@@ -127,17 +127,10 @@ namespace SudokuRoguelike.Classes
 
         // ── On item use ──────────────────────────────────────────────────────────
 
-        /// <summary>
-        /// Returns true if the item use should not consume a charge (StoneGardener: first item/level free;
-        /// PaperCrane relic also covers this — checked separately).
-        /// </summary>
-        public static bool IsItemUseFree(RunState state, LevelState level)
-        {
-            if (state.ClassId != ClassId.StoneGardener) return false;
-            // First item each level is free; L20 upgrade: first 2 items free
-            var freeUses = StoneGardenerFreeItems(state);
-            return level.ItemsUsedThisLevel < freeUses;
-        }
+        /// <summary>[REQ: CLASS-PASSIVE-004] The uses an item has when it enters the bag: 2 for the Stone Gardener, 3 from level 20;
+        /// 1 for every other class. It no longer overlaps with the Eternal Lotus (owner, 0.4.3 playtest).</summary>
+        public static int ItemUses(RunState state) =>
+            state?.ClassId != ClassId.StoneGardener ? 1 : GetClassLevel(state) >= 20 ? 3 : 2;
 
         // ── GardenMonk: pencil purchase restriction ─────────────────────────────
 
@@ -168,12 +161,6 @@ namespace SudokuRoguelike.Classes
         }
 
         private static int ShrineArchivistFreeMarks(RunState state)
-        {
-            var level = GetClassLevel(state);
-            return level >= 20 ? 2 : 1;
-        }
-
-        private static int StoneGardenerFreeItems(RunState state)
         {
             var level = GetClassLevel(state);
             return level >= 20 ? 2 : 1;

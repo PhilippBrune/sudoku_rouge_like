@@ -41,7 +41,7 @@ namespace SudokuRoguelike.UI
                 loads[i].navigation = new Navigation
                 {
                     mode = Navigation.Mode.Explicit, selectOnLeft = i > 0 ? loads[i - 1] : null, selectOnRight = deletes[i],
-                    selectOnDown = back,
+                    selectOnDown = back, selectOnUp = loads[i].transform.parent.Find($"BtnRename_{i}")?.GetComponent<Button>(),
                 };
                 deletes[i].navigation = new Navigation
                 {
@@ -100,6 +100,10 @@ namespace SudokuRoguelike.UI
                 new Vector2(0.56f, 0.125f), T("ProfileSelect.Play"), 20, ScrollUiKit.Ink, ScrollUiKit.PaperText, 22f);
             var capturedSlot = slotIndex;
             btnLoad.onClick.AddListener(() => mc.SelectProfileSlot(capturedSlot));
+            var btnRename = ScrollUiKit.PillButton(card.transform, $"BtnRename_{slotIndex}", new Vector2(0.30f, 0.135f),
+                new Vector2(0.70f, 0.205f), T("ProfileSelect.Rename"), 17, new Color(0.89f, 0.80f, 0.61f, 1f), ScrollUiKit.InkSoft, 14f);   // [REQ: PROFILE-NAME-001]
+            btnRename.onClick.AddListener(() => mc.BeginRenameProfile(capturedSlot));
+            btnRename.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnDown = btnLoad };
             var btnDelete = ScrollUiKit.PillButton(card.transform, $"BtnDelete_{slotIndex}", new Vector2(0.60f, 0.045f),
                 new Vector2(0.84f, 0.115f), T("Delete"), 17, new Color(0.89f, 0.80f, 0.61f, 1f), ScrollUiKit.InkSoft, 14f);
             btnDelete.onClick.AddListener(() => mc.DeleteProfileSlot(capturedSlot));

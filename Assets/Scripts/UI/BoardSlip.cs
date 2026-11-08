@@ -112,7 +112,7 @@ namespace SudokuRoguelike.UI
             }
             else lines.Add(LocalizationService.T("DailyWalk.Board.NotOnIt"));
             for (var i = 0; i < standing.Top.Count && i < rows; i++)
-                lines.Add($"{i + 1}. {standing.Top[i].Name}  <color=#3A3228>{Number(standing.Top[i].Score)}</color>");
+                lines.Add($"{i + 1}. {standing.Top[i].Name}  <color=#3A3228>{Number(standing.Top[i].Score)}</color>{Clock(standing.TopSeconds, i)}");
             if (standing.Rank > System.Math.Min(rows, standing.Top.Count))
                 lines.Add($"<color=#9E2A2B>{standing.Rank}. {LocalizationService.T("DailyWalk.Board.You")}</color>");
             return string.Join("\n", lines);
@@ -139,7 +139,7 @@ namespace SudokuRoguelike.UI
             for (var i = 0; i < standing.FriendTop.Count && i < rows; i++)
             {
                 var (name, score) = standing.FriendTop[i];
-                var row = $"{i + 1}. {name ?? LocalizationService.T("DailyWalk.Board.You")}  <color=#3A3228>{Number(score)}</color>";
+                var row = $"{i + 1}. {name ?? LocalizationService.T("DailyWalk.Board.You")}  <color=#3A3228>{Number(score)}</color>{Clock(standing.FriendTopSeconds, i)}";
                 lines.Add(name == null ? $"<color=#9E2A2B>{row}</color>" : row);
             }
             if (standing.FriendRank > System.Math.Min(rows, standing.FriendTop.Count))
@@ -151,5 +151,10 @@ namespace SudokuRoguelike.UI
         private static int PlaceSize(int rows) => rows <= 1 ? 26 : 40;
 
         private static string Number(int value) => value.ToString("N0", LocalizationService.Culture);
+
+        // [REQ: SEED-BOARD-004] The walk's time beside its score, where the board keeps one.
+        public static string Clock(List<int> seconds, int index) =>
+            seconds == null || index >= seconds.Count || seconds[index] <= 0 ? string.Empty
+                : $"  <size=16><color=#6B5F4C>{seconds[index] / 60}:{seconds[index] % 60:00}</color></size>";
     }
 }

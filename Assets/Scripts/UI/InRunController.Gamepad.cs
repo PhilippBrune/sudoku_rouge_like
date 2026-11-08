@@ -90,7 +90,7 @@ namespace SudokuRoguelike.UI
             _gbControllerInRelicsFocus = relics;
             if (items) _hudView?.ControllerSelectBagSlot(0);
             else if (relics) _hudView?.ControllerSelectRelicSlot(0);
-            else SetStatus(T("[Controller] Puzzle mode  (LB to switch)"));
+            else if (InputDeviceTracker.UsingPad) SetStatus(T("[Controller] Puzzle mode  (LB to switch)"));
             _hudView?.ClearControllerRelicSelection(keep: relics);
             _numpadView?.HighlightControllerCursor(items || relics ? (int?)null : _gbNumpadRow * 3 + _gbNumpadCol);
         }
@@ -127,6 +127,9 @@ namespace SudokuRoguelike.UI
             if (PadButtons.Pressed(KeyCode.JoystickButton6)) { SaveAndQuit(); return; }
 
             // [REQ: INPUT-PAD-005] The D-pad and the left stick step between the path's nodes (the UI module never saw them).
+            // [REQ: INPUT-KEY-002] A closed scene leaves nothing chosen and the UI module moves only from a chosen control.
+            if (MenuDpad.MoveKeyDown && UnityEngine.EventSystems.EventSystem.current?.currentSelectedGameObject == null)
+                RestorePadFocusOnPath();
             var step = MenuDpad.ReadPressed();
             if (step != UnityEngine.EventSystems.MoveDirection.None)
             {
@@ -211,6 +214,32 @@ namespace SudokuRoguelike.UI
             var row = Mathf.Clamp(_gbNumpadRow + (vDown ? 1 : vUp ? -1 : 0), 0, 2);
             if (row * 3 + col + 1 <= size) (_gbNumpadRow, _gbNumpadCol) = (row, col);
             _numpadView?.HighlightControllerCursor(_gbNumpadRow * 3 + _gbNumpadCol);
+        }
+
+        // [REQ: INPUT-KEY-002] Keyboard only: Tab goes into the bag and back, R into the relics and back; the arrows step inside.
+        // True when a key was used here, so the board does not hear it.
+        private bool HandleBagAndRelicKeys()
+        {
+            var state = _map?.Run?.State;
+            if (Input.GetKeyDown(KeyCode.Tab) && (_gbControllerInItemsFocus || (state?.HeldItems?.Count ?? 0) > 0))
+            {
+                SetPadFocus(items: !_gbControllerInItemsFocus, relics: false);
+                if (_gbControllerInItemsFocus) SetStatus(T("InRun.KeyFocus.Bag"));
+                return true;
+            }
+            if (Input.GetKeyDown(KeyCode.R) && (_gbControllerInRelicsFocus || (state?.HeldRelics?.Count ?? 0) > 0))
+            {
+                SetPadFocus(items: false, relics: !_gbControllerInRelicsFocus);
+                if (_gbControllerInRelicsFocus) SetStatus(T("InRun.KeyFocus.Relics"));
+                return true;
+            }
+            if (!_gbControllerInItemsFocus && !_gbControllerInRelicsFocus) return false;
+            var back = Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.A);
+            var next = Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.D);
+            if (back == next) return false;
+            if (_gbControllerInItemsFocus) _hudView?.ControllerSelectBagSlot(back ? -1 : 1);
+            else _hudView?.ControllerSelectRelicSlot(back ? -1 : 1);
+            return true;
         }
 
         private void HandleGamepadItemsFocus()

@@ -144,7 +144,8 @@ namespace SudokuRoguelike.Tests
                 ClassId = ClassId.NumberFreak,
                 Mode = GameMode.GardenRun,
                 AllowIrregularPuzzles = false,
-                ClassLevel = 1
+                ClassLevel = 1,
+                GardenOpened = 0   // a plain first floor: these tests are about the digits, not a rule such as fog
             }, seed);
             // Starting relics can absorb mistakes; isolate the placement rules from them.
             run.State.HeldRelics.Clear();

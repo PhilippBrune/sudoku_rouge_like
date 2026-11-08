@@ -85,6 +85,7 @@ namespace SudokuRoguelike.Bootstrap
 
         private void Start()
         {
+            Platform.SessionGuard.Begin();   // [REQ: CRASH-REPORT-001]
             Application.runInBackground = true;
             SteamLeaderboardService.Initialize();
             ApplySavedLanguage();
@@ -165,6 +166,7 @@ namespace SudokuRoguelike.Bootstrap
         private void OnApplicationQuit()
         {
             SaveFileService.FlushSharedPendingWrites();
+            Platform.SessionGuard.End();   // [REQ: CRASH-REPORT-001]
         }
 
         // GAP-074: every quit request is logged with the window's state, so a quit the game did not ask for (the
@@ -508,6 +510,7 @@ namespace SudokuRoguelike.Bootstrap
             var opts = _profileService?.LoadOptions();
             var muteWhenUnfocused = opts?.Audio?.MuteWhenUnfocused ?? false;
             AudioListener.pause = muteWhenUnfocused && !hasFocus;
+            if (!hasFocus) SaveFileService.FlushSharedPendingWrites();   // [REQ: DEVICE-RESUME-001] Windows locked, the device asleep
         }
 
         // ── Infrastructure ──

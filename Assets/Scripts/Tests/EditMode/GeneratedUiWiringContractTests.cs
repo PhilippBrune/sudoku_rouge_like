@@ -272,7 +272,8 @@ namespace SudokuRoguelike.Tests
             var endSource = ReadSource(EndScreenViewControllerPath);
 
             // GAP-052: the event is a scene drawn over the path, not the blueprint panel under it.
-            StringAssert.Contains("ScrollUiKit.Scene(_pathPanel, \"EventScene\", \"bg_event\"", eventSource);
+            StringAssert.Contains("ScrollUiKit.Scene(_pathPanel, \"EventScene\", painting", eventSource);
+            StringAssert.Contains("\"bg_event\"", eventSource);
             StringAssert.Contains("ScrollUiKit.HandScroll(screen.transform, \"EventScroll\"", eventSource);
             StringAssert.Contains("F(\"InRun.Event.NeedGold\", option.GoldCost, state.CurrentGold)", eventSource);
             StringAssert.Contains("ScrollUiKit.Scene(pathPanel, \"CursedChoicePanel\", \"bg_curse\"", gateSource);
@@ -354,13 +355,13 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
-        public void SudokuRelicSlots_AreSquareUsingCurrentWidthAsHeight()
+        public void SudokuRelicSlots_AreSquare()
         {
             var hudSource = ReadSource(HudViewControllerPath);
 
-            StringAssert.Contains("var go = new GameObject($\"RelicSlot_{i}\", typeof(RectTransform), typeof(Image), typeof(Button))", hudSource);
+            StringAssert.Contains("var go = new GameObject($\"RelicSlot_{index}\", typeof(RectTransform), typeof(Image), typeof(Button))", hudSource);
             StringAssert.Contains("var aspect = go.AddComponent<AspectRatioFitter>()", hudSource);
-            StringAssert.Contains("aspect.aspectMode = AspectRatioFitter.AspectMode.WidthControlsHeight", hudSource);
+            StringAssert.Contains("aspect.aspectMode = AspectRatioFitter.AspectMode.HeightControlsWidth", hudSource);
             StringAssert.Contains("aspect.aspectRatio = 1f", hudSource);
         }
 
@@ -686,7 +687,7 @@ namespace SudokuRoguelike.Tests
 
             StringAssert.Contains("LineRenbanLine      = new(0.93f, 0.50f, 0.76f, 1f); // pink", paletteSource);
             StringAssert.Contains("Cells on pink lines form a consecutive set", bossSource);
-            StringAssert.Contains("BossService.GetModifierDescription(id)", customSource);
+            StringAssert.Contains("BossService.GetModifierDescription(id", customSource);
             Assert.That(customSource, Does.Not.Contain("Orange line: all digits on the line form a consecutive set"));
         }
 

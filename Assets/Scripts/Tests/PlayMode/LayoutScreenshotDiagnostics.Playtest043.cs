@@ -96,6 +96,40 @@ namespace SudokuRoguelike.Tests
         }
 
         [UnityTest]
+        public IEnumerator RenderBagAndTwelveRelics()
+        {
+            var camera = CreateCamera();
+            _beforeBindAlways = r =>
+            {
+                r.State.ClassId = ClassId.StoneGardener;
+                r.State.ItemSlots = 5;
+                r.State.HeldItems.Clear();
+                foreach (var type in new[] { ItemType.InkWell, ItemType.PatternScroll, ItemType.GinkgoLeaf, ItemType.Finder })
+                    r.State.HeldItems.Add(new ItemInstance { Id = type.ToString(), Type = type, Rarity = ItemRarity.Rare, Charges = 2 });
+                r.State.HeldRelics.Clear();
+                var ids = (RelicId[])Enum.GetValues(typeof(RelicId));
+                for (var i = 0; i < 12; i++) r.State.HeldRelics.Add(new RelicInstance { Id = ids[i], UsesRemaining = 1 });
+            };
+            var (host, _) = StartRun(7470, true, BossModifierId.Thermo);
+            _beforeBindAlways = null;
+            yield return DismissIntro();
+            yield return new WaitForSecondsRealtime(0.5f);
+            new SaveFileService(TestSlot).Save(new SaveFileEnvelope());
+            var screen = host.GetComponentInChildren<InRunController>(true);
+            Call(screen, "ShowSudoku");
+            Call(screen, "RenderBoard");
+            yield return null;
+            for (var i = 0; i < 4 && Named(host, "BtnRuleCardNext") != null; i++)
+            {
+                Named(host, "BtnRuleCardNext").onClick.Invoke();
+                yield return null;
+            }
+            yield return new WaitForSecondsRealtime(0.4f);
+            yield return Shoot(host, camera, "pt043_bag_and_relics.png");
+            host.SetActive(false);
+        }
+
+        [UnityTest]
         public IEnumerator RenderCustomPuzzleSevenRules()
         {
             var camera = CreateCamera();

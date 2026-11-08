@@ -921,7 +921,7 @@ namespace SudokuRoguelike.Economy
             var fallback = id switch
             {
                 RelicId.SmoothPebble => "Start each puzzle with +2 pencil marks.",
-                RelicId.CrackedTeacup => "Absorb the first mistake each puzzle (no HP loss).",
+                RelicId.CrackedTeacup => "Absorb the first mistake each puzzle: no HP lost and the combo holds.",
                 RelicId.WoodenComb => "+1 Max HP.",
                 RelicId.MossToken => "Shop rerolls cost 25% less.",
                 RelicId.KoiReflectionRelic => "Reveal the correct candidates for 5 random empty cells at puzzle start (no auto-fill).",

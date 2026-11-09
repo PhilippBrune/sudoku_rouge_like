@@ -285,9 +285,9 @@ namespace SudokuRoguelike.Core
         BambooCompass,     // [HARMONY-H3+] highlight 2 cells where next placement would violate a constraint
         // ── General-pool items (previously unregistered) ──
         BambooScroll,      // Normal: reveal star ratings of your next available path nodes
-        GardenLantern,     // Normal: illuminate all fogged cells for 15 seconds, then re-fog
+        GardenLantern,     // Moth Light, Normal: lifts the fog of one chosen box for good
         GoldenKoi,         // Rare: grant +10g per star rating when this puzzle is completed
-        TempleStamp,       // Rare: all wrong placements this puzzle cost 0 HP; consumed on completion
+        TempleStamp,       // Stone Oath, Rare: costs 1 HP, this puzzle pays 50 % more gold
         // ── Counter items, one per modifier family (GoldEconomySystem lever L3, ITEM-COUNTER-001..006) ──
         WaterBasin,        // Rare, lines: up to 3 cells of one line
         TwinPebbles,       // Normal, dots and pairs: both cells of one mark
@@ -339,7 +339,7 @@ namespace SudokuRoguelike.Core
         // ── Harmony Difficulty relics ──
         CrackedStone,      // [HARMONY-H2+] T1: +8g at run start, -1 starting HP
         FrostedMirror,     // [HARMONY-H5+] T2: absorb 1 HP of mistake damage at cost of 3 pencil
-        VoidPetal,         // [HARMONY-H7+] T3: survive lethal hit at 1 HP, receive 1 Normal Solver (once/run)
+        VoidPetal,         // [HARMONY-H7+] T3: the first mistake of each floor costs 3 pencil instead of HP
         LanternOfVoid,     // [HARMONY-H9+] Legendary: boss modifiers never ???; +1g per active floor modifier per solve
         // ── Class signature relics, from class Level 1 [RELIC-SIG-001] ──
         CountingBeads,     // NumberFreak: the last copy of a digit placed gives +1 Pencil
@@ -353,7 +353,7 @@ namespace SudokuRoguelike.Core
         // ── Keystones, one of three after the first boss [RELIC-KEY-001] ──
         GildedBox,         // every finished box pays 1 gold
         OpenMargin,        // pencil marks cost nothing on boards up to 6×6
-        SteadyHand,        // the first mistake of each puzzle costs no HP
+        SteadyHand,        // Steady Brush: buying pencil costs 40 % less
         CageWhisper,       // cages with a hidden sum show its last digit
         // [REQ: RELIC-PACK-001] [REQ: RELIC-TRADE-001] RM-104 (owner's picks 2026-11-04)
         CrackedBell,       // −2 Max HP at once, +2 Max HP for every boss defeated
@@ -362,7 +362,8 @@ namespace SudokuRoguelike.Core
         LanternOfDaring,   // Risk route puzzles +50 % gold, Calm route −20 %
         OniPact,           // mistakes cost 1 HP more; puzzles +50 % gold and one more reward plaque
         SmoulderingIncense,// each puzzle start costs 1 HP (never below 1); each puzzle starts with a box solved
-        DryInkstone        // −5 max pencil at once; every 5-digit combo heals 1 HP
+        DryInkstone,       // −5 max pencil at once; every 5-digit combo heals 1 HP
+        UnbrokenThread     // [REQ: RELIC-THREAD-001] a mistake halves the combo instead of ending it
     }
 
     public enum RelicTier

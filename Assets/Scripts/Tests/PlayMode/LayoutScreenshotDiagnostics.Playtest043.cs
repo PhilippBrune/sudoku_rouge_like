@@ -2,7 +2,9 @@ using System;
 using System.Collections;
 using System.Linq;
 using System.Reflection;
+using NUnit.Framework;
 using SudokuRoguelike.Core;
+using SudokuRoguelike.Platform;
 using SudokuRoguelike.Run;
 using SudokuRoguelike.Save;
 using SudokuRoguelike.UI;
@@ -92,6 +94,44 @@ namespace SudokuRoguelike.Tests
             Named(host, "RecentRun_0")?.onClick.Invoke();
             yield return new WaitForSecondsRealtime(0.3f);
             yield return Shoot(host, camera, "pt043_recent_runs_card.png");
+            host.SetActive(false);
+        }
+
+        // [REQ: FEEDBACK-002] Posts one real report through the Worker to the owner's channel: UnityWebRequest's form as the game sends it.
+        [UnityTest]
+        public IEnumerator SendsARealReportToTheRelay()
+        {
+            var sent = false;
+            string zip = "no answer";
+            yield return FeedbackSender.Send(new FeedbackSender.Report { Kind = "Bug", Title = "Relay test from the game client", Text = "Sent by a diagnostic, not by a player." },
+                (ok, path) => { sent = ok; zip = path; });
+            Assert.IsTrue(sent, $"written as a ZIP instead: {zip}");
+        }
+
+        [UnityTest]
+        public IEnumerator RenderViewModifiers()
+        {
+            var camera = CreateCamera();
+            var (host, _) = StartRun(7480, true, BossModifierId.DutchWhispers, BossModifierId.Thermo, BossModifierId.ConsecutiveLine);
+            yield return DismissIntro();
+            yield return new WaitForSecondsRealtime(0.5f);
+            new SaveFileService(TestSlot).Save(new SaveFileEnvelope());
+            var screen = host.GetComponentInChildren<InRunController>(true);
+            Call(screen, "ShowSudoku");
+            Call(screen, "RenderBoard");
+            yield return null;
+            for (var i = 0; i < 4 && Named(host, "BtnRuleCardNext") != null; i++)
+            {
+                Named(host, "BtnRuleCardNext").onClick.Invoke();
+                yield return null;
+            }
+            Named(host, "BtnSudokuOptions").onClick.Invoke();
+            yield return null;
+            Named(host, "IGTabRun").onClick.Invoke();
+            yield return null;
+            Named(host, "BtnInGameOptionsModifiers").onClick.Invoke();
+            yield return new WaitForSecondsRealtime(0.4f);
+            yield return Shoot(host, camera, "pt043_view_modifiers.png");
             host.SetActive(false);
         }
 

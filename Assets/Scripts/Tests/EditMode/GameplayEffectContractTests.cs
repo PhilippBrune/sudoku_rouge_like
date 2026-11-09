@@ -38,25 +38,30 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
-        public void TempleStamp_UseLocksHpUntilPuzzleCompletion()
+        public void StoneOath_PaysHalfAgainTheGold_AndLastsOnePuzzle()
         {
             var run = StartPuzzleRun(93002);
             run.State.HeldItems.Add(BuildItem(ItemType.TempleStamp, ItemRarity.Rare));
 
+            var plain = StartPuzzleRun(93002);
+            plain.State.HeldRelics.Clear();
+            run.State.HeldRelics.Clear();
+
             Assert.IsTrue(run.TryUseItem(0));
-            Assert.IsTrue(run.State.TempleSealActive);
+            Assert.IsTrue(run.State.StoneOathActive);
             Assert.AreEqual(0, run.State.HeldItems.Count);
 
-            var hpBeforeMistake = run.State.CurrentHP;
-            run.ApplyMistakePenalty(2);
-
-            Assert.AreEqual(hpBeforeMistake, run.State.CurrentHP);
-            Assert.AreEqual(0, run.State.LastMistakeHpLost);
-
+            var goldBefore = run.State.CurrentGold;
+            var plainBefore = plain.State.CurrentGold;
+            var puzzleGold = SudokuRoguelike.Economy.GoldTable.CalculatePuzzleGold(run.CurrentLevelConfig.BoardSize, run.CurrentLevelConfig.Stars);
             SolveCurrentBoard(run);
+            SolveCurrentBoard(plain);
             run.CompleteLevelAndGrantRewards();
+            plain.CompleteLevelAndGrantRewards();
 
-            Assert.IsFalse(run.State.TempleSealActive);
+            Assert.IsFalse(run.State.StoneOathActive);
+            Assert.AreEqual((int)System.Math.Round(puzzleGold * 0.5, System.MidpointRounding.AwayFromZero),
+                run.State.CurrentGold - goldBefore - (plain.State.CurrentGold - plainBefore), "half the puzzle's gold again");
         }
 
         [Test]

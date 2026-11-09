@@ -63,7 +63,7 @@ namespace SudokuRoguelike.Tests
             StringAssert.Contains("_patternScrollPending", source);
             StringAssert.Contains("_koiReflectionPending", source);
             StringAssert.Contains("_templeIncensePending", source);
-            StringAssert.Contains("_windChimePending", source);
+            StringAssert.Contains("_mothLightPending", source);
             StringAssert.Contains("Press ESC to cancel", source);
             StringAssert.Contains("remaining", source);
             StringAssert.Contains("Cancelled.", source);

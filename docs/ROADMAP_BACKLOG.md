@@ -1,11 +1,12 @@
 # Roadmap backlog: Run of the Nine
 
-**Version:** 1.22 | **Date:** 2026-11-08 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
+**Version:** 1.23 | **Date:** 2026-11-09 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.23 | 2026-11-09 | review | Owner's last picks for 0.4.3: RM-234 pick A and RM-235 built; RM-236 concept paintings on `docs/design/event-art-proposals.html`; RM-237 live. |
 | 1.22 | 2026-11-08 | review | Owner's playtest of 0.4.3: RM-233 pick C built; RM-234 the View Modifiers screen, RM-235 item and relic replacements and the combo relic as proposals; RM-236 event paintings; RM-237 the feedback relay stays open. |
 | 1.21 | 2026-11-08 | review | Owner's picks: RM-230 C and RM-231 B built; RM-232 built (seven rules, the pressure rules); RM-233 the new-profile screens as mockups for the pick. |
 | 1.20 | 2026-11-07 | review | Owner's Daily Walk playtest of 0.4.2 (2026-11-07): the run history (RM-230, mockups A to C wait for the pick), the Pattern Scroll's screen (RM-231, mockups A to C) and Custom Puzzles with more rules and pressure rules (RM-232, a question). |
@@ -82,10 +83,10 @@ Horizons: **short term** = the next one to three updates, **mid term** = after t
 | RM-231 | The Pattern Scroll's screen | Still the old dark list; the player should see where and which rule piece is solved. | Owner's playtest of 0.4.2; pick B, the list with preview, built (ITEM-SCROLL-002). The cells show gold, without the mockup's pale digits: a cancelled scroll comes back, so the digits would be free to read. | built |
 | RM-232 | Custom Puzzle: more rules and pressure rules | The owner asked whether a Custom Puzzle takes more than five rules and the pressure rules. Now seven rules and all four pressure rules. | Owner: analyse, plan, build; measured and built (CUSTOM-RULE-002/003). | built |
 | RM-233 | The new-profile screens in the new look | First-time setup and the Basics prompt still wear the dark modal. | Owner (2026-11-08); mockups in `docs/design/first-run-proposals.html` (A one hanging scroll, B three short steps, C welcome with ema); pick C built (UI-STYLE-045). | built |
-| RM-234 | The View Modifiers screen in the new look | Options › Run › View Modifiers is still a dark list. | Owner's 0.4.3 playtest; mockups in `docs/design/playtest-043b-proposals.html` wait for the pick. | proposed |
-| RM-235 | Item and relic overlaps, a combo relic | Replacements for items and relics with the same effect, and a relic that plays on the combo. | Owner's 0.4.3 playtest; proposals in `docs/design/playtest-043b-proposals.html` wait for the pick. | proposed |
-| RM-236 | Paintings for the events | Each event its own painting, the Ice Cream Cart first. | Owner's 0.4.3 playtest; the game shows `background/event_<key>` when it exists (EVENT-ART-001); the paintings need Fooocus running. | open |
-| RM-237 | Feedback to Discord | Reports from the game arrive on Discord instead of as a ZIP. | Built (FEEDBACK-001/002); open: the owner's Worker setup (`tools/feedback-worker/README.md`), then its address in `FeedbackSender.Endpoint`. Owner (2026-11-08): keep as an open point. | open |
+| RM-234 | The View Modifiers screen in the new look | Options › Run › View Modifiers as a slip with colour, name and rule. | Built 2026-11-09, the owner's pick A (UI-STYLE-046). | done |
+| RM-235 | Item and relic overlaps, a combo relic | Four items and two relics got an effect of their own; the Unbroken Thread plays on the combo. | Built 2026-11-09, the owner's picks (ITEM-REWORK-002, RELIC-REWORK-001, RELIC-THREAD-001). | done |
+| RM-236 | Paintings for the events | Each event its own painting. | Concept paintings for all 19 events made with the local Fooocus on `docs/design/event-art-proposals.html` (2026-11-09); the owner picks, then they go to `Assets/Resources/background/event_<key>.png` (EVENT-ART-001). | proposed |
+| RM-237 | Feedback to Discord | Reports from the game arrive on Discord instead of as a ZIP. | Live 2026-11-09: Worker `rotn-feedback` on Cloudflare, its address in `FeedbackSender.Endpoint` (FEEDBACK-001/002); the webhook is only a secret of the Worker. | done |
 
 ## Mid term (suggested)
 
@@ -101,7 +102,7 @@ Horizons: **short term** = the next one to three updates, **mid term** = after t
 | RM-109 | Mistakes that count fairly | Every mistake counts (done, GAP-059); how much depends on when it happens, for example a grade per puzzle on the end screen. | Proposals, now GameDesignSpec.md §9c. | built: per-puzzle grades (GameDesignSpec 1.14 §9c) |
 | RM-106 | More accessibility | Colour-blind safe colours for every overlay, a text size setting for all screens, a dyslexia-friendly font option. | Sudoku players skew older; accessibility widens the audience. | done: colour-blind line colours (GAP-061), Text Size on the board and the clues (ACCESS-FONT-001/002) and on every screen (ACCESS-FONT-003), OpenDyslexic (ACCESS-FONT-004), Reduce Motion |
 | RM-110, RM-111, RM-112, RM-115 | One more run, first slice | Built 2026-10-22: Walk again, So close, What this run moved, the stakes in numbers; the run length is measured in the game (RM-113 decided from it). | GameDesignSpec.md §14 (End Screens) | done |
-| RM-114 | Keystone relics | After the first boss, one of three keystones that shape the run; a keystone may bend Sudoku's own rules. | Built 2026-10-26 with the class signature relics (RM-124): Gilded Box, Open Margin, Steady Hand, Cage Whisper (ItemsAndRelicsSystem 2.4). | done |
+| RM-114 | Keystone relics | After the first boss, one of three keystones that shape the run; a keystone may bend Sudoku's own rules. | Built 2026-10-26 with the class signature relics (RM-124): Gilded Box, Open Margin, Steady Brush, Cage Whisper (ItemsAndRelicsSystem 2.4). | done |
 | RM-113, RM-116 to RM-121 | One more run | A short walk, class challenges, a daily garden, early unlocks, pacts, a faster first choice, a rival run. | Roguelike pull after each run; details and effort in GameDesignSpec.md §14. Owner 2026-11-03: RM-113 closed (the Daily Walk is the short run); RM-120 (RUN-FIRST-001), RM-118 (RUN-EARLY-001/002) and RM-116 (CLASS-CHALLENGE-001/002) built; RM-119 and RM-121 later. | S to L each |
 | RM-122 | A quick run every day | The Daily Walk as one floor of its own (three puzzles and a boss, about 15 minutes), the same seed for everyone, paid in class XP with a streak bonus instead of gold. | Spec: DailyGoalSystem.md, "The Daily Walk as a run". | done: the Daily Walk as a two-floor run (DAILY-WALK-001 to 010) |
 | RM-123 | The Incense Walk (time attack) | A clock instead of HP: start with 8 minutes, each solved puzzle adds time, mistakes cost time, over at 0:00. | Spec: IncenseWalkMode.md. | done: the Incense Walk (IncenseWalkMode.md, INCENSE-*) |

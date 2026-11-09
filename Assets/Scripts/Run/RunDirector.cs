@@ -315,14 +315,11 @@ namespace SudokuRoguelike.Run
             StartLevel(CurrentLevelConfig);
         }
 
-        private const int PlainFirstFloorRuns = 3;   // [REQ: BOSS-FLOOR-004]
-
         private void RollFloorModifiers()
         {
             var minSize = FloorThemeData.GetMinBoardSize(State.CurrentFloor);
             _bossService.ReseedForDecision(DecisionSeed(DecisionPurpose.FloorModifiers));
-            State.ActiveFloorModifiers = _bossService.RollFloorModifiers(State.CurrentFloor, minSize, State.HarmonyLevel,
-                State.GardenOpened < PlainFirstFloorRuns && !State.DailyWalk);
+            State.ActiveFloorModifiers = _bossService.RollFloorModifiers(State.CurrentFloor, minSize, State.HarmonyLevel);
 
             // Add floor modifiers to seen set for "???" reveal tracking
             for (var i = 0; i < State.ActiveFloorModifiers.Count; i++)
@@ -477,9 +474,7 @@ namespace SudokuRoguelike.Run
             TickPressureCountersOnly();
             // HP (shields, class passives, relics), debuff and pressure effects of the mistake.
             ApplyMistakePenalty(row, col);
-            // Shield: if the mistake was fully absorbed by ShieldPoints, preserve the combo streak.
-            if (!State.LastMistakeShieldAbsorbed)
-                State.ComboStreak = 0;
+            BreakCombo();
             return PlaceResult.Invalid;
         }
 
@@ -529,6 +524,7 @@ namespace SudokuRoguelike.Run
             State.LastComboBeforeMistake = 0;
             State.LastWrongRow = State.LastWrongCol = -1;   // [REQ: RUN-HISTORY-001]
             State.PuzzleClockSeconds = 0f;   // [REQ: SAVE-TIMER-001]
+            State.StoneOathActive = State.RiverBellActive = false;   // a challenge can end without the payout
             // [REQ: HARMONY-SURV-003] Combo decay (H7+): the combo carried into a new puzzle is halved
             // (SPEC-AMB resolution 2026-10-06; the "8 placements without a bonus" wording could never trigger).
             if (State.ComboDecayEnabled)
@@ -624,13 +620,11 @@ namespace SudokuRoguelike.Run
             // Clear per-call flag before any early returns
             State.LastMistakeShieldAbsorbed = false;
 
-            // TempleStamp: HP is locked for the entire puzzle — absorb all damage silently.
-            if (State.TempleSealActive) { State.LastMistakeHpLost = 0; return; }
-
             if (State.MistakeShieldCharges > 0) { State.MistakeShieldCharges--; State.LastMistakeHpLost = 0; return; }
             if (ClassPassiveService.OnMistake(State)) { State.LastMistakeHpLost = 0; return; } // class passive absorbs
             if (RelicService.TryAbsorbMistake(State)) { State.LastMistakeHpLost = 0; State.LastMistakeShieldAbsorbed = true; return; }   // [REQ: RELIC-TEACUP-001] the combo holds
-            if (RelicService.TryFirstMistakeShield(State)) { State.LastMistakeHpLost = 0; return; }   // [REQ: RELIC-SIG-002] [REQ: RELIC-KEY-002]
+            if (RelicService.TryFirstMistakeShield(State)) { State.LastMistakeHpLost = 0; return; }   // [REQ: RELIC-SIG-002]
+            if (RelicService.TryVoidPetal(State)) { State.LastMistakeHpLost = 0; return; }   // [REQ: RELIC-REWORK-001]
             State.MonksBeadsCountdown = 0; // any mistake cancels MonksBeads streak
 
             // Shield system: drain ShieldPoints before touching CurrentHP.
@@ -1617,7 +1611,9 @@ namespace SudokuRoguelike.Run
             State.FogDisabledMoves     = 0;
             State.MonksBeadsCountdown  = 0;
             State.WornChiselActive     = false;
-            State.TempleSealActive     = false;
+            var stoneOath = State.StoneOathActive;
+            var riverBellGold = RiverBellGold();
+            State.StoneOathActive = State.RiverBellActive = false;
             if (level?.FogPendingCells != null)
                 level.FogPendingCells.Clear();
             // [REQ: REQ-BOSS-107] The floor's numbers for the boss-defeated screen (older saves have no tally yet).
@@ -1657,6 +1653,10 @@ namespace SudokuRoguelike.Run
 
             // Relic: puzzle-complete gold adjustments (CopperTortoise, TransmutedSigil, SakuraSeal)
             RelicService.OnPuzzleComplete(State, level, ref goldBase);
+
+            // [REQ: ITEM-REWORK-002] Stone Oath and River Bell
+            if (stoneOath) goldBase = (int)Math.Round(goldBase * StoneOathGold, MidpointRounding.AwayFromZero);
+            goldBase += riverBellGold;
 
             // GoldenKoi: +10g per puzzle star rating, then consumed; the reward lists it on its own line (RM-212).
             _koiGold = State.GoldenKoiActive ? config.Stars * 10 : 0;
@@ -1873,6 +1873,9 @@ namespace SudokuRoguelike.Run
 
             var item = State.HeldItems[inventoryIndex];
             if (item == null) return false;
+            // [REQ: ITEM-REWORK-002] The oath never kills; with two uses (Stone Gardener) a second one in the same puzzle would pay for nothing.
+            if (item.Type == ItemType.TempleStamp && (State.CurrentHP <= StoneOathHp || State.StoneOathActive)) return false;
+            if (item.Type == ItemType.KoiDragonScale && State.RiverBellActive) return false;
 
             // [REQ: DEBUFF-DEF-015] RevealCost: item use is blocked while the counter is active
             if (CurrentLevelState?.ItemUseBlockedMoves > 0) return false;
@@ -1886,7 +1889,10 @@ namespace SudokuRoguelike.Run
                     State.GoldenKoiActive = true;
                     break;
                 case ItemType.TempleStamp:
-                    State.TempleSealActive = true;
+                    PayStoneOath();
+                    break;
+                case ItemType.KoiDragonScale:
+                    State.RiverBellActive = true;
                     break;
             }
 
@@ -1966,13 +1972,6 @@ namespace SudokuRoguelike.Run
                     return ItemEffectResult.Message($"Fog disabled for {moves} moves.");
                 }
 
-                case ItemType.WindChime:
-                {
-                    // Undo last mistake — full logic handled in InRunController via _lastMistakeRow.
-                    // RunDirector tracks no UI-layer state; this path is a no-op placeholder.
-                    return ItemEffectResult.Message("Wind Chime: undo last mistake.");
-                }
-
                 case ItemType.GardenRake:
                 {
                     if (row < 0) return ItemEffectResult.Message("Select a cell first.");
@@ -2004,15 +2003,6 @@ namespace SudokuRoguelike.Run
                     CurrentBoard.PlaceValue(row, col, correctVal);
                     CurrentLevelState.CorrectPlacements++;
                     return ItemEffectResult.CellsFilled(new List<(int,int)> { (row, col) }, "Correct candidate placed.");
-                }
-
-                case ItemType.KoiDragonScale:
-                {
-                    var (bestAxis, bestIdx, bestCount) = FindMostFilledAxis(size);
-                    if (bestIdx < 0) return ItemEffectResult.Message("No incomplete lines.");
-                    var filled2 = new List<(int, int)>();
-                    FillAxisCells(bestAxis, bestIdx, size, filled2);
-                    return ItemEffectResult.CellsFilled(filled2, $"Completed {bestAxis} {bestIdx + 1}.");
                 }
 
                 case ItemType.KoiReflection:
@@ -2180,37 +2170,6 @@ namespace SudokuRoguelike.Run
                 if (CurrentBoard.Cells[nr, nc] != 0) continue;
                 FillCellIfEmpty(nr, nc, filled);
                 done++;
-            }
-        }
-
-        private (string axis, int idx, int count) FindMostFilledAxis(int size)
-        {
-            var best = (-1, -1, -1);
-            string bestAxis = "row";
-            // rows
-            for (var r = 0; r < size; r++)
-            {
-                var filled = 0; var empty = 0;
-                for (var c = 0; c < size; c++) { if (CurrentBoard.Cells[r, c] != 0) filled++; else empty++; }
-                if (empty > 0 && filled > best.Item3) { best = (0, r, filled); bestAxis = "row"; }
-            }
-            // cols
-            for (var c = 0; c < size; c++)
-            {
-                var filled = 0; var empty = 0;
-                for (var r = 0; r < size; r++) { if (CurrentBoard.Cells[r, c] != 0) filled++; else empty++; }
-                if (empty > 0 && filled > best.Item3) { best = (1, c, filled); bestAxis = "col"; }
-            }
-            return (bestAxis, best.Item2, best.Item3);
-        }
-
-        private void FillAxisCells(string axis, int idx, int size, List<(int, int)> filled)
-        {
-            for (var i = 0; i < size; i++)
-            {
-                var r = axis == "row" ? idx : i;
-                var c = axis == "row" ? i : idx;
-                FillCellIfEmpty(r, c, filled);
             }
         }
 

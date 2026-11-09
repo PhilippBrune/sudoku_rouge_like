@@ -341,14 +341,12 @@ namespace SudokuRoguelike.Boss
         /// Excludes modifiers that require board sizes larger than the floor's minimum.
         /// </summary>
         // [REQ: BOSS-FLOOR-001] Floor modifier counts by floor index (0-based): 0,1,1,1,2
-        // [REQ: BOSS-FLOOR-004] Owner, 0.4.3 playtest: rules should appear more often. A three-floor run has 1, 2 and 2 on its
-        // floors (was 0, 1 and 2); a player's first runs keep the plain first floor.
-        private static readonly int[] BaseFloorModifierCounts = { 1, 1, 2, 2, 2 };
-        public List<BossModifierId> RollFloorModifiers(int floor, int minBoardSize, int harmonyLevel, bool plainFirstFloor = false)
+        private static readonly int[] BaseFloorModifierCounts = { 0, 1, 1, 1, 2 };
+        public List<BossModifierId> RollFloorModifiers(int floor, int minBoardSize, int harmonyLevel)
         {
             var harmonyBonus = HarmonyDifficultyService.GetBonusFloorModifiers(harmonyLevel, floor);
-            var baseCount = floor == 0 && plainFirstFloor ? 0
-                : floor >= 0 && floor < BaseFloorModifierCounts.Length ? BaseFloorModifierCounts[floor] : floor;
+            var baseCount = floor >= 0 && floor < BaseFloorModifierCounts.Length
+                ? BaseFloorModifierCounts[floor] : floor;
             var count = baseCount + harmonyBonus;
             if (count == 0) return new List<BossModifierId>();
 

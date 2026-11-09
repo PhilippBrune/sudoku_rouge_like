@@ -780,7 +780,7 @@ namespace SudokuRoguelike.Tests
             var list = FindObject(options, "ModifierList");
             Assert.AreEqual(1f, list.GetComponent<Image>().color.a, 0.001f, "the list must hide the options underneath");
             StringAssert.Contains(BossService.GetModifierName(BossModifierId.GermanWhispers),
-                FindObject(list, "Body").GetComponent<Text>().text);
+                FindObject(FindObject(list, "Rule_GermanWhispers"), "Name").GetComponent<Text>().text);
             ClickButton(list, "BtnModifierListBack");
             yield return null;
             Assert.IsNull(FindObjectOrNull(options, "ModifierList"));

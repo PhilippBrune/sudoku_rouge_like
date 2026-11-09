@@ -17,8 +17,8 @@ namespace SudokuRoguelike.Platform
     /// </summary>
     public static class FeedbackSender
     {
-        /// <summary>The Worker's https address; empty until the owner has set it up (tools/feedback-worker/README.md).</summary>
-        public const string Endpoint = "";
+        /// <summary>The Worker's https address (tools/feedback-worker/README.md); empty means every report becomes a ZIP.</summary>
+        public const string Endpoint = "https://rotn-feedback.run-of-the-nine.workers.dev";
 
         public const int MaxBytes = 2 * 1024 * 1024;
         public const float SecondsBetweenSends = 60f;

@@ -283,9 +283,9 @@ namespace SudokuRoguelike.Items
             var fallback = type switch
             {
                 ItemType.Solver or ItemType.Finder or ItemType.InkWell or ItemType.MeditationStone
-                    or ItemType.WindChime or ItemType.PatternScroll or ItemType.KoiReflection
+                    or ItemType.PatternScroll or ItemType.KoiReflection
                     or ItemType.LanternOfClarity
-                    or ItemType.BambooScroll or ItemType.GardenLantern => true,
+                    or ItemType.BambooScroll => true,
                 _ => false
             };
             return fallback;
@@ -306,7 +306,7 @@ namespace SudokuRoguelike.Items
                     or ItemType.DoubleOrQuits or ItemType.WornChisel or ItemType.DimLantern
                     or ItemType.ReedPledge or ItemType.SurveyNotes => ItemRarity.Rare,
                 // General-pool items: BambooScroll + GardenLantern are Normal; GoldenKoi + TempleStamp are Rare
-                ItemType.BambooScroll or ItemType.GardenLantern => ItemRarity.Normal,
+                ItemType.BambooScroll or ItemType.GardenLantern or ItemType.WindChime => ItemRarity.Normal,
                 ItemType.GoldenKoi or ItemType.TempleStamp => ItemRarity.Rare,
                 // [REQ: ITEM-PACK-001] [REQ: ITEM-TRADE-001] RM-104
                 ItemType.SeedPouch or ItemType.BloodInk or ItemType.InkPact or ItemType.RedThread => ItemRarity.Rare,
@@ -384,11 +384,6 @@ namespace SudokuRoguelike.Items
                 ItemType.Finder => rarity == ItemRarity.Epic
                     ? "Item.Description.Finder.Epic"
                     : "Item.Description.Finder.NormalRare",
-                ItemType.WindChime => rarity == ItemRarity.Epic
-                    ? "Item.Description.WindChime.Epic"
-                    : rarity == ItemRarity.Rare
-                        ? "Item.Description.WindChime.Rare"
-                        : "Item.Description.WindChime.Normal",
                 ItemType.KoiReflection => rarity == ItemRarity.Epic
                     ? "Item.Description.KoiReflection.Epic"
                     : "Item.Description.KoiReflection.NormalRare",
@@ -414,7 +409,7 @@ namespace SudokuRoguelike.Items
                 ItemType.Finder => "Finder",
                 ItemType.InkWell => "Ink Well",
                 ItemType.MeditationStone => "Meditation Stone",
-                ItemType.WindChime => "Wind Chime",
+                ItemType.WindChime => "Chime of Notes",
                 ItemType.PatternScroll => "Pattern Scroll",
                 ItemType.KoiReflection => "Koi Reflection",
                 ItemType.LanternOfClarity => "Lantern of Clarity",
@@ -425,7 +420,7 @@ namespace SudokuRoguelike.Items
                 ItemType.GinkgoLeaf => "Ginkgo Leaf",
                 ItemType.RicePaperUmbrella => "Rice Paper Umbrella",
                 ItemType.TempleIncense => "Temple Incense",
-                ItemType.KoiDragonScale => "Koi Dragon Scale",
+                ItemType.KoiDragonScale => "River Bell",
                 ItemType.GoldenKintsugiJar => "Golden Kintsugi Jar",
                 ItemType.SilkFan => "Silk Fan",
                 // Class-exclusive items (L15)
@@ -439,9 +434,9 @@ namespace SudokuRoguelike.Items
                 ItemType.SurveyNotes     => "Survey Notes",
                 // General-pool items
                 ItemType.BambooScroll    => "Bamboo Scroll",
-                ItemType.GardenLantern   => "Garden Lantern",
+                ItemType.GardenLantern   => "Moth Light",
                 ItemType.GoldenKoi       => "Golden Koi",
-                ItemType.TempleStamp     => "Temple Stamp",
+                ItemType.TempleStamp     => "Stone Oath",
                 ItemType.BambooCompass  => "Bamboo Compass",
                 // Counter items (ITEM-COUNTER-001..006)
                 ItemType.WaterBasin     => "Water Basin",
@@ -534,11 +529,7 @@ namespace SudokuRoguelike.Items
                     : LocalizationService.Format(ItemDescriptionKey(type, rarity), "Highlight {0} cell(s) matching the selected digit.", GetFinderHighlightCount(rarity)),
                 ItemType.InkWell => LocalizationService.Format(ItemDescriptionKey(type, rarity), "Restore {0} pencil marks.", GetInkWellAmount(rarity)),
                 ItemType.MeditationStone => LocalizationService.Format(ItemDescriptionKey(type, rarity), "Restore {0} HP.", GetMeditationStoneAmount(rarity)),
-                ItemType.WindChime => rarity == ItemRarity.Epic
-                    ? LocalizationService.T(ItemDescriptionKey(type, rarity), "Click a cell to fill its row + column + box.")
-                    : rarity == ItemRarity.Rare
-                        ? LocalizationService.T(ItemDescriptionKey(type, rarity), "Choose any 2 of row/column/box, then click a cell to fill them.")
-                        : LocalizationService.T(ItemDescriptionKey(type, rarity), "Choose row, column, OR box, then click a cell to fill it."),
+                ItemType.WindChime => LocalizationService.T(ItemDescriptionKey(type, rarity), "Writes every possible digit as a free note into every empty cell without notes. Places no digit."),
                 ItemType.PatternScroll => LocalizationService.Format(ItemDescriptionKey(type, rarity), "Select {0} mechanic instance(s) to solve using the solution. ESC cancels.", GetPatternScrollZones(rarity)),
                 // [REDESIGN] Koi Reflection Epic: reveal candidates for every unsolved cell in the most ambiguous zone.
                 ItemType.KoiReflection => rarity == ItemRarity.Epic
@@ -553,7 +544,7 @@ namespace SudokuRoguelike.Items
                 ItemType.GinkgoLeaf => LocalizationService.T(ItemDescriptionKey(type, rarity), "Undo the last mistake, restore the lost HP, and recover your combo."),
                 ItemType.RicePaperUmbrella => LocalizationService.T(ItemDescriptionKey(type, rarity), "Block the next mistake penalty (2 charges)."),
                 ItemType.TempleIncense => LocalizationService.Format(ItemDescriptionKey(type, rarity), "Click {0} empty cell(s) to fill their correct answer.", rarity == ItemRarity.Epic ? 6 : rarity == ItemRarity.Rare ? 4 : 2),
-                ItemType.KoiDragonScale => LocalizationService.T(ItemDescriptionKey(type, rarity), "Completes the two most-filled rows, columns or boxes."),
+                ItemType.KoiDragonScale => LocalizationService.T(ItemDescriptionKey(type, rarity), "This puzzle a mistake does not break your combo. At the end +2 gold per 5 combo."),
                 // [REDESIGN] Golden Kintsugi Jar: fix all current mistakes AND reveal correct digits.
                 ItemType.GoldenKintsugiJar => LocalizationService.T(ItemDescriptionKey(type, rarity), "Your next 3 mistakes in this puzzle write the right digit instead: no HP lost, the combo stays."),
                 // [REDESIGN] Silk Fan: generate 5 Shield. Absorbs HP damage before health bar.
@@ -571,9 +562,9 @@ namespace SudokuRoguelike.Items
                 ItemType.BambooCompass  => LocalizationService.T(ItemDescriptionKey(type, rarity), "Highlight 2 cells where the next placement would likely violate an active constraint."),
                 // General-pool items
                 ItemType.BambooScroll   => LocalizationService.T(ItemDescriptionKey(type, rarity), "Every tile of this floor shows its board size and stars."),
-                ItemType.GardenLantern  => LocalizationService.T(ItemDescriptionKey(type, rarity), "Lift fog from the entire board for 15 seconds, then re-fog."),
+                ItemType.GardenLantern  => LocalizationService.T(ItemDescriptionKey(type, rarity), "Choose a box: its fog is gone for good."),
                 ItemType.GoldenKoi      => LocalizationService.Format(ItemDescriptionKey(type, rarity), "Grant +{0}g per star rating when this puzzle ends.", 10 * 1),
-                ItemType.TempleStamp    => LocalizationService.T(ItemDescriptionKey(type, rarity), "Protect your HP this puzzle - all wrong placements deal 0 damage. Consumed on completion."),
+                ItemType.TempleStamp    => LocalizationService.T(ItemDescriptionKey(type, rarity), "Costs 1 HP now. This puzzle pays 50 % more gold."),
                 // Counter items (GoldEconomySystem lever L3)
                 ItemType.WaterBasin     => LocalizationService.T(ItemDescriptionKey(type, rarity), "Lines: writes the correct digit in up to 3 empty cells of one line - the selected cell's line, else the line closest to done."),
                 ItemType.TwinPebbles    => LocalizationService.T(ItemDescriptionKey(type, rarity), "Dots and pairs: writes the correct digits in both cells of one dot or pair mark - the selected cell's, else one that is half done."),

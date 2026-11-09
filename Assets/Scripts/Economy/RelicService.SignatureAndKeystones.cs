@@ -72,13 +72,11 @@ namespace SudokuRoguelike.Economy
             state.SingleStrokeUsed = false;
         }
 
-        /// <summary>Steady Hand (any mistake) or Prayer Beads (while HP are full): the puzzle's first mistake costs no HP.</summary>
+        /// <summary>Prayer Beads, while HP are full: the puzzle's first mistake costs no HP.</summary>
         public static bool TryFirstMistakeShield(RunState state)
         {
             if (state == null || state.FirstMistakeShieldUsed) return false;
-            var shields = HasRelicOfType(state, RelicId.SteadyHand)
-                || (HasRelicOfType(state, RelicId.PrayerBeads) && state.CurrentHP >= state.MaxHP);
-            if (!shields) return false;
+            if (!HasRelicOfType(state, RelicId.PrayerBeads) || state.CurrentHP < state.MaxHP) return false;
             state.FirstMistakeShieldUsed = true;
             return true;
         }
@@ -93,6 +91,10 @@ namespace SudokuRoguelike.Economy
             state.SingleStrokeUsed = true;
             return true;
         }
+
+        /// <summary>[REQ: RELIC-REWORK-001] Steady Brush: buying pencil costs 40 % less.</summary>
+        public static int PencilBuyCost(RunState state, int price) =>
+            HasRelicOfType(state, RelicId.SteadyHand) ? (int)Math.Round(price * 0.6f, MidpointRounding.AwayFromZero) : price;
 
         /// <summary>Open Margin: pencil marks cost nothing on boards up to 6×6.</summary>
         public static bool PencilFreeOnBoard(RunState state, int boardSize) =>

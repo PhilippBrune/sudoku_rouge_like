@@ -173,8 +173,10 @@ namespace SudokuRoguelike.Core
         public bool LastMistakeShieldAbsorbed;
         // GoldenKoi: when true, grants +10g per star rating on puzzle completion (cleared after payout).
         public bool GoldenKoiActive;
-        // TempleStamp: when true, all mistake HP damage is absorbed silently this puzzle; cleared on completion.
-        public bool TempleSealActive;
+        // [REQ: ITEM-REWORK-002] Stone Oath (TempleStamp): this puzzle pays half again; River Bell (KoiDragonScale): a mistake keeps
+        // the combo and the end pays for it. Both end with the puzzle.
+        public bool StoneOathActive;
+        public bool RiverBellActive;
 
         // Spirit Trials tier (set by RunDirector.StartRun when Mode == SpiritTrials)
         public SpiritTrialsTier SpiritTrialsTier;
@@ -234,7 +236,8 @@ namespace SudokuRoguelike.Core
         public FloorTally FloorTally = new FloorTally();
         public int ItemsUsedThisRun;
         public bool TempleVowReady;        // GardenMonk L30: trigger ready (HP ≤ 25%, fires once/puzzle)
-        public bool FirstMistakeShieldUsed; // [RELIC-SIG-002] [RELIC-KEY-002] Prayer Beads / Steady Hand, once per puzzle
+        public bool FirstMistakeShieldUsed; // [RELIC-SIG-002] Prayer Beads, once per puzzle
+        public bool VoidPetalUsedThisFloor; // [RELIC-REWORK-001]
         public bool SingleStrokeUsed;       // [RELIC-SIG-002] Single Stroke, once per puzzle
         // [REDESIGN] AccurateMap: guarantee one relic-tier node this floor (read by RunDirector).
         public bool BonusRelicNodeThisFloor;

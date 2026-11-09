@@ -79,20 +79,18 @@ namespace SudokuRoguelike.Tests
         }
 
         [Test]
-        [Requirement("RELIC-SIG-002", "RELIC-KEY-002")]
-        public void SteadyHandAndPrayerBeads_ShieldThePuzzlesFirstMistake_Once()
+        [Requirement("RELIC-SIG-002")]
+        public void PrayerBeads_ShieldThePuzzlesFirstMistake_OnceAtFullHp()
         {
-            var steady = StateWith(RelicId.SteadyHand);
-            Assert.IsTrue(RelicService.TryFirstMistakeShield(steady));
-            Assert.IsFalse(RelicService.TryFirstMistakeShield(steady), "once per puzzle");
-            RelicService.OnPuzzleStart(steady, Board());
-            Assert.IsTrue(RelicService.TryFirstMistakeShield(steady), "again in the next puzzle");
-
             var beads = StateWith(RelicId.PrayerBeads);
             beads.CurrentHP = 9;
             Assert.IsFalse(RelicService.TryFirstMistakeShield(beads), "Prayer Beads only at full HP");
             beads.CurrentHP = 10;
             Assert.IsTrue(RelicService.TryFirstMistakeShield(beads));
+            Assert.IsFalse(RelicService.TryFirstMistakeShield(beads), "once per puzzle");
+            RelicService.OnPuzzleStart(beads, Board());
+            Assert.IsTrue(RelicService.TryFirstMistakeShield(beads), "again in the next puzzle");
+            Assert.IsFalse(RelicService.TryFirstMistakeShield(StateWith(RelicId.SteadyHand)), "the Steady Brush is about pencil now");
         }
 
         [Test]

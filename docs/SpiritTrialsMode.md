@@ -53,7 +53,7 @@ Like Endless Zen, Spirit Trials goes straight to the puzzle view rather than the
 | Board size | Always `9x9` |
 | Puzzle count | Exactly 1 |
 | Gold | `0` |
-| Items | **[TRIAL-SESSION-001]** `ItemSlots = 1` with one starting item: Normal on Apprentice and Adept, Rare on Master and Grandmaster. The seed picks it from Solver, Finder, Ink Well, Meditation Stone, Wind Chime and Koi Reflection (items that help in any one puzzle; no path, gold, fog or rule-zone items). `SpiritTrialsService.StartingItem` |
+| Items | **[TRIAL-SESSION-001]** `ItemSlots = 1` with one starting item: Normal on Apprentice and Adept, Rare on Master and Grandmaster. The seed picks it from Solver, Finder, Ink Well, Meditation Stone, Chime of Notes and Koi Reflection (items that help in any one puzzle; no path, gold, fog or rule-zone items). `SpiritTrialsService.StartingItem` |
 | Relics | None |
 | Puzzle screen | **[TRIAL-HUD-001]** The bag shows the item's one slot and no relic part (0.3.1 playtest, GAP-112: the screen showed empty item and relic slots; owner 2026-11-03, GAP-113: the starting item gets its slot) |
 | XP / meta rewards | Disabled via `DisableProgressionRewards = true` |

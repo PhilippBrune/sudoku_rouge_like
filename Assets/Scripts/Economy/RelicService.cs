@@ -29,7 +29,8 @@ namespace SudokuRoguelike.Economy
         private static readonly RelicId[] BaseT2Pool = { RelicId.KoiReflectionRelic, RelicId.MonkCharm, RelicId.CopperTortoise, RelicId.JadeHairpin, RelicId.StoneSundial,
             RelicId.CrackedBell, RelicId.LanternOfDaring, RelicId.DryInkstone };   // RM-104
         private static readonly RelicId[] BaseT3Pool = { RelicId.SakuraSeal, RelicId.CrimsonFan, RelicId.WisteriaBranch, RelicId.PaperCrane, RelicId.PorcelainMask,
-            RelicId.TwinKoi, RelicId.GoldLeafBrush, RelicId.SmoulderingIncense };   // RM-104
+            RelicId.TwinKoi, RelicId.GoldLeafBrush, RelicId.SmoulderingIncense,   // RM-104
+            RelicId.UnbrokenThread };   // [REQ: RELIC-THREAD-001]
         private static readonly RelicId[] BaseT4Pool = { RelicId.TransmutedSigil, RelicId.PhoenixFeather, RelicId.SpiritLantern, RelicId.MoonstoneCompass,
             RelicId.OniPact };   // RM-104
         private static readonly RelicId[] BaseLegPool = { RelicId.GoldenRoot, RelicId.SilentGrid, RelicId.ShiftingGarden, RelicId.EternalLotus, RelicId.DragonsEye };
@@ -300,7 +301,6 @@ namespace SudokuRoguelike.Economy
                 RelicId.SilentGrid    => 3,
                 RelicId.PhoenixFeather => 1,
                 RelicId.WardingFlame  => 1, // once per run
-                RelicId.VoidPetal     => 1, // [HARMONY] once per run
                 _ => -1 // passive
             };
             return fallback;
@@ -335,14 +335,15 @@ namespace SudokuRoguelike.Economy
             return Math.Max(0, hpDamage - 1);
         }
 
-        /// <summary>[HARMONY] VoidPetal: survive a lethal hit at 1 HP once per run.
-        /// Caller is responsible for granting 1 free Normal Solver item if slots allow.</summary>
+        public const int VoidPetalPencil = 3;
+
+        /// <summary>[REQ: RELIC-REWORK-001] Void Petal: the first mistake of each floor costs 3 pencil instead of HP. Without 3 pencil
+        /// the mistake costs HP as usual and the petal waits for the next one.</summary>
         public static bool TryVoidPetal(RunState state)
         {
-            var relic = FindRelicByType(state, RelicId.VoidPetal);
-            if (relic == null || relic.UsesRemaining <= 0) return false;
-            relic.UsesRemaining--;
-            state.CurrentHP = 1;
+            if (state.VoidPetalUsedThisFloor || state.CurrentPencil < VoidPetalPencil || !HasRelicOfType(state, RelicId.VoidPetal)) return false;
+            state.VoidPetalUsedThisFloor = true;
+            state.CurrentPencil -= VoidPetalPencil;
             return true;
         }
 
@@ -586,6 +587,7 @@ namespace SudokuRoguelike.Economy
         /// <summary>Called at floor start: apply per-floor relic effects for all held relics.</summary>
         public static void OnFloorStart(RunState state)
         {
+            state.VoidPetalUsedThisFloor = false;
             if (state.HeldRelics == null || state.HeldRelics.Count == 0) return;
             foreach (var relic in state.HeldRelics)
             {
@@ -828,7 +830,8 @@ namespace SudokuRoguelike.Economy
                 RelicId.CompassNeedle    => "Compass Needle",
                 RelicId.GildedBox        => "Gilded Box",
                 RelicId.OpenMargin       => "Open Margin",
-                RelicId.SteadyHand       => "Steady Hand",
+                RelicId.SteadyHand       => "Steady Brush",
+                RelicId.UnbrokenThread   => "Unbroken Thread",
                 RelicId.CageWhisper      => "Cage Whisper",
                 _ => id.ToString()
             };
@@ -888,6 +891,7 @@ namespace SudokuRoguelike.Economy
                 RelicId.GildedBox         => "golden_bonsai",
                 RelicId.OpenMargin        => "infinity_stone",
                 RelicId.SteadyHand        => "temple_bell",
+                RelicId.UnbrokenThread    => "unbroken_thread",
                 RelicId.CageWhisper       => "torii_lock",
                 RelicId.CrackedBell       => "sacred_bell",
                 RelicId.TwinKoi           => "dual_mask",
@@ -962,7 +966,7 @@ namespace SudokuRoguelike.Economy
                 // Harmony-gated relics
                 RelicId.CrackedStone     => "[H2+] Each mistake after the first in a puzzle deals 0 HP (stone absorbs). Passive; unlimited.",
                 RelicId.FrostedMirror    => "[H5+] Once per mistake: spend 3 pencil to absorb 1 HP of damage (auto-triggers if pencil ≥ 3). At H5+ each hit after the first in a puzzle is partially reduced.",
-                RelicId.VoidPetal        => "[H7+] Once per run: survive a lethal hit at 1 HP. Grants 1 free Normal Solver upon activation.",
+                RelicId.VoidPetal        => "[H7+] The first mistake of each floor costs 3 pencil instead of HP.",
                 RelicId.LanternOfVoid    => "[H9+] Boss modifier labels are always hidden (no auto-reveal on repeat). Earn +1 gold per active floor modifier on puzzle completion.",
                 RelicId.CountingBeads    => "When the last copy of a digit is placed, +1 Pencil. (Number Freak)",
                 RelicId.PrayerBeads      => "The first mistake of each puzzle costs no HP while your HP are full. (Garden Monk)",
@@ -974,7 +978,8 @@ namespace SudokuRoguelike.Economy
                 RelicId.CompassNeedle    => "The path shows the board size and stars of every tile on the floor. (Quiet Cartographer)",
                 RelicId.GildedBox        => "Keystone: every box you finish pays 1 gold.",
                 RelicId.OpenMargin       => "Keystone: pencil marks cost nothing on boards up to 6×6.",
-                RelicId.SteadyHand       => "Keystone: the first mistake of each puzzle costs no HP.",
+                RelicId.SteadyHand       => "Keystone: buying pencil costs 40 % less.",
+                RelicId.UnbrokenThread   => "A mistake halves your combo instead of ending it.",
                 RelicId.CageWhisper      => "Keystone: cages with a hidden sum show its last digit.",
                 _ => ""
             };

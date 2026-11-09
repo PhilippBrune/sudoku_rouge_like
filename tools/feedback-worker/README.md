@@ -7,7 +7,10 @@ ZIP in its data folder instead (`%USERPROFILE%\AppData\LocalLow\Kratossos\sudoku
 
 Requirement: FEEDBACK-002 (docs/GameDesignSpec.md, "Feedback from inside the game").
 
-## Set up (owner, once, about 15 minutes)
+**Live since 2026-11-09:** `https://rotn-feedback.run-of-the-nine.workers.dev` (the address is in `FeedbackSender.Endpoint`).
+To change the Worker: `npx wrangler deploy` in this folder. To replace the webhook: `npx wrangler secret put DISCORD_WEBHOOK`.
+
+## Set up from scratch (once, about 15 minutes)
 
 1. Discord: make a private channel `#player-feedback` (Staff only). Channel settings › Integrations › Webhooks › New
    Webhook, name it "Feedback", copy its URL. Keep the URL to yourself: whoever has it can post to the channel.
@@ -16,7 +19,7 @@ Requirement: FEEDBACK-002 (docs/GameDesignSpec.md, "Feedback from inside the gam
    npx wrangler login
    npx wrangler kv namespace create FEEDBACK_LIMITS
    ```
-   Paste the `id` it prints into `wrangler.toml`.
+   Paste the `id` it prints into `wrangler.toml` (this one is already filled in).
 3. Store the webhook as a secret (it asks for the URL; it is not written anywhere in the repo):
    ```
    npx wrangler secret put DISCORD_WEBHOOK

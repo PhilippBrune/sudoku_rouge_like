@@ -1,11 +1,12 @@
 ﻿# Run of the Nine — Game Design Specification
 
-**Version:** 1.41 | **Date:** 2026-11-08 | **Status:** implemented
+**Version:** 1.42 | **Date:** 2026-11-09 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.42 | 2026-11-09 | implemented | Owner's pick A: the View Modifiers screen as a slip (UI-STYLE-046, RM-234). The feedback relay is live (FEEDBACK-002, RM-237). |
 | 1.41 | 2026-11-08 | implemented | Owner's 0.4.3 playtest: keys on the scenes and in the bag, the puzzle clock saved, the saved Daily Walk on the main menu, the relic rows, the puzzle challenge, profile names, crash reports with consent, the new-profile screen (requirements below RUN-HISTORY-002). |
 | 1.40 | 2026-11-08 | implemented | Owner's pick C after the 0.4.2 playtest (RM-230): the last five runs on a slip in the main menu, each with its last board and seed (RUN-HISTORY-001/002). |
 | 1.39 | 2026-11-07 | implemented | Owner's picks after the 0.4.2 playtests (2026-11-07): feedback from inside the game (FEEDBACK-001/002, K3), a card for each new rule (RULE-CARD-001, FB1), the Daily Walk in its own save slot (SAVE-DAILY-001, FB4), the chosen cell framed (UI-CELL-FOCUS-001, FB5) and the fixes of the owner's Daily Walk playtest (EVENT-OUTCOME-001, SHOP-MULTI-001, REST-REFRESH-001, FOG-SOLVED-001, ACCESS-FONT-005, DAILY-WALK-011). |
@@ -648,6 +649,7 @@ As built (1.1, GAP-020; Run tab since 1.9, UI-OPT-002): the in-run Options panel
 | CRASH-REPORT-001 | After a game that did not close properly the next start offers a report with the last session's log. The player sees all of it first; only Send lets it leave, through the feedback relay. Without the relay it is a ZIP on the player's PC. |
 | PROFILE-NAME-001 | A profile can be named on Select Profile (20 characters, plain text). Only the name changes; its runs and statistics stay. |
 | UI-STYLE-045 | A new profile's first screen (RM-233, the owner's pick C): banner, language and comfort on one slip, Learn the basics and Enter the garden as ema. |
+| UI-STYLE-046 | View Modifiers (Options › Run, RM-234, the owner's pick A): a paper slip like the legend. Colour, name and rule of every rule in force, grouped by this floor, this puzzle and the boss; the column scrolls with the wheel, the arrow keys, the stick and the D-pad when it needs more room. |
 | EVENT-CHALLENGE-001 | The Hourglass Master: a rule-free timed puzzle for an item (the floor's smallest board, 2 or 3 stars, 2.5 s plus 1 s per star for each cell) or a relic (one size more, one star more, 2 s plus 1 s per star for each cell), or walk on. Out of time ends the puzzle: back on the path, no prize, no further cost. |
 | EVENT-ART-001 | An event with its own painting (`background/event_<key>`) shows it; the others keep the shared one. |
 | UI-PATH-FLOORS-001 | The path's floor marks are as many as the walk has floors and stand side by side. |

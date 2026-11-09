@@ -181,7 +181,7 @@ namespace SudokuRoguelike.Run
         // 20 + 20 × pencil purchases this run. Garden Monk cannot buy pencil mid-level (GDS §6).
         public const int PencilPerPurchase = 3;
 
-        public int GetPencilBuyCost() => GoldTable.PencilBuyCost(State.PencilBoughtCount);
+        public int GetPencilBuyCost() => RelicService.PencilBuyCost(State, GoldTable.PencilBuyCost(State.PencilBoughtCount));
 
         private int _koiGold;
 

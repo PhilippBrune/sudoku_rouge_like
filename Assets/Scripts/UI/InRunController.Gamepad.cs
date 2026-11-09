@@ -162,7 +162,7 @@ namespace SudokuRoguelike.UI
                 if (_gameOverPanel != null && _gameOverPanel.activeSelf) { SaveAndQuit(); return; }
                 // PS-3: A also confirms pending cell-select interactions
                 bool anyPending = _koiReflectionPending || _templeIncensePending ||
-                    _patternScrollPending || _swapMode || _windChimePending;
+                    _patternScrollPending || _swapMode || _mothLightPending;
                 if (anyPending && _selectedRow >= 0 && _selectedCol >= 0)
                 { OnCellClicked(_selectedRow, _selectedCol); return; }
                 _pendingKeyboardDigit = _gbNumpadRow * 3 + _gbNumpadCol + 1;

@@ -1,13 +1,14 @@
 # Items & Relics System
 
-**Version:** 2.12  
-**Date:** 2026-11-08  
+**Version:** 2.13  
+**Date:** 2026-11-09  
 **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.13 | 2026-11-09 | implemented | Owner's picks on `docs/design/playtest-043b-proposals.html`: four items and two relics get an effect of their own (ITEM-REWORK-002, RELIC-REWORK-001), the Unbroken Thread is new (RELIC-THREAD-001). |
 | 2.12 | 2026-11-08 | implemented | Owner's 0.4.3 playtest: the Cracked Teacup keeps the combo (RELIC-TEACUP-001); the five-relic row (HUD-RELIC-001). |
 | 2.11 | 2026-11-08 | implemented | Owner's pick B after the 0.4.2 playtest (RM-231): the Pattern Scroll on a paper slip with a row per piece; the chosen piece's cells are gold on the board (ITEM-SCROLL-002). |
 | 2.10 | 2026-11-07 | implemented | Owner's picks after the 0.4.2 playtests (2026-11-07): the item review (ITEM-REWORK-001); the class items worked only in code no button reached (GAP-125), the Solver never completed a box (GAP-126), the Reed Duelist could not be unlocked (GAP-123). |
@@ -77,13 +78,13 @@ shops roll as before.
 
 | ID | Requirement |
 |---|---|
-| ITEM-REWORK-001 | **Golden Kintsugi Jar:** the next 3 mistakes of the puzzle write the right digit instead (no HP lost, the combo stays). **Bamboo Compass:** out of the game and the Codex (kept in the enum for old saves; `ItemService.IsRetired`). **Loaded Coin:** works from the bag (the next reward fills every Nothing slot, then it is spent); using it does nothing else. **Monk's Beads:** the next 5 correct digits heal 1 HP each. **Dim Lantern:** shows the floor's boss rules on the map. **Reed Pledge:** no pencil mark in the puzzle: +4 pencil, +30 gold, +25 XP; each mark costs 1 HP and breaks it. **Double or Quits:** at the puzzle's end 50 % its gold again, else -1 HP (never below 1), on its own line in the reward. **Annotated Folio:** notes in every cell with exactly two possible digits. **Worn Chisel:** 30 % off in every shop of the floor. **Survey Notes:** the next puzzle is a whole star easier. **Bamboo Scroll:** every tile of the floor shows its size and stars. **Koi Dragon Scale:** the two most-filled rows, columns or boxes. **Pattern Scroll:** rolled and sold only on floors with rules. **Garden Rake:** removes every note the board's digits rule out, +1 pencil per 3. **Zen Sand Sifter:** writes the two possible digits into up to 4 cells that have exactly two. **Finder:** Normal 2 cells, Rare 4. **Solver:** by the cell's box as drawn (`RegionMap`): Normal the cell and 2 more of its box, Rare the whole box, Epic its box, row and column. The Reed Duelist's Codex goal counts no class items and no retired item (U1). |
+| ITEM-REWORK-001 | **Golden Kintsugi Jar:** the next 3 mistakes of the puzzle write the right digit instead (no HP lost, the combo stays). **Bamboo Compass:** out of the game and the Codex (kept in the enum for old saves; `ItemService.IsRetired`). **Loaded Coin:** works from the bag (the next reward fills every Nothing slot, then it is spent); using it does nothing else. **Monk's Beads:** the next 5 correct digits heal 1 HP each. **Dim Lantern:** shows the floor's boss rules on the map. **Reed Pledge:** no pencil mark in the puzzle: +4 pencil, +30 gold, +25 XP; each mark costs 1 HP and breaks it. **Double or Quits:** at the puzzle's end 50 % its gold again, else -1 HP (never below 1), on its own line in the reward. **Annotated Folio:** notes in every cell with exactly two possible digits. **Worn Chisel:** 30 % off in every shop of the floor. **Survey Notes:** the next puzzle is a whole star easier. **Bamboo Scroll:** every tile of the floor shows its size and stars. **Koi Dragon Scale:** the two most-filled rows, columns or boxes (since ITEM-REWORK-002 the River Bell). **Pattern Scroll:** rolled and sold only on floors with rules. **Garden Rake:** removes every note the board's digits rule out, +1 pencil per 3. **Zen Sand Sifter:** writes the two possible digits into up to 4 cells that have exactly two. **Finder:** Normal 2 cells, Rare 4. **Solver:** by the cell's box as drawn (`RegionMap`): Normal the cell and 2 more of its box, Rare the whole box, Epic its box, row and column. The Reed Duelist's Codex goal counts no class items and no retired item (U1). |
 
 ### Fog lanterns (ITEM-FOG-001, 0.4.3)
 
 | ID | Requirement |
 |---|---|
-| ITEM-FOG-001 | The Lantern of Clarity and the Garden Lantern are never rolled as rewards (on a board without fog they did nothing). The market offers them like the counter items, each at `CounterItemChance`, when the floor's or the boss's rules include Fog of War or an Inkblot or Fog of Memory curse is active (`CounterItems.FogAhead`, `FogItems`). |
+| ITEM-FOG-001 | The Lantern of Clarity and the Moth Light are never rolled as rewards (on a board without fog they did nothing). The market offers them like the counter items, each at `CounterItemChance`, when the floor's or the boss's rules include Fog of War or an Inkblot or Fog of Memory curse is active (`CounterItems.FogAhead`, `FogItems`). |
 
 ### Counter Items (2.3, ITEM-COUNTER-001..006)
 
@@ -174,7 +175,7 @@ playtest.
 | ID | Requirement |
 |---|---|
 | RELIC-SIG-001 | Each class has one signature relic, open from class Level 1. It is not in the shared pool: a relic offering (relic node or boss table) for that class puts it among the choices with a 35 % chance while the player does not hold it. An offering holds at most one class relic: the signature first, else the Level 30 exclusive (25 %, CLASS-EXCL-004). Shown as Tier 2. |
-| RELIC-SIG-002 | The effects below. Prayer Beads and Steady Hand share one shield per puzzle; Single Stroke returns `PlaceResult.TakenBack` (no mistake, no HP, the status line says so). |
+| RELIC-SIG-002 | The effects below. Prayer Beads shield the first mistake of a puzzle while HP are full; Single Stroke returns `PlaceResult.TakenBack` (no mistake, no HP, the status line says so). |
 
 | Class | Relic | Effect |
 |---|---|---|
@@ -198,7 +199,7 @@ playtest.
 |---|---|
 | Gilded Box | Every box (region) the player finishes pays 1 gold. |
 | Open Margin | Pencil marks cost nothing on boards up to 6×6. |
-| Steady Hand | The first mistake of each puzzle costs no HP (the mistake still counts for the grade). |
+| Steady Brush (`SteadyHand`) | Buying pencil costs 40 % less (RELIC-REWORK-001). |
 | Cage Whisper | Cages with a hidden sum (the Hidden Killer rule) show its last digit: "?7". |
 
 Icons: the twelve borrow existing game icons (`RelicService.GetIconFolder`) until they have art of their own.
@@ -213,7 +214,7 @@ for a strong effect; of those they took three relics, three items and all four e
 | RELIC-PACK-001 | **Cracked Bell** (Tier 2): −2 Max HP when taken (never below 1); every boss defeated gives +2 Max HP and heals 2. **Twin Koi** (Tier 3): every item that goes into the bag (reward, swap, shop, event, Seed Pouch) has one more charge. **Gold Leaf Brush** (Tier 3): a combo of 10 readies the next reward, once per puzzle; every item of it is one rarity higher (`ItemService.OneTierUp`: Normal to Rare as Empty Canvas, a tiered Rare item to Epic, a fixed Rare one to a random Epic; Epic stays); a reroll keeps the raise, taking or leaving the reward ends it. **Lantern of Daring** (Tier 2): a puzzle on the Risk route pays +50 % gold, on the Calm route −20 % (the route of the tile just solved). |
 | RELIC-TRADE-001 | **Oni Pact** (Tier 4): every mistake costs 1 HP more; every puzzle pays +50 % gold and the reward shows one more plaque. **Smouldering Incense** (Tier 3): each puzzle start costs 1 HP (never below 1) and solves one box. **Dry Inkstone** (Tier 2): −5 max pencil when taken (never below 1); every combo of 5 heals 1 HP. |
 | ITEM-PACK-001 | **Seed Pouch** (Rare): planted when used; after the next two solved puzzles a random Rare item goes into the bag (it waits while the bag is full), and the reward's tally names it. |
-| ITEM-TRADE-001 | **Blood Ink** (Rare): costs 2 HP (needs more than 2), writes the correct digit in 3 random empty cells. **Ink Pact** (Rare): costs 6 pencil marks, completes the most-filled row, column or box (as the Koi Dragon Scale). **Red Thread** (Rare): costs 1 Max HP (needs more than 1), a random relic of the floor's pool. An item whose price cannot be paid stays in the bag. |
+| ITEM-TRADE-001 | **Blood Ink** (Rare): costs 2 HP (needs more than 2), writes the correct digit in 3 random empty cells. **Ink Pact** (Rare): costs 6 pencil marks, completes the most-filled row, column or box. **Red Thread** (Rare): costs 1 Max HP (needs more than 1), a random relic of the floor's pool. An item whose price cannot be paid stays in the bag. |
 
 All four items are in the Rare reward pool. Icons borrow game art like the signature relics (the Cracked Bell the
 temple bell, the Red Thread the jade amulet on its cord; the Seed Pouch, Blood Ink and Ink Pact got copies of the bud,
@@ -222,7 +223,10 @@ new content is open from the first run.
 
 | ID | Requirement |
 |---|---|
-| ITEM-REFUND-001 | GAP-117: Koi Reflection, Temple Incense, Wind Chime and the Pattern Scroll are used up when picked; a choice left before any cell took effect (Esc, the Options, Save & Quit, a new puzzle) gives the item back, its charge or its slot, and the use is not counted. |
+| ITEM-REFUND-001 | GAP-117: Koi Reflection, Temple Incense, the Moth Light and the Pattern Scroll are used up when picked; a choice left before any cell took effect (Esc, the Options, Save & Quit, a new puzzle) gives the item back, its charge or its slot, and the use is not counted. |
+| ITEM-REWORK-002 | Owner's picks after the 0.4.3 playtest: items that did what another item did now do something of their own. **Chime of Notes** (`WindChime`), **River Bell** (`KoiDragonScale`), **Stone Oath** (`TempleStamp`), **Moth Light** (`GardenLantern`); effects in the item list. The enum names stay, so saves keep their items. |
+| RELIC-REWORK-001 | The same for two relics: **Steady Brush** (`SteadyHand`): buying pencil costs 40 % less. **Void Petal**: the first mistake of each floor costs 3 pencil instead of HP. |
+| RELIC-THREAD-001 | **Unbroken Thread** (Tier 3, owner's pick): a mistake halves the combo instead of ending it. A shield that keeps the combo or the River Bell goes first. |
 
 ### HUD
 
@@ -241,7 +245,7 @@ Implementation reference:
 
 ## Standalone Items
 
-Bamboo Scroll and Garden Lantern (tiered), Golden Koi and Temple Stamp (Rare) are **in the `ItemType` enum and in the roll pools** of shops and rewards (documented 2026-10-07, SPEC-CONF-035; the earlier "not yet wired" note and the name "Temple Seal" were wrong). Their effects are listed in the item table below.
+Bamboo Scroll (tiered), the Moth Light (Garden Lantern, Normal), Golden Koi and the Stone Oath (Temple Stamp, Rare) are **in the `ItemType` enum and in the roll pools** of shops and rewards (documented 2026-10-07, SPEC-CONF-035; the earlier "not yet wired" note and the name "Temple Seal" were wrong). Their effects are listed in the item table below.
 
 ## Explicit Non-Features
 
@@ -265,7 +269,7 @@ Base shop price by rarity: Normal 40 gold, Rare 75 gold, Epic 150 gold (×2.5 si
 | Finder | `Finder` | Normal / Rare / Epic | 1 | Reveal ALL unsolved cells containing the selected digit. / Highlight {0} cell(s) matching the selected digit. |
 | Ink Well | `InkWell` | Normal / Rare / Epic | 1 | Restore {0} pencil marks. |
 | Meditation Stone | `MeditationStone` | Normal / Rare / Epic | 1 | Restore {0} HP. |
-| Wind Chime | `WindChime` | Normal / Rare / Epic | 1 | Click a cell to fill its row + column + box. / Choose any 2 of row/column/box, then click a cell to fill them. / Choose row, column, OR box, then click a cell to fill it. |
+| Chime of Notes | `WindChime` | Normal | 1 | Writes every digit its row, column and box still allow (and the rules on the board) as a free note into every empty cell without notes. The player's own notes stay. Places no digit. |
 | Pattern Scroll | `PatternScroll` | Normal / Rare / Epic | 1 | Select {0} mechanic instance(s) to solve using the solution. ESC cancels. The list names each piece by its rule, "German Whispers #1 · 4 cells", in the player's language (ITEM-SCROLL-001). A paper slip beside the board has one row per piece with its rule's colour and "3 empty of 4"; solved pieces are struck through and the chosen piece's cells are gold on the board. A click, the mouse wheel, the arrows or the D-pad choose; Solve, Enter or A writes it; B or Esc cancels. The digits are not shown beforehand: a cancelled scroll comes back (ITEM-REFUND-001), so a preview would be a free look at every solution (ITEM-SCROLL-002). |
 | Koi Reflection | `KoiReflection` | Normal / Rare / Epic | 1 | Reveal candidates for every unsolved cell in the board's most ambiguous zone (row/column/box with most open cells). / Click {0} empty cell(s) to reveal their candidates. |
 | Lantern of Clarity | `LanternOfClarity` | Normal / Rare / Epic | 1 | Disable fog for {0} moves. |
@@ -276,7 +280,7 @@ Base shop price by rarity: Normal 40 gold, Rare 75 gold, Epic 150 gold (×2.5 si
 | Ginkgo Leaf | `GinkgoLeaf` | Rare | 1 | Undo the last mistake, restore the lost HP, and recover your combo. |
 | Rice Paper Umbrella | `RicePaperUmbrella` | Rare | 1 | Block the next mistake penalty (2 charges). |
 | Temple Incense | `TempleIncense` | Rare | 1 | Click {0} empty cell(s) to fill their correct answer. |
-| Koi Dragon Scale | `KoiDragonScale` | Epic | 1 | Complete the most-filled row, column, or box. |
+| River Bell | `KoiDragonScale` | Epic | 1 | This puzzle a mistake does not break the combo. At the end +2 gold per 5 combo. |
 | Golden Kintsugi Jar | `GoldenKintsugiJar` | Epic | 1 | Fix all current mistakes on the board and reveal the correct digits for all affected cells. |
 | Silk Fan | `SilkFan` | Epic | 2 | Generate {0} Shield. Shield absorbs HP damage before your health bar. While shielded, mistakes don't break your combo. Resets each puzzle. |
 | Loaded Coin | `LoadedCoin` | Rare | 1 | Gain 1 Reroll Token. (NumberFreak exclusive) |
@@ -288,9 +292,9 @@ Base shop price by rarity: Normal 40 gold, Rare 75 gold, Epic 150 gold (×2.5 si
 | Reed Pledge | `ReedPledge` | Rare | 1 | Complete this puzzle using zero pencil marks for +2 HP. (ReedDuelist exclusive) |
 | Survey Notes | `SurveyNotes` | Rare | 1 | Shows the board size and stars of every tile on this floor. (QuietCartographer exclusive) |
 | Bamboo Scroll | `BambooScroll` | Normal / Rare / Epic | 1 | Reveal the star rating of all upcoming path nodes. |
-| Garden Lantern | `GardenLantern` | Normal / Rare / Epic | 1 | Lift fog from the entire board for 15 seconds, then re-fog. |
+| Moth Light | `GardenLantern` | Normal | 1 | Choose a box: its fog is gone for good. A box without fog keeps the choice open; a board without fog refuses the item. |
 | Golden Koi | `GoldenKoi` | Rare | 1 | Grant +{0}g per star rating when this puzzle ends. |
-| Temple Stamp | `TempleStamp` | Rare | 1 | Protect your HP this puzzle - all wrong placements deal 0 damage. Consumed on completion. /  |
+| Stone Oath | `TempleStamp` | Rare | 1 | Costs 1 HP (refused at 1 HP). This puzzle pays 50 % more gold. |
 | Bamboo Compass | `BambooCompass` | — | 1 | Highlight 2 cells where the next placement would likely violate an active constraint. |
 
 ### Relics
@@ -311,6 +315,7 @@ Base shop price by rarity: Normal 40 gold, Rare 75 gold, Epic 150 gold (×2.5 si
 | Wisteria Branch | `WisteriaBranch` | Tier 3 | Heal 2 HP at the start of each floor. |
 | Paper Crane | `PaperCrane` | Tier 3 | First item use each puzzle is free (no charge cost). |
 | Porcelain Mask | `PorcelainMask` | Tier 3 | Elite reward rarity upgraded by one tier. |
+| Unbroken Thread | `UnbrokenThread` | Tier 3 | A mistake halves the combo instead of ending it. No protection for HP. |
 | Transmuted Sigil | `TransmutedSigil` | Tier 4 | +25% gold from puzzle completion. |
 | Phoenix Feather | `PhoenixFeather` | Tier 4 | Prevent death once per run (heal to 1 HP). |
 | Spirit Lantern | `SpiritLantern` | Tier 4 | Shop prices reduced by 20%. |
@@ -330,5 +335,5 @@ Base shop price by rarity: Normal 40 gold, Rare 75 gold, Epic 150 gold (×2.5 si
 | Accurate Map | `AccurateMap` | Tier 3 (class exclusive) | Every floor: shows the board size and stars of every tile and guarantees one relic-tier reward node. (QuietCartographer exclusive) |
 | Cracked Stone | `CrackedStone` | Tier 1 | [H2+] Each mistake after the first in a puzzle deals 0 HP (stone absorbs). Passive; unlimited. |
 | Frosted Mirror | `FrostedMirror` | Tier 2 | [H5+] Once per mistake: spend 3 pencil to absorb 1 HP of damage (auto-triggers if pencil ≥ 3). At H5+ each hit after the first in a puzzle is partially reduced. |
-| Void Petal | `VoidPetal` | Tier 3 | [H7+] Once per run: survive a lethal hit at 1 HP. Grants 1 free Normal Solver upon activation. |
+| Void Petal | `VoidPetal` | Tier 3 | [H7+] The first mistake of each floor costs 3 pencil instead of HP. With fewer than 3 pencil the mistake costs HP and the petal waits for the next one. |
 | Lantern of Void | `LanternOfVoid` | Legendary | [H9+] Boss modifier labels are always hidden (no auto-reveal on repeat). Earn +1 gold per active floor modifier on puzzle completion. |

@@ -17,12 +17,19 @@ namespace SudokuRoguelike.Tests
     public sealed class CustomRuleCountDiagnostics
     {
         [Test]
-        public void RuleCount_Sweep()
+        public void RuleCount_Sweep() => Sweep("RM-232", size => (5, size >= 8 ? 10 : 7));
+
+        // [REQ: BOSS-MOD-010] One to four rules, the usual boards: pieces per rule, and that no rule loses its place to another.
+        [Test]
+        public void FewRules_Sweep() => Sweep("BOSS-MOD-010", size => (1, 4));
+
+        private static void Sweep(string label, Func<int, (int from, int to)> range)
         {
-            var lines = new List<string> { "size rules  boards  all-rules  missing/board  mean ms  max ms" };
+            var lines = new List<string> { "size rules  boards  all-rules  missing/board  pieces/rule  mean ms  max ms" };
             foreach (var size in new[] { 9, 8, 7, 6, 5 })
-            for (var count = 5; count <= (size >= 8 ? 10 : 7); count++)
+            for (var count = range(size).from; count <= range(size).to; count++)
             {
+                var pieces = 0;
                 int boards = 0, complete = 0, missing = 0;
                 long total = 0, max = 0;
                 for (var trial = 0; trial < 12; trial++)
@@ -45,13 +52,15 @@ namespace SudokuRoguelike.Tests
                     var miss = run.LastGenerationMissingModifiers.Count + mods.Count(m => !run.CurrentLevelConfig.ActiveModifiers.Contains(m));
                     missing += miss;
                     if (miss == 0) complete++;
+                    var o = run.CurrentOverlay;
+                    pieces += o.Lines.Count + o.KropkiDots.Count + o.KillerCages.Count + o.Arrows.Count + o.CellMarkers.Count;
                     total += watch.ElapsedMilliseconds;
                     max = Math.Max(max, watch.ElapsedMilliseconds);
                 }
-                lines.Add($"{size}x{size} {count,5}  {boards,6}  {complete,9}  {(boards > 0 ? missing / (double)boards : 0),13:0.00}  {(boards > 0 ? total / boards : 0),7}  {max,6}");
+                lines.Add($"{size}x{size} {count,5}  {boards,6}  {complete,9}  {(boards > 0 ? missing / (double)boards : 0),13:0.00}  {(boards > 0 ? pieces / (double)boards / count : 0),11:0.0}  {(boards > 0 ? total / boards : 0),7}  {max,6}");
             }
             TestContext.WriteLine(string.Join("\n", lines));
-            UnityEngine.Debug.Log("[RM-232]\n" + string.Join("\n", lines));
+            UnityEngine.Debug.Log($"[{label}]\n" + string.Join("\n", lines));
         }
 
         // A random set the Custom Puzzle screen accepts, ignoring only its count limit.

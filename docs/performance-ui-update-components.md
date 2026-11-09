@@ -6,7 +6,7 @@ Current extracted helpers:
 
 - `ControllerIndicatorPoller`: owns the controller-indicator poll interval and cached joystick count so `Input.GetJoystickNames()` is not queried every frame.
 - `AsyncLevelCompletionPresenter`: converts completed async boss-generation state into a view result for the in-run controller.
-- `TimedVisualStateController`: centralizes positive realtime-expiry checks used by temporary visual effects such as Garden Lantern reveal.
+- `TimedVisualStateController`: centralizes positive realtime-expiry checks for temporary visual effects (no caller since the Moth Light replaced the timed Garden Lantern reveal, 2026-11-09).
 
 Guidelines for future per-frame work:
 

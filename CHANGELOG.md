@@ -1,12 +1,21 @@
 # Changelog
 
-## 0.4.3 (2026-11-07)
+## 0.4.3 (2026-11-09)
 
 ### New
 
 - **Send feedback from inside the game:** F8, or Options › Run › Send feedback. The screen is captured first; you write
   what happened, pick Bug, Idea, Balance or Text and tick what goes with it: the screenshot, the run's seed and board,
-  the log, your save. Nothing goes without a tick, and no name or Steam ID is sent.
+  the log, your save. Nothing goes without a tick, and no name or Steam ID is sent. Your report goes straight to me.
+- **The Hourglass Master:** a new event. Solve a timed puzzle for an item, or a bigger one on a tighter clock for a relic.
+  Out of time, you are back on the path with nothing lost.
+- **Your last runs in the main menu:** a slip with your last five runs. Each one shows its last board and you can walk its
+  seed again.
+- **Name your profiles**, and keep everything in them when you rename one.
+- **A crash report if you want one:** after a crash the game asks whether to send the log. Nothing goes without a yes.
+- **The Unbroken Thread:** a new relic. A mistake halves your combo instead of ending it.
+- **Custom Puzzle:** up to seven rules, and the pressure rules have a tab in the rule book.
+- **A new first screen** for a new profile: language, comfort options and the way in on one page.
 - **A card for each new rule:** the first time a puzzle brings a rule you have not met, a card explains it before the
   clock starts, and the board shows only that rule's marks.
 - **The Daily Walk has its own save:** starting or finishing a walk no longer ends a saved Garden Run. Game Modes ›
@@ -18,6 +27,26 @@
 
 ### Changed
 
+- **Rules show up more often in a puzzle:** a rule used to bring two or three lines to a board. A rule alone now brings
+  twice as many, two rules 1.75 times as many each, and so on. Lines can run as wide as the board. A no-repeat line inside
+  one box is gone, it said nothing the box did not.
+- **Four items do something new:** the **Chime of Notes** (was Wind Chime) writes every possible digit as free notes on the
+  whole board. The **River Bell** (was Koi Dragon Scale) keeps your combo through mistakes in this puzzle and pays +2 gold
+  per 5 combo at the end. The **Stone Oath** (was Temple Stamp) costs 1 HP and makes this puzzle pay 50 % more gold. The
+  **Moth Light** (was Garden Lantern) lifts the fog of a box you choose, for good.
+- **Two relics do something new:** the **Steady Brush** (was Steady Hand) makes pencil 40 % cheaper. The **Void Petal** turns
+  the first mistake of each floor into a cost of 3 pencil instead of HP.
+- **The Stone Gardener:** every item has 2 uses, 3 from Level 20. **The Cracked Teacup** keeps your combo when it catches a
+  mistake.
+- **View Modifiers** is a slip like the legend: the colour, name and rule of each rule, by floor, puzzle and boss.
+- **Relics:** the first five sit in a fixed row, more go in rows that scroll, and nothing overlaps.
+- **Irregular regions** turn with the seed, so one shape makes four boards. **X-Sums** have a clearer text and a clue you
+  have fulfilled is struck through. **Prime Cells** names only the digits your board has.
+- **The Pattern Scroll** opens a slip beside the board and marks the cells of the piece you are looking at.
+- **The Daily Walk** continues from the main menu, and its shop has first-floor prices on its first floor.
+- **Monthly Walk:** the leaderboard shows your time too.
+- **Keyboard:** the arrow keys work on rest and event screens, Tab goes in and out of the bag, R goes to your relics, and the
+  mouse pointer hides while you use the keys.
 - **The Garden Run is three floors:** the Bamboo Courtyard, the Koi Terrace and the Shrine Summit. Each floor is shorter
   and denser: boards of 6×6 to 7×7, 7×7 to 9×9 and 9×9, 40 % more gold and 50 % more XP per puzzle, a shop right after
   each boss, and in the middle of Floors 2 and 3 the warden of the skipped garden (the Moss Garden's, the Stone Lantern
@@ -27,7 +56,7 @@
 - **The chosen path tile** wears a vermilion brush ring and your class's marker, so you see on a handheld where the pad is.
 - **A full bag** shows the new item and the one you would give up on two cards side by side, with your bag as a row of
   chips below.
-- **Fog lanterns:** the Lantern of Clarity and the Garden Lantern are no longer rewards (without fog they did nothing).
+- **Fog lanterns:** the Lantern of Clarity and the Moth Light are no longer rewards (without fog they did nothing).
   The market sells them when the floor or the boss brings fog, or a fog curse is active.
 - **Class passives:** the Garden Monk heals 2 HP after a puzzle without mistakes (3 at Level 15) instead of 1 HP for
   every few digits. The Number Freak gets a reroll token and 10 gold for a puzzle without mistakes. The Reed Duelist gets
@@ -35,8 +64,7 @@
   every tile's size and stars from the start of a floor, and after a perfect puzzle the next one is half a star easier
   (a whole star at Level 15).
 
-- **Items:** the Golden Kintsugi Jar turns your next 3 mistakes in a puzzle into the right digit. The Koi Dragon Scale
-  completes the two most-filled units. The Garden Rake removes every note the board already rules out (+1 pencil for
+- **Items:** the Golden Kintsugi Jar turns your next 3 mistakes in a puzzle into the right digit. The Garden Rake removes every note the board already rules out (+1 pencil for
   every 3), the Zen Sand Sifter writes the two possible digits into up to 4 cells, the Bamboo Scroll shows every tile of
   the floor, the Finder marks 2 and 4 cells. The Pattern Scroll is offered only on floors with rules. The Bamboo Compass,
   which nobody could find, is gone.
@@ -49,6 +77,11 @@
 
 ### Fixed
 
+- The puzzle timer no longer starts over after Save & Quit.
+- A bag of four or more slots was invisible for the Stone Gardener.
+- The rule card lay under the bag and the relics.
+- After an event the arrow keys did nothing on the path.
+- A Windows lock screen could end the game on a Legion Go: the game now runs on Direct3D 11 and saves when it loses focus.
 - The class items did nothing when used, and the Reed Duelist could not be unlocked.
 - The Lantern Seer's and the Shrine Archivist's old passives never worked.
 - The Solver never completed a box.

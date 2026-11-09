@@ -47,7 +47,7 @@ namespace SudokuRoguelike.Sudoku
         {
             var overlay = new ModifierOverlayData();
             var rng = new Random(seed);
-            var scale = IntensityScale(intensity);
+            var scale = IntensityScale(intensity) * PiecesPerRule(modifiers.Count);
             UsedCells.Clear();
 
             // The inverted zone goes first and claims its 3×3 area: lines, cages, arrows and marks of the other modifiers
@@ -223,7 +223,7 @@ namespace SudokuRoguelike.Sudoku
                         GenerateDistanceCells(board, overlay, rng, scale);
                         break;
                     case BossModifierId.ConstraintNegationZone:
-                        GenerateNegationZone(board, overlay, rng, scale);
+                        GenerateNegationZone(board, overlay, rng, IntensityScale(intensity));   // its 3×3 zone has no room for more lines
                         break;
 
                     // Batch B4 (ModifierGeometryGenerator.OutsideClues.cs)

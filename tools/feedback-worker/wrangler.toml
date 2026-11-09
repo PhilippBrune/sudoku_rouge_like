@@ -2,9 +2,9 @@ name = "rotn-feedback"
 main = "worker.js"
 compatibility_date = "2026-10-01"
 
-# Create it once with: npx wrangler kv namespace create FEEDBACK_LIMITS   (then paste the id it prints here)
+# The rate-limit store (npx wrangler kv namespace create FEEDBACK_LIMITS printed this id).
 [[kv_namespaces]]
 binding = "FEEDBACK_LIMITS"
-id = "PASTE_THE_KV_ID_HERE"
+id = "3ba4742499cd46498af9b8e896a50e30"
 
 # The webhook is a secret, never in this file: npx wrangler secret put DISCORD_WEBHOOK

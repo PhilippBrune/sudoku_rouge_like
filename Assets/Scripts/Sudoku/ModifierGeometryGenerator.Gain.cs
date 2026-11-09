@@ -11,6 +11,10 @@ namespace SudokuRoguelike.Sudoku
     {
         public static int LongestLine(int size) => Math.Max(6, size);
 
+        /// <summary>[REQ: BOSS-MOD-010] Owner, 0.4.3 playtest: a rule showed up only two or three times in its puzzle. A rule alone
+        /// gets twice as many pieces; the more rules share the board, the less room each has, down to the old count from five.</summary>
+        public static float PiecesPerRule(int rules) => Math.Max(1f, 2.25f - 0.25f * rules);
+
         private static int LineLength(Random rng, int min, int size) => rng.Next(min, LongestLine(size) + 1);
 
         /// <summary>True when two of the cells share no row, column or region, so "no repeats" adds something.</summary>

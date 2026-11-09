@@ -1,4 +1,3 @@
-using System.Text;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -71,6 +70,7 @@ namespace SudokuRoguelike.UI
             ShowDefeatScreen(run);
         }
 
+        // [REQ: UI-STYLE-046] Owner's pick A (0.4.3 playtest): a slip like the legend, colour, name and rule, grouped by floor, puzzle and boss.
         private void ShowModifierList()
         {
             var panel = _inGameOptionsPanel != null ? _inGameOptionsPanel.transform : null;
@@ -80,27 +80,23 @@ namespace SudokuRoguelike.UI
             // A child of the options panel, so closing the options (Back / B) also closes the list.
             _modifierList = new GameObject("ModifierList", typeof(RectTransform), typeof(Image));
             _modifierList.transform.SetParent(panel, false);
-            var rt = _modifierList.GetComponent<RectTransform>();
-            rt.anchorMin = Vector2.zero;
-            rt.anchorMax = Vector2.one;
-            rt.offsetMin = rt.offsetMax = Vector2.zero;
-            // Opaque: the options labels underneath showed through the panel colour (1.1 build smoke B13).
-            var bg = InRunUiFactory.PanelBg;
-            _modifierList.GetComponent<Image>().color = new Color(bg.r, bg.g, bg.b, 1f);
+            Place(_modifierList.GetComponent<RectTransform>(), Vector2.zero, Vector2.one);
+            _modifierList.GetComponent<Image>().color = Color.black;   // opaque: the options must not show through (1.1 build smoke B13)
+            ScrollUiKit.Painting(_modifierList.transform, "Backdrop", "bg_menu_pause", new Color(0.5f, 0.5f, 0.5f, 1f));
 
-            var title = InRunUiFactory.CreateText(_modifierList.transform, "Title", T("Active Modifiers"), 22,
-                TextAnchor.UpperCenter, InRunUiFactory.AccentGold);
-            Place(title.rectTransform, new Vector2(0.05f, 0.88f), new Vector2(0.95f, 0.97f));
+            var paper = ScrollUiKit.Fill(_modifierList.transform, "ModifierPaper", new Vector2(0.24f, 0.08f), new Vector2(0.76f, 0.92f), ScrollUiKit.Paper);
+            var shadow = paper.gameObject.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0f, 0f, 0f, 0.55f);
+            shadow.effectDistance = new Vector2(0f, -10f);
+            ScrollUiKit.Fill(paper.transform, "Band", new Vector2(0f, 0.993f), Vector2.one, ScrollUiKit.Vermilion);
+            ScrollUiKit.Label(paper.transform, "Eyebrow", T("ModifierList.Eyebrow"), 16, TextAnchor.MiddleLeft, ScrollUiKit.InkSoft,
+                new Vector2(0.05f, 0.925f), new Vector2(0.95f, 0.975f), 10);
+            ScrollUiKit.Label(paper.transform, "Title", T("ModifierList.Title"), 40, TextAnchor.MiddleLeft, ScrollUiKit.Ink,
+                new Vector2(0.05f, 0.835f), new Vector2(0.95f, 0.925f), 20);
 
-            var body = InRunUiFactory.CreateText(_modifierList.transform, "Body", BuildModifierListText(), 14,
-                TextAnchor.UpperLeft, InRunUiFactory.TextColor);
-            body.supportRichText = true;
-            body.horizontalOverflow = HorizontalWrapMode.Wrap;
-            body.verticalOverflow = VerticalWrapMode.Truncate;
-            Place(body.rectTransform, new Vector2(0.05f, 0.14f), new Vector2(0.95f, 0.86f));
-
-            var back = InRunUiFactory.CreateActionButton(_modifierList.transform, "BtnModifierListBack",
-                new Vector2(0.35f, 0.02f), new Vector2(0.65f, 0.10f), T("Back"), UiAction.Back);
+            var scroll = BuildRuleColumn(paper.transform);
+            var back = ScrollUiKit.PillButton(paper.transform, "BtnModifierListBack", new Vector2(0.35f, 0.025f), new Vector2(0.65f, 0.105f), T("Back"),
+                22, ScrollUiKit.Wood, ScrollUiKit.WoodTileText, 26f);
             back.onClick.AddListener(() =>
             {
                 Destroy(_modifierList);
@@ -109,44 +105,106 @@ namespace SudokuRoguelike.UI
                 if (reopen != null) EventSystem.current?.SetSelectedGameObject(reopen.gameObject);
             });
             EventSystem.current?.SetSelectedGameObject(back.gameObject);
+            _modifierList.AddComponent<ArrowKeyScroll>().Target = scroll;
         }
 
-        // Floor modifiers, the current puzzle's modifiers and this floor's boss debuff, each with its rule text.
-        private string BuildModifierListText()
+        // The rules in a column that scrolls when a late Harmony floor or a large text size needs more room than the slip has.
+        private ScrollRect BuildRuleColumn(Transform paper)
         {
+            var viewport = ScrollUiKit.Area(paper, "Rules", new Vector2(0.05f, 0.125f), new Vector2(0.95f, 0.825f));
+            viewport.gameObject.AddComponent<Image>().color = Color.clear;   // the wheel and a drag need something to land on
+            viewport.gameObject.AddComponent<RectMask2D>();
+            var content = ScrollUiKit.Area(viewport, "RulesContent", new Vector2(0f, 1f), new Vector2(1f, 1f));
+            content.pivot = new Vector2(0.5f, 1f);
+            var column = content.gameObject.AddComponent<VerticalLayoutGroup>();
+            column.childControlWidth = column.childControlHeight = true;
+            column.childForceExpandWidth = column.childForceExpandHeight = false;
+            column.spacing = 12f;
+            content.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
             var run = _map?.Run;
-            var sb = new StringBuilder();
-            void Add(BossModifierId id)
+            var size = run?.CurrentBoard?.Size ?? 9;
+            var shown = 0;
+            void Group(string heading, System.Collections.Generic.IEnumerable<BossModifierId> ids)
             {
-                sb.Append("<b>").Append(BossService.GetModifierName(id)).Append("</b>  ");
-                sb.AppendLine(BossService.GetModifierDescription(id, run?.CurrentBoard?.Size ?? 9));
-            }
-
-            var floorMods = run?.State?.ActiveFloorModifiers;
-            if (floorMods != null && floorMods.Count > 0)
-            {
-                sb.AppendLine(T("Floor modifiers:"));
-                foreach (var id in floorMods) Add(id);
-                sb.AppendLine();
-            }
-
-            var puzzleMods = run?.CurrentLevelConfig?.ActiveModifiers;
-            var extra = 0;
-            if (puzzleMods != null && run.CurrentBoard != null)
-                foreach (var id in puzzleMods)
+                var head = false;
+                foreach (var id in ids)
                 {
-                    if (floorMods != null && floorMods.Contains(id)) continue;
-                    if (extra++ == 0) sb.AppendLine(T("This puzzle:"));
-                    Add(id);
+                    if (!head) { Heading(content, heading); head = true; }
+                    RuleRow(content, id, size);
+                    shown++;
                 }
-
-            if (extra == 0 && run?.GetBossDebuffForCurrentFloor() is { } debuff)
-            {
-                sb.AppendLine(T("This floor's boss:"));
-                Add(debuff);
             }
 
-            return sb.Length > 0 ? sb.ToString() : T("No modifiers are active.");
+            var floor = run?.State?.ActiveFloorModifiers;
+            Group(T("ModifierList.Floor"), floor ?? new System.Collections.Generic.List<BossModifierId>());
+            var puzzle = new System.Collections.Generic.List<BossModifierId>();
+            if (run?.CurrentBoard != null && run.CurrentLevelConfig?.ActiveModifiers != null)
+                foreach (var id in run.CurrentLevelConfig.ActiveModifiers)
+                    if (floor == null || !floor.Contains(id)) puzzle.Add(id);
+            Group(T("ModifierList.Puzzle"), puzzle);
+            if (puzzle.Count == 0 && run?.GetBossDebuffForCurrentFloor() is { } debuff)
+                Group(T("ModifierList.Boss"), new[] { debuff });
+            if (shown == 0) Heading(content, T("No modifiers are active."));
+
+            var scroll = viewport.gameObject.AddComponent<ScrollRect>();
+            scroll.viewport = viewport;
+            scroll.content = content;
+            scroll.horizontal = false;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+            scroll.scrollSensitivity = 30f;
+            LayoutRebuilder.ForceRebuildLayoutImmediate(content);
+            scroll.verticalNormalizedPosition = 1f;
+            return scroll;
+        }
+
+        private static void Heading(Transform parent, string text)
+        {
+            var label = InRunUiFactory.CreateText(parent, "Heading", text.ToUpperInvariant(), 19, TextAnchor.MiddleLeft, ScrollUiKit.Vermilion);
+            label.raycastTarget = false;
+        }
+
+        private static void RuleRow(Transform parent, BossModifierId id, int boardSize)
+        {
+            var row = new GameObject($"Rule_{id}", typeof(RectTransform));
+            row.transform.SetParent(parent, false);
+            var lines = row.AddComponent<VerticalLayoutGroup>();
+            lines.childControlWidth = lines.childControlHeight = true;
+            lines.childForceExpandWidth = lines.childForceExpandHeight = false;
+            lines.padding = new RectOffset(60, 0, 0, 8);
+            lines.spacing = 2f;
+
+            var swatch = ScrollUiKit.Fill(row.transform, "Swatch", new Vector2(0f, 1f), new Vector2(0f, 1f),
+                BoardViewController.TryGetLegendColor(id, out var color) ? color : ScrollUiKit.InkSoft, ScrollUiKit.Rounded(6f));
+            swatch.rectTransform.pivot = new Vector2(0f, 1f);
+            swatch.rectTransform.sizeDelta = new Vector2(44f, 12f);
+            swatch.rectTransform.anchoredPosition = new Vector2(0f, -9f);
+            swatch.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+
+            RowText(row.transform, "Name", BossService.GetModifierName(id), 24, ScrollUiKit.Ink);
+            RowText(row.transform, "Rule", BossService.GetModifierDescription(id, boardSize), 18, ScrollUiKit.InkSoft);
+        }
+
+        private static void RowText(Transform row, string name, string text, int size, Color color)
+        {
+            var label = InRunUiFactory.CreateText(row, name, text, size, TextAnchor.UpperLeft, color);
+            label.horizontalOverflow = HorizontalWrapMode.Wrap;
+            label.verticalOverflow = VerticalWrapMode.Overflow;
+            label.raycastTarget = false;
+        }
+
+        // Arrow keys, the stick and the D-pad move a list that has no buttons to step through.
+        private sealed class ArrowKeyScroll : MonoBehaviour
+        {
+            public ScrollRect Target;
+            private const float PerSecond = 0.9f;
+
+            private void Update()
+            {
+                var v = Input.GetAxis("Vertical");
+                if (Target == null || Mathf.Abs(v) < 0.1f) return;
+                Target.verticalNormalizedPosition = Mathf.Clamp01(Target.verticalNormalizedPosition + v * Time.unscaledDeltaTime * PerSecond);
+            }
         }
 
         private static TComponent FindInPanel<TComponent>(Transform panel, string name) where TComponent : Component

@@ -89,13 +89,6 @@ namespace SudokuRoguelike.UI
         private bool _koiReflectionPending;
         private int  _koiReflectionChargesLeft;
 
-        // ── WindChime pending house-select state ──
-        private bool       _windChimePending;
-        private ItemRarity _windChimeRarity;
-        private bool       _windChimeChoosingHouses; // phase 1: pick which house(s) to fill
-        private bool       _windChimeFillRow, _windChimeFillCol, _windChimeFillBox;
-        private int        _windChimeMaxHouses; // 1 Normal / 2 Rare
-
         // ── TempleIncense pending cell-fill state ──
         private bool _templeIncensePending;
         private int  _templeIncenseChargesLeft;
@@ -129,14 +122,8 @@ namespace SudokuRoguelike.UI
         private HashSet<(int row, int col)> _bagHighlightCells;
 
         // Fog moves are stored in RunState.FogDisabledMoves (persisted); read via this accessor
-        private int _fogDisabledMovesRemaining =>
-            (_gardenLanternUnfogUntil > 0f && Time.realtimeSinceStartup < _gardenLanternUnfogUntil)
-                ? int.MaxValue
-                : (_map?.Run?.State?.FogDisabledMoves ?? 0);
+        private int _fogDisabledMovesRemaining => _map?.Run?.State?.FogDisabledMoves ?? 0;
 
-        // Garden Lantern: real-time timestamp (Time.realtimeSinceStartup) at which the 15-second
-        // fog reveal expires. 0 when no lantern is active. Not persisted — save+quit re-fogs the board.
-        private float _gardenLanternUnfogUntil;
         private float _bagHighlightEndTime;
 
         // ── Path overlay ──
@@ -206,7 +193,6 @@ namespace SudokuRoguelike.UI
         private AccessibilityService _accessibility = new AccessibilityService();
         private readonly ControllerIndicatorPoller _controllerIndicatorPoller = new ControllerIndicatorPoller();
         private readonly AsyncLevelCompletionPresenter _asyncLevelCompletionPresenter = new AsyncLevelCompletionPresenter();
-        private readonly TimedVisualStateController _timedVisualStateController = new TimedVisualStateController();
 
         // ── Icon cache: all node/legend sprites preloaded once at Awake ──
         private readonly Dictionary<string, Sprite> _nodeIconCache = new Dictionary<string, Sprite>();
@@ -486,7 +472,7 @@ namespace SudokuRoguelike.UI
         }
 
         private bool HasPendingItemInteraction =>
-            _windChimeChoosingHouses || _windChimePending ||
+            _mothLightPending ||
             _templeIncensePending || _koiReflectionPending ||
             _swapMode || _patternScrollPending;
 
@@ -551,12 +537,6 @@ namespace SudokuRoguelike.UI
             {
                 _shownGold = run.State.CurrentGold;
                 _goldLabel.text = _shownGold.ToString();
-            }
-
-            if (_timedVisualStateController.HasExpired(_gardenLanternUnfogUntil, Time.realtimeSinceStartup))
-            {
-                _gardenLanternUnfogUntil = 0f;
-                RenderBoard();
             }
 
             if (_controllerIndicatorPoller.Tick(Time.deltaTime, out var controllerIndicatorLabel) &&
@@ -1815,7 +1795,7 @@ namespace SudokuRoguelike.UI
 
             // PS-3: Enter/A confirms pending cell-select item interactions
             bool anyPendingInteraction = _koiReflectionPending || _templeIncensePending ||
-                _patternScrollPending || _swapMode || _windChimePending;
+                _patternScrollPending || _swapMode || _mothLightPending;
             if (anyPendingInteraction && _selectedRow >= 0 && _selectedCol >= 0
                 && (Input.GetKeyDown(KeyCode.Return) || PadButtons.Pressed(KeyCode.JoystickButton0)))
             {
@@ -1832,7 +1812,6 @@ namespace SudokuRoguelike.UI
                 eventSystem.SetSelectedGameObject(null);
 
             // House-choice phase for Wind Chime takes over all digit keys
-            if (_windChimeChoosingHouses) { HandleWindChimeHouseChoice(); _inputRemap.Tick(); return; }
             HandleGamepadController();
             var sz = _map?.Run?.CurrentBoard?.Size ?? 9;
             if (HandleBagAndRelicKeys()) { _inputRemap.Tick(); return; }   // [REQ: INPUT-KEY-002]
@@ -2049,9 +2028,7 @@ namespace SudokuRoguelike.UI
         private void CancelPendingItemInteraction(bool showStatus = true)
         {
             RefundUntouchedPendingItem();   // GAP-117 (InRunController.PendingItems.cs)
-            _windChimeChoosingHouses = false;
-            _windChimePending        = false;
-            _windChimeFillRow = _windChimeFillCol = _windChimeFillBox = false;
+            _mothLightPending        = false;
             _templeIncensePending    = false;
             _templeIncenseChargesLeft = 0;
             _koiReflectionPending    = false;
@@ -2112,62 +2089,6 @@ namespace SudokuRoguelike.UI
             }
         }
 
-        /// <summary>
-        /// Phase 1 of Wind Chime: player presses 1/2/3 to choose which house(s) to fill.
-        /// Auto-advances to cell-click phase when enough houses are selected.
-        /// </summary>
-        private void HandleWindChimeHouseChoice()
-        {
-            // Numeric keys 1/2/3 toggle Row/Col/Box selection
-            static int Count(bool a, bool b, bool c) => (a ? 1 : 0) + (b ? 1 : 0) + (c ? 1 : 0);
-
-            if (Input.GetKeyDown(KeyCode.Alpha1) || Input.GetKeyDown(KeyCode.Keypad1) ||
-                PadButtons.Pressed(KeyCode.JoystickButton3)) // Y button
-                ToggleWindChimeHouseFlag(ref _windChimeFillRow);
-
-            if (Input.GetKeyDown(KeyCode.Alpha2) || Input.GetKeyDown(KeyCode.Keypad2) ||
-                PadButtons.Pressed(KeyCode.JoystickButton1)) // B button
-                ToggleWindChimeHouseFlag(ref _windChimeFillCol);
-
-            if (Input.GetKeyDown(KeyCode.Alpha3) || Input.GetKeyDown(KeyCode.Keypad3) ||
-                PadButtons.Pressed(KeyCode.JoystickButton2)) // X button
-                ToggleWindChimeHouseFlag(ref _windChimeFillBox);
-
-            var selected = Count(_windChimeFillRow, _windChimeFillCol, _windChimeFillBox);
-            var r = _windChimeFillRow ? "[●Row]" : "[ Row]";
-            var c = _windChimeFillCol ? "[●Col]" : "[ Col]";
-            var b = _windChimeFillBox ? "[●Box]" : "[ Box]";
-            var remain = _windChimeMaxHouses - selected;
-
-            if (selected >= _windChimeMaxHouses && selected > 0)
-            {
-                // Enough houses selected → proceed to cell-click phase
-                _windChimeChoosingHouses = false;
-                _windChimePending        = true;
-                var label = (selected == 3 ? "row + column + box" :
-                             selected == 2 ? (_windChimeFillRow && _windChimeFillCol ? "row + column" :
-                                              _windChimeFillRow && _windChimeFillBox ? "row + box" : "column + box") :
-                             _windChimeFillRow ? "row" : _windChimeFillCol ? "column" : "box");
-                SetStatus(Tf("Wind Chime: click a cell to fill its {0}. ESC cancels.", label));
-            }
-            else
-            {
-                SetStatus(Tf("Wind Chime: {0} {1} {2}  — select {3} more (1=Row 2=Col 3=Box). ESC cancels.", r, c, b, remain));
-            }
-        }
-
-        private void ToggleWindChimeHouseFlag(ref bool flag)
-        {
-            if (flag)
-            {
-                flag = false; // deselect
-                return;
-            }
-            var selected = (_windChimeFillRow ? 1 : 0) + (_windChimeFillCol ? 1 : 0) + (_windChimeFillBox ? 1 : 0);
-            if (selected < _windChimeMaxHouses)
-                flag = true;
-        }
-
         private void MoveSelection(int dr, int dc)
         {
             var board = _map?.Run?.CurrentBoard;
@@ -2192,18 +2113,15 @@ namespace SudokuRoguelike.UI
             if (board == null) return;
             EnsureSpiritTrialsTimerStarted();
 
-            // Ignore cell clicks while player is choosing houses for Wind Chime
-            if (_windChimeChoosingHouses) return;
-
             if (_koiReflectionPending)
             {
                 HandleKoiReflectionClick(r, c);
                 return;
             }
 
-            if (_windChimePending)
+            if (_mothLightPending)
             {
-                HandleWindChimeClick(r, c);
+                HandleMothLightClick(r, c);
                 return;
             }
 
@@ -3021,17 +2939,13 @@ namespace SudokuRoguelike.UI
                     break;
                 }
 
-                // ── Koi Dragon Scale: fill the most-complete unit ──
+                // ── River Bell (KoiDragonScale): a mistake keeps the combo this puzzle ── [REQ: ITEM-REWORK-002]
                 case ItemType.KoiDragonScale:
                 {
                     if (board == null) { SetStatus(T("No active board.")); return; }
-                    // [REQ: ITEM-REWORK-001] The two most-filled rows, columns or boxes (one is what the Ink Pact does).
-                    var count = FillMostCompleteUnit(board, run);
-                    if (count == 0) { SetStatus(T("No incomplete unit found.")); return; }
-                    count += FillMostCompleteUnit(board, run);
+                    if (s.RiverBellActive) { SetStatus(T("Item.Status.AlreadyActive")); return; }
                     run.TryUseItem(slotIndex);
-                    SetStatus(LocalizationService.Format("Item.Status.KoiDragonScale", "Koi Dragon Scale: {0} cell(s) written in two units.", count));
-                    RenderBoard();
+                    SetStatus(T("Item.Status.RiverBell"));
                     break;
                 }
 
@@ -3068,13 +2982,15 @@ namespace SudokuRoguelike.UI
                     break;
                 }
 
-                // ── Garden Lantern: illuminate all fogged cells for 15 seconds ──
+                // ── Moth Light (GardenLantern): the fog of one chosen box is gone for good ── [REQ: ITEM-REWORK-002]
                 case ItemType.GardenLantern:
                 {
-                    _gardenLanternUnfogUntil = Time.realtimeSinceStartup + 15f;
+                    if (board == null) { SetStatus(T("No active board.")); return; }
+                    if (!run.BoardHasFog) { SetStatus(T("Item.Status.MothLight.NoFog")); return; }
+                    RememberPendingItem(slotIndex, item, 1);   // GAP-117
                     run.TryUseItem(slotIndex);
-                    SetStatus(T("Garden Lantern: fog lifted for 15 seconds."));
-                    RenderBoard();
+                    _mothLightPending = true;
+                    SetStatus(T("Item.Status.MothLight.Pick"));
                     break;
                 }
 
@@ -3088,36 +3004,30 @@ namespace SudokuRoguelike.UI
                     break;
                 }
 
-                // ── Temple Stamp: lock HP this puzzle (mistakes cost 0 HP) ──
+                // ── Stone Oath (TempleStamp): 1 HP now, half again the gold ── [REQ: ITEM-REWORK-002]
                 case ItemType.TempleStamp:
                 {
-                    s.TempleSealActive = true;
+                    if (board == null || run.IsLevelComplete) { SetStatus(T("No active board.")); return; }
+                    if (s.StoneOathActive) { SetStatus(T("Item.Status.AlreadyActive")); return; }
+                    if (s.CurrentHP <= RunDirector.StoneOathHp)
+                    {
+                        SetStatus(LocalizationService.Format("Item.Status.NeedHp", "{0} needs more than {1} HP.", ItemService.GetItemName(item.Type), RunDirector.StoneOathHp));
+                        return;
+                    }
                     run.TryUseItem(slotIndex);
-                    SetStatus(T("Temple Stamp: HP locked this puzzle — mistakes deal no damage."));
+                    SetStatus(T("Item.Status.StoneOath"));
                     break;
                 }
 
-                // ── Wind Chime: player selects which house(s) to fill ──
+                // ── Chime of Notes (WindChime): every open cell gets its candidates as free notes ── [REQ: ITEM-REWORK-002]
                 case ItemType.WindChime:
                 {
                     if (board == null) { SetStatus(T("No active board.")); return; }
-                    RememberPendingItem(slotIndex, item, 1);   // GAP-117
+                    var noted = run.WriteAllNotes();
+                    if (noted == 0) { SetStatus(T("Item.Status.ChimeOfNotes.None")); return; }
                     run.TryUseItem(slotIndex);
-                    _windChimeRarity = item.Rarity;
-                    _windChimeFillRow = _windChimeFillCol = _windChimeFillBox = false;
-                    if (item.Rarity == ItemRarity.Epic)
-                    {
-                        // Epic: all 3 houses — skip choice, go straight to cell-click
-                        _windChimeFillRow = _windChimeFillCol = _windChimeFillBox = true;
-                        _windChimePending = true;
-                        SetStatus(T("Wind Chime: click any cell to fill its row + column + box. ESC cancels."));
-                    }
-                    else
-                    {
-                        _windChimeMaxHouses      = item.Rarity == ItemRarity.Rare ? 2 : 1;
-                        _windChimeChoosingHouses = true;
-                        SetStatus(Tf("Wind Chime: press 1=Row 2=Col 3=Box to select {0} house(s). ESC cancels.", _windChimeMaxHouses));
-                    }
+                    SetStatus(Tf("Item.Status.ChimeOfNotes", noted));
+                    RenderBoard();
                     break;
                 }
 
@@ -3255,40 +3165,6 @@ namespace SudokuRoguelike.UI
             {
                 SetStatus(Tf("Koi Reflection: candidates revealed ({0} remaining).", _koiReflectionChargesLeft));
             }
-            RenderBoard();
-        }
-
-        private void HandleWindChimeClick(int r, int c)
-        {
-            var run   = _map?.Run;
-            var board = run?.CurrentBoard;
-            if (board == null) { _windChimePending = false; return; }
-
-            var filled = 0;
-            if (_windChimeFillRow)
-            {
-                for (var cc = 0; cc < board.Size; cc++)
-                    if (!board.GivenMask[r, cc] && board.Cells[r, cc] == 0)
-                    { run.PlaceNumber(r, cc, board.Solution[r, cc]); filled++; }
-            }
-            if (_windChimeFillCol)
-            {
-                for (var rr = 0; rr < board.Size; rr++)
-                    if (!board.GivenMask[rr, c] && board.Cells[rr, c] == 0)
-                    { run.PlaceNumber(rr, c, board.Solution[rr, c]); filled++; }
-            }
-            if (_windChimeFillBox)
-            {
-                var reg = board.RegionMap[r, c];
-                for (var rr = 0; rr < board.Size; rr++)
-                for (var cc = 0; cc < board.Size; cc++)
-                    if (board.RegionMap[rr, cc] == reg && !board.GivenMask[rr, cc] && board.Cells[rr, cc] == 0)
-                    { run.PlaceNumber(rr, cc, board.Solution[rr, cc]); filled++; }
-            }
-            _windChimePending = false;
-            _windChimeFillRow = _windChimeFillCol = _windChimeFillBox = false;
-            _map?.SaveNow();
-            SetStatus(Tf("Wind Chime: filled {0} cell(s).", filled));
             RenderBoard();
         }
 

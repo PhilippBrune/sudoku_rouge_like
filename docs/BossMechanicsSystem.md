@@ -1,11 +1,12 @@
 ﻿# Boss Mechanics System
 
-**Version:** 2.15 | **Date:** 2026-11-08 | **Status:** implemented
+**Version:** 2.16 | **Date:** 2026-11-09 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 2.16 | 2026-11-09 | implemented | Owner's correction to the 0.4.3 playtest: the floor counts go back to 0, 1, 1, 1, 2 (BOSS-FLOOR-004 withdrawn, it was a misreading); the request was more pieces of a rule inside its puzzle: BOSS-MOD-010. |
 | 2.15 | 2026-11-08 | implemented | Owner's 0.4.3 playtest: more floor rules 1, 1, 2, 2, 2 with a plain first floor in a player's first runs (BOSS-FLOOR-004), every piece must say something (BOSS-MOD-008), lines as long as the board is wide (BOSS-MOD-009), rule texts name only the board's digits (BOSS-TEXT-001), fulfilled X-Sum clues are struck through (BOSS-XSUM-001). |
 | 2.14 | 2026-11-03 | implemented | Owner (2026-11-03), on the proposals of OPEN_POINTS 2.0: Phase 0 step 3 built (`ModifierCatalog`: name, abbreviation and rule text as one entry per modifier; the letters on a line are its modifier's abbreviation, so the Palindrome line reads PL as at its gate, not PA) and step 5 as golden geometry snapshots (BOSS-MOD-007). |
 | 2.13 | 2026-10-27 | implemented | Owner request (2026-10-27): the modifier catalog plan (v1.5, 2026-10-19; its file is removed) is merged into the new section "Modifier catalog": the Phase 0 steps with their state, the verdicts, the owner's decisions and what is open. Steps 3 and 5 stay open; the spec contradictions the plan found are listed there and not resolved. No rule changed. |
@@ -275,13 +276,15 @@ Starting from Floor 2, modifiers are applied to **all puzzles** on the floor —
 
 | Floor | Floor Modifiers | Effect |
 |:---:|:---:|--------|
-| 1 | 1 | One modifier (none in a player's first three runs: BOSS-FLOOR-004) |
+| 1 | 0 | No floor modifiers — gentle introduction |
 | 2 | 1 | One modifier active on all puzzles |
-| 3 | 2 | Two modifiers |
-| 4 | 2 | Two modifiers; boss picks keep rising |
+| 3 | 1 | One modifier; difficulty rises through stars and board size |
+| 4 | 1 | One modifier; boss picks keep rising |
 | 5 | 2 | Two modifiers on all puzzles — maximum floor pressure |
 
-Base counts `1, 1, 2, 2, 2` since the owner's 0.4.3 playtest (BOSS-FLOOR-004; before: `0, 1, 1, 1, 2`, decided 2026-10-07 in SPEC-CONF-001): the code values were kept because the generation load is tested at that level; difficulty still rises through stars, board size and boss picks. Harmony adds floor modifiers on top (`HarmonyDifficultyService.GetBonusFloorModifiers`, HarmonyDifficultySystem §4.4).
+Base counts `0, 1, 1, 1, 2` (`BossService.BaseFloorModifierCounts`), decided 2026-10-07 (SPEC-CONF-001): the code values were kept because the generation load is tested at that level; difficulty still rises through stars, board size and boss picks. Harmony adds floor modifiers on top (`HarmonyDifficultyService.GetBonusFloorModifiers`, HarmonyDifficultySystem §4.4).
+
+**[BOSS-MOD-010] Pieces per rule.** A rule shows up often in its puzzle (owner, 0.4.3 playtest: "only two or three of them"): every rule's number of lines, dots, cages, arrows, marks or clues is multiplied by `max(1, 2.25 − 0.25 × rules on the board)`: twice as many for a rule alone, 1.75 times for two, 1.5 for three, 1.25 for four, and the old number from five rules on, because rules share the cells. The intensity scale and each kind's upper limit still apply.
 
 ### Floor Modifier Rolling
 

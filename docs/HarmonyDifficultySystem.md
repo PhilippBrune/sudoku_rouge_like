@@ -1,11 +1,12 @@
 # Harmony Difficulty System
 
-**Version:** 1.3 | **Date:** 2026-10-22 | **Status:** implemented
+**Version:** 1.4 | **Date:** 2026-11-09 | **Status:** implemented
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.4 | 2026-11-09 | implemented | The Void Petal has a new effect (RELIC-REWORK-001, owner's pick). |
 | 1.3 | 2026-10-22 | implemented | §7 Pre-Run Perks as built and fixed (owner: "implement GAP-064 as planned", "analyze, plan and fix GAP-067"): the pencil a perk gives raises the maximum too; Scholar's Burden's slot cost never goes below one slot, its Rare Ink Well (two from H8) comes first in the bag, the Level 30 class item only when a slot is left; Moonshade's first-reward Nothing and Empty Canvas's Rare+ rewards are applied (GAP-069). HARMONY-PERK-003..005. |
 | 1.2 | 2026-10-14 | implemented | §9 Achievements: display names, descriptions and visibility follow the live Steamworks configuration (App 4858470, published with the first Early Access build); only harmony_10_perfect is hidden (SPEC-CONF-040). |
 | 1.1 | 2026-10-07 | implemented | 1.1 (2026-10-07): all table fields consumed, code aligned to the tables (SPEC-CONF-025, GAP-008); XP multiplier on every run end without flat bonus (SPEC-CONF-024); §4.8 documents how grid and star weights, boss bonuses, flags and reward pressure are applied, incl. the early-floor star cap (REQ-RUN-106). Change history added. |
@@ -193,7 +194,7 @@ New relics are added to the appropriate tier pool only when `harmonyLevel >= gat
 |---|---|---|---|
 | `CrackedStone` | T1 | H2+ | Each mistake after the first in a puzzle costs 0 HP (stone absorbs). Passive. |
 | `FrostedMirror` | T2 | H5+ | Once per mistake: spend 3 pencil to absorb 1 HP of damage. Auto-triggers. |
-| `VoidPetal` | T3 | H7+ | Once per run: survive a lethal hit at 1 HP. Grants 1 free Normal Solver on activation. |
+| `VoidPetal` | T3 | H7+ | The first mistake of each floor costs 3 pencil instead of HP. |
 | `LanternOfVoid` | Legendary | H9+ | Boss modifier labels permanently hidden. +1 gold per active floor modifier on puzzle complete. |
 
 These relics are **excluded** from the `AllRelicsDiscovered` completion tracker (which uses a

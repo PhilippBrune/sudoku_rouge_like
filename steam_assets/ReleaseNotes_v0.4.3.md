@@ -3,7 +3,7 @@
 Release build of 2026-11-09 from `feature/game-ui-refactor` (tag `v0.4.3`, local). It holds everything since 0.4.2: the
 picks from the 0.4.1 and 0.4.2 playtests, the owner's 0.4.3 playtest (GAP-133 to GAP-142, RM-230 to RM-235) and the last
 picks of 2026-11-09. 0.4.2 is uploaded with its own notes (owner, 2026-11-07). Player-facing text comes from `CHANGELOG.md`.
-Uploaded on request (owner, 2026-11-09); not live until the owner sets it live.
+Uploaded on request (owner, 2026-11-09): **Steam build 26534828** (depot 4858471, manifest 7748882595683954094, note "v0.4.3"), live on no branch. The announcement below is saved on Steam as a draft (clone of the 0.4.2 event), not published.
 
 ## Build
 
@@ -11,28 +11,20 @@ See the build section of `docs/release/release-readiness-status.md` (0.4.3). Ste
 
 ## Going live (owner)
 
-1. **Achievements first** (Steamworks → Stats & Achievements): the English texts of `floor_5` and the eight
-   `challenge_*_2` changed (the run is three floors now; the Swift Path is under 25 minutes). English, as in
-   `docs/Achievements.md` section 2:
-   - `floor_5`: **Summit in Sight**: "Reach the last floor of a Garden Run."
-   - `challenge_<class>_2`: **The Swift Path (<class>)**: "Win a Garden Run in under 25 minutes."
-
-   Then upload the other four languages from `steam_assets/achievements/localization/*.vdf` and publish the achievement
-   change (stop before Publish, as always).
-2. **Upload:** SteamPipe → Builds → *Upload Depots via HTTP*: `Builds/RunOfTheNine_0.4.3_win64.zip`, depot 4858471,
-   description "v0.4.3", then commit the upload. It is not live after this step.
-3. **Set live:** SteamPipe → Builds → set the build live on `default`.
-4. **Announcement:** Events & Announcements → Create → *Patch notes / Small update*, one of the texts below; publish it
-   after the build is live. The Steam news mirror posts it to #rotn-news by itself.
-5. **Discord:** I change the "current build" line of `tools/discord/texts/known_issues.md` to v0.4.3 when you say the
-   build is live; then `python tools/discord/discord_admin.py replace known-issues tools/discord/texts/known_issues.md`.
+1. **Achievement texts:** the English `floor_5` and the eight `challenge_*_2` are saved in Steamworks with all five
+   languages. They need Publish (Steamworks → Publish). Their icons still read "40 Min" while the text says 25 minutes.
+2. **Set live:** SteamPipe → Builds → set build 26534828 live on `default`.
+3. **Announcement:** Steam Events → the draft "Update v0.4.3" → check the title and publish it once the build is live.
+   The Steam news mirror posts it to #rotn-news by itself.
+4. **Discord:** the short text below goes to #release-drafts first. I change the "current build" line of
+   `tools/discord/texts/known_issues.md` to v0.4.3 when you say the build is live; then
+   `python tools/discord/discord_admin.py replace known-issues tools/discord/texts/known_issues.md`.
 
 ## Steam announcement: 0.4.3
 
-Title: **Update v0.4.3: three floors, more rules on the board, new items and feedback from the game**
+Title: **Update v0.4.3: three floors, more rules on the board and new items**
 
-Summary: The Garden Run is three denser floors. Rules show up more often in a puzzle, six items and relics do something new,
-a timed event pays well, and F8 sends me your feedback from the game.
+Summary: Three denser floors, rules that show up more often, six items and relics that do something new, a timed event, and F8 sends me your feedback from the game.
 
 ```
 [h2]Three floors[/h2]

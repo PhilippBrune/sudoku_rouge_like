@@ -52,28 +52,28 @@ ICONS = {
     'story_tale_quiet_cartographer': ('background/bg_game_modes', 'class/icon_quiet_cartographer', 'Whole Tale'),
     'story_ninth_keeper': ('background/bg_victory', 'meta/icon_full_sakura', 'The Ninth'),
     'challenge_number_freak_1': ('background/bg_puzzle_board', 'class/icon_number_freak', '10 Perfect'),
-    'challenge_number_freak_2': ('background/bg_puzzle_board', 'class/icon_number_freak', '40 Min'),
+    'challenge_number_freak_2': ('background/bg_puzzle_board', 'class/icon_number_freak', None),
     'challenge_number_freak_3': ('background/bg_puzzle_board', 'class/icon_number_freak', 'Harmony VI'),
     'challenge_garden_monk_1': ('background/bg_garden_grove', 'class/icon_garden_monk', 'No Items'),
-    'challenge_garden_monk_2': ('background/bg_garden_grove', 'class/icon_garden_monk', '40 Min'),
+    'challenge_garden_monk_2': ('background/bg_garden_grove', 'class/icon_garden_monk', None),
     'challenge_garden_monk_3': ('background/bg_garden_grove', 'class/icon_garden_monk', 'Harmony VI'),
     'challenge_shrine_archivist_1': ('background/bg_shrine_garden', 'class/icon_shrine_archivist', '4 Relics'),
-    'challenge_shrine_archivist_2': ('background/bg_shrine_garden', 'class/icon_shrine_archivist', '40 Min'),
+    'challenge_shrine_archivist_2': ('background/bg_shrine_garden', 'class/icon_shrine_archivist', None),
     'challenge_shrine_archivist_3': ('background/bg_shrine_garden', 'class/icon_shrine_archivist', 'Harmony VI'),
     'challenge_koi_gambler_1': ('background/bg_koi_garden', 'class/icon_koi_gambler', '3 Curses'),
-    'challenge_koi_gambler_2': ('background/bg_koi_garden', 'class/icon_koi_gambler', '40 Min'),
+    'challenge_koi_gambler_2': ('background/bg_koi_garden', 'class/icon_koi_gambler', None),
     'challenge_koi_gambler_3': ('background/bg_koi_garden', 'class/icon_koi_gambler', 'Harmony VI'),
     'challenge_stone_gardener_1': ('background/bg_demon_summit', 'class/icon_stone_gardener', '8 Items'),
-    'challenge_stone_gardener_2': ('background/bg_demon_summit', 'class/icon_stone_gardener', '40 Min'),
+    'challenge_stone_gardener_2': ('background/bg_demon_summit', 'class/icon_stone_gardener', None),
     'challenge_stone_gardener_3': ('background/bg_demon_summit', 'class/icon_stone_gardener', 'Harmony VI'),
     'challenge_lantern_seer_1': ('background/bg_event', 'class/icon_lantern_seer', '3 Rules'),
-    'challenge_lantern_seer_2': ('background/bg_event', 'class/icon_lantern_seer', '40 Min'),
+    'challenge_lantern_seer_2': ('background/bg_event', 'class/icon_lantern_seer', None),
     'challenge_lantern_seer_3': ('background/bg_event', 'class/icon_lantern_seer', 'Harmony VI'),
     'challenge_reed_duelist_1': ('background/bg_koi_terrace', 'class/icon_reed_duelist', 'Quiet Floor'),
-    'challenge_reed_duelist_2': ('background/bg_koi_terrace', 'class/icon_reed_duelist', '40 Min'),
+    'challenge_reed_duelist_2': ('background/bg_koi_terrace', 'class/icon_reed_duelist', None),
     'challenge_reed_duelist_3': ('background/bg_koi_terrace', 'class/icon_reed_duelist', 'Harmony VI'),
     'challenge_quiet_cartographer_1': ('background/bg_game_modes', 'class/icon_quiet_cartographer', '6 Risks'),
-    'challenge_quiet_cartographer_2': ('background/bg_game_modes', 'class/icon_quiet_cartographer', '40 Min'),
+    'challenge_quiet_cartographer_2': ('background/bg_game_modes', 'class/icon_quiet_cartographer', None),
     'challenge_quiet_cartographer_3': ('background/bg_game_modes', 'class/icon_quiet_cartographer', 'Harmony VI'),
 }
 
@@ -97,28 +97,30 @@ def make(painting_rel, icon_rel, label):
     bg = ImageEnhance.Brightness(bg.filter(ImageFilter.GaussianBlur(1.5))).enhance(0.62).convert('RGBA')
     icon = load(icon_rel)
     icon.thumbnail((150, 150), Image.LANCZOS)
-    x, y = (SIZE - icon.width) // 2, 30 + (150 - icon.height) // 2
+    x, y = (SIZE - icon.width) // 2, ((SIZE - icon.height) // 2 if not label else 30 + (150 - icon.height) // 2)
     halo = Image.new('RGBA', bg.size, (0, 0, 0, 0))
     halo.paste(Image.new('RGBA', icon.size, (255, 230, 170, 140)), (x, y), icon)
     bg = Image.alpha_composite(bg, halo.filter(ImageFilter.GaussianBlur(9)))
     bg.alpha_composite(icon, (x, y))
 
     # A dark band under the label keeps the gold readable on bright paintings.
-    band = Image.new('L', (1, SIZE), 0)
-    for row in range(170, SIZE):
-        band.putpixel((0, row), min(200, (row - 170) * 6))
-    shade = Image.new('RGBA', bg.size, (0, 0, 0, 255))
-    shade.putalpha(band.resize(bg.size))
-    bg = Image.alpha_composite(bg, shade)
+    if label:
+        band = Image.new('L', (1, SIZE), 0)
+        for row in range(170, SIZE):
+            band.putpixel((0, row), min(200, (row - 170) * 6))
+        shade = Image.new('RGBA', bg.size, (0, 0, 0, 255))
+        shade.putalpha(band.resize(bg.size))
+        bg = Image.alpha_composite(bg, shade)
 
     draw = ImageDraw.Draw(bg)
-    font = ImageFont.truetype(FONT, 27)
-    while draw.textlength(label, font=font) > SIZE - 24 and font.size > 14:
-        font = ImageFont.truetype(FONT, font.size - 1)
-    width = draw.textlength(label, font=font)
-    tx, ty = (SIZE - width) / 2, 204
-    draw.text((tx + 1, ty + 2), label, font=font, fill=(0, 0, 0, 200))
-    draw.text((tx, ty), label, font=font, fill=GOLD + (255,))
+    if label:
+        font = ImageFont.truetype(FONT, 27)
+        while draw.textlength(label, font=font) > SIZE - 24 and font.size > 14:
+            font = ImageFont.truetype(FONT, font.size - 1)
+        width = draw.textlength(label, font=font)
+        tx, ty = (SIZE - width) / 2, 204
+        draw.text((tx + 1, ty + 2), label, font=font, fill=(0, 0, 0, 200))
+        draw.text((tx, ty), label, font=font, fill=GOLD + (255,))
     draw.rectangle((2, 2, SIZE - 3, SIZE - 3), outline=GOLD + (255,), width=3)
     achieved = bg.convert('RGB')
 

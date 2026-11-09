@@ -154,5 +154,9 @@ steam_assets/audio_proposals/
 
 # Feedback relay (Cloudflare Worker): local secrets and build output
 tools/feedback-worker/.dev.vars
-tools/feedback-worker/.wrangler/
+.wrangler/
 tools/feedback-worker/node_modules/
+
+# Metas of two empty local folders
+Assets/Neuer Ordner.meta
+Assets/Resources/audio/music_new.meta

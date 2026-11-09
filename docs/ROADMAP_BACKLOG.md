@@ -1,11 +1,12 @@
 # Roadmap backlog: Run of the Nine
 
-**Version:** 1.23 | **Date:** 2026-11-09 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
+**Version:** 1.24 | **Date:** 2026-11-09 | **Status:** review (short term set by the owner; mid and long term are suggestions waiting for the owner's pick)
 
 ### Change History
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
+| 1.24 | 2026-11-09 | review | 0.5.0 starts. RM-238 Jokers and RM-239 Chaos Sudoku as a new spec; RM-236: the first paintings were not in the game's style, new ones in the style on `docs/design/event-art-proposals.html`. |
 | 1.23 | 2026-11-09 | review | Owner's last picks for 0.4.3: RM-234 pick A and RM-235 built; RM-236 concept paintings on `docs/design/event-art-proposals.html`; RM-237 live. |
 | 1.22 | 2026-11-08 | review | Owner's playtest of 0.4.3: RM-233 pick C built; RM-234 the View Modifiers screen, RM-235 item and relic replacements and the combo relic as proposals; RM-236 event paintings; RM-237 the feedback relay stays open. |
 | 1.21 | 2026-11-08 | review | Owner's picks: RM-230 C and RM-231 B built; RM-232 built (seven rules, the pressure rules); RM-233 the new-profile screens as mockups for the pick. |
@@ -87,6 +88,8 @@ Horizons: **short term** = the next one to three updates, **mid term** = after t
 | RM-235 | Item and relic overlaps, a combo relic | Four items and two relics got an effect of their own; the Unbroken Thread plays on the combo. | Built 2026-11-09, the owner's picks (ITEM-REWORK-002, RELIC-REWORK-001, RELIC-THREAD-001). | done |
 | RM-236 | Paintings for the events | Each event its own painting. | Concept paintings for all 19 events made with the local Fooocus on `docs/design/event-art-proposals.html` (2026-11-09); the owner picks, then they go to `Assets/Resources/background/event_<key>.png` (EVENT-ART-001). | proposed |
 | RM-237 | Feedback to Discord | Reports from the game arrive on Discord instead of as a ZIP. | Live 2026-11-09: Worker `rotn-feedback` on Cloudflare, its address in `FeedbackSender.Endpoint` (FEEDBACK-001/002); the webhook is only a secret of the Worker. | done |
+| RM-238 | Jokers | A Joker written into a cell holds the true digit and shows it, `?` or a lie: Master, Confused and Chaos, proposed as one item in three rarities. | Owner's idea (2026-11-09); `docs/JokersAndChaosSudoku.md` waits for the owner's answers. | proposed |
+| RM-239 | A more chaotic Sudoku | Six chaos rules on an optional Fox Tile; what the player sees can lie, the rules never break. | Owner's idea (2026-11-09); `docs/JokersAndChaosSudoku.md` waits for the owner's answers. | proposed |
 
 ## Mid term (suggested)
 

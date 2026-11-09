@@ -3,7 +3,7 @@
 Release build of 2026-11-09 from `feature/game-ui-refactor` (tag `v0.4.3`, local). It holds everything since 0.4.2: the
 picks from the 0.4.1 and 0.4.2 playtests, the owner's 0.4.3 playtest (GAP-133 to GAP-142, RM-230 to RM-235) and the last
 picks of 2026-11-09. 0.4.2 is uploaded with its own notes (owner, 2026-11-07). Player-facing text comes from `CHANGELOG.md`.
-Uploaded on request (owner, 2026-11-09): **Steam build 26534828** (depot 4858471, manifest 7748882595683954094, note "v0.4.3"), live on no branch. The announcement below is saved on Steam as a draft (clone of the 0.4.2 event), not published.
+Uploaded on request (owner, 2026-11-09): **Steam build 26534828** (depot 4858471, manifest 7748882595683954094, note "v0.4.3"), live on `default` and the announcement published by the owner (2026-11-09).
 
 ## Build
 

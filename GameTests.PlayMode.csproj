@@ -49,17 +49,37 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.3.10f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\Tests\PlayMode\LayoutScreenshotDiagnostics.Release043b.cs" />
+    <Compile Include="Assets\Scripts\Tests\PlayMode\CustomPuzzleScreenPlayModeTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\PlayMode\RewardScreenPlayModeTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\PlayMode\LayoutScreenshotDiagnostics.Story.cs" />
+    <Compile Include="Assets\Scripts\Tests\PlayMode\MainMenuVersionPlayModeTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\PlayMode\GameplayOptionsPlayModeTests.cs" />
     <Compile Include="Assets\Scripts\Tests\PlayMode\PlayModeSmokeTests.cs" />
     <Compile Include="Assets\Scripts\Tests\PlayMode\BossClearedFlowPlayModeTests.cs" />
     <Compile Include="Assets\Scripts\Tests\PlayMode\FirstRunSetupPlayModeTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\PlayMode\PathFocusMarkPlayModeTests.cs" />
     <Compile Include="Assets\Scripts\Tests\PlayMode\GeneratedUiPlayModeTraversalTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\PlayMode\LayoutScreenshotDiagnostics.Release043c.cs" />
     <Compile Include="Assets\Scripts\Tests\PlayMode\StartupFlowPlayModeTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\PlayMode\QuitConfirmPlayModeTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\PlayMode\InRunAudioPlayModeTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\PlayMode\MenuDpadPlayModeTests.cs" />
     <Compile Include="Assets\Scripts\Tests\PlayMode\InRunUiPlayModeTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\PlayMode\LayoutScreenshotDiagnostics.Release043.cs" />
     <Compile Include="Assets\Scripts\Tests\PlayMode\TestSaveIsolation.cs" />
+    <Compile Include="Assets\Scripts\Tests\PlayMode\ClassGardenPlayModeTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\PlayMode\Playtest042PlayModeTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\PlayMode\LayoutScreenshotDiagnostics.cs" />
+    <Compile Include="Assets\Scripts\Tests\PlayMode\ModeScreensPlayModeTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\PlayMode\RunNodeScenesPlayModeTests.cs" />
     <Compile Include="Assets\Scripts\Tests\PlayMode\RequirementAttribute.cs" />
     <Compile Include="Assets\Scripts\Tests\PlayMode\AudioClipPlayModeTests.cs" />
     <Compile Include="Assets\Scripts\Tests\PlayMode\OptionsScreenshotDiagnostics.cs" />
-    <Compile Include="Assets\Scripts\Tests\PlayMode\LayoutScreenshotDiagnostics.cs" />
+    <Compile Include="Assets\Scripts\Tests\PlayMode\TextSizeAndFontPlayModeTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\PlayMode\CodexBookPlayModeTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\PlayMode\LayoutScreenshotDiagnostics.FirstRun.cs" />
+    <Compile Include="Assets\Scripts\Tests\PlayMode\GamepadDpadPlayModeTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Scripts\Tests\PlayMode\GameTests.PlayMode.asmdef" />
@@ -1027,6 +1047,10 @@
     </Reference>
     <Reference Include="UnityEditor.TestRunner">
       <HintPath>Library\ScriptAssemblies\UnityEditor.TestRunner.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.InputSystem">
+      <HintPath>Library\ScriptAssemblies\Unity.InputSystem.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEditor.UI">
